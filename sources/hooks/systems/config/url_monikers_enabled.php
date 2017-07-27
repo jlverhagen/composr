@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -15,7 +15,7 @@
 /**
  * @license    http://opensource.org/licenses/cpal_1.0 Common Public Attribution License
  * @copyright  ocProducts Ltd
- * @package    core
+ * @package    core_configuration
  */
 
 /**
@@ -40,7 +40,7 @@ class Hook_config_url_monikers_enabled
             'list_options' => '',
             'order_in_category_group' => 4,
 
-            'addon' => 'core',
+            'addon' => 'core_configuration',
         );
     }
 

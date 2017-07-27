@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -123,6 +123,19 @@ function array_intersect($array1, $array2, $array3 = null)
 }
 
 /**
+ * Computes the intersection of arrays using keys for comparison.
+ *
+ * @param  array $array1 First array.
+ * @param  array $array2 Second array.
+ * @param  ?array $array3 Third array (null: only 2).
+ * @return array The intersection.
+ */
+function array_intersect_key($array1, $array2, $array3 = null)
+{
+    return array();
+}
+
+/**
  * Calculate the intersection of arrays with additional index check.
  *
  * @param  array $array1 First array.
@@ -193,7 +206,7 @@ function array_reverse($array, $preserve_keys = false)
  *
  * @param  mixed $needle Needle.
  * @param  array $haystack Haystack.
- * @return mixed The key (false: not found).
+ * @return ~mixed The key (false: not found).
  */
 function array_search($needle, $haystack)
 {
@@ -233,7 +246,7 @@ function array_slice($array, $offset, $length = null)
  * @param  ?array $replacement The replacement (null: nothing put in, just bit taken out).
  * @return array The spliced result.
  */
-function array_splice($input, $offset, $length = null, $replacement = null)
+function array_splice(&$input, $offset, $length = null, $replacement = null)
 {
     return array();
 }
@@ -454,9 +467,10 @@ function cos($angle)
  * Count elements in a variable.
  *
  * @param  array $var Variable to count elements of.
+ * @param  integer $mode The count mode (COUNT_NORMAL or COUNT_RECURSIVE).
  * @return integer The count.
  */
-function count($var)
+function count($var, $mode = 0)
 {
     return 0;
 }
@@ -561,20 +575,6 @@ function dirname($name)
 function deg2rad($number)
 {
     return 0.0;
-}
-
-/**
- * Send an error message somewhere.
- *
- * @param  string $message The message to log.
- * @param  integer $message_type The message type (0 is normal PHP logging system, 1 is e-mail address [non-Roadsend], 2 is debugger connection, 3 is file).
- * @set    0 1 2 3
- * @param  string $destination The parameter that defines details of the message type (for type 0, meaningless).
- * @return boolean Success status.
- */
-function error_log($message, $message_type = 0, $destination = '')
-{
-    return true;
 }
 
 /**
@@ -802,6 +802,7 @@ function fopen($filename, $mode, $use_include_path = false, $context = null)
 
 /**
  * Output all remaining data on a file pointer.
+ * Call cms_ob_end_clean() first, else too much memory will be used.
  *
  * @param  resource $handle The file handle.
  * @return ~integer The number of characters that got read (false: error).
@@ -843,168 +844,6 @@ function fseek($handle, $offset, $whence = SEEK_SET)
  * @return ~integer The offset (false: error).
  */
 function ftell($handle)
-{
-    return 0;
-}
-
-/**
- * Changes directories on a FTP server.
- *
- * @param  resource $ftp_stream The FTP connection.
- * @param  PATH $dir The directory to change to.
- * @return boolean Success status.
- */
-function ftp_chdir($ftp_stream, $dir)
-{
-    return false;
-}
-
-/**
- * Close an FTP connection.
- *
- * @param  resource $ftp_stream The FTP connection.
- * @return boolean Success status.
- */
-function ftp_close($ftp_stream)
-{
-    return false;
-}
-
-/**
- * Make an FTP connection.
- *
- * @param  string $host The FTP server to connect to.
- * @param  integer $port The port on the FTP server that holds the FTP server application.
- * @param  integer $timeout The timeout after which we give up with an error.
- * @return ~resource The FTP connection (false: error).
- */
-function ftp_connect($host, $port = 21, $timeout = 90)
-{
-    return array();
-}
-
-/**
- * Deletes a file on the FTP server.
- *
- * @param  resource $ftp_stream The FTP connection.
- * @param  PATH $filename The filename.
- * @return boolean Success status.
- */
-function ftp_delete($ftp_stream, $filename)
-{
-    return false;
-}
-
-/**
- * Uploads from an open file to the FTP server.
- *
- * @param  resource $ftp_stream The FTP connection.
- * @param  PATH $remote_file The remote filename.
- * @param  resource $handle The open file handle.
- * @param  integer $mode The file mode for the remote file (e.g. 0777).
- * @return boolean Success status.
- */
-function ftp_fput($ftp_stream, $remote_file, $handle, $mode)
-{
-    return false;
-}
-
-/**
- * Logs in to an FTP connection.
- *
- * @param  resource $ftp_stream The FTP connection.
- * @param  string $username The username.
- * @param  string $password The password.
- * @return boolean Success status.
- */
-function ftp_login($ftp_stream, $username, $password)
-{
-    return false;
-}
-
-/**
- * Creates a directory.
- *
- * @param  resource $ftp_stream The FTP connection.
- * @param  PATH $directory The directory to create.
- * @return ~string The directory name (false: error).
- */
-function ftp_mkdir($ftp_stream, $directory)
-{
-    return '';
-}
-
-/**
- * Returns a list of files in the given directory.
- *
- * @param  resource $ftp_stream The FTP connection.
- * @param  PATH $directory The directory.
- * @return ~array The list of files (false: error).
- */
-function ftp_nlist($ftp_stream, $directory)
-{
-    return array();
-}
-
-/**
- * Uploads a file to the FTP server.
- *
- * @param  resource $ftp_stream The FTP connection.
- * @param  PATH $remote_file The remote filename.
- * @param  PATH $local_file The local filename.
- * @param  integer $mode The file mode for the remote file (e.g. 0777).
- * @return boolean Success status.
- */
-function ftp_put($ftp_stream, $remote_file, $local_file, $mode)
-{
-    return false;
-}
-
-/**
- * Renames a file on the FTP server.
- *
- * @param  resource $ftp_stream The FTP connection.
- * @param  PATH $from Original path.
- * @param  PATH $to New path.
- * @return boolean Success status.
- */
-function ftp_rename($ftp_stream, $from, $to)
-{
-    return false;
-}
-
-/**
- * Removes a directory on the FTP server.
- *
- * @param  resource $ftp_stream The FTP connection.
- * @param  PATH $directory The directory to remove.
- * @return boolean Success status.
- */
-function ftp_rmdir($ftp_stream, $directory)
-{
-    return false;
-}
-
-/**
- * Sends a SITE command to the FTP server.
- *
- * @param  resource $ftp_stream The FTP connection.
- * @param  string $cmd The SITE command.
- * @return boolean Success status.
- */
-function ftp_site($ftp_stream, $cmd)
-{
-    return false;
-}
-
-/**
- * Find the file size of a file on the FTP server.
- *
- * @param  resource $ftp_stream The FTP connection.
- * @param  PATH $cmd The file's path.
- * @return ~integer The file size (false: error).
- */
-function ftp_size($ftp_stream, $cmd)
 {
     return 0;
 }
@@ -1095,7 +934,7 @@ function get_object_vars($object)
  * @param  string $charset The character set to use
  * @return array The translation table.
  */
-function get_html_translation_table($table, $quote_style = ENT_COMPAT, $charset = 'UTF-8')
+function get_html_translation_table($table, $quote_style = ENT_COMPAT, $charset = 'utf-8')
 {
     return array();
 }
@@ -1221,15 +1060,6 @@ function headers_sent()
 function hexdec($hex_string)
 {
     return 0;
-}
-
-/**
- * Syntax highlighting of a string (output directly).
- *
- * @param  string $str The string to highlight.
- */
-function highlight_string($str)
-{
 }
 
 /**
@@ -2139,20 +1969,11 @@ function include_once($filename)
  * Gets the value of a configuration option. Note: On Phalanger any unknown config options will produce a warning if fetched.
  *
  * @param  string $varname Config option.
- * @return mixed Value of option (empty: no such config option, or an empty value) (false: ditto).
+ * @return ~mixed Value of option (empty: no such config option, or an empty value) (false: ditto).
  */
 function ini_get($varname)
 {
     return '';
-}
-
-/**
- * Restores the value of a configuration option.
- *
- * @param  string $varname Config option.
- */
-function ini_restore($varname)
-{
 }
 
 /**
@@ -2681,15 +2502,13 @@ function ob_get_length()
 }
 
 /**
- * Convert character encoding as output buffer handler.
+ * Return the nesting level of the output buffering mechanism.
  *
- * @param  string $buffer Input string.
- * @param  integer $mode Irrelevant (we don't use this function directly anyway).
- * @return string Filtered version.
+ * @return integer Nesting level.
  */
-function ob_iconv_handler($buffer, $mode)
+function ob_get_level()
 {
-    return '';
+    return 0;
 }
 
 /**
@@ -2810,36 +2629,16 @@ function pathinfo($path)
 }
 
 /**
- * Return info about a user by user ID. Does not exist on Windows.
- *
- * @param  integer $uid The user ID.
- * @return ~array A map of details of the user (false: failure).
- */
-function posix_getpwuid($uid)
-{
-    return array();
-}
-
-/**
- * Return the real user ID of the current process. Does not exist on Windows.
- *
- * @return integer User ID.
- */
-function posix_getuid()
-{
-    return 0;
-}
-
-/**
  * Perform a regular expression match.
  *
  * @param  string $pattern The pattern.
  * @param  string $subject The subject string.
- * @param  ?array $matches Where matches will be put (note that it is a list of maps, except the arrays are turned inside out) (null: do not store matches). Note that this is actually passed by reference, but is also optional.
+ * @param  ?array $matches Where matches will be put (note that it is a list of maps, except the arrays are turned inside out) (null: do not store matches). Note that this is actually passed by reference, but is also optional. (null: don't gather)
  * @param  integer $flags Either 0, or PREG_OFFSET_CAPTURE.
+ * @param  integer $offset Offset to start from. Usually use with 'A' modifier to anchor it (using '^' in the pattern will not work)
  * @return ~integer The number of matches (false: error).
  */
-function preg_match($pattern, $subject, $matches = null, $flags = 0)
+function preg_match($pattern, $subject, &$matches = null, $flags = 0, $offset = 0)
 {
     return 0;
 }
@@ -2862,7 +2661,7 @@ function preg_grep($pattern, $subject, $flags = 0)
  *
  * @param  string $pattern The pattern.
  * @param  string $subject The subject string.
- * @param  array $matches Where matches will be put (note that it is a list of maps, except the arrays are turned inside out). Note that this is actually passed by reference, but is also optional.
+ * @param  ?array $matches Where matches will be put (note that it is a list of maps, except the arrays are turned inside out). Note that this is actually passed by reference, but is also optional. (null: don't gather)
  * @param  integer $flags Either 0, or PREG_OFFSET_CAPTURE.
  * @return ~integer The number of matches (false: error).
  */
@@ -2945,7 +2744,7 @@ function rawurldecode($str)
 }
 
 /**
- * Encode URL-encoded strings.
+ * Encode URL-encoded strings. Used for everything *except* GET-parameter encoding.
  *
  * @param  string $str The string to encode.
  * @return string Encoded string.
@@ -3412,7 +3211,7 @@ function strstr($haystack, $needle)
 /**
  * Tokenize string.
  *
- * @param  string $subject String to tokenise. EXCEPT if $deliminators=NULL, then this has actual deliminators.
+ * @param  string $subject String to tokenise. EXCEPT if $deliminators=null, then this has actual deliminators.
  * @param  ?string $deliminators Deliminators (null: continue with previous tokenisation).
  * @return ~string Next token (false: could not return a token, no more tokens to return).
  */
@@ -3497,9 +3296,11 @@ function substr($string, $start, $length = null)
  *
  * @param  string $haystack The subject.
  * @param  string $needle The substring to search for in the subject.
+ * @param  integer $offset Offset.
+ * @param  ?integer $maxlen Maximum length (null: no limit).
  * @return integer The number of times substring occurs in the subject.
  */
-function substr_count($haystack, $needle)
+function substr_count($haystack, $needle, $offset = 0, $maxlen = null)
 {
     return 0;
 }
@@ -3634,7 +3435,7 @@ function urldecode($str)
 }
 
 /**
- * URL-encodes string.
+ * URL-encodes string. Used for GET-parameter encoding ONLY.
  *
  * @param  string $str The pure string to URL encode.
  * @return string URL encoded string.
@@ -3655,7 +3456,7 @@ function usort(&$array, $cmp_function)
 }
 
 /**
- * Converts a string with ISO-8859-1 characters encoded with UTF-8 to single-byte ISO-8859-1.
+ * Converts a string with ISO-8859-1 characters encoded with utf-8 to single-byte ISO-8859-1.
  *
  * @param  string $data Subject.
  * @return string Result.
@@ -3666,7 +3467,7 @@ function utf8_decode($data)
 }
 
 /**
- * Encodes an ISO-8859-1 string to UTF-8.
+ * Encodes an ISO-8859-1 string to utf-8.
  *
  * @param  string $data Subject.
  * @return string Result.
@@ -3686,169 +3487,6 @@ function utf8_encode($data)
  * @return string Word-wrapped string.
  */
 function wordwrap($string, $width = 75, $break = "\n", $cut = false)
-{
-    return '';
-}
-
-/**
- * Get XML parser error string for a certain error code.
- *
- * @param  integer $code Error code.
- * @return string The string representation of the error code given.
- */
-function xml_error_string($code)
-{
-    return '';
-}
-
-/**
- * Get current byte index for an XML parser.
- *
- * @param  resource $parser XML parser.
- * @return ~integer Byte index (false: invalid parser given).
- */
-function xml_get_current_byte_index($parser)
-{
-    return 0;
-}
-
-/**
- * Get current line number for an XML parser.
- *
- * @param  resource $parser XML parser.
- * @return ~integer Line number (false: invalid parser given).
- */
-function xml_get_current_line_number($parser)
-{
-    return 0;
-}
-
-/**
- * Get XML parser error code for last error the occurred.
- *
- * @param  resource $parser XML parser.
- * @return integer The error code.
- */
-function xml_get_error_code($parser)
-{
-    return 0;
-}
-
-/**
- * Start parsing an XML document.
- *
- * @param  resource $parser XML parser.
- * @param  string $data The data to parse.
- * @param  boolean $is_final Finish parsing process with this piece of data (otherwise parsing is open to re-enter with more data).
- * @return BINARY Success status.
- */
-function xml_parse($parser, $data, $is_final = false)
-{
-    return 0;
-}
-
-/**
- * Create an XML parser with namespace support.
- *
- * @param  ?string $encoding Encoding (null: PHP4: as-for-input/PHP5: autodetect).
- * @return ~resource XML parser (false: could not create, happens on default PHP5 on Windows).
- */
-function xml_parser_create_ns($encoding = null)
-{
-    return array();
-}
-
-/**
- * Free an XML parser.
- *
- * @param  resource $parser XML parser.
- * @return boolean Success status.
- */
-function xml_parser_free($parser)
-{
-    return false;
-}
-
-/**
- * Set options in an XML parser.
- *
- * @param  resource $parser XML parser.
- * @param  integer $option The option to set (XML_OPTION_CASE_FOLDING [integer], XML_OPTION_TARGET_ENCODING [string]).
- * @param  mixed $value The value (BINARY or string).
- * @return boolean Success status.
- */
-function xml_parser_set_option($parser, $option, $value)
-{
-    return false;
-}
-
-/**
- * Set up character data handler.
- *
- * @param  resource $parser XML parser.
- * @param  mixed $handler The callback.
- * @return boolean Success status.
- */
-function xml_set_character_data_handler($parser, $handler)
-{
-    return false;
-}
-
-/**
- * Set up start and end element handlers.
- *
- * @param  resource $parser XML parser.
- * @param  mixed $start_handler The callback for start of element.
- * @param  mixed $end_handler The callback for end of element.
- * @return boolean Success status.
- */
-function xml_set_element_handler($parser, $start_handler, $end_handler)
-{
-    return false;
-}
-
-/**
- * Set up namespace-end decl handler.
- *
- * @param  resource $parser XML parser.
- * @param  mixed $handler The callback.
- * @return boolean Success status.
- */
-function xml_set_end_namespace_decl_handler($parser, $handler)
-{
-    return false;
-}
-
-/**
- * Use XML Parser within an object.
- *
- * @param  resource $parser XML parser.
- * @param  object $object The object.
- */
-function xml_set_object($parser, $object)
-{
-}
-
-/**
- * Set up namespace-start decl handler.
- *
- * @param  resource $parser XML parser.
- * @param  mixed $handler The callback.
- * @return boolean Success status.
- */
-function xml_set_start_namespace_decl_handler($parser, $handler)
-{
-    return false;
-}
-
-/**
- * Generates XML for a method request.
- *
- * @param  string $method The method to call.
- * @param  array $params The parameters to use.
- * @return string The XML.
- */
-function xmlrpc_encode_request($method, $params)
 {
     return '';
 }
@@ -4259,18 +3897,6 @@ function md5_file($filename)
 }
 
 /**
- * Formats a number as a currency string.
- *
- * @param  string $format The formatting string.
- * @param  float $number The number to format as currency.
- * @return string The final currency string.
- */
-function money_format($format, $number)
-{
-    return '';
-}
-
-/**
  * Advance the internal array pointer of an array.
  *
  * @param  array $array The array.
@@ -4294,9 +3920,9 @@ function pi()
 /**
  * Exponential expression.
  *
- * @param  float $base Base.
- * @param  float $exp Exponent.
- * @return float Result.
+ * @param  mixed $base Base (integer or float).
+ * @param  mixed $exp Exponent (integer or float).
+ * @return mixed Result (integer or float).
  */
 function pow($base, $exp)
 {
@@ -4352,6 +3978,7 @@ function range($from, $to, $step = 1)
 
 /**
  * Outputs a file.
+ * Call cms_ob_end_clean() first, else too much memory will be used.
  *
  * @param  PATH $filename The filename.
  * @param  boolean $use_include_path Whether to search within the include path.
@@ -4592,133 +4219,6 @@ function gettype($var)
 }
 
 /**
- * Gets the version of the current Zend engine.
- *
- * @return string The version of the currently running Zend Engine.
- */
-function zend_version()
-{
-    return '';
-}
-
-/*!WEIRD*
- * Gets the Zend guid.
- *
- * @return string The ID which can be used to display the Zend logo using the built-in image.
- */
-/*function zend_logo_guid()
-{
-}*/
-
-/**
- * Get current column number for an XML parser.
- *
- * @param  resource $parser A reference to the XML parser to get column number from.
- * @return ~integer Which column on the current line the parser is currently at (false: error).
- */
-function xml_get_current_column_number($parser)
-{
-    return 0;
-}
-
-/**
- * Create an XML parser.
- *
- * @param  ?string $encoding Encoding (null: PHP4: as-for-input/PHP5: autodetect).
- * @return ~resource XML parser (false: could not create, happens on default PHP5 on Windows) (false: error).
- */
-function xml_parser_create($encoding = null)
-{
-    return array();
-}
-
-/**
- * Get options from an XML parser.
- *
- * @param  resource $parser Parser.
- * @param  integer $option Option.
- * @return mixed Value.
- */
-function xml_parser_get_option($parser, $option)
-{
-    return 0;
-}
-
-/**
- * Parse XML data into an array structure.
- *
- * @param  resource $parser The parser.
- * @param  string $data The XML.
- * @param  array $values Where to put the values.
- * @param  ?array $index Where to put the indices into the XML for where the values are at (null: don't collect). Note that this is actually passed by reference, but is also optional.
- * @return BINARY 0 is failure, 1=pass.
- */
-function xml_parse_into_struct($parser, $data, &$values, $index = null)
-{
-    return 1;
-}
-
-/**
- * Set up default handler.
- *
- * @param  resource $parser XML parser.
- * @param  mixed $callback The callback.
- * @return boolean Success status.
- */
-function xml_set_default_handler($parser, $callback)
-{
-    return true;
-}
-
-/**
- * Set up external entity reference handler.
- *
- * @param  resource $parser XML parser.
- * @param  mixed $callback The callback.
- * @return boolean Success status.
- */
-function xml_set_external_entity_ref_handler($parser, $callback)
-{
-    return true;
-}
-
-/**
- * Set up notation declaration handler.
- *
- * @param  resource $parser XML parser.
- * @param  mixed $callback The callback.
- * @return boolean Success status.
- */
-function xml_set_notation_decl_handler($parser, $callback)
-{
-    return true;
-}
-
-/**
- * Set up processing instruction (PI) handler.
- *
- * @param  resource $parser XML parser.
- * @param  mixed $callback The callback.
- * @return boolean Success status.
- */
-function xml_set_processing_instruction_handler($parser, $callback)
-{
-    return true;
-}
-
-/**
- * Set up unparsed entity declaration handler.
- *
- * @param  resource $parser XML parser.
- * @param  mixed $callback The callback.
- * @return boolean Success status.
- */
-function xml_set_unparsed_entity_decl_handler($parser, $callback)
-{
-    return true;
-}
-
-/**
  * Dumps information about a variable.
  *
  * @param  mixed $expression Data.
@@ -4814,18 +4314,6 @@ function soundex($input)
 {
     return '';
 }
-
-/*!WEIRD*
- * Parses input from a string according to a format.
- *
- * @param  string $string Input string.
- * @param  string $format Formatting string.
- * @return array The values.
- */
-/*function sscanf($string, $format)
-{
-    return array();
-}*/
 
 /**
  * Un-quote string quoted with addcslashes.
@@ -5149,104 +4637,6 @@ function fstat($handle)
 }
 
 /**
- * Set permissions on a file via FTP.
- *
- * @param  resource $ftp_stream File handle.
- * @param  integer $mode Requested file permissions.
- * @param  PATH $filename Filepath.
- * @return ~integer New file permissions (false: error).
- */
-function ftp_chmod($ftp_stream, $mode, $filename)
-{
-    return 0;
-}
-
-/**
- * Changes to the parent directory.
- *
- * @param  resource $ftp_stream FTP handle.
- * @return boolean Success status.
- */
-function ftp_cdup($ftp_stream)
-{
-    return true;
-}
-
-/**
- * Downloads a file from the FTP server and saves to an open file.
- *
- * @param  resource $ftp_stream FTP handle.
- * @param  resource $file_handle File handle.
- * @param  PATH $remote_file Remote file.
- * @param  integer $mode Transfer mode (FTP_ASCII or FTP_BINARY).
- * @return boolean Success status.
- */
-function ftp_fget($ftp_stream, $file_handle, $remote_file, $mode)
-{
-    return true;
-}
-
-/**
- * Downloads a file from the FTP server.
- *
- * @param  resource $ftp_stream FTP handle.
- * @param  PATH $local_file Local file.
- * @param  PATH $remote_file Remote file.
- * @param  integer $mode Transfer mode (FTP_ASCII or FTP_BINARY).
- * @return boolean Success status.
- */
-function ftp_get($ftp_stream, $local_file, $remote_file, $mode)
-{
-    return true;
-}
-
-/**
- * Turns passive mode on or off.
- *
- * @param  resource $ftp_stream The link identifier of the FTP connection.
- * @param  boolean $pasv If TRUE, the passive mode is turned on, else it's turned off.
- * @return boolean Success status.
- */
-function ftp_pasv($ftp_stream, $pasv)
-{
-    return true;
-}
-
-/**
- * Returns the current directory name.
- *
- * @param  resource $ftp_stream The link identifier of the FTP connection.
- * @return ~string Current directory name (false: error).
- */
-function ftp_pwd($ftp_stream)
-{
-    return '';
-}
-
-/**
- * Returns a detailed list of files in the given directory.
- *
- * @param  resource $ftp_stream The link identifier of the FTP connection.
- * @param  PATH $directory The directory path.
- * @return ~array Each element corresponds to one line of text (false: error).
- */
-function ftp_rawlist($ftp_stream, $directory)
-{
-    return array();
-}
-
-/**
- * Returns the system type identifier of the remote FTP server.
- *
- * @param  resource $ftp_stream The link identifier of the FTP connection.
- * @return ~string System type (false: error).
- */
-function ftp_systype($ftp_stream)
-{
-    return '';
-}
-
-/**
  * Truncates a file to a given length.
  *
  * @param  resource $file File handle.
@@ -5391,31 +4781,6 @@ function nl2br($in)
 }
 
 /**
- * Returns information about the operating system PHP is running on.
- *
- * @param  string $mode Type of info to get.
- * @set    a s n r v m
- * @return string The info.
- */
-function php_uname($mode = 'a')
-{
-    return '';
-}
-
-/**
- * Opens process file pointer.
- *
- * @param  string $command Command to execute.
- * @param  string $mode Access mode.
- * @set    r r+ w w+ a a+
- * @return ~resource Socket (false: error).
- */
-function popen($command, $mode)
-{
-    return array();
-}
-
-/**
  * Output a formatted string.
  *
  * @param  string $format Formatting string.
@@ -5527,9 +4892,10 @@ function getlastmod()
 /**
  * Get current time.
  *
+ * @param boolean $return_float Return as float.
  * @return array Map of time details.
  */
-function gettimeofday()
+function gettimeofday($return_float = false)
 {
     return array();
 }
@@ -5718,34 +5084,16 @@ function ignore_user_abort($setting)
 }
 
 /**
- * XSS detection helper function.
- *
- * @param  string $var String to mark as escaped.
- */
-function ocp_mark_as_escaped(&$var)
-{
-}
-
-/**
- * XSS detection helper function.
- *
- * @param  string $var String to test for being escaped.
- * @return boolean Whether string is escaped.
- */
-function ocp_is_escaped($var)
-{
-    return true;
-}
-
-/**
  * Get the contents of a file.
  *
  * @param  SHORT_TEXT $filename The file name.
  * @param  boolean $use_include_path Whether to search within the include path.
  * @param  ?resource $context A stream context to attach to (null: no special context).
+ * @param  integer $offset Offset.
+ * @param  ?integer $maxlen Maximum length (null: no limit).
  * @return ~LONG_TEXT The file contents (false: error).
  */
-function file_get_contents($filename, $use_include_path = false, $context = null)
+function file_get_contents($filename, $use_include_path = false, $context = null, $offset = 0, $maxlen = null)
 {
     return '';
 }
@@ -5756,9 +5104,10 @@ function file_get_contents($filename, $use_include_path = false, $context = null
  * @param  string $input String to count words in.
  * @param  integer $format The format.
  * @set    0 1 2
+ * @param  string $chars A list of additional characters which will be considered as 'word'.
  * @return mixed Typically a list - the words of the input string.
  */
-function str_word_count($input, $format = 0)
+function str_word_count($input, $format = 0, $chars = '')
 {
     return array();
 }
@@ -6033,17 +5382,6 @@ function image_type_to_mime_type($image_type)
 }
 
 /**
- * Determine the type of an image.
- *
- * @param  PATH $filename Image path.
- * @return integer Image type.
- */
-function exif_imagetype($filename)
-{
-    return 0;
-}
-
-/**
  * Find pathnames matching a pattern.
  *
  * @param  string $pattern Pattern according to the rules used by the libc glob.
@@ -6154,20 +5492,10 @@ function array_intersect_ukey($array1, $array2, $callback)
 }
 
 /**
- * Retrieve array of errors.
- *
- * @return array Array of errors.
- */
-function libxml_get_errors()
-{
-    return array();
-}
-
-/**
  * Converts a packed internet address to a human readable representation.
  *
  * @param  string $in_addr Converts a packed internet address to a human readable representation.
- * @return string A string representation of the address (false: error).
+ * @return ~string A string representation of the address (false: error).
  */
 function inet_ntop($in_addr)
 {
@@ -6260,20 +5588,6 @@ function array_change_key_case($input, $case)
 }
 
 /**
- * Reads the EXIF headers from JPEG or TIFF.
- *
- * @param  PATH $filename The name of the image file being read. This cannot be an URL.
- * @param  ?string $sections Is a comma separated list of sections that need to be present in file to produce a result array (null: no filter).
- * @param  boolean $arrays Specifies whether or not each section becomes an array.
- * @param  boolean $thumbnail When set to TRUE the thumbnail itself is read. Otherwise, only the tagged data is read.
- * @return ~array An associative array where the array indexes are the header names and the array values are the values associated with those headers (false: error).
- */
-function exif_read_data($filename, $sections = null, $arrays = false, $thumbnail = false)
-{
-    return array();
-}
-
-/**
  * Outputs or returns a parsable string representation of a variable.
  *
  * @param  mixed $expression The variable you want to export.
@@ -6297,52 +5611,135 @@ function stream_context_create($options = null, $params = null)
     return array();
 }
 
+/**
+ * Returns the amount of memory allocated to PHP.
+ *
+ * @return integer The amount of memory, in bytes, that's currently being allocated to your PHP script.
+ */
+function memory_get_usage()
+{
+    return 0;
+}
+
 /*
 
-Various things are disabled for various reasons. You may use them, if you use a function_exists guard and a check against the disabled_functions option.
+Various things are disabled for various reasons. You may use them, if you use php_function_allowed
 
 Disabled due to Google App Engine...
 
 gc_collect_cycles
 gc_enable
 gc_disable
+phpversion
+php_sapi_name
+
+Disabled due to too much general weirdness or just generally a bad idea to use...
+
+sscanf
+zend_logo_guid
+zend_version
+phpcredits
+php_logo_guid
+php_real_logo_guid
+php_egg_logo_guid
+register_tick_function
+unregister_tick_function
+time_nanosleep
+time_sleep_until
+get_loaded_extensions
+extension_loaded
+get_extension_funcs
+php_ini_scanned_files
+php_ini_loaded_file
+dl
+rand
+convert_uuencode
+convert_uudecode
+import_request_variables
+debug_zval_dump
+php_strip_whitespace
+ini_get_all
+get_include_path
+set_include_path
+restore_include_path
+setrawcookie
+umask
+get_browser
+chown
+chgrp
+extract
+compact
+str_rot13
+output_add_rewrite_var
+output_reset_rewrite_vars
+
+Disabled due to multi-OS compatibility...
+
+getservbyname
+getservbyport
+getprotobyname
+getprotobynumber
+virtual
+apache_*
+getallheaders
+posix_uname
+posix_kill
+posix_mkfifo
+posix_setpgid
+posix_setsid
+posix_setuid
+posix_setuid
+posix_getpwuid
+posix_getuid
+syslog
+openlog
+closelog
+symlink
+link
+readlink
+linkinfo
+lchown
+lchgrp
+lstat
+sys_getloadavg
 getmypid
 getmyuid
 getrusage
 getmyinode
 getmygid
 get_current_user
-libxml_disable_entity_loader
-disk_free_space
-disk_total_space
-highlight_file
-phpversion
-php_sapi_name
+fnmatch
+money_format
 
-Disabled due to multi-os compatibility...
-
-symlink
-link
-
-Disabled various very specific ones, such as...
-
-apache_*
-posix_uname
-syslog
-openlog
-
-Disabled various legacy synonyms, such as...
+Disabled various legacy synonyms (aliases), such as...
 
 show_source
 doubleval
 ini_alter
+fputs
+get_required_files
+user_error
+chop
+diskfreespace
+is_double
+is_int
+is_long
+is_real
+is_writeable
+join
+key_exists
+magic_quotes_runtime
+strchr
+pos
+sizeof
+die
 
 Disabled due to very commonly being disabled on hosts...
 
 popen
 pclose
 proc_close
-prog_get_status
+proc_get_status
 proc_nice
 proc_open
 proc_terminate
@@ -6355,50 +5752,89 @@ exec
 system
 shell_exec
 ftp_exec
-posix_kill
-posix_mkfifo
-posix_setpgid
-posix_setsid
-posix_setuid
-posix_setuid
 set_time_limit
 fsockopen
 phpinfo
+highlight_string
+highlight_file
+disk_free_space
+disk_total_space
+error_log
+php_uname
+ini_restore
 
 Disabled due to often being ill-configured or disabled on hosts...
 
 tmpfile
 tempnam
 
-Sessions is not always compiled into PHP or correctly configured...
+Disabled due to being removed/deprecated from PHP...
 
-session_cache_limiter
-session_decode
-session_destroy
-session_encode
-session_get_cookie_params
-session_id
-session_module_name
-session_name
-session_save_path
-session_set_cookie_params
-session_set_save_handler
-session_start
-session_unset
-session_write_close
+set_magic_quotes_runtime
+call_user_method
+call_user_method_array
+split
+spliti
+ereg
+ereg_replace
+eregi
+eregi_replace
+sql_regcase
+
+Disabled simply as we don't feel a need to use them (can enable if we find a use)...
+
+property_exists
+interface_exists
+restore_exception_handler
+get_declared_interfaces
+get_defined_constants
+strptime
+htmlspecialchars_decode
+sha1_file
+strripos
+nl_langinfo
+vfprintf
+asinh
+acosh
+atanh
+expm1
+log1p
+fmod
+getopt
+settype
+dir
+ob_get_flush
+ob_get_status
+ob_list_handlers
+array_intersect_uassoc
+
+// ---
 
 Not yet in our compatibility list (<=PHP5.1), but would be disabled if they were...
-
 gethostname (Google AppEngine disallows)
 
+In newer PHP so we will add at some point...
+memory_get_peak_usage
+error_get_last
+array_fill_keys
+sys_get_temp_dir
+preg_last_error
 
-NB:
- Almost always avoid PHP_SELF and SCRIPT_FILENAME and PATH_TRANSLATED. They do not work consistently across platforms and with rewrite rules and are mostly redundant.
- Instead, use __FILE__ (filesystem path), SCRIPT_NAME (URL path) or REQUEST_URI (URL path and parameters)
- REQUEST_URI may be wrong, but Composr will correct it if it is.
- Obviously do not rely on REQUEST_URI if you're not sure it is a web-request; use get_base_url()
+NOT disabled...
+GD functions - we TRY to be conditional with them, but they are in our minimum specs and we don't want dirty code
+GZIP functions - we TRY to be conditional with them, but they are in our minimum specs and we don't want dirty code
 
-NB:
+// ---
+
+NB about paths:
+ Obviously do not rely on PHP_SELF/SCRIPT_NAME/REQUEST_URI if you're not sure it is a web-request; use get_self_url_easy()
+ PATH_INFO is very specific and should not be relied on; Composr may do something with it if it is there
+ PATH_TRANSLATED may be wrong or missing, never use it
+ DOCUMENT_ROOT is never really knowable, don't rely on it
+ PHP_SELF is always set but you almost always want SCRIPT_NAME instead (or REQUEST_URI for URLs)
+ Chris's notes in the PHP manual (http://php.net/manual/en/reserved.variables.server.php) explain how everything works; we emulate stuff as discussed in the notes
+
+NB about $_SERVER:
  We should always check both $_SERVER and $_ENV for stuff (usually via cms_srv) apart from for...
   argv
   PHP_AUTH_USER

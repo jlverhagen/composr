@@ -24,7 +24,7 @@ class SimpleShell {
      *    Executes the shell comand and stashes the output.
      *    @access public
      */
-    function SimpleShell() {
+    function __construct() {
         $this->_output = false;
     }
 
@@ -80,8 +80,8 @@ class ShellTestCase extends SimpleTestCase {
      *                             the class name if none specified.
      *    @access public
      */
-    function ShellTestCase($label = false) {
-        $this->SimpleTestCase($label);
+    function __construct($label = false) {
+        parent::__construct($label);
         $this->_current_shell = &$this->_createShell();
         $this->_last_status = false;
         $this->_last_command = '';
@@ -137,7 +137,7 @@ class ShellTestCase extends SimpleTestCase {
      *    @return boolean           True on pass
      *    @access public
      */
-    function assertTrue($result, $message = false) {
+    function assertTrue($result, $message = '%s') {
         return $this->assert(new TrueExpectation(), $result, $message);
     }
 

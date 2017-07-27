@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -59,7 +59,7 @@ class Block_main_contact_us
         $subject_prefix = array_key_exists('subject_prefix', $map) ? $map['subject_prefix'] : '';
         $subject_suffix = array_key_exists('subject_suffix', $map) ? $map['subject_suffix'] : '';
 
-        $id = uniqid('', true);
+        $id = uniqid('', false);
         $_self_url = build_url(array('page' => 'admin_messaging', 'type' => 'view', 'id' => $id, 'message_type' => $type), get_module_zone('admin_messaging'));
         $self_url = $_self_url->evaluate();
         $self_title = post_param_string('title', do_lang('CONTACT_US_MESSAGING'));
@@ -72,7 +72,6 @@ class Block_main_contact_us
 
         if ((post_param_integer('_comment_form_post', 0) == 1) && (post_param_string('_block_id', '') == $block_id) && ($post != '')) {
             $message = new Tempcode();/*Used to be written out here*/
-            attach_message(do_lang_tempcode('MESSAGE_SENT'), 'inform');
 
             // Check CAPTCHA
             if ((addon_installed('captcha')) && (get_option('captcha_on_feedback') == '1')) {
@@ -84,7 +83,7 @@ class Block_main_contact_us
             if ($email_from != '') {
                 require_code('type_sanitisation');
                 if (!is_email_address($email_from)) {
-                    warn_exit(do_lang_tempcode('INVALID_EMAIL_ADDRESS'));
+                    return paragraph(do_lang_tempcode('INVALID_EMAIL_ADDRESS'), '', 'red_alert');
                 }
             }
 
@@ -95,31 +94,30 @@ class Block_main_contact_us
             dispatch_notification('messaging', $type . '_' . $id, $notification_subject, $notification_message, null, null, 3, true, false, null, null, $subject_prefix, $subject_suffix, $body_prefix, $body_suffix);
 
             // Send standard confirmation email to current user
-            if ($email_from != '') {
+            if ($email_from != '' && get_option('message_received_emails') == '1') {
                 require_code('mail');
                 mail_wrap(do_lang('YOUR_MESSAGE_WAS_SENT_SUBJECT', $title), do_lang('YOUR_MESSAGE_WAS_SENT_BODY', $post), array($email_from), null, '', '', 3, null, false, get_member());
             }
 
             $redirect = array_key_exists('redirect', $map) ? $map['redirect'] : '';
             if ($redirect != '') {
-                require_code('urls2');
-                $redirect = page_link_as_url($redirect);
+                $redirect = page_link_to_url($redirect);
                 require_code('site2');
                 assign_refresh($redirect, 0.0);
             }
 
-    		decache('main_staff_checklist');
+            decache('main_staff_checklist');
+
+            attach_message(do_lang_tempcode('MESSAGE_SENT'), 'inform');
         } else {
             $message = new Tempcode();
         }
 
         if (get_forum_type() != 'none') { // If cns_forum not installed, will still work
             // Comment posts
-            $forum = get_option('messaging_forum_name');
-            $count = 0;
-            $_comments = $GLOBALS['FORUM_DRIVER']->get_forum_topic_posts($GLOBALS['FORUM_DRIVER']->find_topic_id_for_topic_identifier($forum, $type . '_' . $id), $count);
+            $forum_id = $GLOBALS['FORUM_DRIVER']->forum_id_from_name(get_option('messaging_forum_name'));
 
-            if ($_comments !== -1) {
+            if ($forum_id !== null) {
                 $em = $GLOBALS['FORUM_DRIVER']->get_emoticon_chooser();
 
                 require_javascript('editing');
@@ -165,6 +163,7 @@ class Block_main_contact_us
                     'DISPLAY' => 'block',
                     'COMMENT_URL' => $comment_url,
                     'TITLE' => $box_title,
+                    'SUBMIT_NAME' => do_lang_tempcode('SEND'),
                     'HIDDEN' => $hidden,
                 ));
 

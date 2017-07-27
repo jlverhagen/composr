@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -35,7 +35,8 @@ class Module_login
         $info['organisation'] = 'ocProducts';
         $info['hacked_by'] = null;
         $info['hack_version'] = null;
-        $info['version'] = 2;
+        $info['version'] = 3;
+        $info['update_require_upgrade'] = true;
         $info['locked'] = true;
         return $info;
     }
@@ -56,13 +57,18 @@ class Module_login
      */
     public function install($upgrade_from = null, $upgrade_from_hack = null)
     {
-        $GLOBALS['SITE_DB']->create_table('failedlogins', array(
-            'id' => '*AUTO',
-            'failed_account' => 'ID_TEXT',
-            'date_and_time' => 'TIME',
-            'ip' => 'IP'
-        ));
-        $GLOBALS['SITE_DB']->create_index('failedlogins', 'failedlogins_by_ip', array('ip'));
+        if (is_null($upgrade_from)) {
+            $GLOBALS['SITE_DB']->create_table('failedlogins', array(
+                'id' => '*AUTO',
+                'failed_account' => 'ID_TEXT',
+                'date_and_time' => 'TIME',
+                'ip' => 'IP'
+            ));
+        }
+
+        if ((is_null($upgrade_from)) || ($upgrade_from < 3)) {
+            $GLOBALS['SITE_DB']->create_index('failedlogins', 'failedlogins_by_ip', array('ip'));
+        }
     }
 
     /**
@@ -71,7 +77,7 @@ class Module_login
      * @param  boolean $check_perms Whether to check permissions.
      * @param  ?MEMBER $member_id The member to check permissions as (null: current user).
      * @param  boolean $support_crosslinks Whether to allow cross links to other modules (identifiable via a full-page-link rather than a screen-name).
-     * @param  boolean $be_deferential Whether to avoid any entry-point (or even return NULL to disable the page in the Sitemap) if we know another module, or page_group, is going to link to that entry-point. Note that "!" and "browse" entry points are automatically merged with container page nodes (likely called by page-groupings) as appropriate.
+     * @param  boolean $be_deferential Whether to avoid any entry-point (or even return null to disable the page in the Sitemap) if we know another module, or page_group, is going to link to that entry-point. Note that "!" and "browse" entry points are automatically merged with container page nodes (likely called by page-groupings) as appropriate.
      * @return ?array A map of entry points (screen-name=>language-code/string or screen-name=>[language-code/string, icon-theme-image]) (null: disabled).
      */
     public function get_entry_points($check_perms = true, $member_id = null, $support_crosslinks = true, $be_deferential = false)
@@ -83,12 +89,12 @@ class Module_login
         }
         $ret = array(
             'browse' => array('_LOGIN', 'menu/site_meta/user_actions/login'),
-            //'logout'=>array('LOGOUT','menu/site_meta/user_actions/logout'), Don't show an immediate action, don't want accidental preloading
-            //'concede'=>array('CONCEDED_MODE','menu/site_meta/user_actions/concede'), Don't show an immediate action, don't want accidental preloading
+            //'logout' => array('LOGOUT', 'menu/site_meta/user_actions/logout'), Don't show an immediate action, don't want accidental preloading
+            //'concede' => array('CONCEDED_MODE', 'menu/site_meta/user_actions/concede'), Don't show an immediate action, don't want accidental preloading
         );
         /*
-        if (get_option('is_on_invisibility')=='1')
-            $ret['invisible']=array('INVISIBLE','menu/site_meta/user_actions/invisible'); Don't show an immediate action, don't want accidental preloading
+        if (get_option('is_on_invisibility') == '1')
+            $ret['invisible'] = array('INVISIBLE', 'menu/site_meta/user_actions/invisible'); Don't show an immediate action, don't want accidental preloading
         */
         return $ret;
     }
@@ -100,7 +106,7 @@ class Module_login
     public $fields_to_not_relay;
 
     /**
-     * Module pre-run function. Allows us to know meta-data for <head> before we start streaming output.
+     * Module pre-run function. Allows us to know metadata for <head> before we start streaming output.
      *
      * @return ?Tempcode Tempcode indicating some kind of exceptional output (null: none).
      */
@@ -196,13 +202,18 @@ class Module_login
         $passion = new Tempcode(); // Hidden fields
 
         // Where we will be redirected to after login, for GET requests (POST requests are handled further in the code)
-        $redirect_default = get_self_url(true, true); // The default is to go back to where we are after login. Note that this is not necessarily the URL to the login module, as login screens happen on top of screens you're not allowed to access. If it is the URL to the login module, we'll realise this later in this code. This URL is coded to not redirect to root if we have $_POST, because we relay $_POST values and have intelligence (via $passion).
+        $redirect_default = get_self_url(true); // The default is to go back to where we are after login. Note that this is not necessarily the URL to the login module, as login screens happen on top of screens you're not allowed to access. If it is the URL to the login module, we'll realise this later in this code. This URL is coded to not redirect to root if we have $_POST, because we relay $_POST values and have intelligence (via $passion).
         $redirect = get_param_string('redirect', $redirect_default); // ... but often the login screen's URL tells us where to go back to
         $unhelpful_redirect = false;
         $unhelpful_url_stubs = array(
             static_evaluate_tempcode(build_url(array('page' => 'login'), '', null, false, false, true)),
             static_evaluate_tempcode(build_url(array('page' => 'login', 'type' => 'browse'), '', null, false, false, true)),
+            static_evaluate_tempcode(build_url(array('page' => 'login', 'type' => 'login'), '', null, false, false, true)),
             static_evaluate_tempcode(build_url(array('page' => 'login', 'type' => 'logout'), '', null, false, false, true)),
+            static_evaluate_tempcode(build_url(array('page' => 'login'), '_SELF', null, false, false, true)),
+            static_evaluate_tempcode(build_url(array('page' => 'login', 'type' => 'browse'), '_SELF', null, false, false, true)),
+            static_evaluate_tempcode(build_url(array('page' => 'login', 'type' => 'login'), '_SELF', null, false, false, true)),
+            static_evaluate_tempcode(build_url(array('page' => 'login', 'type' => 'logout'), '_SELF', null, false, false, true)),
         );
         foreach ($unhelpful_url_stubs as $unhelpful_url_stub) {
             if (substr($redirect, 0, strlen($unhelpful_url_stub)) == $unhelpful_url_stub) {
@@ -226,13 +237,10 @@ class Module_login
             if (!is_null($redirect_passon)) {
                 $passion->attach(form_input_hidden('redirect_passon', $redirect_passon)); // redirect_passon is used when there are POST fields, as it says what the redirect will be on the post-login-check hop (post fields prevent us doing an immediate HTTP-level redirect).
             }
-            if (post_param_string('session_id', '') != '') {
-                $passion->attach(form_input_hidden('session_id', $GLOBALS['DID_CHANGE_SESSION_ID'] ? get_session_id() : post_param_string('session_id')));
-            }
         }
 
         // Lost password link
-        if (get_forum_type() == 'cns' && count($_POST) == 0) {
+        if (get_forum_type() == 'cns' && !has_interesting_post_fields()) {
             require_lang('cns');
             $forgotten_link = build_url(array('page' => 'lost_password', 'wide_high' => get_param_integer('wide_high', null)), get_module_zone('lost_password'));
             $extra = do_lang_tempcode('cns:IF_FORGOTTEN_PASSWORD', escape_html($forgotten_link->evaluate()));
@@ -251,6 +259,9 @@ class Module_login
         $username = trim(get_param_string('username', ''));
         if (!is_guest()) {
             $username = $GLOBALS['FORUM_DRIVER']->get_username(get_member());
+            if ($username === null) {
+                $username = '';
+            }
         }
         return do_template('LOGIN_SCREEN', array('_GUID' => '0940dbf2c42493c53b7e99eb50ca51f1', 'EXTRA' => $extra, 'USERNAME' => $username, 'JOIN_URL' => $GLOBALS['FORUM_DRIVER']->join_url(), 'TITLE' => $this->title, 'LOGIN_URL' => $login_url, 'PASSION' => $passion));
     }
@@ -269,7 +280,7 @@ class Module_login
         if (!is_null($id)) {
             $url = enforce_sessioned_url(either_param_string('redirect')); // Now that we're logged in, we need to ensure the redirect URL contains our new session ID
 
-            if (count($_POST) <= 4) { // Only the login username, password, remember-me and redirect
+            if (!has_interesting_post_fields()) {
                 require_code('site2');
                 assign_refresh($url, 0.0);
                 $post = new Tempcode();
@@ -280,14 +291,11 @@ class Module_login
                 if (!is_null($redirect_passon)) {
                     $post->attach(form_input_hidden('redirect', enforce_sessioned_url($redirect_passon)));
                 }
-                if (post_param_string('session_id', '') != '') {
-                    $post->attach(form_input_hidden('session_id', $GLOBALS['DID_CHANGE_SESSION_ID'] ? get_session_id() : post_param_string('session_id')));
-                }
                 $refresh = do_template('JS_REFRESH', array('_GUID' => 'c7d2f9e7a2cc637f3cf9ac4d1cf97eca', 'FORM_NAME' => 'redir_form'));
             }
             decache('side_users_online');
 
-            return do_template('LOGIN_REDIRECT_SCREEN', array('_GUID' => '82e056de9150bbed185120eac3571f40', 'REFRESH' => $refresh, 'TITLE' => $this->title, 'TEXT' => do_lang_tempcode('_LOGIN_TEXT'), 'URL' => $url, 'POST' => $post));
+            return do_template('REDIRECT_POST_METHOD_SCREEN', array('_GUID' => '82e056de9150bbed185120eac3571f40', 'REFRESH' => $refresh, 'TITLE' => $this->title, 'TEXT' => do_lang_tempcode('_LOGIN_TEXT'), 'URL' => $url, 'POST' => $post));
         } else {
             $text = $feedback['error'];
 
@@ -296,7 +304,7 @@ class Module_login
             if (get_forum_type() == 'cns') {
                 require_lang('cns');
 
-                if ($text->evaluate() == do_lang('MEMBER_BAD_PASSWORD')) {
+                if ($text->evaluate() == do_lang('MEMBER_BAD_PASSWORD') || $text->evaluate() == do_lang('MEMBER_INVALID_LOGIN')) {
                     $forgotten_link = build_url(array('page' => 'lost_password'), get_module_zone('lost_password'));
                     $extra = do_lang_tempcode('IF_FORGOTTEN_PASSWORD', escape_html($forgotten_link->evaluate()));
 

@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -62,6 +62,13 @@ class galleries_test_set extends cms_test_case
 
     public function testAddGalleryActualiser()
     {
+        // Cleanup after failed prior execution
+        $test = $GLOBALS['SITE_DB']->query_select_value_if_there('galleries', 'name', array('name' => 'a_test_gallery_for_ut'));
+        if (!is_null($test)) {
+            require_code('galleries2');
+            delete_gallery('a_test_gallery_for_ut');
+        }
+
         //Setting sample data to POST
         $_POST = array(
             'fullname' => 'A test gallery for UT',

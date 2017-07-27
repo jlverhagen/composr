@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -10,7 +10,7 @@
 /**
  * @license    http://opensource.org/licenses/cpal_1.0 Common Public Attribution License
  * @copyright  ocProducts Ltd
- * @package    classifieds
+ * @package    classified_ads
  */
 
 i_solemnly_declare(I_UNDERSTAND_SQL_INJECTION | I_UNDERSTAND_XSS | I_UNDERSTAND_PATH_INJECTION);
@@ -101,6 +101,10 @@ for ($i = 0; $i < 10; $i++) {
 $_catalogues = $GLOBALS['SITE_DB']->query_select('catalogues', array('c_name', 'c_title'), null, 'ORDER BY c_name');
 $catalogues = array();
 foreach ($_catalogues as $_catalogue) {
+    if (substr($_catalogue['c_name'], 0, 1) == '_') {
+        continue;
+    }
+
     $catalogues[$_catalogue['c_name']] = get_translated_text($_catalogue['c_title']);
 }
 

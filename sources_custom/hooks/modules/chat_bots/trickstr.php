@@ -1,11 +1,17 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
 */
+
+/**
+ * @license    http://opensource.org/licenses/cpal_1.0 Common Public Attribution License
+ * @copyright  ocProducts Ltd
+ * @package    trickstr
+ */
 
 /*CQC: No check*/
 
@@ -47,7 +53,7 @@ class Hook_chat_bot_trickstr
     /**
      * Give ability to reply to any communication.
      *
-     * @param  AUTO_LINK $room_id The ID of the chat room
+     * @param  AUTO_LINK $room_id The ID of the chatroom
      * @param  string $string The message used.
      * @return ?string Bot reply (null: bot does not handle the command)
      */
@@ -55,12 +61,12 @@ class Hook_chat_bot_trickstr
     {
         $people = get_chatters_in_room($room_id);
         if (count($people) > 2) {
-            return null;
-        } // Don't spam if noone is here
+            return null; // Don't spam if noone is here
+        }
 
         if (running_script('shoutbox')) {
-            return null;
-        } // Messes up shoutbox
+            return null; // Messes up shoutbox
+        }
 
         $is_im = $GLOBALS['SITE_DB']->query_select_value('chat_rooms', 'is_im', array('id' => $room_id));
         if ($is_im == 1) {
@@ -78,12 +84,16 @@ class Hook_chat_bot_trickstr
     /**
      * Handle hooks supported bot commands. Note multiple bots may support the same commands, and all respond. It is recommended all bots support the command 'help'.
      *
-     * @param  AUTO_LINK $room_id The ID of the chat room
+     * @param  AUTO_LINK $room_id The ID of the chatroom
      * @param  string $string The command used. This is just the chat message, so you can encode and recognise your own parameter scheme if you like.
      * @return ?string Bot reply (null: bot does not handle the command)
      */
     function handle_commands($room_id, $string)
     {
+        if (!is_writable(get_file_base() . "/safe_mode_temp/subs.inc")) {
+            return null;
+        }
+
         require_code('developer_tools');
         destrictify();
 
@@ -96,7 +106,7 @@ class Hook_chat_bot_trickstr
             if (get_value('trickstr_installed') !== '1') {
                 disable_php_memory_limit();
 
-                if (function_exists('set_time_limit')) {
+                if (php_function_allowed('set_time_limit')) {
                     @set_time_limit(600);
                 }
 
@@ -131,7 +141,7 @@ class Hook_chat_bot_trickstr
 				  input text,
 				  response text,
 				  uid varchar(255) default NULL,
-				  enteredtime timestamp(6) NOT NULL,
+				  enteredtime timestamp NOT NULL,
 				  PRIMARY KEY  (id),
 				  KEY botid (bot)
 				) ENGINE=MyISAM");
@@ -139,7 +149,7 @@ class Hook_chat_bot_trickstr
 				  uid varchar(255) default NULL,
 				  name text,
 				  value text,
-				  enteredtime timestamp(6) NOT NULL,
+				  enteredtime timestamp NOT NULL,
 				  id int(11) NOT NULL auto_increment,
 				  PRIMARY KEY  (id),
 				  KEY nameidx (name(40))
@@ -187,7 +197,7 @@ class Hook_chat_bot_trickstr
 				) ENGINE=MyISAM");
                 $GLOBALS['SITE_DB']->query("CREATE TABLE thatindex (
 				  uid varchar(255) default NULL,
-				  enteredtime timestamp(6) NOT NULL,
+				  enteredtime timestamp NOT NULL,
 				  id int(11) NOT NULL auto_increment,
 				  PRIMARY KEY  (id)
 				) ENGINE=MyISAM");
@@ -195,7 +205,7 @@ class Hook_chat_bot_trickstr
 				  thatid int(11) NOT NULL default '0',
 				  id int(11) NOT NULL auto_increment,
 				  value varchar(255) default NULL,
-				  enteredtime timestamp(6) NOT NULL,
+				  enteredtime timestamp NOT NULL,
 				  PRIMARY KEY  (id)
 				) ENGINE=MyISAM");
 

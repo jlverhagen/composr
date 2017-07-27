@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -62,7 +62,7 @@ function transcode_video($url, $table, $local_id, $local_id_field, $url_field, $
 
             require_code('xml');
             $transcoded_filename = uniqid('transcoded', true) . '--' . rawurldecode(preg_replace('#\.\w+$#', '', basename($url))) . '.' . $extension;
-            $xml = '<' . '?xml version="1.0" encoding="UTF-8"?' . '>
+            $xml = '<' . '?xml version="1.0" encoding="utf-8"?' . '>
                     <api-request>
                             <api_key>' . xmlentities(get_option('transcoding_zencoder_api_key')) . '</api_key>
                             <input>' . xmlentities(url_is_local($url) ? (get_custom_base_url() . '/' . $url) : $url) . '</input>
@@ -139,7 +139,7 @@ function transcode_video($url, $table, $local_id, $local_id_field, $url_field, $
 
         // IMMEDIATE LOCAL FFMPEG
 
-        if (strpos(@ini_get('disable_functions'), 'shell_exec') !== false) {
+        if (!php_function_allowed('shell_exec')) {
             return $url; // Can't do
         }
 
@@ -239,7 +239,7 @@ function store_transcoding_failure($transcoder_id)
  */
 function store_transcoding_success($transcoder_id, $new_url = null)
 {
-    if (function_exists('set_time_limit')) {
+    if (php_function_allowed('set_time_limit')) {
         @set_time_limit(0);
     }
 
@@ -265,8 +265,7 @@ function store_transcoding_success($transcoder_id, $new_url = null)
         $new_file_path = str_replace('/uploads/galleries/', '/uploads/galleries/pre_transcoding/', $old_file_path);
         if (file_exists(get_custom_file_base() . '/uploads/galleries/pre_transcoding')) { // Move the old media file to the archive directory
             @rename($old_file_path, $new_file_path);
-            sync_file($old_file_path);
-            sync_file($new_file_path);
+            sync_file_move($old_file_path, $new_file_path);
         } else { // Delete old media
             @unlink($old_file_path);
             sync_file($old_file_path);

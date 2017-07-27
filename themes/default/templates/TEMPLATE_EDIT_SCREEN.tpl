@@ -2,7 +2,7 @@
 
 {$SET,COUNT,{COUNT}}
 
-<form title="{!PRIMARY_PAGE_FORM}" method="post" action="{URL*}">
+<form title="{!PRIMARY_PAGE_FORM}" method="post" action="{URL*}" autocomplete="off" onsubmit="return modsecurity_workaround(this);">
 	{$INSERT_SPAMMER_BLACKHOLE}
 
 	<div>
@@ -30,17 +30,15 @@
 			{+END}
 
 			<div class="right">
-				<input onclick="disable_button_just_clicked(this); this.form.target='_self'; this.form.action='{URL;*}';" class="buttons__save button_screen" type="submit" value="{!SAVE}" />
+				<input onclick="disable_button_just_clicked(this); this.form.target='_self'; this.form.action='{URL;*}';" class="button_screen buttons__save" type="submit" value="{!SAVE}" />
 			</div>
 			{+START,IF,{$JS_ON}}
 				<div class="right">
-					<input onclick="disable_button_just_clicked(this); this.form.target='save_frame'; this.form.action='{URL;*}{$?,{$IN_STR,{URL},?},&amp;,?}save_and_stay=1';" accesskey="U" class="buttons__save_and_stay button_screen" type="submit" value="{!SAVE_AND_STAY}" />
+					<input onclick="disable_button_just_clicked(this); this.form.target='save_frame'; this.form.action='{URL;*}{$?,{$IN_STR,{URL},?},&amp;,?}save_and_stay=1';" accesskey="U" class="button_screen buttons__save_and_stay" type="submit" value="{!SAVE_AND_STAY}" />
 				</div>
 			{+END}
 		</div>
 	</div>
 </form>
 
-{+START,IF,{$NEQ,{$VALUE_OPTION,no_frames},2}}
-	<iframe name="save_frame" id="save_frame" title="{!SAVE_AND_STAY}" class="hidden_save_frame" src="{$BASE_URL*}/uploads/index.html">{!SAVE_AND_STAY}</iframe>
-{+END}
+<iframe name="save_frame" id="save_frame" title="{!SAVE_AND_STAY}" class="hidden_save_frame" src="{$BASE_URL*}/uploads/index.html">{!SAVE_AND_STAY}</iframe>

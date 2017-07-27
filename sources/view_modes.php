@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -65,14 +65,14 @@ function special_page_types($special_page_type, &$out, $out_evaluated)
 {
     global $RECORDED_TEMPLATES_USED;
 
-    if (function_exists('set_time_limit')) {
+    if (php_function_allowed('set_time_limit')) {
         @set_time_limit(280);
     }
 
     $middle_spt = new Tempcode();
 
     if (is_null($out_evaluated)) {
-        $out->evaluate(); // False evaluation
+        $out_evaluated = $out->evaluate(); // False evaluation
     }
 
     // FUDGE: Yuck. We have to after-the-fact make it wide, and empty lots of internal caching to reset the state.
@@ -257,6 +257,11 @@ function special_page_types($special_page_type, &$out, $out_evaluated)
 
     // Content translation mode
     if (substr($special_page_type, 0, 12) == 'lang_content') {
+        require_code('input_filter_2');
+        modsecurity_workaround_enable();
+
+        require_javascript('editing');
+
         $map_a = get_file_base() . '/lang/langs.ini';
         $map_b = get_custom_file_base() . '/lang_custom/langs.ini';
         if (!file_exists($map_b)) {
@@ -274,10 +279,10 @@ function special_page_types($special_page_type, &$out, $out_evaluated)
 
         require_lang('lang');
         require_code('form_templates');
+        $GLOBALS['NO_DEV_MODE_FULLSTOP_CHECK'] = true;
+        require_code('lang2');
 
         $fields = new Tempcode();
-
-        require_code('lang2');
 
         $names = find_lang_content_names(array_keys($RECORDED_LANG_STRINGS_CONTENT));
 
@@ -323,9 +328,15 @@ function special_page_types($special_page_type, &$out, $out_evaluated)
             'SUBMIT_ICON' => 'buttons__save',
             'SUBMIT_NAME' => do_lang_tempcode('SAVE'),
             'SUPPORT_AUTOSAVE' => true,
+            'MODSECURITY_WORKAROUND' => true,
         ));
     } // Language mode
     elseif (substr($special_page_type, 0, 4) == 'lang') {
+        require_code('input_filter_2');
+        modsecurity_workaround_enable();
+
+        require_javascript('editing');
+
         $map_a = get_file_base() . '/lang/langs.ini';
         $map_b = get_custom_file_base() . '/lang_custom/langs.ini';
         if (!file_exists($map_b)) {
@@ -339,12 +350,15 @@ function special_page_types($special_page_type, &$out, $out_evaluated)
             $lang_name = $map[$lang_name];
         }
 
-        global $RECORDED_LANG_STRINGS;
+        global $RECORDED_LANG_STRINGS, $LANGS_REQUESTED;
         require_lang('lang');
         require_code('form_templates');
+        require_code('lang2');
+        $GLOBALS['NO_DEV_MODE_FULLSTOP_CHECK'] = true;
         require_code('lang_compile');
         $fields = new Tempcode();
         $descriptions = get_lang_file_section(fallback_lang());
+        //ksort($RECORDED_LANG_STRINGS); Best to leave them in occurrence order
         foreach (array_keys($RECORDED_LANG_STRINGS) as $key) {
             $value_found = do_lang($key, null, null, null, null, false);
             $description = array_key_exists($key, $descriptions) ? make_string_tempcode($descriptions[$key]) : new Tempcode();
@@ -362,7 +376,20 @@ function special_page_types($special_page_type, &$out, $out_evaluated)
                     ));
                 }
                 $description->attach($actions);
-                $fields->attach(form_input_text($key, $description, 'l_' . $key, str_replace('\n', "\n", $value_found), false));
+
+                $key_extended = $key;
+                foreach (array_keys(get_lang_files(fallback_lang())) as $lang_file) {
+                    $tmp_path = get_file_base() . '/lang/' . fallback_lang() . '/' . $lang_file . '.ini';
+                    if (!is_file($tmp_path)) {
+                        $tmp_path = get_file_base() . '/lang_custom/' . fallback_lang() . '/' . $lang_file . '.ini';
+                    }
+                    if (is_file($tmp_path) && strpos(file_get_contents($tmp_path), "\n{$key}=") !== false) {
+                        $key_extended .= ' (' . $lang_file . ')';
+                        break;
+                    }
+                }
+
+                $fields->attach(form_input_text($key_extended, $description, 'l_' . $key, str_replace('\n', "\n", $value_found), false));
             }
         }
         $title = get_screen_title('__TRANSLATE_CODE', true, array(escape_html($lang_name)));
@@ -380,6 +407,7 @@ function special_page_types($special_page_type, &$out, $out_evaluated)
             'SUBMIT_ICON' => 'buttons__save',
             'SUBMIT_NAME' => do_lang_tempcode('SAVE'),
             'SUPPORT_AUTOSAVE' => true,
+            'MODSECURITY_WORKAROUND' => true,
         ));
     }
 
@@ -419,12 +447,12 @@ function special_page_types($special_page_type, &$out, $out_evaluated)
             global $CSSS, $JAVASCRIPTS;
             foreach (array_keys($CSSS) as $c) {
                 if (substr($c, 0, 8) != 'merged__') {
-                    $hidden->attach(form_input_hidden('f' . strval(mt_rand(0, 100000)) . 'file', 'css/' . $c . '.css'));
+                    $hidden->attach(form_input_hidden('f' . strval(mt_rand(0, mt_getrandmax())) . 'file', 'css/' . $c . '.css'));
                 }
             }
             foreach (array_keys($JAVASCRIPTS) as $c) {
                 if (substr($c, 0, 8) != 'merged__') {
-                    $hidden->attach(form_input_hidden('f' . strval(mt_rand(0, 100000)) . 'file', 'javascript/' . $c . '.js'));
+                    $hidden->attach(form_input_hidden('f' . strval(mt_rand(0, mt_getrandmax())) . 'file', 'javascript/' . $c . '.js'));
                 }
             }
 
@@ -545,7 +573,7 @@ function find_template_tree_nice($codename, $children, $fresh, $cache_started = 
             'EDIT_URL' => $edit_url,
             'CODENAME' => $codename,
             'GUID' => $guid,
-            'ID' => strval(mt_rand(0, 100000)),
+            'ID' => strval(mt_rand(0, mt_getrandmax())),
         ));
     }
     $out = $source->evaluate();
@@ -668,7 +696,7 @@ function display_webstandards_results($out, $error, $preview_mode = false, $ret 
     global $XHTML_SPIT_OUT;
     $XHTML_SPIT_OUT = true;
 
-    if (function_exists('set_time_limit')) {
+    if (php_function_allowed('set_time_limit')) {
         @set_time_limit(280);
     }
 
@@ -682,7 +710,7 @@ function display_webstandards_results($out, $error, $preview_mode = false, $ret 
     $i = 0;
 
     // Output header
-    if (count($_POST) == 0) {
+    if (!has_interesting_post_fields()) {
         if (get_param_integer('keep_markers', 0) == 1) {
             $messy_url = new Tempcode();
         } else {
@@ -815,7 +843,8 @@ function display_webstandards_results($out, $error, $preview_mode = false, $ret 
                 $escaped_code = do_template('WEBSTANDARDS_LINE_END');
                 $escaped_code->evaluate_echo();
             }
-            if (preg_match('#^\s*\n#', substr($out, $i + 1)) != 0) {
+            $matches = array();
+            if (preg_match('#\s*\n#A', $out, $matches, 0, $i + 1) != 0) {
                 // Do not show blank lines
                 ++$number;
                 continue;
@@ -878,7 +907,7 @@ function display_webstandards_results($out, $error, $preview_mode = false, $ret 
         if ((is_null($level_ranges)) && ($char == "\t")) {
             $char = '&nbsp;&nbsp;&nbsp;';
         }
-        //if ($char==' ') $char='&nbsp;';
+        //if ($char == ' ') $char = '&nbsp;';
         if (function_exists('ocp_mark_as_escaped')) {
             ocp_mark_as_escaped($char);
         }
@@ -948,16 +977,14 @@ function display_webstandards_results($out, $error, $preview_mode = false, $ret 
  */
 function attach_message_memory_usage(&$messages_bottom)
 {
-    if (function_exists('memory_get_usage')) {
-        if (function_exists('memory_get_peak_usage')) {
-            $memory_usage = memory_get_peak_usage();
-        } else {
-            $memory_usage = memory_get_usage();
-        }
-        $messages_bottom->attach(do_template('MESSAGE', array(
-            '_GUID' => 'd605c0d111742a8cd2d4ef270a1e5fe1',
-            'TYPE' => 'inform',
-            'MESSAGE' => do_lang_tempcode('MEMORY_USAGE', escape_html(float_format(floatval($memory_usage) / 1024.0 / 1024.0, 2))),
-        )));
+    if (function_exists('memory_get_peak_usage')) {
+        $memory_usage = memory_get_peak_usage();
+    } else {
+        $memory_usage = memory_get_usage();
     }
+    $messages_bottom->attach(do_template('MESSAGE', array(
+        '_GUID' => 'd605c0d111742a8cd2d4ef270a1e5fe1',
+        'TYPE' => 'inform',
+        'MESSAGE' => do_lang_tempcode('MEMORY_USAGE', escape_html(float_format(floatval($memory_usage) / 1024.0 / 1024.0, 2))),
+    )));
 }

@@ -123,7 +123,7 @@ EOD;
      *
      * @param array $dataRow Array containing data to be written.
      *          Example $dataRow = ['data1', 1234, null, '', 'data5'];
-     * @param array $metaData Array containing meta-data maps for individual cells, such as 'url'
+     * @param array $metaData Array containing metadata maps for individual cells, such as 'url'
      * @return void
      * @throws \Box\Spout\Common\Exception\IOException If the data cannot be written
      */
@@ -156,7 +156,7 @@ EOD;
             if ($cellValue === '' || $cellValue === null || $cellValue === false) {
                 $data .= '/>' . PHP_EOL;
             } else {
-                if (trim(ltrim($cellValue, '-'), '0123456789.') == '' /*similar to is_numeric without having PHPs regular quirkiness*/) {
+                if (preg_match('#^\-?\d+(\.\d+)?$#', $cellValue) != 0/*similar to is_numeric without having PHPs regular quirkiness*/) {
                     $data .= '><v>' . $cellValue . '</v></c>' . PHP_EOL;
                 } else {
                     if ($this->shouldUseInlineStrings) {

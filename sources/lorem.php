@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -67,7 +67,7 @@ function lorem_phrase()
  */
 function lorem_title()
 {
-    return get_screen_title('Lorem Ipsum Dolor');
+    return get_screen_title('Lorem Ipsum Dolor', false);
 }
 
 /**
@@ -256,8 +256,6 @@ function placeholder_form_with_field($field_name)
 
     require_code('form_templates');
     $hidden = form_input_hidden($field_name, '0');
-
-    //$field->attach(form_input_line_auto_load('test','test.','test','',false,'news'));
 
     $form = do_lorem_template('FORM', array('TABINDEX' => placeholder_number(), 'HIDDEN' => $hidden, 'TEXT' => $text, 'FIELDS' => placeholder_fields(), 'URL' => placeholder_url(), 'SUBMIT_ICON' => 'buttons__proceed', 'SUBMIT_NAME' => 'proceed'));
 
@@ -521,7 +519,9 @@ function placeholder_breadcrumbs()
  */
 function do_lorem_template($codename, $parameters = null, $lang = null, $light_error = false, $fallback = null, $suffix = '.tpl', $directory = 'templates')
 {
-    return do_template($codename, $parameters, $lang, $light_error, $fallback, $suffix, $directory);
+    global $THEME_BEING_TESTED;
+    $theme = isset($THEME_BEING_TESTED) ? $GLOBALS['FORUM_DRIVER']->get_theme() : $THEME_BEING_TESTED;
+    return do_template($codename, $parameters, $lang, $light_error, $fallback, $suffix, $directory, $theme);
 }
 
 /**
@@ -852,7 +852,7 @@ function render_screen_preview($template, $hook, $function)
     // Load all ini/js/css
     $files = $ob->get_file_list();
     foreach ($files as $file) {
-        if ((substr($file, -4) == '.ini') && (substr($file, 0, 8) == 'lang/EN/')) {
+        if ((substr($file, -4) == '.ini') && ((substr($file, 0, 8) == 'lang/EN/') || (substr($file, 0, 15) == 'lang_custom/EN/'))) {
             require_lang(basename($file, '.ini'));
         }
 
@@ -915,6 +915,7 @@ function get_text_templates()
         'templates/TRACKBACK_XML_WRAPPER.tpl',
         'templates/HANDLE_CONFLICT_RESOLUTION.tpl',
         'templates/TRACKBACK_XML.tpl',
+        'templates/PASSWORD_CHECK_JS.tpl',
         'templates/POLL_RSS_SUMMARY.tpl',
         'templates/FONT_SIZER.tpl',
         'templates/FORM_SCREEN_FIELD_DESCRIPTION.tpl',
@@ -946,8 +947,8 @@ function is_plain_text_template($temp_name)
 /**
  * Checks if the template is a full screen template
  *
- * @param  ?string $temp_name Name of the template (null: do not use as criteria, use other as criteria, which must iself be non-NULL)
- * @param  ?Tempcode $tempcode The instantiated template (null: do not use as criteria, use other as criteria, which must iself be non-NULL)
+ * @param  ?string $temp_name Name of the template (null: do not use as criteria, use other as criteria, which must iself be non-null)
+ * @param  ?Tempcode $tempcode The instantiated template (null: do not use as criteria, use other as criteria, which must iself be non-null)
  * @return boolean Whether it is
  */
 function is_full_screen_template($temp_name = null, $tempcode = null)

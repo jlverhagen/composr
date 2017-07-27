@@ -1,16 +1,22 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
 */
 
+/**
+ * @license    http://opensource.org/licenses/cpal_1.0 Common Public Attribution License
+ * @copyright  ocProducts Ltd
+ * @package    meta_toolkit
+ */
+
 i_solemnly_declare(I_UNDERSTAND_SQL_INJECTION | I_UNDERSTAND_XSS | I_UNDERSTAND_PATH_INJECTION);
 
 disable_php_memory_limit();
-if (function_exists('set_time_limit')) {
+if (php_function_allowed('set_time_limit')) {
     @set_time_limit(0);
 }
 $GLOBALS['NO_DB_SCOPE_CHECK'] = true;
@@ -19,7 +25,7 @@ require_code('tar');
 
 $filename = 'composr-' . get_site_name() . '.' . date('Y-m-d') . '.tar';
 
-header('Content-Disposition: attachment; filename="' . str_replace("\r", '', str_replace("\n", '', addslashes($filename))) . '"');
+header('Content-Disposition: attachment; filename="' . escape_header($filename, true) . '"');
 
 $tar = tar_open(null, 'wb');
 

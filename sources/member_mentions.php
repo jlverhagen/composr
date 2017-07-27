@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -41,6 +41,7 @@ function dispatch_member_mention_notifications($content_type, $content_id, $subm
     require_code('notifications');
     require_code('content');
     require_code('feedback');
+    require_lang('comcode');
 
     $mentions = array_unique($MEMBER_MENTIONS_IN_COMCODE);
     $MEMBER_MENTIONS_IN_COMCODE = array(); // Reset
@@ -68,7 +69,9 @@ function dispatch_member_mention_notifications($content_type, $content_id, $subm
         if ($content_type != '') {
             $cma_content_row = content_get_row($content_id, $info);
             if (!is_null($cma_content_row)) {
-                $rendered = preg_replace('#keep_session=\w*#', 'filtered=1', static_evaluate_tempcode($cma_ob->run($cma_content_row, '_SEARCH', true, true)));
+                push_no_keep_context();
+                $rendered = static_evaluate_tempcode($cma_ob->run($cma_content_row, '_SEARCH', true, true));
+                pop_no_keep_context();
             }
         }
 

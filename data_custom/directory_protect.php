@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -12,6 +12,9 @@
  * @copyright  ocProducts Ltd
  * @package    directory_protect
  */
+
+// Fixup SCRIPT_FILENAME potentially being missing
+$_SERVER['SCRIPT_FILENAME'] = __FILE__;
 
 // Find Composr base directory, and chdir into it
 global $FILE_BASE, $RELATIVE_PATH;
@@ -94,7 +97,7 @@ if (!$okay) {
 header('Content-Type: application/octet-stream' . '; authoritative=true;');
 require_code('mime_types');
 header('Content-Type: ' . get_mime_type(get_file_extension($filename), false) . '; authoritative=true;');
-header('Content-Disposition: inline; filename="' . str_replace("\r", '', str_replace("\n", '', addslashes($filename))) . '"');
+header('Content-Disposition: inline; filename="' . escape_header($filename, true) . '"');
 header('Accept-Ranges: bytes');
 
 // Caching
@@ -144,7 +147,7 @@ if (strlen($httprange) > 0) {
     }
 }
 header('Content-Length: ' . strval($new_length));
-if (function_exists('set_time_limit')) {
+if (php_function_allowed('set_time_limit')) {
     @set_time_limit(0);
 }
 error_reporting(0);
@@ -152,20 +155,20 @@ error_reporting(0);
 // Send actual data
 $myfile = fopen($_full, 'rb');
 fseek($myfile, $from);
-/*if ($size==$new_length)     Uses a lot of memory :S
-{
+if ($size == $new_length) {
+    cms_ob_end_clean();
     fpassthru($myfile);
-} else {*/
-$i = 0;
-flush(); // Works around weird PHP bug that sends data before headers, on some PHP versions
-while ($i < $new_length) {
-    $content = fread($myfile, min($new_length - $i, 1048576));
-    echo $content;
-    $len = strlen($content);
-    if ($len == 0) {
-        break;
+} else {
+    $i = 0;
+    flush(); // LEGACY Works around weird PHP bug that sends data before headers, on some PHP versions
+    while ($i < $new_length) {
+        $content = fread($myfile, min($new_length - $i, 1048576));
+        echo $content;
+        $len = strlen($content);
+        if ($len == 0) {
+            break;
+        }
+        $i += $len;
     }
-    $i += $len;
+    fclose($myfile);
 }
-fclose($myfile);
-//}

@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -10,7 +10,7 @@
 /**
  * @license    http://opensource.org/licenses/cpal_1.0 Common Public Attribution License
  * @copyright  ocProducts Ltd
- * @package    oc_gifts
+ * @package    giftr
  */
 
 /**
@@ -33,6 +33,10 @@ class Hook_pointstore_giftr
      */
     public function info()
     {
+        if (!$GLOBALS['SITE_DB']->table_exists('giftr')) {
+            return array();
+        }
+
         $class = str_replace('hook_pointstore_', '', strtolower(get_class($this)));
 
         $next_url = build_url(array('page' => '_SELF', 'type' => 'action', 'id' => $class), '_SELF');
@@ -110,9 +114,9 @@ class Hook_pointstore_giftr
 
         $fields->attach(form_input_username(do_lang_tempcode('TO_USERNAME'), do_lang_tempcode('MEMBER_TO_GIVE'), 'username', get_param_string('username', ''), true));
 
-        $fields->attach(form_input_text(do_lang_tempcode('GIFT_MESSAGE'), do_lang_tempcode('DESCRIPTION_GIFT_MESSAGE'), 'gift_message', '', true));
+        $fields->attach(form_input_text(do_lang_tempcode('MESSAGE'), do_lang_tempcode('DESCRIPTION_GIFT_MESSAGE'), 'gift_message', '', true));
 
-        $fields->attach(form_input_tick(do_lang_tempcode('ANONYMOUS'), do_lang_tempcode('DESCRIPTION_ANONYMOUS'), 'anonymous', false));
+        $fields->attach(form_input_tick(do_lang_tempcode('ANON'), do_lang_tempcode('DESCRIPTION_ANONYMOUS'), 'anonymous', false));
 
         $submit_name = do_lang_tempcode('SEND_GIFT');
         $text = paragraph(do_lang_tempcode('CHOOSE_MEMBER'));
@@ -147,7 +151,7 @@ class Hook_pointstore_giftr
             $member_row = $member_rows[0];
             $to_member_id = $member_row['id'];
 
-            $gift_rows = $GLOBALS['SITE_DB']->query_select('giftr', array('*'), array('id' => $gift_id));
+            $gift_rows = $GLOBALS['SITE_DB']->query_select('giftr', array('*'), array('id' => $gift_id), '', 1);
             if (array_key_exists(0, $gift_rows)) {
                 $gift_row = $gift_rows[0];
                 $gift_name = $gift_row['name'];
@@ -185,7 +189,7 @@ class Hook_pointstore_giftr
                 warn_exit(do_lang_tempcode('MISSING_RESOURCE'));
             }
         } else {
-            warn_exit(do_lang_tempcode('NO_MEMBER_SELECTED'));
+            warn_exit(do_lang_tempcode('_MEMBER_NO_EXIST', escape_html($username)));
         }
 
         // Show message / done

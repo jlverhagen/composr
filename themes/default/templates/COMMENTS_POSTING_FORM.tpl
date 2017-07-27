@@ -3,12 +3,17 @@
 		{+START,IF,{USE_CAPTCHA}}
 			<div class="comments_captcha">
 				<div class="box box___comments_posting_form__captcha"><div class="box_inner">
-					<p><label for="captcha">{!DESCRIPTION_CAPTCHA_2,<a target="_blank" title="{!AUDIO_VERSION} {!LINK_NEW_WINDOW}" href="{$FIND_SCRIPT*,captcha,1}?mode=audio{$KEEP*,0,1}">{!AUDIO_VERSION}</a>}</label></p>
+					{+START,IF,{$CONFIG_OPTION,audio_captcha}}
+						<p>{+START,IF,{$NOT,{$CONFIG_OPTION,js_captcha}}}<label for="captcha">{+END}{!DESCRIPTION_CAPTCHA_2,<a onclick="return play_self_audio_link(this);" title="{!AUDIO_VERSION}" href="{$FIND_SCRIPT*,captcha,1}?mode=audio&amp;cache_break={$RAND&*}{$KEEP*,0,1}">{!AUDIO_VERSION}</a>}{+START,IF,{$NOT,{$CONFIG_OPTION,js_captcha}}}</label>{+END}</p>
+					{+END}
+					{+START,IF,{$NOT,{$CONFIG_OPTION,audio_captcha}}}
+						<p>{+START,IF,{$NOT,{$CONFIG_OPTION,js_captcha}}}<label for="captcha">{+END}{!DESCRIPTION_CAPTCHA_3}{+START,IF,{$NOT,{$CONFIG_OPTION,js_captcha}}}</label>{+END}</p>
+					{+END}
 					{+START,IF,{$CONFIG_OPTION,css_captcha}}
-						<iframe{$?,{$BROWSER_MATCHES,ie}, frameBorder="0" scrolling="no"} id="captcha_frame" class="captcha_frame" title="{!CONTACT_STAFF_TO_JOIN_IF_IMPAIRED}" src="{$FIND_SCRIPT*,captcha}{$KEEP*,1,1}">{!CONTACT_STAFF_TO_JOIN_IF_IMPAIRED}</iframe>
+						<iframe{$?,{$BROWSER_MATCHES,ie}, frameBorder="0" scrolling="no"} id="captcha_frame" class="captcha_frame" title="{!CONTACT_STAFF_TO_JOIN_IF_IMPAIRED}" src="{$FIND_SCRIPT*,captcha}?cache_break={$RAND&*}{$KEEP*,0,1}">{!CONTACT_STAFF_TO_JOIN_IF_IMPAIRED}</iframe>
 					{+END}
 					{+START,IF,{$NOT,{$CONFIG_OPTION,css_captcha}}}
-						<img id="captcha_image" title="{!CONTACT_STAFF_TO_JOIN_IF_IMPAIRED}" alt="{!CONTACT_STAFF_TO_JOIN_IF_IMPAIRED}" src="{$FIND_SCRIPT*,captcha}{$KEEP*,1,1}" />
+						<img id="captcha_image" title="{!CONTACT_STAFF_TO_JOIN_IF_IMPAIRED}" alt="{!CONTACT_STAFF_TO_JOIN_IF_IMPAIRED}" src="{$FIND_SCRIPT*,captcha}?cache_break={$RAND&*}{$KEEP*,0,1}" />
 					{+END}
 					<input maxlength="6" size="8" class="input_text_required" value="" type="text" id="captcha" name="captcha" />
 				</div></div>
@@ -18,7 +23,7 @@
 {+END}
 
 {+START,IF_NON_EMPTY,{COMMENT_URL}}
-<form role="form" title="{TITLE*}" class="comments_form" id="comments_form" onsubmit="return ({+START,IF_PASSED,MORE_URL}(this.getAttribute('action')=='{MORE_URL;*}') || {+END}(check_field_for_blankness(this.elements['post'],event)){+START,IF,{$AND,{GET_EMAIL},{$NOT,{EMAIL_OPTIONAL}}}} &amp;&amp; (check_field_for_blankness(this.elements['email'],event)){+END});" action="{COMMENT_URL*}{+START,IF_NON_EMPTY,{$GET,current_anchor}}#{$GET,current_anchor}{+END}{+START,IF_EMPTY,{$GET,current_anchor}}{+START,IF_PASSED_AND_TRUE,COMMENTS}#last_comment{+END}{+END}" method="post" enctype="multipart/form-data">
+<form role="form" title="{TITLE*}" class="comments_form" id="comments_form" onsubmit="return ({+START,IF_PASSED,MORE_URL}(this.getAttribute('action')=='{MORE_URL;*}') || {+END}(check_field_for_blankness(this.elements['post'],event)){+START,IF,{$AND,{GET_EMAIL},{$NOT,{EMAIL_OPTIONAL}}}} &amp;&amp; (check_field_for_blankness(this.elements['email'],event)){+END});" action="{COMMENT_URL*}{+START,IF_NON_EMPTY,{$GET,current_anchor}}#{$GET,current_anchor}{+END}{+START,IF_EMPTY,{$GET,current_anchor}}{+START,IF_PASSED_AND_TRUE,COMMENTS}#last_comment{+END}{+END}" method="post" enctype="multipart/form-data" autocomplete="off">
 	{$INSERT_SPAMMER_BLACKHOLE}
 	<input type="hidden" name="_comment_form_post" value="1" />
 {+END}
@@ -117,7 +122,7 @@
 
 									<td>
 										{+START,IF,{$JS_ON}}
-											<img id="review_bar_1__{TYPE|*}__{REVIEW_TITLE|*}__{ID|*}" alt="" src="{$IMG*,icons/14x14/rating}" srcset="{$IMG*,icons/28x28/rating} 2x" /><img id="review_bar_2__{TYPE*}__{REVIEW_TITLE|*}__{ID*}" alt="" src="{$IMG*,icons/14x14/rating}" srcset="{$IMG*,icons/28x28/rating} 2x" /><img id="review_bar_3__{TYPE*}__{REVIEW_TITLE|*}__{ID*}" alt="" src="{$IMG*,icons/14x14/rating}" srcset="{$IMG*,icons/28x28/rating} 2x" /><img id="review_bar_4__{TYPE*}__{REVIEW_TITLE|*}__{ID*}" alt="" src="{$IMG*,icons/14x14/rating}" srcset="{$IMG*,icons/28x28/rating} 2x" /><img id="review_bar_5__{TYPE*}__{REVIEW_TITLE|*}__{ID*}" alt="" src="{$IMG*,icons/14x14/rating}" srcset="{$IMG*,icons/28x28/rating} 2x" />
+											<img id="review_bar_1__{TYPE|*}__{REVIEW_TITLE|*}__{ID|*}" alt="" src="{$IMG*,icons/14x14/rating}" srcset="{$IMG*,icons/28x28/rating} 2x" /><img id="review_bar_2__{TYPE*}__{REVIEW_TITLE|*}__{ID|*}" alt="" src="{$IMG*,icons/14x14/rating}" srcset="{$IMG*,icons/28x28/rating} 2x" /><img id="review_bar_3__{TYPE*}__{REVIEW_TITLE|*}__{ID|*}" alt="" src="{$IMG*,icons/14x14/rating}" srcset="{$IMG*,icons/28x28/rating} 2x" /><img id="review_bar_4__{TYPE*}__{REVIEW_TITLE|*}__{ID|*}" alt="" src="{$IMG*,icons/14x14/rating}" srcset="{$IMG*,icons/28x28/rating} 2x" /><img id="review_bar_5__{TYPE*}__{REVIEW_TITLE|*}__{ID|*}" alt="" src="{$IMG*,icons/14x14/rating}" srcset="{$IMG*,icons/28x28/rating} 2x" />
 											<script>// <![CDATA[
 												function new_review_highlight__{TYPE%}__{REVIEW_TITLE|}__{ID|}(review,first_time)
 												{
@@ -212,7 +217,7 @@
 
 							<td>
 								<div class="constrain_field">
-									<textarea{+START,IF,{$NOT,{$MOBILE}}} onkeyup="manage_scroll_height(this);"{+END} accesskey="x" class="wide_field" onfocus="if ((this.value.replace(/\s/g,'')=='{POST_WARNING;^*}'.replace(/\s/g,'') &amp;&amp; '{POST_WARNING;^*}'!='') || (typeof this.strip_on_focus!='undefined' &amp;&amp; this.value==this.strip_on_focus)) this.value=''; this.style.color='black';" cols="42" rows="{$?,{$IS_NON_EMPTY,{$GET,COMMENT_POSTING_ROWS}},{$GET,COMMENT_POSTING_ROWS},11}" name="post" id="post">{POST_WARNING*}{+START,IF_PASSED,DEFAULT_TEXT}{DEFAULT_TEXT*}{+END}</textarea>
+									<textarea{+START,IF,{$NOT,{$MOBILE}}} onkeyup="manage_scroll_height(this);"{+END} accesskey="x" class="wide_field" onfocus="if ((this.value.replace(/\s/g,'')=='{POST_WARNING;^*}'.replace(/\s/g,'') &amp;&amp; '{POST_WARNING;^*}'!='') || (typeof this.strip_on_focus!='undefined' &amp;&amp; this.value==this.strip_on_focus)) this.value=''; this.className='field_input_filled';" cols="42" rows="{$?,{$IS_NON_EMPTY,{$GET,COMMENT_POSTING_ROWS}},{$GET,COMMENT_POSTING_ROWS},11}" name="post" id="post">{POST_WARNING*}{+START,IF_PASSED,DEFAULT_TEXT}{DEFAULT_TEXT*}{+END}</textarea>
 								</div>
 
 								<div id="error_post" style="display: none" class="input_error_here"></div>
@@ -222,13 +227,25 @@
 										{+START,IF_PASSED,ATTACH_SIZE_FIELD}
 											{ATTACH_SIZE_FIELD}
 										{+END}
-										<input type="hidden" name="posting_ref_id" value="{$RAND,1,2147483646}" />
+										<input type="hidden" name="posting_ref_id" value="{$RAND%}" />
 										{ATTACHMENTS}
 									</div>
 								{+END}
 
 								{+START,IF,{$MOBILE}}
-									{$GET,CAPTCHA}
+									{+START,IF,{$CONFIG_OPTION,js_captcha}}
+										<noscript>{!JAVASCRIPT_REQUIRED}</noscript>
+
+										{+START,IF_NON_EMPTY,{$TRIM,{$GET,CAPTCHA}}}
+											<div id="captcha_spot"></div>
+											<script>// <![CDATA[
+												set_inner_html(document.getElementById('captcha_spot'),'{$GET;^/,CAPTCHA}');
+											//]]></script>
+										{+END}
+									{+END}
+									{+START,IF,{$NOT,{$CONFIG_OPTION,js_captcha}}}
+										{$GET,CAPTCHA}
+									{+END}
 								{+END}
 							</td>
 						</tr>
@@ -239,7 +256,19 @@
 
 				<div class="comments_posting_form_end">
 					{+START,IF,{$NOT,{$MOBILE}}}
-						{$GET,CAPTCHA}
+						{+START,IF,{$CONFIG_OPTION,js_captcha}}
+							<noscript>{!JAVASCRIPT_REQUIRED}</noscript>
+
+							{+START,IF_NON_EMPTY,{$TRIM,{$GET,CAPTCHA}}}
+								<div id="captcha_spot"></div>
+								<script>// <![CDATA[
+									set_inner_html(document.getElementById('captcha_spot'),'{$GET;^/,CAPTCHA}');
+								//]]></script>
+							{+END}
+						{+END}
+						{+START,IF,{$NOT,{$CONFIG_OPTION,js_captcha}}}
+							{$GET,CAPTCHA}
+						{+END}
 					{+END}
 
 					<div class="proceed_button buttons_group">
@@ -255,8 +284,10 @@
 							{+END}
 						{+END}
 
-						{+START,IF,{$BROWSER_MATCHES,simplified_attachments_ui}}
-							<input tabindex="7" id="attachment_upload_button" class="buttons__thumbnail {$?,{$IS_EMPTY,{COMMENT_URL}},button_screen,button_screen_item}" type="button" value="{!comcode:ADD_IMAGES}" />
+						{+START,IF_PASSED,ATTACHMENTS}
+							{+START,IF,{$BROWSER_MATCHES,simplified_attachments_ui}}
+								<input tabindex="7" id="attachment_upload_button" class="for_field_post buttons__thumbnail {$?,{$IS_EMPTY,{COMMENT_URL}},button_screen,button_screen_item}" type="button" value="{!comcode:ADD_IMAGES}" />
+							{+END}
 						{+END}
 
 						{+START,SET,button_title}{+START,IF_PASSED,SUBMIT_NAME}{SUBMIT_NAME*}{+END}{+START,IF_NON_PASSED,SUBMIT_NAME}{+START,IF_NON_EMPTY,{TITLE}}{TITLE*}{+END}{+START,IF_EMPTY,{TITLE}}{!SEND}{+END}{+END}{+END}

@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -12,6 +12,9 @@
  * @copyright  ocProducts Ltd
  * @package    composr_homesite
  */
+
+// Fixup SCRIPT_FILENAME potentially being missing
+$_SERVER['SCRIPT_FILENAME'] = __FILE__;
 
 // Find Composr base directory, and chdir into it
 global $FILE_BASE, $RELATIVE_PATH;
@@ -57,7 +60,7 @@ $password_given = post_param_string('password', null);
 if ($password_given === null) {
     call_user_func_array('server__public__' . get_param_string('call'), $parameters);
 } else {
-    require_code('global4');
+    require_code('crypt_master');
     if (!check_master_password($password_given)) {
         exit('Access Denied');
     }

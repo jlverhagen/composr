@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -40,7 +40,7 @@ function cns_edit_post_template($id, $title, $text, $forum_multi_code, $use_defa
 
     if ((addon_installed('commandr')) && (!running_script('install'))) {
         require_code('resource_fs');
-        generate_resourcefs_moniker('post_template', strval($id));
+        generate_resource_fs_moniker('post_template', strval($id));
     }
 }
 
@@ -57,7 +57,7 @@ function cns_delete_post_template($id)
 
     if ((addon_installed('commandr')) && (!running_script('install'))) {
         require_code('resource_fs');
-        expunge_resourcefs_moniker('post_template', strval($id));
+        expunge_resource_fs_moniker('post_template', strval($id));
     }
 }
 
@@ -116,6 +116,7 @@ function cns_edit_emoticon($old_code, $code, $theme_img_code, $relevance_level, 
     if ($code != $old_code) {
         $test = $GLOBALS['FORUM_DB']->query_select_value_if_there('f_emoticons', 'e_code', array('e_code' => $code));
         if (!is_null($test)) {
+            require_lang('cns');
             warn_exit(do_lang_tempcode('CONFLICTING_EMOTICON_CODE', escape_html($code)));
         }
     }
@@ -138,8 +139,10 @@ function cns_edit_emoticon($old_code, $code, $theme_img_code, $relevance_level, 
 
     if ((addon_installed('commandr')) && (!running_script('install'))) {
         require_code('resource_fs');
-        generate_resourcefs_moniker('emoticon', $code);
+        generate_resource_fs_moniker('emoticon', $code);
     }
+
+    decache('_emoticon_chooser');
 
     log_it('EDIT_EMOTICON', $code, $theme_img_code);
 }
@@ -163,8 +166,10 @@ function cns_delete_emoticon($code)
 
     if ((addon_installed('commandr')) && (!running_script('install'))) {
         require_code('resource_fs');
-        expunge_resourcefs_moniker('emoticon', $code);
+        expunge_resource_fs_moniker('emoticon', $code);
     }
+
+    decache('_emoticon_chooser');
 
     log_it('DELETE_EMOTICON', $code);
 }
@@ -202,7 +207,7 @@ function cns_edit_welcome_email($id, $name, $subject, $text, $send_time, $newsle
 
     if ((addon_installed('commandr')) && (!running_script('install'))) {
         require_code('resource_fs');
-        generate_resourcefs_moniker('welcome_email', strval($id));
+        generate_resource_fs_moniker('welcome_email', strval($id));
     }
 
     log_it('EDIT_WELCOME_EMAIL', strval($id), get_translated_text($_subject));
@@ -227,7 +232,7 @@ function cns_delete_welcome_email($id)
 
     if ((addon_installed('commandr')) && (!running_script('install'))) {
         require_code('resource_fs');
-        expunge_resourcefs_moniker('welcome_email', strval($id));
+        expunge_resource_fs_moniker('welcome_email', strval($id));
     }
 
     log_it('DELETE_WELCOME_EMAIL', strval($id), get_translated_text($_subject));
@@ -263,6 +268,7 @@ function cns_get_forum_multi_code_field($forum_multi_code)
  * @param  LONG_TEXT $reason The reason for the moderation (may be blank).
  * @param  ?MEMBER $by The member performing the moderation (null: current member).
  * @param  ?TIME $date_and_time The time of the moderation (null: just now).
+ * @return AUTO_LINK The log ID.
  */
 function cns_mod_log_it($the_type, $param_a = '', $param_b = '', $reason = '', $by = null, $date_and_time = null)
 {
@@ -273,12 +279,16 @@ function cns_mod_log_it($the_type, $param_a = '', $param_b = '', $reason = '', $
         $by = get_member();
     }
 
-    $GLOBALS['FORUM_DB']->query_insert('f_moderator_logs', array(
+    // Tidy up auto-save
+    require_code('autosave');
+    clear_cms_autosave();
+
+    return $GLOBALS['FORUM_DB']->query_insert('f_moderator_logs', array(
         'l_the_type' => $the_type,
         'l_param_a' => $param_a,
         'l_param_b' => $param_b,
         'l_date_and_time' => $date_and_time,
         'l_reason' => $reason,
         'l_by' => $by
-    ));
+    ), true);
 }

@@ -1,6 +1,6 @@
 <div aria-busy="true" class="spaced" id="loading_space">
 	<div class="ajax_loading vertical_alignment">
-		<img id="loading_image" src="{$IMG*,loading}" title="{!LOADING}" alt="{!LOADING}" />
+		<img src="{$IMG*,loading}" title="{!LOADING}" alt="{!LOADING}" />
 		<span>{!LOADING}</span>
 	</div>
 </div>
@@ -83,8 +83,11 @@
 				var _comcode=comcode;
 				if (typeof rep_from!='undefined')
 				{
-					_comcode_semihtml=_comcode_semihtml.replace(rep_from,rep_to);
-					_comcode=_comcode.replace(rep_from,rep_to);
+					for (var i=0;i<rep_from.length;i++)
+					{
+						_comcode_semihtml=_comcode_semihtml.replace(rep_from[i],rep_to[i]);
+						_comcode=_comcode.replace(rep_from[i],rep_to[i]);
+					}
 				}
 
 				if (typeof ret!='undefined' && ret)
@@ -124,6 +127,7 @@
 		{+START,IF,{$PREG_MATCH,^new_\d+$,{TAG_CONTENTS}}}
 			var field='file{$SUBSTR;/,{TAG_CONTENTS},4}';
 			var upload_element=target_window.document.getElementById(field);
+			if (!upload_element) upload_element=target_window.document.getElementById('hidFileID_'+field);
 			if ((typeof upload_element.plupload_object!='undefined') && (is_wysiwyg))
 			{
 				var ob=upload_element.plupload_object;

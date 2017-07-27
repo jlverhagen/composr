@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -43,7 +43,7 @@ function syndicate_described_activity($a_language_string_code = '', $a_label_1 =
     foreach (array_keys($hooks) as $hook) { // We only expect one actually
         require_code('hooks/systems/activities/' . $hook);
         $ob = object_factory('Hook_activities_' . $hook);
-        if (get_param_integer('keep_debug_notifications', 0) == 1) {
+        if ((get_param_integer('keep_debug_notifications', 0) == 1) || (get_value('avoid_register_shutdown_function') === '1')) {
             $ob->syndicate_described_activity($a_language_string_code, $a_label_1, $a_label_2, $a_label_3, $a_page_link_1, $a_page_link_2, $a_page_link_3, $a_addon, $a_is_public, $a_member_id, $sitewide_too, $a_also_involving);
         } else {
             register_shutdown_function(array($ob, 'syndicate_described_activity'), $a_language_string_code, $a_label_1, $a_label_2, $a_label_3, $a_page_link_1, $a_page_link_2, $a_page_link_3, $a_addon, $a_is_public, $a_member_id, $sitewide_too, $a_also_involving);
@@ -71,16 +71,17 @@ function has_external_site_wide_syndication()
 /**
  * Get syndication field UI.
  *
+ * @param  string $content_type The content type this is for
  * @return Tempcode Syndication fields (or empty)
  */
-function get_syndication_option_fields()
+function get_syndication_option_fields($content_type)
 {
     $hooks = find_all_hooks('systems', 'activities');
     $ret = new Tempcode();
     foreach (array_keys($hooks) as $hook) { // We only expect one actually
         require_code('hooks/systems/activities/' . $hook);
         $ob = object_factory('Hook_activities_' . $hook);
-        $ret->attach($ob->get_syndication_option_fields());
+        $ret->attach($ob->get_syndication_option_fields($content_type));
     }
     return $ret;
 }

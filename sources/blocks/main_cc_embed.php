@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -49,7 +49,7 @@ class Block_main_cc_embed
     public function caching_environment()
     {
         $info = array();
-        $info['cache_on'] = '(preg_match(\'#<\w+>#\',(array_key_exists(\'filter\',$map)?$map[\'filter\']:\'\'))!=0)?null:array(array_key_exists(\'as_guest\',$map)?($map[\'as_guest\']==\'1\'):false,get_param_integer($block_id.\'_max\',array_key_exists(\'max\',$map)?intval($map[\'max\']):30),get_param_integer($block_id.\'_start\',array_key_exists(\'start\',$map)?intval($map[\'start\']):0),((array_key_exists(\'pagination\',$map)?$map[\'pagination\']:\'0\')==\'1\'),((array_key_exists(\'root\',$map)) && ($map[\'root\']!=\'\'))?intval($map[\'root\']):NULL,((array_key_exists(\'sorting\',$map)?$map[\'sorting\']:\'0\')==\'1\'),array_key_exists(\'select\',$map)?$map[\'select\']:\'\',get_param_string($block_id.\'_order\',array_key_exists(\'sort\',$map)?$map[\'sort\']:\'\'),array_key_exists(\'display_type\',$map)?$map[\'display_type\']:NULL,array_key_exists(\'template_set\',$map)?$map[\'template_set\']:\'\',array_key_exists(\'filter\',$map)?$map[\'filter\']:\'\',array_key_exists(\'param\',$map)?$map[\'param\']:db_get_first_id())';
+        $info['cache_on'] = '(preg_match(\'#<\w+>#\',(array_key_exists(\'filter\',$map)?$map[\'filter\']:\'\'))!=0)?null:array(array_key_exists(\'as_guest\',$map)?($map[\'as_guest\']==\'1\'):false,get_param_integer($block_id.\'_max\',array_key_exists(\'max\',$map)?intval($map[\'max\']):30),get_param_integer($block_id.\'_start\',array_key_exists(\'start\',$map)?intval($map[\'start\']):0),((array_key_exists(\'pagination\',$map)?$map[\'pagination\']:\'0\')==\'1\'),((array_key_exists(\'root\',$map)) && ($map[\'root\']!=\'\'))?intval($map[\'root\']):null,((array_key_exists(\'sorting\',$map)?$map[\'sorting\']:\'0\')==\'1\'),array_key_exists(\'select\',$map)?$map[\'select\']:\'\',get_param_string($block_id.\'_order\',array_key_exists(\'sort\',$map)?$map[\'sort\']:\'\'),array_key_exists(\'display_type\',$map)?$map[\'display_type\']:get_param_string(\'keep_cat_display_type\',\'\'),array_key_exists(\'template_set\',$map)?$map[\'template_set\']:\'\',array_key_exists(\'filter\',$map)?$map[\'filter\']:\'\',array_key_exists(\'param\',$map)?$map[\'param\']:db_get_first_id())';
         $info['special_cache_flags'] = CACHE_AGAINST_DEFAULT | CACHE_AGAINST_PERMISSIVE_GROUPS;
         if (addon_installed('content_privacy')) {
             $info['special_cache_flags'] |= CACHE_AGAINST_MEMBER;
@@ -128,13 +128,13 @@ class Block_main_cc_embed
                 }
             }
         } else {
-            $display_type = $catalogue['c_display_type'];
+            $display_type = get_param_integer('keep_cat_display_type', $catalogue['c_display_type']);
         }
 
         // Get entries
         $as_guest = array_key_exists('as_guest', $map) ? ($map['as_guest'] == '1') : false;
         $viewing_member_id = $as_guest ? $GLOBALS['FORUM_DRIVER']->get_guest_id() : mixed();
-        list($entry_buildup, $sorting, , $max_rows) = get_catalogue_category_entry_buildup(is_null($select) ? $category_id : null, $catalogue_name, $catalogue, 'CATEGORY', $tpl_set, $max, $start, $select, $root, $display_type, true, null, $filter, $sort, $block_id . '_order', $viewing_member_id);
+        list($entry_buildup, $sorting, , $max_rows) = render_catalogue_category_entry_buildup(is_null($select) ? $category_id : null, $catalogue_name, $catalogue, 'CATEGORY', $tpl_set, $max, $start, $select, $root, $display_type, true, null, $filter, $sort, $block_id . '_order', $viewing_member_id);
 
         // Sorting and pagination
         if (!$do_sorting) {
@@ -162,31 +162,25 @@ class Block_main_cc_embed
                 break;
         }
 
-        $cart_link = new Tempcode();
         $is_ecommerce = is_ecommerce_catalogue($catalogue_name, $catalogue);
         if ($is_ecommerce) {
             if (get_forum_type() != 'cns') {
-                warn_exit(do_lang_tempcode('NO_CNS'));
+                return paragraph(do_lang_tempcode('NO_CNS'), '', 'red_alert');
             }
-
-            require_code('shopping');
-            require_lang('shopping');
-
-            $cart_link = show_cart_link();
         }
+
+        $entry_buildup = apply_quick_caching($entry_buildup);
 
         // Render
         return do_template('CATALOGUE_' . $tpl_set . '_CATEGORY_EMBED', array(
             '_GUID' => 'dfdsfdsfsd3ffsdfsd',
-            'BLOCK_PARAMS' => block_params_arr_to_str($map),
+            'BLOCK_PARAMS' => block_params_arr_to_str(array('block_id' => $block_id) + $map),
             'DISPLAY_TYPE' => $display_type_str,
             'ROOT' => is_null($root) ? '' : strval($root),
             'CATALOGUE' => $catalogue_name,
             'ENTRIES' => $entry_buildup,
             'SORTING' => $sorting,
             'PAGINATION' => $pagination,
-
-            'CART_LINK' => $cart_link,
 
             'START' => strval($start),
             'MAX' => strval($max),

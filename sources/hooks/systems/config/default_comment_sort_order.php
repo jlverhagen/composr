@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -38,6 +38,7 @@ class Hook_config_default_comment_sort_order
             'explanation' => 'CONFIG_OPTION_default_comment_sort_order',
             'shared_hosting_restricted' => '0',
             'list_options' => 'newest|oldest|relevance',
+            'order_in_category_group' => 7,
 
             'addon' => 'core_feedback_features',
         );

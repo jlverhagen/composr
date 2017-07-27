@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -36,7 +36,6 @@ class Module_admin_sitemap
         $info['hacked_by'] = null;
         $info['hack_version'] = null;
         $info['version'] = 4;
-        $info['update_require_upgrade'] = 1;
         $info['locked'] = false;
         return $info;
     }
@@ -47,7 +46,7 @@ class Module_admin_sitemap
      * @param  boolean $check_perms Whether to check permissions.
      * @param  ?MEMBER $member_id The member to check permissions as (null: current user).
      * @param  boolean $support_crosslinks Whether to allow cross links to other modules (identifiable via a full-page-link rather than a screen-name).
-     * @param  boolean $be_deferential Whether to avoid any entry-point (or even return NULL to disable the page in the Sitemap) if we know another module, or page_group, is going to link to that entry-point. Note that "!" and "browse" entry points are automatically merged with container page nodes (likely called by page-groupings) as appropriate.
+     * @param  boolean $be_deferential Whether to avoid any entry-point (or even return null to disable the page in the Sitemap) if we know another module, or page_group, is going to link to that entry-point. Note that "!" and "browse" entry points are automatically merged with container page nodes (likely called by page-groupings) as appropriate.
      * @return ?array A map of entry points (screen-name=>language-code/string or screen-name=>[language-code/string, icon-theme-image]) (null: disabled).
      */
     public function get_entry_points($check_perms = true, $member_id = null, $support_crosslinks = true, $be_deferential = false)
@@ -68,7 +67,7 @@ class Module_admin_sitemap
     public $title;
 
     /**
-     * Module pre-run function. Allows us to know meta-data for <head> before we start streaming output.
+     * Module pre-run function. Allows us to know metadata for <head> before we start streaming output.
      *
      * @return ?Tempcode Tempcode indicating some kind of exceptional output (null: none).
      */
@@ -565,24 +564,32 @@ class Module_admin_sitemap
                     continue;
                 }
 
-                if (file_exists(zone_black_magic_filterer(get_custom_file_base() . '/' . filter_naughty($zone) . (($zone != '') ? '/' : '') . 'pages/' . filter_naughty($type) . '/' . $_page))) {
+                if (file_exists(zone_black_magic_filterer(get_custom_file_base() . '/' . filter_naughty($zone) . (($zone == '') ? '' : '/') . 'pages/' . filter_naughty($type) . '/' . $_page))) {
                     if ($afm_needed) {
-                        afm_move(zone_black_magic_filterer(filter_naughty($zone) . (($zone != '') ? '/' : '') . 'pages/' . filter_naughty($type) . '/' . $_page, true),
-                            zone_black_magic_filterer(filter_naughty($new_zone) . (($new_zone != '') ? '/' : '') . 'pages/' . filter_naughty($type) . '/' . $_page, true));
+                        afm_move(
+                            zone_black_magic_filterer(filter_naughty($zone) . (($zone == '') ? '' : '/') . 'pages/' . filter_naughty($type) . '/' . $_page, true),
+                            zone_black_magic_filterer(filter_naughty($new_zone) . (($new_zone != '') ? '/' : '') . 'pages/' . filter_naughty($type) . '/' . $_page, true)
+                        );
                     } else {
-                        rename(zone_black_magic_filterer(get_custom_file_base() . '/' . filter_naughty($zone) . (($zone != '') ? '/' : '') . 'pages/' . filter_naughty($type) . '/' . $_page),
-                            zone_black_magic_filterer(get_custom_file_base() . '/' . filter_naughty($new_zone) . (($new_zone != '') ? '/' : '') . 'pages/' . filter_naughty($type) . '/' . $_page));
+                        $old_path = zone_black_magic_filterer(get_custom_file_base() . '/' . filter_naughty($zone) . (($zone == '') ? '' : '/') . 'pages/' . filter_naughty($type) . '/' . $_page);
+                        $new_path = zone_black_magic_filterer(get_custom_file_base() . '/' . filter_naughty($new_zone) . (($new_zone != '') ? '/' : '') . 'pages/' . filter_naughty($type) . '/' . $_page);
+                        rename($old_path, $new_path);
+                        sync_file_move($old_path, $new_path);
                     }
                 }
 
                 // If a non-overridden one is there too, need to move that too
-                if ((strpos($type, '_custom') !== false) && (file_exists(zone_black_magic_filterer(get_custom_file_base() . '/' . filter_naughty($zone) . (($zone != '') ? '/' : '') . 'pages/' . filter_naughty(str_replace('_custom', '', $type)) . '/' . $_page))) && (!file_exists(zone_black_magic_filterer(get_custom_file_base() . '/' . filter_naughty($new_zone) . (($new_zone != '') ? '/' : '') . 'pages/' . filter_naughty(str_replace('_custom', '', $type)) . '/' . $_page)))) {
+                if ((strpos($type, '_custom') !== false) && (file_exists(zone_black_magic_filterer(get_custom_file_base() . '/' . filter_naughty($zone) . (($zone == '') ? '' : '/') . 'pages/' . filter_naughty(str_replace('_custom', '', $type)) . '/' . $_page))) && (!file_exists(zone_black_magic_filterer(get_custom_file_base() . '/' . filter_naughty($new_zone) . (($new_zone != '') ? '/' : '') . 'pages/' . filter_naughty(str_replace('_custom', '', $type)) . '/' . $_page)))) {
                     if ($afm_needed) {
-                        afm_move(zone_black_magic_filterer(filter_naughty($zone) . (($zone != '') ? '/' : '') . 'pages/' . filter_naughty(str_replace('_custom', '', $type)) . '/' . $_page, true),
-                            zone_black_magic_filterer(filter_naughty($new_zone) . (($new_zone != '') ? '/' : '') . 'pages/' . filter_naughty(str_replace('_custom', '', $type)) . '/' . $_page, true));
+                        afm_move(
+                            zone_black_magic_filterer(filter_naughty($zone) . (($zone == '') ? '' : '/') . 'pages/' . filter_naughty(str_replace('_custom', '', $type)) . '/' . $_page, true),
+                            zone_black_magic_filterer(filter_naughty($new_zone) . (($new_zone != '') ? '/' : '') . 'pages/' . filter_naughty(str_replace('_custom', '', $type)) . '/' . $_page, true)
+                        );
                     } else {
-                        rename(zone_black_magic_filterer(get_custom_file_base() . '/' . filter_naughty($zone) . (($zone != '') ? '/' : '') . 'pages/' . filter_naughty(str_replace('_custom', '', $type)) . '/' . $_page),
-                            zone_black_magic_filterer(get_custom_file_base() . '/' . filter_naughty($new_zone) . (($new_zone != '') ? '/' : '') . 'pages/' . filter_naughty(str_replace('_custom', '', $type)) . '/' . $_page));
+                        $old_path = zone_black_magic_filterer(get_custom_file_base() . '/' . filter_naughty($zone) . (($zone == '') ? '' : '/') . 'pages/' . filter_naughty(str_replace('_custom', '', $type)) . '/' . $_page);
+                        $new_path = zone_black_magic_filterer(get_custom_file_base() . '/' . filter_naughty($new_zone) . (($new_zone != '') ? '/' : '') . 'pages/' . filter_naughty(str_replace('_custom', '', $type)) . '/' . $_page);
+                        rename($old_path, $new_path);
+                        sync_file_move($old_path, $new_path);
                     }
                 }
 

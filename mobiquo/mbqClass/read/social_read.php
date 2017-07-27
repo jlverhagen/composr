@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -209,8 +209,8 @@ class CMSSocialRead
                     $content_id = preg_replace('#^.*:topicview:browse:(\d+)\#post_(\d+).*$#', '$2', $row['a_pagelink_1']);
                     break;
                 /*case 'ACTIVITY_LIKES':	No likes actually
-                    $content_type='like';
-                    $content_id=preg_replace('#:topicview:findpost:(\d+)#','$1',$row['a_pagelink_1']);
+                    $content_type = 'like';
+                    $content_id = preg_replace('#:topicview:findpost:(\d+)#', '$1', $row['a_pagelink_1']);
                     break;*/
             }
 

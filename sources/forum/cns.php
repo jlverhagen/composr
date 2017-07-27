@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -50,7 +50,7 @@ function init__forum__cns()
 class Forum_driver_cns extends Forum_driver_base
 {
     /**
-     * Initialise LDAP. To see if LDAP is running we check LDAP_CONNECTION for NULL. ldap_is_enabled is not good enough - we don't want Composr to bomb out under faulty LDAP settings, hence making it unfixable.
+     * Initialise LDAP. To see if LDAP is running we check LDAP_CONNECTION for null. ldap_is_enabled is not good enough - we don't want Composr to bomb out under faulty LDAP settings, hence making it unfixable.
      */
     public function forum_layer_initialise()
     {
@@ -62,7 +62,7 @@ class Forum_driver_cns extends Forum_driver_base
         $CNS_DRIVER = mixed();
         $GLOBALS['CNS_DRIVER'] = &$this; // Done like this to workaround that PHP can't put a reference in a global'd variable
 
-        if ((function_exists('ldap_connect')) && (get_option('ldap_is_enabled', true) == '1')) {
+        if ((addon_installed('ldap')) && (function_exists('ldap_connect')) && (get_option('ldap_is_enabled', true) == '1')) {
             require_code('cns_members');
             require_code('cns_groups');
             require_code('cns_ldap');
@@ -145,7 +145,7 @@ class Forum_driver_cns extends Forum_driver_base
      */
     protected function _install_delete_custom_field($name)
     {
-        $id = $this->connection->query_select_value_if_there('f_custom_fields', 'id', array($GLOBALS['SITE_DB']->translate_field_ref('cf_name') => 'cms_' . $name));
+        $id = $this->connection->query_select_value_if_there('f_custom_fields', 'id', array($this->connection->translate_field_ref('cf_name') => 'cms_' . $name));
         if (!is_null($id)) {
             require_code('cns_members_action2');
             cns_delete_custom_field($id);
@@ -235,7 +235,7 @@ class Forum_driver_cns extends Forum_driver_base
      * @param  ?SHORT_TEXT $no_notify_for__code_category DO NOT send notifications to: The category within the notification code (null: none / no restriction)
      * @param  ?TIME $time_post The post time (null: use current time)
      * @param  ?MEMBER $spacer_post_member_id Owner of comment topic (null: Guest)
-     * @return array Topic ID (may be NULL), and whether a hidden post has been made
+     * @return array Topic ID (may be null), and whether a hidden post has been made
      */
     public function make_post_forum_topic($forum_name, $topic_identifier, $member_id, $post_title, $post, $content_title, $topic_identifier_encapsulation_prefix, $content_url = null, $time = null, $ip = null, $validated = null, $topic_validated = 1, $skip_post_checks = false, $poster_name_if_guest = '', $parent_id = null, $staff_only = false, $no_notify_for__notification_code = null, $no_notify_for__code_category = null, $time_post = null, $spacer_post_member_id = null)
     {
@@ -419,10 +419,10 @@ class Forum_driver_cns extends Forum_driver_base
         require_code('cns_members_action');
         require_code('cns_members_action2');
 
-        $field_bits = $this->connection->query_select('f_custom_fields', array('id', 'cf_type'), array($GLOBALS['SITE_DB']->translate_field_ref('cf_name') => 'cms_' . $field));
+        $field_bits = $this->connection->query_select('f_custom_fields', array('id', 'cf_type'), array($this->connection->translate_field_ref('cf_name') => 'cms_' . $field));
         if (!array_key_exists(0, $field_bits)) { // Should never happen, but sometimes on upgrades/corruption...
             $this->install_create_custom_field($field, 10);
-            $field_bits = $this->connection->query_select('f_custom_fields', array('id', 'cf_type'), array($GLOBALS['SITE_DB']->translate_field_ref('cf_name') => 'cms_' . $field));
+            $field_bits = $this->connection->query_select('f_custom_fields', array('id', 'cf_type'), array($this->connection->translate_field_ref('cf_name') => 'cms_' . $field));
             if (!array_key_exists(0, $field_bits)) {
                 return; // Possible on an MSN, and there's an inconsistency (e.g. no points addon)
             }
@@ -592,7 +592,7 @@ class Forum_driver_cns extends Forum_driver_base
     protected function _join_url()
     {
         $page = '_SELF';
-        if (count($_POST) != 0) {
+        if (has_interesting_post_fields()) {
             $page = '';
         }
         $_redirect_url = build_url(array('page' => $page), '_SELF', array('keep_session' => 1, 'redirect' => 1), true);
@@ -600,7 +600,7 @@ class Forum_driver_cns extends Forum_driver_base
 
         $redirect_url = get_param_string('redirect_passon', get_param_string('redirect', $redirect_url));
 
-        $_url = build_url(array('page' => 'join', 'redirect' => (get_page_name() == 'recommend') ? null : $redirect_url), get_module_zone('join'));
+        $_url = build_url(array('page' => 'join', 'redirect' => (get_page_name() == 'recommend') ? null : $redirect_url), get_module_zone('join'), array('keep_session' => 1, 'redirect' => 1));
         $url = $_url->evaluate();
         if (get_option('forum_in_portal') == '0') {
             $url = str_replace(get_base_url(), get_forum_base_url(), $url);
@@ -675,7 +675,7 @@ class Forum_driver_cns extends Forum_driver_base
      * Get the forum ID from a forum name.
      *
      * @param  SHORT_TEXT $forum_name The forum name
-     * @return integer The forum ID
+     * @return ?integer The forum ID (null: not found)
      */
     public function forum_id_from_name($forum_name)
     {
@@ -703,9 +703,10 @@ class Forum_driver_cns extends Forum_driver_base
      *
      * @param  string $forum The forum name / ID
      * @param  SHORT_TEXT $topic_identifier The topic identifier
+     * @param  ?string $topic_identifier_encapsulation_prefix This is put together with the topic identifier to make a more-human-readable topic title or topic description (hopefully the latter and a $content_title title, but only if the forum supports descriptions). Set this to improve performance (null: unknown)
      * @return ?integer The topic ID (null: not found)
      */
-    public function find_topic_id_for_topic_identifier($forum, $topic_identifier)
+    public function find_topic_id_for_topic_identifier($forum, $topic_identifier, $topic_identifier_encapsulation_prefix = null)
     {
         $key = serialize(array($forum, $topic_identifier));
 
@@ -732,8 +733,16 @@ class Forum_driver_cns extends Forum_driver_base
             return null;
         }
 
-        $query = 'SELECT t.id,f_is_threaded FROM ' . $this->connection->get_table_prefix() . 'f_topics t JOIN ' . $this->connection->get_table_prefix() . 'f_forums f ON f.id=t.t_forum_id WHERE t_forum_id=' . strval($forum_id) . ' AND (' . db_string_equal_to('t_description', $topic_identifier) . ' OR t_description LIKE \'%: #' . db_encode_like($topic_identifier) . '\'';
-        $query .= ' OR t_cache_first_title LIKE \'% (#' . db_encode_like($topic_identifier) . ')\''; // LEGACY
+        $query = 'SELECT t.id,f_is_threaded FROM ' . $this->connection->get_table_prefix() . 'f_topics t JOIN ' . $this->connection->get_table_prefix() . 'f_forums f ON f.id=t.t_forum_id WHERE t_forum_id=' . strval($forum_id) . ' AND ';
+        $query .= '(';
+        if ($topic_identifier_encapsulation_prefix === null) {
+            $query .= db_string_equal_to('t_description', $topic_identifier);
+            $query .= ' OR t_description LIKE \'%: #' . db_encode_like($topic_identifier) . '\'';
+            $query .= ' OR t_cache_first_title LIKE \'% (#' . db_encode_like($topic_identifier) . ')\''; // LEGACY
+        } else {
+            $query .= db_string_equal_to('t_description', $topic_identifier);
+            $query .= ' OR ' . db_string_equal_to('t_description', $topic_identifier_encapsulation_prefix . ': #' . $topic_identifier);
+        }
         $query .= ')';
 
         $_result = $this->connection->query($query, 1, null, false, true);
@@ -811,49 +820,73 @@ class Forum_driver_cns extends Forum_driver_base
      */
     public function member_group_query($groups, $max = null, $start = 0)
     {
-        $_groups = '';
-        foreach ($groups as $group) {
-            if ($_groups != '') {
-                $_groups .= ' OR ';
-            }
-            $_groups .= 'gm_group_id=' . strval($group);
-        }
-        if ($_groups == '') {
-            return array();
-        }
-        $a = $this->connection->query('SELECT u.* FROM ' . $this->connection->get_table_prefix() . 'f_group_members g JOIN ' . $this->connection->get_table_prefix() . 'f_members u ON u.id=g.gm_member_id WHERE (' . $_groups . ') AND gm_validated=1 ORDER BY g.gm_group_id ASC', $max, $start, false, true);
-        $_groups = '';
-        foreach ($groups as $group) {
-            if ($_groups != '') {
-                $_groups .= ' OR ';
-            }
-            $_groups .= 'm_primary_group=' . strval($group);
-        }
-        $b = $this->connection->query('SELECT * FROM ' . $this->connection->get_table_prefix() . 'f_members WHERE ' . $_groups . ' ORDER BY m_primary_group ASC', $max, $start, false, true);
         $out = array();
-        foreach ($a as $x) {
-            if (!array_key_exists($x['id'], $out)) {
+
+        if (db_has_subqueries($this->connection->connection_read)) {
+            $_groups = '';
+            foreach ($groups as $group) {
+                if ($_groups != '') {
+                    $_groups .= ',';
+                }
+                $_groups .= strval($group);
+            }
+            if ($_groups == '') {
+                return array();
+            }
+            $sql = 'SELECT * FROM ' . $this->connection->get_table_prefix() . 'f_members m WHERE m_primary_group IN (' . $_groups . ') OR EXISTS(SELECT * FROM ' . $this->connection->get_table_prefix() . 'f_group_members WHERE gm_group_id IN (' . $_groups . ') AND gm_member_id=m.id AND gm_validated=1) ORDER BY m_primary_group ASC,id ASC';
+            $a = $this->connection->query($sql, $max, $start, false, true);
+            foreach ($a as $x) {
                 $out[$x['id']] = $x;
             }
-        }
-        foreach ($b as $x) {
-            if (!array_key_exists($x['id'], $out)) {
-                $out[$x['id']] = $x;
+        } else { // This can be removed in the future, when we reduce our ancient MySQL tolerance
+            $_groups = '';
+            foreach ($groups as $group) {
+                if ($_groups != '') {
+                    $_groups .= ' OR ';
+                }
+                $_groups .= 'gm_group_id=' . strval($group);
+            }
+            if ($_groups == '') {
+                return array();
+            }
+            $sql = 'SELECT u.* FROM ' . $this->connection->get_table_prefix() . 'f_group_members g JOIN ' . $this->connection->get_table_prefix() . 'f_members u ON u.id=g.gm_member_id WHERE (' . $_groups . ') AND gm_validated=1 ORDER BY g.gm_group_id ASC';
+            $a = $this->connection->query($sql, $max, $start, false, true);
+            foreach ($a as $x) {
+                if (!array_key_exists($x['id'], $out)) {
+                    $out[$x['id']] = $x;
+                }
+            }
+
+            $_groups = '';
+            foreach ($groups as $group) {
+                if ($_groups != '') {
+                    $_groups .= ' OR ';
+                }
+                $_groups .= 'm_primary_group=' . strval($group);
+            }
+            $sql = 'SELECT * FROM ' . $this->connection->get_table_prefix() . 'f_members WHERE ' . $_groups . ' ORDER BY m_primary_group ASC';
+            $b = $this->connection->query($sql, $max, $start, false, true);
+            foreach ($b as $x) {
+                if (!array_key_exists($x['id'], $out)) {
+                    $out[$x['id']] = $x;
+                }
             }
         }
 
         // Now implicit usergroup hooks
-        $hooks = find_all_hooks('systems', 'cns_implicit_usergroups');
-        foreach (array_keys($hooks) as $hook) {
-            require_code('hooks/systems/cns_implicit_usergroups/' . $hook);
-            $ob = object_factory('Hook_implicit_usergroups_' . $hook);
-            $group_ids = $ob->get_bound_group_ids();
-            foreach ($group_ids as $group_id) {
-                if (in_array($group_id, $groups)) {
-                    $c = $ob->get_member_list($group_id);
-                    if (!is_null($c)) {
-                        foreach ($c as $member_id => $x) {
-                            $out[$member_id] = $x;
+        if ($start == 0) {
+            $hooks = find_all_hooks('systems', 'cns_implicit_usergroups');
+            foreach (array_keys($hooks) as $hook) {
+                require_code('hooks/systems/cns_implicit_usergroups/' . $hook);
+                $ob = object_factory('Hook_implicit_usergroups_' . $hook);
+                $group_ids = $ob->get_bound_group_ids();
+                foreach ($group_ids as $group_id) {
+                    if (in_array($group_id, $groups)) {
+                        $c = $ob->get_member_list($group_id);
+                        if (!is_null($c)) {
+                            foreach ($c as $member_id => $x) {
+                                $out[$member_id] = $x;
+                            }
                         }
                     }
                 }
@@ -871,7 +904,12 @@ class Forum_driver_cns extends Forum_driver_base
      */
     public function get_previous_member($member)
     {
-        $tempid = $this->connection->query_value_if_there('SELECT id FROM ' . $this->connection->get_table_prefix() . 'f_members WHERE id<' . strval($member) . ' AND id>0 ORDER BY id DESC');
+        $sql = 'SELECT id FROM ' . $this->connection->get_table_prefix() . 'f_members WHERE id<' . strval($member) . ' AND id>0 AND ' . db_string_equal_to('m_validated_email_confirm_code', '');
+        if (addon_installed('unvalidated')) {
+            $sql .= ' AND m_validated=1';
+        }
+        $sql .= ' ORDER BY id DESC';
+        $tempid = $this->connection->query_value_if_there($sql);
         if ($tempid == $this->get_guest_id()) {
             return null;
         }
@@ -879,7 +917,7 @@ class Forum_driver_cns extends Forum_driver_base
     }
 
     /**
-     * Get the member ID of the next member after the given one, or NULL.
+     * Get the member ID of the next member after the given one, or null.
      * It cannot be assumed there are no gaps in member IDs, as members may be deleted.
      *
      * @param  MEMBER $member The member ID to increment
@@ -887,7 +925,12 @@ class Forum_driver_cns extends Forum_driver_base
      */
     public function get_next_member($member)
     {
-        $tempid = $this->connection->query_value_if_there('SELECT id FROM ' . $this->connection->get_table_prefix() . 'f_members WHERE id>' . strval($member) . ' ORDER BY id');
+        $sql = 'SELECT id FROM ' . $this->connection->get_table_prefix() . 'f_members WHERE id>' . strval($member) . ' AND ' . db_string_equal_to('m_validated_email_confirm_code', '');
+        if (addon_installed('unvalidated')) {
+            $sql .= ' AND m_validated=1';
+        }
+        $sql .= ' ORDER BY id';
+        $tempid = $this->connection->query_value_if_there($sql);
         return $tempid;
     }
 
@@ -911,7 +954,7 @@ class Forum_driver_cns extends Forum_driver_base
 
     /**
      * Get the name relating to the specified member ID.
-     * If this returns NULL, then the member has been deleted. Always take potential NULL output into account.
+     * If this returns null, then the member has been deleted. Always take potential null output into account.
      *
      * @param  MEMBER $member The member ID
      * @return ?SHORT_TEXT The member name (null: member deleted)
@@ -931,7 +974,7 @@ class Forum_driver_cns extends Forum_driver_base
      * @param  ID_TEXT $username The username
      * @return SHORT_TEXT The display name
      */
-    public function get_displayname($username)
+    protected function _get_displayname($username)
     {
         $generator = get_option('display_name_generator');
         if ($generator != '') {
@@ -945,19 +988,23 @@ class Forum_driver_cns extends Forum_driver_base
                 $username = $generator;
 
                 $matches = array();
-                $num_matches = preg_match_all('#\{(\d+)\}#', $generator, $matches);
+                $num_matches = preg_match_all('#\{(\!?)(\d+)\}#', $generator, $matches);
                 for ($i = 0; $i < $num_matches; $i++) {
-                    $field_key = 'field_' . $matches[1][$i];
+                    $field_key = 'field_' . $matches[2][$i];
                     if (isset($fields[$field_key])) {
                         $cpf_value = $fields[$field_key];
                         if (!is_string($cpf_value)) {
-                            $cpf_value = strval($cpf_value);
+                            if ($matches[1][$i] == '!') {
+                                $cpf_value = get_translated_text($cpf_value, $GLOBALS['FORUM_DB']);
+                            } else {
+                                $cpf_value = strval($cpf_value);
+                            }
                         }
                         $username = str_replace($matches[0][$i], $cpf_value, $username);
                     }
                 }
 
-                $username = preg_replace('# +#', ' ', trim($username)); // Strip and double (or triple, etc) blanks, and leading/trailing blanks
+                $username = preg_replace('# +#', ' ', trim($username)); // Strip any double (or triple, etc) blanks, and leading/trailing blanks
 
                 if ($username == '') {
                     $username = $username_bak;
@@ -1104,7 +1151,7 @@ class Forum_driver_cns extends Forum_driver_base
         if (!addon_installed('chat')) {
             $friends = false;
         }
-        if ($GLOBALS['SITE_DB']->connection_read != $GLOBALS['FORUM_DB']->connection_read) {
+        if (is_cns_satellite_site()) {
             $friends = false;
         }
         if (is_guest()) {
@@ -1211,7 +1258,11 @@ class Forum_driver_cns extends Forum_driver_base
         $value = intval(get_value_newer_than('cns_member_count', time() - 60 * 60 * 3));
 
         if ($value == 0) {
-            $value = $this->connection->query_select_value('f_members', 'COUNT(*)') - 1;
+            $where = array('m_validated_email_confirm_code' => '');
+            if (addon_installed('unvalidated')) {
+                $where['m_validated'] = 1;
+            }
+            $value = max(0, get_table_count_approx('f_members', $where, null, $this->connection) - 1);
             if (!$GLOBALS['SITE_DB']->table_is_locked('values')) {
                 set_value('cns_member_count', strval($value));
             }
@@ -1230,7 +1281,11 @@ class Forum_driver_cns extends Forum_driver_base
         $value = intval(get_value_newer_than('cns_topic_count', time() - 60 * 60 * 3));
 
         if ($value == 0) {
-            $value = $this->connection->query_select_value('f_topics', 'COUNT(*)');
+            $where = array();
+            if (addon_installed('unvalidated')) {
+                $where['t_validated'] = 1;
+            }
+            $value = get_table_count_approx('f_topics', $where, null, $this->connection);
             if (!$GLOBALS['SITE_DB']->table_is_locked('values')) {
                 set_value('cns_topic_count', strval($value));
             }
@@ -1249,7 +1304,12 @@ class Forum_driver_cns extends Forum_driver_base
         $value = intval(get_value_newer_than('cns_post_count', time() - 60 * 60 * 3));
 
         if ($value == 0) {
-            $value = $this->connection->query_select_value('f_posts', 'COUNT(*)');
+            $where = '';
+            if (addon_installed('unvalidated')) {
+                $where = ' AND p_validated=1';
+            }
+            $where = 'p_cache_forum_id IS NOT NULL' . $where;
+            $value = get_table_count_approx('f_posts', null, $where, $this->connection);
             if (!$GLOBALS['SITE_DB']->table_is_locked('values')) {
                 set_value('cns_post_count', strval($value));
             }
@@ -1306,7 +1366,7 @@ class Forum_driver_cns extends Forum_driver_base
                 return $id;
             }
         }
-        $row = $this->connection->query_select('f_members', array('*'), array('m_email_address' => $email_address), '', 1);
+        $row = $this->connection->query_select('f_members', array('*'), array('m_email_address' => $email_address), 'ORDER BY m_is_perm_banned,m_join_time DESC', 1);
         if (!array_key_exists(0, $row)) {
             return null;
         }
@@ -1325,7 +1385,11 @@ class Forum_driver_cns extends Forum_driver_base
         $ret = function_exists('persistent_cache_get') ? persistent_cache_get('SUPER_ADMIN_GROUPS') : null;
 
         if ($ret === null) {
-            $ret = collapse_1d_complexity('id', $this->connection->query_select('f_groups', array('id'), array('g_is_super_admin' => 1)));
+            $_ret = $this->connection->query_select('f_groups', array('id'), array('g_is_super_admin' => 1), '', null, null, running_script('install')/*may not be installed yet*/);
+            if ($_ret === null) {
+                return array();
+            }
+            $ret = collapse_1d_complexity('id', $_ret);
 
             if (function_exists('persistent_cache_set')) {
                 persistent_cache_set('SUPER_ADMIN_GROUPS', $ret);
@@ -1346,7 +1410,11 @@ class Forum_driver_cns extends Forum_driver_base
         $ret = function_exists('persistent_cache_get') ? persistent_cache_get('SUPER_MODERATOR_GROUPS') : null;
 
         if ($ret === null) {
-            $ret = collapse_1d_complexity('id', $this->connection->query_select('f_groups', array('id'), array('g_is_super_moderator' => 1)));
+        $_ret = $this->connection->query_select('f_groups', array('id'), array('g_is_super_moderator' => 1), '', null, null, running_script('install')/*may not be installed yet*/);
+            if ($_ret === null) {
+                return array();
+            }
+            $ret = collapse_1d_complexity('id', $_ret);
 
             if (function_exists('persistent_cache_set')) {
                 persistent_cache_set('SUPER_MODERATOR_GROUPS', $ret);
@@ -1376,7 +1444,7 @@ class Forum_driver_cns extends Forum_driver_base
         $where = $only_permissive ? ' WHERE g_is_private_club=0' : '';
 
         $select = 'g.id,g_name,g.g_hidden';
-        $sup = ' ORDER BY g_order,' . $GLOBALS['FORUM_DB']->translate_field_ref('g_name');
+        $sup = ' ORDER BY g_order,' . $this->connection->translate_field_ref('g_name');
         if (running_script('upgrader')) {
             $sup = '';
         }
@@ -1387,7 +1455,7 @@ class Forum_driver_cns extends Forum_driver_base
             $count = persistent_cache_get('GROUPS_COUNT' . ($only_permissive ? '_PO' : ''));
             if ($count === null) {
                 $groups_count_sql = 'SELECT COUNT(*) FROM ' . $this->connection->get_table_prefix() . 'f_groups g' . $where;
-                $count = $this->connection->query_value_if_there($groups_count_sql, false, true);
+                $count = $this->connection->query_value_if_there($groups_count_sql, running_script('install')/*maybe no table yet*/, true);
                 $cnt_cache[$where] = $count;
                 persistent_cache_set('GROUPS_COUNT' . ($only_permissive ? '_PO' : ''), $cnt_cache[$where]);
             } else {
@@ -1421,7 +1489,10 @@ class Forum_driver_cns extends Forum_driver_base
             if (isset($rows_cache[$where]) && !running_script('install')) {
                 $rows = $rows_cache[$where];
             } else {
-                $rows = $this->connection->query($query, null, null, false, true, array('g_name' => 'SHORT_TRANS'));
+                $rows = $this->connection->query($query, null, null, running_script('install')/*maybe no table yet*/, true, array('g_name' => 'SHORT_TRANS'));
+                if (!is_array($rows)) {
+                    $rows = array();
+                }
                 $rows_cache[$where] = $rows;
                 if (!$too_many) {
                     persistent_cache_set('GROUPS' . ($only_permissive ? '_PO' : ''), $rows);
@@ -1429,10 +1500,11 @@ class Forum_driver_cns extends Forum_driver_base
             }
         }
         $out = array();
+        $members_groups = function_exists('get_member') ? $GLOBALS['CNS_DRIVER']->get_members_groups(get_member()) : array();
         foreach ($rows as $row) {
             $name = get_translated_text($row['g_name'], $GLOBALS['FORUM_DB']);
 
-            if (($hide_hidden) && ($row['g_hidden'] == 1)) {
+            if (($hide_hidden) && ($row['g_hidden'] == 1) && (!in_array($row['id'], $members_groups))) {
                 if ($skip_hidden) {
                     continue;
                 }
@@ -1469,7 +1541,6 @@ class Forum_driver_cns extends Forum_driver_base
     {
         // User
         cms_setcookie(get_member_cookie(), strval($id));
-        $_COOKIE[get_member_cookie()] = strval($id);
 
         // Password
         $password_hashed_salted = $this->get_member_row_field($id, 'm_pass_hash_salted');
@@ -1478,7 +1549,6 @@ class Forum_driver_cns extends Forum_driver_base
             $password_hashed_salted = md5($password_hashed_salted); // can't do direct representation for this, would be a plain text cookie; so in forum_authorise_login we expect it to be md5'd and compare thusly (as per non-cookie call to that function)
         }
         cms_setcookie(get_pass_cookie(), $password_hashed_salted);
-        $_COOKIE[get_pass_cookie()] = $password_hashed_salted;
     }
 
     /**
@@ -1503,12 +1573,12 @@ class Forum_driver_cns extends Forum_driver_base
         if ((!cns_is_ldap_member($member_id)) && (!is_null($member_id))) {
             return md5($password);
         } else {
-            return $password; //cns_ldap_hash($member_id,$password); Can't do hash checks under all systems
+            return $password; //cns_ldap_hash($member_id, $password); Can't do hash checks under all systems
         }
     }
 
     /**
-     * Find if the given member ID and password is valid. If username is NULL, then the member ID is used instead.
+     * Find if the given member ID and password is valid. If username is null, then the member ID is used instead.
      * All authorisation, cookies, and form-logins, are passed through this function.
      * Some forums do cookie logins differently, so a Boolean is passed in to indicate whether it is a cookie login.
      *
@@ -1517,7 +1587,7 @@ class Forum_driver_cns extends Forum_driver_base
      * @param  SHORT_TEXT $password_hashed The md5-hashed password
      * @param  string $password_raw The raw password
      * @param  boolean $cookie_login Whether this is a cookie login, determines how the hashed password is treated for the value passed in
-     * @return array A map of 'id' and 'error'. If 'id' is NULL, an error occurred and 'error' is set
+     * @return array A map of 'id' and 'error'. If 'id' is null, an error occurred and 'error' is set
      */
     public function forum_authorise_login($username, $userid, $password_hashed, $password_raw, $cookie_login = false)
     {
@@ -1526,7 +1596,7 @@ class Forum_driver_cns extends Forum_driver_base
     }
 
     /**
-     * Handle flood control for members.
+     * Handle flood control for members, and update member last visiting times.
      *
      * @param  MEMBER $id The member ID that just got detected
      */
@@ -1543,7 +1613,7 @@ class Forum_driver_cns extends Forum_driver_base
         }
 
         // Set last visit time session cookie if it doesn't exist
-        if ((!isset($_COOKIE['last_visit'])) && ($GLOBALS['FORUM_DRIVER']->get_guest_id() != $id)) {
+        if ((!isset($_COOKIE['last_visit'])) && (!is_guest($id))) {
             require_code('users_active_actions');
             $lvt = $this->get_member_row_field($id, 'm_last_visit_time');
             if (function_exists('cms_setcookie')) {// May be trying to check in safe mode when doing above require_code, so recurse
@@ -1555,7 +1625,7 @@ class Forum_driver_cns extends Forum_driver_base
         }
 
         // Do some flood control
-        $submitting = ((count($_POST) > 0) && (get_param_string('type', null) !== 'edit') && (get_param_string('type', null) !== 'edit_category') && (!running_script('preview')));
+        $submitting = ((has_interesting_post_fields()) && (get_param_string('type', null) !== 'edit') && (get_param_string('type', null) !== 'edit_category') && (!running_script('preview')));
         if (get_value('no_flood_control') !== '1') {
             $restrict = $submitting ? 'flood_control_submit_secs' : 'flood_control_access_secs';
             $restrict_setting = $submitting ? 'm_last_submit_time' : 'm_last_visit_time';
@@ -1566,6 +1636,9 @@ class Forum_driver_cns extends Forum_driver_base
             }
             if ($restrict_answer < 0) {
                 $restrict_answer = 0;
+            }
+            if (($restrict_answer == 0) && (is_guest($id))) {
+                return;
             }
             $last = $this->get_member_row_field($id, $restrict_setting);
             if ($last > time()) {
@@ -1580,11 +1653,13 @@ class Forum_driver_cns extends Forum_driver_base
                 if ((!running_script('index')) && (!running_script('iframe'))) {
                     return; // Not when probably running some AJAX script
                 }
-                $captcha = post_param_string('captcha', '');
-                if ($captcha != '') { // Don't consider a CAPTCHA submitting, it'll drive people nuts to get flood control right after a CAPTCHA
-                    require_code('captcha');
-                    if (check_captcha($captcha, false)) {
-                        return;
+                if (addon_installed('captcha')) {
+                    $captcha = post_param_string('captcha', '');
+                    if ($captcha != '') { // Don't consider a CAPTCHA submitting, it'll drive people nuts to get flood control right after a CAPTCHA
+                        require_code('captcha');
+                        if (check_captcha($captcha, false)) {
+                            return;
+                        }
                     }
                 }
 
@@ -1598,6 +1673,7 @@ class Forum_driver_cns extends Forum_driver_base
                 if (($count >= $count_threshold) && (addon_installed('securitylogging'))) {
                     $ip = get_ip_address();
                     require_code('failure');
+                    require_code('failure_spammers');
                     add_ip_ban($ip, do_lang('SPAM_REPORT_SITE_FLOODING'));
                     require_code('notifications');
                     dispatch_notification('auto_ban', null, do_lang('AUTO_BAN_SUBJECT', $ip, null, null, get_site_default_lang()), do_notification_lang('AUTO_BAN_DOS_MESSAGE', $ip, integer_format($count_threshold), integer_format($time_threshold), get_site_default_lang()), null, A_FROM_SYSTEM_PRIVILEGED);
@@ -1611,6 +1687,7 @@ class Forum_driver_cns extends Forum_driver_base
                 }
                 require_lang('cns');
 
+                require_code('global3');
                 set_http_status_code('429');
 
                 warn_exit(do_lang_tempcode('FLOOD_CONTROL_RESTRICT', escape_html(integer_format($wait_time))));

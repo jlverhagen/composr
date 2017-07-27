@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -53,8 +53,6 @@ class Hook_task_import_rss
         $imported_news = array();
         $imported_pages = array();
 
-        $groups = $GLOBALS['FORUM_DRIVER']->get_usergroup_list(false, true);
-
         // Preload news categories
         $NEWS_CATS = $GLOBALS['SITE_DB']->query_select('news_categories', array('*'), array('nc_owner' => null));
         $NEWS_CATS = list_to_map('id', $NEWS_CATS);
@@ -93,7 +91,7 @@ class Hook_task_import_rss
             if ($post_time === false) {
                 $post_time = time(); // We've seen this situation in an error email, it's if the add date won't parse by PHP
             }
-            if (($post_time < 0) || ($post_time > 2147483647)) {
+            if (($post_time < 0) || ($post_time > 2147483647)) { // TODO: #3046 in tracker
                 $post_time = 2147483647;
             }
             $edit_time = array_key_exists('clean_edit_date', $item) ? $item['clean_edit_date'] : (array_key_exists('edit_date', $item) ? strtotime($item['edit_date']) : null);
@@ -101,7 +99,7 @@ class Hook_task_import_rss
                 $edit_time = null;
             }
             if (!is_null($edit_time)) {
-                if (($edit_time < 0) || ($edit_time > 2147483647)) {
+                if (($edit_time < 0) || ($edit_time > 2147483647)) { // TODO: #3046 in tracker
                     $edit_time = 2147483647;
                 }
             }
@@ -170,9 +168,8 @@ class Hook_task_import_rss
                     }
                     if (is_null($cat_id)) { // Could not find existing category, create new
                         $cat_id = add_news_category($cat, 'newscats/general', '', null);
-                        foreach (array_keys($groups) as $group_id) {
-                            $GLOBALS['SITE_DB']->query_insert('group_category_access', array('module_the_name' => 'news', 'category_name' => strval($cat_id), 'group_id' => $group_id));
-                        }
+                        require_code('permissions2');
+                        set_global_category_access('news', $cat_id);
                         // Need to reload now
                         $NEWS_CATS = $GLOBALS['SITE_DB']->query_select('news_categories', array('*'), array('nc_owner' => null));
                         $NEWS_CATS = list_to_map('id', $NEWS_CATS);
@@ -207,7 +204,9 @@ class Hook_task_import_rss
                             $rep_image = 'uploads/repimages/' . $uniqid . '_' . basename($rep_image);
                         }
                         $target_handle = fopen($target_path, 'wb') or intelligent_write_error($target_path);
+                        flock($target_handle, LOCK_EX);
                         http_download_file($item['rep_image'], null, false, false, 'Composr', null, null, null, null, null, $target_handle);
+                        flock($target_handle, LOCK_UN);
                         fclose($target_handle);
                         sync_file($target_path);
                         fix_permissions($target_path);
@@ -265,8 +264,8 @@ class Hook_task_import_rss
                 // Save articles as new comcode pages
                 $zone = 'site';
                 $lang = fallback_lang();
-                $file = preg_replace('#[^\w\-]#', '_', $post_name); // Filter non alphanumeric charactors
-                $fullpath = zone_black_magic_filterer(get_custom_file_base() . '/' . $zone . '/pages/comcode_custom/' . $lang . '/' . $file . '.txt');
+                $file = preg_replace('#[^' . URL_CONTENT_REGEXP . ']#', '_', $post_name); // Filter non alphanumeric charactors
+                $full_path = zone_black_magic_filterer(get_custom_file_base() . '/' . $zone . '/pages/comcode_custom/' . $lang . '/' . $file . '.txt');
 
                 // Content
                 $_content = "[title]" . comcode_escape($item['title']) . "[/title]\n\n";
@@ -297,19 +296,11 @@ class Hook_task_import_rss
                 ));
 
                 // Save to disk
-                if (!file_exists(dirname($fullpath))) {
-                    require_code('files2');
-                    make_missing_directory(dirname($fullpath));
+                require_code('files');
+                $success_status = cms_file_put_contents_safe($full_path, $_content, FILE_WRITE_FAILURE_SILENT | FILE_WRITE_FIX_PERMISSIONS | FILE_WRITE_SYNC_FILE);
+                if (!$success_status) {
+                    return array(null, do_lang_tempcode('COULD_NOT_SAVE_FILE', escape_html($full_path)));
                 }
-                $myfile = @fopen($fullpath, GOOGLE_APPENGINE ? 'wb' : 'wt');
-                if ($myfile === false) {
-                    intelligent_write_error($fullpath);
-                }
-                if (fwrite($myfile, $_content) < strlen($_content)) {
-                    return array(null, do_lang_tempcode('COULD_NOT_SAVE_FILE'));
-                }
-                fclose($myfile);
-                sync_file($fullpath);
 
                 // Meta
                 require_code('seo2');
@@ -331,7 +322,7 @@ class Hook_task_import_rss
                     'contents' => $_content,
                     'zone' => $zone,
                     'page' => $file,
-                    'path' => $fullpath,
+                    'path' => $full_path,
                     'parent_page' => $parent_page,
                     'id' => $page_id,
                 );
@@ -408,6 +399,7 @@ class Hook_task_import_rss
                             $submitter = $GLOBALS['FORUM_DRIVER']->get_guest_id(); // If comment is made by a non-member, assign comment to guest account
                         }
 
+                        require_code('feedback');
                         $forum = (is_null(find_overridden_comment_forum('news'))) ? get_option('comments_forum_name') : find_overridden_comment_forum('news');
 
                         $comment_parent_id = mixed();
@@ -468,11 +460,8 @@ class Hook_task_import_rss
             $zone = $item['zone'];
             $page = $item['page'];
             _news_import_grab_images_and_fix_links($download_images == 1, $contents, $imported_news);
-            $myfile = fopen($item['path'], 'wb');
-            fwrite($myfile, $contents);
-            fclose($myfile);
-            sync_file($item['path']);
-            fix_permissions($item['path']);
+            require_code('files');
+            cms_file_put_contents_safe($item['path'], $contents, FILE_WRITE_FIX_PERMISSIONS | FILE_WRITE_SYNC_FILE);
             if (!is_null($item['parent_page'])) {
                 $parent_page = mixed();
                 foreach ($imported_pages as $item2) {

@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -21,9 +21,10 @@ class Hook_addon_registry_community_billboard
     /**
      * Get a list of file permissions to set
      *
+     * @param  boolean $runtime Whether to include wildcards represented runtime-created chmoddable files
      * @return array File permissions to set
      */
-    public function get_chmod_array()
+    public function get_chmod_array($runtime = false)
     {
         return array();
     }
@@ -184,7 +185,7 @@ class Hook_addon_registry_community_billboard
         return array(
             lorem_globalise(
                 do_lorem_template('POINTSTORE_COMMUNITY_BILLBOARD_2', array(
-                        'TEXT_URL' => placeholder_url(),
+                        'COMMUNITY_BILLBOARD_URL' => placeholder_url(),
                     )
                 ), null, '', true),
         );
@@ -203,7 +204,7 @@ class Hook_addon_registry_community_billboard
             lorem_globalise(
                 do_lorem_template('POINTSTORE_COMMUNITY_BILLBOARD_SCREEN', array(
                         'TITLE' => lorem_title(),
-                        'TEXT_URL' => placeholder_url(),
+                        'COMMUNITY_BILLBOARD_URL' => placeholder_url(),
                         'QUEUE' => placeholder_number(),
                         'COST' => placeholder_number(),
                     )
@@ -243,11 +244,11 @@ class Hook_addon_registry_community_billboard
                 'TEXT' => $text->evaluate(),
             )));
         }
-
+        $name = placeholder_random_id();
         $input = do_lorem_template('FORM_SCREEN_INPUT_LIST', array(
             'TABINDEX' => '5',
             'REQUIRED' => '_required',
-            'NAME' => placeholder_random_id(),
+            'NAME' => $name,
             'CONTENT' => $out,
             'INLINE_LIST' => true,
             'SIZE' => '9',
@@ -256,7 +257,7 @@ class Hook_addon_registry_community_billboard
             'REQUIRED' => true,
             'SKIP_LABEL' => false,
             'PRETTY_NAME' => lorem_word(),
-            'NAME' => placeholder_random_id(),
+            'NAME' => $name,
             'DESCRIPTION' => lorem_sentence_html(),
             'DESCRIPTION_SIDE' => '',
             'INPUT' => $input,

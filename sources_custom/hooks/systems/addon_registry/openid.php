@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -21,9 +21,10 @@ class Hook_addon_registry_openid
     /**
      * Get a list of file permissions to set
      *
+     * @param  boolean $runtime Whether to include wildcards represented runtime-created chmoddable files
      * @return array File permissions to set
      */
-    public function get_chmod_array()
+    public function get_chmod_array($runtime = false)
     {
         return array();
     }
@@ -45,7 +46,7 @@ class Hook_addon_registry_openid
      */
     public function get_category()
     {
-        return 'Third Party Integration';
+        return 'Development';
     }
 
     /**
@@ -89,7 +90,9 @@ class Hook_addon_registry_openid
     {
         return 'OpenID login support to Composr, so you can log in with, for example, a Google account.
 
-This is based on the work of Martin Conte Mac Donell (OpenID-realselector) and Mewp (LightOpenID).';
+This is based on the work of Martin Conte Mac Donell (OpenID-realselector) and Mewp (LightOpenID).
+
+[b]This addon has now been moved to the Development category because it no longer seems to work properly, and major providers including Google and Facebook have dropped OpenID support[/b]. Ideally it will be rewritten as OpenID Connect, on top of a shared Composr oAuth framework.';
     }
 
     /**

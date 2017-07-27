@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -11,6 +11,8 @@
    **** If you ignore this advice, then your website upgrades (e.g. for bug fixes) will likely kill your changes ****
 
 */
+
+/*EXTRA FUNCTIONS: xml_.**/
 
 /**
  * @license    http://opensource.org/licenses/cpal_1.0 Common Public Attribution License
@@ -99,21 +101,21 @@ class CMS_RSS
                 }
             }
             // Weed out if isn't supported
-            if ((is_null($GLOBALS['HTTP_CHARSET'])) || (!in_array(strtoupper($GLOBALS['HTTP_CHARSET']), array('ISO-8859-1', 'US-ASCII', 'UTF-8')))) {
-                $GLOBALS['HTTP_CHARSET'] = 'UTF-8';
+            if ((is_null($GLOBALS['HTTP_CHARSET'])) || (!in_array(strtoupper($GLOBALS['HTTP_CHARSET']), array('ISO-8859-1', 'US-ASCII', 'utf-8')))) {
+                $GLOBALS['HTTP_CHARSET'] = 'utf-8';
             }
 
             // Our internal charset
             $parser_charset = get_charset();
-            if (!in_array(strtoupper($parser_charset), array('ISO-8859-1', 'US-ASCII', 'UTF-8'))) {
-                $parser_charset = 'UTF-8';
+            if (!in_array(strtoupper($parser_charset), array('ISO-8859-1', 'US-ASCII', 'utf-8'))) {
+                $parser_charset = 'utf-8';
             }
 
             // Create and setup our parser
             if (function_exists('libxml_disable_entity_loader')) {
                 libxml_disable_entity_loader();
             }
-            $xml_parser = function_exists('xml_parser_create_ns') ? @xml_parser_create_ns($GLOBALS['HTTP_CHARSET']) : @xml_parser_create($GLOBALS['HTTP_CHARSET']);
+            $xml_parser =  @xml_parser_create_ns($GLOBALS['HTTP_CHARSET']);
             if ($xml_parser === false) {
                 $this->error = do_lang_tempcode('XML_PARSING_NOT_SUPPORTED');
                 return; // PHP5 default build on windows comes with this function disabled, so we need to be able to escape on error
@@ -122,15 +124,14 @@ class CMS_RSS
             @xml_parser_set_option($xml_parser, XML_OPTION_TARGET_ENCODING, $parser_charset);
             xml_set_element_handler($xml_parser, 'startElement', 'endElement');
             xml_set_character_data_handler($xml_parser, 'startText');
-            //xml_set_external_entity_ref_handler($xml_parser,'extEntity');
-            if (function_exists('xml_set_start_namespace_decl_handler')) {
-                xml_set_start_namespace_decl_handler($xml_parser, 'startNamespace');
-            }
-            if (function_exists('xml_set_end_namespace_decl_handler')) {
-                xml_set_end_namespace_decl_handler($xml_parser, 'endNameSpace');
-            }
+            //xml_set_external_entity_ref_handler($xml_parser, 'extEntity');
+            xml_set_start_namespace_decl_handler($xml_parser, 'startNamespace');
+            xml_set_end_namespace_decl_handler($xml_parser, 'endNameSpace');
 
-            //$data=convert_to_internal_encoding($data);    xml_parser does it for us, and we can't disable it- so run with it instead of our own. Shame as it's inferior.
+            /*
+            require_code('character_sets');
+            $data = convert_to_internal_encoding($data);    xml_parser does it for us, and we can't disable it- so run with it instead of our own. Shame as it's inferior.
+            */
 
             if (strpos($data, '<!ENTITY') === false) {
                 $extra_data = "<" . "?xml version=\"1.0\" encoding=\"" . $GLOBALS['HTTP_CHARSET'] . "\" ?" . ">
@@ -143,7 +144,7 @@ class CMS_RSS
                 if (($extra_data != '') && (strpos($data, $extra_data) === false)) {
                     $data = $extra_data . $data;
                 }
-                if ((strtoupper($GLOBALS['HTTP_CHARSET']) == 'ISO-8859-1') || (strtoupper($GLOBALS['HTTP_CHARSET']) == 'UTF-8')) { // Hack to fix bad use of entities (we can't encode them all above)
+                if ((strtoupper($GLOBALS['HTTP_CHARSET']) == 'ISO-8859-1') || (strtolower($GLOBALS['HTTP_CHARSET']) == 'utf-8')) { // Hack to fix bad use of entities (we can't encode them all above)
                     $data = convert_bad_entities($data, $GLOBALS['HTTP_CHARSET']);
                 }
                 $convert_bad_entities = true;
@@ -190,7 +191,7 @@ class CMS_RSS
      */
     /*function extEntity($parser, $open_entity_names, $base, $system_id, $public_id)
     {
-        $_open_entity_names=explode(',', $open_entity_names);
+        $_open_entity_names = explode(',', $open_entity_names);
         return 1; // Kludge to skip dodgy entities
     }*/
 
@@ -237,18 +238,16 @@ class CMS_RSS
             // Unfortunately we can't find the version using PHP XML functions
         }
 
-        if (($name == 'FEED') && (!function_exists('xml_set_start_namespace_decl_handler'))) {
-            $this->type = 'ATOM';
-        }
-
         if ($name == 'RSS') {
             $this->type = 'RSS';
-            /*    $version=explode('.',$attributes['VERSION']);      Actually we won't try and detect versions, RSS usage is too much of a mess
-            if ($version[0]=='0') && ($version[1]=='90') $this->version=0.9; // rdf
-            elseif ($version[0]=='0') && ($version[1][0]=='9') $this->version=0.91;
-            elseif ($version[0]=='1') $this->version=1; // rdf
-            elseif ($version[0]=='2') $this->version=2;
-            else fatal_exit(do_lang('RSS_UNKNOWN_VERSION',$version));*/
+            /* Actually we won't try and detect versions, RSS usage is too much of a mess
+                $version = explode('.', $attributes['VERSION']);
+                if ($version[0] == '0') && ($version[1] == '90') $this->version = 0.9; // rdf
+                elseif ($version[0] == '0') && ($version[1][0] == '9') $this->version = 0.91;
+                elseif ($version[0] == '1') $this->version = 1; // rdf
+                elseif ($version[0] == '2') $this->version = 2;
+                else fatal_exit(do_lang('RSS_UNKNOWN_VERSION', $version));
+            */
             $this->version = $attributes['VERSION'];
         }
 
@@ -306,6 +305,29 @@ class CMS_RSS
         switch ($this->type) {
             case 'RSS':
                 switch ($prelast_tag) {
+                    // wordpress namespace
+                    case 'HTTP://WORDPRESS.ORG/EXPORT/1.2/:COMMENT':
+                        $current_item = &$this->gleamed_items[count($this->gleamed_items) - 1];
+
+                        if (!array_key_exists('comments', $current_item)) {
+                            $current_item['comments'] = array(array());
+                        }
+
+                        $current_item['comments'][count($current_item['comments']) - 1][preg_replace('#^HTTP://WORDPRESS.ORG/EXPORT/1.2/:#', '', $last_tag)] = $data;
+                        break;
+
+                    // yahoo namespace
+                    case 'HTTP://SEARCH.YAHOO.COM/MRSS/:GROUP':
+                        $current_item = &$this->gleamed_items[count($this->gleamed_items) - 1];
+                        switch ($last_tag) {
+                            case 'HTTP://SEARCH.YAHOO.COM/MRSS/:THUMBNAIL':
+                                if (array_key_exists('URL', $attributes)) {
+                                    $current_item['rep_image'] = $attributes['URL'];
+                                }
+                                break;
+                        }
+                        break;
+
                     case 'CHANNEL':
                         switch ($last_tag) {
                             // dc namespace
@@ -365,6 +387,7 @@ class CMS_RSS
 
                                 $this->gleamed_feed['cloud'] = $cloud;
                                 break;
+
                             default:
                                 if (!array_key_exists($last_tag, $this->gleamed_feed)) {
                                     $this->gleamed_feed[$last_tag] = array();
@@ -391,6 +414,7 @@ class CMS_RSS
                                     $current_item['clean_add_date'] = $a[1];
                                 }
                                 break;
+
                             case 'HTTP://PURL.ORG/RSS/1.0/MODULES/CONTENT/:ENCODED':
                                 $current_item['news_article'] = $data;
                                 if ((preg_match('#[<>]#', $current_item['news_article']) == 0) && (preg_match('#[<>]#', html_entity_decode($current_item['news_article'], ENT_QUOTES)) != 0)) {// Double escaped HTML
@@ -403,10 +427,12 @@ class CMS_RSS
                                     $current_item['news_article'] = xhtmlise_html($current_item['news_article']);
                                 }
                                 break;
+
                             // slash namespace
                             case 'HTTP://PURL.ORG/RSS/1.0/modules/slash:SECTION':
                                 $current_item['category'] = $data;
                                 break;
+
                             // wp namespace
                             case 'HTTP://WORDPRESS.ORG/EXPORT/1.2/EXCERPT/:ENCODED':
                                 $current_item['news'] = $data;
@@ -424,6 +450,18 @@ class CMS_RSS
                                 $current_item['comments'][] = array();
                                 break;
 
+                            // yahoo namespace
+                            case 'HTTP://SEARCH.YAHOO.COM/MRSS/:GROUP':
+                                switch ($last_tag) {
+                                    case 'HTTP://SEARCH.YAHOO.COM/MRSS/:THUMBNAIL':
+                                        if (array_key_exists('URL', $attributes)) {
+                                            $current_item['rep_image'] = $attributes['URL'];
+                                        }
+                                        break;
+                                }
+                                break;
+
+                            // standard RSS
                             case 'TITLE':
                                 $current_item['title'] = $data;
                                 if ((preg_match('#[<>]#', $current_item['title']) == 0) && (preg_match('#[<>]#', html_entity_decode($current_item['title'], ENT_QUOTES)) != 0)) {// Double escaped HTML
@@ -494,6 +532,7 @@ class CMS_RSS
                                     $current_item['guid'] = $data;
                                 }
                                 break;
+
                             default:
                                 if (!array_key_exists($last_tag, $current_item)) {
                                     $current_item[$last_tag] = array();
@@ -502,16 +541,6 @@ class CMS_RSS
                                 $current_item['extra'][$last_tag] = $data;
                                 break;
                         }
-                        break;
-
-                    case 'HTTP://WORDPRESS.ORG/EXPORT/1.2/:COMMENT':
-                        $current_item = &$this->gleamed_items[count($this->gleamed_items) - 1];
-
-                        if (!array_key_exists('comments', $current_item)) {
-                            $current_item['comments'] = array(array());
-                        }
-
-                        $current_item['comments'][count($current_item['comments']) - 1][preg_replace('#^HTTP://WORDPRESS.ORG/EXPORT/1.2/:#', '', $last_tag)] = $data;
                         break;
                 }
                 break;
@@ -530,16 +559,24 @@ class CMS_RSS
                 if ($mode == 'BASE64') {
                     $data = base64_decode($data);
                 }
-                if (function_exists('xml_set_start_namespace_decl_handler')) {
-                    $prefix = 'HTTP://PURL.ORG/ATOM/NS#:';
-                } else {
-                    $prefix = '';
-                }
+                $prefix = 'HTTP://PURL.ORG/ATOM/NS#:';
                 if (!is_null($prelast_tag)) {
                     $prelast_tag = str_replace('HTTP://WWW.W3.ORG/2005/ATOM:', $prefix, $prelast_tag);
                 }
                 $last_tag = str_replace('HTTP://WWW.W3.ORG/2005/ATOM:', $prefix, $last_tag);
                 switch ($prelast_tag) {
+                    // yahoo namespace
+                    case 'HTTP://SEARCH.YAHOO.COM/MRSS/:GROUP':
+                        $current_item = &$this->gleamed_items[count($this->gleamed_items) - 1];
+                        switch ($last_tag) {
+                            case 'HTTP://SEARCH.YAHOO.COM/MRSS/:THUMBNAIL':
+                                if (array_key_exists('URL', $attributes)) {
+                                    $current_item['rep_image'] = $attributes['URL'];
+                                }
+                                break;
+                        }
+                        break;
+
                     case $prefix . 'AUTHOR':
                         $preprelast_tag = array_peek($this->tag_stack, 3);
                         switch ($preprelast_tag) {
@@ -572,6 +609,7 @@ class CMS_RSS
                                 break;
                         }
                         break;
+
                     case $prefix . 'FEED':
                         switch ($last_tag) {
                             case $prefix . 'TITLE':
@@ -617,9 +655,17 @@ class CMS_RSS
                                 break;
                         }
                         break;
+
                     case $prefix . 'ENTRY':
                         $current_item = &$this->gleamed_items[count($this->gleamed_items) - 1];
                         switch ($last_tag) {
+                            // yahoo namespace
+                            case 'HTTP://SEARCH.YAHOO.COM/MRSS/:THUMBNAIL':
+                                if (array_key_exists('URL', $attributes)) {
+                                    $current_item['rep_image'] = $attributes['URL'];
+                                }
+                                break;
+
                             case $prefix . 'TITLE':
                                 $current_item['title'] = $data;
                                 break;
@@ -690,11 +736,7 @@ class CMS_RSS
                                     }
                                 }
                                 break;
-                            case 'HTTP://SEARCH.YAHOO.COM/MRSS/:THUMBNAIL':
-                                if (array_key_exists('URL', $attributes)) {
-                                    $current_item['rep_image'] = $attributes['URL'];
-                                }
-                                break;
+
                             default:
                                 if (!array_key_exists($last_tag, $current_item)) {
                                     $current_item[$last_tag] = array();

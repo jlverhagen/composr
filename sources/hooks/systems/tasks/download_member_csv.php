@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -43,7 +43,7 @@ class Hook_task_download_member_csv
 
         $headers = array();
         $headers['Content-type'] = $mime_type;
-        $headers['Content-Disposition'] = 'attachment; filename="' . str_replace("\r", '', str_replace("\n", '', addslashes($filename))) . '"';
+        $headers['Content-Disposition'] = 'attachment; filename="' . escape_header($filename) . '"';
 
         $ini_set = array();
         $ini_set['ocproducts.xss_detect'] = '0';
@@ -51,10 +51,14 @@ class Hook_task_download_member_csv
         require_code('cns_members_action2');
         list($headings, $cpfs, $subscription_types) = member_get_csv_headings_extended();
 
+        $_headings = $headings;
+
         // What to filter on
         if ($preset == '') {
-            if (!in_array($order_by, $fields_to_use)) {
-                $fields_to_use[] = $order_by;
+            foreach (explode(',', $order_by) as $_order_by) {
+                if ((!in_array($_order_by, $fields_to_use)) && (isset($_headings[$_order_by]))) {
+                    $fields_to_use[] = $_order_by;
+                }
             }
         } else {
             $presets = $this->_get_export_presets();
@@ -64,10 +68,9 @@ class Hook_task_download_member_csv
             $order_by = array_key_exists('row_order', $_preset) ? $_preset['row_order'] : 'ID';
             $usergroups = array_key_exists('usergroups', $_preset) ? $_preset['usergroups'] : array();
         }
-        $_headings = $headings;
         $headings = array();
         foreach ($fields_to_use as $field_label) {
-            $field_name = isset($_headings[$field_label]) ? $_headings[$field_label] : $field_label;/*Must be a psuedo-field so just carry it forward*/
+            $field_name = isset($_headings[$field_label]) ? $_headings[$field_label] : $field_label;/*Must be a pseudo-field so just carry it forward*/
             $headings[$field_label] = is_numeric($field_name) ? intval($field_name) : $field_name;
         }
 
@@ -102,8 +105,8 @@ class Hook_task_download_member_csv
             $group_filter_2 = '1=1';
         }
 
-        $outfile_path = cms_tempnam('csv');
-        $outfile = fopen($outfile_path, 'w+b');
+        $outfile_path = cms_tempnam();
+        $outfile = fopen($outfile_path, 'wb');
 
         $fields = array('id', 'm_username', 'm_email_address', 'm_last_visit_time', 'm_cache_num_posts', 'm_pass_hash_salted', 'm_pass_salt', 'm_password_compat_scheme', 'm_signature', 'm_validated', 'm_join_time', 'm_primary_group', 'm_is_perm_banned', 'm_dob_day', 'm_dob_month', 'm_dob_year', 'm_reveal_age', 'm_language', 'm_allow_emails', 'm_allow_emails_from_staff');
         if (addon_installed('cns_member_avatars')) {
@@ -209,7 +212,7 @@ class Hook_task_download_member_csv
      * @param  array $subscription_types List of subscription types
      * @return array The row
      */
-    protected function _get_csv_member_record($m, $groups, $headings, $cpfs, $member_groups, $subscription_types)
+    public function _get_csv_member_record($m, $groups, $headings, $cpfs, $member_groups, $subscription_types)
     {
         // Usergroup subscription details
         if (addon_installed('ecommerce')) {
@@ -303,7 +306,7 @@ class Hook_task_download_member_csv
                             break;
 
                         default: // string
-                            // Psuedo fields
+                            // Pseudo fields
                             /*switch ($part) {
                                 case 'Initials':
                                     $at = preg_replace('#\s*(\w)\w*\s*#', '${1}', $m['field_' . find_cpf_field_id('Forenames')] . ' ' . $m['field_' . find_cpf_field_id('Surname')]);

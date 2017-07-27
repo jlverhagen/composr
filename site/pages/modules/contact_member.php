@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -46,7 +46,48 @@ class Module_contact_member
     public $to_name;
 
     /**
-     * Module pre-run function. Allows us to know meta-data for <head> before we start streaming output.
+     * Uninstall the module.
+     */
+    public function uninstall()
+    {
+        $GLOBALS['SITE_DB']->query_delete('group_page_access', array('page_name' => 'contact_member'));
+    }
+
+    /**
+     * Install the module.
+     *
+     * @param  ?integer $upgrade_from What version we're upgrading from (null: new install)
+     * @param  ?integer $upgrade_from_hack What hack version we're upgrading from (null: new-install/not-upgrading-from-a-hacked-version)
+     */
+    public function install($upgrade_from = null, $upgrade_from_hack = null)
+    {
+        // Deny non-staff/Guest access to contact_member (as non-Guests can just use private topics and contact_member may be abused by spammers)
+        $staff_groups = $GLOBALS['FORUM_DRIVER']->get_moderator_groups();
+        $usergroups = $GLOBALS['FORUM_DRIVER']->get_usergroup_list(false, true);
+        foreach (array_keys($usergroups) as $id) {
+            if ((!isset($staff_groups[$id])) && $id != (db_get_first_id())) {
+                $GLOBALS['SITE_DB']->query_delete('group_page_access', array('page_name' => 'contact_member', 'zone_name' => 'site', 'group_id' => $id), '', 1); // in case already exists
+                $GLOBALS['SITE_DB']->query_insert('group_page_access', array('page_name' => 'contact_member', 'zone_name' => 'site', 'group_id' => $id));
+            }
+        }
+    }
+
+    /**
+     * Find entry-points available within this module.
+     *
+     * @param  boolean $check_perms Whether to check permissions.
+     * @param  ?MEMBER $member_id The member to check permissions as (null: current user).
+     * @param  boolean $support_crosslinks Whether to allow cross links to other modules (identifiable via a full-page-link rather than a screen-name).
+     * @param  boolean $be_deferential Whether to avoid any entry-point (or even return null to disable the page in the Sitemap) if we know another module, or page_group, is going to link to that entry-point. Note that "!" and "browse" entry points are automatically merged with container page nodes (likely called by page-groupings) as appropriate.
+     * @return ?array A map of entry points (screen-name=>language-code/string or screen-name=>[language-code/string, icon-theme-image]) (null: disabled).
+     */
+    public function get_entry_points($check_perms = true, $member_id = null, $support_crosslinks = true, $be_deferential = false)
+    {
+        return array();
+    }
+
+    /**
+     * Module pre-run function. Allows us to know metadata for <head> before we start streaming output.
      *
      * @return ?Tempcode Tempcode indicating some kind of exceptional output (null: none).
      */
@@ -54,6 +95,11 @@ class Module_contact_member
     {
         $type = get_param_string('type', 'browse');
 
+        if (get_forum_type() != 'cns') {
+            warn_exit(do_lang_tempcode('NO_CNS'));
+        } else {
+            cns_require_all_forum_stuff();
+        }
         require_lang('cns');
 
         if ($type == 'browse') {
@@ -97,16 +143,10 @@ class Module_contact_member
         require_lang('mail');
         require_lang('comcode');
 
-        if (get_forum_type() != 'cns') {
-            warn_exit(do_lang_tempcode('NO_CNS'));
-        } else {
-            cns_require_all_forum_stuff();
-        }
-
         $type = get_param_string('type', 'browse');
 
         $member_id = get_param_integer('id');
-        if (($GLOBALS['FORUM_DRIVER']->get_member_row_field($member_id, 'm_email_address') == '') || ((get_option('allow_email_disable') == '1') && ($GLOBALS['FORUM_DRIVER']->get_member_row_field($member_id, 'm_allow_emails') == 0)) || (is_guest($member_id))) {
+        if (($GLOBALS['FORUM_DRIVER']->get_member_row_field($member_id, 'm_email_address') == '') || ((get_option('allow_email_disable') == '1') && ($GLOBALS['FORUM_DRIVER']->get_member_row_field($member_id, 'm_allow_emails') == 0)) || (is_guest($member_id)) || ($GLOBALS['FORUM_DRIVER']->is_banned($member_id))) {
             warn_exit(do_lang_tempcode('NO_ACCEPT_EMAILS'));
         }
 
@@ -135,7 +175,7 @@ class Module_contact_member
         $fields = new Tempcode();
         require_code('form_templates');
         $default_email = (is_guest()) ? '' : $GLOBALS['FORUM_DRIVER']->get_member_row_field(get_member(), 'm_email_address');
-        $default_name = (is_guest()) ? '' : $GLOBALS['FORUM_DRIVER']->get_member_row_field(get_member(), 'm_username');
+        $default_name = (is_guest()) ? '' : $GLOBALS['FORUM_DRIVER']->get_username(get_member(), true);
         $name_field = form_input_line(do_lang_tempcode('NAME'), do_lang_tempcode('_DESCRIPTION_NAME'), 'name', $default_name, true);
         if ($default_name == '') {
             $fields->attach($name_field);

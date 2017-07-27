@@ -3,19 +3,23 @@
 {$SET,login_screen,1}
 
 <div class="login_page">
-	<div class="box box___login_screen"><div class="box_inner">
-		{!LOGIN_TEXT,<a href="{JOIN_URL*}"><strong>{!JOIN_HERE}</strong></a>}
-	</div></div>
+	{+START,IF,{$HAS_FORUM,1}}
+		<div class="box box___login_screen"><div class="box_inner">
+			{!LOGIN_TEXT,<a href="{JOIN_URL*}"><strong>{!JOIN_HERE}</strong></a>}
+		</div></div>
+	{+END}
 
-	<form title="{!_LOGIN}" onsubmit="if (check_field_for_blankness(this.elements['login_username'],event)) { disable_button_just_clicked(this); return true; } return false;" action="{LOGIN_URL*}" method="post" autocomplete="on" target="_top">
+	<form title="{!_LOGIN}" onsubmit="if (check_field_for_blankness(this.elements['login_username'],event)) { disable_button_just_clicked(this); return true; } return false;" action="{LOGIN_URL*}" method="post" target="_top" autocomplete="on">
 		<div>
+			{$INSERT_SPAMMER_BLACKHOLE}
+
 			{PASSION}
 
 			<div class="float_surrounder">
 				{+START,IF,{$MOBILE}}
 					<div class="login_page_form">
 						<p class="constrain_field">
-							<label for="login_username">{!USERNAME}{+START,IF,{$AND,{$NOT,{$MOBILE}},{$CNS},{$CONFIG_OPTION,one_per_email_address}}} / <span class="must_show_together">{!EMAIL_ADDRESS}</span>{+END}</label>
+							<label for="login_username">{$LOGIN_LABEL}</label>
 							<input maxlength="80" class="wide_field" type="text" value="{USERNAME*}" id="login_username" name="login_username" size="25" />
 						</p>
 
@@ -30,7 +34,7 @@
 					<table class="map_table autosized_table login_page_form">
 						<tbody>
 							<tr>
-								<th class="de_th"><label for="login_username">{!USERNAME}{+START,IF,{$AND,{$NOT,{$MOBILE}},{$CNS},{$CONFIG_OPTION,one_per_email_address}}} / <span class="must_show_together">{!EMAIL_ADDRESS}</span>{+END}</label>:</th>
+								<th class="de_th"><label for="login_username">{$LOGIN_LABEL}</label>:</th>
 								<td>
 									<input maxlength="80" type="text" value="{USERNAME*}" id="login_username" name="login_username" size="25" />
 								</td>
@@ -69,7 +73,7 @@
 			</div>
 
 			<p class="proceed_button">
-				<input class="menu__site_meta__user_actions__login button_screen" type="submit" value="{!_LOGIN}" />
+				<input class="button_screen menu__site_meta__user_actions__login" type="submit" value="{!_LOGIN}" />
 			</p>
 		</div>
 	</form>

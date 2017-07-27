@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -30,7 +30,12 @@ class Hook_snippet_css_compile__text
      */
     public function run()
     {
+        require_code('input_filter_2');
+        modsecurity_workaround_enable();
+
         if (has_actual_page_access(get_member(), 'admin_themes')) {
+            safe_ini_set('ocproducts.xss_detect', '0');
+
             require_code('tempcode_compiler');
             return template_to_tempcode(post_param_string('css'));
         }

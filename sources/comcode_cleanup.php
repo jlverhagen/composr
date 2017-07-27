@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -17,6 +17,27 @@
  * @copyright  ocProducts Ltd
  * @package    core_rich_media
  */
+
+/**
+ * Censor some Comcode raw code so that another user can see it.
+ * This function isn't designed to be perfectly secure, and we don't guarantee it's always run, but as a rough thing we prefer to do it.
+ *
+ * @param  string $comcode Comcode
+ * @param  ?MEMBER $aggressive Force an HTML-evaluation of the Comcode through this security ID then back to Comcode, as a security technique (null: don't)
+ * @return string Censored Comcode
+ */
+function comcode_censored_raw_code_access($comcode, $aggressive = null)
+{
+    if ($aggressive !== null) {
+        $eval = comcode_to_tempcode($comcode, $aggressive);
+        require_code('comcode_from_html');
+        $comcode = semihtml_to_comcode($comcode, true);
+        return $comcode;
+    }
+
+    $comcode = preg_replace('#\[staff_note\].*\[/staff_note\]#Us', '', $comcode);
+    return $comcode;
+}
 
 /**
  * Filter external media, copying it locally.
@@ -60,7 +81,7 @@ function _download_associated_media(&$text, $old_url)
         $temp_path = get_custom_file_base() . '/uploads/external_media/' . $temp_filename;
 
         $write_to_file = fopen($temp_path, 'wb');
-        $test = http_download_file($old_url, null, false, false, 'ocPortal', null, null, null, null, null, $write_to_file);
+        $test = http_download_file($old_url, null, false, false, 'Composr', null, null, null, null, null, $write_to_file);
         if ($test === null) {
             @unlink($temp_path);
             return;

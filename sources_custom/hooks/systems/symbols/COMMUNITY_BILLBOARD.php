@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -27,6 +27,10 @@ class Hook_symbol_COMMUNITY_BILLBOARD
     public function run($param)
     {
         if (!addon_installed('community_billboard')) {
+            return '';
+        }
+
+        if (!$GLOBALS['SITE_DB']->table_exists('community_billboard')) {
             return '';
         }
 

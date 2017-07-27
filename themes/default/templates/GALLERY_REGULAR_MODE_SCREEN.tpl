@@ -29,6 +29,12 @@
 		</div></div>
 	{+END}
 
+	{+START,IF_EMPTY,{ENTRIES}{CHILDREN}}
+		<p class="nothing_here">
+			{!NO_ENTRIES}
+		</p>
+	{+END}
+
 	{$REVIEW_STATUS,gallery,{CAT}}
 
 	{+START,IF,{$CONFIG_OPTION,show_content_tagging}}{TAGS}{+END}
@@ -52,7 +58,6 @@
 		2_ICON=menu/cms/galleries/add_one_video
 		3_URL={$?,{$OR,{$NOT,{$HAS_PRIVILEGE,may_download_gallery}},{$IS_EMPTY,{ENTRIES}}},,{$FIND_SCRIPT*,download_gallery}?cat={CAT*}{$KEEP*,0,1}}
 		3_TITLE={!DOWNLOAD_GALLERY_CONTENTS}
-		3_CLASS=archive_link
 		3_ICON=links/download_as_archive
 		4_URL={ADD_GALLERY_URL*}
 		4_TITLE={!ADD_GALLERY}
@@ -89,7 +94,7 @@
 		</div>
 	{+END}
 
-	{+START,IF,{$CONFIG_OPTION,show_screen_actions}}{$BLOCK,failsafe=1,block=main_screen_actions,title={$META_DATA,title}}{+END}
+	{+START,IF,{$CONFIG_OPTION,show_screen_actions}}{$BLOCK,failsafe=1,block=main_screen_actions,title={$METADATA,title}}{+END}
 
 	{$,Uncomment the below if you want the root gallery to show recent and top content, then customise the GALLERY_POPULAR.tpl template to control specifics}
 	{$,\{+START,INCLUDE,GALLERY_POPULAR\}\{+END\}}

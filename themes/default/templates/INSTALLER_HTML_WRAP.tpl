@@ -55,30 +55,32 @@
 					}
 				}
 
-				if (!check_password(form)) return false;
+				if (!check_passwords(form)) return false;
 
 				if ((form.elements['db_site_password']) && (window.do_ajax_field_test))
 				{
-					var url='install.php?type=ajax_db_details&db_type='+form.elements['db_type'].value+'&db_site_host='+form.elements['db_site_host'].value+'&db_site='+form.elements['db_site'].value+'&db_site_user='+form.elements['db_site_user'].value+'&db_site_password='+form.elements['db_site_password'].value;
-					if (!do_ajax_field_test(url)) return false;
+					var url='install.php?type=ajax_db_details';
+					var post='db_type='+window.encodeURIComponent(form.elements['db_type'].value)+'&db_site_host='+window.encodeURIComponent(form.elements['db_site_host'].value)+'&db_site='+window.encodeURIComponent(form.elements['db_site'].value)+'&db_site_user='+window.encodeURIComponent(form.elements['db_site_user'].value)+'&db_site_password='+window.encodeURIComponent(form.elements['db_site_password'].value);
+					if (!do_ajax_field_test(url,post)) return false;
 				}
 
 				if ((form.elements['db_forums_password']) && (window.do_ajax_field_test))
 				{
-					var url='install.php?type=ajax_db_details&db_type='+form.elements['db_type'].value+'&db_forums_host='+form.elements['db_forums_host'].value+'&db_forums='+form.elements['db_forums'].value+'&db_forums_user='+form.elements['db_forums_user'].value+'&db_forums_password='+form.elements['db_forums_password'].value;
-					if (!do_ajax_field_test(url)) return false;
+					var url='install.php?type=ajax_db_details';
+					var post='db_type='+window.encodeURIComponent(form.elements['db_type'].value)+'&db_forums_host='+window.encodeURIComponent(form.elements['db_forums_host'].value)+'&db_forums='+window.encodeURIComponent(form.elements['db_forums'].value)+'&db_forums_user='+window.encodeURIComponent(form.elements['db_forums_user'].value)+'&db_forums_password='+window.encodeURIComponent(form.elements['db_forums_password'].value);
+					if (!do_ajax_field_test(url,post)) return false;
 				}
 
 				if ((form.elements['ftp_domain']) && (window.do_ajax_field_test))
 				{
-					var url='install.php?type=ajax_ftp_details&ftp_domain='+form.elements['ftp_domain'].value+'&ftp_folder='+form.elements['ftp_folder'].value+'&ftp_username='+form.elements['ftp_username'].value+'&ftp_password='+form.elements['ftp_password'].value;
-					if (!do_ajax_field_test(url)) return false;
+					var url='install.php?type=ajax_ftp_details';
+					var post='ftp_domain='+window.encodeURIComponent(form.elements['ftp_domain'].value)+'&ftp_folder='+window.encodeURIComponent(form.elements['ftp_folder'].value)+'&ftp_username='+window.encodeURIComponent(form.elements['ftp_username'].value)+'&ftp_password='+window.encodeURIComponent(form.elements['ftp_password'].value);
+					if (!do_ajax_field_test(url,post)) return false;
 				}
 
 				return true;
 			}
 
-			// By Netscape
 			function set_cookie(cookieName,cookieValue,nDays)
 			{
 				var today=new Date();
@@ -114,49 +116,31 @@
 				if (itm.style.display=='none')
 				{
 					itm.style.display='block';
-					if (img) img.src='{$BASE_URL;/}/install.php?type=contract';
+					if (img)
+					{
+						img.src='{$BASE_URL;/}/install.php?type=contract';
+						img.alt=img.alt.replace('{!EXPAND;}','{!CONTRACT;}');
+						img.title=img.title.replace('{!EXPAND;}','{!CONTRACT;}');
+					}
 				} else
 				{
 					itm.style.display='none';
-					if (img) img.src='{$BASE_URL;/}/install.php?type=expand';
-				}
-			}
-
-			function check_password(form)
-			{
-				if ((typeof form.confirm!='undefined') && (form.confirm)) return true;
-
-				if (typeof form.elements['cns_admin_password_confirm']!='undefined')
-				{
-					if (form.elements['cns_admin_password_confirm'].value!=form.elements['cns_admin_password'].value)
+					if (img)
 					{
-						window.alert('{!PASSWORDS_DO_NOT_MATCH;/}');
-						return false;
+						img.src='{$BASE_URL;/}/install.php?type=expand';
+						img.alt=img.alt.replace('{!CONTRACT;}','{!EXPAND;}');
+						img.title=img.title.replace('{!CONTRACT;}','{!EXPAND;}');
 					}
 				}
-				if (typeof form.elements['master_password_confirm']!='undefined')
-				{
-					if (form.elements['master_password_confirm'].value!=form.elements['master_password'].value)
-					{
-						window.alert('{!PASSWORDS_DO_NOT_MATCH;/}');
-						return false;
-					}
-				}
-
-				window.alert('{PASSWORD_PROMPT;/}','');
-
-				if (form.elements['master_password'].value.length<5)
-				{
-					return window.confirm('{!MASTER_PASSWORD_INSECURE;/}');
-				}
-				return true;
 			}
 		//]]></script>
+
+		{+START,INCLUDE,PASSWORD_CHECK_JS}INSTALLER=1{+END}
 	</head>
 
 	<body id="installer_body" class="website_body" onload="install_stage_load();">
 		<div class="installer_main">
-			<img alt="Composr" src="{LOGO_URL*}" />
+			<img alt="Composr" src="{LOGO_URL*}" width="550" height="115" />
 		</div>
 
 		<script>// <![CDATA[

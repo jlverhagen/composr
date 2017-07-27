@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -32,9 +32,10 @@ class Hook_content_meta_aware_calendar_type
     public function info($zone = null)
     {
         return array(
-            'supports_custom_fields' => false,
+            'support_custom_fields' => false,
 
             'content_type_label' => 'calendar:EVENT_TYPE',
+            'content_type_universal_label' => 'Calendar type',
 
             'connection' => $GLOBALS['SITE_DB'],
             'table' => 'calendar_types',
@@ -44,8 +45,8 @@ class Hook_content_meta_aware_calendar_type
             'parent_category_meta_aware_type' => null,
             'is_category' => true,
             'is_entry' => false,
-            'category_field' => null, // For category permissions
-            'category_type' => null, // For category permissions
+            'category_field' => 'id', // For category permissions
+            'category_type' => 'calendar', // For category permissions
             'parent_spec__table_name' => null,
             'parent_spec__parent_name' => null,
             'parent_spec__field_name' => null,
@@ -56,6 +57,7 @@ class Hook_content_meta_aware_calendar_type
             'description_field' => null,
             'thumb_field' => 't_logo',
             'thumb_field_is_theme_image' => true,
+            'alternate_icon_theme_image' => null,
 
             'view_page_link_pattern' => '_SEARCH:calendar:browse:_WILD',
             'edit_page_link_pattern' => '_SEARCH:cms_calendar:_edit_category:_WILD',
@@ -66,7 +68,9 @@ class Hook_content_meta_aware_calendar_type
             'support_url_monikers' => false,
 
             'views_field' => null,
+            'order_field' => null,
             'submitter_field' => null,
+            'author_field' => null,
             'add_time_field' => null,
             'edit_time_field' => null,
             'date_field' => null,
@@ -76,9 +80,14 @@ class Hook_content_meta_aware_calendar_type
 
             'feedback_type_code' => null,
 
-            'permissions_type_code' => null, // NULL if has no permissions
+            'permissions_type_code' => 'calendar', // null if has no permissions
 
             'search_hook' => null,
+            'rss_hook' => null,
+            'attachment_hook' => null,
+            'unvalidated_hook' => null,
+            'notification_hook' => null,
+            'sitemap_hook' => 'calendar_type',
 
             'addon_name' => 'calendar',
 
@@ -88,7 +97,11 @@ class Hook_content_meta_aware_calendar_type
             'commandr_filesystem_hook' => 'calendar',
             'commandr_filesystem__is_folder' => true,
 
-            'rss_hook' => null,
+            'support_revisions' => false,
+
+            'support_privacy' => false,
+
+            'support_content_reviews' => true,
 
             'actionlog_regexp' => '\w+_CALENDAR_TYPE',
         );
@@ -108,7 +121,7 @@ class Hook_content_meta_aware_calendar_type
      */
     public function run($row, $zone, $give_context = true, $include_breadcrumbs = true, $root = null, $attach_to_url_filter = false, $guid = '')
     {
-        require_code('authors');
+        require_code('calendar');
 
         return render_calendar_type_box($row, $zone, $give_context, $guid);
     }

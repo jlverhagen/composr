@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -26,9 +26,10 @@ class Hook_addon_registry_search
     /**
      * Get a list of file permissions to set
      *
+     * @param  boolean $runtime Whether to include wildcards represented runtime-created chmoddable files
      * @return array File permissions to set
      */
-    public function get_chmod_array()
+    public function get_chmod_array($runtime = false)
     {
         return array();
     }
@@ -76,9 +77,6 @@ class Hook_addon_registry_search
             'requires' => array(),
             'recommends' => array(),
             'conflicts_with' => array(),
-            'previously_in_addon' => array(
-                'search'
-            )
         );
     }
 
@@ -147,6 +145,8 @@ class Hook_addon_registry_search
             'sources/hooks/systems/config/minimum_autocomplete_length.php',
             'sources/hooks/systems/config/maximum_autocomplete_suggestions.php',
             'sources/hooks/systems/config/minimum_autocomplete_past_search.php',
+            'sources/hooks/systems/commandr_fs_extended_member/searches_saved.php',
+            'sources/hooks/systems/config/block_top_search.php',
         );
     }
 
@@ -440,12 +440,14 @@ class Hook_addon_registry_search
             'ROWS' => $types_results,
         )));
 
-        require_lang('catalogues');
-        $result->attach(do_lorem_template('SEARCH_RESULT_CATALOGUE_ENTRIES', array(
-            'BUILDUP' => lorem_phrase(),
-            'NAME' => lorem_word(),
-            'TITLE' => lorem_word_2(),
-        )));
+        if (addon_installed('catalogues')) {
+            require_lang('catalogues');
+            $result->attach(do_lorem_template('SEARCH_RESULT_CATALOGUE_ENTRIES', array(
+                'BUILDUP' => lorem_phrase(),
+                'NAME' => lorem_word(),
+                'TITLE' => lorem_word_2(),
+            )));
+        }
 
         return array(
             lorem_globalise(do_lorem_template('SEARCH_FORM_SCREEN', array(

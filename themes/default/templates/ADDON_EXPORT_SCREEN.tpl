@@ -2,6 +2,7 @@
 
 <h2>{!EXPORT_LANGUAGE}</h2>
 
+{$RESET_CYCLE,addon_export}
 {+START,IF_NON_EMPTY,{LANGUAGES}}
 	{LANGUAGES}
 {+END}
@@ -9,8 +10,9 @@
 	<p class="nothing_here">{!NONE_EM}</p>
 {+END}
 
-<h3>{!EXPORT_THEME}</h3>
+<h2>{!EXPORT_THEME}</h2>
 
+{$RESET_CYCLE,addon_export}
 {+START,IF_NON_EMPTY,{THEMES}}
 	{THEMES}
 {+END}
@@ -18,10 +20,20 @@
 	<p class="nothing_here">{!NONE_EM}</p>
 {+END}
 
-<h3>{!EXPORT_FILES}</h3>
+<h2>{!EXPORT_FILES}</h2>
 
 {+START,IF_NON_EMPTY,{FILES}}
-	{FILES}
+	<form title="{!EXPORT_ADDON}" action="{URL*}" method="post" autocomplete="off">
+		{$INSERT_SPAMMER_BLACKHOLE}
+
+		<div>
+			{FILES}
+		</div>
+
+		<p>
+			<input onclick="disable_button_just_clicked(this);" class="button_screen menu___generic_admin__export" type="submit" value="{!EXPORT_ADDON}" />
+		</p>
+	</form>
 {+END}
 {+START,IF_EMPTY,{FILES}}
 	<p class="nothing_here">{!NONE_EM}</p>

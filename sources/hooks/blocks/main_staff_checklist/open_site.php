@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -26,12 +26,12 @@ class Hook_checklist_open_site
     /**
      * Find items to include on the staff checklist.
      *
-     * @return array An array of tuples: The task row to show, the number of seconds until it is due (or NULL if not on a timer), the number of things to sort out (or NULL if not on a queue), The name of the config option that controls the schedule (or NULL if no option).
+     * @return array An array of tuples: The task row to show, the number of seconds until it is due (or null if not on a timer), the number of things to sort out (or null if not on a queue), The name of the config option that controls the schedule (or null if no option).
      */
     public function run()
     {
-        $url = build_url(array('page' => 'admin_config', 'type' => 'category', 'id' => 'SITE'), 'adminzone', null, false, false, false, 'group_CLOSED_SITE');
-        $task = do_lang_tempcode('NAG_OPEN_WEBSITE', $url->evaluate());
+        $url = build_url(array('page' => 'admin_config', 'type' => 'category', 'id' => 'SITE'), get_module_zone('admin_config'), null, false, false, false, 'group_CLOSED_SITE');
+        $task = do_lang_tempcode('NAG_OPEN_WEBSITE', escape_html_tempcode($url));
 
         $status = (get_option('site_closed') == '1') ? 0 : 1;
         $_status = ($status == 0) ? do_template('BLOCK_MAIN_STAFF_CHECKLIST_ITEM_STATUS_0') : do_template('BLOCK_MAIN_STAFF_CHECKLIST_ITEM_STATUS_1');

@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -156,7 +156,7 @@ function add_poll($question, $a1, $a2, $a3 = '', $a4 = '', $a5 = '', $a6 = '', $
 
     if ((addon_installed('commandr')) && (!running_script('install'))) {
         require_code('resource_fs');
-        generate_resourcefs_moniker('poll', strval($id), null, null, true);
+        generate_resource_fs_moniker('poll', strval($id), null, null, true);
     }
 
     require_code('sitemap_xml');
@@ -187,11 +187,11 @@ function add_poll($question, $a1, $a2, $a3 = '', $a4 = '', $a5 = '', $a6 = '', $
  * @param  SHORT_INTEGER $allow_comments Whether comments are allowed (0=no, 1=yes, 2=review style)
  * @param  BINARY $allow_trackbacks Whether to allow trackbacking on this poll
  * @param  LONG_TEXT $notes Notes about this poll
- * @param  ?TIME $edit_time Edit time (null: either means current time, or if $null_is_literal, means reset to to NULL)
+ * @param  ?TIME $edit_time Edit time (null: either means current time, or if $null_is_literal, means reset to to null)
  * @param  ?TIME $add_time Add time (null: do not change)
  * @param  ?integer $views Number of views (null: do not change)
  * @param  ?MEMBER $submitter Submitter (null: do not change)
- * @param  boolean $null_is_literal Determines whether some NULLs passed mean 'use a default' or literally mean 'set to NULL'
+ * @param  boolean $null_is_literal Determines whether some nulls passed mean 'use a default' or literally mean 'set to null'
  */
 function edit_poll($id, $question, $a1, $a2, $a3, $a4, $a5, $a6, $a7, $a8, $a9, $a10, $num_options, $allow_rating, $allow_comments, $allow_trackbacks, $notes, $edit_time = null, $add_time = null, $views = null, $submitter = null, $null_is_literal = false)
 {
@@ -203,7 +203,7 @@ function edit_poll($id, $question, $a1, $a2, $a3, $a4, $a5, $a6, $a7, $a8, $a9, 
 
     if ((addon_installed('commandr')) && (!running_script('install'))) {
         require_code('resource_fs');
-        generate_resourcefs_moniker('poll', strval($id));
+        generate_resource_fs_moniker('poll', strval($id));
     }
 
     persistent_cache_delete('POLL');
@@ -252,6 +252,7 @@ function edit_poll($id, $question, $a1, $a2, $a3, $a4, $a5, $a6, $a7, $a8, $a9, 
     }
 
     $GLOBALS['SITE_DB']->query_update('poll', $update_map, array('id' => $id), '', 1);
+    persistent_cache_delete('POLL');
     decache('main_poll');
 
     require_code('urls2');
@@ -304,7 +305,7 @@ function delete_poll($id)
 
     if ((addon_installed('commandr')) && (!running_script('install'))) {
         require_code('resource_fs');
-        expunge_resourcefs_moniker('poll', strval($id));
+        expunge_resource_fs_moniker('poll', strval($id));
     }
 
     require_code('sitemap_xml');
@@ -318,8 +319,6 @@ function delete_poll($id)
  */
 function set_poll($id)
 {
-    persistent_cache_delete('POLL');
-
     $rows = $GLOBALS['SITE_DB']->query_select('poll', array('question', 'submitter'), array('id' => $id));
     $question = $rows[0]['question'];
     $submitter = $rows[0]['submitter'];
@@ -342,7 +341,9 @@ function set_poll($id)
 
     $GLOBALS['SITE_DB']->query_update('poll', array('is_current' => 0), array('is_current' => 1));
     $GLOBALS['SITE_DB']->query_update('poll', array('is_current' => 1, 'date_and_time' => time()), array('id' => $id), '', 1);
+
     decache('main_poll');
+    persistent_cache_delete('POLL');
 
     require_lang('polls');
     require_code('notifications');

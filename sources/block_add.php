@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -155,9 +155,9 @@ function block_helper_script()
 
             $url = find_script('block_helper') . '?type=step2&block=' . urlencode($block) . '&field_name=' . urlencode(get_param_string('field_name')) . $keep->evaluate();
             if (get_param_string('utheme', '') != '') {
-                $url .= '&utheme=' . get_param_string('utheme');
+                $url .= '&utheme=' . urlencode(get_param_string('utheme'));
             }
-            $url .= '&block_type=' . $type_wanted;
+            $url .= '&block_type=' . urlencode($type_wanted);
             if (get_param_string('save_to_id', '') != '') {
                 $url .= '&save_to_id=' . urlencode(get_param_string('save_to_id'));
             }
@@ -214,9 +214,9 @@ function block_helper_script()
         $defaults = parse_single_comcode_tag(get_param_string('parse_defaults', '', true), 'block');
 
         $keep = symbol_tempcode('KEEP');
-        $back_url = find_script('block_helper') . '?type=step1&field_name=' . get_param_string('field_name') . $keep->evaluate();
+        $back_url = find_script('block_helper') . '?type=step1&field_name=' . urlencode(get_param_string('field_name')) . $keep->evaluate();
         if (get_param_string('utheme', '') != '') {
-            $back_url .= '&utheme=' . get_param_string('utheme');
+            $back_url .= '&utheme=' . urlencode(get_param_string('utheme'));
         }
         if (get_param_string('save_to_id', '') != '') {
             $back_url .= '&save_to_id=' . urlencode(get_param_string('save_to_id'));
@@ -235,12 +235,7 @@ function block_helper_script()
         }
 
         // Work out parameters involved, and their sets ("classes")
-        $parameters = get_block_parameters($block);
-        $parameters[] = 'failsafe';
-        $parameters[] = 'cache';
-        $parameters[] = 'quick_cache';
-        $parameters[] = 'defer';
-        $parameters[] = 'block_id';
+        $parameters = get_block_parameters($block, true);
         // NB: Also update sources/hooks/systems/preview/block_comcode.php
         if (!isset($defaults['cache'])) {
             $defaults['cache'] = block_cache_default($block);
@@ -361,7 +356,7 @@ function block_helper_script()
                     if (!addon_installed('cns_forum')) {
                         warn_exit(do_lang_tempcode('NO_FORUM_INSTALLED'));
                     }
-                    $list = create_selection_list_forum_tree(null, null, explode(',', $default));
+                    $list = create_selection_list_forum_tree(null, null, array_map('intval', explode(',', $default)));
                     $fields->attach(form_input_multi_list($parameter_title, escape_html($description), $parameter, $list));
                 } elseif ($parameter == 'font') { // font choice
                     $fonts = array();
@@ -410,13 +405,14 @@ function block_helper_script()
                     $list = new Tempcode();
                     $hooks = find_all_hooks($matches[1], $matches[2]);
                     ksort($hooks);
-                    if (($default == '') && ($has_default)) {
+                    $is_multi_list = (($block == 'main_search') && ($parameter == 'limit_to')) || ($block == 'side_tag_cloud');
+                    if (($default == '') && ($has_default) && (!$is_multi_list)) {
                         $list->attach(form_input_list_entry('', true));
                     }
                     foreach (array_keys($hooks) as $hook) {
                         $list->attach(form_input_list_entry($hook, $hook == $default));
                     }
-                    if ((($block == 'main_search') && ($parameter == 'limit_to')) || ($block == 'side_tag_cloud')) {
+                    if ($is_multi_list) {
                         $fields->attach(form_input_multi_list($parameter_title, escape_html($description), $parameter, $list, null, 0));
                     } else {
                         $fields->attach(form_input_list($parameter_title, escape_html($description), $parameter, $list, null, false, false));
@@ -432,9 +428,9 @@ function block_helper_script()
         }
         $post_url = find_script('block_helper') . '?type=step3&field_name=' . urlencode(get_param_string('field_name')) . $keep->evaluate();
         if (get_param_string('utheme', '') != '') {
-            $post_url .= '&utheme=' . get_param_string('utheme');
+            $post_url .= '&utheme=' . urlencode(get_param_string('utheme'));
         }
-        $post_url .= '&block_type=' . $type_wanted;
+        $post_url .= '&block_type=' . urlencode($type_wanted);
         if (get_param_string('save_to_id', '') != '') {
             $post_url .= '&save_to_id=' . urlencode(get_param_string('save_to_id'));
             $submit_name = do_lang_tempcode('SAVE');
@@ -475,11 +471,7 @@ function block_helper_script()
         $bparameters = '';
         $bparameters_tempcode = '';
         $block = trim(either_param_string('block'));
-        $parameters = get_block_parameters($block);
-        $parameters[] = 'failsafe';
-        $parameters[] = 'cache';
-        $parameters[] = 'block_id';
-        $parameters[] = 'quick_cache';
+        $parameters = get_block_parameters($block, true);
         if (in_array('param', $parameters)) {
             $_parameters = array('param');
             unset($parameters[array_search('param', $parameters)]);

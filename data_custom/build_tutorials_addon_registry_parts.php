@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -12,6 +12,9 @@
  * @copyright  ocProducts Ltd
  * @package    composr_tutorials
  */
+
+// Fixup SCRIPT_FILENAME potentially being missing
+$_SERVER['SCRIPT_FILENAME'] = __FILE__;
 
 // Find Composr base directory, and chdir into it
 global $FILE_BASE, $RELATIVE_PATH;
@@ -54,7 +57,7 @@ if (!is_file($FILE_BASE . '/sources/global.php')) {
 }
 require($FILE_BASE . '/sources/global.php');
 
-header('Content-type: text/plain');
+header('Content-type: text/plain; charset=' . get_charset());
 
 safe_ini_set('ocproducts.xss_detect', '0');
 

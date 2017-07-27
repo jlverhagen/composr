@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -49,15 +49,20 @@ function init__cns_groups()
  */
 function render_group_box($row, $zone = '_SEARCH', $give_context = true, $guid = '')
 {
+    if (is_null($row)) { // Should never happen, but we need to be defensive
+        return new Tempcode();
+    }
+
     require_lang('cns');
 
     $url = build_url(array('page' => 'groups', 'type' => 'view', 'id' => $row['id']), get_module_zone('groups'));
 
     $_title = cns_get_group_name($row['id']);
-    $title = $give_context ? do_lang('CONTENT_IS_OF_TYPE', do_lang('GROUP'), $_title) : $_title;
+    $title = $give_context ? do_lang('CONTENT_IS_OF_TYPE', do_lang('USERGROUP'), $_title) : $_title;
 
     $summary = get_translated_text($row['g_name'], $GLOBALS['FORUM_DB']);
 
+    require_code('cns_groups2');
     $num_members = cns_get_group_members_raw_count($row['id']);
     $entry_details = do_lang_tempcode('GROUP_NUM_MEMBERS', escape_html(integer_format($num_members)));
 
@@ -71,6 +76,7 @@ function render_group_box($row, $zone = '_SEARCH', $give_context = true, $guid =
         'URL' => $url,
         'FRACTIONAL_EDIT_FIELD_NAME' => $give_context ? null : 'name',
         'FRACTIONAL_EDIT_FIELD_URL' => $give_context ? null : '_SEARCH:admin_cns_groups:__edit:' . strval($row['id']),
+        'RESOURCE_TYPE' => 'group',
     ));
 }
 
@@ -105,6 +111,9 @@ function cns_create_selection_list_usergroups($it = null, $allow_guest_group = t
 function get_first_default_group()
 {
     $default_groups = cns_get_all_default_groups(true);
+    if (count($default_groups) == 0) {
+        $default_groups = array(db_get_first_id() + 8);
+    }
     return array_pop($default_groups);
 }
 
@@ -126,11 +135,11 @@ function cns_get_all_default_groups($include_primary = false, $include_all_confi
         return $ALL_DEFAULT_GROUPS_CACHE[$include_primary ? 1 : 0];
     }
 
-    $rows = $GLOBALS['FORUM_DB']->query_select('f_groups', array('id'), array('g_is_default' => 1, 'g_is_presented_at_install' => 0), 'ORDER BY g_order,' . $GLOBALS['FORUM_DB']->translate_field_ref('g_name'));
+    $rows = $GLOBALS['FORUM_DB']->query_select('f_groups', array('id', 'g_name'), array('g_is_default' => 1, 'g_is_presented_at_install' => 0), 'ORDER BY g_order,' . $GLOBALS['FORUM_DB']->translate_field_ref('g_name'));
     $groups = collapse_1d_complexity('id', $rows);
 
     if ($include_primary) {
-        $rows = $GLOBALS['FORUM_DB']->query_select('f_groups', array('id'), array('g_is_presented_at_install' => 1), 'ORDER BY g_order,' . $GLOBALS['FORUM_DB']->translate_field_ref('g_name'));
+        $rows = $GLOBALS['FORUM_DB']->query_select('f_groups', array('id', 'g_name'), array('g_is_presented_at_install' => 1), 'ORDER BY g_order,' . $GLOBALS['FORUM_DB']->translate_field_ref('g_name'));
         if (($include_all_configured_default_groups) || (count($rows) == 1) || (get_option('show_first_join_page') == '0')) { // If just 1 then we won't have presented a choice on the join form, so should inject that 1 as the default group as it is implied
             $groups = array_merge($groups, collapse_1d_complexity('id', $rows));
         }
@@ -167,13 +176,13 @@ function cns_ensure_groups_cached($groups)
         return;
     }
 
-    $count = persistent_cache_get('GROUPS_COUNT');
+    $total_groups = persistent_cache_get('GROUPS_COUNT');
 
     $groups_to_load = '';
-    $counter = 0;
-    foreach ($groups as $group) {
+    $expected_load_count = 0;
+    foreach (array_values($groups) as $group) {
         if (!array_key_exists($group, $USER_GROUPS_CACHED)) {
-            if (($count !== null) && ($count < 100)) {
+            if (($total_groups !== null) && ($total_groups < 100)) {
                 $USER_GROUPS_CACHED[$group] = persistent_cache_get('GROUP_' . strval($group));
                 if ($USER_GROUPS_CACHED[$group] !== null) {
                     continue;
@@ -184,15 +193,15 @@ function cns_ensure_groups_cached($groups)
                 $groups_to_load .= ' OR ';
             }
             $groups_to_load .= 'g.id=' . strval($group);
-            $counter++;
+            $expected_load_count++;
         }
     }
-    if ($counter == 0) {
+    if ($expected_load_count == 0) {
         return;
     }
     $extra_groups = $GLOBALS['FORUM_DB']->query('SELECT g.* FROM ' . $GLOBALS['FORUM_DB']->get_table_prefix() . 'f_groups g WHERE ' . $groups_to_load, null, null, false, true, array('g_name' => 'SHORT_TRANS', 'g_title' => 'SHORT_TRANS'));
 
-    if (count($extra_groups) != $counter) {
+    if (count($extra_groups) < $expected_load_count) {
         warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'group'));
     }
 
@@ -204,7 +213,7 @@ function cns_ensure_groups_cached($groups)
 
         $USER_GROUPS_CACHED[$extra_group['id']] = $extra_group;
 
-        if (($count !== null) && ($count < 100)) {
+        if (($total_groups !== null) && ($total_groups < 100)) {
             persistent_cache_set('GROUP_' . strval($extra_group['id']), $extra_group);
         }
     }
@@ -231,8 +240,10 @@ function cns_get_group_link($id, $hide_hidden = true)
 
     $name = cns_get_group_name($row['id'], $hide_hidden);
 
+    $members_groups = $GLOBALS['CNS_DRIVER']->get_members_groups(get_member());
+
     $see_hidden = has_privilege(get_member(), 'see_hidden_groups');
-    if ((!$see_hidden) && ($row['g_hidden'] == 1)) {
+    if ((!$see_hidden) && ($row['g_hidden'] == 1) && (!in_array($id, $members_groups))) {
         return make_string_tempcode(escape_html($name));
     }
 
@@ -269,7 +280,14 @@ function cns_get_group_property($group, $property, $hide_hidden = true)
     global $USER_GROUPS_CACHED;
 
     if ($hide_hidden) {
-        if (($property == 'name') && ($USER_GROUPS_CACHED[$group]['g_hidden'] == 1) && (!has_privilege(get_member(), 'see_hidden_groups'))) {
+        $members_groups = $GLOBALS['CNS_DRIVER']->get_members_groups(get_member());
+
+        if (
+            ($property == 'name') &&
+            ($USER_GROUPS_CACHED[$group]['g_hidden'] == 1) &&
+            (!has_privilege(get_member(), 'see_hidden_groups')) &&
+            (!in_array($group, $members_groups))
+        ) {
             return do_lang('UNKNOWN');
         }
     }
@@ -299,7 +317,7 @@ function cns_get_member_best_group_property($member_id, $property)
 function cns_get_best_group_property($groups, $property)
 {
     $big_is_better = array('gift_points_per_day', 'gift_points_base', 'enquire_on_new_ips', 'is_super_admin', 'is_super_moderator', 'max_daily_upload_mb', 'max_attachments_per_post', 'max_avatar_width', 'max_avatar_height', 'max_post_length_comcode', 'max_sig_length_comcode');
-    //$small_and_perfectly_formed=array('flood_control_submit_secs','flood_control_access_secs'); Not needed by elimination, but nice to have here as a note
+    //$small_and_perfectly_formed = array('flood_control_submit_secs', 'flood_control_access_secs'); Not needed by elimination, but nice to have here as a note
 
     $go_super_size = in_array($property, $big_is_better);
 
@@ -367,8 +385,11 @@ function cns_get_members_groups($member_id = null, $skip_secret = false, $handle
         }
     }
 
-    $skip_secret = (($skip_secret) && ((/*For installer*/
-                                       !function_exists('get_member')) || ($member_id != get_member())) && ((!function_exists('has_privilege')) || (!has_privilege(get_member(), 'see_hidden_groups'))));
+    $skip_secret = (
+        ($skip_secret) &&
+        ((/*For installer*/!function_exists('get_member')) || ($member_id != get_member())) &&
+        ((!function_exists('has_privilege')) || (!has_privilege(get_member(), 'see_hidden_groups')))
+    );
 
     global $GROUP_MEMBERS_CACHE;
     if (isset($GROUP_MEMBERS_CACHE[$member_id][$skip_secret][$handle_probation])) {
@@ -394,10 +415,6 @@ function cns_get_members_groups($member_id = null, $skip_secret = false, $handle
 
     require_code('cns_members');
     if ((!function_exists('cns_is_ldap_member')/*can happen if said in safe mode and detecting safe mode when choosing whether to avoid a custom file via admin permission which requires this function to run*/) || (!cns_is_ldap_member($member_id))) {
-        $_groups = $GLOBALS['FORUM_DB']->query_select('f_group_members m LEFT JOIN ' . $GLOBALS['FORUM_DB']->get_table_prefix() . 'f_groups g ON g.id=m.gm_group_id', array('gm_group_id', 'g_hidden'), array('gm_member_id' => $member_id, 'gm_validated' => 1), 'ORDER BY g.g_order');
-        foreach ($_groups as $group) {
-            $groups[$group['gm_group_id']] = true;
-        }
         if (!isset($GLOBALS['CNS_DRIVER'])) { // We didn't init fully (MICRO_BOOTUP), but now we dug a hole - get out of it
             if (method_exists($GLOBALS['FORUM_DRIVER'], 'forum_layer_initialise')) {
                 $GLOBALS['FORUM_DRIVER']->forum_layer_initialise();
@@ -410,6 +427,11 @@ function cns_get_members_groups($member_id = null, $skip_secret = false, $handle
         $groups[$primary_group] = true;
         foreach (array_keys($groups) as $group_id) {
             $groups[$group_id] = true;
+        }
+
+        $_groups = $GLOBALS['FORUM_DB']->query_select('f_group_members m LEFT JOIN ' . $GLOBALS['FORUM_DB']->get_table_prefix() . 'f_groups g ON g.id=m.gm_group_id', array('gm_group_id', 'g_hidden'), array('gm_member_id' => $member_id, 'gm_validated' => 1), 'ORDER BY g.g_order');
+        foreach ($_groups as $group) {
+            $groups[$group['gm_group_id']] = true;
         }
 
         $GROUP_MEMBERS_CACHE[$member_id][false][$handle_probation] = $groups;

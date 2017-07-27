@@ -6,7 +6,7 @@ Composr has a huge number of possibilities available via its impressive choice o
 
 [title="2"]Setting up the catalogue of stores[/title]
 
-The first part of this is to set up a catalogue within your install which will include all of the information relating to your stores and the positioning data for each store. To be able to fill in the data you will need to know both the longitude and latitude coordinates of each store. To find this you can use this free website. [url="http://itouchmap.com/latlong.html"]http://itouchmap.com/latlong.html[/url].
+The first part of this is to set up a catalogue within your install which will include all of the information relating to your stores and the positioning data for each store. To be able to fill in the data you will need to know both the longitude and latitude coordinates of each store. To find this you can use this free website. [url="https://itouchmap.com/latlong.html"]https://itouchmap.com/latlong.html[/url].
 
 I will go through the minimum for creating a new catalogue for your store locator. You can add as many fields to the information as you like but there are too many field option types to cover in this tutorial!
 
@@ -66,6 +66,6 @@ You can change these options to suit your own Catalogue. The parameters you can 
 [/list]
 You should note that the preview of this page will not work for this block so I recommend creating the page not attached to a live site and making sure it works before you link it to your live site.
 
-[box="Thank you Arvixe"]This tutorial was sponsored by [url="Arvixe hosting"]http://www.arvixe.com/5256-223-3-122.html[/url].[/box]
+[box="Thank you Arvixe"]This tutorial was sponsored by [url="Arvixe hosting"]http://arvixe.evyy.net/c/302199/279421/3370[/url].[/box]
 
 {$SET,tutorial_tags,eCommerce,Third Party Integration,Catalogues,novice}{$SET,tutorial_add_date,Aug 2013}{$SET,tutorial_summary,A store locator is very useful for any retail business. This tutorial shows how to create one using catalogues.}[block]main_tutorial_rating[/block]

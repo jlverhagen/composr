@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -42,6 +42,9 @@ class Hook_pointstore_topic_pin
         if (get_option('is_on_' . $class . '_buy') == '0') {
             return array();
         }
+        if (has_no_forum()) {
+            return array();
+        }
 
         $next_url = build_url(array('page' => '_SELF', 'type' => '_topic_pin', 'id' => $class), '_SELF');
         return array(do_template('POINTSTORE_' . strtoupper($class), array('NEXT_URL' => $next_url)));
@@ -56,6 +59,9 @@ class Hook_pointstore_topic_pin
     {
         $class = str_replace('hook_pointstore_', '', strtolower(get_class($this)));
         if (get_option('is_on_' . $class . '_buy') == '0') {
+            return new Tempcode();
+        }
+        if (has_no_forum()) {
             return new Tempcode();
         }
 
@@ -123,6 +129,9 @@ class Hook_pointstore_topic_pin
         if (get_option('is_on_' . $class . '_buy') == '0') {
             return new Tempcode();
         }
+        if (has_no_forum()) {
+            return new Tempcode();
+        }
 
         $title = get_screen_title('TOPIC_PINNING');
 
@@ -156,13 +165,15 @@ class Hook_pointstore_topic_pin
         $keep->attach(form_input_hidden('days', strval($days)));
         $proceed_url = build_url(array('page' => '_SELF', 'type' => '___topic_pin', 'id' => 'topic_pin'), '_SELF');
 
-        return do_template('POINTSTORE_CONFIRM_SCREEN', array('_GUID' => '94abff69da7ba3cca3d125ac4d519d72', 'TITLE' => $title,
-                                                              'KEEP' => $keep,
-                                                              'ACTION' => $action,
-                                                              'COST' => integer_format($total),
-                                                              'POINTS_AFTER' => integer_format($points_left - $total),
-                                                              'PROCEED_URL' => $proceed_url,
-                                                              'CANCEL_URL' => build_url(array('page' => '_SELF'), '_SELF'),
+        return do_template('POINTSTORE_CONFIRM_SCREEN', array(
+            '_GUID' => '94abff69da7ba3cca3d125ac4d519d72',
+            'TITLE' => $title,
+            'KEEP' => $keep,
+            'ACTION' => $action,
+            'COST' => integer_format($total),
+            'POINTS_AFTER' => integer_format($points_left - $total),
+            'PROCEED_URL' => $proceed_url,
+            'CANCEL_URL' => build_url(array('page' => '_SELF'), '_SELF'),
         ));
     }
 
@@ -175,6 +186,9 @@ class Hook_pointstore_topic_pin
     {
         $class = str_replace('hook_pointstore_', '', strtolower(get_class($this)));
         if (get_option('is_on_' . $class . '_buy') == '0') {
+            return new Tempcode();
+        }
+        if (has_no_forum()) {
             return new Tempcode();
         }
 

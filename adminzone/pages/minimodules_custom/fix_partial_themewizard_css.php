@@ -1,11 +1,29 @@
-<?php
+<?php /*
+
+ Composr
+ Copyright (c) ocProducts, 2004-2016
+
+ See text/EN/licence.txt for full licencing information.
+
+*/
+
+/**
+ * @license    http://opensource.org/licenses/cpal_1.0 Common Public Attribution License
+ * @copyright  ocProducts Ltd
+ * @package    theme_debug
+ */
 
 /*
 This script will spot when a theme has bits of default theme CSS that is not adjusted for that theme's seed.
 It could fix CSS upgraded via diff, or just poor copy-and-pasting of code back from the default theme CSS files.
 
 Take BACKUPs before running this.
+
+TODO: Maybe merge into ":theme_debug"
 */
+
+$title = get_screen_title('Themewizard theme repair', false);
+$title->evaluate_echo();
 
 i_solemnly_declare(I_UNDERSTAND_SQL_INJECTION | I_UNDERSTAND_XSS | I_UNDERSTAND_PATH_INJECTION);
 
@@ -59,6 +77,8 @@ while (($sheet = readdir($dh)) !== false) {
 
         if (!file_exists($saveat)) {
             copy(get_file_base() . '/themes/default/css/' . $sheet, $saveat);
+            fix_permissions($saveat);
+            sync_file($saveat);
         }
 
         $output = file_get_contents($saveat);
@@ -80,13 +100,8 @@ while (($sheet = readdir($dh)) !== false) {
         }
 
         if ($output != $before) {
-            $fp = @fopen($saveat, 'wb') or intelligent_write_error($saveat);
-            if (fwrite($fp, $output) < strlen($output)) {
-                warn_exit(do_lang_tempcode('COULD_NOT_SAVE_FILE'));
-            }
-            fclose($fp);
-            fix_permissions($saveat);
-            sync_file($saveat);
+            require_code('files');
+            cms_file_put_contents_safe($saveat, $output, FILE_WRITE_FIX_PERMISSIONS | FILE_WRITE_SYNC_FILE);
 
             echo '<li>' . escape_html($sheet) . '</li>';
         }

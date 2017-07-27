@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -28,9 +28,13 @@ function clear_cms_autosave()
         return;
     }
 
+    if (!function_exists('get_member')) {
+        return;
+    }
+
     foreach (array_keys($_COOKIE) as $key) {
         if (substr($key, 0, 13) == 'cms_autosave_') {
-            if (strpos($key, get_page_name()) !== false) {
+            if (strpos($key, get_page_name()) !== false || strpos($key, str_replace('_', '-', get_page_name())) !== false) {
                 // Has to do both, due to inconsistencies with how PHP reads and sets cookies -- reading de-urlencodes (although not strictly needed), while setting does not urlencode; may differ between versions
                 require_code('users_active_actions');
                 cms_setcookie(urlencode($key), '0', false, false, 0);

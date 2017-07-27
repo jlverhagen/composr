@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -79,9 +79,9 @@ function ticket_outgoing_message($ticket_id, $ticket_url, $ticket_type_name, $su
     require_code('mail');
     $extended_message = '';
     $extended_message .= do_lang('TICKET_SIMPLE_MAIL_' . ($new ? 'new' : 'reply'), get_site_name(), $ticket_type_name, array($ticket_url, $from_displayname));
-    $extended_message .= comcode_to_clean_text($message);
+    $extended_message .= $message;
 
-    mail($to_name . ' <' . $to_email . '>', $extended_subject, $extended_message, $headers);
+    mail($to_name . ' <' . $to_email . '>', $extended_subject, comcode_to_clean_text($extended_message), $headers);
 }
 
 /**
@@ -161,11 +161,23 @@ function ticket_incoming_scan()
             }
             _imap_get_part($resource, $l, 'APPLICATION/OCTET-STREAM', $attachments, $attachment_size_total);
 
-            if (!is_non_human_email($subject, $body, $full_header)) {
+            if (strlen($header->reply_toaddress) > 0) {
+                $from_email = get_ticket_email_from_header($header->reply_toaddress);
+                if (find_ticket_member_from_email($from_email) === null) {
+                    $from_email_alt = get_ticket_email_from_header($header->fromaddress);
+                    if (find_ticket_member_from_email($from_email_alt) !== null) {
+                        $from_email = $from_email_alt;
+                    }
+                }
+            } else {
+                $from_email = get_ticket_email_from_header($header->fromaddress);
+            }
+
+            if (!is_non_human_email($subject, $body, $full_header, $from_email)) {
                 imap_clearflag_full($resource, $l, '\\Seen'); // Clear this, as otherwise it is a real pain to debug (have to keep manually marking unread)
 
                 ticket_incoming_message(
-                    (strlen($header->reply_toaddress) > 0) ? $header->reply_toaddress : $header->fromaddress,
+                    $from_email,
                     $subject,
                     $body,
                     $attachments
@@ -176,7 +188,13 @@ function ticket_incoming_scan()
         }
         imap_close($resource);
     } else {
-        warn_exit(do_lang_tempcode('IMAP_ERROR', imap_last_error()));
+        $error = imap_last_error();
+        imap_errors(); // Works-around weird PHP bug where "Retrying PLAIN authentication after [AUTHENTICATIONFAILED] Authentication failed. (errflg=1) in Unknown on line 0" may get spit out into any stream (even the backup log)
+
+        $cli = ((php_function_allowed('php_sapi_name')) && (php_sapi_name() == 'cli') && (cms_srv('REMOTE_ADDR') == ''));
+        if (!$cli && get_param_integer('no_fatal_cron_errors', 0) != 1) {
+            warn_exit(do_lang_tempcode('IMAP_ERROR', $error));
+        }
     }
 }
 
@@ -279,10 +297,15 @@ function email_comcode_from_text($body)
  * @param  string $subject Subject line
  * @param  string $body Message body
  * @param  string $full_header Message headers
+ * @param  EMAIL $from_email From address
  * @return boolean Whether it should not be processed
  */
-function is_non_human_email($subject, $body, $full_header)
+function is_non_human_email($subject, $body, $full_header, $from_email)
 {
+    if ($from_email == get_option('ticket_email_from') || $from_email == get_option('staff_address') || $from_email == get_option('website_email')) {
+        return true;
+    }
+
     $full_header = "\r\n" . strtolower($full_header);
     if (strpos($full_header, "\r\nfrom: <>") !== false) {
         return true;
@@ -316,6 +339,7 @@ function is_non_human_email($subject, $body, $full_header)
  *
  * @param  array $matches preg Matches
  * @return string The result
+ *
  * @ignore
  */
 function _convert_text_quote_to_comcode($matches)
@@ -328,6 +352,7 @@ function _convert_text_quote_to_comcode($matches)
  *
  * @param  object $structure Structure
  * @return string Mime type
+ *
  * @ignore
  */
 function _imap_get_mime_type($structure)
@@ -341,7 +366,7 @@ function _imap_get_mime_type($structure)
 
 /**
  * Find a message part of an e-mail that matches a mime-type.
- * Taken from http://www.php.net/manual/en/function.imap-fetchbody.php
+ * Taken from http://php.net/manual/en/function.imap-fetchbody.php
  *
  * @param  resource $stream IMAP connection object
  * @param  integer $msg_number Message number
@@ -452,7 +477,7 @@ function ticket_incoming_message($from_email, $subject, $body, $attachments)
             $existing_ticket = $matches[2];
 
             // Validate
-            $topic_id = $GLOBALS['FORUM_DRIVER']->find_topic_id_for_topic_identifier(get_option('ticket_forum_name'), $existing_ticket);
+            $topic_id = $GLOBALS['FORUM_DRIVER']->find_topic_id_for_topic_identifier(get_option('ticket_forum_name'), $existing_ticket, do_lang('SUPPORT_TICKET'));
             if (is_null($topic_id)) {
                 $existing_ticket = null; // Invalid
             }
@@ -480,14 +505,14 @@ function ticket_incoming_message($from_email, $subject, $body, $attachments)
         }
     }
     if ($forwarded) {
-        if (preg_match('#From:(.*)#s', $body, $matches) != 0) {
-            $from_email = $matches[1];
+        if (find_ticket_member_from_email($from_email) === null) {
+            if (preg_match('#From:(.*)#s', $body, $matches) != 0) {
+                $from_email_alt = get_ticket_email_from_header($matches[1]);
+                if (find_ticket_member_from_email($from_email_alt) !== null) {
+                    $from_email = $from_email_alt;
+                }
+            }
         }
-    }
-
-    // Clean up e-mail address
-    if (preg_match('#([\w\.\-\+]+@[\w\.\-]+)#', $from_email, $matches) != 0) {
-        $from_email = $matches[1];
     }
 
     // Try to bind to a from member
@@ -533,6 +558,7 @@ function ticket_incoming_message($from_email, $subject, $body, $attachments)
 
     // Add in attachments
     foreach ($attachments as $filename => $filedata) {
+        require_code('files');
         $new_filename = preg_replace('#\..*#', '', $filename) . '.dat';
         do {
             $new_path = get_custom_file_base() . '/uploads/attachments/' . $new_filename;
@@ -540,9 +566,7 @@ function ticket_incoming_message($from_email, $subject, $body, $attachments)
                 $new_filename = uniqid('', true) . '_' . preg_replace('#\..*#', '', $filename) . '.dat';
             }
         } while (file_exists($new_path));
-        file_put_contents($new_path, $filedata);
-        sync_file($new_path);
-        fix_permissions($new_path);
+        cms_file_put_contents_safe($new_path, $filedata, FILE_WRITE_FIX_PERMISSIONS | FILE_WRITE_SYNC_FILE);
 
         $attachment_id = $GLOBALS['SITE_DB']->query_insert('attachments', array(
             'a_member_id' => $member_id,
@@ -622,4 +646,36 @@ function ticket_incoming_message($from_email, $subject, $body, $attachments)
         // Send email (to staff & to confirm receipt to $member_id)
         send_ticket_email($existing_ticket, $__title, $body, $home_url, $from_email, null, $member_id, true);
     }
+}
+
+/**
+ * Try and get an e-mail address from an embedded part of an e-mail header.
+ *
+ * @param  string $from_email E-mail header
+ * @return string E-mail address (hopefully)
+ */
+function get_ticket_email_from_header($from_email)
+{
+    $matches = array();
+    if (preg_match('#([\w\.\-\+]+@[\w\.\-]+)#', $from_email, $matches) != 0) {
+        $from_email = $matches[1];
+    }
+    return $from_email;
+}
+
+/**
+ * Find the ticket member for an e-mail address.
+ *
+ * @param  string $from_email E-mail address
+ * @return ?MEMBER Member ID (null: none)
+ */
+function find_ticket_member_from_email($from_email)
+{
+    $member_id = $GLOBALS['SITE_DB']->query_select_value_if_there('ticket_known_emailers', 'member_id', array(
+        'email_address' => $from_email,
+    ));
+    if ($member_id === null) {
+        $member_id = $GLOBALS['FORUM_DRIVER']->get_member_from_email_address($from_email);
+    }
+    return $member_id;
 }

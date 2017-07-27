@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -70,7 +70,7 @@ class Hook_search_cns_clubs extends FieldsSearchHook
     /**
      * Get a list of extra fields to ask for.
      *
-     * @return array A list of maps specifying extra fields
+     * @return ?array A list of maps specifying extra fields (null: no tree)
      */
     public function get_fields()
     {
@@ -127,7 +127,7 @@ class Hook_search_cns_clubs extends FieldsSearchHook
         $where_clause .= 'g_hidden=0 AND g_is_private_club=1';
 
         $table = 'f_groups r';
-        $trans_fields = array('!' => '!', 'r.g_name' => 'SHORT_TRANS', 'r.g_title' => 'SHORT_TRANS');
+        $trans_fields = array('r.g_name' => 'SHORT_TRANS', 'r.g_title' => 'SHORT_TRANS');
         $nontrans_fields = array();
         $this->_get_search_parameterisation_advanced_for_content_type('_group', $table, $where_clause, $trans_fields, $nontrans_fields);
 
@@ -174,6 +174,7 @@ class Hook_search_cns_clubs extends FieldsSearchHook
             'TITLE' => $title,
             'SUMMARY' => $summary,
             'URL' => $url,
+            'RESOURCE_TYPE' => 'group',
         ));
     }
 }

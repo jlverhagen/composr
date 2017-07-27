@@ -11,11 +11,11 @@
 </p>
 
 <div class="float_surrounder" id="ze_panels_wrap">
-	<div id="p_panel_left" class="ze_panel" onmouseover="this.className='ze_panel ze_panel_expanded'; if (!this.style.width) this.style.width='19em'; ze_animate_to(this,45,true);" onmouseout="this.className='ze_panel'; if (!this.style.width) this.style.width='45em'; ze_animate_to(this,19,false);">
+	<div id="p_panel_left" class="ze_panel" onmouseover="this.className='ze_panel ze_panel_expanded'; if (!this.style.width) this.style.width='19em'; ze_animate_to(this,45,true);" onmouseleave="this.className='ze_panel'; if (!this.style.width) this.style.width='45em'; ze_animate_to(this,19,false);">
 		{LEFT_EDITOR}
 	</div>
 
-	<div id="p_panel_right" class="ze_panel" onmouseover="this.className='ze_panel ze_panel_expanded'; if (!this.style.width) this.style.width='19em'; ze_animate_to(this,45,true);" onmouseout="this.className='ze_panel'; if (!this.style.width) this.style.width='45em'; ze_animate_to(this,19,false);">
+	<div id="p_panel_right" class="ze_panel" onmouseover="this.className='ze_panel ze_panel_expanded'; if (!this.style.width) this.style.width='19em'; ze_animate_to(this,45,true);" onmouseleave="this.className='ze_panel'; if (!this.style.width) this.style.width='45em'; ze_animate_to(this,19,false);">
 		{RIGHT_EDITOR}
 	</div>
 
@@ -26,14 +26,14 @@
 
 <hr class="spaced_rule" />
 
-<form title="{!SAVE}" action="{URL*}" method="post" target="_self">
+<form title="{!SAVE}" action="{URL*}" method="post" target="_self" autocomplete="off" onsubmit="return modsecurity_workaround(this);">
 	{$INSERT_SPAMMER_BLACKHOLE}
 
 	<div id="edit_field_store" style="display: none">
 	</div>
 
 	<p class="proceed_button vertical_alignment">
-		<input class="buttons__save button_screen" type="button" value="{!SAVE}" onclick="fetch_more_fields(); this.form.submit();" /> <span class="associated_details">{!ZE_CLICK_TO_EDIT}</span>
+		<input class="button_screen buttons__save" type="button" value="{!SAVE}" onclick="fetch_more_fields(); this.form.submit();" /> <span class="associated_details">{!ZE_CLICK_TO_EDIT}</span>
 	</p>
 </form>
 

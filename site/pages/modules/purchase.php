@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -36,8 +36,8 @@ class Module_purchase
         $info['hacked_by'] = null;
         $info['hack_version'] = null;
         $info['version'] = 6;
+        $info['update_require_upgrade'] = true;
         $info['locked'] = false;
-        $info['update_require_upgrade'] = 1;
         return $info;
     }
 
@@ -51,7 +51,7 @@ class Module_purchase
 
         delete_privilege('access_ecommerce_in_test_mode');
 
-        $cpf = array('currency', 'payment_cardholder_name', 'payment_type', 'payment_card_number', 'payment_card_start_date', 'payment_card_expiry_date', 'payment_card_issue_number', 'payment_card_cv2');
+        $cpf = array('currency', 'payment_cardholder_name', 'payment_type', 'payment_card_number', 'payment_card_start_date', 'payment_card_expiry_date', 'payment_card_issue_number');
         foreach ($cpf as $_cpf) {
             $GLOBALS['FORUM_DRIVER']->install_delete_custom_field($_cpf);
         }
@@ -83,7 +83,7 @@ class Module_purchase
             ));
 
             require_code('currency');
-            $cpf = array('currency' => array(3, 'list', implode('|', array_keys(get_currency_map()))));
+            $cpf = array('currency' => array(3, 'list', '|' . implode('|', array_keys(get_currency_map()))));
             foreach ($cpf as $f => $l) {
                 $GLOBALS['FORUM_DRIVER']->install_create_custom_field($f, $l[0], 0, 0, 1, 0, '', $l[1], 0, $l[2]);
             }
@@ -129,7 +129,7 @@ class Module_purchase
      * @param  boolean $check_perms Whether to check permissions.
      * @param  ?MEMBER $member_id The member to check permissions as (null: current user).
      * @param  boolean $support_crosslinks Whether to allow cross links to other modules (identifiable via a full-page-link rather than a screen-name).
-     * @param  boolean $be_deferential Whether to avoid any entry-point (or even return NULL to disable the page in the Sitemap) if we know another module, or page_group, is going to link to that entry-point. Note that "!" and "browse" entry points are automatically merged with container page nodes (likely called by page-groupings) as appropriate.
+     * @param  boolean $be_deferential Whether to avoid any entry-point (or even return null to disable the page in the Sitemap) if we know another module, or page_group, is going to link to that entry-point. Note that "!" and "browse" entry points are automatically merged with container page nodes (likely called by page-groupings) as appropriate.
      * @return ?array A map of entry points (screen-name=>language-code/string or screen-name=>[language-code/string, icon-theme-image]) (null: disabled).
      */
     public function get_entry_points($check_perms = true, $member_id = null, $support_crosslinks = true, $be_deferential = false)
@@ -142,7 +142,7 @@ class Module_purchase
     public $title;
 
     /**
-     * Module pre-run function. Allows us to know meta-data for <head> before we start streaming output.
+     * Module pre-run function. Allows us to know metadata for <head> before we start streaming output.
      *
      * @return ?Tempcode Tempcode indicating some kind of exceptional output (null: none).
      */
@@ -189,8 +189,10 @@ class Module_purchase
         if (!is_null($new_username)) {
             require_code('cns_join');
             list($messages) = cns_join_actual(true, false, false, true, false, false, false, true);
-            if (!$messages->is_empty()) {
-                return inform_screen($this->title, $messages);
+            if (is_guest()) {
+                if (!$messages->is_empty()) {
+                    return inform_screen($this->title, $messages);
+                }
             }
         }
 
@@ -362,7 +364,7 @@ class Module_purchase
         }
         $url = build_url(array('page' => '_SELF', 'type' => is_null($fields) ? 'pay' : 'details', 'type_code' => $type_code, 'id' => get_param_integer('id', -1), 'accepted' => 1), '_SELF', null, true, true);
 
-        return $this->_wrap(do_template('PURCHASE_WIZARD_STAGE_LICENCE', array('_GUID' => '55c7bc550bb327535db1aebdac9d85f2', 'TITLE' => $this->title, 'URL' => $url, 'LICENCE' => $terms)), $this->title, null);
+        return $this->_wrap(do_template('PURCHASE_WIZARD_STAGE_TERMS', array('_GUID' => '55c7bc550bb327535db1aebdac9d85f2', 'TITLE' => $this->title, 'URL' => $url, 'TERMS' => $terms)), $this->title, null);
     }
 
     /**
@@ -454,7 +456,7 @@ class Module_purchase
             $length = null;
             $length_units = '';
 
-            //Add cataloue item order to shopping_orders
+            // Add cataloue item order to shopping_orders
             if (method_exists($object, 'add_purchase_order')) {
                 $purchase_id = strval($object->add_purchase_order($type_code, $temp[$type_code]));
             }
@@ -560,6 +562,14 @@ class Module_purchase
 
                 list($success, , $message, $message_raw) = $object->do_transaction($trans_id, $name, $card_number, $amount, $currency, $expiry_date, $issue_number, $start_date, $card_type, $cv2, $length, $length_units);
 
+                $item_name = $transaction_row['e_item_name'];
+
+                if (addon_installed('shopping')) {
+                    if (preg_match('#' . str_replace('xxx', '.*', preg_quote(do_lang('shopping:CART_ORDER', 'xxx'), '#')) . '#', $item_name) != 0) {
+                        $this->store_shipping_address(intval($transaction_row['e_purchase_id']));
+                    }
+                }
+
                 if (($success) || (!is_null($length))) {
                     $status = ((!is_null($length)) && (!$success)) ? 'SCancelled' : 'Completed';
                     handle_confirmed_transaction($transaction_row['e_purchase_id'], $transaction_row['e_item_name'], $status, $message_raw, '', '', $amount, $currency, $trans_id, '', is_null($length) ? '' : strtolower(strval($length) . ' ' . $length_units), $via);
@@ -574,11 +584,9 @@ class Module_purchase
 
             $type_code = get_param_string('type_code', '');
             if ($type_code != '') {
-                if (count($_POST) != 0) { // Alternative to IPN, *if* posted fields sent here
+                if ((!perform_local_payment()) && (has_interesting_post_fields())) { // Alternative to IPN, *if* posted fields sent here
                     handle_transaction_script();
                 }
-
-                attach_message(do_lang_tempcode('SUCCESS'), 'inform');
 
                 $product_object = find_product($type_code);
 
@@ -637,6 +645,8 @@ class Module_purchase
                 }
 
                 require_code('cns_join');
+
+                check_joining_allowed();
 
                 $url = get_self_url();
 

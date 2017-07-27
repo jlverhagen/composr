@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -41,23 +41,23 @@ class Module_cms_cns_groups extends Standard_crud_module
      * @param  boolean $check_perms Whether to check permissions.
      * @param  ?MEMBER $member_id The member to check permissions as (null: current user).
      * @param  boolean $support_crosslinks Whether to allow cross links to other modules (identifiable via a full-page-link rather than a screen-name).
-     * @param  boolean $be_deferential Whether to avoid any entry-point (or even return NULL to disable the page in the Sitemap) if we know another module, or page_group, is going to link to that entry-point. Note that "!" and "browse" entry points are automatically merged with container page nodes (likely called by page-groupings) as appropriate.
+     * @param  boolean $be_deferential Whether to avoid any entry-point (or even return null to disable the page in the Sitemap) if we know another module, or page_group, is going to link to that entry-point. Note that "!" and "browse" entry points are automatically merged with container page nodes (likely called by page-groupings) as appropriate.
      * @return ?array A map of entry points (screen-name=>language-code/string or screen-name=>[language-code/string, icon-theme-image]) (null: disabled).
      */
     public function get_entry_points($check_perms = true, $member_id = null, $support_crosslinks = true, $be_deferential = false)
     {
         return array(
-                   'browse' => array('MANAGE_CLUBS', 'menu/cms/clubs'),
-               ) + parent::get_entry_points();
+            'browse' => array('MANAGE_CLUBS', 'menu/cms/clubs'),
+        ) + parent::get_entry_points();
     }
 
     public $title;
 
     /**
-     * Module pre-run function. Allows us to know meta-data for <head> before we start streaming output.
+     * Module pre-run function. Allows us to know metadata for <head> before we start streaming output.
      *
      * @param  boolean $top_level Whether this is running at the top level, prior to having sub-objects called.
-     * @param  ?ID_TEXT $type The screen type to consider for meta-data purposes (null: read from environment).
+     * @param  ?ID_TEXT $type The screen type to consider for metadata purposes (null: read from environment).
      * @return ?Tempcode Tempcode indicating some kind of exceptional output (null: none).
      */
     public function pre_run($top_level = true, $type = null)
@@ -202,7 +202,7 @@ class Module_cms_cns_groups extends Standard_crud_module
     {
         $fields = new Tempcode();
         $count = $GLOBALS['FORUM_DB']->query_select_value('f_groups', 'COUNT(*)', array('g_is_private_club' => 1));
-        if ($count < 500) {
+        if ($count < intval(get_option('general_safety_listing_limit'))) {
             $rows = $GLOBALS['FORUM_DB']->query_select('f_groups', array('id', 'g_name', 'g_promotion_target', 'g_is_super_admin', 'g_group_leader'), array('g_is_private_club' => 1), 'ORDER BY g_name');
         } else {
             $rows = $GLOBALS['FORUM_DB']->query_select('f_groups', array('id', 'g_name', 'g_promotion_target', 'g_is_super_admin', 'g_group_leader'), array('g_group_leader' => get_member(), 'g_is_private_club' => 1), 'ORDER BY g_name');
@@ -269,7 +269,7 @@ class Module_cms_cns_groups extends Standard_crud_module
         if ($_group_leader != '') {
             $group_leader = $GLOBALS['FORUM_DRIVER']->get_member_from_username($_group_leader);
             if (is_null($group_leader)) {
-                warn_exit(do_lang_tempcode('_MEMBER_NO_EXIST', $_group_leader));
+                warn_exit(do_lang_tempcode('_MEMBER_NO_EXIST', escape_html($_group_leader)));
             }
         } else {
             $group_leader = null;
@@ -373,7 +373,7 @@ class Module_cms_cns_groups extends Standard_crud_module
         if ($_group_leader != '') {
             $group_leader = $GLOBALS['FORUM_DRIVER']->get_member_from_username($_group_leader);
             if (is_null($group_leader)) {
-                warn_exit(do_lang_tempcode('_MEMBER_NO_EXIST', $_group_leader));
+                warn_exit(do_lang_tempcode('_MEMBER_NO_EXIST', escape_html($_group_leader)));
             }
         } else {
             $group_leader = null;

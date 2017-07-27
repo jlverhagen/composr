@@ -5,13 +5,13 @@
 		<p><em>{!ONLY_1000_SHOWN}</em></p>
 	{+END}
 
-	<form title="{!PRIMARY_PAGE_FORM}" action="{$PAGE_LINK*,_SEARCH:admin_trackbacks:delete}" method="post">
+	<form title="{!PRIMARY_PAGE_FORM}" action="{$PAGE_LINK*,_SEARCH:admin_trackbacks:delete}" method="post" autocomplete="off">
 		{$INSERT_SPAMMER_BLACKHOLE}
 
 		{TRACKBACKS}
 
 		<p class="proceed_button">
-			<input onclick="disable_button_just_clicked(this);" class="menu___generic_admin__delete button_screen" type="submit" value="{!DELETE}" />
+			<input onclick="disable_button_just_clicked(this);" class="button_screen menu___generic_admin__delete" type="submit" value="{!DELETE}" />
 		</p>
 	</form>
 {+END}

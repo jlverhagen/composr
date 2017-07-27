@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -51,6 +51,9 @@ class Hook_config_secondary_members_per_page
      */
     public function get_default()
     {
+        if (get_forum_type() != 'cns') {
+            return null;
+        }
         return '50';
     }
 }

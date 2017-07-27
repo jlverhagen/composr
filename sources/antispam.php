@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -25,12 +25,14 @@
  */
 function init__antispam()
 {
-    define('ANTISPAM_RESPONSE_SKIP', -2);
-    define('ANTISPAM_RESPONSE_ERROR', -1);
-    define('ANTISPAM_RESPONSE_UNLISTED', 0);
-    define('ANTISPAM_RESPONSE_STALE', 1);
-    define('ANTISPAM_RESPONSE_ACTIVE', 2);
-    define('ANTISPAM_RESPONSE_ACTIVE_UNKNOWN_STALE', 3);
+    if (!defined('ANTISPAM_RESPONSE_SKIP')) {
+        define('ANTISPAM_RESPONSE_SKIP', -2);
+        define('ANTISPAM_RESPONSE_ERROR', -1);
+        define('ANTISPAM_RESPONSE_UNLISTED', 0);
+        define('ANTISPAM_RESPONSE_STALE', 1);
+        define('ANTISPAM_RESPONSE_ACTIVE', 2);
+        define('ANTISPAM_RESPONSE_ACTIVE_UNKNOWN_STALE', 3);
+    }
 }
 
 /**
@@ -115,7 +117,7 @@ function check_rbls($page_level = false, $user_ip = null)
  * @param  IP $user_ip The IP address to lookup
  * @param  boolean $we_have_a_result_already If true, then no RBL check will happen if the RBL has no scoring, because it can't provide a superior result to what is already known (performance)
  * @param  boolean $page_level Whether this is a page level check (i.e. we won't consider blocks or approval, just ban setting)
- * @return array Pair: Listed for potential blocking as a ANTISPAM_RESPONSE_* constant, confidence level if attainable (0.0 to 1.0) (else NULL)
+ * @return array Pair: Listed for potential blocking as a ANTISPAM_RESPONSE_* constant, confidence level if attainable (0.0 to 1.0) (else null)
  */
 function check_rbl($rbl, $user_ip, $we_have_a_result_already = false, $page_level = false)
 {
@@ -153,44 +155,6 @@ function check_rbl($rbl, $user_ip, $we_have_a_result_already = false, $page_leve
 
         foreach ($rtornevall as $rbl_t => $rbl_tc) {
             if ((($rbl_response[3] & $rbl_tc) != 0) && ($block[$rbl_t])) {
-                return array(ANTISPAM_RESPONSE_ACTIVE_UNKNOWN_STALE, null);
-            }
-        }
-        return array(ANTISPAM_RESPONSE_UNLISTED, null); // Not listed / Not listed with a threat status
-    }
-
-    // Blocking based on njabl.org settings (not used by default)
-    // http://njabl.org/use.html
-    if (strpos($rbl, 'njabl.org') !== false) {
-        $block = array(
-            'njabl_dialup' => false,                // Njabl: Block dialups/dynamic ip-ranges (Be careful!)
-            'njabl_formmail' => true,                // Njabl: Block systems with insecure scripts that make them into open relays
-            'njabl_multi' => false,                // Njabl: Block multi-stage open relays (Don't know what this is? Leave it alone)
-            'njabl_openproxy' => true,            // Njabl: Block open proxy servers
-            'njabl_passive' => false,                // Njabl: Block passively detected 'bad hosts' (Don't know what this is? Leave it alone)
-            'njabl_relay' => false,                // Njabl: Block open relays (as in e-mail-open-relays - be careful)
-            'njabl_spam' => false                    // Njabl: lock spam sources (Again, as in e-mail
-        );
-        $rnjabl = array(
-            'njabl_relay' => 2,
-            'njabl_dialup' => 3,
-            'njabl_spam' => 4,
-            'njabl_multi' => 5,
-            'njabl_passive' => 6,
-            'njabl_formmail' => 8,
-            'njabl_openproxy' => 9
-        );
-
-        if ($we_have_a_result_already) {
-            return array(ANTISPAM_RESPONSE_SKIP, null); // We know better than this RBL can tell us, so stick with what we know
-        }
-        $rbl_response = rbl_resolve($user_ip, $rbl, $page_level);
-        if (is_null($rbl_response)) {
-            return array(ANTISPAM_RESPONSE_ERROR, null); // Error
-        }
-
-        foreach ($rnjabl as $njcheck => $value) {
-            if (($rbl_response[3] == $value) && ($block[$njcheck])) {
                 return array(ANTISPAM_RESPONSE_ACTIVE_UNKNOWN_STALE, null);
             }
         }
@@ -414,7 +378,7 @@ function check_stopforumspam($username = null, $email = null)
  * @param  string $user_ip Check this IP address
  * @param  ?string $username Check this particular username that has just been supplied (null: none)
  * @param  ?string $email Check this particular email address that has just been supplied (null: none)
- * @return array Pair: Listed for potential blocking as a ANTISPAM_RESPONSE_* constant, confidence level if attainable (0.0 to 1.0) (else NULL)
+ * @return array Pair: Listed for potential blocking as a ANTISPAM_RESPONSE_* constant, confidence level if attainable (0.0 to 1.0) (else null)
  * @ignore
  */
 function _check_stopforumspam($user_ip, $username = null, $email = null)
@@ -423,6 +387,10 @@ function _check_stopforumspam($user_ip, $username = null, $email = null)
 
     $confidence_level = mixed();
     $status = ANTISPAM_RESPONSE_UNLISTED;
+
+    if (strpos($user_ip, ':') !== false) { // No ipv6 support
+        return array(ANTISPAM_RESPONSE_ERROR, $confidence_level); // TODO: #2585
+    }
 
     // Do the query with every detail we have
     require_code('files');

@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -37,7 +37,10 @@ function incoming_bounced_email_script()
     if (preg_match('#^From: .*([^ ]+@[^ ]+)#m', $bounce_email, $matches) != 0) {
         $email = $matches[1];
 
-        $GLOBALS['SITE_DB']->query_delete('newsletter_subscribers', array('email' => $email), '', 1);
+        $id = $GLOBALS['SITE_DB']->query_select_value_if_there('newsletter_subscribers', 'id', array('email' => $email));
+        if (!is_null($id)) {
+            delete_newsletter_subscriber($id);
+        }
     }
 }
 
@@ -48,19 +51,19 @@ function incoming_bounced_email_script()
  * @param  EMAIL $email The email address of the subscriber
  * @param  integer $interest_level The interest level
  * @range  1 4
- * @param  ?LANGUAGE_NAME $lang The language (null: users)
+ * @param  ?LANGUAGE_NAME $language The language (null: users)
  * @param  boolean $get_confirm_mail Whether to require a confirmation mail
  * @param  ?AUTO_LINK $newsletter_id The newsletter to join (null: the first)
  * @param  string $forename Subscribers forename
  * @param  string $surname Subscribers surname
  * @return string Newsletter password
  */
-function basic_newsletter_join($email, $interest_level = 4, $lang = null, $get_confirm_mail = false, $newsletter_id = null, $forename = '', $surname = '')
+function basic_newsletter_join($email, $interest_level = 4, $language = null, $get_confirm_mail = false, $newsletter_id = null, $forename = '', $surname = '')
 {
     require_lang('newsletter');
 
-    if (is_null($lang)) {
-        $lang = user_lang();
+    if (is_null($language)) {
+        $language = user_lang();
     }
     if (is_null($newsletter_id)) {
         $newsletter_id = db_get_first_id();
@@ -73,20 +76,14 @@ function basic_newsletter_join($email, $interest_level = 4, $lang = null, $get_c
         $password = get_rand_password();
         $salt = produce_salt();
         $code_confirm = $get_confirm_mail ? mt_rand(1, 9999999) : 0;
-        $GLOBALS['SITE_DB']->query_insert('newsletter_subscribers', array(
-            'n_forename' => $forename,
-            'n_surname' => $surname,
-            'join_time' => time(),
-            'email' => $email,
-            'code_confirm' => $code_confirm,
-            'pass_salt' => $salt,
-            'the_password' => ratchet_hash($password, $salt, PASSWORD_SALT),
-            'language' => $lang,
-        ), false, true); // race condition
+        add_newsletter_subscriber($email, time(), $code_confirm, ratchet_hash($password, $salt, PASSWORD_SALT), $salt, $language, $forename, $surname);
     } else {
         if ($code_confirm > 0) {
             // Was not confirmed, allow confirm mail to go again as if this was new, and update their details
-            $GLOBALS['SITE_DB']->query_update('newsletter_subscribers', array('n_forename' => $forename, 'n_surname' => $surname, 'join_time' => time(), 'language' => $lang), array('email' => $email), '', 1);
+            $id = $GLOBALS['SITE_DB']->query_select_value_if_there('newsletter_subscribers', 'id', array('email' => $email));
+            if (!is_null($id)) {
+                edit_newsletter_subscriber($id, $email, time(), null, null, null, $language, $forename, $surname);
+            }
             $password = do_lang('NEWSLETTER_PASSWORD_ENCRYPTED');
         } else {
             // Already on newsletter and confirmed so don't allow tampering without authorisation, which this method can't do
@@ -99,9 +96,9 @@ function basic_newsletter_join($email, $interest_level = 4, $lang = null, $get_c
         $_url = build_url(array('page' => 'newsletter', 'type' => 'confirm', 'email' => $email, 'confirm' => $code_confirm), get_module_zone('newsletter'));
         $url = $_url->evaluate();
         $newsletter_url = build_url(array('page' => 'newsletter'), get_module_zone('newsletter'));
-        $message = do_lang('NEWSLETTER_SIGNUP_TEXT', comcode_escape($url), comcode_escape($password), array($forename, $surname, $email, get_site_name(), $newsletter_url->evaluate()), $lang);
+        $message = do_lang('NEWSLETTER_SIGNUP_TEXT', comcode_escape($url), comcode_escape($password), array($forename, $surname, $email, get_site_name(), $newsletter_url->evaluate()), $language);
         require_code('mail');
-        mail_wrap(do_lang('NEWSLETTER_SIGNUP', null, null, null, $lang), $message, array($email), null, '', '', 3, null, false, null, false, false, false, 'MAIL', true);
+        mail_wrap(do_lang('NEWSLETTER_SIGNUP', null, null, null, $language), $message, array($email), null, '', '', 3, null, false, null, false, false, false, 'MAIL', true);
     }
 
     // Set subscription
@@ -116,7 +113,7 @@ function basic_newsletter_join($email, $interest_level = 4, $lang = null, $get_c
  *
  * @param  LONG_TEXT $message The newsletter message
  * @param  SHORT_TEXT $subject The newsletter subject
- * @param  LANGUAGE_NAME $lang The language
+ * @param  LANGUAGE_NAME $language The language
  * @param  array $send_details A map describing what newsletters and newsletter levels the newsletter is being sent to
  * @param  BINARY $html_only Whether to only send in HTML format
  * @param  string $from_email Override the email address the mail is sent from (blank: staff address)
@@ -127,12 +124,12 @@ function basic_newsletter_join($email, $interest_level = 4, $lang = null, $get_c
  * @param  ID_TEXT $mail_template The template used to show the email
  * @return Tempcode UI
  */
-function actual_send_newsletter($message, $subject, $lang, $send_details, $html_only = 0, $from_email = '', $from_name = '', $priority = 3, $csv_data = '', $mail_template = 'MAIL')
+function actual_send_newsletter($message, $subject, $language, $send_details, $html_only = 0, $from_email = '', $from_name = '', $priority = 3, $csv_data = '', $mail_template = 'MAIL')
 {
     require_lang('newsletter');
 
     // Put in archive
-    $GLOBALS['SITE_DB']->query_insert('newsletter_archive', array('date_and_time' => time(), 'subject' => $subject, 'newsletter' => $message, 'language' => $lang, 'importance_level' => 1));
+    $GLOBALS['SITE_DB']->query_insert('newsletter_archive', array('date_and_time' => time(), 'subject' => $subject, 'newsletter' => $message, 'language' => $language, 'importance_level' => 1));
 
     // Mark as done
     log_it('NEWSLETTER_SEND', $subject);
@@ -140,21 +137,22 @@ function actual_send_newsletter($message, $subject, $lang, $send_details, $html_
 
     // Schedule the task
     require_code('tasks');
-    return call_user_func_array__long_task(do_lang('NEWSLETTER_SEND'), get_screen_title('NEWSLETTER_SEND'), 'send_newsletter', array($message, $subject, $lang, $send_details, $html_only, $from_email, $from_name, $priority, $csv_data, $mail_template), false, get_param_integer('keep_send_immediately', 0) == 1, false);
+    return call_user_func_array__long_task(do_lang('NEWSLETTER_SEND'), get_screen_title('NEWSLETTER_SEND'), 'send_newsletter', array($message, $subject, $language, $send_details, $html_only, $from_email, $from_name, $priority, $csv_data, $mail_template), false, get_param_integer('keep_send_immediately', 0) == 1, false);
 }
 
 /**
- * Find a group of members the newsletter will go to.
+ * Find a group of people the newsletter will go to.
  *
  * @param  array $send_details A map describing what newsletters and newsletter levels the newsletter is being sent to
- * @param  LANGUAGE_NAME $lang The language
+ * @param  LANGUAGE_NAME $language The language
  * @param  integer $start Start position in result set (results are returned in parallel for each category of result)
  * @param  integer $max Maximum records to return from each category
  * @param  boolean $get_raw_rows Whether to get raw rows rather than mailer-ready correspondance lists
  * @param  string $csv_data Serialized CSV data to also consider
+ * @param  boolean $strict_level Whether to do exact level matching, rather than "at least" matching
  * @return array Returns a tuple of corresponding detail lists, emails,hashes,usernames,forenames,surnames,ids, and a record count for levels (depending on requests: csv, 1, <newsletterID>, g<groupID>) [record counts not returned if $start is not zero, for performance reasons]
  */
-function newsletter_who_send_to($send_details, $lang, $start, $max, $get_raw_rows = false, $csv_data = '')
+function newsletter_who_send_to($send_details, $language, $start, $max, $get_raw_rows = false, $csv_data = '', $strict_level = false)
 {
     // Find who to send to
     $level = 0;
@@ -172,18 +170,25 @@ function newsletter_who_send_to($send_details, $lang, $start, $max, $get_raw_row
     foreach ($newsletters as $newsletter) {
         $this_level = array_key_exists(strval($newsletter['id']), $send_details) ? $send_details[strval($newsletter['id'])] : 0;
         if ($this_level != 0) {
-            $where_lang = multi_lang() ? (db_string_equal_to('language', $lang) . ' AND ') : '';
-            $query = ' FROM ' . get_table_prefix() . 'newsletter_subscribe s LEFT JOIN ' . get_table_prefix() . 'newsletter n ON n.email=s.email WHERE ' . $where_lang . 'code_confirm=0 AND s.newsletter_id=' . strval($newsletter['id']) . ' AND the_level>=' . strval($this_level) . ' ORDER BY n.id';
-            $sql = 'SELECT n.id,n.email,the_password,n_forename,n_surname' . $query;
-            $temp = $GLOBALS['SITE_DB']->query($sql, $max, $start);
-            if ($start == 0) {
-                $test = $GLOBALS['SITE_DB']->query_value_if_there('SELECT COUNT(*) FROM ' . get_table_prefix() . 'newsletter_subscribe WHERE newsletter_id=' . strval($newsletter['id']) . ' AND the_level>=' . strval($this_level));
-                if ($test > 10000) { // Inaccurace, for performance reasons
-                    $total[strval($newsletter['id'])] = $test;
+            $where_lang = multi_lang() ? (db_string_equal_to('language', $language) . ' AND ') : '';
+            $query = ' FROM ' . get_table_prefix() . 'newsletter_subscribe s LEFT JOIN ' . get_table_prefix() . 'newsletter_subscribers n ON n.email=s.email WHERE ' . $where_lang . 'code_confirm=0 AND s.newsletter_id=' . strval($newsletter['id']);
+            if (get_option('interest_levels') == '1') {
+                if ($strict_level) {
+                    $query .= ' AND the_level=' . strval($this_level);
                 } else {
-                    $total[strval($newsletter['id'])] = $GLOBALS['SITE_DB']->query_value_if_there('SELECT COUNT(*)' . $query);
+                    $query .= ' AND the_level>=' . strval($this_level);
                 }
             }
+            $query .= ' ORDER BY n.id';
+
+            $sql = 'SELECT n.id,n.email,the_password,n_forename,n_surname' . $query;
+            $temp = $GLOBALS['SITE_DB']->query($sql, $max, $start);
+
+            if ($start == 0) {
+                $sql = 'SELECT COUNT(*)' . $query;
+                $total[strval($newsletter['id'])] = $GLOBALS['SITE_DB']->query_value_if_there($sql);
+            }
+
             foreach ($temp as $_temp) {
                 if (!in_array($_temp['email'], $emails)) { // If not already added
                     if (!$get_raw_rows) {
@@ -192,7 +197,7 @@ function newsletter_who_send_to($send_details, $lang, $start, $max, $get_raw_row
                         $surnames[] = $_temp['n_surname'];
                         $username = trim($_temp['n_forename'] . ' ' . $_temp['n_surname']);
                         if ($username == '') {
-                            $username = do_lang('NEWSLETTER_SUBSCRIBER', get_site_name());
+                            $username = do_lang('NEWSLETTER_SUBSCRIBER_DEFAULT_NAME', get_site_name());
                         }
                         $usernames[] = $username;
                         $ids[] = 'n' . strval($_temp['id']);
@@ -209,7 +214,7 @@ function newsletter_who_send_to($send_details, $lang, $start, $max, $get_raw_row
 
     // Conversr imports
     if (get_forum_type() == 'cns') {
-        $where_lang = multi_lang() ? ('(' . db_string_equal_to('m_language', $lang) . ' OR ' . db_string_equal_to('m_language', '') . ') AND ') : '';
+        $where_lang = multi_lang() ? ('(' . db_string_equal_to('m_language', $language) . ' OR ' . db_string_equal_to('m_language', '') . ') AND ') : '';
 
         // Usergroups
         $groups = $GLOBALS['FORUM_DRIVER']->get_usergroup_list();
@@ -294,7 +299,7 @@ function newsletter_who_send_to($send_details, $lang, $start, $max, $get_raw_row
 
         $pos = 0;
         foreach ($_csv_data as $i => $csv_line) {
-            if (($i <= 1) && (count($csv_line) >= 1) && (isset($csv_line[0])) && (strpos($csv_line[0], '@') === false) && (isset($csv_line[1])) && (strpos($csv_line[1], '@') === false)) {
+            if (($i <= 0) && (count($csv_line) >= 1) && (isset($csv_line[0])) && (strpos($csv_line[0], '@') === false) && (isset($csv_line[1])) && (strpos($csv_line[1], '@') === false)) {
                 foreach ($csv_line as $j => $val) {
                     if (in_array(strtolower($val), array('e-mail', 'email', 'email address', 'e-mail address'))) {
                         $email_index = $j;
@@ -363,7 +368,11 @@ function newsletter_variable_substitution($message, $subject, $forename, $surnam
         $unsub_url = build_url(array('page' => 'newsletter', 'type' => 'unsub', 'id' => substr($sendid, 1), 'hash' => $hash), get_module_zone('newsletter'), null, false, false, true);
     }
 
-    $member_id = $GLOBALS['FORUM_DRIVER']->get_member_from_username($name);
+    $member_id = mixed();
+    if (substr($sendid, 0, 1) == 'm') {
+        $member_id = $GLOBALS['FORUM_DRIVER']->get_member_from_username($name);
+        $name = $GLOBALS['FORUM_DRIVER']->get_displayname($name);
+    }
 
     $vars = array(
         'title' => $subject,
@@ -425,7 +434,7 @@ function add_newsletter($title, $description)
 
     if ((addon_installed('commandr')) && (!running_script('install'))) {
         require_code('resource_fs');
-        generate_resourcefs_moniker('newsletter', strval($id), null, null, true);
+        generate_resource_fs_moniker('newsletter', strval($id), null, null, true);
     }
 
     log_it('ADD_NEWSLETTER', strval($id), $title);
@@ -453,7 +462,7 @@ function edit_newsletter($id, $title, $description)
 
     if ((addon_installed('commandr')) && (!running_script('install'))) {
         require_code('resource_fs');
-        generate_resourcefs_moniker('newsletter', strval($id));
+        generate_resource_fs_moniker('newsletter', strval($id));
     }
 
     log_it('EDIT_NEWSLETTER', strval($id), $_title);
@@ -478,7 +487,7 @@ function delete_newsletter($id)
 
     if ((addon_installed('commandr')) && (!running_script('install'))) {
         require_code('resource_fs');
-        expunge_resourcefs_moniker('newsletter', strval($id));
+        expunge_resource_fs_moniker('newsletter', strval($id));
     }
 
     log_it('DELETE_NEWSLETTER', strval($id), get_translated_text($_title));
@@ -534,7 +543,7 @@ function add_periodic_newsletter($subject, $message, $lang, $send_details, $html
 
     if ((addon_installed('commandr')) && (!running_script('install'))) {
         require_code('resource_fs');
-        generate_resourcefs_moniker('periodic_newsletter', strval($id), null, null, true);
+        generate_resource_fs_moniker('periodic_newsletter', strval($id), null, null, true);
     }
 
     log_it('ADD_PERIODIC_NEWSLETTER', strval($id), $subject);
@@ -586,7 +595,7 @@ function edit_periodic_newsletter($id, $subject, $message, $lang, $send_details,
 
     if ((addon_installed('commandr')) && (!running_script('install'))) {
         require_code('resource_fs');
-        generate_resourcefs_moniker('periodic_newsletter', strval($id));
+        generate_resource_fs_moniker('periodic_newsletter', strval($id));
     }
 
     log_it('EDIT_PERIODIC_NEWSLETTER', strval($id), $subject);
@@ -605,8 +614,109 @@ function delete_periodic_newsletter($id)
 
     if ((addon_installed('commandr')) && (!running_script('install'))) {
         require_code('resource_fs');
-        expunge_resourcefs_moniker('periodic_newsletter', strval($id));
+        expunge_resource_fs_moniker('periodic_newsletter', strval($id));
     }
 
     log_it('DELETE_PERIODIC_NEWSLETTER', strval($id), $subject);
+}
+
+/**
+ * Add a newsletter subscriber to the system (not to any particular newsletters though).
+ *
+ * @param  EMAIL $email The email address of the subscriber
+ * @param  TIME $join_time The join time
+ * @param  integer $code_confirm Confirm code
+ * @param  ID_TEXT $password Newsletter password (hashed)
+ * @param  ID_TEXT $salt Newsletter salt
+ * @param  LANGUAGE_NAME $language The language
+ * @param  string $forename Subscribers forename
+ * @param  string $surname Subscribers surname
+ * @return AUTO_LINK Subscriber ID
+ */
+function add_newsletter_subscriber($email, $join_time, $code_confirm, $password, $salt, $language, $forename, $surname)
+{
+    $GLOBALS['SITE_DB']->query_delete('newsletter_subscribers', array(
+        'email' => $email,
+    ));
+    $id = $GLOBALS['SITE_DB']->query_insert('newsletter_subscribers', array(
+        'email' => $email,
+        'join_time' => $join_time,
+        'code_confirm' => $code_confirm,
+        'the_password' => $password,
+        'pass_salt' => $salt,
+        'language' => $language,
+        'n_forename' => $forename,
+        'n_surname' => $surname,
+    ), true, true/*race condition*/);
+
+    if ((addon_installed('commandr')) && (!running_script('install'))) {
+        require_code('resource_fs');
+        generate_resource_fs_moniker('newsletter_subscriber', strval($id), null, null, true);
+    }
+
+    return $id;
+}
+
+/**
+ * Add a newsletter subscriber to the system (not to any particular newsletters though).
+ *
+ * @param  AUTO_LINK $id Subscriber ID
+ * @param  ?EMAIL $email The email address of the subscriber (null: don't change)
+ * @param  ?TIME $join_time The join time (null: don't change)
+ * @param  ?integer $code_confirm Confirm code (null: don't change)
+ * @param  ?ID_TEXT $password Newsletter password (hashed) (null: don't change)
+ * @param  ?ID_TEXT $salt Newsletter salt (null: don't change)
+ * @param  ?LANGUAGE_NAME $language The language (null: don't change)
+ * @param  ?string $forename Subscribers forename (null: don't change)
+ * @param  ?string $surname Subscribers surname (null: don't change)
+ */
+function edit_newsletter_subscriber($id, $email = null, $join_time = null, $code_confirm = null, $password = null, $salt = null, $language = null, $forename = null, $surname = null)
+{
+    $map = array();
+    if (!is_null($email)) {
+        $map['email'] = $email;
+    }
+    if (!is_null($join_time)) {
+        $map['join_time'] = $join_time;
+    }
+    if (!is_null($code_confirm)) {
+        $map['code_confirm'] = $code_confirm;
+    }
+    if (!is_null($password)) {
+        $map['the_password'] = $password;
+    }
+    if (!is_null($salt)) {
+        $map['pass_salt'] = $salt;
+    }
+    if (!is_null($language)) {
+        $map['language'] = $language;
+    }
+    if (!is_null($forename)) {
+        $map['n_forename'] = $forename;
+    }
+    if (!is_null($surname)) {
+        $map['n_surname'] = $surname;
+    }
+
+    $GLOBALS['SITE_DB']->query_update('newsletter_subscribers', $map, array('id' => $id), '', 1);
+
+    if ((addon_installed('commandr')) && (!running_script('install'))) {
+        require_code('resource_fs');
+        generate_resource_fs_moniker('newsletter_subscriber', strval($id));
+    }
+}
+
+/**
+ * Add a newsletter subscriber to the system (not to any particular newsletters though).
+ *
+ * @param  AUTO_LINK $id Subscriber ID
+ */
+function delete_newsletter_subscriber($id)
+{
+    $GLOBALS['SITE_DB']->query_delete('newsletter_subscribers', array('id' => $id), '', 1);
+
+    if ((addon_installed('commandr')) && (!running_script('install'))) {
+        require_code('resource_fs');
+        expunge_resource_fs_moniker('newsletter_subscriber', strval($id));
+    }
 }

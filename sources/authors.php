@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -29,6 +29,10 @@
  */
 function render_author_box($row, $zone = '_SEARCH', $give_context = true, $guid = '')
 {
+    if (is_null($row)) { // Should never happen, but we need to be defensive
+        return new Tempcode();
+    }
+
     require_lang('authors');
 
     $url = build_url(array('page' => 'authors', 'type' => 'browse', 'id' => $row['author']), $zone);
@@ -41,6 +45,7 @@ function render_author_box($row, $zone = '_SEARCH', $give_context = true, $guid 
         'TITLE' => $title,
         'SUMMARY' => get_translated_tempcode('author', $row, 'description'),
         'URL' => $url,
+        'RESOURCE_TYPE' => 'author',
     ));
 }
 
@@ -74,14 +79,14 @@ function authors_script()
 
     $field_name = filter_naughty_harsh(get_param_string('field_name'));
 
-    $content = new Tempcode();
+    $authors = array();
     $i = 0;
     foreach ($rows as $author => $table) {
         if (($i >= $start) && ($i < $start + $max)) {
             if ($table == 'authors') {
-                $content->attach(do_template('AUTHOR_POPUP_WINDOW_DEFINED', array('_GUID' => 'cffa9926cebd3ec2920677266a3299ea', 'FIELD_NAME' => $field_name, 'AUTHOR' => $author)));
+                $authors[] = array('_GUID' => 'cffa9926cebd3ec2920677266a3299ea', 'DEFINED' => true, 'FIELD_NAME' => $field_name, 'AUTHOR' => $author);
             } else {
-                $content->attach(do_template('AUTHOR_POPUP_WINDOW_UNDEFINED', array('_GUID' => '6210be6d1eef4bc2bda7f49947301f97', 'FIELD_NAME' => $field_name, 'AUTHOR' => $author)));
+                $authors[] = array('_GUID' => '6210be6d1eef4bc2bda7f49947301f97', 'DEFINED' => false, 'FIELD_NAME' => $field_name, 'AUTHOR' => $author);
             }
         }
 
@@ -95,7 +100,10 @@ function authors_script()
         $next_url = null;
     }
 
-    $content = do_template('AUTHOR_POPUP', array('_GUID' => 'e18411d1bf24c6ed945b4d9064774884', 'CONTENT' => $content, 'NEXT_URL' => $next_url));
+    $content = do_template('AUTHOR_POPUP', array('_GUID' => 'e18411d1bf24c6ed945b4d9064774884', 'AUTHORS' => $authors, 'NEXT_URL' => $next_url));
+
+    require_code('site');
+    attach_to_screen_header('<meta name="robots" content="noindex" />'); // XHTMLXHTML
 
     $echo = do_template('STANDALONE_HTML_WRAP', array('_GUID' => 'ab8d8c9d276530d82ddd84202aacf32f', 'TITLE' => do_lang_tempcode('CHOOSE_AUTHOR'), 'CONTENT' => $content, 'POPUP' => true));
     $echo->handle_symbol_preprocessing();
@@ -111,6 +119,9 @@ function authors_script()
 function get_author_id_from_name($author)
 {
     $handle = $GLOBALS['SITE_DB']->query_select_value_if_there('authors', 'member_id', array('author' => $author));
+    if (is_null($handle)) {
+        $handle = $GLOBALS['FORUM_DRIVER']->get_member_from_username($author);
+    }
     return $handle;
 }
 
@@ -142,7 +153,7 @@ function add_author($author, $url, $member_id, $description, $skills, $meta_keyw
             'member_id' => $member_id,
         );
         $map += lang_remap('skills', $_skills, $skills);
-        $map += update_lang_comcode_attachments('description', $_description, $description, 'author', $author, null, false, $member_id);
+        $map += update_lang_comcode_attachments('description', $_description, $description, 'author', $author, null, $member_id);
 
         $GLOBALS['SITE_DB']->query_update('authors', $map, array('author' => $author), '', 1);
     } else {
@@ -159,7 +170,7 @@ function add_author($author, $url, $member_id, $description, $skills, $meta_keyw
 
         if ((addon_installed('commandr')) && (!running_script('install'))) {
             require_code('resource_fs');
-            generate_resourcefs_moniker('author', $author, null, null, true);
+            generate_resource_fs_moniker('author', $author, null, null, true);
         }
 
         require_code('sitemap_xml');
@@ -202,7 +213,7 @@ function delete_author($author)
 
     if ((addon_installed('commandr')) && (!running_script('install'))) {
         require_code('resource_fs');
-        expunge_resourcefs_moniker('author', $author);
+        expunge_resource_fs_moniker('author', $author);
     }
 
     require_code('sitemap_xml');

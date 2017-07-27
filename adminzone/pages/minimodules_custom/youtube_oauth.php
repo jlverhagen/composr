@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -33,4 +33,4 @@ $auth_url .= '&scope=' . urlencode('https://gdata.youtube.com');
 $auth_url .= '&access_type=offline';
 $auth_url .= '&state=authorized';
 
-retrieve_oauth2_token('youtube', 'Youtube', $auth_url, $endpoint);
+retrieve_oauth2_token('youtube', 'YouTube', $auth_url, $endpoint);

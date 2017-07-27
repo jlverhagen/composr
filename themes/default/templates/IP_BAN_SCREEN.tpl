@@ -10,7 +10,7 @@
 	{!DESCRIPTION_BANNED_ADDRESSES_B}
 </p>
 
-<form title="{!PRIMARY_PAGE_FORM}" action="{URL*}" method="post">
+<form title="{!PRIMARY_PAGE_FORM}" action="{URL*}" method="post" autocomplete="off">
 	{$INSERT_SPAMMER_BLACKHOLE}
 
 	<p class="lonely_label"><label for="bans">{!BANNED_ADDRESSES}:</label></p>
@@ -29,7 +29,7 @@
 	</div>
 
 	<p class="proceed_button">
-		<input accesskey="u" onclick="disable_button_just_clicked(this);" class="buttons__save button_screen" type="submit" value="{!SAVE}" />
+		<input accesskey="u" onclick="disable_button_just_clicked(this);" class="button_screen buttons__save" type="submit" value="{!SAVE}" />
 	</p>
 </form>
 

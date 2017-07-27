@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -106,7 +106,7 @@ class Module_tester
      * @param  boolean $check_perms Whether to check permissions.
      * @param  ?MEMBER $member_id The member to check permissions as (null: current user).
      * @param  boolean $support_crosslinks Whether to allow cross links to other modules (identifiable via a full-page-link rather than a screen-name).
-     * @param  boolean $be_deferential Whether to avoid any entry-point (or even return NULL to disable the page in the Sitemap) if we know another module, or page_group, is going to link to that entry-point. Note that "!" and "browse" entry points are automatically merged with container page nodes (likely called by page-groupings) as appropriate.
+     * @param  boolean $be_deferential Whether to avoid any entry-point (or even return null to disable the page in the Sitemap) if we know another module, or page_group, is going to link to that entry-point. Note that "!" and "browse" entry points are automatically merged with container page nodes (likely called by page-groupings) as appropriate.
      * @return ?array A map of entry points (screen-name=>language-code/string or screen-name=>[language-code/string, icon-theme-image]) (null: disabled).
      */
     public function get_entry_points($check_perms = true, $member_id = null, $support_crosslinks = true, $be_deferential = false)
@@ -127,7 +127,7 @@ class Module_tester
     public $self_title;
 
     /**
-     * Module pre-run function. Allows us to know meta-data for <head> before we start streaming output.
+     * Module pre-run function. Allows us to know metadata for <head> before we start streaming output.
      *
      * @return ?Tempcode Tempcode indicating some kind of exceptional output (null: none).
      */
@@ -354,7 +354,7 @@ class Module_tester
 
             $a_test = make_string_tempcode(escape_html($test['t_test']));
             if (!is_null($test['t_inherit_section'])) {
-                $_tests_2 = $GLOBALS['SITE_DB']->query_select('tests', array('*'), array('t_section' => $test['t_inherit_section']));
+                $_tests_2 = $GLOBALS['SITE_DB']->query_select('tests', array('*'), array('t_section' => $test['t_inherit_section']), 'ORDER BY id');
                 if (count($_tests_2) != 0) {
                     $section_notes = $GLOBALS['SITE_DB']->query_select_value('test_sections', 's_notes', array('id' => $test['t_inherit_section']));
                     if ($section_notes != '') {
@@ -467,7 +467,7 @@ class Module_tester
                 if (is_null($username)) {
                     $username = do_lang('UNKNOWN');
                 }
-                $extra = (is_null($_section['s_assigned_to'])) ? do_lang_tempcode('UNASSIGNED') : make_string_tempcode($username);
+                $extra = (is_null($_section['s_assigned_to'])) ? do_lang_tempcode('TEST_UNASSIGNED') : make_string_tempcode($username);
             }
             $list2->attach(form_input_list_entry(strval($id), $it == $id, do_lang_tempcode('TEST_SECTION_ASSIGNMENT', make_string_tempcode(escape_html($section)), make_string_tempcode(integer_format($count)), $extra)));
         }
@@ -732,7 +732,7 @@ class Module_tester
 
         $add_template = do_template('TESTER_TEST_GROUP_NEW', array('_GUID' => '3d0e12fdff0aef8f8aa5818e441238ee', 'ID' => 'add_-REPLACEME-', 'FIELDS' => $this->get_test_form_fields('add_-REPLACEME-')));
 
-        $_tests = $GLOBALS['SITE_DB']->query_select('tests', array('*'), array('t_section' => $id));
+        $_tests = $GLOBALS['SITE_DB']->query_select('tests', array('*'), array('t_section' => $id), 'ORDER BY id');
         $tests = new Tempcode();
         foreach ($_tests as $test) {
             $_fields = $this->get_test_form_fields('edit_' . strval($test['id']), $test['t_test'], $test['t_assigned_to'], $test['t_enabled'], $test['t_inherit_section']);

@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -21,9 +21,10 @@ class Hook_addon_registry_downloads_carousel
     /**
      * Get a list of file permissions to set
      *
+     * @param  boolean $runtime Whether to include wildcards represented runtime-created chmoddable files
      * @return array File permissions to set
      */
-    public function get_chmod_array()
+    public function get_chmod_array($runtime = false)
     {
         return array();
     }
@@ -132,6 +133,7 @@ class Hook_addon_registry_downloads_carousel
         return array(
             'sources_custom/hooks/systems/addon_registry/downloads_carousel.php',
             'sources_custom/miniblocks/main_downloads_carousel.php',
+            'lang_custom/EN/downloads.ini',
         );
     }
 }

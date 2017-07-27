@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -20,6 +20,12 @@
  */
 function init__site__pages__modules_custom__galleries($code)
 {
+    if (!$GLOBALS['SITE_DB']->table_exists('workflow_content')) { // Not installed
+        i_solemnly_declare(I_UNDERSTAND_SQL_INJECTION | I_UNDERSTAND_XSS | I_UNDERSTAND_PATH_INJECTION);
+
+        return $code;
+    }
+
     // Add a redirection for the workflow handling
     $code = str_replace('if ($type == \'list\') return $this->list_galleries();',
         'if ($type == \'list\') return $this->list_galleries();

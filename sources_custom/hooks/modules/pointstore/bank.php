@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -33,6 +33,10 @@ class Hook_pointstore_bank
      */
     public function info()
     {
+        if (!$GLOBALS['SITE_DB']->table_exists('bank')) {
+            return array();
+        }
+
         $class = str_replace('hook_pointstore_', '', strtolower(get_class($this)));
 
         $next_url = build_url(array('page' => '_SELF', 'type' => 'action', 'id' => $class), '_SELF');
@@ -102,7 +106,7 @@ class Hook_pointstore_bank
         // Actuate
         require_code('points2');
         charge_member(get_member(), $amount, do_lang('BANKING'));
-        $GLOBALS['SITE_DB']->query_insert('bank', array('add_time' => time(), 'member_id' => get_member(), 'amount' => strval($amount), 'dividend' => $bank_dividend));
+        $GLOBALS['SITE_DB']->query_insert('bank', array('add_time' => time(), 'member_id' => get_member(), 'amount' => $amount, 'dividend' => $bank_dividend));
 
         // Show message
         $result = do_lang_tempcode('BANKING_CONGRATULATIONS', escape_html(integer_format($amount)), escape_html(integer_format($bank_dividend)));

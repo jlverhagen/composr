@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -11,6 +11,8 @@
    **** If you ignore this advice, then your website upgrades (e.g. for bug fixes) will likely kill your changes ****
 
 */
+
+/*EXTRA FUNCTIONS: ftp_.**/
 
 /**
  * @license    http://opensource.org/licenses/cpal_1.0 Common Public Attribution License
@@ -62,9 +64,8 @@ function force_have_afm_details()
     if (is_null($ftp_password)) {
         $ftp_password = '';
     }
-    //$uses_ftp=get_value('uses_ftp');    We can't use this because there's no reliable way to trust this is always going to be right (permissions change/differ, and we can't accurately run a test and trust the result going forward for everything)
-    if (/*($uses_ftp==='0') || */
-    (strlen($ftp_password) > 0)
+    //$uses_ftp = get_value('uses_ftp');    We can't use this because there's no reliable way to trust this is always going to be right (permissions change/differ, and we can't accurately run a test and trust the result going forward for everything)
+    if (/*($uses_ftp === '0') || */(strlen($ftp_password) > 0)
     ) { // Permanently stored
         return;
     }
@@ -135,7 +136,7 @@ function get_afm_form_fields()
 
     // Domain
     if (is_null($ftp_domain)) {
-        if (array_key_exists('ftp_domain', $GLOBALS['SITE_INFO'])) {
+        if (!empty($GLOBALS['SITE_INFO']['ftp_domain'])) {
             $ftp_domain = $GLOBALS['SITE_INFO']['ftp_domain'];
         } else {
             $ftp_domain = get_domain();
@@ -144,10 +145,10 @@ function get_afm_form_fields()
 
     // Username
     if (is_null($ftp_username)) {
-        if (array_key_exists('ftp_username', $GLOBALS['SITE_INFO'])) {
+        if (!empty($GLOBALS['SITE_INFO']['ftp_username'])) {
             $ftp_username = $GLOBALS['SITE_INFO']['ftp_username'];
         } else {
-            if ((function_exists('posix_getpwuid')) && (strpos(@ini_get('disable_functions'), 'posix_getpwuid') === false)) {
+            if (php_function_allowed('posix_getpwuid')) {
                 $u_info = posix_getpwuid(fileowner(get_file_base() . '/index.php'));
                 if ($u_info !== false) {
                     $ftp_username = $u_info['name'];
@@ -165,7 +166,7 @@ function get_afm_form_fields()
 
     // Directory
     if (is_null($ftp_directory)) {
-        if (array_key_exists('ftp_directory', $GLOBALS['SITE_INFO'])) {
+        if (!empty($GLOBALS['SITE_INFO']['ftp_directory'])) {
             $ftp_directory = $GLOBALS['SITE_INFO']['ftp_directory'];
         } else {
             $pos = strpos(cms_srv('SCRIPT_NAME'), 'adminzone/index.php');
@@ -224,7 +225,7 @@ function _ftp_info($light_fail = false)
         return $AFM_FTP_CONN;
     }
 
-    if (((get_value('uses_ftp') == '1') && (!running_script('upgrader'))) || (post_param_integer('uses_ftp', 0) == 1)) {
+    if (((get_value('uses_ftp') === '1') && (!running_script('upgrader'))) || (post_param_integer('uses_ftp', 0) == 1)) {
         require_lang('installer');
 
         $conn = false;
@@ -561,15 +562,12 @@ function afm_make_file($basic_path, $contents, $world_access)
     $path = _rescope_path($basic_path);
     $access = _translate_file_access($world_access, get_file_extension($basic_path));
 
+    require_code('files');
+
     $conn = _ftp_info();
     if ($conn !== false) {
-        $path2 = cms_tempnam('cmsafm');
-
-        $h = fopen($path2, 'wb');
-        if (fwrite($h, $contents) < strlen($contents)) {
-            warn_exit(do_lang_tempcode('COULD_NOT_SAVE_FILE_TMP', escape_html($path2)));
-        }
-        fclose($h);
+        $path2 = cms_tempnam();
+        cms_file_put_contents_safe($path2, $contents);
 
         $h = fopen($path2, 'rb');
         $success = @ftp_fput($conn, $path, $h, FTP_BINARY);
@@ -590,18 +588,8 @@ function afm_make_file($basic_path, $contents, $world_access)
 
         sync_file(get_custom_file_base() . '/' . $basic_path);
     } else {
-        $h = @fopen($path, 'wb');
-        if ($h === false) {
-            intelligent_write_error($path);
-        }
-        if (fwrite($h, $contents) < strlen($contents)) {
-            warn_exit(do_lang_tempcode('COULD_NOT_SAVE_FILE_TMP'));
-        }
-        fclose($h);
+        cms_file_put_contents_safe($path, $contents, FILE_WRITE_FIX_PERMISSIONS | FILE_WRITE_SYNC_FILE);
         @chmod($path, $access);
-        fix_permissions($path);
-
-        sync_file($path);
     }
 }
 

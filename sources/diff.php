@@ -27,10 +27,26 @@ function _diff_simple($old, $new, $unified = false)
     $diff = new Text_Diff($old, $new);
     if ($unified) {
         $renderer = new Text_Diff_Renderer_unified();
+        $diff_text = $rendered_diff = $renderer->render($diff);
+        $diff_html = '';
+        foreach (explode("\n", $diff_text) as $diff_line) {
+            switch (substr($diff_line, 0, 1)) {
+                case '+':
+                    $diff_html .= '<span style="color: green">' . escape_html($diff_line) . '</span>';
+                    break;
+                case '-':
+                    $diff_html .= '<span style="color: red">' . escape_html($diff_line) . '</span>';
+                    break;
+                default:
+                    $diff_html .= escape_html($diff_line);
+                    break;
+            }
+            $diff_html .= '<br />';
+        }
     } else {
         $renderer = new Text_Diff_Renderer_inline();
+        $diff_html = $rendered_diff = $renderer->render($diff);
     }
-    $diff_html = $rendered_diff = $renderer->render($diff);
     if ($GLOBALS['XSS_DETECT']) {
         ocp_mark_as_escaped($diff_html);
     }
@@ -99,7 +115,7 @@ class Text_Diff
      *                                    lines from a file.
      * @param array $to_lines An array of strings.
      */
-    function Text_Diff($engine, $params)
+    function __construct($engine, $params)
     {
         // Backward compatibility workaround.
         if (!is_string($engine)) {
@@ -294,7 +310,7 @@ class Text_MappedDiff extends Text_Diff
      * @param array $mapped_to_lines This array should have the same number
      *                                            of elements as $to_lines.
      */
-    function Text_MappedDiff($from_lines, $to_lines,
+    function __construct($from_lines, $to_lines,
                              $mapped_from_lines, $mapped_to_lines)
     {
 //		assert(count($from_lines)==count($mapped_from_lines));
@@ -360,7 +376,7 @@ class Text_Diff_Op
 class Text_Diff_Op_copy extends Text_Diff_Op
 {
 
-    function Text_Diff_Op_copy($orig, $final = false)
+    function __construct($orig, $final = false)
     {
         if (!is_array($final)) {
             $final = $orig;
@@ -385,7 +401,7 @@ class Text_Diff_Op_copy extends Text_Diff_Op
 class Text_Diff_Op_delete extends Text_Diff_Op
 {
 
-    function Text_Diff_Op_delete($lines)
+    function __construct($lines)
     {
         $this->orig = $lines;
         $this->final = false;
@@ -407,7 +423,7 @@ class Text_Diff_Op_delete extends Text_Diff_Op
 class Text_Diff_Op_add extends Text_Diff_Op
 {
 
-    function Text_Diff_Op_add($lines)
+    function __construct($lines)
     {
         $this->final = $lines;
         $this->orig = false;
@@ -429,7 +445,7 @@ class Text_Diff_Op_add extends Text_Diff_Op
 class Text_Diff_Op_change extends Text_Diff_Op
 {
 
-    function Text_Diff_Op_change($orig, $final)
+    function __construct($orig, $final)
     {
         $this->orig = $orig;
         $this->final = $final;
@@ -467,7 +483,7 @@ class Text_Diff3 extends Text_Diff
      * @param array $final1 The first version to compare to.
      * @param array $final2 The second version to compare to.
      */
-    function Text_Diff3($orig, $final1, $final2)
+    function __construct($orig, $final1, $final2)
     {
         $engine = new Text_Diff_Engine_native();
 
@@ -587,7 +603,7 @@ class Text_Diff3_Op
     var $final2;
     var $orig;
 
-    function Text_Diff3_Op($orig = false, $final1 = false, $final2 = false)
+    function __construct($orig = false, $final1 = false, $final2 = false)
     {
         $this->orig = $orig ? $orig : array();
         $this->final1 = $final1 ? $final1 : array();
@@ -626,7 +642,7 @@ class Text_Diff3_Op
 class Text_Diff3_Op_copy extends Text_Diff3_Op
 {
 
-    function Text_Diff3_Op_Copy($lines = false)
+    function __construct($lines = false)
     {
         $this->orig = $lines ? $lines : array();
         $this->final1 =& $this->orig;
@@ -653,7 +669,7 @@ class Text_Diff3_Op_copy extends Text_Diff3_Op
 class Text_Diff3_BlockBuilder
 {
 
-    function Text_Diff3_BlockBuilder()
+    function __construct()
     {
         $this->_init();
     }
@@ -704,7 +720,7 @@ class Text_Diff3_BlockBuilder
 
     function _append(&$array, $lines)
     {
-        array_splice($array, sizeof($array), 0, $lines);
+        array_splice($array, count($array), 0, $lines);
     }
 }
 
@@ -752,7 +768,7 @@ class Text_Diff_Engine_string
             $unified = strpos($diff, '---');
             if ($context === $unified) {
                 warn_exit('Type of diff could not be detected');
-            } elseif ($context === false || $context === false) {
+            } elseif ($context === false || $unified === false) {
                 $mode = $context !== false ? 'context' : 'unified';
             } else {
                 $mode = $context < $unified ? 'context' : 'unified';
@@ -1144,7 +1160,7 @@ class Text_Diff_Engine_native
                     }
                 }
 
-                while (list($junk, $y) = each($matches)) {
+                while ($y = current($matches)) {
                     if ($y > $this->seq[$k - 1]) {
 //							assert($y < $this->seq[$k]);
                         /* Optimization: this is a common case: next match is
@@ -1157,6 +1173,8 @@ class Text_Diff_Engine_native
 //						assert($k > 0);
                         $ymids[$k] = $ymids[$k - 1];
                     }
+
+                    next($matches);
                 }
             }
         }
@@ -1413,7 +1431,7 @@ class Text_Diff_Renderer
     /**
      * Constructor.
      */
-    function Text_Diff_Renderer($params = array())
+    function __construct($params = array())
     {
         foreach ($params as $param => $value) {
             $v = '_' . $param;

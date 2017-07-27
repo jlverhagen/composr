@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -70,7 +70,7 @@ class foobar
 {
     var \$i;
 
-    function foobar(\$a)
+    function __construct(\$a)
     {
         echo \$a;
     }
@@ -308,13 +308,13 @@ END;
 END;
 
     $tests[26] = <<<END
-// <unary if error #1>
+// <ternary if error #1>
 
 \$a=''?1:2;
 END;
 
     $tests[27] = <<<END
-// <unary if error #2>
+// <ternary if error #2>
 
 \$a=true?'':2;
 END;
@@ -486,7 +486,7 @@ if (preg_match('a','a')) exit();
 END;
 
     $tests[53] = <<<END
-\$bool=\$whatever==NULL;
+\$bool=\$whatever==null;
 END;
 
     $tests[54] = <<<END
@@ -550,7 +550,7 @@ interface D extends A, C
 }
 class Foo implements A
 {
-    public function foo(\$bar)
+    public function __construct(\$bar)
     {
         // Do nothing
     }
@@ -561,7 +561,7 @@ END;
     $tests[61] = <<<END
 class A
 {
-    public function foo(A \$a, A \$b=NULL, A &\$c, array \$d, array \$e=NULL, array &\$f, array &\$g, \$h, \$i=5)
+    public function foo(A \$a, A \$b=null, A &\$c, array \$d, array \$e=null, array &\$f, array &\$g, \$h, \$i=5)
     {
     }
 }

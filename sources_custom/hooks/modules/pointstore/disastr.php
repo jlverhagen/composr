@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -33,6 +33,10 @@ class Hook_pointstore_disastr
      */
     public function info()
     {
+        if (!$GLOBALS['SITE_DB']->table_exists('members_diseases')) {
+            return array();
+        }
+
         $class = str_replace('hook_pointstore_', '', strtolower(get_class($this)));
 
         $next_url = build_url(array('page' => '_SELF', 'type' => 'action', 'id' => $class), '_SELF');
@@ -56,7 +60,6 @@ class Hook_pointstore_disastr
 
         $member_id = get_member();
         $rows = $GLOBALS['SITE_DB']->query_select('diseases', array('*'), null, 'ORDER BY name');
-        $counter = 0;
         foreach ($rows as $disease) {
             $_cure_url = build_url(array('page' => 'pointstore', 'type' => 'action_done', 'id' => 'disastr', 'disease' => $disease['id'], 'cure' => 1), '_SEARCH');
             $cure_url = $_cure_url->evaluate();
@@ -64,7 +67,7 @@ class Hook_pointstore_disastr
             $_immunization_url = build_url(array('page' => 'pointstore', 'type' => 'action_done', 'id' => 'disastr', 'disease' => $disease['id'], 'immunization' => 1), '_SEARCH');
             $immunization_url = $_immunization_url->evaluate();
 
-            $member_rows = $GLOBALS['SITE_DB']->query_select('members_diseases', array('*'), array('member_id' => $member_id, 'disease_id' => $disease['id']));
+            $member_rows = $GLOBALS['SITE_DB']->query_select('members_diseases', array('*'), array('member_id' => $member_id, 'disease_id' => $disease['id']), '', 1);
 
             $get_cure = true;
             $get_immunization = true;
@@ -88,27 +91,17 @@ class Hook_pointstore_disastr
             }
 
             if ($get_immunization || $get_cure) {
-                if (is_file(get_custom_file_base() . '/' . $disease['image'])) {
-                    if ($get_cure) {
-                        $fields .= '<tr style="border: 1px solid #ccc; background-color: #D4E0F1;"><td width="45"><img width="45" src="' . escape_html(get_custom_base_url() . '/' . $disease['image']) . '" /></td><td>' . escape_html($disease['name']) . '</td><td width="33%"><a href="' . escape_html($cure_url) . '">' . escape_html($disease['cure']) . '</a> costs ' . escape_html(integer_format($disease['cure_price'])) . ' points</td><td width="33%">-</td></tr>';
-                        $counter++;
-                    } else {
-                        $fields .= '<tr style="border: 1px solid #ccc; background-color: #D4E0F1;"><td width="45"><img width="45" src="' . escape_html(get_custom_base_url() . '/' . $disease['image']) . '" /></td><td>' . escape_html($disease['name']) . '</td><td width="33%">-</td><td width="33%"><a href="' . escape_html($immunization_url) . '">' . escape_html($disease['immunisation']) . '</a> costs ' . escape_html(integer_format($disease['immunisation_price'])) . ' points</td></tr>';
-                        $counter++;
-                    }
-                } else {
-                    if ($get_cure) {
-                        $fields .= '<tr style="border: 1px solid #ccc; background-color: #D4E0F1;"><td colspan="2">' . escape_html($disease['name']) . '</td><td width="33%"><a href="' . escape_html($cure_url) . '">' . escape_html($disease['cure']) . '</a> costs ' . escape_html(integer_format($disease['cure_price'])) . ' points</td><td width="33%">-</td></tr>';
-                        $counter++;
-                    } else {
-                        $fields .= '<tr style="border: 1px solid #ccc; background-color: #D4E0F1;"><td colspan="2">' . escape_html($disease['name']) . '</td><td width="33%">-</td><td width="33%"><a href="' . escape_html($immunization_url) . '">' . escape_html($disease['immunisation']) . '</a> costs ' . escape_html(integer_format($disease['immunisation_price'])) . ' points</td></tr>';
-                        $counter++;
-                    }
-                }
+                $fields .= '
+                <tr style="border: 1px solid #ccc; background-color: #D4E0F1;">
+                    <td width="45"><img width="45" src="' . escape_html(get_custom_base_url() . '/' . $disease['image']) . '" /></td>
+                    <td>' . escape_html($disease['name']) . '</td>
+                    <td width="33%">' . ($get_cure ? ('<a href="' . escape_html($cure_url) . '">' . escape_html($disease['cure']) . '</a> costs ' . escape_html(integer_format($disease['cure_price'])) . ' points') : (do_lang('NA_EM') . ' (you\'re not infected)')) . '</td>
+                    <td width="33%">' . (!$get_cure ? ('<a href="' . escape_html($immunization_url) . '">' . escape_html($disease['immunisation']) . '</a> costs ' . escape_html(integer_format($disease['immunisation_price'])) . ' points') : (do_lang('NA_EM') . ' (you\'re already infected)')) . '</td>
+                </tr>';
             }
         }
 
-        if ($counter == 0) {
+        if (count($rows) == 0) {
             $fields .= '<tr><td colspan="4">' . do_lang('NO_ENTRIES_TO_DISPLAY') . '</td></tr>';
         }
         $fields .= '</table>';
@@ -137,7 +130,7 @@ class Hook_pointstore_disastr
         $cure = ($get_cure == 1) ? 1 : 0;
         $immunization = ($get_immunization == 1) ? 1 : 0;
 
-        $member_rows = $GLOBALS['SITE_DB']->query_select('members_diseases', array('*'), array('member_id' => $member_id, 'disease_id' => $disease_id));
+        $member_rows = $GLOBALS['SITE_DB']->query_select('members_diseases', array('*'), array('member_id' => $member_id, 'disease_id' => $disease_id), '', 1);
 
         $insert = true;
 
@@ -149,7 +142,7 @@ class Hook_pointstore_disastr
             //we should insert a new db member disease record
         }
 
-        $rows = $GLOBALS['SITE_DB']->query_select('diseases', array('*'), array('id' => $disease_id));
+        $rows = $GLOBALS['SITE_DB']->query_select('diseases', array('*'), array('id' => $disease_id), '', 1);
 
         $cure_price = (isset($rows[0]['cure_price']) && (intval($rows[0]['cure_price']) > 0)) ? intval($rows[0]['cure_price']) : 0;
         $immunization_price = (isset($rows[0]['immunisation_price']) && (intval($rows[0]['immunisation_price']) > 0)) ? intval($rows[0]['immunisation_price']) : 0;

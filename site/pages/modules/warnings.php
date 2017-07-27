@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -51,13 +51,24 @@ class Module_warnings extends Standard_crud_module
      * @param  boolean $check_perms Whether to check permissions.
      * @param  ?MEMBER $member_id The member to check permissions as (null: current user).
      * @param  boolean $support_crosslinks Whether to allow cross links to other modules (identifiable via a full-page-link rather than a screen-name).
-     * @param  boolean $be_deferential Whether to avoid any entry-point (or even return NULL to disable the page in the Sitemap) if we know another module, or page_group, is going to link to that entry-point. Note that "!" and "browse" entry points are automatically merged with container page nodes (likely called by page-groupings) as appropriate.
+     * @param  boolean $be_deferential Whether to avoid any entry-point (or even return null to disable the page in the Sitemap) if we know another module, or page_group, is going to link to that entry-point. Note that "!" and "browse" entry points are automatically merged with container page nodes (likely called by page-groupings) as appropriate.
      * @return ?array A map of entry points (screen-name=>language-code/string or screen-name=>[language-code/string, icon-theme-image]) (null: disabled).
      */
     public function get_entry_points($check_perms = true, $member_id = null, $support_crosslinks = true, $be_deferential = false)
     {
+        if (get_forum_type() != 'cns') {
+            return null;
+        }
+
         if ($be_deferential) {
             return null;
+        }
+
+        if ($check_perms) {
+            cns_require_all_forum_stuff();
+            if (!cns_may_warn_members()) {
+                return null;
+            }
         }
 
         return (!$check_perms || !is_guest($member_id)) ? (parent::get_entry_points()) : array();
@@ -66,10 +77,10 @@ class Module_warnings extends Standard_crud_module
     public $title;
 
     /**
-     * Module pre-run function. Allows us to know meta-data for <head> before we start streaming output.
+     * Module pre-run function. Allows us to know metadata for <head> before we start streaming output.
      *
      * @param  boolean $top_level Whether this is running at the top level, prior to having sub-objects called.
-     * @param  ?ID_TEXT $type The screen type to consider for meta-data purposes (null: read from environment).
+     * @param  ?ID_TEXT $type The screen type to consider for metadata purposes (null: read from environment).
      * @return ?Tempcode Tempcode indicating some kind of exceptional output (null: none).
      */
     public function pre_run($top_level = true, $type = null)
@@ -82,7 +93,9 @@ class Module_warnings extends Standard_crud_module
             cns_require_all_forum_stuff();
         }
         require_lang('cns_warnings');
-        require_lang('submitban');
+        if (addon_installed('securitylogging')) {
+            require_lang('submitban');
+        }
 
         if ($type == 'history') {
             $this->title = get_screen_title('PUNITIVE_HISTORY');
@@ -166,7 +179,7 @@ class Module_warnings extends Standard_crud_module
 
         $member_id = get_param_integer('id');
 
-        $rows = $GLOBALS['FORUM_DB']->query_select('f_warnings', array('*'), array('w_member_id' => $member_id));
+        $rows = $GLOBALS['FORUM_DB']->query_select('f_warnings', array('*'), array('w_member_id' => $member_id), 'ORDER BY w_time');
         if (count($rows) == 0) {
             inform_exit(do_lang_tempcode('NO_ENTRIES'));
         }
@@ -505,7 +518,7 @@ class Module_warnings extends Standard_crud_module
             if (!is_null($post_id)) {
                 $_postdetails_text = $GLOBALS['FORUM_DB']->query_select_value_if_there('f_posts', 'p_post', array('id' => $post_id));
                 if (!is_null($_postdetails_text)) {
-                    $message = '[quote="' . $username . '"]' . "\n" . get_translated_text($_postdetails_text) . "\n" . '[/quote]';
+                    $message = '[quote="' . $username . '"]' . "\n" . get_translated_text($_postdetails_text, $GLOBALS['FORUM_DB']) . "\n" . '[/quote]';
                 }
             }
             $fields->attach(form_input_text_comcode(do_lang_tempcode('MESSAGE'), do_lang_tempcode('DESCRIPTION_PP_MESSAGE'), 'message', $message, false));
@@ -629,7 +642,7 @@ class Module_warnings extends Standard_crud_module
         $message = post_param_string('message', '');
         $username = $GLOBALS['FORUM_DRIVER']->get_username($member_id);
         if (is_null($username)) {
-            warn_exit(do_lang_tempcode('_MEMBER_NO_EXIST', escape_html($username)));
+            warn_exit(do_lang_tempcode('MEMBER_NO_EXIST'));
         }
 
         $save = post_param_string('save');
@@ -652,7 +665,7 @@ class Module_warnings extends Standard_crud_module
             $_title = do_lang('NEW_WARNING_TO_YOU');
 
             $pt_topic_id = cns_make_topic(null, '', '', 1, 1, 0, 0, 0, get_member(), $member_id);
-            $post_id = cns_make_post($pt_topic_id, $_title, $message, 0, true, 1, 1, null, null, null, null, null, null, null, false);
+            $post_id = cns_make_post($pt_topic_id, $_title, $message, 0, true, 1, 1/*emphasised*/, null, null, null, null, null, null, null, false);
 
             send_pt_notification($post_id, $_title, $pt_topic_id, $member_id);
         }
@@ -782,6 +795,7 @@ class Module_warnings extends Standard_crud_module
         if ($stopforumspam == 1) {
             $banned_ip = $GLOBALS['FORUM_DRIVER']->get_member_row_field($member_id, 'm_ip_address');
             require_code('failure');
+            require_code('failure_spammers');
             syndicate_spammer_report($banned_ip, $username, $GLOBALS['FORUM_DRIVER']->get_member_email_address($member_id), $explanation, true);
 
             require_code('cns_general_action2');

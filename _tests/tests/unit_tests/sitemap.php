@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -35,6 +35,8 @@ class sitemap_test_set extends cms_test_case
         $options = SITEMAP_GEN_NONE;
         $zone = '_SEARCH';
         $meta_gather = SITEMAP_GATHER__ALL | SITEMAP_GEN_USE_PAGE_GROUPINGS;
+
+        $GLOBALS['SITE_DB']->query_delete('bookmarks'); // Interferes with rules
 
         $this->sitemap = retrieve_sitemap_node($page_link, $callback, $valid_node_types, $child_cutoff, $max_recurse_depth, $options, $zone, $meta_gather);
         $this->flattened = $this->flatten_sitemap($this->sitemap);
@@ -73,7 +75,7 @@ class sitemap_test_set extends cms_test_case
         $this->assertTrue(isset($this->flattened['adminzone:admin_config:base']));
 
         // Test we have an arbitrary resource, just to ensure things are still generating deeply
-        $this->assertTrue(isset($this->flattened[get_module_zone('downloads') . ':downloads:browse:1']));
+        $this->assertTrue(isset($this->flattened[get_module_zone('calendar') . ':calendar:browse:int_1=1']));
     }
 
     public function testPageGroupingHelpDocsDefined()
@@ -98,7 +100,7 @@ class sitemap_test_set extends cms_test_case
             }
 
             if (in_array($link[0], $applicable_page_groupings)) {
-                if (($link[0] == '') && (is_array($link[2])) && (!in_array($link[2][2]['type'], $applicable_page_groupings))) {
+                if (($link[0] == '') && (is_array($link[2])) && ((!isset($link[2][1]['type'])) || (!in_array($link[2][1]['type'], $applicable_page_groupings)))) {
                     continue;
                 }
 
@@ -114,7 +116,8 @@ class sitemap_test_set extends cms_test_case
                         $this->assertTrue(true, 'Cannot locate page ' . $link[2][0]);
                     } else {
                         if (strpos($test[0], '_CUSTOM') === false) {
-                            $this->assertTrue(isset($link[4]), 'No help defined for ' . $link[3]->evaluate());
+                            $has_help_defined = isset($link[4]);
+                            $this->assertTrue($has_help_defined, 'No help defined for ' . $link[3]->evaluate() . ' (' . $link[2][2] . ':' . $link[2][0] . ')');
                         }
                     }
                 }
@@ -126,11 +129,15 @@ class sitemap_test_set extends cms_test_case
     {
         foreach ($this->flattened as $k => $c) {
             if (preg_match('#^\w*:(\w*(:\w*)?)?$#', $k) != 0) {
-                if (in_array($k, array(
+                if (in_array($k, array( // Exceptions
                     'site:popup_blockers',
                     'site:userguide_chatcode',
                     'site:userguide_comcode',
                     'site:top_sites',
+                    ':popup_blockers',
+                    ':userguide_chatcode',
+                    ':userguide_comcode',
+                    ':top_sites',
                     ':recommend_help',
                 ))) {
                     continue;
@@ -198,10 +205,5 @@ class sitemap_test_set extends cms_test_case
                 }
             }
         }
-    }
-
-    public function tearDown()
-    {
-        parent::tearDown();
     }
 }

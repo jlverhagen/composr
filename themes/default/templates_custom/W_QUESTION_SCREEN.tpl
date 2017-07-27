@@ -2,7 +2,7 @@
 
 <h2>{!W_SENTRY_QUESTION}</h2>
 
-<form method="post" enctype="multipart/form-data" action="{$PAGE_LINK*,_SELF:_SELF}">
+<form method="post" enctype="multipart/form-data" action="{$PAGE_LINK*,_SELF:_SELF}" autocomplete="off">
 	{$INSERT_SPAMMER_BLACKHOLE}
 
 	<input type="hidden" name="dx" value="{DX*}" />
@@ -14,7 +14,7 @@
 	</p>
 
 	<p class="proceed_button">
-		<input class="buttons__proceed button_screen" type="submit" value="{!PROCEED}" />
+		<input class="button_screen buttons__proceed" type="submit" value="{!PROCEED}" />
 	</p>
 </form>
 

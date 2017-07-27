@@ -1,12 +1,12 @@
 {TITLE}
 
 {+START,IF_PASSED,RESULTS}
-	<h2>{$?,{$IS_EMPTY,{SEARCH_TERM}},{!SEARCH_RESULTS_ARE_UNNAMED,{NUM_RESULTS*}{$?,{$EQ,{NUM_RESULTS},{$NUMBER_FORMAT,{$MAXIMUM_RESULT_COUNT_POINT}}},+}},{!SEARCH_RESULTS_ARE,{NUM_RESULTS*}{$?,{$EQ,{NUM_RESULTS},{$NUMBER_FORMAT,{$MAXIMUM_RESULT_COUNT_POINT}}},+},{SEARCH_TERM*}}}</h2>
-
 	{+START,IF_EMPTY,{RESULTS}}
 		<p class="nothing_here">{!NO_RESULTS_SEARCH}</p>
 	{+END}
 	{+START,IF_NON_EMPTY,{RESULTS}}
+		<h2>{$?,{$IS_EMPTY,{SEARCH_TERM}},{!SEARCH_RESULTS_ARE_UNNAMED,{NUM_RESULTS*}{$?,{$EQ,{NUM_RESULTS},{$NUMBER_FORMAT,{$MAXIMUM_RESULT_COUNT_POINT}}},+}},{!SEARCH_RESULTS_ARE,{NUM_RESULTS*}{$?,{$EQ,{NUM_RESULTS},{$NUMBER_FORMAT,{$MAXIMUM_RESULT_COUNT_POINT}}},+},{SEARCH_TERM*}}}</h2>
+
 		<div class="float_surrounder" itemscope="itemscope" itemtype="http://schema.org/SearchResultsPage">
 			{RESULTS}
 		</div>
@@ -47,8 +47,9 @@
 			{+END}
 		{+END}
 
-		<form title="{!PRIMARY_PAGE_FORM}" action="{$URL_FOR_GET_FORM*,{URL}}" target="_self" method="get" class="main_search_form">
+		<form title="{!PRIMARY_PAGE_FORM}" action="{$URL_FOR_GET_FORM*,{URL}}" target="_self" method="get" class="main_search_form" autocomplete="off">
 			{$HIDDENS_FOR_GET_FORM,{URL}}
+			<input type="hidden" name="all_defaults" value="0" />
 
 			<div class="wide_table_wrap"><table class="map_table form_table wide_table">
 				{+START,IF,{$NOT,{$MOBILE}}}
@@ -65,7 +66,7 @@
 						<td class="form_table_field_input" colspan="2">
 							<div class="accessibility_hidden"><label for="search_content">{!SEARCH_FOR}</label></div>
 							<div class="constrain_field">
-								<input maxlength="255"{+START,IF,{$MOBILE}} autocorrect="off"{+END} autocomplete="off" onkeyup="update_ajax_search_list(this,event{+START,IF_PASSED,SEARCH_TYPE},'{SEARCH_TYPE;^*}'{+END});" onkeypress="if (enter_pressed(event)) this.form.submit();" class="search_content wide_field" type="search" size="48" id="search_content" name="content" value="{+START,IF_PASSED,CONTENT}{CONTENT*}{+END}" />
+								<input maxlength="255"{+START,IF,{$MOBILE}} autocorrect="off"{+END} autocomplete="off" onkeyup="update_ajax_search_list(this,event{+START,IF_PASSED,SEARCH_TYPE},'{SEARCH_TYPE;^*}'{+END});" onkeypress="if (enter_pressed(event)) this.form.submit();" class="search_content wide_field" type="search" size="{$?,{$MOBILE},30,48}" id="search_content" name="content" value="{+START,IF_PASSED,CONTENT}{CONTENT*}{+END}" />
 							</div>
 
 							{+START,IF,{HAS_TEMPLATE_SEARCH}}
@@ -164,7 +165,7 @@
 						</tr>
 					{+END}
 					<tr>
-						<th class="form_table_field_name">{!SORT_BY}</th>
+						<th class="form_table_field_name">{!SORT}</th>
 						<td class="form_table_field_input" colspan="2">
 							<div class="accessibility_hidden"><label for="search_direction">{!DIRECTION}</label></div>
 							<div class="accessibility_hidden"><label for="search_sort">{!SORT_BY}</label></div>
@@ -192,7 +193,7 @@
 			</table></div>
 
 			<p class="proceed_button">
-				<input onclick="disable_button_just_clicked(this);" accesskey="u" class="buttons__search button_screen" type="submit" value="{!SEARCH_TITLE}" />
+				<input onclick="disable_button_just_clicked(this);" accesskey="u" class="button_screen buttons__search" type="submit" value="{!SEARCH_TITLE}" />
 			</p>
 		</form>
 	</div>

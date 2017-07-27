@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -49,7 +49,7 @@ class Module_admin
      * @param  boolean $check_perms Whether to check permissions.
      * @param  ?MEMBER $member_id The member to check permissions as (null: current user).
      * @param  boolean $support_crosslinks Whether to allow cross links to other modules (identifiable via a full-page-link rather than a screen-name).
-     * @param  boolean $be_deferential Whether to avoid any entry-point (or even return NULL to disable the page in the Sitemap) if we know another module, or page_group, is going to link to that entry-point. Note that "!" and "browse" entry points are automatically merged with container page nodes (likely called by page-groupings) as appropriate.
+     * @param  boolean $be_deferential Whether to avoid any entry-point (or even return null to disable the page in the Sitemap) if we know another module, or page_group, is going to link to that entry-point. Note that "!" and "browse" entry points are automatically merged with container page nodes (likely called by page-groupings) as appropriate.
      * @return ?array A map of entry points (screen-name=>language-code/string or screen-name=>[language-code/string, icon-theme-image]) (null: disabled).
      */
     public function get_entry_points($check_perms = true, $member_id = null, $support_crosslinks = true, $be_deferential = false)
@@ -69,7 +69,7 @@ class Module_admin
     public $title;
 
     /**
-     * Module pre-run function. Allows us to know meta-data for <head> before we start streaming output.
+     * Module pre-run function. Allows us to know metadata for <head> before we start streaming output.
      *
      * @return ?Tempcode Tempcode indicating some kind of exceptional output (null: none).
      */
@@ -110,7 +110,7 @@ class Module_admin
                 $this->title = get_screen_title('SETUP');
                 break;
             case 'tools':
-                $this->title = get_screen_title('menus:TOOLS');
+                $this->title = get_screen_title('TOOLS');
                 break;
             case 'security':
                 $this->title = get_screen_title('SECURITY');
@@ -154,7 +154,7 @@ class Module_admin
             case 'setup':
                 return do_next_manager_hooked('SETUP', 'menus:DOC_SETUP', 'setup');
             case 'tools':
-                return do_next_manager_hooked('menus:TOOLS', 'menus:DOC_TOOLS', 'tools');
+                return do_next_manager_hooked('TOOLS', 'menus:DOC_TOOLS', 'tools');
             case 'security':
                 return do_next_manager_hooked('SECURITY', 'menus:DOC_SECURITY', 'security');
         }
@@ -169,139 +169,23 @@ class Module_admin
      */
     public function _synonyms()
     {
-        return array(
-            array('maximum', 'limit', 'total', 'max', 'increase', 'long', 'count', 'tally'),
-            array('characters', 'words', 'bytes'),
+        require_code('textfiles');
+        $sets = explode("\n", read_text_file('synonyms', user_lang()));
+        $_sets = array();
+        foreach ($sets as $set) {
+            $_set = explode("\t", $set);
+            $__set = array();
+            foreach ($_set as $val) {
+                if (trim($val) != '') {
+                    $__set[] = $val;
+                }
+            }
 
-            array('fault', 'error', 'bug', 'warning', 'notice', 'mistake', 'glitch', 'flaw', 'failure'),
-            array('delineate', 'delimit', 'delimitate', 'demarcate'),
-            array('order', 'sort', 'position'),
-            array('sudo', 'masquerade', 'su'),
-            array('multi-moderation', 'multimoderation'),
-            array('invitation', 'invite'),
-            array('social', 'forum'),
-            array('xml_fields', 'filtering'),
-            array('banner', 'advert', 'advertising', 'advertise'),
-            array('news', 'blogs', 'press release'),
-            array('check-in', 'workflow', 'unvalidated', 'validation', 'valid', 'approval', 'approved', 'live', 'accept', 'posted', 'online', 'active', 'activate', 'activation', 'visible', 'publish'/*, 'screened'*/), // i.e. Composr validation
-            array('webstandards', 'check', 'conformance'),
-            // ^ We actually carefully segment our words so we don't talk of 'validation' anymore, like we did on earlier versions
-            //  sanitisation or check or well-formed (for input data, or transactions)
-            //  integrity (for system data)
-            //  approve (for IPs)
-            //  confirm (for newsletter subscriptions)
-            array('theme', 'skin', 'style'),
-            array('uninstall', 'disable', 'remove'),
-            array('pruning', 'prune', 'lurkers'),
-            array('pm', 'pt', 'dm', 'private message', 'private topic', 'whisper'),
-            array('filedump', 'library', 'file manager'),
-            array('word-filter', 'wordfilter', 'swear', 'curse'),
-            array('colour', 'color', 'css', 'font', 'background'),
-            array('dob', 'date of birth', 'age', 'birthday'),
-            array('sef', 'seo', 'google', 'search engine', 'search-engine-friendly', 'search-engine-optimisation'),
-            array('ban', 'suspend', 'suspension', 'probation', 'warn', 'punish', 'punitive', 'troll'),
-            array('crash', 'warn', 'error', 'fatal', 'falt'),
-            array('staff', 'moderator', 'admin', 'administrator', 'operator', 'webmaster'),
-            array('open', 'closed', 'live', 'activate', 'activation', /*'enable', */'turn'),
-            array('import', 'convert', 'migrate', 'interchange'),
-            array('commandr', 'console', 'command prompt', 'command line', 'cle'),
-            array('required', 'optional'),
-            array('export', 'download'),
-            array('attachment', 'upload'),
-            array('tree', 'nest', 'hierarchy', 'node', 'child', 'recursive'),
-            array('pinned', 'sticky'),
-            array('interstitial', 'gateway'),
-            array('cpfs', 'cpf', 'fields'),
-            array('counting_blocks', 'hit counter'),
-            array('email', 'e-mail', 'cns_contact_member'),
-            array('redirect', 'route'),
-            array('center', 'centre'),
-            array('license', 'licence'),
-            array('search', 'find', 'filter'),
-            array('recommend', 'refer'),
-            array('quizzes', 'surveys', 'tests', 'competitions', 'questionnaires', 'prize-draw', 'exam', 'assessment'),
-            array('securitylogging', 'audit'),
-            array('content reviews', 'audit'),
-            array('award', 'highlight', 'feature'),
-            array('bookmark', 'favorite'),
-            array('calendar', 'event', 'diary', 'schedule'),
-            array('admin zone', 'admincp', 'admin panel', 'control panel'),
-            array('collaboration_zone', 'groupware'),
-            array('actionlog', 'audit'),
-            array('atom', 'rss', 'feed', 'syndication'),
-            array('login', 'logon', 'log-in', 'log-on'),
-            array('display', 'render', 'view'),
-            array('gallery', 'album', 'galleries', 'podcast', 'multimedia'),
-            array('audit', 'log', 'usage'),
-            array('download', 'file', 'document', 'publication', 'library'),
-            array('page', 'article', 'comcode'),
-            array('entry', 'item', 'content', 'resource', 'submission'),
-            array('category', 'node', 'section', 'repository', 'collection'),
-            array('directory', 'folder'),
-            array('catalogue', 'database', 'classified', 'catalog', 'directory', 'schema', 'field'),
-            array('speed', 'slow', 'fast', 'optimisation', 'performance', 'efficiency'),
-            array('panel', 'sidebar', 'frame', 'bar', 'column'),
-            array('usergroup', 'group', 'promote', 'rank', 'badge'),
-            array('member', 'user', 'contact', 'person'),
-            array('profile', 'account', 'memberaccount'),
-            array('accessibility', 'a11y'),
-            array('intl', 'internationalisation', 'regionalisation', 'i18n', 'l10n', 'localisation'),
-            array('permission', 'privilege', 'authorisation', 'authorization', 'right', 'access', 'grant', 'restrict', 'prohibite', 'credentials'),
-            array('access', 'view'),
-            array('overlay', 'popup', 'dialog', 'window'),
-            array('option', 'setting', 'value', 'parameter'),
-            array('configure', 'configuration', 'setup', 'install', 'core_configuration'),
-            array('emoticon', 'smiley', 'smile', 'face', 'emoji'),
-            array('forum', 'board', 'bbs', 'cns_forum', 'message board'),
-            array('thread', 'topic'),
-            array('karma', 'point'),
-            array('batch', 'bulk', 'mass'),
-            array('subscribe', 'track', 'notification', 'alert', 'monitor', 'watch', 'follow'),
-            array('bbcode', 'wikicode', 'comcode', 'shortcode'),
-            array('html', 'xhtml'),
-            array('wysiwyg', 'rte'),
-            array('addon', 'add-on', 'mod', 'hack', 'extension', 'plugin', 'app', 'core_addon_management', 'module', 'system'),
-            array('name', 'title', 'label', ''/*May be a stop word*/),
-            array('analytics', 'statistics', 'hits', 'stats'),
-            array('newsletter', 'mass-mail', 'mass-mailing', 'bulletin', 'mail-merge', 'announcement'),
-            array('description', 'caption', 'summary'),
-            array('choose', 'set', 'specify', 'pick'),
-            array('add', 'submit', 'create', 'make', 'publish', 'upload'),
-            array('edit', 'modify', 'manage', 'change', 'control', 'moderate', 'update'),
-            array('delete', 'erase', 'remove', 'discard', 'prune', 'trash'),
-            array('restore', 'revert', 'undo'),
-            array('news', 'story', 'stories', 'article'),
-            array('language', 'unicode', 'utf', 'utf8', 'utf-8', 'character', 'charset', '24', 'clock', 'timezone', 'time-zone', 'time', 'date', 'translate'),
-            array('ldap', 'active directory'),
-            array('contact', 'feedback', 'ticket', 'message', 'issue', 'email', 'e-mail', 'support', 'desk'),
-            array('post', 'message', 'body'),
-            array('documentation', 'help', 'guide', 'manual'),
-            array('sef', 'short', 'friendly'),
-            array('survey', 'quiz', 'competition', 'test', 'questionnaire'),
-            array('swf', 'flash'),
-            array('friend', 'buddy', 'follower'),
-            array('like', 'love', 'rate'),
-            array('subscribe', 'subscription'),
-            array('attach', 'embed'),
-            array('smf', 'simple machines forum'),
-            array('ipb', 'invision'),
-            array('random_quotes', 'testimonials'),
-            array('join', 'register', 'signup', 'sign-up'),
-            array('logout', 'log-out', 'sign-out', 'sign-off'),
-            array('login', 'log-in', 'sign-in', 'sign-on'),
-            array('shopping', 'ecommerce', 'payment', 'purchase', 'products'),
-            array('cache', 'decache', 'cleanup'),
-            array('ssl', 'https'),
-            array('seed', 'theme wizard'),
-            array('author', 'bio', 'biography'),
-            array('block', 'widget'), // Joomla uses 'module', but we don't want to synonym this as it means something else in Composr
-            array('moniker', 'slug'),
-            array('guest', 'anonymous'),
-            array('rules', 'license', 'licence', 'agreement', 'terms', 'conditions', 'legals'),
-            array('dashboard', 'console', 'status'),
-            array('menu', 'navigation'),
-            array('permalink', 'url', 'link'),
-        );
+            if (count($__set) != 0) {
+                $_sets[] = $__set;
+            }
+        }
+        return $_sets;
     }
 
     /**
@@ -312,13 +196,14 @@ class Module_admin
      */
     public function _strip_junk_words($words)
     {
-        $bad = array('the', 'of', 'to', 'and', 'a', 'in', 'is', 'it', 'you', 'that', 'he', 'was', 'for', 'on', 'are',
-                     'with', 'as', 'I', 'his', 'they', 'be', 'at', 'this', 'or', 'had', 'by', 'but', 'what', 'some', 'we', 'can',
-                     'out', 'other', 'were', 'all', 'there', 'when', 'your', 'how', 'an', 'which', 'do', 'so', 'these', 'has', 'go',
-                     'come', 'did', 'no', 'my', 'where', 'me', 'our', 'thing', 'site', 'website');
+        require_code('textfiles');
+        $bad = array_flip(explode("\n", read_text_file('too_common_words', user_lang())));
+        unset($bad['']);
+
+        $bad = array();
         $_words = array();
         foreach ($words as $i => $b) {
-            if (!in_array($b, $bad)) {
+            if (!isset($bad[$b])) {
                 if ((($b != 'chat') || (!array_key_exists($i + 1, $words)) || (($words[$i + 1] != 'room') && ($words[$i + 1] != 'rooms'))) && (($b != 'user') || (!array_key_exists($i + 1, $words)) || (($words[$i + 1] != 'group') && ($words[$i + 1] != 'groups')))) {
                     $_words[] = $b;
                 } else {// Special case of compound terms that are actually single words in Composr; fix the word, and also stop ridiculous amounts of spurious result
@@ -383,7 +268,7 @@ class Module_admin
         }
 
         foreach ($section_limitations as $l) {
-            if (stripos($results_type, $l) !== false) {
+            if (@stripos($results_type, $l) !== false) {
                 return true;
             }
         }
@@ -403,7 +288,7 @@ class Module_admin
 
         $GLOBALS['NO_QUERY_LIMIT'] = true;
 
-        if (function_exists('set_time_limit')) {
+        if (php_function_allowed('set_time_limit')) {
             @set_time_limit(100);
         }
         send_http_output_ping();
@@ -525,7 +410,7 @@ class Module_admin
             );
             foreach ($tips as $n => $tip_string) {
                 if ($this->_keyword_match($n)) {
-                    $content[$current_results_type]->attach(do_template('INDEX_SCREEN_FANCIER_ENTRY', array('NAME' => do_lang_tempcode($tip_string, escape_html(get_brand_base_url()), escape_html(brand_name())), 'URL' => '', 'TITLE' => '', 'DESCRIPTION' => '', 'SUP' => '')));
+                    $content[$current_results_type]->attach(do_template('INDEX_SCREEN_FANCIER_ENTRY', array('_GUID' => 'de0b2510ac9640ec36805fe39025afdf', 'NAME' => do_lang_tempcode($tip_string, escape_html(get_brand_base_url()), escape_html(brand_name())), 'URL' => '', 'TITLE' => '', 'DESCRIPTION' => '', 'SUP' => '')));
                 }
             }
         }
@@ -557,6 +442,29 @@ class Module_admin
                         $sup = do_lang_tempcode('LOCATED_IN', $breadcrumbs);
                         $content[$current_results_type]->attach(do_template('INDEX_SCREEN_FANCIER_ENTRY', array('_GUID' => 'ec53a1d45fe6a80308bf509b896d2763', 'NAME' => $n, 'URL' => $_url, 'TITLE' => '', 'DESCRIPTION' => '', 'SUP' => $sup)));
                     }
+                }
+            }
+        }
+        cms_profile_end_for('admin search: ' . $current_results_type);
+
+        // Cleanup tools
+        $current_results_type = do_lang('CLEANUP_TOOLS');
+        cms_profile_start_for('admin search: ' . $current_results_type);
+        if (($this->_section_match($section_limitations, $current_results_type)) && (has_actual_page_access(get_member(), 'admin_cleanup'))) {
+            $content[$current_results_type] = new Tempcode();
+            $hooks = find_all_hooks('systems', 'cleanup');
+            foreach (array_keys($hooks) as $hook) {
+                require_code('hooks/systems/cleanup/' . filter_naughty_harsh($hook));
+                $object = object_factory('Hook_cleanup_' . filter_naughty_harsh($hook), true);
+                if (is_null($object)) {
+                    continue;
+                }
+                $info = $object->info(true);
+                $n = $info['title'];
+                if ($this->_keyword_match(is_object($n) ? $n->evaluate() : $n)) {
+                    $_url = build_url(array('page' => 'admin_cleanup', 'tick' => $hook), get_module_zone('admin_cleanup'));
+                    $breadcrumbs = new Tempcode();
+                    $content[$current_results_type]->attach(do_template('INDEX_SCREEN_FANCIER_ENTRY', array('_GUID' => 'fc53a1d45fe6a80308bf509b896d2763', 'NAME' => $n, 'URL' => $_url, 'TITLE' => '', 'DESCRIPTION' => '', 'SUP' => '')));
                 }
             }
         }
@@ -633,14 +541,13 @@ class Module_admin
                                     }
                                 }
                                 if (strpos($type, ':') !== false) {
-                                    list($zone, $attributes, $hash) = page_link_decode($type);
-                                    $_url = build_url($attributes, $zone, null, false, false, false, $hash);
+                                    $_url = page_link_to_tempcode_url($type);
                                 } else {
                                     $_url = build_url(array('page' => $page, 'type' => $type), $zone);
                                 }
                                 $sup = $breadcrumbs->is_empty() ? null : do_lang_tempcode('LOCATED_IN', $breadcrumbs);
-                                $sitemap_editor_url = build_url(array('page' => 'admin_sitemap', 'type' => 'sitemap', 'id' => $zone . ':' . $page), 'adminzone');
-                                $permission_tree_editor_url = build_url(array('page' => 'admin_permissions', 'id' => $zone . ':' . $page), 'adminzone');
+                                $sitemap_editor_url = build_url(array('page' => 'admin_sitemap', 'type' => 'sitemap', 'id' => $zone . ':' . $page), get_module_zone('admin_sitemap'));
+                                $permission_tree_editor_url = build_url(array('page' => 'admin_permissions', 'id' => $zone . ':' . $page), get_module_zone('admin_permissions'));
                                /* $content[$current_results_type]->attach(do_template('INDEX_SCREEN_FANCIER_ENTRY', array(
                                     '_GUID' => 'f656efd513099deac516d3273f9adfc4',
                                     'NAME' => $n,
@@ -657,9 +564,9 @@ class Module_admin
                     if (!is_null($n)) {
                         if (($this->_keyword_match($n)) && (has_actual_page_access(get_member(), $page, $zone))) {
                             $_url = build_url(array('page' => $page), $zone);
-                            $site_tree_editor_url = build_url(array('page' => 'admin_sitetree', 'type' => 'site_tree', 'id' => $zone . ':' . $page), 'adminzone');
-                            $permission_tree_editor_url = build_url(array('page' => 'admin_permissions', 'id' => $zone . ':' . $page), 'adminzone');
-                            $content[$current_results_type]->attach(do_template('INDEX_SCREEN_FANCIER_ENTRY', array('NAME' => $n, 'URL' => $_url, 'TITLE' => '', 'DESCRIPTION' => do_lang_tempcode('FIND_IN_SITEMAP_EDITOR', escape_html($site_tree_editor_url->evaluate()), escape_html($permission_tree_editor_url->evaluate())))));
+                            $site_tree_editor_url = build_url(array('page' => 'admin_sitemap', 'type' => 'sitemap', 'id' => $zone . ':' . $page), get_module_zone('admin_sitemap'));
+                            $permission_tree_editor_url = build_url(array('page' => 'admin_permissions', 'id' => $zone . ':' . $page), get_module_zone('admin_permissions'));
+                            $content[$current_results_type]->attach(do_template('INDEX_SCREEN_FANCIER_ENTRY', array('_GUID' => '65420db47f2a73b4cc24258a9e9f3ef9', 'NAME' => $n, 'URL' => $_url, 'TITLE' => '', 'DESCRIPTION' => do_lang_tempcode('FIND_IN_SITEMAP_EDITOR', escape_html($site_tree_editor_url->evaluate()), escape_html($permission_tree_editor_url->evaluate())))));
                         }
                     }
                 }
@@ -704,12 +611,12 @@ class Module_admin
                     }
                 }
             }
-            $all_options['timezone'] = array('human_name' => 'TIME_ZONE', 'c_value' => '', 'the_type' => 'special', 'category' => 'SITE', 'group' => 'GENERAL', 'explanation' => 'DESCRIPTION_TIMEZONE_SITE', 'shared_hosting_restricted' => 0);
+            $all_options['timezone'] = array('human_name' => 'TIMEZONE', 'c_value' => '', 'the_type' => 'special', 'category' => 'SITE', 'group' => 'GENERAL', 'explanation' => 'DESCRIPTION_TIMEZONE_SITE', 'shared_hosting_restricted' => 0);
             $config_categories = array();
             $conf_found_count = 0;
             foreach ($all_options as $name => $p) {
-				$_n = do_lang($p['human_name'], null, null, null, null, false);
-				if (is_null($_n)) {
+                $_n = do_lang($p['human_name'], null, null, null, null, false);
+                if (is_null($_n)) {
                     continue;
                 }
                 $n = do_lang_tempcode($p['human_name']);
@@ -718,7 +625,7 @@ class Module_admin
                 $value = array_key_exists('c_value', $p) ? $p['c_value'] : get_option($name);
 
                 if ((($this->_keyword_match($name)) || ($this->_keyword_match($n->evaluate())) || ($this->_keyword_match($t)) || ($this->_keyword_match($value)))) {
-                    $_url = build_url(array('page' => 'admin_config', 'type' => 'category', 'id' => $p['category']), 'adminzone');
+                    $_url = build_url(array('page' => 'admin_config', 'type' => 'category', 'id' => $p['category']), get_module_zone('admin_config'));
                     $url = $_url->evaluate();
                     $url .= '#group_' . $p['group'];
                     if (is_null($t)) {
@@ -727,9 +634,9 @@ class Module_admin
                     $breadcrumbs = new Tempcode();
                     $breadcrumbs->attach(hyperlink(build_url(array('page' => 'admin', 'type' => 'setup'), 'adminzone'), do_lang_tempcode('SETUP'), false, false));
                     $breadcrumbs->attach(do_template('BREADCRUMB_SEPARATOR'));
-                    $breadcrumbs->attach(hyperlink(build_url(array('page' => 'admin_config', 'type' => 'browse'), 'adminzone'), do_lang_tempcode('CONFIGURATION'), false, false));
+                    $breadcrumbs->attach(hyperlink(build_url(array('page' => 'admin_config', 'type' => 'browse'), get_module_zone('admin_config')), do_lang_tempcode('CONFIGURATION'), false, false));
                     $breadcrumbs->attach(do_template('BREADCRUMB_SEPARATOR'));
-                    $breadcrumbs->attach(hyperlink(build_url(array('page' => 'admin_config', 'type' => 'category', 'id' => $p['category']), 'adminzone'), do_lang_tempcode('CONFIG_CATEGORY_' . $p['category']), false, false));
+                    $breadcrumbs->attach(hyperlink(build_url(array('page' => 'admin_config', 'type' => 'category', 'id' => $p['category']), get_module_zone('admin_config')), do_lang_tempcode('CONFIG_CATEGORY_' . $p['category']), false, false));
                     $breadcrumbs->attach(do_template('BREADCRUMB_SEPARATOR'));
                     $breadcrumbs->attach(hyperlink($url, do_lang_tempcode($p['group']), false, false));
                     $sup = do_lang_tempcode('LOCATED_IN', $breadcrumbs);
@@ -760,12 +667,12 @@ class Module_admin
                 }
                 $n = do_lang_tempcode('CONFIG_CATEGORY_' . $p);
                 if ($this->_keyword_match($n->evaluate())) {
-                    $_url = build_url(array('page' => 'admin_config', 'type' => 'category', 'id' => $p), 'adminzone');
+                    $_url = build_url(array('page' => 'admin_config', 'type' => 'category', 'id' => $p), get_module_zone('admin_config'));
                     $description = do_lang_tempcode('CONFIG_CATEGORY_DESCRIPTION__' . $p);
                     $breadcrumbs = new Tempcode();
                     $breadcrumbs->attach(hyperlink(build_url(array('page' => 'admin', 'type' => 'setup'), 'adminzone'), do_lang_tempcode('SETUP'), false, false));
                     $breadcrumbs->attach(do_template('BREADCRUMB_SEPARATOR'));
-                    $breadcrumbs->attach(hyperlink(build_url(array('page' => 'admin_config', 'type' => 'browse'), 'adminzone'), do_lang_tempcode('CONFIGURATION'), false, false));
+                    $breadcrumbs->attach(hyperlink(build_url(array('page' => 'admin_config', 'type' => 'browse'), get_module_zone('admin_config')), do_lang_tempcode('CONFIGURATION'), false, false));
                     $sup = do_lang_tempcode('LOCATED_IN', $breadcrumbs);
                     $content[$current_results_type]->attach(do_template('INDEX_SCREEN_FANCIER_ENTRY', array('_GUID' => 'eec6e7cc57e660bdcbf123db8419e24e', 'NAME' => $n, 'URL' => $_url, 'TITLE' => '', 'DESCRIPTION' => $description, 'SUP' => $sup)));
                 }
@@ -784,15 +691,15 @@ class Module_admin
                         } else {
                             $group_description = do_lang_tempcode('CONFIG_GROUP_DESCRIP_' . $group, escape_html($post_max_size), escape_html($upload_max_filesize), false);
                         }
-                        $_url = build_url(array('page' => 'admin_config', 'type' => 'category', 'id' => $p), 'adminzone');
+                        $_url = build_url(array('page' => 'admin_config', 'type' => 'category', 'id' => $p), get_module_zone('admin_config'));
                         $url = $_url->evaluate();
                         $url .= '#group_' . $group;
                         $breadcrumbs = new Tempcode();
                         $breadcrumbs->attach(hyperlink(build_url(array('page' => 'admin', 'type' => 'setup'), 'adminzone'), do_lang_tempcode('SETUP'), false, false));
                         $breadcrumbs->attach(do_template('BREADCRUMB_SEPARATOR'));
-                        $breadcrumbs->attach(hyperlink(build_url(array('page' => 'admin_config', 'type' => 'browse'), 'adminzone'), do_lang_tempcode('CONFIGURATION'), false, false));
+                        $breadcrumbs->attach(hyperlink(build_url(array('page' => 'admin_config', 'type' => 'browse'), get_module_zone('admin_config')), do_lang_tempcode('CONFIGURATION'), false, false));
                         $breadcrumbs->attach(do_template('BREADCRUMB_SEPARATOR'));
-                        $breadcrumbs->attach(hyperlink(build_url(array('page' => 'admin_config', 'type' => 'category', 'id' => $p), 'adminzone'), do_lang_tempcode('CONFIG_CATEGORY_' . $p), false, false));
+                        $breadcrumbs->attach(hyperlink(build_url(array('page' => 'admin_config', 'type' => 'category', 'id' => $p), get_module_zone('admin_config')), do_lang_tempcode('CONFIG_CATEGORY_' . $p), false, false));
                         $sup = do_lang_tempcode('LOCATED_IN', $breadcrumbs);
                         $content[$current_results_type_2]->attach(do_template('INDEX_SCREEN_FANCIER_ENTRY', array('_GUID' => 'e95b87d01c839e41ee1ea484feeb5cd7', 'NAME' => $n2, 'URL' => $url, 'TITLE' => '', 'DESCRIPTION' => $group_description, 'SUP' => $sup)));
                     }
@@ -811,14 +718,14 @@ class Module_admin
             foreach ($all_groups as $p) {
                 $n = get_translated_text($p['g_name'], $GLOBALS['FORUM_DB']);
                 if ($this->_keyword_match($n)) {
-                    $_url = build_url(array('page' => 'admin_cns_groups', 'type' => '_edit', 'id' => $p['id']), 'adminzone');
+                    $_url = build_url(array('page' => 'admin_cns_groups', 'type' => '_edit', 'id' => $p['id']), get_module_zone('admin_cns_groups'));
                     $url = $_url->evaluate();
                     $breadcrumbs = new Tempcode();
                     $breadcrumbs->attach(hyperlink(build_url(array('page' => 'admin', 'type' => 'security'), 'adminzone'), do_lang_tempcode('SECURITY'), false, false));
                     $breadcrumbs->attach(do_template('BREADCRUMB_SEPARATOR'));
-                    $breadcrumbs->attach(hyperlink(build_url(array('page' => 'admin_cns_groups', 'type' => 'browse'), 'adminzone'), do_lang_tempcode('USERGROUPS'), false, false));
+                    $breadcrumbs->attach(hyperlink(build_url(array('page' => 'admin_cns_groups', 'type' => 'browse'), get_module_zone('admin_cns_groups')), do_lang_tempcode('USERGROUPS'), false, false));
                     $breadcrumbs->attach(do_template('BREADCRUMB_SEPARATOR'));
-                    $breadcrumbs->attach(hyperlink(build_url(array('page' => 'admin_cns_groups', 'type' => 'edit'), 'adminzone'), do_lang_tempcode('EDIT_GROUP'), false, false));
+                    $breadcrumbs->attach(hyperlink(build_url(array('page' => 'admin_cns_groups', 'type' => 'edit'), get_module_zone('admin_cns_groups')), do_lang_tempcode('EDIT_GROUP'), false, false));
                     $sup = do_lang_tempcode('LOCATED_IN', $breadcrumbs);
                     $content[$current_results_type]->attach(do_template('INDEX_SCREEN_FANCIER_ENTRY', array('_GUID' => '785e7208a7b10dfd095197754cedf505', 'NAME' => $n, 'URL' => $url, 'TITLE' => '', 'DESCRIPTION' => '', 'SUP' => $sup)));
                 }
@@ -834,12 +741,12 @@ class Module_admin
             $map = array();
             foreach (array(do_lang('MOBILE_PAGES')) as $n) {
                 if ($this->_keyword_match($n)) {
-                    $_url = build_url(array('page' => 'admin_themes', 'type' => 'edit_theme', 'theme' => $GLOBALS['FORUM_DRIVER']->get_theme('')), 'adminzone');
+                    $_url = build_url(array('page' => 'admin_themes', 'type' => 'edit_theme', 'theme' => $GLOBALS['FORUM_DRIVER']->get_theme('')), get_module_zone('admin_themes'));
                     $url = $_url->evaluate();
                     $breadcrumbs = new Tempcode();
                     $breadcrumbs->attach(hyperlink(build_url(array('page' => 'admin', 'type' => 'style'), 'adminzone'), do_lang_tempcode('STYLE'), false, false));
                     $breadcrumbs->attach(do_template('BREADCRUMB_SEPARATOR'));
-                    $breadcrumbs->attach(hyperlink(build_url(array('page' => 'admin_themes', 'type' => 'browse'), 'adminzone'), do_lang_tempcode('THEMES'), false, false));
+                    $breadcrumbs->attach(hyperlink(build_url(array('page' => 'admin_themes', 'type' => 'browse'), get_module_zone('admin_themes')), do_lang_tempcode('THEMES'), false, false));
                     $sup = do_lang_tempcode('LOCATED_IN', $breadcrumbs);
                     $content[$current_results_type]->attach(do_template('INDEX_SCREEN_FANCIER_ENTRY', array('_GUID' => '00bb6ce930058afc298ce206b703322b', 'NAME' => $n, 'URL' => $url, 'TITLE' => '', 'DESCRIPTION' => '', 'SUP' => $sup)));
 
@@ -861,14 +768,14 @@ class Module_admin
                 $t = get_translated_text($p['zone_title']);
                 $ht = get_translated_text($p['zone_header_text']);
                 if (($this->_keyword_match($n)) || ($this->_keyword_match($t)) || ($this->_keyword_match($ht))) {
-                    $_url = build_url(array('page' => 'admin_zones', 'type' => '_edit', 'id' => $p['zone_name']), 'adminzone');
+                    $_url = build_url(array('page' => 'admin_zones', 'type' => '_edit', 'id' => $p['zone_name']), get_module_zone('admin_zones'));
                     $url = $_url->evaluate();
                     $breadcrumbs = new Tempcode();
                     $breadcrumbs->attach(hyperlink(build_url(array('page' => 'admin', 'type' => 'setup'), 'adminzone'), do_lang_tempcode('STRUCTURE'), false, false));
                     $breadcrumbs->attach(do_template('BREADCRUMB_SEPARATOR'));
-                    $breadcrumbs->attach(hyperlink(build_url(array('page' => 'admin_zones', 'type' => 'browse'), 'adminzone'), do_lang_tempcode('ZONES'), false, false));
+                    $breadcrumbs->attach(hyperlink(build_url(array('page' => 'admin_zones', 'type' => 'browse'), get_module_zone('admin_zones')), do_lang_tempcode('ZONES'), false, false));
                     $breadcrumbs->attach(do_template('BREADCRUMB_SEPARATOR'));
-                    $breadcrumbs->attach(hyperlink(build_url(array('page' => 'admin_zones', 'type' => 'edit'), 'adminzone'), do_lang_tempcode('EDIT_ZONE'), false, false));
+                    $breadcrumbs->attach(hyperlink(build_url(array('page' => 'admin_zones', 'type' => 'edit'), get_module_zone('admin_zones')), do_lang_tempcode('EDIT_ZONE'), false, false));
                     $sup = do_lang_tempcode('LOCATED_IN', $breadcrumbs);
                     $content[$current_results_type]->attach(do_template('INDEX_SCREEN_FANCIER_ENTRY', array('_GUID' => 'd9e5c8d9ba1aedb920ac7c719d4ace69', 'NAME' => $n, 'URL' => $url, 'TITLE' => '', 'DESCRIPTION' => escape_html($t), 'SUP' => $sup)));
                 }
@@ -910,14 +817,15 @@ class Module_admin
                             $tar = tar_open(get_custom_file_base() . '/imports/addons/' . $f, 'rb');
                             $directory = tar_get_directory($tar);
                             $info_file = tar_get_file($tar, 'addon.inf');
+                            tar_close($tar);
                             if (!is_null($info_file)) {
                                 $info = better_parse_ini_file(null, $info_file['data']);
 
                                 $title = isset($info['title']) ? $info['title'] : '';
                                 $description = isset($info['description']) ? $info['description'] : '';
-                                $_url = build_url(array('page' => 'admin_addons'), 'adminzone');
+                                $_url = build_url(array('page' => 'admin_addons'), get_module_zone('admin_addons'));
                                 $url = $_url->evaluate();
-                                $content[$current_results_type]->attach(do_template('INDEX_SCREEN_FANCIER_ENTRY', array('NAME' => $p, 'URL' => $url, 'TITLE' => $title, 'DESCRIPTION' => $description)));
+                                $content[$current_results_type]->attach(do_template('INDEX_SCREEN_FANCIER_ENTRY', array('_GUID' => 'e9cd6b45e33abf4a2136dc6b1ff5b8ee', 'NAME' => $p, 'URL' => $url, 'TITLE' => $title, 'DESCRIPTION' => $description)));
                             }
                         }
                     }
@@ -940,11 +848,11 @@ class Module_admin
                     continue;
                 }
                 if (($this->_keyword_match($n)) || ($this->_keyword_match($p['the_name']))) {
-                    $_url = build_url(array('page' => 'admin_permissions', 'type' => 'privileges', 'id' => $p['p_section']), 'adminzone');
+                    $_url = build_url(array('page' => 'admin_permissions', 'type' => 'privileges', 'id' => $p['p_section']), get_module_zone('admin_permissions'));
                     $breadcrumbs = new Tempcode();
                     $breadcrumbs->attach(hyperlink(build_url(array('page' => 'admin', 'type' => 'security'), 'adminzone'), do_lang_tempcode('SECURITY'), false, false));
                     $breadcrumbs->attach(do_template('BREADCRUMB_SEPARATOR'));
-                    $breadcrumbs->attach(hyperlink(build_url(array('page' => 'admin_permissions', 'type' => 'privileges'), 'adminzone'), do_lang_tempcode('PRIVILEGES'), false, false));
+                    $breadcrumbs->attach(hyperlink(build_url(array('page' => 'admin_permissions', 'type' => 'privileges'), get_module_zone('admin_permissions')), do_lang_tempcode('PRIVILEGES'), false, false));
                     $breadcrumbs->attach(do_template('BREADCRUMB_SEPARATOR'));
                     $breadcrumbs->attach(hyperlink($_url, do_lang_tempcode($p['p_section']), false, false));
                     $sup = do_lang_tempcode('LOCATED_IN', $breadcrumbs);
@@ -960,11 +868,11 @@ class Module_admin
                     continue;
                 }
                 if (($this->_keyword_match($n)) || ($this->_keyword_match($p))) {
-                    $_url = build_url(array('page' => 'admin_permissions', 'type' => 'privileges', 'id' => $p), 'adminzone');
+                    $_url = build_url(array('page' => 'admin_permissions', 'type' => 'privileges', 'id' => $p), get_module_zone('admin_permissions'));
                     $breadcrumbs = new Tempcode();
                     $breadcrumbs->attach(hyperlink(build_url(array('page' => 'admin', 'type' => 'security'), 'adminzone'), do_lang_tempcode('SECURITY'), false, false));
                     $breadcrumbs->attach(do_template('BREADCRUMB_SEPARATOR'));
-                    $breadcrumbs->attach(hyperlink(build_url(array('page' => 'admin_permissions', 'type' => 'privileges'), 'adminzone'), do_lang_tempcode('PRIVILEGES'), false, false));
+                    $breadcrumbs->attach(hyperlink(build_url(array('page' => 'admin_permissions', 'type' => 'privileges'), get_module_zone('admin_permissions')), do_lang_tempcode('PRIVILEGES'), false, false));
                     $sup = do_lang_tempcode('LOCATED_IN', $breadcrumbs);
                     $content[$current_results_type]->attach(do_template('INDEX_SCREEN_FANCIER_ENTRY', array('_GUID' => '43bfb229943e0bb1d2c2e4512e0e5ec9', 'NAME' => $n, 'URL' => $_url, 'TITLE' => '', 'DESCRIPTION' => '', 'SUP' => $sup)));
                 }
@@ -975,7 +883,7 @@ class Module_admin
         // Usergroup settings
         $current_results_type = do_lang('USERGROUP_SETTINGS_SEARCH_GROUP');
         cms_profile_start_for('admin search: ' . $current_results_type);
-        if (($this->_section_match($section_limitations, $current_results_type)) && (get_forum_type() == 'cns') && (has_actual_page_access(get_member(), 'admin_cns_groups', 'adminzone'))) {
+        if (($this->_section_match($section_limitations, $current_results_type)) && (get_forum_type() == 'cns') && (has_actual_page_access(get_member(), 'admin_cns_groups'))) {
             $content[$current_results_type] = new Tempcode();
             $applicable_langstrings = array(
                 array('ENQUIRE_ON_NEW_IPS', 'DESCRIPTION_ENQUIRE_ON_NEW_IPS'),
@@ -999,12 +907,12 @@ class Module_admin
                     $n = do_lang($langstring);
                     if ($this->_keyword_match($n)) {
                         $n = do_lang_tempcode($array[0]);
-                        $_url = build_url(array('page' => 'admin_cns_groups', 'type' => 'edit'), 'adminzone');
+                        $_url = build_url(array('page' => 'admin_cns_groups', 'type' => 'edit'), get_module_zone('admin_cns_groups'));
                         $descrip = array_key_exists(1, $array) ? do_lang_tempcode($array[1]) : new Tempcode();
                         $breadcrumbs = new Tempcode();
                         $breadcrumbs->attach(hyperlink(build_url(array('page' => 'admin', 'type' => 'security'), 'adminzone'), do_lang_tempcode('SECURITY'), false, false));
                         $breadcrumbs->attach(do_template('BREADCRUMB_SEPARATOR'));
-                        $breadcrumbs->attach(hyperlink(build_url(array('page' => 'admin_cns_groups', 'type' => 'browse'), 'adminzone'), do_lang_tempcode('USERGROUPS'), false, false));
+                        $breadcrumbs->attach(hyperlink(build_url(array('page' => 'admin_cns_groups', 'type' => 'browse'), get_module_zone('admin_cns_groups')), do_lang_tempcode('USERGROUPS'), false, false));
                         $sup = do_lang_tempcode('LOCATED_IN', $breadcrumbs);
                         $content[$current_results_type]->attach(do_template('INDEX_SCREEN_FANCIER_ENTRY', array('_GUID' => 'd0baedf2ee9cf0bdd00e604bd4c7f3b4', 'NAME' => $n, 'URL' => $_url, 'TITLE' => '', 'DESCRIPTION' => $descrip, 'SUP' => $sup)));
                         continue 2;
@@ -1045,7 +953,7 @@ class Module_admin
         // Zone options
         $current_results_type = do_lang('ZONE_OPTIONS');
         cms_profile_start_for('admin search: ' . $current_results_type);
-        if (($this->_section_match($section_limitations, $current_results_type)) && (has_actual_page_access(get_member(), 'admin_zones', 'adminzone'))) {
+        if (($this->_section_match($section_limitations, $current_results_type)) && (has_actual_page_access(get_member(), 'admin_zones', get_module_zone('admin_zones')))) {
             $content[$current_results_type] = new Tempcode();
             $applicable_langstrings = array(
                 array('DEFAULT_PAGE', 'DESCRIPTION_DEFAULT_PAGE'),
@@ -1059,12 +967,12 @@ class Module_admin
                     $n = do_lang($langstring);
                     if ($this->_keyword_match($n)) {
                         $n = do_lang_tempcode($array[0]);
-                        $_url = build_url(array('page' => 'admin_zones', 'type' => 'edit'), 'adminzone');
+                        $_url = build_url(array('page' => 'admin_zones', 'type' => 'edit'), get_module_zone('admin_zones'));
                         $descrip = array_key_exists(1, $array) ? do_lang_tempcode($array[1]) : new Tempcode();
                         $breadcrumbs = new Tempcode();
                         $breadcrumbs->attach(hyperlink(build_url(array('page' => 'admin', 'type' => 'structure'), 'adminzone'), do_lang_tempcode('STRUCTURE'), false, false));
                         $breadcrumbs->attach(do_template('BREADCRUMB_SEPARATOR'));
-                        $breadcrumbs->attach(hyperlink(build_url(array('page' => 'admin_zones', 'type' => 'browse'), 'adminzone'), do_lang_tempcode('ZONES'), false, false));
+                        $breadcrumbs->attach(hyperlink(build_url(array('page' => 'admin_zones', 'type' => 'browse'), get_module_zone('admin_zones')), do_lang_tempcode('ZONES'), false, false));
                         $sup = do_lang_tempcode('LOCATED_IN', $breadcrumbs);
                         $content[$current_results_type]->attach(do_template('INDEX_SCREEN_FANCIER_ENTRY', array('_GUID' => '9c2cadfe9be9776c91c4d99050e0c187', 'NAME' => $n, 'URL' => $_url, 'TITLE' => '', 'DESCRIPTION' => $descrip, 'SUP' => $sup)));
                         continue 2;
@@ -1097,7 +1005,7 @@ class Module_admin
         // Language string names and contents
         $current_results_type = do_lang('MODULE_TRANS_NAME_admin_lang');
         cms_profile_start_for('admin search: ' . $current_results_type);
-        if (($this->_section_match($section_limitations, $current_results_type)) && (has_actual_page_access(get_member(), 'admin_lang', 'adminzone'))) {
+        if (($this->_section_match($section_limitations, $current_results_type)) && (has_actual_page_access(get_member(), 'admin_lang', get_module_zone('admin_lang')))) {
             $content[$current_results_type] = new Tempcode();
 
             global $LANGUAGE_STRINGS_CACHE;
@@ -1133,15 +1041,15 @@ class Module_admin
                     }
                 }
 
-                $_url = build_url(array('page' => 'admin_lang', 'type' => 'browse', 'lang' => user_lang(), 'lang_file' => $lang_file), 'adminzone');
+                $_url = build_url(array('page' => 'admin_lang', 'type' => 'browse', 'lang' => user_lang(), 'lang_file' => $lang_file), get_module_zone('admin_lang'));
                 $url = $_url->evaluate();
                 $url .= '#jmp_' . $n;
                 $breadcrumbs = new Tempcode();
                 $breadcrumbs->attach(hyperlink(build_url(array('page' => 'admin', 'type' => 'style'), 'adminzone'), do_lang_tempcode('STYLE'), false, false));
                 $breadcrumbs->attach(do_template('BREADCRUMB_SEPARATOR'));
-                $breadcrumbs->attach(hyperlink(build_url(array('page' => 'admin_lang', 'type' => 'browse'), 'adminzone'), do_lang_tempcode('TRANSLATE_CONTENT'), false, false));
+                $breadcrumbs->attach(hyperlink(build_url(array('page' => 'admin_lang', 'type' => 'browse'), get_module_zone('admin_lang')), do_lang_tempcode('TRANSLATE_CONTENT'), false, false));
                 $breadcrumbs->attach(do_template('BREADCRUMB_SEPARATOR'));
-                $breadcrumbs->attach(hyperlink(build_url(array('page' => 'admin_lang', 'type' => 'browse', 'lang' => user_lang(), 'lang_file' => $lang_file), 'adminzone'), $lang_file, false, true));
+                $breadcrumbs->attach(hyperlink(build_url(array('page' => 'admin_lang', 'type' => 'browse', 'lang' => user_lang(), 'lang_file' => $lang_file), get_module_zone('admin_lang')), $lang_file, false, true));
                 $sup = do_lang_tempcode('LOCATED_IN', $breadcrumbs);
                 $content[$current_results_type]->attach(do_template('INDEX_SCREEN_FANCIER_ENTRY', array('_GUID' => 'cafa14d50ce6ecc1db1486017b364ce5', 'NAME' => $n, 'URL' => $url, 'TITLE' => '', 'DESCRIPTION' => escape_html($n_value), 'SUP' => $sup)));
             }
@@ -1152,19 +1060,19 @@ class Module_admin
         // Theme images
         $current_results_type = do_lang('EDIT_THEME_IMAGES');
         cms_profile_start_for('admin search: ' . $current_results_type);
-        if (($this->_section_match($section_limitations, $current_results_type)) && (has_actual_page_access(get_member(), 'admin_themes', 'adminzone'))) {
+        if (($this->_section_match($section_limitations, $current_results_type)) && (has_actual_page_access(get_member(), 'admin_themes'))) {
             $content[$current_results_type] = new Tempcode();
             $images = $GLOBALS['SITE_DB']->query_select('theme_images', array('id', 'theme', 'lang'));
             foreach ($images as $image) {
                 $n = $image['id'];
                 if ($this->_keyword_match($n)) {
-                    $_url = build_url(array('page' => 'admin_themes', 'type' => 'edit_image', 'theme' => $image['theme'], 'lang' => $image['lang'], 'id' => $n), 'adminzone');
+                    $_url = build_url(array('page' => 'admin_themes', 'type' => 'edit_image', 'theme' => $image['theme'], 'lang' => $image['lang'], 'id' => $n), get_module_zone('admin_themes'));
                     $breadcrumbs = new Tempcode();
                     $breadcrumbs->attach(hyperlink(build_url(array('page' => 'admin', 'type' => 'style'), 'adminzone'), do_lang_tempcode('STYLE'), false, false));
                     $breadcrumbs->attach(do_template('BREADCRUMB_SEPARATOR'));
-                    $breadcrumbs->attach(hyperlink(build_url(array('page' => 'admin_themes', 'type' => 'browse'), 'adminzone'), do_lang_tempcode('THEMES'), false, false));
+                    $breadcrumbs->attach(hyperlink(build_url(array('page' => 'admin_themes', 'type' => 'browse'), get_module_zone('admin_themes')), do_lang_tempcode('THEMES'), false, false));
                     $breadcrumbs->attach(do_template('BREADCRUMB_SEPARATOR'));
-                    $breadcrumbs->attach(hyperlink(build_url(array('page' => 'admin_themes', 'type' => 'edit_css', 'theme' => $image['theme']), 'adminzone'), do_lang_tempcode('EDIT_THEME_IMAGE'), false, false));
+                    $breadcrumbs->attach(hyperlink(build_url(array('page' => 'admin_themes', 'type' => 'manage_images', 'theme' => $image['theme']), get_module_zone('admin_themes')), do_lang_tempcode('EDIT_THEME_IMAGE'), false, false));
                     $breadcrumbs->attach(do_template('BREADCRUMB_SEPARATOR'));
                     $breadcrumbs->attach(escape_html($image['theme']));
                     $sup = do_lang_tempcode('LOCATED_IN', $breadcrumbs);
@@ -1180,7 +1088,7 @@ class Module_admin
         // Template names
         $current_results_type = do_lang('TEMPLATES');
         cms_profile_start_for('admin search: ' . $current_results_type);
-        if (($this->_section_match($section_limitations, $current_results_type)) && (has_actual_page_access(get_member(), 'admin_themes', 'adminzone'))) {
+        if (($this->_section_match($section_limitations, $current_results_type)) && (has_actual_page_access(get_member(), 'admin_themes', get_module_zone('admin_themes')))) {
             $content[$current_results_type] = new Tempcode();
             $tpl_found = array();
             foreach (array('templates_custom', 'templates', 'xml_custom', 'xml', 'text_custom', 'text') as $template_dir) {
@@ -1189,16 +1097,16 @@ class Module_admin
                     if (((substr(strtolower($file), -4) == '.tpl') || (substr(strtolower($file), -4) == '.xml') || (substr(strtolower($file), -4) == '.txt') || (substr(strtolower($file), -3) == '.js')) && (!array_key_exists($file, $tpl_found))) {
                         $n = $file;
                         if (($this->_keyword_match(basename($n, '.' . get_file_extension($n)))) || ($this->_keyword_match($n)) || (($template_dir == 'templates_custom') && ($this->_keyword_match(file_get_contents(get_file_base() . '/themes/default/' . $template_dir . '/' . $n))))) {
-                            $_url = build_url(array('page' => 'admin_themes', 'type' => '_edit_templates', 'theme' => $default_theme, 'f0file' => $template_dir . '/' . $file), 'adminzone');
+                            $_url = build_url(array('page' => 'admin_themes', 'type' => '_edit_templates', 'theme' => $default_theme, 'f0file' => $template_dir . '/' . $file), get_module_zone('admin_themes'));
                             $breadcrumbs = new Tempcode();
                             $breadcrumbs->attach(hyperlink(build_url(array('page' => 'admin', 'type' => 'style'), 'adminzone'), do_lang_tempcode('STYLE'), false, false));
                             $breadcrumbs->attach(do_template('BREADCRUMB_SEPARATOR'));
-                            $breadcrumbs->attach(hyperlink(build_url(array('page' => 'admin_themes', 'type' => 'browse'), 'adminzone'), do_lang_tempcode('THEMES'), false, false));
+                            $breadcrumbs->attach(hyperlink(build_url(array('page' => 'admin_themes', 'type' => 'browse'), get_module_zone('admin_themes')), do_lang_tempcode('THEMES'), false, false));
                             $breadcrumbs->attach(do_template('BREADCRUMB_SEPARATOR'));
-                            $breadcrumbs->attach(hyperlink(build_url(array('page' => 'admin_themes', 'type' => 'edit_templates', 'theme' => $default_theme), 'adminzone'), do_lang_tempcode('EDIT_TEMPLATES'), false, false));
+                            $breadcrumbs->attach(hyperlink(build_url(array('page' => 'admin_themes', 'type' => 'edit_templates', 'theme' => $default_theme), get_module_zone('admin_themes')), do_lang_tempcode('EDIT_TEMPLATES'), false, false));
                             $sup = do_lang_tempcode('LOCATED_IN', $breadcrumbs);
                             $content[$current_results_type]->attach(do_template('INDEX_SCREEN_FANCIER_ENTRY', array('_GUID' => '5cd222ad77fe4bfdf05b4856a5f7b8ac', 'NAME' => $n, 'URL' => $_url, 'TITLE' => '', 'DESCRIPTION' => '', 'SUP' => $sup)));
-                            $tpl_found[$file] = 1;
+                            $tpl_found[$file] = true;
                         }
                     }
                 }
@@ -1209,14 +1117,14 @@ class Module_admin
         // CSS file contents
         $current_results_type = 'CSS';
         cms_profile_start_for('admin search: ' . $current_results_type);
-        if (($this->_section_match($section_limitations, $current_results_type)) && (has_actual_page_access(get_member(), 'admin_themes', 'adminzone'))) {
+        if (($this->_section_match($section_limitations, $current_results_type)) && (has_actual_page_access(get_member(), 'admin_themes'))) {
             $content[$current_results_type] = new Tempcode();
             $dh = opendir(get_file_base() . '/themes/default/css/');
             while (($file = readdir($dh)) !== false) {
                 if (substr(strtolower($file), -4) == '.css') {
                     $n = $file;
                     if ($this->_keyword_match(file_get_contents(get_file_base() . '/themes/default/css/' . $n))) {
-                        $_url = build_url(array('page' => 'admin_themes', 'type' => 'edit_css', 'theme' => $default_theme, 'file' => $file), 'adminzone');
+                        $_url = build_url(array('page' => 'admin_themes', 'type' => 'edit_css', 'theme' => $default_theme, 'file' => $file), get_module_zone('admin_themes'));
                         $url = $_url->evaluate();
                         if (isset($keywords[0])) {
                             $url .= '#' . $keywords[0][0];
@@ -1224,9 +1132,9 @@ class Module_admin
                         $breadcrumbs = new Tempcode();
                         $breadcrumbs->attach(hyperlink(build_url(array('page' => 'admin', 'type' => 'style'), 'adminzone'), do_lang_tempcode('STYLE'), false, false));
                         $breadcrumbs->attach(do_template('BREADCRUMB_SEPARATOR'));
-                        $breadcrumbs->attach(hyperlink(build_url(array('page' => 'admin_themes', 'type' => 'browse'), 'adminzone'), do_lang_tempcode('THEMES'), false, false));
+                        $breadcrumbs->attach(hyperlink(build_url(array('page' => 'admin_themes', 'type' => 'browse'), get_module_zone('admin_themes')), do_lang_tempcode('THEMES'), false, false));
                         $breadcrumbs->attach(do_template('BREADCRUMB_SEPARATOR'));
-                        $breadcrumbs->attach(hyperlink(build_url(array('page' => 'admin_themes', 'type' => 'choose_css', 'theme' => $default_theme), 'adminzone'), do_lang_tempcode('EDIT_CSS'), false, false));
+                        $breadcrumbs->attach(hyperlink(build_url(array('page' => 'admin_themes', 'type' => 'choose_css', 'theme' => $default_theme), get_module_zone('admin_themes')), do_lang_tempcode('EDIT_CSS'), false, false));
                         $sup = do_lang_tempcode('LOCATED_IN', $breadcrumbs);
                         $content[$current_results_type]->attach(do_template('INDEX_SCREEN_FANCIER_ENTRY', array('_GUID' => '3ac82fa3d03b3367a03116f57993769b', 'NAME' => $n, 'URL' => $url, 'TITLE' => '', 'DESCRIPTION' => '', 'SUP' => $sup)));
                     }
@@ -1261,6 +1169,17 @@ class Module_admin
             return $this->search();
         }
 
-        return do_template('INDEX_SCREEN_FANCIER_SCREEN', array('_GUID' => 'b34d4765744c359a25a0b71449eafed1', 'TITLE' => $this->title, 'EMPTY' => $found_some ? null : true, 'ARRAY' => true, 'CONTENT' => $found_some ? $content : array(), 'PRE' => $pre, 'POST' => $post));
+        $javascript = 'document.getElementById(\'search_content\').value=\'' . addslashes($raw_search_string) . '\';';
+
+        return do_template('INDEX_SCREEN_FANCIER_SCREEN', array(
+            '_GUID' => 'b34d4765744c359a25a0b71449eafed1',
+            'TITLE' => $this->title,
+            'EMPTY' => $found_some ? null : true,
+            'ARRAY' => true,
+            'CONTENT' => $found_some ? $content : array(),
+            'PRE' => $pre,
+            'POST' => $post,
+            'JAVASCRIPT' => $javascript,
+        ));
     }
 }

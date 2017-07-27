@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -88,7 +88,7 @@ class Hook_notification_wiki extends Hook_Notification
     public function list_handled_codes()
     {
         $list = array();
-        $list['wiki'] = array(do_lang('menus:CONTENT'), do_lang('wiki:NOTIFICATION_TYPE_wiki'));
+        $list['wiki'] = array(do_lang('CONTENT'), do_lang('wiki:NOTIFICATION_TYPE_wiki'));
         return $list;
     }
 

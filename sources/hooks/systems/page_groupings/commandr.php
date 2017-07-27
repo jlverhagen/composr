@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -37,7 +37,7 @@ class Hook_page_groupings_commandr
         }
 
         return array(
-            array('tools', 'menu/adminzone/tools/commandr', array('admin_commandr', array('type' => 'browse'), get_module_zone('admin_commandr')), do_lang_tempcode('commandr:COMMANDR'), 'DOC_COMMANDR'),
+            array('tools', 'menu/adminzone/tools/commandr', array('admin_commandr', array('type' => 'browse'), get_module_zone('admin_commandr')), do_lang_tempcode('commandr:COMMANDR'), 'commandr:DOC_COMMANDR'),
         );
     }
 }

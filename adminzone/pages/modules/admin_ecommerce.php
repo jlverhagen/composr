@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -32,6 +32,8 @@ class Module_admin_ecommerce extends Standard_crud_module
     public $table = 'f_usergroup_subs';
     public $orderer = 's_title';
     public $title_is_multi_lang = true;
+    public $donext_entry_content_type = 'usergroup_subscription';
+    public $donext_category_content_type = null;
 
     public $javascript = "
         var _length_units=document.getElementById('length_units'),_length=document.getElementById('length');
@@ -82,11 +84,17 @@ class Module_admin_ecommerce extends Standard_crud_module
      * @param  boolean $check_perms Whether to check permissions.
      * @param  ?MEMBER $member_id The member to check permissions as (null: current user).
      * @param  boolean $support_crosslinks Whether to allow cross links to other modules (identifiable via a full-page-link rather than a screen-name).
-     * @param  boolean $be_deferential Whether to avoid any entry-point (or even return NULL to disable the page in the Sitemap) if we know another module, or page_group, is going to link to that entry-point. Note that "!" and "browse" entry points are automatically merged with container page nodes (likely called by page-groupings) as appropriate.
+     * @param  boolean $be_deferential Whether to avoid any entry-point (or even return null to disable the page in the Sitemap) if we know another module, or page_group, is going to link to that entry-point. Note that "!" and "browse" entry points are automatically merged with container page nodes (likely called by page-groupings) as appropriate.
      * @return ?array A map of entry points (screen-name=>language-code/string or screen-name=>[language-code/string, icon-theme-image]) (null: disabled).
      */
     public function get_entry_points($check_perms = true, $member_id = null, $support_crosslinks = true, $be_deferential = false)
     {
+        if (get_value('unofficial_ecommerce') !== '1') {
+            if (get_forum_type() != 'cns') {
+                return null;
+            }
+        }
+
         $ret = array(
             'browse' => array('CUSTOM_PRODUCT_USERGROUP', 'menu/adminzone/audit/ecommerce/subscriptions'),
         );
@@ -97,10 +105,10 @@ class Module_admin_ecommerce extends Standard_crud_module
     public $title;
 
     /**
-     * Module pre-run function. Allows us to know meta-data for <head> before we start streaming output.
+     * Module pre-run function. Allows us to know metadata for <head> before we start streaming output.
      *
      * @param  boolean $top_level Whether this is running at the top level, prior to having sub-objects called.
-     * @param  ?ID_TEXT $type The screen type to consider for meta-data purposes (null: read from environment).
+     * @param  ?ID_TEXT $type The screen type to consider for metadata purposes (null: read from environment).
      * @return ?Tempcode Tempcode indicating some kind of exceptional output (null: none).
      */
     public function pre_run($top_level = true, $type = null)
@@ -138,12 +146,14 @@ class Module_admin_ecommerce extends Standard_crud_module
         require_code('ecommerce');
         require_code('ecommerce2');
 
-        if ((get_value('unofficial_ecommerce') != '1') && (count(find_all_hooks('systems', 'ecommerce')) == 8)) {
+        if (get_value('unofficial_ecommerce') !== '1') {
             if (get_forum_type() != 'cns') {
                 warn_exit(do_lang_tempcode('NO_CNS'));
-            } else {
-                cns_require_all_forum_stuff();
             }
+        }
+
+        if (get_forum_type() == 'cns') {
+            cns_require_all_forum_stuff();
         }
 
         $this->add_one_label = do_lang_tempcode('ADD_USERGROUP_SUBSCRIPTION');
@@ -167,8 +177,8 @@ class Module_admin_ecommerce extends Standard_crud_module
         require_code('templates_donext');
         return do_next_manager($this->title, comcode_lang_string('DOC_USERGROUP_SUBSCRIPTION'),
             array(
-                ((get_forum_type() != 'cns') && (get_value('unofficial_ecommerce') != '1')) ? null : array('menu/_generic_admin/add_one', array('_SELF', array('type' => 'add'), '_SELF'), do_lang('ADD_USERGROUP_SUBSCRIPTION')),
-                ((get_forum_type() != 'cns') && (get_value('unofficial_ecommerce') != '1')) ? null : array('menu/_generic_admin/edit_one', array('_SELF', array('type' => 'edit'), '_SELF'), do_lang('EDIT_USERGROUP_SUBSCRIPTION')),
+                ((get_forum_type() != 'cns') && (get_value('unofficial_ecommerce') !== '1')) ? null : array('menu/_generic_admin/add_one', array('_SELF', array('type' => 'add'), '_SELF'), do_lang('ADD_USERGROUP_SUBSCRIPTION')),
+                ((get_forum_type() != 'cns') && (get_value('unofficial_ecommerce') !== '1')) ? null : array('menu/_generic_admin/edit_one', array('_SELF', array('type' => 'edit'), '_SELF'), do_lang('EDIT_USERGROUP_SUBSCRIPTION')),
             ),
             do_lang('CUSTOM_PRODUCT_USERGROUP')
         );
@@ -184,7 +194,7 @@ class Module_admin_ecommerce extends Standard_crud_module
      * @param  SHORT_TEXT $length_units The units for the length
      * @set    y m d w
      * @param  BINARY $auto_recur Auto-recur
-     * @param  ?GROUP $group_id The usergroup that purchasing gains membership to (null: super members)
+     * @param  ?GROUP $group_id The usergroup that purchasing gains membership to (null: not set)
      * @param  BINARY $uses_primary Whether this is applied to primary usergroup membership
      * @param  BINARY $enabled Whether this is currently enabled
      * @param  ?LONG_TEXT $mail_start The text of the e-mail to send out when a subscription is start (null: default)
@@ -274,7 +284,7 @@ class Module_admin_ecommerce extends Standard_crud_module
                 $ref_point = isset($mails[$i]) ? $mails[$i]['ref_point'] : 'start';
                 $ref_point_offset = isset($mails[$i]) ? $mails[$i]['ref_point_offset'] : 0;
 
-                $fields->attach(do_template('FORM_SCREEN_FIELD_SPACER', array('TITLE' => do_lang_tempcode('EXTRA_SUBSCRIPTION_MAIL', escape_html(integer_format($i + 1))), 'SECTION_HIDDEN' => ($subject == ''))));
+                $fields->attach(do_template('FORM_SCREEN_FIELD_SPACER', array('_GUID' => '18f5d62292d76cc0364463fb6de1faa3', 'TITLE' => do_lang_tempcode('EXTRA_SUBSCRIPTION_MAIL', escape_html(integer_format($i + 1))), 'SECTION_HIDDEN' => ($subject == ''))));
                 $fields->attach(form_input_line_comcode(do_lang_tempcode('SUBJECT'), do_lang_tempcode('DESCRIPTION_SUBSCRIPTION_SUBJECT'), 'subject_' . strval($i), $subject, false));
                 $fields->attach(form_input_text_comcode(do_lang_tempcode('BODY'), do_lang_tempcode('DESCRIPTION_SUBSCRIPTION_BODY'), 'body_' . strval($i), $body, false, null, true));
                 $radios = new Tempcode();
@@ -339,7 +349,7 @@ class Module_admin_ecommerce extends Standard_crud_module
         foreach ($rows as $r) {
             $edit_link = build_url($url_map + array('id' => $r['id']), '_SELF');
 
-            $fields->attach(results_entry(array(get_translated_text($r['s_title'], $GLOBALS[(get_forum_type() == 'cns') ? 'FORUM_DB' : 'SITE_DB']), $r['s_cost'], do_lang('_LENGTH_UNIT_' . $r['s_length_units'], integer_format($r['s_length'])), cns_get_group_name($r['s_group_id']), ($r['s_enabled'] == 1) ? do_lang_tempcode('YES') : do_lang_tempcode('NO'), protect_from_escaping(hyperlink($edit_link, do_lang_tempcode('EDIT'), false, false, '#' . strval($r['id'])))), true));
+            $fields->attach(results_entry(array(get_translated_text($r['s_title'], $GLOBALS[(get_forum_type() == 'cns') ? 'FORUM_DB' : 'SITE_DB']), $r['s_cost'], do_lang_tempcode('_LENGTH_UNIT_' . $r['s_length_units'], integer_format($r['s_length'])), cns_get_group_name($r['s_group_id']), ($r['s_enabled'] == 1) ? do_lang_tempcode('YES') : do_lang_tempcode('NO'), protect_from_escaping(hyperlink($edit_link, do_lang_tempcode('EDIT'), false, false, '#' . strval($r['id'])))), true));
         }
 
         return array(results_table(do_lang($this->menu_label), get_param_integer('start', 0), 'start', either_param_integer('max', 20), 'max', $max_rows, $header_row, $fields, $sortables, $sortable, $sort_order), false);
@@ -460,7 +470,7 @@ class Module_admin_ecommerce extends Standard_crud_module
             $config_url = $_config_url->evaluate();
             $config_url .= '#group_ECOMMERCE';
 
-            $text = do_lang_tempcode('ECOM_ADDED_SUBSCRIP', escape_html($config_url));
+            $text = paragraph(do_lang_tempcode('ECOM_ADDED_SUBSCRIP', escape_html($config_url)));
         } else {
             $text = null;
         }

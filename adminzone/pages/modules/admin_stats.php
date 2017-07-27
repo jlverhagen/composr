@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -37,7 +37,7 @@ class Module_admin_stats
         $info['hack_version'] = null;
         $info['version'] = 9;
         $info['locked'] = true;
-        $info['update_require_upgrade'] = 1;
+        $info['update_require_upgrade'] = true;
         return $info;
     }
 
@@ -77,9 +77,7 @@ class Module_admin_stats
             ));
 
             // Note: We have chosen not to create many indices because we want insertion to be very fast
-            $GLOBALS['SITE_DB']->create_index('stats', 'member_track_1', array('member_id'));
             $GLOBALS['SITE_DB']->create_index('stats', 'member_track_2', array('ip'));
-            $GLOBALS['SITE_DB']->create_index('stats', 'member_track_3', array('member_id', 'date_and_time'));
             $GLOBALS['SITE_DB']->create_index('stats', 'pages', array('the_page'));
             $GLOBALS['SITE_DB']->create_index('stats', 'date_and_time', array('date_and_time'));
             $GLOBALS['SITE_DB']->create_index('stats', 'milliseconds', array('milliseconds'));
@@ -123,10 +121,16 @@ class Module_admin_stats
         if ((!is_null($upgrade_from)) && ($upgrade_from < 9)) {
             $GLOBALS['SITE_DB']->alter_table_field('stats', 'the_user', 'MEMBER', 'member_id');
             $GLOBALS['SITE_DB']->add_table_field('stats', 'session_id', 'ID_TEXT');
+            $GLOBALS['SITE_DB']->query_update('db_meta_indices', array('i_fields' => 'member_id'), array('i_name' => 'member_track_1'), '', 1);
+
+            $GLOBALS['SITE_DB']->delete_index_if_exists('stats', 'member_track_1');
+            $GLOBALS['SITE_DB']->delete_index_if_exists('stats', 'member_track_3');
         }
 
         if ((is_null($upgrade_from)) || ($upgrade_from < 9)) {
             $GLOBALS['SITE_DB']->create_index('stats', 'member_track_4', array('session_id'));
+            $GLOBALS['SITE_DB']->create_index('stats', 'member_track_1', array('member_id'));
+            $GLOBALS['SITE_DB']->create_index('stats', 'member_track_3', array('member_id', 'date_and_time'));
         }
     }
 
@@ -136,7 +140,7 @@ class Module_admin_stats
      * @param  boolean $check_perms Whether to check permissions.
      * @param  ?MEMBER $member_id The member to check permissions as (null: current user).
      * @param  boolean $support_crosslinks Whether to allow cross links to other modules (identifiable via a full-page-link rather than a screen-name).
-     * @param  boolean $be_deferential Whether to avoid any entry-point (or even return NULL to disable the page in the Sitemap) if we know another module, or page_group, is going to link to that entry-point. Note that "!" and "browse" entry points are automatically merged with container page nodes (likely called by page-groupings) as appropriate.
+     * @param  boolean $be_deferential Whether to avoid any entry-point (or even return null to disable the page in the Sitemap) if we know another module, or page_group, is going to link to that entry-point. Note that "!" and "browse" entry points are automatically merged with container page nodes (likely called by page-groupings) as appropriate.
      * @return ?array A map of entry points (screen-name=>language-code/string or screen-name=>[language-code/string, icon-theme-image]) (null: disabled).
      */
     public function get_entry_points($check_perms = true, $member_id = null, $support_crosslinks = true, $be_deferential = false)
@@ -155,8 +159,12 @@ class Module_admin_stats
             'clear' => array('CLEAR_STATISTICS', 'menu/adminzone/audit/statistics/clear_stats'),
         );
 
-        $test = $GLOBALS['SITE_DB']->query_select_value('ip_country', 'COUNT(*)');
-        if ($test == 0) {
+        static $has_geolocation_data = null;
+        if ($has_geolocation_data === null) {
+            $test = $GLOBALS['SITE_DB']->query_select_value_if_there('ip_country', 'id');
+            $has_geolocation_data = ($test !== null);
+        }
+        if (!$has_geolocation_data) {
             $ret['install_data'] = array('INSTALL_GEOLOCATION_DATA', 'menu/adminzone/audit/statistics/geolocate');
         }
 
@@ -179,7 +187,7 @@ class Module_admin_stats
     public $title;
 
     /**
-     * Module pre-run function. Allows us to know meta-data for <head> before we start streaming output.
+     * Module pre-run function. Allows us to know metadata for <head> before we start streaming output.
      *
      * @return ?Tempcode Tempcode indicating some kind of exceptional output (null: none).
      */
@@ -265,7 +273,9 @@ class Module_admin_stats
      */
     public function run()
     {
-        $GLOBALS['SITE_DB']->query('DELETE FROM ' . get_table_prefix() . 'stats WHERE date_and_time<' . strval(time() - 60 * 60 * 24 * intval(get_option('stats_store_time'))));
+        if (!$GLOBALS['SITE_DB']->table_is_locked('stats')) {
+            $GLOBALS['SITE_DB']->query('DELETE FROM ' . get_table_prefix() . 'stats WHERE date_and_time<' . strval(time() - 60 * 60 * 24 * intval(get_option('stats_store_time'))), 500/*to reduce lock times*/);
+        }
 
         require_code('svg');
         require_css('stats');
@@ -352,8 +362,8 @@ class Module_admin_stats
             }
         }
 
-        $test = $GLOBALS['SITE_DB']->query_select_value('ip_country', 'COUNT(*)');
-        if ($test == 0) {
+        $test = $GLOBALS['SITE_DB']->query_select_value_if_there('ip_country', 'id');
+        if ($test === null) {
             $actions[] = array('menu/adminzone/audit/statistics/geolocate', array('_SELF', array('type' => 'install_data'), '_SELF'), do_lang('INSTALL_GEOLOCATION_DATA'), 'DOC_INSTALL_GEOLOCATION_DATA');
         }
 
@@ -430,7 +440,7 @@ class Module_admin_stats
         $max = get_param_integer('max', 50); // Intentionally the browse is disabled, as the graph will show all - we fudge $max_rows to $i
         $csv = get_param_integer('csv', 0) == 1;
         if ($csv) {
-            if (function_exists('set_time_limit')) {
+            if (php_function_allowed('set_time_limit')) {
                 @set_time_limit(0);
             }
             $start = 0;
@@ -514,7 +524,7 @@ class Module_admin_stats
         $max = get_param_integer('max', 50); // Intentionally the browse is disabled, as the graph will show all - we fudge $max_rows to $i
         $csv = get_param_integer('csv', 0) == 1;
         if ($csv) {
-            if (function_exists('set_time_limit')) {
+            if (php_function_allowed('set_time_limit')) {
                 @set_time_limit(0);
             }
             $start = 0;
@@ -530,11 +540,11 @@ class Module_admin_stats
             log_hack_attack_and_exit('ORDERBY_HACK');
         }
 
-        $rows = $GLOBALS['SITE_DB']->query_select('adminlogs', array('date_and_time', 'COUNT(*) AS cnt'), null, 'GROUP BY date_and_time ORDER BY ' . $sortable . ' ' . $sort_order, 3000/*reasonable limit*/);
+        $rows = $GLOBALS['SITE_DB']->query_select('actionlogs', array('date_and_time', 'COUNT(*) AS cnt'), null, 'GROUP BY date_and_time ORDER BY ' . $sortable . ' ' . $sort_order, 3000/*reasonable limit*/);
         if (count($rows) < 1) {
             return warn_screen($this->title, do_lang_tempcode('NO_DATA'));
         }
-        //$max_rows=$GLOBALS['SITE_DB']->query_select_value('adminlogs','COUNT(DISTINCT date_and_time)');   Cannot do this as the DB does not do all the processing
+        //$max_rows = $GLOBALS['SITE_DB']->query_select_value('actionlogs', 'COUNT(DISTINCT date_and_time)');   Cannot do this as the DB does not do all the processing
 
         $data = array();
         $base = $rows[0]['date_and_time'];
@@ -614,13 +624,13 @@ class Module_admin_stats
         $max = get_param_integer('max', 30);
         $csv = get_param_integer('csv', 0) == 1;
         if ($csv) {
-            if (function_exists('set_time_limit')) {
+            if (php_function_allowed('set_time_limit')) {
                 @set_time_limit(0);
             }
             $start = 0;
             $max = 10000;
-            /*$time_start=0;     Actually, this is annoying. We have legitimate reason to filter, and cannot re-filter the data in Excel retro-actively
-            $time_end=time();*/
+            /*$time_start = 0;     Actually, this is annoying. We have legitimate reason to filter, and cannot re-filter the data in Excel retro-actively
+            $time_end = time();*/
         }
 
         $this->title = get_screen_title('LOAD_TIMES_RANGE', true, array(escape_html(get_timezoned_date($time_start, false)), escape_html(get_timezoned_date($time_end, false))));
@@ -729,19 +739,19 @@ class Module_admin_stats
         $max = get_param_integer('max', 25);
         $csv = get_param_integer('csv', 0) == 1;
         if ($csv) {
-            if (function_exists('set_time_limit')) {
+            if (php_function_allowed('set_time_limit')) {
                 @set_time_limit(0);
             }
             $start = 0;
             $max = 10000;
-            /*$time_start=0;     Actually, this is annoying. We have legitimate reason to filter, and cannot re-filter the data in Excel retro-actively
-            $time_end=time();*/
+            /*$time_start = 0;     Actually, this is annoying. We have legitimate reason to filter, and cannot re-filter the data in Excel retro-actively
+            $time_end = time();*/
         }
 
         $this->title = get_screen_title('TOP_REFERRERS_RANGE', true, array(escape_html(get_timezoned_date($time_start, false)), escape_html(get_timezoned_date($time_end, false))));
 
-        $non_local_filter = 'referer NOT LIKE \'' . db_encode_like(preg_replace('#^https?://#', 'http://', get_base_url()) . '%') . '\'';
-        $non_local_filter .= ' AND referer NOT LIKE \'' . db_encode_like(preg_replace('#^https?://#', 'https://', get_base_url()) . '%') . '\'';
+        $non_local_filter = 'referer NOT LIKE \'' . db_encode_like(str_replace('_', '\\_', preg_replace('#^https?://#', 'http://', get_base_url())) . '%') . '\'';
+        $non_local_filter .= ' AND referer NOT LIKE \'' . db_encode_like(str_replace('_', '\\_', preg_replace('#^https?://#', 'https://', get_base_url())) . '%') . '\'';
         if (get_param_integer('debug', 0) == 1) {
             $non_local_filter = '1=1';
         }
@@ -861,13 +871,13 @@ class Module_admin_stats
         $max = get_param_integer('max', 25);
         $csv = get_param_integer('csv', 0) == 1;
         if ($csv) {
-            if (function_exists('set_time_limit')) {
+            if (php_function_allowed('set_time_limit')) {
                 @set_time_limit(0);
             }
             $start = 0;
             $max = 10000;
-            /*$time_start=0;     Actually, this is annoying. We have legitimate reason to filter, and cannot re-filter the data in Excel retro-actively
-            $time_end=time();*/
+            /*$time_start = 0;     Actually, this is annoying. We have legitimate reason to filter, and cannot re-filter the data in Excel retro-actively
+            $time_end = time();*/
         }
 
         $this->title = get_screen_title('TOP_SEARCH_KEYWORDS_RANGE', true, array(escape_html(get_timezoned_date($time_start, false)), escape_html(get_timezoned_date($time_end, false))));
@@ -1005,13 +1015,13 @@ class Module_admin_stats
         $max = get_param_integer('max', 30);
         $csv = get_param_integer('csv', 0) == 1;
         if ($csv) {
-            if (function_exists('set_time_limit')) {
+            if (php_function_allowed('set_time_limit')) {
                 @set_time_limit(0);
             }
             $start = 0;
             $max = 10000;
-            /*$time_start=0;     Actually, this is annoying. We have legitimate reason to filter, and cannot re-filter the data in Excel retro-actively
-            $time_end=time();*/
+            /*$time_start = 0;     Actually, this is annoying. We have legitimate reason to filter, and cannot re-filter the data in Excel retro-actively
+            $time_end = time();*/
         }
 
         $this->title = get_screen_title('PAGES_STATISTICS_RANGE', true, array(escape_html(get_timezoned_date($time_start, false)), escape_html(get_timezoned_date($time_end, false))));
@@ -1119,6 +1129,9 @@ class Module_admin_stats
     {
         $page_request = _request_page(get_zone_default_page(''), '');
         $page = $page_request[count($page_request) - 1];
+        if (is_array($page)) {
+            $page = $page['r_to_page'];
+        }
 
         list($graph_views_monthly, $list_views_monthly) = array_values($this->views_per_x($page, 'views_hourly', 'VIEWS_PER_MONTH', 'DESCRIPTION_VIEWS_PER_MONTH', 730, 8766));
 
@@ -1305,8 +1318,8 @@ class Module_admin_stats
         //************************************************************************************************
         // Regionalities
         //************************************************************************************************
-        $regionalities_test = $GLOBALS['SITE_DB']->query_select_value('ip_country', 'COUNT(*)');
-        if ($regionalities_test > 0) {
+        $regionalities_test = $GLOBALS['SITE_DB']->query_select_value_if_there('ip_country', 'id');
+        if ($regionalities_test !== null) {
             $start = get_param_integer('start_regionalities', 0);
             $max = get_param_integer('max_regionalities', 15);
             $sortables = array('ip' => do_lang_tempcode('REGIONALITY'));
@@ -1320,7 +1333,7 @@ class Module_admin_stats
                 $where .= ' OR ' . db_string_equal_to('the_page', '/' . $page); // Legacy compatibility
             }
             $ip_filter = $GLOBALS['DEV_MODE'] ? '' : (' AND ' . db_string_not_equal_to('ip', get_ip_address()));
-            $rows = $GLOBALS['SITE_DB']->query('SELECT DISTINCT ip FROM ' . $GLOBALS['SITE_DB']->get_table_prefix() . 'stats WHERE (' . $where . ')' . $ip_filter . ' ORDER BY ' . $sortable . ' ' . $sort_order, 1000/*reasonable limit*/);
+            $rows = $GLOBALS['SITE_DB']->query('SELECT DISTINCT ip,' . $sortable . ' FROM ' . $GLOBALS['SITE_DB']->get_table_prefix() . 'stats WHERE (' . $where . ')' . $ip_filter . ' ORDER BY ' . $sortable . ' ' . $sort_order, 1000/*reasonable limit*/);
             shuffle($rows);
             if (count($rows) < 1) {
                 $list_regionality = new Tempcode();
@@ -1514,9 +1527,8 @@ class Module_admin_stats
             while (false !== ($file = readdir($handle))) {
                 if ((!should_ignore_file(get_custom_file_base() . '/data_custom/modules/admin_stats/' . $file, IGNORE_ACCESS_CONTROLLERS | IGNORE_HIDDEN_FILES)) && ($file != 'IP_Country.txt') && (!is_dir($file))) {
                     $path = get_custom_file_base() . '/data_custom/modules/admin_stats/' . $file;
-                    @unlink($path)
-                    or intelligent_write_error($path);
-                    sync_file('data_custom/modules/admin_stats/' . $file);
+                    @unlink($path) or intelligent_write_error($path);
+                    sync_file($path);
                 }
             }
 
@@ -1735,16 +1747,8 @@ class Module_admin_stats
      */
     public function save_graph($path, $graph)
     {
+        require_code('files');
         $path = get_custom_file_base() . '/data_custom/modules/admin_stats/' . filter_naughty_harsh($path) . '.xml';
-        $file = @fopen($path, GOOGLE_APPENGINE ? 'wb' : 'wt');
-        if ($file === false) {
-            intelligent_write_error($path);
-        }
-        if (fwrite($file, $graph) < strlen($graph)) {
-            warn_exit(do_lang_tempcode('COULD_NOT_SAVE_FILE'));
-        }
-        @fclose($file);
-        fix_permissions($path);
-        sync_file($path);
+        cms_file_put_contents_safe($path, $graph, FILE_WRITE_FIX_PERMISSIONS | FILE_WRITE_SYNC_FILE);
     }
 }

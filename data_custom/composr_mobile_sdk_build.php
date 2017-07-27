@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -12,6 +12,9 @@
  * @copyright  ocProducts Ltd
  * @package    composr_mobile_sdk
  */
+
+// Fixup SCRIPT_FILENAME potentially being missing
+$_SERVER['SCRIPT_FILENAME'] = __FILE__;
 
 // Find Composr base directory, and chdir into it
 global $FILE_BASE, $RELATIVE_PATH;
@@ -69,9 +72,9 @@ class Composr_mobile_sdk_tools
     public function run()
     {
         // Check running on the command line
-        $cli = ((function_exists('php_sapi_name')) && (strpos(@ini_get('disable_functions'), 'php_sapi_name') === false) && (php_sapi_name() == 'cli') && (cms_srv('REMOTE_ADDR') == ''));
+        $cli = ((php_function_allowed('php_sapi_name')) && (php_sapi_name() == 'cli') && (cms_srv('REMOTE_ADDR') == ''));
         if (!$cli) {
-            header('Content-type: text/plain');
+            header('Content-type: text/plain; charset=' . get_charset());
             exit('This script must be run from the command line, php data_custom/composr_mobile_sdk_build.php <toolname> <params...>' . "\n");
         }
 
@@ -153,8 +156,10 @@ class Composr_mobile_sdk_tools
 
             $ios_path = $out_dir . '/' . $file . '.strings';
             $ios_file = fopen($ios_path, 'wb');
+            flock($ios_file, LOCK_EX);
             $android_path = $out_dir . '/' . $file . '.xml';
             $android_file = fopen($android_path, 'wb');
+            flock($android_file, LOCK_EX);
 
             fwrite($android_file, '<resources>' . "\n");
 
@@ -186,7 +191,9 @@ class Composr_mobile_sdk_tools
 
             fwrite($android_file, '</resources>' . "\n");
 
+            flock(($ios_file), LOCK_UN);
             fclose($ios_file);
+            flock($android_file, LOCK_UN);
             fclose($android_file);
         }
 

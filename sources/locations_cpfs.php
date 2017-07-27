@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -47,6 +47,7 @@ function autofill_geo_cpfs($member_id = null) {
  * Automatically populate member geo CPFs (worker function).
  *
  * @param  array $row Member row
+ *
  * @ignore
  */
 function _autofill_geo_cpfs($row) {
@@ -80,7 +81,7 @@ function _autofill_geo_cpfs($row) {
     $changes = array();
 
     // GPS from address
-    if (!$has_latitude || !$has_longitude) {
+    if ((!$has_latitude || !$has_longitude) && (isset($latitude_field)) && (isset($longitude_field))) {
         if ($has_address) {
             $address_components = array();
             if ($has_street_address) {

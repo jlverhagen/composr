@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -127,21 +127,27 @@ class Hook_media_rendering_hyperlink
                     $meta_title = escape_html($title);
                 }
 
-                return do_template('MEDIA_WEBPAGE_SEMANTIC', array('_GUID' => '59ae26467bbde639a176a213d85370ea', 'TITLE' => $meta_details['t_title'],
-                                                                   'META_TITLE' => $meta_title,
-                                                                   'DESCRIPTION' => ((array_key_exists('description', $attributes)) && ($attributes['description'] != '')) ? $attributes['description'] : $meta_details['t_description'],
-                                                                   'IMAGE_URL' => ((array_key_exists('thumb_url', $attributes)) && ($attributes['thumb_url'] != '')) ? $attributes['thumb_url'] : $meta_details['t_image_url'],
-                                                                   'URL' => $meta_details['t_url'],
-                                                                   'WIDTH' => ((array_key_exists('width', $attributes)) && ($attributes['width'] != '')) ? $attributes['width'] : get_option('thumb_width'),
-                                                                   'HEIGHT' => ((array_key_exists('height', $attributes)) && ($attributes['height'] != '')) ? $attributes['height'] : get_option('thumb_width'),
+                return do_template('MEDIA_WEBPAGE_SEMANTIC', array(
+                    '_GUID' => '59ae26467bbde639a176a213d85370ea',
+                    'TITLE' => $meta_details['t_title'],
+                   'META_TITLE' => $meta_title,
+                   'DESCRIPTION' => ((array_key_exists('description', $attributes)) && ($attributes['description'] != '')) ? $attributes['description'] : $meta_details['t_description'],
+                   'IMAGE_URL' => ((array_key_exists('thumb_url', $attributes)) && ($attributes['thumb_url'] != '')) ? $attributes['thumb_url'] : $meta_details['t_image_url'],
+                   'URL' => $meta_details['t_url'],
+                   'WIDTH' => ((array_key_exists('width', $attributes)) && ($attributes['width'] != '')) ? $attributes['width'] : get_option('thumb_width'),
+                   'HEIGHT' => ((array_key_exists('height', $attributes)) && ($attributes['height'] != '')) ? $attributes['height'] : get_option('thumb_width'),
                 ));
             }
-            // Hmm, okay we'll proceed towards a plain link if it's not a download and has no meta data to box
+            // Hmm, okay we'll proceed towards a plain link if it's not a download and has no metadata to box
         } // Hmm, we explicitly said we want a plain link
 
         $link_captions_title = $meta_details['t_title'];
         if ($link_captions_title == '') {
-            $link_captions_title = $_url_safe;
+            if (!empty($attributes['filename'])) {
+                $link_captions_title = $attributes['filename'];
+            } else {
+                $link_captions_title = $_url_safe;
+            }
         }
 
         require_code('comcode_renderer');

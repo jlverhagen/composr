@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -31,6 +31,8 @@ class Module_admin_cns_customprofilefields extends Standard_crud_module
     public $orderer = 'cf_name';
     public $table = 'f_custom_fields';
     public $title_is_multi_lang = true;
+    public $donext_entry_content_type = 'cpf';
+    public $donext_category_content_type = null;
 
     /**
      * Find entry-points available within this module.
@@ -38,7 +40,7 @@ class Module_admin_cns_customprofilefields extends Standard_crud_module
      * @param  boolean $check_perms Whether to check permissions.
      * @param  ?MEMBER $member_id The member to check permissions as (null: current user).
      * @param  boolean $support_crosslinks Whether to allow cross links to other modules (identifiable via a full-page-link rather than a screen-name).
-     * @param  boolean $be_deferential Whether to avoid any entry-point (or even return NULL to disable the page in the Sitemap) if we know another module, or page_group, is going to link to that entry-point. Note that "!" and "browse" entry points are automatically merged with container page nodes (likely called by page-groupings) as appropriate.
+     * @param  boolean $be_deferential Whether to avoid any entry-point (or even return null to disable the page in the Sitemap) if we know another module, or page_group, is going to link to that entry-point. Note that "!" and "browse" entry points are automatically merged with container page nodes (likely called by page-groupings) as appropriate.
      * @return ?array A map of entry points (screen-name=>language-code/string or screen-name=>[language-code/string, icon-theme-image]) (null: disabled).
      */
     public function get_entry_points($check_perms = true, $member_id = null, $support_crosslinks = true, $be_deferential = false)
@@ -69,10 +71,10 @@ class Module_admin_cns_customprofilefields extends Standard_crud_module
     public $title;
 
     /**
-     * Module pre-run function. Allows us to know meta-data for <head> before we start streaming output.
+     * Module pre-run function. Allows us to know metadata for <head> before we start streaming output.
      *
      * @param  boolean $top_level Whether this is running at the top level, prior to having sub-objects called.
-     * @param  ?ID_TEXT $type The screen type to consider for meta-data purposes (null: read from environment).
+     * @param  ?ID_TEXT $type The screen type to consider for metadata purposes (null: read from environment).
      * @return ?Tempcode Tempcode indicating some kind of exceptional output (null: none).
      */
     public function pre_run($top_level = true, $type = null)
@@ -185,7 +187,9 @@ class Module_admin_cns_customprofilefields extends Standard_crud_module
         require_code('encryption');
         require_lang('fields');
 
-        if (substr($name, 0, 4) != 'cms_') {
+        $allow_full_edit = (get_param_integer('keep_all_cpfs', 0) == 1);
+
+        if (substr($name, 0, 4) != 'cms_' || $allow_full_edit) {
             $fields->attach(form_input_line(do_lang_tempcode('NAME'), do_lang_tempcode('DESCRIPTION_NAME'), 'name', $name, true));
         } else {
             $hidden->attach(form_input_hidden('name', $name));
@@ -193,29 +197,29 @@ class Module_admin_cns_customprofilefields extends Standard_crud_module
         }
 
         $fields->attach(form_input_line_comcode(do_lang_tempcode('DESCRIPTION'), do_lang_tempcode('DESCRIPTION_DESCRIPTION'), 'description', $description, false));
-        if ($locked == 0) {
-            $fields->attach(form_input_line(do_lang_tempcode('DEFAULT_VALUE'), do_lang_tempcode('DESCRIPTION_DEFAULT_VALUE_CPF'), 'default', $default, false, null, 10000));
-        } else {
-            $hidden->attach(form_input_hidden('default', $default));
-        }
+        $fields->attach(form_input_line(do_lang_tempcode('DEFAULT_VALUE'), do_lang_tempcode('DESCRIPTION_DEFAULT_VALUE_CPF'), 'default', $default, false, null, 10000));
         $fields->attach(form_input_tick(do_lang_tempcode('OWNER_VIEW'), do_lang_tempcode('DESCRIPTION_OWNER_VIEW'), 'owner_view', $owner_view == 1));
         $fields->attach(form_input_tick(do_lang_tempcode('OWNER_SET'), do_lang_tempcode('DESCRIPTION_OWNER_SET'), 'owner_set', $owner_set == 1));
         $fields->attach(form_input_tick(do_lang_tempcode('PUBLIC_VIEW'), do_lang_tempcode('DESCRIPTION_PUBLIC_VIEW'), 'public_view', $public_view == 1));
-        if (($locked == 0) && (is_encryption_enabled()) && ($name == '')) {
+        if ((($locked == 0) || ($allow_full_edit)) && (is_encryption_enabled()) && ($name == '')) {
             require_lang('encryption');
             $fields->attach(form_input_tick(do_lang_tempcode('ENCRYPTED'), do_lang_tempcode('DESCRIPTION_ENCRYPTED'), 'encrypted', $encrypted == 1));
         }
 
         require_code('fields');
         $type_list = create_selection_list_field_type($type, $name != '');
-        if ($locked == 0) {
+        if ($locked == 0 || $allow_full_edit) {
             $fields->attach(form_input_list(do_lang_tempcode('TYPE'), do_lang_tempcode('DESCRIPTION_FIELD_TYPE'), 'type', $type_list));
         } else {
             $hidden->attach(form_input_hidden('type', $type));
         }
-        $fields->attach(form_input_line(do_lang_tempcode('FIELD_OPTIONS'), do_lang_tempcode('DESCRIPTION_FIELD_OPTIONS'), 'options', $options, false));
+        $fields->attach(form_input_line(do_lang_tempcode('FIELD_OPTIONS'), do_lang_tempcode('DESCRIPTION_FIELD_OPTIONS', escape_html(get_tutorial_url('tut_fields'))), 'options', $options, false));
 
-        $fields->attach(form_input_tick(do_lang_tempcode('REQUIRED'), do_lang_tempcode('DESCRIPTION_REQUIRED'), 'required', $required == 1));
+        if ($locked == 0 || $allow_full_edit) {
+            $fields->attach(form_input_tick(do_lang_tempcode('REQUIRED'), do_lang_tempcode('DESCRIPTION_REQUIRED'), 'required', $required == 1));
+        } else {
+            $hidden->attach(form_input_hidden('required', strval($required)));
+        }
 
         $fields->attach(form_input_tick(do_lang_tempcode('SHOW_ON_JOIN_FORM'), do_lang_tempcode('DESCRIPTION_SHOW_ON_JOIN_FORM'), 'show_on_join_form', $show_on_join_form == 1));
 
@@ -225,9 +229,9 @@ class Module_admin_cns_customprofilefields extends Standard_crud_module
         $fields->attach(form_input_tick(do_lang_tempcode('SHOW_IN_POST_PREVIEWS'), do_lang_tempcode('DESCRIPTION_SHOW_IN_POST_PREVIEWS'), 'show_in_post_previews', $show_in_post_previews == 1));
 
         $rows = $GLOBALS['FORUM_DB']->query_select('f_groups', array('id', 'g_name', 'g_is_super_admin'), array('g_is_private_club' => 0));
-        if ($locked == 0) {
+        if ($locked == 0 || $allow_full_edit) {
             $groups = new Tempcode();
-            //$groups=form_input_list_entry('-1',false,do_lang_tempcode('_ALL'));
+            //$groups = form_input_list_entry('-1', false, do_lang_tempcode('_ALL'));
             foreach ($rows as $group) {
                 if ($group['id'] != db_get_first_id()) {
                     $groups->attach(form_input_list_entry(strval($group['id']), count(array_intersect(array($group['id']), explode(',', $only_group))) != 0, get_translated_text($group['g_name'], $GLOBALS['FORUM_DB'])));
@@ -268,6 +272,10 @@ class Module_admin_cns_customprofilefields extends Standard_crud_module
             log_hack_attack_and_exit('ORDERBY_HACK');
         }
 
+        $num_cpfs = $GLOBALS['FORUM_DB']->query_select_value('f_custom_fields', 'COUNT(*)');
+
+        $standard_ordering = (($current_ordering == 'cf_order ASC') && ($num_cpfs < 200));
+
         $fh = array(
             do_lang_tempcode('NAME'),
             do_lang_tempcode('OWNER_VIEW'),
@@ -294,87 +302,89 @@ class Module_admin_cns_customprofilefields extends Standard_crud_module
             $to_keep += $_hook->to_enable();
         }
 
-        // Load rows, according to pagination
-        $record_start = get_param_integer('start', 0);
-        $record_max = get_param_integer('max', 20);
-        $record_counter = $record_start;
-        $fields = new Tempcode();
-        list($rows, $max_rows) = $this->get_entry_rows(false, $current_ordering, null);
-        $changed = false;
-
-        // Save sorting changes
-        if (strtoupper($sort_order) != 'DESC') {
-            for ($record_counter = $record_start; $record_counter < $record_start + $record_max; $record_counter++) {
-                $new_order_value = post_param_integer('order_' . strval($record_counter), null);
-                if ($new_order_value !== $record_counter && !is_null($new_order_value)) {
-                    $this->change_order($new_order_value, $record_counter, $current_ordering);
-                    $changed = true;
-                }
-            }
-        } else {
-            $record_start = $max_rows - $record_start;
-            $record_max = $record_start - $record_max;
-            for ($record_counter = $record_max; $record_counter <= $record_start; $record_counter++) {
-                $new_order_value = post_param_integer('order_' . strval($record_counter), null);
-                if ($new_order_value !== $record_counter && !is_null($new_order_value)) {
-                    $this->change_order($new_order_value, $record_counter, $current_ordering);
-                    $changed = true;
-                }
+        // Normalise ordering
+        if ($standard_ordering) {
+            $rows = $GLOBALS['FORUM_DB']->query_select('f_custom_fields', array('id'), null, 'ORDER BY cf_order ASC');
+            foreach ($rows as $i => $row) {
+                $GLOBALS['FORUM_DB']->query_update('f_custom_fields', array('cf_order' => $i), array('id' => $row['id']), '', 1);
             }
         }
-        // Reload after sorting changes
-        if ($changed) {
-            list($rows, $max_rows) = $this->get_entry_rows(false, $current_ordering);
+
+        // Load rows, according to pagination
+        list($rows, $max_rows) = $this->get_entry_rows(false, $current_ordering, null);
+
+        // Save sorting changes
+        if ($standard_ordering) {
+            $changed = false;
+
+            foreach ($rows as $row) {
+                $new_order = post_param_integer('order_' . strval($row['id']), null);
+                if ($new_order !== null) {
+                    if ($new_order !== $row['cf_order']) {
+                        $this->change_order($row['id'], $row['cf_order'], $new_order);
+                        $changed = true;
+                    }
+                }
+            }
+
+            // Reload after sorting changes
+            if ($changed) {
+                list($rows, $max_rows) = $this->get_entry_rows(false, $current_ordering);
+            }
         }
 
         // Render selection table
+        $fields = new Tempcode();
         require_code('form_templates');
         foreach ($rows as $row) {
-            $trans = get_translated_text($row['cf_name'], $GLOBALS['FORUM_DB']);
+            $name = get_translated_text($row['cf_name'], $GLOBALS['FORUM_DB']);
 
             $used = true;
-            if ((substr($trans, 0, 4) == 'cms_') && (get_param_integer('keep_all_cpfs', 0) != 1)) {
+            if ((substr($name, 0, 4) == 'cms_') && (get_param_integer('keep_all_cpfs', 0) != 1)) {
                 // See if it gets filtered
-                if ((!array_key_exists(substr($trans, 4), $to_keep)) && (get_param_integer('edit_unused', 0) != 1)) {
+                if ((!array_key_exists(substr($name, 4), $to_keep)) && (get_param_integer('edit_unused', 0) != 1)) {
                     $used = false;
                 }
 
-                $test = do_lang('SPECIAL_CPF__' . $trans, null, null, null, null, false);
+                $test = do_lang('SPECIAL_CPF__' . $name, null, null, null, null, false);
                 if (!is_null($test)) {
-                    $trans = $test;
+                    $name = $test;
                 }
             }
 
             $edit_link = build_url($url_map + array('id' => $row['id']), '_SELF');
 
-            $orderlist = new Tempcode();
-            $num_cpfs = $GLOBALS['FORUM_DB']->query_select_value('f_custom_fields', 'COUNT(*)');
-            $selected_one = false;
             $order = $row['cf_order'];
-            for ($i = 0; $i < max($num_cpfs, $order, 200); $i++) {
-                $selected = ($i === $order);
-                if ($selected) {
-                    $selected_one = true;
+            if ($standard_ordering) {
+                $order_list = '';
+                $selected_one = false;
+                for ($i = 0; $i < $num_cpfs; $i++) {
+                    $selected = ($i === $order);
+                    if ($selected) {
+                        $selected_one = true;
+                    }
+                    $order_list .= '<option value="' . strval($i) . '"' . ($selected ? ' selected="selected"' : '') . '>' . strval($i + 1) . '</option>'; // XHTMLXHTML
                 }
-                $orderlist->attach(form_input_list_entry(strval($i), $selected, strval($i + 1)));
+                if (!$selected_one) {
+                    $order_list .= '<option value="' . strval($i) . '" selected="selected">' . (($order == ORDER_AUTOMATED_CRITERIA) ? do_lang('NA') : strval($order + 1)) . '</option>'; // XHTMLXHTML
+                }
+                $orderer = do_template('COLUMNED_TABLE_ROW_CELL_SELECT', array('_GUID' => '0c35279246e34d94fd4a41c432cdffed', 'LABEL' => do_lang_tempcode('SORT'), 'NAME' => 'order_' . strval($row['id']), 'LIST' => $order_list));
+            } else {
+                $orderer = make_string_tempcode('#' . escape_html($order + 1));
             }
-            if (!$selected_one) {
-                $orderlist->attach(form_input_list_entry(strval($order), true, ($order == ORDER_AUTOMATED_CRITERIA) ? do_lang('NA') : strval($order + 1)));
-            }
-            $orderer = do_template('COLUMNED_TABLE_ROW_CELL_SELECT', array('_GUID' => '0c35279246e34d94fd4a41c432cdffed', 'LABEL' => do_lang_tempcode('SORT'), 'NAME' => 'order_' . strval($row['cf_order']), 'LIST' => $orderlist));
 
             $fr = array();
-            $fr[] = $trans;
+            $fr[] = $name;
             $fr[] = ($row['cf_owner_view'] == 1) ? do_lang_tempcode('YES') : do_lang_tempcode('NO');
             $fr[] = ($row['cf_owner_set'] == 1) ? do_lang_tempcode('YES') : do_lang_tempcode('NO');
             $fr[] = ($row['cf_public_view'] == 1) ? do_lang_tempcode('YES') : do_lang_tempcode('NO');
             $fr[] = ($row['cf_required'] == 1) ? do_lang_tempcode('YES') : do_lang_tempcode('NO');
             $fr[] = ($row['cf_show_on_join_form'] == 1) ? do_lang_tempcode('YES') : do_lang_tempcode('NO');
-            //$fr[]=($row['cf_show_in_posts']==1)?do_lang_tempcode('YES'):do_lang_tempcode('NO');
-            //$fr[]=($row['cf_show_in_post_previews']==1)?do_lang_tempcode('YES'):do_lang_tempcode('NO');
+            //$fr[]=($row['cf_show_in_posts']==1) ? do_lang_tempcode('YES') : do_lang_tempcode('NO');
+            //$fr[]=($row['cf_show_in_post_previews']==1) ? do_lang_tempcode('YES') : do_lang_tempcode('NO');
             $fr[] = protect_from_escaping($orderer);
             if ($used) {
-                $edit_link = hyperlink($edit_link, do_lang_tempcode('EDIT'), false, false, do_lang('EDIT') . ' #' . strval($row['id']));
+                $edit_link = hyperlink($edit_link, do_lang_tempcode('EDIT'), false, false, do_lang('EDIT') . ' ' . escape_html($name));
             } else {
                 $edit_link = do_lang_tempcode('UNUSED_CPF');
             }
@@ -398,36 +408,31 @@ class Module_admin_cns_customprofilefields extends Standard_crud_module
     }
 
     /**
-     * Change the order of custom profile fields.
+     * Change the order of a Custom Profile Field.
      *
-     * @param  integer $start_order Record start count.
-     * @param  integer $end_order Record end count.
+     * @param  AUTO_LINK $id The ID.
+     * @param  integer $old_order Old order.
+     * @param  integer $new_order New order.
      */
-    public function change_order($start_order = 0, $end_order = 0)
+    public function change_order($id, $old_order, $new_order)
     {
-        $rows = null;
-        $row_cf_order = 0;
-        $table = get_table_prefix() . 'f_custom_fields';
-        if ($start_order > $end_order) {
-            $rows = $GLOBALS['FORUM_DB']->query('SELECT * FROM ' . $table . ' WHERE cf_order BETWEEN ' . strval($end_order) . ' AND ' . strval($start_order) . ' ORDER BY cf_order,' . $GLOBALS['FORUM_DB']->translate_field_ref('cf_name'));
-            foreach ($rows as $row) {
-                $row_cf_order = $row['cf_order'];
-                if ($row_cf_order == $end_order) {
-                    $GLOBALS['FORUM_DB']->query_update('f_custom_fields', array('cf_order' => $start_order), array('id' => $row['id']), '', 1);
-                } else {
-                    $GLOBALS['FORUM_DB']->query_update('f_custom_fields', array('cf_order' => $row_cf_order - 1), array('id' => $row['id']), '', 1);
+        $sql = 'SELECT r.id AS r_id,r.cf_order FROM ' . $GLOBALS['FORUM_DB']->get_table_prefix() . 'f_custom_fields r WHERE cf_order BETWEEN ';
+        $sql .= strval(min($old_order, $new_order)) . ' AND ' . strval(max($old_order, $new_order));
+        $sql .= ' ORDER BY cf_order,' . $GLOBALS['FORUM_DB']->translate_field_ref('cf_name');
+        $rows = $GLOBALS['FORUM_DB']->query($sql, null, null, false, false, array('cf_name' => 'SHORT_TRANS'));
+
+        foreach ($rows as $row) {
+            if ($id == $row['r_id']) {
+                $_new_order = $new_order;
+            } else {
+                if ($old_order < $new_order) { // Moving order of $id up
+                    $_new_order = $row['cf_order'] - 1;
+                } else { // Moving order of $id down
+                    $_new_order = $row['cf_order'] + 1;
                 }
             }
-        } else {
-            $rows = $GLOBALS['FORUM_DB']->query('SELECT * FROM ' . $table . ' WHERE cf_order BETWEEN ' . strval($start_order) . ' AND ' . strval($end_order) . ' ORDER BY cf_order,' . $GLOBALS['FORUM_DB']->translate_field_ref('cf_name'));
-            foreach ($rows as $row) {
-                $row_cf_order = $row['cf_order'];
-                if ($row_cf_order == $end_order) {
-                    $GLOBALS['FORUM_DB']->query_update('f_custom_fields', array('cf_order' => $start_order), array('id' => $row['id']), '', 1);
-                } else {
-                    $GLOBALS['FORUM_DB']->query_update('f_custom_fields', array('cf_order' => $row_cf_order + 1), array('id' => $row['id']), '', 1);
-                }
-            }
+
+            $GLOBALS['FORUM_DB']->query_update('f_custom_fields', array('cf_order' => $_new_order), array('id' => $row['r_id']), '', 1);
         }
     }
 
@@ -612,7 +617,7 @@ class Module_admin_cns_customprofilefields extends Standard_crud_module
         if (count($members_in_range) == 300) {
             attach_message(do_lang_tempcode('TOO_MUCH_CHOOSE__TOP_ONLY', escape_html(integer_format(300))), 'warn');
         }
-        $lines = new Tempcode();
+        $lines = array();
         foreach ($members_in_range as $row) {
             if (!is_null($row[$f_name])) {
                 $val = $row[$f_name];
@@ -621,11 +626,11 @@ class Module_admin_cns_customprofilefields extends Standard_crud_module
                     continue;
                 }
 
-                $lines->attach(do_template('CNS_CPF_STATS_LINE', array('_GUID' => '874c9b780f625ff4566e7b909f554288', 'CNT' => integer_format($row['cnt']), 'VAL' => is_integer($val) ? integer_format($val) : $val)));
+                $lines[] = array('CNT' => integer_format($row['cnt']), 'VAL' => is_integer($val) ? integer_format($val) : $val);
             }
         }
-        if ($lines->is_empty()) {
-            warn_exit(do_lang_tempcode('NO_DATA'));
+        if ($lines === array()) {
+            warn_exit(do_lang_tempcode('NO_ENTRIES'));
         }
 
         return do_template('CNS_CPF_STATS_SCREEN', array('_GUID' => 'bb7be7acf936cd008e16bd515f7f39ac', 'TITLE' => $this->title, 'STATS' => $lines));

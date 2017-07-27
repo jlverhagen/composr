@@ -1,6 +1,6 @@
 {TITLE}
 
-<form title="{!PRIMARY_PAGE_FORM}" action="{POST_URL*}" method="post">
+<form title="{!PRIMARY_PAGE_FORM}" action="{POST_URL*}" method="post" autocomplete="off" onsubmit="return modsecurity_workaround(this);">
 	{$INSERT_SPAMMER_BLACKHOLE}
 
 	<div class="constrain_field">
@@ -9,7 +9,7 @@
 	</div>
 
 	<p class="proceed_button">
-		<input class="buttons__save button_screen" id="submit_button" accesskey="u" type="submit" value="{!SAVE}" />
+		<input class="button_screen buttons__save" id="submit_button" accesskey="u" type="submit" value="{!SAVE}" />
 	</p>
 </form>
 

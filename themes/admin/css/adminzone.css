@@ -1,12 +1,12 @@
 /*
  {$BRAND_NAME`}
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 */
 
 /* Style overrides (NB: it is reasonable to assume global.css ran before this, so precedence here is automatic) */
 
 html>body#main_website {
-	background: #f0f3f7;
+	background: #f0f3f7 !important;
 }
 
 header {
@@ -14,13 +14,13 @@ header {
 	border-bottom: 3px solid #cacaca;
 }
 
-{+START,IF,{$MOBILE}}
+/*{+START,IF,{$MOBILE}}*/
 	.global_navigation_inner span {
 		float: right;
 		margin: 0.75em;
 		font-size: 1.2em;
 	}
-{+END}
+/*{+END}*/
 
 #main_website #main_website_inner {
 	border: 0;
@@ -34,10 +34,10 @@ body#main_website #main_website_inner, html>body div.global_middle_faux {
 
 .global_messages {
 	margin: 0;
-	{+START,IF,{$MOBILE}}
+	/*{+START,IF,{$MOBILE}}*/
 		padding-left: 2px;
 		padding-right: 2px;
-	{+END}
+	/*{+END}*/
 }
 
 .global_messages .box___message {
@@ -55,16 +55,18 @@ body#main_website #main_website_inner, html>body div.global_middle_faux {
 	padding-top: 0;
 }
 
+/*{+START,IF,{$CONFIG_OPTION,fixed_width}}*/
 .global_breadcrumbs {
 	padding: 18px 0 7px 0;
 }
 
-{+START,IF,{$NOT,{$MOBILE}}}
+/*{+START,IF,{$NOT,{$MOBILE}}}*/
 	.global_middle {
 		padding-left: 0;
 		padding-right: 0;
 	}
-{+END}
+/*{+END}*/
+/*{+END}*/
 
 #panel_left{
 	margin-left: 0;
@@ -78,27 +80,15 @@ body#main_website #main_website_inner, html>body div.global_middle_faux {
 	padding-right: 2em;
 }
 
-.global_side_panel .hide_if_in_panel {
-	display: none;
-}
-
-.hide_if_not_in_panel {
-	display: none;
-}
-
-.global_side_panel .hide_if_not_in_panel {
-	display: block;
-}
-
 .page_running_login #main_website_inner {
 	{$BETA_CSS_PROPERTY,background-image: none !important;}
 }
 
 .footer_inner {
-	{+START,IF,{$CONFIG_OPTION,fixed_width}}{+START,IF,{$NOT,{$MOBILE}}}
+	/*{+START,IF,{$CONFIG_OPTION,fixed_width}}{+START,IF,{$NOT,{$MOBILE}}}*/
 		width: 980px;
 		margin: 0 auto;
-	{+END}{+END}
+	/*{+END}{+END}*/
 }
 
 footer .global_footer_left #special_page_type {
@@ -131,10 +121,28 @@ footer .global_minilinks {
 
 .adminzone_search {
 	padding: 0.7em 1em;
+	white-space: nowrap;
 }
 
 .adminzone_search input {
 	vertical-align: middle;
+}
+
+/*
+=========================
+========Revisions========
+=========================
+*/
+
+.revisions_filter_item {
+	width: 15%;
+	margin: 0 5% 0.5em 0;
+	float: left;
+}
+
+.revisions_filter_item_button {
+	margin: 0.75em 0.5em 0 0;
+	float: right;
 }
 
 /*

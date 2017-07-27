@@ -19,9 +19,11 @@
 {+END}
 
 {+START,IF_NON_EMPTY,{RESET_URL}}
-	<form title="{!RESET_BANNER_STATS}" action="{RESET_URL*}" method="post">
+	<form title="{!RESET_BANNER_STATS}" action="{RESET_URL*}" method="post" autocomplete="off">
+		{$INSERT_SPAMMER_BLACKHOLE}
+
 		<input type="hidden" name="confirm" value="1" />
-		<input class="button_page" type="submit" value="{!RESET_BANNER_STATS}" onclick="var _form=this.form; fauxmodal_confirm('{!WARNING_RESET_BANNER_STATS;}',function(result) { if (result) _form.submit(); }); return false;" />
+		<input class="button_screen menu___generic_admin__delete" type="submit" value="{!RESET_BANNER_STATS}" onclick="var _form=this.form; fauxmodal_confirm('{!WARNING_RESET_BANNER_STATS;}',function(result) { if (result) _form.submit(); }); return false;" />
 	</form>
 {+END}
 

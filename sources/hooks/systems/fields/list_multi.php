@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -44,6 +44,10 @@ class Hook_fields_list_multi
         $display = array_key_exists('trans_name', $field) ? $field['trans_name'] : get_translated_text($field['cf_name']); // 'trans_name' may have been set in CPF retrieval API, might not correspond to DB lookup if is an internal field
         $list = $this->get_input_list_map($field, true);
         foreach ($list as $l) {
+            if (is_integer($l)) {
+                $l = strval($l);
+            }
+
             $special->attach(form_input_list_entry($l, get_param_string('option_' . strval($field['id']), '') == $l));
         }
         return array('NAME' => strval($field['id']), 'DISPLAY' => $display, 'TYPE' => $type, 'SPECIAL' => $special);
@@ -69,15 +73,20 @@ class Hook_fields_list_multi
      * Get some info bits relating to our field type, that helps us look it up / set defaults.
      *
      * @param  ?array $field The field details (null: new field)
-     * @param  ?boolean $required Whether a default value cannot be blank (null: don't "lock in" a new default value)
-     * @param  ?string $default The given default value as a string (null: don't "lock in" a new default value)
+     * @param  ?boolean $required Whether a default value cannot be blank (null: don't "lock in" a new default value) (may be passed as false also if we want to avoid "lock in" of a new default value, but in this case possible cleanup of $default may still happen where appropriate)
+     * @param  ?string $default The given default value as a string (null: don't "lock in" a new default value) (blank: only "lock in" a new default value if $required is true)
      * @return array Tuple of details (row-type,default-value-to-use,db row-type)
      */
     public function get_field_value_row_bits($field, $required = null, $default = null)
     {
         if ($required !== null) {
-            if (($required) && ($default == '')) {
-                $default = preg_replace('#\|.*#', '', $default);
+            if ((($default == '') && ($required)) || ($default == $field['cf_default'])) {
+                $default = $field['cf_default'];
+                if ($required) {
+                    $default = preg_replace('#^(=.*)?\|#U', '', $default); // Get key of blank option
+                }
+                $default = preg_replace('#\|.*$#', '', $default); // Remove all the non-first list options
+                $default = preg_replace('#=.*$#', '', $default); // Get key of first
             }
         }
         return array('long_unescaped', $default, 'long');
@@ -92,6 +101,10 @@ class Hook_fields_list_multi
      */
     public function render_field_value($field, $ev)
     {
+        if ($ev == $field['cf_default']) {
+            return '';
+        }
+
         if (is_object($ev)) {
             return $ev;
         }
@@ -221,13 +234,9 @@ class Hook_fields_list_multi
             natsort($list);
         }
 
-        $_list = array();
         $custom_name = $input_name . '_other';
         $custom_value = mixed();
         $custom_value = array();
-        foreach ($list as $i => $l) {
-            $_list[] = array($l, $input_name . '_' . strval($i), in_array($l, $exploded_chosen), '');
-        }
         foreach ($exploded_chosen as $chosen) {
             if (!in_array($chosen, $list)) {
                 $custom_value[] = $chosen;
@@ -256,13 +265,17 @@ class Hook_fields_list_multi
         {
             case 'vertical_checkboxes':
             case 'horizontal_checkboxes':
+                $_list = array();
+                foreach ($list as $i => $l) {
+                    $_list[] = array(protect_from_escaping(comcode_to_tempcode($l, null, true)), $input_name . '_' . strval($i), in_array($l, $exploded_chosen), '');
+                }
                 return form_input_various_ticks($_list, $_cf_description, null, $_cf_name, ($widget == 'vertical_checkboxes'), $custom_name, $custom_value);
 
             case 'multilist':
             default:
                 $list_tpl = new Tempcode();
                 foreach ($list as $l) {
-                    $list_tpl->attach(form_input_list_entry($l, in_array($l, $exploded_chosen)));
+                    $list_tpl->attach(form_input_list_entry(protect_from_escaping(comcode_to_tempcode($l, null, true)), in_array($l, $exploded_chosen)));
                 }
                 return form_input_multi_list($_cf_name, $_cf_description, $input_name, $list_tpl, null, $input_size, $field['cf_required'] == 1, $custom_name, $custom_value);
         }
@@ -273,7 +286,7 @@ class Hook_fields_list_multi
      *
      * @param  boolean $editing Whether we were editing (because on edit, it could be a fractional edit)
      * @param  array $field The field details
-     * @param  ?string $upload_dir Where the files will be uploaded to (null: do not store an upload, return NULL if we would need to do so)
+     * @param  ?string $upload_dir Where the files will be uploaded to (null: do not store an upload, return null if we would need to do so)
      * @param  ?array $old_value Former value of field (null: none)
      * @return ?string The value (null: could not process)
      */

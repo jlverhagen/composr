@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -96,8 +96,8 @@ class Block_main_member_bar
                 'UNREAD_TOPICS_URL' => build_url(array('page' => 'vforums', 'type' => 'unread'), get_module_zone('vforums')),
                 'RECENTLY_READ_URL' => build_url(array('page' => 'vforums', 'type' => 'recently_read'), get_module_zone('vforums')),
                 'INLINE_PERSONAL_POSTS_URL' => build_url(array('page' => 'topicview'), get_module_zone('topicview')),
-                'UNANSWERED_TOPICS_URL' => build_url(array('page' => 'vforums', 'type' => 'unanswered_topics'), get_module_zone('vforums')),
-                'INVOLVED_TOPICS_URL' => build_url(array('page' => 'vforums', 'type' => 'involved_topics'), get_module_zone('vforums')),
+                'UNANSWERED_TOPICS_URL' => build_url(array('page' => 'vforums', 'type' => 'unanswered'), get_module_zone('vforums')),
+                'INVOLVED_TOPICS_URL' => build_url(array('page' => 'vforums', 'type' => 'involved'), get_module_zone('vforums')),
                 'PT_EXTRA' => $pt_extra,
                 'NUM_UNREAD_PTS' => strval($num_unread_pps),
                 'NEW_TOPICS' => integer_format($new_topics),
@@ -108,7 +108,7 @@ class Block_main_member_bar
                 'DETAILS' => $details
             ));
         } else { // Guest
-            if (count($_POST) > 0 || (get_page_name() == 'join') || (get_page_name() == 'login')) {
+            if (has_interesting_post_fields() || (get_page_name() == 'join') || (get_page_name() == 'login') || (get_page_name() == 'lost_password')) {
                 $_this_url = build_url(array('page' => 'forumview'), 'forum', array('keep_session' => 1, 'redirect' => 1));
             } else {
                 $_this_url = build_url(array('page' => '_SELF'), '_SELF', array('keep_session' => 1, 'redirect' => 1), true);
@@ -116,14 +116,14 @@ class Block_main_member_bar
             $this_url = $_this_url->evaluate();
             $login_url = build_url(array('page' => 'login', 'type' => 'login', 'redirect' => $this_url), get_module_zone('login'));
             $full_link = build_url(array('page' => 'login', 'type' => 'browse', 'redirect' => $this_url), get_module_zone('login'));
-            $join_url = build_url(array('page' => 'join', 'redirect' => $this_url), get_module_zone('join'));
+            $join_url = build_url(array('page' => 'join', 'redirect' => $this_url), get_module_zone('join'), array('keep_session' => 1, 'redirect' => 1));
             $bar = do_template('CNS_GUEST_BAR', array(
                 '_GUID' => '3b613deec9d4786f5b53dbd52af00d3c',
                 'LOGIN_URL' => $login_url,
                 'JOIN_URL' => $join_url,
                 'FULL_LOGIN_URL' => $full_link,
                 'NEW_POSTS_URL' => build_url(array('page' => 'vforums', 'type' => 'browse'), get_module_zone('vforums')),
-                'UNANSWERED_TOPICS_URL' => build_url(array('page' => 'vforums', 'type' => 'unanswered_topics'), get_module_zone('vforums')),
+                'UNANSWERED_TOPICS_URL' => build_url(array('page' => 'vforums', 'type' => 'unanswered'), get_module_zone('vforums')),
             ));
         }
 

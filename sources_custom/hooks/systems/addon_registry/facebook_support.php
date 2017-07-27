@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -21,9 +21,10 @@ class Hook_addon_registry_facebook_support
     /**
      * Get a list of file permissions to set
      *
+     * @param  boolean $runtime Whether to include wildcards represented runtime-created chmoddable files
      * @return array File permissions to set
      */
-    public function get_chmod_array()
+    public function get_chmod_array($runtime = false)
     {
         return array();
     }
@@ -100,7 +101,11 @@ Features:
 
 For this addon to work you need to configure Composr\'s Facebook configuration settings, which includes getting a Facebook app ID.
 
-Please be aware that this addon overrides some common templates to add Facebook functionality to them, such as [tt]LOGIN_SCREEN.tpl[/tt] and [tt]BLOCK_SIDE_PERSONAL_STATS_NO.tpl[/tt].';
+Please be aware that this addon overrides some common templates to add Facebook functionality to them, such as [tt]LOGIN_SCREEN.tpl[/tt] and [tt]BLOCK_SIDE_PERSONAL_STATS_NO.tpl[/tt].
+
+The documentation for this addon is covered in a dedicated tutorial (' . get_brand_base_url() . '/docs/tut_facebook.htm).
+For a demo, see this video tutorial: https://www.youtube.com/watch?v=HUZ_O5io0F0
+';
     }
 
     /**
@@ -121,7 +126,10 @@ Please be aware that this addon overrides some common templates to add Facebook 
     public function get_dependencies()
     {
         return array(
-            'requires' => array(),
+            'requires' => array(
+                'PHP sessions',
+                'PHP CuRL extension',
+            ),
             'recommends' => array('activity_feed'),
             'conflicts_with' => array()
         );
@@ -190,6 +198,7 @@ Please be aware that this addon overrides some common templates to add Facebook 
             'sources_custom/hooks/systems/config/facebook_appid.php',
             'sources_custom/hooks/systems/config/facebook_secret_code.php',
             'sources_custom/hooks/systems/config/facebook_uid.php',
+            'sources_custom/hooks/systems/config/facebook_syndicate.php',
             'sources_custom/hooks/systems/config/facebook_auto_syndicate.php',
             'sources_custom/hooks/systems/config/facebook_member_syndicate_to_page.php',
             'sources_custom/hooks/systems/config/facebook_sync_avatar.php',
@@ -197,6 +206,7 @@ Please be aware that this addon overrides some common templates to add Facebook 
             'sources_custom/hooks/systems/config/facebook_sync_email.php',
             'sources_custom/hooks/systems/config/facebook_sync_username.php',
             'sources_custom/cns_field_editability.php',
+            'sources_custom/facebook/.htaccess',
         );
     }
 }

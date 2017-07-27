@@ -1,7 +1,7 @@
 {+START,IF_PASSED,DESCRIPTION}{+START,IF_NON_EMPTY,{DESCRIPTION}}
 	<div class="box box___cns_forum"><div class="box_inner">
 		<div itemprop="description">
-			{DESCRIPTION}
+			{$PARAGRAPH,{DESCRIPTION}}
 		</div>
 	</div></div>
 {+END}{+END}
@@ -28,7 +28,7 @@
 
 {+START,IF_EMPTY,{TOPIC_WRAPPER}{FORUM_GROUPINGS}}
 	<p class="nothing_here">
-		{!NO_ENTRIES}
+		{!NO_ENTRIES,topic}
 	</p>
 {+END}
 
@@ -71,7 +71,7 @@
 
 	{+START,IF_PASSED,ID}
 		<div class="non_accessibility_redundancy">
-			<nav class="breadcrumbs" itemprop="breadcrumb" role="navigation">
+			<nav class="breadcrumbs" itemprop="breadcrumb">
 				<img class="breadcrumbs_img" src="{$IMG*,1x/breadcrumbs}" srcset="{$IMG*,2x/breadcrumbs} 2x" alt="&gt; " title="{!YOU_ARE_HERE}" />
 				{BREADCRUMBS}
 			</nav>

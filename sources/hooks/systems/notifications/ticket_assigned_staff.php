@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -51,10 +51,11 @@ class Hook_notification_ticket_assigned_staff extends Hook_Notification
             $types2 = array(); // Too many to consider
         }
 
+        require_code('tickets');
         require_code('tickets2');
 
         foreach ($tickets as $ticket) {
-            $details = get_ticket_details($ticket['l_code_category']);
+            $details = get_ticket_details($ticket['l_code_category'], false);
             if (is_null($details)) {
                 continue;
             }
@@ -113,7 +114,7 @@ class Hook_notification_ticket_assigned_staff extends Hook_Notification
     public function list_handled_codes()
     {
         $list = array();
-        $list['ticket_assigned_staff'] = array(do_lang('notifications:MESSAGES'), do_lang('tickets:NOTIFICATION_TYPE_ticket_assigned_staff'));
+        $list['ticket_assigned_staff'] = array(do_lang('MESSAGES'), do_lang('tickets:NOTIFICATION_TYPE_ticket_assigned_staff'));
         return $list;
     }
 

@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -32,7 +32,8 @@ class Hook_snippet_management_menu
     {
         if (has_zone_access(get_member(), 'adminzone')) {
             require_code('menus');
-            return build_menu('popup', 'adminzone:start,include=node,title=' . do_lang('menus:DASHBOARD') . ',icon=menu/adminzone/start + adminzone:,include=children,max_recurse_depth=4,use_page_groupings=1 + cms:,include=node,max_recurse_depth=3,use_page_groupings=1');
+            $bits = build_menu('popup', 'adminzone:start,include=node,title=' . do_lang('menus:DASHBOARD') . ',icon=menu/adminzone/start + adminzone:,include=children,max_recurse_depth=4,use_page_groupings=1 + cms:,include=node,max_recurse_depth=3,use_page_groupings=1');
+            return $bits[0];
         }
         return new Tempcode();
     }

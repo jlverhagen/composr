@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -54,7 +54,7 @@ class Hook_members_booking
 
             $links[] = array(
                 'content',
-                do_lang_tempcode('BOOKING_EDIT', $from, $to, get_translated_tempcode('bookable', $bookable[0], 'title')),
+                do_lang_tempcode('BOOKING_EDIT', escape_html($from), escape_html($to), get_translated_tempcode('bookable', $bookable[0], 'title')),
                 build_url(array('page' => 'cms_booking', 'type' => '_eb', 'id' => strval($member_id) . '_' . strval($i)), $zone),
                 'menu/booking',
             );

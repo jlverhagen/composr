@@ -1,5 +1,5 @@
 {+START,IF_EMPTY,{BANNERS}}
-	<p class="nothing_here">{!NO_ENTRIES}</p>
+	<p class="nothing_here">{!NO_ENTRIES,banner}</p>
 {+END}
 
 {+START,IF_NON_EMPTY,{BANNERS}}
@@ -10,10 +10,10 @@
 					{!SITE}
 				</th>
 				<th>
-					{!BANNER_HITSFROM}
+					{!BANNER_HITS_FROM}
 				</th>
 				<th>
-					{!BANNER_HITSTO}
+					{!BANNER_HITS_TO}
 				</th>
 			</tr>
 		</thead>
@@ -35,11 +35,11 @@
 					</td>
 
 					<td>
-						{$NUMBER_FORMAT*,{HITSFROM}}
+						{$NUMBER_FORMAT*,{HITS_FROM}}
 					</td>
 
 					<td>
-						{$NUMBER_FORMAT*,{HITSTO}}
+						{$NUMBER_FORMAT*,{HITS_TO}}
 					</td>
 				</tr>
 			{+END}
@@ -48,5 +48,5 @@
 {+END}
 
 {+START,IF_NON_EMPTY,{SUBMIT_URL}}
-	<p class="proceed_button"><a class="menu___generic_admin__add_one button_screen" href="{SUBMIT_URL*}"><span>{!ADD_BANNER}</span></a></p>
+	<p class="proceed_button"><a class="button_screen menu___generic_admin__add_one" href="{SUBMIT_URL*}"><span>{!ADD_BANNER}</span></a></p>
 {+END}

@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -162,7 +162,7 @@ class CMSPtWrite
         require_code('cns_topics_action2');
 
         $topic_info = $GLOBALS['FORUM_DB']->query_select('f_topics', array('t_pt_from', 't_pt_to', 't_pt_from_category', 't_pt_to_category'), array('id' => $topic_id), '', 1);
-        if (!isset($topic_info[0])) {
+        if (!array_key_exists(0, $topic_info)) {
             warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'topic'));
         }
 
@@ -228,7 +228,7 @@ class CMSPtWrite
             cns_ping_topic_read($topic_id);
         }
 
-        decache('side_cns_personal_topics', array(get_member()));
+        decache('side_cns_private_topics', array(get_member()));
         decache('_new_pp', array(get_member()));
     }
 }

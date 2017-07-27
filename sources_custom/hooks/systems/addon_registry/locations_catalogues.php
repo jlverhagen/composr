@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -21,9 +21,10 @@ class Hook_addon_registry_locations_catalogues
     /**
      * Get a list of file permissions to set
      *
+     * @param  boolean $runtime Whether to include wildcards represented runtime-created chmoddable files
      * @return array File permissions to set
      */
-    public function get_chmod_array()
+    public function get_chmod_array($runtime = false)
     {
         return array();
     }
@@ -168,13 +169,13 @@ class Hook_addon_registry_locations_catalogues
                 'l_population' => '?INTEGER',
                 'l_latitude' => '?REAL',
                 'l_longitude' => '?REAL',
-                //'l_postcode'=>'ID_TEXT',   Actually often many postcodes per location and/or poor alignment
+                //'l_postcode' => 'ID_TEXT',   Actually often many postcodes per location and/or poor alignment
             ));
             $GLOBALS['SITE_DB']->create_index('locations', 'l_place', array('l_place'));
             $GLOBALS['SITE_DB']->create_index('locations', 'l_country', array('l_country'));
             $GLOBALS['SITE_DB']->create_index('locations', 'l_latitude', array('l_latitude'));
             $GLOBALS['SITE_DB']->create_index('locations', 'l_longitude', array('l_longitude'));
-            //$GLOBALS['SITE_DB']->create_index('locations','l_postcode',array('l_postcode'));
+            //$GLOBALS['SITE_DB']->create_index('locations', 'l_postcode', array('l_postcode'));
         }
     }
 }

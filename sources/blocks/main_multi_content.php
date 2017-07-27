@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -75,7 +75,7 @@ class Block_main_multi_content
         $info['cache_on'] = '
             (preg_match(\'#<\w+>#\',(array_key_exists(\'filter\',$map)?$map[\'filter\']:\'\'))!=0)
             ?
-            NULL
+            null
             :
             array(
                 array_key_exists(\'as_guest\',$map)?($map[\'as_guest\']==\'1\'):false,
@@ -86,13 +86,13 @@ class Block_main_multi_content
                 get_param_integer($block_id.\'_max\',array_key_exists(\'max\',$map)?intval($map[\'max\']):30),
                 get_param_integer($block_id.\'_start\',array_key_exists(\'start\',$map)?intval($map[\'start\']):0),
                 ((array_key_exists(\'pagination\',$map)?$map[\'pagination\']:\'0\')==\'1\'),
-                ((array_key_exists(\'root\',$map)) && ($map[\'root\']!=\'\'))?intval($map[\'root\']):get_param_integer(\'keep_\'.(array_key_exists(\'param\',$map)?$map[\'param\']:\'download\').\'_root\',NULL),
+                ((array_key_exists(\'root\',$map)) && ($map[\'root\']!=\'\'))?intval($map[\'root\']):get_param_integer(\'keep_\'.(array_key_exists(\'param\',$map)?$map[\'param\']:\'download\').\'_root\',null),
                 (array_key_exists(\'give_context\',$map)?$map[\'give_context\']:\'0\')==\'1\',
                 (array_key_exists(\'include_breadcrumbs\',$map)?$map[\'include_breadcrumbs\']:\'0\')==\'1\',
                 array_key_exists(\'filter\',$map)?$map[\'filter\']:\'\',
                 array_key_exists(\'no_links\',$map)?$map[\'no_links\']:0,
-                ((array_key_exists(\'days\',$map)) && ($map[\'days\']!=\'\'))?intval($map[\'days\']):NULL,
-                ((array_key_exists(\'lifetime\',$map)) && ($map[\'lifetime\']!=\'\'))?intval($map[\'lifetime\']):NULL,
+                ((array_key_exists(\'days\',$map)) && ($map[\'days\']!=\'\'))?intval($map[\'days\']):null,
+                ((array_key_exists(\'lifetime\',$map)) && ($map[\'lifetime\']!=\'\'))?intval($map[\'lifetime\']):null,
                 ((array_key_exists(\'pinned\',$map)) && ($map[\'pinned\']!=\'\'))?explode(\',\',$map[\'pinned\']):array(),
                 array_key_exists(\'title\',$map)?$map[\'title\']:\'\',
                 array_key_exists(\'param\',$map)?$map[\'param\']:\'download\',
@@ -110,6 +110,14 @@ class Block_main_multi_content
     }
 
     /**
+     * Uninstall the block.
+     */
+    public function uninstall()
+    {
+        $GLOBALS['SITE_DB']->drop_table_if_exists('feature_lifetime_monitor');
+    }
+
+    /**
      * Install the block.
      *
      * @param  ?integer $upgrade_from What version we're upgrading from (null: new install)
@@ -124,14 +132,6 @@ class Block_main_multi_content
             'running_now' => 'BINARY',
             'last_update' => 'TIME',
         ));
-    }
-
-    /**
-     * Uninstall the block.
-     */
-    public function uninstall()
-    {
-        $GLOBALS['SITE_DB']->drop_table_if_exists('feature_lifetime_monitor');
     }
 
     /**
@@ -179,20 +179,19 @@ class Block_main_multi_content
         $include_breadcrumbs = (isset($map['include_breadcrumbs']) ? $map['include_breadcrumbs'] : '0') == '1';
 
         if ((!file_exists(get_file_base() . '/sources/hooks/systems/content_meta_aware/' . filter_naughty_harsh($content_type) . '.php')) && (!file_exists(get_file_base() . '/sources_custom/hooks/systems/content_meta_aware/' . filter_naughty_harsh($content_type) . '.php'))) {
-            return paragraph(do_lang_tempcode('NO_SUCH_CONTENT_TYPE', $content_type), '', 'red_alert');
+            return paragraph(do_lang_tempcode('NO_SUCH_CONTENT_TYPE', escape_html($content_type)), '', 'red_alert');
         }
 
         require_code('content');
         $object = get_content_object($content_type);
         $info = $object->info($zone, ($select_b == '') ? null : $select_b);
         if ($info === null) {
-            warn_exit(do_lang_tempcode('IMPOSSIBLE_TYPE_USED'));
+            return paragraph(do_lang_tempcode('IMPOSSIBLE_TYPE_USED'), '', 'red_alert');
         }
 
         $submit_url = $info['add_url'];
         if ($submit_url !== null) {
-            list($submit_url_zone, $submit_url_map, $submit_url_hash) = page_link_decode($submit_url);
-            $submit_url = static_evaluate_tempcode(build_url($submit_url_map, $submit_url_zone, null, false, false, false, $submit_url_hash));
+            $submit_url = page_link_to_url($submit_url);
         } else {
             $submit_url = '';
         }
@@ -224,8 +223,16 @@ class Block_main_multi_content
             $category_type_select = mixed();
         }
 
+        // Actually for categories we check access on category ID
+        if ($info['is_category'] && $category_type_access !== null) {
+            $category_field_access = $first_id_field;
+        }
+
         $where = '1=1';
         $query = 'FROM ' . get_table_prefix() . $info['table'] . ' r';
+        if ($info['table'] == 'catalogue_entries') {
+            $where .= ' AND r.c_name NOT LIKE \'' . db_encode_like('\_%') . '\'';
+        }
         if ((!$GLOBALS['FORUM_DRIVER']->is_super_admin(get_member())) && (!$efficient)) {
             $_groups = $GLOBALS['FORUM_DRIVER']->get_members_groups(get_member(), false, true);
             $groups = '';
@@ -290,9 +297,9 @@ class Block_main_multi_content
             $x2 = $this->build_select($select_b, $info, $category_field_access);
         }
 
-        if ($days !== null) {
+        if ($days !== null && $info['date_field'] !== null) {
             $where .= ' AND ';
-            $where .= $info['date_field'] . '>=' . strval(time() - 60 * 60 * 24 * $days);
+            $where .= 'r.' . $info['date_field'] . '>=' . strval(time() - 60 * 60 * 24 * $days);
         }
 
         if (is_array($info['id_field'])) {
@@ -300,7 +307,7 @@ class Block_main_multi_content
         }
         if ($lifetime !== null) {
             $block_cache_id = md5(serialize($map));
-            $query .= ' LEFT JOIN ' . $info['connection']->get_table_prefix() . 'feature_lifetime_monitor m ON m.content_id=r.' . $info['id_field'] . ' AND ' . db_string_equal_to('m.block_cache_id', $block_cache_id);
+            $query .= ' LEFT JOIN ' . $info['connection']->get_table_prefix() . 'feature_lifetime_monitor m ON m.content_id=r.' . db_cast($first_id_field, 'CHAR') . ' AND ' . db_string_equal_to('m.block_cache_id', $block_cache_id);
             $where .= ' AND ';
             $where .= '(m.run_period IS NULL OR m.run_period<' . strval($lifetime * 60 * 60 * 24) . ')';
         }
@@ -320,9 +327,12 @@ class Block_main_multi_content
 
         // Filtercode support
         if ($filter != '') {
+            global $BLOCK_OCPRODUCTS_ERROR_EMAILS;
+            $BLOCK_OCPRODUCTS_ERROR_EMAILS = true;
+
             // Convert the filters to SQL
             require_code('filtercode');
-            list($extra_select, $extra_join, $extra_where) = filtercode_to_sql($info['connection'], parse_filtercode($filter), $content_type, '');
+            list($extra_select, $extra_join, $extra_where) = filtercode_to_sql($info['connection'], parse_filtercode($filter), $content_type);
             $extra_select_sql .= implode('', $extra_select);
             $query .= implode('', $extra_join);
             $where .= $extra_where;
@@ -375,8 +385,11 @@ class Block_main_multi_content
             } else {
                 switch ($sort) {
                     case 'random':
+                    case 'fixed_random':
                     case 'fixed_random ASC':
-                        $rows = $info['connection']->query('SELECT r.*' . $extra_select_sql . ',(MOD(CAST(r.' . $first_id_field . ' AS SIGNED),' . date('d') . ')) AS fixed_random ' . $query . ' ORDER BY fixed_random', $max, $start, false, true, $lang_fields);
+                        $clause = db_cast('r.' . $first_id_field, 'INT');
+                        $clause = '(' . db_function('MOD', array($clause, date('d'))) . ')';
+                        $rows = $info['connection']->query('SELECT r.*' . $extra_select_sql . ',' . $clause . ' AS fixed_random ' . $query . ' ORDER BY fixed_random', $max, $start, false, true, $lang_fields);
                         break;
                     case 'recent_contents':
                     case 'recent_contents ASC':
@@ -386,26 +399,29 @@ class Block_main_multi_content
                         foreach (array_keys($hooks) as $hook) {
                             $other_ob = get_content_object($hook);
                             $other_info = $other_ob->info();
-                            if (($hook != $content_type) && (isset($other_info['parent_category_meta_aware_type'])) && ($other_info['parent_category_meta_aware_type'] == $content_type) && (is_string($other_info['parent_category_field'])) && (isset($other_info['add_time_field']))) {
+                            if (($hook != $content_type) && (!is_null($other_info['parent_category_meta_aware_type'])) && ($other_info['parent_category_meta_aware_type'] == $content_type) && (is_string($other_info['parent_category_field'])) && (!is_null($other_info['add_time_field']))) {
                                 $sort_combos[] = array($other_info['table'], $other_info['add_time_field'], $other_info['parent_category_field']);
                             }
                         }
                         if ($sort_combos != array()) {
-                            $order_by = 'GREATEST(';
+                            $_order_by = array();
                             foreach ($sort_combos as $i => $sort_combo) {
-                                if ($i != 0) {
-                                    $order_by .= ',';
-                                }
                                 list($other_table, $other_add_time_field, $other_category_field) = $sort_combo;
                                 if ($sort == 'recent_contents DESC') {
-                                    $order_by .= 'IFNULL((SELECT MAX(';
+                                    $__order_by_a = '(SELECT MAX(';
                                 } else {
-                                    $order_by .= 'IFNULL((SELECT MIN(';
+                                    $__order_by_a = '(SELECT MIN(';
                                 }
-                                $order_by .= $other_add_time_field . ') FROM ' . $GLOBALS['SITE_DB']->get_table_prefix() . $other_table . ' x WHERE r.' . $first_id_field . '=x.' . $other_category_field;
-                                $order_by .= '),' . (($sort == 'recent_contents DESC') ? '0' : strval(PHP_INT_MAX)/*so empty galleries go to end of order*/) . ')';
+                                $__order_by_a .= $other_add_time_field . ') FROM ' . $GLOBALS['SITE_DB']->get_table_prefix() . $other_table . ' x WHERE r.' . $first_id_field . '=x.' . $other_category_field;
+                                $__order_by_a .= ')';
+                                $__order_by_b = (($sort == 'recent_contents DESC') ? '0' : strval(PHP_INT_MAX)/*so empty galleries go to end of order*/);
+                                $_order_by[] = db_function('COALESCE', array($__order_by_a, $__order_by_b));
                             }
-                            $order_by .= ')';
+                            if (count($sort_combos) == 1) {
+                                $order_by = $_order_by[0];
+                            } else {
+                                $order_by = db_function('GREATEST', $_order_by);
+                            }
 
                             if ($sort == 'recent_contents DESC') {
                                 $order_by .= ' DESC';
@@ -437,8 +453,8 @@ class Block_main_multi_content
                                 $sort .= ' DESC';
                             }
 
-                            $select_rating = ',(SELECT AVG(rating) FROM ' . get_table_prefix() . 'rating WHERE ' . db_string_equal_to('rating_for_type', $info['feedback_type_code']) . ' AND rating_for_id=' . $first_id_field . ') AS average_rating';
-                            $rows = $info['connection']->query('SELECT r.*' . $extra_select_sql . $select_rating . ' ' . $query, $max, $start, 'ORDER BY ' . $sort, $max, $start, false, true, $lang_fields);
+                            $select_rating = ',(SELECT AVG(rating) FROM ' . get_table_prefix() . 'rating WHERE ' . db_string_equal_to('rating_for_type', $info['feedback_type_code']) . ' AND rating_for_id=' . db_cast($first_id_field, 'CHAR') . ') AS average_rating';
+                            $rows = $info['connection']->query('SELECT r.*' . $extra_select_sql . $select_rating . ' ' . $query . ' ORDER BY ' . $sort, $max, $start, false, true, $lang_fields);
                             break;
                         }
                         $sort = $first_id_field;
@@ -450,23 +466,20 @@ class Block_main_multi_content
                                 $sort .= ' DESC';
                             }
 
-                            $select_rating = ',(SELECT SUM(rating-1) FROM ' . get_table_prefix() . 'rating WHERE ' . db_string_equal_to('rating_for_type', $info['feedback_type_code']) . ' AND rating_for_id=' . $first_id_field . ') AS compound_rating';
-                            $rows = $info['connection']->query('SELECT r.*' . $extra_select_sql . $select_rating . ' ' . $query, $max, $start, 'ORDER BY ' . $sort, $max, $start, false, true, $lang_fields);
+                            $select_rating = ',(SELECT SUM(rating-1) FROM ' . get_table_prefix() . 'rating WHERE ' . db_string_equal_to('rating_for_type', $info['feedback_type_code']) . ' AND rating_for_id=' . db_cast($first_id_field, 'CHAR') . ') AS compound_rating';
+                            $rows = $info['connection']->query('SELECT r.*' . $extra_select_sql . $select_rating . ' ' . $query . ' ORDER BY ' . $sort, $max, $start, false, true, $lang_fields);
                             break;
                         }
                         $sort = $first_id_field;
                     case 'title':
                     case 'title ASC':
                     case 'title DESC':
-                        if ($sort == 'title') {
-                            $sort .= ' DESC';
+                        if (strpos($sort, ' ') === false) {
+                            $sort .= ' ASC';
                         }
                         $sort_order = preg_replace('#^.* #', '', $sort);
 
                         $sql = 'SELECT r.*' . $extra_select_sql . ' ' . $query . ' ORDER BY ';
-                        if (isset($info['order_field'])) {
-                            $sql .= 'r.' . $info['order_field'] . ' ' . $sort_order . ',';
-                        }
                         if ((array_key_exists('title_field', $info)) && (strpos($info['title_field'], ':') === false)) {
                             if ($info['title_field_dereference']) {
                                 $sql .= $GLOBALS['SITE_DB']->translate_field_ref($info['title_field']) . ' ' . $sort_order;
@@ -474,7 +487,11 @@ class Block_main_multi_content
                                 $sql .= 'r.' . $info['title_field'] . ' ' . $sort_order;
                             }
                         } else {
-                            $sql .= 'r.' . $first_id_field . ' ' . $sort_order;
+                            if (isset($info['order_field'])) {
+                                $sql .= 'r.' . $info['order_field'] . ' ' . $sort_order . ',';
+                            } else {
+                                $sql .= 'r.' . $first_id_field . ' ' . $sort_order;
+                            }
                         }
                         $rows = $info['connection']->query($sql, $max, $start, false, true, $lang_fields);
                         break;
@@ -586,8 +603,7 @@ class Block_main_multi_content
         // Move towards render...
 
         if ($info['archive_url'] !== null) {
-            list($archive_url_zone, $archive_url_map, $archive_url_hash) = page_link_decode($info['archive_url']);
-            $archive_url = build_url($archive_url_map, $archive_url_zone, null, false, false, false, $archive_url_hash);
+            $archive_url = page_link_to_tempcode_url($info['archive_url']);
         } else {
             $archive_url = new Tempcode();
         }
@@ -681,19 +697,22 @@ class Block_main_multi_content
 
         return do_template('BLOCK_MAIN_MULTI_CONTENT', array(
             '_GUID' => ($guid != '') ? $guid : '9035934bc9b25f57eb8d23bf100b5796',
-            'BLOCK_PARAMS' => block_params_arr_to_str($map),
+            'BLOCK_PARAMS' => block_params_arr_to_str(array('block_id' => $block_id) + $map),
             'TYPE' => do_lang_tempcode($info['content_type_label']),
             'TITLE' => $title,
             'CONTENT' => $rendered_content,
+            'CONTENT_TYPE' => $content_type,
             'CONTENT_DATA' => $content_data,
             'SUBMIT_URL' => $submit_url,
             'ARCHIVE_URL' => $archive_url,
             'PAGINATION' => $pagination,
+            'ADD_STRING' => content_language_string($content_type, 'ADD'),
 
             'START' => strval($start),
             'MAX' => strval($max),
             'START_PARAM' => $block_id . '_start',
             'MAX_PARAM' => $block_id . '_max',
+            'EXTRA_GET_PARAMS' => (get_param_integer($block_id . '_max', null) === null) ? null : ('&' . $block_id . '_max=' . urlencode(strval($max))),
         ));
     }
 
@@ -708,7 +727,7 @@ class Block_main_multi_content
     public function build_select($select, $info, $category_field_select)
     {
         $parent_spec__table_name = array_key_exists('parent_spec__table_name', $info) ? $info['parent_spec__table_name'] : $info['table'];
-        $parent_field_name = $info['is_category'] ? $info['id_field'] : $category_field_select;
+        $parent_field_name = $info['is_category'] ? (is_array($info['id_field']) ? implode(',', $info['id_field']) : $info['id_field']) : $category_field_select;
         if ($parent_field_name === null) {
             $parent_spec__table_name = null;
         }
@@ -719,7 +738,7 @@ class Block_main_multi_content
 
         require_code('selectcode');
 
-        $sql = selectcode_to_sqlfragment($select, 'r.' . $info['id_field'], $parent_spec__table_name, $parent_spec__parent_name, 'r.' . $parent_field_name, $parent_spec__field_name, $id_field_numeric, !$category_is_string);
+        $sql = selectcode_to_sqlfragment($select, 'r.' . (is_array($info['id_field']) ? implode(',', $info['id_field']) : $info['id_field']), $parent_spec__table_name, $parent_spec__parent_name, 'r.' . $parent_field_name, $parent_spec__field_name, $id_field_numeric, !$category_is_string);
         return $sql;
     }
 }

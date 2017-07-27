@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -10,9 +10,13 @@
 /**
  * @license    http://opensource.org/licenses/cpal_1.0 Common Public Attribution License
  * @copyright  ocProducts Ltd
+ * @package    stress_test
  */
 
 /*EXTRA FUNCTIONS: gc_enable*/
+
+// Fixup SCRIPT_FILENAME potentially being missing
+$_SERVER['SCRIPT_FILENAME'] = __FILE__;
 
 // Find Composr base directory, and chdir into it
 global $FILE_BASE, $RELATIVE_PATH;
@@ -38,8 +42,8 @@ if (!is_file($FILE_BASE . '/sources/global.php')) {
 
 require($FILE_BASE . '/sources/global.php');
 
-if (function_exists('set_time_limit')) {
-    set_time_limit(0);
+if (php_function_allowed('set_time_limit')) {
+    @set_time_limit(0);
 }
 safe_ini_set('ocproducts.xss_detect', '0');
 @header('Content-type: text/plain; charset=' . get_charset());
@@ -54,11 +58,20 @@ do_work();
 
 function do_work()
 {
-    $num_wanted = 200;
+    $cli = ((php_sapi_name() == 'cli') && (empty($_SERVER['REMOTE_ADDR'])) && (empty($_ENV['REMOTE_ADDR'])));
+    if (!$cli) {
+        header('Content-type: text/plain; charset=' . get_charset());
+        exit('Must run this script on command line, for security reasons');
+    }
+
+    $num_wanted = isset($_SERVER['argv'][1]) ? intval($_SERVER['argv'][1]) : 200;
+    $want_zones = isset($_SERVER['argv'][2]) ? (in_array('zones', explode(',', $_SERVER['argv'][2]))) : false;
 
     require_code('config2');
-    set_option('post_history_days', '0'); // Needed for a little sanity in recent post retrieval
+    set_option('post_read_history_days', '0'); // Needed for a little sanity in recent post retrieval
     set_option('enable_sunk', '0');
+
+    require_code('crypt');
 
     set_mass_import_mode();
 
@@ -70,7 +83,7 @@ function do_work()
     require_code('cns_members_action');
     require_code('notifications');
     for ($i = $GLOBALS['FORUM_DB']->query_select_value('f_members', 'COUNT(*)'); $i < $num_wanted; $i++) {
-        $member_id = cns_make_member(uniqid('', true), uniqid('', true), uniqid('', true) . '@example.com', array(), intval(date('d')), intval(date('m')), intval(date('Y')), array(), null, null, 1, null, null, '', null, '', 0, 0, 1, '', '', '', 1, 1, null, 1, 1, null, '', false);
+        $member_id = cns_make_member(uniqid('', false), uniqid('', true), uniqid('', true) . '@example.com', array(), intval(date('d')), intval(date('m')), intval(date('Y')), array(), null, null, 1, null, null, '', null, '', 0, 0, 1, '', '', '', 1, 1, null, 1, 1, null, '', false);
         add_author(random_line(), '', $member_id, random_text(), random_text());
 
         enable_notifications('cns_topic', 'forum:' . strval(db_get_first_id()), $member_id);
@@ -109,7 +122,7 @@ function do_work()
     require_code('banners');
     require_code('banners2');
     for ($i = $GLOBALS['SITE_DB']->query_select_value('banners', 'COUNT(*)'); $i < $num_wanted; $i++) {
-        add_banner(uniqid('', true), get_logo_url(), random_line(), random_text(), '', 100, get_base_url(), 3, '', BANNER_PERMANENT, null, db_get_first_id() + 1, 1);
+        add_banner(uniqid('', false), get_logo_url(), random_line(), random_text(), '', 100, get_base_url(), 3, '', BANNER_PERMANENT, null, db_get_first_id() + 1, 1);
     }
     echo 'done banner stuff' . "\n";
 
@@ -121,13 +134,9 @@ function do_work()
     require_code('files');
     require_code('files2');
     for ($i = $GLOBALS['SITE_DB']->query_select_value('comcode_pages', 'COUNT(*)'); $i < $num_wanted; $i++) {
-        $file = uniqid('', true);
-        /*$path=get_custom_file_base().'/site/pages/comcode_custom/'.fallback_lang().'/'.$file.'.txt';
-        $myfile=fopen($path,GOOGLE_APPENGINE?'wb':'wt');
-        fwrite($myfile,random_text());
-        fclose($myfile);
-        sync_file($path);
-        fix_permissions($path);*/
+        $file = uniqid('', false);
+        /*$path = get_custom_file_base() . '/site/pages/comcode_custom/' . fallback_lang() . '/' . $file . '.txt';
+        cms_file_put_contents_safe($path, random_text(), FILE_WRITE_FIX_PERMISSIONS | FILE_WRITE_SYNC_FILE);*/
         $GLOBALS['SITE_DB']->query_insert('comcode_pages', array(
             'the_zone' => 'site',
             'the_page' => $file,
@@ -147,15 +156,17 @@ function do_work()
     }
 
     // zones
-    require_code('zones2');
-    require_code('abstract_file_manager');
-    for ($i = $GLOBALS['SITE_DB']->query_select_value('zones', 'COUNT(*)'); $i < min($num_wanted, 1000/* lets be somewhat reasonable! */); $i++) {
-        actual_add_zone(uniqid('', true), random_line(), 'start', random_line(), 'default', 0);
-    }
-    echo 'done zone stuff' . "\n";
+    if ($want_zones) {
+        require_code('zones2');
+        require_code('abstract_file_manager');
+        for ($i = $GLOBALS['SITE_DB']->query_select_value('zones', 'COUNT(*)'); $i < min($num_wanted, 1000/* lets be somewhat reasonable! */); $i++) {
+            actual_add_zone(uniqid('', false), random_line(), 'start', random_line(), 'default', 0);
+        }
+        echo 'done zone stuff' . "\n";
 
-    if (function_exists('gc_collect_cycles')) {
-        gc_enable();
+        if (function_exists('gc_collect_cycles')) {
+            gc_enable();
+        }
     }
 
     // calendar events
@@ -169,14 +180,14 @@ function do_work()
         gc_enable();
     }
 
-    // chat rooms
+    // chatrooms
     require_code('chat2');
     require_code('chat');
     for ($i = $GLOBALS['SITE_DB']->query_select_value('chat_rooms', 'COUNT(*)'); $i < $num_wanted; $i++) {
         $room_id = add_chatroom(random_text(), random_line(), mt_rand(db_get_first_id() + 1, $num_wanted - 1), strval(db_get_first_id() + 1), '', '', '', fallback_lang());
     }
     $room_id = db_get_first_id() + 1;
-    // messages in chat room
+    // messages in chatroom
     for ($j = $GLOBALS['SITE_DB']->query_select_value('chat_messages', 'COUNT(*)'); $j < $num_wanted; $j++) {
         $map = array(
             'system_message' => 0,
@@ -214,19 +225,19 @@ function do_work()
     $content_url = build_url(array('page' => 'downloads', 'type' => 'entry', 'id' => $content_id), 'site');
     for ($j = $GLOBALS['SITE_DB']->query_select_value('trackbacks', 'COUNT(*)'); $j < $num_wanted; $j++) {
         // trackbacks
-        $GLOBALS['SITE_DB']->query_insert('trackbacks', array('trackback_for_type' => 'downloads', 'trackback_for_id' => $content_id, 'trackback_ip' => '', 'trackback_time' => time(), 'trackback_url' => '', 'trackback_title' => random_line(), 'trackback_excerpt' => random_text(), 'trackback_name' => random_line()));
+        $GLOBALS['SITE_DB']->query_insert('trackbacks', array('trackback_for_type' => 'downloads', 'trackback_for_id' => strval($content_id), 'trackback_ip' => '', 'trackback_time' => time(), 'trackback_url' => '', 'trackback_title' => random_line(), 'trackback_excerpt' => random_text(), 'trackback_name' => random_line()));
 
         // ratings
-        $GLOBALS['SITE_DB']->query_insert('rating', array('rating_for_type' => 'downloads', 'rating_for_id' => $content_id, 'rating_member' => $j + 1, 'rating_ip' => '', 'rating_time' => time(), 'rating' => 3));
+        $GLOBALS['SITE_DB']->query_insert('rating', array('rating_for_type' => 'downloads', 'rating_for_id' => strval($content_id), 'rating_member' => $j + 1, 'rating_ip' => '', 'rating_time' => time(), 'rating' => 3));
 
         // posts in a comment topic
         $GLOBALS['FORUM_DRIVER']->make_post_forum_topic(
             get_option('comments_forum_name'),
             'downloads_' . strval($content_id),
             get_member(),
+            random_line(),
             random_text(),
             random_line(),
-            '',
             do_lang('COMMENT'),
             $content_url->evaluate(),
             null,
@@ -282,10 +293,10 @@ function do_work()
 
     // galleries under a subcategory
     require_code('galleries2');
-    $xsubcat_id = uniqid('', true);
+    $xsubcat_id = uniqid('', false);
     add_gallery($xsubcat_id, random_line(), random_text(), '', 'root');
     for ($i = $GLOBALS['SITE_DB']->query_select_value('galleries', 'COUNT(*)'); $i < $num_wanted; $i++) {
-        add_gallery(uniqid('', true), random_line(), random_text(), '', $xsubcat_id);
+        add_gallery(uniqid('', false), random_line(), random_text(), '', $xsubcat_id);
     }
     // images
     require_code('galleries2');
@@ -407,7 +418,7 @@ function do_work()
     require_code('tickets');
     require_code('tickets2');
     for ($i = intval(floatval($GLOBALS['FORUM_DB']->query_select_value('f_topics', 'COUNT(*)')) / 2.0); $i < $num_wanted; $i++) {
-        ticket_add_post(mt_rand(db_get_first_id(), $num_wanted - 1), uniqid('', true), db_get_first_id(), random_line(), random_text(), '', false);
+        ticket_add_post(mt_rand(db_get_first_id(), $num_wanted - 1), strval(get_member()) . '_' . uniqid('', true), db_get_first_id(), random_line(), random_text(), '', false);
     }
     echo 'done tickets stuff' . "\n";
 
@@ -419,12 +430,12 @@ function do_work()
     require_code('catalogues2');
     $root_id = db_get_first_id();
     for ($i = $GLOBALS['SITE_DB']->query_select_value('catalogues', 'COUNT(*)'); $i < $num_wanted; $i++) {
-        $catalogue_name = uniqid('', true);
+        $catalogue_name = uniqid('', false);
         actual_add_catalogue($catalogue_name, random_line(), random_text(), mt_rand(0, 3), 1, '', 30);
     }
+    $catalogue_name = 'products';
     $root_id = $GLOBALS['SITE_DB']->query_select_value_if_there('catalogue_categories', 'id', array('c_name' => $catalogue_name));
     // catalogue categories under a subcategory (remember to test all catalogue views: atoz, index, and root cat)
-    $catalogue_name = 'products';
     $subcat_id = actual_add_catalogue_category($catalogue_name, random_line(), random_text(), '', $root_id);
     for ($j = $GLOBALS['SITE_DB']->query_select_value('catalogue_categories', 'COUNT(*)'); $j < $num_wanted; $j++) {
         actual_add_catalogue_category($catalogue_name, random_line(), random_text(), '', $subcat_id);
@@ -457,6 +468,9 @@ function do_work()
     }
     // outstanding ecommerce orders
     $pid = $GLOBALS['SITE_DB']->query_select_value('catalogue_entries', 'MIN(id)', array('c_name' => 'products'));
+    if ($pid === null) {
+        $pid = db_get_first_id();
+    }
     require_code('shopping');
     for ($j = $GLOBALS['SITE_DB']->query_select_value('shopping_cart', 'COUNT(*)'); $j < $num_wanted; $j++) {
         $product_det = array(

@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -43,10 +43,16 @@ class Hook_preview_news
     {
         $original_comcode = post_param_string('post');
 
-        $posting_ref_id = post_param_integer('posting_ref_id', mt_rand(0, 100000));
+        $posting_ref_id = post_param_integer('posting_ref_id', mt_rand(0, mt_getrandmax()));
         $post_bits = do_comcode_attachments($original_comcode, 'news', strval(-$posting_ref_id), true, $GLOBALS['SITE_DB']);
         $post_comcode = $post_bits['comcode'];
         $post_html = $post_bits['tempcode'];
+
+        if ($post_comcode != '') {
+            return array($post_html, $post_comcode); // Just preview the main article if there is one
+        }
+
+        // Otherwise we'll lay out all the Comcode fields in a boring way...
 
         $map_table_map = array();
         $map_table_map[post_param_string('label_for__title')] = escape_html(post_param_string('title'));

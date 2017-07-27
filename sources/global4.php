@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -69,6 +69,7 @@ function attach_message_su(&$messages_bottom)
  * @set .css .js
  * @param  PATH $write_path Write path
  * @return boolean If the merge happened
+ *
  * @ignore
  */
 function _save_web_resource_merging($resources, $type, $write_path)
@@ -90,7 +91,7 @@ function _save_web_resource_merging($resources, $type, $write_path)
         }
         if ($merge_from != '') {
             if (is_file($merge_from)) {
-                $extra_data = unixify_line_format(file_get_contents($merge_from)) . "\n\n";
+                $extra_data = unixify_line_format(cms_file_get_contents_safe($merge_from)) . "\n\n";
                 $data .= $extra_data;
                 if (strpos($extra_data, '"use strict";') === false) {
                     $all_strict = false;
@@ -107,11 +108,8 @@ function _save_web_resource_merging($resources, $type, $write_path)
             $data = str_replace('"use strict";', '', $data);
         }
 
-        $myfile = @fopen($write_path, 'wb') or intelligent_write_error($write_path); // Intentionally 'wb' to stop line ending conversions on Windows
-        fwrite($myfile, $data);
-        fclose($myfile);
-        fix_permissions($write_path, 0777);
-        sync_file($write_path);
+        require_code('files');
+        cms_file_put_contents_safe($write_path, $data, FILE_WRITE_FIX_PERMISSIONS | FILE_WRITE_SYNC_FILE);
 
         require_code('css_and_js');
         compress_cms_stub_file($write_path);
@@ -239,6 +237,7 @@ function member_personal_links_and_details($member_id)
                     require_lang('ecommerce');
                     $expiry_date = is_null($expiry_time) ? do_lang('INTERNAL_ERROR') : get_timezoned_date($expiry_time, false, false, false, true);
                     $details->attach(do_template('BLOCK_SIDE_PERSONAL_STATS_LINE', array(
+                        '_GUID' => '2675d56aa278616aa9f00b051ca084fc',
                         'KEY' => do_lang_tempcode('SUBSCRIPTION_EXPIRY_MESSAGE', escape_html($subscription['item_name'])),
                         'VALUE' => do_lang_tempcode('SUBSCRIPTION_EXPIRY_DATE', escape_html($expiry_date)),
                     )));
@@ -273,11 +272,11 @@ function member_personal_links_and_details($member_id)
     // Admin Zone link
     if (get_option('show_personal_adminzone_link') == '1') {
         if (has_zone_access($member_id, 'adminzone')) {
-            $url = build_url(array('page' => ''), 'adminzone');
+            $url = build_url(array('page' => '', 'keep_theme' => null), 'adminzone');
             $links->attach(do_template('BLOCK_SIDE_PERSONAL_STATS_LINK', array('_GUID' => 'ae243058f780f9528016f7854763a5fa', 'TARGET' => '_blank', 'TITLE' => do_lang_tempcode('LINK_NEW_WINDOW'), 'ACCESSKEY' => 'I', 'NAME' => do_lang_tempcode('ADMIN_ZONE'), 'URL' => $url)));
-        } else {
-            $url = build_url(array('page' => ''), 'cms');
-            $links->attach(do_template('BLOCK_SIDE_PERSONAL_STATS_LINK', array('ACCESSKEY' => 'I', 'TARGET' => '_blank', 'TITLE' => do_lang_tempcode('LINK_NEW_WINDOW'), 'NAME' => do_lang_tempcode('CMS'), 'URL' => $url)));
+        } elseif (has_zone_access($member_id, 'cms')) {
+            $url = build_url(array('page' => '', 'keep_theme' => null), 'cms');
+            $links->attach(do_template('BLOCK_SIDE_PERSONAL_STATS_LINK', array('_GUID' => '3f63dad2645b6c39f68dcfebe7d7a0ab', 'ACCESSKEY' => 'I', 'TARGET' => '_blank', 'TITLE' => do_lang_tempcode('LINK_NEW_WINDOW'), 'NAME' => do_lang_tempcode('CMS'), 'URL' => $url)));
         }
     }
 
@@ -409,7 +408,7 @@ function prevent_double_submit($type, $a = null, $b = null)
             return; // Cannot work with this
         }
         $where += array(
-            'param_a' => substr($a, 0, 80),
+            'param_a' => cms_mb_substr($a, 0, 80),
         );
     }
     if (!is_null($b)) {
@@ -417,11 +416,11 @@ function prevent_double_submit($type, $a = null, $b = null)
             return; // Cannot work with this
         }
         $where += array(
-            'param_b' => substr($b, 0, 80),
+            'param_b' => cms_mb_substr($b, 0, 80),
         );
     }
     $time_window = 60 * 5; // 5 minutes seems reasonable
-    $test = $GLOBALS['SITE_DB']->query_select_value_if_there('adminlogs', 'date_and_time', $where, ' AND date_and_time>' . strval(time() - $time_window));
+    $test = $GLOBALS['SITE_DB']->query_select_value_if_there('actionlogs', 'date_and_time', $where, ' AND date_and_time>' . strval(time() - $time_window));
     if (!is_null($test)) {
         warn_exit(do_lang_tempcode('DOUBLE_SUBMISSION_PREVENTED', display_time_period($time_window), display_time_period($time_window - (time() - $test))));
     }
@@ -433,16 +432,33 @@ function prevent_double_submit($type, $a = null, $b = null)
  * @param  ID_TEXT $type The type of activity just carried out (a language string ID)
  * @param  ?SHORT_TEXT $a The most important parameter of the activity (e.g. ID) (null: none)
  * @param  ?SHORT_TEXT $b A secondary (perhaps, human readable) parameter of the activity (e.g. caption) (null: none)
+ * @return ?AUTO_LINK Log ID (null: did not save a log)
  * @ignore
  */
 function _log_it($type, $a = null, $b = null)
 {
     if (!function_exists('get_member')) {
-        return; // If this is during installation
+        return null; // If this is during installation
     }
 
+    // Need to update copyright date?
+    if ($GLOBALS['FORUM_DRIVER']->is_staff(get_member()) && $type != 'CONFIGURATION') {
+        $matches = array();
+        $old_copyright = get_option('copyright');
+        if (preg_match('#^(.*\$CURRENT_YEAR=)(\d+)(.*)$#', $old_copyright, $matches) != 0) {
+            $new_copyright = $matches[1] . date('Y') . $matches[3];
+            if ($old_copyright != $new_copyright) {
+                require_code('config2');
+                set_option('copyright', $new_copyright);
+                require_code('caches3');
+                erase_cached_templates(false, array('GLOBAL_HTML_WRAP'));
+            }
+        }
+    }
+
+    // No more logging if site closed (possibly)
     if ((get_option('site_closed') == '1') && (get_option('stats_when_closed') == '0')) {
-        return;
+        return null;
     }
 
     // Run hooks, if any exist
@@ -456,15 +472,25 @@ function _log_it($type, $a = null, $b = null)
         $ob->run($type, $a, $b);
     }
 
+    // Add to log
+    $log_id = mixed();
     global $ADMIN_LOGGING_ON;
     if ($ADMIN_LOGGING_ON) {
         $ip = get_ip_address();
-        $GLOBALS['SITE_DB']->query_insert('adminlogs', array('the_type' => $type, 'param_a' => is_null($a) ? '' : substr($a, 0, 80), 'param_b' => is_null($b) ? '' : substr($b, 0, 80), 'date_and_time' => time(), 'member_id' => get_member(), 'ip' => $ip));
+        $log_id = $GLOBALS['SITE_DB']->query_insert('actionlogs', array(
+            'the_type' => $type,
+            'param_a' => is_null($a) ? '' : cms_mb_substr($a, 0, 80),
+            'param_b' => is_null($b) ? '' : cms_mb_substr($b, 0, 80),
+            'date_and_time' => time(),
+            'member_id' => get_member(),
+            'ip' => $ip,
+        ), true);
     }
 
     static $logged = 0;
     $logged++;
 
+    // Cache clearing
     if ($logged == 1) {
         decache('side_tag_cloud');
         decache('main_staff_actions');
@@ -478,10 +504,13 @@ function _log_it($type, $a = null, $b = null)
     require_code('autosave');
     clear_cms_autosave();
 
-    if ((get_page_name() != 'admin_themewizard') && (get_page_name() != 'admin_import') && ($ADMIN_LOGGING_ON)) {
+    // Notification
+    if ((!get_mass_import_mode()) && ($ADMIN_LOGGING_ON)) {
         if ($logged < 10) { // Be extra sure it's not some kind of import, causing spam
             if (addon_installed('actionlog')) {
-                require_all_lang();
+                if (do_lang($type, null, null, null, null, false) === null) {
+                    require_all_lang();
+                }
                 if (is_null($a)) {
                     $a = do_lang('NA');
                 }
@@ -489,12 +518,15 @@ function _log_it($type, $a = null, $b = null)
                     $a = do_lang('NA');
                 }
                 require_code('notifications');
+                require_lang('actionlog');
                 $subject = do_lang('ACTIONLOG_NOTIFICATION_MAIL_SUBJECT', get_site_name(), do_lang($type), array($a, $b));
                 $mail = do_notification_lang('ACTIONLOG_NOTIFICATION_MAIL', comcode_escape(get_site_name()), comcode_escape(do_lang($type)), array(is_null($a) ? '' : comcode_escape($a), is_null($b) ? '' : comcode_escape($b)));
                 dispatch_notification('actionlog', $type, $subject, $mail, null, get_member(), 3, false, false, null, null, '', '', '', '', null, true);
             }
         }
     }
+
+    return $log_id;
 }
 
 /**
@@ -527,4 +559,24 @@ function generate_guid()
         // 48 bits for "node"
         substr($hash, 20, 12)
     );
+}
+
+/**
+ * Find a percentage performance figure relative to a Late 2014 iMac (at the time of writing this is the lead developers main machine).
+ *
+ * @return float Performance figure
+ */
+function find_normative_performance()
+{
+    static $percentage = null;
+    if ($percentage !== null) {
+        return $percentage;
+    }
+
+    $t = microtime(true);
+    for ($i = 0; $i < 10000; $i++) {
+        md5(uniqid('', false)); // Some fairly heavy crunching
+    }
+    $percentage = 100.0 * (0.055 / (microtime(true) - $t));
+    return $percentage;
 }

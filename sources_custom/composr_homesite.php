@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -15,26 +15,222 @@
 
 /*EXTRA FUNCTIONS: shell_exec*/
 
+/*
+Use &test_mode=1 for using non-live test data.
+*/
+
 function init__composr_homesite()
 {
     define('DEMONSTRATR_DEMO_LAST_DAYS', 30);
 }
 
-function server__public__demo_reset()
+// IDENTIFYING RELEASES
+// --------------------
+
+function get_latest_version_dotted()
 {
-    require_lang('sites');
-
-    set_value('last_demo_set_time', strval(time()));
-
-    require_lang('composr_homesite');
-
-    $servers = find_all_servers();
-    $server = array_shift($servers);
-    $codename = 'shareddemo';
-    $password = 'demo123';
-    $email_address = '';
-    demonstratr_add_site_raw($server, $codename, $email_address, $password);
+    static $version = null;
+    static $fetched_version = false;
+    if (!$fetched_version) {
+        $version = $GLOBALS['SITE_DB']->query_select_value_if_there('download_downloads', 'name', array($GLOBALS['SITE_DB']->translate_field_ref('additional_details') => 'This is the latest version.'), 'ORDER BY add_date DESC');
+        if ($version !== null) {
+            require_code('version2');
+            $_version = preg_replace('# \(.*#', '', get_translated_text($version));
+            $version = get_version_dotted__from_anything($_version);
+        }
+        $fetched_version = true;
+    }
+    return ($version === null) ? null : $version;
 }
+
+function get_latest_version_pretty()
+{
+    $version_dotted = get_latest_version_dotted();
+    if ($version_dotted === null) {
+        return null;
+    }
+    return get_version_pretty__from_dotted($version_dotted);
+}
+
+function get_latest_version_basis_number()
+{
+    require_code('version2');
+    $latest_pretty = get_latest_version_pretty();
+    if ($latest_pretty === null && $GLOBALS['DEV_MODE']) { // Not uploaded any releases to dev site?
+        $latest_pretty = float_to_raw_string(cms_version_number(), 2, true);
+    }
+    if ($latest_pretty === null) {
+        return null;
+    }
+
+    $latest_dotted = get_version_dotted__from_anything($latest_pretty);
+    list($_latest_number) = get_version_components__from_dotted($latest_dotted);
+    return floatval($_latest_number);
+}
+
+function get_release_tree()
+{
+    require_code('version2');
+
+    $versions = array();
+
+    global $DOWNLOAD_ROWS;
+    load_version_download_rows();
+
+    foreach ($DOWNLOAD_ROWS as $download_row) {
+        $matches = array();
+        if (preg_match('#^Composr Version (.*) \(.*manual\)$#', $download_row['nice_title'], $matches) != 0) {
+            $version_dotted = get_version_dotted__from_anything($matches[1]);
+            list(, $qualifier, $qualifier_number, $long_dotted_number, , $long_dotted_number_with_qualifier) = get_version_components__from_dotted($version_dotted);
+            $versions[$long_dotted_number_with_qualifier] = $download_row;
+        }
+    }
+
+    uksort($versions, 'version_compare');
+
+    $_versions = array();
+    foreach ($versions as $long_dotted_number_with_qualifier => $download_row) {
+        $_versions[preg_replace('#\.0$#', '', $long_dotted_number_with_qualifier)] = $download_row;
+    }
+
+    return $_versions;
+}
+
+function is_release_discontinued($version)
+{
+    $discontinued = array('1', '2', '2.1', '2.5', '2.6', '3', '3.1', '3.2', '4', '5', '6', '7');
+    return (preg_match('#^(' . implode('|', array_map('preg_quote', $discontinued)) . ')($|\.)#', $version) != 0);
+}
+
+function find_version_download($version_pretty, $type_wanted = 'manual')
+{
+    global $DOWNLOAD_ROWS;
+    load_version_download_rows();
+
+    $download_row = null;
+    foreach ($DOWNLOAD_ROWS as $download_row) {
+        $nice_title_stripped = preg_replace('# \(.*\)$#', '', $download_row['nice_title']);
+        if ($nice_title_stripped == 'Composr Version ' . $version_pretty) {
+            $is_manual = (strpos($download_row['nice_title'], 'manual') !== false);
+            if (($is_manual && $type_wanted == 'manual') || (!$is_manual && $type_wanted == 'quick')) {
+                return $download_row;
+            }
+        }
+    }
+
+    return null;
+}
+
+function load_version_download_rows()
+{
+    global $DOWNLOAD_ROWS;
+    if (!isset($DOWNLOAD_ROWS)) {
+        if (get_param_integer('test_mode', 0) == 1) {
+            // Test data
+            $DOWNLOAD_ROWS = array(
+                array('id' => 20, 'nice_title' => 'Composr Version 13 (manual)', 'add_date' => time() - 60 * 60 * 8, 'nice_description' => 'Manual installer (as opposed to the regular quick installer). Please note this isn\'t documentation.', 'url' => 'uploads/website_specific/compo.sr/upgrades/sample_data/a.zip'),
+                array('id' => 30, 'nice_title' => 'Composr Version 13.1 (manual)', 'add_date' => time() - 60 * 60 * 5, 'nice_description' => '', 'url' => 'uploads/website_specific/compo.sr/upgrades/sample_data/b.zip'),
+                array('id' => 35, 'nice_title' => 'Composr Version 13.1.1 (manual)', 'add_date' => time() - 60 * 60 * 5, 'nice_description' => 'Manual installer (as opposed to the regular quick installer). Please note this isn\'t documentation.', 'url' => 'uploads/website_specific/compo.sr/upgrades/sample_data/c.zip'),
+                array('id' => 40, 'nice_title' => 'Composr Version 13.2 beta1 (manual)', 'add_date' => time() - 60 * 60 * 4, 'nice_description' => 'Manual installer (as opposed to the regular quick installer). Please note this isn\'t documentation.', 'url' => 'uploads/website_specific/compo.sr/upgrades/sample_data/d.zip'),
+                array('id' => 50, 'nice_title' => 'Composr Version 13.2 (manual)', 'add_date' => time() - 60 * 60 * 3, 'nice_description' => 'Manual installer (as opposed to the regular quick installer). Please note this isn\'t documentation.', 'url' => 'uploads/website_specific/compo.sr/upgrades/sample_data/e.zip'),
+                array('id' => 60, 'nice_title' => 'Composr Version 14 (manual)', 'add_date' => time() - 60 * 60 * 1, 'nice_description' => 'Manual installer (as opposed to the regular quick installer). Please note this isn\'t documentation.', 'url' => 'uploads/website_specific/compo.sr/upgrades/sample_data/f.zip'),
+
+                array('id' => 20, 'nice_title' => 'Composr Version 13 (quick)', 'add_date' => time() - 60 * 60 * 8, 'nice_description' => '[Test message] This is 3. Yo peeps. 3.1 is the biz.', 'url' => 'uploads/website_specific/compo.sr/upgrades/sample_data/a.zip'),
+                array('id' => 30, 'nice_title' => 'Composr Version 13.1 (quick)', 'add_date' => time() - 60 * 60 * 5, 'nice_description' => '[Test message] This is 3.1.1. 3.1.1 is out dudes.', 'url' => 'uploads/website_specific/compo.sr/upgrades/sample_data/b.zip'),
+                array('id' => 35, 'nice_title' => 'Composr Version 13.1.1 (quick)', 'add_date' => time() - 60 * 60 * 5, 'nice_description' => '[Test message] This is 3.1.1. 3.2 is out dudes.', 'url' => 'uploads/website_specific/compo.sr/upgrades/sample_data/c.zip'),
+                array('id' => 40, 'nice_title' => 'Composr Version 13.2 beta1 (quick)', 'add_date' => time() - 60 * 60 * 4, 'nice_description' => '[Test message] This is 3.2 beta1. 3.2 beta2 is out.', 'url' => 'uploads/website_specific/compo.sr/upgrades/sample_data/d.zip'),
+                array('id' => 50, 'nice_title' => 'Composr Version 13.2 (quick)', 'add_date' => time() - 60 * 60 * 3, 'nice_description' => '[Test message] This is 3.2. 4 is out.', 'url' => 'uploads/website_specific/compo.sr/upgrades/sample_data/e.zip'),
+                array('id' => 60, 'nice_title' => 'Composr Version 14 (quick)', 'add_date' => time() - 60 * 60 * 1, 'nice_description' => '[Test message] This is the 4 and you can find bug reports somewhere.', 'url' => 'uploads/website_specific/compo.sr/upgrades/sample_data/f.zip'),
+            );
+        } else {
+            // Live data
+            $sql = 'SELECT d.* FROM ' . get_table_prefix() . 'download_downloads d';
+            if (strpos(get_db_type(), 'mysql') !== false) {
+                $sql .= ' FORCE INDEX (recent_downloads)';
+            }
+            $sql .= ' WHERE validated=1 AND ' . $GLOBALS['SITE_DB']->translate_field_ref('name') . ' LIKE \'' . db_encode_like('Composr Version %') . '\' ORDER BY add_date';
+            $DOWNLOAD_ROWS = $GLOBALS['SITE_DB']->query($sql, null, null, false, false, array('name' => 'SHORT_TRANS', 'description' => 'LONG_TRANS__COMCODE'));
+            foreach ($DOWNLOAD_ROWS as $i => $row) {
+                $DOWNLOAD_ROWS[$i]['nice_title'] = get_translated_text($row['name']);
+                $DOWNLOAD_ROWS[$i]['nice_description'] = get_translated_text($row['description']);
+            }
+        }
+    }
+}
+
+function find_version_news($version_pretty)
+{
+    global $NEWS_ROWS;
+    load_version_news_rows();
+
+    foreach ($NEWS_ROWS as $news_row) {
+        if ($news_row['nice_title'] == 'Composr ' . $version_pretty . ' released') {
+            return $news_row;
+        }
+        if ($news_row['nice_title'] == 'Composr ' . $version_pretty . ' released!') { // Major releases have exclamation marks
+            return $news_row;
+        }
+    }
+
+    return null;
+}
+
+function load_version_news_rows()
+{
+    global $NEWS_ROWS;
+    if (!isset($NEWS_ROWS)) {
+        if (get_param_integer('test_mode', 0) == 1) {
+            // Test data
+            $NEWS_ROWS = array(
+                array('id' => 2, 'nice_title' => 'Composr 13 released', 'add_date' => time() - 60 * 60 * 8),
+                array('id' => 3, 'nice_title' => '13.1 released', 'add_date' => time() - 60 * 60 * 5),
+                array('id' => 4, 'nice_title' => '13.1.1 released', 'add_date' => time() - 60 * 60 * 5),
+                array('id' => 5, 'nice_title' => 'Composr 13.2 beta1 released', 'add_date' => time() - 60 * 60 * 4),
+                array('id' => 6, 'nice_title' => 'Composr 13.2 released', 'add_date' => time() - 60 * 60 * 3),
+                array('id' => 7, 'nice_title' => 'Composr 14 released', 'add_date' => time() - 60 * 60 * 1),
+            );
+        } else {
+            // Live data
+            $NEWS_ROWS = $GLOBALS['SITE_DB']->query_select('news', array('*', 'date_and_time AS add_date'), array('validated' => 1), 'ORDER BY add_date');
+            foreach ($NEWS_ROWS as $i => $row) {
+                $NEWS_ROWS[$i]['nice_title'] = get_translated_text($row['title']);
+            }
+        }
+    }
+}
+
+// PROBING RELEASES
+// ----------------
+
+function recursive_unzip($zip_path, $unzip_path)
+{
+    $zip_handle = zip_open($zip_path);
+    while (($entry = (zip_read($zip_handle))) !== false) {
+        $entry_name = zip_entry_name($entry);
+        if (substr($entry_name, -1) != '/') {
+            $_entry = zip_entry_open($zip_handle, $entry);
+            if ($_entry !== false) {
+                @mkdir(dirname($unzip_path . '/' . $entry_name), 0777, true);
+                $out_file = fopen($unzip_path . '/' . $entry_name, 'wb');
+                flock($out_file, LOCK_EX);
+                while (true) {
+                    $it = zip_entry_read($entry, 1024);
+                    if (($it === false) || ($it == '')) {
+                        break;
+                    }
+                    fwrite($out_file, $it);
+                }
+                zip_entry_close($entry);
+                flock($out_file, LOCK_UN);
+                fclose($out_file);
+            }
+        }
+    }
+    zip_close($zip_handle);
+}
+
+// MAKING RELEASES
+// ---------------
 
 function server__public__get_tracker_categories()
 {
@@ -58,58 +254,6 @@ function server__close_tracker_issue($tracker_id)
 {
     require_code('mantis');
     close_tracker_issue(intval($tracker_id));
-}
-
-function server__post_in_bugs_catalogue($version_pretty, $ce_title, $ce_description, $ce_affects, $ce_fix)
-{
-    require_code('catalogues2');
-
-    $bug_category_id = get_bug_category_id($version_pretty);
-
-    $map = array(
-        // FUDGE: Hard-coded IDs
-        35 => $ce_title,
-        36 => $ce_description,
-        32 => $ce_affects,
-        34 => $ce_fix,
-    );
-
-    $entry_id = actual_add_catalogue_entry($bug_category_id, 1, '', 0, 0, 0, $map);
-
-    echo strval($entry_id);
-}
-
-function get_bug_category_id($version_pretty)
-{
-    require_code('catalogues');
-    require_code('catalogues2');
-
-    if (is_null($GLOBALS['SITE_DB']->query_select_value_if_there('catalogues', 'c_name', array('c_name' => 'bugs')))) {
-        actual_add_catalogue('bugs', 'Bugs', '', C_DT_FIELDMAPS, 0, '', 0);
-        $fields = array(
-            array('Title', 'short_trans', 1, 1, 1),
-            array('Description', 'long_trans', 0, 1, 0),
-            array('Fix', 'long_trans', 0, 0, 0),
-        );
-        foreach ($fields as $i => $field) {
-            actual_add_catalogue_field('projects', $field[0], '', $field[1], $i, $field[2], 1, 1, '', $field[3], $field[4]);
-        }
-        $groups = $GLOBALS['FORUM_DRIVER']->get_usergroup_list(false, true);
-        foreach (array_keys($groups) as $group_id) {
-            $GLOBALS['SITE_DB']->query_insert('group_category_access', array('module_the_name' => 'catalogues_catalogue', 'category_name' => 'bugs', 'group_id' => $group_id));
-        }
-    }
-
-    $bug_category_id = $GLOBALS['SITE_DB']->query_select_value_if_there('catalogue_categories', 'id', array($GLOBALS['SITE_DB']->translate_field_ref('cc_title') => strval($version_pretty)));
-    if (is_null($bug_category_id)) {
-        $bug_category_id = actual_add_catalogue_category('bugs', strval($version_pretty), '', '', null);
-        $groups = $GLOBALS['FORUM_DRIVER']->get_usergroup_list(false, true);
-        foreach (array_keys($groups) as $group_id) {
-            $GLOBALS['SITE_DB']->query_insert('group_category_access', array('module_the_name' => 'catalogues_category', 'category_name' => strval($bug_category_id), 'group_id' => $group_id));
-        }
-    }
-
-    return $bug_category_id;
 }
 
 function server__create_forum_post($_replying_to_post, $post_reply_title, $post_reply_message, $_post_important)
@@ -144,14 +288,33 @@ function server__upload_to_tracker_issue($tracker_id)
     upload_to_tracker_issue(intval($tracker_id), $_FILES['upload']);
 }
 
+// DEMONSTRATR
+// -----------
+
+function server__public__demo_reset()
+{
+    require_lang('sites');
+
+    set_value('last_demo_set_time', strval(time()));
+
+    require_lang('composr_homesite');
+
+    $servers = find_all_servers();
+    $server = array_shift($servers);
+    $codename = 'shareddemo';
+    $password = 'demo123';
+    $email_address = '';
+    demonstratr_add_site_raw($server, $codename, $email_address, $password);
+}
+
 function demonstratr_add_site($codename, $name, $email_address, $password, $description, $category, $show_in_directory)
 {
-    if (strlen($name) > 200) {
+    if (cms_mb_strlen($name) > 200) {
         warn_exit(do_lang_tempcode('INTERNAL_ERROR'));
     }
 
     // Check named site valid
-    if ((strlen($codename) < 3) || (strlen($codename) > 20) || (preg_match('#^[\w\d-]*$#', $codename) == 0)) {
+    if ((strlen($codename) < 3) || (cms_mb_strlen($codename) > 20) || (preg_match('#^[\w\-]*$#', $codename) == 0)) {
         warn_exit(do_lang_tempcode('CMS_BAD_NAME'));
     }
 
@@ -211,48 +374,75 @@ function demonstratr_add_site($codename, $name, $email_address, $password, $desc
 
 function demonstratr_add_site_raw($server, $codename, $email_address, $password)
 {
-    // Create database, set title and description and domain
-    $master_conn = new DatabaseConnector(get_db_site(), 'localhost'/*$server*/, 'root', $GLOBALS['SITE_INFO']['mysql_root_password'], 'cms_');
+    global $SITE_INFO;
+
+    // Create database
+    $master_conn = new DatabaseConnector(get_db_site(), 'localhost'/*$server*/, 'root', $SITE_INFO['mysql_root_password'], 'cms_');
     $master_conn->query('DROP DATABASE `demonstratr_site_' . $codename . '`', null, null, true);
     $master_conn->query('CREATE DATABASE `demonstratr_site_' . $codename . '`', null, null, true);
     $user = substr(md5('demonstratr_site_' . $codename), 0, 16);
-    $master_conn->query('GRANT ALL ON `demonstratr_site_' . $codename . '`.* TO \'' . $user . '\'@\'%\' IDENTIFIED BY \'' . db_escape_string($GLOBALS['SITE_INFO']['mysql_demonstratr_password']) . '\''); // tcp/ip
-    $master_conn->query('GRANT ALL ON `demonstratr_site_' . $codename . '`.* TO \'' . $user . '\'@\'localhost\' IDENTIFIED BY \'' . db_escape_string($GLOBALS['SITE_INFO']['mysql_demonstratr_password']) . '\''); // local socket
-    $cmd = 'mysql -h' . /*$server*/'localhost' . ' -Ddemonstratr_site_' . $codename . ' -u' . $user . ' -p' . $GLOBALS['SITE_INFO']['mysql_demonstratr_password'] . ' < ' . special_demonstratr_dir() . '/template.sql';
-    if (get_member() == 6) {
-        attach_message($cmd, 'inform');
+    $master_conn->query('GRANT ALL ON `demonstratr_site_' . $codename . '`.* TO \'' . $user . '\'@\'%\' IDENTIFIED BY \'' . db_escape_string($SITE_INFO['mysql_demonstratr_password']) . '\''); // tcp/ip
+    $master_conn->query('GRANT ALL ON `demonstratr_site_' . $codename . '`.* TO \'' . $user . '\'@\'localhost\' IDENTIFIED BY \'' . db_escape_string($SITE_INFO['mysql_demonstratr_password']) . '\''); // local socket
+
+    // Import database contents
+    $cmd = '/usr/local/bin/mysql';
+    if (!is_file($cmd)) {
+        $cmd = '/usr/bin/mysql';
     }
-    shell_exec($cmd);
-    $db_conn = new DatabaseConnector('demonstratr_site_' . $codename, 'localhost'/*$server*/, $user, $GLOBALS['SITE_INFO']['mysql_demonstratr_password'], 'cms_');
+    $cmd .= ' -h' . /*$server*/'localhost';
+    $cmd .= ' -Ddemonstratr_site_' . $codename;
+    $cmd .= ' -u' . $user;
+    if ($SITE_INFO['mysql_demonstratr_password'] != '') {
+        $cmd .= ' -p' . $SITE_INFO['mysql_demonstratr_password'];
+    }
+    $cmd .= ' < ' . special_demonstratr_dir() . '/template.sql';
+    $cmd .= ' 2>&1'; // We want to gather error messages
+    if ($GLOBALS['FORUM_DRIVER']->is_super_admin(get_member())) {
+        attach_message('Running import command... ' . $cmd, 'inform');
+    }
+    $output = array();
+    $return_var = 0;
+    $last_line = exec($cmd, $output, $return_var);
+    if ($return_var != 0) {
+        fatal_exit('Failed to create database, ' . implode("\n", $output) . "\n" . $last_line);
+    }
+
+    // Set some default config
+    $db_conn = new DatabaseConnector('demonstratr_site_' . $codename, 'localhost'/*$server*/, $user, $SITE_INFO['mysql_demonstratr_password'], 'cms_');
     $db_conn->query_update('config', array('c_value' => $email_address), array('c_name' => 'staff_address'), '', 1);
     $pass = md5($password);
     $salt = '';
     $compat = 'md5';
+    $GLOBALS['NO_DB_SCOPE_CHECK'] = true;
     $db_conn->query_update('f_members', array('m_email_address' => $email_address, 'm_pass_hash_salted' => $pass, 'm_pass_salt' => $salt, 'm_password_compat_scheme' => $compat), array('m_username' => 'admin'), '', 1);
+    $GLOBALS['NO_DB_SCOPE_CHECK'] = false;
 
     // Create default file structure
     $path = special_demonstratr_dir() . '/servers/' . filter_naughty($server) . '/sites/' . filter_naughty($codename);
     if (file_exists($path)) {
-        require_code('files');
-        deldir_contents($path);
-    } else {
-        @mkdir(dirname($path), 0775);
-        mkdir($path, 0775);
+        //require_code('files'); @deldir_contents($path);
+        exec('rm -rf ' . $path); // More efficient
     }
-    @chmod($path, 0775);
+    @mkdir(dirname($path), 0777);
+    @mkdir($path, 0777);
+    @chmod($path, 0777);
     require_code('tar');
     $tar = tar_open(special_demonstratr_dir() . '/template.tar', 'rb');
     $path_short = substr($path, strlen(get_custom_file_base() . '/'));
-    tar_extract_to_folder($tar, $path_short);
+    tar_extract_to_folder($tar, $path_short, false, null, false, false);
     tar_close($tar);
     require_code('files2');
     $contents = get_directory_contents($path, $path, true, true, true);
     foreach ($contents as $c) {
-        @chmod($c, 0664);
+        if (is_file($c)) {
+            @chmod($c, 0666);
+        }
     }
     $contents = get_directory_contents($path, $path, true, true, false);
     foreach ($contents as $c) {
-        @chmod($c, 0775);
+        if (is_dir($c)) {
+            @chmod($c, 0777);
+        }
     }
 }
 
@@ -263,7 +453,7 @@ function demonstratr_add_site_raw($server, $codename, $email_address, $password)
  */
 function special_demonstratr_dir()
 {
-    return 'uploads/website_specific/compo.sr/demonstratr';
+    return get_custom_file_base() . '/uploads/website_specific/compo.sr/demonstratr';
 }
 
 /**
@@ -339,50 +529,65 @@ function find_all_servers()
  */
 function reset_base_config_file($server)
 {
+    global $SITE_INFO;
+
     $path = special_demonstratr_dir() . '/servers/' . filter_naughty($server) . '/_config.php';
-    $myfile = fopen($path, GOOGLE_APPENGINE ? 'wb' : 'at');
-    @flock($myfile, LOCK_EX);
-    if (!GOOGLE_APPENGINE) {
-        ftruncate($myfile, 0);
-    }
     $contents = "<" . "?php
-if (!isset(\$_SERVER['HTTP_HOST']))
-{
-    exit('Must be run from a web-request, for us to be able to identify the correct site.');
+global \$SITE_INFO;
+
+
+if (!function_exists('git_repos')) {
+    /**
+     * Find the git branch name. This is useful for making this config file context-adaptive (i.e. dev settings vs production settings).
+     *
+     * @return ?ID_TEXT Branch name (null: not in git)
+     */
+    function git_repos()
+    {
+        \$path = dirname(__FILE__).'/.git/HEAD';
+        if (!is_file(\$path)) return '';
+        \$lines = file(\$path);
+        \$parts = explode('/', \$lines[0]);
+        return trim(end(\$parts));
+    }
 }
 
-global \$SITE_INFO;
-\$SITE_INFO['default_lang']='EN';
-\$SITE_INFO['db_type']='mysql';
-\$SITE_INFO['forum_type']='cns';
-\$SITE_INFO['domain']=\$_SERVER['HTTP_HOST'];
-\$SITE_INFO['base_url']='http://'.\$_SERVER['HTTP_HOST'];
-\$SITE_INFO['table_prefix']='cms_';
-\$SITE_INFO['use_msn']='1';
-\$SITE_INFO['db_forums']='demonstratr_site';
-\$SITE_INFO['db_forums_host']='localhost';
-\$SITE_INFO['db_forums_user']='demonstratr_site';
-\$SITE_INFO['db_forums_password']='" . $GLOBALS['SITE_INFO']['mysql_demonstratr_password'] . "';
-\$SITE_INFO['cns_table_prefix']='cms_';
-\$SITE_INFO['db_site']='demonstratr_site';
-\$SITE_INFO['db_site_host']='localhost';
-\$SITE_INFO['db_site_user']='demonstratr_site';
-\$SITE_INFO['db_site_password']='" . $GLOBALS['SITE_INFO']['mysql_demonstratr_password'] . "';
-\$SITE_INFO['user_cookie']='demonstratr_member_id';
-\$SITE_INFO['pass_cookie']='demonstratr_member_hash';
-\$SITE_INFO['cookie_domain']='';
-\$SITE_INFO['cookie_path']='/';
-\$SITE_INFO['cookie_days']='120';
+\$SITE_INFO['multi_lang_content'] = '0';
+\$SITE_INFO['default_lang'] = 'EN';
+\$SITE_INFO['forum_type'] = 'cns';
+\$SITE_INFO['db_type'] = 'mysql';
+\$SITE_INFO['db_site_host'] = '127.0.0.1';
+\$SITE_INFO['user_cookie'] = 'cms_member_id';
+\$SITE_INFO['pass_cookie'] = 'cms_member_hash';
+\$SITE_INFO['cookie_domain'] = '';
+\$SITE_INFO['cookie_path'] = '/';
+\$SITE_INFO['cookie_days'] = '120';
+\$SITE_INFO['session_cookie'] = 'cms_session__567206a440a52943735248';
+\$SITE_INFO['self_learning_cache'] = '1';
 
-\$SITE_INFO['throttle_space_complementary']=100;
-\$SITE_INFO['throttle_space_views_per_meg']=10;
-\$SITE_INFO['throttle_bandwidth_complementary']=500;
-\$SITE_INFO['throttle_bandwidth_views_per_meg']=1;
+\$SITE_INFO['db_site_user'] = 'demonstratr_site';
+\$SITE_INFO['db_site_password'] = '" . $SITE_INFO['mysql_demonstratr_password'] . "';
+\$SITE_INFO['db_site'] = 'demonstratr_site';
+\$SITE_INFO['table_prefix'] = 'cms_';
 
-\$SITE_INFO['custom_base_url_stub']='http://'.\$_SERVER['HTTP_HOST'].'/sites';
-\$SITE_INFO['custom_file_base_stub']='/home/cms/public_html/servers/composr.info/sites';
-\$SITE_INFO['custom_share_domain']=(strpos(\$_SERVER['HTTP_HOST'],'.3c.ms')!==false)?'3c.ms':'composr.info';
-\$SITE_INFO['custom_share_path']='sites';
+\$SITE_INFO['dev_mode'] = '0';
+
+\$SITE_INFO['throttle_space_complementary'] = 100;
+\$SITE_INFO['throttle_space_views_per_meg'] = 10;
+\$SITE_INFO['throttle_bandwidth_complementary'] = 500;
+\$SITE_INFO['throttle_bandwidth_views_per_meg'] = 1;
+
+\$SITE_INFO['domain'] = \$_SERVER['HTTP_HOST'];
+\$SITE_INFO['base_url'] = 'http://'.\$_SERVER['HTTP_HOST'];
+
+\$SITE_INFO['custom_base_url_stub'] = 'http://'.\$_SERVER['HTTP_HOST'].'/sites';
+\$SITE_INFO['custom_file_base_stub'] = dirname(__FILE__) . '/sites';
+\$SITE_INFO['custom_share_domain'] = 'composr.info';
+\$SITE_INFO['custom_share_path'] = 'sites';
+
+if (\$_SERVER['HTTP_HOST'] == 'composr.info') {
+        exit('Must run an individual demo site');
+}
 ";
     $rows = $GLOBALS['SITE_DB']->query_select('sites', array('s_codename', 's_domain_name'), array('s_server' => $server));
     foreach ($rows as $row) {
@@ -392,13 +597,11 @@ global \$SITE_INFO;
 ";
         }
         $contents .= "
-\$SITE_INFO['custom_user_" . db_escape_string($row['s_codename']) . "']=1;
+\$SITE_INFO['custom_user_" . db_escape_string($row['s_codename']) . "'] = true;
 ";
     }
-    $contents .= "?" . ">";
-    fwrite($myfile, $contents);
-    @flock($myfile, LOCK_UN);
-    fclose($myfile);
+    require_code('files');
+    cms_file_put_contents_safe($path, $contents, FILE_WRITE_FIX_PERMISSIONS | FILE_WRITE_SYNC_FILE);
 }
 
 /**
@@ -407,6 +610,8 @@ global \$SITE_INFO;
 function reset_aliases()
 {
     return; // Needs customising for each deployment; Demonstratr personal demos currently not supporting email hosting
+
+    require_code('files');
 
     // Rebuild virtualdomains
     $vds = explode("\n", file_get_contents(special_demonstratr_dir() . '/virtualdomains'));
@@ -419,44 +624,30 @@ function reset_aliases()
     $sites = $GLOBALS['SITE_DB']->query_select('sites', array('s_codename', 's_domain_name'));
     foreach ($sites as $site) {
         $text .= $site['s_codename'] . '.composr.info:' . 'alias-demonstratr_' . $site['s_codename'] . "\n";
-        $text .= $site['s_codename'] . '.3c.ms:' . 'alias-demonstratr_' . $site['s_codename'] . "\n";
         if ($site['s_domain_name'] != '') {
             $text .= $site['s_domain_name'] . ':' . 'alias-demonstratr_' . $site['s_codename'] . "\n";
         }
     }
-    $myfile = fopen(special_demonstratr_dir() . '/virtualdomains', GOOGLE_APPENGINE ? 'wb' : 'at');
-    @flock($myfile, LOCK_EX);
-    if (!GOOGLE_APPENGINE) {
-        ftruncate($myfile, 0);
-    }
-    fwrite($myfile, $text);
-    @flock($myfile, LOCK_UN);
-    fclose($myfile);
+    $path = special_demonstratr_dir() . '/virtualdomains';
+    cms_file_put_contents_safe($path, $text, FILE_WRITE_FIX_PERMISSIONS);
 
     // Rebuild rcpthosts
     $vds = explode("\n", file_get_contents(special_demonstratr_dir() . '/rcpthosts'));
     $hosts = array();
     foreach ($vds as $vd) {
         if (trim($vd) != '') {
-            $hosts[$vd] = 1;
+            $hosts[$vd] = true;
         }
     }
     $sites = $GLOBALS['SITE_DB']->query_select('sites', array('s_codename', 's_domain_name'));
     foreach ($sites as $site) {
-        $hosts[$site['s_codename'] . '.composr.info'] = 1;
-        $hosts[$site['s_codename'] . '.3c.ms'] = 1;
+        $hosts[$site['s_codename'] . '.composr.info'] = true;
         if ($site['s_domain_name'] != '') {
-            $hosts[$site['s_domain_name']] = 1;
+            $hosts[$site['s_domain_name']] = true;
         }
     }
-    $myfile = fopen(special_demonstratr_dir() . '/rcpthosts', GOOGLE_APPENGINE ? 'wb' : 'at');
-    @flock($myfile, LOCK_EX);
-    if (!GOOGLE_APPENGINE) {
-        ftruncate($myfile, 0);
-    }
-    fwrite($myfile, implode("\n", array_keys($hosts)) . "\n");
-    @flock($myfile, LOCK_UN);
-    fclose($myfile);
+    $path = special_demonstratr_dir() . '/rcpthosts';
+    cms_file_put_contents_safe($path, implode("\n", array_keys($hosts)) . "\n", FILE_WRITE_FIX_PERMISSIONS);
 
     // Go through aliases directory and remove Demonstratr aliases
     $a_path = special_demonstratr_dir() . '/alias';
@@ -471,46 +662,11 @@ function reset_aliases()
     // Rebuild alias files
     $emails = $GLOBALS['SITE_DB']->query_select('sites_email', array('*'));
     foreach ($emails as $email) {
-        $myfile = fopen($a_path . '/.qmail-demonstratr_' . filter_naughty($email['s_codename']) . '_' . filter_naughty(str_replace('.', ':', $email['s_email_from'])), GOOGLE_APPENGINE ? 'wb' : 'at');
-        @flock($myfile, LOCK_EX);
-        if (!GOOGLE_APPENGINE) {
-            ftruncate($myfile, 0);
-        }
-        fwrite($myfile, '&' . $email['s_email_to']);
-        @flock($myfile, LOCK_UN);
-        fclose($myfile);
+        $path = $a_path . '/.qmail-demonstratr_' . filter_naughty($email['s_codename']) . '_' . filter_naughty(str_replace('.', ':', $email['s_email_from']));
+        cms_file_put_contents_safe($path, '&' . $email['s_email_to'], FILE_WRITE_FIX_PERMISSIONS);
     }
 
     shell_exec(special_demonstratr_dir() . '/reset_aliases');
-}
-
-/**
- * Find the size of a directory.
- *
- * @param  PATH $dir The pathname to the directory
- * @return integer The size in bytes
- */
-function find_dir_size($dir)
-{
-    $amount = 0;
-
-    $current_dir = @opendir($dir);
-    if ($current_dir !== false) {
-        while (false !== ($entryname = readdir($current_dir))) {
-            if (($entryname == '.') || ($entryname == '..')) {
-                continue;
-            }
-
-            if (is_dir($dir . '/' . $entryname)) {
-                $amount += find_dir_size($dir . '/' . $entryname);
-            } else {
-                $amount += filesize($dir . '/' . $entryname);
-            }
-        }
-        closedir($current_dir);
-    }
-
-    return $amount;
 }
 
 /**
@@ -523,7 +679,7 @@ function find_server_load($server)
 {
     return 1; // Not currently supported, needs customising per-server
 
-    //   $stats=http_download_file('http://'.$server.'/data_custom/stats.php?html=1');
+    //$stats = http_download_file('http://' . $server . '/data_custom/stats.php?html=1');
     $stats = shell_exec('php /home/demonstratr/public_html/data_custom/stats.php 1');
     $matches = array();
     preg_match('#Memory%: (.*)<br />Swap%: (.*)<br />15-min-load: load average: (.*)<br />5-min-load: (.*)<br />1-min-load: (.*)<br />CPU-user%: (.*)<br />CPU-idle%: (.*)<br />Free-space: (.*)#', $stats, $matches);
@@ -576,12 +732,14 @@ function do_backup_script()
     }
     $server = $sites[0]['s_server'];
 
+    global $SITE_INFO;
+
     // Create data
     require_code('zip');
     $file_array = zip_scan_folder(special_demonstratr_dir() . '/servers/' . filter_naughty($server) . '/sites/' . filter_naughty($id));
-    $tmp_path = cms_tempnam('demonstratr_backup');
+    $tmp_path = cms_tempnam();
     $user = substr(md5('demonstratr_site_' . $id), 0, 16);
-    shell_exec('mysqldump -h' . /*$server*/'localhost' . ' -u' . $user . ' -p' . $GLOBALS['SITE_INFO']['mysql_demonstratr_password'] . ' demonstratr_site_' . $id . ' --skip-opt > ' . $tmp_path);
+    shell_exec('mysqldump -h' . /*$server*/'localhost' . ' -u' . $user . ' -p' . $SITE_INFO['mysql_demonstratr_password'] . ' demonstratr_site_' . $id . ' --skip-opt > ' . $tmp_path);
     $file_array[] = array('full_path' => $tmp_path, 'name' => 'database.sql', 'time' => time());
     $data = create_zip_file($file_array);
     unlink($tmp_path);
@@ -661,15 +819,17 @@ function demonstratr_delete_old_sites()
  */
 function demonstratr_delete_site($server, $codename, $bulk = false)
 {
+    global $SITE_INFO;
+
     // Database
-    $master_conn = new DatabaseConnector(get_db_site(), 'localhost'/*$server*/, 'root', $GLOBALS['SITE_INFO']['mysql_root_password'], 'cms_');
+    $master_conn = new DatabaseConnector(get_db_site(), 'localhost'/*$server*/, 'root', $SITE_INFO['mysql_root_password'], 'cms_');
     $master_conn->query('DROP DATABASE IF EXISTS `demonstratr_site_' . $codename . '`');
     $user = substr(md5('demonstratr_site_' . $codename), 0, 16);
     $master_conn->query('REVOKE ALL ON `demonstratr_site_' . $codename . '`.* FROM \'' . $user . '\'', null, null, true);
-// $master_conn->query('DROP USER \'demonstratr_site_'.$codename.'\'');
+    //$master_conn->query('DROP USER \'demonstratr_site_' . $codename . '\'');
 
     $GLOBALS['SITE_DB']->query_delete('sites_deletion_codes', array('s_codename' => $codename), '', 1);
-    $GLOBALS['SITE_DB']->query_update('sites_email', array('s_codename' => $codename . '__expired_' . strval(rand(0, 100))), array('s_codename' => $codename), '', 1, null, false, true);
+    $GLOBALS['SITE_DB']->query_update('sites_email', array('s_codename' => $codename . '__expired_' . strval(mt_rand(0, 100))), array('s_codename' => $codename), '', 1, null, false, true);
 
     // Directory entry
     $GLOBALS['SITE_DB']->query_delete('sites', array('s_codename' => $codename), '', 1);
@@ -678,9 +838,8 @@ function demonstratr_delete_site($server, $codename, $bulk = false)
     if ($codename != '') {
         $path = special_demonstratr_dir() . '/servers/' . filter_naughty($server) . '/sites/' . filter_naughty($codename);
         if (file_exists($path)) {
-            require_code('files');
-            deldir_contents($path);
-            rmdir($path);
+            //require_code('files'); deldir_contents($path); @rmdir($path);
+            exec('rm -rf ' . $path); // More efficient
         }
     }
 
@@ -690,5 +849,5 @@ function demonstratr_delete_site($server, $codename, $bulk = false)
     reset_base_config_file($server);
 
     // Special
-    //$GLOBALS['SITE_DB']->query_delete('sites_email',array('s_codename'=>$codename));
+    //$GLOBALS['SITE_DB']->query_delete('sites_email', array('s_codename' => $codename));
 }

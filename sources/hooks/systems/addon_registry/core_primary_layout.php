@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -26,9 +26,10 @@ class Hook_addon_registry_core_primary_layout
     /**
      * Get a list of file permissions to set
      *
+     * @param  boolean $runtime Whether to include wildcards represented runtime-created chmoddable files
      * @return array File permissions to set
      */
-    public function get_chmod_array()
+    public function get_chmod_array($runtime = false)
     {
         return array();
     }
@@ -107,14 +108,12 @@ class Hook_addon_registry_core_primary_layout
             'themes/default/templates/GLOBAL_HELPER_PANEL.tpl',
             'themes/default/templates/CLOSED_SITE.tpl',
             'themes/default/templates/SCREEN_TITLE.tpl',
-            'themes/default/templates/SECTION_TITLE.tpl',
-            'themes/default/templates/MINOR_TITLE.tpl',
             'themes/default/templates/MAIL.tpl',
+            'themes/default/text/MAIL.txt',
             'themes/default/text/MAIL_SUBJECT.txt',
             'themes/default/templates/BREADCRUMB_SEPARATOR.tpl',
             'themes/default/templates/BREADCRUMB_LONE_WRAP.tpl',
             'themes/default/templates/BREADCRUMB_LINK_WRAP.tpl',
-            'themes/default/templates/CSS_NEED_FULL.tpl',
         );
     }
 
@@ -130,7 +129,6 @@ class Hook_addon_registry_core_primary_layout
             'templates/BREADCRUMB_LONE_WRAP.tpl' => 'breadcrumb',
             'templates/BREADCRUMB_LINK_WRAP.tpl' => 'breadcrumb',
             'templates/CLOSED_SITE.tpl' => 'closed_site',
-            'templates/CSS_NEED_FULL.tpl' => 'css_need_full',
             'templates/MESSAGE.tpl' => 'message',
             'text/MAIL_SUBJECT.txt' => 'mail_subject',
             'templates/MAIL.tpl' => 'mail',
@@ -138,8 +136,6 @@ class Hook_addon_registry_core_primary_layout
             'templates/GLOBAL_HTML_WRAP_mobile.tpl' => 'global_html_wrap',
             'templates/GLOBAL_HELPER_PANEL.tpl' => 'global_html_wrap',
             'templates/SCREEN_TITLE.tpl' => 'screen_title',
-            'templates/MINOR_TITLE.tpl' => 'minor_title',
-            'templates/SECTION_TITLE.tpl' => 'section_title'
         );
     }
 
@@ -175,22 +171,6 @@ class Hook_addon_registry_core_primary_layout
                 'CLOSED' => lorem_phrase(),
                 'LOGIN_URL' => placeholder_url(),
                 'JOIN_URL' => placeholder_url(),
-            )), null, '', true)
-        );
-    }
-
-    /**
-     * Get a preview(s) of a (group of) template(s), as a full standalone piece of HTML in Tempcode format.
-     * Uses sources/lorem.php functions to place appropriate stock-text. Should not hard-code things, as the code is intended to be declaritive.
-     * Assumptions: You can assume all Lang/CSS/JavaScript files in this addon have been pre-required.
-     *
-     * @return array Array of previews, each is Tempcode. Normally we have just one preview, but occasionally it is good to test templates are flexible (e.g. if they use IF_EMPTY, we can test with and without blank data).
-     */
-    public function tpl_preview__css_need_full()
-    {
-        return array(
-            lorem_globalise(do_lorem_template('CSS_NEED_FULL', array(
-                'URL' => placeholder_url(),
             )), null, '', true)
         );
     }
@@ -290,38 +270,6 @@ class Hook_addon_registry_core_primary_layout
             lorem_globalise(do_lorem_template('SCREEN_TITLE', array(
                 'TITLE' => lorem_phrase(),
                 'AWARDS' => $awards,
-            )), null, '', true)
-        );
-    }
-
-    /**
-     * Get a preview(s) of a (group of) template(s), as a full standalone piece of HTML in Tempcode format.
-     * Uses sources/lorem.php functions to place appropriate stock-text. Should not hard-code things, as the code is intended to be declaritive.
-     * Assumptions: You can assume all Lang/CSS/JavaScript files in this addon have been pre-required.
-     *
-     * @return array Array of previews, each is Tempcode. Normally we have just one preview, but occasionally it is good to test templates are flexible (e.g. if they use IF_EMPTY, we can test with and without blank data).
-     */
-    public function tpl_preview__minor_title()
-    {
-        return array(
-            lorem_globalise(do_lorem_template('MINOR_TITLE', array(
-                'TITLE' => lorem_phrase(),
-            )), null, '', true)
-        );
-    }
-
-    /**
-     * Get a preview(s) of a (group of) template(s), as a full standalone piece of HTML in Tempcode format.
-     * Uses sources/lorem.php functions to place appropriate stock-text. Should not hard-code things, as the code is intended to be declaritive.
-     * Assumptions: You can assume all Lang/CSS/JavaScript files in this addon have been pre-required.
-     *
-     * @return array Array of previews, each is Tempcode. Normally we have just one preview, but occasionally it is good to test templates are flexible (e.g. if they use IF_EMPTY, we can test with and without blank data).
-     */
-    public function tpl_preview__section_title()
-    {
-        return array(
-            lorem_globalise(do_lorem_template('SECTION_TITLE', array(
-                'TITLE' => lorem_phrase(),
             )), null, '', true)
         );
     }

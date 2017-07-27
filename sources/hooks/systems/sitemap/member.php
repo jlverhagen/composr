@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -72,7 +72,11 @@ class Hook_sitemap_member extends Hook_sitemap_content
         $consider_validation = (($options & SITEMAP_GEN_CONSIDER_VALIDATION) != 0);
 
         if ($child_cutoff !== null) {
-            $count = $GLOBALS['FORUM_DB']->query_select_value('f_members', 'COUNT(*)', $consider_validation ? array('m_validated' => 1) : null);
+            if ($consider_validation) {
+                $count = $GLOBALS['FORUM_DRIVER']->get_members();
+            } else {
+                $count = $GLOBALS['FORUM_DB']->query_select_value('f_members', 'COUNT(*)');
+            }
             if ($count > $child_cutoff) {
                 return $nodes;
             }
@@ -123,11 +127,18 @@ class Hook_sitemap_member extends Hook_sitemap_content
         list($content_id, $row, $partial_struct) = $_;
 
         $struct = array(
-                      'sitemap_priority' => SITEMAP_IMPORTANCE_LOW,
-                      'sitemap_refreshfreq' => 'monthly',
+            'sitemap_priority' => SITEMAP_IMPORTANCE_LOW,
+            'sitemap_refreshfreq' => 'monthly',
 
-                      'privilege_page' => null,
-                  ) + $partial_struct;
+            'privilege_page' => null,
+        ) + $partial_struct;
+
+        if (($meta_gather & SITEMAP_GATHER_IMAGE) != 0) {
+            if (empty($struct['extra_meta']['image'])) {
+                $test = find_theme_image('cns_default_avatars/default', true);
+                $struct['extra_meta']['image'] = $test;
+            }
+        }
 
         if (!$this->_check_node_permissions($struct)) {
             return null;

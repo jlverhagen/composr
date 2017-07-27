@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -40,7 +40,7 @@ class Module_admin_chat extends Standard_crud_module
      * @param  boolean $check_perms Whether to check permissions.
      * @param  ?MEMBER $member_id The member to check permissions as (null: current user).
      * @param  boolean $support_crosslinks Whether to allow cross links to other modules (identifiable via a full-page-link rather than a screen-name).
-     * @param  boolean $be_deferential Whether to avoid any entry-point (or even return NULL to disable the page in the Sitemap) if we know another module, or page_group, is going to link to that entry-point. Note that "!" and "browse" entry points are automatically merged with container page nodes (likely called by page-groupings) as appropriate.
+     * @param  boolean $be_deferential Whether to avoid any entry-point (or even return null to disable the page in the Sitemap) if we know another module, or page_group, is going to link to that entry-point. Note that "!" and "browse" entry points are automatically merged with container page nodes (likely called by page-groupings) as appropriate.
      * @return ?array A map of entry points (screen-name=>language-code/string or screen-name=>[language-code/string, icon-theme-image]) (null: disabled).
      */
     public function get_entry_points($check_perms = true, $member_id = null, $support_crosslinks = true, $be_deferential = false)
@@ -58,10 +58,10 @@ class Module_admin_chat extends Standard_crud_module
     public $title;
 
     /**
-     * Module pre-run function. Allows us to know meta-data for <head> before we start streaming output.
+     * Module pre-run function. Allows us to know metadata for <head> before we start streaming output.
      *
      * @param  boolean $top_level Whether this is running at the top level, prior to having sub-objects called.
-     * @param  ?ID_TEXT $type The screen type to consider for meta-data purposes (null: read from environment).
+     * @param  ?ID_TEXT $type The screen type to consider for metadata purposes (null: read from environment).
      * @return ?Tempcode Tempcode indicating some kind of exceptional output (null: none).
      */
     public function pre_run($top_level = true, $type = null)
@@ -158,8 +158,8 @@ class Module_admin_chat extends Standard_crud_module
     {
         require_code('chat_lobby');
 
-        $rows = $GLOBALS['SITE_DB']->query_select('chat_rooms', array('*'), array('is_im' => 0), 'ORDER BY room_name DESC', 500);
-        if (count($rows) == 500) {
+        $rows = $GLOBALS['SITE_DB']->query_select('chat_rooms', array('*'), array('is_im' => 0), 'ORDER BY room_name DESC', intval(get_option('general_safety_listing_limit')));
+        if (count($rows) == intval(get_option('general_safety_listing_limit'))) {
             warn_exit(do_lang_tempcode('TOO_MANY_TO_CHOOSE_FROM'));
         }
         $fields = new Tempcode();
@@ -216,13 +216,13 @@ class Module_admin_chat extends Standard_crud_module
     {
         list($allow2, $allow2_groups, $disallow2, $disallow2_groups) = read_in_chat_perm_fields();
 
-        $meta_data = actual_meta_data_get_fields('chat', null);
+        $metadata = actual_metadata_get_fields('chat', null);
 
         $id = add_chatroom(post_param_string('c_welcome'), post_param_string('room_name'), $GLOBALS['FORUM_DRIVER']->get_member_from_username(post_param_string('room_owner')), $allow2, $allow2_groups, $disallow2, $disallow2_groups, post_param_string('room_lang', user_lang()));
 
         set_url_moniker('chat', strval($id));
 
-        $this->set_permissions($id);
+        $this->set_permissions(strval($id));
 
         if (addon_installed('content_reviews')) {
             content_review_set('chat', strval($id));
@@ -249,7 +249,7 @@ class Module_admin_chat extends Standard_crud_module
             $disallow2_groups = STRING_MAGIC_NULL;
         }
 
-        $meta_data = actual_meta_data_get_fields('chat', $id);
+        $metadata = actual_metadata_get_fields('chat', $id);
 
         edit_chatroom(intval($id), post_param_string('c_welcome', STRING_MAGIC_NULL), post_param_string('room_name'), $room_owner, $allow2, $allow2_groups, $disallow2, $disallow2_groups, post_param_string('room_lang', STRING_MAGIC_NULL));
 
@@ -271,7 +271,7 @@ class Module_admin_chat extends Standard_crud_module
     }
 
     /**
-     * The UI to delete all chat rooms.
+     * The UI to delete all chatrooms.
      *
      * @return Tempcode The UI
      */
@@ -287,7 +287,7 @@ class Module_admin_chat extends Standard_crud_module
     }
 
     /**
-     * The actualiser to delete all chat rooms.
+     * The actualiser to delete all chatrooms.
      *
      * @return Tempcode The UI
      */

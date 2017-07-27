@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -28,7 +28,7 @@ class CMSForumWrite
         cms_verify_parameters_phpdoc();
 
         if (is_guest()) {
-            warn_exit(do_lang_tempcode('NOT_AS_GUEST'));
+            warn_exit(do_lang_tempcode('permissions:ACCESS_DENIED__NOT_AS_GUEST'));
         }
 
         require_code('config2');

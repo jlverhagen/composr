@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -35,7 +35,7 @@ function password_censor($auto = false, $display = true, $days_ago = 30)
         $forum_id = $GLOBALS['FORUM_DRIVER']->forum_id_from_name($_forum);
     }
 
-    $sql = 'SELECT p_post FROM ' . $GLOBALS['FORUM_DB']->get_table_prefix() . 'f_posts p';
+    $sql = 'SELECT id,p_post FROM ' . $GLOBALS['FORUM_DB']->get_table_prefix() . 'f_posts p';
     $sql .= ' WHERE ' . $GLOBALS['SITE_DB']->translate_field_ref('p_post') . ' LIKE \'%password%\'';
     $sql .= ' AND (p_cache_forum_id=' . strval($forum_id) . ' OR p_cache_forum_id IS NULL OR p_intended_solely_for IS NOT NULL)';
     $sql .= ' AND p_time<' . strval(time() - 60 * 60 * 24 * $days_ago);
@@ -44,13 +44,13 @@ function password_censor($auto = false, $display = true, $days_ago = 30)
     header('Content-type: text/plain; charset=' . get_charset());
 
     foreach ($rows as $row) {
-        $text_start = get_translated_text($row['id']);
+        $text_start = get_translated_text($row['p_post'], $GLOBALS['FORUM_DB']);
         $text_after = _password_censor($text_start, PASSWORD_CENSOR__TIMEOUT_SCAN);
         if ($text_after != $text_start) {
             if (multi_lang_content()) {
                 $update_query = 'UPDATE ' . $GLOBALS['FORUM_DB']->get_table_prefix() . 'translate SET text_original=\'' . db_escape_string($text_after) . '\',text_parsed=\'\' WHERE id=' . strval($row['id']);
             } else {
-                $update_query = 'UPDATE ' . $GLOBALS['FORUM_DB']->get_table_prefix() . 'f_posts SET p_post=\'' . db_escape_string($text_after) . '\',p_post__tempcode=\'\' WHERE id=' . strval($row['id']);
+                $update_query = 'UPDATE ' . $GLOBALS['FORUM_DB']->get_table_prefix() . 'f_posts SET p_post=\'' . db_escape_string($text_after) . '\',p_post__text_parsed=\'\' WHERE id=' . strval($row['id']);
             }
 
             if ($auto) {
@@ -141,7 +141,7 @@ function _password_censor($text, $scan_type = 1, $explicit_only = false)
                 if ((is_numeric($m)) && (strlen($m) > 6)) {
                     $c++;
                 }
-                if (preg_match('#(password|pass|pword|pw)\s*:?=?\s+' . preg_quote($m, '#') . '#i', $text) != 0) {
+                if (preg_match('#(password|pass|pword|pw|p/w)\s*:?=?\s+' . preg_quote($m, '#') . '#i', $text) != 0) {
                     $c += 2;
                 }
                 if ($c >= 3) {

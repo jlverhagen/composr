@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -44,63 +44,65 @@ Node structure includes the following special data for menu rendering:
  */
 function init__sitemap()
 {
-    if (function_exists('set_time_limit')) {
+    if (php_function_allowed('set_time_limit')) {
         @set_time_limit(100);
     }
 
-    // Defining what should be gathered with the Sitemap
-    define('SITEMAP_GATHER_DESCRIPTION', 1);
-    define('SITEMAP_GATHER_IMAGE', 2);
-    define('SITEMAP_GATHER_TIMES', 4);
-    define('SITEMAP_GATHER_SUBMITTER', 8);
-    define('SITEMAP_GATHER_AUTHOR', 16);
-    define('SITEMAP_GATHER_VIEWS', 32);
-    define('SITEMAP_GATHER_RATING', 64);
-    define('SITEMAP_GATHER_NUM_COMMENTS', 128);
-    define('SITEMAP_GATHER_META', 256);
-    define('SITEMAP_GATHER_CATEGORIES', 512);
-    define('SITEMAP_GATHER_VALIDATED', 1024);
-    define('SITEMAP_GATHER_DB_ROW', 2048);
-    define('SITEMAP_GATHER__ALL', 0x7FFFFFF);
+    if (!defined('SITEMAP_GATHER_DESCRIPTION')) {
+        // Defining what should be gathered with the Sitemap
+        define('SITEMAP_GATHER_DESCRIPTION', 1);
+        define('SITEMAP_GATHER_IMAGE', 2);
+        define('SITEMAP_GATHER_TIMES', 4);
+        define('SITEMAP_GATHER_SUBMITTER', 8);
+        define('SITEMAP_GATHER_AUTHOR', 16);
+        define('SITEMAP_GATHER_VIEWS', 32);
+        define('SITEMAP_GATHER_RATING', 64);
+        define('SITEMAP_GATHER_NUM_COMMENTS', 128);
+        define('SITEMAP_GATHER_META', 256);
+        define('SITEMAP_GATHER_CATEGORIES', 512);
+        define('SITEMAP_GATHER_VALIDATED', 1024);
+        define('SITEMAP_GATHER_DB_ROW', 2048);
+        define('SITEMAP_GATHER__ALL', 0x7FFFFFF);
 
-    // Defining how a node will be handle
-    define('SITEMAP_NODE_NOT_HANDLED', 0);
-    define('SITEMAP_NODE_HANDLED', 1);
-    define('SITEMAP_NODE_HANDLED_VIRTUALLY', 2); // Not a real node, but a virtual node for which we can accumulate real nodes at
+        // Defining how a node will be handle
+        define('SITEMAP_NODE_NOT_HANDLED', 0);
+        define('SITEMAP_NODE_HANDLED', 1);
+        define('SITEMAP_NODE_HANDLED_VIRTUALLY', 2); // Not a real node, but a virtual node for which we can accumulate real nodes at
 
-    // Sitemap importances
-    define('SITEMAP_IMPORTANCE_NONE', 0.0);
-    //define('SITEMAP_IMPORTANCE_',0.1);
-    define('SITEMAP_IMPORTANCE_LOW', 0.2);
-    //define('SITEMAP_IMPORTANCE_',0.3);
-    //define('SITEMAP_IMPORTANCE_',0.4);
-    define('SITEMAP_IMPORTANCE_MEDIUM', 0.5);
-    //define('SITEMAP_IMPORTANCE_',0.6);
-    //define('SITEMAP_IMPORTANCE_',0.7);
-    define('SITEMAP_IMPORTANCE_HIGH', 0.8);
-    //define('SITEMAP_IMPORTANCE_',0.9);
-    define('SITEMAP_IMPORTANCE_ULTRA', 1.0);
+        // Sitemap importances
+        define('SITEMAP_IMPORTANCE_NONE', 0.0);
+        //define('SITEMAP_IMPORTANCE_', 0.1);
+        define('SITEMAP_IMPORTANCE_LOW', 0.2);
+        //define('SITEMAP_IMPORTANCE_', 0.3);
+        //define('SITEMAP_IMPORTANCE_', 0.4);
+        define('SITEMAP_IMPORTANCE_MEDIUM', 0.5);
+        //define('SITEMAP_IMPORTANCE_', 0.6);
+        //define('SITEMAP_IMPORTANCE_', 0.7);
+        define('SITEMAP_IMPORTANCE_HIGH', 0.8);
+        //define('SITEMAP_IMPORTANCE_', 0.9);
+        define('SITEMAP_IMPORTANCE_ULTRA', 1.0);
 
-    // Sitemap generation settings
-    define('SITEMAP_GEN_NONE', 0);
-    define('SITEMAP_GEN_REQUIRE_PERMISSION_SUPPORT', 1); // Only go so deep as needed to find nodes with permission-support (typically, stopping prior to the entry-level).
-    define('SITEMAP_GEN_USE_PAGE_GROUPINGS', 2); // Whether to make use of page groupings, to organise stuff with the hook schema, supplementing the default zone organisation.
-    define('SITEMAP_GEN_CONSIDER_SECONDARY_CATEGORIES', 4); // Whether to consider secondary categorisations for content that primarily exists elsewhere.
-    define('SITEMAP_GEN_CONSIDER_VALIDATION', 8); // Whether to filter out non-validated content.
-    define('SITEMAP_GEN_LABEL_CONTENT_TYPES', 16); // Whether to change title labels to show what nodes and what kinds of content (i.e. more technical).
-    define('SITEMAP_GEN_NO_EMPTY_PAGE_LINKS', 32); // When iteratively expanding we need to make sure this is set, otherwise we won't be able to expand everything. But when generating menus we do not want it set.
-    define('SITEMAP_GEN_KEEP_FULL_STRUCTURE', 64); // Avoid merging structure together to avoid page-link duplication.
-    define('SITEMAP_GEN_COLLAPSE_ZONES', 128); // Simulate zone collapse in the Sitemap.
-    define('SITEMAP_GEN_CHECK_PERMS', 256); // Check permissions when building up nodes.
+        // Sitemap generation settings
+        define('SITEMAP_GEN_NONE', 0);
+        define('SITEMAP_GEN_REQUIRE_PERMISSION_SUPPORT', 1); // Only go so deep as needed to find nodes with permission-support (typically, stopping prior to the entry-level).
+        define('SITEMAP_GEN_USE_PAGE_GROUPINGS', 2); // Whether to make use of page groupings, to organise stuff with the hook schema, supplementing the default zone organisation.
+        define('SITEMAP_GEN_CONSIDER_SECONDARY_CATEGORIES', 4); // Whether to consider secondary categorisations for content that primarily exists elsewhere.
+        define('SITEMAP_GEN_CONSIDER_VALIDATION', 8); // Whether to filter out non-validated content.
+        define('SITEMAP_GEN_LABEL_CONTENT_TYPES', 16); // Whether to change title labels to show what nodes and what kinds of content (i.e. more technical).
+        define('SITEMAP_GEN_NO_EMPTY_PAGE_LINKS', 32); // When iteratively expanding we need to make sure this is set, otherwise we won't be able to expand everything. But when generating menus we do not want it set.
+        define('SITEMAP_GEN_KEEP_FULL_STRUCTURE', 64); // Avoid merging structure together to avoid page-link duplication.
+        define('SITEMAP_GEN_COLLAPSE_ZONES', 128); // Simulate zone collapse in the Sitemap.
+        define('SITEMAP_GEN_CHECK_PERMS', 256); // Check permissions when building up nodes.
 
-    // Defining how the content-selection list should be put together
-    define('CSL_PERMISSION_VIEW', 0);
-    define('CSL_PERMISSION_ADD', 1);
-    define('CSL_PERMISSION_EDIT', 2);
-    define('CSL_PERMISSION_DELETE', 4);
+        // Defining how the content-selection list should be put together
+        define('CSL_PERMISSION_VIEW', 0);
+        define('CSL_PERMISSION_ADD', 1);
+        define('CSL_PERMISSION_EDIT', 2);
+        define('CSL_PERMISSION_DELETE', 4);
 
-    // Other constants
-    define('SITEMAP_MAX_ROWS_PER_LOOP', 500);
+        // Other constants
+        define('SITEMAP_MAX_ROWS_PER_LOOP', 500);
+    }
 }
 
 /**
@@ -256,7 +258,7 @@ abstract class Hook_sitemap_base
             return true;
         }
 
-        // Note that other things are disabled via get_entry_points returning NULL
+        // Note that other things are disabled via get_entry_points returning null
 
         return false;
     }
@@ -527,8 +529,8 @@ abstract class Hook_sitemap_base
                 }
             }
 
-            if ($row === null) { // Get from stored menus?
-                $test = $GLOBALS['SITE_DB']->query_select('menu_items', array('i_caption', 'i_theme_img_code', 'i_caption_long'), array('i_url' => $zone . ':' . $page), '', 1);
+            if ($row === null) { // Get from editable menus?
+                $test = $GLOBALS['SITE_DB']->query_select('menu_items', array('*'), array('i_url' => $zone . ':' . $page), '', 1);
                 if (array_key_exists(0, $test)) {
                     $title = get_translated_tempcode('menu_items', $test[0], 'i_caption');
                     $icon = $test[0]['i_theme_img_code'];
@@ -618,9 +620,15 @@ abstract class Hook_sitemap_content extends Hook_sitemap_base
             $zone = $matches[1];
             $page = $matches[2];
 
-            require_code('content');
-            $cma_ob = get_content_object($this->content_type);
-            $cma_info = $cma_ob->info();
+            static $cache = array();
+            if (isset($cache[$this->content_type])) {
+                $cma_info = $cache[$this->content_type];
+            } else {
+                require_code('content');
+                $cma_ob = get_content_object($this->content_type);
+                $cma_info = $cma_ob->info();
+                $cache[$this->content_type] = $cma_info;
+            }
             require_code('site');
             if (($cma_info['module'] == $page) && ($zone != '_SEARCH') && (_request_page($page, $zone) !== false)) { // Ensure the given page matches the content type, and it really does exist in the given zone
                 if ($matches[0] == $page_link) {
@@ -711,7 +719,7 @@ abstract class Hook_sitemap_content extends Hook_sitemap_base
             $title = make_string_tempcode(escape_html($title_value));
         } else {
             $title_value = $row[$cma_info['title_field']];
-            if ((isset($cma_info['title_field_supports_comcode'])) && ($cma_info['title_field_supports_comcode'])) {
+            if (isset($cma_info['title_field_supports_comcode']) && $cma_info['title_field_supports_comcode']) {
                 if ($cma_info['title_field_dereference']) {
                     $title = get_translated_tempcode($cma_info['table'], $row, $cma_info['title_field'], $cma_info['connection']);
                 } else {
@@ -734,7 +742,7 @@ abstract class Hook_sitemap_content extends Hook_sitemap_base
         $page = $matches[2];
 
         $has_entries = ($cma_info['is_category']) && ($this->entry_content_type !== null);
-        $has_subcategories = (isset($cma_info['parent_spec__parent_name'])) && ($cma_info['parent_category_meta_aware_type'] == $this->content_type);
+        $has_subcategories = (!is_null($cma_info['parent_spec__parent_name'])) && ($cma_info['parent_category_meta_aware_type'] == $this->content_type);
 
         $struct = array(
             'title' => $title,
@@ -780,7 +788,7 @@ abstract class Hook_sitemap_content extends Hook_sitemap_base
             'sitemap_refreshfreq' => 'monthly',
         );
 
-        if (isset($cma_info['permissions_type_code'])) {
+        if (!is_null($cma_info['permissions_type_code'])) {
             if (is_array($cma_info['category_field'])) {
                 $cma_info['category_field'] = array_pop($cma_info['category_field']);
             }
@@ -793,19 +801,18 @@ abstract class Hook_sitemap_content extends Hook_sitemap_base
             );
         }
 
-        /*if ((($meta_gather & SITEMAP_GATHER_DESCRIPTION)!=0) && (isset($cma_info['description_field'])))  Description field generally not appropriate for Sitemap
-        {
-            $description=$row[$cma_info['description_field']];
-            if (is_integer($description))
-            {
+        /* Description field generally not appropriate for Sitemap
+        if ((($meta_gather & SITEMAP_GATHER_DESCRIPTION) != 0) && (!is_null($cma_info['description_field']))) {
+            $description = $row[$cma_info['description_field']];
+            if (is_integer($description)) {
                 $struct['extra_meta']['description'] = get_translated_tempcode($description, $cma_info['connection']);
-            } else
-            {
+            } else {
                 $struct['extra_meta']['description'] = make_string_tempcode(escape_html($description));
             }
-        }*/
+        }
+        */
 
-        if ((($meta_gather & SITEMAP_GATHER_IMAGE) != 0) && (isset($cma_info['thumb_field']))) {
+        if ((($meta_gather & SITEMAP_GATHER_IMAGE) != 0) && (!is_null($cma_info['thumb_field']))) {
             if (method_exists($this, '_find_theme_image')) {
                 $this->_find_theme_image($row, $struct);
             } else {
@@ -817,12 +824,10 @@ abstract class Hook_sitemap_content extends Hook_sitemap_base
                 if ($struct['extra_meta']['image'] == '') {
                     $struct['extra_meta']['image'] = null;
                 } else {
-                    if ((isset($cma_info['thumb_field_is_theme_image'])) && ($cma_info['thumb_field_is_theme_image'])) {
-                        if ($struct['extra_meta']['image'] != '') {
-                            $struct['extra_meta']['image'] = find_theme_image($struct['extra_meta']['image'], true);
-                        }
+                    if ($cma_info['thumb_field_is_theme_image']) {
+                        $struct['extra_meta']['image'] = find_theme_image($struct['extra_meta']['image'], true);
                     } else {
-                        if ((url_is_local($struct['extra_meta']['image'])) && ($struct['extra_meta']['image'] != '')) {
+                        if (url_is_local($struct['extra_meta']['image'])) {
                             $struct['extra_meta']['image'] = get_custom_base_url() . '/' . $struct['extra_meta']['image'];
                         }
                     }
@@ -831,44 +836,44 @@ abstract class Hook_sitemap_content extends Hook_sitemap_base
         }
 
         if (($meta_gather & SITEMAP_GATHER_TIMES) != 0) {
-            if (isset($cma_info['add_time_field'])) {
+            if (!is_null($cma_info['add_time_field'])) {
                 $struct['extra_meta']['add_time'] = $row[$cma_info['add_time_field']];
             }
 
-            if (isset($cma_info['edit_time_field'])) {
+            if (!is_null($cma_info['edit_time_field'])) {
                 $struct['extra_meta']['edit_time'] = $row[$cma_info['edit_time_field']];
             }
         }
 
-        if ((($meta_gather & SITEMAP_GATHER_SUBMITTER) != 0) && (isset($cma_info['submitter_field']))) {
+        if ((($meta_gather & SITEMAP_GATHER_SUBMITTER) != 0) && (!is_null($cma_info['submitter_field']))) {
             $struct['extra_meta']['submitter'] = $row[$cma_info['submitter_field']];
         }
 
-        if ((($meta_gather & SITEMAP_GATHER_AUTHOR) != 0) && (isset($cma_info['author_field']))) {
+        if ((($meta_gather & SITEMAP_GATHER_AUTHOR) != 0) && (!is_null($cma_info['author_field']))) {
             $struct['extra_meta']['author'] = $row[$cma_info['author_field']];
         }
 
-        if ((($meta_gather & SITEMAP_GATHER_VIEWS) != 0) && (isset($cma_info['views_field']))) {
+        if ((($meta_gather & SITEMAP_GATHER_VIEWS) != 0) && (!is_null($cma_info['views_field']))) {
             $struct['extra_meta']['views'] = $row[$cma_info['views_field']];
         }
 
-        if ((($meta_gather & SITEMAP_GATHER_RATING) != 0) && (isset($cma_info['feedback_type_code']))) {
+        if ((($meta_gather & SITEMAP_GATHER_RATING) != 0) && (!is_null($cma_info['feedback_type_code']))) {
             $rating = $GLOBALS['SITE_DB']->query_select_value('rating', 'AVG(rating)', array('rating_for_type' => $cma_info['feedback_type_code'], 'rating_for_id' => $content_id));
             $struct['extra_meta']['rating'] = $rating;
         }
 
-        if ((($meta_gather & SITEMAP_GATHER_NUM_COMMENTS) != 0) && (isset($cma_info['feedback_type_code']))) {
+        if ((($meta_gather & SITEMAP_GATHER_NUM_COMMENTS) != 0) && (!is_null($cma_info['feedback_type_code']))) {
             $num_comments = 0;
-            $_comments = $GLOBALS['FORUM_DRIVER']->get_forum_topic_posts($GLOBALS['FORUM_DRIVER']->find_topic_id_for_topic_identifier(get_option('comments_forum_name'), $cma_info['feedback_type_code'] . '_' . $content_id), $num_comments, 0, 0, false);
+            $_comments = $GLOBALS['FORUM_DRIVER']->get_forum_topic_posts($GLOBALS['FORUM_DRIVER']->find_topic_id_for_topic_identifier(get_option('comments_forum_name'), $cma_info['feedback_type_code'] . '_' . $content_id, do_lang('COMMENT')), $num_comments, 0, 0, false);
 
             $struct['extra_meta']['num_comments'] = $num_comments;
         }
 
-        if ((($meta_gather & SITEMAP_GATHER_META) != 0) && (isset($cma_info['seo_type_code']))) {
+        if ((($meta_gather & SITEMAP_GATHER_META) != 0) && (!is_null($cma_info['seo_type_code']))) {
             list($struct['extra_meta']['meta_keywords'], $struct['extra_meta']['meta_description']) = seo_meta_get_for($this->content_type, $content_id);
         }
 
-        if ((($meta_gather & SITEMAP_GATHER_VALIDATED) != 0) && (isset($cma_info['validated_field']))) {
+        if ((($meta_gather & SITEMAP_GATHER_VALIDATED) != 0) && (!is_null($cma_info['validated_field']))) {
             $struct['extra_meta']['validated'] = $row[$cma_info['validated_field']];
         }
 
@@ -915,7 +920,7 @@ abstract class Hook_sitemap_content extends Hook_sitemap_base
         $children = array();
 
         $has_entries = ($cma_info['is_category']) && ($this->entry_content_type !== null);
-        $has_subcategories = (isset($cma_info['parent_spec__parent_name'])) && ($cma_info['parent_category_meta_aware_type'] == $this->content_type);
+        $has_subcategories = (!is_null($cma_info['parent_spec__parent_name'])) && ($cma_info['parent_category_meta_aware_type'] == $this->content_type);
         if (!$has_entries && !$has_subcategories) {
             return null;
         }
@@ -934,14 +939,14 @@ abstract class Hook_sitemap_content extends Hook_sitemap_base
                 $cma_entry_ob = get_content_object($entry_content_type);
                 $cma_entry_info = $cma_entry_ob->info();
 
-                if ((!$require_permission_support) || (isset($cma_entry_info['permissions_type_code']))) {
+                if ((!$require_permission_support) || (!is_null($cma_entry_info['permissions_type_code']))) {
                     $child_hook_ob = $this->_get_sitemap_object($entry_sitetree_hook);
 
                     $children_entries = array();
 
                     $privacy_join = '';
                     $privacy_where = '';
-                    if ((isset($cma_entry_info['supports_privacy'])) && ($cma_entry_info['supports_privacy'])) {
+                    if ($cma_entry_info['support_privacy']) {
                         if (addon_installed('content_privacy')) {
                             require_code('content_privacy');
                             list($privacy_join, $privacy_where) = get_privacy_where_clause($entry_content_type, 'r');
@@ -952,8 +957,8 @@ abstract class Hook_sitemap_content extends Hook_sitemap_base
                     if (is_array($cma_entry_info['category_field'])) {
                         $cma_entry_info['category_field'] = array_pop($cma_entry_info['category_field']);
                     }
-                    $where[$cma_entry_info['category_field']] = $cma_entry_info['id_field_numeric'] ? intval($content_id) : $content_id;
-                    if (($consider_validation) && (isset($cma_entry_info['validated_field']))) {
+                    $where[$cma_entry_info['category_field']] = $cma_info['id_field_numeric'] ? intval($content_id) : $content_id;
+                    if (($consider_validation) && (!is_null($cma_entry_info['validated_field']))) {
                         $where[$cma_entry_info['validated_field']] = 1;
                     }
                     $table = $cma_entry_info['table'] . ' r';
@@ -976,7 +981,7 @@ abstract class Hook_sitemap_content extends Hook_sitemap_base
                     if (!$skip_children) {
                         $start = 0;
                         do {
-                            $rows = $cma_entry_info['connection']->query_select($table, array('*'), $where, $extra_where_entries . $privacy_where . (is_null($explicit_order_by_entries) ? '' : (' ORDER BY ' . $explicit_order_by_entries)), SITEMAP_MAX_ROWS_PER_LOOP, $start);
+                            $rows = $cma_entry_info['connection']->query_select($table, array('r.*'), $where, $extra_where_entries . $privacy_where . (is_null($explicit_order_by_entries) ? '' : (' ORDER BY ' . $explicit_order_by_entries)), SITEMAP_MAX_ROWS_PER_LOOP, $start);
                             $child_page = ($cma_entry_info['module'] == $cma_info['module']) ? $page : $cma_entry_info['module']; // assumed in same zone
                             foreach ($rows as $child_row) {
                                 $child_page_link = $zone . ':' . $child_page . ':' . $child_hook_ob->screen_type . ':' . ($cma_entry_info['id_field_numeric'] ? strval($child_row[$cma_entry_info['id_field']]) : $child_row[$cma_entry_info['id_field']]);
@@ -1003,11 +1008,13 @@ abstract class Hook_sitemap_content extends Hook_sitemap_base
 
             $where = array();
             $where[$cma_info['parent_spec__parent_name']] = $cma_info['category_is_string'] ? $content_id : intval($content_id);
-            if (($consider_validation) && (isset($cma_info['validated_field']))) {
+            if (($consider_validation) && (!is_null($cma_info['validated_field']))) {
                 $where[$cma_info['validated_field']] = 1;
             }
+            $select = array('r.*');
             $table = $cma_info['parent_spec__table_name'] . ' r';
             if ($cma_info['parent_spec__table_name'] != $cma_info['table']) {
+                $select[] = 'r2.*';
                 $table .= ' JOIN ' . $cma_info['connection']->get_table_prefix() . $cma_info['table'] . ' r2 ON r2.' . $cma_info['id_field'] . '=r.' . $cma_info['parent_spec__field_name'];
             }
 
@@ -1026,9 +1033,11 @@ abstract class Hook_sitemap_content extends Hook_sitemap_base
             }
 
             if (!$skip_children) {
+                $lang_fields = isset($GLOBALS['TABLE_LANG_FIELDS_CACHE'][$cma_info['parent_spec__table_name']]) ? $GLOBALS['TABLE_LANG_FIELDS_CACHE'][$cma_info['parent_spec__table_name']] : array();
+
                 $start = 0;
                 do {
-                    $rows = $cma_info['connection']->query_select($table, array('*'), $where, (is_null($explicit_order_by_subcategories) ? '' : ('ORDER BY ' . $explicit_order_by_subcategories)), SITEMAP_MAX_ROWS_PER_LOOP, $start);
+                    $rows = $cma_info['connection']->query_select($table, $select, $where, (is_null($explicit_order_by_subcategories) ? '' : ('ORDER BY ' . $explicit_order_by_subcategories)), SITEMAP_MAX_ROWS_PER_LOOP, $start, false, $lang_fields);
                     foreach ($rows as $child_row) {
                         if ($this->content_type == 'comcode_page') {
                             $child_page_link = $zone . ':' . $child_row['the_page'];
@@ -1104,36 +1113,51 @@ function get_page_grouping_links()
  */
 function get_root_comcode_pages($zone, $include_zone = false)
 {
-    /*$rows=$GLOBALS['SITE_DB']->query_select('comcode_pages',array('the_page','p_validated'),array('the_zone'=>$zone,'p_parent_page'=>''));
-    return collapse_2d_complexity('the_page','p_validated',$rows);*/
+    /*
+    $rows[$zone] = $GLOBALS['SITE_DB']->query_select('comcode_pages', array('the_page', 'p_validated'), array('the_zone' => $zone, 'p_parent_page' => ''));
+    return collapse_2d_complexity('the_page', 'p_validated', $rows[$zone]);
+    */
 
     // This uses more memory than the above, but is needed as pages may not have got into the database yet...
 
     disable_php_memory_limit();
 
-    $rows = $GLOBALS['SITE_DB']->query('SELECT the_page,p_validated FROM ' . get_table_prefix() . 'comcode_pages WHERE ' . db_string_equal_to('the_zone', $zone) . ' AND ' . db_string_not_equal_to('p_parent_page', ''));
-    $non_root = collapse_2d_complexity('the_page', 'p_validated', $rows);
+    static $rows = array();
+    if (!isset($rows[$zone])) {
+        $rows[$zone] = $GLOBALS['SITE_DB']->query_select('comcode_pages', array('the_page', 'p_validated', 'p_parent_page'), array('the_zone' => $zone));
+    }
+    $non_root = array();
+    $root = array();
+    foreach ($rows[$zone] as $row) {
+        if ($row['p_parent_page'] == '') {
+            $root[$row['the_page']] = $row['p_validated'];
+        } else {
+            $non_root[$row['the_page']] = $row['p_validated'];
+        }
+    }
 
-    $pages = find_all_pages_wrap($zone, false, /*$consider_redirects=*/true, /*$show_method = */0, /*$page_type = */'comcode');
+    $pages = find_all_pages_wrap($zone, false, /*$consider_redirects = */true, /*$show_method = */0, /*$page_type = */'comcode');
     foreach ($pages as $page => $page_type) {
         if (isset($non_root[$page])) {
             unset($pages[$page]);
         }
     }
 
-    if ($include_zone) {
-        $page_links = array();
-        foreach ($pages as $page => $page_type) {
-            if (is_integer($page)) {
-                $page = strval($page);
-            }
-
-            $page_links[$zone . ':' . $page] = $page_type;
+    $page_links = array();
+    foreach ($pages as $page => $page_type) {
+        if (is_integer($page)) {
+            $page = strval($page);
         }
-        return $page_links;
-    }
 
-    return $pages;
+        if ($include_zone) {
+            $key = $zone . ':' . $page;
+        } else {
+            $key = $page;
+        }
+
+        $page_links[$key] = isset($root[$page]) ? $root[$page] : 1;
+    }
+    return $page_links;
 }
 
 /**

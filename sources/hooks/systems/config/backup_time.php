@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -38,6 +38,7 @@ class Hook_config_backup_time
             'explanation' => 'CONFIG_OPTION_backup_time',
             'shared_hosting_restricted' => '1',
             'list_options' => '',
+            'required' => false,
 
             'addon' => 'backup',
         );

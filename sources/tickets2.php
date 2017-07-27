@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -71,7 +71,7 @@ function add_ticket_type($ticket_type_name, $guest_emails_mandatory = 0, $search
 
     if ((addon_installed('commandr')) && (!running_script('install'))) {
         require_code('resource_fs');
-        generate_resourcefs_moniker('ticket_type', strval($ticket_type_id), null, null, true);
+        generate_resource_fs_moniker('ticket_type', strval($ticket_type_id), null, null, true);
     }
 
     return $ticket_type_id;
@@ -100,7 +100,7 @@ function edit_ticket_type($ticket_type_id, $ticket_type_name, $guest_emails_mand
 
     if ((addon_installed('commandr')) && (!running_script('install'))) {
         require_code('resource_fs');
-        generate_resourcefs_moniker('ticket_type', strval($ticket_type_id), $ticket_type_name);
+        generate_resource_fs_moniker('ticket_type', strval($ticket_type_id), $ticket_type_name);
     }
 }
 
@@ -125,7 +125,7 @@ function delete_ticket_type($ticket_type_id)
 
     if ((addon_installed('commandr')) && (!running_script('install'))) {
         require_code('resource_fs');
-        expunge_resourcefs_moniker('ticket_type', strval($ticket_type_id));
+        expunge_resource_fs_moniker('ticket_type', strval($ticket_type_id));
     }
 }
 
@@ -133,17 +133,20 @@ function delete_ticket_type($ticket_type_id)
  * Get a map of properties for the given ticket type.
  *
  * @param  ?AUTO_LINK $ticket_type_id The ticket type (null: fallback for old tickets)
- * @return ?array Array of properties (null: ticket type not found)
+ * @return array Array of properties
  */
 function get_ticket_type($ticket_type_id)
 {
+    $default = array('ticket_type' => null, 'ticket_type_name' => do_lang('UNKNOWN'), 'guest_emails_mandatory' => 0, 'search_faq' => 0, 'cache_lead_time' => null);
+
     if (is_null($ticket_type_id)) {
-        return array('ticket_type' => null, 'guest_emails_mandatory' => false, 'search_faq' => false, 'cache_lead_time' => null);
+        // LEGACY
+        return $default;
     }
 
     $rows = $GLOBALS['SITE_DB']->query_select('ticket_types', null, array('id' => $ticket_type_id), '', 1);
     if (count($rows) == 0) {
-        return null;
+        return $default;
     }
     return $rows[0];
 }
@@ -214,7 +217,7 @@ function update_ticket_type_lead_times()
  * @param  AUTO_LINK $member_id The member ID
  * @param  ?AUTO_LINK $ticket_type_id The ticket type (null: all ticket types)
  * @param  boolean $override_view_others_tickets Don't view others' tickets, even if the member has permission to
- * @param  boolean $silent_error_handling Whether to skip showing errors, returning NULL instead
+ * @param  boolean $silent_error_handling Whether to skip showing errors, returning null instead
  * @param  boolean $open_only Open tickets only
  * @param  boolean $include_first_posts Whether to include first posts
  * @return array Array of tickets, empty on failure
@@ -297,7 +300,7 @@ function get_tickets($member_id, $ticket_type_id = null, $override_view_others_t
  * @param  AUTO_LINK $ticket_type Return location for the ticket type
  * @param  integer $start Start offset in pagination
  * @param  ?integer $max Max per page in pagination (null: no limit)
- * @return mixed The array of maps (Each map is: title, message, member, date) (null: no such ticket)
+ * @return ?mixed The array of maps (Each map is: title, message, member, date) (null: no such ticket)
  */
 function get_ticket_posts($ticket_id, &$forum, &$topic_id, &$ticket_type, $start = 0, $max = null)
 {
@@ -314,15 +317,15 @@ function get_ticket_posts($ticket_id, &$forum, &$topic_id, &$ticket_type, $start
         $forum = $ticket[0]['forum_id'];
         $topic_id = $ticket[0]['topic_id'];
         $count = 0;
-        return $GLOBALS['FORUM_DRIVER']->get_forum_topic_posts($GLOBALS['FORUM_DRIVER']->find_topic_id_for_topic_identifier(strval($forum), $ticket_id), $count, $max, $start);
+        return $GLOBALS['FORUM_DRIVER']->get_forum_topic_posts($GLOBALS['FORUM_DRIVER']->find_topic_id_for_topic_identifier(strval($forum), $ticket_id, do_lang('SUPPORT_TICKET')), $count, $max, $start);
     }
 
     // It must be an old-style ticket, residing in the root ticket forum
     $forum = get_ticket_forum_id();
-    $topic_id = $GLOBALS['FORUM_DRIVER']->find_topic_id_for_topic_identifier(get_option('ticket_forum_name'), $ticket_id);
+    $topic_id = $GLOBALS['FORUM_DRIVER']->find_topic_id_for_topic_identifier(get_option('ticket_forum_name'), $ticket_id, do_lang('SUPPORT_TICKET'));
     $ticket_type_id = null;
     $count = 0;
-    return $GLOBALS['FORUM_DRIVER']->get_forum_topic_posts($GLOBALS['FORUM_DRIVER']->find_topic_id_for_topic_identifier(strval($forum), $ticket_id), $count);
+    return $GLOBALS['FORUM_DRIVER']->get_forum_topic_posts($GLOBALS['FORUM_DRIVER']->find_topic_id_for_topic_identifier(strval($forum), $ticket_id, do_lang('SUPPORT_TICKET')), $count);
 }
 
 /**
@@ -384,7 +387,7 @@ function ticket_add_post($member_id, $ticket_id, $ticket_type_id, $title, $post,
         $time_post
     );
 
-    // Save meta-data
+    // Save metadata
     $topic_id = $GLOBALS['LAST_TOPIC_ID'];
     $is_new = $GLOBALS['LAST_TOPIC_IS_NEW'];
     if (($is_new) && ($ticket_type_id !== null)) {
@@ -466,8 +469,8 @@ function send_ticket_email($ticket_id, $title, $post, $ticket_url, $uid_email, $
                 $subject = do_lang(
                     'TICKET_REPLY',
                     $ticket_type_name,
-                    $ticket_type_name,
                     $title,
+                    null,
                     $uid_lang
                 );
 
@@ -534,7 +537,7 @@ function send_ticket_email($ticket_id, $title, $post, $ticket_url, $uid_email, $
             if ((get_option('ticket_mail_on') == '1') && (cron_installed()) && (function_exists('imap_open')) && ($new_ticket) && ($auto_created)) {
                 require_code('tickets_email_integration');
                 ticket_outgoing_message($ticket_id, $ticket_url, $ticket_type_name, $title, $post, $uid_displayname, $uid_email, '', true);
-            } else {
+            } elseif (get_option('message_received_emails') == '1') {
                 require_code('mail');
                 mail_wrap(do_lang('YOUR_MESSAGE_WAS_SENT_SUBJECT', $title), do_lang('YOUR_MESSAGE_WAS_SENT_BODY', $post), array($uid_email), null, '', '', 3, null, false, $new_poster);
             }

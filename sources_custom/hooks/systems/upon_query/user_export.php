@@ -1,11 +1,17 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
 */
+
+/**
+ * @license    http://opensource.org/licenses/cpal_1.0 Common Public Attribution License
+ * @copyright  ocProducts Ltd
+ * @package    user_simple_csv_sync
+ */
 
 /**
  * Hook class.
@@ -16,7 +22,23 @@ class Hook_upon_query_user_export
 
     public function run_pre($ob, $query, $max, $start, $fail_ok, $get_insert_id)
     {
-        $prefix = preg_quote(get_table_prefix(), '#');
+        if ($query[0] == 'S') {
+            return;
+        }
+
+        if (!isset($GLOBALS['FORUM_DB'])) {
+            return;
+        }
+
+        if (running_script('install')) {
+            return;
+        }
+
+        if (strpos($query, 'f_member') === false) {
+            return;
+        }
+
+        $prefix = preg_quote($GLOBALS['FORUM_DB']->get_table_prefix(), '#');
 
         $matches = array();
         if (
@@ -42,11 +64,19 @@ class Hook_upon_query_user_export
 
     public function run_post($ob, $query, $max, $start, $fail_ok, $get_insert_id, $ret)
     {
+        if ($query[0] == 'S') {
+            return;
+        }
+
         if (!isset($GLOBALS['FORUM_DB'])) {
             return;
         }
 
         if (running_script('install')) {
+            return;
+        }
+
+        if (strpos($query, 'f_member') === false) {
             return;
         }
 

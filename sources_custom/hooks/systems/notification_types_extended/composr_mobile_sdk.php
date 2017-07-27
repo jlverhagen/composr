@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -95,6 +95,10 @@ class Hook_notification_types_extended_composr_mobile_sdk
      */
     public function _notification_setting_available($setting, $member_id, &$system_wide, &$for_member)
     {
+        if (!$GLOBALS['SITE_DB']->table_exists('device_token_details')) {
+            return;
+        }
+
         switch ($setting) {
             case A_INSTANT_IOS:
                 if (get_option('enable_notifications_instant_ios') === '1') {
@@ -149,7 +153,7 @@ class Hook_notification_types_extended_composr_mobile_sdk
             }
         }
 
-        if (get_option('enable_notifications_instant_android') === '1') {
+        if (get_option('enable_notifications_instant_android') !== '') {
             if (_notification_setting_available(A_INSTANT_ANDROID, $to_member_id)) {
                 $message = strip_comcode($message);
                 $properties = $this->improve_message_for_mobile($message);

@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -46,7 +46,7 @@ class Module_admin_pointstore
      * @param  boolean $check_perms Whether to check permissions.
      * @param  ?MEMBER $member_id The member to check permissions as (null: current user).
      * @param  boolean $support_crosslinks Whether to allow cross links to other modules (identifiable via a full-page-link rather than a screen-name).
-     * @param  boolean $be_deferential Whether to avoid any entry-point (or even return NULL to disable the page in the Sitemap) if we know another module, or page_group, is going to link to that entry-point. Note that "!" and "browse" entry points are automatically merged with container page nodes (likely called by page-groupings) as appropriate.
+     * @param  boolean $be_deferential Whether to avoid any entry-point (or even return null to disable the page in the Sitemap) if we know another module, or page_group, is going to link to that entry-point. Note that "!" and "browse" entry points are automatically merged with container page nodes (likely called by page-groupings) as appropriate.
      * @return ?array A map of entry points (screen-name=>language-code/string or screen-name=>[language-code/string, icon-theme-image]) (null: disabled).
      */
     public function get_entry_points($check_perms = true, $member_id = null, $support_crosslinks = true, $be_deferential = false)
@@ -65,7 +65,7 @@ class Module_admin_pointstore
     public $title;
 
     /**
-     * Module pre-run function. Allows us to know meta-data for <head> before we start streaming output.
+     * Module pre-run function. Allows us to know metadata for <head> before we start streaming output.
      *
      * @return ?Tempcode Tempcode indicating some kind of exceptional output (null: none).
      */
@@ -105,6 +105,9 @@ class Module_admin_pointstore
      */
     public function run()
     {
+        require_code('input_filter_2');
+        rescue_shortened_post_request();
+
         require_code('form_templates');
         require_css('points');
 
@@ -154,19 +157,21 @@ class Module_admin_pointstore
                 $username = do_lang('UNKNOWN');
             }
             switch ($row['purchasetype']) {
-                case 'banner':
-                    require_lang('banners');
-                    $type = do_lang('ADD_BANNER');
-                    break;
                 case 'pop3':
                     $type = do_lang('POP3');
                     break;
                 case 'forwarding':
                     $type = do_lang('FORWARDING');
                     break;
+                case 'banner':
+                    if (addon_installed('banners')) {
+                        require_lang('banners');
+                        $type = do_lang('ADD_BANNER');
+                    }
+                    break;
                 default:
                     $_type = do_lang($row['purchasetype'], null, null, null, null, false);
-                    if (is_null($type)) {
+                    if (is_null($_type)) {
                         $type = make_string_tempcode($row['purchasetype']);
                     } else {
                         $type = do_lang_tempcode($row['purchasetype']);
@@ -236,6 +241,9 @@ class Module_admin_pointstore
      */
     public function interface_set_prices()
     {
+        require_code('input_filter_2');
+        modsecurity_workaround_enable();
+
         $field_groups = new Tempcode();
         $add_forms = new Tempcode();
 
@@ -294,6 +302,7 @@ class Module_admin_pointstore
                 'SUBMIT_BUTTON_CLASS' => 'proceed_button_left_2',
                 'URL' => $post_url,
                 'SUPPORT_AUTOSAVE' => true,
+                'MODSECURITY_WORKAROUND' => true,
             ));
         }
 
@@ -316,6 +325,9 @@ class Module_admin_pointstore
      */
     public function set_prices()
     {
+        require_code('input_filter_2');
+        modsecurity_workaround_enable();
+
         // Save configuration for hooks
         $_hooks = find_all_hooks('modules', 'pointstore');
         foreach (array_keys($_hooks) as $hook) {

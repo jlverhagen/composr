@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -33,6 +33,7 @@ class Hook_config_gallery_sync_orphaned_handling
             'explanation' => 'CONFIG_OPTION_gallery_sync_orphaned_handling',
             'shared_hosting_restricted' => '0',
             'list_options' => '1|2|3',
+            'order_in_category_group' => 2,
 
             'addon' => 'gallery_syndication',
         );

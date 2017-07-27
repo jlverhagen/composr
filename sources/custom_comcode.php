@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -43,11 +43,13 @@ function add_custom_comcode_tag($tag, $title, $description, $replace, $example, 
 
     require_code('comcode_compiler');
 
+    init_valid_comcode_tags();
+
     global $VALID_COMCODE_TAGS;
     $test = $GLOBALS['SITE_DB']->query_select_value_if_there('custom_comcode', 'tag_tag', array('tag_tag' => $tag));
     if ((array_key_exists($tag, $VALID_COMCODE_TAGS)) || (!is_null($test))) {
         if ($uniqify) {
-            $tag .= '_' . uniqid('', true);
+            $tag .= '_' . uniqid('', false);
         } else {
             warn_exit(do_lang_tempcode('ALREADY_EXISTS', escape_html($tag)));
         }
@@ -79,7 +81,7 @@ function add_custom_comcode_tag($tag, $title, $description, $replace, $example, 
 
     if ((addon_installed('commandr')) && (!running_script('install'))) {
         require_code('resource_fs');
-        generate_resourcefs_moniker('custom_comcode_tag', $tag, null, null, true);
+        generate_resource_fs_moniker('custom_comcode_tag', $tag, null, null, true);
     }
 
     return $tag;
@@ -111,6 +113,8 @@ function edit_custom_comcode_tag($old_tag, $tag, $title, $description, $replace,
 
     require_code('comcode_compiler');
 
+    init_valid_comcode_tags();
+
     global $VALID_COMCODE_TAGS;
     $test = $GLOBALS['SITE_DB']->query_select_value_if_there('custom_comcode', 'tag_tag', array('tag_tag' => $tag));
     if ($old_tag == $tag) {
@@ -118,7 +122,7 @@ function edit_custom_comcode_tag($old_tag, $tag, $title, $description, $replace,
     }
     if ((array_key_exists($tag, $VALID_COMCODE_TAGS)) || (!is_null($test))) {
         if ($uniqify) {
-            $tag .= '_' . uniqid('', true);
+            $tag .= '_' . uniqid('', false);
         } else {
             warn_exit(do_lang_tempcode('ALREADY_EXISTS', escape_html($tag)));
         }
@@ -149,7 +153,7 @@ function edit_custom_comcode_tag($old_tag, $tag, $title, $description, $replace,
 
     if ((addon_installed('commandr')) && (!running_script('install'))) {
         require_code('resource_fs');
-        generate_resourcefs_moniker('custom_comcode_tag', $tag);
+        generate_resource_fs_moniker('custom_comcode_tag', $tag);
     }
 
     return $tag;
@@ -179,6 +183,6 @@ function delete_custom_comcode_tag($tag)
 
     if ((addon_installed('commandr')) && (!running_script('install'))) {
         require_code('resource_fs');
-        expunge_resourcefs_moniker('custom_comcode_tag', $tag);
+        expunge_resource_fs_moniker('custom_comcode_tag', $tag);
     }
 }

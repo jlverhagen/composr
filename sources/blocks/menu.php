@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -37,7 +37,7 @@ class Block_menu
         $info['hack_version'] = null;
         $info['version'] = 2;
         $info['locked'] = false;
-        $info['parameters'] = array('title', 'type', 'param', 'tray_status', 'silent_failure');
+        $info['parameters'] = array('title', 'type', 'param', 'tray_status', 'silent_failure', 'javascript_highlighting');
         return $info;
     }
 
@@ -64,15 +64,17 @@ class Block_menu
      */
     public function run($map)
     {
-        if (!array_key_exists('param', $map)) {
-            $map['param'] = '';
+        global $LANGS_REQUESTED;
+        $bak = $LANGS_REQUESTED;
+
+        $menu = isset($map['param']) ? $map['param'] : '';
+        if ($menu == '') {
+            // Sitemap takes lots of memory
+            disable_php_memory_limit();
         }
 
-        $type = array_key_exists('type', $map) ? $map['type'] : 'embossed';
-        $silent_failure = array_key_exists('silent_failure', $map) ? $map['silent_failure'] : '0';
-        $tray_status = array_key_exists('tray_status', $map) ? $map['tray_status'] : '';
-
-        if ($type != 'tree') {
+        $type = isset($map['type']) ? $map['type'] : 'embossed';
+        if ($type != 'dropdown' && $type != 'tree' && $type != 'embossed' && $type != 'popup' && $type != 'select') {
             $exists = file_exists(get_file_base() . '/themes/default/templates/MENU_BRANCH_' . $type . '.tpl');
             if (!$exists) {
                 $exists = file_exists(get_custom_file_base() . '/themes/default/templates_custom/MENU_BRANCH_' . $type . '.tpl');
@@ -89,19 +91,33 @@ class Block_menu
             }
         }
 
-        if ($map['param'] == '') {
-            disable_php_memory_limit();
-        }
+        $title = (isset($map['title']) ? $map['title'] : '');
+
+        $silent_failure = ((isset($map['silent_failure']) ? $map['silent_failure'] : '0') == '1');
+
+        $tray_status = isset($map['tray_status']) ? $map['tray_status'] : '';
+
+        $javascript_highlighting = ((isset($map['javascript_highlighting']) ? $map['javascript_highlighting'] : '1') == '1');
 
         require_code('menus');
-        $menu = build_menu($type, $map['param'], $silent_failure == '1');
-        $menu->handle_symbol_preprocessing(); // Optimisation: we are likely to have lots of page-links in here, so we want to spawn them to be detected for mass moniker loading
-
-        if ((array_key_exists('title', $map)) && ($map['title'] != '')) {
-            $menu = do_template('BLOCK_MENU', array('_GUID' => 'ae46aa37a9c5a526f43b26a391164436', 'CONTENT' => $menu, 'TYPE' => $type, 'PARAM' => $map['param'], 'TRAY_STATUS' => $tray_status, 'TITLE' => comcode_to_tempcode($map['title'], null, true)));
+        list($content, $root) = build_menu($type, $menu, $silent_failure, !$javascript_highlighting);
+        if (strpos(serialize($root), 'keep_') === false) {
+            $LANGS_REQUESTED = $bak; // We've flattened with apply_quick_caching, we don't need to load up all those language files next time
         }
 
-        return $menu;
+        if ($title != '') {
+            $content = do_template('BLOCK_MENU', array(
+                '_GUID' => 'ae46aa37a9c5a526f43b26a391164436',
+                'CONTENT' => $content,
+                'TYPE' => $type,
+                'PARAM' => $menu,
+                'TRAY_STATUS' => $tray_status,
+                'TITLE' => comcode_to_tempcode($map['title'], null, true),
+                'JAVASCRIPT_HIGHLIGHTING' => $javascript_highlighting,
+            ));
+        }
+
+        return $content;
     }
 }
 
@@ -120,22 +136,38 @@ function block_menu__cache_on($map)
      (special case -- catalogue index screens are also distinguished by ID, as catalogues vary a lot)
 
     There is a simple workaround if our assumptions don't hold up. Just turn off caching for the
-    particular menu block instance. cache="0". It won't hurt very much, menus are relatively fast.
+    particular menu block instance. cache="0". It won't hurt very much, menus are relatively fast,
+    except for large drop-down sets.
     */
 
-    $menu = array_key_exists('param', $map) ? $map['param'] : '';
-    $page = get_page_name();
-    $url_type = get_param_string('type', 'browse');
-    return array(
-        ((substr($menu, 0, 1) != '_') && (substr($menu, 0, 3) != '!!!') && (has_actual_page_access(get_member(), 'admin_menus'))),
-        get_zone_name(),
-        $page,
-        $url_type,
-        ($page == 'catalogues' && $url_type == 'index') ? get_param_string('id', '') : '', // Catalogues need a little extra work to distinguish them
-        array_key_exists('type', $map) ? $map['type'] : 'embossed',
+    $menu = isset($map['param']) ? $map['param'] : '';
+
+    require_code('permissions');
+    $show_edit_link = ((substr($menu, 0, 1) != '_') && (substr($menu, 0, 3) != '!!!') && (has_actual_page_access(get_member(), 'admin_menus')));
+
+    $javascript_highlighting = ((isset($map['javascript_highlighting']) ? $map['javascript_highlighting'] : '1') == '1');
+
+    $ret = array(
+        has_keep_parameters(),
+        $show_edit_link,
         $menu,
-        array_key_exists('title', $map) ? $map['title'] : '',
-        array_key_exists('silent_failure', $map) ? $map['silent_failure'] : '0',
-        array_key_exists('tray_status', $map) ? $map['tray_status'] : '',
+        isset($map['type']) ? $map['type'] : 'embossed',
+        isset($map['title']) ? $map['title'] : '',
+        ((isset($map['silent_failure']) ? $map['silent_failure'] : '0') == '1'),
+        isset($map['tray_status']) ? $map['tray_status'] : '',
     );
+
+    if (!$javascript_highlighting) {
+        $page = get_page_name();
+        $url_type = get_param_string('type', 'browse');
+
+        $ret = array_merge($ret, array(
+            get_zone_name(),
+            $page,
+            $url_type,
+            ($page == 'catalogues' && $url_type == 'index') ? get_param_string('id', '') : '', // Catalogues need a little extra work to distinguish them
+        ));
+    }
+
+    return $ret;
 }

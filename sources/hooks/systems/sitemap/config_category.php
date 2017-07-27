@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -136,7 +136,10 @@ class Hook_sitemap_config_category extends Hook_sitemap_base
         $page = $matches[2];
         $category = $matches[4];
 
-        require_all_lang();
+        require_lang('config');
+        if (do_lang('CONFIG_CATEGORY_' . $category, null, null, null, null, false) === null) {
+            require_all_lang();
+        }
 
         $_category_name = do_lang_tempcode('CONFIG_CATEGORY_' . $category);
 
@@ -150,8 +153,8 @@ class Hook_sitemap_config_category extends Hook_sitemap_base
             'url' => null,
             'extra_meta' => array(
                 'description' => null,
-                'image' => null,
-                'image_2x' => null,
+                'image' => (($meta_gather & SITEMAP_GATHER_IMAGE) != 0) ? find_theme_image('icons/24x24/menu/adminzone/setup/config/config') : null,
+                'image_2x' => (($meta_gather & SITEMAP_GATHER_IMAGE) != 0) ? find_theme_image('icons/48x48/menu/adminzone/setup/config/config') : null,
                 'add_date' => null,
                 'edit_date' => null,
                 'submitter' => null,

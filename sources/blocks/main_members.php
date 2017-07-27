@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -104,7 +104,6 @@ class Block_main_members
         require_code('cns_members');
         require_code('cns_groups');
         require_code('cns_members2');
-        require_code('selectcode');
 
         require_css('cns_member_directory');
         require_lang('cns_member_directory');
@@ -168,8 +167,7 @@ class Block_main_members
         }
         if ($filter != '') {
             require_code('filtercode');
-            $content_type = 'member';
-            list($filter_extra_select, $filter_extra_join, $filter_extra_where) = filtercode_to_sql($GLOBALS['FORUM_DB'], parse_filtercode($filter), $content_type, '');
+            list($filter_extra_select, $filter_extra_join, $filter_extra_where) = filtercode_to_sql($GLOBALS['FORUM_DB'], parse_filtercode($filter), 'member');
             $extra_select_sql = implode('', $filter_extra_select);
             $extra_join_sql = implode('', $filter_extra_join);
         } else {
@@ -180,7 +178,10 @@ class Block_main_members
         $where .= $filter_extra_where;
 
         $select = array_key_exists('select', $map) ? $map['select'] : '*';
-        $where .= ' AND (' . selectcode_to_sqlfragment($select, 'id') . ')';
+        if ($select != '*') {
+            require_code('selectcode');
+            $where .= ' AND (' . selectcode_to_sqlfragment($select, 'id') . ')';
+        }
 
         if ($usergroup != '') {
             $where .= ' AND (1=0';
@@ -205,6 +206,7 @@ class Block_main_members
         if ((!has_privilege(get_member(), 'see_unvalidated')) && (addon_installed('unvalidated'))) {
             $where .= ' AND m_validated=1';
         }
+        $where .= ' AND ' . db_string_equal_to('m_validated_email_confirm_code', '');
 
         $include_form = array_key_exists('include_form', $map) ? ($map['include_form'] == '1') : true;
 
@@ -266,10 +268,8 @@ class Block_main_members
             'm_last_visit_time' => do_lang_tempcode('LAST_VISIT_TIME'),
             'm_profile_views' => do_lang_tempcode('PROFILE_VIEWS'),
             'random' => do_lang_tempcode('RANDOM'),
+            'm_total_sessions' => do_lang_tempcode('LOGIN_FREQUENCY'),
         );
-        if (strpos(get_db_type(), 'mysql') !== false) {
-            $sortables['m_total_sessions'] = do_lang_tempcode('LOGIN_FREQUENCY');
-        }
         if (strpos($sort, ' ') === false) {
             $sort .= ' ASC';
         }
@@ -277,13 +277,13 @@ class Block_main_members
         switch ($sort) {
             case 'random ASC':
             case 'random DESC':
-                $sort = 'RAND() ASC';
+                $sort = db_function('RAND') . ' ASC';
                 break;
             case 'm_total_sessions ASC':
-                $sort = 'm_total_sessions/(UNIX_TIMESTAMP()-m_join_time) ASC';
+                $sort = 'm_total_sessions/(' . strval(time()) . '-m_join_time) ASC';
                 break;
             case 'm_total_sessions DESC':
-                $sort = 'm_total_sessions/(UNIX_TIMESTAMP()-m_join_time) DESC';
+                $sort = 'm_total_sessions/(' . strval(time()) . '-m_join_time) DESC';
                 break;
             case 'm_join_time':
             case 'm_last_visit_time':
@@ -324,9 +324,10 @@ class Block_main_members
         /*if (count($rows)==0)   We let our template control no-result output
         {
             return do_template('BLOCK_NO_ENTRIES', array(
+                '_GUID' => '8e2691c84c5ff6e4ca16305fa409f7b8',
                 'HIGH' => false,
                 'TITLE' => do_lang_tempcode('RECENT', make_string_tempcode(integer_format($max)), do_lang_tempcode('MEMBERS')),
-                'MESSAGE' => do_lang_tempcode('NO_ENTRIES'),
+                'MESSAGE' => do_lang_tempcode('NO_ENTRIES', 'member'),
                 'ADD_NAME' => '',
                 'SUBMIT_URL' => '',
             ));
@@ -417,12 +418,13 @@ class Block_main_members
             if (get_option('use_joindate') == '1') {
                 $_fields_title[] = do_lang_tempcode('JOIN_DATE');
             }
-            $fields_title = results_field_title($_fields_title, $sortables, 'md_sort', $sortable . ' ' . $sort_order);
+            $fields_title = results_field_title($_fields_title, $sortables, $block_id . '_sort', $sortable . ' ' . $sort_order);
             require_code('cns_members2');
             foreach ($rows as $row) {
                 $_entry = array();
 
                 $_entry[] = do_template('CNS_MEMBER_DIRECTORY_USERNAME', array(
+                    '_GUID' => '868074cc21dcdf4427e93ce78e8f5637',
                     'ID' => strval($row['id']),
                     'USERNAME' => $row['m_username'],
                     'URL' => $GLOBALS['FORUM_DRIVER']->member_profile_url($row['id'], true, true),
@@ -447,11 +449,11 @@ class Block_main_members
                 }
 
                 if (get_option('use_lastondate') == '1') {
-                    $_entry[] = escape_html(get_timezoned_date($row['m_last_visit_time'], false));
+                    $_entry[] = escape_html_tempcode(get_timezoned_date_tempcode($row['m_last_visit_time'], false));
                 }
 
                 if (get_option('use_joindate') == '1') {
-                    $_entry[] = escape_html(get_timezoned_date($row['m_join_time'], false));
+                    $_entry[] = escape_html_tempcode(get_timezoned_date_tempcode($row['m_join_time'], false));
                 }
 
                 $results_entries->attach(results_entry($_entry, false));
@@ -505,6 +507,9 @@ class Block_main_members
                 break;
             }
         }
+
+        // Optimisation, as the member structure is much heavier than you'd think, due to lots of nested templates, including a member box tooltip for each member row in the results table
+        $results_table = apply_quick_caching($results_table);
 
         return do_template('BLOCK_MAIN_MEMBERS', array(
             '_GUID' => $guid,

@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -28,24 +28,26 @@ function init__svg()
     require_css('svg');
 
     // Some default values
-    define('VIEWPORT_WIDTH', 1024.0);
-    define('VIEWPORT_HEIGHT', 400.0);
-    define('SVG_WIDTH', 1024.0);
-    define('SVG_HEIGHT', 400.0);
-    define('Y_LABEL_WIDTH', 50.0);
-    define('Y_AXIS_WIDTH', 50.0);
-    define('PLOT_WIDTH_BIAS', 10.0);
-    define('PLOT_WIDTH', SVG_WIDTH - Y_LABEL_WIDTH - Y_AXIS_WIDTH - PLOT_WIDTH_BIAS);
-    define('X_LABEL_HEIGHT', 13.0);
-    define('X_AXIS_HEIGHT', 13.0);
-    define('PLOT_HEIGHT_BIAS', 10.0);
-    define('PLOT_HEIGHT', SVG_HEIGHT - X_LABEL_HEIGHT - X_AXIS_HEIGHT - PLOT_HEIGHT_BIAS);
-    define('X_PADDING', 2.0);
-    define('Y_PADDING', 2.0);
-    define('MIN_Y_MARKER_DISTANCE', 14.0);
-    define('MIN_X_MARKER_DISTANCE', 14.0);
-    define('TEXT_HEIGHT', 14.0);
-    define('BAR_WIDTH', 15.0);
+    if (!defined('VIEWPORT_WIDTH')) {
+        define('VIEWPORT_WIDTH', 1024.0);
+        define('VIEWPORT_HEIGHT', 400.0);
+        define('SVG_WIDTH', 1024.0);
+        define('SVG_HEIGHT', 400.0);
+        define('Y_LABEL_WIDTH', 50.0);
+        define('Y_AXIS_WIDTH', 50.0);
+        define('PLOT_WIDTH_BIAS', 10.0);
+        define('PLOT_WIDTH', SVG_WIDTH - Y_LABEL_WIDTH - Y_AXIS_WIDTH - PLOT_WIDTH_BIAS);
+        define('X_LABEL_HEIGHT', 13.0);
+        define('X_AXIS_HEIGHT', 13.0);
+        define('PLOT_HEIGHT_BIAS', 10.0);
+        define('PLOT_HEIGHT', SVG_HEIGHT - X_LABEL_HEIGHT - X_AXIS_HEIGHT - PLOT_HEIGHT_BIAS);
+        define('X_PADDING', 2.0);
+        define('Y_PADDING', 2.0);
+        define('MIN_Y_MARKER_DISTANCE', 14.0);
+        define('MIN_X_MARKER_DISTANCE', 14.0);
+        define('TEXT_HEIGHT', 14.0);
+        define('BAR_WIDTH', 15.0);
+    }
 
     global $CSS_FILE_CONTENTS;
     $CSS_FILE_CONTENTS = '';
@@ -62,6 +64,7 @@ function init__svg()
  * @param  integer $end_x The X position of the end vertex
  * @param  integer $end_y The Y position of the end vertex
  * @return string The SVG markup for the described segment
+ *
  * @ignore
  */
 function _draw_segment($colour, $angle, $radius, $start_x, $start_y, $end_x, $end_y)
@@ -82,6 +85,7 @@ function _draw_segment($colour, $angle, $radius, $start_x, $start_y, $end_x, $en
  * @param   integer $start_y The starting Y position
  * @param   string $units The units (e.g. %)
  * @return  string         The SVG markup for the described key
+ *
  * @ignore
  */
 function _draw_key($data, $start_colour, $start_x, $start_y, $units = '')
@@ -102,7 +106,7 @@ function _draw_key($data, $start_colour, $start_x, $start_y, $units = '')
 
         $value = float_format($_value);
 
-        if (strlen($value) > 100) {
+        if (cms_mb_strlen($value) > 100) {
             $value = substr($value, 0, 40) . '&hellip;' . substr($value, -40);
         }
 
@@ -125,6 +129,7 @@ function _draw_key($data, $start_colour, $start_x, $start_y, $units = '')
  *
  * @param   string $current_colour The hexadecimal-format colour to be incremented
  * @return  string         The incremented hexadecimal colour
+ *
  * @ignore
  */
 function _get_next_colour($current_colour)
@@ -143,6 +148,7 @@ function _get_next_colour($current_colour)
  * Get the markup required to start a new SVG document
  *
  * @return string The markup
+ *
  * @ignore
  */
 function _start_svg()
@@ -198,6 +204,7 @@ if (typeof window.addEventListenerAbstract==\'undefined\') addEventListenerAbstr
  *
  * @param  string $plot The plot markup to insert first
  * @return string The markup
+ *
  * @ignore
  */
 function _finish_svg($plot = '')
@@ -210,6 +217,7 @@ function _finish_svg($plot = '')
  *
  * @param  string $plot The SVG
  * @return string ... made to have inline styles
+ *
  * @ignore
  */
 function _filter_svg_css($plot)
@@ -225,6 +233,7 @@ function _filter_svg_css($plot)
  * @param   string $x_label X axis label
  * @param   string $y_label Y axis label
  * @return  string         The markup
+ *
  * @ignore
  */
 function _draw_axes($max_y, $y_scale, $x_label = 'X axis', $y_label = 'Y axis')
@@ -264,6 +273,7 @@ function _draw_axes($max_y, $y_scale, $x_label = 'X axis', $y_label = 'Y axis')
  * @param  float $average Average value
  * @param  float $y_scale Y scale
  * @return string The markup
+ *
  * @ignore
  */
 function _draw_average($average, $y_scale)

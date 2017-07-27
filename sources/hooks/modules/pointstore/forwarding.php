@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -94,7 +94,7 @@ class Hook_pointstore_forwarding
      */
     public function config()
     {
-        $rows = $GLOBALS['SITE_DB']->query('SELECT price,name FROM ' . get_table_prefix() . 'prices WHERE name LIKE \'' . db_encode_like('forw_%') . '\'');
+        $rows = $GLOBALS['SITE_DB']->query('SELECT price,name FROM ' . get_table_prefix() . 'prices WHERE name LIKE \'' . db_encode_like('forw\_%') . '\'');
         $out = array();
         foreach ($rows as $i => $row) {
             $fields = new Tempcode();
@@ -272,7 +272,7 @@ class Hook_pointstore_forwarding
 
         dispatch_notification('pointstore_request_forwarding', 'forw_' . strval($sale_id), do_lang('MAIL_REQUEST_FORWARDING', null, null, null, get_site_default_lang()), $message_raw->evaluate(get_site_default_lang()), null, null, 3, true, false, null, null, '', '', '', '', null, true);
 
-        $text = do_lang_tempcode('ORDER_FORWARDER_DONE', $email, escape_html($prefix . '@' . $_suffix));
+        $text = do_lang_tempcode('ORDER_FORWARDER_DONE', escape_html($email), escape_html($prefix . '@' . $_suffix));
         $url = build_url(array('page' => '_SELF', 'type' => 'browse'), '_SELF');
         return redirect_screen($title, $url, $text);
     }

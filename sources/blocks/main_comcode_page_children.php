@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -118,13 +118,18 @@ class Block_main_comcode_page_children
             }
 
             if ($title == '') {
-                $title = escape_html(titleify($child['the_page']));
+                $title = titleify($child['the_page']);
             }
 
             $child['TITLE'] = $title;
             $child['PAGE'] = $child['the_page'];
-            $child['ZONE'] = get_comcode_zone($child['the_page']);
+            $child['ZONE'] = get_comcode_zone($child['the_page'], false);
             $child['ORDER'] = $child['p_order'];
+
+            if ($child['ZONE'] === null) {
+                unset($children[$i]);
+                continue;
+            }
 
             $children[$i] = $child;
         }

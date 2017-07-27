@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -36,8 +36,7 @@ class Module_admin_config
         $info['hacked_by'] = null;
         $info['hack_version'] = null;
         $info['version'] = 15;
-        $info['locked'] = true;
-        $info['update_require_upgrade'] = 1;
+        $info['locked'] = false;
         return $info;
     }
 
@@ -47,7 +46,7 @@ class Module_admin_config
      * @param  boolean $check_perms Whether to check permissions.
      * @param  ?MEMBER $member_id The member to check permissions as (null: current user).
      * @param  boolean $support_crosslinks Whether to allow cross links to other modules (identifiable via a full-page-link rather than a screen-name).
-     * @param  boolean $be_deferential Whether to avoid any entry-point (or even return NULL to disable the page in the Sitemap) if we know another module, or page_group, is going to link to that entry-point. Note that "!" and "browse" entry points are automatically merged with container page nodes (likely called by page-groupings) as appropriate.
+     * @param  boolean $be_deferential Whether to avoid any entry-point (or even return null to disable the page in the Sitemap) if we know another module, or page_group, is going to link to that entry-point. Note that "!" and "browse" entry points are automatically merged with container page nodes (likely called by page-groupings) as appropriate.
      * @return ?array A map of entry points (screen-name=>language-code/string or screen-name=>[language-code/string, icon-theme-image]) (null: disabled).
      */
     public function get_entry_points($check_perms = true, $member_id = null, $support_crosslinks = true, $be_deferential = false)
@@ -87,12 +86,17 @@ class Module_admin_config
     public $category;
 
     /**
-     * Module pre-run function. Allows us to know meta-data for <head> before we start streaming output.
+     * Module pre-run function. Allows us to know metadata for <head> before we start streaming output.
      *
      * @return ?Tempcode Tempcode indicating some kind of exceptional output (null: none).
      */
     public function pre_run()
     {
+        require_code('input_filter_2');
+        modsecurity_workaround_enable();
+
+        require_all_lang();
+
         $type = get_param_string('type', 'browse');
 
         require_lang('config');
@@ -107,17 +111,31 @@ class Module_admin_config
             /*Actually let's save the space  set_helper_panel_tutorial('tut_adv_configuration');*/
 
             $category = get_param_string('id');
-            breadcrumb_set_parents(array(array('_SELF:_SELF:browse', do_lang_tempcode('CONFIGURATION'))));
-            breadcrumb_set_self(do_lang_tempcode('CONFIG_CATEGORY_' . $category));
 
-            $this->title = get_screen_title(do_lang_tempcode('CONFIG_CATEGORY_' . $category), false);
+            $test = do_lang('CONFIG_CATEGORY_' . $category, null, null, null, null, false);
+            if (is_null($test)) {
+                attach_message(do_lang_tempcode('CAT_NOT_FOUND', escape_html($category), 'OPTION_CATEGORY'), 'warn');
+
+                $this->title = get_screen_title('CONFIGURATION');
+            } else {
+                breadcrumb_set_parents(array(array('_SELF:_SELF:browse', do_lang_tempcode('CONFIGURATION'))));
+                breadcrumb_set_self(do_lang_tempcode('CONFIG_CATEGORY_' . $category));
+
+                $this->title = get_screen_title(do_lang_tempcode('CONFIG_CATEGORY_' . $category), false);
+            }
 
             $this->category = $category;
         }
 
         if ($type == 'set') {
             $category = get_param_string('id', 'MAIN');
-            $this->title = get_screen_title(do_lang_tempcode('CONFIG_CATEGORY_' . $category), false);
+
+            $test = do_lang('CONFIG_CATEGORY_' . $category, null, null, null, null, false);
+            if (is_null($test)) {
+                $this->title = get_screen_title('CONFIGURATION');
+            } else {
+                $this->title = get_screen_title(do_lang_tempcode('CONFIG_CATEGORY_' . $category), false);
+            }
         }
 
         if ($type == 'base') {
@@ -168,7 +186,6 @@ class Module_admin_config
      */
     public function run()
     {
-        require_all_lang();
         require_code('config2');
 
         $type = get_param_string('type', 'browse');
@@ -229,23 +246,6 @@ class Module_admin_config
      */
     public function config_choose()
     {
-        // Test to see if we have any ModSecurity issue that blocks config form submissions, via posting through some perfectly legitimate things that it might be paranoid about
-        if (count($_POST) == 0) {
-            $proper_url = build_url(array('page' => ''), '');
-            $_proper_url = $proper_url->evaluate();
-            $test_a = http_download_file($_proper_url, 0, false, true);
-            $message_a = $GLOBALS['HTTP_MESSAGE'];
-            if ($message_a == '200')
-            {
-                $test_b = http_download_file($_proper_url, 0, false, true, 'ocPortal', array('test_a' => '/usr/bin/unzip -o @_SRC_@ -x -d @_DST_@', 'test_b' => '<iframe src="http://example.com/"></iframe>', 'test_c' => '<script>console.log(document.cookie);</script>'));
-                $message_b = $GLOBALS['HTTP_MESSAGE'];
-                if ($message_b != '200')
-                {
-                    attach_message(do_lang_tempcode('MOD_SECURITY', escape_html($message_b)), 'warn');
-                }
-            }
-        }
-
         // Find all categories
         $hooks = find_all_hooks('systems', 'config');
         $categories = array();
@@ -288,14 +288,13 @@ class Module_admin_config
             $url = build_url(array('page' => '_SELF', 'type' => 'category', 'id' => $category), '_SELF');
 
             $_category_name = do_lang('CONFIG_CATEGORY_' . $category, null, null, null, null, false);
-            if (!$GLOBALS['SEMI_DEV_MODE']) {
-                if (is_null($_category_name)) {
-                    continue;
-                }
+            if (is_null($_category_name)) {
+                attach_message(do_lang_tempcode('CAT_NOT_FOUND', escape_html($category), 'OPTION_CATEGORY'), 'warn');
+
+                $category_name = make_string_tempcode($category);
             } else {
-                $_category_name = do_lang('CONFIG_CATEGORY_' . $category); // We want to see an error
+                $category_name = do_lang_tempcode('CONFIG_CATEGORY_' . $category);
             }
-            $category_name = do_lang_tempcode('CONFIG_CATEGORY_' . $category);
 
             $description = do_lang_tempcode('CONFIG_CATEGORY_DESCRIPTION__' . $category);
 
@@ -305,7 +304,7 @@ class Module_admin_config
                 '_GUID' => '6ba2b09432d06e7502c71e7aac2d3527',
                 'COUNT' => $count,
                 'NAME' => $category_name,
-                'TITLE' => protect_from_escaping(do_lang('CONFIGURATION') . ': ' . $_category_name),
+                'TITLE' => '',
                 'DESCRIPTION' => $description,
                 'URL' => $url,
             )));
@@ -313,7 +312,7 @@ class Module_admin_config
         $categories_tpl->attach(do_template('INDEX_SCREEN_FANCIER_ENTRY', array(
             '_GUID' => '6fde99ae81367fb7405e94b6731a7d9a',
             'COUNT' => null,
-            'TITLE' => protect_from_escaping(do_lang('CONFIGURATION') . ': ' . do_lang('BASE_CONFIGURATION')),
+            'TITLE' => '',
             'URL' => get_base_url() . '/config_editor.php',
             'NAME' => do_lang_tempcode('BASE_CONFIGURATION'),
             'DESCRIPTION' => do_lang_tempcode('DOC_BASE_CONFIGURATION'),
@@ -345,20 +344,20 @@ class Module_admin_config
 
         // Find all options in category
         $hooks = find_all_hooks('systems', 'config');
-        $rows = array();
+        $options = array();
         foreach (array_keys($hooks) as $hook) {
             require_code('hooks/systems/config/' . filter_naughty($hook));
             $ob = object_factory('Hook_config_' . $hook);
             $option = $ob->get_details();
-            if ((is_null($GLOBALS['CURRENT_SHARE_USER'])) || ($option['shared_hosting_restricted'] == 0)) {
-                if (!is_null($ob->get_default())) {
-                    if ($category == $option['category']) {
+            if (($GLOBALS['CURRENT_SHARE_USER'] === null) || ($option['shared_hosting_restricted'] == 0)) {
+                if ($category == $option['category']) {
+                    if ($ob->get_default() !== null) {
                         if (!isset($option['order_in_category_group'])) {
                             $option['order_in_category_group'] = 100;
                         }
                         $option['ob'] = $ob;
                         $option['name'] = $hook;
-                        $rows[$hook] = $option;
+                        $options[$option['group']][$hook] = $option;
                     }
                 }
             }
@@ -366,77 +365,83 @@ class Module_admin_config
 
         // Add in special ones
         if ($category == 'SITE') {
-            $rows['timezone'] = array('name' => 'timezone', 'human_name' => 'TIME_ZONE', 'c_value' => '', 'type' => 'special', 'category' => 'SITE', 'group' => 'INTERNATIONALISATION', 'explanation' => 'DESCRIPTION_TIMEZONE_SITE', 'shared_hosting_restricted' => 0, 'order_in_category_group' => 1);
+            $options['INTERNATIONALISATION']['timezone'] = array('name' => 'timezone', 'human_name' => 'TIMEZONE', 'c_value' => '', 'type' => 'special', 'category' => 'SITE', 'group' => 'INTERNATIONALISATION', 'explanation' => 'DESCRIPTION_TIMEZONE_SITE', 'shared_hosting_restricted' => 0, 'order_in_category_group' => 1);
         }
         require_code('files');
         $upload_max_filesize = (ini_get('upload_max_filesize') == '0') ? do_lang('NA') : clean_file_size(php_return_bytes(ini_get('upload_max_filesize')));
         $post_max_size = (ini_get('post_max_size') == '0') ? do_lang('NA') : clean_file_size(php_return_bytes(ini_get('post_max_size')));
 
-        // Sort generally, categorise into groups, sort the groups
-        sort_maps_by($rows, 'order_in_category_group');
+        // Sort the groups
         $all_known_groups = array();
-        foreach ($rows as $myrow) {
-            $_group = do_lang($myrow['group']);
+        foreach (array_keys($options) as $group) {
+            $_group = do_lang($group);
 
-            $_group = strtolower(trim(preg_replace('#(&.*;)|[^\w\d\s]#U', '', $_group)));
-            if ((array_key_exists($_group, $all_known_groups)) && ($all_known_groups[$_group] != $myrow['group'])) {
-                $_group = 'std_' . $myrow['group']; // If cat names translate to same things or are in non-latin characters like Cyrillic
+            $_group = strtolower(trim(preg_replace('#(&.*;)|[^\w\s]#U', '', strip_tags($_group))));
+            if ((isset($all_known_groups[$_group])) && ($all_known_groups[$_group] != $group)) {
+                $_group = 'std_' . $group; // If cat names translate to same things or are in non-latin characters like Cyrillic
             }
 
-            $all_known_groups[$_group] = $myrow['group'];
+            $all_known_groups[$_group] = $group;
         }
-        $advanced_key = strtolower(trim(preg_replace('#(&.*;)|[^\w\d\s]#U', '', do_lang('ADVANCED'))));
+        $advanced_key = strtolower(trim(preg_replace('#(&.*;)|[^\w\s]#U', '', do_lang('ADVANCED'))));
         ksort($all_known_groups);
         if (isset($all_known_groups[$advanced_key])) { // Advanced goes last
             $temp = $all_known_groups[$advanced_key];
             unset($all_known_groups[$advanced_key]);
             $all_known_groups[$advanced_key] = $temp;
         }
-        $groups = array();
-        foreach ($all_known_groups as $group_codename) {
-            $group_rows = array();
-            foreach ($rows as $myrow) {
-                if ($myrow['group'] == $group_codename) {
-                    $group_rows[] = $myrow;
-                }
-            }
-
-            $groups[$group_codename] = $group_rows;
-        }
 
         // Render option groups
-        $groups_tempcode = new Tempcode();
+        $groups_arr = array();
         require_code('form_templates');
         $_groups = array();
-        foreach ($groups as $group_codename => $rows) {
-            $out = '';
-            foreach ($rows as $myrow) {
-                $name = $myrow['name']; // Can't get from array key, as sorting nuked it
+        foreach ($all_known_groups as $group_codename) {
+            if (!isset($options[$group_codename])) {
+                continue;
+            }
 
+            $options_in_group = $options[$group_codename];
+
+            $all_orders_default = true;
+            foreach ($options_in_group as $name => $option) {
+                if ($option['order_in_category_group'] != 100) {
+                    $all_orders_default = false;
+                }
+                $options_in_group[$name]['human_name_trans'] = do_lang($option['human_name']);
+            }
+            if ($all_orders_default) {
+                sort_maps_by($options_in_group, 'human_name_trans');
+            } else {
+                sort_maps_by($options_in_group, 'order_in_category_group');
+            }
+
+            $out = '';
+            foreach ($options_in_group as $name => $option) {
                 // Language strings
-                $human_name = do_lang_tempcode($myrow['human_name']);
-                $_explanation = do_lang($myrow['explanation'], null, null, null, null, false);
-                if (is_null($_explanation)) {
-                    $_explanation = do_lang('CONFIG_GROUP_DEFAULT_DESCRIP_' . $myrow['group'], null, null, null, null, false);
-                    if (is_null($_explanation)) {
+                $human_name = do_lang_tempcode($option['human_name']);
+                $_explanation = do_lang($option['explanation'], null, null, null, null, false);
+                if ($_explanation === null) {
+                    $_explanation = do_lang('CONFIG_GROUP_DEFAULT_DESCRIP_' . $option['group'], null, null, null, null, false);
+                    if ($_explanation === null) {
                         // So an error shows
-                        $_explanation = do_lang($myrow['explanation']);
-                        $explanation = do_lang_tempcode($myrow['explanation']);
+                        $_explanation = do_lang($option['explanation']);
+                        $explanation = do_lang_tempcode($option['explanation']);
                     } else {
-                        $explanation = do_lang_tempcode('CONFIG_GROUP_DEFAULT_DESCRIP_' . $myrow['group']);
+                        $explanation = do_lang_tempcode('CONFIG_GROUP_DEFAULT_DESCRIP_' . $option['group']);
                     }
                 } else {
-                    $explanation = do_lang_tempcode($myrow['explanation']);
+                    $explanation = do_lang_tempcode($option['explanation']);
                 }
+                $default = get_default_option($name);
 
-                if (isset($myrow['required'])) {
-                    $required = $myrow['required'];
+                if (isset($option['required'])) {
+                    $required = $option['required'];
                 } else {
-                    if ($myrow['type'] == 'integer') {
+                    if ($option['type'] == 'integer') {
                         $required = true;
-                    } elseif ($myrow['type'] == 'float') {
+                    } elseif ($option['type'] == 'float') {
                         $required = true;
-                    } elseif ($myrow['type'] == 'list') {
+                    } elseif ($option['type'] == 'list') {
                         $required = true;
                     } else {
                         $required = false;
@@ -444,7 +449,7 @@ class Module_admin_config
                 }
 
                 // Render field inputter
-                switch ($myrow['type']) {
+                switch ($option['type']) {
                     case 'special':
                         switch ($name) {
                             case 'timezone':
@@ -457,23 +462,26 @@ class Module_admin_config
                                 break;
 
                             default:
-                                $ob = $myrow['ob'];
-                                $out .= static_evaluate_tempcode($ob->field_inputter($name, $myrow, $human_name, $explanation));
+                                $ob = $option['ob'];
+                                $out .= static_evaluate_tempcode($ob->field_inputter($name, $option, $human_name, $explanation));
                                 break;
                         }
                         break;
 
                     case 'integer':
-                        $out .= static_evaluate_tempcode(form_input_integer($human_name, $explanation, $name, intval(get_option($name)), $required));
+                        $explanation_with_default = do_lang_tempcode('EXPLANATION_WITH_DEFAULT', $explanation, ($default == '') ? do_lang_tempcode('BLANK_EM') : make_string_tempcode(escape_html($default)));
+                        $out .= static_evaluate_tempcode(form_input_integer($human_name, $explanation_with_default, $name, intval(get_option($name)), $required));
                         break;
 
                     case 'float':
-                        $out .= static_evaluate_tempcode(form_input_float($human_name, $explanation, $name, floatval(get_option($name)), $required));
+                        $explanation_with_default = do_lang_tempcode('EXPLANATION_WITH_DEFAULT', $explanation, escape_html(($default == '') ? do_lang_tempcode('BLANK_EM') : make_string_tempcode(float_format(floatval($default)))));
+                        $out .= static_evaluate_tempcode(form_input_float($human_name, $explanation_with_default, $name, floatval(get_option($name)), $required));
                         break;
 
                     case 'line':
                     case 'transline':
-                        $out .= static_evaluate_tempcode(form_input_line($human_name, $explanation, $name, get_option($name), $required));
+                        $explanation_with_default = do_lang_tempcode('EXPLANATION_WITH_DEFAULT', $explanation, ($default == '') ? do_lang_tempcode('BLANK_EM') : make_string_tempcode(escape_html($default)));
+                        $out .= static_evaluate_tempcode(form_input_line($human_name, $explanation_with_default, $name, get_option($name), $required, null, 100000));
                         break;
 
                     case 'text':
@@ -482,7 +490,8 @@ class Module_admin_config
                         break;
 
                     case 'comcodeline':
-                        $out .= static_evaluate_tempcode(form_input_line_comcode($human_name, $explanation, $name, get_option($name), $required));
+                        $explanation_with_default = do_lang_tempcode('EXPLANATION_WITH_DEFAULT', $explanation, ($default == '') ? do_lang_tempcode('BLANK_EM') : make_string_tempcode(escape_html($default)));
+                        $out .= static_evaluate_tempcode(form_input_line_comcode($human_name, $explanation_with_default, $name, get_option($name), $required));
                         break;
 
                     case 'comcodetext':
@@ -490,27 +499,33 @@ class Module_admin_config
                         break;
 
                     case 'list':
+                        $_default = make_string_tempcode(escape_html($default));
                         $list = '';
                         if (!$required) {
                             $list .= static_evaluate_tempcode(form_input_list_entry('', false, do_lang_tempcode('NA_EM')));
                         }
                         $_value = get_option($name);
-                        $values = explode('|', $myrow['list_options']);
+                        $values = explode('|', $option['list_options']);
                         foreach ($values as $value) {
                             $__value = str_replace(' ', '__', $value);
                             $_option_text = do_lang('CONFIG_OPTION_' . $name . '_VALUE_' . $__value, null, null, null, null, false);
-                            if (!is_null($_option_text)) {
+                            if ($_option_text !== null) {
                                 $option_text = do_lang_tempcode('CONFIG_OPTION_' . $name . '_VALUE_' . $__value);
+                                if ($value == $default) {
+                                    $_default = $option_text;
+                                }
                             } else {
                                 $option_text = make_string_tempcode($value);
                             }
                             $list .= static_evaluate_tempcode(form_input_list_entry($value, $_value == $value, $option_text));
                         }
-                        $out .= static_evaluate_tempcode(form_input_list($human_name, $explanation, $name, make_string_tempcode($list), null, false, false));
+                        $explanation_with_default = do_lang_tempcode('EXPLANATION_WITH_DEFAULT', $explanation, ($default == '') ? do_lang_tempcode('BLANK_EM') : $_default);
+                        $out .= static_evaluate_tempcode(form_input_list($human_name, $explanation_with_default, $name, make_string_tempcode($list), null, false, false));
                         break;
 
                     case 'tick':
-                        $out .= static_evaluate_tempcode(form_input_tick($human_name, $explanation, $name, get_option($name) == '1'));
+                        $explanation_with_default = do_lang_tempcode('EXPLANATION_WITH_DEFAULT', $explanation, escape_html(($default == '1') ? do_lang('YES') : do_lang('NO')));
+                        $out .= static_evaluate_tempcode(form_input_tick($human_name, $explanation_with_default, $name, get_option($name) == '1'));
                         break;
 
                     case 'username':
@@ -530,7 +545,7 @@ class Module_admin_config
                             $current_setting = get_option($name);
                             if (!is_numeric($current_setting)) {
                                 $_current_setting = $GLOBALS['FORUM_DB']->query_select_value_if_there('f_forums', 'id', array('f_name' => $current_setting));
-                                if (is_null($_current_setting)) {
+                                if ($_current_setting === null) {
                                     if ($required) {
                                         $current_setting = strval(db_get_first_id());
                                         attach_message(do_lang_tempcode('FORUM_CURRENTLY_UNSET', $human_name), 'notice');
@@ -573,7 +588,7 @@ class Module_admin_config
                             if (!$required) {
                                 $_list->attach(form_input_list_entry('', false, do_lang_tempcode('NA_EM')));
                             }
-                            $_list->attach(cns_create_selection_list_usergroups($tmp_value, $myrow['type'] == 'usergroup'));
+                            $_list->attach(cns_create_selection_list_usergroups($tmp_value, $option['type'] == 'usergroup'));
                             $out .= static_evaluate_tempcode(form_input_list($human_name, $explanation, $name, $_list));
                         } else {
                             $out .= static_evaluate_tempcode(form_input_line($human_name, $explanation, $name, get_option($name), $required));
@@ -581,20 +596,19 @@ class Module_admin_config
                         break;
 
                     default:
-                        fatal_exit('Invalid config option type: ' . $myrow['type'] . ' (for ' . $myrow['name'] . ')');
+                        fatal_exit('Invalid config option type: ' . $option['type'] . ' (for ' . $option['name'] . ')');
                 }
             }
 
             // Render group
             $group_title = do_lang_tempcode($group_codename);
             $_group_description = do_lang('CONFIG_GROUP_DESCRIP_' . $group_codename, escape_html($post_max_size), escape_html($upload_max_filesize), null, null, false);
-            if (is_null($_group_description)) {
+            if ($_group_description === null) {
                 $group_description = new Tempcode();
             } else {
                 $group_description = do_lang_tempcode('CONFIG_GROUP_DESCRIP_' . $group_codename, escape_html($post_max_size), escape_html($upload_max_filesize));
             }
-            $group = do_template('CONFIG_GROUP', array('_GUID' => '84c0db86002a33a383a7c2e195dd3913', 'GROUP_DESCRIPTION' => $group_description, 'GROUP_NAME' => $group_codename, 'GROUP' => $out, 'GROUP_TITLE' => $group_title));
-            $groups_tempcode->attach($group->evaluate());
+            $groups_arr[] = array('GROUP_DESCRIPTION' => $group_description, 'GROUP_NAME' => $group_codename, 'GROUP' => $out, 'GROUP_TITLE' => $group_title);
             $_groups[$group_codename] = $group_title;
         }
 
@@ -609,7 +623,7 @@ class Module_admin_config
             'WARNING_DETAILS' => $warning_details,
             'TITLE' => $this->title,
             'URL' => $post_url,
-            'GROUPS' => $groups_tempcode,
+            'GROUPS' => $groups_arr,
             'SUBMIT_ICON' => 'buttons__save',
             'SUBMIT_NAME' => do_lang_tempcode('SAVE'),
         ));
@@ -625,16 +639,27 @@ class Module_admin_config
         require_code('input_filter_2');
         rescue_shortened_post_request();
 
+        require_code('caches3');
+
         global $CONFIG_OPTIONS_CACHE;
 
         $category = get_param_string('id', 'MAIN');
 
-        if (strtoupper(cms_srv('REQUEST_METHOD')) != 'POST') {
+        if (cms_srv('REQUEST_METHOD') != 'POST') {
             warn_exit(do_lang_tempcode('INTERNAL_ERROR'));
         }
 
         // Make sure we haven't locked ourselves out due to URL Scheme support
-        if ((post_param_string('url_scheme', 'RAW') != 'RAW') && (substr(cms_srv('SERVER_SOFTWARE'), 0, 6) == 'Apache') && ((!file_exists(get_file_base() . DIRECTORY_SEPARATOR . '.htaccess')) || (strpos(file_get_contents(get_file_base() . DIRECTORY_SEPARATOR . '.htaccess'), 'RewriteEngine on') === false) || ((function_exists('apache_get_modules')) && (!in_array('mod_rewrite', apache_get_modules()))) || (http_download_file(get_base_url() . '/sitemap.htm', null, false, true) != '') && ($GLOBALS['HTTP_MESSAGE'] == '404'))) {
+        if (
+            (post_param_string('url_scheme', 'RAW') != 'RAW') &&
+            (substr(cms_srv('SERVER_SOFTWARE'), 0, 6) == 'Apache') &&
+            (
+                (!file_exists(get_file_base() . '/.htaccess')) ||
+                (stripos(file_get_contents(get_file_base() . '/.htaccess'), 'RewriteEngine on') === false) ||
+                ((function_exists('apache_get_modules')) && (!in_array('mod_rewrite', apache_get_modules()))) ||
+                (http_download_file(get_base_url() . '/pg/keymap', null, false, true) != '') && ($GLOBALS['HTTP_MESSAGE'] == '404')
+            )
+        ) {
             warn_exit(do_lang_tempcode('BEFORE_MOD_REWRITE'));
         }
 
@@ -668,14 +693,18 @@ class Module_admin_config
         // Empty thumbnail cache if needed
         if (function_exists('imagetypes')) {
             if ((!is_null(post_param_string('thumb_width', null))) && (post_param_string('thumb_width') != get_option('thumb_width'))) {
-                require_code('caches3');
                 erase_thumb_cache();
             }
         }
 
+        // Empty language cache if needed
+        if ((!is_null(post_param_string('yeehaw', null))) && (post_param_string('yeehaw') != get_option('yeehaw'))) {
+            erase_cached_language();
+        }
+
         // Find all options in category
         $hooks = find_all_hooks('systems', 'config');
-        $rows = array();
+        $options = array();
         foreach (array_keys($hooks) as $hook) {
             require_code('hooks/systems/config/' . filter_naughty($hook));
             $ob = object_factory('Hook_config_' . $hook);
@@ -684,7 +713,7 @@ class Module_admin_config
                 if ((is_null($GLOBALS['CURRENT_SHARE_USER'])) || ($option['shared_hosting_restricted'] == 0)) {
                     if (!is_null($ob->get_default())) {
                         $option['ob'] = $ob;
-                        $rows[$hook] = $option;
+                        $options[$hook] = $option;
                     }
                 }
             }
@@ -692,18 +721,21 @@ class Module_admin_config
 
         // Add in special ones
         if ($category == 'SITE') {
-            $rows['timezone'] = array('shared_hosting_restricted' => 0, 'type' => 'special');
+            $options['timezone'] = array('shared_hosting_restricted' => 0, 'type' => 'special');
         }
 
         // Go through all options on the page, saving
-        foreach ($rows as $name => $myrow) {
+        foreach ($options as $name => $option) {
             // Save
-            if ($myrow['type'] == 'tick') {
+            if ($option['type'] == 'float') {
+                $_value = post_param_string($name, '');
+                $value = ($_value == '') ? '' : float_unformat($_value);
+            } elseif ($option['type'] == 'tick') {
                 $value = strval(post_param_integer($name, 0));
-            } elseif ($myrow['type'] == 'date') {
+            } elseif ($option['type'] == 'date') {
                 $date_value = post_param_date($name);
                 $value = is_null($date_value) ? '' : strval($date_value);
-            } elseif ((($myrow['type'] == 'forum') || ($myrow['type'] == '?forum')) && (get_forum_type() == 'cns')) {
+            } elseif ((($option['type'] == 'forum') || ($option['type'] == '?forum')) && (get_forum_type() == 'cns')) {
                 $value = post_param_string($name);
                 if (is_numeric($value)) {
                     $value = $GLOBALS['FORUM_DB']->query_select_value_if_there('f_forums', 'f_name', array('id' => post_param_integer($name)));
@@ -711,7 +743,7 @@ class Module_admin_config
                 if (is_null($value)) {
                     $value = '';
                 }
-            } elseif (($myrow['type'] == 'forum_grouping') && (get_forum_type() == 'cns')) {
+            } elseif (($option['type'] == 'forum_grouping') && (get_forum_type() == 'cns')) {
                 $value = post_param_string($name);
                 if (is_numeric($value)) {
                     $value = $GLOBALS['FORUM_DB']->query_select_value_if_there('f_forum_groupings', 'c_title', array('id' => post_param_integer($name)));
@@ -719,7 +751,7 @@ class Module_admin_config
                 if (is_null($value)) {
                     $value = '';
                 }
-            } elseif ((($myrow['type'] == 'usergroup') || ($myrow['type'] == 'usergroup_not_guest')) && (get_forum_type() == 'cns')) {
+            } elseif ((($option['type'] == 'usergroup') || ($option['type'] == 'usergroup_not_guest')) && (get_forum_type() == 'cns')) {
                 $_value = $GLOBALS['FORUM_DB']->query_select_value_if_there('f_groups', 'g_name', array('id' => post_param_integer($name)));
                 if (is_null($_value)) {
                     $value = '';
@@ -736,24 +768,23 @@ class Module_admin_config
             } else {
                 // If the option was changed
                 $old_value = get_option($name);
-                if (($old_value != $value) || ($CONFIG_OPTIONS_CACHE[$name]['c_set'] == 0)) {
+                if (($old_value != $value) || (!isset($CONFIG_OPTIONS_CACHE[$name]['c_set'])) || ($CONFIG_OPTIONS_CACHE[$name]['c_set'] == 0)) {
                     set_option($name, $value);
                 }
             }
         }
 
         // Clear some caching
-        require_code('caches3');
         erase_comcode_page_cache();
         erase_block_cache();
         //persistent_cache_delete('OPTIONS');  Done by set_option / erase_persistent_cache
         erase_persistent_cache();
-        erase_cached_templates();
+        erase_cached_templates(false, null, TEMPLATE_DECACHE_WITH_CONFIG);
 
         // Show it worked / Refresh
         $redirect = get_param_string('redirect', null);
         if ($redirect === null) {
-            $url = build_url(array('page' => '_SELF', 'type' => 'browse'), '_SELF'); // ,'type'=>'category','id'=>$category
+            $url = build_url(array('page' => '_SELF', 'type' => 'browse'), '_SELF'); // , 'type' => 'category', 'id' => $category
         } else {
             $url = make_string_tempcode($redirect);
         }
@@ -821,7 +852,7 @@ class Module_admin_config
             '_GUID' => 'cc21f921ecbdbdf83e1e28d2b3f75a3a',
             'TITLE' => $this->title,
             'POST_URL' => $post_url,
-            'XML' => file_exists(get_custom_file_base() . '/data_custom/xml_config/fields.xml') ? file_get_contents(get_custom_file_base() . '/data_custom/xml_config/fields.xml') : file_get_contents(get_file_base() . '/data/xml_config/fields.xml'),
+            'XML' => file_exists(get_custom_file_base() . '/data_custom/xml_config/fields.xml') ? cms_file_get_contents_safe(get_custom_file_base() . '/data_custom/xml_config/fields.xml') : cms_file_get_contents_safe(get_file_base() . '/data/xml_config/fields.xml'),
         ));
     }
 
@@ -832,27 +863,10 @@ class Module_admin_config
      */
     public function _xml_fields()
     {
-        if (!file_exists(get_custom_file_base() . '/data_custom')) {
-            require_code('files2');
-            make_missing_directory(get_custom_file_base() . '/data_custom');
-        }
-
-        $myfile = @fopen(get_custom_file_base() . '/data_custom/xml_config/fields.xml', GOOGLE_APPENGINE ? 'wb' : 'at');
-        if ($myfile === false) {
-            intelligent_write_error(get_custom_file_base() . '/data_custom/xml_config/fields.xml');
-        }
-        @flock($myfile, LOCK_EX);
-        if (!GOOGLE_APPENGINE) {
-            ftruncate($myfile, 0);
-        }
+        require_code('files');
+        $full_path = get_custom_file_base() . '/data_custom/xml_config/fields.xml';
         $xml = post_param_string('xml');
-        if (fwrite($myfile, $xml) < strlen($xml)) {
-            warn_exit(do_lang_tempcode('COULD_NOT_SAVE_FILE'));
-        }
-        @flock($myfile, LOCK_UN);
-        fclose($myfile);
-        fix_permissions(get_custom_file_base() . '/data_custom/xml_config/fields.xml');
-        sync_file(get_custom_file_base() . '/data_custom/xml_config/fields.xml');
+        cms_file_put_contents_safe($full_path, $xml, FILE_WRITE_FIX_PERMISSIONS | FILE_WRITE_SYNC_FILE);
 
         log_it('FIELD_FILTERS');
 
@@ -872,7 +886,7 @@ class Module_admin_config
             '_GUID' => '456f56149832d459bce72ca63a1578b9',
             'TITLE' => $this->title,
             'POST_URL' => $post_url,
-            'XML' => file_exists(get_custom_file_base() . '/data_custom/xml_config/breadcrumbs.xml') ? file_get_contents(get_custom_file_base() . '/data_custom/xml_config/breadcrumbs.xml') : file_get_contents(get_file_base() . '/data/xml_config/breadcrumbs.xml'),
+            'XML' => file_exists(get_custom_file_base() . '/data_custom/xml_config/breadcrumbs.xml') ? cms_file_get_contents_safe(get_custom_file_base() . '/data_custom/xml_config/breadcrumbs.xml') : cms_file_get_contents_safe(get_file_base() . '/data/xml_config/breadcrumbs.xml'),
         ));
     }
 
@@ -883,27 +897,10 @@ class Module_admin_config
      */
     public function _xml_breadcrumbs()
     {
-        if (!file_exists(get_custom_file_base() . '/data_custom')) {
-            require_code('files2');
-            make_missing_directory(get_custom_file_base() . '/data_custom');
-        }
-
-        $myfile = @fopen(get_custom_file_base() . '/data_custom/xml_config/breadcrumbs.xml', GOOGLE_APPENGINE ? 'wb' : 'at');
-        if ($myfile === false) {
-            intelligent_write_error(get_custom_file_base() . '/data_custom/xml_config/breadcrumbs.xml');
-        }
-        @flock($myfile, LOCK_EX);
-        if (!GOOGLE_APPENGINE) {
-            ftruncate($myfile, 0);
-        }
+        require_code('files');
+        $full_path = get_custom_file_base() . '/data_custom/xml_config/breadcrumbs.xml';
         $xml = post_param_string('xml');
-        if (fwrite($myfile, $xml) < strlen($xml)) {
-            warn_exit(do_lang_tempcode('COULD_NOT_SAVE_FILE'));
-        }
-        @flock($myfile, LOCK_UN);
-        fclose($myfile);
-        fix_permissions(get_custom_file_base() . '/data_custom/xml_config/breadcrumbs.xml');
-        sync_file(get_custom_file_base() . '/data_custom/xml_config/breadcrumbs.xml');
+        cms_file_put_contents_safe($full_path, $xml, FILE_WRITE_FIX_PERMISSIONS | FILE_WRITE_SYNC_FILE);
 
         log_it('BREADCRUMB_OVERRIDES');
 

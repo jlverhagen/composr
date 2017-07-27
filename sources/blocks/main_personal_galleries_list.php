@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -55,6 +55,8 @@ class Block_main_personal_galleries_list
     {
         $block_id = get_block_id($map);
 
+        require_lang('galleries');
+
         $member_id = array_key_exists('member_id', $map) ? intval($map['member_id']) : get_member();
         $member_id_viewing = get_member();
 
@@ -69,7 +71,7 @@ class Block_main_personal_galleries_list
         // Find galleries
         $galleries = new Tempcode();
         $query = ' FROM ' . get_table_prefix() . 'galleries';
-        $query .= ' WHERE name LIKE \'' . db_encode_like('member\_' . strval($member_id) . '\_%') . '\' OR g_owner=' . strval($member_id);
+        $query .= ' WHERE name LIKE \'' . db_encode_like('member\_' . strval($member_id) . '\_%') . '\'';// . ' OR g_owner=' . strval($member_id); g_owner may be set for boring stuff, so don't use for now
         $rows = $GLOBALS['SITE_DB']->query('SELECT *' . $query, $max, $start, false, true);
         $max_rows = $GLOBALS['SITE_DB']->query_value_if_there('SELECT COUNT(*)' . $query, false, true);
 
@@ -96,7 +98,7 @@ class Block_main_personal_galleries_list
                 }
             } else { // Or invite them to explicitly add a gallery (they can add images/videos from their existing gallery now)
                 if ((has_actual_page_access(null, 'cms_galleries', null, null)) && (has_submit_permission('cat_mid', get_member(), get_ip_address(), 'cms_galleries'))) {
-                    $add_gallery_url = build_url(array('page' => 'cms_galleries', 'type' => 'add_category', 'cat' => $rows[0]['name']), get_module_zone('cms_galleries'));
+                    $add_gallery_url = build_url(array('page' => 'cms_galleries', 'type' => 'add_category', 'parent_id' => $rows[0]['name']), get_module_zone('cms_galleries'));
                 }
                 if (count($rows) == 1) {
                     if ($rows[0]['accept_images'] == 1) {
@@ -114,7 +116,7 @@ class Block_main_personal_galleries_list
 
         return do_template('BLOCK_MAIN_PERSONAL_GALLERIES_LIST', array(
             '_GUID' => '90b11d3c01ff551be42a0472d27dd207',
-            'BLOCK_PARAMS' => block_params_arr_to_str($map),
+            'BLOCK_PARAMS' => block_params_arr_to_str(array('block_id' => $block_id) + $map),
             'GALLERIES' => $galleries,
             'PAGINATION' => $pagination,
             'MEMBER_ID' => strval($member_id),
@@ -126,6 +128,7 @@ class Block_main_personal_galleries_list
             'MAX' => strval($max),
             'START_PARAM' => $block_id . '_start',
             'MAX_PARAM' => $block_id . '_max',
+            'EXTRA_GET_PARAMS' => (get_param_integer($block_id . '_max', null) === null) ? null : ('&' . $block_id . '_max=' . urlencode(strval($max))),
         ));
     }
 

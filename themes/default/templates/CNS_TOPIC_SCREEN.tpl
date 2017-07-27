@@ -5,20 +5,22 @@
 {$SET,topic_title,{_TITLE}}
 
 <div class="cns_topic_{THREADED*}">
-	{+START,IF,{$CONFIG_OPTION,enable_forum_dupe_buttons}}
+	{+START,IF,{$CONFIG_OPTION,enable_forum_dupe_buttons}}{+START,IF_NON_EMPTY,{BUTTON_SCREENS}{ID}}
 		<div class="non_accessibility_redundancy">
 			<div class="float_surrounder">
 				<div class="buttons_group cns_buttons_screen">
-					{+START,INCLUDE,NOTIFICATION_BUTTONS}
-						NOTIFICATIONS_TYPE=cns_topic
-						NOTIFICATIONS_ID={ID}
-						NOTIFICATIONS_PAGE_LINK=forum:topics:toggle_notifications_topic:{ID}
+					{+START,IF,{$NOT,{TICKET_FORUM}}}
+						{+START,INCLUDE,NOTIFICATION_BUTTONS}
+							NOTIFICATIONS_TYPE=cns_topic
+							NOTIFICATIONS_ID={ID}
+							NOTIFICATIONS_PAGE_LINK=forum:topics:toggle_notifications_topic:{ID}
+						{+END}
 					{+END}
 					{BUTTON_SCREENS}
 				</div>
 			</div>
 		</div>
-	{+END}
+	{+END}{+END}
 
 	{POLL}
 
@@ -76,16 +78,16 @@
 	{+END}
 	{+START,IF_EMPTY,{POSTS}}
 		<p class="nothing_here">
-			{!NO_ENTRIES}
+			{!NO_ENTRIES,post}
 		</p>
 	{+END}
 
-	{+START,IF,{$OR,{$IS_NON_EMPTY,{MODERATOR_ACTIONS}},{$AND,{$NOT,{$MOBILE}},{$IS_NON_EMPTY,{MARKED_POST_ACTIONS}}},{MAY_CHANGE_MAX}}}
+	{+START,IF,{$OR,{$IS_NON_EMPTY,{MODERATOR_ACTIONS}},{$AND,{$NOT,{$MOBILE}},{$IS_NON_EMPTY,{MARKED_POST_ACTIONS}}},{THREADED}}}
 		<div class="box cns_topic_control_functions"><div class="box_inner">
 			{+START,IF,{$NOT,{$MOBILE}}}<span class="field_name">{!CONTROL_FUNCTIONS}:</span>{+END}
 
 			{+START,IF_NON_EMPTY,{MODERATOR_ACTIONS}}
-				<form title="{!TOPIC_ACTIONS}" action="{$URL_FOR_GET_FORM*,{ACTION_URL}}" method="get" class="inline horiz_field_sep_rightward">
+				<form title="{!TOPIC_ACTIONS}" action="{$URL_FOR_GET_FORM*,{ACTION_URL}}" method="get" class="inline horiz_field_sep_rightward" autocomplete="off">
 					{$HIDDENS_FOR_GET_FORM,{ACTION_URL}}
 
 					<div class="inline">
@@ -93,7 +95,7 @@
 						<select class="dropdown_actions" id="tma_type" name="type">
 							<option value="browse">-</option>
 							{MODERATOR_ACTIONS}
-						</select><input class="buttons__proceed button_micro" type="submit" onclick="if (document.getElementById('tma_type').selectedIndex!=-1) { disable_button_just_clicked(this); return true; }  return false;" value="{!PROCEED}" />
+						</select><input class="button_micro buttons__proceed" type="submit" onclick="if (document.getElementById('tma_type').selectedIndex!=-1) { disable_button_just_clicked(this); return true; }  return false;" value="{!PROCEED}" />
 					</div>
 				</form>
 			{+END}
@@ -101,17 +103,17 @@
 			{+START,IF,{$NOT,{$MOBILE}}}
 				{+START,IF_NON_EMPTY,{MARKED_POST_ACTIONS}}
 					{+START,IF,{$JS_ON}}
-						<form title="{!MARKED_POST_ACTIONS}" action="{$URL_FOR_GET_FORM*,{ACTION_URL}}" method="get" class="inline horiz_field_sep_rightward">
+						<form title="{!MARKED_POST_ACTIONS}" action="{$URL_FOR_GET_FORM*,{ACTION_URL}}" method="get" class="inline horiz_field_sep_rightward" autocomplete="off">
 							{$HIDDENS_FOR_GET_FORM,{ACTION_URL}}
 
-							<div class="inline horiz_field_sep_rightward">
+							<div class="inline">
 								<label for="mpa_type">{!_MARKED_POST_ACTIONS}:</label>
 								<select id="mpa_type" name="type">
 									{+START,IF,{$GT,{$SUBSTR_COUNT,{MARKED_POST_ACTIONS},<option},1}}
 										<option value="browse">-</option>
 									{+END}
 									{MARKED_POST_ACTIONS}
-								</select><input class="buttons__proceed button_micro" type="submit" onclick="if (!add_form_marked_posts(this.form,'mark_')) { window.fauxmodal_alert('{!NOTHING_SELECTED=;}'); return false; } if (document.getElementById('mpa_type').selectedIndex!=-1) { disable_button_just_clicked(this); return true; } return false;" value="{!PROCEED}" />
+								</select><input class="button_micro buttons__proceed" type="submit" onclick="if (!add_form_marked_posts(this.form,'mark_')) { window.fauxmodal_alert('{!NOTHING_SELECTED=;}'); return false; } if (document.getElementById('mpa_type').selectedIndex!=-1) { disable_button_just_clicked(this); return true; } return false;" value="{!PROCEED}" />
 							</div>
 						</form>
 					{+END}
@@ -119,7 +121,7 @@
 			{+END}
 
 			{+START,IF,{THREADED}}
-				<form class="inline" action="{$SELF_URL*}" method="post">
+				<form class="inline" action="{$SELF_URL*}" method="post" autocomplete="off">
 					{$INSERT_SPAMMER_BLACKHOLE}
 
 					<div class="inline">
@@ -131,7 +133,7 @@
 							<option{+START,IF,{$EQ,{$_POST,comments_sort,oldest},average_rating}} selected="selected"{+END} value="average_rating">{!RATING}</option>
 							<option{+START,IF,{$EQ,{$_POST,comments_sort,oldest},compound_rating}} selected="selected"{+END} value="compound_rating">{!POPULARITY}</option>
 						</select>
-						<input type="submit" value="{!SORT}" class="buttons__sort button_micro" />
+						<input type="submit" value="{!SORT}" class="button_micro buttons__sort" />
 					</div>
 				</form>
 			{+END}
@@ -146,17 +148,21 @@
 
 	{+START,IF_NON_EMPTY,{POSTS}}
 		<div class="float_surrounder">
-			<div class="buttons_group cns_buttons_screen">
-				{+START,INCLUDE,NOTIFICATION_BUTTONS}
-					NOTIFICATIONS_TYPE=cns_topic
-					NOTIFICATIONS_ID={ID}
-					NOTIFICATIONS_PAGE_LINK=forum:topics:toggle_notifications_topic:{ID}
-				{+END}
-				{BUTTON_SCREENS}
-			</div>
+			{+START,IF_NON_EMPTY,{BUTTON_SCREENS}{ID}}
+				<div class="buttons_group cns_buttons_screen">
+					{+START,IF,{$NOT,{TICKET_FORUM}}}
+						{+START,INCLUDE,NOTIFICATION_BUTTONS}
+							NOTIFICATIONS_TYPE=cns_topic
+							NOTIFICATIONS_ID={ID}
+							NOTIFICATIONS_PAGE_LINK=forum:topics:toggle_notifications_topic:{ID}
+						{+END}
+					{+END}
+					{BUTTON_SCREENS}
+				</div>
+			{+END}
 
 			{+START,IF,{$CONFIG_OPTION,enable_forum_dupe_buttons}}
-				<div class="non_accessibility_redundancy left"><nav class="breadcrumbs" itemprop="breadcrumb" role="navigation">
+				<div class="non_accessibility_redundancy left"><nav class="breadcrumbs" itemprop="breadcrumb">
 					<p class="breadcrumbs">
 						<img class="breadcrumbs_img" src="{$IMG*,1x/breadcrumbs}" srcset="{$IMG*,2x/breadcrumbs} 2x" alt="&gt; " title="{!YOU_ARE_HERE}" />
 						{BREADCRUMBS}
@@ -166,18 +172,25 @@
 		</div>
 	{+END}
 
-	<div class="cns_quick_reply">
-		{QUICK_REPLY}
-
+	{+START,SET,double_post_message}
 		{+START,IF_EMPTY,{QUICK_REPLY}}{+START,IF,{$EQ,{LAST_POSTER},{$MEMBER}}}{+START,IF,{$NOT,{$IS_GUEST}}}{+START,IF,{$NOT,{MAY_DOUBLE_POST}}}
-			<div class="box box__members_viewing"><div class="box_inner">
+			<div class="box box___members_viewing"><div class="box_inner">
 				{!NO_DOUBLE_POST}
 			</div></div>
 		{+END}{+END}{+END}{+END}
-	</div>
+	{+END}
+	{+START,IF,{$OR,{$IS_NON_EMPTY,{QUICK_REPLY}},{$IS_NON_EMPTY,{$TRIM,{$GET,double_post_message}}}}}
+		<div class="cns_quick_reply">
+			{QUICK_REPLY}
+
+			{$GET,double_post_message}
+		</div>
+	{+END}
 
 	{$REVIEW_STATUS,topic,{ID}}
 
-	{+START,IF,{$CONFIG_OPTION,show_screen_actions}}{+START,IF_PASSED,_TITLE}{$BLOCK,failsafe=1,block=main_screen_actions,title={_TITLE}}{+END}{+END}
+	{+START,IF_NON_EMPTY,{FORUM_ID}}
+		{+START,IF,{$CONFIG_OPTION,show_screen_actions}}{+START,IF_PASSED,_TITLE}{$BLOCK,failsafe=1,block=main_screen_actions,title={_TITLE}}{+END}{+END}
+	{+END}
 </div>
 

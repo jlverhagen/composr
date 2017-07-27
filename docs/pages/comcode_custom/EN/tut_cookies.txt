@@ -1,9 +1,9 @@
 [title sub="Written by Chris Graham (ocProducts)"]Composr Tutorial: Introduction to Cookies and sessions (and JavaScript)[/title]
 
+[media width="150" description="" float="right"]data_custom/images/docs/tut_cookies/image.png[/media]
 This is a tutorial that will explain the concept of cookies and sessions, as well as briefly explain how they relate to JavaScript in Composr.
 
 [i]This tutorial is mostly for interest, it is not required understanding for normal Composr use.[/i]
-
 
 [contents]decimal,lower-alpha[/contents]
 
@@ -15,8 +15,8 @@ Originally there was no way to identify a user on the web that was viewing a web
 
 Cookies were designed to resolve this problem, and another one:
 [list="1"]
-[*]it would allow server-side web applications to identify a specific user by the computer they accessed with
-[*]it would allow client-side web applications to have a memory, which was otherwise impossible
+[*] it would allow server-side web applications to identify a specific user by the computer they accessed with
+[*] it would allow client-side web applications to have a memory, which was otherwise impossible
 [/list]
 
 [title="2"]Login cookies[/title]
@@ -43,6 +43,7 @@ Note that IP addresses could never be used instead of sessions because they are 
 
 [title="2"]JavaScript[/title]
 
+[media thumb="0" width="80" framed="0" description="" float="right"]themes/default/images_custom/tutorial_icons/javascript.png[/media]
 JavaScript is built into web browsers directly. It is used to provide an interactive element to the user's experience in their web browser.
 
 Composr detects JavaScript by making the web browser write a cookie using JavaScript -- if such a cookie exists, Composr knows that JavaScript is enabled. Likewise, if the cookie does not get set, Composr knows JavaScript is probably not enabled.
@@ -62,16 +63,23 @@ If the problem is number 1, then you can adjust the browser settings to reenable
 
 [title="2"]Privacy[/title]
 
+[media thumb="0" width="80" framed="0" description="" float="right"]themes/default/images_custom/tutorial_icons/security.png[/media]
 Cookies can only be read by the site that created them, or a site 'underneath' the site that created them. This prevents other websites from stealing cookies.
 
-When cookies were fairly new, there was a lot of controversy about their ability to track users browsing 'all around the web'. This is not really the case, due to sites only being able to read their own cookies; however, for affiliated companies, such as advertising companies, it is true that cookies could be placed in banners such that any site showing a banner could aid the banner company in tracking every website the banner viewer visited on their network. Therefore as more paranoid users may feel the need to disable their cookies, Composr does not require them: session details may be relayed by URL in Composr. The obvious disadvantage is that automatic login is not possible in this situation, and there is an additional disadvantage that JavaScript will be thought to be disabled, as Composr needs to use cookies to detect it. The first problem may be ameliorated by the web browser 'auto-fill' feature, which can be used to automatically remember how forms, such as login forms, were filled in.
+When cookies were fairly new, there was a lot of controversy about their ability to track users browsing 'all around the web'. This is not really the case, due to sites only being able to read their own cookies; however, for affiliated companies, such as advertising companies, it is true that cookies could be placed in banners such that any site showing a banner could aid the banner company in tracking every website the banner viewer visited on their network.
+
+Therefore as more paranoid users may feel the need to disable their cookies, Composr does not require them: session details may be relayed by URL in Composr. The obvious disadvantage is that automatic login is not possible in this situation, and there is an additional disadvantage that JavaScript will be thought to be disabled, as Composr needs to use cookies to detect it. The first problem may be ameliorated by the web browser 'auto-fill' feature, which can be used to automatically remember how forms, such as login forms, were filled in.
 
 The developers recommend that users do have cookies enabled, but that they possibly disable 'third party cookies' if they are concerned about privacy so that advertisers can not track the advertising sites that they view.
 
 [title="2"]EU legislation[/title]
 
+[surround]
+[media thumb="0" width="80" framed="0" description="" float="right"]themes/default/images_custom/tutorial_icons/configuration.png[/media]
 The EU require tracking cookies be declared for organisations operating inside the EU.
+
 The Composr "Cookie notice" configuration option implements this. It isn't on by default because Composr's cookies are heavily minimised to what we consider reasonable compliance without special notice. However, use of something like Adsense strictly requires you enable the cookie notice.
+[/surround]
 
 [title="2"]20 things you didn't know about cookies (for programmers)[/title]
 
@@ -85,14 +93,14 @@ The Composr "Cookie notice" configuration option implements this. It isn't on by
 8) Cookies must be set against a domain name. This is either done by putting [tt].domain[/tt] as the cookie domain, or by leaving the domain blank when setting the cookie; the domain should never be defined as [tt]domain[/tt] as it will not work properly.
 9) Cookies work with an elaborate but confusing precedence system. Only cookies underneath a matched domain/path combination will be sent to a server URL (for privacy reasons), and they will be given precedence based on 'most specific gets priority'. To change a cookie the server must set it against the domain/path combination it was created with. The variables a cookie was defined under are not available server-side, which means that anyone modifying the cookie must know these in advance, or guess wildly.
 10) There is a legitimate privacy concern with cookies when ads are concerned. Banner rotations run from centralised sites, and hence have the ability to effectively track users from this centralised site but with regard any site that they visit that uses the rotation. Nevertheless, such tracking could happen regardless of cookies, via server logging and cross-server messaging -- so blaming cookies is simplistic.
-11) Microsoft made a great extension to Netscape's original cookie spec, allowing 'HTTP only' cookies (cookies that JavaScript cannot read). Use of this prevents XSS many vulnerabilities. Unfortunately it is only supported by Internet Explorer currently.
+11) Microsoft made a great extension to Netscape's original cookie spec, allowing 'HTTP only' cookies (cookies that JavaScript cannot read). Use of this prevents XSS many vulnerabilities.
 12) At the protocol level, cookies are sent to the server in a single Cookie HTTP header, but set from the server using individual Set-Cookie headers.
 13) Cookies just store names and values, and never any data that a web server or normal JavaScript would not have been able to discern -- because it is the web server or browser that sets the cookie.
 14) JavaScript provides its cookie support by a virtual variable, [tt]document.cookie[/tt]. The variable can be set and read, but the process is not actually direct.
 15) A common server-side coding mistake is to set a cookie and then refer to the cookie value within the same server response -- yet the cookie would not have been activated until the response had been sent.
 16) Some web servers (including Apache) restrict cookie data length, refusing to server data if the length is exceeded.
 17) Cookie names should not contain certain special characters like '=' as these have special meanings within HTTP and there is no standard escaping mechanism for cookie names. (Unexpected bugs may happen if you attempt to set such cookies)
-18) Cookies were invented by Netscape, not by the usual bodies: the IETF or W3C.
+18) Cookies were invented by Netscape, not by the usual standards bodies (the IETF or W3C).
 19) On some web servers it is not possible to set a cookie at the same time as doing an HTTP redirect.
 20) The name 'cookie' was given for no particular reason, but is the origin of endless bad jokes.
 
@@ -104,11 +112,12 @@ The Composr "Cookie notice" configuration option implements this. It isn't on by
 
 [title="2"]See also[/title]
 
+ - https://www.youtube.com/watch?v=mI2STe_Kklk
  - [page="_SEARCH:tut_nuances"]Nuances of forum integration[/page]
  - [page="_SEARCH:tut_security"]Security[/page]
  - [page="_SEARCH:tut_markup"]Guide to web technologies (including HTML, CSS, and JavaScript)[/page]
  - [page="_SEARCH:tut_how_internet_works"]How the Internet works[/page]
- - [page="_SEARCH:tut_cookies"]Introduction to Cookies and sessions (and JavaScript)[/page]
  - [page="_SEARCH:tut_email"]Understanding and configuring e-mail[/page]
+ - [page="_SEARCH:tut_domain_names"]How domain names work[/page]
 
 {$SET,tutorial_tags,Internet Technology,Development,expert}{$SET,tutorial_add_date,Aug 2008}{$SET,tutorial_summary,Want to know everything there is to know about cookies and sessions? You probably don't, but if you do, read this!}[block]main_tutorial_rating[/block]

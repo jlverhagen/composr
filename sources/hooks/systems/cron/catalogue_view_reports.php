@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -76,7 +76,7 @@ class Hook_cron_catalogue_view_reports
             require_lang('catalogues');
         }
 
-        if (function_exists('set_time_limit')) {
+        if (php_function_allowed('set_time_limit')) {
             @set_time_limit(0);
         }
 

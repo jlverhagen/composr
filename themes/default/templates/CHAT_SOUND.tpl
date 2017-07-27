@@ -1,16 +1,22 @@
 <script>
 // <![CDATA[
-	if (typeof window.soundManager!='undefined')
+	function prepare_chat_sounds()
 	{
-		add_event_listener_abstract(window,'real_load',function () {
-			window.soundManager.setup({url: get_base_url()+'/data', debugMode: false, preferFlash : false, html5Only : true});
+		if (typeof window.prepared_chat_sounds!='undefined') return;
+		window.prepared_chat_sounds=true;
 
-			soundManager.onload=function() {
-				{+START,LOOP,SOUND_EFFECTS}
-					soundManager.createSound('{KEY;/}','{VALUE;/}');
-				{+END}
-			}
-		} );
+		if (typeof window.soundManager!='undefined')
+		{
+			window.soundManager.setup({
+				url: get_base_url()+'/data',
+				debugMode: false,
+				onready: function() {
+					{+START,LOOP,SOUND_EFFECTS}
+						window.soundManager.createSound('{KEY;/}','{VALUE;/}');
+					{+END}
+				}
+			});
+		}
 	}
 // ]]>
 </script>

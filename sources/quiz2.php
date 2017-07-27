@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -113,6 +113,7 @@ function parse_quiz_question_line($question, $answers, $question_extra_text = ''
  * @param  string $text Text for questions
  * @param  ID_TEXT $type The type
  * @set COMPETITION TEST SURVEY
+ *
  * @ignore
  */
 function _save_available_quiz_answers($id, $text, $type)
@@ -347,6 +348,9 @@ function add_quiz($name, $timeout, $start_text, $end_text, $end_text_fail, $note
     if (is_null($add_time)) {
         $add_time = time();
     }
+    if ($open_time === null) {
+        $open_time = time();
+    }
 
     if (!addon_installed('unvalidated')) {
         $validated = 1;
@@ -388,7 +392,7 @@ function add_quiz($name, $timeout, $start_text, $end_text, $end_text_fail, $note
 
     if ((addon_installed('commandr')) && (!running_script('install'))) {
         require_code('resource_fs');
-        generate_resourcefs_moniker('quiz', strval($id), null, null, true);
+        generate_resource_fs_moniker('quiz', strval($id), null, null, true);
     }
 
     require_code('sitemap_xml');
@@ -425,7 +429,7 @@ function add_quiz($name, $timeout, $start_text, $end_text, $end_text_fail, $note
  * @param  BINARY $shuffle_answers Whether to shuffle multiple-choice answers, to make cheating a bit harder
  * @param  ?TIME $add_time Add time (null: do not change)
  * @param  ?MEMBER $submitter Submitter (null: do not change)
- * @param  boolean $null_is_literal Determines whether some NULLs passed mean 'use a default' or literally mean 'set to NULL'
+ * @param  boolean $null_is_literal Determines whether some nulls passed mean 'use a default' or literally mean 'set to null'
  */
 function edit_quiz($id, $name, $timeout, $start_text, $end_text, $end_text_fail, $notes, $percentage, $open_time, $close_time, $num_winners, $redo_time, $type, $validated, $text, $meta_keywords, $meta_description, $points_for_passing = 0, $tied_newsletter = null, $reveal_answers = 0, $shuffle_questions = 0, $shuffle_answers = 0, $add_time = null, $submitter = null, $null_is_literal = false)
 {
@@ -437,6 +441,10 @@ function edit_quiz($id, $name, $timeout, $start_text, $end_text, $end_text_fail,
     $_start_text = $rows[0]['q_start_text'];
     $_end_text = $rows[0]['q_end_text'];
     $_end_text_fail = $rows[0]['q_end_text_fail'];
+
+    if ($open_time === null) {
+        $open_time = time();
+    }
 
     if (!addon_installed('unvalidated')) {
         $validated = 1;
@@ -492,7 +500,7 @@ function edit_quiz($id, $name, $timeout, $start_text, $end_text, $end_text_fail,
 
     if ((addon_installed('commandr')) && (!running_script('install'))) {
         require_code('resource_fs');
-        generate_resourcefs_moniker('quiz', strval($id));
+        generate_resource_fs_moniker('quiz', strval($id));
     }
 
     require_code('sitemap_xml');
@@ -550,7 +558,7 @@ function delete_quiz($id)
 
     if ((addon_installed('commandr')) && (!running_script('install'))) {
         require_code('resource_fs');
-        expunge_resourcefs_moniker('quiz', strval($id));
+        expunge_resource_fs_moniker('quiz', strval($id));
     }
 
     require_code('sitemap_xml');

@@ -1,7 +1,7 @@
 ptrad<?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -212,7 +212,7 @@ class CMSPmRead
         }
 
         // Too old to track
-        if ($topic_details['t_cache_last_time'] < time() - 60 * 60 * 24 * intval(get_option('post_history_days'))) {
+        if ($topic_details['t_cache_last_time'] < time() - 60 * 60 * 24 * intval(get_option('post_read_history_days'))) {
             return self::READ;
         }
 

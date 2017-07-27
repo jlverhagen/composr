@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -18,7 +18,7 @@
  * @package    core
  */
 
-/*EXTRA FUNCTIONS: ILess_Autoloader|ILess_Parser|ILess_Cache_FileSystem*/
+/*EXTRA FUNCTIONS: ILess_Autoloader|ILess_Parser|ILess_Cache_FileSystem|less_proxy_compile|proc_.*|escapeshellarg|stream_get_contents*/
 
 /**
  * Standard code module initialisation function.
@@ -27,17 +27,19 @@
  */
 function init__tempcode_compiler()
 {
-    define('PARSE_NO_MANS_LAND', 0);
-    define('PARSE_DIRECTIVE', 1);
-    define('PARSE_SYMBOL', 2);
-    define('PARSE_LANGUAGE_REFERENCE', 3);
-    define('PARSE_PARAMETER', 4);
-    define('PARSE_DIRECTIVE_INNER', 5);
+    if (!defined('PARSE_NO_MANS_LAND')) {
+        define('PARSE_NO_MANS_LAND', 0);
+        define('PARSE_DIRECTIVE', 1);
+        define('PARSE_SYMBOL', 2);
+        define('PARSE_LANGUAGE_REFERENCE', 3);
+        define('PARSE_PARAMETER', 4);
+        define('PARSE_DIRECTIVE_INNER', 5);
+    }
 
     global $DIRECTIVES_NEEDING_VARS;
-    $DIRECTIVES_NEEDING_VARS = array('IF_PASSED_AND_TRUE' => true, 'IF_NON_PASSED_OR_FALSE' => true, 'PARAM_INFO' => true, 'IF_NOT_IN_ARRAY' => true, 'IF_IN_ARRAY' => true, 'IMPLODE' => true, 'COUNT' => true, 'IF_ARRAY_EMPTY' => true, 'IF_ARRAY_NON_EMPTY' => true, 'OF' => true, 'INCLUDE' => true, 'LOOP' => true, 'SET_NOPREEVAL' => true);
+    $DIRECTIVES_NEEDING_VARS = array('IF_PASSED_AND_TRUE' => true, 'IF_NON_PASSED_OR_FALSE' => true, 'PARAM_INFO' => true, 'IF_NOT_IN_ARRAY' => true, 'IF_IN_ARRAY' => true, 'IMPLODE' => true, 'COUNT' => true, 'IF_ARRAY_EMPTY' => true, 'IF_ARRAY_NON_EMPTY' => true, 'OF' => true, 'INCLUDE' => true, 'LOOP' => true);
 
-    // Work out what symbols may be compiled out
+    // Work out what symbols may be compiled out (look at patterns at top of caches3.php if changing this)
     global $COMPILABLE_SYMBOLS;
     $_compilable_symbols = array(
         'LANG',
@@ -50,9 +52,7 @@ function init__tempcode_compiler()
         'CONFIG_OPTION',
         'VALUE_OPTION',
         'COPYRIGHT',
-        'BASE_URL',
         'BASE_URL_NOHTTP',
-        'CUSTOM_BASE_URL',
         'CUSTOM_BASE_URL_NOHTTP',
         'BRAND_NAME',
         'BRAND_BASE_URL',
@@ -74,9 +74,6 @@ function init__tempcode_compiler()
         'SSW',
         'MAILTO',
     );
-    if (function_exists('get_option') && get_option('enable_https', true) != '1') {
-        $_compilable_symbols[] = 'BASE_URL';
-    }
     global $SITE_INFO;
     if ((isset($SITE_INFO['no_keep_params'])) && ($SITE_INFO['no_keep_params'] == '1')) {
         $_compilable_symbols[] = 'KEEP';
@@ -85,6 +82,8 @@ function init__tempcode_compiler()
     }
     if (!addon_installed('ssl')) {
         $_compilable_symbols[] = 'IMG';
+        $_compilable_symbols[] = 'BASE_URL';
+        $_compilable_symbols[] = 'CUSTOM_BASE_URL';
     }
     if ((function_exists('get_option')) && (get_option('detect_javascript') == '0')) {
         $_compilable_symbols[] = 'JS_ON';
@@ -101,6 +100,7 @@ function init__tempcode_compiler()
  * @param  array $bits Compiler tokens
  * @param  integer $i How far we are through the token list
  * @return integer The sum length of tokens passed
+ *
  * @ignore
  */
 function _length_so_far($bits, $i)
@@ -173,10 +173,10 @@ function compile_template($data, $template_name, $theme, $lang, $tolerate_errors
     $preprocessable_bits_stack = array();
     for ($i = 0; $i < $count; $i++) {
         $next_token = $bits[$i];
-        if ($next_token == '') {
+        if ($next_token === '') {
             continue;
         }
-        if (($i != $count - 1) && ($next_token == '{') && (preg_match('#^[\dA-Z\$\+\!\_]#', $bits[$i + 1]) == 0)) {
+        if (($i !== $count - 1) && ($next_token === '{') && (preg_match('#^[\dA-Z\$\+\!\_]#', $bits[$i + 1]) === 0)) {
             $current_level_data[] = '"{}"';
             continue;
         }
@@ -197,15 +197,15 @@ function compile_template($data, $template_name, $theme, $lang, $tolerate_errors
                 switch (isset($next_token[0]) ? $next_token[0] : '') {
                     case '$':
                         $current_level_mode = PARSE_SYMBOL;
-                        $current_level_data[] = '"' . php_addslashes(($next_token == '$') ? '' : substr($next_token, 1)) . '"';
+                        $current_level_data[] = '"' . php_addslashes(($next_token === '$') ? '' : substr($next_token, 1)) . '"';
                         break;
                     case '+':
                         $current_level_mode = PARSE_DIRECTIVE;
-                        $current_level_data[] = '"' . php_addslashes(($next_token == '+') ? '' : substr($next_token, 1)) . '"';
+                        $current_level_data[] = '"' . php_addslashes(($next_token === '+') ? '' : substr($next_token, 1)) . '"';
                         break;
                     case '!':
                         $current_level_mode = PARSE_LANGUAGE_REFERENCE;
-                        $current_level_data[] = '"' . php_addslashes(($next_token == '!') ? '' : substr($next_token, 1)) . '"';
+                        $current_level_data[] = '"' . php_addslashes(($next_token === '!') ? '' : substr($next_token, 1)) . '"';
                         break;
                     default:
                         $current_level_mode = PARSE_PARAMETER;
@@ -216,7 +216,7 @@ function compile_template($data, $template_name, $theme, $lang, $tolerate_errors
                 break;
 
             case '}':
-                if (($stack == array()) || ($current_level_mode == PARSE_DIRECTIVE_INNER)) {
+                if (($stack === array()) || ($current_level_mode === PARSE_DIRECTIVE_INNER)) {
                     $literal = php_addslashes($next_token);
 
                     if ($GLOBALS['XSS_DETECT']) {
@@ -229,12 +229,12 @@ function compile_template($data, $template_name, $theme, $lang, $tolerate_errors
 
                 $opener_params = array_merge($current_level_params, array($current_level_data));
                 $__first_param = array_shift($opener_params);
-                if (count($__first_param) != 1) {
+                if (count($__first_param) !== 1) {
                     warn_exit(do_lang_tempcode('COMPLEX_FIRST_PARAMETER'));
                 }
                 $_first_param = $__first_param[0];
 
-                if (($bits[$i - 1] == '') && (count($current_level_data) == 0)) {
+                if (($bits[$i - 1] === '') && (count($current_level_data) === 0)) {
                     $current_level_data[] = '""';
                 }
 
@@ -242,7 +242,7 @@ function compile_template($data, $template_name, $theme, $lang, $tolerate_errors
                 $past_level_data = $current_level_data;
                 $past_level_params = $current_level_params;
                 $past_level_mode = $current_level_mode;
-                if ($stack == array()) {
+                if ($stack === array()) {
                     if (!$tolerate_errors) {
                         warn_exit(do_lang_tempcode('TEMPCODE_TOO_MANY_CLOSES', escape_html($template_name), escape_html(integer_format(1 + _length_so_far($bits, $i)))));
                     }
@@ -300,6 +300,7 @@ function compile_template($data, $template_name, $theme, $lang, $tolerate_errors
                         case '+':
                             $escaped[] = PURE_STRING; // A performance marker
                             break;
+
                         // This is used as a hint to not preprocess
                         case '-':
                             // NB: we're out of ASCII symbols now. We want to avoid []()<>" brackets, whitespace characters, and control codes, and others are used for Tempcode grammar or are valid identifier characters.
@@ -308,7 +309,7 @@ function compile_template($data, $template_name, $theme, $lang, $tolerate_errors
                 }
                 $_opener_params = '';
                 foreach ($opener_params as $oi => &$oparam) {
-                    if ($oparam == array()) {
+                    if ($oparam === array()) {
                         $oparam = array('""');
                         if (!isset($opener_params[$oi + 1])) {
                             unset($opener_params[$oi]);
@@ -316,7 +317,7 @@ function compile_template($data, $template_name, $theme, $lang, $tolerate_errors
                         }
                     }
 
-                    if ($_opener_params != '') {
+                    if ($_opener_params !== '') {
                         $_opener_params .= ',';
                     }
                     $_opener_params .= implode('.', $oparam);
@@ -343,7 +344,7 @@ function compile_template($data, $template_name, $theme, $lang, $tolerate_errors
                                 case '"LOAD_PAGE"':
                                 case '"LOAD_PANEL"':
                                     foreach ($stack as $level_test) { // Make sure if it's a LOOP then we evaluate the parameters early, as these have extra bindings we don't know about
-                                        if (($level_test[3] == PARSE_DIRECTIVE) && (isset($level_test[5][1])) && (isset($level_test[5][1][0])) && ($level_test[5][1][0] == '"LOOP"')) { // For a loop, we need to do full evaluation of symbol parameters as it may be bound to a loop variable
+                                        if (($level_test[3] === PARSE_DIRECTIVE) && (isset($level_test[5][1])) && (isset($level_test[5][1][0])) && ($level_test[5][1][0] === '"LOOP"')) { // For a loop, we need to do full evaluation of symbol parameters as it may be bound to a loop variable
                                             $tpl_funcs = array();
                                             $eval = debug_eval('return array(' . $_opener_params . ');', $tpl_funcs, array(), $cl);
                                             if (is_array($eval)) {
@@ -368,18 +369,18 @@ function compile_template($data, $template_name, $theme, $lang, $tolerate_errors
                             }
                         }
 
-                        if (($first_param == '"IMG"') && (strpos($_opener_params, ',') === false)) { // Needed to ensure correct binding
+                        if (($first_param === '"IMG"') && (strpos($_opener_params, ',') === false)) { // Needed to ensure correct binding
                             $_opener_params .= ',"0","' . php_addslashes($theme) . '"';
                         }
 
-                        if ($first_param == '"?"') { // Optimise out static ternary
-                            if (implode('.', $opener_params[0]) == '"1"') {
+                        if ($first_param === '"?"') { // Optimise out static ternary
+                            if (implode('.', $opener_params[0]) === '"1"') {
                                 if (isset($opener_params[1])) {
                                     $current_level_data[] = implode('.', $opener_params[1]);
                                 }
                                 break;
                             }
-                            if (implode('.', $opener_params[0]) == '"0"') {
+                            if (implode('.', $opener_params[0]) === '"0"') {
                                 if (isset($opener_params[2])) {
                                     $current_level_data[] = implode('.', $opener_params[2]);
                                 }
@@ -387,31 +388,31 @@ function compile_template($data, $template_name, $theme, $lang, $tolerate_errors
                             }
                         }
 
-                        if ($first_param == '""') { // Optimise out comments
+                        if ($first_param === '""') { // Optimise out comments
                             break;
                         }
 
                         // Optimise simple PHP-compatible operators
                         foreach (array('EQ' => '==', 'NEQ' => '!=') as $symbol_op => $php_op) {
-                            if (($first_param == '"' . $symbol_op . '"') && (count($opener_params) == 2)) {
+                            if (($first_param === '"' . $symbol_op . '"') && (count($opener_params) === 2)) {
                                 $current_level_data[] = '(((' . implode('.', $opener_params[0]) . ')' . $php_op . '(' . implode('.', $opener_params[1]) . '))?"1":"0")';
                                 break 2;
                             }
                         }
                         foreach (array('AND' => '&&', 'OR' => '||') as $symbol_op => $php_op) {
-                            if (($first_param == '"' . $symbol_op . '"') && (count($opener_params) == 2)) {
+                            if (($first_param === '"' . $symbol_op . '"') && (count($opener_params) === 2)) {
                                 $current_level_data[] = '(((' . implode('.', $opener_params[0]) . ')=="1")' . $php_op . '(' . implode('.', $opener_params[1]) . '=="1")?"1":"0")';
                                 break 2;
                             }
                         }
-                        if (($first_param == '"?"') && (count($opener_params) == 3) && (count($escaped) == 0)) {
+                        if (($first_param === '"?"') && (count($opener_params) === 3) && (count($escaped) === 0)) {
                             $current_level_data[] = '(((' . implode('.', $opener_params[0]) . ')=="1")?(' . implode('.', $opener_params[1]) . '):(' . implode('.', $opener_params[2]) . '))';
                             break 2;
                         }
 
                         // Okay, a fully dynamic symbol
                         $name = preg_replace('#(^")|("$)#', '', $first_param);
-                        if ($name == '?') {
+                        if ($name === '?') {
                             $name = 'TERNARY';
                         }
                         if (function_exists('ecv_' . $name)) {
@@ -419,15 +420,15 @@ function compile_template($data, $template_name, $theme, $lang, $tolerate_errors
                         } else {
                             $new_line = 'ecv($cl,array(' . implode(',', $escaped) . '),' . strval(TC_SYMBOL) . ',' . $first_param . ',array(' . $_opener_params . '))';
                         }
-                        if ((isset($COMPILABLE_SYMBOLS[$first_param])) && (preg_match('#^[^\(\)]*$#', $_opener_params) != 0)) { // Can optimise out?
+                        if ((isset($COMPILABLE_SYMBOLS[$first_param])) && (preg_match('#^[^\(\)]*$#', $_opener_params) !== 0)) { // Can optimise out?
                             $tpl_funcs = array();
                             $new_line = '"' . php_addslashes(debug_eval('return ' . $new_line . ';', $tpl_funcs, array(), $cl)) . '"';
                         } else {
                             // We want the benefit's of keep_ variables but not with having to do lots of individual URL moniker lookup queries - so use a static URL and KEEP_ symbol combination
-                            if (($GLOBALS['OUTPUT_STREAMING']) && ($first_param == '"PAGE_LINK"') && (count($opener_params) == 1) && (preg_match('#^[^\(\)]*$#', $_opener_params) != 0) && (function_exists('has_submit_permission')/*needed for moniker hooks to load up*/)) {
+                            if (($GLOBALS['OUTPUT_STREAMING']) && ($first_param === '"PAGE_LINK"') && (count($opener_params) === 1) && (preg_match('#^[^\(\)]*$#', $_opener_params) !== 0) && (function_exists('has_submit_permission')/*needed for moniker hooks to load up*/)) {
                                 $tmp = $_GET;
                                 foreach (array_keys($_GET) as $key) {
-                                    if (substr($key, 0, 5) == 'keep_') {
+                                    if (substr($key, 0, 5) === 'keep_') {
                                         unset($_GET[$key]);
                                     }
                                 }
@@ -445,11 +446,11 @@ function compile_template($data, $template_name, $theme, $lang, $tolerate_errors
 
                     case PARSE_LANGUAGE_REFERENCE:
                         $new_line = 'ecv($cl,array(' . implode(',', $escaped) . '),' . strval(TC_LANGUAGE_REFERENCE) . ',' . $first_param . ',array(' . $_opener_params . '))';
-                        if (($_opener_params == '') && ($escaped == array())) { // Optimise it out for simple case?
+                        if (($_opener_params === '') && ($escaped === array())) { // Optimise it out for simple case?
                             $tpl_funcs = array();
                             $looked_up = do_lang(debug_eval('return ' . $first_param . ';', $tpl_funcs, array(), $cl), null, null, null, $lang, false);
                             if ($looked_up !== null) {
-                                if (apply_tempcode_escaping($escaped, $looked_up) == $looked_up) {
+                                if (apply_tempcode_escaping($escaped, $looked_up) === $looked_up) {
                                     $new_line = '"' . php_addslashes($looked_up) . '"';
                                 }
                             }
@@ -459,30 +460,30 @@ function compile_template($data, $template_name, $theme, $lang, $tolerate_errors
 
                     case PARSE_PARAMETER:
                         $parameter = str_replace('"', '', str_replace("'", '', $first_param));
-                        $parameter = preg_replace('#[^\w\_\d]#', '', $parameter); // security to stop PHP injection
-                        if ($escaped == array(PURE_STRING)) {
+                        $parameter = preg_replace('#[^\w]#', '', $parameter); // security to stop PHP injection
+                        if ($escaped === array(PURE_STRING)) {
                             $current_level_data[] = '$bound_' . php_addslashes($parameter);
                         } else {
-                            $temp = 'otp(isset($bound_' . php_addslashes($parameter) . ')?$bound_' . php_addslashes($parameter) . ':NULL';
+                            $temp = 'otp(isset($bound_' . php_addslashes($parameter) . ')?$bound_' . php_addslashes($parameter) . ':null';
                             if ((!function_exists('get_value')) || (get_value('shortened_tempcode') !== '1')) {
                                 $temp .= ',"' . php_addslashes($parameter . '/' . $template_name) . '"';
                             }
                             $temp .= ')';
 
-                            if ($escaped == array()) {
+                            if ($escaped === array()) {
                                 $current_level_data[] = $temp;
                             } else {
                                 $s_escaped = '';
                                 foreach ($escaped as $esc) {
-                                    if ($s_escaped != '') {
+                                    if ($s_escaped !== '') {
                                         $s_escaped .= ',';
                                     }
                                     $s_escaped .= strval($esc);
                                 }
-                                if (($s_escaped == strval(ENTITY_ESCAPED)) && (!$GLOBALS['XSS_DETECT'])) {
-                                    $current_level_data[] = '(empty($bound_' . $parameter . '->pure_lang)?htmlspecialchars(' . $temp . ',ENT_QUOTES,get_charset()):' . $temp . ')';
+                                if (($s_escaped === strval(ENTITY_ESCAPED)) && (!$GLOBALS['XSS_DETECT'])) {
+                                    $current_level_data[] = '(empty($bound_' . $parameter . '->pure_lang)?@htmlspecialchars(' . $temp . ',ENT_QUOTES | ENT_SUBSTITUTE,get_charset()):' . $temp . ')';
                                 } else {
-                                    if ($s_escaped == strval(ENTITY_ESCAPED)) {
+                                    if ($s_escaped === strval(ENTITY_ESCAPED)) {
                                         $current_level_data[] = '(empty($bound_' . $parameter . '->pure_lang)?apply_tempcode_escaping_inline(array(' . $s_escaped . '),' . $temp . '):' . $temp . ')';
                                     } else {
                                         $current_level_data[] = 'apply_tempcode_escaping_inline(array(' . $s_escaped . '),' . $temp . ')';
@@ -494,30 +495,30 @@ function compile_template($data, $template_name, $theme, $lang, $tolerate_errors
                 }
 
                 // Handle directive nesting
-                if ($past_level_mode == PARSE_DIRECTIVE) {
+                if ($past_level_mode === PARSE_DIRECTIVE) {
                     $tpl_funcs = array();
                     $eval = debug_eval('return ' . $first_param . ';', $tpl_funcs, array(), $cl);
                     if (!is_string($eval)) {
                         $eval = '';
                     }
-                    if ($eval == 'START') { // START
+                    if ($eval === 'START') { // START
                         // Open a new directive level
                         $stack[] = array($current_level_mode, $current_level_data, $current_level_params, $past_level_mode, $past_level_data, $past_level_params, count($preprocessable_bits));
                         $current_level_data = array();
                         $current_level_params = array();
                         $current_level_mode = PARSE_DIRECTIVE_INNER;
-                        if ($opener_params == array(array('"NO_PREPROCESSING"'))) {
-                            array_push($preprocessable_bits_stack, $preprocessable_bits);
+                        if ($opener_params === array(array('"NO_PREPROCESSING"'))) {
+                            array_push($preprocessable_bits_stack, $preprocessable_bits); // So anything inside will end up being thrown away when we pop back to what we had before in $preprocessable_bits
                         }
-                    } elseif ($eval == 'END') { // END
+                    } elseif ($eval === 'END') { // END
                         // Test that the top stack does represent a started directive, and close directive level
                         $past_level_data = $current_level_data;
-                        if ($past_level_data == array()) {
+                        if ($past_level_data === array()) {
                             $past_level_data = array('""');
                         }
                         $past_level_params = $current_level_params;
                         $past_level_mode = $current_level_mode;
-                        if ($stack == array()) {
+                        if ($stack === array()) {
                             if ($tolerate_errors) {
                                 continue;
                             }
@@ -531,7 +532,7 @@ function compile_template($data, $template_name, $theme, $lang, $tolerate_errors
                             warn_exit(do_lang_tempcode('UNCLOSED_DIRECTIVE_OR_BRACE', escape_html($template_name), escape_html(integer_format(1 + substr_count(substr($data, 0, _length_so_far($bits, $i)), "\n")))));
                         }
                         $directive_opener_params = array_merge($directive_level_params, array($directive_level_data));
-                        if (($directive_level_mode != PARSE_DIRECTIVE) || ($directive_opener_params[0][0] != '"START"')) {
+                        if (($directive_level_mode !== PARSE_DIRECTIVE) || ($directive_opener_params[0][0] !== '"START"')) {
                             if ($tolerate_errors) {
                                 continue;
                             }
@@ -539,7 +540,7 @@ function compile_template($data, $template_name, $theme, $lang, $tolerate_errors
                         }
 
                         // Handle directive
-                        if (count($directive_opener_params) == 1) {
+                        if (count($directive_opener_params) === 1) {
                             if ($tolerate_errors) {
                                 continue;
                             }
@@ -547,21 +548,21 @@ function compile_template($data, $template_name, $theme, $lang, $tolerate_errors
                         }
                         $directive_params = '';
                         $first_directive_param = '""';
-                        if ($directive_opener_params[1] == array()) {
+                        if ($directive_opener_params[1] === array()) {
                             $directive_opener_params[1] = array('""');
                         }
                         $count_directive_opener_params = count($directive_opener_params);
                         for ($j = 2; $j < $count_directive_opener_params; $j++) {
-                            if ($directive_opener_params[$j] == array()) {
+                            if ($directive_opener_params[$j] === array()) {
                                 $directive_opener_params[$j] = array('""');
                             }
 
-                            if ($directive_params != '') {
+                            if ($directive_params !== '') {
                                 $directive_params .= ',';
                             }
                             $directive_params .= implode('.', $directive_opener_params[$j]);
 
-                            if ($j == 2) {
+                            if ($j === 2) {
                                 $first_directive_param = implode('.', $directive_opener_params[$j]);
                             }
                         }
@@ -582,21 +583,6 @@ function compile_template($data, $template_name, $theme, $lang, $tolerate_errors
                                 }
                                 break;
                         }
-                        if ($directive_name == 'SET_NOPREEVAL') { // Needs to be dynamic
-                            $myfunc = 'do_runtime_' . uniqid('', true)/*fast_uniqid()*/;
-                            $_past_level_data = implode('.', $past_level_data);
-                            $unset_code = '';
-                            if (strpos($_past_level_data, 'isset($bound') !== false) {// Horrible but efficient code needed to allow IF_PASSED/IF_NON_PASSED to keep working when templates are put adjacent to each other, where some have it, and don't. This is needed as eval does not set a scope block.
-                                $reset_code = "eval(\\\$FULL_RESET_VAR_CODE);";
-                            } elseif (strpos($_past_level_data, '$bound') !== false) {
-                                $reset_code = "eval(\\\$RESET_VAR_CODE);";
-                            } else {
-                                $reset_code = '';
-                            }
-                            $funcdef = /*if (!isset(\$tpl_funcs['$myfunc']))\n\t*/
-                                "\$tpl_funcs['$myfunc']=\"$reset_code echo " . php_addslashes($_past_level_data) . ";\";\n";
-                            $past_level_data = array('new Tempcode(array(array(\'' . $myfunc . '\'=>"' . php_addslashes($funcdef) . '"),array(array(array("' . $myfunc . '",array(),' . strval(TC_KNOWN) . ',\'\',\'\')))))');
-                        }
                         switch ($directive_name) {
                             case 'COMMENT':
                                 break;
@@ -609,32 +595,32 @@ function compile_template($data, $template_name, $theme, $lang, $tolerate_errors
 
                             case 'IF':
                                 // Optimise out static NOT expressions
-                                if (preg_match('#^ecv\(\$cl,array\(\),0,"NOT",array\("1"\)\)$#', $first_directive_param) != 0) {
+                                if (preg_match('#^ecv\(\$cl,array\(\),0,"NOT",array\("1"\)\)$#', $first_directive_param) !== 0) {
                                     $first_directive_param = '"0"';
                                 }
-                                if (preg_match('#^ecv\(\$cl,array\(\),0,"NOT",array\("0"\)\)$#', $first_directive_param) != 0) {
+                                if (preg_match('#^ecv\(\$cl,array\(\),0,"NOT",array\("0"\)\)$#', $first_directive_param) !== 0) {
                                     $first_directive_param = '"1"';
                                 }
 
                                 // Optimise out static boolean expressions
-                                if (($first_directive_param == '((("1")==("1"))?"1":"0")') || ($first_directive_param == '(("0"=="0")?"1":"0")')) {
+                                if (($first_directive_param === '((("1")==("1"))?"1":"0")') || ($first_directive_param === '(("0"=="0")?"1":"0")')) {
                                     $first_directive_param = '"1"';
-                                } elseif (($first_directive_param == '((("1")==("0"))?"1":"0")') || ($first_directive_param == '(("0"=="1")?"1":"0")')) {
+                                } elseif (($first_directive_param === '((("1")==("0"))?"1":"0")') || ($first_directive_param === '(("0"=="1")?"1":"0")')) {
                                     $first_directive_param = '"0"';
                                 }
 
                                 // Optimise simple expressions to PHP
                                 $matches = array();
-                                if (preg_match('#^\((\(\([^()]+\)(==|!=)\([^()]+\))\)\?"1":"0"\)\)$#', $first_directive_param, $matches) != 0) {
+                                if (preg_match('#^\((\(\([^()]+\)(==|!=)\([^()]+\))\)\?"1":"0"\)\)$#', $first_directive_param, $matches) !== 0) {
                                     $current_level_data[] = '(' . $matches[1] . '?(' . implode('.', $past_level_data) . '):\'\')';
                                     break;
                                 }
 
                                 // Optimise out static IFs
-                                if ($first_directive_param == '"0"') {
+                                if ($first_directive_param === '"0"') {
                                     break;
                                 }
-                                if ($first_directive_param == '"1"') {
+                                if ($first_directive_param === '"1"') {
                                     $current_level_data[] = '(' . implode('.', $past_level_data) . ')';
                                     break;
                                 }
@@ -657,7 +643,7 @@ function compile_template($data, $template_name, $theme, $lang, $tolerate_errors
                                 if (!is_string($eval)) {
                                     $eval = '';
                                 }
-                                $current_level_data[] = '(isset($bound_' . preg_replace('#[^\w\d\_]#', '', $eval) . ')?(' . implode('.', $past_level_data) . '):\'\')';
+                                $current_level_data[] = '(isset($bound_' . preg_replace('#[^\w]#', '', $eval) . ')?(' . implode('.', $past_level_data) . '):\'\')';
                                 break;
 
                             case 'IF_NON_PASSED':
@@ -666,7 +652,7 @@ function compile_template($data, $template_name, $theme, $lang, $tolerate_errors
                                 if (!is_string($eval)) {
                                     $eval = '';
                                 }
-                                $current_level_data[] = '(!isset($bound_' . preg_replace('#[^\w\d\_]#', '', $eval) . ')?(' . implode('.', $past_level_data) . '):\'\')';
+                                $current_level_data[] = '(!isset($bound_' . preg_replace('#[^\w]#', '', $eval) . ')?(' . implode('.', $past_level_data) . '):\'\')';
                                 break;
 
                             case 'IF_PASSED_AND_TRUE':
@@ -675,7 +661,7 @@ function compile_template($data, $template_name, $theme, $lang, $tolerate_errors
                                 if (!is_string($eval)) {
                                     $eval = '';
                                 }
-                                $current_level_data[] = '((isset($bound_' . preg_replace('#[^\w\d\_]#', '', $eval) . ') && (otp($bound_' . preg_replace('#[^\w\d\_]#', '', $eval) . ')=="1"))?(' . implode('.', $past_level_data) . '):\'\')';
+                                $current_level_data[] = '((isset($bound_' . preg_replace('#[^\w]#', '', $eval) . ') && (otp($bound_' . preg_replace('#[^\w]#', '', $eval) . ')=="1"))?(' . implode('.', $past_level_data) . '):\'\')';
                                 break;
 
                             case 'IF_NON_PASSED_OR_FALSE':
@@ -684,7 +670,7 @@ function compile_template($data, $template_name, $theme, $lang, $tolerate_errors
                                 if (!is_string($eval)) {
                                     $eval = '';
                                 }
-                                $current_level_data[] = '((!isset($bound_' . preg_replace('#[^\w\d\_]#', '', $eval) . ') || (otp($bound_' . preg_replace('#[^\w\d\_]#', '', $eval) . ')=="0"))?(' . implode('.', $past_level_data) . '):\'\')';
+                                $current_level_data[] = '((!isset($bound_' . preg_replace('#[^\w]#', '', $eval) . ') || (otp($bound_' . preg_replace('#[^\w]#', '', $eval) . ')=="0"))?(' . implode('.', $past_level_data) . '):\'\')';
                                 break;
 
                             case 'WHILE':
@@ -706,20 +692,16 @@ function compile_template($data, $template_name, $theme, $lang, $tolerate_errors
                                 if (!is_string($eval)) {
                                     $eval = '';
                                 }
-                                if (($template_name == $eval) || ((!$GLOBALS['SEMI_DEV_MODE']) && (get_param_string('special_page_type', '') == '')) && ($count_directive_opener_params == 3) && ($past_level_data == array('""')) && (!isset($FILE_ARRAY))) { // Simple case
-                                    $found = find_template_place($eval, '', $theme, '.tpl', 'templates', $template_name == $eval);
+                                if (($template_name === $eval) || ((!$GLOBALS['SEMI_DEV_MODE']) && (get_param_string('special_page_type', '') === '')) && ($count_directive_opener_params === 3) && ($past_level_data === array('""')) && (!isset($FILE_ARRAY))) { // Simple case
+                                    $found = find_template_place($eval, '', $theme, '.tpl', 'templates', $template_name === $eval);
                                     $_theme = $found[0];
                                     if ($found[1] !== null) {
-                                        $fullpath = get_custom_file_base() . '/themes/' . $_theme . $found[1] . $eval . $found[2];
-                                        if (!is_file($fullpath)) {
-                                            $fullpath = get_file_base() . '/themes/' . $_theme . $found[1] . $eval . $found[2];
+                                        $full_path = get_custom_file_base() . '/themes/' . $_theme . $found[1] . $eval . $found[2];
+                                        if (!is_file($full_path)) {
+                                            $full_path = get_file_base() . '/themes/' . $_theme . $found[1] . $eval . $found[2];
                                         }
-                                        if (is_file($fullpath)) {
-                                            $tmp = fopen($fullpath, 'rb');
-                                            @flock($tmp, LOCK_SH);
-                                            $filecontents = file_get_contents($fullpath);
-                                            @flock($tmp, LOCK_UN);
-                                            fclose($tmp);
+                                        if (is_file($full_path)) {
+                                            $filecontents = cms_file_get_contents_safe($full_path);
                                         } else {
                                             $filecontents = '';
                                         }
@@ -732,7 +714,7 @@ function compile_template($data, $template_name, $theme, $lang, $tolerate_errors
                             // intentionally rolls on...
 
                             default:
-                                if ($directive_params != '') {
+                                if ($directive_params !== '') {
                                     $directive_params .= ',';
                                 }
                                 $directive_params .= implode('.', $past_level_data);
@@ -784,14 +766,14 @@ function compile_template($data, $template_name, $theme, $lang, $tolerate_errors
         }
     }
     if ((!array_key_exists('LAX_COMCODE', $GLOBALS)) || ($GLOBALS['LAX_COMCODE'] === false)) {
-        if ($stack != array()) {
+        if ($stack !== array()) {
             if (!$tolerate_errors) {
                 warn_exit(do_lang_tempcode('UNCLOSED_DIRECTIVE_OR_BRACE', escape_html($template_name), escape_html(integer_format(1 + substr_count(substr($data, 0, _length_so_far($bits, $i)), "\n")))));
             }
         }
     }
 
-    if ($current_level_data == array('')) {
+    if ($current_level_data === array('')) {
         $current_level_data = array('""');
     }
 
@@ -800,7 +782,7 @@ function compile_template($data, $template_name, $theme, $lang, $tolerate_errors
     $just_done_string = false;
     foreach ($current_level_data as $c) {
         $c_stripped_down = str_replace(array('\\\\', '\\"'), array('', ''), $c); // Remove literal slashes and literal quotes so we can do an accurate scan to ensure it is all one string
-    	if ($c_stripped_down[0] == '"' && strpos($c_stripped_down, '"', 1) == strlen($c_stripped_down) - 1) {
+        if ($c_stripped_down[0] === '"' && strpos($c_stripped_down, '"', 1) === strlen($c_stripped_down) - 1) {
             if ($just_done_string) {
                 $pi = count($merged) - 1;
                 $merged[$pi] = substr($merged[$pi], 0, strlen($merged[$pi]) - 1) . substr($c, 1, strlen($c) - 1);
@@ -831,6 +813,7 @@ function compile_template($data, $template_name, $theme, $lang, $tolerate_errors
  * @param  string $suffix File type suffix of template file (e.g. .tpl)
  * @param  ?ID_TEXT $theme_orig The theme to cache in (null: main theme)
  * @return Tempcode The compiled Tempcode
+ *
  * @ignore
  */
 function _do_template($theme, $path, $codename, $_codename, $lang, $suffix, $theme_orig = null)
@@ -844,7 +827,10 @@ function _do_template($theme, $path, $codename, $_codename, $lang, $suffix, $the
         $base_dir = get_file_base() . '/themes/';
     }
 
-    global $CACHE_TEMPLATES, $FILE_ARRAY, $IS_TEMPLATE_PREVIEW_OP_CACHE;
+    global $CACHE_TEMPLATES, $FILE_ARRAY, $IS_TEMPLATE_PREVIEW_OP_CACHE, $SITE_INFO;
+    if ($IS_TEMPLATE_PREVIEW_OP_CACHE === null) {
+        fill_template_preview_op_cache();
+    }
 
     //$final_css_path = null;
 
@@ -852,51 +838,85 @@ function _do_template($theme, $path, $codename, $_codename, $lang, $suffix, $the
         $template_contents = unixify_line_format(file_array_get('themes/' . $theme . $path . $codename . $suffix));
     } else {
         $_path = $base_dir . filter_naughty($theme . $path . $codename) . $suffix;
-        $tmp = fopen($_path, 'rb');
-        @flock($tmp, LOCK_SH);
-        $template_contents = unixify_line_format(file_get_contents($_path));
-        @flock($tmp, LOCK_UN);
-        fclose($tmp);
+        $template_contents = unixify_line_format(cms_file_get_contents_safe($_path));
     }
 
     // LESS support
     if ((addon_installed('less')) && ($suffix == '.less')) {
         // Up our resources
-        if (function_exists('set_time_limit')) {
+        if (php_function_allowed('set_time_limit')) {
             @set_time_limit(300);
         }
         disable_php_memory_limit();
 
         // Stop parallel compilation of the same file by a little hack; without this it could knock out a server
-        /*$final_css_path = get_custom_file_base() . '/themes/' . $theme . '/templates_cached/' . $lang . '/' . $codename . '.css';		Actually this is architectually messy, just let it happen - it's not as slow as it was
+        /*
+        $final_css_path = get_custom_file_base() . '/themes/' . $theme . '/templates_cached/' . $lang . '/' . $codename . '.css'; Actually this is architectually messy, just let it happen - it's not as slow as it was
         if ((is_file($final_css_path)) && (file_get_contents($final_css_path) == 'GENERATING')) {
-            header('Content-type: text/plain');
+            header('Content-type: text/plain; charset=' . get_charset());
             exit('We are doing a code update. Please refresh in around 2 minutes.');
         }
-        file_put_contents($final_css_path, 'GENERATING');*/
+        require_code('files');
+        cms_file_put_contents_safe($final_css_path, 'GENERATING', FILE_WRITE_FIX_PERMISSIONS);
+        */
 
-        // Heavy-weight, newer (iLess)
-        require_code('ILess/Autoloader');
-        ILess_Autoloader::register();
-        $less = new ILess_Parser(array(
-            'import_dirs' => array(dirname($_path)),
-        ), new ILess_Cache_FileSystem(array(
-            'cache_dir' => get_custom_file_base() . '/themes/' . $theme . '/templates_cached/' . $lang,
-        )));
-        try {
-            $less->parseString($template_contents);
-            $template_contents = $less->getCSS();
-        } catch (Exception $ex) {
-            fatal_exit('.less problem: ' . $ex->getMessage());
+        if (!empty($SITE_INFO['nodejs_binary_path'])) {
+            $less_path = get_custom_file_base() . '/node_modules/less/bin/lessc';
+
+            if (!file_exists($less_path)) {
+                fatal_exit('Unable to find the less NPM module. Please `cd` to your Composr directory and run `npm install less` to install it.');
+            }
+
+            $cmd = sprintf('%s %s --no-color %s', $SITE_INFO['nodejs_binary_path'], escapeshellarg($less_path), escapeshellarg($_path));
+            $descriptorspec = array(
+                0 => array('pipe', 'r'), // stdin
+                1 => array('pipe', 'w'), // stdout
+                2 => array('pipe', 'w'), // stderr
+            );
+            $pipes = array();
+            $process = proc_open($cmd, $descriptorspec, $pipes);
+
+            if ($process === false) {
+                fatal_exit('Unable to execute the Node.js binary, please make sure it exists and proper permissions are set.');
+            }
+
+            $stdout = stream_get_contents($pipes[1]);
+            fclose($pipes[1]);
+
+            $stderr = stream_get_contents($pipes[2]);
+            fclose($pipes[2]);
+
+            $return_code = proc_close($process);
+
+            if ($return_code !== 0) {
+                fatal_exit('.less problem: ' . $stderr);
+            }
+
+            $template_contents = $stdout;
+        } else {
+            // Heavy-weight, newer (iLess)
+            require_code('ILess/Autoloader');
+            ILess_Autoloader::register();
+            $less = new ILess_Parser(array(
+                'import_dirs' => array(dirname($_path)),
+            ), new ILess_Cache_FileSystem(array(
+                'cache_dir' => get_custom_file_base() . '/themes/' . $theme . '/templates_cached/' . $lang,
+            )));
+            try {
+                $less->parseString($template_contents);
+                $template_contents = $less->getCSS();
+            } catch (Exception $ex) {
+                fatal_exit('.less problem: ' . $ex->getMessage());
+            }
         }
     }
 
-    if (($GLOBALS['SEMI_DEV_MODE']) && ($suffix == '.js') && (strpos($template_contents, '.innerHTML') !== false) && (!running_script('install')) && (strpos($template_contents, 'Parser hint: .innerHTML okay') === false)) {
+    if (($GLOBALS['SEMI_DEV_MODE']) && ($suffix === '.js') && (strpos($template_contents, '.innerHTML') !== false) && (!running_script('install')) && (strpos($template_contents, 'Parser hint: .innerHTML okay') === false)) {
         attach_message($codename . ': Do not use the .innerHTML property in your JavaScript because it will not work in true XHTML (when the browsers real XML parser is in action). Use Composr\'s global set_inner_html/get_inner_html functions.', 'warn');
     }
 
     // Strip off trailing final lines from single lines templates. Editors often put these in, and it causes annoying "visible space" issues
-    if ((substr($template_contents, -1, 1) == "\n") && (substr_count($template_contents, "\n") == 1)) {
+    if ((substr($template_contents, -1, 1) === "\n") && (substr_count($template_contents, "\n") === 1)) {
         $template_contents = substr($template_contents, 0, strlen($template_contents) - 1);
     }
 
@@ -910,53 +930,13 @@ function _do_template($theme, $path, $codename, $_codename, $lang, $suffix, $the
     cms_profile_start_for('_do_template');
     $result = template_to_tempcode($template_contents, 0, false, $codename, $theme_orig, $lang);
     cms_profile_end_for('_do_template', $codename . $suffix);
-    if (($CACHE_TEMPLATES) && (!$IS_TEMPLATE_PREVIEW_OP_CACHE) && (($suffix == '.tpl') || ($codename == 'no_cache'))) {
+    if (($CACHE_TEMPLATES) && (!$IS_TEMPLATE_PREVIEW_OP_CACHE)) {
         $path2 = get_custom_file_base() . '/themes/' . $theme_orig . '/templates_cached/' . filter_naughty($lang);
         $_path2 = $path2 . '/' . filter_naughty($_codename) . $suffix . '.tcp';
-        $myfile = @fopen($_path2, GOOGLE_APPENGINE ? 'wb' : 'ab');
-        if ($myfile === false) {
-            static $looping = false;
-            if ($looping) {
-                critical_error('PASSON', do_lang('WRITE_ERROR', escape_html($path2 . '/' . filter_naughty($_codename) . $suffix . '.tcp'))); // Bail out hard if would cause a loop
-            }
-            $looping = true;
 
-            if (!file_exists($path2)) {
-                require_code('files2');
-                if (!file_exists(dirname($path2))) {
-                    make_missing_directory(dirname($path2));
-                }
-                make_missing_directory($path2);
-            }
-
-            $looping = false;
-
-            $myfile = @fopen($_path2, GOOGLE_APPENGINE ? 'wb' : 'ab');
-            if ($myfile === false) {
-                critical_error('PASSON', do_lang('WRITE_ERROR', escape_html($path2 . '/' . filter_naughty($_codename) . $suffix . '.tcp'))); // Bail out hard if would cause a loop
-            }
-        }
-
-        @flock($myfile, LOCK_EX);
-        if (!GOOGLE_APPENGINE) {
-            ftruncate($myfile, 0);
-        }
-        $data_to_write = '<' . '?php' . "\n" . $result->to_assembly($lang) . "\n" . '?' . '>';
-        if (fwrite($myfile, $data_to_write) >= strlen($data_to_write)) {
-            // Success
-            @flock($myfile, LOCK_UN);
-            fclose($myfile);
-            require_code('files');
-            fix_permissions($path2 . '/' . filter_naughty($_codename) . $suffix . '.tcp');
-            /*if (!is_null($final_css_path)) {
-                @unlink($final_css_path); // So we know to regenerate the final file (so far we just did the .tcp)
-            }*/
-        } else {
-            // Failure
-            @flock($myfile, LOCK_UN);
-            fclose($myfile);
-            @unlink($path2 . '/' . filter_naughty($_codename) . $suffix . '.tcp'); // Can't leave this around, would cause problems
-        }
+        require_code('files');
+        $data_to_write = '<' . '?php' . "\n" . $result->to_assembly($lang) . "\n";
+        cms_file_put_contents_safe($_path2, $data_to_write, FILE_WRITE_FAILURE_SILENT | FILE_WRITE_FIX_PERMISSIONS);
     }
 
     return $result;
@@ -985,11 +965,11 @@ function template_to_tempcode($text, $symbol_pos = 0, $inside_directive = false,
 
     list($parts, $preprocessable_bits) = compile_template(substr($text, $symbol_pos), $codename, $theme, $lang, $tolerate_errors);
 
-    if (count($parts) == 0) {
+    if (count($parts) === 0) {
         return new Tempcode();
     }
 
-    $output_streaming = (function_exists('get_option')) && (get_option('output_streaming') == '1');
+    $output_streaming = (function_exists('get_option')) && (get_option('output_streaming') === '1');
 
     $parts_groups = array();
     $parts_group = array();
@@ -1030,7 +1010,7 @@ function template_to_tempcode($text, $symbol_pos = 0, $inside_directive = false,
  */
 function build_closure_function($myfunc, $parts)
 {
-    if ($parts == array()) {
+    if ($parts === array()) {
         $parts = array('""');
     }
     $code = '';

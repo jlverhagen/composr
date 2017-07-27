@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -32,9 +32,6 @@ function gd_text_script()
     }
 
     $text = get_param_string('text', false, true);
-    if (get_magic_quotes_gpc()) {
-        $text = stripslashes($text);
-    }
 
     $direction = array_key_exists('direction', $_GET) ? $_GET['direction'] : 'vertical';
 
@@ -122,8 +119,21 @@ function gd_text_script()
     imagealphablending($img, false);
     $fg_color = array_key_exists('fg_color', $_GET) ? $_GET['fg_color'] : '000000';
     if (substr($fg_color, 0, 5) == 'seed-') {
-        require_code('themewizard');
-        $fg_color = find_theme_seed(substr($fg_color, 5));
+        $theme = substr($fg_color, 5);
+
+        if (addon_installed('themewizard')) {
+            require_code('themewizard');
+            $fg_color = find_theme_seed($theme);
+        } else {
+            $ini_path = (($theme == 'default' || $theme == 'admin') ? get_file_base() : get_custom_file_base()) . '/themes/' . filter_naughty($theme) . '/theme.ini';
+            if (is_file($ini_path)) {
+                require_code('files');
+                $map = better_parse_ini_file($ini_path);
+            } else {
+                $map = array();
+            }
+            $fg_color = isset($map['seed']) ? $map['seed'] : '000000';
+        }
     }
     $color = imagecolorallocate($img, hexdec(substr($fg_color, 0, 2)), hexdec(substr($fg_color, 2, 2)), hexdec(substr($fg_color, 4, 2)));
     if ((!function_exists('imagettftext')) || (!array_key_exists('FreeType Support', gd_info())) || (@imagettfbbox(26.0, 0.0, get_file_base() . '/data/fonts/Vera.ttf', 'test') === false) || (strlen($text) == 0)) {
@@ -197,10 +207,10 @@ function simple_tracker_script()
         'c_date_and_time' => time(),
         'c_member_id' => get_member(),
         'c_ip_address' => get_ip_address(),
-        'c_url' => $url,
+        'c_url' => cms_mb_substr($url, 0, 255),
     ));
 
-    header('Location: ' . str_replace("\r", '', str_replace("\n", '', $url)));
+    header('Location: ' . escape_header($url));
 }
 
 /**
@@ -210,7 +220,7 @@ function simple_tracker_script()
  */
 function preview_script()
 {
-    @header('X-XSS-Protection: 0');
+    disable_browser_xss_detection();
 
     require_code('preview');
     list($output, $validation, $keyword_density, $spelling) = build_preview(true);
@@ -230,11 +240,12 @@ function preview_script()
  * Script to perform Composr CRON jobs called by the real CRON.
  *
  * @param  PATH $caller File path of the cron_bridge.php script
+ *
  * @ignore
  */
 function cron_bridge_script($caller)
 {
-    if (function_exists('set_time_limit')) {
+    if (php_function_allowed('set_time_limit')) {
         @set_time_limit(1000); // May get overridden lower later on
     }
 
@@ -250,7 +261,7 @@ function cron_bridge_script($caller)
 
     // For multi-site installs, run for each install
     global $CURRENT_SHARE_USER, $SITE_INFO;
-    if ((is_null($CURRENT_SHARE_USER)) && (array_key_exists('custom_share_domain', $SITE_INFO))) {
+    if ((is_null($CURRENT_SHARE_USER)) && (!empty($SITE_INFO['custom_share_domain']))) {
         require_code('files');
 
         foreach ($SITE_INFO as $key => $val) {
@@ -271,11 +282,18 @@ function cron_bridge_script($caller)
     $log_file = mixed();
     if (is_file($_log_file)) {
         $log_file = fopen($_log_file, 'at');
+
+        flock($log_file, LOCK_EX);
+        fseek($log_file, 0, SEEK_END);
+        fwrite($log_file, date('Y-m-d H:i:s') . '  (CRON STARTING)' . "\n");
+        flock($log_file, LOCK_UN);
     }
 
     // Call the hooks which do the real work
     set_value('last_cron', strval(time()));
+    set_value('last_cron_started', '-', true);
     $cron_hooks = find_all_hooks('systems', 'cron');
+    ksort($cron_hooks);
     foreach (array_keys($cron_hooks) as $hook) {
         if (($limit_hook != '') && ($limit_hook != $hook)) {
             continue;
@@ -287,18 +305,44 @@ function cron_bridge_script($caller)
             continue;
         }
 
-        if (!is_null($log_file)) {
-            fwrite($log_file, date('Y-m-d H:i:s') . '  STARTING ' . $hook . "\n");
-        }
+        // Run, with basic locking support
+        if ($GLOBALS['DEV_MODE'] || get_value_newer_than('cron_currently_running__' . $hook, time() - 60 * 60 * 5, true) !== '1' || get_param_integer('force', 0) == 1) {
+            if (!is_null($log_file)) {
+                flock($log_file, LOCK_EX);
+                fseek($log_file, 0, SEEK_END);
+                fwrite($log_file, date('Y-m-d H:i:s') . '  STARTING ' . $hook . "\n");
+                flock($log_file, LOCK_UN);
+            }
 
-        $object->run();
+            set_value('cron_currently_running__' . $hook, '1', true);
 
-        if (!is_null($log_file)) {
-            fwrite($log_file, date('Y-m-d H:i:s') . '  FINISHED ' . $hook . "\n");
+            $object->run();
+
+            delete_value('cron_currently_running__' . $hook, true);
+
+            if (!is_null($log_file)) {
+                flock($log_file, LOCK_EX);
+                fseek($log_file, 0, SEEK_END);
+                fwrite($log_file, date('Y-m-d H:i:s') . '  FINISHED ' . $hook . "\n");
+                flock($log_file, LOCK_UN);
+            }
+        } else {
+            if (!is_null($log_file)) {
+                flock($log_file, LOCK_EX);
+                fseek($log_file, 0, SEEK_END);
+                fwrite($log_file, date('Y-m-d H:i:s') . '  WAS LOCKED ' . $hook . "\n");
+                flock($log_file, LOCK_UN);
+            }
         }
     }
+    set_value('last_cron_finished', '-', true);
 
     if (!is_null($log_file)) {
+        flock($log_file, LOCK_EX);
+        fseek($log_file, 0, SEEK_END);
+        fwrite($log_file, date('Y-m-d H:i:s') . '  (CRON ENDING)' . "\n");
+        flock($log_file, LOCK_UN);
+
         fclose($log_file);
     }
 
@@ -331,7 +375,7 @@ function iframe_script()
         warn_exit(do_lang_tempcode('MISSING_RESOURCE'));
     }
     if ($zones[0]['zone_require_session'] == 1) {
-        header('X-Frame-Options: SAMEORIGIN'); // Clickjacking protection
+        set_no_clickjacking_csp();
     }
     if (($zones[0]['zone_name'] != '') && (get_value('windows_auth_is_enabled') !== '1') && ((get_session_id() == '') || (!$GLOBALS['SESSION_CONFIRMED_CACHE'])) && (!is_guest()) && ($zones[0]['zone_require_session'] == 1)) {
         access_denied('ZONE_ACCESS_SESSION');
@@ -388,7 +432,7 @@ function page_link_redirect_script()
         log_hack_attack_and_exit('HEADER_SPLIT_HACK');
     }
 
-    header('Location: ' . $x);
+    header('Location: ' . escape_header($x));
 }
 
 /**
@@ -435,12 +479,12 @@ function emoticons_script()
     require_javascript('editing');
 
     $extra = has_privilege(get_member(), 'use_special_emoticons') ? '' : ' AND e_is_special=0';
-    $rows = $GLOBALS['FORUM_DB']->query('SELECT * FROM ' . $GLOBALS['FORUM_DB']->get_table_prefix() . 'f_emoticons WHERE e_relevance_level<3' . $extra);
+    $_rows = $GLOBALS['FORUM_DB']->query('SELECT * FROM ' . $GLOBALS['FORUM_DB']->get_table_prefix() . 'f_emoticons WHERE e_relevance_level<3' . $extra);
 
     // Work out what grid spacing to use
     $max_emoticon_width = 0;
     require_code('images');
-    foreach ($rows as $myrow) {
+    foreach ($_rows as $myrow) {
         list($_width,) = _symbol_image_dims(array(find_theme_image($myrow['e_theme_img_code'], true)));
         $max_emoticon_width = max($max_emoticon_width, intval($_width));
     }
@@ -455,22 +499,29 @@ function emoticons_script()
     }
 
     // Render UI
-    $content = new Tempcode();
-    $current_row = new Tempcode();
-    foreach ($rows as $i => $myrow) {
+    $rows = array();
+    $cells = array();
+    foreach ($_rows as $i => $myrow) {
         if (($i % $cols == 0) && ($i != 0)) {
-            $content->attach(do_template('CNS_EMOTICON_ROW', array('_GUID' => '283bff0bb281039b94ff2d4dcaf79172', 'CELLS' => $current_row)));
-            $current_row = new Tempcode();
+            $rows[] = array('CELLS' => $cells);
+            $cells = array();
         }
 
         $code_esc = $myrow['e_code'];
-        $current_row->attach(do_template('CNS_EMOTICON_CELL', array('_GUID' => 'ddb838e6fa296df41299c8758db92f8d', 'COLS' => strval($cols), 'FIELD_NAME' => filter_naughty_harsh(get_param_string('field_name', 'post')), 'CODE_ESC' => $code_esc, 'THEME_IMG_CODE' => $myrow['e_theme_img_code'], 'CODE' => $myrow['e_code'])));
+        $cells[] = array(
+            '_GUID' => 'ddb838e6fa296df41299c8758db92f8d',
+            'COLS' => strval($cols),
+            'FIELD_NAME' => filter_naughty_harsh(get_param_string('field_name', 'post')),
+            'CODE_ESC' => $code_esc,
+            'THEME_IMG_CODE' => $myrow['e_theme_img_code'],
+            'CODE' => $myrow['e_code'],
+        );
     }
-    if (!$current_row->is_empty()) {
-        $content->attach(do_template('CNS_EMOTICON_ROW', array('_GUID' => 'd13e74f7febc560dc5fc241dc7914a03', 'CELLS' => $current_row)));
+    if ($cells !== array()) {
+        $rows[] = array('CELLS' => $cells);
     }
 
-    $content = do_template('CNS_EMOTICON_TABLE', array('_GUID' => 'd3dd9bbfacede738e2aff4712b86944b', 'ROWS' => $content));
+    $content = do_template('CNS_EMOTICON_TABLE', array('_GUID' => 'fb8c4c51f57cd8334800ef12e60d2a8a', 'ROWS' => $rows));
 
     require_code('site');
     attach_to_screen_header('<meta name="robots" content="noindex" />'); // XHTMLXHTML
@@ -498,9 +549,6 @@ function thumb_script()
     if (!is_saveable_image($new_name)) {
         $new_name .= '.png';
     }
-    if (is_null($new_name)) {
-        warn_exit(do_lang_tempcode('URL_THUMB_TOO_LONG'));
-    }
     $file_thumb = get_custom_file_base() . '/uploads/auto_thumbs/' . $new_name;
     if (!file_exists($file_thumb)) {
         convert_image($url_full, $file_thumb, -1, -1, intval(get_option('thumb_width')), false);
@@ -514,7 +562,7 @@ function thumb_script()
     if ((strpos($url_thumb, "\n") !== false) || (strpos($url_thumb, "\r") !== false)) {
         log_hack_attack_and_exit('HEADER_SPLIT_HACK');
     }
-    header('Location: ' . $url_thumb);
+    header('Location: ' . escape_header($url_thumb));
 }
 
 /**
@@ -565,7 +613,7 @@ function external_url_proxy_script()
     }
 
     // No time-limits wanted
-    if (function_exists('set_time_limit')) {
+    if (php_function_allowed('set_time_limit')) {
         @set_time_limit(0);
     }
 
@@ -602,6 +650,7 @@ function external_url_proxy_script()
         header('Content-Type: ' . $content_type);
     }
     if ($f !== false) {
+        cms_ob_end_clean();
         fpassthru($f);
         @fclose($f);
     }

@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -420,7 +420,7 @@ class Forum_driver_smf2 extends Forum_driver_base
      * Get the forum ID from a forum name.
      *
      * @param  SHORT_TEXT $forum_name The forum name
-     * @return integer The forum ID
+     * @return ?integer The forum ID (null: not found)
      */
     public function forum_id_from_name($forum_name)
     {
@@ -464,7 +464,7 @@ class Forum_driver_smf2 extends Forum_driver_base
      * @param  SHORT_TEXT $poster_name_if_guest The name of the poster
      * @param  ?AUTO_LINK $parent_id ID of post being replied to (null: N/A)
      * @param  boolean $staff_only Whether the reply is only visible to staff
-     * @return array Topic ID (may be NULL), and whether a hidden post has been made
+     * @return array Topic ID (may be null), and whether a hidden post has been made
      */
     public function make_post_forum_topic($forum_name, $topic_identifier, $member, $post_title, $post, $content_title, $topic_identifier_encapsulation_prefix, $content_url = null, $time = null, $ip = null, $validated = null, $topic_validated = 1, $skip_post_checks = false, $poster_name_if_guest = '', $parent_id = null, $staff_only = false)
     {
@@ -484,7 +484,7 @@ class Forum_driver_smf2 extends Forum_driver_base
         $topic_id = $this->find_topic_id_for_topic_identifier($forum_name, $topic_identifier);
         $is_new = is_null($topic_id);
         if ($is_new) {
-            $topic_id = $this->connection->query_insert('topics', array('id_board' => $forum_id, 'id_first_msg' => mt_rand(0, 100000), 'id_last_msg' => mt_rand(0, 100000), 'id_member_started' => $member, 'id_member_updated' => $member, 'num_replies' => 2), true);
+            $topic_id = $this->connection->query_insert('topics', array('id_board' => $forum_id, 'id_first_msg' => mt_rand(0, mt_getrandmax()), 'id_last_msg' => mt_rand(0, mt_getrandmax()), 'id_member_started' => $member, 'id_member_updated' => $member, 'num_replies' => 2), true);
             $home_link = hyperlink($content_url, $content_title, false, true);
             $post_id = $this->connection->query_insert('messages', array('id_topic' => $topic_id, 'id_board' => $forum_id, 'poster_time' => $time, 'id_member' => $this->get_guest_id(), 'subject' => $content_title . ', ' . $topic_identifier_encapsulation_prefix . ': #' . $topic_identifier, 'poster_name' => do_lang('SYSTEM', '', '', '', get_site_default_lang()), 'poster_email' => get_option('staff_address'), 'poster_ip' => '127.0.0.1', 'modified_name' => '', 'body' => do_lang('SPACER_POST', $home_link->evaluate(), '', '', get_site_default_lang())), true);
 
@@ -701,7 +701,7 @@ class Forum_driver_smf2 extends Forum_driver_base
     }
 
     /**
-     * Get the member ID of the next member after the given one, or NULL.
+     * Get the member ID of the next member after the given one, or null.
      * It cannot be assumed there are no gaps in member IDs, as members may be deleted.
      *
      * @param  MEMBER $member The member ID to increment
@@ -728,7 +728,7 @@ class Forum_driver_smf2 extends Forum_driver_base
 
     /**
      * Get the name relating to the specified member ID.
-     * If this returns NULL, then the member has been deleted. Always take potential NULL output into account.
+     * If this returns null, then the member has been deleted. Always take potential null output into account.
      *
      * @param  MEMBER $member The member ID
      * @return ?SHORT_TEXT The member name (null: member deleted)
@@ -875,7 +875,7 @@ class Forum_driver_smf2 extends Forum_driver_base
             }
             $this->EMOTICON_CACHE[$myrow['code']] = array('EMOTICON_IMG_CODE_DIR', $src, $myrow['code']);
         }
-        uksort($this->EMOTICON_CACHE, 'strlen_sort');
+        uksort($this->EMOTICON_CACHE, '_strlen_sort');
         $this->EMOTICON_CACHE = array_reverse($this->EMOTICON_CACHE);
         return $this->EMOTICON_CACHE;
     }
@@ -1124,11 +1124,10 @@ class Forum_driver_smf2 extends Forum_driver_base
         $data = array($id, $_password, (time() + get_cookie_days() * 24 * 60 * 60), 3);
 
         cms_setcookie($stub, serialize($data));
-        $_COOKIE[$stub] = strval($id);
     }
 
     /**
-     * Find if the given member ID and password is valid. If username is NULL, then the member ID is used instead.
+     * Find if the given member ID and password is valid. If username is null, then the member ID is used instead.
      * All authorisation, cookies, and form-logins, are passed through this function.
      * Some forums do cookie logins differently, so a Boolean is passed in to indicate whether it is a cookie login.
      *
@@ -1137,7 +1136,7 @@ class Forum_driver_smf2 extends Forum_driver_base
      * @param  SHORT_TEXT $password_hashed The md5-hashed password
      * @param  string $password_raw The raw password
      * @param  boolean $from_cookie Whether this is a cookie login
-     * @return array A map of 'id' and 'error'. If 'id' is NULL, an error occurred and 'error' is set
+     * @return array A map of 'id' and 'error'. If 'id' is null, an error occurred and 'error' is set
      */
     public function forum_authorise_login($username, $userid, $password_hashed, $password_raw, $from_cookie = false)
     {
@@ -1160,12 +1159,12 @@ class Forum_driver_smf2 extends Forum_driver_base
         }
 
         if (!array_key_exists(0, $rows) || $rows[0] === null) { // All hands to lifeboats
-            $out['error'] = (do_lang_tempcode('_MEMBER_NO_EXIST', $username));
+            $out['error'] = do_lang_tempcode((get_option('login_error_secrecy') == '1') ? 'MEMBER_INVALID_LOGIN' : '_MEMBER_NO_EXIST', $username);
             return $out;
         }
         $row = $rows[0];
         if ($this->is_banned($row['id_member'])) { // All hands to the guns
-            $out['error'] = (do_lang_tempcode('YOU_ARE_BANNED'));
+            $out['error'] = do_lang_tempcode('YOU_ARE_BANNED');
             return $out;
         }
 
@@ -1179,12 +1178,14 @@ class Forum_driver_smf2 extends Forum_driver_base
         $test1 = ((!$GLOBALS['SMF_NEW'])) && ((($from_cookie) && ($this->forum_md5($row['passwd'], 'ys', true) == $bits[0])) || ((!$from_cookie) && ($row['passwd'] == $bits[0])));
         $test2 = ($GLOBALS['SMF_NEW']) && ((($from_cookie) && (sha1($row['passwd'] . $row['password_salt']) == $bits[1])) || ((!$from_cookie) && ($row['passwd'] == $bits[1])));
         if ((!$test1) && (!$test2)) {
-            $out['error'] = (do_lang_tempcode('MEMBER_BAD_PASSWORD'));
+            $out['error'] = do_lang_tempcode((get_option('login_error_secrecy') == '1') ? 'MEMBER_INVALID_LOGIN' : 'MEMBER_BAD_PASSWORD');
             return $out;
         }
 
-        require_code('users_active_actions');
-        cms_eatcookie('PHPSESSID');
+        if (substr(get_member_cookie(), 0, 5) != 'cms__') {
+            require_code('users_active_actions');
+            cms_eatcookie('PHPSESSID');
+        }
 
         $out['id'] = $row['id_member'];
         return $out;

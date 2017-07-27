@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -50,14 +50,8 @@ function require_code($codename, $light_exit = false)
         $codename = filter_naughty($codename);
     }
 
-    static $mue = null;
-    if ($mue === null) {
-        $mue = function_exists('memory_get_usage');
-    }
-    if (($mue) && (isset($_GET['keep_show_loading'])) && ($_GET['keep_show_loading'] == '1')) {
-        if (function_exists('memory_get_usage')) { // Repeated, for code quality checker; done previously, for optimisation
-            $before = memory_get_usage();
-        }
+    if ((isset($_GET['keep_show_loading_code'])) && ($_GET['keep_show_loading_code'] === '1')) {
+        $before = memory_get_usage();
     }
 
     $worked = false;
@@ -76,7 +70,13 @@ function require_code($codename, $light_exit = false)
         }
         if (isset($CODE_OVERRIDES[$codename])) {
             $has_custom = $CODE_OVERRIDES[$codename];
+            if ($has_custom) {
+                $has_custom = is_file($path_custom); // Double-check still there
+            }
             $has_orig = $CODE_OVERRIDES['!' . $codename];
+            if ($has_orig) {
+                $has_orig = is_file($path_orig); // Double-check still there
+            }
         } else {
             $has_custom = is_file($path_custom);
             $has_orig = is_file($path_orig);
@@ -88,7 +88,7 @@ function require_code($codename, $light_exit = false)
         $has_custom = is_file($path_custom);
     }
 
-    if ((isset($SITE_INFO['safe_mode'])) && ($SITE_INFO['safe_mode'] == '1')) {
+    if ((isset($SITE_INFO['safe_mode'])) && ($SITE_INFO['safe_mode'] === '1')) {
         $has_custom = false;
     }
 
@@ -99,7 +99,7 @@ function require_code($codename, $light_exit = false)
         if (!isset($has_orig)) {
             $has_orig = is_file($path_orig);
         }
-        if (($path_custom != $path_orig) && ($has_orig)) {
+        if (($path_custom !== $path_orig) && ($has_orig)) {
             $orig = str_replace(array('?' . '>', '<' . '?php'), array('', ''), file_get_contents($path_orig));
             $a = file_get_contents($path_custom);
 
@@ -119,18 +119,18 @@ function require_code($codename, $light_exit = false)
                 $pure = true; // We will set this to false if it does not have all functions the main one has. If it does have all functions we know we should not run the original init, as it will almost certainly just have been the same code copy&pasted through.
                 $overlaps = false;
                 foreach ($functions_diff as $function) { // Go through override's functions and make sure original doesn't have them: rename original's to non_overridden__ equivs.
-                    if (strpos($orig, 'function ' . $function . '(') !== false) { // NB: If this fails, it may be that "function\t" is in the file (you can't tell with a three-width proper tab)
-                        $orig = str_replace('function ' . $function . '(', 'function non_overridden__' . $function . '(', $orig);
+                    if (stripos($orig, 'function ' . $function . '(') !== false) { // NB: If this fails, it may be that "function\t" is in the file (you can't tell with a three-width proper tab)
+                        $orig = str_ireplace('function ' . $function . '(', 'function non_overridden__' . $function . '(', $orig);
                         $overlaps = true;
                     } else {
                         $pure = false;
                     }
                 }
                 foreach ($classes_diff as $class) {
-                    if (substr(strtolower($class), 0, 6) == 'module') {
+                    if (substr(strtolower($class), 0, 6) === 'module') {
                         $class = ucfirst($class);
                     }
-                    if (substr(strtolower($class), 0, 4) == 'hook') {
+                    if (substr(strtolower($class), 0, 4) === 'hook') {
                         $class = ucfirst($class);
                     }
 
@@ -150,7 +150,7 @@ function require_code($codename, $light_exit = false)
                         $orig = $test;
                     }
                     $done_init = true;
-                    if ((count($functions_diff) == 1) && (count($classes_diff) == 0)) {
+                    if ((count($functions_diff) === 1) && (count($classes_diff) === 0)) {
                         $pure = false;
                     }
                 }
@@ -162,9 +162,8 @@ function require_code($codename, $light_exit = false)
                         include($path_orig);
                     }
                 } else {
-                    //static $log_file=NULL;if ($log_file===NULL) $log_file=fopen(get_file_base().'/log.'.strval(time()).'.txt','wb');fwrite($log_file,$path_orig."\n");      Good for debugging errors in eval'd code
+                    //static $log_file = null; if ($log_file === null) $log_file = fopen(get_file_base() . '/log.' . strval(time()) . '.txt', 'wb'); flock($log_file, LOCK_EX); fwrite($log_file, $path_orig . "\n"); flock($log_file, LOCK_UN);      Good for debugging errors in eval'd code
                     eval($orig); // Load up modified original
-
                 }
 
                 if ((!$pure) && ($doing_code_modifier_init) && (function_exists('non_overridden__init__' . str_replace('/', '__', str_replace('.php', '', $codename))))) {
@@ -177,7 +176,7 @@ function require_code($codename, $light_exit = false)
                     safe_ini_set('display_errors', '0');
                     $orig = str_replace('?' . '>', '', str_replace('<' . '?php', '', file_get_contents($path_orig)));
                     if (eval($orig) === false) {
-                        if ((!function_exists('fatal_exit')) || ($codename == 'failure')) {
+                        if ((!function_exists('fatal_exit')) || ($codename === 'failure')) {
                             critical_error('PASSON', @strval($php_errormsg) . ' [sources/' . $codename . '.php]');
                         }
                         fatal_exit(@strval($php_errormsg) . ' [sources/' . $codename . '.php]');
@@ -193,7 +192,7 @@ function require_code($codename, $light_exit = false)
                     safe_ini_set('display_errors', '0');
                     $orig = str_replace('?' . '>', '', str_replace('<' . '?php', '', file_get_contents($path_custom)));
                     if (eval($orig) === false) {
-                        if ((!function_exists('fatal_exit')) || ($codename == 'failure')) {
+                        if ((!function_exists('fatal_exit')) || ($codename === 'failure')) {
                             critical_error('PASSON', @strval($php_errormsg) . ' [sources_custom/' . $codename . '.php]');
                         }
                         fatal_exit(@strval($php_errormsg) . ' [sources_custom/' . $codename . '.php]');
@@ -211,7 +210,7 @@ function require_code($codename, $light_exit = false)
                 safe_ini_set('display_errors', '0');
                 $orig = str_replace('?' . '>', '', str_replace('<' . '?php', '', file_get_contents($path_custom)));
                 if (eval($orig) === false) {
-                    if ((!function_exists('fatal_exit')) || ($codename == 'failure')) {
+                    if ((!function_exists('fatal_exit')) || ($codename === 'failure')) {
                         critical_error('PASSON', @strval($php_errormsg) . ' [sources_custom/' . $codename . '.php]');
                     }
                     fatal_exit(@strval($php_errormsg) . ' [sources_custom/' . $codename . '.php]');
@@ -225,9 +224,11 @@ function require_code($codename, $light_exit = false)
             }
         }
 
-        if (($mue) && (isset($_GET['keep_show_loading'])) && ($_GET['keep_show_loading'] == '1')) {
-            if (function_exists('memory_get_usage')) { // Repeated, for code quality checker; done previously, for optimisation
-                print('<!-- require_code: ' . htmlentities($codename) . ' (' . number_format(memory_get_usage() - $before) . ' bytes used, now at ' . number_format(memory_get_usage()) . ') -->' . "\n");
+        if ((isset($_GET['keep_show_loading_code'])) && ($_GET['keep_show_loading_code'] === '1')) {
+            if (function_exists('attach_message')) {
+                attach_message('require_code: ' . $codename . ' (' . number_format(memory_get_usage() - $before) . ' bytes used, now at ' . number_format(memory_get_usage()) . ')', 'inform');
+            } else {
+                print('<!-- require_code: ' . htmlentities($codename) . ' (' . htmlentities(number_format(memory_get_usage() - $before)) . ' bytes used, now at ' . htmlentities(number_format(memory_get_usage())) . ') -->' . "\n");
                 flush();
             }
         }
@@ -247,7 +248,7 @@ function require_code($codename, $light_exit = false)
                 $orig = str_replace(array('?' . '>', '<' . '?php'), array('', ''), $contents);
 
                 if (eval($orig) === false) {
-                    if ((!function_exists('fatal_exit')) || ($codename == 'failure')) {
+                    if ((!function_exists('fatal_exit')) || ($codename === 'failure')) {
                         critical_error('PASSON', @strval($php_errormsg) . ' [sources/' . $codename . '.php]');
                     }
                     fatal_exit(@strval($php_errormsg) . ' [sources/' . $codename . '.php]');
@@ -262,15 +263,17 @@ function require_code($codename, $light_exit = false)
             } else {
                 @include($path_orig);
             }
-            if ($php_errormsg == '') {
+            if ($php_errormsg == '' || stripos($php_errormsg, 'deprecated') !== false/*deprecated errors can leak through because even though we return true in our error handler, error handlers won't run recursively, so if this code is loaded during an error it'll stream through deprecated stuff here*/) {
                 $worked = true;
             }
         }
 
         if ($worked) {
-            if (($mue) && (isset($_GET['keep_show_loading'])) && ($_GET['keep_show_loading'] == '1')) {
-                if (function_exists('memory_get_usage')) { // Repeated, for code quality checker; done previously, for optimisation
-                    print('<!-- require_code: ' . htmlentities($codename) . ' (' . number_format(memory_get_usage() - $before) . ' bytes used, now at ' . number_format(memory_get_usage()) . ') -->' . "\n");
+            if ((isset($_GET['keep_show_loading_code'])) && ($_GET['keep_show_loading_code'] === '1')) {
+                if (function_exists('attach_message')) {
+                    attach_message('require_code: ' . $codename . ' (' . number_format(memory_get_usage() - $before) . ' bytes used, now at ' . number_format(memory_get_usage()) . ')', 'inform');
+                } else {
+                    print('<!-- require_code: ' . htmlentities($codename) . ' (' . htmlentities(number_format(memory_get_usage() - $before)) . ' bytes used, now at ' . htmlentities(number_format(memory_get_usage())) . ') -->' . "\n");
                     flush();
                 }
             }
@@ -287,11 +290,16 @@ function require_code($codename, $light_exit = false)
         return;
     }
 
+    if ($codename !== 'critical_errors') {
+        if ($php_errormsg != '') {
+            $codename .= '... "' . $php_errormsg . '"';
+        }
+    }
     if ($light_exit) {
         warn_exit(do_lang_tempcode('MISSING_SOURCE_FILE', escape_html($codename), escape_html($path_orig)));
     }
     if (!function_exists('do_lang')) {
-        if ($codename == 'critical_errors') {
+        if ($codename === 'critical_errors') {
             exit('<!DOCTYPE html>' . "\n" . '<html lang="EN"><head><title>Critical startup error</title></head><body><h1>Composr startup error</h1><p>The Composr critical error message file, sources/critical_errors.php, could not be located. This is almost always due to an incomplete upload of the Composr system, so please check all files are uploaded correctly.</p><p>Once all Composr files are in place, Composr must actually be installed by running the installer. You must be seeing this message either because your system has become corrupt since installation, or because you have uploaded some but not all files from our manual installer package: the quick installer is easier, so you might consider using that instead.</p><p>ocProducts maintains full documentation for all procedures and tools, especially those for installation. These may be found on the <a href="http://compo.sr">Composr website</a>. If you are unable to easily solve this problem, we may be contacted from our website and can help resolve it for you.</p><hr /><p style="font-size: 0.8em">Composr is a website engine created by ocProducts.</p></body></html>');
         }
         critical_error('MISSING_SOURCE', $codename);
@@ -345,7 +353,7 @@ function tacit_https()
  * Make an object of the given class
  *
  * @param  string $class The class name
- * @param  boolean $failure_ok Whether to return NULL if there is no such class
+ * @param  boolean $failure_ok Whether to return null if there is no such class
  * @return ?object The object (null: no such class)
  */
 function object_factory($class, $failure_ok = false)
@@ -362,12 +370,27 @@ function object_factory($class, $failure_ok = false)
 /**
  * Find whether a particular PHP function is blocked.
  *
+ * Note that you still need to put "@" before set_time_limit, as some web host(s) have their own non-detectable block:
+ *  "Cannot set max execution time limit due to system policy"
+ *
  * @param  string $function Function name.
  * @return boolean Whether it is.
  */
 function php_function_allowed($function)
 {
-    return (@preg_match('#(\s|,|^)' . str_replace('#', '\#', preg_quote($function)) . '(\s|$|,)#', strtolower(@ini_get('disable_functions') . ',' . ini_get('suhosin.executor.func.blacklist') . ',' . ini_get('suhosin.executor.include.blacklist') . ',' . ini_get('suhosin.executor.eval.blacklist'))) == 0);
+    static $cache = array();
+    if (isset($cache[$function])) {
+        return $cache[$function];
+    }
+
+    if (!in_array($function, /*These are actually language constructs rather than functions*/array('eval', 'exit', 'include', 'include_once', 'isset', 'require', 'require_once', 'unset', 'empty', 'print',))) {
+        if (!function_exists($function)) {
+            $cache[$function] = false;
+            return false;
+        }
+    }
+    $cache[$function] = (@preg_match('#(\s|,|^)' . str_replace('#', '\#', preg_quote($function)) . '(\s|$|,)#', strtolower(@ini_get('disable_functions') . ',' . ini_get('suhosin.executor.func.blacklist') . ',' . ini_get('suhosin.executor.include.blacklist') . ',' . ini_get('suhosin.executor.eval.blacklist'))) == 0);
+    return $cache[$function];
 }
 
 /**
@@ -428,6 +451,10 @@ function get_custom_file_base()
  */
 function filter_naughty($in, $preg = false)
 {
+    if ((function_exists('ctype_alnum')) && (ctype_alnum($in))) {
+        return $in;
+    }
+
     if (strpos($in, "\0") !== false) {
         log_hack_attack_and_exit('PATH_HACK');
     }
@@ -455,15 +482,18 @@ function filter_naughty($in, $preg = false)
  */
 function filter_naughty_harsh($in, $preg = false)
 {
-    if (preg_match('#^[\w\-]*$#', $in) != 0) {
+    if ((function_exists('ctype_alnum')) && (ctype_alnum($in))) {
         return $in;
     }
-    if (preg_match('#^[\w\-]*/#', $in) != 0) {
+    if (preg_match('#^[' . URL_CONTENT_REGEXP . ']*$#', $in) !== 0) {
+        return $in;
+    }
+    if (preg_match('#^[\w\-]*/#', $in) !== 0) {
         warn_exit(do_lang_tempcode('MISSING_RESOURCE')); // Probably a relative URL underneath a URL Scheme short URL, should not really happen
     }
 
     if ($preg) {
-        return preg_replace('#[^\w\-]#', '', $in);
+        return preg_replace('#[^' . URL_CONTENT_REGEXP . ']#', '', $in);
     }
     log_hack_attack_and_exit('EVAL_HACK', $in);
     return ''; // trick to make Zend happy
@@ -473,24 +503,30 @@ function filter_naughty_harsh($in, $preg = false)
  * Include some PHP code, compiling to HHVM's hack, for type strictness (uses Composr phpdoc comments).
  *
  * @param  PATH $path Include path
- * @return ?mixed Code return code (null: actual NULL)
+ * @return ?mixed Code return code (null: actual null)
  */
 function hhvm_include($path)
 {
     return include($path); // Disable this line to enable the fancy Hack support. We don't maintain this 100%, but it is a great performance option.
 
-    /*//if (!is_file($path.'.hh'))  // Leave this commented when debugging
+    /*//if (!is_file($path . '.hh'))  // Leave this commented when debugging
     {
-        if ($path==get_file_base().'/sources/php.php') return include($path);
-        if ($path==get_file_base().'/sources/type_sanitisation.php') return include($path);
-        if (strpos($path,'_custom')!==false) return include($path);
+        if ($path == get_file_base() . '/sources/php.php') {
+            return include($path);
+        }
+        if ($path == get_file_base() . '/sources/type_sanitisation.php') {
+            return include($path);
+        }
+        if (strpos($path, '_custom') !== false) {
+            return include($path);
+        }
 
         require_code('php');
-        $path=substr($path,strlen(get_file_base())+1);
-        $new_code=convert_from_php_to_hhvm_hack($path);
-        file_put_contents($path.'.hh',$new_code);
+        $path = substr($path, strlen(get_file_base()) + 1);
+        $new_code = convert_from_php_to_hhvm_hack($path);
+        file_put_contents($path . '.hh', $new_code, LOCK_EX);
     }
-    return include($path.'.hh');*/
+    return include($path . '.hh');*/
 }
 
 // Useful for basic profiling
@@ -514,6 +550,9 @@ if (str_replace(array('on', 'true', 'yes'), array('1', '1', '1'), strtolower(ini
 define('HHVM', strpos(PHP_VERSION, 'hiphop') !== false);
 define('GOOGLE_APPENGINE', isset($_SERVER['APPLICATION_ID']));
 
+define('URL_CONTENT_REGEXP', '\w\-\x80-\xFF'); // PHP is done using ASCII (don't use the 'u' modifier). Note this doesn't include dots, this is intentional as they can cause problems in filenames
+define('URL_CONTENT_REGEXP_JS', '\w\-\u0080-\uFFFF'); // JavaScript is done using Unicode
+
 // Sanitise the PHP environment some more
 safe_ini_set('track_errors', '1'); // so $php_errormsg is available
 if (!GOOGLE_APPENGINE) {
@@ -522,6 +561,9 @@ if (!GOOGLE_APPENGINE) {
 }
 if (!defined('E_DEPRECATED')) { // LEGACY
     define('E_DEPRECATED', 0);
+}
+if (!defined('ENT_SUBSTITUTE')) { // LEGACY
+    define('ENT_SUBSTITUTE', 0);
 }
 safe_ini_set('suhosin.executor.disable_emodifier', '1'); // Extra security if suhosin is available
 safe_ini_set('suhosin.executor.multiheader', '1'); // Extra security if suhosin is available
@@ -534,7 +576,7 @@ if (function_exists('set_magic_quotes_runtime')) {
     @set_magic_quotes_runtime(0); // @'d because it's deprecated and PHP 5.3 may give an error
 }
 safe_ini_set('html_errors', '1');
-safe_ini_set('docref_root', 'http://www.php.net/manual/en/');
+safe_ini_set('docref_root', 'http://php.net/manual/en/');
 safe_ini_set('docref_ext', '.php');
 
 // Get ready for some global variables
@@ -582,24 +624,35 @@ $SITE_INFO = array();
 if (count($SITE_INFO) == 0) {
     // LEGACY
     if ((!is_file($FILE_BASE . '/_config.php')) && (is_file($FILE_BASE . '/info.php'))) {
-        @rename($FILE_BASE . '/info.php', $FILE_BASE . '/_config.php');
+        @copy($FILE_BASE . '/info.php', $FILE_BASE . '/_config.php');
+        if (is_file($FILE_BASE . '/_config.php')) {
+            $new_config_file = file_get_contents($FILE_BASE . '/_config.php');
+            $new_config_file = str_replace(array('ocf_table_prefix', 'use_mem_cache', 'ocp_member_id', 'ocp_member_hash', 'ocf', 'admin_password'), array('cns_table_prefix', 'use_persistent_cache', 'cms_member_id', 'cms_member_hash', 'cns', 'master_password'), $new_config_file);
+            $new_config_file = str_replace(']=\'', '] = \'', $new_config_file); // Clean up formatting to new convention
+            file_put_contents($FILE_BASE . '/_config.php', $new_config_file, LOCK_EX);
+        } else {
+            exit('Error, cannot rename info.php to _config.php: check the Composr upgrade instructions');
+        }
         @include($FILE_BASE . '/_config.php');
     }
 }
 if (count($SITE_INFO) == 0) {
-    if ((!is_file($FILE_BASE . '/_config.php')) || (filesize($FILE_BASE . '/_config.php') == 0)) {
-        critical_error('INFO.PHP');
+    if (!is_file($FILE_BASE . '/_config.php')) {
+        critical_error('_CONFIG.PHP_MISSING');
+    } elseif (strlen(trim(file_get_contents($FILE_BASE . '/_config.php'))) == 0) {
+        critical_error('_CONFIG.PHP_EMPTY');
+    } else {
+        critical_error('_CONFIG.PHP_CORRUPTED');
     }
-    critical_error('INFO.PHP_CORRUPTED');
 }
 
 // Rate limiter, to stop aggressive bots
 global $SITE_INFO;
 $rate_limiting = empty($SITE_INFO['rate_limiting']) ? false : ($SITE_INFO['rate_limiting'] == '1');
 if ($rate_limiting) {
-    if ((!empty($_SERVER['REMOTE_ADDR'])) && (basename($_SERVER['SCRIPT_NAME']) == 'index.php')) {
+    if (((!empty($_SERVER['REMOTE_ADDR'])) || (!empty($_SERVER['HTTP_X_FORWARDED_FOR']))) && (basename($_SERVER['SCRIPT_NAME']) == 'index.php')) {
         // Basic context
-        $ip = $_SERVER['REMOTE_ADDR'];
+        $ip = empty($_SERVER['HTTP_X_FORWARDED_FOR']) ? $_SERVER['REMOTE_ADDR'] : $_SERVER['HTTP_X_FORWARDED_FOR'];
         $time = time();
 
         if (!(((!empty($_SERVER['SERVER_ADDR'])) && ($ip == $_SERVER['SERVER_ADDR'])) || ((!empty($_SERVER['LOCAL_ADDR'])) && ($ip == $_SERVER['LOCAL_ADDR'])))) {
@@ -609,9 +662,10 @@ if ($rate_limiting) {
                 global $RATE_LIMITING_DATA;
                 $RATE_LIMITING_DATA = array();
 
-                $fp = fopen($rate_limiter_path, 'r');
+                $fp = fopen($rate_limiter_path, 'rb');
                 flock($fp, LOCK_SH);
                 include($rate_limiter_path);
+                flock($fp, LOCK_UN);
                 fclose($fp);
             }
 
@@ -631,7 +685,7 @@ if ($rate_limiting) {
             if (count($pertinent) >= $rate_limit_hits_per_window) {
                 header('HTTP/1.0 429 Too Many Requests');
                 header('Content-Type: text/plain');
-                exit('We only allow ' . strval($rate_limit_hits_per_window) . ' page hits every ' . strval($rate_limit_time_window) . ' seconds. You\'re at ' . strval(count($pertinent)) . '.');
+                exit('We only allow ' . strval($rate_limit_hits_per_window - 1) . ' page hits every ' . strval($rate_limit_time_window) . ' seconds. You\'re at ' . strval(count($pertinent)) . '.');
             }
 
             // Remove any old hits from other IPs

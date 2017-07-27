@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -39,12 +39,12 @@ class Hook_choose_download
             if (substr($id, 0, 8) == 'Version ') {
                 $id_float = floatval(substr($id, 8));
                 do {
-                    $str = 'Version ' . float_to_raw_string($id_float, 1);
+                    $str = 'Version ' . float_to_raw_string($id_float, 1, true);
                     $_id = $GLOBALS['SITE_DB']->query_select_value_if_there('download_categories', 'id', array('parent_id' => 3, $GLOBALS['SITE_DB']->translate_field_ref('category') => $str));
                     if (is_null($_id)) {
                         $id_float -= 0.1;
                     }
-                } while ((is_null($_id)) && ($id_float != 0.0));
+                } while ((is_null($_id)) && ($id_float > 0.0));
             } else {
                 $_id = $GLOBALS['SITE_DB']->query_select_value_if_there('download_categories', 'id', array($GLOBALS['SITE_DB']->translate_field_ref('category') => $id));
             }
@@ -71,7 +71,7 @@ class Hook_choose_download
 
         $out = '';
 
-        $out .= '<options>' . serialize($options) . '</options>';
+        $out .= '<options>' . xmlentities(serialize($options)) . '</options>';
 
         foreach ($tree as $t) {
             $_id = $t['id'];
@@ -114,7 +114,7 @@ class Hook_choose_download
                                 $view_url = get_custom_base_url() . '/' . $view_url;
                             }
                             $thumb_url = ensure_thumbnail($row['url'], $row['thumb_url'], 'galleries', 'images', $row['id']);
-                            $description_image = get_translated_tempcode('download_downloads', $row, 'description');
+                            $description_image = get_translated_tempcode('images', $row, 'description');
                             $thumb = do_image_thumb($thumb_url, '');
                             $iedit_url = new Tempcode();
                             $_content = do_template('DOWNLOAD_SCREEN_IMAGE', array('_GUID' => '45905cd5823af4b066ccbc18a39edd74', 'ID' => strval($row['id']), 'VIEW_URL' => $view_url, 'EDIT_URL' => $iedit_url, 'THUMB' => $thumb, 'DESCRIPTION' => $description_image));

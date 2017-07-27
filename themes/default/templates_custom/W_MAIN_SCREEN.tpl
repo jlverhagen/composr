@@ -3,7 +3,7 @@
 <section class="box"><div class="box_inner">
 	<h3>{!NAVIGATION}</h3>
 
-	<section class="box box__realm_main"><div class="box_inner">
+	<section class="box box___realm_main"><div class="box_inner">
 		<h3>&ldquo;{REALM_NAME*}&rdquo;, &lsquo;{ROOM_NAME*}&rsquo;, <kbd>{REALM*}:{X*}:{Y*}</kbd></h3>
 
 		<div class="buildr_navigation">
@@ -11,7 +11,7 @@
 				{!W_MOVEMENT_TABLE}
 			</p>
 
-			<table class="results_table">
+			<table class="results_table columned_table">
 				<thead>
 					<tr>
 						<th colspan="3" style="text-align: center">
@@ -29,7 +29,7 @@
 								{+START,IF,{HAS_UP_ROOM}}
 									<div>
 										&uarr;<br />
-										<form target="_self" class="inline" method="post" action="{$PAGE_LINK*,_SELF:_SELF}">{$INSERT_SPAMMER_BLACKHOLE}<input type="hidden" name="type" value="up" /><input class="button_hyperlink" type="submit" value="{UP_ROOM}" /></form>
+										<form target="_self" class="inline" method="post" action="{$PAGE_LINK*,_SELF:_SELF}" autocomplete="off">{$INSERT_SPAMMER_BLACKHOLE}<input type="hidden" name="type" value="up" /><input class="button_hyperlink" type="submit" value="{UP_ROOM*}" /></form>
 									</div>
 								{+END}
 								{+START,IF,{$NOT,{HAS_UP_ROOM}}}
@@ -48,7 +48,7 @@
 						<td>
 							{+START,IF,{HAS_LEFT_ROOM}}
 								<div style="text-align: right">
-									&larr;&nbsp;<form target="_self" class="inline" method="post" action="{$PAGE_LINK*,_SELF:_SELF}">{$INSERT_SPAMMER_BLACKHOLE}<input type="hidden" name="type" value="left" /><input class="button_hyperlink" type="submit" value="{LEFT_ROOM}" /></form>
+									&larr;&nbsp;<form target="_self" class="inline" method="post" action="{$PAGE_LINK*,_SELF:_SELF}" autocomplete="off">{$INSERT_SPAMMER_BLACKHOLE}<input type="hidden" name="type" value="left" /><input class="button_hyperlink" type="submit" value="{LEFT_ROOM*}" /></form>
 								</div>
 							{+END}
 							{+START,IF,{$NOT,{HAS_LEFT_ROOM}}}
@@ -63,7 +63,7 @@
 						<td>
 							{+START,IF,{HAS_RIGHT_ROOM}}
 								<div style="text-align: left">
-									&nbsp;<form target="_self" class="inline" method="post" action="{$PAGE_LINK*,_SELF:_SELF}">{$INSERT_SPAMMER_BLACKHOLE}<input type="hidden" name="type" value="right" /><input class="button_hyperlink" type="submit" value="{RIGHT_ROOM}" /></form>&nbsp;&rarr;
+									&nbsp;<form target="_self" class="inline" method="post" action="{$PAGE_LINK*,_SELF:_SELF}" autocomplete="off">{$INSERT_SPAMMER_BLACKHOLE}<input type="hidden" name="type" value="right" /><input class="button_hyperlink" type="submit" value="{RIGHT_ROOM*}" /></form>&nbsp;&rarr;
 								</div>
 							{+END}
 							{+START,IF,{$NOT,{HAS_RIGHT_ROOM}}}
@@ -81,7 +81,7 @@
 							<div style="text-align: center">
 								{+START,IF,{HAS_DOWN_ROOM}}
 								<div>
-									<form target="_self" class="inline" method="post" action="{$PAGE_LINK*,_SELF:_SELF}">{$INSERT_SPAMMER_BLACKHOLE}<input type="hidden" name="type" value="down" /><input class="button_hyperlink" type="submit" value="{DOWN_ROOM}" /></form><br />
+									<form target="_self" class="inline" method="post" action="{$PAGE_LINK*,_SELF:_SELF}" autocomplete="off">{$INSERT_SPAMMER_BLACKHOLE}<input type="hidden" name="type" value="down" /><input class="button_hyperlink" type="submit" value="{DOWN_ROOM*}" /></form><br />
 									<div class="buildr_arrow">
 										&darr;
 									</div>
@@ -124,7 +124,7 @@
 
 <br />
 
-<section class="box box__room_info"><div class="box_inner">
+<section class="box box___room_info"><div class="box_inner">
 	<h3>{!W_ROOM_INFORMATION}</h3>
 
 	<div class="float_surrounder">
@@ -133,14 +133,14 @@
 			<div>
 				<iframe{$?,{$BROWSER_MATCHES,ie}, frameBorder="0" scrolling="no"} title="{!MESSAGES}" src="{$FIND_SCRIPT*,wmessages}{$KEEP*,1}">{!MESSAGES}</iframe> {EMOTICON_CHOOSER}
 			</div>
-			<form method="post" id="posting_form" action="{$PAGE_LINK*,_SELF:_SELF}">
+			<form method="post" id="posting_form" action="{$PAGE_LINK*,_SELF:_SELF}" autocomplete="off">
 				{$INSERT_SPAMMER_BLACKHOLE}
 
 				<div><input id="post" name="post" value="" type="text" /> <input name="type" type="hidden" value="message" /> <select name="tmember" size="1">
 					<option value="0">
 						{!W_EVERYONE}
 					</option>
-				</select> <input class="buttons__send button_screen_item" type="submit" value="{!SEND_MESSAGE}" /></div>
+				</select> <input class="button_screen_item buttons__send" type="submit" value="{!SEND_MESSAGE}" /></div>
 			</form>
 		</div>
 
@@ -290,7 +290,7 @@
 				</tr>
 			</table>
 			{+START,IF_NON_EMPTY,{ITEMS_HELD}}
-				<form method="post" class="inline" action="{$PAGE_LINK*,_SELF:_SELF}">
+				<form method="post" class="inline" action="{$PAGE_LINK*,_SELF:_SELF}" autocomplete="off">
 					{$INSERT_SPAMMER_BLACKHOLE}
 
 					<table class="columned_table results_table wide_table autosized_table">
@@ -316,12 +316,12 @@
 							</td>
 							<td>
 								<input type="hidden" name="type" value="drop" />
-								<input class="buttons__proceed button_screen_item" type="submit" value="{!PROCEED}" />
+								<input class="button_screen_item buttons__proceed" type="submit" value="{!PROCEED}" />
 							</td>
 						</tr>
 					</table>
 				</form>
-				<form method="post" class="inline" action="{$PAGE_LINK*,_SELF:_SELF}">
+				<form method="post" class="inline" action="{$PAGE_LINK*,_SELF:_SELF}" autocomplete="off">
 					{$INSERT_SPAMMER_BLACKHOLE}
 
 					<table class="columned_table results_table wide_table autosized_table">
@@ -347,12 +347,12 @@
 							</td>
 							<td>
 								<input type="hidden" name="type" value="give" />
-								<input class="buttons__proceed button_screen_item" type="submit" value="{!PROCEED}" />
+								<input class="button_screen_item buttons__proceed" type="submit" value="{!PROCEED}" />
 							</td>
 						</tr>
 					</table>
 				</form>
-				<form method="post" class="inline" action="{$PAGE_LINK*,_SELF:_SELF:confirm}">
+				<form method="post" class="inline" action="{$PAGE_LINK*,_SELF:_SELF:confirm}" autocomplete="off">
 					{$INSERT_SPAMMER_BLACKHOLE}
 
 					<table class="columned_table results_table wide_table autosized_table">
@@ -378,12 +378,12 @@
 							</td>
 							<td>
 								<input type="hidden" name="btype" value="pickpocket" />
-								<input class="buttons__proceed button_screen_item" type="submit" value="{!PROCEED}" />
+								<input class="button_screen_item buttons__proceed" type="submit" value="{!PROCEED}" />
 							</td>
 						</tr>
 					</table>
 				</form>
-				<form method="post" class="inline" action="{$PAGE_LINK*,_SELF:_SELF}">
+				<form method="post" class="inline" action="{$PAGE_LINK*,_SELF:_SELF}" autocomplete="off">
 					{$INSERT_SPAMMER_BLACKHOLE}
 
 					<table class="columned_table results_table wide_table autosized_table">
@@ -409,12 +409,12 @@
 							</td>
 							<td>
 								<input type="hidden" name="type" value="use" />
-								<input class="buttons__proceed button_screen_item" type="submit" value="{!PROCEED}" />
+								<input class="button_screen_item buttons__proceed" type="submit" value="{!PROCEED}" />
 							</td>
 						</tr>
 					</table>
 				</form>
-				<form method="post" class="inline" action="{$PAGE_LINK*,_SELF:_SELF:confirm}">
+				<form method="post" class="inline" action="{$PAGE_LINK*,_SELF:_SELF:confirm}" autocomplete="off">
 					{$INSERT_SPAMMER_BLACKHOLE}
 
 					<table class="columned_table results_table wide_table autosized_table">
@@ -440,13 +440,13 @@
 							</td>
 							<td>
 								<input type="hidden" name="btype" value="delete-message-by-person" />
-								<input class="buttons__proceed button_screen_item" type="submit" value="{!PROCEED}" />
+								<input class="button_screen_item buttons__proceed" type="submit" value="{!PROCEED}" />
 							</td>
 						</tr>
 					</table>
 				</form>
 			{+END}
-			<form method="post" class="inline" action="{$PAGE_LINK*,_SELF:_SELF}">
+			<form method="post" class="inline" action="{$PAGE_LINK*,_SELF:_SELF}" autocomplete="off">
 				{$INSERT_SPAMMER_BLACKHOLE}
 
 				<table class="columned_table results_table wide_table autosized_table">
@@ -472,7 +472,7 @@
 						</td>
 						<td>
 							<input type="hidden" name="type" value="findperson" />
-							<input class="buttons__proceed button_screen_item" type="submit" value="{!PROCEED}" />
+							<input class="button_screen_item buttons__proceed" type="submit" value="{!PROCEED}" />
 						</td>
 					</tr>
 				</table>
@@ -485,7 +485,7 @@
 						</td>
 					</tr>
 				</table>
-				<form method="post" class="inline" action="{$PAGE_LINK*,_SELF:_SELF}">
+				<form method="post" class="inline" action="{$PAGE_LINK*,_SELF:_SELF}" autocomplete="off">
 					{$INSERT_SPAMMER_BLACKHOLE}
 
 					<table class="columned_table results_table wide_table autosized_table">
@@ -511,12 +511,12 @@
 							</td>
 							<td>
 								<input type="hidden" name="type" value="teleport-person" />
-								<input class="buttons__proceed button_screen_item" type="submit" value="{!PROCEED}" />
+								<input class="button_screen_item buttons__proceed" type="submit" value="{!PROCEED}" />
 							</td>
 						</tr>
 					</table>
 				</form>
-				<form method="post" class="inline" action="{$PAGE_LINK*,_SELF:_SELF}">
+				<form method="post" class="inline" action="{$PAGE_LINK*,_SELF:_SELF}" autocomplete="off">
 					{$INSERT_SPAMMER_BLACKHOLE}
 
 					<table class="columned_table results_table wide_table autosized_table">
@@ -542,12 +542,12 @@
 							</td>
 							<td>
 								<input type="hidden" name="type" value="imprison-person" />
-								<input class="buttons__proceed button_screen_item" type="submit" value="{!PROCEED}" />
+								<input class="button_screen_item buttons__proceed" type="submit" value="{!PROCEED}" />
 							</td>
 						</tr>
 					</table>
 				</form>
-				<form method="post" class="inline" action="{$PAGE_LINK*,_SELF:_SELF}">
+				<form method="post" class="inline" action="{$PAGE_LINK*,_SELF:_SELF}" autocomplete="off">
 					{$INSERT_SPAMMER_BLACKHOLE}
 
 					<table class="columned_table results_table wide_table autosized_table">
@@ -573,12 +573,12 @@
 							</td>
 							<td>
 								<input type="hidden" name="type" value="hurt-person" />
-								<input class="buttons__proceed button_screen_item" type="submit" value="{!PROCEED}" />
+								<input class="button_screen_item buttons__proceed" type="submit" value="{!PROCEED}" />
 							</td>
 						</tr>
 					</table>
 				</form>
-				<form method="post" class="inline" action="{$PAGE_LINK*,_SELF:_SELF}">
+				<form method="post" class="inline" action="{$PAGE_LINK*,_SELF:_SELF}" autocomplete="off">
 					{$INSERT_SPAMMER_BLACKHOLE}
 
 					<table class="columned_table results_table wide_table autosized_table">
@@ -604,12 +604,12 @@
 							</td>
 							<td>
 								<input type="hidden" name="type" value="dehurt-person" />
-								<input class="buttons__proceed button_screen_item" type="submit" value="{!PROCEED}" />
+								<input class="button_screen_item buttons__proceed" type="submit" value="{!PROCEED}" />
 							</td>
 						</tr>
 					</table>
 				</form>
-				<form method="post" class="inline" action="{$PAGE_LINK*,_SELF:_SELF}">
+				<form method="post" class="inline" action="{$PAGE_LINK*,_SELF:_SELF}" autocomplete="off">
 					{$INSERT_SPAMMER_BLACKHOLE}
 
 					<table class="columned_table results_table wide_table autosized_table">
@@ -635,12 +635,12 @@
 							</td>
 							<td>
 								<input type="hidden" name="type" value="ban-person" />
-								<input class="buttons__proceed button_screen_item" type="submit" value="{!PROCEED}" />
+								<input class="button_screen_item buttons__proceed" type="submit" value="{!PROCEED}" />
 							</td>
 						</tr>
 					</table>
 				</form>
-				<form method="post" class="inline" action="{$PAGE_LINK*,_SELF:_SELF}">
+				<form method="post" class="inline" action="{$PAGE_LINK*,_SELF:_SELF}" autocomplete="off">
 					{$INSERT_SPAMMER_BLACKHOLE}
 
 					<table class="columned_table results_table wide_table autosized_table">
@@ -666,12 +666,12 @@
 							</td>
 							<td>
 								<input type="hidden" name="type" value="unban-person" />
-								<input class="buttons__proceed button_screen_item" type="submit" value="{!PROCEED}" />
+								<input class="button_screen_item buttons__proceed" type="submit" value="{!PROCEED}" />
 							</td>
 						</tr>
 					</table>
 				</form>
-				<form method="post" class="inline" action="{$PAGE_LINK*,_SELF:_SELF}">
+				<form method="post" class="inline" action="{$PAGE_LINK*,_SELF:_SELF}" autocomplete="off">
 					{$INSERT_SPAMMER_BLACKHOLE}
 
 					<table class="columned_table results_table wide_table autosized_table">
@@ -697,7 +697,7 @@
 							</td>
 							<td>
 								<input type="hidden" name="type" value="take-from-person" />
-								<input class="buttons__proceed button_screen_item" type="submit" value="{!PROCEED}" />
+								<input class="button_screen_item buttons__proceed" type="submit" value="{!PROCEED}" />
 							</td>
 						</tr>
 					</table>
@@ -741,7 +741,7 @@
 
 	<div class="box box___w_main_screen">
 		<h2 class="toggleable_tray_title">
-			<a class="toggleable_tray_button" href="#" onclick="toggleable_tray(this.parentNode.parentNode); set_cookie('hideMod',(this.getElementsByTagName('img')[0].getAttribute('src')=='{$IMG;*,1x/trays/contract}')?'0':'1'); return false;">{!W_ENVIRONMENT_MODIFICATIONS}</a>
+			<a class="toggleable_tray_button" href="#" onclick="toggleable_tray(this.parentNode.parentNode); return false;">{!W_ENVIRONMENT_MODIFICATIONS}</a>
 			{+START,IF,{$JS_ON}}
 				<a class="toggleable_tray_button" href="#" onclick="toggleable_tray(this.parentNode.parentNode); set_cookie('hideMod',(this.getElementsByTagName('img')[0].getAttribute('src')=='{$IMG;*,1x/trays/contract}')?'0':'1'); return false;"><img alt="{!EXPAND}" title="{!EXPAND}" src="{$IMG*,1x/trays/expand2}" srcset="{$IMG*,2x/trays/expand2} 2x" /></a>
 			{+END}
@@ -749,17 +749,17 @@
 
 		<div class="toggleable_tray" style="{$JS_ON,{HIDE_MODIFICATIONS*},}"{+START,IF,{HIDE_MODIFICATIONS}} aria-expanded="false"{+END}>
 			{+START,IF_NON_EMPTY,{ITEMS_OWNED}}
-				<form method="post" action="{$PAGE_LINK*,_SELF:_SELF}"><div>
+				<form method="post" action="{$PAGE_LINK*,_SELF:_SELF}" autocomplete="off"><div>
 					{$INSERT_SPAMMER_BLACKHOLE}
 
-					<label for="item">{!W_ITEMS}</label>: {ITEMS_OWNED} <input type="hidden" name="type" value="edititem" /> <input class="buttons__edit button_screen_item" type="submit" value="{!W_EDIT_ITEM}" onclick="form.elements['type']='edititem';" /> <input class="menu___generic_admin__delete button_screen_item" type="submit" value="{!W_DELETE_ITEM}" onclick="form.elements['type']='confirm';" />
+					<label for="item">{!W_ITEMS}</label>: {ITEMS_OWNED} <input type="hidden" name="type" value="edititem" /> <input class="button_screen_item buttons__edit" type="submit" value="{!W_EDIT_ITEM}" onclick="form.elements['type']='edititem';" /> <input class="button_screen_item menu___generic_admin__delete" type="submit" value="{!W_DELETE_ITEM}" onclick="form.elements['type']='confirm';" />
 				</div></form>
 
 				{+START,IF,{IS_STAFF}}
-					<form method="post" action="{$PAGE_LINK*,_SELF:_SELF}"><div>
+					<form method="post" action="{$PAGE_LINK*,_SELF:_SELF}" autocomplete="off"><div>
 						{$INSERT_SPAMMER_BLACKHOLE}
 
-						<label for="item">{!FROM}</label>: {ITEMS_OWNED} <label for="item2">{!TO}</label>: {ITEMS_OWNED_2} <input type="hidden" name="type" value="mergeitems" /> <input class="menu___generic_admin__merge button_screen_item" type="submit" value="{!W_MERGE_ITEMS}" />
+						<label for="item">{!FROM}</label>: {ITEMS_OWNED} <label for="item2">{!TO}</label>: {ITEMS_OWNED_2} <input type="hidden" name="type" value="mergeitems" /> <input class="button_screen_item menu___generic_admin__merge" type="submit" value="{!W_MERGE_ITEMS}" />
 					</div></form>
 				{+END}
 			{+END}

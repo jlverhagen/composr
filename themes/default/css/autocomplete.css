@@ -1,6 +1,6 @@
 /*
  {$BRAND_NAME`}
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 */
 
 /* Username autocomplete */
@@ -31,7 +31,7 @@
 }
 
 .-sew-list-item.selected {
-	color: {$GET,native_ui_selected_foreground};
+	color: {$GET,native_ui_foreground};
 	background: {$GET,area_current_background};
 	text-decoration: none;
 }

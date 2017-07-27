@@ -7,7 +7,7 @@
 {+START,IF_NON_EMPTY,{START_TEXT}}
 	<div class="box box___quiz_screen"><div class="box_inner">
 		<div itemprop="description">
-			{START_TEXT}
+			{$PARAGRAPH,{START_TEXT}}
 		</div>
 	</div></div>
 {+END}
@@ -61,7 +61,7 @@
 	{+END}
 {+END}
 
-<form title="{!SAVE}" id="quiz_form" class="quiz_form" method="post" onsubmit="return check_form(this);" action="{URL*}">
+<form title="{!SAVE}" id="quiz_form" class="quiz_form" method="post" onsubmit="return check_form(this);" action="{URL*}" autocomplete="off">
 	{$INSERT_SPAMMER_BLACKHOLE}
 
 	<div>
@@ -79,7 +79,7 @@
 		</table></div>
 
 		<p class="proceed_button">
-			<input accesskey="u" class="buttons__proceed button_screen" type="submit" value="{!SUBMIT}" />
+			<input accesskey="u" class="button_screen buttons__proceed" type="submit" value="{!SUBMIT}" />
 		</p>
 	</div>
 </form>

@@ -10,12 +10,12 @@ if (typeof window.notifications_time_barrier=='undefined')
 
 	window.NOTIFICATION_POLL_FREQUENCY={$CONFIG_OPTION%,notification_poll_frequency};
 
-	window.notifications_time_barrier=null;
+	window.notifications_time_barrier=0;
 }
 
 function notification_poller_init(time_barrier)
 {
-	require_javascript('sound');
+	require_javascript('sound',window.SoundManager);
 
 	window.notifications_time_barrier=time_barrier;
 
@@ -125,21 +125,22 @@ function display_alert(notification)
 	// Play sound, if requested
 	var sound=notification.getAttribute('sound');
 	if (!sound) sound=(window.parseInt(notification.getAttribute('priority'))<3)?'on':'off';
-	if (read_cookie('sound')==='off') sound='off';
-	if (sound=='on')
+	if (read_cookie('sound','off')==='off') sound='off';
+	var notification_code=notification.getAttribute('notification_code');
+	if (sound=='on' && typeof window.detect_change=='undefined' || notification_code!='ticket_reply' && notification_code!='ticket_reply_staff')
 	{
 		if (typeof window.soundManager!='undefined')
 		{
 			var go_func=function() {
 				var sound_url='data/sounds/message_received.mp3';
 				var base_url=((sound_url.indexOf('data_custom')==-1)&&(sound_url.indexOf('uploads/')==-1))?'{$BASE_URL_NOHTTP;}':'{$CUSTOM_BASE_URL_NOHTTP;}';
-				window.soundManager.createSound('notification_ping',base_url+'/'+sound_url);
-				window.soundManager.play('notification_ping');
+				var sound_object=window.soundManager.createSound({url: base_url+'/'+sound_url});
+				if (sound_object && document.hasFocus()/*don't want multiple tabs all pinging*/) sound_object.play();
 			};
 
 			if (!window.soundManager.setupOptions.url)
 			{
-				window.soundManager.setup({onready: go_func, url: get_base_url()+'/data', debugMode: false});
+				window.soundManager.setup({onready: go_func, url: get_base_url()+'/data/soundmanager', debugMode: false});
 			} else
 			{
 				go_func();
@@ -152,7 +153,7 @@ function display_alert(notification)
 	if (window.notify.isSupported)
 	{
 		var icon='{$IMG;,favicon}'.replace(/^https?:/,window.location.protocol);
-		var title='{!notifications:DESKTOP_NOTIFICATION_SUBJECT;}';
+		var title='{!notifications:DESKTOP_NOTIFICATION_SUBJECT;^}';
 		title=title.replace(/\\{1\\}/,notification.getAttribute('subject'));
 		title=title.replace(/\\{2\\}/,notification.getAttribute('from_username'));
 		var body='';//notification.getAttribute('rendered'); Looks ugly
@@ -185,7 +186,9 @@ function display_alert(notification)
 // We attach to an onclick handler, to enable desktop notifications later on; we need this as we cannot call requestPermission out of the blue
 function explicit_notifications_enable_request()
 {
+	/*{+START,IF,{$CONFIG_OPTION,notification_desktop_alerts}}*/
 	window.notify.requestPermission();
+	/*{+END}*/
 }
 
 function toggle_top_personal_stats(event)

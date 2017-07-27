@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -151,16 +151,14 @@ function actual_edit_theme_image($old_id, $theme, $lang, $id, $path, $quick = fa
     $GLOBALS['SITE_DB']->query_delete('theme_images', $where_map);
 
     foreach ($langs as $lang) {
-        $GLOBALS['SITE_DB']->query_insert('theme_images', array('id' => $id, 'theme' => $theme, 'path' => $path, 'lang' => $lang));
+        $GLOBALS['SITE_DB']->query_insert('theme_images', array('id' => $id, 'theme' => $theme, 'path' => $path, 'lang' => $lang), false, true);
     }
 
     if (!$quick) {
         Self_learning_cache::erase_smart_cache();
 
-        if (addon_installed('!ssl')) {
-            require_code('caches3');
-            erase_cached_templates(); // Paths may have been cached
-        }
+        require_code('caches3');
+        erase_cached_templates(false, null, TEMPLATE_DECACHE_WITH_THEME_IMAGE); // Paths may have been cached
 
         log_it('EDIT_THEME_IMAGE', $id, $theme);
     }
@@ -190,7 +188,7 @@ function actual_add_theme($name)
 {
     $GLOBALS['NO_QUERY_LIMIT'] = true;
 
-    if ((file_exists(get_custom_file_base() . '/themes/' . $name)) || ($name == 'default')) {
+    if ((file_exists(get_custom_file_base() . '/themes/' . $name)) || ($name == 'default' || $name == 'admin')) {
         warn_exit(do_lang_tempcode('ALREADY_EXISTS', escape_html($name)));
     }
 
@@ -277,9 +275,9 @@ function actual_add_theme_image($theme, $lang, $id, $path, $fail_ok = false)
 
     Self_learning_cache::erase_smart_cache();
 
-    if (addon_installed('!ssl')) {
+    if (addon_installed('ssl')) {
         require_code('caches3');
-        erase_cached_templates(); // Paths may have been cached
+        erase_cached_templates(false, null, TEMPLATE_DECACHE_WITH_THEME_IMAGE); // Paths may have been cached
     }
 }
 
@@ -305,22 +303,19 @@ function post_param_theme_img_code($type, $required = false, $field_file = 'file
         $upload_to = 'themes/default/images_custom/' . $type;
         @mkdir(get_custom_file_base() . '/' . $upload_to, 0777);
         if (file_exists(get_custom_file_base() . '/' . $upload_to)) {
-            fix_permissions(get_custom_file_base() . '/' . $upload_to, 0777);
+            fix_permissions(get_custom_file_base() . '/' . $upload_to);
         } else {
             $upload_to = 'themes/default/images_custom';
         }
     }
 
-    if ((substr($type, 0, 4) == 'cns_') && (file_exists(get_file_base() . '/themes/default/images/avatars/index.html'))) { // Allow debranding of theme img dirs
-        $type = substr($type, 4);
-    }
-
     require_code('uploads');
-    if ((is_plupload()) || (((array_key_exists($field_file, $_FILES)) && (is_uploaded_file($_FILES[$field_file]['tmp_name']))))) {
+    is_plupload(true);
+    if (((array_key_exists($field_file, $_FILES)) && ((is_plupload()) || (is_uploaded_file($_FILES[$field_file]['tmp_name']))))) {
         $urls = get_url('', $field_file, $upload_to, 0, CMS_UPLOAD_IMAGE, false);
 
-        $theme_img_code = $type . '/' . $urls[1];
-        if (find_theme_image($theme_img_code, true) != '') {
+        $theme_img_code = $type . '/' . basename($urls[2], '.' . get_file_extension($urls[2]));
+        if ($GLOBALS['SITE_DB']->query_select_value_if_there('theme_images', 'id', array('id' => $theme_img_code)) !== null) {
             $theme_img_code = $type . '/' . uniqid('', true);
         }
 
@@ -356,13 +351,11 @@ function post_param_theme_img_code($type, $required = false, $field_file = 'file
  */
 function post_param_image($name = 'image', $upload_to = null, $theme_image_type = null, $required = true, $is_edit = false, &$filename = null, &$thumb_url = null)
 {
-    if (!is_null($theme_image_type)) {
-        if ((substr($theme_image_type, 0, 4) == 'cns_') && (file_exists(get_file_base() . '/themes/default/images/avatars/index.html'))) { // Allow debranding of theme img dirs
-            $theme_image_type = substr($theme_image_type, 4);
-        }
+    $thumb_specify_name = $name . '__thumb__url';
+    $test = post_param_string($thumb_specify_name, '');
+    if ($test == '') {
+        $thumb_specify_name = $name . '__thumb__filedump';
     }
-
-    $thumb_specify_name = $name . '__url__thumb';
 
     // Upload
     // ------
@@ -371,7 +364,7 @@ function post_param_image($name = 'image', $upload_to = null, $theme_image_type 
         $upload_to = 'themes/default/images_custom/' . $theme_image_type;
         @mkdir(get_custom_file_base() . '/' . $upload_to, 0777);
         if (file_exists(get_custom_file_base() . '/' . $upload_to)) {
-            fix_permissions(get_custom_file_base() . '/' . $upload_to, 0777);
+            fix_permissions(get_custom_file_base() . '/' . $upload_to);
         } else {
             $upload_to = 'themes/default/images_custom';
         }
@@ -379,7 +372,7 @@ function post_param_image($name = 'image', $upload_to = null, $theme_image_type 
 
     require_code('uploads');
     $field_file = $name . '__upload';
-    $thumb_attach_name = $name . '__upload__thumb';
+    $thumb_attach_name = $name . '__thumb__upload';
     if ((is_plupload()) || (((array_key_exists($field_file, $_FILES)) && (is_uploaded_file($_FILES[$field_file]['tmp_name']))))) {
         $urls = get_url('', $field_file, $upload_to, 0, CMS_UPLOAD_IMAGE, $thumb_url !== null, $thumb_specify_name, $thumb_attach_name);
 
@@ -472,7 +465,7 @@ function post_param_image($name = 'image', $upload_to = null, $theme_image_type 
  */
 function resize_rep_image($rep_image)
 {
-    if (($rep_image != '') && (function_exists('imagepng')) && (get_value('resize_rep_images') !== '0')) {
+    if (($rep_image != '') && (function_exists('imagepng')) && (get_value('resize_rep_images') !== '0') && (preg_match('#^uploads/repimages/#', $rep_image) != 0)) {
         $_rep_image = $rep_image;
         if (url_is_local($rep_image)) {
             $_rep_image = get_custom_base_url() . '/' . $rep_image;
@@ -493,7 +486,7 @@ function resize_rep_image($rep_image)
  */
 function find_images_do_dir($theme, $subdir, $langs)
 {
-    $full = (($theme == 'default') ? get_file_base() : get_custom_file_base()) . '/themes/' . filter_naughty($theme) . '/' . filter_naughty($subdir);
+    $full = (($theme == 'default' || $theme == 'admin') ? get_file_base() : get_custom_file_base()) . '/themes/' . filter_naughty($theme) . '/' . filter_naughty($subdir);
     $out = array();
 
     $_dir = @opendir($full);
@@ -529,7 +522,7 @@ function find_images_do_dir($theme, $subdir, $langs)
  * @param  ID_TEXT $type The type of image (e.g. 'cns_emoticons')
  * @param  boolean $recurse Whether to search recursively; i.e. in subdirectories of the type subdirectory
  * @param  ?object $db The database connection to work over (null: site db)
- * @param  ?ID_TEXT $theme The theme to search in, in addition to the default theme (null: current theme)
+ * @param  ?ID_TEXT $theme The theme to search in, in addition to the default theme (null: no other)
  * @param  boolean $dirs_only Whether to only return directories (advanced option, rarely used)
  * @param  boolean $db_only Whether to only return from the database (advanced option, rarely used)
  * @param  ?array $skip The list of files/directories to skip (null: none)
@@ -537,13 +530,25 @@ function find_images_do_dir($theme, $subdir, $langs)
  */
 function get_all_image_ids_type($type, $recurse = false, $db = null, $theme = null, $dirs_only = false, $db_only = false, $skip = null)
 {
-    global $THEME_IMAGES_CACHE;
-
     if (is_null($db)) {
         $db = $GLOBALS['SITE_DB'];
     }
+
+    static $cache = array();
+    $cache_sig = serialize(array($type, $recurse, $theme, $dirs_only, $db_only, $skip));
+    if ($db === $GLOBALS['SITE_DB']) {
+        if (isset($cache[$cache_sig])) {
+            return $cache[$cache_sig];
+        }
+    }
+
+    require_code('images');
+    require_code('files');
+
+    global $THEME_IMAGES_CACHE;
+
     if (is_null($theme)) {
-        $theme = $GLOBALS['FORUM_DRIVER']->get_theme();
+        $theme = 'default';
     }
     if (is_null($skip)) {
         $skip = array();
@@ -614,7 +619,13 @@ function get_all_image_ids_type($type, $recurse = false, $db = null, $theme = nu
     }
     sort($ids);
 
-    return array_unique($ids);
+    $ret = array_unique($ids);
+
+    if ($db === $GLOBALS['SITE_DB']) {
+        $cache[$cache_sig] = $ret;
+    }
+
+    return $ret;
 }
 
 /**
@@ -626,12 +637,12 @@ function get_all_image_ids_type($type, $recurse = false, $db = null, $theme = nu
  * @param  boolean $recurse Whether to search recursively; i.e. in subdirectories of the type subdirectory
  * @param  boolean $dirs_only Whether to only return directories (advanced option, rarely used)
  * @param  array $skip The list of files/directories to skip
+ *
  * @ignore
  */
 function _get_all_image_ids_type(&$ids, $dir, $type, $recurse, $dirs_only, $skip)
 {
-    require_code('images');
-    require_code('files');
+    $has_skip = ($skip !== array());
 
     $_dir = @opendir($dir);
     if ($_dir !== false) {
@@ -639,26 +650,35 @@ function _get_all_image_ids_type(&$ids, $dir, $type, $recurse, $dirs_only, $skip
             if ($file[0] == '.' || $file == 'index.html') {
                 continue; // Optimisation, so no need for should_ignore_file call
             }
-            if (in_array($file, $skip)) {
+            if ($has_skip && in_array($file, $skip)) {
                 continue;
             }
 
-            if ((preg_match('#^[\w\-]+\.(png|jpg|gif)$#', $file) != 0/*optimisation*/) || (!should_ignore_file($file, IGNORE_ACCESS_CONTROLLERS))) {
-                if (!is_dir($dir . '/' . $file)) {
-                    if (!$dirs_only) {
+            $path = $dir . (($dir != '') ? '/' : '') . $file;
+            $is_dir = is_dir($path);
+
+            if ($is_dir) {
+                if (($recurse) && (!should_ignore_file($file, IGNORE_ACCESS_CONTROLLERS)) && ((strlen($file) != 2) || (strtoupper($file) != $file))) {
+                    $type_path = $type . (($type != '') ? '/' : '');
+
+                    if ($dirs_only) {
+                        $ids[] = $type_path . $file;
+                    }
+                    _get_all_image_ids_type($ids, $path, $type_path . $file, true, $dirs_only, $skip);
+                }
+            } else {
+                if (!$dirs_only) {
+                    if ((preg_match('#^[' . URL_CONTENT_REGEXP . ']+\.(png|jpg|gif)$#', $file) != 0/*optimisation*/) || (!should_ignore_file($file, IGNORE_ACCESS_CONTROLLERS))) {
+                        $type_path = $type . (($type != '') ? '/' : '');
+
                         $dot_pos = strrpos($file, '.');
                         if ($dot_pos === false) {
                             $dot_pos = strlen($file);
                         }
                         if (is_image($file)) {
-                            $ids[] = $type . (($type != '') ? '/' : '') . substr($file, 0, $dot_pos);
+                            $ids[] = $type_path . substr($file, 0, $dot_pos);
                         }
                     }
-                } elseif (($recurse) && ((strlen($file) != 2) || (strtoupper($file) != $file))) {
-                    if ($dirs_only) {
-                        $ids[] = $type . (($type != '') ? '/' : '') . $file;
-                    }
-                    _get_all_image_ids_type($ids, $dir . (($dir != '') ? '/' : '') . $file, $type . (($type != '') ? '/' : '') . $file, true, $dirs_only, $skip);
                 }
             }
         }
@@ -875,24 +895,26 @@ function find_all_themes($full_details = false)
     }
     closedir($_dir);
     if (get_custom_file_base() != get_file_base()) {
-        $_dir = opendir(get_custom_file_base() . '/themes/');
-        while (false !== ($file = readdir($_dir))) {
-            $ini_file = get_custom_file_base() . '/themes/' . $file . '/theme.ini';
-            if ((strpos($file, '.') === false) && (is_dir(get_custom_file_base() . '/themes/' . $file)) && (file_exists($ini_file))) {
-                $details = better_parse_ini_file($ini_file);
-                if (!array_key_exists('title', $details)) {
-                    $details['title'] = '?';
+        $_dir = @opendir(get_custom_file_base() . '/themes/');
+        if ($_dir !== false) {
+            while (false !== ($file = readdir($_dir))) {
+                $ini_file = get_custom_file_base() . '/themes/' . $file . '/theme.ini';
+                if ((strpos($file, '.') === false) && (is_dir(get_custom_file_base() . '/themes/' . $file)) && (file_exists($ini_file))) {
+                    $details = better_parse_ini_file($ini_file);
+                    if (!array_key_exists('title', $details)) {
+                        $details['title'] = '?';
+                    }
+                    if (!array_key_exists('description', $details)) {
+                        $details['description'] = '?';
+                    }
+                    if (!array_key_exists('author', $details)) {
+                        $details['author'] = '?';
+                    }
+                    $themes[$file] = $full_details ? $details : $details['title'];
                 }
-                if (!array_key_exists('description', $details)) {
-                    $details['description'] = '?';
-                }
-                if (!array_key_exists('author', $details)) {
-                    $details['author'] = '?';
-                }
-                $themes[$file] = $full_details ? $details : $details['title'];
             }
+            closedir($_dir);
         }
-        closedir($_dir);
     }
     if (!array_key_exists('default', $themes)) {
         $details = better_parse_ini_file(get_file_base() . '/themes/default/theme.ini');
@@ -908,10 +930,25 @@ function find_all_themes($full_details = false)
         $themes['default'] = $full_details ? $details : $details['title'];
     }
 
+    // Sort
     if ($full_details) {
         sort_maps_by($themes, 'title');
     } else {
         natsort($themes);
+    }
+
+    // Default theme should go first
+    if (isset($themes['default'])) {
+        $temp = $themes['default'];
+        $temp_2 = $themes;
+        $themes = array('default' => $temp) + $temp_2;
+    }
+
+    // Admin theme should go last
+    if (isset($themes['admin'])) {
+        $temp = $themes['admin'];
+        unset($themes['admin']);
+        $themes['admin'] = $temp;
     }
 
     return $themes;
@@ -932,7 +969,7 @@ function tidy_theme_img_code($new, $old, $table, $field, $db = null)
         return; // Still being used
     }
 
-    $path = find_theme_image($old, true, true);
+    $path = ($old == '') ? null : find_theme_image($old, true, true);
     if ((is_null($path)) || ($path == '')) {
         return;
     }
@@ -944,7 +981,7 @@ function tidy_theme_img_code($new, $old, $table, $field, $db = null)
         $count = $db->query_select_value($table, 'COUNT(*)', array($field => $old));
         if ($count == 0) {
             @unlink(get_custom_file_base() . '/' . $path);
-            sync_file($path);
+            sync_file(get_custom_file_base() . '/' . $path);
             $GLOBALS['SITE_DB']->query_delete('theme_images', array('id' => $old));
         }
     }

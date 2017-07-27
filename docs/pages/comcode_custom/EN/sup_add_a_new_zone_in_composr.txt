@@ -18,7 +18,7 @@ Here is the step by step process of adding a new zone followed by a look at the 
 [*] Click the Add zone button
 [/list]
 
-[b][i]Important![/i][/b] -- Remember if you have set up the "Use .htm to identify CMS pages" URL scheme for your Composr site you will need to make sure you follow the process detailed in the short URLs tutorial or your new zone will not work. Read the [page="_SEARCH:sup_setting_up_short_urls_in_composr"]Setting up short URLs in Composr tutorial[/page] before going any further with this process.
+[b][i]Important![/i][/b] -- Remember if you have set up the "Use .htm to identify CMS pages" URL scheme for your Composr site you will need to make sure you follow the process detailed in the URL Schemes in Composr tutorial or your new zone will not work. Read the [page="_SEARCH:tut_short_urls"]URL Schemes in Composr tutorial[/page] before going any further with this process.
 
 [title="2"]The adding a new zone form in detail[/title]
 
@@ -46,6 +46,6 @@ This section only has one option which is a checkbox. This option allows you to 
 
 The final part of the form deals with the permissions for the zone and whether members of each usergroup can see and have access to the zone. You may choose to set up a member's only zone which has the access limited to it for most usergroups. If this is the case you can simply untick (uncheck) the usergroups which you do not want to be able to access the new zone.
 
-[box="Thank you Arvixe"]This tutorial was sponsored by [url="Arvixe hosting"]http://www.arvixe.com/5256-223-3-122.html[/url].[/box]
+[box="Thank you Arvixe"]This tutorial was sponsored by [url="Arvixe hosting"]http://arvixe.evyy.net/c/302199/279421/3370[/url].[/box]
 
 {$SET,tutorial_tags,Structure and navigation,novice}{$SET,tutorial_add_date,Jul 2013}{$SET,tutorial_summary,Zones are a key element to the structure of any Composr built website and are a great way of sectioning off your content into different areas.}[block]main_tutorial_rating[/block]

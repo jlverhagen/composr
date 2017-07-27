@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -35,6 +35,7 @@
  * @param  BINARY $encrypted Whether the field is encrypted
  * @param  ?string $default Default field value (null: standard for field type)
  * @return boolean Whether the custom field was created successfully
+ *
  * @ignore
  */
 function _helper_install_create_custom_field($this_ref, $name, $length, $locked = 1, $viewable = 0, $settable = 0, $required = 0, $description = '', $type = 'long_text', $encrypted = 0, $default = null)
@@ -43,12 +44,12 @@ function _helper_install_create_custom_field($this_ref, $name, $length, $locked 
     require_code('cns_members_action');
 
     $name = 'cms_' . $name;
-    $id = $this_ref->connection->query_select_value_if_there('f_custom_fields', 'id', array($GLOBALS['SITE_DB']->translate_field_ref('cf_name') => $name));
+    $id = $this_ref->connection->query_select_value_if_there('f_custom_fields', 'id', array($this_ref->connection->translate_field_ref('cf_name') => $name));
     if (is_null($id)) {
         if (is_null($default)) {
             $default = (strpos($name, 'points') !== false) ? '0' : '';
         }
-        $id = cns_make_custom_field($name, $locked, $description, $default, $viewable, $viewable, $settable, $encrypted, $type, $required);
+        $id = cns_make_custom_field($name, $locked, $description, $default, $viewable, $viewable, $settable, $encrypted, $type, $required, 0, 0, null, '', 0, '', true);
     }
     return !is_null($id);
 }
@@ -62,13 +63,14 @@ function _helper_install_create_custom_field($this_ref, $name, $length, $locked 
  * - title, a textual title of the attribute
  *
  * @return array The attributes for the forum
+ *
  * @ignore
  */
 function _helper_install_specifics()
 {
     $a = array();
     $a['name'] = 'cns_table_prefix';
-    $a['default'] = 'cms_';
+    $a['default'] = function_exists('get_default_table_prefix') ? get_default_table_prefix() : 'cms_';
     $a['description'] = do_lang('MOST_DEFAULT');
     $a['title'] = do_lang('TABLE_PREFIX');
     $b = array();
@@ -94,6 +96,7 @@ function _helper_install_specifics()
  *
  * @param  PATH $path The path in which to search
  * @return boolean Whether the forum auto-config could be found
+ *
  * @ignore
  */
 function _helper_install_test_load_from($path)
@@ -103,7 +106,7 @@ function _helper_install_test_load_from($path)
     $PROBED_FORUM_CONFIG['sql_user'] = $GLOBALS['DB_STATIC_OBJECT']->db_default_user();
     $PROBED_FORUM_CONFIG['sql_pass'] = $GLOBALS['DB_STATIC_OBJECT']->db_default_password();
 
-    $base_url = post_param_string('base_url', 'http://' . cms_srv('HTTP_HOST') . dirname(cms_srv('SCRIPT_NAME')));
+    $base_url = post_param_string('base_url', get_base_url());
 
     $PROBED_FORUM_CONFIG['board_url'] = $base_url . '/forum';
     return true;

@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -37,7 +37,7 @@ class Hook_page_groupings_ldap
         }
 
         return array(
-            (get_forum_type() != 'cns') ? null : array('security', 'menu/adminzone/security/ldap', array('admin_cns_ldap', array('type' => 'browse'), get_module_zone('admin_cns_ldap')), do_lang_tempcode('ldap:LDAP'), 'ldap:DOC_LDAP'),
+            (get_forum_type() != 'cns') ? null : array('security', 'menu/adminzone/security/ldap', array('admin_cns_ldap', array('type' => 'browse'), get_module_zone('admin_cns_ldap')), do_lang_tempcode('cns:LDAP'), 'ldap:DOC_LDAP'),
         );
     }
 }

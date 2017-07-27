@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -103,7 +103,7 @@ class Hook_html_site
 
         $fields->attach(form_input_tick(do_lang_tempcode('FIX_INVALID_HTML'), do_lang_tempcode('DESCRIPTION_FIX_INVALID_HTML'), 'fix_html', true));
 
-        $fields->attach(form_input_line(do_lang_tempcode('BASE_URL'), do_lang_tempcode('DESCRIPTION_IMPORT_BASE_URL'), 'base_url', get_base_url(), true));
+        $fields->attach(form_input_line(do_lang_tempcode('installer:BASE_URL'), do_lang_tempcode('DESCRIPTION_IMPORT_BASE_URL'), 'base_url', get_base_url(), true));
 
         return $fields;
     }
@@ -118,6 +118,8 @@ class Hook_html_site
     public function import_pages($db, $table_prefix, $file_base)
     {
         appengine_live_guard();
+
+        require_code('files');
 
         require_code('files2');
         $files = @get_directory_contents($file_base);
@@ -209,7 +211,7 @@ class Hook_html_site
                     $best_av_ratios = mixed();
                     $ratios = array();
                     while ($last_pos !== false) {
-                        //@print('!'.(strlen($reference_file)-$last_pos).' '.$lv.' '.$ratio.'<br />'."\n");flush();if (@$dd++==180) @exit('fini'); // Useful for debugging
+                        //@print('!' . (strlen($reference_file) - $last_pos) . ' ' . $lv . ' ' . $ratio . '<br />' . "\n");flush();if (@$dd++ == 180) @exit('fini'); // Useful for debugging
                         if ($template_wanted == 'HEADER') {
                             $next_pos = strpos($reference_file, '<', $last_pos);
                         } else {
@@ -348,11 +350,7 @@ class Hook_html_site
             $global_to_write = $header_to_write . '{MIDDLE}' . $footer_to_write;
         }
         $path = get_custom_file_base() . '/themes/' . filter_naughty($theme) . '/templates_custom/GLOBAL_HTML_WRAP.tpl';
-        $myfile = fopen($path, GOOGLE_APPENGINE ? 'wb' : 'wt');
-        fwrite($myfile, $global_to_write);
-        fclose($myfile);
-        fix_permissions($path);
-        sync_file($path);
+        cms_file_put_contents_safe($path, $global_to_write, FILE_WRITE_FIX_PERMISSIONS | FILE_WRITE_SYNC_FILE);
 
         // Extract site name from <title> tag, based on common consistency (largest common substring)
         $site_name = get_site_name();
@@ -386,7 +384,7 @@ class Hook_html_site
                 }
             }
             // Strip bits
-            $site_name = trim(preg_replace('#^[\|\-�,]#', '', preg_replace('#[\|\-�,]$#', '', trim($lcs))));
+            $site_name = trim(preg_replace('#^[\|\-–—,]#', '', preg_replace('#[\|\-–—,]$#', '', trim($lcs))));
             // Save as site name
             set_option('site_name', $site_name);
         }
@@ -412,11 +410,7 @@ class Hook_html_site
 
             if (substr($content_file, -4) == '.php') {
                 $file_path = zone_black_magic_filterer(get_custom_file_base() . '/' . $zone . '/pages/minimodules_custom/' . $page . '.php');
-                $myfile = fopen($file_path, GOOGLE_APPENGINE ? 'wb' : 'wt');
-                fwrite($myfile, $file_contents);
-                fclose($myfile);
-                fix_permissions($file_path);
-                sync_file($file_path);
+                cms_file_put_contents_safe($file_path, $file_contents, FILE_WRITE_FIX_PERMISSIONS | FILE_WRITE_SYNC_FILE);
             } else {
                 $filtered = $this->_html_filter($file_contents, $fix_html, $base_url, $files, $file_base);
 
@@ -424,7 +418,7 @@ class Hook_html_site
                 $matches = array();
                 $page_title = null;
                 if (preg_match('#<title>(.*)</title>#', $filtered, $matches) != 0) {
-                    $page_title = preg_replace('#( [\|\-�] )?' . preg_quote($site_name) . '( [\|\-�] )?#', '', $matches[1]);
+                    $page_title = preg_replace('#( [\|\-–—] )?' . preg_quote($site_name) . '( [\|\-–—] )?#', '', $matches[1]);
                 }
                 $page_keywords = null;
                 if (preg_match('#<meta name="keywords" content="([^"]*)"#', $filtered, $matches) != 0) {
@@ -456,11 +450,7 @@ class Hook_html_site
 
                     $file_path = zone_black_magic_filterer(get_custom_file_base() . '/' . $zone . '/pages/comcode_custom/' . get_site_default_lang() . '/' . $page . '.txt');
 
-                    $myfile = fopen($file_path, GOOGLE_APPENGINE ? 'wb' : 'wt');
-                    fwrite($myfile, '[semihtml]' . $filtered . '[/semihtml]');
-                    fclose($myfile);
-                    fix_permissions($file_path);
-                    sync_file($file_path);
+                    cms_file_put_contents_safe($file_path, '[semihtml]' . $filtered . '[/semihtml]', FILE_WRITE_FIX_PERMISSIONS | FILE_WRITE_SYNC_FILE);
                 } else { // Or copy htm/html's as Comcode-converted instead, if the user chose this
                     // Insert an <h1> if the h1 is not there
                     if ((strpos($filtered, '[title') === false) && (!is_null($page_title))) {
@@ -470,11 +460,7 @@ class Hook_html_site
                     require_code('comcode_from_html');
                     $comcode = semihtml_to_comcode($filtered);
                     $file_path = zone_black_magic_filterer(get_custom_file_base() . '/' . $zone . '/pages/comcode_custom/' . get_site_default_lang() . '/' . $page . '.txt');
-                    $myfile = fopen($file_path, GOOGLE_APPENGINE ? 'wb' : 'wt');
-                    fwrite($myfile, $comcode);
-                    fclose($myfile);
-                    fix_permissions($file_path);
-                    sync_file($file_path);
+                    cms_file_put_contents_safe($file_path, $comcode, FILE_WRITE_FIX_PERMISSIONS | FILE_WRITE_SYNC_FILE);
                 }
             }
         }
@@ -493,14 +479,12 @@ class Hook_html_site
         }
 
         // Set the panels to be blank
+        require_code('files');
         foreach (array('site/', '') as $zone) {
             $panels = array('panel_left', 'panel_right');
             foreach ($panels as $panel) {
                 $path = zone_black_magic_filterer(get_custom_file_base() . '/' . $zone . 'pages/comcode_custom/' . filter_naughty(fallback_lang()) . '/' . filter_naughty($panel) . '.txt');
-                $myfile = fopen($path, GOOGLE_APPENGINE ? 'wb' : 'wt');
-                fclose($myfile);
-                fix_permissions($path);
-                sync_file($path);
+                cms_file_put_contents_safe($path, '', FILE_WRITE_FIX_PERMISSIONS | FILE_WRITE_SYNC_FILE);
             }
         }
     }
@@ -573,14 +557,12 @@ class Hook_html_site
                         @unlink($target);
                         @copy($file_base . '/' . $decoded_url, $target);
 
-                        /*if (substr($decoded_url,-4)=='.css') Not needed, as relative paths maintained
-                                        {
-                                                        $css_file=file_get_contents($target);
-                                                        $css_file=preg_replace('#(url\([\'"]?)(\.*'.'/)?#','${1}{$BASE_URL;}/uploads/website_specific/',$css_file);
-                                                        $my_css_file=fopen($target,GOOGLE_APPENGINE?'wb':'wt');
-                                                        fwrite($my_css_file,$css_file);
-                                                        fclose($my_css_file);
-                                        }*/
+                        /*if (substr($decoded_url, -4) == '.css') { Not needed, as relative paths maintained
+                            $css_file = file_get_contents($target);
+                            $css_file = preg_replace('#(url\([\'"]?)(\.*' . '/)?#', '${1}{$BASE_URL;}/uploads/website_specific/', $css_file);
+                            require_code('files');
+                            cms_file_put_contents_safe($target, $css_file);
+                        }*/
 
                         fix_permissions($target);
                         sync_file($target);
@@ -601,7 +583,7 @@ class Hook_html_site
      * @param  string $to_strip What we are stripping.
      * @param  string $subject What we are stripping from.
      * @param  boolean $backwards Whether we are removing from the end.
-     * @param  integer $i The position to start at (if $backwards=true, then this is relative to the end).
+     * @param  integer $i The position to start at (if $backwards == true, then this is relative to the end).
      * @return string The altered string.
      */
     public function levenshtein_strip_search($to_strip, $subject, $backwards, $i)
@@ -632,7 +614,7 @@ class Hook_html_site
                 }
             }
             $lev = null;
-            //$lev=fake_levenshtein($backwards?substr($subject,-$i):substr($subject,0,$i),$to_strip);    For efficiency the next loop has a more intelligent searching algorithm, to narrow down on the peak
+            //$lev = fake_levenshtein($backwards ? substr($subject, -$i) : substr($subject, 0, $i), $to_strip);    For efficiency the next loop has a more intelligent searching algorithm, to narrow down on the peak
             $positions[] = array($i, $lev);
         }
 

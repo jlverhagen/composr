@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -26,7 +26,7 @@ class Hook_checklist_messaging
     /**
      * Find items to include on the staff checklist.
      *
-     * @return array An array of tuples: The task row to show, the number of seconds until it is due (or NULL if not on a timer), the number of things to sort out (or NULL if not on a queue), The name of the config option that controls the schedule (or NULL if no option).
+     * @return array An array of tuples: The task row to show, the number of seconds until it is due (or null if not on a timer), the number of things to sort out (or null if not on a queue), The name of the config option that controls the schedule (or null if no option).
      */
     public function run()
     {
@@ -57,7 +57,7 @@ class Hook_checklist_messaging
                 $outstanding++;
 
                 $count = 0;
-                $_comments = $GLOBALS['FORUM_DRIVER']->get_forum_topic_posts($GLOBALS['FORUM_DRIVER']->find_topic_id_for_topic_identifier($forum, $message_type . '_' . $id), $count, 100, 0, false);
+                $_comments = $GLOBALS['FORUM_DRIVER']->get_forum_topic_posts($GLOBALS['FORUM_DRIVER']->find_topic_id_for_topic_identifier($forum, $message_type . '_' . $id, do_lang('COMMENT')), $count, 100, 0, false);
                 if ((is_array($_comments)) && (array_key_exists(0, $_comments))) {
                     $message_title = $_comments[0]['title'];
                     $message = $_comments[0]['message'];

@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -26,9 +26,10 @@ class Hook_addon_registry_core
     /**
      * Get a list of file permissions to set
      *
+     * @param  boolean $runtime Whether to include wildcards represented runtime-created chmoddable files
      * @return array File permissions to set
      */
-    public function get_chmod_array()
+    public function get_chmod_array($runtime = false)
     {
         return array();
     }
@@ -61,10 +62,18 @@ class Hook_addon_registry_core
     public function get_applicable_tutorials()
     {
         return array(
-            'tut_webapp',
             'tut_do',
             'tut_drinking',
             'tut_metadata',
+            'tut_sql',
+            'tut_short_urls',
+            'tut_seo',
+            'tut_selectcode',
+            'tut_filtercode',
+            'tut_keymap',
+            'tut_email',
+            'tut_disaster',
+            'tut_antispam',
         );
     }
 
@@ -100,6 +109,7 @@ class Hook_addon_registry_core
     public function get_file_list()
     {
         return array(
+            'adminzone/pages/comcode/EN/_modsecurity.txt',
             'themes/default/images/icons/24x24/menu/_generic_admin/merge.png',
             'themes/default/images/icons/48x48/menu/_generic_admin/merge.png',
             'themes/default/images/icons/24x24/menu/rich_content.png',
@@ -181,8 +191,6 @@ class Hook_addon_registry_core
             'themes/default/images/icons/48x48/menu/adminzone/setup/config/base_config.png',
             'themes/default/images/icons/24x24/buttons/cancel.png',
             'themes/default/images/icons/48x48/buttons/cancel.png',
-            'themes/default/images/icons/24x24/buttons/changes.png',
-            'themes/default/images/icons/48x48/buttons/changes.png',
             'themes/default/images/icons/24x24/buttons/choose.png',
             'themes/default/images/icons/48x48/buttons/choose.png',
             'themes/default/images/icons/24x24/buttons/clear.png',
@@ -261,8 +269,6 @@ class Hook_addon_registry_core
             'themes/default/images/icons/48x48/buttons/new_reply.png',
             'themes/default/images/icons/24x24/buttons/report.png',
             'themes/default/images/icons/48x48/buttons/report.png',
-            'themes/default/images/icons/24x24/buttons/restore.png',
-            'themes/default/images/icons/48x48/buttons/restore.png',
             'themes/default/images/icons/24x24/menu/pages/rules.png',
             'themes/default/images/icons/48x48/menu/pages/rules.png',
             'themes/default/images/icons/24x24/buttons/search.png',
@@ -307,7 +313,6 @@ class Hook_addon_registry_core
             'themes/default/images/icons/48x48/tool_buttons/top.png',
             'themes/default/images/icons/24x24/buttons/upload.png',
             'themes/default/images/icons/48x48/buttons/upload.png',
-            'themes/default/images/EN/upload.png',
             'themes/default/images/icons/64x64/menu/adminzone/audit.png',
             'themes/default/images/icons/24x24/menu/social/users_online.png',
             'themes/default/images/icons/48x48/menu/social/users_online.png',
@@ -455,13 +460,11 @@ class Hook_addon_registry_core
             'themes/default/images/icons/28x28/remove.png',
             'themes/default/images/icons/28x28/remove_manage.png',
             'themes/default/images/icons/28x28/tools.png',
-            'sources/hooks/systems/commandr_fs_extended_config/.htaccess',
-            'sources_custom/hooks/systems/commandr_fs_extended_config/.htaccess',
             'sources/hooks/systems/resource_meta_aware/.htaccess',
             'sources_custom/hooks/systems/resource_meta_aware/.htaccess',
             'sources/hooks/systems/resource_meta_aware/index.html',
             'sources_custom/hooks/systems/resource_meta_aware/index.html',
-            'sources/hooks/systems/commandr_fs_extended_config/privilege.php',
+            'sources/hooks/systems/commandr_fs_extended_member/group_timeouts.php',
             'sources/block_add.php',
             'themes/default/css/carousels.css',
             'themes/default/css/adminzone.css',
@@ -502,7 +505,6 @@ class Hook_addon_registry_core
             'data/html5.js', // LEGACY
             'data/external_url_proxy.php',
             'adminzone/.htaccess',
-            'adminzone/pages/comcode/EN/_modsecurity.txt',
             'themes/default/images/no_image.png',
             'themes/default/css/install.css',
             'lang/EN/installer.ini',
@@ -521,6 +523,7 @@ class Hook_addon_registry_core
             'sources/hooks/systems/symbols/REGION.php',
             'lang/EN/locations.ini',
             'data/geocode.php',
+            'sources/web_resources.php',
             'sources/hooks/systems/cron/git_autopull.php',
             'sources/hooks/systems/cron/dynamic_firewall.php',
             'data_custom/firewall_rules.txt',
@@ -531,10 +534,6 @@ class Hook_addon_registry_core
             'themes/default/templates/GROUP_MEMBER_TIMEOUT_MANAGE_SCREEN.tpl',
             'sources/inst_special.php',
             'sources/actionlog.php',
-            'sources/hooks/systems/config/fixed_width.php',
-            'sources/hooks/systems/config/collapse_user_zones.php',
-            'sources/hooks/systems/config/url_monikers_enabled.php',
-            'sources/hooks/systems/cron/ip_address_sharing.php',
             'themes/admin/javascript/.htaccess',
             'themes/admin/javascript/index.html',
             'themes/admin/text/.htaccess',
@@ -547,6 +546,7 @@ class Hook_addon_registry_core
             'themes/default/text/index.html',
             'themes/default/xml/.htaccess',
             'themes/default/xml/index.html',
+            'data/no_banning.txt',
             'data/editarea/edit_area.css',
             'data/editarea/edit_area_compressor.php',
             'data/editarea/edit_area_full.js',
@@ -626,7 +626,7 @@ class Hook_addon_registry_core
             'sources/firephp.php',
             'sources/content.php',
             'sources/content2.php',
-            'lang/EN/meta_data.ini',
+            'lang/EN/metadata.ini',
             'adminzone/find_permissions.php',
             'themes/default/javascript/sound.js',
             'data/sounds/message_background.mp3',
@@ -650,6 +650,7 @@ class Hook_addon_registry_core
             'sources/selectcode.php',
             'sources/filtercode.php',
             'lang/EN/filtercode.ini',
+            'sources/mail_dkim.php',
             'sources/blocks/main_content_filtering.php',
             'sources/lang_stemmer_EN.php',
             'sources/lang_filter_EN.php',
@@ -747,6 +748,8 @@ class Hook_addon_registry_core
             'sources_custom/hooks/systems/addon_registry/.htaccess',
             'sources/activities.php',
             'sources/crypt.php',
+            'sources/crypt_master.php',
+            'data_custom/sitemaps/index.html',
             'themes/default/templates/JS_BLOCK.tpl',
             'themes/default/javascript/modernizr.js',
             'themes/default/javascript/jquery.js',
@@ -769,7 +772,11 @@ class Hook_addon_registry_core
             'themes/default/javascript/global.js',
             'themes/default/javascript/ajax.js',
             'themes/default/templates/JAVASCRIPT_NEED.tpl',
+            'themes/default/templates/JAVASCRIPT_NEED_FULL.tpl',
             'themes/default/templates/JAVASCRIPT_NEED_INLINE.tpl',
+            'themes/default/templates/CSS_NEED.tpl',
+            'themes/default/templates/CSS_NEED_FULL.tpl',
+            'themes/default/templates/CSS_NEED_INLINE.tpl',
             'themes/default/javascript/staff.js',
             'themes/default/javascript/transitions.js',
             'themes/default/javascript/tree_list.js',
@@ -784,11 +791,9 @@ class Hook_addon_registry_core
             'themes/default/templates/BLOCK_TOP_LOGIN.tpl',
             'themes/default/templates/BLOCK_TOP_PERSONAL_STATS.tpl',
             'themes/default/templates/BLOCK_MAIN_CONTENT_FILTERING.tpl',
-            'themes/default/templates/LOGIN_REDIRECT_SCREEN.tpl',
+            'themes/default/templates/REDIRECT_POST_METHOD_SCREEN.tpl',
             'themes/default/templates/LOGIN_SCREEN.tpl',
             'themes/default/css/login.css',
-            'themes/default/templates/CSS_NEED.tpl',
-            'themes/default/templates/CSS_NEED_INLINE.tpl',
             'themes/default/templates/BROKEN_LANG_STRINGS.tpl',
             'themes/default/templates/BROKEN_URLS.tpl',
             'themes/default/templates/FORUMS_EMBED.tpl',
@@ -800,10 +805,7 @@ class Hook_addon_registry_core
             'themes/default/templates/LOOKUP_IP_LIST_ENTRY.tpl',
             'themes/default/templates/LOOKUP_SCREEN.tpl',
             'themes/default/templates/FATAL_SCREEN.tpl',
-            'themes/default/templates/STACK_TRACE_HYPER_WRAP.tpl',
-            'themes/default/templates/STACK_TRACE_LINE.tpl',
-            'themes/default/templates/STACK_TRACE_WRAP.tpl',
-            'themes/default/templates/BLOCK_MAIN_EMOTICON_CODES_ENTRY.tpl',
+            'themes/default/templates/STACK_TRACE.tpl',
             'themes/default/templates/BLOCK_MAIN_EMOTICON_CODES.tpl',
             'themes/default/templates/BLOCK_NO_ENTRIES.tpl',
             'adminzone/index.php',
@@ -850,6 +852,7 @@ class Hook_addon_registry_core
             'text/EN/licence.txt',
             'text/EN/too_common_words.txt',
             'text/EN/word_characters.txt',
+            'text/EN/synonyms.txt',
             'text/index.html',
             'text_custom/.htaccess',
             'text_custom/EN/.htaccess',
@@ -997,12 +1000,14 @@ class Hook_addon_registry_core
             'data/page_link_redirect.php',
             'data/quash_referer.php',
             'data/sheet.php',
+            'data/script.php',
             'data/sitemap.php',
             'data/snippet.php',
-            'data/soundmanager2.swf',
-            'data/soundmanager2_flash9.swf',
-            'data/soundmanager2_flash9_debug.swf',
-            'data/soundmanager2_debug.swf',
+            'data/soundmanager/soundmanager2.swf',
+            'data/soundmanager/soundmanager2_flash9.swf',
+            'data/soundmanager/soundmanager2_flash9_debug.swf',
+            'data/soundmanager/soundmanager2_debug.swf',
+            'data/soundmanager/index.html',
             'data/sounds/index.html',
             'data_custom/execute_temp.php',
             'data_custom/functions.dat',
@@ -1143,6 +1148,7 @@ class Hook_addon_registry_core
             'sources/database.php',
             'sources/database_security_filter.php',
             'sources/database_helper.php',
+            'sources/database_repair.php',
             'sources/database_action.php',
             'sources/database_search.php',
             'sources/diff.php',
@@ -1152,14 +1158,15 @@ class Hook_addon_registry_core
             'sources/forum_stub.php',
             'sources/global.php',
             'sources/shared_installs.php',
-            'sources/xml_storage.php',
             'sources/override_api.php',
             'sources/global2.php',
             'sources/character_sets.php',
             'sources/css_and_js.php',
             'sources/jsmin.php',
+            'sources/database_relations.php',
             'sources/wordfilter.php',
             'sources/input_filter.php',
+            'sources/csrf_filter.php',
             'sources/input_filter_2.php',
             'sources/hooks/systems/checks/.htaccess',
             'sources_custom/hooks/systems/checks/.htaccess',
@@ -1181,9 +1188,14 @@ class Hook_addon_registry_core
             'sources/hooks/systems/checks/suhosin_eval.php',
             'sources/hooks/systems/checks/unzip.php',
             'sources/hooks/systems/checks/xml.php',
+            'sources/hooks/systems/checks/directory_name.php',
+            'sources/hooks/systems/checks/normative_performance.php',
+            'sources/hooks/systems/checks/utf.php',
+            'sources/hooks/systems/checks/modsecurity.php',
             'sources/failure.php',
             'sources/failure_spammers.php',
             'sources/images.php',
+            'sources/images2.php',
             'sources/images_png.php',
             'sources/exif.php',
             'sources/index.html',
@@ -1217,6 +1229,7 @@ class Hook_addon_registry_core
             'sources/symbols.php',
             'sources/symbols2.php',
             'sources/tar.php',
+            'sources/tar2.php',
             'sources/tempcode.php',
             'sources/tempcode_compiler.php',
             'sources/tempcode_optimiser.php',
@@ -1320,6 +1333,12 @@ class Hook_addon_registry_core
             'sources/incoming_uploads.php',
             'themes/default/images/uploader/cancelbutton.gif',
             'themes/default/images/uploader/index.html',
+            'themes/default/images/icons/24x24/links/facebook.png',
+            'themes/default/images/icons/24x24/links/twitter.png',
+            'themes/default/images/icons/48x48/links/facebook.png',
+            'themes/default/images/icons/48x48/links/twitter.png',
+            'uploads/repimages/index.html',
+            'uploads/repimages/.htaccess',
             'uploads/incoming/index.html',
             'uploads/incoming/.htaccess',
             'uploads/.htaccess',
@@ -1347,11 +1366,9 @@ class Hook_addon_registry_core
             'themes/default/templates/MASS_SELECT_MARKER.tpl',
             'themes/default/templates/MASS_SELECT_DELETE_FORM.tpl',
             'themes/default/templates/MASS_SELECT_FORM_BUTTONS.tpl',
-            'themes/default/templates/DELETE_MARKER.tpl',
             'data/tasks.php',
             'sources/tasks.php',
             'lang/EN/tasks.ini',
-            'sources/hooks/systems/config/tasks_background.php',
             'sources/hooks/systems/cron/tasks.php',
             'sources/hooks/systems/tasks/index.html',
             'sources_custom/hooks/systems/tasks/index.html',
@@ -1364,6 +1381,8 @@ class Hook_addon_registry_core
             'sources/persistent_caching/.htaccess',
             'sources/deep_clean.php',
             'sources/hooks/systems/symbols/DEEP_CLEAN.php',
+            'themes/default/templates/PASSWORD_CHECK_JS.tpl',
+            'themes/default/templates/SPONSORS_SCREEN.tpl',
 
             // External endpoints (API) - no actual endpoints defined in core (or even bundled at time of writing), but may be added by other addons
             'data/endpoint.php',
@@ -1429,17 +1448,17 @@ class Hook_addon_registry_core
             'templates/ACTIONLOGS_SCREEN.tpl' => 'administrative__actionlogs_screen',
             'templates/ACTIONLOGS_TOGGLE_LINK.tpl' => 'administrative__actionlogs_toggle_link',
             'templates/LOGIN_SCREEN.tpl' => 'login_screen',
-            'templates/LOGIN_REDIRECT_SCREEN.tpl' => 'login_redirect_screen',
+            'templates/REDIRECT_POST_METHOD_SCREEN.tpl' => 'redirect_post_method_screen',
             'templates/FORUMS_EMBED.tpl' => 'forums_embed',
             'templates/JS_BLOCK.tpl' => 'js_block',
-            'templates/JAVASCRIPT_NEED_INLINE.tpl' => 'javascript_need_inline',
-            'templates/CSS_NEED_INLINE.tpl' => 'css_need_inline',
             'templates/JAVASCRIPT_NEED.tpl' => 'javascript_need',
+            'templates/JAVASCRIPT_NEED_FULL.tpl' => 'javascript_need_full',
+            'templates/JAVASCRIPT_NEED_INLINE.tpl' => 'javascript_need_inline',
             'templates/CSS_NEED.tpl' => 'css_need',
+            'templates/CSS_NEED_FULL.tpl' => 'css_need_full',
+            'templates/CSS_NEED_INLINE.tpl' => 'css_need_inline',
             'templates/FATAL_SCREEN.tpl' => 'administrative__fatal_screen',
-            'templates/STACK_TRACE_LINE.tpl' => 'administrative__stack_trace_hyper_wrap',
-            'templates/STACK_TRACE_WRAP.tpl' => 'administrative__stack_trace_hyper_wrap',
-            'templates/STACK_TRACE_HYPER_WRAP.tpl' => 'administrative__stack_trace_hyper_wrap',
+            'templates/STACK_TRACE.tpl' => 'administrative__stack_trace',
             'templates/INLINE_WIP_MESSAGE.tpl' => 'inline_wip_message',
             'templates/MISSING_SCREEN.tpl' => 'missing_screen',
             'templates/PARAM_INFO.tpl' => 'param_info',
@@ -1453,7 +1472,6 @@ class Hook_addon_registry_core
             'templates/BLOCK_TOP_LOGIN.tpl' => 'block_top_login',
             'templates/BLOCK_TOP_PERSONAL_STATS.tpl' => 'block_top_personal_stats',
             'templates/BLOCK_NO_ENTRIES.tpl' => 'nothing_here',
-            'templates/BLOCK_MAIN_EMOTICON_CODES_ENTRY.tpl' => 'block_main_emoticon_codes',
             'templates/BLOCK_MAIN_EMOTICON_CODES.tpl' => 'block_main_emoticon_codes',
             'templates/BLOCK_MAIN_COMCODE_PAGE_CHILDREN.tpl' => 'block_main_comcode_page_children',
             'templates/QUERY_LOG.tpl' => 'administrative__query_screen',
@@ -1472,9 +1490,9 @@ class Hook_addon_registry_core
             'templates/MASS_SELECT_FORM_BUTTONS.tpl' => 'mass_select_form_buttons',
             'templates/MASS_SELECT_MARKER.tpl' => 'mass_select_marker',
             'templates/MASS_SELECT_DELETE_FORM.tpl' => 'mass_select_delete_form',
-            'templates/DELETE_MARKER.tpl' => 'delete_marker',
             'templates/UPLOAD_SYNDICATION_SETUP_SCREEN.tpl' => 'upload_syndication_setup_screen',
             'templates/GROUP_MEMBER_TIMEOUT_MANAGE_SCREEN.tpl' => 'group_member_timeout_manage_screen',
+            'templates/SPONSORS_SCREEN.tpl' => 'sponsors_screen',
         );
     }
 
@@ -1512,6 +1530,7 @@ class Hook_addon_registry_core
         return array(
             lorem_globalise(do_lorem_template('BLOCK_MAIN_MULTI_CONTENT', array(
                 'TYPE' => lorem_phrase(),
+                'CONTENT_TYPE' => lorem_phrase(),
                 'TITLE' => lorem_word(),
                 'RAW_AWARD_DATE' => placeholder_date(),
                 'AWARD_DATE' => placeholder_date(),
@@ -1521,6 +1540,7 @@ class Hook_addon_registry_core
                 'SUBMIT_URL' => placeholder_url(),
                 'ARCHIVE_URL' => placeholder_url(),
                 'BLOCK_PARAMS' => '',
+                'ADD_STRING' => lorem_phrase(),
 
                 'START' => '0',
                 'MAX' => '10',
@@ -1539,8 +1559,6 @@ class Hook_addon_registry_core
      */
     public function tpl_preview__email_log_screen()
     {
-        require_lang('email_log');
-
         return array(
             lorem_globalise(do_lorem_template('EMAIL_LOG_SCREEN', array(
                 'TITLE' => lorem_title(),
@@ -1619,10 +1637,10 @@ class Hook_addon_registry_core
      *
      * @return array Array of previews, each is Tempcode. Normally we have just one preview, but occasionally it is good to test templates are flexible (e.g. if they use IF_EMPTY, we can test with and without blank data).
      */
-    public function tpl_preview__login_redirect_screen()
+    public function tpl_preview__redirect_post_method_screen()
     {
         return array(
-            lorem_globalise(do_lorem_template('LOGIN_REDIRECT_SCREEN', array(
+            lorem_globalise(do_lorem_template('REDIRECT_POST_METHOD_SCREEN', array(
                 'REFRESH' => '',
                 'TITLE' => lorem_title(),
                 'TEXT' => lorem_sentence_html(),
@@ -1671,11 +1689,75 @@ class Hook_addon_registry_core
      *
      * @return array Array of previews, each is Tempcode. Normally we have just one preview, but occasionally it is good to test templates are flexible (e.g. if they use IF_EMPTY, we can test with and without blank data).
      */
+    public function tpl_preview__javascript_need()
+    {
+        return array(
+            lorem_globalise(do_lorem_template('JAVASCRIPT_NEED', array(
+                'CODE' => placeholder_javascript_code(),
+            )), null, '', true)
+        );
+    }
+
+    /**
+     * Get a preview(s) of a (group of) template(s), as a full standalone piece of HTML in Tempcode format.
+     * Uses sources/lorem.php functions to place appropriate stock-text. Should not hard-code things, as the code is intended to be declaritive.
+     * Assumptions: You can assume all Lang/CSS/JavaScript files in this addon have been pre-required.
+     *
+     * @return array Array of previews, each is Tempcode. Normally we have just one preview, but occasionally it is good to test templates are flexible (e.g. if they use IF_EMPTY, we can test with and without blank data).
+     */
+    public function tpl_preview__javascript_need_full()
+    {
+        return array(
+            lorem_globalise(do_lorem_template('JAVASCRIPT_NEED_FULL', array(
+                'URL' => placeholder_url(),
+            )), null, '', true)
+        );
+    }
+
+    /**
+     * Get a preview(s) of a (group of) template(s), as a full standalone piece of HTML in Tempcode format.
+     * Uses sources/lorem.php functions to place appropriate stock-text. Should not hard-code things, as the code is intended to be declaritive.
+     * Assumptions: You can assume all Lang/CSS/JavaScript files in this addon have been pre-required.
+     *
+     * @return array Array of previews, each is Tempcode. Normally we have just one preview, but occasionally it is good to test templates are flexible (e.g. if they use IF_EMPTY, we can test with and without blank data).
+     */
     public function tpl_preview__javascript_need_inline()
     {
         return array(
             lorem_globalise(do_lorem_template('JAVASCRIPT_NEED_INLINE', array(
                 'CODE' => placeholder_javascript_code(),
+            )), null, '', true)
+        );
+    }
+
+    /**
+     * Get a preview(s) of a (group of) template(s), as a full standalone piece of HTML in Tempcode format.
+     * Uses sources/lorem.php functions to place appropriate stock-text. Should not hard-code things, as the code is intended to be declaritive.
+     * Assumptions: You can assume all Lang/CSS/JavaScript files in this addon have been pre-required.
+     *
+     * @return array Array of previews, each is Tempcode. Normally we have just one preview, but occasionally it is good to test templates are flexible (e.g. if they use IF_EMPTY, we can test with and without blank data).
+     */
+    public function tpl_preview__css_need()
+    {
+        return array(
+            lorem_globalise(do_lorem_template('CSS_NEED', array(
+                'CODE' => lorem_phrase(),
+            )), null, '', true)
+        );
+    }
+
+    /**
+     * Get a preview(s) of a (group of) template(s), as a full standalone piece of HTML in Tempcode format.
+     * Uses sources/lorem.php functions to place appropriate stock-text. Should not hard-code things, as the code is intended to be declaritive.
+     * Assumptions: You can assume all Lang/CSS/JavaScript files in this addon have been pre-required.
+     *
+     * @return array Array of previews, each is Tempcode. Normally we have just one preview, but occasionally it is good to test templates are flexible (e.g. if they use IF_EMPTY, we can test with and without blank data).
+     */
+    public function tpl_preview__css_need_full()
+    {
+        return array(
+            lorem_globalise(do_lorem_template('CSS_NEED_FULL', array(
+                'URL' => placeholder_url(),
             )), null, '', true)
         );
     }
@@ -1710,6 +1792,7 @@ class Hook_addon_registry_core
                 'TITLE' => lorem_title(),
                 'MESSAGE' => lorem_phrase(),
                 'TRACE' => lorem_phrase(),
+                'MAY_SEE_TRACE' => true,
             )), null, '', true)
         );
     }
@@ -1721,27 +1804,27 @@ class Hook_addon_registry_core
      *
      * @return array Array of previews, each is Tempcode. Normally we have just one preview, but occasionally it is good to test templates are flexible (e.g. if they use IF_EMPTY, we can test with and without blank data).
      */
-    public function tpl_preview__administrative__stack_trace_hyper_wrap()
+    public function tpl_preview__administrative__stack_trace()
     {
-        $trace = new Tempcode();
+        $trace = array();
         foreach (placeholder_array() as $value) {
-            $traces = new Tempcode();
+            $traces = array();
             foreach (placeholder_array() as $key => $value1) {
-                $traces->attach(do_lorem_template('STACK_TRACE_LINE', array(
+                $traces[] = array(
                     'LINE' => $value1,
                     'FILE' => lorem_phrase(),
                     'KEY' => ucfirst($value1),
                     'VALUE' => lorem_sentence(),
-                )));
+                );
             }
-            $trace->attach(do_lorem_template('STACK_TRACE_WRAP', array(
+            $trace[] = array(
                 'TRACES' => $traces,
-            )));
+            );
         }
 
         return array(
-            lorem_globalise(do_lorem_template('STACK_TRACE_HYPER_WRAP', array(
-                'CONTENT' => $trace,
+            lorem_globalise(do_lorem_template('STACK_TRACE', array(
+                'TRACE' => $trace,
                 'POST' => placeholder_array(),
             )), null, '', true)
         );
@@ -1800,38 +1883,6 @@ class Hook_addon_registry_core
                     'A' => 'a',
                     'B' => 'b',
                 )
-            )), null, '', true)
-        );
-    }
-
-    /**
-     * Get a preview(s) of a (group of) template(s), as a full standalone piece of HTML in Tempcode format.
-     * Uses sources/lorem.php functions to place appropriate stock-text. Should not hard-code things, as the code is intended to be declaritive.
-     * Assumptions: You can assume all Lang/CSS/JavaScript files in this addon have been pre-required.
-     *
-     * @return array Array of previews, each is Tempcode. Normally we have just one preview, but occasionally it is good to test templates are flexible (e.g. if they use IF_EMPTY, we can test with and without blank data).
-     */
-    public function tpl_preview__javascript_need()
-    {
-        return array(
-            lorem_globalise(do_lorem_template('JAVASCRIPT_NEED', array(
-                'CODE' => placeholder_javascript_code(),
-            )), null, '', true)
-        );
-    }
-
-    /**
-     * Get a preview(s) of a (group of) template(s), as a full standalone piece of HTML in Tempcode format.
-     * Uses sources/lorem.php functions to place appropriate stock-text. Should not hard-code things, as the code is intended to be declaritive.
-     * Assumptions: You can assume all Lang/CSS/JavaScript files in this addon have been pre-required.
-     *
-     * @return array Array of previews, each is Tempcode. Normally we have just one preview, but occasionally it is good to test templates are flexible (e.g. if they use IF_EMPTY, we can test with and without blank data).
-     */
-    public function tpl_preview__css_need()
-    {
-        return array(
-            lorem_globalise(do_lorem_template('CSS_NEED', array(
-                'CODE' => lorem_phrase(),
             )), null, '', true)
         );
     }
@@ -2017,16 +2068,16 @@ class Hook_addon_registry_core
 
         $emoticons = placeholder_emoticons();
 
-        $rows = new Tempcode();
+        $rows = array();
         global $EMOTICON_LEVELS;
         foreach ($emoticons as $code => $imgcode) {
             if ((is_null($EMOTICON_LEVELS)) || ($EMOTICON_LEVELS[$code] < 3)) {
-                $rows->attach(do_lorem_template('BLOCK_MAIN_EMOTICON_CODES_ENTRY', array(
+                $rows[] = array(
                     'COLUMNS' => array(array(
-                                           'CODE' => $code,
-                                           'TPL' => do_emoticon($imgcode),
-                                       )),
-                )));
+                       'CODE' => $code,
+                       'TPL' => do_emoticon($imgcode),
+                   )),
+                );
             }
         }
 
@@ -2105,6 +2156,7 @@ class Hook_addon_registry_core
     public function tpl_preview__administrative__broken_urls()
     {
         require_lang('cleanup');
+
         $found_404 = array();
         foreach (placeholder_array() as $value) {
             $found_404[] = array(
@@ -2141,6 +2193,7 @@ class Hook_addon_registry_core
     public function tpl_preview__administrative__broken_lang_strings()
     {
         require_lang('cleanup');
+
         return array(
             lorem_globalise(do_lorem_template('BROKEN_LANG_STRINGS', array(
                 'MISSING_LANG_STRINGS' => placeholder_array(),
@@ -2228,23 +2281,6 @@ class Hook_addon_registry_core
     {
         return array(
             lorem_globalise(do_lorem_template('FONT_SIZER', array()), null, '', true)
-        );
-    }
-
-    /**
-     * Get a preview(s) of a (group of) template(s), as a full standalone piece of HTML in Tempcode format.
-     * Uses sources/lorem.php functions to place appropriate stock-text. Should not hard-code things, as the code is intended to be declaritive.
-     * Assumptions: You can assume all Lang/CSS/JavaScript files in this addon have been pre-required.
-     *
-     * @return array Array of previews, each is Tempcode. Normally we have just one preview, but occasionally it is good to test templates are flexible (e.g. if they use IF_EMPTY, we can test with and without blank data).
-     */
-    public function tpl_preview__delete_marker()
-    {
-        return array(
-            lorem_globalise(do_lorem_template('DELETE_MARKER', array(
-                '_EDIT_URL' => placeholder_url(),
-                'ID' => placeholder_id(),
-            )), null, '', true)
         );
     }
 
@@ -2389,6 +2425,29 @@ class Hook_addon_registry_core
                 'DATE_INPUT' => lorem_phrase(),
                 'URL' => placeholder_url(),
                 'PAGINATION' => placeholder_pagination(),
+            )), null, '', true)
+        );
+    }
+
+    /**
+     * Get a preview(s) of a (group of) template(s), as a full standalone piece of HTML in Tempcode format.
+     * Uses sources/lorem.php functions to place appropriate stock-text. Should not hard-code things, as the code is intended to be declaritive.
+     * Assumptions: You can assume all Lang/CSS/JavaScript files in this addon have been pre-required.
+     *
+     * @return array Array of previews, each is Tempcode. Normally we have just one preview, but occasionally it is good to test templates are flexible (e.g. if they use IF_EMPTY, we can test with and without blank data).
+     */
+    public function tpl_preview__sponsors_screen()
+    {
+        return array(
+            lorem_globalise(do_lorem_template('SPONSORS_SCREEN', array(
+                'TITLE' => lorem_title(),
+                'PATREONS' => array(
+                    array(
+                        'USERNAME' => lorem_word(),
+                        'NAME' => lorem_word(),
+                        'MONTHLY' => placeholder_number(),
+                    ),
+                ),
             )), null, '', true)
         );
     }

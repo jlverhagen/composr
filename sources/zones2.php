@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -30,6 +30,89 @@ function init__zones2()
 }
 
 /**
+ * Get the title for a Comcode page via an efficient disk scan, or fall-back to a reasonable approximation if there is none.
+ * It's all an approximation, but a pretty good one. We don't support single quotes, or missing quotes for the subtitle, or tags that look like HTML tags but are not, or HTML tags opening and closing before the title tag.
+ *
+ * @param  PATH $path Path to Comcode page
+ * @param  boolean $include_subtitle Whether to include the subtitle in brackets after if it exists
+ * @param  boolean $in_tempcode Whether to get in Tempcode format (which will be HTML)
+ * @return mixed Comcode page title
+ */
+function get_comcode_page_title_from_disk($path, $include_subtitle = false, $in_tempcode = false)
+{
+    $page_contents = trim(file_get_contents($path));
+
+    $fallback_title = titleify(basename($path, '.txt'));
+
+    $matches = array();
+    if (preg_match('#\[title([^\]]*)?[^\]]*\]#', $page_contents, $matches) == 0) {
+        // No title
+        if ($in_tempcode) {
+            return make_string_tempcode(escape_html($fallback_title));
+        } else {
+            return $fallback_title;
+        }
+    }
+
+    $tag_attribute_stuff = empty($matches[1]) ? '' : $matches[1];
+
+    if (preg_match('#^(.*\sparam)?=?"[2-9]"?#', $tag_attribute_stuff) != 0) {
+        // Wrong title level
+        if ($in_tempcode) {
+            return make_string_tempcode(escape_html($fallback_title));
+        } else {
+            return $fallback_title;
+        }
+    }
+
+    $start = strpos($page_contents, $matches[0]) + strlen($matches[0]);
+    $end = strpos($page_contents, '[/title]', $start);
+    $raw_title = trim(substr($page_contents, $start, $end - $start));
+
+    if (($raw_title == '') || ($raw_title == 'TODO')) {
+        // Blank title
+        return $fallback_title;
+    }
+
+    if ($include_subtitle) {
+        $matches2 = array();
+        if (preg_match('#\ssub="([^"]*)"#', $tag_attribute_stuff, $matches2) != 0) {
+            $subtitle = empty($matches2[1]) ? '' : $matches2[1];
+            if (!empty($subtitle)) {
+                if (stripos($subtitle, $raw_title) !== false) {
+                    $raw_title = ucfirst($subtitle);
+                } else {
+                    $raw_title .= ' (' . $subtitle . ')';
+                }
+            }
+        }
+    }
+
+    $semihtml_context = (substr($page_contents, 0, 9) == '[semihtml');
+    $purehtml_context = (substr($page_contents, 0, 5) == '[html');
+    $html_context = $semihtml_context || $purehtml_context;
+
+    if ($in_tempcode) {
+        if ($purehtml_context) {
+            $tempcode_title = make_string_tempcode(escape_html(strip_html($raw_title)));
+        } else {
+            require_code('comcode');
+            $tempcode_title = comcode_to_tempcode($raw_title, null, true, null, null, null, false, false, $html_context);
+        }
+        return $tempcode_title;
+    }
+
+    $cleaned_title = $raw_title;
+    if ($html_context) {
+        $cleaned_title = trim(strip_html($cleaned_title));
+    }
+    if (!$purehtml_context) {
+        $cleaned_title = trim(strip_comcode($cleaned_title));
+    }
+    return $cleaned_title;
+}
+
+/**
  * Render a Comcode page box.
  *
  * @param  array $row Row to render
@@ -41,6 +124,10 @@ function init__zones2()
  */
 function render_comcode_page_box($row, $give_context = true, $include_breadcrumbs = true, $root = null, $guid = '')
 {
+    if (is_null($row)) { // Should never happen, but we need to be defensive
+        return new Tempcode();
+    }
+
     $map = array('page' => $row['the_page']);
     if (!is_null($root)) {
         $map['keep_page_root'] = $root;
@@ -100,8 +187,10 @@ function render_comcode_page_box($row, $give_context = true, $include_breadcrumb
  */
 function actual_add_zone($zone, $title, $default_page = 'start', $header_text = '', $theme = 'default', $require_session = 0, $uniqify = false, $base_url = '')
 {
+    require_lang('zones');
+
     require_code('type_sanitisation');
-    if (!is_alphanumeric($zone, true)) {
+    if (!is_alphanumeric($zone)) {
         warn_exit(do_lang_tempcode('BAD_CODENAME'));
     }
 
@@ -114,7 +203,7 @@ function actual_add_zone($zone, $title, $default_page = 'start', $header_text = 
     if (!is_null($test)) {
         if (file_exists(get_file_base() . '/' . $zone)) { // Ok it's here completely, so we can't create
             if ($uniqify) {
-                $zone .= '_' . uniqid('', true);
+                $zone .= '_' . uniqid('', false);
             } else {
                 warn_exit(do_lang_tempcode('ALREADY_EXISTS', escape_html($zone)));
             }
@@ -140,30 +229,23 @@ function actual_add_zone($zone, $title, $default_page = 'start', $header_text = 
             afm_make_directory($zone . '/pages/html/' . $lang, false, true);
         }
         afm_make_file($zone . '/index.php', file_get_contents(get_file_base() . '/adminzone/index.php'), false);
-        if (file_exists(get_file_base() . '/pages' . DIRECTORY_SEPARATOR . '.htaccess')) {
-            afm_make_file($zone . '/pages/.htaccess', file_get_contents(get_file_base() . '/pages' . DIRECTORY_SEPARATOR . '.htaccess'), false);
+        if (file_exists(get_file_base() . '/pages/.htaccess')) {
+            $index_php = array('pages/comcode/EN', 'pages/comcode_custom/EN',
+                               'pages/html/EN', 'pages/html_custom/EN',
+                               'pages/modules', 'pages/modules_custom', 'pages');
+            foreach ($index_php as $i) {
+                afm_make_file($zone . (($zone == '') ? '' : '/') . $i . '/.htaccess', file_get_contents(get_file_base() . '/pages/.htaccess'), false);
+            }
         }
         $index_php = array('pages/comcode', 'pages/comcode/EN', 'pages/comcode_custom', 'pages/comcode_custom/EN',
                            'pages/html', 'pages/html/EN', 'pages/html_custom', 'pages/html_custom/EN',
                            'pages/modules', 'pages/modules_custom', 'pages');
         foreach ($index_php as $i) {
-            afm_make_file($zone . '/' . $i . '/index.html', '', false);
+            afm_make_file($zone . (($zone == '') ? '' : '/') . $i . '/index.html', '', false);
         }
-        afm_make_file($zone . '/pages/comcode_custom/EN/panel_right.txt', '', true);
-        $GLOBALS['SITE_DB']->query_insert('comcode_pages', array(
-            'the_zone' => $zone,
-            'the_page' => 'panel_right',
-            'p_parent_page' => '',
-            'p_validated' => 1,
-            'p_edit_date' => null,
-            'p_add_date' => time(),
-            'p_submitter' => get_member(),
-            'p_show_as_edit' => 0,
-            'p_order' => 0,
-        ));
     }
 
-    afm_make_file($zone . '/pages/comcode_custom/EN/' . filter_naughty($default_page) . '.txt', '[title]' . do_lang('YOUR_NEW_ZONE') . '[/title]' . "\n\n" . do_lang('YOUR_NEW_ZONE_PAGE', $zone . ':' . $default_page) . "\n\n" . '[block]main_comcode_page_children[/block]', true);
+    afm_make_file($zone . '/pages/comcode_custom/EN/' . filter_naughty($default_page) . '.txt', '[title]' . $title . '[/title]' . "\n\n" . do_lang('YOUR_NEW_ZONE_PAGE', $zone . ':' . $default_page) . "\n\n" . '[block]main_comcode_page_children[/block]', true);
     $GLOBALS['SITE_DB']->query_insert('comcode_pages', array(
         'the_zone' => $zone,
         'the_page' => $default_page,
@@ -192,7 +274,7 @@ function actual_add_zone($zone, $title, $default_page = 'start', $header_text = 
 
     if ((addon_installed('commandr')) && (!running_script('install'))) {
         require_code('resource_fs');
-        generate_resourcefs_moniker('zone', $zone, null, null, true);
+        generate_resource_fs_moniker('zone', $zone, null, null, true);
     }
 
     save_zone_base_url($zone, $base_url);
@@ -210,46 +292,44 @@ function actual_add_zone($zone, $title, $default_page = 'start', $header_text = 
  */
 function save_zone_base_url($zone, $base_url)
 {
-    $config_path = get_custom_file_base() . '/_config.php';
-    $tmp = fopen($config_path, 'rb');
-    @flock($tmp, LOCK_SH);
-    $config_file = file_get_contents($config_path);
-    @flock($tmp, LOCK_UN);
-    fclose($tmp);
+    if (!is_null($GLOBALS['CURRENT_SHARE_USER'])) {
+        return;
+    }
+
+    $config_path = get_file_base() . '/_config.php';
+    $config_file = cms_file_get_contents_safe($config_path);
     $config_file_before = $config_file;
 
     $regexp = '#\n?\$SITE_INFO\[\'ZONE_MAPPING_' . preg_quote($zone, '#') . '\'\] = array\(\'[^\']+\', \'[^\']+\'\);\n?#';
     $config_file = preg_replace($regexp, '', $config_file); // Strip any old entry
 
     if ($base_url != '') { // Add new entry, if appropriate
+        $main_site_domain = parse_url(get_base_url(), PHP_URL_HOST);
+        $main_site_path = trim(parse_url(get_base_url(), PHP_URL_PATH), '/');
+
         if (url_is_local($base_url)) {
-            $domain = cms_srv('HTTP_HOST');
+            $domain = $main_site_domain;
             $path = $base_url;
         } else {
             $parsed = @parse_url($base_url);
-            if ($parsed === false) {
+            if ($parsed === false || !isset($parsed['host'])) {
                 warn_exit(do_lang_tempcode('INVALID_ZONE_BASE_URL'));
             }
             $domain = $parsed['host'];
-            $path = $parsed['path'];
+            $path = isset($parsed['path']) ? $parsed['path'] : '';
         }
-        $config_file .= "\n\$SITE_INFO['ZONE_MAPPING_" . addslashes($zone) . "'] = array('" . addslashes($domain) . "', '" . addslashes(trim($path, '/')) . "');\n";
+
+        $path = preg_replace('#(/|$)index\.php$#', '', $path); // Fix common mistake
+        $path = trim($path, '/ ');
+
+        if (($domain != $main_site_domain) || (($path != '') && ($path != $main_site_path))) { // If not fully benign
+            $config_file .= "\n\$SITE_INFO['ZONE_MAPPING_" . addslashes($zone) . "'] = array('" . addslashes($domain) . "', '" . addslashes(trim($path, '/')) . "');\n";
+        }
     }
 
     if ($config_file != $config_file_before) {
-        $out = @fopen($config_path, GOOGLE_APPENGINE ? 'wb' : 'ab');
-        if ($out === false) {
-            intelligent_write_error($config_path);
-        }
-        @flock($out, LOCK_EX);
-        if (!GOOGLE_APPENGINE) {
-            ftruncate($out, 0);
-        }
-        fwrite($out, $config_file);
-        @flock($out, LOCK_UN);
-        fclose($out);
-        sync_file($path);
-        fix_permissions($path);
+        require_code('files');
+        cms_file_put_contents_safe($config_path, $config_file, FILE_WRITE_FIX_PERMISSIONS | FILE_WRITE_SYNC_FILE);
     }
 }
 
@@ -289,9 +369,9 @@ function upgrade_module($zone, $module)
     }
 
     $ret = 0;
-    if ((!is_null($functions[1])) && (array_key_exists('update_require_upgrade', $info))) {
-        if ((($upgrade_from < $info['version']) && (array_key_exists('update_require_upgrade', $info)))
-            || (($upgrade_from_hack < $info['hack_version']) && (array_key_exists('hack_require_upgrade', $info)))
+    if ((!is_null($functions[1])) && (!empty($info['update_require_upgrade']))) {
+        if ((($upgrade_from < $info['version']) && (!empty($info['update_require_upgrade'])))
+            || (($upgrade_from_hack < $info['hack_version']) && (!empty($info['hack_require_upgrade'])))
         ) {
             require_code('database_action');
             require_code('config2');
@@ -466,9 +546,10 @@ function cleanup_block_name($block)
  * Gets parameters for a block
  *
  * @param  ID_TEXT $block The name of the block to get parameters for
+ * @param  boolean $include_standard_parameters Include parameters that apply to all blocks
  * @return array A list of parameters the block takes
  */
-function get_block_parameters($block)
+function get_block_parameters($block, $include_standard_parameters = false)
 {
     $block_path = _get_block_path($block);
     $info = extract_module_info($block_path);
@@ -482,14 +563,20 @@ function get_block_parameters($block)
             $params[$matches[1][$i]] = true;
         }
 
-        return array_diff(array_keys($params), array('cache'));
+        $parameters = array_diff(array_keys($params), array('cache'));
+    } else {
+        $parameters = empty($info['parameters']) ? array() : $info['parameters'];
     }
 
-    $ret = array_key_exists('parameters', $info) ? $info['parameters'] : array();
-    if (is_null($ret)) {
-        return array();
+    if ($include_standard_parameters) {
+        $parameters[] = 'failsafe';
+        $parameters[] = 'cache';
+        $parameters[] = 'quick_cache';
+        $parameters[] = 'defer';
+        $parameters[] = 'block_id';
     }
-    return $ret;
+
+    return $parameters;
 }
 
 /**
@@ -710,8 +797,11 @@ function _find_all_pages_wrap($zone, $keep_ext_on = false, $consider_redirects =
 
     if (addon_installed('redirects_editor')) {
         if ($consider_redirects) {
-            $redirects = $GLOBALS['SITE_DB']->query_select('redirects', array('*'), array('r_from_zone' => $zone));
-            foreach ($redirects as $r) {
+            static $redirects = array();
+            if (!isset($redirects[$zone])) {
+                $redirects[$zone] = $GLOBALS['SITE_DB']->query_select('redirects', array('*'), array('r_from_zone' => $zone));
+            }
+            foreach ($redirects[$zone] as $r) {
                 if ($r['r_is_transparent'] == 0) {
                     //unset($pages[$r['r_from_page']]); // We don't want to link to anything that is a full redirect    -  Actually, we don't want to hide things too much, could be confusing
                 } else {
@@ -755,7 +845,7 @@ function _find_all_pages($zone, $type, $ext = 'php', $keep_ext_on = false, $cuto
     $dh = @opendir($stub . '/' . $module_path);
     if ($dh !== false) {
         while (($file = readdir($dh)) !== false) {
-            if ((substr($file, -4) == '.' . $ext) && (file_exists($stub . '/' . $module_path . '/' . $file)) && (preg_match('#^[^\.][\w\-]*$#', substr($file, 0, strlen($file) - 4)) != 0)) {
+            if ((substr($file, -4) == '.' . $ext) && (file_exists($stub . '/' . $module_path . '/' . $file)) && (preg_match('#^[^\.][' . URL_CONTENT_REGEXP . ']*$#', substr($file, 0, strlen($file) - 4)) != 0)) {
                 if (!is_null($cutoff_time)) {
                     if (filectime($stub . '/' . $module_path . '/' . $file) < $cutoff_time) {
                         continue;
@@ -765,9 +855,9 @@ function _find_all_pages($zone, $type, $ext = 'php', $keep_ext_on = false, $cuto
                 if ($ext == 'txt') {
                     switch ($show_method) {
                         case FIND_ALL_PAGES__NEWEST: // Only gets newest if it's a large site
-                            if (count($out) > 300) {
+                            if (count($out) > intval(get_option('general_safety_listing_limit'))) {
                                 $out = array();
-                                $records = $GLOBALS['SITE_DB']->query_select('comcode_pages', array('the_page'), array('the_zone' => $zone), 'ORDER BY p_add_date DESC', 300);
+                                $records = $GLOBALS['SITE_DB']->query_select('comcode_pages', array('the_page'), array('the_zone' => $zone), 'ORDER BY p_add_date DESC', intval(get_option('general_safety_listing_limit')));
                                 foreach ($records as $record) {
                                     $file = $record['the_page'] . '.txt';
 
@@ -789,7 +879,7 @@ function _find_all_pages($zone, $type, $ext = 'php', $keep_ext_on = false, $cuto
                         //break; Actually, no, let it roll on to the next one to get key files too
 
                         case FIND_ALL_PAGES__PERFORMANT: // Default, chooses selection carefully based on site size
-                            if (($show_method == FIND_ALL_PAGES__NEWEST) || (count($out) > 300)) {
+                            if (($show_method == FIND_ALL_PAGES__NEWEST) || (count($out) > intval(get_option('general_safety_listing_limit')))) {
                                 if ($show_method != FIND_ALL_PAGES__NEWEST) {
                                     $out = array();
                                 }
@@ -860,11 +950,8 @@ function sync_htaccess_with_zones()
 
         $htaccess = file_get_contents($htaccess_path);
         $htaccess = preg_replace('#\(site[^\)]*#', '(' . implode('|', $zones), $htaccess);
-        $myfile = fopen($htaccess_path, GOOGLE_APPENGINE ? 'wb' : 'wt');
-        fwrite($myfile, $htaccess);
-        fclose($myfile);
-        fix_permissions($htaccess_path);
-        sync_file($htaccess_path);
+        require_code('files');
+        cms_file_put_contents_safe($htaccess_path, $htaccess, FILE_WRITE_FIX_PERMISSIONS | FILE_WRITE_SYNC_FILE);
     }
 }
 
@@ -912,7 +999,7 @@ function check_page_name($zone, $page)
         }
         if ($url_scheme == 'HTM') {
             // No naming a welcome zone page the same as a zone
-            if ((file_exists(get_file_base() . '/' . $page . '/index.php')) || (file_exists(get_custom_file_base() . '/' . $page . '/index.php'))) {
+            if ((file_exists(get_file_base() . '/' . $page . '/pages/comcode')) || (file_exists(get_custom_file_base() . '/' . $page . '/pages/comcode'))) {
                 require_lang('zones');
                 warn_exit(do_lang_tempcode('CONFLICTING_PAGE_NAME'));
             }

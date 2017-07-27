@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -46,7 +46,7 @@ class Module_admin_content_reviews
      * @param  boolean $check_perms Whether to check permissions.
      * @param  ?MEMBER $member_id The member to check permissions as (null: current user).
      * @param  boolean $support_crosslinks Whether to allow cross links to other modules (identifiable via a full-page-link rather than a screen-name).
-     * @param  boolean $be_deferential Whether to avoid any entry-point (or even return NULL to disable the page in the Sitemap) if we know another module, or page_group, is going to link to that entry-point. Note that "!" and "browse" entry points are automatically merged with container page nodes (likely called by page-groupings) as appropriate.
+     * @param  boolean $be_deferential Whether to avoid any entry-point (or even return null to disable the page in the Sitemap) if we know another module, or page_group, is going to link to that entry-point. Note that "!" and "browse" entry points are automatically merged with container page nodes (likely called by page-groupings) as appropriate.
      * @return ?array A map of entry points (screen-name=>language-code/string or screen-name=>[language-code/string, icon-theme-image]) (null: disabled).
      */
     public function get_entry_points($check_perms = true, $member_id = null, $support_crosslinks = true, $be_deferential = false)
@@ -93,7 +93,7 @@ class Module_admin_content_reviews
     public $title;
 
     /**
-     * Module pre-run function. Allows us to know meta-data for <head> before we start streaming output.
+     * Module pre-run function. Allows us to know metadata for <head> before we start streaming output.
      *
      * @return ?Tempcode Tempcode indicating some kind of exceptional output (null: none).
      */
@@ -139,7 +139,7 @@ class Module_admin_content_reviews
             }
 
             $content = new Tempcode();
-            $content_ids = collapse_2d_complexity('content_id', 'next_review_time', $GLOBALS['SITE_DB']->query('SELECT content_id,next_review_time FROM ' . get_table_prefix() . 'content_reviews WHERE ' . db_string_equal_to('content_type', $content_type) . ' AND next_review_time<=' . strval(time()) . ' ORDER BY next_review_time', 100));
+            $content_ids = collapse_2d_complexity('content_id', 'next_review_time', $GLOBALS['SITE_DB']->query('SELECT content_id,next_review_time FROM ' . get_table_prefix() . 'content_reviews WHERE ' . db_string_equal_to('content_type', $content_type) . ' AND next_review_time<=' . strval(time()) . ' ORDER BY next_review_time', intval(get_option('general_safety_listing_limit'))));
             $_content_ids = array();
             foreach ($content_ids as $content_id => $next_review_time) {
                 list($title,) = content_get_details($content_type, $content_id);
@@ -148,14 +148,14 @@ class Module_admin_content_reviews
                     $title .= ' (' . get_timezoned_date($next_review_time, false) . ')';
                     $_content_ids[$content_id] = $title;
                 } else {
-                    $GLOBALS['SITE_DB']->query_delete('content_reviews', array('content_type' => $content_id, 'content_id' => $content_id), '', 1); // The actual content was deleted, I guess
+                    $GLOBALS['SITE_DB']->query_delete('content_reviews', array('content_type' => $content_type, 'content_id' => $content_id), '', 1); // The actual content was deleted, I guess
                     continue;
                 }
             }
             foreach ($_content_ids as $content_id => $title) {
                 $content->attach(form_input_list_entry($content_id, false, $title));
             }
-            if (count($content_ids) == 100) {
+            if (count($content_ids) == intval(get_option('general_safety_listing_limit'))) {
                 attach_message(do_lang_tempcode('TOO_MANY_TO_CHOOSE_FROM'), 'warn');
             }
 
@@ -172,7 +172,7 @@ class Module_admin_content_reviews
                 $post_url = build_url($attributes + array('redirect' => get_self_url(true)), $zone);
                 $fields = form_input_list(do_lang_tempcode('CONTENT'), '', $edit_identifier, $content, null, true);
 
-                // Could debate whether to include "'TARGET'=>'_blank',". However it does redirect back, so it's a nice linear process like this. If it was new window it could be more efficient, but also would confuse people with a lot of new windows opening and not closing.
+                // Could debate whether to include "'TARGET' => '_blank',". However it does redirect back, so it's a nice linear process like this. If it was new window it could be more efficient, but also would confuse people with a lot of new windows opening and not closing.
                 $content = do_template('FORM', array('_GUID' => '288c2534a75e5af5bc7155594dfef68f', 'SKIP_REQUIRED' => true, 'GET' => true, 'HIDDEN' => '', 'SUBMIT_ICON' => 'buttons__proceed', 'SUBMIT_NAME' => do_lang_tempcode('EDIT'), 'FIELDS' => $fields, 'URL' => $post_url, 'TEXT' => ''));
 
                 $out->attach(do_template('UNVALIDATED_SECTION', array('_GUID' => '406d4c0a8abd36b9c88645df84692c7d', 'TITLE' => do_lang_tempcode($info['content_type_label']), 'CONTENT' => $content)));

@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -108,11 +108,11 @@ class Hook_sitemap_author extends Hook_sitemap_content
         list($content_id, $row, $partial_struct) = $_;
 
         $struct = array(
-                      'sitemap_priority' => SITEMAP_IMPORTANCE_LOW,
-                      'sitemap_refreshfreq' => 'yearly',
+            'sitemap_priority' => SITEMAP_IMPORTANCE_LOW,
+            'sitemap_refreshfreq' => 'yearly',
 
-                      'privilege_page' => $this->get_privilege_page($page_link),
-                  ) + $partial_struct;
+            'privilege_page' => $this->get_privilege_page($page_link),
+        ) + $partial_struct;
 
         if (!$this->_check_node_permissions($struct)) {
             return null;

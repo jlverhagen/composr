@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -196,7 +196,7 @@ function get_php_file_api($filename, $include_code = true)
                         }
 
                         $parts = _cleanup_array(preg_split('/\s/', substr($ltrim, 6)));
-                        if (($parts[0][0] != '?') && (array_key_exists('default', $parameters[$arg_counter])) && (is_null($parameters[$arg_counter]['default']))) {
+                        if ((strpos($parts[0], '?') === false) && (array_key_exists('default', $parameters[$arg_counter])) && (is_null($parameters[$arg_counter]['default']))) {
                             attach_message(do_lang_tempcode('UNALLOWED_NULL', escape_html($parameters[$arg_counter]['name']), escape_html($function_name), array(escape_html('null'))), 'warn');
                             continue 2;
                         }
@@ -216,8 +216,7 @@ function get_php_file_api($filename, $include_code = true)
                                     if (preg_match('#^\s*((public|protected|private|static|abstract) )*function \w+\((.*)\)#', $lines[$k], $matches) != 0) {
                                         $params = explode(',', $matches[3]);
                                         if (isset($params[$arg_counter])) {
-                                            $_description = /*str_pad(*/
-                                                preg_replace('#^\s*&?(\$\w+).*$#', '$1', $params[$arg_counter])/*, 20, ' ')*/ . ' ' . $_description;
+                                            $_description = /*str_pad(*/preg_replace('#^\s*&?(\$\w+).*$#', '$1', $params[$arg_counter])/*, 20, ' ')*/ . ' ' . $_description;
                                             $found = true;
                                         }
                                         break;
@@ -225,7 +224,8 @@ function get_php_file_api($filename, $include_code = true)
                                 }
                                 if ($found) {
                                     $lines[$i] = str_replace(trim(implode(' ', $parts)), $_description, $lines[$i]);
-                                    file_put_contents($full_path, implode('', $lines));
+                                    require_code('files');
+                                    cms_file_put_contents_safe($full_path, implode('', $lines), FILE_WRITE_FIX_PERMISSIONS | FILE_WRITE_SYNC_FILE);
                                 }
                             }
                         }
@@ -300,14 +300,22 @@ function get_php_file_api($filename, $include_code = true)
                 check_function_type($parameter['type'], $function_name, $parameter['name'], $default, array_key_exists('range', $parameter) ? $parameter['range'] : null, array_key_exists('set', $parameter) ? $parameter['set'] : null);
 
                 // Check that null is fully specified
-                if ($parameter['type'][0] == '?') {
+                if (strpos($parameter['type'], '?') !== false) {
                     if (strpos($parameter['description'], '(null: ') === false) {
                         attach_message(do_lang_tempcode('NULL_MEANING_NOT_SPECIFIED', escape_html($parameter['name']), escape_html($function_name), array(escape_html('null'))), 'warn');
                     }
+                } else {
+                    if (strpos($parameter['description'], '(null: ') !== false) {
+                        attach_message(do_lang_tempcode('NULL_MEANING_SHOULDNT_BE_SPECIFIED', escape_html($parameter['name']), escape_html($function_name), array(escape_html('null'))), 'warn');
+                    }
                 }
-                if ($parameter['type'][0] == '~') {
+                if (strpos($parameter['type'], '~') !== false) {
                     if (strpos($parameter['description'], '(false: ') === false) {
                         attach_message(do_lang_tempcode('NULL_MEANING_NOT_SPECIFIED', escape_html($parameter['name']), escape_html($function_name), array(escape_html('false'))), 'warn');
+                    }
+                } else {
+                    if (strpos($parameter['description'], '(false: ') !== false) {
+                        attach_message(do_lang_tempcode('NULL_MEANING_SHOULDNT_BE_SPECIFIED', escape_html($parameter['name']), escape_html($function_name), array(escape_html('false'))), 'warn');
                     }
                 }
             }
@@ -316,14 +324,22 @@ function get_php_file_api($filename, $include_code = true)
                 check_function_type($return['type'], $function_name, '(return)', null, array_key_exists('range', $return) ? $return['range'] : null, array_key_exists('set', $return) ? $return['set'] : null);
 
                 // Check that null is fully specified
-                if ($return['type'][0] == '?') {
+                if (strpos($return['type'], '?') !== false) {
                     if (strpos($return['description'], '(null: ') === false) {
-                        attach_message(do_lang_tempcode('NULL_MEANING_NOT_SPECIFIED', escape_html('(return)'), escape_html($function_name), array(escape_html('NULL'))), 'warn');
+                        attach_message(do_lang_tempcode('NULL_MEANING_NOT_SPECIFIED', escape_html('(return)'), escape_html($function_name), array(escape_html('null'))), 'warn');
+                    }
+                } else {
+                    if (strpos($return['description'], '(null: ') !== false) {
+                        attach_message(do_lang_tempcode('NULL_MEANING_SHOULDNT_BE_SPECIFIED', escape_html('(return)'), escape_html($function_name), array(escape_html('null'))), 'warn');
                     }
                 }
-                if ($return['type'][0] == '~') {
+                if (strpos($return['type'], '~') !== false) {
                     if (strpos($return['description'], '(false: ') === false) {
                         attach_message(do_lang_tempcode('NULL_MEANING_NOT_SPECIFIED', escape_html('(return)'), escape_html($function_name), array(escape_html('false'))), 'warn');
+                    }
+                } else {
+                    if (strpos($return['description'], '(false: ') !== false) {
+                        attach_message(do_lang_tempcode('NULL_MEANING_SHOULDNT_BE_SPECIFIED', escape_html('(return)'), escape_html($function_name), array(escape_html('false'))), 'warn');
                     }
                 }
             } else {
@@ -592,7 +608,7 @@ function check_function_type($type, $function_name, $name, $value, $range, $set,
         'mixed'
     );
 
-    $_type = (($type[0] == '?') || ($type[0] == '~')) ? substr($type, 1) : $type;
+    $_type = ltrim($type, '?~');
 
     if (!in_array($_type, $valid_types)) {
         attach_message(do_lang_tempcode('INVALID_PARAMETER_TYPE', escape_html($type), escape_html($function_name)), 'warn');
@@ -672,8 +688,8 @@ function check_function_type($type, $function_name, $name, $value, $range, $set,
  */
 function test_fail_php_type_check($type, $function_name, $name, $value, $echo = false)
 {
-    $null_allowed = ($type[0] == '?');
-    $false_allowed = ($type[0] == '~');
+    $null_allowed = (strpos($type, '?') !== false);
+    $false_allowed = (strpos($type, '~') !== false);
     $_type = preg_replace('#[^\w]#', '', $type);
 
     if ((is_null($value)) && (!$null_allowed)) {
@@ -801,7 +817,7 @@ function test_fail_php_type_check($type, $function_name, $name, $value, $echo = 
             break;
         case 'AUTO_LINK':
             if ((!is_integer($value)) || ($value < -1)) {
-                _fail_php_type_check($type, $function_name, $name, $value, $echo); // -1 means something different to NULL
+                _fail_php_type_check($type, $function_name, $name, $value, $echo); // -1 means something different to null
             }
             break;
         case 'BINARY':
@@ -836,7 +852,7 @@ function _fail_php_type_check($type, $function_name, $name, $value, $echo = fals
     if ($echo) {
         echo 'TYPE_MISMATCH in \'' . $function_name . '\' (' . $name . ' is ' . (is_string($value) ? $value : strval($value)) . ' which is not a ' . $type . ')<br />';
     } else {
-        attach_message(do_lang_tempcode('TYPE_MISMATCH', escape_html($function_name), escape_html($name), is_string($value) ? $value : strval($value)/*,$type*/), 'warn');
+        attach_message(do_lang_tempcode('TYPE_MISMATCH', escape_html($function_name), escape_html($name), is_string($value) ? $value : strval($value)/*, $type*/), 'warn');
     }
 }
 
@@ -853,7 +869,7 @@ function render_php_function($function, $class, $show_filename = false)
     $parameters = new Tempcode();
     $full_parameters = new Tempcode();
     foreach ($function['parameters'] as $parameter) {
-        //           if (!array_key_exists('type',$parameter)) exit($function['name']);
+        //if (!array_key_exists('type', $parameter)) exit($function['name']);
 
         $parameters->attach(do_template('PHP_PARAMETER_LIST', array('_GUID' => '03e76c19ec2cf9cb7f283db72728fc13', 'TYPE' => $parameter['type'], 'NAME' => $parameter['name'])));
 
@@ -872,7 +888,7 @@ function render_php_function($function, $class, $show_filename = false)
 
     $description = comcode_to_tempcode($function['description']);
 
-    if ((function_exists('highlight_string')) && (array_key_exists('code', $function)) && ($function['filename'] != 'sources/phpstub.php')) {
+    if ((php_function_allowed('highlight_string')) && (array_key_exists('code', $function)) && ($function['filename'] != 'sources/phpstub.php')) {
         $_code = "<" . "?php\n" . $function['code'] . "\n?" . ">";
 
         ob_start();
@@ -1015,11 +1031,11 @@ function convert_from_php_to_hhvm_hack($filename)
  */
 function cms_type_to_hhvm_type($t)
 {
-    if ($t[0] == '~') {
+    if (strpos($t, '~') !== false) {
         return 'mixed';
     }
     $nullable = false;
-    if ($t[0] == '@') {
+    if (strpos($t, '?') !== false) {
         $nullable = true;
         $t = substr($t, 1);
     }

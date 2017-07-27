@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -30,12 +30,12 @@ class Hook_task_sitemap
      */
     public function run()
     {
-        set_value('sitemap_building_in_progress', '1');
+        set_value('sitemap_building_in_progress', '1', true);
 
         require_code('sitemap_xml');
         sitemap_xml_build();
 
-        set_value('sitemap_building_in_progress', '0');
+        set_value('sitemap_building_in_progress', '0', true);
 
         return null;
     }

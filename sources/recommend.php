@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -31,6 +31,8 @@
  */
 function send_recommendation_email($name, $email_address, $message, $is_invite = false, $recommender_email = null, $subject = null, $names = null)
 {
+    require_lang('recommend');
+
     if (!is_array($email_address)) {
         $email_address = array($email_address);
     }

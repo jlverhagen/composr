@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -10,6 +10,11 @@
 /**
  * @license    http://opensource.org/licenses/cpal_1.0 Common Public Attribution License
  * @copyright  ocProducts Ltd
+ * @package    data_mappr
+ */
+
+/**
+ * Block class.
  */
 class Block_main_google_map
 {
@@ -27,8 +32,7 @@ class Block_main_google_map
         $info['hack_version'] = null;
         $info['version'] = 2;
         $info['locked'] = false;
-        $info['parameters'] = array('select', 'filter', 'title', 'region', 'cluster', 'geolocate_user', 'latfield', 'longfield', 'catalogue', 'width', 'height',/* 'api_key',*/
-                                    'zoom', 'center', 'latitude', 'longitude', 'show_links', 'min_latitude', 'max_latitude', 'min_longitude', 'max_longitude', 'star_entry', 'max_results', 'extra_sources', 'guid');
+        $info['parameters'] = array('select', 'filter', 'title', 'region', 'cluster', 'geolocate_user', 'latfield', 'longfield', 'catalogue', 'width', 'height',/* 'api_key',*/'zoom', 'center', 'latitude', 'longitude', 'show_links', 'min_latitude', 'max_latitude', 'min_longitude', 'max_longitude', 'star_entry', 'max_results', 'extra_sources', 'guid');
         return $info;
     }
 
@@ -59,8 +63,14 @@ class Block_main_google_map
         if (!isset($map['longitude'])) {
             $map['longitude'] = '0';
         }
-        $mapwidth = isset($map['width']) ? $map['width'] : '100%';
-        $mapheight = isset($map['height']) ? $map['height'] : '300px';
+        $map_width = isset($map['width']) ? $map['width'] : '100%';
+        if (is_numeric($map_width)) {
+            $map_width .= 'px';
+        }
+        $map_height = isset($map['height']) ? $map['height'] : '300px';
+        if (is_numeric($map_height)) {
+            $map_height .= 'px';
+        }
         $api_key = isset($map['api_key']) ? $map['api_key'] : '';
         $set_zoom = isset($map['zoom']) ? $map['zoom'] : '3';
         $set_center = isset($map['center']) ? $map['center'] : '0';
@@ -170,7 +180,7 @@ class Block_main_google_map
             }
             $entries_to_show = array_merge($entries_to_show, $ce_entries);
             if ((count($entries_to_show) == 0) && (($min_latitude == '') || ($max_latitude == '') || ($min_longitude == '') || ($max_longitude == ''))) { // If there's nothing to show and no given bounds
-                //return paragraph(do_lang_tempcode('NO_ENTRIES'),'','nothing_here');
+                //return paragraph(do_lang_tempcode('NO_ENTRIES'), '', 'nothing_here');
             }
 
             // Find long/lat fields
@@ -178,7 +188,7 @@ class Block_main_google_map
             if (isset($CAT_FIELDS_CACHE[$catalogue_name])) {
                 $fields = $CAT_FIELDS_CACHE[$catalogue_name];
             } else {
-                $fields = $GLOBALS['SITE_DB']->query_select('catalogue_fields', array('*'), array('c_name' => $catalogue_name), 'ORDER BY cf_order,' . $GLOBALS['FORUM_DB']->translate_field_ref('cf_name'));
+                $fields = $GLOBALS['SITE_DB']->query_select('catalogue_fields', array('*'), array('c_name' => $catalogue_name), 'ORDER BY cf_order,' . $GLOBALS['SITE_DB']->translate_field_ref('cf_name'));
             }
             $CAT_FIELDS_CACHE[$catalogue_name] = $fields;
             $_latitude_key = 'FIELD_1';
@@ -200,14 +210,8 @@ class Block_main_google_map
                 $breadcrumbs = null;
                 $details = get_catalogue_entry_map($entry_row, $catalogue_row, 'CATEGORY', $catalogue_name, null, null, null, false, false, null, $breadcrumbs, true);
 
-                $latitude = $details[$_latitude_key];
-                $longitude = $details[$_longitude_key];
-                if (is_object($latitude)) {
-                    $latitude = $latitude->evaluate();
-                }
-                if (is_object($longitude)) {
-                    $longitude = $longitude->evaluate();
-                }
+                $latitude = $details[$_latitude_key . '_PURE'];
+                $longitude = $details[$_longitude_key . '_PURE'];
 
                 if ((is_numeric($latitude)) && (is_numeric($longitude))) {
                     $details['LATITUDE'] = $latitude;
@@ -251,8 +255,8 @@ class Block_main_google_map
             'DIV_ID' => $div_id,
             'CLUSTER' => $cluster,
             'REGION' => $map['region'],
-            'WIDTH' => $mapwidth,
-            'HEIGHT' => $mapheight,
+            'WIDTH' => $map_width,
+            'HEIGHT' => $map_height,
             'LATITUDE' => $map['latitude'],
             'LONGITUDE' => $map['longitude'],
             'ZOOM' => $set_zoom,

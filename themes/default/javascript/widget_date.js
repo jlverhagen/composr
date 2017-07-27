@@ -161,6 +161,7 @@ HTML5 Date polyfill | Jonathan Stipe | https://github.com/jonstipe/date-polyfill
         $hiddenField.attr({
           type: "hidden",
           name: $this.attr('name'),
+          id: $this.attr('name'),
           value: makeDateString(value)
         });
         $hiddenField.data({
@@ -192,14 +193,14 @@ HTML5 Date polyfill | Jonathan Stipe | https://github.com/jonstipe/date-polyfill
         $dateBtn.appendTo(calendarContainer);
         $calendarDiv.appendTo(calendarContainer);
         $calendarDiv.datepicker({
-          dayNames: ['{!dates:SUNDAY;}','{!dates:MONDAY;}','{!dates:TUESDAY;}','{!dates:WEDNESDAY;}','{!dates:THURSDAY;}','{!dates:FRIDAY;}','{!dates:SATURDAY;}'],
-          dayNamesMin: ['{$SUBSTR,{!dates:SUNDAY;},0,2}','{$SUBSTR,{!dates:MONDAY;},0,2}','{$SUBSTR,{!dates:TUESDAY;},0,2}','{$SUBSTR,{!dates:WEDNESDAY;},0,2}','{$SUBSTR,{!dates:THURSDAY;},0,2}','{$SUBSTR,{!dates:FRIDAY;},0,2}','{$SUBSTR,{!dates:SATURDAY;},0,2}'],
-          dayNamesShort: ['{$SUBSTR,{!dates:SUNDAY;},0,3}','{$SUBSTR,{!dates:MONDAY;},0,3}','{$SUBSTR,{!dates:TUESDAY;},0,3}','{$SUBSTR,{!dates:WEDNESDAY;},0,3}','{$SUBSTR,{!dates:THURSDAY;},0,3}','{$SUBSTR,{!dates:FRIDAY;},0,3}','{$SUBSTR,{!dates:SATURDAY;},0,3}'],
-          monthNames: ['{!dates:JANUARY;}','{!dates:FEBRUARY;}','{!dates:MARCH;}','{!dates:APRIL;}','{!dates:MAY;}','{!dates:JUNE;}','{!dates:JULY;}','{!dates:AUGUST;}','{!dates:SEPTEMBER;}','{!dates:OCTOBER;}','{!dates:NOVEMBER;}','{!dates:DECEMBER;}'],
-          monthNamesShort: ['{$SUBSTR,{!dates:JANUARY;},0,3}','{$SUBSTR,{!dates:FEBRUARY;},0,3}','{$SUBSTR,{!dates:MARCH;},0,3}','{$SUBSTR,{!dates:APRIL;},0,3}','{$SUBSTR,{!dates:MAY;},0,3}','{$SUBSTR,{!dates:JUNE;},0,3}','{$SUBSTR,{!dates:JULY;},0,3}','{$SUBSTR,{!dates:AUGUST;},0,3}','{$SUBSTR,{!dates:SEPTEMBER;},0,3}','{$SUBSTR,{!dates:OCTOBER;},0,3}','{$SUBSTR,{!dates:NOVEMBER;},0,3}','{$SUBSTR,{!dates:DECEMBER;},0,3}'],
-          prevText: '{!PREVIOUS;}',
-          nextText: '{!NEXT;}',
-          currentText: '{!TODAY;}',
+          dayNames: ['{!dates:SUNDAY;^}','{!dates:MONDAY;^}','{!dates:TUESDAY;^}','{!dates:WEDNESDAY;^}','{!dates:THURSDAY;^}','{!dates:FRIDAY;^}','{!dates:SATURDAY;^}'],
+          dayNamesMin: ['{!dates:SUNDAY_SHORT;^}','{!dates:MONDAY_SHORT;^}','{!dates:TUESDAY_SHORT;^}','{!dates:WEDNESDAY_SHORT;^}','{!dates:THURSDAY_SHORT;^}','{!dates:FRIDAY_SHORT;^}','{!dates:SATURDAY_SHORT;^}'],
+          dayNamesShort: ['{!dates:SUNDAY_SHORT;^}','{!dates:MONDAY_SHORT;^}','{!dates:TUESDAY_SHORT;^}','{!dates:WEDNESDAY_SHORT;^}','{!dates:THURSDAY_SHORT;^}','{!dates:FRIDAY_SHORT;^}','{!dates:SATURDAY_SHORT;^}'],
+          monthNames: ['{!dates:JANUARY;^}','{!dates:FEBRUARY;^}','{!dates:MARCH;^}','{!dates:APRIL;^}','{!dates:MAY;^}','{!dates:JUNE;^}','{!dates:JULY;^}','{!dates:AUGUST;^}','{!dates:SEPTEMBER;^}','{!dates:OCTOBER;^}','{!dates:NOVEMBER;^}','{!dates:DECEMBER;^}'],
+          monthNamesShort: ['{!dates:JANUARY_SHORT;^}','{!dates:FEBRUARY_SHORT;^}','{!dates:MARCH_SHORT;^}','{!dates:APRIL_SHORT;^}','{!dates:MAY_SHORT;^}','{!dates:JUNE_SHORT;^}','{!dates:JULY_SHORT;^}','{!dates:AUGUST_SHORT;^}','{!dates:SEPTEMBER_SHORT;^}','{!dates:OCTOBER_SHORT;^}','{!dates:NOVEMBER_SHORT;^}','{!dates:DECEMBER_SHORT;^}'],
+          prevText: '{!PREVIOUS;^}',
+          nextText: '{!NEXT;^}',
+          currentText: '{!TODAY;^}',
           firstDay: {$?,{$CONFIG_OPTION,ssw},0,1},
           dateFormat: 'MM dd, yy',
           changeMonth: true,
@@ -433,11 +434,11 @@ HTML5 Time polyfill | Jonathan Stipe | https://github.com/jonstipe/time-polyfill
           time_arr.push('0');
         }
         time_arr.push(time_obj.getMinutes().toString());
-        time_arr.push(':');
+        /*time_arr.push(':');
         if (time_obj.getSeconds() < 10) {
           time_arr.push('0');
         }
-        time_arr.push(time_obj.getSeconds().toString());
+        time_arr.push(time_obj.getSeconds().toString());*/
         /*if (time_obj.getMilliseconds() > 0) {
           time_arr.push('.');
           if (time_obj.getMilliseconds() % 100 === 0) {
@@ -466,9 +467,9 @@ HTML5 Time polyfill | Jonathan Stipe | https://github.com/jonstipe/time-polyfill
         step = $hiddenField.data("step");
         max = $hiddenField.data("max");
         if (!(step != null) || step === 'any') {
-          value.setSeconds(value.getSeconds() + 1);
+          value.setMinutes(value.getMinutes() + 1);
         } else {
-          value.setSeconds(value.getSeconds() + step);
+          value.setMinutes(value.getMinutes() + step);
         }
         if ((max != null) && value > max) {
           value.setTime(max.getTime());
@@ -484,9 +485,9 @@ HTML5 Time polyfill | Jonathan Stipe | https://github.com/jonstipe/time-polyfill
         step = $hiddenField.data("step");
         min = $hiddenField.data("min");
         if (!(step != null) || step === 'any') {
-          value.setSeconds(value.getSeconds() - 1);
+          value.setMinutes(value.getMinutes() - 1);
         } else {
-          value.setSeconds(value.getSeconds() - step);
+          value.setMinutes(value.getMinutes() - step);
         }
         if ((min != null) && value < min) {
           value.setTime(min.getTime());
@@ -569,6 +570,7 @@ HTML5 Time polyfill | Jonathan Stipe | https://github.com/jonstipe/time-polyfill
         $timeField.attr({
           type: "text",
           name: $this.attr('name'),
+          id: $this.attr('name'),
           value: makeTimeDisplayString(value),
           size: 14
         });

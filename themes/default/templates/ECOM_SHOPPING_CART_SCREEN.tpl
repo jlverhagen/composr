@@ -1,6 +1,6 @@
 {TITLE}
 
-<form title="{!PRIMARY_PAGE_FORM}" action="{FORM_URL*}" method="post" itemscope="itemscope" itemtype="http://schema.org/CheckoutPage">
+<form title="{!PRIMARY_PAGE_FORM}" action="{FORM_URL*}" method="post" itemscope="itemscope" itemtype="http://schema.org/CheckoutPage" autocomplete="off">
 	{$INSERT_SPAMMER_BLACKHOLE}
 
 	{RESULTS_TABLE}
@@ -18,11 +18,11 @@
 		<div class="buttons_group cart_update_buttons" itemprop="significantLinks">
 			{$,Put first, so it associates with the enter key}
 			{+START,IF_NON_EMPTY,{PRO_IDS}}
-				<input id="cart_update_button" class="buttons__cart_update button_screen{+START,IF,{$JS_ON}} button_faded{+END}" type="submit" name="update" onclick="return update_cart('{PRO_IDS;*}');" title="{!UPDATE_CART}" value="{!UPDATE}" />
+				<input id="cart_update_button" class="buttons__cart_update button_screen{+START,IF,{$JS_ON}} button_faded{+END}" type="submit" name="update" onclick="return update_cart('{PRO_IDS;*}');" title="{!UPDATE_CART}" value="{!_UPDATE_CART}" />
 			{+END}
 
 			{+START,IF_NON_EMPTY,{EMPTY_CART_URL*}}
-				<input class="buttons__cart_empty button_screen" type="submit" onclick="return confirm_empty('{!EMPTY_CONFIRM}','{EMPTY_CART_URL;*}',this.form);" value="{!EMPTY_CART}" />
+				<input class="button_screen buttons__cart_empty" type="submit" onclick="return confirm_empty('{!EMPTY_CONFIRM}','{EMPTY_CART_URL;*}',this.form);" value="{!EMPTY_CART}" />
 			{+END}
 		</div>
 
@@ -30,7 +30,7 @@
 			<input type="hidden" name="product_ids" id="product_ids" value="{PRO_IDS*}" />
 
 			{+START,IF_NON_EMPTY,{CONT_SHOPPING_URL}}
-				<a class="menu__rich_content__catalogues__products button_screen" href="{CONT_SHOPPING_URL*}"><span>{!CONTINUE_SHOPPING}</span></a>
+				<a class="button_screen menu__rich_content__catalogues__products" href="{CONT_SHOPPING_URL*}"><span>{!CONTINUE_SHOPPING}</span></a>
 			{+END}
 		</div>
 	</div>

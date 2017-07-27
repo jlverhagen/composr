@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -15,7 +15,7 @@
 /**
  * @license    http://opensource.org/licenses/cpal_1.0 Common Public Attribution License
  * @copyright  ocProducts Ltd
- * @package    core_cns
+ * @package    cns_forum
  */
 
 /**
@@ -56,6 +56,8 @@ class Hook_cleanup_cns
         if (get_forum_type() != 'cns') {
             return new Tempcode();
         }
+
+        require_lang('cns');
 
         require_code('tasks');
         return call_user_func_array__long_task(do_lang('CACHE_FORUMS'), null, 'cns_recache');

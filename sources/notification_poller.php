@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -25,9 +25,11 @@
  */
 function init__notification_poller()
 {
-    define('NOTIFICATION_POLL_FREQUENCY', intval(get_option('notification_poll_frequency')));
+    if (!defined('NOTIFICATION_POLL_FREQUENCY')) {
+        define('NOTIFICATION_POLL_FREQUENCY', intval(get_option('notification_poll_frequency')));
 
-    define('NOTIFICATION_POLL_SAFETY_LAG_SECS', 8); // Assume a request could have taken this long to happen, so we look back a little further even than NOTIFICATION_POLL_FREQUENCY
+        define('NOTIFICATION_POLL_SAFETY_LAG_SECS', 8); // Assume a request could have taken this long to happen, so we look back a little further even than NOTIFICATION_POLL_FREQUENCY
+    }
 }
 
 /**
@@ -218,20 +220,22 @@ function get_web_notifications($max = null, $start = 0)
                 break;
         }
 
-        $rendered = do_template('NOTIFICATION_WEB', array('_GUID' => '314db5380aecd610c7ad2a013743f614', 'ID' => strval($row['id']),
-                                                          'SUBJECT' => $row['d_subject'],
-                                                          'MESSAGE' => $_message,
-                                                          'FROM_USERNAME' => $username,
-                                                          'FROM_MEMBER_ID' => strval($member_id),
-                                                          'URL' => $url,
-                                                          'FROM_URL' => $from_url,
-                                                          'FROM_AVATAR_URL' => $avatar_url,
-                                                          'PRIORITY' => strval($row['d_priority']),
-                                                          'DATE_TIMESTAMP' => strval($row['d_date_and_time']),
-                                                          'DATE_WRITTEN_TIME' => get_timezoned_time($row['d_date_and_time']),
-                                                          'NOTIFICATION_CODE' => $row['d_notification_code'],
-                                                          'CODE_CATEGORY' => $row['d_code_category'],
-                                                          'HAS_READ' => ($row['d_read'] == 1),
+        $rendered = do_template('NOTIFICATION_WEB', array(
+            '_GUID' => '314db5380aecd610c7ad2a013743f614',
+            'ID' => strval($row['id']),
+            'SUBJECT' => $row['d_subject'],
+            'MESSAGE' => $_message,
+            'FROM_USERNAME' => $username,
+            'FROM_MEMBER_ID' => strval($member_id),
+            'URL' => $url,
+            'FROM_URL' => $from_url,
+            'FROM_AVATAR_URL' => $avatar_url,
+            'PRIORITY' => strval($row['d_priority']),
+            'DATE_TIMESTAMP' => strval($row['d_date_and_time']),
+            'DATE_WRITTEN_TIME' => get_timezoned_date($row['d_date_and_time']),
+            'NOTIFICATION_CODE' => $row['d_notification_code'],
+            'CODE_CATEGORY' => $row['d_code_category'],
+            'HAS_READ' => ($row['d_read'] == 1),
         ));
         $out->attach($rendered);
     }
@@ -266,21 +270,23 @@ function web_notification_to_xml($row)
 
     $_message = get_translated_tempcode('digestives_tin', $row, 'd_message');
 
-    $rendered = do_template('NOTIFICATION_WEB_DESKTOP', array('_GUID' => '1641fa5c5b62421ae535680859e89636', 'ID' => strval($row['id']),
-                                                              'SUBJECT' => $row['d_subject'],
-                                                              'MESSAGE' => $_message,
-                                                              'FROM_USERNAME' => $username,
-                                                              'FROM_MEMBER_ID' => strval($member_id),
-                                                              'FROM_URL' => $from_url,
-                                                              'FROM_AVATAR_URL' => $avatar_url,
-                                                              'PRIORITY' => strval($row['d_priority']),
-                                                              'DATE_TIMESTAMP' => strval($row['d_date_and_time']),
-                                                              'DATE_WRITTEN_TIME' => get_timezoned_time($row['d_date_and_time']),
-                                                              'NOTIFICATION_CODE' => $row['d_notification_code'],
-                                                              'CODE_CATEGORY' => $row['d_code_category'],
+    $rendered = do_template('NOTIFICATION_WEB_DESKTOP', array(
+        '_GUID' => '1641fa5c5b62421ae535680859e89636',
+        'ID' => strval($row['id']),
+        'SUBJECT' => $row['d_subject'],
+        'MESSAGE' => $_message,
+        'FROM_USERNAME' => $username,
+        'FROM_MEMBER_ID' => strval($member_id),
+        'FROM_URL' => $from_url,
+        'FROM_AVATAR_URL' => $avatar_url,
+        'PRIORITY' => strval($row['d_priority']),
+        'DATE_TIMESTAMP' => strval($row['d_date_and_time']),
+        'DATE_WRITTEN_TIME' => get_timezoned_date($row['d_date_and_time']),
+        'NOTIFICATION_CODE' => $row['d_notification_code'],
+        'CODE_CATEGORY' => $row['d_code_category'],
     ));
 
-    //sound="'.(($row['d_priority']<3)?'on':'off').'"
+    //sound="' . (($row['d_priority'] < 3) ? 'on' : 'off') . '"
     return '
         <web_notification
             id="' . strval($row['id']) . '"
@@ -293,7 +299,7 @@ function web_notification_to_xml($row)
             from_avatar_url="' . escape_html($avatar_url) . '"
             priority="' . escape_html(strval($row['d_priority'])) . '"
             date_timestamp="' . escape_html(strval($row['d_date_and_time'])) . '"
-            date_written_time="' . escape_html(get_timezoned_time($row['d_date_and_time'])) . '"
+            date_written_time="' . escape_html(get_timezoned_date($row['d_date_and_time'])) . '"
             notification_code="' . escape_html($row['d_notification_code']) . '"
             code_category="' . escape_html($row['d_code_category']) . '"
             sound="on"
@@ -318,6 +324,10 @@ function get_pts($max = null, $start = 0)
         return array(new Tempcode(), 0);
     }
 
+    if (!addon_installed('cns_forum')) {
+        return array(new Tempcode(), 0);
+    }
+
     if ($start == 0) {
         $test = get_cache_entry('_get_pts', serialize(array($max)), CACHE_AGAINST_MEMBER, 10000);
         if ($test !== null) {
@@ -333,8 +343,7 @@ function get_pts($max = null, $start = 0)
 
     $out = new Tempcode();
     foreach ($rows as $i => $topic) {
-        $topic_url = build_url(array('page' => 'topicview', 'id' => $topic['id'], 'type' => 'findpost'), get_module_zone('topicview'));
-        $topic_url->attach('#post_' . strval($topic['id']));
+        $topic_url = build_url(array('page' => 'topicview', 'id' => $topic['t_id']), get_module_zone('topicview'));
         $title = $topic['t_cache_first_title'];
         $date = get_timezoned_date($topic['t_cache_last_time'], true);
         $num_posts = $topic['t_cache_num_posts'];
@@ -346,7 +355,15 @@ function get_pts($max = null, $start = 0)
         $with_username = $GLOBALS['FORUM_DRIVER']->get_username($with_poster_id);
         $with_member_url = $GLOBALS['CNS_DRIVER']->member_profile_url($with_poster_id, false, true);
 
-        $is_unread = ($topic['t_cache_last_time'] > time() - 60 * 60 * 24 * intval(get_option('post_history_days'))) && ((is_null($topic['l_time'])) || ($topic['l_time'] < $topic['p_time']));
+        $by_poster_id = $topic['t_pt_from'];
+        $by_username = $GLOBALS['FORUM_DRIVER']->get_username($by_poster_id);
+        $by_member_url = $GLOBALS['CNS_DRIVER']->member_profile_url($by_poster_id, false, true);
+
+        $to_poster_id = $topic['t_pt_to'];
+        $to_username = $GLOBALS['FORUM_DRIVER']->get_username($to_poster_id);
+        $to_member_url = $GLOBALS['CNS_DRIVER']->member_profile_url($to_poster_id, false, true);
+
+        $is_unread = ($topic['t_cache_last_time'] > time() - 60 * 60 * 24 * intval(get_option('post_read_history_days'))) && ((is_null($topic['l_time'])) || ($topic['l_time'] < $topic['p_time']));
 
         $out->attach(do_template('CNS_PRIVATE_TOPIC_LINK', array(
             '_GUID' => '6a36e785b05d10f53e7ee76acdfb9f80',
@@ -360,6 +377,12 @@ function get_pts($max = null, $start = 0)
             'WITH_POSTER_URL' => $with_member_url,
             'WITH_USERNAME' => $with_username,
             'WITH_POSTER_ID' => strval($with_poster_id),
+            'BY_POSTER_URL' => $by_member_url,
+            'BY_USERNAME' => $by_username,
+            'BY_POSTER_ID' => strval($by_poster_id),
+            'TO_POSTER_URL' => $to_member_url,
+            'TO_USERNAME' => $to_username,
+            'TO_POSTER_ID' => strval($to_poster_id),
             'NUM_POSTS' => integer_format($num_posts),
             'HAS_READ' => !$is_unread,
         )));
@@ -393,7 +416,7 @@ function pt_to_xml($row)
     $avatar_url = $GLOBALS['FORUM_DRIVER']->get_member_avatar_url($member_id);
 
     $just_post_row = db_map_restrict($row, array('id', 'p_post'));
-    $_message = get_translated_tempcode('f_posts', $just_post_row, 'p_post', $GLOBALS['SITE_DB']);
+    $_message = get_translated_tempcode('f_posts', $just_post_row, 'p_post', $GLOBALS['FORUM_DB']);
 
     $rendered = do_template('NOTIFICATION_PT_DESKTOP', array(
         '_GUID' => '624df70cf0cbb796c5d5ce1d18ae39f7',
@@ -405,7 +428,7 @@ function pt_to_xml($row)
         'URL' => $url,
         'FROM_AVATAR_URL' => $avatar_url,
         'DATE_TIMESTAMP' => strval($row['p_time']),
-        'DATE_WRITTEN_TIME' => get_timezoned_time($row['p_time']),
+        'DATE_WRITTEN_TIME' => get_timezoned_date($row['p_time']),
     ));
 
     return '
@@ -419,7 +442,7 @@ function pt_to_xml($row)
             url="' . escape_html($url) . '"
             from_avatar_url="' . escape_html($avatar_url) . '"
             date_timestamp="' . escape_html(strval($row['p_time'])) . '"
-            date_written_time="' . escape_html(get_timezoned_time($row['p_time'])) . '"
+            date_written_time="' . escape_html(get_timezoned_date($row['p_time'])) . '"
             sound="on"
         />
     ';

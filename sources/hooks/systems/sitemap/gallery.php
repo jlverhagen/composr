@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -67,8 +67,10 @@ class Hook_sitemap_gallery extends Hook_sitemap_content
 
         $page = $this->_make_zone_concrete($zone, $page_link);
 
+        $parent = (($options & SITEMAP_GEN_KEEP_FULL_STRUCTURE) == 0) ? 'root' : '';
+
         if ($child_cutoff !== null) {
-            $count = $GLOBALS['SITE_DB']->query_select_value('galleries', 'COUNT(*)', array('parent_id' => ''));
+            $count = $GLOBALS['SITE_DB']->query_select_value('galleries', 'COUNT(*)', array('parent_id' => $parent));
             if ($count > $child_cutoff) {
                 return $nodes;
             }
@@ -76,7 +78,7 @@ class Hook_sitemap_gallery extends Hook_sitemap_content
 
         $start = 0;
         do {
-            $rows = $GLOBALS['SITE_DB']->query_select('galleries', array('*'), array('parent_id' => ''), '', SITEMAP_MAX_ROWS_PER_LOOP, $start);
+            $rows = $GLOBALS['SITE_DB']->query_select('galleries', array('*'), array('parent_id' => $parent), ' AND name NOT LIKE \'download\_%\'', SITEMAP_MAX_ROWS_PER_LOOP, $start);
             foreach ($rows as $row) {
                 $child_page_link = $zone . ':' . $page . ':' . $this->screen_type . ':' . $row['name'];
                 $node = $this->get_node($child_page_link, $callback, $valid_node_types, $child_cutoff, $max_recurse_depth, $recurse_level, $options, $zone, $meta_gather, $row);
@@ -116,13 +118,15 @@ class Hook_sitemap_gallery extends Hook_sitemap_content
         list($content_id, $row, $partial_struct) = $_;
 
         $struct = array(
-                      'sitemap_priority' => SITEMAP_IMPORTANCE_MEDIUM,
-                      'sitemap_refreshfreq' => 'monthly',
+            'sitemap_priority' => SITEMAP_IMPORTANCE_MEDIUM,
+            'sitemap_refreshfreq' => 'monthly',
 
-                      'privilege_page' => $this->get_privilege_page($page_link),
+            'privilege_page' => $this->get_privilege_page($page_link),
 
-                      'edit_url' => build_url(array('page' => 'cms_galleries', 'type' => '_edit_category', 'id' => $content_id), get_module_zone('cms_galleries')),
-                  ) + $partial_struct;
+            'edit_url' => build_url(array('page' => 'cms_galleries', 'type' => '_edit_category', 'id' => $content_id), get_module_zone('cms_galleries')),
+        ) + $partial_struct;
+
+        $struct['extra_meta']['is_a_category_tree_root'] = true;
 
         if (!$this->_check_node_permissions($struct)) {
             return null;

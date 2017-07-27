@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -32,7 +32,31 @@ class Hook_profiles_tabs_galleries
      */
     public function is_active($member_id_of, $member_id_viewing)
     {
-        return has_privilege($member_id_of, 'have_personal_category', 'cms_galleries') && !is_null($GLOBALS['SITE_DB']->query_select_value_if_there('galleries', 'is_member_synched', array('is_member_synched' => 1)));
+        if (!has_privilege($member_id_of, 'have_personal_category', 'cms_galleries')) {
+            return false;
+        }
+        if ($member_id_of == $member_id_viewing) {
+            if (!is_null($GLOBALS['SITE_DB']->query_select_value_if_there('galleries', 'is_member_synched', array('is_member_synched' => 1)))) {
+                return true; // Can have one, even if don't know
+            }
+        }
+        return ($this->find_num_personal_galleries($member_id_of) > 0); // Does have one
+    }
+
+    /**
+     * Find number of personal galleries of a member.
+     *
+     * @param  MEMBER $member_id_of The ID of the member
+     * @return integer Number of personal galleries
+     */
+    private function find_num_personal_galleries($member_id_of)
+    {
+        static $result = array();
+        if (!isset($result[$member_id_of])) {
+            $sql = 'SELECT COUNT(*) FROM ' . get_table_prefix() . 'galleries WHERE name LIKE \'' . db_encode_like('member\_' . strval($member_id_of) . '\_%') . '\'';
+            $result[$member_id_of] = $GLOBALS['SITE_DB']->query_value_if_there($sql);
+        }
+        return $result[$member_id_of];
     }
 
     /**
@@ -40,14 +64,14 @@ class Hook_profiles_tabs_galleries
      *
      * @param  MEMBER $member_id_of The ID of the member who is being viewed
      * @param  MEMBER $member_id_viewing The ID of the member who is doing the viewing
-     * @param  boolean $leave_to_ajax_if_possible Whether to leave the tab contents NULL, if tis hook supports it, so that AJAX can load it later
+     * @param  boolean $leave_to_ajax_if_possible Whether to leave the tab contents null, if tis hook supports it, so that AJAX can load it later
      * @return array A tuple: The tab title, the tab contents, the suggested tab order, the icon
      */
     public function render_tab($member_id_of, $member_id_viewing, $leave_to_ajax_if_possible = false)
     {
         require_lang('galleries');
 
-        $title = do_lang_tempcode('GALLERIES');
+        $title = ($this->find_num_personal_galleries($member_id_of) <= 1) ? do_lang_tempcode('GALLERY') : do_lang_tempcode('GALLERIES');
 
         $order = 30;
 

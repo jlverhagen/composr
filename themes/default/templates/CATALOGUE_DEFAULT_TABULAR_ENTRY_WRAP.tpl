@@ -2,12 +2,12 @@
 
 {$SET,EDIT_URL,{EDIT_URL}}
 
-<tr>
+<tr class="{$CYCLE,results_table_zebra,zebra_0,zebra_1}">
 	{FIELDS_TABULAR}
 	{+START,IF_NON_EMPTY,{VIEW_URL}}
 		<td>
 			<!--VIEWLINK-->
-			<a class="buttons__more button_screen_item" href="{VIEW_URL*}"><span>{!VIEW}</span></a>
+			<a class="button_screen_item buttons__more" href="{VIEW_URL*}"><span>{!VIEW}</span></a>
 		</td>
 	{+END}
 	{$, Uncomment to show ratings

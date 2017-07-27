@@ -1,11 +1,17 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
 */
+
+/**
+ * @license    http://opensource.org/licenses/cpal_1.0 Common Public Attribution License
+ * @copyright  ocProducts Ltd
+ * @package    meta_toolkit
+ */
 
 /*
 Used to generate a database schema in the form of SQL code that can be imported into MySQL Workbench
@@ -19,15 +25,14 @@ $filename = 'composr-erd.sql';
 
 if (!isset($_GET['testing'])) {
     header('Content-Type: application/octet-stream' . '; authoritative=true;');
-    header('Content-Disposition: attachment; filename="' . str_replace("\r", '', str_replace("\n", '', addslashes($filename))) . '"');
+    header('Content-Disposition: attachment; filename="' . escape_header($filename, true) . '"');
 } else {
     header('Content-type: text/plain; charset=' . get_charset());
 }
 
-require_code('relations');
-$relation_map = get_relation_map();
+require_code('database_relations');
 
-$tables = get_all_tables();
+$tables = get_all_innodb_tables();
 
 echo get_innodb_table_sql($tables, $tables);
 

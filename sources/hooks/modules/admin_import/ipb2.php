@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -89,6 +89,8 @@ class Hook_ipb2 extends Hook_ipb_base
         require_code('custom_comcode');
         require_code('comcode_compiler');
 
+        init_valid_comcode_tags();
+
         $rows = $db->query('SELECT * FROM ' . $table_prefix . 'custom_bbcode');
         foreach ($rows as $row) {
             if (import_check_if_imported('custom_comcode', strval($row['bbcode_id']))) {
@@ -146,7 +148,7 @@ class Hook_ipb2 extends Hook_ipb_base
                 continue;
             }
 
-            $description = strip_tags(@html_entity_decode($row['description'], ENT_QUOTES, get_charset()));
+            $description = strip_html($row['description']);
             $expanded_by_default = 1;
 
             $id_new = cns_make_forum_grouping($title, $description, $expanded_by_default);
@@ -181,7 +183,7 @@ class Hook_ipb2 extends Hook_ipb_base
             }
 
             $name = @html_entity_decode($row['name'], ENT_QUOTES, get_charset());
-            $description = strip_tags(@html_entity_decode($row['description'], ENT_QUOTES, get_charset()));
+            $description = strip_html($row['description']);
 
             // To determine whether parent_id specifies category or parent, we must check status of what it is pointing at
             $parent_test = $db->query('SELECT use_ibc,parent_id FROM ' . $table_prefix . 'forums WHERE id=' . strval($row['parent_id']));
@@ -259,7 +261,7 @@ class Hook_ipb2 extends Hook_ipb_base
             'smtp_pass' => 'smtp_sockets_password',
             'home_name' => 'site_name',
             'reg_auth_type' => 'require_new_member_validation',
-            /*      'show_max_msg_list'=>'forum_posts_per_page'  */
+            //'show_max_msg_list' => 'forum_posts_per_page'
         );
 
         $rows = $db->query('SELECT * FROM ' . $table_prefix . 'conf_settings');
@@ -311,7 +313,7 @@ class Hook_ipb2 extends Hook_ipb_base
      */
     public function import_cns_private_topics($db, $table_prefix, $old_base_dir)
     {
-        $rows = $db->query('SELECT * FROM ' . $table_prefix . 'message_topics m LEFT JOIN ' . $table_prefix . 'message_text t ON m.mt_msg_id=t.msg_id WHERE mt_vid_folder<>\'sent\' ORDER BY mt_date');
+        $rows = $db->query('SELECT * FROM ' . $table_prefix . 'message_topics m LEFT JOIN ' . $table_prefix . 'message_text t ON m.mt_msg_id=t.msg_id WHERE ' . db_string_not_equal_to('mt_vid_folder', 'sent') . ' ORDER BY mt_date');
 
         // Group them up into what will become topics
         $groups = array();

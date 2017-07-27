@@ -1,4 +1,4 @@
-[title sub="Written by Steve Jarvis, Sponsored by Arvixe hosting"]Composr Supplementary: Finding Your Way Around the Composr Admin Zone Part 1[/title]
+[title sub="Written by Steve Jarvis, Sponsored by Arvixe hosting"]Composr Supplementary: Finding Your Way Around the Composr Admin Zone[/title]
 
 One of Composr's biggest strengths is its large amount of features. However, to a new user the Admin Zone may initially look a little overwhelming. This tutorial is a brief look at the different screens to help you find your way around when you have installed a new Composr website. I'm not going to go into great detail for every single option within the Admin Zone or you will end up reading a 10,000 word essay! This tutorial is to show you where the most common options are.
 
@@ -87,6 +87,6 @@ In this section you also have a link to all of the pages on your site and the ab
 
 The last part of the menu is a link to the Documents section of the main Composr website which includes a range of tutorials (like this one!) including basic installation and more advanced tasks. I suggest exploring this section of the Composr site and familiarising yourself with the different sections of your own sites Admin Zone before jumping in at the deep end!
 
-[box="Thank you Arvixe"]This tutorial was sponsored by [url="Arvixe hosting"]http://www.arvixe.com/5256-223-3-122.html[/url].[/box]
+[box="Thank you Arvixe"]This tutorial was sponsored by [url="Arvixe hosting"]http://arvixe.evyy.net/c/302199/279421/3370[/url].[/box]
 
 {$SET,tutorial_tags,Introduction,Administration,Configuration,Content,novice}{$SET,tutorial_add_date,Apr 2013}{$SET,tutorial_summary,One of Composr's biggest strengths is its large amount of features. However, to a new user the Admin Zone may initially look a little overwhelming. This tutorial is a brief walk through it.}[block]main_tutorial_rating[/block]

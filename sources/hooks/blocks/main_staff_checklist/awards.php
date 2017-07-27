@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -26,7 +26,7 @@ class Hook_checklist_awards
     /**
      * Find items to include on the staff checklist.
      *
-     * @return array An array of tuples: The task row to show, the number of seconds until it is due (or NULL if not on a timer), the number of things to sort out (or NULL if not on a queue), The name of the config option that controls the schedule (or NULL if no option).
+     * @return array An array of tuples: The task row to show, the number of seconds until it is due (or null if not on a timer), the number of things to sort out (or null if not on a queue), The name of the config option that controls the schedule (or null if no option).
      */
     public function run()
     {
@@ -66,8 +66,7 @@ class Hook_checklist_awards
 
                 $url = $details['add_url'];
                 if (!is_null($url)) {
-                    list($url_zone, $url_map, $url_hash) = page_link_decode($url);
-                    $url = static_evaluate_tempcode(build_url($url_map, $url_zone, null, false, false, false, $url_hash));
+                    $url = page_link_to_url($url);
                 } else {
                     $url = '';
                 }
@@ -79,7 +78,7 @@ class Hook_checklist_awards
                     $where = filter_naughty_harsh($details['date_field']) . '>' . strval(intval($date));
                     $num_queue = $details['connection']->query_value_if_there('SELECT COUNT(*) FROM ' . $details['connection']->get_table_prefix() . str_replace('1=1', $where, $details['table']) . ' r WHERE ' . $where);
                     $_num_queue = integer_format($num_queue);
-                    $num_new_since = do_lang_tempcode('NUM_NEW_SINCE', $_num_queue);
+                    $num_new_since = do_lang_tempcode('NUM_NEW_SINCE', escape_html($_num_queue));
                 } else {
                     $num_new_since = new Tempcode();
                 }

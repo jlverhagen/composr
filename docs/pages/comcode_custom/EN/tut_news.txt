@@ -19,7 +19,7 @@ You can manage news from Content Management > News. You'll find an add icon unde
 The add icon brings up the add screen, which is a standard form in Composr. It contains these fields:
  - [b]Title[/b]: this is the title (headline) that your news post will have
  - [b]Main category[/b]: This is the primary category that your news post will be listed in; it is special when compared to secondary categories as access to the primary news category is required for anyone to see or read the article
- - [b]Secondary category[/b]: In this space, you may choose additional categories for this post to be listed in. (hold ctrl to select more than one)
+ - [b]Secondary category[/b]: In this space, you may choose additional categories for this post to be listed in. (hold Ctrl to select more than one, or Option on a mac)
  - [b]Source[/b]: the primary source/author of this source. It may be you
  - [b]Allow rating[/b]: With this option ticked, your members will be able to rate your news
  - [b]Allow comments[/b]: With this option ticked, your members will be able to leave comments at the end of your news post
@@ -31,6 +31,10 @@ The add icon brings up the add screen, which is a standard form in Composr. It c
  - [b]Attachments[/b]: At the bottom of the page, you have the ability to add as many attachments to this post from your computer as you like
 
 After being validated by the staff, your news post will be visible on the front page unless you choose to schedule for it to be only made visible on a certain date and time. If you chose for it to be in the 'personal category of myname', then it will also be available by clicking the 'Blog' link in your profile.
+
+[title="3"]Headers[/title]
+
+Don't create a primary header in the article content because the title of the news record will carry through for that automatically. If you do you'll find you have two headers.
 
 [title="2"]Editing and deleting news[/title]
 
@@ -92,7 +96,7 @@ News entries may be in multiple news categories, but a user needs access to the 
 
 [title="2"]Alternative strategies[/title]
 
-[title="2"]Show RSS feeds[/title]
+[title="3"]Show RSS feeds[/title]
 
 RSS feeds can be displayed by placing the [tt]main_rss[/tt] block. This block is very straight-forward to configure, and like any block, may be added using the 'Add block' button when editing a Comcode page.
 

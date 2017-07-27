@@ -4,16 +4,16 @@
 	{$REQUIRE_JAVASCRIPT,jwplayer}
 
 	{+START,IF_NON_PASSED_OR_FALSE,WYSIWYG_EDITABLE}
-		{+START,IF_EMPTY,{$META_DATA,video}}
-			{$META_DATA,video,{URL}}
-			{$META_DATA,video:height,{HEIGHT}}
-			{$META_DATA,video:width,{WIDTH}}
-			{$META_DATA,video:type,{MIME_TYPE}}
+		{+START,IF_EMPTY,{$METADATA,video}}
+			{$METADATA,video,{URL}}
+			{$METADATA,video:height,{HEIGHT}}
+			{$METADATA,video:width,{WIDTH}}
+			{$METADATA,video:type,{MIME_TYPE}}
 		{+END}
 	{+END}
 
-	<meta itemprop="width" content="{WIDTH*}" />
-	<meta itemprop="height" content="{HEIGHT*}" />
+	<meta itemprop="width" content="{$MIN*,950,{WIDTH}}" />
+	<meta itemprop="height" content="{$MIN*,{$MULT,{HEIGHT},{$DIV_FLOAT,950,{WIDTH}}},{HEIGHT}}" />
 	{+START,IF_NON_EMPTY,{LENGTH}}
 		<meta itemprop="duration" content="T{LENGTH*}S" />
 	{+END}
@@ -30,11 +30,13 @@
 			jwplayer('{$GET%,player_id}').setup({
 				{$,Scale to a maximum width because we can always maximise - for object/embed players we can use max-width for this}
 				{+START,IF_NON_EMPTY,{WIDTH}}
-					width: {$MIN,1000,{WIDTH%}},
+					//width: {$MIN%,950,{WIDTH}},
 				{+END}
 				{+START,IF_NON_EMPTY,{HEIGHT}}
-					height: {$MIN,{$MULT,{HEIGHT},{$DIV_FLOAT,1000,{WIDTH}}},{HEIGHT%}},
+					//height: {$MIN%,{$MULT,{HEIGHT},{$DIV_FLOAT,950,{WIDTH}}},{HEIGHT}},
 				{+END}
+				width: '100%',
+				aspectratio: '{WIDTH%}:{HEIGHT%}',
 
 				autostart: false,
 				{+START,IF_NON_EMPTY,{LENGTH}}
@@ -62,7 +64,7 @@
 	{$,Uncomment for a download link \{+START,INCLUDE,MEDIA__DOWNLOAD_LINK\}\{+END\}}
 {+END}
 {+START,IF,{$GET,raw_video}}
-	<video{+START,IF_NON_EMPTY,{THUMB_URL}} poster="{THUMB_URL*}"{+END} width="{WIDTH*}" height="{HEIGHT*}" controls="controls">
+	<video{+START,IF_NON_EMPTY,{THUMB_URL}} poster="{THUMB_URL*}"{+END} width="{$MIN*,950,{WIDTH}}" height="{$MIN*,{$MULT,{HEIGHT},{$DIV_FLOAT,950,{WIDTH}}},{HEIGHT}}" controls="controls">
 		<source src="{$ENSURE_PROTOCOL_SUITABILITY*,{URL}}" type="{MIME_TYPE*}" />
 		<span>{DESCRIPTION}</span>
 	</video>

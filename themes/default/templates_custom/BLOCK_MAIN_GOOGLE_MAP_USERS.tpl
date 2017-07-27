@@ -1,6 +1,6 @@
-<script src="http://www.google.com/jsapi"></script>
+<script src="https://www.google.com/jsapi"></script>
 {+START,IF,{CLUSTER}}
-	<script src="http://google-maps-utility-library-v3.googlecode.com/svn/trunk/markerclustererplus/src/markerclusterer_packed.js"></script>
+	<script src="https://raw.githubusercontent.com/printercu/google-maps-utility-library-v3-read-only/master/markerclustererplus/src/markerclusterer_packed.js"></script>
 {+END}
 <script>// <![CDATA[
 	function google_map_users_initialize()
@@ -30,7 +30,7 @@
 					try
 					{
 						navigator.geolocation.getCurrentPosition(function(position) {
-							map.setCenter(google.maps.LatLng(position.coords.latitude,position.coords.longitude));
+							map.setCenter(new google.maps.LatLng(position.coords.latitude,position.coords.longitude));
 						});
 					}
 					catch (e) {}
@@ -126,7 +126,7 @@
 			{
 				{$,Dynamically load a specific members details only when their marker is clicked.}
 				do_ajax_request('{$BASE_URL;/}/data_custom/get_member_tooltip.php?member='+arg_member+keep_stub(),function(reply) {
-					var content=reply.responseXML.documentElement.getElementsByTagName('result')[0].firstChild.nodeValue;
+					var content=reply.getElementsByTagName('result')[0].firstChild.nodeValue;
 					if (content!='')
 					{
 						info_window.setContent('<div class="global_middle_faux float_surrounder">'+content+'<\/div>');
@@ -136,12 +136,21 @@
 			};
 		})(marker,data_point[0])); {$,These are the args passed to the dynamic function above.}
 	}
-
-	google.load('maps','3',{callback: google_map_users_initialize,other_params:''{+START,IF_NON_EMPTY,{REGION}},region:'{REGION;/}'{+END}});
 //]]></script>
 
-<section class="box box___block_main_google_map_users"><div class="box_inner">
+{+START,IF_NON_EMPTY,{TITLE}}
+<section class="box box___block_main_google_map_users inline_block"><div class="box_inner">
 	<h3>{TITLE*}</h3>
+{+END}
 
 	<div id="map_canvas" style="width: {WIDTH}; height: {HEIGHT}"></div>
+
+	<script>// <![CDATA[
+		add_event_listener_abstract(window,'load',function() {
+			google.load('maps','3',{callback: google_map_users_initialize,other_params:'{+START,IF_NON_EMPTY,{$CONFIG_OPTION,google_map_key}}key={$CONFIG_OPTION;/,google_map_key}{+END}'{+START,IF_NON_EMPTY,{REGION}},region:'{REGION;/}'{+END}});
+		});
+	//]]></script>
+
+{+START,IF_NON_EMPTY,{TITLE}}
 </div></section>
+{+END}

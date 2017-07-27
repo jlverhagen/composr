@@ -6,13 +6,14 @@
 	{WARNINGS}
 
 	<div class="cart_info">
-		{+START,IF_NON_EMPTY,{RATING_DETAILS}}
+		{$SET,rating,{$RATING,catalogues__{CATALOGUE},{ID},{SUBMITTER},,,RATING_INLINE_DYNAMIC}}
+		{+START,IF_NON_EMPTY,{$TRIM,{$GET,rating}}}
 			<div class="rating_part">
-				<span class="field_name">{!RATING}:</span> {$RATING,catalogue_entry,{ID},,,,RATING_INLINE_DYNAMIC}
+				<span class="field_name">{!RATING}:</span> {$GET,rating}
 			</div>
 		{+END}
 
-		{CART_LINK}
+		{$CART_LINK}
 	</div>
 
 	<div class="box box___catalogue_products_entry_screen"><div class="box_inner">
@@ -32,7 +33,7 @@
 
 				{+START,IF_NON_EMPTY,{FIELD_2}}
 					<div class="price_box">
-						<span class="price">{!PRICE} <span itemprop="priceCurrency">{$CURRENCY_SYMBOL}</span><span itemprop="price">{$FLOAT_FORMAT*,{FIELD_2_PLAIN}}</span>{$,Product price}</span>
+						<span class="price">{!PRICE}: <span itemprop="priceCurrency">{$CURRENCY_SYMBOL}</span><span itemprop="price">{$FLOAT_FORMAT*,{FIELD_2_PLAIN}}</span>{$,Product price}</span>
 					</div>
 				{+END}
 			</div>
@@ -55,7 +56,10 @@
 			{+END}
 
 			{+START,IF_NON_EMPTY,{FIELD_1}}
-				<p class="product-ids sku">{!PRODUCT_CODE} <kbd>{FIELD_1}</kbd>{$,Product code}</p>
+				<p class="product-ids sku">{!ECOM_CAT_sku}: <kbd>{FIELD_1}</kbd>{$,Product code}</p>
+			{+END}
+			{+START,IF_NON_EMPTY,{FIELD_3}}
+				<p class="stock_level">{!STOCK}: <kbd>{$NUMBER_FORMAT*,{$STOCK_CHECK,{ID}}}</kbd>{$,Stock level}</p>
 			{+END}
 
 			{CART_BUTTONS}
@@ -81,5 +85,5 @@
 		</div>
 	</div>
 
-	{+START,IF,{$CONFIG_OPTION,show_screen_actions}}{$BLOCK,failsafe=1,block=main_screen_actions,title={$META_DATA,title}}{+END}
+	{+START,IF,{$CONFIG_OPTION,show_screen_actions}}{$BLOCK,failsafe=1,block=main_screen_actions,title={$METADATA,title}}{+END}
 </div>

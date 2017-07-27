@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -13,9 +13,9 @@
 */
 
 /**
- * @license http://opensource.org/licenses/cpal_1.0 Common Public Attribution License
+ * @license    http://opensource.org/licenses/cpal_1.0 Common Public Attribution License
  * @copyright  ocProducts Ltd
- * @package shopping
+ * @package    shopping
  */
 
 /*
@@ -82,21 +82,19 @@ class Hook_ecommerce_cart_orders
 
         require_lang('shopping');
 
-        if (function_exists('set_time_limit')) {
+        if (php_function_allowed('set_time_limit')) {
             @set_time_limit(0);
         }
 
         if (!is_null($search)) {
-            $where = '1=1';
-            if (!$search_item_names) {
-                $l = do_lang('CART_ORDER', '', null, null, $site_lang ? get_site_default_lang() : user_lang());
-                if (substr($search, 0, strlen($l)) != $l) {
-                    return array();
-                }
-                $where .= ' AND id=' . strval(intval(substr($search, strlen($l))));
+            $l = do_lang('CART_ORDER', '', null, null, $site_lang ? get_site_default_lang() : user_lang());
+            if (substr($search, 0, strlen($l)) != $l) {
+                return array();
             }
+            $where = 'id=' . strval(intval(substr($search, strlen($l))));
+            // NB: $search_item_names is ignored because codename is the same as item name for this hook
         } else {
-            $where = ('(' . db_string_equal_to('order_status', 'ORDER_STATUS_awaiting_payment') . ' OR ' . db_string_equal_to('order_status', 'ORDER_STATUS_payment_received') . ')');
+            $where = '(' . db_string_equal_to('order_status', 'ORDER_STATUS_awaiting_payment') . ' OR ' . db_string_equal_to('order_status', 'ORDER_STATUS_payment_received') . ')';
         }
 
         if (is_null($search)) {
@@ -111,7 +109,14 @@ class Hook_ecommerce_cart_orders
             $orders = $GLOBALS['SITE_DB']->query('SELECT id,tot_price FROM ' . get_table_prefix() . 'shopping_order WHERE ' . $where, 500, null, false, true);
 
             foreach ($orders as $order) {
-                $products[do_lang('shopping:CART_ORDER', strval($order['id']), null, null, $site_lang ? get_site_default_lang() : user_lang())] = array(PRODUCT_ORDERS, $order['tot_price'], 'handle_product_orders', array(), do_lang('CART_ORDER', strval($order['id']), null, null, $site_lang ? get_site_default_lang() : user_lang()));
+                $products[do_lang('shopping:CART_ORDER', strval($order['id']), null, null, $site_lang ? get_site_default_lang() : user_lang())] = array(
+                    PRODUCT_ORDERS,
+                    $order['tot_price'],
+                    'handle_product_orders',
+                    array(),
+                    do_lang('CART_ORDER', strval($order['id']), null, null, $site_lang ? get_site_default_lang() : user_lang()),
+                    get_option('currency'),
+                );
             }
 
             $start += 500;
@@ -140,9 +145,9 @@ class Hook_ecommerce_cart_orders
      */
     public function get_product_dispatch_type($order_id)
     {
-        $row = $GLOBALS['SITE_DB']->query_select('shopping_order_details', array('*'), array('order_id' => $order_id));
+        $rows = $GLOBALS['SITE_DB']->query_select('shopping_order_details', array('*'), array('order_id' => $order_id));
 
-        foreach ($row as $item) {
+        foreach ($rows as $item) {
             if (is_null($item['p_type'])) {
                 continue;
             }
@@ -157,7 +162,7 @@ class Hook_ecommerce_cart_orders
             }
         }
 
-        //if none of product items have manual dispatch, return order dispatch as automatic.
+        // If none of product items have manual dispatch, return order dispatch as automatic.
         return 'automatic';
     }
 

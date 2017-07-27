@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -26,6 +26,10 @@ class Hook_trackback_iotds
      */
     public function run($id)
     {
+        if (!$GLOBALS['SITE_DB']->table_exists('iotd')) {
+            return false;
+        }
+
         $rows = $GLOBALS['SITE_DB']->query_select('iotd', array('allow_trackbacks'), array('id' => intval($id)), '', 1);
         if (!array_key_exists(0, $rows)) {
             return false;

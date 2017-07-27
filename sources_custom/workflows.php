@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -100,7 +100,7 @@ function get_all_workflows()
 /**
  * Get the system's default workflow. If there is only one workflow this
  * will return it, otherwise (multiple with no default specified, or no
- * workflows at all) it will give NULL.
+ * workflows at all) it will give null.
  *
  * @return ?AUTO_LINK The ID of the default workflow. (null: if none set)
  */
@@ -249,7 +249,7 @@ function get_workflow_form($workflow_content_id)
                 $approval_status[$approve_count][] = $approval_point_name;        // Pretty name
                 $approval_status[$approve_count][] = 'approval_' . strval($point);        // Name
                 $approval_status[$approve_count][] = array_key_exists($point, $statuses) ? $statuses[$point] : 0;        // The value (defaults to 0)
-                $approval_status[$approve_count][] = do_lang_tempcode('APPROVAL_TICK_DESCRIPTION', $approval_point_name);        // Description
+                $approval_status[$approve_count][] = do_lang_tempcode('APPROVAL_TICK_DESCRIPTION', escape_html($approval_point_name));        // Description
                 $approval_status[$approve_count][] = false;        // Not disabled, since we have permission
 
                 // Add the details to the uneditable, existing status values
@@ -258,10 +258,10 @@ function get_workflow_form($workflow_content_id)
                 $existing_status[$approve_count][] = 'existing_' . strval($point);        // Name
                 if (array_key_exists($point, $statuses) && ($statuses[$point] == 1)) {
                     $existing_status[$approve_count][] = 1;        // The value (1 due to our if condition)
-                    $existing_status[$approve_count][] = do_lang_tempcode('ALREADY_APPROVED', $approval_point_name);        // Description
+                    $existing_status[$approve_count][] = do_lang_tempcode('ALREADY_APPROVED', escape_html($approval_point_name));        // Description
                 } else {
                     $existing_status[$approve_count][] = 0;        // The value defaults to 0
-                    $existing_status[$approve_count][] = do_lang_tempcode('NOT_YET_APPROVED', $approval_point_name);        // Description
+                    $existing_status[$approve_count][] = do_lang_tempcode('NOT_YET_APPROVED', escape_html($approval_point_name));        // Description
                 }
                 $existing_status[$approve_count][] = true;        // Disabled, since this is for informative purposes only
 
@@ -279,7 +279,7 @@ function get_workflow_form($workflow_content_id)
                 // Set the default value. We want groups allowed to approve the
                 // next+1 point ticked (assuming we're approving the next one)
                 // For simplicity, let's keep these unticked for now.
-                //if (in_array($allowed_group['usergroup'],$groups_shown))
+                //if (in_array($allowed_group['usergroup'], $groups_shown))
                 //{
                 $send_next[$allowed_group][] = false;
                 //}
@@ -295,7 +295,7 @@ function get_workflow_form($workflow_content_id)
             $existing_status[$approve_count][] = $approval_point_name;        // Pretty name
             $existing_status[$approve_count][] = 'approval_' . strval($point);        // Name
             $existing_status[$approve_count][] = array_key_exists($point, $statuses) ? $statuses[$point] : 0;        // Value (defaults to 0)
-            $existing_status[$approve_count][] = do_lang_tempcode('APPROVAL_TICK_DESCRIPTION', $approval_point_name);        // Description
+            $existing_status[$approve_count][] = do_lang_tempcode('APPROVAL_TICK_DESCRIPTION', escape_html($approval_point_name));        // Description
             $existing_status[$approve_count][] = true;        // Disabled, we have no permission
             // Increment the unique ID for the array elements
             $approve_count++;
@@ -412,7 +412,7 @@ function get_workflow_form($workflow_content_id)
         if (is_null($username)) {
             $username = do_lang('DELETED');
         }
-        $submitter_details[] = do_lang_tempcode('NEXT_APPROVAL_AUTHOR', $username);        // Description
+        $submitter_details[] = do_lang_tempcode('NEXT_APPROVAL_AUTHOR', escape_html($username));        // Description
         $send_to_boxes[] = $submitter_details;        // Then tack it on the end
     }
 
@@ -426,7 +426,7 @@ function get_workflow_form($workflow_content_id)
     }
 
     // Attach the title to the form first, along with usage info
-    $workflow_fields->attach(do_template('FORM_SCREEN_FIELD_SPACER', array('TITLE' => null, 'HELP' => do_lang_tempcode('WORKFLOW_USAGE'))));
+    $workflow_fields->attach(do_template('FORM_SCREEN_FIELD_SPACER', array('_GUID' => 'f0a8a4aabdd2f42bf7612f88b52b32b6', 'TITLE' => null, 'HELP' => do_lang_tempcode('WORKFLOW_USAGE'))));
 
     // Show the current status next
     $workflow_fields->attach(form_input_various_ticks($existing_status, '', null, do_lang_tempcode('CURRENT_APPROVAL_STATUS'), false));
@@ -594,7 +594,7 @@ function workflow_update_handler()
         }
     }
     if (count($notes_approved) + count($notes_disapproved) > 0) {
-        $note_title = date('Y-m-d H:i') . ' ' . $GLOBALS['FORUM_DRIVER']->get_username(get_member());
+        $note_title = get_timezoned_date(time(), false, false, false, true) . ' ' . $GLOBALS['FORUM_DRIVER']->get_username(get_member());
         $workflow_notes = $workflow_notes . "\n\n" . $note_title . "\n" . str_repeat('-', strlen($note_title));
 
         $notes_approved = array_map('get_translated_text', $notes_approved);
@@ -624,6 +624,7 @@ function workflow_update_handler()
 
     // Now use it to find this content's validation field...
 
+    require_code('content');
     $ob = get_content_object($content_details[0]['content_type']);
 
     // Grab information about the hook
@@ -687,7 +688,7 @@ function workflow_update_handler()
     dispatch_notification('workflow_step', strval($workflow_id), $subject, $body, $send_to_members);
 
     // Finally return a success message
-    $return_url = strip_tags(post_param_string('return_url'));
+    $return_url = post_param_string('return_url');
     return redirect_screen(new Tempcode(), $return_url, $success_message);
 }
 
@@ -792,7 +793,7 @@ function get_all_approval_points($workflow_id)
 function get_usergroups_for_approval_point($approval_id)
 {
     if (is_null($approval_id)) {
-        warn_exit(do_lang_tempcode('_MISSING_RESOURCE', 'NULL approval'));
+        warn_exit(do_lang_tempcode('_MISSING_RESOURCE', 'null approval'));
     }
     $groups = $GLOBALS['SITE_DB']->query_select('workflow_permissions', array('usergroup'), array('workflow_approval_point_id' => $approval_id));
     $raw_names = array();

@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -65,7 +65,12 @@ class Hook_commandr_command_whois
                 $ip = '';
             }
 
-            $all_banned = collapse_1d_complexity('ip', $GLOBALS['SITE_DB']->query('SELECT ip FROM ' . get_table_prefix() . 'banned_ip WHERE i_ban_positive=1 AND (i_ban_until IS NULL OR i_ban_until>' . strval(time()) . ')'));
+            if (addon_installed('securitylogging')) {
+                $all_banned = collapse_1d_complexity('ip', $GLOBALS['SITE_DB']->query('SELECT ip FROM ' . get_table_prefix() . 'banned_ip WHERE i_ban_positive=1 AND (i_ban_until IS NULL OR i_ban_until>' . strval(time()) . ')'));
+            } else
+            {
+                $all_banned = array();
+            }
 
             $ip_list = new Tempcode();
             foreach ($rows as $row) {

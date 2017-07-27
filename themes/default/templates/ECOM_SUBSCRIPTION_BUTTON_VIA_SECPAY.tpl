@@ -1,4 +1,4 @@
-<form title="{!MAKE_PAYMENT}" class="left" action="{IPN_URL*}" method="post">
+<form title="{!MAKE_PAYMENT}" class="left" action="{IPN_URL*}" method="post" autocomplete="off">
 	<input type="hidden" name="trans_id" value="subscr_{TRANS_ID*}" />
 	<input type="hidden" name="merchant" value="{USERNAME*}" />
 	<input type="hidden" name="digest" value="{DIGEST*}" />
@@ -15,7 +15,7 @@
 	<input type="hidden" name="repeat" value="{FIRST_REPEAT*}/{LENGTH_UNITS_2*}/0/{PRICE*}" />
 
 	<div>
-		<input onclick="disable_button_just_clicked(this);" class="menu__adminzone__audit__ecommerce__subscriptions button_screen" type="submit" value="{!START_SUBSCRIPTION}" />
+		<input onclick="disable_button_just_clicked(this);" class="button_screen menu__adminzone__audit__ecommerce__subscriptions" type="submit" value="{!START_SUBSCRIPTION}" />
 	</div>
 </form>
 

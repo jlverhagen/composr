@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -123,6 +123,7 @@ function cns_member_handle_promotion($member_id = null)
 
             // Notify the member
             require_code('notifications');
+            require_lang('cns');
             $subject = do_lang('RANK_PROMOTED_MAIL_SUBJECT', cns_get_group_name($_p), null, null, get_lang($member_id));
             $mail = do_notification_lang('RANK_PROMOTED_MAIL', comcode_escape(cns_get_group_name($_p)), null, null, get_lang($member_id));
             dispatch_notification('cns_rank_promoted', null, $subject, $mail, array($member_id));
@@ -148,6 +149,7 @@ function cns_member_handle_promotion($member_id = null)
     }
 
     if (count($promotes_today) != 0) {
+		require_lang('cns');
         $name = $GLOBALS['CNS_DRIVER']->get_member_row_field($member_id, 'm_username');
         log_it('MEMBER_PROMOTED_AUTOMATICALLY', strval($member_id), $name);
     }
@@ -167,8 +169,9 @@ function cns_member_handle_promotion($member_id = null)
  * @param  boolean $is_pt Whether this is for a Private Topic.
  * @param  ?ID_TEXT $no_notify_for__notification_code DO NOT send notifications to: The notification code (null: no restriction)
  * @param  ?SHORT_TEXT $no_notify_for__code_category DO NOT send notifications to: The category within the notification code (null: none / no restriction)
+ * @param  ?SHORT_TEXT $poster_name The name of the poster (null: default for $sender_member_id)
  */
-function cns_send_topic_notification($url, $topic_id, $forum_id, $sender_member_id, $is_starter, $post, $topic_title, $_limit_to = null, $is_pt = false, $no_notify_for__notification_code = null, $no_notify_for__code_category = null)
+function cns_send_topic_notification($url, $topic_id, $forum_id, $sender_member_id, $is_starter, $post, $topic_title, $_limit_to = null, $is_pt = false, $no_notify_for__notification_code = null, $no_notify_for__code_category = null, $poster_name = null)
 {
     if ((is_null($forum_id)) && ($is_starter)) {
         return;
@@ -190,7 +193,7 @@ function cns_send_topic_notification($url, $topic_id, $forum_id, $sender_member_
     require_code('notifications');
 
     $subject = do_lang($is_starter ? 'TOPIC_NOTIFICATION_MAIL_SUBJECT' : 'POST_NOTIFICATION_MAIL_SUBJECT', get_site_name(), $topic_title, array($sender_displayname, $sender_username));
-    $mail = do_notification_lang($is_starter ? 'TOPIC_NOTIFICATION_MAIL' : 'POST_NOTIFICATION_MAIL', comcode_escape(get_site_name()), comcode_escape($url), array(comcode_escape($sender_displayname), $post, $topic_title, strval($sender_member_id), comcode_escape($sender_username)));
+    $mail = do_notification_lang($is_starter ? 'TOPIC_NOTIFICATION_MAIL' : 'POST_NOTIFICATION_MAIL', comcode_escape(get_site_name()), comcode_escape($url), array(comcode_escape($sender_displayname), $post, $topic_title, ((is_guest($sender_member_id)) && ($poster_name !== null)) ? $poster_name : strval($sender_member_id), comcode_escape($sender_username), strval($sender_member_id)));
 
     $limit_to = is_null($_limit_to) ? array() : array($_limit_to);
 
@@ -282,7 +285,7 @@ function cns_force_update_topic_caching($topic_id, $post_count_dif = null, $last
             't_cache_first_post_id=' . (is_null($first_post_id) ? 'NULL' : strval($first_post_id)) . ',
         ' . (($first_title == '') ? '' : ('t_cache_first_title=\'' . db_escape_string($first_title) . '\'') . ',') . '
         t_cache_first_time=' . (is_null($first_time) ? 'NULL' : strval($first_time)) . ',
-        t_cache_first_post=' . (multi_lang_content() ? ((is_null($first_post) ? '\'NULL\'' : strval($first_post))) : '\'\'') . ',
+        t_cache_first_post=' . (multi_lang_content() ? ((is_null($first_post) ? 'NULL' : strval($first_post))) : '\'\'') . ',
         t_cache_first_username=\'' . db_escape_string($first_username) . '\',
         t_cache_first_member_id=' . (is_null($first_member_id) ? 'NULL' : strval($first_member_id)) . ',';
     }
@@ -292,7 +295,7 @@ function cns_force_update_topic_caching($topic_id, $post_count_dif = null, $last
             't_cache_last_post_id=' . (is_null($last_post_id) ? 'NULL' : strval($last_post_id)) . ',
         t_cache_last_title=\'' . db_escape_string($last_title) . '\',
         t_cache_last_time=' . (is_null($last_time) ? 'NULL' : strval($last_time)) . ',
-        t_cache_last_username=\'' . db_escape_string(substr($last_username, 0, 255)) . '\',
+        t_cache_last_username=\'' . db_escape_string(cms_mb_substr($last_username, 0, 255)) . '\',
         t_cache_last_member_id=' . (is_null($last_member_id) ? 'NULL' : strval($last_member_id)) . ',';
     }
 
@@ -378,7 +381,7 @@ function cns_force_update_forum_caching($forum_id, $num_topics_increment = null,
                                 'f_cache_last_topic_id=' . (!is_null($last_topic_id) ? strval($last_topic_id) : 'NULL') . ',
         f_cache_last_title=\'' . db_escape_string($last_title) . '\',
         f_cache_last_time=' . (!is_null($last_time) ? strval($last_time) : 'NULL') . ',
-        f_cache_last_username=\'' . db_escape_string(substr($last_username, 0, 255)) . '\',
+        f_cache_last_username=\'' . db_escape_string(cms_mb_substr($last_username, 0, 255)) . '\',
         f_cache_last_member_id=' . (!is_null($last_member_id) ? strval($last_member_id) : 'NULL') . ',
         f_cache_last_forum_id=' . (!is_null($last_forum_id) ? strval($last_forum_id) : 'NULL') . '
             WHERE id=' . strval($forum_id), 1, null, false, true);

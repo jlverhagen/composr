@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -12,6 +12,9 @@
  * @copyright  ocProducts Ltd
  * @package    uninstaller
  */
+
+// Fixup SCRIPT_FILENAME potentially being missing
+$_SERVER['SCRIPT_FILENAME'] = __FILE__;
 
 // Find Composr base directory, and chdir into it
 global $FILE_BASE, $RELATIVE_PATH;
@@ -58,7 +61,7 @@ if (uninstall_check_master_password(post_param_string('given_password', null))) 
 
     $uninstalled->evaluate_echo();
 } else {
-    $echo = do_template('BASIC_HTML_WRAP', array('_GUID' => '009e7517e7df76167b4d13ca77308704', 'NOFOLLOW' => true, 'TITLE' => do_lang_tempcode('UNINSTALL'), 'CONTENT' => do_template('UNINSTALL_SCREEN')));
+    $echo = do_template('BASIC_HTML_WRAP', array('_GUID' => '009e7517e7df76167b4d13ca77308704', 'NOFOLLOW' => true, 'NOINDEX' => true, 'TITLE' => do_lang_tempcode('UNINSTALL'), 'CONTENT' => do_template('UNINSTALL_SCREEN')));
     $echo->evaluate_echo();
 }
 
@@ -74,23 +77,7 @@ function uninstall_check_master_password($password_given)
         return false;
     }
 
-    global $SITE_INFO;
-    if (!array_key_exists('master_password', $SITE_INFO)) {
-        exit('No master password defined in _config.php currently so cannot authenticate');
-    }
-    $actual_password_hashed = $SITE_INFO['master_password'];
-    if ((function_exists('password_verify')) && (strpos($actual_password_hashed, '$') !== false)) {
-        return password_verify($password_given, $actual_password_hashed);
-    }
-    $salt = '';
-    if ((substr($actual_password_hashed, 0, 1) == '!') && (strlen($actual_password_hashed) == 33)) {
-        $actual_password_hashed = substr($actual_password_hashed, 1);
-        $salt = 'cms';
-
-        // LEGACY
-        if ($actual_password_hashed != md5($password_given . $salt)) {
-            $salt = 'ocp';
-        }
-    }
-    return (((strlen($password_given) != 32) && ($actual_password_hashed == $password_given)) || ($actual_password_hashed == md5($password_given . $salt)));
+    global $FILE_BASE;
+    require_once($FILE_BASE . '/sources/crypt_master.php');
+    return check_master_password($password_given);
 }

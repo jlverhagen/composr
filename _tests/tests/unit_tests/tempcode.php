@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -181,7 +181,7 @@ class Tempcode_test_set extends cms_test_case
 	</tr>
 	<tr>
 		<td>$TRUNCATE_RIGHT,i love to eat cheese,5</td>
-		<td>&hellip;t cheese</td>
+		<td>&hellip;se</td>
 	</tr>
 	<tr>
 		<td>$TRUNCATE_SPREAD,i love to eat cheese,5</td>

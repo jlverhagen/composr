@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -26,9 +26,10 @@ class Hook_addon_registry_cns_signatures
     /**
      * Get a list of file permissions to set
      *
+     * @param  boolean $runtime Whether to include wildcards represented runtime-created chmoddable files
      * @return array File permissions to set
      */
-    public function get_chmod_array()
+    public function get_chmod_array($runtime = false)
     {
         return array();
     }
@@ -158,6 +159,7 @@ class Hook_addon_registry_cns_signatures
                 'FIELD_NAME' => lorem_word(),
                 'TITLE' => lorem_phrase(),
                 'B' => $button,
+                'IS_POSTING_FIELD' => false,
             )));
         }
 
@@ -176,6 +178,7 @@ class Hook_addon_registry_cns_signatures
                 'FIELD_NAME' => lorem_word(),
                 'TITLE' => lorem_phrase(),
                 'B' => $button['t'],
+                'IS_POSTING_FIELD' => false,
             )));
         }
 
@@ -183,6 +186,7 @@ class Hook_addon_registry_cns_signatures
             'POSTING_FIELD' => lorem_word(),
             'BUTTONS' => $buttons,
             'MICRO_BUTTONS' => $micro_buttons,
+            'IS_POSTING_FIELD' => false,
         ));
 
         $posting_form = do_lorem_template('POSTING_FORM', array(

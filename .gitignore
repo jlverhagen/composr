@@ -8,9 +8,12 @@ test_a
 /safe_mode_temp/subs.inc
 /sources_custom/user_sync__customise.php
 /www.pid
+/_critical_error.html
+/critical_errors
 .DS_Store
 /.ftaccess
 /.ftpquota
+*.cms
 *.lcd
 *.tcp
 *.tcd
@@ -24,6 +27,9 @@ test_a
 /data_custom/rate_limiter.php
 /data_custom/*log.php
 /exports/*/*.tar
+/exports/*/*.gz
+/exports/*/*.txt
+/exports/backups/test
 /exports/builds/*/*
 /imports/*/*.tar
 /mobiquo/logging.dat
@@ -57,6 +63,7 @@ gibberish
 php.ini
 /*.shtml
 /uploads/auto_thumbs/*
+/uploads/incoming/*.dat
 /uploads/*/*__*.png
 images_custom/*/*__*.png
 default/images/*/*__*.png
@@ -68,8 +75,13 @@ images_custom/*/*__*.jpeg
 default/images/*/*__*.jpeg
 /data_custom/failover_rewritemap.txt
 /data_custom/failover_rewritemap__mobile.txt
+/themes/default/images_custom/*/logo/-logo.png
+/themes/default/images_custom/*/logo/standalone_logo.png
 
 ; The matched files should be blocked for the main Composr dev repository but not for Composr projects
+/uploads/website_specific/compo.sr/demonstratr/servers/
+/themes/_unnamed_/
+/.gitconfig
 /.htaccess
 .idea
 /data_custom/modules/google_appengine/*
@@ -126,5 +138,7 @@ pages/html_custom/*/*.htm
 *.tempfile
 /data_custom/modules/user_export/out.csv
 /data_custom/execute_temp.php
-cms.sql
-
+/cms.sql
+/tracker/uploads/
+/stats
+/uploads/website_specific/compo.sr/upgrades/full

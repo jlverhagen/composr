@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -95,7 +95,7 @@ class Hook_pointstore_permission
         }
         $fields->attach(form_input_list(do_lang_tempcode('PERMISSION_SCOPE_privilege'), do_lang_tempcode('DESCRIPTION_PERMISSION_SCOPE_privilege'), 'permission_privilege' . $name_suffix, $privileges, null, false, false));
         $zones = new Tempcode();
-        //$zones->attach(form_input_list_entry('',false,do_lang_tempcode('NA_EM')));      Will always scope to a zone. Welcome zone would be '' anyway, so we're simplifying the code by having a zone setting which won't hurt anyway
+        //$zones->attach(form_input_list_entry('', false, do_lang_tempcode('NA_EM')));      Will always scope to a zone. Welcome zone would be '' anyway, so we're simplifying the code by having a zone setting which won't hurt anyway
         require_code('zones2');
         require_code('zones3');
         $zones->attach(create_selection_list_zones($zone));
@@ -250,6 +250,8 @@ class Hook_pointstore_permission
             $map += insert_lang('p_mail_body', $mail_body, 2);
             $GLOBALS['SITE_DB']->query_insert('pstore_permissions', $map);
         }
+
+        log_it('POINTSTORE_AMEND_CUSTOM_PERMISSIONS');
     }
 
     /**
@@ -262,14 +264,22 @@ class Hook_pointstore_permission
         $class = str_replace('hook_pointstore_', '', strtolower(get_class($this)));
 
         $items = array();
+
         $rows = $GLOBALS['SITE_DB']->query_select('pstore_permissions', array('*'), array('p_enabled' => 1));
+
+        foreach ($rows as $i => $row) {
+            $rows[$i]['_title'] = get_translated_text($row['p_title']);
+        }
+        sort_maps_by($rows, '_title');
+
         foreach ($rows as $row) {
             if ($this->bought($row)) {
                 continue;
             }
 
             $next_url = build_url(array('page' => '_SELF', 'type' => 'action', 'id' => $class, 'sub_id' => $row['id']), '_SELF');
-            $items[] = do_template('POINTSTORE_' . strtoupper($class), array('NEXT_URL' => $next_url, 'TITLE' => get_translated_text($row['p_title']), 'DESCRIPTION' => get_translated_tempcode('pstore_permissions', $row, 'p_description')));
+            $just_row = db_map_restrict($row, array('id', 'p_description'));
+            $items[] = do_template('POINTSTORE_' . strtoupper($class), array('NEXT_URL' => $next_url, 'TITLE' => $row['_title'], 'DESCRIPTION' => get_translated_tempcode('pstore_permissions', $just_row, 'p_description')));
         }
         return $items;
     }
@@ -315,7 +325,7 @@ class Hook_pointstore_permission
 
         post_param_integer('confirm'); // Make sure POSTed
         $id = get_param_integer('sub_id');
-        $rows = $GLOBALS['SITE_DB']->query_select('pstore_permissions', array('*'), array('id' => $id, 'p_enabled' => 1));
+        $rows = $GLOBALS['SITE_DB']->query_select('pstore_permissions', array('*'), array('id' => $id, 'p_enabled' => 1), '', 1);
         if (!array_key_exists(0, $rows)) {
             warn_exit(do_lang_tempcode('MISSING_RESOURCE'));
         }

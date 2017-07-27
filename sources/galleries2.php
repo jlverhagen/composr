@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -26,7 +26,7 @@
  * @param  PATH $file_path The path to the video file
  * @param  string $filename The original filename of the video file (so we can find the file type from the file extension)
  * @param  boolean $delay_errors Whether to skip over errored files instead of dying. We don't currently make use of this as our readers aren't sophisticard enough to properly spot erroneous situations.
- * @return ~array The triplet of width/height/length (possibly containing NULL's for when we can't detect properties) (false: error)
+ * @return ~array The triplet of width/height/length (possibly containing nulls for when we can't detect properties) (false: error)
  */
 function get_video_details($file_path, $filename, $delay_errors = false)
 {
@@ -38,6 +38,7 @@ function get_video_details($file_path, $filename, $delay_errors = false)
     if ($file === false) {
         return false;
     }
+    flock($file, LOCK_SH);
 
     switch ($extension) {
         case 'wmv':
@@ -101,6 +102,7 @@ function get_video_details($file_path, $filename, $delay_errors = false)
             break;
     }
 
+    flock($file, LOCK_UN);
     fclose($file);
 
     if (is_null($info)) {
@@ -155,7 +157,7 @@ function read_network_endian_int($buffer)
  * Get width,height,length of a .wmv video file.
  *
  * @param  resource $file The file handle
- * @return array The triplet (possibly containing NULL's for when we can't detect properties)
+ * @return array The triplet (possibly containing nulls for when we can't detect properties)
  * @ignore
  */
 function _get_wmv_details($file)
@@ -170,7 +172,7 @@ function _get_wmv_details($file)
  *
  * @param  resource $file The file handle
  * @param  ?integer $chunk_length The length of the current chunk list (null: covers full file)
- * @return ?array The quartet (possibly containing NULL's for when we can't detect properties) (null: error)
+ * @return ?array The quartet (possibly containing nulls for when we can't detect properties) (null: error)
  * @ignore
  */
 function _get_wmv_details_do_chunk_list($file, $chunk_length = null)
@@ -241,7 +243,7 @@ function _get_wmv_details_do_chunk_list($file, $chunk_length = null)
  * Get width,height,length of a .avi video file.
  *
  * @param  resource $file The file handle
- * @return array The triplet (possibly containing NULL's for when we can't detect properties)
+ * @return array The triplet (possibly containing nulls for when we can't detect properties)
  * @ignore
  */
 function _get_avi_details($file)
@@ -261,7 +263,7 @@ function _get_avi_details($file)
  * Get width,height,length of a .rm/.ram video file.
  *
  * @param  resource $file The file handle
- * @return ?array The triplet (possibly containing NULL's for when we can't detect properties) (null: error)
+ * @return ?array The triplet (possibly containing nulls for when we can't detect properties) (null: error)
  * @ignore
  */
 function _get_ram_details($file) // + rm
@@ -294,7 +296,7 @@ function _get_ram_details($file) // + rm
  * Get width,height,length of a .mov/.qt video file.
  *
  * @param  resource $file The file handle
- * @return ?array The triplet (possibly containing NULL's for when we can't detect properties) (null: error)
+ * @return ?array The triplet (possibly containing nulls for when we can't detect properties) (null: error)
  * @ignore
  */
 function _get_mov_details($file)
@@ -313,7 +315,7 @@ function _get_mov_details($file)
  *
  * @param  resource $file The file handle
  * @param  ?integer $atom_size The length of the current atom list (null: covers full file)
- * @return array The quartet (possibly containing NULL's for when we can't detect properties)
+ * @return array The quartet (possibly containing nulls for when we can't detect properties)
  * @ignore
  */
 function _get_mov_details_do_atom_list($file, $atom_size = null)
@@ -334,11 +336,11 @@ function _get_mov_details_do_atom_list($file, $atom_size = null)
         }
         $count += 4;
         if ($size == 0) {
-            //       $qt_atom=true;
+            //$qt_atom = true;
             fseek($file, 8, SEEK_CUR);
             $size = read_network_endian_int(fread($file, 4));
             $count += 12;
-        }// else $qt_atom=false;
+        }// else $qt_atom = false;
 
         $type = fread($file, 4);
         $count += 4;
@@ -465,7 +467,7 @@ function add_image($title, $cat, $description, $url, $thumb_url, $validated, $al
 
     if ((addon_installed('commandr')) && (!running_script('install'))) {
         require_code('resource_fs');
-        generate_resourcefs_moniker('image', strval($id), null, null, true);
+        generate_resource_fs_moniker('image', strval($id), null, null, true);
     }
 
     require_code('seo2');
@@ -522,12 +524,12 @@ function add_image($title, $cat, $description, $url, $thumb_url, $validated, $al
  * @param  LONG_TEXT $notes Hidden notes associated with the image
  * @param  SHORT_TEXT $meta_keywords Meta keywords
  * @param  LONG_TEXT $meta_description Meta description
- * @param  ?TIME $edit_time Edit time (null: either means current time, or if $null_is_literal, means reset to to NULL)
+ * @param  ?TIME $edit_time Edit time (null: either means current time, or if $null_is_literal, means reset to to null)
  * @param  ?TIME $add_time Add time (null: do not change)
  * @param  ?integer $views Number of views (null: do not change)
  * @param  ?MEMBER $submitter Submitter (null: do not change)
  * @param  ?array $regions The regions (empty: not region-limited) (null: same as empty)
- * @param  boolean $null_is_literal Determines whether some NULLs passed mean 'use a default' or literally mean 'set to NULL'
+ * @param  boolean $null_is_literal Determines whether some nulls passed mean 'use a default' or literally mean 'set to null'
  */
 function edit_image($id, $title, $cat, $description, $url, $thumb_url, $validated, $allow_rating, $allow_comments, $allow_trackbacks, $notes, $meta_keywords, $meta_description, $edit_time = null, $add_time = null, $views = null, $submitter = null, $regions = null, $null_is_literal = false)
 {
@@ -613,7 +615,7 @@ function edit_image($id, $title, $cat, $description, $url, $thumb_url, $validate
 
     if ((addon_installed('commandr')) && (!running_script('install'))) {
         require_code('resource_fs');
-        generate_resourcefs_moniker('image', strval($id));
+        generate_resource_fs_moniker('image', strval($id));
     }
 
     require_code('seo2');
@@ -688,7 +690,7 @@ function delete_image($id, $delete_full = true)
 
     if ((addon_installed('commandr')) && (!running_script('install'))) {
         require_code('resource_fs');
-        expunge_resourcefs_moniker('image', strval($id));
+        expunge_resource_fs_moniker('image', strval($id));
     }
 
     require_code('sitemap_xml');
@@ -700,7 +702,7 @@ function delete_image($id, $delete_full = true)
  *
  * @param  URLPATH $src_url Video to get thumbail from (must be local)
  * @param  ?PATH $expected_output_path Where to save to (null: decide for ourselves)
- * @return URLPATH Thumbnail, only valid if expected_output_path was passed as NULL (blank: could not generate)
+ * @return URLPATH Thumbnail, only valid if expected_output_path was passed as null (blank: could not generate)
  */
 function create_video_thumb($src_url, $expected_output_path = null)
 {
@@ -718,9 +720,13 @@ function create_video_thumb($src_url, $expected_output_path = null)
                         $expected_output_path = get_custom_file_base() . '/uploads/galleries/' . $filename;
                     }
                     require_code('files');
-                    $_expected_output_path = fopen($expected_output_path, 'wb');
-                    http_download_file($ret, null, true, false, 'Composr', null, null, null, null, null, $_expected_output_path);
-                    fclose($_expected_output_path);
+                    $_expected_output_path = @fopen($expected_output_path, 'wb');
+                    if ($_expected_output_path !== false) {
+                        flock($_expected_output_path, LOCK_EX);
+                        http_download_file($ret, null, true, false, 'Composr', null, null, null, null, null, $_expected_output_path);
+                        flock($_expected_output_path, LOCK_UN);
+                        fclose($_expected_output_path);
+                    }
 
                     return $ret;
                 }
@@ -744,7 +750,9 @@ function create_video_thumb($src_url, $expected_output_path = null)
                 require_code('files');
                 $_expected_output_path = @fopen($expected_output_path, 'wb');
                 if ($_expected_output_path !== false) {
+                    flock($_expected_output_path, LOCK_EX);
                     http_download_file($ret, null, true, false, 'Composr', null, null, null, null, null, $_expected_output_path);
+                    flock($_expected_output_path, LOCK_UN);
                     fclose($_expected_output_path);
                 }
             }
@@ -799,7 +807,7 @@ function create_video_thumb($src_url, $expected_output_path = null)
 
         $ffmpeg_path = get_option('ffmpeg_path');
 
-        if (($ffmpeg_path != '') && (strpos(@ini_get('disable_functions'), 'shell_exec') === false)) {
+        if (($ffmpeg_path != '') && (php_function_allowed('shell_exec'))) {
             $filename = 'thumb_' . md5(uniqid(strval(post_param_integer('thumbnail_auto_position', 1)), true)) . '%d.jpg';
             $dest_file = get_custom_file_base() . '/uploads/galleries/' . $filename;
             if (is_null($expected_output_path)) {
@@ -848,9 +856,13 @@ function create_video_thumb($src_url, $expected_output_path = null)
     if ($ret != '') {
         if (!is_null($expected_output_path)) {
             require_code('files');
-            $_expected_output_path = fopen($expected_output_path, 'wb');
-            http_download_file($ret, null, true, false, 'Composr', null, null, null, null, null, $_expected_output_path);
-            fclose($_expected_output_path);
+            $_expected_output_path = @fopen($expected_output_path, 'wb');
+            if ($_expected_output_path !== false) {
+                flock($_expected_output_path, LOCK_EX);
+                http_download_file($ret, null, true, false, 'Composr', null, null, null, null, null, $_expected_output_path);
+                flock($_expected_output_path, LOCK_UN);
+                fclose($_expected_output_path);
+            }
         }
     }
     return $ret;
@@ -935,7 +947,7 @@ function add_video($title, $cat, $description, $url, $thumb_url, $validated, $al
 
     if ((addon_installed('commandr')) && (!running_script('install'))) {
         require_code('resource_fs');
-        generate_resourcefs_moniker('video', strval($id), null, null, true);
+        generate_resource_fs_moniker('video', strval($id), null, null, true);
     }
 
     if ($validated == 1) {
@@ -1001,12 +1013,12 @@ function add_video($title, $cat, $description, $url, $thumb_url, $validated, $al
  * @param  integer $video_height The height of the video
  * @param  SHORT_TEXT $meta_keywords Meta keywords
  * @param  LONG_TEXT $meta_description Meta description
- * @param  ?TIME $edit_time Edit time (null: either means current time, or if $null_is_literal, means reset to to NULL)
+ * @param  ?TIME $edit_time Edit time (null: either means current time, or if $null_is_literal, means reset to to null)
  * @param  ?TIME $add_time Add time (null: do not change)
  * @param  ?integer $views Number of views (null: do not change)
  * @param  ?MEMBER $submitter Submitter (null: do not change)
  * @param  ?array $regions The regions (empty: not region-limited) (null: same as empty)
- * @param  boolean $null_is_literal Determines whether some NULLs passed mean 'use a default' or literally mean 'set to NULL'
+ * @param  boolean $null_is_literal Determines whether some nulls passed mean 'use a default' or literally mean 'set to null'
  */
 function edit_video($id, $title, $cat, $description, $url, $thumb_url, $validated, $allow_rating, $allow_comments, $allow_trackbacks, $notes, $video_length, $video_width, $video_height, $meta_keywords, $meta_description, $edit_time = null, $add_time = null, $views = null, $submitter = null, $regions = null, $null_is_literal = false)
 {
@@ -1097,7 +1109,7 @@ function edit_video($id, $title, $cat, $description, $url, $thumb_url, $validate
 
     if ((addon_installed('commandr')) && (!running_script('install'))) {
         require_code('resource_fs');
-        generate_resourcefs_moniker('video', strval($id));
+        generate_resource_fs_moniker('video', strval($id));
     }
 
     require_code('seo2');
@@ -1180,7 +1192,7 @@ function delete_video($id, $delete_full = true)
 
     if ((addon_installed('commandr')) && (!running_script('install'))) {
         require_code('resource_fs');
-        expunge_resourcefs_moniker('video', strval($id));
+        expunge_resource_fs_moniker('video', strval($id));
     }
 
     require_code('sitemap_xml');
@@ -1262,6 +1274,7 @@ function watermark_gallery_image($gallery, $file_path, $filename)
  * @param  URLPATH $watermark_url The (local) URL to the watermark file
  * @param  BINARY $x Whether a right hand side corner is being watermarked
  * @param  BINARY $y Whether a bottom edge corner is being watermarked
+ *
  * @ignore
  */
 function _watermark_corner($source, $watermark_url, $x, $y)
@@ -1298,6 +1311,16 @@ function constrain_gallery_image_to_max_size($file_path, $filename, $box_width)
     }
 
     if (function_exists('imagepng')) {
+        // TODO: Fix in v11, use new function
+        if ((function_exists('getimagesize')) && (is_image($filename))) {
+            $details = @getimagesize($file_path);
+            if ($details !== false) {
+                if (($details[0] <= $box_width) && ($details[1] <= $box_width)) {
+                    return;
+                }
+            }
+        }
+
         convert_image($file_path, $file_path, -1, -1, $box_width, false, get_file_extension($filename), true, true);
     }
 }
@@ -1336,7 +1359,7 @@ function add_gallery($name, $fullname, $description, $notes, $parent_id, $accept
     }
 
     require_code('type_sanitisation');
-    if (!is_alphanumeric($name, true)) {
+    if (!is_alphanumeric($name)) {
         warn_exit(do_lang_tempcode('BAD_CODENAME'));
     }
 
@@ -1344,7 +1367,7 @@ function add_gallery($name, $fullname, $description, $notes, $parent_id, $accept
         $test = $GLOBALS['SITE_DB']->query_select_value_if_there('galleries', 'name', array('name' => $name));
         if (!is_null($test)) {
             if ($uniqify) {
-                $name .= '_' . uniqid('', true);
+                $name .= '_' . uniqid('', false);
             } else {
                 warn_exit(do_lang_tempcode('ALREADY_EXISTS', escape_html($name)));
             }
@@ -1378,7 +1401,7 @@ function add_gallery($name, $fullname, $description, $notes, $parent_id, $accept
 
     if ((addon_installed('commandr')) && (!running_script('install'))) {
         require_code('resource_fs');
-        generate_resourcefs_moniker('gallery', $name, null, null, true);
+        generate_resource_fs_moniker('gallery', $name, null, null, true);
     }
 
     if ($parent_id != '') {
@@ -1434,7 +1457,7 @@ function add_gallery($name, $fullname, $description, $notes, $parent_id, $accept
  * @param  BINARY $allow_comments Whether comments are allowed
  * @param  ?MEMBER $g_owner The gallery owner (null: nobody)
  * @param  ?TIME $add_time The add time (null: now)
- * @param  boolean $null_is_literal Determines whether some NULLs passed mean 'use a default' or literally mean 'set to NULL'
+ * @param  boolean $null_is_literal Determines whether some nulls passed mean 'use a default' or literally mean 'set to null'
  * @param  boolean $uniqify Whether to force the name as unique, if there's a conflict
  * @return ID_TEXT The name
  */
@@ -1463,14 +1486,14 @@ function edit_gallery($old_name, $name, $fullname, $description, $notes, $parent
 
     if ($old_name != $name) {
         require_code('type_sanitisation');
-        if (!is_alphanumeric($name, true)) {
+        if (!is_alphanumeric($name)) {
             warn_exit(do_lang_tempcode('BAD_CODENAME'));
         }
 
         $test = $GLOBALS['SITE_DB']->query_select_value_if_there('galleries', 'name', array('name' => $name));
         if (!is_null($test)) {
             if ($uniqify) {
-                $name .= '_' . uniqid('', true);
+                $name .= '_' . uniqid('', false);
             } else {
                 warn_exit(do_lang_tempcode('ALREADY_EXISTS', escape_html($name)));
             }
@@ -1552,7 +1575,7 @@ function edit_gallery($old_name, $name, $fullname, $description, $notes, $parent
 
     if ((addon_installed('commandr')) && (!running_script('install'))) {
         require_code('resource_fs');
-        generate_resourcefs_moniker('gallery', $name);
+        generate_resource_fs_moniker('gallery', $name);
     }
 
     $GLOBALS['SITE_DB']->query_update('group_category_access', array('category_name' => $name), array('module_the_name' => 'galleries', 'category_name' => $old_name));
@@ -1607,7 +1630,7 @@ function delete_gallery($name)
     delete_lang($rows[0]['description']);
 
     // Images and videos are deleted, because we are deleting the _gallery_, not just a category (nobody is going to be deleting galleries with the expectation of moving the image to a different one in bulk - unlike download categories, for example).
-    if (function_exists('set_time_limit')) {
+    if (php_function_allowed('set_time_limit')) {
         @set_time_limit(0);
     }
     do {
@@ -1643,7 +1666,7 @@ function delete_gallery($name)
 
     if ((addon_installed('commandr')) && (!running_script('install'))) {
         require_code('resource_fs');
-        expunge_resourcefs_moniker('gallery', $name);
+        expunge_resource_fs_moniker('gallery', $name);
     }
 
     require_code('sitemap_xml');
@@ -1714,7 +1737,7 @@ function get_potential_gallery_title($cat)
         // Work out name
         $username = $GLOBALS['FORUM_DRIVER']->get_username($member, true);
         if (is_null($username)) {
-            warn_exit(do_lang_tempcode('_MEMBER_NO_EXIST', escape_html($username)));
+            warn_exit(do_lang_tempcode('MEMBER_NO_EXIST'));
         }
         $fullname = get_translated_text($parent_info['fullname']);
         if ($fullname == do_lang('GALLERIES_HOME')) {

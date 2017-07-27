@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -48,7 +48,7 @@ function add_award_type($title, $description, $points, $content_type, $hide_awar
 
     if ((addon_installed('commandr')) && (!running_script('install'))) {
         require_code('resource_fs');
-        generate_resourcefs_moniker('award_type', strval($id), null, null, true);
+        generate_resource_fs_moniker('award_type', strval($id), null, null, true);
     }
 
     return $id;
@@ -86,7 +86,7 @@ function edit_award_type($id, $title, $description, $points, $content_type, $hid
 
     if ((addon_installed('commandr')) && (!running_script('install'))) {
         require_code('resource_fs');
-        generate_resourcefs_moniker('award_type', strval($id));
+        generate_resource_fs_moniker('award_type', strval($id));
     }
 }
 
@@ -110,6 +110,6 @@ function delete_award_type($id)
 
     if ((addon_installed('commandr')) && (!running_script('install'))) {
         require_code('resource_fs');
-        expunge_resourcefs_moniker('award_type', strval($id));
+        expunge_resource_fs_moniker('award_type', strval($id));
     }
 }

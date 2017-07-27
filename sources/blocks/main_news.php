@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -105,12 +105,12 @@ class Block_main_news
         $days_outline = floatval($days) - $days_full;
 
         // News query
-        require_code('selectcode');
         $select = isset($map['select']) ? $map['select'] : get_param_string('news_select', '*');
         $select_and = isset($map['select_and']) ? $map['select_and'] : '';
-        if ($filter == '*') {
+        if ($select == '*') {
             $q_filter = '1=1';
         } else {
+            require_code('selectcode');
             $selects_1 = selectcode_to_sqlfragment($select, 'r.news_category', 'news_categories', null, 'r.news_category', 'id'); // Note that the parameters are fiddled here so that category-set and record-set are the same, yet SQL is returned to deal in an entirely different record-set (entries' record-set)
             $selects_2 = selectcode_to_sqlfragment($select, 'd.news_entry_category', 'news_categories', null, 'd.news_category', 'id'); // Note that the parameters are fiddled here so that category-set and record-set are the same, yet SQL is returned to deal in an entirely different record-set (entries' record-set)
             $q_filter = '(' . $selects_1 . ' OR ' . $selects_2 . ')';
@@ -132,6 +132,7 @@ class Block_main_news
             $join = '';
         }
         if ($select_and != '') {
+            require_code('selectcode');
             $selects_and_1 = selectcode_to_sqlfragment($select_and, 'r.news_category', 'news_categories', null, 'r.news_category', 'id'); // Note that the parameters are fiddled here so that category-set and record-set are the same, yet SQL is returned to deal in an entirely different record-set (entries' record-set)
             $selects_and_2 = selectcode_to_sqlfragment($select_and, 'd.news_entry_category', 'news_categories', null, 'd.news_category', 'id'); // Note that the parameters are fiddled here so that category-set and record-set are the same, yet SQL is returned to deal in an entirely different record-set (entries' record-set)
             $q_filter .= ' AND (' . $selects_and_1 . ' OR ' . $selects_and_2 . ')';
@@ -140,8 +141,7 @@ class Block_main_news
         // Filtercode
         if ($filter != '') {
             require_code('filtercode');
-            $content_type = 'news';
-            list($filter_extra_select, $filter_extra_join, $filter_extra_where) = filtercode_to_sql($GLOBALS['SITE_DB'], parse_filtercode($filter), $content_type, '');
+            list($filter_extra_select, $filter_extra_join, $filter_extra_where) = filtercode_to_sql($GLOBALS['SITE_DB'], parse_filtercode($filter), 'news');
             $extra_select_sql = implode('', $filter_extra_select);
             $join .= implode('', $filter_extra_join);
             $q_filter .= $filter_extra_where;
@@ -174,8 +174,8 @@ class Block_main_news
                 $rows2 = $GLOBALS['SITE_DB']->query('SELECT *,r.id AS p_id' . $extra_select_sql . ' FROM ' . $GLOBALS['SITE_DB']->get_table_prefix() . 'news r LEFT JOIN ' . $GLOBALS['SITE_DB']->get_table_prefix() . 'news_category_entries d ON r.id=d.news_entry' . $join . ' WHERE ' . $q_filter . ((!has_privilege(get_member(), 'see_unvalidated')) ? ' AND validated=1' : '') . ' AND date_and_time>=' . strval(time() - 60 * 60 * 24 * intval($days_full + $days_outline)) . ' AND date_and_time<' . strval(time() - 60 * 60 * 24 * intval($days_full)) . (can_arbitrary_groupby() ? ' GROUP BY r.id' : '') . ' ORDER BY r.date_and_time DESC', max($fallback_full + $fallback_archive, 30)/*reasonable limit*/, null, false, false, array('title' => 'SHORT_TRANS', 'news' => 'LONG_TRANS', 'news_article' => 'LONG_TRANS'));
             }
         } else {
-            if (function_exists('set_time_limit')) {
-                @set_time_limit(0);
+            if (php_function_allowed('set_time_limit')) {
+                @set_time_limit(100);
             }
             $start = 0;
             do {
@@ -246,7 +246,7 @@ class Block_main_news
 
                 // Basic details
                 $id = $myrow['p_id'];
-                $date = get_timezoned_date($myrow['date_and_time']);
+                $date = get_timezoned_date_tempcode($myrow['date_and_time']);
                 $news_title = get_translated_tempcode('news', $just_news_row, 'title');
                 $news_title_plain = get_translated_text($myrow['title']);
 
@@ -359,7 +359,7 @@ class Block_main_news
                 $just_news_row = db_map_restrict($myrow, array('id', 'title', 'news', 'news_article'));
 
                 // Basic details
-                $date = get_timezoned_date($myrow['date_and_time']);
+                $date = get_timezoned_date_tempcode($myrow['date_and_time']);
 
                 // URL
                 $tmp = array('page' => 'news', 'type' => 'view', 'id' => $myrow['p_id']) + $prop_url;
@@ -395,7 +395,7 @@ class Block_main_news
         $is_on_rss = is_null($_is_on_rss) ? 0 : intval($_is_on_rss); // Set to zero if we don't want to show RSS links
         $submit_url = new Tempcode();
         $management_page = ($blogs === 1) ? 'cms_blogs' : 'cms_news';
-        if ((($blogs !== 1) || (has_privilege(get_member(), 'have_personal_category', 'cms_news'))) && (has_actual_page_access(null, $management_page, null, null)) && (has_submit_permission('high', get_member(), get_ip_address(), $management_page))) {
+        if ((($blogs !== 1) || (has_privilege(get_member(), 'have_personal_category', 'cms_news'))) && (has_actual_page_access(null, $management_page, null, null)) && (has_submit_permission(($blogs === 1) ? 'mid' : 'high', get_member(), get_ip_address(), $management_page))) {
             $map2 = array('page' => $management_page, 'type' => 'add', 'redirect' => SELF_REDIRECT);
             if (is_numeric($select)) {
                 $map2['cat'] = $select; // select news cat by default, if we are only showing one news cat in this block
@@ -423,9 +423,9 @@ class Block_main_news
         $atom_url = new Tempcode();
         $rss_url = new Tempcode();
         if ($is_on_rss == 1) {
-            $atom_url = make_string_tempcode(find_script('backend') . '?type=atom&mode=news&select=' . $select);
+            $atom_url = make_string_tempcode(find_script('backend') . '?type=atom&mode=news&select=' . urlencode($select));
             $atom_url->attach(symbol_tempcode('KEEP'));
-            $rss_url = make_string_tempcode(find_script('backend') . '?type=rss2&mode=news&select=' . $select);
+            $rss_url = make_string_tempcode(find_script('backend') . '?type=rss2&mode=news&select=' . urlencode($select));
             $rss_url->attach(symbol_tempcode('KEEP'));
         }
 
@@ -459,7 +459,7 @@ class Block_main_news
 
         return do_template('BLOCK_MAIN_NEWS', array(
             '_GUID' => '01f5fbd2b0c7c8f249023ecb4254366e',
-            'BLOCK_PARAMS' => block_params_arr_to_str($map),
+            'BLOCK_PARAMS' => block_params_arr_to_str(array('block_id' => $block_id) + $map),
             'BLOG' => $blogs === 1,
             'TITLE' => $_title,
             'CONTENT' => $news_text,
@@ -470,7 +470,6 @@ class Block_main_news
             'RSS_URL' => $rss_url,
             'ATOM_URL' => $atom_url,
             'PAGINATION' => $pagination,
-
             'START' => strval($start),
             'MAX' => strval($fallback_full + $fallback_archive),
             'START_PARAM' => $block_id . '_start',

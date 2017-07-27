@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -48,7 +48,7 @@ class Hook_preview_cns_post
         require_code('cns_posts_action');
         require_code('cns_posts_action2');
         cns_check_post($original_comcode, post_param_integer('topic_id', null), get_member());
-        $posting_ref_id = post_param_integer('posting_ref_id', mt_rand(0, 100000));
+        $posting_ref_id = post_param_integer('posting_ref_id', mt_rand(0, mt_getrandmax()));
         if ($posting_ref_id < 0) {
             fatal_exit(do_lang_tempcode('INTERNAL_ERROR'));
         }
@@ -88,7 +88,7 @@ class Hook_preview_cns_post
         $post_date = get_timezoned_date($_post_date);
 
         $post_title = post_param_string('title', '');
-        if (strlen($post_title) > 120) {
+        if (cms_mb_strlen($post_title) > 120) {
             warn_exit(do_lang_tempcode('TITLE_TOO_LONG'));
         }
         $unvalidated = ((post_param_integer('validated', 0) == 0) && (get_page_name() == 'topics')) ? do_lang_tempcode('UNVALIDATED') : new Tempcode();
@@ -106,7 +106,9 @@ class Hook_preview_cns_post
         $class = $is_emphasised ? 'cns_post_emphasis' : (!is_null($intended_solely_for) ? 'cns_post_personal' : '');
 
         // Member details
-        $signature = get_translated_tempcode('f_members', $GLOBALS['FORUM_DRIVER']->get_member_row($post_owner), 'm_signature', $GLOBALS['FORUM_DB']);
+        $member_row = $GLOBALS['FORUM_DRIVER']->get_member_row($post_owner);
+        $just_member_row = db_map_restrict($member_row, array('id', 'm_signature'));
+        $signature = get_translated_tempcode('f_members', $just_member_row, 'm_signature', $GLOBALS['FORUM_DB']);
         $_postdetails_avatar = $GLOBALS['FORUM_DRIVER']->get_member_avatar_url($post_owner);
         if ($_postdetails_avatar != '') {
             $post_avatar = do_template('CNS_TOPIC_POST_AVATAR', array('_GUID' => '2683c09eabd7a9f1fdc57a20117483ef', 'AVATAR' => $_postdetails_avatar));

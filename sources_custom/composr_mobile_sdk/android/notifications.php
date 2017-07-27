@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -74,7 +74,7 @@ class AndroidPushNotifications
             'delay_while_idle' => ($priority == 5),
         );
 
-        $api_access_key = get_option('android_notifications_access_key');
+        $api_access_key = get_option('enable_notifications_instant_android');
         $extra_headers = array(
             'Authorization' => 'key=' . $api_access_key,
         );

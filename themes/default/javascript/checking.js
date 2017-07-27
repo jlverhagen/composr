@@ -12,18 +12,18 @@ function password_strength(ob)
 	var _ind=document.getElementById('password_strength_'+ob.id);
 	if (!_ind) return;
 	var ind=_ind.getElementsByTagName('div')[0];
-	var url='password='+window.encodeURIComponent(ob.value);
+	var post='password='+window.encodeURIComponent(ob.value);
 	if (ob.form && typeof ob.form.elements['username']!='undefined')
 	{
-		url+='&username='+ob.form.elements['username'].value;
+		post+='&username='+ob.form.elements['username'].value;
 	} else
 	{
 		if (ob.form && typeof ob.form.elements['edit_username']!='undefined')
 		{
-			url+='&username='+ob.form.elements['edit_username'].value;
+			post+='&username='+ob.form.elements['edit_username'].value;
 		}
 	}
-	var strength=load_snippet('password_strength',url);
+	var strength=load_snippet('password_strength',post);
 	strength*=2; if (strength>10) strength=10; // Normally too harsh!
 	ind.style.width=(strength*10)+'px';
 	if (strength>=6)
@@ -94,7 +94,7 @@ function set_field_error(the_element,error_msg)
 					while (p!==null)
 					{
 						p=p.parentNode;
-						if ((error_msg.substr(0,5)!='{!DISABLED_FORM_FIELD;}'.substr(0,5)) && (p) && (typeof p.getAttribute!='undefined') && (p.getAttribute('id')) && (p.getAttribute('id').substr(0,2)=='g_') && (p.style.display=='none'))
+						if ((error_msg.substr(0,5)!='{!DISABLED_FORM_FIELD;^}'.substr(0,5)) && (p) && (typeof p.getAttribute!='undefined') && (p.getAttribute('id')) && (p.getAttribute('id').substr(0,2)=='g_') && (p.style.display=='none'))
 						{
 							select_tab('g',p.getAttribute('id').substr(2,p.id.length-2),false,true);
 							break;
@@ -268,7 +268,7 @@ function do_form_preview(event,form,preview_url,has_separate_preview)
 
 	if (!document.getElementById('preview_iframe'))
 	{
-		fauxmodal_alert('{!ADBLOCKER;}');
+		fauxmodal_alert('{!ADBLOCKER;^}');
 		return false;
 	}
 
@@ -323,6 +323,9 @@ function do_form_preview(event,form,preview_url,has_separate_preview)
 		}
 	}*/
 
+	// Turn main post editing back off
+	if (typeof wysiwyg_set_readonly!='undefined') wysiwyg_set_readonly('post',true);
+
 	return true;
 }
 
@@ -344,8 +347,21 @@ function clever_find_value(form,element)
 			value='';
 			if (element.selectedIndex>=0)
 			{
-				value=element.options[element.selectedIndex].value;
-				if ((value=='') && (element.getAttribute('size')>1)) value='-1'; // Fudge, as we have selected something explicitly that is blank
+				if (element.multiple)
+				{
+					for (var i=0;i<element.options.length;i++)
+					{
+						if (element.options[i].selected)
+						{
+							if (value!='') value+=',';
+							value+=element.options[i].value;
+						}
+					}
+				} else if (element.selectedIndex>=0)
+				{
+					value=element.options[element.selectedIndex].value;
+					if ((value=='') && (element.getAttribute('size')>1)) value='-1'; // Fudge, as we have selected something explicitly that is blank
+				}
 			}
 			break;
 		case 'input':
@@ -379,6 +395,8 @@ function clever_find_value(form,element)
 				case 'time':
 				case 'url':
 				case 'week':
+				case 'password':
+				default:
 					value=element.value;
 					break;
 			}
@@ -404,7 +422,7 @@ function check_field(the_element,the_form,for_preview)
 	// Test file types
 	if ((the_element.type=='file') && (the_element.value) && (the_element.name!='file_anytype'))
 	{
-		var allowed_types='{$VALID_FILE_TYPES;}'.split(/,/);
+		var allowed_types='{$VALID_FILE_TYPES;^}'.split(/,/);
 		var type_ok=false;
 		var theFileType=the_element.value.indexOf('.')?the_element.value.substr(the_element.value.lastIndexOf('.')+1):'{!NONE;^}';
 		for (var k=0;k<allowed_types.length;k++)
@@ -448,7 +466,7 @@ function check_field(the_element,the_form,for_preview)
 	var errormsg_element=(typeof the_element.name=='undefined')?null:get_errormsg_element(the_element.name);
 
 	// Blank?
-	if ((required) && (my_value.replace(/&nbsp;/g,' ').replace(/<br\s*\/?>/g,' ').replace(/\s/g,'')==''))
+	if ((required) && ((my_value.replace(/&nbsp;/g,' ').replace(/<br\s*\/?>/g,' ').replace(/\s/g,'')=='') || (my_value=='****') || (my_value==the_element.alt)))
 	{
 		error_msg='{!REQUIRED_NOT_FILLED_IN;^}';
 		if ((errormsg_element) && (errormsg_element.getAttribute('data-errorUnfilled')!=null) && (errormsg_element.getAttribute('data-errorUnfilled')!=''))
@@ -462,29 +480,29 @@ function check_field(the_element,the_form,for_preview)
 			var month=the_form.elements[the_element.name.replace(/\_(day|month|year)$/,'_month')].options[the_form.elements[the_element.name.replace(/\_(day|month|year)$/,'_month')].selectedIndex].value;
 			var year=the_form.elements[the_element.name.replace(/\_(day|month|year)$/,'_year')].options[the_form.elements[the_element.name.replace(/\_(day|month|year)$/,'_year')].selectedIndex].value;
 			var source_date=new Date(year,month-1,day);
-			if (year!=source_date.getFullYear()) error_msg='{!NOT_A_DATE;^}';
-			if (month!=source_date.getMonth()+1) error_msg='{!NOT_A_DATE;^}';
-			if (day!=source_date.getDate()) error_msg='{!NOT_A_DATE;^}';
+			if (year!=source_date.getFullYear()) error_msg='{!javascript:NOT_A_DATE;^}';
+			if (month!=source_date.getMonth()+1) error_msg='{!javascript:NOT_A_DATE;^}';
+			if (day!=source_date.getDate()) error_msg='{!javascript:NOT_A_DATE;^}';
 		}
 		if (((the_class=='input_email') || (the_class=='input_email_required')) && (my_value!='') && (!my_value.match(/^[a-zA-Z0-9\._\-\+]+@[a-zA-Z0-9\._\-]+$/)))
 		{
-			error_msg='{!NOT_A_EMAIL;^}'.replace('\{1}',my_value);
+			error_msg='{!javascript:NOT_A_EMAIL;^}'.replace('\{1}',my_value);
 		}
 		if (((the_class=='input_username') || (the_class=='input_username_required')) && (my_value!='') && (window.do_ajax_field_test) && (!do_ajax_field_test('{$FIND_SCRIPT_NOHTTP;,username_exists}?username='+encodeURIComponent(my_value))))
 		{
-			error_msg='{!NOT_USERNAME;^}'.replace('\{1}',my_value);
+			error_msg='{!javascript:NOT_USERNAME;^}'.replace('\{1}',my_value);
 		}
-		if (((the_class=='input_codename') || (the_class=='input_codename_required')) && (my_value!='') && (!my_value.match(/^[a-zA-Z0-9\-\.\_]*$/)))
+		if (((the_class=='input_codename') || (the_class=='input_codename_required')) && (my_value!='') && (!my_value.match(/^[{$URL_CONTENT_REGEXP_JS}]*$/)))
 		{
-			error_msg='{!NOT_CODENAME;^}'.replace('\{1}',my_value);
+			error_msg='{!javascript:NOT_CODENAME;^}'.replace('\{1}',my_value);
 		}
 		if (((the_class=='input_integer') || (the_class=='input_integer_required')) && (my_value!='') && (parseInt(my_value,10)!=my_value-0))
 		{
-			error_msg='{!NOT_INTEGER;^}'.replace('\{1}',my_value);
+			error_msg='{!javascript:NOT_INTEGER;^}'.replace('\{1}',my_value);
 		}
 		if (((the_class=='input_float') || (the_class=='input_float_required')) && (my_value!='') && (parseFloat(my_value)!=my_value-0))
 		{
-			error_msg='{!NOT_FLOAT;^}'.replace('\{1}',my_value);
+			error_msg='{!javascript:NOT_FLOAT;^}'.replace('\{1}',my_value);
 		}
 
 		// Shim for HTML5 regexp patterns
@@ -492,15 +510,16 @@ function check_field(the_element,the_form,for_preview)
 		{
 			if ((my_value!='') && (!my_value.match(new RegExp(the_element.getAttribute('pattern')))))
 			{
-				error_msg='{!PATTERN_NOT_MATCHED;^}'.replace('\{1}',my_value);
+				error_msg='{!javascript:PATTERN_NOT_MATCHED;^}'.replace('\{1}',my_value);
 			}
 		}
 
 		// Custom error messages
-		if (error_msg!='')
+		if (error_msg!='' && errormsg_element!=null)
 		{
-			if ((errormsg_element) && (errormsg_element.getAttribute('data-errorRegexp')!=''))
-				error_msg=errormsg_element.getAttribute('data-errorRegexp');
+			var custom_msg=errormsg_element.getAttribute('data-errorRegexp');
+			if ((custom_msg!=null) && (custom_msg!=''))
+				error_msg=custom_msg;
 		}
 	}
 
@@ -518,7 +537,7 @@ function check_field(the_element,the_form,for_preview)
 function check_form(the_form,for_preview)
 {
 	var delete_element=document.getElementById('delete');
-	if ((!for_preview) && (delete_element!=null) && (((first_class_name(delete_element.className)=='input_radio') && (the_element.value!='0')) || (first_class_name(delete_element.className)=='input_tick')) && (delete_element.checked))
+	if ((!for_preview) && (delete_element!=null) && (((first_class_name(delete_element.className)=='input_radio') && (delete_element.value!='0')) || (first_class_name(delete_element.className)=='input_tick')) && (delete_element.checked))
 	{
 		return true;
 	}
@@ -585,7 +604,7 @@ function check_form(the_form,for_preview)
 			}
 			if (!alerted)
 			{
-				window.fauxmodal_alert('{!TOO_MUCH_FILE_DATA;^}'.replace(new RegExp('\\\\{'+'1'+'\\\\}','g'),Math.round(total_file_size/1024)).replace(new RegExp('\\\\{'+'2'+'\\\\}','g'),Math.round(the_form.elements['MAX_FILE_SIZE'].value/1024)));
+				window.fauxmodal_alert('{!javascript:TOO_MUCH_FILE_DATA;^}'.replace(new RegExp('\\\\{'+'1'+'\\\\}','g'),Math.round(total_file_size/1024)).replace(new RegExp('\\\\{'+'2'+'\\\\}','g'),Math.round(the_form.elements['MAX_FILE_SIZE'].value/1024)));
 			}
 			alerted=true;
 		}
@@ -948,8 +967,8 @@ function toggle_subordinate_fields(pic,help_id)
 		pic.src=((pic.src.indexOf('themewizard.php')!=-1)?pic.src.replace('expand','contract'):'{$IMG;,1x/trays/contract}').replace(/^https?:/,window.location.protocol);
 		if (typeof pic.srcset!='undefined')
 			pic.srcset=((pic.srcset.indexOf('themewizard.php')!=-1)?pic.srcset.replace('expand','contract'):'{$IMG;,2x/trays/contract} 2x').replace(/^https?:/,window.location.protocol);
-		pic.setAttribute('alt','{!CONTRACT;}');
-		pic.setAttribute('title','{!CONTRACT;}');
+		pic.setAttribute('alt','{!CONTRACT;^}');
+		pic.setAttribute('title','{!CONTRACT;^}');
 		new_state=(field_input.nodeName.toLowerCase()=='tr')?'table-row':'block';
 		new_state_2='block';
 		new_state_3='1px dashed';
@@ -958,8 +977,8 @@ function toggle_subordinate_fields(pic,help_id)
 		pic.src=((pic.src.indexOf('themewizard.php')!=-1)?pic.src.replace('contract','expand'):'{$IMG;,1x/trays/expand}').replace(/^https?:/,window.location.protocol);
 		if (typeof pic.srcset!='undefined')
 			pic.srcset=((pic.src.indexOf('themewizard.php')!=-1)?pic.srcset.replace('contract','expand'):'{$IMG;,2x/trays/expand} 2x').replace(/^https?:/,window.location.protocol);
-		pic.setAttribute('alt','{!EXPAND;}');
-		pic.setAttribute('title','{!EXPAND;}');
+		pic.setAttribute('alt','{!EXPAND;^}');
+		pic.setAttribute('title','{!EXPAND;^}');
 		new_state='none';
 		new_state_2='none';
 		new_state_3='0';
@@ -1038,18 +1057,23 @@ function initialise_input_theme_image_entry(name,code)
 	}
 }
 
-function choose_picture(id,ob,name,event)
+function choose_picture(j_id,img_ob,name,event)
 {
-	if (!ob) return;
+	var j=document.getElementById(j_id);
+	if (!j) return;
 
-	var r=document.getElementById(id);
-	if (!r) return;
-	var e=r.form.elements[name];
+	if (!img_ob)
+	{
+		img_ob=document.getElementById('w_'+j_id.substring(2,j_id.length)).getElementsByTagName('img')[0];
+		if (typeof img_ob=='undefined') return;
+	}
+
+	var e=j.form.elements[name];
 	for (var i=0;i<e.length;i++)
 	{
 		if (e[i].disabled) continue;
 		var img=e[i].parentNode.parentNode.getElementsByTagName('img')[0];
-		if ((img) && (img!=ob))
+		if ((img) && (img!=img_ob))
 		{
 			if (img.parentNode.className.indexOf(' selected')!=-1)
 			{
@@ -1060,16 +1084,18 @@ function choose_picture(id,ob,name,event)
 		}
 	}
 
-	if (r.disabled) return;
-	r.checked=true;
-	//if (r.onclick) r.onclick(); causes loop
-	if (typeof r.fakeonchange!='undefined' && r.fakeonchange) r.fakeonchange(event);
-	ob.parentNode.className+=' selected';
-	ob.style.outline='1px dotted';
+	if (j.disabled) return;
+	j.checked=true;
+	//if (j.onclick) j.onclick(); causes loop
+	if (typeof j.fakeonchange!='undefined' && j.fakeonchange) j.fakeonchange(event);
+	img_ob.parentNode.className+=' selected';
+	img_ob.style.outline='1px dotted';
 }
 
-function preview_mobile_button(ob)
+function preview_mobile_button(ob,event)
 {
+	if (!event) event=window.event;
+
 	ob.form.action=ob.form.action.replace(/keep_mobile=\d/g,'keep_mobile='+(ob.checked?'1':'0'));
 	if (window.parent)
 	{
@@ -1108,7 +1134,7 @@ function disable_preview_scripts(under)
 		{
 			try
 			{
-				if ((!elements[i].href) || (elements[i].href.toLowerCase().indexOf('javascript:')!=0)) // guard due to weird Firefox bug, JS actions still opening new window
+				if (((!elements[i].href) || (elements[i].href.toLowerCase().indexOf('javascript:')!=0)) && (elements[i].target!=='_self') && (elements[i].target!=='_blank')) // guard due to weird Firefox bug, JS actions still opening new window
 				{
 					elements[i].target='false_blank'; // Real _blank would trigger annoying CSS. This is better anyway.
 				}
@@ -1250,12 +1276,12 @@ function geolocate_address_fields()
 		{
 			navigator.geolocation.getCurrentPosition(function(position) {
 				var fields=[
-					'{!cns:SPECIAL_CPF__cms_street_address;}',
-					'{!cns:SPECIAL_CPF__cms_city;}',
-					'{!cns:SPECIAL_CPF__cms_county;}',
-					'{!cns:SPECIAL_CPF__cms_state;}',
-					'{!cns:SPECIAL_CPF__cms_post_code;}',
-					'{!cns:SPECIAL_CPF__cms_country;}'
+					'{!cns_special_cpf:SPECIAL_CPF__cms_street_address;^}',
+					'{!cns_special_cpf:SPECIAL_CPF__cms_city;^}',
+					'{!cns_special_cpf:SPECIAL_CPF__cms_county;^}',
+					'{!cns_special_cpf:SPECIAL_CPF__cms_state;^}',
+					'{!cns_special_cpf:SPECIAL_CPF__cms_post_code;^}',
+					'{!cns_special_cpf:SPECIAL_CPF__cms_country;^}'
 				];
 
 				var geocode_url='{$FIND_SCRIPT;,geocode}';

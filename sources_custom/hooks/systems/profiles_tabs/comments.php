@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -35,7 +35,7 @@ class Hook_profiles_tabs_comments
      *
      * @param  MEMBER $member_id_of The ID of the member who is being viewed
      * @param  MEMBER $member_id_viewing The ID of the member who is doing the viewing
-     * @param  boolean $leave_to_ajax_if_possible Whether to leave the tab contents NULL, if tis hook supports it, so that AJAX can load it later
+     * @param  boolean $leave_to_ajax_if_possible Whether to leave the tab contents null, if tis hook supports it, so that AJAX can load it later
      * @return array A tuple: The tab title, the tab contents, the suggested tab order, the icon
      */
     public function render_tab($member_id_of, $member_id_viewing, $leave_to_ajax_if_possible = false)
@@ -46,7 +46,7 @@ class Hook_profiles_tabs_comments
 
         $order = 25;
 
-        if ($leave_to_ajax_if_possible && count($_POST) == 0) {
+        if ($leave_to_ajax_if_possible && !has_interesting_post_fields()) {
             return array($title, null, $order, 'feedback/comment');
         }
 
@@ -74,8 +74,8 @@ class Hook_profiles_tabs_comments
         $test = $GLOBALS['SITE_DB']->query_select_value_if_there('notifications_enabled', 'id', $main_map);
         if (is_null($test)) {
             $GLOBALS['SITE_DB']->query_insert('notifications_enabled', array(
-                                                                           'l_setting' => _find_member_statistical_notification_type($member_id_of, 'comment_posted'),
-                                                                       ) + $main_map);
+                'l_setting' => _find_member_statistical_notification_type($member_id_of, 'comment_posted'),
+            ) + $main_map);
         }
 
         $content = do_template('CNS_MEMBER_PROFILE_COMMENTS', array('_GUID' => '5ce1949e4fa0d247631f52f48698df4e', 'MEMBER_ID' => strval($member_id_of), 'FORUM_NAME' => $forum_name));

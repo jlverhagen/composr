@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -35,23 +35,7 @@
  */
 function init__minikernel()
 {
-    // Fixup some inconsistencies in parameterisation on different PHP platforms. See phpstub.php for info on what environmental data we can rely on.
-    if ((!isset($_SERVER['SCRIPT_NAME'])) && (!isset($_ENV['SCRIPT_NAME']))) { // May be missing on GAE
-        if (strpos($_SERVER['PHP_SELF'], '.php') !== false) {
-            $_SERVER['SCRIPT_NAME'] = preg_replace('#\.php/.*#', '.php', $_SERVER['PHP_SELF']); // Same as PHP_SELF except without path info on the end
-        } else {
-            $_SERVER['SCRIPT_NAME'] = '/' . $_SERVER['SCRIPT_FILENAME']; // In GAE SCRIPT_FILENAME is actually relative to the app root
-        }
-    }
-    if ((!array_key_exists('REQUEST_URI', $_SERVER)) && (!array_key_exists('REQUEST_URI', $_ENV))) { // May be missing on IIS
-        $_SERVER['REQUEST_URI'] = $_SERVER['SCRIPT_NAME'];
-        $first = true;
-        foreach ($_GET as $key => $val) {
-            $_SERVER['REQUEST_URI'] .= $first ? '?' : '&';
-            $_SERVER['REQUEST_URI'] .= urlencode($key) . '=' . urlencode($val);
-            $first = false;
-        }
-    }
+    fixup_bad_php_env_vars();
 
     global $EXITING;
     $EXITING = null;
@@ -61,6 +45,9 @@ function init__minikernel()
 
     global $EXTERNAL_CALL;
     $EXTERNAL_CALL = false;
+
+    global $IN_SELF_ROUTING_SCRIPT;
+    $IN_SELF_ROUTING_SCRIPT = false;
 
     global $XSS_DETECT, $LAX_COMCODE;
     $XSS_DETECT = false;
@@ -73,7 +60,7 @@ function init__minikernel()
     safe_ini_set('track_errors', '1');
     $GLOBALS['SUPPRESS_ERROR_DEATH'] = false;
 
-    safe_ini_set('ocproducts.type_strictness', '1');
+    //safe_ini_set('ocproducts.type_strictness', '1');
 
     safe_ini_set('date.timezone', 'UTC');
 
@@ -81,6 +68,70 @@ function init__minikernel()
     @header('Last-Modified: ' . gmdate('D, d M Y H:i:s') . ' GMT');
     @header('Cache-Control: no-cache, max-age=0');
     @header('Pragma: no-cache'); // for proxies, and also IE
+}
+
+/**
+ * PHP's environment can be a real mess across servers. Cleanup the best we can.
+ * See phpstub.php for info on what environmental data we can rely on.
+ * See Chris's own comments on http://php.net/manual/en/reserved.variables.server.php also
+ */
+function fixup_bad_php_env_vars()
+{
+    // We can trust these to be there
+    $script_filename = empty($_SERVER['SCRIPT_FILENAME']) ? $_ENV['SCRIPT_FILENAME'] : $_SERVER['SCRIPT_FILENAME']; // If was not here, was added by our front-end controller script
+
+    // Now derive missing ones...
+
+    $document_root = empty($_SERVER['DOCUMENT_ROOT']) ? (empty($_ENV['DOCUMENT_ROOT']) ? '' : $_ENV['DOCUMENT_ROOT']) : $_SERVER['DOCUMENT_ROOT'];
+    if (empty($document_root)) {
+        $document_root = '';
+        $path_components = explode(DIRECTORY_SEPARATOR, get_file_base());
+        foreach ($path_components as $i => $path_component) {
+            $document_root .= $path_component . DIRECTORY_SEPARATOR;
+            if (in_array($path_component, array('public_html', 'www', 'webroot', 'httpdocs', 'wwwroot', 'Documents'))) {
+                break;
+            }
+        }
+        $document_root = substr($document_root, 0, strlen($document_root) - strlen(DIRECTORY_SEPARATOR));
+        $_SERVER['DOCUMENT_ROOT'] = $document_root;
+    }
+
+    $php_self = empty($_SERVER['PHP_SELF']) ? (empty($_ENV['PHP_SELF']) ? '' : $_ENV['PHP_SELF']) : $_SERVER['PHP_SELF'];
+    if ((empty($php_self)) || (/*or corrupt*/strpos($php_self, '.php') === false)) {
+        // We're really desparate if we have to derive this, but here we go
+        $_SERVER['PHP_SELF'] = '/' . preg_replace('#^' . preg_quote($document_root, '#') . '/#', '', $script_filename);
+        $path_info = empty($_SERVER['PATH_INFO']) ? (empty($_ENV['PATH_INFO']) ? '' : $_ENV['PATH_INFO']) : $_SERVER['PATH_INFO'];
+        if (!empty($path_info)) { // Add in path-info if we have it
+            $_SERVER['PHP_SELF'] .= $path_info;
+        }
+        $php_self = $_SERVER['PHP_SELF'];
+    }
+
+    if ((empty($_SERVER['SCRIPT_NAME'])) && (empty($_ENV['SCRIPT_NAME']))) {
+        $_SERVER['SCRIPT_NAME'] = preg_replace('#\.php/.*#', '.php', $php_self); // Same as PHP_SELF except without path-info on the end
+    }
+
+    if ((empty($_SERVER['REQUEST_URI'])) && (empty($_ENV['REQUEST_URI']))) {
+        if (isset($_SERVER['REDIRECT_URL'])) {
+            $_SERVER['REQUEST_URI'] = $_SERVER['REDIRECT_URL'];
+            if (strpos($_SERVER['REQUEST_URI'], '?') === false) {
+                if (count($_GET) != 0) {
+                    $_SERVER['REQUEST_URI'] .= '?' . http_build_query($_GET); // Messy as rewrite URL-embedded parameters will be doubled, but if you've got a broken server don't push it to do rewrites
+                }
+            }
+        } else {
+            $_SERVER['REQUEST_URI'] = $php_self; // Same as PHP_SELF, but...
+            if (count($_GET) != 0) { // add in query string data if we have it
+                $_SERVER['REQUEST_URI'] .= '?' . http_build_query($_GET);
+            }
+
+            // ^ NB: May be slight deviation. Default directory index files not considered, i.e. index.php may have been omitted in URL
+        }
+    }
+
+    if ((empty($_SERVER['QUERY_STRING'])) && (empty($_ENV['QUERY_STRING']))) {
+        $_SERVER['QUERY_STRING'] = http_build_query($_GET);
+    }
 }
 
 /**
@@ -114,6 +165,22 @@ function sync_file($filename)
 }
 
 /**
+ * Find whether a particular PHP function is blocked.
+ *
+ * @param  string $function Function name.
+ * @return boolean Whether it is.
+ */
+function php_function_allowed($function)
+{
+    if (!in_array($function, /*These are actually language constructs rather than functions*/array('eval', 'exit', 'include', 'include_once', 'isset', 'require', 'require_once', 'unset', 'empty', 'print',))) {
+        if (!function_exists($function)) {
+            return false;
+        }
+    }
+    return (@preg_match('#(\s|,|^)' . str_replace('#', '\#', preg_quote($function)) . '(\s|$|,)#', strtolower(@ini_get('disable_functions') . ',' . ini_get('suhosin.executor.func.blacklist') . ',' . ini_get('suhosin.executor.include.blacklist') . ',' . ini_get('suhosin.executor.eval.blacklist'))) == 0);
+}
+
+/**
  * Return a debugging back-trace of the current execution stack. Use this for debugging purposes.
  *
  * @return Tempcode Debugging backtrace
@@ -121,16 +188,16 @@ function sync_file($filename)
 function get_html_trace()
 {
     $x = @ob_get_contents();
-    @ob_end_clean();
+    cms_ob_end_clean();
     if (is_string($x)) {
         @print($x);
     }
     $GLOBALS['SUPPRESS_ERROR_DEATH'] = true;
     $_trace = debug_backtrace();
-    $trace = new Tempcode();
+    $trace = array();
     foreach ($_trace as $i => $stage) {
-        $traces = new Tempcode();
-//    if (in_array($stage['function'],array('get_html_trace','composr_error_handler','fatal_exit'))) continue;
+        $traces = array();
+        //if (in_array($stage['function'], array('get_html_trace', 'composr_error_handler', 'fatal_exit'))) continue;
         $file = '';
         $line = '';
         $__value = mixed();
@@ -177,13 +244,13 @@ function get_html_trace()
                     ob_end_clean();
                 }
             }
-            $traces->attach(do_template('STACK_TRACE_LINE', array('_GUID' => 'a3bdbe9f0980b425f6aeac5d00fe4f96', 'LINE' => $line, 'FILE' => $file, 'KEY' => ucfirst($key), 'VALUE' => $_value)));
+            $traces[] = array('LINE' => $line, 'FILE' => $file, 'KEY' => ucfirst($key), 'VALUE' => $_value);
         }
-        $trace->attach(do_template('STACK_TRACE_WRAP', array('_GUID' => '748860b0c83ea19d56de594fdc04fe12', 'TRACES' => $traces)));
+        $trace[] = array('TRACES' => $traces);
     }
     $GLOBALS['SUPPRESS_ERROR_DEATH'] = false;
 
-    return do_template('STACK_TRACE_HYPER_WRAP', array('_GUID' => 'da6c0ef0d8d793807d22e51555d73929', 'CONTENT' => $trace, 'POST' => ''));
+    return do_template('STACK_TRACE', array('_GUID' => 'da6c0ef0d8d793807d22e51555d73929', 'TRACE' => $trace, 'POST' => ''));
 }
 
 /**
@@ -195,16 +262,12 @@ function get_html_trace()
  */
 function fatal_exit($text)
 {
-    //   if (is_object($text)) $text=$text->evaluate();
+    //if (is_object($text)) $text = $text->evaluate();
 
     // To break any looping of errors
     global $EXITING;
     if ((!is_null($EXITING)) || (!class_exists('Tempcode'))) {
-        if ((get_domain() == 'localhost') || ((function_exists('get_member')) && (has_privilege(get_member(), 'see_stack_dump')))) {
-            die_html_trace($text);
-        } else {
-            critical_error('RELAY', is_object($text) ? $text->evaluate() : escape_html($text));
-        }
+        die_html_trace($text);
     }
     $EXITING = 1;
 
@@ -212,7 +275,7 @@ function fatal_exit($text)
 
     $trace = get_html_trace();
     $echo = new Tempcode();
-    $echo->attach(do_template('FATAL_SCREEN', array('_GUID' => '95877d427cf4e785b2f16cc71381e7eb', 'TITLE' => $title, 'MESSAGE' => $text, 'TRACE' => $trace)));
+    $echo->attach(do_template('FATAL_SCREEN', array('_GUID' => '95877d427cf4e785b2f16cc71381e7eb', 'TITLE' => $title, 'MESSAGE' => $text, 'TRACE' => $trace, 'MAY_SEE_TRACE' => true,)));
     $css_url = 'install.php?type=css';
     $css_url_2 = 'install.php?type=css_2';
     $logo_url = 'install.php?type=logo';
@@ -223,21 +286,42 @@ function fatal_exit($text)
     }
     require_code('tempcode_compiler');
     $css_nocache = _do_template('default', '/css/', 'no_cache', 'no_cache', 'EN', '.css');
-    $out_final = do_template('INSTALLER_HTML_WRAP', array(
-        '_GUID' => '990e78523cee0b6782e1e09d73a700a7',
-        'CSS_NOCACHE' => $css_nocache,
-        'DEFAULT_FORUM' => '',
-        'PASSWORD_PROMPT' => '',
-        'CSS_URL' => $css_url,
-        'CSS_URL_2' => $css_url_2,
-        'LOGO_URL' => $logo_url,
-        'STEP' => integer_format(intval($_GET['step'])),
-        'CONTENT' => $echo,
-        'VERSION' => $version,
-    ));
+    if (running_script('restore')) {
+        $out_final = do_template('RESTORE_HTML_WRAP', array(
+            '_GUID' => '190e78523cee0b6782e1e09d73a700a7',
+            'CSS_NOCACHE' => $css_nocache,
+            'MESSAGE' => $echo,
+            'ERROR' => true,
+        ));
+    } else {
+        $out_final = do_template('INSTALLER_HTML_WRAP', array(
+            '_GUID' => '990e78523cee0b6782e1e09d73a700a7',
+            'CSS_NOCACHE' => $css_nocache,
+            'DEFAULT_FORUM' => '',
+            'PASSWORD_PROMPT' => '',
+            'CSS_URL' => $css_url,
+            'CSS_URL_2' => $css_url_2,
+            'LOGO_URL' => $logo_url,
+            'STEP' => integer_format(intval($_GET['step'])),
+            'CONTENT' => $echo,
+            'VERSION' => $version,
+        ));
+    }
     $out_final->evaluate_echo();
 
     exit();
+}
+
+/**
+ * Lookup error on compo.sr, to see if there is more information.
+ * (null implementation for minikernel)
+ *
+ * @param  mixed $error_message The error message (string or Tempcode)
+ * @return ?string The result from the web service (null: no result)
+ */
+function get_webservice_result($error_message)
+{
+    return null;
 }
 
 /**
@@ -314,7 +398,7 @@ function composr_error_handler($errno, $errstr, $errfile, $errline)
         case E_ERROR:
         case E_WARNING:
         case E_NOTICE:
-            @ob_end_clean(); // Emergency output, potentially, so kill off any active buffer
+            cms_ob_end_clean(); // Emergency output, potentially, so kill off any active buffer
             fatal_exit('PHP [' . strval($errno) . '] ' . $errstr);
     }
 
@@ -343,6 +427,55 @@ function in_safe_mode()
 }
 
 /**
+ * Get server environment variables.
+ *
+ * @param  string $key The variable name
+ * @return string The variable value ('' means unknown)
+ */
+function cms_srv($key)
+{
+    if (isset($_SERVER[$key])) {
+        return /*stripslashes*/
+            ($_SERVER[$key]);
+    }
+    if ((isset($_ENV)) && (isset($_ENV[$key]))) {
+        return /*stripslashes*/
+            ($_ENV[$key]);
+    }
+
+    if ($key == 'HTTP_HOST') {
+        if (!empty($_SERVER['HTTP_HOST'])) {
+            return $_SERVER['HTTP_HOST'];
+        }
+        if (!empty($_ENV['HTTP_HOST'])) {
+            return $_ENV['HTTP_HOST'];
+        }
+        if (function_exists('gethostname')) {
+            return gethostname();
+        }
+        if (!empty($_SERVER['SERVER_ADDR'])) {
+            return $_SERVER['SERVER_ADDR'];
+        }
+        if (!empty($_ENV['SERVER_ADDR'])) {
+            return $_ENV['SERVER_ADDR'];
+        }
+        if (!empty($_SERVER['LOCAL_ADDR'])) {
+            return $_SERVER['LOCAL_ADDR'];
+        }
+        if (!empty($_ENV['LOCAL_ADDR'])) {
+            return $_ENV['LOCAL_ADDR'];
+        }
+        return 'localhost';
+    }
+
+    if ($key == 'SERVER_ADDR') { // IIS issue
+        return cms_srv('LOCAL_ADDR');
+    }
+
+    return '';
+}
+
+/**
  * Find whether a certain script is being run to get here.
  *
  * @param  string $is_this_running Script filename (canonically we want NO .php file type suffix)
@@ -368,7 +501,7 @@ function get_charset()
         return do_lang('charset');
     }
     global $SITE_INFO;
-    $lang = array_key_exists('default_lang', $SITE_INFO) ? $SITE_INFO['default_lang'] : 'EN';
+    $lang = (!empty($SITE_INFO['default_lang'])) ? $SITE_INFO['default_lang'] : 'EN';
     $path = get_file_base() . '/lang_custom/' . $lang . '/global.ini';
     if (!file_exists($path)) {
         $path = get_file_base() . '/lang/' . $lang . '/global.ini';
@@ -377,7 +510,7 @@ function get_charset()
     $contents = unixify_line_format(fread($file, 100));
     fclose($file);
     $matches = array();
-    if (preg_match('#charset=([\w\-]+)\n#', $contents, $matches) != 0) {
+    if (preg_match('#charset=([\w\-]+)\r?\n#', $contents, $matches) != 0) {
         return strtolower($matches[1]);
     }
     return strtolower('utf-8');
@@ -415,11 +548,7 @@ function warn_exit($text)
     // To break any looping of errors
     global $EXITING;
     if ((!is_null($EXITING)) || (!class_exists('Tempcode'))) {
-        if ((get_domain() == 'localhost') || ((function_exists('get_member')) && (has_privilege(get_member(), 'see_stack_dump')))) {
-            die_html_trace($text);
-        } else {
-            critical_error('RELAY', is_object($text) ? $text->evaluate() : escape_html($text));
-        }
+        die_html_trace($text);
     }
     $EXITING = 1;
 
@@ -437,18 +566,27 @@ function warn_exit($text)
     }
     require_code('tempcode_compiler');
     $css_nocache = _do_template('default', '/css/', 'no_cache', 'no_cache', 'EN', '.css');
-    $out_final = do_template('INSTALLER_HTML_WRAP', array(
-        '_GUID' => '710e7ea5c186b4c42bb3a5453dd915ed',
-        'CSS_NOCACHE' => $css_nocache,
-        'DEFAULT_FORUM' => '',
-        'PASSWORD_PROMPT' => '',
-        'CSS_URL' => $css_url,
-        'CSS_URL_2' => $css_url_2,
-        'LOGO_URL' => $logo_url,
-        'STEP' => integer_format(intval($_GET['step'])),
-        'CONTENT' => $echo,
-        'VERSION' => $version,
-    ));
+    if (running_script('restore')) {
+        $out_final = do_template('RESTORE_HTML_WRAP', array(
+            '_GUID' => '190e78523cee0b6782e1e09d73a700a7',
+            'CSS_NOCACHE' => $css_nocache,
+            'MESSAGE' => $echo,
+            'ERROR' => true,
+        ));
+    } else {
+        $out_final = do_template('INSTALLER_HTML_WRAP', array(
+            '_GUID' => '710e7ea5c186b4c42bb3a5453dd915ed',
+            'CSS_NOCACHE' => $css_nocache,
+            'DEFAULT_FORUM' => '',
+            'PASSWORD_PROMPT' => '',
+            'CSS_URL' => $css_url,
+            'CSS_URL_2' => $css_url_2,
+            'LOGO_URL' => $logo_url,
+            'STEP' => integer_format(intval($_GET['step'])),
+            'CONTENT' => $echo,
+            'VERSION' => $version,
+        ));
+    }
     $out_final->evaluate_echo();
 
     exit();
@@ -482,7 +620,7 @@ function cms_version_pretty()
 function get_domain()
 {
     global $SITE_INFO;
-    if (!array_key_exists('domain', $SITE_INFO)) {
+    if (empty($SITE_INFO['domain'])) {
         $SITE_INFO['domain'] = preg_replace('#:.*#', '', cms_srv('HTTP_HOST'));
     }
     return $SITE_INFO['domain'];
@@ -496,7 +634,7 @@ function get_domain()
 function get_forum_type()
 {
     global $SITE_INFO;
-    if (!array_key_exists('forum_type', $SITE_INFO)) {
+    if (empty($SITE_INFO['forum_type'])) {
         return 'none';
     }
     return $SITE_INFO['forum_type'];
@@ -513,7 +651,7 @@ function get_forum_base_url()
         return '';
     }
     global $SITE_INFO;
-    if (!array_key_exists('board_prefix', $SITE_INFO)) {
+    if (empty($SITE_INFO['board_prefix'])) {
         return get_base_url();
     }
     return $SITE_INFO['board_prefix'];
@@ -539,8 +677,10 @@ function get_site_name()
 function get_base_url($https = null, $zone_for = '')
 {
     global $SITE_INFO;
-    if (!array_key_exists('base_url', $SITE_INFO)) {
-        $base_url = post_param_string('base_url', 'http://' . cms_srv('HTTP_HOST') . dirname(cms_srv('SCRIPT_NAME')));
+    if (empty($SITE_INFO['base_url'])) {
+        $default_base_url = (tacit_https() ? 'https://' : 'http://') . cms_srv('HTTP_HOST') . str_replace('%2F', '/', rawurlencode(str_replace('\\', '/', dirname(cms_srv('SCRIPT_NAME')))));
+
+        $base_url = post_param_string('base_url', $default_base_url);
         if (substr($base_url, -1) == '/') {
             $base_url = substr($base_url, 0, strlen($base_url) - 1);
         }
@@ -595,7 +735,7 @@ function check_wordfilter($a, $name = null, $no_die = false, $try_patterns = fal
  *
  * @param  ID_TEXT $name The name of the parameter to get
  * @param  ?string $default The default value to give the parameter if the parameter value is not defined (null: give error on missing parameter)
- * @return ?string The value of the parameter (null: not there, and default was NULL)
+ * @return ?string The value of the parameter (null: not there, and default was null)
  */
 function either_param_string($name, $default = null)
 {
@@ -608,7 +748,7 @@ function either_param_string($name, $default = null)
  *
  * @param  ID_TEXT $name The name of the parameter to get
  * @param  ?string $default The default value to give the parameter if the parameter value is not defined (null: give error on missing parameter)
- * @return ?string The value of the parameter (null: not there, and default was NULL)
+ * @return ?string The value of the parameter (null: not there, and default was null)
  */
 function post_param_string($name, $default = null)
 {
@@ -621,7 +761,7 @@ function post_param_string($name, $default = null)
  *
  * @param  ID_TEXT $name The name of the parameter to get
  * @param  ?string $default The default value to give the parameter if the parameter value is not defined (null: give error on missing parameter)
- * @return ?string The value of the parameter (null: not there, and default was NULL)
+ * @return ?string The value of the parameter (null: not there, and default was null)
  */
 function get_param_string($name, $default = null)
 {
@@ -637,7 +777,7 @@ function get_param_string($name, $default = null)
  * @param  ?mixed $default The default value to use for the parameter (null: no default)
  * @param  boolean $must_integer Whether the parameter has to be an integer
  * @param  boolean $is_post Whether the parameter is a POST parameter
- * @return ?string The value of the parameter (null: not there, and default was NULL)
+ * @return ?string The value of the parameter (null: not there, and default was null)
  * @ignore
  */
 function __param($array, $name, $default, $must_integer = false, $is_post = false)
@@ -747,7 +887,7 @@ function filter_naughty($in)
  */
 function filter_naughty_harsh($in)
 {
-    if (preg_match('#^[\w0-9\-]*$#', $in) != 0) {
+    if (preg_match('#^[\w\-]*$#', $in) != 0) {
         return $in;
     }
     exit();
@@ -810,7 +950,7 @@ function simulated_wildcard_match($context, $word, $full_cover = false)
  *
  * @param  mixed $key Key
  * @param  ?TIME $min_cache_date Minimum timestamp that entries from the cache may hold (null: don't care)
- * @return ?mixed The data (null: not found / NULL entry)
+ * @return ?mixed The data (null: not found / null entry)
  */
 function persistent_cache_get($key, $min_cache_date = null)
 {
@@ -837,4 +977,17 @@ function persistent_cache_set($key, $data, $server_wide = false, $expire_secs = 
  */
 function persistent_cache_delete($key, $substring = false)
 {
+}
+
+/**
+ * Recursively clean (erase) the output buffer and turn off output buffering.
+ */
+function cms_ob_end_clean()
+{
+    while (ob_get_level() > 0) {
+        if (!ob_end_clean()) {
+            safe_ini_set('zlib.output_compression', '0');
+            break;
+        }
+    }
 }

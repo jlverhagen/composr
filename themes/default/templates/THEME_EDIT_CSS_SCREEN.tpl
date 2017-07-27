@@ -55,7 +55,7 @@
 							<th width="5%" align="left">CSS</th>
 						</tr>
 						<tr>
-							<td><a target="_blank" title="background {!LINK_NEW_WINDOW}" href="http://www.w3schools.com/cssref/pr_background.asp">background</a></td>
+							<td><a target="_blank" title="background {!LINK_NEW_WINDOW}" href="http://www.w3schools.com/cssref/css3_pr_background.asp">background</a></td>
 							<td>Sets all the background properties in one declaration</td>
 							<td>1</td>
 						</tr>
@@ -422,7 +422,7 @@
 	</div>
 </div>
 
-<form title="{!PRIMARY_PAGE_FORM}" action="{URL*}" method="post">
+<form title="{!PRIMARY_PAGE_FORM}" action="{URL*}" method="post" autocomplete="off" onsubmit="return modsecurity_workaround(this);">
 	{$INSERT_SPAMMER_BLACKHOLE}
 
 	<div>
@@ -450,11 +450,11 @@
 
 		<div class="float_surrounder buttons_group">
 			<div class="right">
-				<input id="save_button" onclick="disable_button_just_clicked(this); this.form.target='_self'; this.form.action='{URL;*}';" class="buttons__save button_screen" type="submit" value="{!SAVE}" />
+				<input id="save_button" onclick="disable_button_just_clicked(this); this.form.target='_self'; this.form.action='{URL;*}';" class="button_screen buttons__save" type="submit" value="{!SAVE}" />
 			</div>
 			{+START,IF,{$JS_ON}}
 				<div class="right">
-					<input onclick="disable_button_just_clicked(this); this.form.target='save_frame'; this.form.action='{URL;*}{$?,{$IN_STR,{URL},?},&amp;,?}save_and_stay=1';" class="buttons__save_and_stay button_screen" type="submit" accesskey="U" value="{!SAVE_AND_STAY}" />
+					<input onclick="disable_button_just_clicked(this); this.form.target='save_frame'; this.form.action='{URL;*}{$?,{$IN_STR,{URL},?},&amp;,?}save_and_stay=1';" class="button_screen buttons__save_and_stay" type="submit" accesskey="U" value="{!SAVE_AND_STAY}" />
 				</div>
 			{+END}
 		</div>
@@ -468,7 +468,7 @@
 			<label for="f_old"><a class="toggleable_tray_button" href="#" onclick="return toggleable_tray(this.parentNode.parentNode.parentNode);">{!ORIGINAL}</a>:</label>
 		</h2>
 		<div class="toggleable_tray" style="display: {$JS_ON,none,block}" aria-expanded="false">
-			<form title="{!ORIGINAL}" action="{$BASE_URL*}/index.php" method="post">
+			<form title="{!ORIGINAL}" action="{$BASE_URL*}/index.php" method="post" autocomplete="off">
 				<div class="constrain_field">
 					<textarea id="f_old" name="f_old" cols="70" rows="23" readonly="readonly" class="wide_field">{OLD_CONTENTS*}</textarea>
 				</div>
@@ -483,11 +483,9 @@
 	</p>
 {+END}
 
-{REVISION_HISTORY}
+{REVISIONS}
 
-{+START,IF,{$NEQ,{$VALUE_OPTION,no_frames},2}}
-	<iframe name="save_frame" id="save_frame" title="{!SAVE_AND_STAY}" class="hidden_save_frame" src="{$BASE_URL*}/uploads/index.html">{!SAVE_AND_STAY}</iframe>
-{+END}
+<iframe name="save_frame" id="save_frame" title="{!SAVE_AND_STAY}" class="hidden_save_frame" src="{$BASE_URL*}/uploads/index.html">{!SAVE_AND_STAY}</iframe>
 
 <script>// <![CDATA[
 	add_event_listener_abstract(window,'load',function() {
@@ -515,12 +513,12 @@
 
 		<p>{!DESCRIP_CSS_EQUATION_HELPER}</p>
 
-		<form title="{!CSS_EQUATION_HELPER}" action="{$BASE_URL*}/index.php" onsubmit="return false;" method="post">
+		<form title="{!CSS_EQUATION_HELPER}" action="{$BASE_URL*}/index.php" onsubmit="return false;" method="post" autocomplete="off">
 			<p class="vertical_alignment">
 				<label for="css_equation">{!CSS_EQUATION_HELPER}</label>
 				<input name="css_equation" id="css_equation" type="text" value="100% seed" />
 
-				<input onclick="cancel_bubbling(event,this); var result=load_snippet('themewizard_equation&amp;theme={THEME;*}&amp;css_equation='+window.encodeURIComponent(document.getElementById('css_equation').value),false); if (result=='' || result.indexOf('&lt;html')!=-1) window.fauxmodal_alert('{!ERROR_OCCURRED;}'); else document.getElementById('css_result').value=result; return false;" class="buttons__calculate button_screen_item" type="submit" value="{!CALCULATE}" />
+				<input onclick="cancel_bubbling(event,this); var result=load_snippet('themewizard_equation&amp;theme={THEME;*}&amp;css_equation='+window.encodeURIComponent(document.getElementById('css_equation').value)); if (result=='' || result.indexOf('&lt;html')!=-1) window.fauxmodal_alert('{!ERROR_OCCURRED;}'); else document.getElementById('css_result').value=result; return false;" class="button_screen_item buttons__calculate" type="submit" value="{!CALCULATE}" />
 
 				&rarr;
 

@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -25,9 +25,11 @@
  */
 function init__search()
 {
-    define('MINIMUM_AUTOCOMPLETE_LENGTH', intval(get_option('minimum_autocomplete_length')));
-    define('MINIMUM_AUTOCOMPLETE_PAST_SEARCH', intval(get_option('minimum_autocomplete_past_search')));
-    define('MAXIMUM_AUTOCOMPLETE_SUGGESTIONS', intval(get_option('maximum_autocomplete_suggestions')));
+    if (!defined('MINIMUM_AUTOCOMPLETE_LENGTH')) {
+        define('MINIMUM_AUTOCOMPLETE_LENGTH', intval(get_option('minimum_autocomplete_length')));
+        define('MINIMUM_AUTOCOMPLETE_PAST_SEARCH', intval(get_option('minimum_autocomplete_past_search')));
+        define('MAXIMUM_AUTOCOMPLETE_SUGGESTIONS', intval(get_option('maximum_autocomplete_suggestions')));
+    }
 }
 
 /**
@@ -47,14 +49,16 @@ abstract class FieldsSearchHook
     {
         $extra_sort_fields = array();
 
-        require_code('fields');
+        if (addon_installed('catalogues')) {
+            require_code('fields');
 
-        $rows = $GLOBALS['SITE_DB']->query_select('catalogue_fields', array('id', 'cf_name', 'cf_type', 'cf_default'), array('c_name' => $catalogue_name, 'cf_searchable' => 1, 'cf_visible' => 1), 'ORDER BY cf_order,' . $GLOBALS['FORUM_DB']->translate_field_ref('cf_name'));
-        foreach ($rows as $i => $row) {
-            $ob = get_fields_hook($row['cf_type']);
-            $temp = $ob->inputted_to_sql_for_search($row, $i);
-            if (is_null($temp)) { // Standard direct 'substring' search
-                $extra_sort_fields['f' . strval($i) . '_actual_value'] = get_translated_text($row['cf_name']);
+            $rows = $GLOBALS['SITE_DB']->query_select('catalogue_fields', array('id', 'cf_name', 'cf_type', 'cf_default'), array('c_name' => $catalogue_name, 'cf_searchable' => 1, 'cf_visible' => 1), 'ORDER BY cf_order,' . $GLOBALS['SITE_DB']->translate_field_ref('cf_name'));
+            foreach ($rows as $i => $row) {
+                $ob = get_fields_hook($row['cf_type']);
+                $temp = $ob->inputted_to_sql_for_search($row, $i);
+                if (is_null($temp)) { // Standard direct 'substring' search
+                    $extra_sort_fields['f' . strval($i) . '_actual_value'] = get_translated_text($row['cf_name']);
+                }
             }
         }
 
@@ -69,6 +73,10 @@ abstract class FieldsSearchHook
      */
     protected function _get_fields($catalogue_name)
     {
+        if (!addon_installed('catalogues')) {
+            return array();
+        }
+
         $fields = array();
         $rows = $GLOBALS['SITE_DB']->query_select('catalogue_fields', array('*'), array('c_name' => $catalogue_name, 'cf_searchable' => 1, 'cf_visible' => 1), 'ORDER BY cf_order,' . $GLOBALS['FORUM_DB']->translate_field_ref('cf_name'));
         require_code('fields');
@@ -97,9 +105,13 @@ abstract class FieldsSearchHook
      */
     protected function _get_search_parameterisation_advanced($catalogue_name, $table_alias = 'r')
     {
+        if (!addon_installed('catalogues')) {
+            return null;
+        }
+
         $where_clause = '';
 
-        $fields = $GLOBALS['SITE_DB']->query_select('catalogue_fields', array('*'), array('c_name' => $catalogue_name, 'cf_searchable' => 1), 'ORDER BY cf_order,' . $GLOBALS['FORUM_DB']->translate_field_ref('cf_name'));
+        $fields = $GLOBALS['SITE_DB']->query_select('catalogue_fields', array('*'), array('c_name' => $catalogue_name, 'cf_searchable' => 1), 'ORDER BY cf_order,' . $GLOBALS['SITE_DB']->translate_field_ref('cf_name'));
         if (count($fields) == 0) {
             return null;
         }
@@ -251,7 +263,7 @@ abstract class FieldsSearchHook
             return;
         }
 
-        $table .= ' LEFT JOIN ' . $GLOBALS['SITE_DB']->get_table_prefix() . 'catalogue_entry_linkage l ON l.content_id=r.id AND ' . db_string_equal_to('content_type', substr($catalogue_name, 1));
+        $table .= ' LEFT JOIN ' . $GLOBALS['SITE_DB']->get_table_prefix() . 'catalogue_entry_linkage l ON l.content_id=' . db_cast('r.id', 'CHAR') . ' AND ' . db_string_equal_to('content_type', substr($catalogue_name, 1));
         $table .= ' LEFT JOIN ' . $GLOBALS['SITE_DB']->get_table_prefix() . 'catalogue_entries ce ON ce.id=l.catalogue_entry_id';
 
         list($sup_table, $sup_where_clause, $sup_trans_fields, $sup_nontrans_fields) = $advanced;
@@ -320,27 +332,9 @@ function is_under_radar($test)
         return false;
     }
 
-    return ((strlen($test) < get_minimum_search_length()) && ($test != ''));
-}
+    require_code('database_search');
 
-/**
- * Get minimum search length for MySQL.
- *
- * @return integer    Search length
- */
-function get_minimum_search_length()
-{
-    static $min_word_length = null;
-    if (is_null($min_word_length)) {
-        $min_word_length = 4;
-        if (substr(get_db_type(), 0, 5) == 'mysql') {
-            $_min_word_length = $GLOBALS['SITE_DB']->query('SHOW VARIABLES LIKE \'ft_min_word_len\'', null, null);
-            if (array_key_exists(0, $_min_word_length)) {
-                $min_word_length = intval($_min_word_length[0]['Value']);
-            }
-        }
-    }
-    return $min_word_length;
+    return ((strlen($test) < get_minimum_search_length()) && ($test != ''));
 }
 
 /**
@@ -509,8 +503,9 @@ function do_search_block($map)
 
     $limit_to = array('all_defaults');
     $extrax = array();
-    if (array_key_exists('limit_to', $map)) {
+    if ((array_key_exists('limit_to', $map)) && ($map['limit_to'] != 'all_defaults')) {
         $limit_to = array();
+        $map['limit_to'] = str_replace('|', ',', $map['limit_to']); // "|" looks cleaner in templates
         foreach (explode(',', $map['limit_to']) as $key) {
             $limit_to[] = 'search_' . $key;
             if (strpos($map['limit_to'], ',') !== false) {

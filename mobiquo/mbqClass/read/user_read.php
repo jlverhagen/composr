@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -146,14 +146,16 @@ class CMSUserRead
         $user_ids = array();
 
         if (!is_guest()) {
-            // This really isn't as designed. Chat blocking != Forum blocking
-            //$chat_blocked=$GLOBALS['SITE_DB']->query_select('chat_blocking',array('member_blocked'),array('member_blocker'=>$user_id));
-            //$user_ids=array_merge(collapse_1d_complexity('member_blocked',$chat_blocked),$user_ids);
+            /* This really isn't as designed. Chat blocking != Forum blocking
+            $chat_blocked = $GLOBALS['SITE_DB']->query_select('chat_blocking', array('member_blocked'), array('member_blocker' => $user_id));
+            $user_ids = array_merge(collapse_1d_complexity('member_blocked', $chat_blocked), $user_ids);
+            */
         }
 
-        // We don't really want to filter these, would confuse
-        //$banned=$GLOBALS['SITE_DB']->query_select('usersubmitban_member',array('the_member'));
-        //$user_ids=array_merge(collapse_1d_complexity('the_member',$banned),$user_ids);
+        /* We don't really want to filter these, would confuse
+        $banned = $GLOBALS['SITE_DB']->query_select('usersubmitban_member', array('the_member'));
+        $user_ids = array_merge(collapse_1d_complexity('the_member', $banned), $user_ids);
+        */
 
         return array_unique($user_ids);
     }
@@ -339,16 +341,20 @@ class CMSUserRead
                 }
             }
 
-            if ($GLOBALS['FORUM_DRIVER']->get_member_row_field($user_id, 'm_reveal_age') == 1) {
-                $day = $GLOBALS['FORUM_DRIVER']->get_member_row_field($user_id, 'm_dob_day');
-                $month = $GLOBALS['FORUM_DRIVER']->get_member_row_field($user_id, 'm_dob_month');
-                $year = $GLOBALS['FORUM_DRIVER']->get_member_row_field($user_id, 'm_dob_year');
-                if (!is_null($day)) {
+            $day = $GLOBALS['FORUM_DRIVER']->get_member_row_field($user_id, 'm_dob_day');
+            $month = $GLOBALS['FORUM_DRIVER']->get_member_row_field($user_id, 'm_dob_month');
+            $year = $GLOBALS['FORUM_DRIVER']->get_member_row_field($user_id, 'm_dob_year');
+            if (($day !== null) && ($month !== null) && ($year !== null)) {
+                if ($GLOBALS['FORUM_DRIVER']->get_member_row_field($user_id, 'm_reveal_age') == 1) {
                     if (@strftime('%Y', @mktime(0, 0, 0, 1, 1, 1963)) != '1963') {
-                        $custom_fields_list[do_lang('DATE_OF_BIRTH')] = strval($year) . '-' . str_pad(strval($month), 2, '0', STR_PAD_LEFT) . '-' . str_pad(strval($day), 2, '0', STR_PAD_LEFT);
+                        $dob = strval($year) . '-' . str_pad(strval($month), 2, '0', STR_PAD_LEFT) . '-' . str_pad(strval($day), 2, '0', STR_PAD_LEFT);
                     } else {
-                        $dob = get_timezoned_date(mktime(12, 0, 0, $month, $day, $year), false, true, true);
+                        $dob = get_timezoned_date(mktime(12, 0, 0, $month, $day, $year), false, false, true);
                     }
+                    $custom_fields_list[do_lang('DATE_OF_BIRTH')] = $dob;
+                } else {
+                    $dob = cms_strftime(do_lang('date_no_year'), mktime(12, 0, 0, $month, $day));
+                    $custom_fields_list[do_lang('ENTER_YOUR_BIRTHDAY')] = $dob;
                 }
             }
 
@@ -460,7 +466,11 @@ class CMSUserRead
         cms_verify_parameters_phpdoc();
 
         $table_prefix = $GLOBALS['FORUM_DB']->get_table_prefix();
-        $table = 'f_posts p JOIN ' . $table_prefix . 'f_topics t ON p.p_topic_id=t.id JOIN ' . $table_prefix . 'f_forums f ON f.id=t.t_forum_id';
+        $table = 'f_posts p';
+        if (strpos(get_db_type(), 'mysql') !== false) {
+            $table .= ' FORCE INDEX (posts_by_in_forum)';
+        }
+        $table .= ' JOIN ' . $table_prefix . 'f_topics t ON p.p_topic_id=t.id JOIN ' . $table_prefix . 'f_forums f ON f.id=t.t_forum_id';
 
         $select = array('*', 'p.id AS post_id', 'f.id AS forum_id', 't.id AS topic_id');
 

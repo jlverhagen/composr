@@ -1,19 +1,27 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
 */
 
+/**
+ * @license    http://opensource.org/licenses/cpal_1.0 Common Public Attribution License
+ * @copyright  ocProducts Ltd
+ * @package    static_export
+ */
+
 i_solemnly_declare(I_UNDERSTAND_SQL_INJECTION | I_UNDERSTAND_XSS | I_UNDERSTAND_PATH_INJECTION);
 
 disable_php_memory_limit();
-if (function_exists('set_time_limit')) {
+if (php_function_allowed('set_time_limit')) {
     @set_time_limit(0);
 }
 $GLOBALS['NO_DB_SCOPE_CHECK'] = true;
+
+$GLOBALS['STATIC_TEMPLATE_TEST_MODE'] = true;
 
 require_code('tar');
 require_code('files');
@@ -51,12 +59,10 @@ if (get_option('enable_previews') == '1') {
     warn_exit('Previews must be disabled. It is now disabled - just refresh the browser.');
 }
 
-set_value('no_frames', '1');
-
 $filename = 'static-' . get_site_name() . '.' . date('Y-m-d') . '.tar';
 
 if ((get_param_integer('do__headers', 1) == 1) && (get_param_integer('dir', 0) == 0)) {
-    header('Content-Disposition: attachment; filename="' . str_replace("\r", '', str_replace("\n", '', addslashes($filename))) . '"');
+    header('Content-Disposition: attachment; filename="' . escape_header($filename, true) . '"');
 }
 
 global $STATIC_EXPORT_TAR, $STATIC_EXPORT_WARNINGS;
@@ -68,7 +74,7 @@ $tar_path = mixed();
 if (get_param_integer('dir', 0) == 0) {
     $tar_path = null;
 } else {
-    $tar_path = cms_tempnam('');
+    $tar_path = cms_tempnam();
 }
 $STATIC_EXPORT_TAR = tar_open($tar_path, 'wb');
 
@@ -79,6 +85,7 @@ require_code('sitemap');
 require_code('static_export');
 if (get_param_integer('save__pages', 1) == 1) {
     $member = get_member();
+    require_code('users_inactive_occasionals');
     create_session($GLOBALS['FORUM_DRIVER']->get_guest_id());
     clear_permissions_runtime_cache();
 
@@ -237,9 +244,9 @@ $name=post_param_string("name","' . do_lang('UNKNOWN') . '");
 $post=post_param_string("post","");
 
 $fields=array();
-foreach (array_diff(array_keys($_POST),array("MAX_FILE_SIZE","perform_webstandards_check","_validated","posting_ref_id","f_face","f_colour","f_size","x","y","name","subject","email","to_members_email","to_written_name","redirect","http_referer")) as $key)
+foreach (array_diff(array_keys($_POST),array("MAX_FILE_SIZE","perform_webstandards_check","_validated","posting_ref_id","f_face","f_colour","f_size","x","y","name","subject","email","to_members_email","to_written_name","redirect","http_referer","session_id")) as $key)
 {
-    $is_hidden=(strpos($key,"hour")!==false) || (strpos($key,"access_")!==false) || (strpos($key,"minute")!==false) || (strpos($key,"confirm")!==false) || (strpos($key,"pre_f_")!==false) || (strpos($key,"label_for__")!==false) || (strpos($key,"wysiwyg_version_of_")!==false) || (strpos($key,"is_wysiwyg")!==false) || (strpos($key,"require__")!==false) || (strpos($key,"tempcodecss__")!==false) || (strpos($key,"comcode__")!==false) || (strpos($key,"_parsed")!==false) || (substr($key,0,1)=="_") || (substr($key,0,9)=="hidFileID") || (substr($key,0,11)=="hidFileName");
+    $is_hidden=(strpos($key,"hour")!==false) || (strpos($key,"access_")!==false) || (strpos($key,"minute")!==false) || (strpos($key,"confirm")!==false) || (strpos($key,"pre_f_")!==false) || (strpos($key,"tick_on_form__")!==false) || (strpos($key,"label_for__")!==false) || (strpos($key,"description_for__")!==false) || (strpos($key,"wysiwyg_version_of_")!==false) || (strpos($key,"is_wysiwyg")!==false) || (strpos($key,"require__")!==false) || (strpos($key,"tempcodecss__")!==false) || (strpos($key,"comcode__")!==false) || (strpos($key,"_parsed")!==false) || (substr($key,0,1)=="_") || (substr($key,0,9)=="hidFileID") || (substr($key,0,11)=="hidFileName");
     if ($is_hidden) continue;
 
     if (substr($key,0,1)!="_")
@@ -283,9 +290,9 @@ if (trim($post)!="")
 <p>' . do_lang('MESSAGE_SENT', null, null, null, $lang) . '</p>
 ';
     if (get_param_integer('save__mailer', 1) == 1) {
+        require_code('crypt');
         $mailer_path = get_custom_file_base() . '/pages/html_custom/' . $lang . '/mailer_temp.htm';
-        @mkdir(dirname($mailer_path), 0777);
-        file_put_contents($mailer_path, $mailer_script);
+        cms_file_put_contents_safe($mailer_path, $mailer_script, FILE_WRITE_FIX_PERMISSIONS);
         $session_cookie_id = get_session_cookie();
         $data = http_download_file(static_evaluate_tempcode(build_url(array('page' => 'mailer_temp', 'keep_lang' => (count($langs) != 1) ? $lang : null), '', null, false, false, true)), null, false, false, 'Composr', null, array($session_cookie_id => get_rand_password()));
         unlink($mailer_path);
@@ -321,7 +328,7 @@ if (get_param_integer('dir', 0) == 0) {
 $myfile = tar_open($tar_path, 'rb');
 if (!file_exists(get_custom_file_base() . '/exports/static')) {
     mkdir(get_custom_file_base() . '/exports/static', 0777);
-    fix_permissions(get_custom_file_base() . '/exports/static', 0777);
+    fix_permissions(get_custom_file_base() . '/exports/static');
     sync_file(get_custom_file_base() . '/exports/static');
 }
 tar_extract_to_folder($myfile, 'exports/static');

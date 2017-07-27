@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -34,8 +34,6 @@ class Persistent_caching_filecache
         $PC_FC_CACHE = array();
     }
 
-    public $objects_list = null;
-
     /**
      * Instruction to load up the objects list.
      *
@@ -43,13 +41,20 @@ class Persistent_caching_filecache
      */
     public function load_objects_list()
     {
+        /* No concurrency
         if ($this->objects_list === null) {
             $this->objects_list = $this->get('PERSISTENT_CACHE_OBJECTS');
             if ($this->objects_list === null) {
                 $this->objects_list = array();
             }
         }
-        return $this->objects_list;
+        return $this->objects_list;*/
+
+        $objects_list = $this->get('PERSISTENT_CACHE_OBJECTS');
+        if (!is_array($objects_list)) {
+            $objects_list = array();
+        }
+        return $objects_list;
     }
 
     /**
@@ -57,14 +62,20 @@ class Persistent_caching_filecache
      *
      * @param  string $key Key
      * @param  ?TIME $min_cache_date Minimum timestamp that entries from the cache may hold (null: don't care)
-     * @return ?mixed The data (null: not found / NULL entry)
+     * @return ?mixed The data (null: not found / null entry)
      */
     public function get($key, $min_cache_date = null)
     {
-        global $PC_FC_CACHE;
-        if ($min_cache_date === null && isset($PC_FC_CACHE[$key])) {
-            return $PC_FC_CACHE[$key];
+        if ($key != 'PERSISTENT_CACHE_OBJECTS'/*this key is too volatile with concurrency*/) {
+            global $PC_FC_CACHE;
+            if ($min_cache_date === null && isset($PC_FC_CACHE[$key])) {
+                return $PC_FC_CACHE[$key];
+            }
         }
+
+        //@header('X-Persistent-Cache: caches/persistent/' . md5($key) . '.gcd');
+
+        clearstatcache();
 
         $myfile = @fopen(get_custom_file_base() . '/caches/persistent/' . md5($key) . '.gcd', 'rb');
         if ($myfile === false) {
@@ -76,7 +87,7 @@ class Persistent_caching_filecache
                 return null;
             }
         }
-        @flock($myfile, LOCK_SH);
+        flock($myfile, LOCK_SH);
         $contents = '';
         while (!feof($myfile)) {
             $contents .= fread($myfile, 32768);
@@ -84,7 +95,7 @@ class Persistent_caching_filecache
 
         $ret = @unserialize($contents);
 
-        @flock($myfile, LOCK_UN);
+        flock($myfile, LOCK_UN);
         fclose($myfile);
 
         $PC_FC_CACHE[$key] = $ret;
@@ -114,29 +125,10 @@ class Persistent_caching_filecache
             }
         }
 
-        $to_write = serialize($data);
-
+        require_code('files');
         $path = get_custom_file_base() . '/caches/persistent/' . md5($key) . '.gcd';
-        $myfile = @fopen($path, GOOGLE_APPENGINE ? 'wb' : 'ab');
-        if ($myfile === false) {
-            return; // Failure
-        }
-
-        @flock($myfile, LOCK_EX);
-        if (!GOOGLE_APPENGINE) {
-            ftruncate($myfile, 0);
-        }
-        if (fwrite($myfile, $to_write) !== false) {
-            // Success
-            @flock($myfile, LOCK_UN);
-            fclose($myfile);
-            fix_permissions($path);
-        } else {
-            // Failure
-            @flock($myfile, LOCK_UN);
-            fclose($myfile);
-            unlink($path);
-        }
+        $to_write = serialize($data);
+        cms_file_put_contents_safe($path, $to_write, FILE_WRITE_FIX_PERMISSIONS);
     }
 
     /**

@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -42,6 +42,9 @@ function init__form_templates()
     global $DOING_ALTERNATE_FIELDS_SET;
     $DOING_ALTERNATE_FIELDS_SET = mixed();
 
+    global $MODSECURITY_WORKAROUND_ENABLED;
+    $MODSECURITY_WORKAROUND_ENABLED = false;
+
     require_css('forms');
 
     if (function_exists('get_member')) {
@@ -50,7 +53,7 @@ function init__form_templates()
         }
     }
 
-    @header('X-Frame-Options: SAMEORIGIN'); // Clickjacking protection
+    set_no_clickjacking_csp();
 }
 
 /**
@@ -81,25 +84,44 @@ function read_multi_code($param)
 function check_suhosin_request_quantity($inc = 1, $name_length = 0)
 {
     static $count = 0;
-    static $name_length_count = 0;
     $count += $inc;
-    $name_length_count += $name_length;
 
     static $failed_already = false;
     if ($failed_already) {
         return;
     }
 
-    foreach (array('max_input_vars', 'suhosin.post.max_vars', 'suhosin.request.max_vars') as $setting) {
-        if ((is_numeric(ini_get($setting))) && (intval(ini_get($setting)) < $count)) {
-            attach_message(do_lang_tempcode('SUHOSIN_MAX_VARS_TOO_LOW', $setting), 'warn');
+    static $max_values = null;
+    if ($max_values === null) {
+        $max_values = array();
+        foreach (array('max_input_vars', 'suhosin.post.max_vars', 'suhosin.request.max_vars') as $setting) {
+            if (is_numeric(ini_get($setting))) {
+                $max_values[$setting] = intval(ini_get($setting));
+            }
+        }
+    }
+    foreach ($max_values as $setting => $max_value) {
+        if ($max_value < $count) {
+            global $MODSECURITY_WORKAROUND_ENABLED;
+            if (!$MODSECURITY_WORKAROUND_ENABLED) {
+                attach_message(do_lang_tempcode('SUHOSIN_MAX_VARS_TOO_LOW', escape_html($setting)), 'warn');
+            }
             $failed_already = true;
         }
     }
 
-    foreach (array('suhosin.post.max_totalname_length', 'suhosin.request.max_totalname_length') as $setting) {
-        if ((is_numeric(ini_get($setting))) && (intval(ini_get($setting)) < $name_length_count)) {
-            attach_message(do_lang_tempcode('SUHOSIN_MAX_VARS_TOO_LOW', $setting), 'warn');
+    static $max_length_values = null;
+    if ($max_length_values === null) {
+        $max_length_values = array();
+        foreach (array('suhosin.post.max_name_length', 'suhosin.request.max_name_length', 'suhosin.post.max_totalname_length', 'suhosin.request.max_totalname_length') as $setting) {
+            if (is_numeric(ini_get($setting))) {
+                $max_length_values[$setting] = intval(ini_get($setting));
+            }
+        }
+    }
+    foreach ($max_length_values as $setting => $max_length_value) {
+        if ($max_length_value < $name_length) {
+            attach_message(do_lang_tempcode('SUHOSIN_MAX_VARS_TOO_LOW', escape_html($setting)), 'warn');
             $failed_already = true;
         }
     }
@@ -114,7 +136,7 @@ function check_suhosin_request_size($size)
 {
     foreach (array('suhosin.request.max_value_length', 'suhosin.post.max_value_length') as $setting) {
         if ((is_numeric(ini_get($setting))) && (intval(ini_get($setting)) - 500 < $size)) {
-            attach_message(do_lang_tempcode('SUHOSIN_MAX_VALUE_TOO_SHORT', $setting), 'warn');
+            attach_message(do_lang_tempcode('SUHOSIN_MAX_VALUE_TOO_SHORT', escape_html($setting)), 'warn');
         }
     }
 }
@@ -140,7 +162,7 @@ function url_default_parameters__disable()
 /**
  * Find a default property, defaulting to the average of what is there already, or the given default if really necessary.
  *
- * @param  integer $setting The current setting (null: we have to work it out); if non-null, the function will immediately return
+ * @param  ?integer $setting The current setting (null: we have to work it out); if non-null, the function will immediately return
  * @param  ID_TEXT $db_property The property
  * @param  ID_TEXT $table The table to average within
  * @param  integer $default The last-resort default
@@ -152,8 +174,12 @@ function take_param_int_modeavg($setting, $db_property, $table, $default)
         return $setting;
     }
 
+    if (running_script('install')) {
+        return $default;
+    }
+
     $db = $GLOBALS[(substr($table, 0, 2) == 'f_') ? 'FORUM_DB' : 'SITE_DB'];
-    $val = $db->query_value_if_there('SELECT ' . $db_property . ',count(' . $db_property . ') AS qty FROM ' . get_table_prefix() . $table . ' GROUP BY ' . $db_property . ' ORDER BY qty DESC', false, true); // We need the mode here, not the mean
+    $val = $db->query_value_if_there('SELECT ' . $db_property . ',count(' . $db_property . ') AS qty FROM ' . $db->get_table_prefix() . $table . ' GROUP BY ' . $db_property . ' ORDER BY qty DESC', false, true); // We need the mode here, not the mean
     if (!is_null($val)) {
         return $val;
     }
@@ -172,7 +198,6 @@ function attach_wysiwyg()
         attach_to_javascript(do_template('WYSIWYG_LOAD'));
     }
     $WYSIWYG_ATTACHED = true;
-    @header('Content-type: text/html; charset=' . get_charset());
 }
 
 /**
@@ -212,7 +237,6 @@ function get_attachments($posting_field_name)
 {
     $image_types = str_replace(',', ', ', get_option('valid_images'));
 
-    require_lang('javascript');
     require_lang('comcode');
     require_javascript('plupload');
     require_css('widget_plupload');
@@ -236,7 +260,7 @@ function get_attachments($posting_field_name)
 
     require_code('files2');
     $max_attach_size = get_max_file_size(is_null($syndication_json) ? get_member() : null, $GLOBALS['SITE_DB']);
-    $no_quota = (cns_get_member_best_group_property(get_member(), 'max_daily_upload_mb') == 0);
+    $no_quota = ((get_forum_type() == 'cns') && (cns_get_member_best_group_property(get_member(), 'max_daily_upload_mb') == 0));
     if ($no_quota) {
         if (is_null($syndication_json)) {
             return array(new Tempcode(), new Tempcode());
@@ -307,7 +331,6 @@ function get_attachments($posting_field_name)
  */
 function get_posting_form($submit_name, $submit_icon, $post, $post_url, $hidden_fields, $specialisation, $post_comment = null, $extra = '', $specialisation2 = null, $default_parsed = null, $javascript = null, $tabindex = null, $required = true, $has_preview = true, $avoid_wysiwyg = false, $support_autosave = true, $specialisation2_hidden = false, $description = '')
 {
-    require_lang('javascript');
     require_javascript('posting');
     require_javascript('ajax');
     require_javascript('plupload');
@@ -318,6 +341,7 @@ function get_posting_form($submit_name, $submit_icon, $post, $post_url, $hidden_
     $tabindex = get_form_field_tabindex($tabindex);
 
     $post = filter_form_field_default(is_object($submit_name) ? $submit_name->evaluate() : $submit_name, $post);
+
     $required = filter_form_field_required('post', $required);
 
     check_suhosin_request_size(strlen($post));
@@ -339,8 +363,8 @@ function get_posting_form($submit_name, $submit_icon, $post, $post_url, $hidden_
 
     $emoticon_chooser = $GLOBALS['FORUM_DRIVER']->get_emoticon_chooser();
 
-    $comcode_editor = get_comcode_editor();
-    $comcode_editor_small = get_comcode_editor('post', true);
+    $comcode_editor = get_comcode_editor('post', false, true);
+    $comcode_editor_small = get_comcode_editor('post', true, true);
 
     $w = (!$avoid_wysiwyg) && (has_js()) && (browser_matches('wysiwyg', $post) && (strpos($post, '{$,page hint: no_wysiwyg}') === false));
 
@@ -357,6 +381,8 @@ function get_posting_form($submit_name, $submit_icon, $post, $post_url, $hidden_
     /*Actually we reparse always to ensure it is done in semiparse mode if (is_null($default_parsed)) */
     $default_parsed = @comcode_to_tempcode($post, null, false, null, null, null, true);
     $LAX_COMCODE = $temp;
+
+    global $MODSECURITY_WORKAROUND_ENABLED;
 
     return do_template('POSTING_FORM', array(
         '_GUID' => '41259424ca13c437d5bc523ce18980fe',
@@ -384,6 +410,7 @@ function get_posting_form($submit_name, $submit_icon, $post, $post_url, $hidden_
         'SPECIALISATION2_HIDDEN' => $specialisation2_hidden,
         'SUPPORT_AUTOSAVE' => $support_autosave,
         'DESCRIPTION' => $description,
+        'MODSECURITY_WORKAROUND' => $MODSECURITY_WORKAROUND_ENABLED,
     ));
 }
 
@@ -392,9 +419,10 @@ function get_posting_form($submit_name, $submit_icon, $post, $post_url, $hidden_
  *
  * @param  string $field_name The name of the field the editor is working for
  * @param  boolean $cut_down Whether to make a cut-down version
+ * @param  boolean $is_posting_field Whether this is for a posting field (i.e. has attachment support)
  * @return Tempcode The Comcode editor
  */
-function get_comcode_editor($field_name = 'post', $cut_down = false)
+function get_comcode_editor($field_name = 'post', $cut_down = false, $is_posting_field = false)
 {
     require_lang('comcode');
 
@@ -442,8 +470,9 @@ function get_comcode_editor($field_name = 'post', $cut_down = false)
             '_GUID' => 'e4fe3bc16cec070e06532fedc598d075',
             'DIVIDER' => $divider,
             'FIELD_NAME' => $field_name,
-            'TITLE' => ($button == 'thumb' && browser_matches('simplified_attachments_ui')) ? do_lang_tempcode('INPUT_COMCODE_attachment') : do_lang_tempcode('INPUT_COMCODE_' . $button),
+            'TITLE' => do_lang_tempcode('INPUT_COMCODE_' . $button),
             'B' => $button,
+            'IS_POSTING_FIELD' => $is_posting_field,
         )));
     }
 
@@ -459,6 +488,7 @@ function get_comcode_editor($field_name = 'post', $cut_down = false)
                 'FIELD_NAME' => $field_name,
                 'TITLE' => do_lang_tempcode('INPUT_COMCODE_' . $button['t']),
                 'B' => $button['t'],
+                'IS_POSTING_FIELD' => $is_posting_field,
             )));
         }
     }
@@ -467,6 +497,7 @@ function get_comcode_editor($field_name = 'post', $cut_down = false)
         'POSTING_FIELD' => $field_name,
         'BUTTONS' => $buttons,
         'MICRO_BUTTONS' => $micro_buttons,
+        'IS_POSTING_FIELD' => $is_posting_field,
     ));
 }
 
@@ -548,7 +579,7 @@ function get_field_restrict_property($property, $field, $page = null, $type = nu
  * @param  ?string $placeholder The placeholder value for this input field (null: none)
  * @return Tempcode The input field
  */
-function form_input_codename($pretty_name, $description, $name, $default, $required, $tabindex = null, $_maxlength = null, $extra_chars = null, $placeholder = null)
+function form_input_codename($pretty_name, $description, $name, $default, $required, $tabindex = null, $_maxlength = 40, $extra_chars = null, $placeholder = null)
 {
     if (is_null($default)) {
         $default = '';
@@ -605,7 +636,7 @@ function form_input_line($pretty_name, $description, $name, $default, $required,
         $maxlength = strval($_maxlength);
     }
     $input = do_template('FORM_SCREEN_INPUT_LINE', array('_GUID' => '02789c9af25cbc971e86bfcc0ad322d5', 'PLACEHOLDER' => $placeholder, 'MAXLENGTH' => $maxlength, 'TABINDEX' => strval($tabindex), 'REQUIRED' => $_required, 'NAME' => $name, 'DEFAULT' => $default, 'TYPE' => $type, 'PATTERN' => $pattern));
-    return _form_input($name, $pretty_name, $description, $input, $required, false, $tabindex, false, false, '', $pattern_error);
+    return _form_input($name, $pretty_name, $description, $input, $required, false, $tabindex, false, false, '', (is_null($pattern_error) && !is_null($pattern)) ? strip_html($description->evaluate()) : $pattern_error);
 }
 
 /**
@@ -1406,11 +1437,11 @@ function form_input_upload_multi_source($set_title, $set_description, &$hidden, 
 
     if ((addon_installed('filedump')) && (has_actual_page_access(null, 'filedump'))) {
         require_code('files2');
-        $fullpath = get_custom_file_base() . '/uploads/filedump';
-        $files = get_directory_contents($fullpath, '', false, false);
+        $full_path = get_custom_file_base() . '/uploads/filedump';
+        $files = get_directory_contents($full_path, '', false, false);
         $has_image_or_dir = false;
         foreach ($files as $file) {
-            if (is_image($file) || is_dir($fullpath . '/' . $file)) {
+            if (is_image($file) || is_dir($full_path . '/' . $file)) {
                 $has_image_or_dir = true;
                 break;
             }
@@ -1466,7 +1497,6 @@ function form_input_upload_multi_source($set_title, $set_description, &$hidden, 
  */
 function form_input_upload($pretty_name, $description, $name, $required, $default = null, $tabindex = null, $plupload = true, $filter = '', $syndication_json = null)
 {
-    require_lang('javascript');
     if ($plupload) {
         require_javascript('plupload');
         require_css('widget_plupload');
@@ -1486,7 +1516,7 @@ function form_input_upload($pretty_name, $description, $name, $required, $defaul
         $is_image = is_image($default);
         $existing_url = $default;
         if (url_is_local($existing_url)) {
-            $htaccess_path = get_custom_file_base() . '/' . dirname(rawurldecode($existing_url)) . DIRECTORY_SEPARATOR . '.htaccess';
+            $htaccess_path = get_custom_file_base() . '/' . dirname(rawurldecode($existing_url)) . '/.htaccess';
             if ((is_file($htaccess_path)) && (strpos(file_get_contents($htaccess_path), 'deny from all') !== false)) {
                 $existing_url = '';
             } else {
@@ -1526,7 +1556,6 @@ function form_input_upload($pretty_name, $description, $name, $required, $defaul
  */
 function form_input_upload_multi($pretty_name, $description, $name, $required, $tabindex = null, $default = null, $plupload = true, $filter = '', $syndication_json = null)
 {
-    require_lang('javascript');
     if ($plupload) {
         require_javascript('plupload');
         require_css('widget_plupload');
@@ -1570,7 +1599,7 @@ function form_input_upload_multi($pretty_name, $description, $name, $required, $
  * @param  mixed $pretty_name A human intelligible name for this input field
  * @param  mixed $description A description for this input field
  * @param  ID_TEXT $name The name which this input field is for
- * @param  Tempcode $content The list entries for our list
+ * @param  Tempcode $content The list entries for our list; you compose these via attaching together form_input_list_entry calls
  * @param  ?integer $tabindex The tab index of the field (null: not specified)
  * @param  boolean $inline_list Whether this is an inline displayed list as opposed to a dropdown
  * @param  boolean $required Whether this is required
@@ -1582,8 +1611,83 @@ function form_input_list($pretty_name, $description, $name, $content, $tabindex 
 {
     $tabindex = get_form_field_tabindex($tabindex);
 
+    require_css('widget_select2');
+    require_javascript('jquery');
+    require_javascript('select2');
+
     $_required = ($required) ? '_required' : '';
     $input = do_template('FORM_SCREEN_INPUT_LIST', array('_GUID' => '112dd79a8e0069aa21615594aec1e509', 'TABINDEX' => strval($tabindex), 'REQUIRED' => $_required, 'NAME' => $name, 'CONTENT' => $content, 'INLINE_LIST' => $inline_list, 'IMAGES' => $images, 'SIZE' => strval($size)));
+    return _form_input($name, $pretty_name, $description, $input, $required, false, $tabindex);
+}
+
+/**
+ * Get the Tempcode for a huge listbox.
+ *
+ * @param  mixed $pretty_name A human intelligible name for this input field
+ * @param  mixed $description A description for this input field
+ * @param  ID_TEXT $name The name which this input field is for
+ * @param  Tempcode $content The list entries for our list; you compose these via attaching together form_input_list_entry calls
+ * @param  ?integer $tabindex The tab index of the field (null: not specified)
+ * @param  boolean $inline_list Whether this is an inline displayed list as opposed to a dropdown
+ * @param  boolean $required Whether this is required
+ * @param  ?integer $size Size of list (null: default)
+ * @return Tempcode The input field
+ */
+function form_input_huge_list($pretty_name, $description, $name, $content, $tabindex = null, $inline_list = false, $required = true, $size = null)
+{
+    $tabindex = get_form_field_tabindex($tabindex);
+
+    require_css('widget_select2');
+    require_javascript('jquery');
+    require_javascript('select2');
+
+    $_required = ($required) ? '_required' : '';
+
+    return do_template('FORM_SCREEN_INPUT_HUGE_LIST', array(
+        '_GUID' => 'b29dbbaf09bb5c36410e22feafa2f968',
+        'TABINDEX' => strval($tabindex),
+        'SIZE' => is_null($size) ? null : strval($size),
+        'REQUIRED' => $_required,
+        'PRETTY_NAME' => $pretty_name,
+        'DESCRIPTION' => $description,
+        'NAME' => $name,
+        'CONTENT' => $content,
+        'INLINE_LIST' => $inline_list,
+    ));
+}
+
+/**
+ * Get the Tempcode for a listbox with multiple selections.
+ *
+ * @param  mixed $pretty_name A human intelligible name for this input field
+ * @param  mixed $description A description for this input field
+ * @param  ID_TEXT $name The name which this input field is for
+ * @param  Tempcode $content The list entries for our list; you compose these via attaching together form_input_list_entry calls
+ * @param  ?integer $tabindex The tab index of the field (null: not specified)
+ * @param  integer $size How much space the list takes up
+ * @param  boolean $required Whether at least one must be selected
+ * @param  ?ID_TEXT $custom_name Name for custom value to be entered to (null: no custom value allowed)
+ * @param  ?mixed $custom_value Value for custom value, string (accept single value) or array (accept multiple values) (null: no custom value known)
+ * @return Tempcode The input field
+ */
+function form_input_multi_list($pretty_name, $description, $name, $content, $tabindex = null, $size = 5, $required = false, $custom_name = null, $custom_value = null)
+{
+    $tabindex = get_form_field_tabindex($tabindex);
+
+    require_css('widget_select2');
+    require_javascript('jquery');
+    require_javascript('select2');
+
+    $input = do_template('FORM_SCREEN_INPUT_MULTI_LIST', array(
+        '_GUID' => 'ed0739205c0bf5039e1d4fe2ddfc06da',
+        'TABINDEX' => strval($tabindex),
+        'SIZE' => strval($size),
+        'NAME' => $name,
+        'CONTENT' => $content,
+        'CUSTOM_ACCEPT_MULTIPLE' => is_array($custom_value),
+        'CUSTOM_NAME' => $custom_name,
+        'CUSTOM_VALUE' => is_null($custom_value) ? '' : $custom_value,
+    ));
     return _form_input($name, $pretty_name, $description, $input, $required, false, $tabindex);
 }
 
@@ -1594,7 +1698,7 @@ function form_input_list($pretty_name, $description, $name, $content, $tabindex 
  * @param  mixed $description A description for this input field
  * @param  ID_TEXT $name The name which this input field is for
  * @param  string $default Current selection
- * @param  Tempcode $options The list entries for our list
+ * @param  Tempcode $options The list entries for our list; you compose these via attaching together form_input_list_entry calls
  * @param  ?integer $tabindex The tab index of the field (null: not specified)
  * @param  boolean $required Whether this is required
  * @return Tempcode The input field
@@ -1604,7 +1708,7 @@ function form_input_combo($pretty_name, $description, $name, $default, $options,
     $tabindex = get_form_field_tabindex($tabindex);
 
     $_required = ($required) ? '_required' : '';
-    $input = do_template('FORM_SCREEN_INPUT_COMBO', array('TABINDEX' => strval($tabindex), 'REQUIRED' => $_required, 'NAME' => $name, 'CONTENT' => $options, 'DEFAULT' => $default));
+    $input = do_template('FORM_SCREEN_INPUT_COMBO', array('_GUID' => '4f4595c0b0dfcf09b004481e317d02a8', 'TABINDEX' => strval($tabindex), 'REQUIRED' => $_required, 'NAME' => $name, 'CONTENT' => $options, 'DEFAULT' => $default));
     return _form_input($name, $pretty_name, $description, $input, $required, false, $tabindex);
 }
 
@@ -1664,7 +1768,7 @@ function form_input_tree_list($pretty_name, $description, $name, $root_id, $hook
         $cma_ob = get_content_object($content_type);
         if (!is_null($cma_ob)) {
             $cma_info = $cma_ob->info();
-            if (isset($cma_info['parent_category_meta_aware_type'])) {
+            if (!is_null($cma_info['parent_category_meta_aware_type'])) {
                 $content_type = $cma_info['parent_category_meta_aware_type'];
             }
         }
@@ -1688,69 +1792,6 @@ function form_input_tree_list($pretty_name, $description, $name, $root_id, $hook
         'CONTENT_TYPE' => $content_type,
     ));
     return _form_input($name, $pretty_name, '', $input, $required, false, $tabindex);
-}
-
-/**
- * Get the Tempcode for a huge listbox.
- *
- * @param  mixed $pretty_name A human intelligible name for this input field
- * @param  mixed $description A description for this input field
- * @param  ID_TEXT $name The name which this input field is for
- * @param  Tempcode $content The list entries for our list
- * @param  ?integer $tabindex The tab index of the field (null: not specified)
- * @param  boolean $inline_list Whether this is an inline displayed list as opposed to a dropdown
- * @param  boolean $required Whether this is required
- * @param  ?integer $size Size of list (null: default)
- * @return Tempcode The input field
- */
-function form_input_huge_list($pretty_name, $description, $name, $content, $tabindex = null, $inline_list = false, $required = true, $size = null)
-{
-    $tabindex = get_form_field_tabindex($tabindex);
-
-    $_required = ($required) ? '_required' : '';
-
-    return do_template('FORM_SCREEN_INPUT_HUGE_LIST', array(
-        '_GUID' => 'b29dbbaf09bb5c36410e22feafa2f968',
-        'TABINDEX' => strval($tabindex),
-        'SIZE' => is_null($size) ? null : strval($size),
-        'REQUIRED' => $_required,
-        'PRETTY_NAME' => $pretty_name,
-        'DESCRIPTION' => $description,
-        'NAME' => $name,
-        'CONTENT' => $content,
-        'INLINE_LIST' => $inline_list,
-    ));
-}
-
-/**
- * Get the Tempcode for a listbox with multiple selections.
- *
- * @param  mixed $pretty_name A human intelligible name for this input field
- * @param  mixed $description A description for this input field
- * @param  ID_TEXT $name The name which this input field is for
- * @param  Tempcode $content The list entries for our list
- * @param  ?integer $tabindex The tab index of the field (null: not specified)
- * @param  integer $size How much space the list takes up
- * @param  boolean $required Whether at least one must be selected
- * @param  ?ID_TEXT $custom_name Name for custom value to be entered to (null: no custom value allowed)
- * @param  ?mixed $custom_value Value for custom value, string (accept single value) or array (accept multiple values) (null: no custom value known)
- * @return Tempcode The input field
- */
-function form_input_multi_list($pretty_name, $description, $name, $content, $tabindex = null, $size = 5, $required = false, $custom_name = null, $custom_value = null)
-{
-    $tabindex = get_form_field_tabindex($tabindex);
-
-    $input = do_template('FORM_SCREEN_INPUT_MULTI_LIST', array(
-        '_GUID' => 'ed0739205c0bf5039e1d4fe2ddfc06da',
-        'TABINDEX' => strval($tabindex),
-        'SIZE' => strval($size),
-        'NAME' => $name,
-        'CONTENT' => $content,
-        'CUSTOM_ACCEPT_MULTIPLE' => is_array($custom_value),
-        'CUSTOM_NAME' => $custom_name,
-        'CUSTOM_VALUE' => is_null($custom_value) ? '' : $custom_value,
-    ));
-    return _form_input($name, $pretty_name, $description, $input, $required, false, $tabindex);
 }
 
 /**
@@ -1785,7 +1826,7 @@ function form_input_all_and_not($pretty_name, $description, $base, $list, $type 
  * @param  mixed $pretty_name A human intelligible name for this input field
  * @param  mixed $description A description for this input field
  * @param  ID_TEXT $name The name which this input field is for
- * @param  Tempcode $content The radio buttons for our radio group
+ * @param  Tempcode $content The radio buttons for our radio group; you compose these via attaching together form_input_radio_entry calls
  * @param  boolean $required Whether a radio selection is required
  * @param  boolean $picture_contents Whether this is a picture-based radio list
  * @param  string $selected_path Default value (only appropriate if has picture contents)
@@ -1910,7 +1951,7 @@ function form_input_theme_image($pretty_name, $description, $name, $ids, $select
     // Show each category
     $content = new Tempcode();
     foreach ($categories as $cat => $ids) {
-        $cat = titleify($cat);
+        $cat = $direct_titles ? $cat : titleify($cat);
 
         if ($avatars) {
             $cut_pos = strpos($cat, '/');
@@ -1953,13 +1994,18 @@ function form_input_theme_image($pretty_name, $description, $name, $ids, $select
                 if ($url == '') {
                     $url = find_theme_image($id, false, false, 'default', $lang, $db);
                 }
-                $pretty = $direct_titles ? make_string_tempcode($id) : make_string_tempcode(ucfirst((strrpos($id, '/') === false) ? $id : substr($id, strrpos($id, '/') + 1)));
+                $pretty = $direct_titles ? make_string_tempcode($id) : make_string_tempcode(titleify((strrpos($id, '/') === false) ? $id : substr($id, strrpos($id, '/') + 1)));
             }
             if ($url == '') {
                 continue;
             }
 
-            $test = @getimagesize($url);
+            $file_path = convert_url_to_path($url);
+            if (!is_null($file_path)) {
+                $test = @getimagesize($file_path);
+            } else {
+                $test = @getimagesize($url);
+            }
             if ($test !== false) {
                 list($width, $height) = $test;
             } else {
@@ -1991,7 +2037,7 @@ function form_input_theme_image($pretty_name, $description, $name, $ids, $select
  * @param  boolean $required Whether this is a required field
  * @param  boolean $null_default Whether this field is empty by default
  * @param  boolean $do_time Whether to input time for this field also
- * @param  ?mixed $default_time The default timestamp to use (either TIME or array of time components) (null: now)
+ * @param  ?mixed $default_time The default timestamp to use (either TIME or array of time components) (null: now) [ignored if $null_default is set]
  * @param  integer $total_years_to_show The number of years to allow selection from (all into the future, as this field type is not meant for inputting past dates)
  * @param  ?integer $year_start The year to start from (null: this year)
  * @param  ?integer $tabindex The tab index of the field (null: not specified)
@@ -2014,7 +2060,7 @@ function form_input_date__scheduler($pretty_name, $description, $name, $required
  * @param  boolean $required Whether this is not a required field
  * @param  boolean $null_default Whether this field is empty by default
  * @param  boolean $do_time Whether to input time for this field also
- * @param  ?mixed $default_time The default timestamp to use (either TIME or array of time components) (null: now)
+ * @param  ?mixed $default_time The default timestamp to use (either TIME or array of time components) (null: now) [ignored if $null_default is set]
  * @param  ?integer $total_years_to_show The number of years to allow selection from (pass a negative number for selection of past years instead of future years) (null: no limit)
  * @param  ?integer $year_start The year to start from (null: this year)
  * @param  ?integer $tabindex The tab index of the field (null: not specified)
@@ -2036,7 +2082,7 @@ function form_input_date($pretty_name, $description, $name, $required, $null_def
  * @param  boolean $required Whether this is a required field
  * @param  boolean $null_default Whether this field is empty by default
  * @param  boolean $do_time Whether to input time for this field also
- * @param  ?mixed $default_time The default timestamp to use (either TIME or array of time components) (null: now)
+ * @param  ?mixed $default_time The default timestamp to use (either TIME or array of time components) (null: now) [ignored if $null_default is set]
  * @param  ?integer $total_years_to_show The number of years to allow selection from (pass a negative number for selection of past years instead of future years) (null: no limit)
  * @param  ?integer $year_start The year to start from (null: this year)
  * @param  ?integer $tabindex The tab index of the field (null: not specified)
@@ -2044,6 +2090,7 @@ function form_input_date($pretty_name, $description, $name, $required, $null_def
  * @param  ?ID_TEXT $timezone Timezone to input in (null: current user's timezone)
  * @param  boolean $handle_timezone Convert $default_time to $timezone
  * @return Tempcode The input field
+ *
  * @ignore
  */
 function _form_input_date($name, $required, $null_default, $do_time, $default_time = null, $total_years_to_show = 10, $year_start = null, $tabindex = null, $do_date = true, $timezone = null, $handle_timezone = true)
@@ -2200,6 +2247,7 @@ function form_input_dimensions($pretty_name, $description, $name_width, $name_he
 
     $_required = ($required) ? '_required' : '';
     $input = do_template('FORM_SCREEN_INPUT_DIMENSIONS', array(
+        '_GUID' => 'd8ccbe6813e4d1a0c41a25adb87d5c35',
         'TABINDEX' => strval($tabindex),
         'REQUIRED' => $_required,
         'NAME_WIDTH' => $name_width,
@@ -2231,7 +2279,7 @@ function form_input_float($pretty_name, $description, $name, $default, $required
     $required = filter_form_field_required($name, $required);
 
     $_required = ($required) ? '_required' : '';
-    $input = do_template('FORM_SCREEN_INPUT_FLOAT', array('_GUID' => '6db802ae840bfe7e87881f95c79133c4', 'TABINDEX' => strval($tabindex), 'REQUIRED' => $_required, 'NAME' => $name, 'DEFAULT' => is_null($default) ? '' : float_to_raw_string($default, 10, true)));
+    $input = do_template('FORM_SCREEN_INPUT_FLOAT', array('_GUID' => '6db802ae840bfe7e87881f95c79133c4', 'TABINDEX' => strval($tabindex), 'REQUIRED' => $_required, 'NAME' => $name, 'DEFAULT' => is_null($default) ? '' : float_format($default, 10, true)));
     return _form_input($name, $pretty_name, $description, $input, $required, false, $tabindex);
 }
 
@@ -2311,7 +2359,7 @@ function single_field__end()
 }
 
 /**
- * Used to create a NULL option for field sets.
+ * Used to create a null option for field sets.
  *
  * @param  mixed $pretty_name The human-readable name for this field
  * @param  ?integer $tabindex The tab index (null: none specified)
@@ -2337,6 +2385,7 @@ function form_input_na($pretty_name, $tabindex = null)
  * @param  mixed $description_side A secondary side description for this input field
  * @param  ?string $pattern_error Custom regex pattern validation error (null: none)
  * @return Tempcode The field
+ *
  * @ignore
  */
 function _form_input($name, $pretty_name, $description, $input, $required, $comcode = false, $tabindex = null, $w = false, $skip_label = false, $description_side = '', $pattern_error = null)
@@ -2391,6 +2440,10 @@ function handle_conflict_resolution($id = null, $only_staff = false)
         return array(null, null);
     }
 
+    if (get_param_integer('refreshing', 0) == 1) {
+        return array(null, null);
+    }
+
     if (is_null($id)) {
         $id = get_param_string('id', post_param_string('id', null), true);
         if ($id === null) {
@@ -2399,7 +2452,7 @@ function handle_conflict_resolution($id = null, $only_staff = false)
     }
 
     require_javascript('ajax');
-    $last_edit_screen_time = $GLOBALS['SITE_DB']->query('SELECT * FROM ' . $GLOBALS['SITE_DB']->get_table_prefix() . 'edit_pings WHERE ' . db_string_equal_to('the_page', get_page_name()) . ' AND ' . db_string_equal_to('the_type', get_param_string('type', 'browse')) . ' AND ' . db_string_equal_to('the_id', $id) . ' AND the_member<>' . strval(get_member()) . ' ORDER BY the_time DESC', 1);
+    $last_edit_screen_time = $GLOBALS['SITE_DB']->query('SELECT * FROM ' . $GLOBALS['SITE_DB']->get_table_prefix() . 'edit_pings WHERE ' . db_string_equal_to('the_page', cms_mb_substr(get_page_name(), 0, 80)) . ' AND ' . db_string_equal_to('the_type', cms_mb_substr(get_param_string('type', 'browse'), 0, 80)) . ' AND ' . db_string_equal_to('the_id', cms_mb_substr($id, 0, 80)) . ' AND the_member<>' . strval(get_member()) . ' ORDER BY the_time DESC', 1);
     if ((array_key_exists(0, $last_edit_screen_time)) && ($last_edit_screen_time[0]['the_time'] > time() - 20)) {
         $username = $GLOBALS['FORUM_DRIVER']->get_username($last_edit_screen_time[0]['the_member']);
         if (is_null($username)) {

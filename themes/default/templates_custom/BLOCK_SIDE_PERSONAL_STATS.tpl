@@ -2,7 +2,7 @@
 	<h3>{$DISPLAYED_USERNAME*,{USERNAME}}</h3>
 
 	{+START,IF_NON_EMPTY,{AVATAR_URL}}
-		<div class="personal_stats_avatar"><img src="{AVATAR_URL*}" title="{!AVATAR}" alt="{!AVATAR}" /></div>
+		<div class="personal_stats_avatar"><img src="{$ENSURE_PROTOCOL_SUITABILITY*,{AVATAR_URL}}" title="{!AVATAR}" alt="{!AVATAR}" /></div>
 	{+END}
 
 	{+START,IF_NON_EMPTY,{DETAILS}}
@@ -18,8 +18,8 @@
 	{+END}
 
 	{+START,IF,{$CNS}}{+START,IF,{$NEQ,{$CPF_VALUE,m_password_compat_scheme},facebook}}
-		{+START,IF_NON_EMPTY,{$CONFIG_OPTION,facebook_appid}}
-			<div class="fb-login-button" data-scope="email,user_birthday,user_about_me,user_hometown,user_location,user_website{+START,IF,{$CONFIG_OPTION,facebook_auto_syndicate}},publish_actions{+END}"></div>
-		{+END}
+		{+START,IF_NON_EMPTY,{$CONFIG_OPTION,facebook_appid}}{+START,IF,{$CONFIG_OPTION,facebook_allow_signups}}
+			<div class="fb-login-button" data-scope="email{$,Asking for this stuff is now a big hassle as it needs a screencast(s) making: user_birthday,user_about_me,user_hometown,user_location,user_website}{+START,IF,{$CONFIG_OPTION,facebook_auto_syndicate}},publish_actions,publish_pages{+END}"></div>
+		{+END}{+END}
 	{+END}{+END}
 </div></section>

@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -36,6 +36,8 @@ class Hook_choose_gallery
         require_code('galleries');
         require_lang('galleries');
 
+        $GLOBALS['NO_QUERY_LIMIT'] = true;
+
         $must_accept_images = array_key_exists('must_accept_images', $options) ? $options['must_accept_images'] : false;
         $must_accept_videos = array_key_exists('must_accept_videos', $options) ? $options['must_accept_videos'] : false;
         $must_accept_something = array_key_exists('must_accept_something', $options) ? $options['must_accept_something'] : false;
@@ -52,7 +54,7 @@ class Hook_choose_gallery
         $options['levels_to_expand'] = max(0, $levels_to_expand - 1);
 
         if (!has_actual_page_access(null, 'galleries')) {
-            $tree = array();
+            $tree = $compound_list ? array(array(), '') : array();
         }
 
         if ($compound_list) {
@@ -77,7 +79,7 @@ class Hook_choose_gallery
             }
             $title = $t['title'];
             if (is_object($title)) {
-                $title = @html_entity_decode(strip_tags($title->evaluate()), ENT_QUOTES, get_charset());
+                $title = strip_html($title->evaluate());
             }
             $has_children = ($t['child_count'] != 0);
             $selectable =

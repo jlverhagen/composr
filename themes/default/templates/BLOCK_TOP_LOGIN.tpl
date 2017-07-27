@@ -1,9 +1,11 @@
 {+START,IF,{$NOR,{$GET,login_screen},{$MATCH_KEY_MATCH,_WILD:login}}}
-	<form title="{!_LOGIN}" onsubmit="if (check_field_for_blankness(this.elements['login_username'],event)) { disable_button_just_clicked(this); return true; } return false;" action="{LOGIN_URL*}" method="post" class="autocomplete inline top_login">
+	<form title="{!_LOGIN}" onsubmit="if (check_field_for_blankness(this.elements['login_username'],event)) { disable_button_just_clicked(this); return true; } return false;" action="{LOGIN_URL*}" method="post" class="inline top_login" autocomplete="on">
+		{$INSERT_SPAMMER_BLACKHOLE}
+
 		{+START,IF,{$NOT,{$MOBILE}}}
 			<div class="inline">
-				<div class="accessibility_hidden"><label for="s_login_username">{!USERNAME}{+START,IF,{$AND,{$CNS},{$CONFIG_OPTION,one_per_email_address}}} / {!EMAIL_ADDRESS}{+END}</label></div>
-				<input maxlength="80" size="10" accesskey="l" class="field_input_non_filled" type="text" onfocus="placeholder_focus(this);" onblur="placeholder_blur(this);" value="{!USERNAME}" id="s_login_username" name="login_username" />
+				<div class="accessibility_hidden"><label for="s_login_username">{$LOGIN_LABEL}</label></div>
+				<input maxlength="80" size="10" accesskey="l" class="field_input_non_filled" type="text" onfocus="placeholder_focus(this);" onblur="placeholder_blur(this);" alt="{!USERNAME}" value="{!USERNAME}" id="s_login_username" name="login_username" />
 				<div class="accessibility_hidden"><label for="s_password">{!PASSWORD}</label></div>
 				<input maxlength="255" size="10" type="password" placeholder="{!PASSWORD}" value="" name="password" id="s_password" />
 
@@ -12,7 +14,7 @@
 					<input title="{!REMEMBER_ME}"{+START,IF,{$CONFIG_OPTION,remember_me_by_default}} checked="checked"{+END}{+START,IF,{$NOT,{$CONFIG_OPTION,remember_me_by_default}}} onclick="if (this.checked) { var t=this; window.fauxmodal_confirm('{!REMEMBER_ME_COOKIE;}',function(answer) { if (!answer) { t.checked=false; } }); }"{+END} type="checkbox" value="1" id="s_remember" name="remember" />
 				{+END}
 
-				<input class="menu__site_meta__user_actions__login button_screen_item" type="submit" value="{!_LOGIN}" />
+				<input class="button_screen_item menu__site_meta__user_actions__login" type="submit" value="{!_LOGIN}" />
 			</div>
 		{+END}
 

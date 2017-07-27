@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -46,7 +46,7 @@ class Module_admin_debrand
      * @param  boolean $check_perms Whether to check permissions.
      * @param  ?MEMBER $member_id The member to check permissions as (null: current user).
      * @param  boolean $support_crosslinks Whether to allow cross links to other modules (identifiable via a full-page-link rather than a screen-name).
-     * @param  boolean $be_deferential Whether to avoid any entry-point (or even return NULL to disable the page in the Sitemap) if we know another module, or page_group, is going to link to that entry-point. Note that "!" and "browse" entry points are automatically merged with container page nodes (likely called by page-groupings) as appropriate.
+     * @param  boolean $be_deferential Whether to avoid any entry-point (or even return null to disable the page in the Sitemap) if we know another module, or page_group, is going to link to that entry-point. Note that "!" and "browse" entry points are automatically merged with container page nodes (likely called by page-groupings) as appropriate.
      * @return ?array A map of entry points (screen-name=>language-code/string or screen-name=>[language-code/string, icon-theme-image]) (null: disabled).
      */
     public function get_entry_points($check_perms = true, $member_id = null, $support_crosslinks = true, $be_deferential = false)
@@ -59,7 +59,7 @@ class Module_admin_debrand
     public $title;
 
     /**
-     * Module pre-run function. Allows us to know meta-data for <head> before we start streaming output.
+     * Module pre-run function. Allows us to know metadata for <head> before we start streaming output.
      *
      * @return ?Tempcode Tempcode indicating some kind of exceptional output (null: none).
      */
@@ -120,19 +120,19 @@ class Module_admin_debrand
         if (is_null($company_name)) {
             $company_name = 'ocProducts';
         }
-        $keyboard_map = file_exists(get_file_base() . '/pages/comcode/' . get_site_default_lang() . '/keymap.txt') ? file_get_contents(get_file_base() . '/pages/comcode/' . get_site_default_lang() . '/keymap.txt') : file_get_contents(get_file_base() . '/pages/comcode/' . fallback_lang() . '/keymap.txt');
+        $keyboard_map = file_exists(get_file_base() . '/pages/comcode/' . get_site_default_lang() . '/keymap.txt') ? cms_file_get_contents_safe(get_file_base() . '/pages/comcode/' . get_site_default_lang() . '/keymap.txt') : cms_file_get_contents_safe(get_file_base() . '/pages/comcode/' . fallback_lang() . '/keymap.txt');
         if (file_exists(get_file_base() . '/pages/comcode_custom/' . get_site_default_lang() . '/keymap.txt')) {
-            $keyboard_map = file_get_contents(get_file_base() . '/pages/comcode_custom/' . get_site_default_lang() . '/keymap.txt');
+            $keyboard_map = cms_file_get_contents_safe(get_file_base() . '/pages/comcode_custom/' . get_site_default_lang() . '/keymap.txt');
         }
         if (file_exists(get_file_base() . '/adminzone/pages/comcode_custom/' . get_site_default_lang() . '/website.txt')) {
-            $adminguide = file_get_contents(get_file_base() . '/adminzone/pages/comcode_custom/' . get_site_default_lang() . '/website.txt');
+            $adminguide = cms_file_get_contents_safe(get_file_base() . '/adminzone/pages/comcode_custom/' . get_site_default_lang() . '/website.txt');
         } else {
             $adminguide = do_lang('ADMINGUIDE_DEFAULT_TRAINING');
         }
         if (file_exists(get_file_base() . '/adminzone/pages/comcode_custom/' . get_site_default_lang() . '/start.txt')) {
-            $start_page = file_get_contents(get_file_base() . '/adminzone/pages/comcode_custom/' . get_site_default_lang() . '/start.txt');
+            $start_page = cms_file_get_contents_safe(get_file_base() . '/adminzone/pages/comcode_custom/' . get_site_default_lang() . '/start.txt');
         } elseif (file_exists(get_file_base() . '/adminzone/pages/comcode/' . get_site_default_lang() . '/start.txt')) {
-            $start_page = file_exists(get_file_base() . '/adminzone/pages/comcode/' . get_site_default_lang() . '/start.txt') ? file_get_contents(get_file_base() . '/adminzone/pages/comcode/' . get_site_default_lang() . '/start.txt') : file_get_contents(get_file_base() . '/adminzone/pages/comcode/' . fallback_lang() . '/start.txt');
+            $start_page = file_exists(get_file_base() . '/adminzone/pages/comcode/' . get_site_default_lang() . '/start.txt') ? cms_file_get_contents_safe(get_file_base() . '/adminzone/pages/comcode/' . get_site_default_lang() . '/start.txt') : cms_file_get_contents_safe(get_file_base() . '/adminzone/pages/comcode/' . fallback_lang() . '/start.txt');
         } else {
             $start_page = do_lang('REBRAND_DASHBOARD');
         }
@@ -153,7 +153,7 @@ class Module_admin_debrand
         }
 
         $post_url = build_url(array('page' => '_SELF', 'type' => 'actual'), '_SELF');
-        $submit_name = do_lang_tempcode('SUPER_DEBRAND');
+        $submit_name = do_lang_tempcode('PROCEED');
 
         return do_template('FORM_SCREEN', array('_GUID' => 'fd47f191ac51f7754eb17e3233f53bcc', 'HIDDEN' => '', 'TITLE' => $this->title, 'URL' => $post_url, 'FIELDS' => $fields, 'TEXT' => do_lang_tempcode('WARNING_SUPER_DEBRAND_MAJOR_CHANGES'), 'SUBMIT_ICON' => 'buttons__proceed', 'SUBMIT_NAME' => $submit_name));
     }
@@ -166,6 +166,8 @@ class Module_admin_debrand
     public function actual()
     {
         require_code('config2');
+        require_code('database_action');
+        require_code('files');
 
         if (is_null($GLOBALS['CURRENT_SHARE_USER'])) { // Only if not a shared install
             require_code('abstract_file_manager');
@@ -177,68 +179,23 @@ class Module_admin_debrand
         set_value('company_name', post_param_string('company_name'));
         set_option('show_docs', post_param_string('show_docs', '0'));
 
-        require_code('database_action');
-        //set_option('allow_member_integration','off');
-
-        foreach (array(get_file_base() . '/pages/comcode_custom/' . get_site_default_lang(), get_file_base() . '/adminzone/pages/comcode_custom/' . get_site_default_lang()) as $dir) {
-            if (!file_exists($dir)) {
-                require_code('files2');
-                make_missing_directory($dir);
-            }
-        }
-
         $keyboard_map_path = get_file_base() . '/pages/comcode_custom/' . get_site_default_lang() . '/keymap.txt';
-        if (!file_exists(dirname($keyboard_map_path))) {
-            require_code('files2');
-            make_missing_directory(dirname($keyboard_map_path));
-        }
-        $myfile = @fopen($keyboard_map_path, 'wb');
-        if ($myfile === false) {
-            intelligent_write_error($keyboard_map_path);
-        }
         $km = post_param_string('keyboard_map');
-        if (fwrite($myfile, $km) < strlen($km)) {
-            warn_exit(do_lang_tempcode('COULD_NOT_SAVE_FILE'));
-        }
-        fclose($myfile);
-        fix_permissions($keyboard_map_path);
-        sync_file($keyboard_map_path);
+        cms_file_put_contents_safe($keyboard_map_path, $km, FILE_WRITE_FIX_PERMISSIONS | FILE_WRITE_SYNC_FILE);
 
         $adminguide_path = get_file_base() . '/adminzone/pages/comcode_custom/' . get_site_default_lang() . '/website.txt';
-        if (!file_exists(dirname($adminguide_path))) {
-            require_code('files2');
-            make_missing_directory(dirname($adminguide_path));
-        }
         $adminguide = post_param_string('adminguide');
         $adminguide = str_replace('__company__', post_param_string('company_name'), $adminguide);
-        $myfile = @fopen($adminguide_path, 'wb');
-        if ($myfile === false) {
-            intelligent_write_error($adminguide_path);
-        }
-        if (fwrite($myfile, $adminguide) < strlen($adminguide)) {
-            warn_exit(do_lang_tempcode('COULD_NOT_SAVE_FILE'));
-        }
-        fclose($myfile);
-        fix_permissions($adminguide_path);
-        sync_file($adminguide_path);
+        cms_file_put_contents_safe($adminguide_path, $adminguide, FILE_WRITE_FIX_PERMISSIONS | FILE_WRITE_SYNC_FILE);
 
         $start_path = get_file_base() . '/adminzone/pages/comcode_custom/' . get_site_default_lang() . '/start.txt';
         if (!file_exists($start_path)) {
             $start = post_param_string('start_page');
-            $myfile = @fopen($start_path, 'wb');
-            if ($myfile === false) {
-                intelligent_write_error($start_path);
-            }
-            if (fwrite($myfile, $start) < strlen($start)) {
-                warn_exit(do_lang_tempcode('COULD_NOT_SAVE_FILE'));
-            }
-            fclose($myfile);
-            fix_permissions($start_path);
-            sync_file($start_path);
+            cms_file_put_contents_safe($start_path, $start, FILE_WRITE_FIX_PERMISSIONS | FILE_WRITE_SYNC_FILE);
         }
 
         if (is_null($GLOBALS['CURRENT_SHARE_USER'])) { // Only if not a shared install
-            $critical_errors = file_get_contents(get_file_base() . '/sources/critical_errors.php');
+            $critical_errors = cms_file_get_contents_safe(get_file_base() . '/sources/critical_errors.php');
             $critical_errors = str_replace('Composr', addslashes(post_param_string('rebrand_name')), $critical_errors);
             $critical_errors = str_replace('http://compo.sr', addslashes(post_param_string('rebrand_base_url')), $critical_errors);
             $critical_errors = str_replace('ocProducts', 'ocProducts/' . addslashes(post_param_string('company_name')), $critical_errors);
@@ -247,27 +204,14 @@ class Module_admin_debrand
             afm_make_file($critical_errors_path, $critical_errors, false);
         }
 
-        $save_header_path = get_file_base() . '/themes/' . $GLOBALS['FORUM_DRIVER']->get_theme() . '/templates_custom/GLOBAL_HTML_WRAP.tpl';
-        if (!file_exists(dirname($save_header_path))) {
-            require_code('files2');
-            make_missing_directory(dirname($save_header_path));
+        $save_global_tpl_path = get_file_base() . '/themes/' . $GLOBALS['FORUM_DRIVER']->get_theme('') . '/templates_custom/GLOBAL_HTML_WRAP.tpl';
+        $global_tpl_path = $save_global_tpl_path;
+        if (!file_exists($global_tpl_path)) {
+            $global_tpl_path = get_file_base() . '/themes/default/templates/GLOBAL_HTML_WRAP.tpl';
         }
-        $header_path = $save_header_path;
-        if (!file_exists($header_path)) {
-            $header_path = get_file_base() . '/themes/default/templates/GLOBAL_HTML_WRAP.tpl';
-        }
-        $header_tpl = file_get_contents($header_path);
-        $header_tpl = str_replace('Copyright ocProducts Limited', '', $header_tpl);
-        $myfile = @fopen($save_header_path, 'wb');
-        if ($myfile === false) {
-            intelligent_write_error($save_header_path);
-        }
-        if (fwrite($myfile, $header_tpl) < strlen($header_tpl)) {
-            warn_exit(do_lang_tempcode('COULD_NOT_SAVE_FILE'));
-        }
-        fclose($myfile);
-        fix_permissions($save_header_path);
-        sync_file($save_header_path);
+        $global_tpl = cms_file_get_contents_safe($global_tpl_path);
+        $global_tpl = str_replace('Copyright ocProducts Limited', '', $global_tpl);
+        cms_file_put_contents_safe($save_global_tpl_path, $global_tpl, FILE_WRITE_FIX_PERMISSIONS | FILE_WRITE_SYNC_FILE);
 
         if (post_param_integer('churchy', 0) == 1) {
             if (is_object($GLOBALS['FORUM_DB'])) {
@@ -289,17 +233,26 @@ class Module_admin_debrand
 
         // Clean up the theme images
         //  background-image
-        $theme = $GLOBALS['FORUM_DRIVER']->get_theme();
+        $theme = $GLOBALS['FORUM_DRIVER']->get_theme('');
         find_theme_image('background_image');
         //  logo/*
         if (addon_installed('zone_logos')) {
-            find_theme_image('logo/adminzone-logo');
-            find_theme_image('logo/cms-logo');
-            find_theme_image('logo/collaboration-logo');
             $main_logo_url = find_theme_image('logo/-logo', false, true);
-            $GLOBALS['SITE_DB']->query_update('theme_images', array('path' => $main_logo_url), array('id' => 'logo/adminzone-logo', 'theme' => $theme), '', 1);
-            $GLOBALS['SITE_DB']->query_update('theme_images', array('path' => $main_logo_url), array('id' => 'logo/cms-logo', 'theme' => $theme), '', 1);
-            $GLOBALS['SITE_DB']->query_update('theme_images', array('path' => $main_logo_url), array('id' => 'logo/collaboration-logo', 'theme' => $theme), '', 1);
+
+            $test = find_theme_image('logo/adminzone-logo', true);
+            if ($test != '') {
+                $GLOBALS['SITE_DB']->query_update('theme_images', array('path' => $main_logo_url), array('id' => 'logo/adminzone-logo', 'theme' => $theme), '', 1);
+            }
+
+            $test = find_theme_image('logo/cms-logo', true);
+            if ($test != '') {
+                $GLOBALS['SITE_DB']->query_update('theme_images', array('path' => $main_logo_url), array('id' => 'logo/cms-logo', 'theme' => $theme), '', 1);
+            }
+
+            $test = find_theme_image('logo/collaboration-logo', true);
+            if ($test != '') {
+                $GLOBALS['SITE_DB']->query_update('theme_images', array('path' => $main_logo_url), array('id' => 'logo/collaboration-logo', 'theme' => $theme), '', 1);
+            }
         }
 
         // Various other icons
@@ -318,6 +271,11 @@ class Module_admin_debrand
                 $GLOBALS['SITE_DB']->query_update('theme_images', array('path' => $path[0]), array('id' => 'cns_default_avatars/system'));
             }
         }
+
+        // Decache
+        require_code('caches3');
+        erase_cached_templates(false, null, TEMPLATE_DECACHE_WITH_CONFIG);
+        erase_cached_templates(false, array('GLOBAL_HTML_WRAP'));
 
         // Redirect them back to editing screen
         $url = build_url(array('page' => '_SELF', 'type' => 'browse'), '_SELF');

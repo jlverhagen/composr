@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -30,13 +30,13 @@ class Hook_cron_cns_welcome_emails
     {
         //if (!running_script('execute_temp')) return;
         $time_now = time();
-        //$time_now=1335726076;
+        //$time_now = 1335726076;
         $last_cron_time = intval(get_value('last_welcome_mail_time', null, true));
         if ($last_cron_time == 0) {
             $last_cron_time = $time_now - 24 * 60 * 60 * 7;
         }
         set_value('last_welcome_mail_time', strval($time_now), true);
-        //$last_cron_time=$time_now-60*60*1; Useful for debugging
+        //$last_cron_time = $time_now - 60 * 60 * 1; Useful for debugging
 
         require_code('mail');
 
@@ -56,11 +56,11 @@ class Hook_cron_cns_welcome_emails
 
                 // Think of it like this, m_join_time (members join time) must between $last_cron_time and $time_now, but offset back by $send_seconds_after_joining
                 $where = ' WHERE join_time>' . strval($last_cron_time - $send_seconds_after_joining) . ' AND join_time<=' . strval($time_now - $send_seconds_after_joining) . ' AND (the_level=3 OR the_level=4) AND newsletter_id=' . strval($mail['w_newsletter']);
-                $members = array_merge($members, $GLOBALS['SITE_DB']->query('SELECT s.email AS m_email_address,the_password,n_forename,n_surname,n.id,join_time AS m_join_time FROM ' . get_table_prefix() . 'newsletter_subscribe s JOIN ' . get_table_prefix() . 'newsletter n ON n.email=s.email ' . $where . ' GROUP BY s.email'));
+                $members = array_merge($members, $GLOBALS['SITE_DB']->query('SELECT s.email AS m_email_address,the_password,n_forename,n_surname,n.id,join_time AS m_join_time FROM ' . get_table_prefix() . 'newsletter_subscribe s JOIN ' . get_table_prefix() . 'newsletter_subscribers n ON n.email=s.email ' . $where . ' GROUP BY s.email'));
             } // By usergroup
             elseif ((!is_null($mail['w_usergroup'])) && (get_forum_type() == 'cns')) {
                 $where = ' WHERE join_time>' . strval($last_cron_time - $send_seconds_after_joining) . ' AND join_time<=' . strval($time_now - $send_seconds_after_joining) . ' AND um.usergroup_id=' . strval($mail['w_usergroup']);
-                $query = 'SELECT m.id as id, m.m_email_address AS m_email_address,m.m_username AS m_username,um.join_time AS m_join_time FROM ' . get_table_prefix() . 'f_group_join_log as um JOIN ' . get_table_prefix() . 'f_members as m ON m.id=um.member_id ' . $where;
+                $query = 'SELECT m.id as id, m.m_email_address AS m_email_address,m.m_username AS m_username,um.join_time AS m_join_time FROM ' . $GLOBALS['FORUM_DB']->get_table_prefix() . 'f_group_join_log as um JOIN ' . $GLOBALS['FORUM_DB']->get_table_prefix() . 'f_members as m ON m.id=um.member_id ' . $where;
                 $_members = $GLOBALS['FORUM_DB']->query($query);
                 foreach ($_members as $member) {
                     $ok = false;
@@ -86,7 +86,11 @@ class Hook_cron_cns_welcome_emails
                 if (get_option('allow_email_from_staff_disable') == '1') {
                     $where .= ' AND m_allow_emails=1';
                 }
-                $query = 'SELECT m_email_address,m_username,id,m_join_time FROM ' . get_table_prefix() . 'f_members' . $where;
+                $where .= ' AND ' . db_string_equal_to('m_validated_email_confirm_code', '');
+                if (addon_installed('unvalidated')) {
+                    $where .= ' AND m_validated=1';
+                }
+                $query = 'SELECT m_email_address,m_username,id,m_join_time FROM ' . $GLOBALS['FORUM_DB']->get_table_prefix() . 'f_members' . $where;
                 $members = array_merge($members, $GLOBALS['FORUM_DB']->query($query));
             }
 
@@ -116,12 +120,12 @@ class Hook_cron_cns_welcome_emails
                         $name = trim($forename . ' ' . $surname);
                         require_lang('newsletter');
                         if ($name == '') {
-                            $name = do_lang('NEWSLETTER_SUBSCRIBER', get_site_name());
+                            $name = do_lang('NEWSLETTER_SUBSCRIBER_DEFAULT_NAME', get_site_name());
                         }
                     } else {
                         $forename = '';
                         $surname = '';
-                        $name = $member['m_username'];
+                        $name = $GLOBALS['FORUM_DRIVER']->get_displayname($member['m_username']);
                     }
 
                     if (addon_installed('newsletter')) {

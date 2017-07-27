@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -39,7 +39,7 @@ class Hook_sitemap_topic extends Hook_sitemap_content
      */
     public function get_privilege_page($page_link)
     {
-        return 'topics';
+        return null;
     }
 
     /**
@@ -90,15 +90,15 @@ class Hook_sitemap_topic extends Hook_sitemap_content
         }
 
         $struct = array(
-                      'sitemap_priority' => SITEMAP_IMPORTANCE_LOW,
-                      'sitemap_refreshfreq' => $sitemap_refreshfreq,
+            'sitemap_priority' => SITEMAP_IMPORTANCE_LOW,
+            'sitemap_refreshfreq' => $sitemap_refreshfreq,
 
-                      'has_possible_children' => false,
+            'has_possible_children' => false,
 
-                      'privilege_page' => $this->get_privilege_page($page_link),
+            'privilege_page' => $this->get_privilege_page($page_link),
 
-                      'edit_url' => build_url(array('page' => 'topics', 'type' => 'edit_topic', 'id' => $content_id), get_module_zone('topics')),
-                  ) + $partial_struct;
+            'edit_url' => build_url(array('page' => 'topics', 'type' => 'edit_topic', 'id' => $content_id), get_module_zone('topics')),
+        ) + $partial_struct;
 
         if (!$this->_check_node_permissions($struct)) {
             return null;

@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -10,6 +10,11 @@
 /**
  * @license    http://opensource.org/licenses/cpal_1.0 Common Public Attribution License
  * @copyright  ocProducts Ltd
+ * @package    unslider
+ */
+
+/**
+ * Block class.
  */
 class Block_main_unslider
 {
@@ -91,16 +96,18 @@ class Block_main_unslider
             }
         }
 
-        return do_template('BLOCK_MAIN_UNSLIDER', array('_GUID' => 'ae60f714ef84227c0cb958b65f7a253c', 'PAGES' => $pages,
-                                                        'WIDTH' => $width,
-                                                        'HEIGHT' => $height,
-                                                        'FLUID' => (substr($width, -1) == '%'),
-                                                        'BUTTONS' => $buttons,
-                                                        'DELAY' => $delay,
-                                                        'SPEED' => $speed,
-                                                        'KEYPRESSES' => $keypresses,
-                                                        'SLIDER_ID' => $slider_id,
-                                                        'BGCOLORS' => $bgcolors,
+        return do_template('BLOCK_MAIN_UNSLIDER', array(
+            '_GUID' => 'ae60f714ef84227c0cb958b65f7a253c',
+            'PAGES' => $pages,
+            'WIDTH' => $width,
+            'HEIGHT' => $height,
+            'FLUID' => (substr($width, -1) == '%'),
+            'BUTTONS' => $buttons,
+            'DELAY' => $delay,
+            'SPEED' => $speed,
+            'KEYPRESSES' => $keypresses,
+            'SLIDER_ID' => $slider_id,
+            'BGCOLORS' => $bgcolors,
         ));
     }
 }

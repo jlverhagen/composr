@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -37,7 +37,6 @@ class Block_main_rss
         $info['hack_version'] = null;
         $info['version'] = 3;
         $info['locked'] = false;
-        $info['update_require_upgrade'] = 1;
         $info['parameters'] = array('param', 'max_entries', 'title', 'copyright');
         return $info;
     }
@@ -63,11 +62,16 @@ class Block_main_rss
      */
     public function run($map)
     {
+        if (!addon_installed('news')) {
+            return new Tempcode();
+        }
+
         require_lang('news');
+        require_lang('rss');
         require_css('news');
         require_code('obfuscate');
 
-        $url = array_key_exists('param', $map) ? $map['param'] : (get_brand_base_url() . '/backend.php?type=rss&mode=news&select=1,2,17,18,29,30'); // http://news.google.co.uk/news?hs=UTT&tab=wn&topic=w&output=atom
+        $url = empty($map['param']) ? (get_brand_base_url() . '/backend.php?type=rss&mode=news') : $map['param'];
 
         require_code('rss');
         $rss_feeds = array();
@@ -90,7 +94,7 @@ class Block_main_rss
         if ((!is_null($error)) && (count($rss_feeds) == 0)) {
             $GLOBALS['DO_NOT_CACHE_THIS'] = true;
             require_code('failure');
-            relay_error_notification(do_lang('ERROR_HANDLING_RSS_FEED', $url, $error), false, 'error_occurred_rss');
+            relay_error_notification(do_lang('rss:ERROR_HANDLING_RSS_FEED', $url, $error), false, 'error_occurred_rss');
             if (cron_installed()) {
                 if (!$GLOBALS['FORUM_DRIVER']->is_staff(get_member())) {
                     return new Tempcode();
@@ -152,19 +156,13 @@ class Block_main_rss
 
             $full_url = ($_full_url != '') ? hyperlink($_full_url, do_lang_tempcode('VIEW'), true, false, $_title) : new Tempcode();
 
-            if (array_key_exists('category', $rss->gleamed_items)) {
-                $_title = do_template('BLOCK_MAIN_RSS_TITLE', array('_GUID' => 'd962c1165564f080329decffeab88ba7', 'CATEGORY' => $rss->gleamed_items['category'], 'TITLE' => $_title));
-            }
-
+            $news_full = '';
             if (!array_key_exists('news', $item)) {
                 $news = (array_key_exists('news_article', $item)) ? $item['news_article'] : '';
-                $news_full = new Tempcode();
             } else {
                 $news = $item['news'];
                 if (array_key_exists('news_article', $item)) {
-                    $news_full = do_template('BLOCK_MAIN_RSS_FULL', array('_GUID' => 'adcd82c64966f54fb0173b8edc626bd7', 'NEWS_FULL' => $item['news_article']));
-                } else {
-                    $news_full = new Tempcode();
+                    $news_full = $item['news_article'];
                 }
             }
 
@@ -182,6 +180,8 @@ class Block_main_rss
                 $author = new Tempcode();
             }
 
+            $category = '';
+            $category_img = '';
             if (array_key_exists('category', $item)) {
                 global $THEME_IMAGES_CACHE;
                 $cat = null;
@@ -191,36 +191,33 @@ class Block_main_rss
                     }
                 }
                 if (!is_null($cat)) {
-                    $img = ($NEWS_CATS_CACHE[$cat]['nc_img'] == '') ? '' : find_theme_image($NEWS_CATS_CACHE[$cat]['nc_img']);
-                    if (is_null($img)) {
-                        $img = '';
+                    $category_img = ($NEWS_CATS_CACHE[$cat]['nc_img'] == '') ? '' : find_theme_image($NEWS_CATS_CACHE[$cat]['nc_img']);
+                    if (is_null($category_img)) {
+                        $category_img = '';
                     }
-                    $category = do_template('BLOCK_MAIN_RSS_CATEGORY', array('_GUID' => '9b70a0d7524b62ea74bdb8071f4e88b5', 'IMG' => $img, 'CATEGORY' => $item['category']));
-                } else {
-                    $category = do_template('BLOCK_MAIN_RSS_CATEGORY_NO_IMG', array('_GUID' => '772e44215bd2682e51a96b7480753ded', 'CATEGORY' => $item['category']));
                 }
-            } else {
-                $category = new Tempcode();
+                $category = $item['category'];
             }
 
-            if (array_key_exists('add_date', $item)) {
-                $__title = do_template('BLOCK_MAIN_RSS_FROM_TITLE', array('_GUID' => 'ba9d262682d2e7d74c393508c8d49dd6', 'FEED_URL' => $url, 'NEWS_TITLE' => $_title, 'DATE' => $item['add_date']));
-            } else {
-                $__title = $_title;
+            if ($category_img == '') {
+                if (!empty($item['rep_image'])) {
+                    $category_img = $item['rep_image'];
+                }
             }
 
             $content->attach(do_template('BLOCK_MAIN_RSS_SUMMARY', array(
                 '_GUID' => '9ca64090348263449ea1fcea75c8ed5f',
                 'FEED_URL' => $url,
-                'NEWS_FULL' => $news_full,
                 'DATE' => array_key_exists('add_date', $item) ? $item['add_date'] : '',
                 'DATE_RAW' => array_key_exists('clean_add_date', $item) ? strval($item['clean_add_date']) : '',
                 'AUTHOR' => $author,
                 'CATEGORY' => $category,
+                'CATEGORY_IMG' => $category_img,
                 'FULL_URL' => $full_url,
                 'FULL_URL_RAW' => $_full_url,
-                'NEWS_TITLE' => $__title,
+                'NEWS_TITLE' => $_title,
                 'NEWS' => $news,
+                'NEWS_FULL' => $news_full,
             )));
         }
 
@@ -237,7 +234,7 @@ class Block_main_rss
             if (!is_null($__author)) {
                 $_author_string = $__author->evaluate();
             }
-            $author = do_lang_tempcode('RSS_SOURCE_FROM', $_author_string);
+            $author = do_lang_tempcode('RSS_SOURCE_FROM', escape_html($_author_string));
         } else {
             $author = new Tempcode();
         }

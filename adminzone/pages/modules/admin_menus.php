@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -36,7 +36,7 @@ class Module_admin_menus
         $info['hacked_by'] = null;
         $info['hack_version'] = null;
         $info['version'] = 2;
-        $info['locked'] = true;
+        $info['locked'] = false;
         return $info;
     }
 
@@ -46,7 +46,7 @@ class Module_admin_menus
      * @param  boolean $check_perms Whether to check permissions.
      * @param  ?MEMBER $member_id The member to check permissions as (null: current user).
      * @param  boolean $support_crosslinks Whether to allow cross links to other modules (identifiable via a full-page-link rather than a screen-name).
-     * @param  boolean $be_deferential Whether to avoid any entry-point (or even return NULL to disable the page in the Sitemap) if we know another module, or page_group, is going to link to that entry-point. Note that "!" and "browse" entry points are automatically merged with container page nodes (likely called by page-groupings) as appropriate.
+     * @param  boolean $be_deferential Whether to avoid any entry-point (or even return null to disable the page in the Sitemap) if we know another module, or page_group, is going to link to that entry-point. Note that "!" and "browse" entry points are automatically merged with container page nodes (likely called by page-groupings) as appropriate.
      * @return ?array A map of entry points (screen-name=>language-code/string or screen-name=>[language-code/string, icon-theme-image]) (null: disabled).
      */
     public function get_entry_points($check_perms = true, $member_id = null, $support_crosslinks = true, $be_deferential = false)
@@ -59,12 +59,15 @@ class Module_admin_menus
     public $title;
 
     /**
-     * Module pre-run function. Allows us to know meta-data for <head> before we start streaming output.
+     * Module pre-run function. Allows us to know metadata for <head> before we start streaming output.
      *
      * @return ?Tempcode Tempcode indicating some kind of exceptional output (null: none).
      */
     public function pre_run()
     {
+        require_code('input_filter_2');
+        modsecurity_workaround_enable();
+
         $type = get_param_string('type', 'browse');
 
         require_lang('menus');
@@ -100,6 +103,9 @@ class Module_admin_menus
      */
     public function run()
     {
+        require_code('input_filter_2');
+        rescue_shortened_post_request();
+
         require_javascript('menu_editor');
         require_javascript('ajax');
 
@@ -204,13 +210,13 @@ class Module_admin_menus
         // Option to copy to an editable menu
         if ($id == '') {
             $preview = do_lang_tempcode('COPY_TO_EDITABLE_MENU');
-            $confirm_url = build_url(array('page' => '_SELF', 'type' => 'edit', 'id' => 'main_menu'), '_SELF');
+            $confirm_url = build_url(array('page' => '_SELF', 'type' => 'edit', 'id' => 'main_menu', 'redirect' => get_param_string('redirect', null)), '_SELF');
             require_code('templates_confirm_screen');
             return confirm_screen($this->title, $preview, $confirm_url, null, array('copy_from' => get_option('header_menu_call_string'), 'switch_over' => 1));
         }
 
         require_code('type_sanitisation');
-        if (!is_alphanumeric($id, true)) {
+        if (!is_alphanumeric($id)) {
             warn_exit(do_lang_tempcode('BAD_CODENAME'));
         }
 
@@ -219,13 +225,14 @@ class Module_admin_menus
             require_code('menus2');
             delete_menu($id);
             copy_from_sitemap_to_new_menu($id, $copy_from);
+
             if (post_param_integer('switch_over', 0) == 1) {
                 require_code('config2');
                 set_option('header_menu_call_string', $id);
 
                 // Config option saves into templates
                 require_code('caches3');
-                erase_cached_templates();
+                erase_cached_templates(false, array('GLOBAL_HTML_WRAP'));
             }
         }
 
@@ -304,7 +311,7 @@ class Module_admin_menus
         $list = new Tempcode();
         $list->attach(form_input_list_entry('', false, do_lang_tempcode('NONE_EM')));
         require_code('themes2');
-        $list->attach(create_selection_list_theme_images(null, null, false, true, 'icons/'));
+        $list->attach(create_selection_list_theme_images(null, null, false, true));
         $fields_template->attach(form_input_list(do_lang_tempcode('THEME_IMAGE'), do_lang_tempcode('DESCRIPTION_THEME_IMAGE_FOR_MENU_ITEM'), 'theme_img_code', $list, null, false, false, get_all_image_ids_type('icons', true)));
         $fields_template->attach(form_input_line(do_lang_tempcode('RESTRICT_PAGE_VISIBILITY'), do_lang_tempcode('MENU_ENTRY_MATCH_KEYS'), 'page_only', '', false));
         $list = new Tempcode();
@@ -422,8 +429,8 @@ class Module_admin_menus
             log_it('DELETE_MENU', $menu_id);
 
             // Go back to menu editor screen
-            $url = get_param_string('redirect', '!');
-            if ($url == '!') {
+            $url = get_param_string('redirect', null);
+            if ($url === null) {
                 $_url = build_url(array('page' => '_SELF', 'type' => 'browse'), '_SELF');
                 $url = $_url->evaluate();
             }
@@ -464,8 +471,8 @@ class Module_admin_menus
             log_it('EDIT_MENU', $menu_id);
 
             // Go back to editing the menu
-            $url = get_param_string('redirect', '!');
-            if ($url == '!') {
+            $url = get_param_string('redirect', null);
+            if ($url === null) {
                 $_url = build_url(array('page' => '_SELF', 'type' => 'edit', 'id' => $menu_id), '_SELF');
                 $url = $_url->evaluate();
             }
@@ -507,7 +514,7 @@ class Module_admin_menus
         $url = post_param_string('url_' . strval($id), '');
 
         // See if we can tidy it back to a page-link
-        if (preg_match('#^\w+$#', $url) != 0) {
+        if (preg_match('#^[' . URL_CONTENT_REGEXP . ']+$#', $url) != 0) {
             $url = ':' . $url; // So users do not have to think about zones
         }
         $page_link = url_to_page_link($url, true);

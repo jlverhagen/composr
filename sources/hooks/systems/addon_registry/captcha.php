@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -26,9 +26,10 @@ class Hook_addon_registry_captcha
     /**
      * Get a list of file permissions to set
      *
+     * @param  boolean $runtime Whether to include wildcards represented runtime-created chmoddable files
      * @return array File permissions to set
      */
-    public function get_chmod_array()
+    public function get_chmod_array($runtime = false)
     {
         return array();
     }
@@ -76,9 +77,7 @@ class Hook_addon_registry_captcha
             'requires' => array(),
             'recommends' => array(),
             'conflicts_with' => array(),
-            'previously_in_addon' => array(
-                'core_captcha'
-            )
+            'previously_in_addon' => array('core_captcha'),
         );
     }
 
@@ -147,6 +146,8 @@ class Hook_addon_registry_captcha
             'sources/hooks/systems/config/css_captcha.php',
             'sources/hooks/systems/config/captcha_noise.php',
             'sources/hooks/systems/config/captcha_on_feedback.php',
+            'sources/hooks/systems/config/audio_captcha.php',
+            'sources/hooks/systems/config/js_captcha.php',
         );
     }
 
@@ -181,7 +182,7 @@ class Hook_addon_registry_captcha
         ));
         $captcha = do_lorem_template('FORM_SCREEN_FIELD', array(
             'REQUIRED' => true,
-            'SKIP_LABEL' => false,
+            'SKIP_LABEL' => true,
             'NAME' => 'captcha',
             'PRETTY_NAME' => lorem_phrase(),
             'DESCRIPTION' => lorem_sentence_html(),

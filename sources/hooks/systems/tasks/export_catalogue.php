@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -35,10 +35,12 @@ class Hook_task_export_catalogue
 
         $headers = array();
         $headers['Content-type'] = 'text/csv';
-        $headers['Content-Disposition'] = 'attachment; filename="' . str_replace("\r", '', str_replace("\n", '', addslashes($filename))) . '"';
+        $headers['Content-Disposition'] = 'attachment; filename="' . escape_header($filename) . '"';
 
         $ini_set = array();
         $ini_set['ocproducts.xss_detect'] = '0';
+
+        require_code('catalogues');
 
         $catalogue_row = $GLOBALS['SITE_DB']->query_select('catalogues', array('*'), array('c_name' => $catalogue_name), '', null, null, true);
         if (is_null($catalogue_row)) {
@@ -50,10 +52,10 @@ class Hook_task_export_catalogue
 
         $category_names = array();
 
-        $outfile_path = cms_tempnam('csv');
-        $outfile = fopen($outfile_path, 'w+b');
+        $outfile_path = cms_tempnam();
+        $outfile = fopen($outfile_path, 'wb');
 
-        $fields = $GLOBALS['SITE_DB']->query_select('catalogue_fields', array('*'), array('c_name' => $catalogue_name), 'ORDER BY cf_order,' . $GLOBALS['FORUM_DB']->translate_field_ref('cf_name'));
+        $fields = $GLOBALS['SITE_DB']->query_select('catalogue_fields', array('*'), array('c_name' => $catalogue_name), 'ORDER BY cf_order,' . $GLOBALS['SITE_DB']->translate_field_ref('cf_name'));
         global $CAT_FIELDS_CACHE;
         $CAT_FIELDS_CACHE[$catalogue_name] = $fields;
         fwrite($outfile, 'ID,');

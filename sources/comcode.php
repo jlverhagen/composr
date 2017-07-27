@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -39,6 +39,20 @@ function init__comcode()
     $LAX_COMCODE = null;
 
     global $VALID_COMCODE_TAGS;
+    $VALID_COMCODE_TAGS = null;
+}
+
+/**
+ * Set up the VALID_COMCODE_TAGS global. It uses a bit of memory, so for performance we do it on-demand
+ */
+function init_valid_comcode_tags()
+{
+    global $VALID_COMCODE_TAGS;
+
+    if ($VALID_COMCODE_TAGS !== null) {
+        return;
+    }
+
     /** A list of all valid Comcode tags that we recognise.
      *
      * @global array $VALID_COMCODE_TAGS
@@ -54,24 +68,27 @@ function init__comcode()
         'quote' => true, 'block' => true, 'semihtml' => true, 'html' => true, 'concept' => true, 'thumb' => true,
         'attachment' => true, 'attachment_safe' => true, 'align' => true, 'left' => true, 'center' => true, 'right' => true,
         'snapback' => true, 'post' => true, 'topic' => true, 'include' => true, 'random' => true, 'ticker' => true, 'jumping' => true, 'surround' => true, 'pulse' => true, 'shocker' => true,
+        'require_css' => true, 'require_javascript' => true,
     );
     //if (addon_installed('ecommerce')) {
     $VALID_COMCODE_TAGS['currency'] = true;
     //}
+}
 
+/**
+ * Set up the POTENTIAL_JS_NAUGHTY_ARRAY global. It uses a bit of memory, so for performance we do it on-demand
+ */
+function init_potential_js_naughty_array()
+{
     // We're not allowed to specify any of these as entities
     global $POTENTIAL_JS_NAUGHTY_ARRAY;
-    $POTENTIAL_JS_NAUGHTY_ARRAY = array('d' => true, /*'a' => true, 't' => true, 'a' => true,*/
-                                        'j' => true, 'a' => true, 'v' => true, 's' => true, 'c' => true, 'r' => true, 'i' => true, 'p' => true, 't' => true, 'J' => true, 'A' => true, 'V' => true, 'S' => true, 'C' => true, 'R' => true, 'I' => true, 'P' => true, 'T' => true, ' ' => true, "\t" => true, "\n" => true, "\r" => true, ':' => true, '/' => true, '*' => true, '\\' => true);
+    $POTENTIAL_JS_NAUGHTY_ARRAY = array(
+        'd' => true, /*'a' => true, 't' => true, 'a' => true,*/
+        'j' => true, 'a' => true, 'v' => true, 's' => true, 'c' => true, 'r' => true, 'i' => true, 'p' => true, 't' => true,
+        'J' => true, 'A' => true, 'V' => true, 'S' => true, 'C' => true, 'R' => true, 'I' => true, 'P' => true, 'T' => true,
+        ' ' => true, "\t" => true, "\n" => true, "\r" => true, ':' => true, '/' => true, '*' => true, '\\' => true
+    );
     $POTENTIAL_JS_NAUGHTY_ARRAY[chr(0)] = true;
-
-    define('WYSIWYG_COMCODE__BUTTON', 1);
-    define('WYSIWYG_COMCODE__XML_BLOCK', 2);
-    define('WYSIWYG_COMCODE__XML_BLOCK_ESCAPED', 3);
-    define('WYSIWYG_COMCODE__XML_INLINE', 4);
-    define('WYSIWYG_COMCODE__STANDOUT_BLOCK', 5);
-    define('WYSIWYG_COMCODE__STANDOUT_INLINE', 6);
-    define('WYSIWYG_COMCODE__HTML', 7);
 }
 
 /**
@@ -111,7 +128,14 @@ function html_to_comcode($html, $force = true)
  */
 function apply_emoticons($text)
 {
+    if ($text == '') {
+        return '';
+    }
+
     require_code('comcode_renderer');
+    if (preg_match('#^[A-Za-z0-9\s]*$#', $text) != 0) {
+        return $text; // Nothing interesting here
+    }
     return _apply_emoticons($text);
 }
 
@@ -144,6 +168,7 @@ function comcode_to_tempcode($comcode, $source_member = null, $as_admin = false,
         $wrap_pos = 100000;
     }
 
+    // Optimised code path (still has to support emoticons though, as those are arbitrary)
     $attachments = (count($_FILES) != 0);
     foreach ($_POST as $key => $value) {
         if (is_integer($key)) {
@@ -154,15 +179,17 @@ function comcode_to_tempcode($comcode, $source_member = null, $as_admin = false,
             $attachments = true;
         }
     }
-    if ((!$attachments || ($GLOBALS['IN_MINIKERNEL_VERSION'])) && (preg_match('#^[\w\d\-\_\(\) \.,:;/"\!\?]*$#'/*NB: No apostophes allowed in here, as they get changed by escape_html and can interfere then with apply_emoticons*/, $comcode) != 0) && (strpos($comcode, '  ') === false) && (strpos($comcode, '://') === false) && (strpos($comcode, '--') === false) && (get_page_name() != 'search')) {
+    if ((!$attachments || ($GLOBALS['IN_MINIKERNEL_VERSION'])) && (preg_match('#^[\w\-\(\) \.,:;/"\!\?]*$#'/*NB: No apostophes allowed in here, as they get changed by escape_html and can interfere then with apply_emoticons*/, $comcode) != 0) && (strpos($comcode, '  ') === false) && (strpos($comcode, '://') === false) && (strpos($comcode, '--') === false) && (get_page_name() != 'search')) {
         if (running_script('stress_test_loader')) {
             return make_string_tempcode(escape_html($comcode));
         }
         return make_string_tempcode(apply_emoticons(escape_html($comcode)));
     }
 
+    // Full code path...
+
     require_code('comcode_renderer');
-    $long = (strlen($comcode) > 1000);
+    $long = (cms_mb_strlen($comcode) > 1000);
     if ($long) {
         cms_profile_start_for('comcode_to_tempcode/LONG');
     }
@@ -187,8 +214,21 @@ function strip_comcode($text, $for_extract = false, $tags_to_preserve = null)
         $tags_to_preserve = array();
     }
 
-    if ($text == '' || preg_match('#^[\w\d\-\_\(\) \.,:;/"\'\!\?]*$$#', $text) != 0) {
-        return $text; // Optimisation
+    if ($text == '') {
+        return '';
+    }
+
+    static $done = array();
+    if (isset($done[$text])) {
+        return $done[$text];
+    }
+
+    $input_text = $text;
+
+    $matches = array();
+    if (preg_match('#^(\[semihtml\])?([\w\-\(\) \.,:;/"\'\!\?]*)(\[/semihtml\])?$#', $text, $matches) != 0) {
+        $done[$text] = $matches[2];
+        return $matches[2]; // Optimisation
     }
 
     require_code('mail');
@@ -197,6 +237,8 @@ function strip_comcode($text, $for_extract = false, $tags_to_preserve = null)
     }
 
     if (strpos($text, '[') !== false) {
+        init_valid_comcode_tags();
+
         global $VALID_COMCODE_TAGS;
         foreach (array_keys($VALID_COMCODE_TAGS) as $tag) {
             if (in_array($tag, $tags_to_preserve)) {
@@ -215,5 +257,6 @@ function strip_comcode($text, $for_extract = false, $tags_to_preserve = null)
         $text = str_replace(array('&hellip;', '&middot;', '&ndash;', '&mdash;'), array('...', '-', '-', '-'), $text);
     }
 
+    $done[$text] = $text;
     return $text;
 }

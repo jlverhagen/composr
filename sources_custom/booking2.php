@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -227,7 +227,7 @@ function get_bookable_details_from_form()
     $bookable_details = array(
         'title' => post_param_string('title'),
         'description' => post_param_string('description'),
-        'price' => floatval(str_replace(ecommerce_get_currency_symbol(), '', post_param_string('price'))),
+        'price' => float_unformat(str_replace(ecommerce_get_currency_symbol(), '', post_param_string('price'))),
         'categorisation' => post_param_string('categorisation'),
         'cycle_type' => post_param_string('cycle_type'),
         'cycle_pattern' => post_param_string('cycle_pattern'),
@@ -246,22 +246,23 @@ function get_bookable_details_from_form()
         'active_to_year' => is_null($active_to) ? null : intval(date('Y', $active_to)),
     );
 
-    /*$blacked=array();
-    $supplements=array();
-    foreach (array_keys($_POST) as $key)
-    {
-        if (substr($key,0,8)=='blacked_')
-        {
-            if (post_param_integer($key,0)==1)
-                    $blacked[]=intval(substr($key,8));
+    /*
+    $blacked = array();
+    $supplements = array();
+    foreach (array_keys($_POST) as $key) {
+        if (substr($key, 0, 8) == 'blacked_') {
+            if (post_param_integer($key, 0) == 1) {
+                $blacked[] = intval(substr($key, 8));
+            }
         }
 
-        if (substr($key,0,11)=='supplement_')
-        {
-            if (post_param_integer($key,0)==1)
-                    $supplements[]=intval(substr($key,11));
+        if (substr($key, 0, 11) == 'supplement_') {
+            if (post_param_integer($key, 0) == 1) {
+                $supplements[] = intval(substr($key, 11));
+            }
         }
-    }*/
+    }
+    */
     if (!isset($_POST['blacked'])) {
         $_POST['blacked'] = array();
     }
@@ -307,7 +308,7 @@ function get_bookable_supplement_details_from_form()
     $bookables = array_map('intval', $_POST['bookables']);
 
     return array(array(
-                     'price' => floatval(post_param_string('price')),
+                     'price' => float_unformat(post_param_string('price')),
                      'price_is_per_period' => post_param_integer('price_is_per_period', 0),
                      'supports_quantities' => post_param_integer('supports_quantities', 0),
                      'title' => post_param_string('title'),
@@ -546,7 +547,7 @@ function delete_bookable($bookable_id)
 function add_bookable_supplement($details, $bookables = null)
 {
     /*require_code('global4');   $title is not actually unique enough to do this
-    prevent_double_submit('ADD_BOOKABLE_SUPPLEMENT',NULL,$title);*/
+    prevent_double_submit('ADD_BOOKABLE_SUPPLEMENT', null, $title);*/
 
     if (is_null($bookables)) {
         $bookables = array();

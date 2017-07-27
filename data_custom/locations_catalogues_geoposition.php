@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -10,8 +10,11 @@
 /**
  * @license    http://opensource.org/licenses/cpal_1.0 Common Public Attribution License
  * @copyright  ocProducts Ltd
- * @package    core
+ * @package    locations_catalogues
  */
+
+// Fixup SCRIPT_FILENAME potentially being missing
+$_SERVER['SCRIPT_FILENAME'] = __FILE__;
 
 // Find Composr base directory, and chdir into it
 global $FILE_BASE, $RELATIVE_PATH;
@@ -75,12 +78,12 @@ if (!is_null($lstring)) {
 
         echo 'null';
         echo ',\'' . addslashes($lstring) . '\'';
-        echo ',' . float_to_raw_string(floatval($matches[1]));
-        echo ',' . float_to_raw_string(floatval($matches[2]));
-        echo ',' . float_to_raw_string(floatval($matches[3]));
-        echo ',' . float_to_raw_string(floatval($matches[4]));
-        echo ',' . float_to_raw_string(floatval($matches[5]));
-        echo ',' . float_to_raw_string(floatval($matches[6]));
+        echo ',' . float_to_raw_string(floatval($matches[1]), 30);
+        echo ',' . float_to_raw_string(floatval($matches[2]), 30);
+        echo ',' . float_to_raw_string(floatval($matches[3]), 30);
+        echo ',' . float_to_raw_string(floatval($matches[4]), 30);
+        echo ',' . float_to_raw_string(floatval($matches[5]), 30);
+        echo ',' . float_to_raw_string(floatval($matches[6]), 30);
 
         echo ']';
     }
@@ -107,12 +110,12 @@ if (!is_null($lstring)) {
 
             echo 'null';
             echo ',\'' . addslashes($matches[1]) . '\'';
-            echo ',' . float_to_raw_string(floatval($matches[2]));
-            echo ',' . float_to_raw_string(floatval($matches[3]));
-            echo ',' . float_to_raw_string(floatval($matches[4]));
-            echo ',' . float_to_raw_string(floatval($matches[5]));
-            echo ',' . float_to_raw_string(floatval($matches[6]));
-            echo ',' . float_to_raw_string(floatval($matches[7]));
+            echo ',' . float_to_raw_string(floatval($matches[2]), 30);
+            echo ',' . float_to_raw_string(floatval($matches[3]), 30);
+            echo ',' . float_to_raw_string(floatval($matches[4]), 30);
+            echo ',' . float_to_raw_string(floatval($matches[5]), 30);
+            echo ',' . float_to_raw_string(floatval($matches[6]), 30);
+            echo ',' . float_to_raw_string(floatval($matches[7]), 30);
 
             echo ']';
         }
@@ -188,8 +191,8 @@ if (!is_null($lstring)) {
                 echo '\'\'';
             }
 
-            echo ',' . float_to_raw_string($bits['l_latitude'], 10);
-            echo ',' . float_to_raw_string($bits['l_longitude'], 10);
+            echo ',' . float_to_raw_string($bits['l_latitude'], 30);
+            echo ',' . float_to_raw_string($bits['l_longitude'], 30);
 
             echo ']';
         }

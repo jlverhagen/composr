@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -19,7 +19,7 @@
  */
 
 /**
- * Find file meta information for adding to a zip file
+ * Find file meta information for adding to a ZIP file
  *
  * @param  PATH $path The full path to the folder to add
  * @param  PATH $subpath The subpath relative to the path (should be left as the default '', as this is used for the recursion to distinguish the adding base path from where it's currently looking)
@@ -70,7 +70,7 @@ function crc32_file($filename)
 
         // Detect PHP bug http://bugs.php.net/bug.php?id=45028
         $reverse = false;
-        $tempnam = cms_tempnam('crctest');
+        $tempnam = cms_tempnam();
         $myfile = fopen($tempnam, 'wb');
         fwrite($myfile, 'test');
         fclose($myfile);
@@ -90,26 +90,29 @@ function crc32_file($filename)
 }
 
 /**
- * Create a zip file.
+ * Create a ZIP file.
  *
- * @param  array $file_array A list of maps (time,data/full_path,name) covering everything to zip up
+ * @param  array $file_array A list of maps (time,data/full_path,name) covering everything to ZIP up
  * @param  boolean $stream Whether to stream the output direct to the browser
  * @param  boolean $get_offsets Whether to return the tuple
  * @param  ?PATH $outfile_path File to spool into (null: none). $stream will be forced to false
- * @return mixed The data for the zip file OR a tuple: data, offsets, sizes; will be blank if $stream is true or $outfile_path is not NULL
+ * @return mixed The data for the ZIP file OR a tuple: data, offsets, sizes; will be blank if $stream is true or $outfile_path is not null
  */
 function create_zip_file($file_array, $stream = false, $get_offsets = false, $outfile_path = null)
 {
     $outfile = mixed();
     if (!is_null($outfile_path)) {
         $stream = false;
-        $outfile = fopen($outfile_path, 'w+b');
+        $outfile = fopen($outfile_path, 'wb');
+        flock($outfile, LOCK_EX);
     }
 
     if ($stream) {
+        cms_ob_end_clean();
+
         safe_ini_set('ocproducts.xss_detect', '0');
 
-        flush(); // Works around weird PHP bug that sends data before headers, on some PHP versions
+        flush(); // LEGACY Works around weird PHP bug that sends data before headers, on some PHP versions
     }
 
     $out = '';
@@ -154,12 +157,14 @@ function create_zip_file($file_array, $stream = false, $get_offsets = false, $ou
             if (!is_null($outfile)) {
                 if ((!array_key_exists('data', $file)) || (is_null($file['data']))) {
                     $tmp = fopen($file['full_path'], 'rb');
+                    flock($tmp, LOCK_SH);
                     while (!feof($tmp)) {
                         $data = fread($tmp, 1024 * 1024);
                         if ($data !== false) {
                             fwrite($outfile, $data);
                         }
                     }
+                    flock($tmp, LOCK_UN);
                     fclose($tmp);
                     $offset += filesize($file['full_path']);
                 } else {
@@ -220,6 +225,10 @@ function create_zip_file($file_array, $stream = false, $get_offsets = false, $ou
             fwrite($outfile, $out);
             $out = '';
         }
+    }
+
+    if ($outfile_path !== null) {
+        flock($outfile, LOCK_UN);
     }
 
     if ($get_offsets) {

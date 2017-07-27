@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -42,13 +42,15 @@ class Module_admin_customers
     {
         /* NB: Does not delete CPFs and multi-mods. But that doesn't actually matter */
         delete_config_option('support_credit_value');
-        delete_config_option('support_budget_priority');
-        delete_config_option('support_normal_priority');
-        delete_config_option('support_day_priority');
-        delete_config_option('support_high_priority');
-        delete_config_option('support_emergency_priority');
+        delete_config_option('support_priority_backburner_minutes');
+        delete_config_option('support_priority_regular_minutes');
         $GLOBALS['SITE_DB']->drop_table_if_exists('credit_purchases');
         $GLOBALS['SITE_DB']->drop_table_if_exists('credit_charge_log');
+        $GLOBALS['SITE_DB']->drop_table_if_exists('group_points');
+
+        if (substr(get_db_type(), 0, 5) != 'mysql') {
+            return;
+        }
 
         // MANTIS TABLE DELETION
 
@@ -93,13 +95,20 @@ class Module_admin_customers
      */
     public function install($upgrade_from = null, $upgrade_from_hack = null)
     {
-        require_lang('customers');
-
         if (get_forum_type() != 'cns') {
             return; // Conversr only
         }
 
-        /* CPFs */
+        require_lang('customers');
+
+        $GLOBALS['SITE_DB']->create_table('group_points', array(
+            'p_group_id' => '*GROUP',
+            'p_points_one_off' => 'INTEGER',
+            'p_points_per_month' => 'INTEGER',
+        ));
+
+        // CPFs...
+
         require_code('cns_members_action');
         require_code('cns_members_action2');
         require_code('mantis');
@@ -108,12 +117,14 @@ class Module_admin_customers
         if (!is_null($cur_id)) {
             $GLOBALS['SITE_DB']->query_update('f_custom_fields', array('cf_owner_view' => 1, 'cf_owner_set' => 1), array('id' => $cur_id), '', 1);
         }
-        cns_make_custom_field('cms_support_credits', 1, '', '', 0, 1, 0, 0, 'integer');
-        cns_make_custom_field('cms_ftp_host', 0, do_lang('ENCRYPTED_TO_WEBSITE'), '', 0, 1, 1, 1, 'short_text');
-        cns_make_custom_field('cms_ftp_path', 0, do_lang('ENCRYPTED_TO_WEBSITE'), '', 0, 1, 1, 1, 'short_text');
-        cns_make_custom_field('cms_ftp_username', 0, do_lang('ENCRYPTED_TO_WEBSITE'), '', 0, 1, 1, 1, 'short_text');
-        cns_make_custom_field('cms_ftp_password', 0, do_lang('ENCRYPTED_TO_WEBSITE'), '', 0, 1, 1, 1, 'short_text');
-        cns_make_custom_field('cms_profession', 0, '', do_lang('CUSTOMER_PROFESSION_CPF_LIST'), 0, 1, 1, 0, 'list');
+        cns_make_custom_field('cms_support_credits', 1, '', '', 0, 1, 0, 0, 'integer', 0, 0, 0, null, '', 0, '', true);
+        cns_make_custom_field('cms_ftp_host', 0, do_lang('ENCRYPTED_TO_WEBSITE'), '', 0, 1, 1, 1, 'short_text', 0, 0, 0, null, '', 0, '', true);
+        cns_make_custom_field('cms_ftp_path', 0, do_lang('ENCRYPTED_TO_WEBSITE'), '', 0, 1, 1, 1, 'short_text', 0, 0, 0, null, '', 0, '', true);
+        cns_make_custom_field('cms_ftp_username', 0, do_lang('ENCRYPTED_TO_WEBSITE'), '', 0, 1, 1, 1, 'short_text', 0, 0, 0, null, '', 0, '', true);
+        cns_make_custom_field('cms_ftp_password', 0, do_lang('ENCRYPTED_TO_WEBSITE'), '', 0, 1, 1, 1, 'short_text', 0, 0, 0, null, '', 0, '', true);
+        cns_make_custom_field('cms_profession', 0, '', do_lang('CUSTOMER_PROFESSION_CPF_LIST'), 0, 1, 1, 0, 'list', 0, 0, 0, null, '', 0, '', true);
+
+        // Credit logging...
 
         $GLOBALS['SITE_DB']->create_table('credit_purchases', array(
             'purchase_id' => '*AUTO',
@@ -133,7 +144,9 @@ class Module_admin_customers
             'reason' => 'SHORT_TEXT',
         ));
 
-        if (get_db_type() != 'xml') {
+        // Tracker...
+
+        if (substr(get_db_type(), 0, 5) == 'mysql') {
             $GLOBALS['SITE_DB']->query("CREATE TABLE IF NOT EXISTS `mantis_bugnote_table` (
                                         `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
                                         `bug_id` int(10) unsigned NOT NULL DEFAULT '0',
@@ -647,9 +660,9 @@ class Module_admin_customers
             );
         }
 
-        /* Multi-mods */
-        require_code('cns_moderation_action');
+        // Multi-moderations...
 
+        require_code('cns_moderation_action');
         cns_make_multi_moderation(do_lang('TICKET_MM_TAKE_OWNERSHIP'), do_lang('TICKET_MM_TAKE_OWNERSHIP_POST'), null, null, null, null, '*');
         cns_make_multi_moderation(do_lang('TICKET_MM_QUOTE'), do_lang('TICKET_MM_QUOTE_POST'), null, null, null, null, '*');
         cns_make_multi_moderation(do_lang('TICKET_MM_PRICE'), do_lang('TICKET_MM_PRICE_POST'), null, null, null, null, '*');
@@ -666,7 +679,7 @@ class Module_admin_customers
      * @param  boolean $check_perms Whether to check permissions.
      * @param  ?MEMBER $member_id The member to check permissions as (null: current user).
      * @param  boolean $support_crosslinks Whether to allow cross links to other modules (identifiable via a full-page-link rather than a screen-name).
-     * @param  boolean $be_deferential Whether to avoid any entry-point (or even return NULL to disable the page in the Sitemap) if we know another module, or page_group, is going to link to that entry-point. Note that "!" and "browse" entry points are automatically merged with container page nodes (likely called by page-groupings) as appropriate.
+     * @param  boolean $be_deferential Whether to avoid any entry-point (or even return null to disable the page in the Sitemap) if we know another module, or page_group, is going to link to that entry-point. Note that "!" and "browse" entry points are automatically merged with container page nodes (likely called by page-groupings) as appropriate.
      * @return ?array A map of entry points (screen-name=>language-code/string or screen-name=>[language-code/string, icon-theme-image]) (null: disabled).
      */
     public function get_entry_points($check_perms = true, $member_id = null, $support_crosslinks = true, $be_deferential = false)
@@ -679,7 +692,7 @@ class Module_admin_customers
     public $title;
 
     /**
-     * Module pre-run function. Allows us to know meta-data for <head> before we start streaming output.
+     * Module pre-run function. Allows us to know metadata for <head> before we start streaming output.
      *
      * @return ?Tempcode Tempcode indicating some kind of exceptional output (null: none).
      */
@@ -690,6 +703,7 @@ class Module_admin_customers
         $type = get_param_string('type', 'browse');
 
         require_lang('customers');
+        require_lang('points');
 
         $this->title = get_screen_title('CHARGE_CUSTOMER');
 
@@ -726,6 +740,7 @@ class Module_admin_customers
     public function charge()
     {
         require_code('form_templates');
+        require_code('mantis');
 
         $post_url = build_url(array('page' => '_SELF', 'type' => '_charge'), '_SELF');
         $submit_name = do_lang_tempcode('CHARGE');
@@ -744,7 +759,7 @@ class Module_admin_customers
 
         $fields = new Tempcode();
         $fields->attach(form_input_username(do_lang_tempcode('USERNAME'), '', 'member_username', $username, true));
-        $fields->attach(form_input_integer(do_lang_tempcode('CREDIT_AMOUNT'), do_lang_tempcode('CREDIT_AMOUNT_DESCRIPTION'), 'amount', get_param_integer('amount', 3), true));
+        $fields->attach(form_input_integer(do_lang_tempcode('AMOUNT'), do_lang_tempcode('CREDIT_AMOUNT_DESCRIPTION'), 'amount', get_param_integer('amount', 3), true));
         $fields->attach(form_input_tick(do_lang_tempcode('ALLOW_OVERDRAFT'), do_lang_tempcode('DESCRIPTION_ALLOW_OVERDRAFT'), 'allow_overdraft', true));
         $fields->attach(form_input_line(do_lang_tempcode('REASON'), 'If for a ticket, you can just paste in the ticket URL.', 'reason', '', true));
 
@@ -761,7 +776,7 @@ class Module_admin_customers
                 $num_credits = intval($_fields['field_' . strval($cpf_id)]);
             }
 
-            $text = do_lang_tempcode('CUSTOMER_CURRENTLY_HAS', escape_html(number_format($num_credits)));
+            $text = paragraph(do_lang_tempcode('CUSTOMER_CURRENTLY_HAS', escape_html(number_format($num_credits))));
         } else {
             $text = new Tempcode();
         }
@@ -787,7 +802,7 @@ class Module_admin_customers
                 do_lang_tempcode('REASON'),
             );
             $header_row = columned_table_header_row($_header_row);
-            $text->attach(do_template('COLUMNED_TABLE', array('HEADER_ROW' => $header_row, 'ROWS' => $rows)));
+            $text->attach(do_template('COLUMNED_TABLE', array('_GUID' => '032e4dcb1d4224ed6633679154b6d827', 'HEADER_ROW' => $header_row, 'ROWS' => $rows)));
         }
 
         return do_template('FORM_SCREEN', array('_GUID' => 'f91185ee725f47ffa652d5fef8d85c0b', 'TITLE' => $this->title, 'HIDDEN' => '', 'TEXT' => $text, 'FIELDS' => $fields, 'SUBMIT_ICON' => 'buttons__proceed', 'SUBMIT_NAME' => $submit_name, 'URL' => $post_url));
@@ -804,6 +819,7 @@ class Module_admin_customers
         $member_id = $GLOBALS['FORUM_DRIVER']->get_member_from_username($username);
         $amount = post_param_integer('amount');
 
+        require_code('mantis');
         $cpf_id = get_credits_profile_field_id();
         if (is_null($cpf_id)) {
             $msg_tpl = warn_screen($this->title, do_lang_tempcode('INVALID_FIELD_ID'));
@@ -823,7 +839,7 @@ class Module_admin_customers
             }
         }
 
-        cns_set_custom_field($member_id, $cpf_id, $new_amount);
+        cns_set_custom_field($member_id, $cpf_id, strval($new_amount));
 
         $GLOBALS['SITE_DB']->query_insert('credit_charge_log', array(
             'member_id' => $member_id,

@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -34,6 +34,8 @@ class Module_admin_cns_emoticons extends Standard_crud_module
     public $possibly_some_kind_of_upload = true;
     public $do_preview = null;
     public $menu_label = 'EMOTICONS';
+    public $donext_entry_content_type = 'emoticon';
+    public $donext_category_content_type = null;
 
     /**
      * Find entry-points available within this module.
@@ -41,7 +43,7 @@ class Module_admin_cns_emoticons extends Standard_crud_module
      * @param  boolean $check_perms Whether to check permissions.
      * @param  ?MEMBER $member_id The member to check permissions as (null: current user).
      * @param  boolean $support_crosslinks Whether to allow cross links to other modules (identifiable via a full-page-link rather than a screen-name).
-     * @param  boolean $be_deferential Whether to avoid any entry-point (or even return NULL to disable the page in the Sitemap) if we know another module, or page_group, is going to link to that entry-point. Note that "!" and "browse" entry points are automatically merged with container page nodes (likely called by page-groupings) as appropriate.
+     * @param  boolean $be_deferential Whether to avoid any entry-point (or even return null to disable the page in the Sitemap) if we know another module, or page_group, is going to link to that entry-point. Note that "!" and "browse" entry points are automatically merged with container page nodes (likely called by page-groupings) as appropriate.
      * @return ?array A map of entry points (screen-name=>language-code/string or screen-name=>[language-code/string, icon-theme-image]) (null: disabled).
      */
     public function get_entry_points($check_perms = true, $member_id = null, $support_crosslinks = true, $be_deferential = false)
@@ -51,17 +53,17 @@ class Module_admin_cns_emoticons extends Standard_crud_module
         }
 
         return array(
-                   'browse' => array('EMOTICONS', 'menu/adminzone/style/emoticons'),
-               ) + parent::get_entry_points();
+            'browse' => array('EMOTICONS', 'menu/adminzone/style/emoticons'),
+        ) + parent::get_entry_points();
     }
 
     public $title;
 
     /**
-     * Module pre-run function. Allows us to know meta-data for <head> before we start streaming output.
+     * Module pre-run function. Allows us to know metadata for <head> before we start streaming output.
      *
      * @param  boolean $top_level Whether this is running at the top level, prior to having sub-objects called.
-     * @param  ?ID_TEXT $type The screen type to consider for meta-data purposes (null: read from environment).
+     * @param  ?ID_TEXT $type The screen type to consider for metadata purposes (null: read from environment).
      * @return ?Tempcode Tempcode indicating some kind of exceptional output (null: none).
      */
     public function pre_run($top_level = true, $type = null)
@@ -187,11 +189,10 @@ class Module_admin_cns_emoticons extends Standard_crud_module
         $text = paragraph(do_lang_tempcode('IMPORT_EMOTICONS_WARNING'));
         require_code('images');
         $max = floatval(get_max_image_size()) / floatval(1024 * 1024);
-        /*if ($max<1.0) Ok - this is silly! Emoticons are tiny.
-        {
+        /*if ($max < 1.0) { Ok - this is silly! Emoticons are tiny.
             require_code('files2');
-            $config_url=get_upload_limit_config_url();
-            $text->attach(paragraph(do_lang_tempcode(is_null($config_url)?'MAXIMUM_UPLOAD':'MAXIMUM_UPLOAD_STAFF',escape_html(($max>10.0)?integer_format(intval($max)):float_format($max)),escape_html(is_null($config_url)?'':$config_url))));
+            $config_url = get_upload_limit_config_url();
+            $text->attach(paragraph(do_lang_tempcode(is_null($config_url) ? 'MAXIMUM_UPLOAD' : 'MAXIMUM_UPLOAD_STAFF', escape_html(($max > 10.0) ? integer_format(intval($max)) : float_format($max)), escape_html(is_null($config_url) ? '' : $config_url))));
         }*/
 
         $hidden = build_keep_post_fields();
@@ -249,15 +250,17 @@ class Module_admin_cns_emoticons extends Standard_crud_module
                                     make_missing_directory(dirname($path));
                                 }
                                 $outfile = @fopen($path, 'wb') or intelligent_write_error($path);
+                                flock($outfile, LOCK_EX);
 
                                 $more = mixed();
                                 do {
                                     $more = zip_entry_read($entry);
                                     if (fwrite($outfile, $more) < strlen($more)) {
-                                        warn_exit(do_lang_tempcode('COULD_NOT_SAVE_FILE'));
+                                        warn_exit(do_lang_tempcode('COULD_NOT_SAVE_FILE', escape_html($path)));
                                     }
                                 } while (($more !== false) && ($more != ''));
 
+                                flock($outfile, LOCK_UN);
                                 fclose($outfile);
                                 fix_permissions($path);
                                 sync_file($path);
@@ -416,7 +419,13 @@ class Module_admin_cns_emoticons extends Standard_crud_module
         $entries = new Tempcode();
         $first = true;
         foreach ($_m as $m) {
-            $url = find_theme_image($m['e_theme_img_code']);
+            $url = find_theme_image($m['e_theme_img_code'], true);
+
+            if ($url == '') { // Automatic cleanup of ones deleted from disk
+                $GLOBALS['FORUM_DB']->query_delete('f_emoticons', array('e_code' => $m['e_code']), '', 1);
+                continue;
+            }
+
             $entries->attach(do_template('FORM_SCREEN_INPUT_THEME_IMAGE_ENTRY', array('_GUID' => 'f7f64637d1c4984881f7acc68c2fe6c7', 'PRETTY' => $m['e_code'], 'CHECKED' => $first, 'NAME' => 'id', 'CODE' => $m['e_code'], 'URL' => $url)));
             $first = false;
         }

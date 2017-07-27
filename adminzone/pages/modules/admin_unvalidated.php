@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -46,7 +46,7 @@ class Module_admin_unvalidated
      * @param  boolean $check_perms Whether to check permissions.
      * @param  ?MEMBER $member_id The member to check permissions as (null: current user).
      * @param  boolean $support_crosslinks Whether to allow cross links to other modules (identifiable via a full-page-link rather than a screen-name).
-     * @param  boolean $be_deferential Whether to avoid any entry-point (or even return NULL to disable the page in the Sitemap) if we know another module, or page_group, is going to link to that entry-point. Note that "!" and "browse" entry points are automatically merged with container page nodes (likely called by page-groupings) as appropriate.
+     * @param  boolean $be_deferential Whether to avoid any entry-point (or even return null to disable the page in the Sitemap) if we know another module, or page_group, is going to link to that entry-point. Note that "!" and "browse" entry points are automatically merged with container page nodes (likely called by page-groupings) as appropriate.
      * @return ?array A map of entry points (screen-name=>language-code/string or screen-name=>[language-code/string, icon-theme-image]) (null: disabled).
      */
     public function get_entry_points($check_perms = true, $member_id = null, $support_crosslinks = true, $be_deferential = false)
@@ -59,7 +59,7 @@ class Module_admin_unvalidated
     public $title;
 
     /**
-     * Module pre-run function. Allows us to know meta-data for <head> before we start streaming output.
+     * Module pre-run function. Allows us to know metadata for <head> before we start streaming output.
      *
      * @return ?Tempcode Tempcode indicating some kind of exceptional output (null: none).
      */
@@ -83,7 +83,8 @@ class Module_admin_unvalidated
      */
     public function run()
     {
-        $out = new Tempcode();
+        $out = array();
+
         require_code('form_templates');
 
         $_hooks = find_all_hooks('modules', 'admin_unvalidated');
@@ -100,8 +101,8 @@ class Module_admin_unvalidated
 
             $identifier_select = is_array($info['db_identifier']) ? implode(',', $info['db_identifier']) : $info['db_identifier'];
             $db = array_key_exists('db', $info) ? $info['db'] : $GLOBALS['SITE_DB'];
-            $rows = $db->query_select($info['db_table'], array($identifier_select . (array_key_exists('db_title', $info) ? (',' . $info['db_title']) : '')), array($info['db_validated'] => 0), '', 100);
-            if (count($rows) == 100) {
+            $rows = $db->query_select($info['db_table'], array($identifier_select . (array_key_exists('db_title', $info) ? (',' . $info['db_title']) : '')), array($info['db_validated'] => 0), '', intval(get_option('general_safety_listing_limit')));
+            if (count($rows) == intval(get_option('general_safety_listing_limit'))) {
                 attach_message(do_lang_tempcode('TOO_MANY_TO_CHOOSE_FROM'), 'warn');
             }
             $content = new Tempcode();
@@ -132,16 +133,28 @@ class Module_admin_unvalidated
             }
 
             if (!$content->is_empty()) {
-                $post_url = build_url(array('page' => $info['edit_module'], 'type' => $info['edit_type'], 'validated' => 1/*,'redirect'=>get_self_url(true)*/), get_module_zone($info['edit_module']), null, false, true);
+                $post_url = build_url(array('page' => $info['edit_module'], 'type' => $info['edit_type'], 'validated' => 1/*, 'redirect' => get_self_url(true)*/), get_module_zone($info['edit_module']), null, false, true);
                 $fields = form_input_list(do_lang_tempcode('CONTENT'), '', $info['edit_identifier'], $content, null, true);
 
-                // Could debate whether to include "'TARGET'=>'_blank',". However it does redirect back, so it's a nice linear process like this. If it was new window it could be more efficient, but also would confuse people with a lot of new windows opening and not closing.
+                // Could debate whether to include "'TARGET' => '_blank',". However it does redirect back, so it's a nice linear process like this. If it was new window it could be more efficient, but also would confuse people with a lot of new windows opening and not closing.
                 $content = do_template('FORM', array('_GUID' => '51dcee39273a0fee29569190344f2e41', 'SKIP_REQUIRED' => true, 'GET' => true, 'HIDDEN' => '', 'SUBMIT_ICON' => 'buttons__save', 'SUBMIT_NAME' => do_lang_tempcode('EDIT'), 'FIELDS' => $fields, 'URL' => $post_url, 'TEXT' => ''));
             }
 
-            $out->attach(do_template('UNVALIDATED_SECTION', array('_GUID' => '838240008e190b9cbaa0280fbddd6baf', 'TITLE' => $info['title'], 'CONTENT' => $content)));
+            $out[$info['title']->evaluate()] = do_template('UNVALIDATED_SECTION', array('_GUID' => '838240008e190b9cbaa0280fbddd6baf', 'TITLE' => $info['title'], 'CONTENT' => $content));
         }
 
-        return do_template('UNVALIDATED_SCREEN', array('_GUID' => '4e971f1c8851b821af030b5c7bbcb3fb', 'TITLE' => $this->title, 'TEXT' => do_lang_tempcode('UNVALIDATED_PAGE_TEXT'), 'SECTIONS' => $out));
+        ksort($out);
+
+        $_out = new Tempcode();
+        foreach ($out as $__out) {
+            $_out->attach($__out);
+        }
+
+        return do_template('UNVALIDATED_SCREEN', array(
+            '_GUID' => '4e971f1c8851b821af030b5c7bbcb3fb',
+            'TITLE' => $this->title,
+            'TEXT' => do_lang_tempcode('UNVALIDATED_PAGE_TEXT'),
+            'SECTIONS' => $_out,
+        ));
     }
 }

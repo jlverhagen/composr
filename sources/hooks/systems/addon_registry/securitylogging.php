@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -26,9 +26,10 @@ class Hook_addon_registry_securitylogging
     /**
      * Get a list of file permissions to set
      *
+     * @param  boolean $runtime Whether to include wildcards represented runtime-created chmoddable files
      * @return array File permissions to set
      */
-    public function get_chmod_array()
+    public function get_chmod_array($runtime = false)
     {
         return array();
     }
@@ -77,9 +78,7 @@ class Hook_addon_registry_securitylogging
             'requires' => array(),
             'recommends' => array(),
             'conflicts_with' => array(),
-            'previously_in_addon' => array(
-                'core_securitylogging'
-            )
+            'previously_in_addon' => array('core_securitylogging'),
         );
     }
 
@@ -119,6 +118,9 @@ class Hook_addon_registry_securitylogging
             'lang/EN/submitban.ini',
             'adminzone/pages/modules/admin_lookup.php',
             'sources/lookup.php',
+            'sources/hooks/systems/commandr_fs_extended_member/banned_from_submitting.php',
+            'sources/hooks/systems/commandr_fs_extended_config/ip_banned.php',
+            'sources/hooks/systems/commandr_fs_extended_config/ip_unbannable.php',
         );
     }
 
@@ -149,14 +151,13 @@ class Hook_addon_registry_securitylogging
      */
     public function tpl_preview__ip_ban_screen()
     {
-        require_lang('submitban');
-
         return array(
             lorem_globalise(do_lorem_template('IP_BAN_SCREEN', array(
                 'PING_URL' => placeholder_url(),
                 'WARNING_DETAILS' => '',
                 'TITLE' => lorem_title(),
                 'BANS' => placeholder_ip(),
+                'UNBANNABLE' => placeholder_ip(),
                 'LOCKED_BANS' => placeholder_ip(),
                 'URL' => placeholder_url(),
             )), null, '', true)
@@ -199,7 +200,6 @@ class Hook_addon_registry_securitylogging
      */
     public function tpl_preview__administrative__security_screen()
     {
-        require_lang('security');
         return array(
             lorem_globalise(do_lorem_template('SECURITY_SCREEN', array(
                 'TITLE' => lorem_title(),
@@ -221,7 +221,6 @@ class Hook_addon_registry_securitylogging
      */
     public function tpl_preview__administrative__security_alert_screen()
     {
-        require_lang('security');
         return array(
             lorem_globalise(do_lorem_template('SECURITY_ALERT_SCREEN', array(
                 'TITLE' => lorem_title(),

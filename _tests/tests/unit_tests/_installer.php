@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -25,7 +25,7 @@ class _installer_test_set extends cms_test_case
         $_GET['skip_bundled'] = '0';
         $_GET['skip_mszip'] = '0';
 
-        if (function_exists('set_time_limit')) {
+        if (php_function_allowed('set_time_limit')) {
             @set_time_limit(300);
         }
 
@@ -47,171 +47,59 @@ class _installer_test_set extends cms_test_case
         $this->assertTrue($GLOBALS['HTTP_MESSAGE'] == '200');
     }
 
-    public function testDoesNotFullycrash()
+    public function testDoesNotFullyCrash()
     {
         $test = http_download_file(get_base_url() . '/install.php', null, false);
         $this->assertTrue($GLOBALS['HTTP_MESSAGE'] == '200');
         $this->assertTrue(strpos($test, 'type="submit"') !== false); // Has start button: meaning something worked
     }
 
-    public function testFullInstall()
+    public function testFullInstallSafeMode()
     {
-        // Assumes we're using a blank root password, which is typically the case on development)
+        $result = $this->doHeadlessInstall(true);
+        if (!$result) {
+            return;
+        }
+
+        $result = $this->doHeadlessInstall(false);
+        if (!$result) {
+            return;
+        }
+    }
+
+    private function doHeadlessInstall($safe_mode)
+    {
+        $database = 'test';
+        $table_prefix = 'cms_installer_test_';
 
         // Cleanup old install
-        $tables = $GLOBALS['SITE_DB']->query('SHOW TABLES FROM test');
+        $tables = $GLOBALS['SITE_DB']->query('SHOW TABLES FROM ' . $database, null, null, true);
+        if ($tables === null) {
+            $tables = array();
+        }
         foreach ($tables as $table) {
-            if (substr($table['Tables_in_test'], 0, 14) == 'cms_unit_test_') {
-                $GLOBALS['SITE_DB']->query('DROP TABLE test.' . $table['Tables_in_test']);
+            if (substr($table['Tables_in_' . $database], 0, strlen($table_prefix)) == $table_prefix) {
+                $GLOBALS['SITE_DB']->query('DROP TABLE ' . $database . '.' . $table['Tables_in_' . $database]);
             }
         }
 
+        // Assumes we're using a blank root password, which is typically the case on development) - or you have it in $SITE_INFO['mysql_root_password']
+        global $SITE_INFO;
+        require_code('install_headless');
         for ($i = 0; $i < 2; $i++) { // 1st trial is clean DB, 2nd trial is dirty DB
-            rename(get_file_base() . '/_config.php', get_file_base() . '/_config.php.bak');
-
-            $settings = array(
-                'default_lang' => 'EN',
-                'db_type' => get_db_type(),
-                'forum_type' => 'cns',
-                'board_path' => get_file_base() . '/forums',
-                'domain' => 'localhost',
-                'base_url' => get_base_url(),
-                'table_prefix' => 'cms_unit_test_',
-                'admin_password' => '',
-                'admin_password_confirm' => '',
-                'send_error_emails_ocproducts' => '1',
-                'admin_username' => 'admin',
-                'cns_admin_password' => '',
-                'cns_admin_password_confirm' => '',
-                'clear_existing_forums_on_install' => 'yes',
-                'db_site' => 'test',
-                'db_site_host' => '127.0.0.1',
-                'db_site_user' => 'root',
-                'db_site_password' => '',
-                'user_cookie' => 'cms_member_id',
-                'pass_cookie' => 'cms_member_hash',
-                'cookie_domain' => '',
-                'cookie_path' => '/',
-                'cookie_days' => '120',
-                'db_forums' => 'test',
-                'db_forums_host' => '127.0.0.1',
-                'db_forums_user' => 'root',
-                'db_forums_password' => '',
-                'cns_table_prefix' => 'cms_unit_test_',
-                'confirm' => '1',
-            );
-
-            $stages = array(
-                array(
-                    array(),
-                    array(),
-                ),
-
-                array(
-                    array(
-                        'step' => '2',
-                    ),
-                    array(
-                        'max' => '1000',
-                        'default_lang' => 'EN',
-                    ),
-                ),
-
-                array(
-                    array(
-                        'step' => '3',
-                    ),
-                    array(
-                        'max' => '1000',
-                        'default_lang' => 'EN',
-                        'email' => 'E-mail address',
-                        'interest_level' => '3',
-                        'advertise_on' => '0',
-                    ),
-                ),
-
-                array(
-                    array(
-                        'step' => '4',
-                    ),
-                    array(
-                        'max' => '1000',
-                        'default_lang' => 'EN',
-                        'email' => 'E-mail address',
-                        'interest_level' => '3',
-                        'advertise_on' => '0',
-                        'forum' => 'cns',
-                        'forum_type' => 'cns',
-                        'board_path' => get_file_base() . '/forums',
-                        'use_multi_db' => '0',
-                        'use_msn' => '0',
-                        'db_type' => get_db_type(),
-                    ),
-                ),
-
-                array(
-                    array(
-                        'step' => '5',
-                    ),
-                    $settings,
-                ),
-
-                array(
-                    array(
-                        'step' => '6',
-                    ),
-                    $settings,
-                ),
-
-                array(
-                    array(
-                        'step' => '7',
-                    ),
-                    $settings,
-                ),
-
-                array(
-                    array(
-                        'step' => '8',
-                    ),
-                    $settings,
-                ),
-
-                array(
-                    array(
-                        'step' => '9',
-                    ),
-                    $settings,
-                ),
-
-                array(
-                    array(
-                        'step' => '10',
-                    ),
-                    $settings,
-                ),
-            );
-
-            foreach ($stages as $stage) {
-                list($get, $post) = $stage;
-                $url = get_base_url() . '/install.php?';
-                foreach ($get as $key => $val) {
-                    $url .= '&' . urlencode($key) . '=' . urlencode($val);
-                }
-                /*echo */
-                http_download_file($url, null, true, false, 'Composr', $post);
-                $this->assertTrue($GLOBALS['HTTP_MESSAGE'] == '200');
-                if ($GLOBALS['HTTP_MESSAGE'] != '200') {
-                    break; // Don't keep installing if there's an error
-                }
+            $success = do_install_to($database, (strpos(get_db_site(), 'mysql') === false) ? get_db_site_user() : 'root', isset($SITE_INFO['mysql_root_password']) ? $SITE_INFO['mysql_root_password'] : '', $table_prefix, $safe_mode);
+            $fail_message = 'Failed on trial #' . strval($i + 1);
+            $fail_message .= ($safe_mode ? '(safe mode)' : '(no safe mode)');
+            if (!isset($_GET['debug'])) {
+                $fail_message .= ' -- append &debug=1 to the URL to get debug output';
             }
+            $this->assertTrue($success, $fail_message);
 
-            unlink(get_file_base() . '/_config.php');
-            rename(get_file_base() . '/_config.php.bak', get_file_base() . '/_config.php');
-
-            if ($GLOBALS['HTTP_MESSAGE'] != '200') {
-                break; // Don't do further trials if there's an error
+            if (!$success) {
+                return false; // Don't do further trials if there's an error
             }
         }
+
+        return true;
     }
 }

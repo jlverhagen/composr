@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -26,9 +26,10 @@ class Hook_addon_registry_installer
     /**
      * Get a list of file permissions to set
      *
+     * @param  boolean $runtime Whether to include wildcards represented runtime-created chmoddable files
      * @return array File permissions to set
      */
-    public function get_chmod_array()
+    public function get_chmod_array($runtime = false)
     {
         return array();
     }
@@ -50,7 +51,7 @@ class Hook_addon_registry_installer
      */
     public function get_description()
     {
-        return 'The installer files (can be removed immediately after installing; in-fact Composr makes you remove install.php manually).';
+        return 'The installer files (can be removed immediately after installing; in fact Composr makes you remove install.php manually).';
     }
 
     /**
@@ -148,7 +149,8 @@ class Hook_addon_registry_installer
             'templates/INSTALLER_INPUT_PASSWORD.tpl' => 'administrative__installer_step_4',
             'templates/INSTALLER_STEP_4_SECTION_OPTION.tpl' => 'administrative__installer_step_4',
             'templates/INSTALLER_INPUT_LINE.tpl' => 'administrative__installer_step_4',
-            'templates/INSTALLER_INPUT_TICK.tpl' => 'administrative__installer_step_4'
+            'templates/INSTALLER_INPUT_TICK.tpl' => 'administrative__installer_step_4',
+            'templates/PASSWORD_CHECK_JS.tpl' => 'administrative__installer_wrap',
         );
     }
 
@@ -493,9 +495,12 @@ class Hook_addon_registry_installer
         ));
 
         require_css('install');
+        require_lang('installer');
+
         return array(
             lorem_globalise(do_lorem_template('INSTALLER_STEP_LOG', array(
-                'PREVIOUS_STEP' => lorem_phrase(),
+                'PREVIOUS_STEP' => placeholder_number(),
+                'CURRENT_STEP' => placeholder_number(),
                 'URL' => placeholder_url(),
                 'LOG' => $message,
                 'HIDDEN' => '',
@@ -522,7 +527,8 @@ class Hook_addon_registry_installer
 
         return array(
             lorem_globalise(do_lorem_template('INSTALLER_STEP_10', array(
-                'PREVIOUS_STEP' => lorem_phrase(),
+                'PREVIOUS_STEP' => placeholder_number(),
+                'CURRENT_STEP' => placeholder_number(),
                 'FINAL' => lorem_phrase(),
                 'LOG' => $message,
             )), null, '', true)

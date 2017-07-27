@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -45,8 +45,6 @@ function _get_timezone_list()
     $ret = array(
         'Pacific/Niue' => '(UTC-11:00) Niue, Pago Pago',
         'Pacific/Midway' => '(UTC-11:00) Midway Island, Samoa',
-        'Pacific/Apia' => '(UTC-11:00) Apia',
-        'Pacific/Fakaofo' => '(UTC-10:00) Fakaofo, Johnston, Rarotonga',
         'America/Adak' => '(UTC-10:00) Hawaii-Aleutian',
         'Pacific/Honolulu' => '(UTC-10:00) Hawaii, Honolulu',
         'Pacific/Tahiti' => '(UTC-10:00) Tahiti',
@@ -84,7 +82,7 @@ function _get_timezone_list()
         'America/Guayaquil' => '(UTC-05:00) Guayaquil',
         'America/Bogota' => '(UTC-05:00) Bogota, Lima, Quito',
         'America/Indiana/Indianapolis' => '(UTC-05:00) Indiana (East), Indianapolis',
-        'America/Caracas' => '(UTC-04:30) Caracas',
+        'America/Caracas' => '(UTC-04:00) Caracas',
         'America/Anguilla' => '(UTC-04:00) Anguilla, Antigua, Curacao, Montserrat, St. Thomas',
         'Atlantic/Stanley' => '(UTC-04:00) Faukland Islands',
         'Antarctica/Palmer' => '(UTC-04:00) Palmer',
@@ -120,7 +118,7 @@ function _get_timezone_list()
         'Africa/El_Aaiun' => '(UTC+00:00) El Aaiun, St. Helena',
         'Atlantic/Madeira' => '(UTC+00:00) Madeira',
         'Europe/London' => '(UTC+00:00) Belfast, Dublin, Edinburgh, Lisbon, London',
-        'UTC' => '(UTC) No daylight saving',
+        'UTC' => '(UTC) ' . do_lang('NO_DAYLIGHT_SAVING'),
         'Africa/Abidjan' => '(UTC+00:00) Abidjan, Accra, Bamako, Banjul, Bissau, Conakry',
         'Africa/Dakar' => '(UTC+00:00) Dakar, Danmarkshavn, Freetown, Lome, Nouakchott, Ouagadougou',
         'Africa/Sao_Tome' => '(UTC+00:00) Sao Tome',
@@ -187,10 +185,10 @@ function _get_timezone_list()
         'Asia/Dhaka' => '(UTC+06:00) Astana, Dhaka',
         'Asia/Qyzylorda' => '(UTC+06:00) Qyzylorda',
         'Asia/Bishkek' => '(UTC+06:00) Bishkek',
-        'Asia/Almaty' => '(UTC+06:00) Almaty, Novosibirsk',
         'Asia/Omsk' => '(UTC+06:00) Omsk',
         'Indian/Cocos' => '(UTC+06:30) Cocos',
         'Asia/Rangoon' => '(UTC+06:30) Yangon (Rangoon)',
+        'Asia/Almaty' => '(UTC+07:00) Almaty, Novosibirsk',
         'Indian/Christmas' => '(UTC+07:00) Christmas, Davis, Pontianak, Saigon',
         'Asia/Hovd' => '(UTC+07:00) Hovd',
         'Asia/Krasnoyarsk' => '(UTC+07:00) Krasnoyarsk',
@@ -251,6 +249,8 @@ function _get_timezone_list()
         'Pacific/Chatham' => '(UTC+12:45) Chatham Islands',
         'Pacific/Enderbury' => '(UTC+13:00) Enderbury',
         'Pacific/Tongatapu' => '(UTC+13:00) Nuku Alofa, Tongatapu',
+        'Pacific/Apia' => '(UTC+13:00) Apia',
+        'Pacific/Fakaofo' => '(UTC+13:00) Fakaofo, Johnston, Rarotonga',
         'Pacific/Kiritimati' => '(UTC+14:00) Kiritimati'
     );
 
@@ -259,14 +259,20 @@ function _get_timezone_list()
         $offset = (tz_time(time(), $zone) - time()) / 3600.0;
         $new = '(UTC';
         $new .= ($offset < 0.0) ? '-' : '+';
-        $offset = abs($offset);
-        $hours = intval(floor($offset));
+        $offset_abs = abs($offset);
+        $hours = intval(floor($offset_abs));
         $new .= str_pad(strval($hours), 2, '0', STR_PAD_LEFT);
         $new .= ':';
-        $new .= str_pad(strval(($hours - $offset) * 60), 2, '0', STR_PAD_LEFT);
+        $new .= str_pad(strval(abs($hours - $offset_abs) * 100), 2, '0', STR_PAD_LEFT);
         $new .= ') ';
         $title = preg_replace('#^\(UTC[+-]\d\d:\d\d\) #', $new, $title);
-        $ret[$zone] = $title;
+        $ret[$zone] = array($title, $offset);
+    }
+
+    sort_maps_by($ret, 1);
+
+    foreach ($ret as $zone => $bits) {
+        $ret[$zone] = $bits[0];
     }
 
     return $ret;
@@ -300,9 +306,17 @@ function post_param_date_components($stub, $year = null, $month = null, $day = n
             $day = intval($matches[3]);
 
             $time = either_param_string($stub . '_time', null);
-            if ((!is_null($time)) && (preg_match('#^(\d\d):(\d\d)$#', $time, $matches) != 0)) {
+            if ((!is_null($time)) && (preg_match('#^(\d\d):(\d\d)(:| |$)#', $time, $matches) != 0)) {
                 $hour = intval($matches[1]);
                 $minute = intval($matches[2]);
+                if ((strpos($time, 'AM') !== false) || (strpos($time, 'PM') !== false)) {
+                    if ($hour == 12) {
+                        $hour = 0;
+                    }
+                    if (strpos($time, 'PM') !== false) {
+                        $hour += 12;
+                    }
+                }
             } else {
                 $hour = null;
                 $minute = null;
@@ -337,9 +351,17 @@ function post_param_date_components($stub, $year = null, $month = null, $day = n
             $day = intval($matches[3]);
 
             $time = post_param_string($stub . '_time', null);
-            if ((!is_null($time)) && (preg_match('#^(\d\d):(\d\d)$#', $time, $matches) != 0)) {
+            if ((!is_null($time)) && (preg_match('#^(\d\d):(\d\d)(:| |$)#', $time, $matches) != 0)) {
                 $hour = intval($matches[1]);
                 $minute = intval($matches[2]);
+                if ((strpos($time, 'AM') !== false) || (strpos($time, 'PM') !== false)) {
+                    if ($hour == 12) {
+                        $hour = 0;
+                    }
+                    if (strpos($time, 'PM') !== false) {
+                        $hour += 12;
+                    }
+                }
             } else {
                 $hour = null;
                 $minute = null;
@@ -403,6 +425,11 @@ function _post_param_date($stub, $get_also = false, $do_timezone_conversion = tr
         if (($year >= 1970) || (@strftime('%Y', @mktime(0, 0, 0, 1, 1, 1963)) == '1963')) { // Only try and do timezone conversion if we can do proper maths this far back
             $time = $time * 2 - tz_time($time, $timezone);
         }
+    }
+
+    // TODO: #3046 in tracker
+    if ($time > 2147483647) {
+        $time = 2147483647;
     }
 
     return $time;

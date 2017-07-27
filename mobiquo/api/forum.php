@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts/Tapatalk, 2004-2015
+ Copyright (c) ocProducts/Tapatalk, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -34,12 +34,27 @@ function get_config_func($raw_params)
         $banners_disabled[] = strval($b['group_id']);
     }
 
-    $login_type = (get_option('one_per_email_address') == '1') ? 'both' : 'username';
+    switch (get_option('one_per_email_address')) {
+        case '1':
+            $login_type = 'both';
+            break;
+
+        case '2':
+            $login_type = 'email';
+            break;
+
+        case '0':
+        default:
+            $login_type = 'username';
+            break;
+    }
 
     $brand_name = get_value('rebrand_name');
     if (is_null($brand_name)) {
         $brand_name = 'Composr';
     }
+
+    require_code('database_search');
 
     $_config = array(
         'api_level' => '4',
@@ -122,11 +137,11 @@ function get_config_func($raw_params)
         'no_refresh_on_post' => '1',
         'soft_delete' => '0',
         'system' => $brand_name,
-        'charset' => 'UTF-8', // Keep it simple and compatible with different clients. Will always convert to UTF-8
+        'charset' => 'utf-8', // Keep it simple and compatible with different clients. Will always convert to utf-8
         'timezone' => get_site_timezone(),
         'disable_bbcode' => '0',
 
-        //'json_support'=>'1',	Enable once JSON is tested. Test it if Tapatalk has stopped supporting XML-RPC.
+        //'json_support' => '1',    Enable once JSON is tested. Test it if Tapatalk has stopped supporting XML-RPC.
 
         'push' => '1',
         'push_type' => 'pm,sub,quote,newtopic,tag',

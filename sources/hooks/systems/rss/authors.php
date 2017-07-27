@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -68,7 +68,7 @@ class Hook_rss_authors
             $category = '';
             $category_raw = '';
 
-            $view_url = build_url(array('page' => 'authors', 'type' => 'view', 'id' => $row['author']), get_module_zone('authors'), null, false, false, true);
+            $view_url = build_url(array('page' => 'authors', 'type' => 'browse', 'id' => $row['author']), get_module_zone('authors'), null, false, false, true);
 
             $if_comments = new Tempcode();
 

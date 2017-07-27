@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -26,6 +26,7 @@
  * @param  boolean $collapse_zones Whether we have zone collapsing on
  * @param  ID_TEXT $installprofile ID of the install profile
  * @return array Structure of pages
+ *
  * @ignore
  */
 function _get_zone_pages($installprofileblocks, $block_options, $collapse_zones, $installprofile)
@@ -126,9 +127,9 @@ function _get_zone_pages($installprofileblocks, $block_options, $collapse_zones,
         require_lang('menus');
         if ($installprofile == '') {
             if (($zone == '') && (!$collapse_zones)) {
-                $comcode .= unixify_line_format(file_get_contents(get_file_base() . '/pages/comcode/' . fallback_lang() . '/panel_left.txt'));
+                $comcode .= unixify_line_format(cms_file_get_contents_safe(get_file_base() . '/pages/comcode/' . fallback_lang() . '/panel_left.txt'));
             } else {
-                $comcode .= unixify_line_format(file_get_contents(get_file_base() . '/site/pages/comcode/' . fallback_lang() . '/panel_left.txt'));
+                $comcode .= unixify_line_format(cms_file_get_contents_safe(get_file_base() . '/site/pages/comcode/' . fallback_lang() . '/panel_left.txt'));
             }
         }
         $comcode .= $left;

@@ -1,4 +1,17 @@
-<?php
+<?php /*
+
+ Composr
+ Copyright (c) ocProducts, 2004-2016
+
+ See text/EN/licence.txt for full licencing information.
+
+*/
+
+/**
+ * @license    http://opensource.org/licenses/cpal_1.0 Common Public Attribution License
+ * @copyright  ocProducts Ltd
+ * @package    facebook_support
+ */
 
 /**
  * Hook class.
@@ -12,6 +25,10 @@ class Hook_syndication_facebook
 
     public function is_available()
     {
+        if (get_option('facebook_syndicate') == '0') {
+            return false;
+        }
+
         $appapikey = get_option('facebook_appid');
         $appsecret = get_option('facebook_secret_code');
         if (($appapikey == '') || ($appsecret == '')) {
@@ -33,40 +50,39 @@ class Hook_syndication_facebook
             var fb_button=document.getElementById('syndicate_start__facebook');
             if (fb_button)
             {
-                    var fb_input;
-                    if (typeof fb_button.form.elements['facebook_syndicate_to_page']=='undefined')
-                    {
-                            fb_input=document.createElement('input');
-                            fb_input.type='hidden';
-                            fb_input.name='facebook_syndicate_to_page';
-                            fb_input.value='0';
-                            fb_button.form.appendChild(fb_input);
-                    } else
-                    {
-                            fb_input=fb_button.form.elements['facebook_syndicate_to_page'];
-                    }
-                    fb_button.onclick=function() {
-                            generate_question_ui(
-                                        '" . addslashes(do_lang('HOW_TO_SYNDICATE_DESCRIPTION')) . "',
+                var fb_input;
+                if (typeof fb_button.form.elements['facebook_syndicate_to_page']=='undefined')
+                {
+                    fb_input=document.createElement('input');
+                    fb_input.type='hidden';
+                    fb_input.name='facebook_syndicate_to_page';
+                    fb_input.value='0';
+                    fb_button.form.appendChild(fb_input);
+                } else
+                {
+                    fb_input=fb_button.form.elements['facebook_syndicate_to_page'];
+                }
+                fb_button.onclick=function() {
+                    generate_question_ui(
+                        '" . addslashes(do_lang('HOW_TO_SYNDICATE_DESCRIPTION')) . "',
 
-                                        ['" . addslashes(do_lang('INPUTSYSTEM_CANCEL')) . "','" . addslashes(do_lang('FACEBOOK_PAGE')) . "','" . addslashes(do_lang('FACEBOOK_WALL')) . "'],
+                        ['" . addslashes(do_lang('INPUTSYSTEM_CANCEL')) . "','" . addslashes(do_lang('FACEBOOK_PAGE')) . "','" . addslashes(do_lang('FACEBOOK_WALL')) . "'],
 
-                                        '" . addslashes(do_lang('HOW_TO_SYNDICATE')) . "',
+                        '" . addslashes(do_lang('HOW_TO_SYNDICATE')) . "',
 
-                                        '" . addslashes(do_lang('SYNDICATE_TO_OWN_WALL', get_site_name())) . "',
+                        '" . addslashes(do_lang('SYNDICATE_TO_OWN_WALL', get_site_name())) . "',
 
-                                        function(val) {
-                                                        if (val!='" . addslashes(do_lang('INPUTSYSTEM_CANCEL')) . "')
-                                                        {
-                                                                            fb_input.value=(val=='" . addslashes(do_lang('FACEBOOK_PAGE')) . "')?'1':'0';
-                                                                            fb_button.onclick=null;
-                                                                            click_link(fb_button);
-                                                        }
-                                        }
-                            );
+                        function(val) {
+                            if (val!='" . addslashes(do_lang('INPUTSYSTEM_CANCEL')) . "') {
+                                fb_input.value=(val=='" . addslashes(do_lang('FACEBOOK_PAGE')) . "')?'1':'0';
+                                fb_button.onclick=null;
+                                click_link(fb_button);
+                            }
+                        }
+                    );
 
-                            return false;
-                    };
+                    return false;
+                };
             }
         ";
     }
@@ -77,7 +93,8 @@ class Hook_syndication_facebook
         if (!is_null($member_id)) {
             $save_to .= '__' . strval($member_id);
         }
-        return get_value($save_to, null, true) !== null;
+        $val = get_value($save_to, null, true);
+        return !empty($val);
     }
 
     public function auth_set($member_id, $oauth_url)
@@ -89,7 +106,12 @@ class Hook_syndication_facebook
         $code = get_param_string('code', '', true);
 
         if ($code == '') {
-            $oauth_redir_url = $FACEBOOK_CONNECT->getLoginUrl(array('redirect_uri' => $oauth_url->evaluate(), 'scope' => array('publish_actions')));
+            $scope = array('publish_actions');
+            if (is_null($member_id)) {
+                $scope[] = 'manage_pages';
+                $scope[] = 'publish_pages';
+            }
+            $oauth_redir_url = $FACEBOOK_CONNECT->getLoginUrl(array('redirect_uri' => $oauth_url->evaluate(), 'scope' => $scope));
             require_code('site2');
             smart_redirect($oauth_redir_url);
         }
@@ -139,7 +161,10 @@ class Hook_syndication_facebook
 
         if (get_page_name() != 'facebook_oauth') { // Take member back to page that implicitly shows their results
             require_code('site2');
-            smart_redirect(str_replace('&syndicate_start__facebook=1', '', str_replace('oauth_in_progress=1&', 'oauth_in_progress=0&', $oauth_url->evaluate())));
+            $target_url = $oauth_url->evaluate();
+            $target_url = preg_replace('#oauth_in_progress=\d+#', '', $target_url);
+            $target_url = preg_replace('#syndicate_start__facebook=\d+#', '', $target_url);
+            smart_redirect($target_url);
         }
 
         return true;
@@ -220,7 +245,7 @@ class Hook_syndication_facebook
         // Send message
         $appid = get_option('facebook_appid');
         $appsecret = get_option('facebook_secret_code');
-        $fb = new cmsFacebook(array('appId' => $appid, 'secret' => $appsecret));
+        $fb = new Facebook(array('appId' => $appid, 'secret' => $appsecret));
         $fb->setAccessToken($token);
 
         $attachment = array('description' => $message);
@@ -241,9 +266,11 @@ class Hook_syndication_facebook
         try {
             $ret = $fb->api('/' . $post_to_uid . '/feed', 'POST', $attachment);
         } catch (Exception $e) {
-            if ((!is_null($member_id)) && (count($_POST) == 0) && (running_script('index')) && (!headers_sent())) {
+            if ((!is_null($member_id)) && (!has_interesting_post_fields()) && (running_script('index')) && (!headers_sent())) {
                 $this->auth_set($member_id, get_self_url());
             }
+
+            header('Facebook-Error: ' . escape_header($e->getMessage()));
 
             if (!$silent_warn) {
                 attach_message($e->getMessage(), 'warn');

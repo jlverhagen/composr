@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -45,7 +45,7 @@ class Hook_rss_filedump
         }
 
         if (!file_exists(get_custom_file_base() . '/uploads/filedump/')) {
-            return array();
+            return null;
         }
 
         $filters = explode(',', $_filters);

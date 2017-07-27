@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -44,7 +44,11 @@ function read_filtercode_parameter_from_env($field_name, $field_type = null)
         $_default_value = post_param_date('filter_' . $field_name, true);
         $default_value = ($_default_value === null) ? '' : strval($_default_value);
     } elseif ($field_type == 'list_multi') {
-        $default_value = array_key_exists('filter_' . $field_name, $env) ? implode(',', $env['filter_' . $field_name]) : '';
+        if (array_key_exists('filter_' . $field_name, $env)) {
+            $default_value = implode(',', is_array($env['filter_' . $field_name]) ? $env['filter_' . $field_name] : array($env['filter_' . $field_name]));
+        } else {
+            $default_value = '';
+        }
     } else {
         $default_value = either_param_string('filter_' . $field_name, '');
     }
@@ -90,6 +94,7 @@ function form_for_filtercode($filter, $labels = null, $content_type = null, $typ
     $catalogue_name = mixed();
     if (preg_match('#^\w+$#', $filter) != 0) {
         $catalogue_name = $filter;
+        $filter = '';
     }
 
     $_links = array();
@@ -109,7 +114,7 @@ function form_for_filtercode($filter, $labels = null, $content_type = null, $typ
         if (isset($info['seo_type_code'])) {
             $db_fields['meta_keywords'] = 'SHORT_TEXT';
             $db_fields['meta_description'] = 'LONG_TEXT';
-            $types['meta_keywords'] = 'line';
+            $types['meta_keywords'] = 'list_multi';
             $types['meta_description'] = 'line';
         }
 
@@ -117,7 +122,7 @@ function form_for_filtercode($filter, $labels = null, $content_type = null, $typ
         require_code('content');
         $ob2 = get_content_object($content_type);
         $info2 = $ob2->info();
-        if ((isset($info2['supports_custom_fields'])) && ($info2['supports_custom_fields'])) {
+        if (($info2['support_custom_fields']) || ($content_type == 'catalogue_entry')) {
             require_code('fields');
             $catalogue_fields = list_to_map('id', get_catalogue_fields(($content_type == 'catalogue_entry') ? $catalogue_name : '_' . $content_type));
             foreach ($catalogue_fields as $catalogue_field) {
@@ -178,7 +183,17 @@ function form_for_filtercode($filter, $labels = null, $content_type = null, $typ
         $matches = array();
         if (preg_match('#^<([^<>]+)>$#', $filter_op, $matches) != 0) {
             $field_name = filter_naughty_harsh($matches[1]);
-            $field_title = array_key_exists($field_name, $labels) ? make_string_tempcode($labels[$field_name]) : do_lang_tempcode('OPERATOR_FOR', escape_html(titleify(preg_replace('#^filter\_#', '', preg_replace('#\_op$#', '', $field_name)))));
+            if (array_key_exists($field_name, $labels)) {
+                $field_title = escape_html($labels[$field_name]);
+            } else {
+                $target_name = preg_replace('#^filter\_#', '', preg_replace('#\_op$#', '', $field_name));
+                if (array_key_exists($target_name, $labels)) {
+                    $operator_target_label = escape_html($labels[$target_name]);
+                } else {
+                    $operator_target_label = escape_html(titleify($target_name));
+                }
+                $field_title = do_lang_tempcode('OPERATOR_FOR', $operator_target_label);
+            }
 
             $fields_needed[] = array(
                 'list',
@@ -211,11 +226,19 @@ function form_for_filtercode($filter, $labels = null, $content_type = null, $typ
             if (array_key_exists($field_name, $types)) {
                 $field_type = $types[$field_name];
 
-                if (($field_type == 'list') || ($field_type == 'linklist') || ($field_type == 'mulilist')) {
+                if (($field_type == 'list') || ($field_type == 'linklist'/*tag-cloud-narrow-in*/) || ($field_type == 'list_multi')) {
                     // Work out what list values there are
                     $extra = array();
                     if ($table !== null) {
-                        if (($field_name != 'meta_keywords') && ($field_name != 'meta_description') && ($field_name != 'compound_rating') && ($field_name != 'average_rating')) {
+                        if (substr($field_name, 0, 6) == 'field_') {
+                            $_extra = $db->query_select_value('catalogue_fields', 'cf_default', array('id' => intval(substr($field_name, 6))));
+                            $_extra_parts = explode('|', $_extra);
+                            foreach ($_extra_parts as $e) {
+                                if ($e != '') {
+                                    $extra[$e] = $e;
+                                }
+                            }
+                        } elseif (($field_name != 'meta_keywords') && ($field_name != 'meta_description') && ($field_name != 'compound_rating') && ($field_name != 'average_rating')) {
                             $_extra = $db->query_select($table, array('DISTINCT ' . filter_naughty_harsh($field_name)), null, 'ORDER BY ' . filter_naughty_harsh($field_name));
                             foreach ($_extra as $e) {
                                 if (!is_string($e[$field_name])) {
@@ -223,15 +246,10 @@ function form_for_filtercode($filter, $labels = null, $content_type = null, $typ
                                 }
                                 $extra[$e[$field_name]] = $e[$field_name];
                             }
-                        } else {
-                            if ($field_name == 'meta_keywords') {
-                                $_extra = $db->query_select('seo_meta', array('DISTINCT meta_keywords'), null, 'ORDER BY ' . filter_naughty_harsh($field_name));
-                                foreach ($_extra as $e) {
-                                    $keywords = explode(',', $e['meta_keywords']);
-                                    foreach ($keywords as $k) {
-                                        $extra[trim($k)] = $e[trim($k)];
-                                    }
-                                }
+                        } elseif ($field_name == 'meta_keywords') {
+                            $_extra = $db->query_select('seo_meta_keywords', array('DISTINCT meta_keyword'), null, 'ORDER BY meta_keyword');
+                            foreach ($_extra as $e) {
+                                $extra[trim($e['meta_keyword'])] = trim($e['meta_keyword']);
                             }
                         }
                     }
@@ -277,7 +295,7 @@ function form_for_filtercode($filter, $labels = null, $content_type = null, $typ
                             break;
                         case 'LANGUAGE_NAME':
                             $field_type = 'list';
-                            require_code('lang3');
+                            require_code('lang2');
                             $_extra = array_keys(find_all_langs());
                             $extra = array();
                             foreach (array_keys(find_all_langs()) as $lang) {
@@ -310,11 +328,11 @@ function form_for_filtercode($filter, $labels = null, $content_type = null, $typ
 
         switch ($field_type) { // NB: These type codes also vaguelly correspond to field hooks, just for convention (we don't use them)
             case 'time':
-                $form_fields->attach(form_input_date($field_label, '', $field_name, false, $default_value == '', true, ($default_value == '') ? null : intval($default_value)));
+                $form_fields->attach(form_input_date($field_label, '', 'filter_' . $field_name, false, $default_value == '', true, ($default_value == '') ? null : intval($default_value)));
                 break;
 
             case 'date':
-                $form_fields->attach(form_input_date($field_label, '', $field_name, false, $default_value == '', false, ($default_value == '') ? null : intval($default_value)));
+                $form_fields->attach(form_input_date($field_label, '', 'filter_' . $field_name, false, $default_value == '', false, ($default_value == '') ? null : intval($default_value)));
                 break;
 
             case 'days':
@@ -327,7 +345,7 @@ function form_for_filtercode($filter, $labels = null, $content_type = null, $typ
                 foreach ($days_options as $key => $val) {
                     $list_options->attach(form_input_list_entry($key, $default_value == $key, $val));
                 }
-                $form_fields->attach(form_input_list($field_label, '', $field_name, $list_options, null, false, false));
+                $form_fields->attach(form_input_list($field_label, '', 'filter_' . $field_name, $list_options, null, false, false));
                 break;
 
             case 'tick':
@@ -335,7 +353,7 @@ function form_for_filtercode($filter, $labels = null, $content_type = null, $typ
                 foreach (array('' => '', '0' => do_lang_tempcode('NO'), '1' => do_lang_tempcode('YES')) as $key => $val) {
                     $list_options->attach(form_input_list_entry($key, $default_value == $key, $val));
                 }
-                $form_fields->attach(form_input_list($field_label, '', $field_name, $list_options, null, false, false));
+                $form_fields->attach(form_input_list($field_label, '', 'filter_' . $field_name, $list_options, null, false, false));
                 break;
 
             case 'rating':
@@ -344,7 +362,7 @@ function form_for_filtercode($filter, $labels = null, $content_type = null, $typ
                 foreach (array(1 => '&#10025;', 4 => '&#10025;&#10025;', 6 => '&#10025;&#10025;&#10025;', 8 => '&#10025;&#10025;&#10025;&#10025;', 10 => '&#10025;&#10025;&#10025;&#10025;&#10025;') as $rating => $rating_label) {
                     $list_options->attach(form_input_list_entry(strval($rating), $default_value == strval($rating), protect_from_escaping($rating_label)));
                 }
-                $form_fields->attach(form_input_list($field_label, '', $field_name, $list_options, null, false, false));
+                $form_fields->attach(form_input_list($field_label, '', 'filter_' . $field_name, $list_options, null, false, false));
                 break;
 
             case 'list':
@@ -353,7 +371,7 @@ function form_for_filtercode($filter, $labels = null, $content_type = null, $typ
                 foreach ($extra as $key => $val) {
                     $list_options->attach(form_input_list_entry($key, $default_value == $key, $val));
                 }
-                $form_fields->attach(form_input_list($field_label, '', $field_name, $list_options, null, false, false));
+                $form_fields->attach(form_input_list($field_label, '', 'filter_' . $field_name, $list_options, null, false, false));
                 break;
 
             case 'list_multi':
@@ -361,7 +379,7 @@ function form_for_filtercode($filter, $labels = null, $content_type = null, $typ
                 foreach ($extra as $key => $val) {
                     $list_options->attach(form_input_list_entry($key, preg_match('#(^|,)' . preg_quote($key, '#') . '(,|$)#', $default_value) != 0, $val));
                 }
-                $form_fields->attach(form_input_multi_list($field_label, '', $field_name, $list_options, null, 5, false));
+                $form_fields->attach(form_input_multi_list($field_label, '', 'filter_' . $field_name, $list_options, null, 5, false));
                 break;
 
             case 'linklist':
@@ -371,32 +389,32 @@ function form_for_filtercode($filter, $labels = null, $content_type = null, $typ
                 break;
 
             case 'float':
-                $form_fields->attach(form_input_float($field_label, '', $field_name, ($default_value == '') ? null : floatval($default_value), false));
+                $form_fields->attach(form_input_float($field_label, '', 'filter_' . $field_name, ($default_value == '') ? null : floatval($default_value), false));
                 break;
 
             case 'integer':
-                $form_fields->attach(form_input_integer($field_label, '', $field_name, ($default_value == '') ? null : intval($default_value), false));
+                $form_fields->attach(form_input_integer($field_label, '', 'filter_' . $field_name, ($default_value == '') ? null : intval($default_value), false));
                 break;
 
             case 'email':
-                $form_fields->attach(form_input_email($field_label, '', $field_name, $default_value, false));
+                $form_fields->attach(form_input_email($field_label, '', 'filter_' . $field_name, $default_value, false));
                 break;
 
             case 'author':
-                $form_fields->attach(form_input_author($field_label, '', $field_name, $default_value, false));
+                $form_fields->attach(form_input_author($field_label, '', 'filter_' . $field_name, $default_value, false));
                 break;
 
             case 'username':
-                $form_fields->attach(form_input_username($field_label, '', $field_name, $default_value, false));
+                $form_fields->attach(form_input_username($field_label, '', 'filter_' . $field_name, $default_value, false));
                 break;
 
             case 'codename':
-                $form_fields->attach(form_input_codename($field_label, '', $field_name, $default_value, false));
+                $form_fields->attach(form_input_codename($field_label, '', 'filter_' . $field_name, $default_value, false));
                 break;
 
             case 'line':
             default:
-                $form_fields->attach(form_input_line($field_label, '', $field_name, $default_value, false));
+                $form_fields->attach(form_input_line($field_label, '', 'filter_' . $field_name, $default_value, false));
                 break;
         }
     }
@@ -416,7 +434,7 @@ function parse_filtercode($filter)
     $filters = explode((strpos($filter, "\n") !== false) ? "\n" : ',', $filter);
     foreach ($filters as $bit) {
         if ($bit != '') {
-            $parts = preg_split('#(<[\w\-\_]+>|<=|>=|<>|!=|<|>|=|==|~=|~|@|\#)#', $bit, 2, PREG_SPLIT_DELIM_CAPTURE); // NB: preg_split is not greedy, so longest operators need to go first
+            $parts = preg_split('#(<[\w\-]+>|<=|>=|<>|!=|<|>|=|==|~=|~|@|\#)#', $bit, 2, PREG_SPLIT_DELIM_CAPTURE); // NB: preg_split is not greedy, so longest operators need to go first
             if (count($parts) == 3) {
                 $parts[0] = ltrim($parts[0]);
                 $is_join = false;
@@ -462,7 +480,7 @@ function unparse_filtercode($parsed)
  * @param  ID_TEXT $filter_key The field to get
  * @param  string $filter_val The field value for this
  * @param  array $db_fields Database field data
- * @param  string $table_join_code What MySQL will join the table with
+ * @param  string $table_join_code What the database will join the table with
  * @return ?array A triple: Proper database field name to access with, The fields API table type (blank: no special table), The new filter value (null: error)
  * @ignore
  */
@@ -473,7 +491,7 @@ function _fields_api_filtercode_named($db, $info, $catalogue_name, &$extra_join,
     if (count($fields) != 0) {
         foreach ($fields as $i => $field) {
             if (get_translated_text($field['cf_name']) == $filter_key) {
-                return _fields_api_filtercode($db, $info, $catalogue_name, $extra_join, $extra_select, 'field_' . strval($i), $filter_val, $db_fields, $table_join_code);
+                return _fields_api_filtercode($db, $info, $catalogue_name, $extra_join, $extra_select, 'field_' . strval($field['id']), $filter_val, $db_fields, $table_join_code);
             }
         }
     }
@@ -510,7 +528,7 @@ function _fields_api_filtercode_named($db, $info, $catalogue_name, &$extra_join,
  * @param  ID_TEXT $filter_key The field to get
  * @param  string $filter_val The field value for this
  * @param  array $db_fields Database field data
- * @param  string $table_join_code What MySQL will join the table with
+ * @param  string $table_join_code What the database will join the table with
  * @return ?array A triple: Proper database field name to access with, The fields API table type (blank: no special table), The new filter value (null: error)
  * @ignore
  */
@@ -523,16 +541,16 @@ function _fields_api_filtercode($db, $info, $catalogue_name, &$extra_join, &$ext
 
     require_code('fields');
     $this_catalogue_name = ($matches[1] == '') ? $catalogue_name : $matches[2];
-    $fields = get_catalogue_fields($this_catalogue_name);
+    $fields = list_to_map('id', get_catalogue_fields($this_catalogue_name));
 
-    $field_in_seq = intval($matches[3]);
+    $field_id = intval($matches[3]);
 
-    if ((!isset($fields[intval($field_in_seq)])) || ($fields[intval($field_in_seq)]['cf_put_in_search'] == 0)) {
+    if ((!isset($fields[$field_id])) || ($fields[$field_id]['cf_put_in_search'] == 0)) {
         return null;
     }
 
-    $ob = get_fields_hook($fields[intval($field_in_seq)]['cf_type']);
-    list(, , $table) = $ob->get_field_value_row_bits($fields[$field_in_seq]);
+    $ob = get_fields_hook($fields[$field_id]['cf_type']);
+    list(, , $table) = $ob->get_field_value_row_bits($fields[$field_id]);
 
     $catalogue_key = generate_filtercode_join_key_from_string($this_catalogue_name);
 
@@ -544,19 +562,26 @@ function _fields_api_filtercode($db, $info, $catalogue_name, &$extra_join, &$ext
         $table_join_code_here = $table_join_code;
     }
 
+    if ((!isset($info['content_type'])) || ($info['content_type'] == 'catalogues')) {
+        $join_sql = ' LEFT JOIN ' . $db->get_table_prefix() . 'catalogue_efv_' . $table . ' f' . strval($field_id) . '_' . $catalogue_key . ' ON f' . strval($field_id) . '_' . $catalogue_key . '.ce_id=' . $table_join_code_here . '.id AND f' . strval($field_id) . '_' . $catalogue_key . '.cf_id=' . strval($field_id);
+    } else {
+        $id_field = is_array($info['id_field']) ? $info['id_field'][0] : $info['id_field'];
+        $join_sql = ' LEFT JOIN ' . $db->get_table_prefix() . 'catalogue_entry_linkage l' . strval($field_id) . '_' . $catalogue_key . ' ON ' . db_string_equal_to('l' . strval($field_id) . '_' . $catalogue_key . '.content_type', $info['content_type']) . ' AND l' . strval($field_id) . '_' . $catalogue_key . '.content_id=' . db_cast($table_join_code_here . '.' . $id_field, 'CHAR') . ' LEFT JOIN ' . $db->get_table_prefix() . 'catalogue_efv_' . $table . ' f' . strval($field_id) . '_' . $catalogue_key . ' ON f' . strval($field_id) . '_' . $catalogue_key . '.ce_id=l' . strval($field_id) . '_' . $catalogue_key . '.catalogue_entry_id AND f' . strval($field_id) . '_' . $catalogue_key . '.cf_id=' . strval($field_id);
+    }
+
     if ((strpos($table, '_trans') !== false) && (multi_lang_content())) {
-        $join_sql = ' LEFT JOIN ' . $db->get_table_prefix() . 'catalogue_efv_' . $table . ' f' . strval($field_in_seq) . '_' . $catalogue_key . ' ON f' . strval($field_in_seq) . '_' . $catalogue_key . '.ce_id=' . $table_join_code_here . '.id AND f' . strval($field_in_seq) . '_' . $catalogue_key . '.cf_id=' . strval($fields[$field_in_seq]['id']) . ' LEFT JOIN ' . $db->get_table_prefix() . 'translate t' . strval($field_in_seq) . '_' . $catalogue_key . ' ON f' . strval($field_in_seq) . '_' . $catalogue_key . '.cv_value=t' . strval($field_in_seq) . '_' . $catalogue_key . '.id';
+        $join_sql .= ' LEFT JOIN ' . $db->get_table_prefix() . 'translate t' . strval($field_id) . '_' . $catalogue_key . ' ON f' . strval($field_id) . '_' . $catalogue_key . '.cv_value=t' . strval($field_id) . '_' . $catalogue_key . '.id';
+
         if (!in_array($join_sql, $extra_join)) {
             $extra_join[$filter_key] = $join_sql;
         }
-        return array('t' . strval($field_in_seq) . '_' . $catalogue_key . '.text_original', $table, $filter_val);
+        return array('t' . strval($field_id) . '_' . $catalogue_key . '.text_original', $table, $filter_val);
     }
 
-    $join_sql = ' LEFT JOIN ' . $db->get_table_prefix() . 'catalogue_efv_' . $table . ' f' . strval($field_in_seq) . '_' . $catalogue_key . ' ON f' . strval($field_in_seq) . '_' . $catalogue_key . '.ce_id=' . $table_join_code_here . '.id AND f' . strval($field_in_seq) . '_' . $catalogue_key . '.cf_id=' . strval($fields[$field_in_seq]['id']);
     if (!in_array($join_sql, $extra_join)) {
         $extra_join[$filter_key] = $join_sql;
     }
-    return array('f' . strval($field_in_seq) . '_' . $catalogue_key . '.cv_value', $table, $filter_val);
+    return array('f' . strval($field_id) . '_' . $catalogue_key . '.cv_value', $table, $filter_val);
 }
 
 /**
@@ -581,19 +606,21 @@ function generate_filtercode_join_key_from_string($str)
  * @param  ID_TEXT $filter_key The field to get
  * @param  string $filter_val The field value for this
  * @param  array $db_fields Database field data
- * @param  string $table_join_code What MySQL will join the table with
+ * @param  string $table_join_code What the database will join the table with
  * @return ?array A triple: Proper database field name to access with, The fields API table type (blank: no special table), The new filter value (null: error)
  * @ignore
  */
 function _default_conv_func($db, $info, $catalogue_name, &$extra_join, &$extra_select, $filter_key, $filter_val, $db_fields, $table_join_code)
 {
+    $first_id_field = (is_array($info['id_field']) ? implode(',', $info['id_field']) : $info['id_field']);
+
     // Special case for ratings
     $matches = array('', $info['feedback_type_code']);
     if (($filter_key == 'compound_rating') || (preg_match('#^compound_rating\_\_(.+)#', $filter_key, $matches) != 0)) {
         if ($filter_key == 'compound_rating') {
             $matches[1] .= '__' . $catalogue_name;
         }
-        $clause = '(SELECT SUM(rating-1) FROM ' . $db->get_table_prefix() . 'rating rat WHERE ' . db_string_equal_to('rat.rating_for_type', $matches[1]) . ' AND rat.rating_for_id=' . $table_join_code . '.id)';
+        $clause = '(SELECT SUM(rating-1) FROM ' . $db->get_table_prefix() . 'rating rat WHERE ' . db_string_equal_to('rat.rating_for_type', $matches[1]) . ' AND rat.rating_for_id=' . db_cast($table_join_code . '.' . $first_id_field, 'CHAR') . ')';
         $extra_select[$filter_key] = ', ' . $clause . ' AS compound_rating_' . fix_id($matches[1]);
         return array($clause, '', $filter_val);
     }
@@ -602,15 +629,27 @@ function _default_conv_func($db, $info, $catalogue_name, &$extra_join, &$extra_s
         if ($filter_key == 'average_rating') {
             $matches[1] .= '__' . $catalogue_name;
         }
-        $clause = '(SELECT AVG(rating)/2 FROM ' . $db->get_table_prefix() . 'rating rat WHERE ' . db_string_equal_to('rat.rating_for_type', $matches[1]) . ' AND rat.rating_for_id=' . $table_join_code . '.id)';
+        $clause = '(SELECT AVG(rating)/2 FROM ' . $db->get_table_prefix() . 'rating rat WHERE ' . db_string_equal_to('rat.rating_for_type', $matches[1]) . ' AND rat.rating_for_id=' . db_cast($table_join_code . '.' . $first_id_field, 'CHAR') . ')';
         $extra_select[$filter_key] = ', ' . $clause . ' AS average_rating_' . fix_id($matches[1]);
+        return array($clause, '', $filter_val);
+    }
+
+    // Random
+    $matches = array('', $info['feedback_type_code']);
+    if (($filter_key == 'fixed_random') || (preg_match('#^fixed_random\_\_(.+)#', $filter_key, $matches) != 0)) {
+        if ($filter_key == 'fixed_random') {
+            $matches[1] .= '__' . $catalogue_name;
+        }
+        $clause = db_cast('r.' . $first_id_field, 'INT');
+        $clause = '(' . db_function('MOD', array($clause, date('d'))) . ')';
+        $extra_select[$filter_key] = ', ' . $clause . ' AS fixed_random_' . fix_id($matches[1]);
         return array($clause, '', $filter_val);
     }
 
     // Special case for SEO fields
     if ($filter_key == 'meta_description') {
         $seo_type_code = isset($info['seo_type_code']) ? $info['seo_type_code'] : '!!!ERROR!!!';
-        $join = ' LEFT JOIN ' . $db->get_table_prefix() . 'seo_meta sm ON sm.meta_for_id=' . $table_join_code . '.id AND ' . db_string_equal_to('sm.meta_for_type', $seo_type_code);
+        $join = ' LEFT JOIN ' . $db->get_table_prefix() . 'seo_meta sm ON sm.meta_for_id=' . db_cast($table_join_code . '.' . $first_id_field, 'CHAR') . ' AND ' . db_string_equal_to('sm.meta_for_type', $seo_type_code);
         if (!in_array($join, $extra_join)) {
             $extra_join[$filter_key] = $join;
         }
@@ -619,11 +658,11 @@ function _default_conv_func($db, $info, $catalogue_name, &$extra_join, &$extra_s
     if ($filter_key == 'meta_keywords') {
         $seo_type_code = isset($info['seo_type_code']) ? $info['seo_type_code'] : '!!!ERROR!!!';
         if (multi_lang_content()) {
-            $clause = 'GROUP_CONCAT(SELECT text_original FROM ' . $db->get_table_prefix() . 'seo_meta_keywords kw JOIN ' . $db->get_table_prefix() . 'translate kwt ON kwt.id=kw.meta_keyword WHERE kw.meta_for_id=' . $table_join_code . '.id AND ' . db_string_equal_to('kw.meta_for_type', $seo_type_code) . ')';
+            $clause = '(' . db_function('GROUP_CONCAT', array('text_original', $db->get_table_prefix() . 'seo_meta_keywords kw JOIN ' . $db->get_table_prefix() . 'translate kwt ON kwt.id=kw.meta_keyword WHERE kw.meta_for_id=' . db_cast($table_join_code . '.' . $first_id_field, 'CHAR') . ' AND ' . db_string_equal_to('kw.meta_for_type', $seo_type_code))) . ')';
         } else {
-            $clause = 'GROUP_CONCAT(SELECT meta_keyword FROM ' . $db->get_table_prefix() . 'seo_meta_keywords kw WHERE kw.meta_for_id=' . $table_join_code . '.id AND ' . db_string_equal_to('kw.meta_for_type', $seo_type_code) . ')';
+            $clause = '(' . db_function('GROUP_CONCAT', array('meta_keyword', $db->get_table_prefix() . 'seo_meta_keywords kw WHERE kw.meta_for_id=' . db_cast($table_join_code . '.' . $first_id_field, 'CHAR') . ' AND ' . db_string_equal_to('kw.meta_for_type', $seo_type_code))) . ')';
         }
-        $extra_select[$filter_key] = ', ' . $clause . ' AS meta_keyword_' . fix_id($matches[1]);
+        $extra_select[$filter_key] = ', ' . $clause . ' AS meta_keyword_' . fix_id($seo_type_code);
         return array($clause, '', $filter_val);
     }
 
@@ -709,9 +748,13 @@ function _default_conv_func($db, $info, $catalogue_name, &$extra_join, &$extra_s
         return null;
     }
 
-    // $filter_key is exactly as said in most cases
+    if (strpos($filter_key, '.') !== false) {
+        $new_filter_key = $filter_key;
+    } else {
+        $new_filter_key = $table_join_code . '.' . $filter_key;
+    }
 
-    return array($table_join_code . '.' . $filter_key, $field_type, $filter_val);
+    return array($new_filter_key, $field_type, $filter_val);
 }
 
 /**
@@ -719,12 +762,12 @@ function _default_conv_func($db, $info, $catalogue_name, &$extra_join, &$extra_s
  *
  * @param  object $db Database object to use
  * @param  array $filters Parsed Filtercode structure
- * @param  ID_TEXT $content_type The content type (blank: no function needed, direct in-table mapping always works)
- * @param  string $context First parameter to send to the conversion function, may mean whatever that function wants it to. If we have no conversion function, this is the name of a table to read field meta data from
- * @param  string $table_join_code What MySQL will join the table with
+ * @param  ?ID_TEXT $content_type The content type (null: no function needed, direct in-table mapping always works)
+ * @param  ?string $context First parameter to send to the conversion function, may mean whatever that function wants it to. If we have no conversion function, this is the name of a table to read field metadata from (null: none)
+ * @param  string $table_join_code What the database will join the table with
  * @return array Tuple: array of extra select, array of extra join, string of extra where
  */
-function filtercode_to_sql($db, $filters, $content_type = '', $context = '', $table_join_code = 'r')
+function filtercode_to_sql($db, $filters, $content_type = null, $context = null, $table_join_code = 'r')
 {
     // Nothing to do?
     if (($filters === null) || ($filters == array())) {
@@ -734,13 +777,13 @@ function filtercode_to_sql($db, $filters, $content_type = '', $context = '', $ta
     // Get the conversion function. The conversion function takes field names and works out how that results in SQL
     $info = array();
     $conv_func = '_default_conv_func';
-    if ($content_type != '') {
+    if (!empty($content_type)) {
         require_code('content');
         $ob = get_content_object($content_type);
         $info = $ob->info();
         $info['content_type'] = $content_type; // We'll need this later, so add it in
 
-        if (isset($info['filtercode'])) {
+        if (array_key_exists('filtercode', $info)) {
             if (strpos($info['filtercode'], '::') !== false) {
                 list($code_file, $conv_func) = explode('::', $info['filtercode']);
                 require_code($code_file);
@@ -839,7 +882,7 @@ function filtercode_to_sql($db, $filters, $content_type = '', $context = '', $ta
                             $alt .= ' OR ';
                         }
                         $_filter_val = explode('-', $filter_val, 2);
-                        //$alt.=$filter_key.'>='.$_filter_val[0].' AND '.$filter_key.'<='.$_filter_val[1];     Less efficient than the below, due to possibility of $filter_key being a subselect
+                        //$alt .= $filter_key . '>=' . $_filter_val[0] . ' AND ' . $filter_key . '<=' . $_filter_val[1];     Less efficient than the below, due to possibility of $filter_key being a subselect
                         $alt .= $filter_key . ' BETWEEN ' . $_filter_val[0] . ' AND ' . $_filter_val[1];
                     }
                     break;
@@ -858,20 +901,7 @@ function filtercode_to_sql($db, $filters, $content_type = '', $context = '', $ta
                             $alt .= ' OR ';
                         }
 
-                        switch ($filter_op) {
-                            case '<':
-                                $alt .= 'STRCMP(REPLACE(' . $filter_key . ',\'-\',\'\'),REPLACE(\'' . db_escape_string($filter_val) . '\',\'-\',\'\'))<0';
-                                break;
-                            case '>':
-                                $alt .= 'STRCMP(REPLACE(' . $filter_key . ',\'-\',\'\'),REPLACE(\'' . db_escape_string($filter_val) . '\',\'-\',\'\'))>0';
-                                break;
-                            case '<=':
-                                $alt .= 'STRCMP(REPLACE(' . $filter_key . ',\'-\',\'\'),REPLACE(\'' . db_escape_string($filter_val) . '\',\'-\',\'\'))<=0';
-                                break;
-                            case '>=':
-                                $alt .= 'STRCMP(REPLACE(' . $filter_key . ',\'-\',\'\'),REPLACE(\'' . db_escape_string($filter_val) . '\',\'-\',\'\'))>=0';
-                                break;
-                        }
+                        $alt .= 'REPLACE(' . $filter_key . ',\'-\',\'\')' . $filter_op . 'REPLACE(\'' . db_escape_string($filter_val) . '\',\'-\',\'\')';
                     }
                     break;
 
@@ -913,7 +943,7 @@ function filtercode_to_sql($db, $filters, $content_type = '', $context = '', $ta
                     break;
 
                 case '~':
-                    if (strlen($filter_val) > 3) { // Within MySQL filter limits
+                    if (strlen($filter_val) > get_minimum_search_length()) {
                         if ($filter_val != '') {
                             if ($alt != '') {
                                 $alt .= ' OR ';
@@ -942,22 +972,28 @@ function filtercode_to_sql($db, $filters, $content_type = '', $context = '', $ta
                                 $alt .= ' OR ';
                             }
                             $alt .= '(';
-                            if ($is_join) {
-                                $alt .= $filter_key . ' LIKE CONCAT(' . $it_value . ',\',%\')';
-                                $alt .= ' OR ';
-                                $alt .= $filter_key . ' LIKE CONCAT(\'%,\',' . $it_value . ')';
-                                $alt .= ' OR ';
-                                $alt .= $filter_key . ' LIKE CONCAT(\'%,\',' . $it_value . ',\',%\')';
-                                $alt .= ' OR ';
-                                $alt .= $filter_key . '=' . $it_value;
-                            } else {
-                                $alt .= $filter_key . ' LIKE \'' . db_encode_like($it_value . ',%') . '\'';
-                                $alt .= ' OR ';
-                                $alt .= $filter_key . ' LIKE \'' . db_encode_like('%,' . $it_value) . '\'';
-                                $alt .= ' OR ';
-                                $alt .= $filter_key . ' LIKE \'' . db_encode_like('%,' . $it_value . ',%') . '\'';
-                                $alt .= ' OR ';
-                                $alt .= db_string_equal_to($filter_key, $it_value);
+                            foreach (array('|', "\n"/*list_multi*/) as $delimi_i => $delim) {
+                                if ($delimi_i != 0) {
+                                    $alt .= ' OR ';
+                                }
+
+                                if ($is_join) {
+                                    $alt .= $filter_key . ' LIKE ' . db_function('CONCAT', array($it_value, '\'' . $delim . '%\''));
+                                    $alt .= ' OR ';
+                                    $alt .= $filter_key . ' LIKE ' . db_function('CONCAT', array('\'%' . $delim . '\'',  $it_value));
+                                    $alt .= ' OR ';
+                                    $alt .= $filter_key . ' LIKE ' . db_function('CONCAT', array('\'%' . $delim . '\'', $it_value, '\'' . $delim . '%\''));
+                                    $alt .= ' OR ';
+                                    $alt .= $filter_key . '=' . $it_value;
+                                } else {
+                                    $alt .= $filter_key . ' LIKE \'' . db_encode_like($it_value . '' . $delim . '%') . '\'';
+                                    $alt .= ' OR ';
+                                    $alt .= $filter_key . ' LIKE \'' . db_encode_like('%' . $delim . '' . $it_value) . '\'';
+                                    $alt .= ' OR ';
+                                    $alt .= $filter_key . ' LIKE \'' . db_encode_like('%' . $delim . '' . $it_value . '' . $delim . '%') . '\'';
+                                    $alt .= ' OR ';
+                                    $alt .= db_string_equal_to($filter_key, $it_value);
+                                }
                             }
                             $alt .= ')';
                         }
@@ -966,6 +1002,8 @@ function filtercode_to_sql($db, $filters, $content_type = '', $context = '', $ta
                     break;
 
                 case '~=':
+                    $filter_val = trim($filter_val, '*'); // In case user does not understand that this is not a wildcard search
+
                     if ($filter_val != '') {
                         if ($alt != '') {
                             $alt .= ' OR ';
@@ -976,7 +1014,7 @@ function filtercode_to_sql($db, $filters, $content_type = '', $context = '', $ta
                                 $alt .= ' OR ';
                             }
                             if ($is_join) {
-                                $alt .= $filter_key . ' LIKE CONCAT(\'%\',' . $it_value . ',\'%\')';
+                                $alt .= $filter_key . ' LIKE ' . db_function('CONCAT', array('\'%\'', $it_value, '\'%\''));
                             } else {
                                 $alt .= $filter_key . ' LIKE \'' . db_encode_like('%' . $it_value . '%') . '\'';
                             }

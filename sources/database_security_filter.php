@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -41,6 +41,10 @@ function init__database_security_filter()
  */
 function is_simple_query($query)
 {
+    if (strpos($query, get_table_prefix()) === false) {
+        return false;
+    }
+
     $complex_keywords = array('ORDER' => true, 'GROUP' => true, 'AS' => true, 'OR' => true, 'NOT' => true, 'LIKE' => true, 'IN' => true, 'BETWEEN' => true, 'UNION' => true, 'HAVING' => true);
     $complex_operators = array('<', '>', '!', '+', '-', '/', '*');
     $query = _trim_quoted_substrings($query);
@@ -72,6 +76,11 @@ function is_simple_query($query)
  */
 function has_escaped_dynamic_sql($query)
 {
+    if (substr(get_db_type(), 0, 5) != 'mysql') {
+        // Our scanning may not work right on non-MySQL
+        return true;
+    }
+
     $query_call_strings = array('query(', 'query_value_if_there(');
 
     $strings = _get_quoted_substrings($query);
@@ -110,7 +119,7 @@ function has_escaped_dynamic_sql($query)
                         }
                     }
                     if ((!$ok) && ($found_query_line)) {
-                        //@var_dump($_strings);exit($str); // Useful for debugging
+                        //@var_dump($_strings);@exit($str); // Useful for debugging
 
                         return false; // :-(.
                     }
@@ -127,6 +136,7 @@ function has_escaped_dynamic_sql($query)
  * @param  string $string The query
  * @param  boolean $recurse Whether to recurse (for double escaping)
  * @return array List of substrings
+ *
  * @ignore
  */
 function _get_quoted_substrings($string, $recurse = false)
@@ -170,6 +180,7 @@ function _get_quoted_substrings($string, $recurse = false)
  *
  * @param  string $string Input string
  * @return string Simplified substring
+ *
  * @ignore
  */
 function _trim_quoted_substrings($string)

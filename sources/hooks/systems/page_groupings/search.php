@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -37,7 +37,7 @@ class Hook_page_groupings_search
         }
 
         return array(
-            array('site_meta', 'buttons/search', array('search', array(), get_module_zone('search')), do_lang_tempcode('search:SEARCH')),
+            array('site_meta', 'buttons/search', array('search', array(), get_module_zone('search')), do_lang_tempcode('SEARCH')),
         );
     }
 }

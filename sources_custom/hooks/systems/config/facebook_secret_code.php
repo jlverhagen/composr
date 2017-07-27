@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -10,7 +10,7 @@
 /**
  * @license    http://opensource.org/licenses/cpal_1.0 Common Public Attribution License
  * @copyright  ocProducts Ltd
- * @package    facebook
+ * @package    facebook_support
  */
 
 /**
@@ -35,7 +35,7 @@ class Hook_config_facebook_secret_code
             'list_options' => '',
             'order_in_category_group' => 2,
 
-            'addon' => 'facebook',
+            'addon' => 'facebook_support',
         );
     }
 

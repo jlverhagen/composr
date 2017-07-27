@@ -29,7 +29,7 @@ class DetachedTestCase {
      *    @param string $dry_command   Script for dry run.
      *    @access public
      */
-    function DetachedTestCase($command, $dry_command = false) {
+    function __construct($command, $dry_command = false) {
         $this->_command = $command;
         $this->_dry_command = $dry_command ? $dry_command : $command;
         $this->_size = false;
@@ -52,7 +52,7 @@ class DetachedTestCase {
      *    @returns boolean                   True if no failures.
      *    @access public
      */
-    function run(&$reporter) {
+    function run($reporter) {
         $shell = new SimpleShell();
         $shell->execute($this->_command);
         $parser = &$this->_createParser($reporter);

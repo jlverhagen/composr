@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -38,6 +38,7 @@ class Hook_config_smtp_from_address
             'explanation' => 'CONFIG_OPTION_smtp_from_address',
             'shared_hosting_restricted' => '1',
             'list_options' => '',
+            'order_in_category_group' => 6,
 
             'addon' => 'core_configuration',
         );
@@ -50,10 +51,7 @@ class Hook_config_smtp_from_address
      */
     public function get_default()
     {
-        if (!function_exists('fsockopen')) {
-            return null;
-        }
-        if (strpos(@ini_get('disable_functions'), 'shell_exec') !== false) {
+        if (!php_function_allowed('fsockopen')) {
             return null;
         }
         return '';

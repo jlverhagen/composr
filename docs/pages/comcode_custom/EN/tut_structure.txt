@@ -86,7 +86,7 @@ There is a simple standard in Composr for identifying a page accessed by URL, in
 
 Page-links are commonly seen in their most simple form in the Comcode page editor's list of pages. In this, a page is simply [tt]<zone-name>:<page-name>[/tt]. This is the simplest case, as a Comcode page will never need any parameters (although they could take them, and use them if they contain blocks that do, to the parameter relates to Composr rather than the page itself). Note that the Welcome Zone is given with a blank, and hence just [tt]:<page-name>[/tt] is written for a page in the Welcome Zone.
 
-A more complex case is used in the menu editor, which has the ability to insert any Composr 'entry point' as an item on the menu. An example of an entry point is [tt]site:downloads:type=browse[/tt]. This points to the [tt]downloads[/tt] module in the site zone, and specifies a [tt]type[/tt] parameter to be of value [tt]browse[/tt]; the URL will turn out to be like [tt]http://yourbaseurl/site/index.php?page=downloads&type=browse[/tt] (or something else such as [tt]http://yourbaseurl/site/pg/downloads/browse[/tt] if short-urls are enabled). Note that [tt]type[/tt] is a standard parameter name in Composr, used by almost all modules to segregate internal command (for instance, [tt]browse[/tt] in this case specifies category listing functionality, as opposed to viewing an actual download); the page-link syntax does not handle it any different, but the short-URL syntax does.
+A more complex case is used in the menu editor, which has the ability to insert any Composr 'entry point' as an item on the menu. An example of an entry point is [tt]site:downloads:type=browse[/tt]. This points to the [tt]downloads[/tt] module in the site zone, and specifies a [tt]type[/tt] parameter to be of value [tt]browse[/tt]; the URL will turn out to be like [tt]http://yourbaseurl/site/index.php?page=downloads&type=browse[/tt] (or something else such as [tt]http://yourbaseurl/site/pg/downloads/browse[/tt] if short-urls are enabled). Note that [tt]type[/tt] is a standard parameter name in Composr, used by almost all modules to segregate internal command (for instance, [tt]browse[/tt] in this case specifies category listing functionality, as opposed to viewing an actual download); the page-link syntax does not handle it any different, but the URL Scheme syntax does.
 
 A more complex case is for a full blown 'page-link' that can not be referred to as merely a standard 'entry point' (as explained above, page-links may depend on the state of content while entry points cannot). An example of this might be [tt]site:downloads:type=browse:id=10[/tt], which is a link to view the download category of ID#10.
 
@@ -111,6 +111,14 @@ Panel pages won't show if:
 2) they are empty
 3) they are left/right and [tt]&keep_wide=1[/tt]/[tt]&wide=1[/tt] is attached to the URL (i.e. these URL parameters disable panels)
 4) [tt]&keep_wide_high=1[/tt]/[tt]&wide_high=1[/tt] is attached to the URL (in this case the header and footer won't show either)
+
+Site owners often want panels disabled on certain pages only. This can be done by surrounding the panel contents with Tempcode like...
+[code="Tempcode"]
+{+START,IF,{$NEQ,{$PAGE},example_page_1,example_page_2,example_page_3}}
+...
+{+END}
+[/code]
+In this case the panel won't show for any of those 3 example pages.
 
 [title="4"]The default theme's panel support[/title]
 
@@ -246,7 +254,7 @@ The Sitemap generally reflects the actual structure of your website, and works r
 
 Zones are the first level and operate as different top-level security contexts, and potentially have different panels, a different theme, and different navigations.
 
-Page groups are hard-coded with what we consider a sensible way to organisation for the different pages on the site. We do expect advanced users will not use the Sitemap directly in menus, so the hard-coding should not be a problem, just a tidy structure to start from. When you want to take full control of menus you can choose to copy the defaults into a new stored menu, and start manipulating it.
+Page groups are hard-coded with what we consider a sensible way to organisation for the different pages on the site. We do expect advanced users will not use the Sitemap directly in menus, so the hard-coding should not be a problem, just a tidy structure to start from. When you want to take full control of menus you can choose to copy the defaults into a new editable menu, and start manipulating it.
 
 Composr supports 'redirects' which let you have pages within multiple zones. This will reflect on the Sitemap.
 
@@ -294,6 +302,9 @@ If you add a new gallery named [tt]example_distorted_gallery[/tt], there will be
 What the XML means:
  - The [tt]match_key[/tt] attribute represents the page-link to match against. This is where we're targeting our new set of parent links to, replacing the old set of parent links.
  - The [tt]label[/tt] attribute in the "substitution" tag represents the label to give the matched page in the breadcrumbs ([tt]substitution[/tt] tag) or the inserted link ([tt]link[/tt] tag).
+ - The [tt]skip_if_single_public_zone[/tt] attribute in the "substitution" tag makes the rule only apply if the single public zone option is off, if set to "true". Defaults to "false".
+ - The [tt]include_self[/tt] attribute in the "substitution" tag makes the rule include the node being substituted, if set to "true". Defaults to "true".
+ - The [tt]final[/tt] attribute in the "substitution" tag makes the rule the last rule that will apply, if set to "true". Defaults to "false".
  - The [tt]link[/tt] tag is used to specify all the different links which will show above the matched page (the parent links). The webmaster can give as many links as they need but we've just given one here.
 
 After saving customising the breadcrumbs, the updated breadcrumbs will be applied. See the screenshots for the before/after.
@@ -355,7 +366,7 @@ Information about redirects and virtual roots is covered in the [page="_SEARCH:t
  1_key="Page-link"      1_value="A special syntax that is like 'a Composr URL' that is written in a simplified form, local, and not tied to PHP/Composr URL reality (so if Composr URLs start to look different, Page-links still work)"
  2_key="Zone"           2_value="A sub-directory of Composr that stores pages and has separate configuration (including permissions)"
  3_key="Page"           3_value="A Composr site consists of pages, and some pages (mainly modules) consist of multiple screens"
- 4_key="screen"         4_value="An actual screen that could be roughly categorised distinctly from all other screens (e.g. the backup system has a screen to start a backup, and a screen to view the results)"
+ 4_key="Screen"         4_value="An actual screen that could be roughly categorised distinctly from all other screens (e.g. the backup system has a screen to start a backup, and a screen to view the results)"
  5_key="Module"         5_value="A Composr page that is written in PHP to a very strict structure"
  6_key="Mini-module"    6_value="A module that is easier to write, but less powerful (it has no installation support, for example)"
  7_key="Zone editor"    7_value="A unified zone and panel editor"
@@ -370,7 +381,7 @@ Information about redirects and virtual roots is covered in the [page="_SEARCH:t
  - [page="_SEARCH:tut_adv_comcode"]Advanced Comcode[/page]
  - [page="_SEARCH:tut_comcode_pages"]Adding standalone pages of content (via Comcode)[/page]
  - [page="_SEARCH:tut_adv_comcode_pages"]Using blocks[/page]
- - [page="_SEARCH:tut_repository"]The Composr repository[/page]
+ - [page="_SEARCH:tut_repository"]The Composr Enterprise Repository[/page]
  - [page="_SEARCH:tut_short_urls"]URL Schemes in Composr[/page]
  - [page="_SEARCH:tut_adv_structure"]Advanced site structure and flow[/page]
 

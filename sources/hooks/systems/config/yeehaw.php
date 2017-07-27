@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -38,6 +38,7 @@ class Hook_config_yeehaw
             'explanation' => 'CONFIG_OPTION_yeehaw',
             'shared_hosting_restricted' => '0',
             'list_options' => '',
+            'order_in_category_group' => 9,
 
             'addon' => 'core_configuration',
         );
@@ -50,6 +51,10 @@ class Hook_config_yeehaw
      */
     public function get_default()
     {
-        return '1';
+        require_code('locations');
+        if (geolocate_ip() == 'US') {
+            return '1';
+        }
+        return '0';
     }
 }

@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -103,8 +103,17 @@ function regen_theme_images($theme, $langs = null, $target_theme = null)
     $images = array_merge(find_images_do_dir($theme, 'images/', $langs), find_images_do_dir($theme, 'images_custom/', $langs));
 
     foreach (array_keys($langs) as $lang) {
-        $existing = $GLOBALS['SITE_DB']->query_select('theme_images', array('id', 'path'), array('lang' => $lang, 'theme' => $target_theme));
+        $where = array('lang' => $lang, 'theme' => $target_theme);
+        $existing = $GLOBALS['SITE_DB']->query_select('theme_images', array('id', 'path'), $where);
 
+        // Cleanup broken references
+        foreach ($existing as $e) {
+            if ((!file_exists(get_custom_file_base() . '/' . rawurldecode($e['path']))) && (!file_exists(get_file_base() . '/' . rawurldecode($e['path'])))) {
+                $GLOBALS['SITE_DB']->query_delete('theme_images', $e + $where, '', 1);
+            }
+        }
+
+        // Add theme images for anything on disk but not currently having a reference
         foreach ($images as $id => $path) {
             $found = false;
             foreach ($existing as $e) {
@@ -154,7 +163,7 @@ function cleanup_theme_images($old_url)
             $encoded_path = substr($path, 0, strrpos($path, '/') + 1) . rawurlencode(substr($path, strrpos($path, '/') + 1));
             if ((!in_array($path, $files_referenced)) && (!in_array($encoded_path, $files_referenced)) && (($old_url == $path) || ($old_url == $encoded_path))) {
                 @unlink(get_custom_file_base() . '/' . $path);
-                sync_file($path);
+                sync_file(get_custom_file_base() . '/' . $path);
             }
         }
     }
@@ -172,7 +181,7 @@ function actual_rename_theme($theme, $to)
         fatal_exit(do_lang_tempcode('INTERNAL_ERROR'));
     }
 
-    if ((file_exists(get_custom_file_base() . '/themes/' . $to)) || ($to == 'default')) {
+    if ((file_exists(get_custom_file_base() . '/themes/' . $to)) || ($to == 'default' || $to == 'admin')) {
         warn_exit(do_lang_tempcode('ALREADY_EXISTS', escape_html($to)));
     }
 
@@ -210,7 +219,7 @@ function actual_copy_theme($theme, $to)
         fatal_exit(do_lang_tempcode('INTERNAL_ERROR'));
     }
 
-    if ((file_exists(get_custom_file_base() . '/themes/' . $to)) || ($to == 'default')) {
+    if ((file_exists(get_custom_file_base() . '/themes/' . $to)) || ($to == 'default' || $to == 'admin')) {
         warn_exit(do_lang_tempcode('ALREADY_EXISTS', escape_html($to)));
     }
 
@@ -242,7 +251,7 @@ function actual_copy_theme($theme, $to)
     foreach ($images as $i) {
         $i['theme'] = $to;
         $i['path'] = str_replace('themes/' . $theme . '/', 'themes/' . $to . '/', $i['path']);
-        $GLOBALS['SITE_DB']->query_insert('theme_images', $i);
+        $GLOBALS['SITE_DB']->query_insert('theme_images', $i, false, true);
     }
 
     Self_learning_cache::erase_smart_cache();

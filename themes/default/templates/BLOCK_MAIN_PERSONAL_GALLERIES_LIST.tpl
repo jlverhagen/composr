@@ -1,6 +1,6 @@
 {+START,IF,{$NEQ,{$COMMA_LIST_GET,{BLOCK_PARAMS},raw},1}}
-	{$SET,wrapper_id,ajax_block_wrapper_{$RAND%}}
-	<div id="{$GET*,wrapper_id}">
+	{$SET,ajax_block_main_personal_galleries_list_wrapper,ajax_block_main_personal_galleries_list_wrapper_{$RAND%}}
+	<div id="{$GET*,ajax_block_main_personal_galleries_list_wrapper}">
 		{+START,IF_NON_EMPTY,{GALLERIES}}
 			<div class="box box___block_main_personal_galleries_list"><div class="box_inner compacted_subbox_stream">
 				<div class="raw_ajax_grow_spot">
@@ -9,11 +9,11 @@
 			</div></div>
 		{+END}
 		{+START,IF_EMPTY,{GALLERIES}}
-			<p class="nothing_here">{!NO_CATEGORIES}</p>
+			<p class="nothing_here">{!NO_CATEGORIES,gallery}</p>
 		{+END}
 
 		{+START,IF_NON_EMPTY,{PAGINATION}}
-			<div class="float_surrounder ajax_block_wrapper_links">
+			<div class="pagination_spacing float_surrounder ajax_block_wrapper_links">
 				{PAGINATION}
 			</div>
 		{+END}

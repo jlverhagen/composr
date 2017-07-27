@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -46,7 +46,7 @@ class Module_admin_themewizard
      * @param  boolean $check_perms Whether to check permissions.
      * @param  ?MEMBER $member_id The member to check permissions as (null: current user).
      * @param  boolean $support_crosslinks Whether to allow cross links to other modules (identifiable via a full-page-link rather than a screen-name).
-     * @param  boolean $be_deferential Whether to avoid any entry-point (or even return NULL to disable the page in the Sitemap) if we know another module, or page_group, is going to link to that entry-point. Note that "!" and "browse" entry points are automatically merged with container page nodes (likely called by page-groupings) as appropriate.
+     * @param  boolean $be_deferential Whether to avoid any entry-point (or even return null to disable the page in the Sitemap) if we know another module, or page_group, is going to link to that entry-point. Note that "!" and "browse" entry points are automatically merged with container page nodes (likely called by page-groupings) as appropriate.
      * @return ?array A map of entry points (screen-name=>language-code/string or screen-name=>[language-code/string, icon-theme-image]) (null: disabled).
      */
     public function get_entry_points($check_perms = true, $member_id = null, $support_crosslinks = true, $be_deferential = false)
@@ -65,7 +65,7 @@ class Module_admin_themewizard
     public $title;
 
     /**
-     * Module pre-run function. Allows us to know meta-data for <head> before we start streaming output.
+     * Module pre-run function. Allows us to know metadata for <head> before we start streaming output.
      *
      * @return ?Tempcode Tempcode indicating some kind of exceptional output (null: none).
      */
@@ -255,10 +255,10 @@ class Module_admin_themewizard
         $inherit_css = get_param_integer('inherit_css', 0);
         $themename = get_param_string('themename');
         require_code('type_sanitisation');
-        if ((!is_alphanumeric($themename, true)) || (strlen($themename) > 40)) {
+        if ((!is_alphanumeric($themename)) || (strlen($themename) > 40)) {
             warn_exit(do_lang_tempcode('BAD_CODENAME'));
         }
-        if ((file_exists(get_custom_file_base() . '/themes/' . $themename)) || ($themename == 'default')) {
+        if ((file_exists(get_custom_file_base() . '/themes/' . $themename)) || ($themename == 'default' || $themename == 'admin')) {
             warn_exit(do_lang_tempcode('ALREADY_EXISTS', escape_html($themename)));
         }
 
@@ -332,24 +332,22 @@ class Module_admin_themewizard
         $inherit_css = post_param_integer('inherit_css');
 
         send_http_output_ping();
-        if (function_exists('set_time_limit')) {
+        if (php_function_allowed('set_time_limit')) {
             @set_time_limit(0);
         }
 
         require_code('type_sanitisation');
-        if ((!is_alphanumeric($themename, true)) || (strlen($themename) > 40)) {
+        if ((!is_alphanumeric($themename)) || (strlen($themename) > 40)) {
             warn_exit(do_lang_tempcode('BAD_CODENAME'));
         }
         make_theme($themename, $source_theme, $algorithm, $seed, $use, $dark == 1, $inherit_css == 1);
-        $myfile = @fopen(get_custom_file_base() . '/themes/' . filter_naughty($themename) . '/theme.ini', GOOGLE_APPENGINE ? 'wb' : 'wt') or intelligent_write_error(get_custom_file_base() . '/themes/' . filter_naughty($themename) . '/theme.ini');
-        fwrite($myfile, 'title=' . $themename . "\n");
-        fwrite($myfile, 'description=' . do_lang('NA') . "\n");
-        fwrite($myfile, 'seed=' . $seed . "\n");
-        if (fwrite($myfile, 'author=' . $GLOBALS['FORUM_DRIVER']->get_username(get_member(), true) . "\n") == 0) {
-            warn_exit(do_lang_tempcode('COULD_NOT_SAVE_FILE'));
-        }
-        fclose($myfile);
-        sync_file('themes/' . filter_naughty($themename) . '/theme.ini');
+        require_code('files');
+        $contents = '';
+        $contents .= 'title=' . $themename . "\n";
+        $contents .= 'description=' . do_lang('NA') . "\n";
+        $contents .= 'seed=' . $seed . "\n";
+        $contents .= 'author=' . $GLOBALS['FORUM_DRIVER']->get_username(get_member(), true) . "\n";
+        cms_file_put_contents_safe(get_custom_file_base() . '/themes/' . filter_naughty($themename) . '/theme.ini', $contents, FILE_WRITE_FIX_PERMISSIONS | FILE_WRITE_SYNC_FILE);
 
         // We're done
         $message = do_lang_tempcode('THEMEWIZARD_4_DESCRIBE', escape_html('#' . $seed), escape_html($themename));
@@ -411,7 +409,7 @@ class Module_admin_themewizard
         require_code('form_templates');
 
         $fields = new Tempcode();
-        $fields->attach(form_input_line(do_lang_tempcode('config:SITE_NAME'), do_lang_tempcode('DESCRIPTION_LOGO_NAME'), 'name', get_option('site_name'), true));
+        $fields->attach(form_input_line(do_lang_tempcode('config:SITE_NAME'), do_lang_tempcode('DESCRIPTION_LOGO_NAME'), 'name', get_option('site_name'), /*intentionally false so that custom font work can be done in a paint tool*/false));
         $fields->attach(form_input_theme_image(do_lang_tempcode('LOGO_THEME_IMAGE'), '', 'logo_theme_image', $default_logos, null));
         $fields->attach(form_input_theme_image(do_lang_tempcode('BACKGROUND_THEME_IMAGE'), '', 'background_theme_image', $default_backgrounds));
         $font_choices = new Tempcode();
@@ -460,7 +458,7 @@ class Module_admin_themewizard
             $theme = $GLOBALS['SITE_DB']->query_select_value('zones', 'zone_theme', array('zone_name' => ''));
         }
         if ($theme == '-1') {
-            $theme = preg_replace('#[^A-Za-z\d]#', '_', get_site_name());
+            $theme = preg_replace('#[^' . URL_CONTENT_REGEXP . ']#', '_', get_site_name());
         }
         if (!file_exists(get_custom_file_base() . '/themes/' . $theme)) {
             $theme = 'default';
@@ -499,32 +497,43 @@ class Module_admin_themewizard
 
         // Do it
         require_code('themes2');
-        $rand = uniqid('', true);
         foreach (array($theme, 'default') as $logo_save_theme) {
-            $path = 'themes/' . $logo_save_theme . '/images_custom/' . $rand . '.png';
-
-            if (!file_exists(dirname($path))) {
-                require_code('files2');
-                make_missing_directory(dirname($path));
-            }
-
+            // Save -logo
             $img = generate_logo(post_param_string('name'), $font, $logo_theme_image, $background_theme_image, false, $logo_save_theme);
-            @imagepng($img, get_custom_file_base() . '/' . $path, 9) or intelligent_write_error($path);
-            imagedestroy($img);
-            require_code('images_png');
-            png_compress(get_custom_file_base() . '/' . $path);
-            actual_edit_theme_image('logo/-logo', $logo_save_theme, user_lang(), 'logo/-logo', $path);
-            if (addon_installed('collaboration_zone')) {
-                actual_edit_theme_image('logo/collaboration-logo', $logo_save_theme, user_lang(), 'logo/collaboration-logo', $path);
+            foreach (array_keys(find_all_langs()) as $lang) {
+                if (is_suexec_like()) {
+                    $path = 'themes/' . $logo_save_theme . '/images_custom/' . $lang . '/logo/-logo.png';
+                } else {
+                    $path = 'themes/' . $logo_save_theme . '/images_custom/-logo.png';
+                }
+
+                if (!file_exists(dirname($path))) {
+                    require_code('files2');
+                    make_missing_directory(dirname($path));
+                }
+
+                @imagepng($img, get_custom_file_base() . '/' . $path, 9) or intelligent_write_error($path);
+                require_code('images_png');
+                png_compress(get_custom_file_base() . '/' . $path);
+                actual_edit_theme_image('logo/-logo', $logo_save_theme, $lang, 'logo/-logo', $path);
             }
-            $rand = uniqid('', true);
-            $path = 'themes/' . $logo_save_theme . '/images_custom/' . $rand . '.png';
-            $img = generate_logo(post_param_string('name'), $font, $logo_theme_image, $background_theme_image, false, null, true);
-            @imagepng($img, get_custom_file_base() . '/' . $path, 9) or intelligent_write_error($path);
             imagedestroy($img);
-            require_code('images_png');
-            png_compress(get_custom_file_base() . '/' . $path);
-            actual_edit_theme_image('logo/standalone_logo', $logo_save_theme, user_lang(), 'logo/standalone_logo', $path);
+
+            // Save standalone_logo
+            $img = generate_logo(post_param_string('name'), $font, $logo_theme_image, $background_theme_image, false, null, true);
+            foreach (array_keys(find_all_langs()) as $lang) {
+                if (is_suexec_like()) {
+                    $path = 'themes/' . $logo_save_theme . '/images_custom/' . $lang . '/logo/standalone_logo.png';
+                } else {
+                    $path = 'themes/' . $logo_save_theme . '/images_custom/standalone_logo.png';
+                }
+
+                @imagepng($img, get_custom_file_base() . '/' . $path, 9) or intelligent_write_error($path);
+                require_code('images_png');
+                png_compress(get_custom_file_base() . '/' . $path);
+                actual_edit_theme_image('logo/standalone_logo', $logo_save_theme, $lang, 'logo/standalone_logo', $path);
+            }
+            imagedestroy($img);
         }
         Self_learning_cache::erase_smart_cache();
 

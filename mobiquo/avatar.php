@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -54,4 +54,6 @@ require_code('mime_types');
 require_code('files');
 header('Content-Type: ' . get_mime_type(get_file_extension($url), false));
 ini_set('allow_url_fopen', '1');
+
+cms_ob_end_clean();
 @readfile($url);

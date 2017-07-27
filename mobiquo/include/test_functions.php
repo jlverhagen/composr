@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -81,7 +81,7 @@ function mobiquo_xmlrpc_simple_call($method, $params, $username = null)
     $response = $ob->send(new xmlrpcmsg($method, $arr));
     $result = $response->value();
     if ($result === 0) {
-        @header('Content-type: text/plain; charset=UTF-8');
+        @header('Content-type: text/plain; charset=utf-8');
         exit($response->faultString());
     }
     return php_xmlrpc_decode($result);
@@ -153,7 +153,7 @@ function mobiquo_json_simple_call($method, $params, $username = null)
     );
 
     $post = json_encode($params);
-    $data = http_download_file($url, null, true, false, 'Composr', $post, null, null, null, null, null, null, null, 6.0, true, null, array());
+    $data = http_download_file($url, null, true, false, 'Composr', array($post), null, null, null, null, null, null, null, 6.0, true, null, array());
     echo 'RAW: ' . $data;
     return json_decode($data, true);
 }

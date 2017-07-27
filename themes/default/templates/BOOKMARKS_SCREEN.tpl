@@ -11,7 +11,9 @@
 	{+START,LOOP,BOOKMARKS}
 		<h2>{CAPTION*}</h2>
 
-		<form title="{CAPTION*}" onsubmit="if (check_field_for_blankness(this.elements['caption'],event) &amp;&amp; check_field_for_blankness(this.elements['page_link'],event)) { disable_button_just_clicked(this); return true; } return false;" action="{$PAGE_LINK*,_SELF:_SELF:_edit:{ID}}" method="post">
+		<form title="{CAPTION*}" onsubmit="if (check_field_for_blankness(this.elements['caption'],event) &amp;&amp; check_field_for_blankness(this.elements['page_link'],event)) { disable_button_just_clicked(this); return true; } return false;" action="{$PAGE_LINK*,_SELF:_SELF:_edit:{ID}}" method="post" autocomplete="off">
+			{$INSERT_SPAMMER_BLACKHOLE}
+
 			<div class="wide_table_wrap"><table class="map_table wide_table results_table autosized_table">
 				<tbody>
 					<tr>
@@ -45,8 +47,8 @@
 					<tr>
 						<th>{!ACTIONS}</th>
 						<td class="vertical_alignment">
-							 <input class="buttons__edit button_screen_item" type="submit" value="{!EDIT}" />
-							 <input class="menu___generic_admin__delete button_screen_item" type="submit" name="delete" value="{!DELETE}" />
+							 <input class="button_screen_item buttons__edit" type="submit" value="{!EDIT}" />
+							 <input class="button_screen_item menu___generic_admin__delete" type="submit" name="delete" value="{!DELETE}" />
 
 							 <label class="horiz_field_sep vertical_alignment" for="bookmark_{ID*}">{!CHOOSE}:</label> <input onclick="handle_bookmark_selection(this,'{ID;*}',event);" type="checkbox" id="bookmark_{ID*}" name="bookmark_{ID*}" value="1" />
 						</td>

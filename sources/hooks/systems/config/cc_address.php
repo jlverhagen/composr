@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -34,7 +34,7 @@ class Hook_config_cc_address
             'human_name' => 'CC_ADDRESS',
             'type' => 'line',
             'category' => 'SITE',
-            'group' => 'EMAIL',
+            'group' => '_EMAIL',
             'explanation' => 'CONFIG_OPTION_cc_address',
             'shared_hosting_restricted' => '0',
             'list_options' => '',

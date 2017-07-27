@@ -91,7 +91,7 @@ function script_load_stuff_staff()
 	];
 	var cells=document.getElementsByTagName('td');
 	var links=[];
-	if (window.location.href.indexOf('/cms/')!=-1)
+	if (window.location.href.replace('{$BASE_URL_NOHTTP;}','').indexOf('/cms/')!=-1{+START,IF,{$DEV_MODE}} || true{+END})
 	{
 		for (var i=0;i<cells.length;i++)
 		{
@@ -113,52 +113,53 @@ function script_load_stuff_staff()
 				var id=links[i].href.match(url_pattern);
 				if (id)
 				{
-					var myfunc=function(hook,id,link)
-					{
-						add_event_listener_abstract(link,'mouseout',function(event) {
-							if (typeof event=='undefined') event=window.event;
-							if (typeof window.deactivate_tooltip!='undefined') deactivate_tooltip(link);
-						});
-						add_event_listener_abstract(link,'mousemove',function(event) {
-							if (typeof event=='undefined') event=window.event;
-							if (typeof window.activate_tooltip!='undefined') reposition_tooltip(link,event,false,false,null,true);
-						});
-						add_event_listener_abstract(link,'mouseover',function(event) {
-							if (typeof event=='undefined') event=window.event;
-
-							if (typeof window.activate_tooltip!='undefined')
-							{
-								var id_chopped=id[1];
-								if (typeof id[2]!='undefined') id_chopped+=':'+id[2];
-								var comcode='[block="'+hook+'" id="'+window.decodeURIComponent(id_chopped)+'" no_links="1"]main_content[/block]';
-								if (typeof link.rendered_tooltip=='undefined')
-								{
-									link.is_over=true;
-
-									var request=do_ajax_request(maintain_theme_in_link('{$FIND_SCRIPT_NOHTTP;,comcode_convert}?css=1&javascript=1&box_title={!PREVIEW;&}'+keep_stub(false)),function(ajax_result_frame,ajax_result) {
-										if (ajax_result)
-										{
-											link.rendered_tooltip=get_inner_html(ajax_result);
-										}
-										if (typeof link.rendered_tooltip!='undefined')
-										{
-											if (link.is_over)
-												activate_tooltip(link,event,link.rendered_tooltip,'400px',null,null,false,false,false,true);
-										}
-									},'data='+window.encodeURIComponent(comcode));
-								} else
-								{
-									activate_tooltip(link,event,link.rendered_tooltip,'400px',null,null,false,false,false,true);
-								}
-							}
-						});
-					};
-					myfunc(hook,id,links[i]);
+					apply_comcode_tooltip(hook,id,links[i]);
 				}
 			}
 		}
 	}
 }
+
+function apply_comcode_tooltip(hook,id,link)
+{
+	add_event_listener_abstract(link,'mouseout',function(event) {
+		if (typeof event=='undefined') event=window.event;
+		if (typeof window.deactivate_tooltip!='undefined') deactivate_tooltip(link);
+	});
+	add_event_listener_abstract(link,'mousemove',function(event) {
+		if (typeof event=='undefined') event=window.event;
+		if (typeof window.activate_tooltip!='undefined') reposition_tooltip(link,event,false,false,null,true);
+	});
+	add_event_listener_abstract(link,'mouseover',function(event) {
+		if (typeof event=='undefined') event=window.event;
+
+		if (typeof window.activate_tooltip!='undefined')
+		{
+			var id_chopped=id[1];
+			if (typeof id[2]!='undefined') id_chopped+=':'+id[2];
+			var comcode='[block="'+hook+'" id="'+window.decodeURIComponent(id_chopped)+'" no_links="1"]main_content[/block]';
+			if (typeof link.rendered_tooltip=='undefined')
+			{
+				link.is_over=true;
+
+				var request=do_ajax_request(maintain_theme_in_link('{$FIND_SCRIPT_NOHTTP;,comcode_convert}?css=1&javascript=1&raw_output=1&box_title={!PREVIEW;&}'+keep_stub(false)),function(ajax_result_frame) {
+					if (ajax_result_frame && ajax_result_frame.responseText)
+					{
+						link.rendered_tooltip=ajax_result_frame.responseText;
+					}
+					if (typeof link.rendered_tooltip!='undefined')
+					{
+						if (link.is_over)
+							activate_tooltip(link,event,link.rendered_tooltip,'400px',null,null,false,false,false,true);
+					}
+				},'data='+window.encodeURIComponent(comcode));
+			} else
+			{
+				activate_tooltip(link,event,link.rendered_tooltip,'400px',null,null,false,false,false,true);
+			}
+		}
+	});
+};
 
 function local_page_caching(html)
 {
@@ -213,7 +214,7 @@ function contextual_css_edit()
 		if (!document.getElementById('opt_for_sheet_'+sheet))
 		{
 			css_option=document.createElement('option');
-			set_inner_html(css_option,((sheet=='global')?'{!CONTEXTUAL_CSS_EDITING_GLOBAL;}':'{!CONTEXTUAL_CSS_EDITING;}').replace('\{1}',escape_html(sheet+'.css')));
+			set_inner_html(css_option,((sheet=='global')?'{!CONTEXTUAL_CSS_EDITING_GLOBAL;^}':'{!CONTEXTUAL_CSS_EDITING;^}').replace('\{1}',escape_html(sheet+'.css')));
 			css_option.value=sheet+'.css';
 			css_option.id='opt_for_sheet_'+sheet;
 			if (find_active_selectors(sheet,window).length!=0)
@@ -246,6 +247,20 @@ function find_css_sheets(win)
 						{
 							sheet=win.document.styleSheets[i].href.substring(l+('/templates_cached/'+window.cms_lang+'/').length,win.document.styleSheets[i].href.length).replace('_non_minified','').replace('_ssl','').replace('_mobile','').replace(/\?\d+/,'').replace('.css','');
 							possibilities.push(sheet);
+						} else {
+							l=win.document.styleSheets[i].href.lastIndexOf('/sheet.php?sheet=');
+							if (l!=-1)
+							{
+								var amp_pos=win.document.styleSheets[i].href.indexOf('&');
+								if (amp_pos==-1)
+								{
+									sheet=win.document.styleSheets[i].href.substring(l+'/sheet.php?sheet='.length,win.document.styleSheets[i].href.length);
+								} else
+								{
+									sheet=win.document.styleSheets[i].href.substring(l+'/sheet.php?sheet='.length,amp_pos);
+								}
+								possibilities.push(sheet);
+							}
 						}
 					}
 				}
@@ -284,7 +299,7 @@ function find_active_selectors(match,win)
 		{
 			try
 			{
-				if ((!match) || (!win.document.styleSheets[i].href && ((win.document.styleSheets[i].ownerNode && win.document.styleSheets[i].ownerNode.id=='style_for_'+match) || (!win.document.styleSheets[i].ownerNode && win.document.styleSheets[i].id=='style_for_'+match))) || (win.document.styleSheets[i].href && win.document.styleSheets[i].href.indexOf('/'+match)!=-1))
+				if ((!match) || (!win.document.styleSheets[i].href && ((win.document.styleSheets[i].ownerNode && win.document.styleSheets[i].ownerNode.id=='style_for_'+match) || (!win.document.styleSheets[i].ownerNode && win.document.styleSheets[i].id=='style_for_'+match))) || (win.document.styleSheets[i].href && win.document.styleSheets[i].href.indexOf('/'+match)!=-1) || (win.document.styleSheets[i].href && win.document.styleSheets[i].href.indexOf('sheet='+match)!=-1))
 				{
 					classes=win.document.styleSheets[i].rules || win.document.styleSheets[i].cssRules;
 					for (j=0;j<classes.length;j++)
@@ -351,7 +366,7 @@ function handle_image_mouse_over(event)
 		ml.onclick=function(event) { handle_image_click(event,target,true); };
 		ml.type='button';
 		ml.id='editimg_'+target.id;
-		ml.value='{!themes:EDIT_THEME_IMAGE;}';
+		ml.value='{!themes:EDIT_THEME_IMAGE;^}';
 		ml.className='magic_image_edit_link button_micro';
 		ml.style.position='absolute';
 		ml.style.left=find_pos_x(target)+'px';
@@ -368,11 +383,13 @@ function handle_image_mouse_over(event)
 	/*{+END}*/
 
 	window.old_status_img=window.status;
-	window.status='{!SPECIAL_CLICK_TO_EDIT;}';
+	window.status='{!SPECIAL_CLICK_TO_EDIT;^}';
 }
 
 function handle_image_mouse_out(event)
 {
+	if (typeof event=='undefined') event=window.event;
+
 	var target=event.target || event.srcElement;
 
 	/*{+START,IF,{$CONFIG_OPTION,enable_theme_img_buttons}}*/
@@ -441,10 +458,10 @@ function load_software_chat(event)
 	var html=' \
 		<div class="software_chat"> \
 			<h2>{!CMS_COMMUNITY_HELP}</h2> \
-			<ul class="spaced_list">{!SOFTWARE_CHAT_EXTRA;}</ul> \
-			<p class="associated_link associated_links_block_group"><a title="{!SOFTWARE_CHAT_STANDALONE} {!LINK_NEW_WINDOW;}" target="_blank" href="'+escape_html(url)+'">{!SOFTWARE_CHAT_STANDALONE}</a> <a href="#" onclick="return load_software_chat(event);">{!HIDE}</a></p> \
+			<ul class="spaced_list">{!SOFTWARE_CHAT_EXTRA;^}</ul> \
+			<p class="associated_link associated_links_block_group"><a title="{!SOFTWARE_CHAT_STANDALONE} {!LINK_NEW_WINDOW;^}" target="_blank" href="'+escape_html(url)+'">{!SOFTWARE_CHAT_STANDALONE}</a> <a href="#" onclick="return load_software_chat(event);">{!HIDE}</a></p> \
 		</div> \
-		<iframe class="software_chat_iframe" frameborder="0" style="border: 0" src="'+escape_html(url)+'"></iframe> \
+		<iframe class="software_chat_iframe" style="border: 0" src="'+escape_html(url)+'"></iframe> \
 	'.replace(/\\{1\\}/,escape_html((window.location+'').replace(get_base_url(),'http://baseurl')));
 
 	var box=document.getElementById('software_chat_box');
@@ -573,10 +590,10 @@ function set_task_hiding(hide_done)
 
 function submit_custom_task(form)
 {
-	var new_task=load_snippet('checklist_task_manage&type=add&recurevery='+window.encodeURIComponent(form.elements['recurevery'].value)+'&recurinterval='+window.encodeURIComponent(form.elements['recur'].value)+'&tasktitle='+window.encodeURIComponent(form.elements['new_task'].value));
+	var new_task=load_snippet('checklist_task_manage','type=add&recur_every='+window.encodeURIComponent(form.elements['recur_every'].value)+'&recur_interval='+window.encodeURIComponent(form.elements['recur_interval'].value)+'&task_title='+window.encodeURIComponent(form.elements['new_task'].value));
 
-	form.elements['recurevery'].value='';
-	form.elements['recur'].value='';
+	form.elements['recur_every'].value='';
+	form.elements['recur_interval'].value='';
 	form.elements['new_task'].value='';
 
 	set_inner_html(document.getElementById('custom_tasks_go_here'),new_task,true);
@@ -586,7 +603,7 @@ function submit_custom_task(form)
 
 function delete_custom_task(ob,id)
 {
-	load_snippet('checklist_task_manage&type=delete&id='+window.encodeURIComponent(id));
+	load_snippet('checklist_task_manage','type=delete&id='+window.encodeURIComponent(id));
 	ob.parentNode.parentNode.parentNode.style.display='none';
 
 	return false;
@@ -594,14 +611,14 @@ function delete_custom_task(ob,id)
 
 function mark_done(ob,id)
 {
-	load_snippet('checklist_task_manage&type=mark_done&id='+window.encodeURIComponent(id));
+	load_snippet('checklist_task_manage','type=mark_done&id='+window.encodeURIComponent(id));
 	ob.onclick=function() { mark_undone(ob,id); };
 	ob.getElementsByTagName('img')[1].setAttribute('src','{$IMG;,checklist/checklist1}');
 }
 
 function mark_undone(ob,id)
 {
-	load_snippet('checklist_task_manage&type=mark_undone&id='+window.encodeURIComponent(id));
+	load_snippet('checklist_task_manage','type=mark_undone&id='+window.encodeURIComponent(id));
 	ob.onclick=function() { mark_done(ob,id); };
 	ob.getElementsByTagName('img')[1].setAttribute('src','{$IMG;,checklist/not_completed}');
 }

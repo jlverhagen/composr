@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -159,7 +159,11 @@ class Hook_sitemap_page extends Hook_sitemap_base
                     $struct['title'] = make_string_tempcode(do_lang('MODULE') . ': ' . $page);
 
                     $matches = array();
-                    if (preg_match('#@package\s+(\w+)#', file_get_contents(zone_black_magic_filterer(get_file_base() . '/' . $path)), $matches) != 0) {
+                    $normal_path = str_replace('_custom', '', $path); // We want to find normal package, not package of an override
+                    if (!is_file($normal_path)) {
+                        $normal_path = $path;
+                    }
+                    if (preg_match('#@package\s+(\w+)#', file_get_contents(zone_black_magic_filterer(get_file_base() . '/' . $normal_path)), $matches) != 0) {
                         $package = $matches[1];
                         $path_addon = get_file_base() . '/sources/hooks/systems/addon_registry/' . $package . '.php';
                         if (!file_exists($path_addon)) {
@@ -225,7 +229,7 @@ class Hook_sitemap_page extends Hook_sitemap_base
                 $functions = extract_module_functions(get_file_base() . '/' . $path, array('get_entry_points', 'get_wrapper_icon'), array(
                     $check_perms, // $check_perms
                     null, // $member_id
-                    true, // $support_crosslinks
+                    $simplified || $use_page_groupings, // $support_crosslinks
                     $simplified || $use_page_groupings // $be_deferential
                 ));
 
@@ -233,10 +237,16 @@ class Hook_sitemap_page extends Hook_sitemap_base
 
                 if (!is_null($functions[0])) {
                     $entry_points = is_array($functions[0]) ? call_user_func_array($functions[0][0], $functions[0][1]) : eval($functions[0]);
-                    if ((!is_null($entry_points)) && (count($entry_points) > 0)) {
+
+                    if (is_null($entry_points)) {
+                        return null;
+                    }
+
+                    if (count($entry_points) > 0) {
                         $struct['has_possible_children'] = true;
 
                         $entry_point_sitemap_ob = $this->_get_sitemap_object('entry_point');
+                        $comcode_page_sitemap_ob = $this->_get_sitemap_object('comcode_page');
 
                         $has_entry_points = true;
 
@@ -264,7 +274,9 @@ class Hook_sitemap_page extends Hook_sitemap_base
                             $move_down_entry_point = (count($entry_points) == 1) ? key($entry_points) : 'browse';
                             if (!isset($row[1])) {
                                 if (substr($struct['page_link'], -strlen(':' . $move_down_entry_point)) != ':' . $move_down_entry_point) {
-                                    $struct['page_link'] .= ':' . $move_down_entry_point;
+                                    if ($move_down_entry_point != 'browse') {
+                                        $struct['page_link'] .= ':' . $move_down_entry_point;
+                                    }
                                 }
                                 if (!isset($entry_points['browse'])) {
                                     $_title = $entry_points[$move_down_entry_point][0];
@@ -298,20 +310,40 @@ class Hook_sitemap_page extends Hook_sitemap_base
                         }
 
                         if (($max_recurse_depth === null) || ($recurse_level < $max_recurse_depth)) {
-                            foreach (array_keys($entry_points) as $entry_point) {
+                            foreach ($entry_points as $entry_point => $entry_point_details) {
+                                $page_type = 'module';
+
                                 if (strpos($entry_point, ':') === false) {
                                     $child_page_link = $zone . ':' . $page . ':' . $entry_point;
                                 } else {
                                     $child_page_link = $entry_point;
+
+                                    require_code('site');
+                                    list($entry_point_zone, $entry_point_codename) = explode(':', $entry_point);
+                                    $_page_type = __request_page($entry_point_codename, $entry_point_zone);
+                                    if ($_page_type !== false) {
+                                        $page_type = strtolower($_page_type[0]);
+                                    }
                                 }
 
-                                if ((preg_match('#^([^:]*):([^:]*):([^:]*)(:.*|$)#', $child_page_link) != 0) || ($entry_point == '_SEARCH:topicview'/*special case*/)) {
-                                    if (strpos($extra, ':catalogue_name=') !== false) {
-                                        $child_page_link .= preg_replace('#^:\w+#', '', $extra);
+                                if (strpos($page_type, 'comcode') !== false) {
+                                    if (($valid_node_types !== null) && (!in_array('comcode_page', $valid_node_types))) {
+                                        continue;
                                     }
-                                    $child_node = $entry_point_sitemap_ob->get_node($child_page_link, $callback, $valid_node_types, $child_cutoff, $max_recurse_depth, $recurse_level + 1, $options, $zone, $meta_gather);
+                                    $child_node = $comcode_page_sitemap_ob->get_node($child_page_link, $callback, $valid_node_types, $child_cutoff, $max_recurse_depth, $recurse_level + 1, $options, $zone, $meta_gather);
                                 } else {
-                                    $child_node = $this->get_node($child_page_link, $callback, $valid_node_types, $child_cutoff, $max_recurse_depth, $recurse_level + 1, $options, $zone, $meta_gather);
+                                    if (($valid_node_types !== null) && (!in_array('page', $valid_node_types))) {
+                                        continue;
+                                    }
+
+                                    if ((preg_match('#^([^:]*):([^:]*):([^:]*)(:.*|$)#', $child_page_link) != 0) || ($entry_point == '_SEARCH:topicview'/*special case*/)) {
+                                        if (strpos($extra, ':catalogue_name=') !== false) {
+                                            $child_page_link .= preg_replace('#^:\w+#', '', $extra);
+                                        }
+                                        $child_node = $entry_point_sitemap_ob->get_node($child_page_link, $callback, $valid_node_types, $child_cutoff, $max_recurse_depth, $recurse_level + 1, $options, $zone, $meta_gather, $entry_point_details);
+                                    } else {
+                                        $child_node = $this->get_node($child_page_link, $callback, $valid_node_types, $child_cutoff, $max_recurse_depth, $recurse_level + 1, $options, $zone, $meta_gather);
+                                    }
                                 }
                                 if ($child_node !== null) {
                                     $children[$child_node['page_link']] = $child_node;
@@ -319,12 +351,12 @@ class Hook_sitemap_page extends Hook_sitemap_base
                             }
                         }
                     }
-                }
-            }
 
-            if (!$has_entry_points) {
-                if (($options & SITEMAP_GEN_NO_EMPTY_PAGE_LINKS) == 0) {
-                    $struct['page_link'] = '';
+                    if (!$has_entry_points) {
+                        if (($options & SITEMAP_GEN_NO_EMPTY_PAGE_LINKS) == 0) {
+                            $struct['page_link'] = ''; // get_entry_points is defined, but there are no entry points, meaning we can't link direct to the module
+                        }
+                    }
                 }
             }
 
@@ -344,7 +376,7 @@ class Hook_sitemap_page extends Hook_sitemap_base
                             $virtual_child_nodes = array();
                         }
                         foreach ($virtual_child_nodes as $child_node) {
-                            if ((count($virtual_child_nodes) == 1) && (preg_match('#^' . preg_quote($page_link, '#') . ':browse(:[^:=]*$|$)#', $child_node['page_link']) != 0) && (!$require_permission_support) && (($options & SITEMAP_GEN_KEEP_FULL_STRUCTURE) == 0)) {
+                            if ((count($virtual_child_nodes) == 1) && (preg_match('#^' . preg_quote($page_link, '#') . ':browse(:[^:=]*$|$)#', $child_node['page_link']) != 0) && (!$require_permission_support) && (($options & SITEMAP_GEN_KEEP_FULL_STRUCTURE) == 0) && (empty($child_node['extra_meta']['is_a_category_tree_root']))) {
                                 // Put as container instead
                                 if ($child_node['extra_meta']['image'] == '') {
                                     $child_node['extra_meta']['image'] = $struct['extra_meta']['image'];
@@ -368,9 +400,9 @@ class Hook_sitemap_page extends Hook_sitemap_base
                 }
             }
 
-            if (!$has_entry_points && (($options & SITEMAP_GEN_KEEP_FULL_STRUCTURE) == 0)) {
-                if ($children == array()) {
-                    return null;
+            if ($children == array()) {
+                if (($struct['page_link'] == '') && (($options & SITEMAP_GEN_KEEP_FULL_STRUCTURE) == 0)) {
+                    return null; // There's no reason for this Sitemap node
                 }
             }
         }

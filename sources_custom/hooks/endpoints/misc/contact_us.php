@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -27,6 +27,10 @@ class Hook_endpoint_account_contact_us
      */
     public function run($type, $id)
     {
+        if (!addon_installed('staff_messaging')) { // TODO: Fix in v11
+            warn_exit(do_lang_tempcode('INTERNAL_ERROR'));
+        }
+
         // Gather input
         $id = uniqid('', true);
         $category = post_param_string('category', do_lang('GENERAL'));
@@ -43,7 +47,7 @@ class Hook_endpoint_account_contact_us
 
         // Send standard confirmation email to current user
         $email_from = trim(post_param_string('email', $GLOBALS['FORUM_DRIVER']->get_member_email_address(get_member())));
-        if ($email_from != '') {
+        if ($email_from != '' && get_option('message_received_emails') == '1') {
             require_code('mail');
             mail_wrap(do_lang('YOUR_MESSAGE_WAS_SENT_SUBJECT', $title), do_lang('YOUR_MESSAGE_WAS_SENT_BODY', $post), array($email_from), null, '', '', 3, null, false, get_member());
         }

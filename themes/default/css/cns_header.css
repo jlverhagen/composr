@@ -1,11 +1,13 @@
 /*
  {$BRAND_NAME`}
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 */
 
-.cns_information_bar { /* either CNS_GUEST_BAR.tpl or CNS_MEMBER_BAR.tpl */
-	font-size: 0.9em;
-}
+/*{+START,IF,{$NOT,{$MOBILE}}}*/
+	.cns_information_bar { /* either CNS_GUEST_BAR.tpl or CNS_MEMBER_BAR.tpl */
+		font-size: 0.9em;
+	}
+/*{+END}*/
 
 .cns_information_bar_outer>.toggleable_tray {
 	margin: 0; /* Undoes what .box_inner sets, so that our dividers are flush with the box border */
@@ -34,6 +36,9 @@
 		float: {!en_left};
 		border-{!en_left}: 1px solid {$GET,pale_border};
 	/*{+END}*/
+	/*{+START,IF,{$MOBILE}}*/
+		display: inline-block;
+	/*{+END}*/
 }
 
 /*{+START,IF,{$NOT,{$MOBILE}}}*/
@@ -50,6 +55,11 @@
 
 .cns_guest_column_a * {
 	vertical-align: middle;
+}
+
+.cns_guest_column_a .fb-login-button {
+	top: -2px;
+	width: 65px;
 }
 
 .cns_guest_column_a .horizontal_links, .cns_guest_column_a .horizontal_links li {
@@ -82,6 +92,9 @@
 	/*{+START,IF,{$NOT,{$MOBILE}}}*/
 		width: 20em;
 	/*{+END}*/
+	/*{+START,IF,{$MOBILE}}*/
+		max-width: 13em;
+	/*{+END}*/
 }
 
 .cns_member_column_c {
@@ -93,6 +106,13 @@
 .cns_member_column_d {
 	white-space: nowrap;
 }
+
+/*{+START,IF,{$MOBILE}}*/
+	.cns_member_column_d li {
+		width: 45%;
+		float: left;
+	}
+/*{+END}*/
 
 .cns_member_column_title {
 	font-weight: bold;

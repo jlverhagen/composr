@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -45,6 +45,8 @@ class Hook_commandr_command_untar
             if (!is_file(get_custom_file_base() . '/' . $path)) {
                 return array('', '', '', do_lang('MISSING_RESOURCE'));
             }
+
+            disable_php_memory_limit();
 
             require_code('tar');
 

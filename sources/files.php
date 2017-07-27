@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -45,7 +45,160 @@ function init__files()
         define('IGNORE_UPLOADS', 8192); // More specific than IGNORE_CUSTOM_DIR_GROWN_CONTENTS, except it does skip .htaccess/index.html under uploads too
         define('IGNORE_CUSTOM_DIR_SUPPLIED_CONTENTS', 16384);
         define('IGNORE_CUSTOM_DIR_GROWN_CONTENTS', 32768);
+        define('IGNORE_NONBUNDLED_VERY_SCATTERED', 65536);
+        define('IGNORE_NONBUNDLED_EXTREMELY_SCATTERED', 131072);
+
+        define('FILE_WRITE_FAILURE_SILENT', 0);
+        define('FILE_WRITE_FAILURE_SOFT', 1);
+        define('FILE_WRITE_FAILURE_HARD', 2);
+        define('FILE_WRITE_FIX_PERMISSIONS', 4);
+        define('FILE_WRITE_SYNC_FILE', 8);
     }
+}
+
+/**
+ * Write out to a file, with lots of error checking and locking.
+ *
+ * @param  PATH $path File path.
+ * @param  string $contents File contents.
+ * @param  integer $flags FILE_WRITE_* flags.
+ * @param  integer $retry_depth How deep it is into retrying if somehow the data did not get written.
+ * @return boolean Success status.
+ */
+function cms_file_put_contents_safe($path, $contents, $flags = 2, $retry_depth = 0)
+{
+    $num_bytes_to_save = strlen($contents);
+
+    $error_message = mixed();
+
+    $exists_already = file_exists($path);
+
+    if (!$exists_already) {
+        // If the directory is missing
+        if (!is_dir(dirname($path))) {
+            require_code('files2');
+            if ((($flags & FILE_WRITE_FAILURE_SOFT) != 0) && (($flags & FILE_WRITE_FAILURE_HARD) != 0)) {
+                make_missing_directory(dirname($path));
+            } else {
+                $test = @make_missing_directory(dirname($path));
+                if ($test === false) {
+                    return false;
+                }
+            }
+        }
+    }
+
+    // Error condition: If there's a lack of disk space
+    if (php_function_allowed('disk_free_space')) {
+        $num_bytes_to_write = $num_bytes_to_save;
+        if (is_file($path)) {
+            $num_bytes_to_write -= @filesize($path); /* @ is for race condition */
+        }
+        static $disk_space = null;
+        if ($disk_space === null) {
+            $disk_space = @disk_free_space(dirname($path));
+        }
+        if ($disk_space !== false) {
+            if ($disk_space < $num_bytes_to_write) {
+                if (function_exists('do_lang_tempcode')) {
+                    $error_message = do_lang_tempcode('COULD_NOT_SAVE_FILE', escape_html($path));
+                } else {
+                    $error_message = 'Could not save file ' . htmlentities($path);
+                }
+                return _cms_file_put_contents_safe_failed($error_message, $path, $flags);
+            }
+        }
+    }
+
+    // Save
+    $num_bytes_written = @file_put_contents($path, $contents, LOCK_EX);
+    if (php_function_allowed('disk_free_space')) {
+        if ($disk_space !== false) {
+            $disk_space -= $num_bytes_written;
+        }
+    }
+
+    // Error condition: If it failed to save
+    if ($num_bytes_written === false) {
+        $error_message = intelligent_write_error_inline($path);
+        return _cms_file_put_contents_safe_failed($error_message, $path, $flags);
+    }
+
+    // Error condition: If it did not save all bytes
+    if ($num_bytes_written < $num_bytes_to_save) {
+        if ($exists_already) {
+            @unlink($path);
+        }
+
+        if (function_exists('do_lang_tempcode')) {
+            $error_message = do_lang_tempcode('COULD_NOT_SAVE_FILE', escape_html($path));
+        } else {
+            $error_message = 'Could not save file ' . htmlentities($path);
+        }
+        return _cms_file_put_contents_safe_failed($error_message, $path, $flags);
+    }
+
+    // Find file size
+    clearstatcache();
+    $size = @filesize($path);
+
+    // Special condition: File already deleted
+    if ($size === false) {
+        return true; // We'll assume it was okay before something else deleted it
+    }
+
+    // Error condition: If somehow it said it saved but didn't actually (maybe a race condition on servers with buggy locking)
+    if ($size != $num_bytes_to_save) {
+        if ($retry_depth < 5) {
+            return cms_file_put_contents_safe($path, $contents, $flags, $retry_depth + 1);
+        }
+
+        if (function_exists('do_lang_tempcode')) {
+            $error_message = do_lang_tempcode('COULD_NOT_SAVE_FILE', escape_html($path));
+        } else {
+            $error_message = 'Could not save file ' . htmlentities($path);
+        }
+        return _cms_file_put_contents_safe_failed($error_message, $path, $flags);
+    }
+
+    // Extra requested operations
+    if (($flags & FILE_WRITE_FIX_PERMISSIONS) != 0) {
+        fix_permissions($path);
+    }
+    if (($flags & FILE_WRITE_SYNC_FILE) != 0) {
+        sync_file($path);
+    }
+
+    return true;
+}
+
+/**
+ * If cms_file_put_contents_safe has failed, process the error messaging.
+ *
+ * @param  mixed $error_message Error message (Tempcode or string).
+ * @param  PATH $path File path.
+ * @param  integer $flags FILE_WRITE_* flags.
+ * @return boolean Success status (always false).
+ */
+function _cms_file_put_contents_safe_failed($error_message, $path, $flags = 2)
+{
+    static $looping = false;
+    if ($looping) {
+        critical_error('PASSON', do_lang('WRITE_ERROR', escape_html($path))); // Bail out hard if would cause a loop
+    }
+    $looping = true;
+
+    if (($flags & FILE_WRITE_FAILURE_SOFT) != 0) {
+        attach_message($error_message, 'warn');
+    }
+
+    if (($flags & FILE_WRITE_FAILURE_HARD) != 0) {
+        warn_exit($error_message);
+    }
+
+    $looping = false;
+
+    return false;
 }
 
 /**
@@ -150,7 +303,7 @@ function better_parse_ini_file($filename, $file = null)
         if (@is_array($FILE_ARRAY)) {
             $file = file_array_get($filename);
         } else {
-            $file = file_get_contents($filename);
+            $file = cms_file_get_contents_safe($filename);
         }
     }
 
@@ -215,12 +368,12 @@ function should_ignore_file($filepath, $bitmask = 0, $bitmask_defaults = 0)
 
                                              // Source code control systems
                                              '.svn' => '.*',
-                                             '.git' => '',
+                                             '.git' => '.*',
                                              'git-hooks' => '',
                                              '.gitattributes' => '',
                                              '.gitignore' => '',
+                                             '.gitconfig' => '',
                                              'phpdoc.dist.xml' => '',
-                                             'composer.json' => '',
 
                                              // Web server extensions / leave-behinds
                                              'web-inf' => '.*',
@@ -228,6 +381,10 @@ function should_ignore_file($filepath, $bitmask = 0, $bitmask_defaults = 0)
                                              '.ftaccess' => '',
                                              '.ftpquota' => '',
                                              'cgi-bin' => '',
+                                             'stats' => '', // ISPConfig
+
+                                             // Stuff from composr_homesite deployment
+                                             'upgrades' => '',
 
                                              // Specially-recognised naming conventions
                                              '_old' => '.*',
@@ -242,7 +399,7 @@ function should_ignore_file($filepath, $bitmask = 0, $bitmask_defaults = 0)
                                              'php.ini' => '.*',
                                              '.htpasswd' => '.*',
                                              'iirf.ini' => '',
-                                             'robots.txt' => 'text',
+                                             'robots.txt' => '',
                                              'favicon.ico' => '', // Not used for Composr, but default path for other scripts on server
                                              '400.shtml' => '',
                                              '500.shtml' => '',
@@ -256,19 +413,9 @@ function should_ignore_file($filepath, $bitmask = 0, $bitmask_defaults = 0)
 
                                              // Installer files
                                              'install.php' => '',
-                                             '_config.php.template' => '',
                                              'data.cms' => '',
                                              'cms.sql' => '', // Temporary backup
-                                             'install.sql' => '',
-                                             'install1.sql' => '',
-                                             'install2.sql' => '',
-                                             'install3.sql' => '',
-                                             'install4.sql' => '',
-                                             'user.sql' => '',
-                                             'postinstall.sql' => '',
                                              'restore.php' => '',
-                                             'parameters.xml' => '',
-                                             'manifest.xml' => '',
 
                                              // IDE projects
                                              'nbproject' => '', // Netbeans
@@ -286,6 +433,9 @@ function should_ignore_file($filepath, $bitmask = 0, $bitmask_defaults = 0)
                                              'text/if_hosted_service.txt' => '',
                                              'sites' => '',
 
+                                             // Tapatalk
+                                             'request_helper.dat' => 'mobiquo/include',
+
                                              // API docs
                                              'api' => 'docs',
                                              'composr-api-template' => 'docs',
@@ -295,19 +445,19 @@ function should_ignore_file($filepath, $bitmask = 0, $bitmask_defaults = 0)
                                              'hphp.files.list' => '',
                                              'hphp' => '',
 
-                                             // Files only for the build process
-                                             'execute_temp.php.bundle' => 'data_custom',
-
                                              // LEGACY: Old files
                                              'info.php' => '', // Pre-v10 equivalent to _config.php
                                              'persistant_cache' => '', // Old misspelling
                                              'mods' => 'imports|exports',
+
+                                             // Prep for v11
+                                             '_meta_tree' => '.*',
     );
 
     $ignore_extensions = array( // Case insensitive, define in lower case
                                 // Exports (effectively these are like temporary files - only intended for file transmission)
                                 'tar' => '(imports|exports)/.*',
-                                'txt' => '(imports|exports)/.*',
+                                'txt' => '(safe_mode_temp|imports|exports)/.*',
 
                                 // Exports/Cache files
                                 'gz' => '(themes/[^/]*/templates_cached|imports|exports)/.*',
@@ -331,6 +481,7 @@ function should_ignore_file($filepath, $bitmask = 0, $bitmask_defaults = 0)
                                 'dat' => 'safe_mode_temp',
                                 'bak' => '.*',
                                 'old' => '.*',
+                                'cms' => '.*', // Installers and upgraders
 
                                 // HHVM Hack converted files (built on-the-fly)
                                 'hh' => '.*',
@@ -340,12 +491,12 @@ function should_ignore_file($filepath, $bitmask = 0, $bitmask_defaults = 0)
     );
 
     $ignore_filename_and_dir_name_patterns = array( // Case insensitive
-                                                    array('\..*\.(png|gif|jpeg|jpg)', '.*'), // Image meta data file, e.g. ".example.png"
+                                                    array('\..*\.(png|gif|jpeg|jpg)', '.*'), // Image metadata file, e.g. ".example.png"
                                                     array('\_vti\_.*', '.*'), // Frontpage
                                                     array('google.*\.html', ''), // Google authorisation files
                                                     array('\.\_.*', '.*'), // MacOS extended attributes
                                                     array('tmpfile__.*', '.*'), // cms_tempnam produced temporarily files (unfortunately we can't specify a .tmp suffix)
-                                                    array('.*\.\d+', 'exports/file_backups'), // File backups (saved as revisions)
+                                                    array('.*\.\d+.*', 'exports/file_backups'), // File backups (saved as revisions)
     );
     $ignore_filename_patterns = array( // Case insensitive; we'll use this only when we *need* directories that would match to be valid
     );
@@ -358,6 +509,8 @@ function should_ignore_file($filepath, $bitmask = 0, $bitmask_defaults = 0)
             'functions.dat' => 'data_custom',
             'errorlog.php' => 'data_custom',
             'execute_temp.php' => 'data_custom',
+            'upgrader.cms.tmp' => 'data_custom',
+            'unit_test_positive_ignore_sampler.xxx' => 'data_custom', // To help us test this function. This file won't ever exist.
         );
     }
 
@@ -370,14 +523,26 @@ function should_ignore_file($filepath, $bitmask = 0, $bitmask_defaults = 0)
             'permissioncheckslog.php' => 'data_custom',
             'failover_rewritemap.txt' => 'data_custom',
             'failover_rewritemap__mobile.txt' => 'data_custom',
+            'aggregate_types.xml' => 'data_custom/xml_config',
+            'breadcrumbs.xml' => 'data_custom/xml_config',
+            'fields.xml' => 'data_custom/xml_config',
+            'EN.pwl' => 'data_custom/spelling/personal_dicts',
+            'out.csv' => 'data_custom/modules/user_export',
+        );
+    }
+
+    if (($bitmask & IGNORE_NONBUNDLED_SCATTERED) != 0 || ($bitmask & IGNORE_NONBUNDLED_VERY_SCATTERED) != 0 || ($bitmask & IGNORE_NONBUNDLED_EXTREMELY_SCATTERED) != 0) {
+        $ignore_filenames_and_dir_names += array(
+            '_critical_error.html' => '',
+            'critical_errors' => '',
         );
     }
 
     if (($bitmask & IGNORE_ACCESS_CONTROLLERS) != 0) {
         $ignore_filenames_and_dir_names = array(
-                                              '.htaccess' => '.*',
-                                              'index.html' => '.*',
-                                          ) + $ignore_filenames_and_dir_names; // Done in this order as we are overriding .htaccess to block everywhere (by default blocks root only). PHP has weird array merge precedence rules.
+            '.htaccess' => '.*',
+            'index.html' => '.*',
+        ) + $ignore_filenames_and_dir_names; // Done in this order as we are overriding .htaccess to block everywhere (by default blocks root only). PHP has weird array merge precedence rules.
     }
 
     if (($bitmask & IGNORE_USER_CUSTOMISE) != 0) { // Ignores directories that user override files go in, not code or uploads (which IGNORE_CUSTOM_DIR_SUPPLIED_CONTENTS | IGNORE_CUSTOM_DIR_GROWN_CONTENTS would cover): stuff edited through frontend to override bundled files
@@ -410,7 +575,7 @@ function should_ignore_file($filepath, $bitmask = 0, $bitmask_defaults = 0)
                 array('(?!index\.html$)(?!\.htaccess$).*', '.*_custom(/.*)?'), // Stuff under custom folders
             ));
             $ignore_filename_and_dir_name_patterns = array_merge($ignore_filename_and_dir_name_patterns, array(
-                //'.*\_custom'=>'.*', Let it find them, but work on the contents
+                //'.*\_custom' => '.*', Let it find them, but work on the contents
                 array('(?!index\.html$)(?!\.htaccess$).*', 'sources_custom/[^/]*'), // We don't want deep sources_custom directories either
             ));
         }
@@ -442,7 +607,7 @@ function should_ignore_file($filepath, $bitmask = 0, $bitmask_defaults = 0)
 
     if (($bitmask & IGNORE_REVISION_FILES) != 0) { // E.g. global.css.<timestamp>
         $ignore_filename_and_dir_name_patterns = array_merge($ignore_filename_and_dir_name_patterns, array(
-            array('.*\.\d+', '.*'),
+            array('.*\.\d+.*', '.*'),
         ));
     }
 
@@ -486,14 +651,14 @@ function should_ignore_file($filepath, $bitmask = 0, $bitmask_defaults = 0)
         }
     }
 
-    if (($bitmask & IGNORE_NONBUNDLED_SCATTERED) != 0) {
+    if (($bitmask & IGNORE_NONBUNDLED_SCATTERED) != 0 || ($bitmask & IGNORE_NONBUNDLED_VERY_SCATTERED) != 0 || ($bitmask & IGNORE_NONBUNDLED_EXTREMELY_SCATTERED) != 0) {
         if (preg_match('#^data_custom/images/addon_screenshots(/|$)#', strtolower($filepath)) != 0) {
             return true; // Relating to addon build, but not defined in addons
         }
         if (preg_match('#^exports/static(/|$)#', strtolower($filepath)) != 0) {
             return true; // Empty directory, so has to be a special exception
         }
-        if (preg_match('#^exports/builds(/|$)#', strtolower($filepath)) != 0) {
+        if (preg_match('#^exports/(builds|backups/test)(/|$)#', strtolower($filepath)) != 0) {
             return true; // Needed to stop build recursion
         }
         if (preg_match('#^_tests(/|$)#', strtolower($filepath)) != 0) {
@@ -506,10 +671,12 @@ function should_ignore_file($filepath, $bitmask = 0, $bitmask_defaults = 0)
         if (preg_match('#^data_custom/sitemaps(/|$)#', strtolower($filepath)) != 0) {
             return true; // Don't want sitemap files
         }
+    }
 
+    if (($bitmask & IGNORE_NONBUNDLED_SCATTERED) != 0 || ($bitmask & IGNORE_NONBUNDLED_VERY_SCATTERED) != 0) {
         static $addon_files = null;
         if ($addon_files === null) {
-            $addon_files = array();// Old style: function_exists('collapse_1d_complexity')?array_map('strtolower',collapse_1d_complexity('filename',$GLOBALS['SITE_DB']->query_select('addons_files',array('filename')))):array();
+            $addon_files = array();// Old style: function_exists('collapse_1d_complexity') ? array_map('strtolower', collapse_1d_complexity('filename', $GLOBALS['SITE_DB']->query_select('addons_files', array('filename')))) : array();
             $hooks = find_all_hooks('systems', 'addon_registry');
             foreach ($hooks as $hook => $place) {
                 if ($place == 'sources_custom') {
@@ -527,7 +694,9 @@ function should_ignore_file($filepath, $bitmask = 0, $bitmask_defaults = 0)
             $addon_files = array_flip($addon_files);
         }
         if (isset($addon_files[strtolower($filepath)])) {
-            return true;
+            if (($bitmask & IGNORE_NONBUNDLED_SCATTERED) != 0 || ($bitmask & IGNORE_NONBUNDLED_VERY_SCATTERED) != 0 && strpos($filepath, '_custom') === false) {
+                return true;
+            }
         }
         // Note that we have no support for identifying directories related to addons, only files inside. Code using this function should detect directories with no usable files in as relating to addons.
     }

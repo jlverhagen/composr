@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -42,7 +42,12 @@ class Hook_sw_cns_forum
             $test = $GLOBALS['SITE_DB']->query_select_value_if_there('f_groups', 'id', array('id' => db_get_first_id() + 7));
             $settings['have_default_rank_set'] = is_null($test) ? '0' : '1';
 
-            $test = $GLOBALS['SITE_DB']->query('SELECT * FROM ' . get_table_prefix() . 'f_emoticons WHERE e_code<>\':P\' AND e_code<>\';)\' AND e_code<>\':)\' AND e_code<>\':)\' AND e_code<>\':\\\'(\'');
+            $sql = 'SELECT * FROM ' . get_table_prefix() . 'f_emoticons WHERE 1=1';
+            $sql .= ' AND ' . db_string_not_equal_to('e_code', ':P');
+            $sql .= ' AND ' . db_string_not_equal_to('e_code', ';)');
+            $sql .= ' AND ' . db_string_not_equal_to('e_code', ':)');
+            $sql .= ' AND ' . db_string_not_equal_to('e_code', ':\'(');
+            $test = $GLOBALS['SITE_DB']->query($sql);
             $settings['have_default_full_emoticon_set'] = (count($test) != 0) ? '1' : '0';
 
             $have_default_cpf_set = false;
@@ -70,7 +75,7 @@ class Hook_sw_cns_forum
      */
     public function get_fields($field_defaults)
     {
-        if (get_forum_type() != 'cns') {
+        if (get_forum_type() != 'cns' || post_param_integer('addon_cns_forum', null) === 0) {
             return new Tempcode();
         }
 
@@ -100,7 +105,7 @@ class Hook_sw_cns_forum
      */
     public function set_fields()
     {
-        if (get_forum_type() != 'cns') {
+        if (get_forum_type() != 'cns' || post_param_integer('addon_cns_forum', null) === 0) {
             return;
         }
 
@@ -130,12 +135,8 @@ class Hook_sw_cns_forum
             if (post_param_integer('have_default_cpf_set', 0) == 0) {
                 $fields = array('im_skype', 'interests', 'location', 'occupation');
                 foreach ($fields as $field) {
-                    $test = $GLOBALS['SITE_DB']->query_select_value_if_there('f_custom_fields', 'id', array($GLOBALS['SITE_DB']->translate_field_ref('cf_name') => do_lang('DEFAULT_CPF_' . $field . '_NAME')));
-                    if (!is_null($test)) {
-                        require_code('cns_members_action');
-                        require_code('cns_members_action2');
-                        cns_delete_custom_field($test);
-                    }
+                    require_code('cns_members_action2');
+                    cns_delete_boiler_custom_field($field);
                 }
             }
         }

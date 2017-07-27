@@ -184,7 +184,7 @@ It is easy to imagine useful bots that could be created; as just one example, im
 
 [title="2"]The shout-box block[/title]
 
-Composr includes a 'shout-box' block, which is essentially a little portion of your menu that can be used for members to place short messages. Like all blocks, the shout-box is of course optional. The shout-box is tied to a specified chatroom, which by default, is the 'General Chat' chat-room.
+Composr includes a 'shout-box' block, which is essentially a little portion of your menu that can be used for members to place short messages. Like all blocks, the shout-box is of course optional. The shout-box is tied to a specified chatroom, which by default, is the 'General Chat' chatroom.
 
 [title="2"]Third-party approaches[/title]
 
@@ -201,13 +201,21 @@ c) Extend the IM system for a sales-chat use case
 d) Support storage of messages in an IRC server -- perhaps directly integrating with its database, or via some kind of plugin (or even our own custom IRC server)
 e) Support for file sharing
 
+[title="3"]CometChat[/title]
+
+CometChat (a commercial chat system) provides support for Composr CMS. See our video tutorial: https://www.youtube.com/watch?v=ItrBhsRTAOU&feature=youtu.be
+
 [title="3"]Video chat[/title]
 
 Video chat either needs a powerful central video server, or a complex peer-to-peer system.
 
-For video chat it is therefore best just to use an established third-party infrastructure such as [url="Talky"]https://talky.io/[/url] (which lets you access rooms by just giving an identifying URL -- meaning you can integrate it into a Composr chat template easily). Google Hangouts is very popular as another option.
+For video chat it is therefore best just to use an established third-party infrastructure such as:
+ - [url="Talky"]https://talky.io/[/url] (which lets you access rooms by just giving an identifying URL -- meaning you can integrate it into a Composr chat template easily)
+ - Google Hangouts (you'd need to direct people to start a hangout)
+ - Skype (ditto)
+ - CometChat (they provide a video chat option on their Platinum Edition)
 
-We'd love there to be feasible Open Source offerings, but the complexity of software and hardware infrastructure of Open Source systems is currently very high such that it is not feasible for anything less than a full time team to deploy. Proprietary flash systems used to be simpler, but Flash is no longer an appropriate technology for website development.
+We'd love there to be feasible Open Source offerings, but the complexity of software and hardware infrastructure of Open Source systems is currently very high such that it is not feasible for anything less than a full time team to deploy. Proprietary Flash systems used to be simpler, but Flash is no longer an appropriate technology for website development.
 
 [title="3"]Desktop app chat[/title]
 
@@ -221,10 +229,10 @@ The down-side of IRC is that it is complex. However, [url="https://kiwiirc.com/"
 
 Composr caters well for public/private chatrooms, and private instant messaging, but is not designed specifically for one-on-one live chat sessions between guest visitors and a staff team.
 For this we advise integration external software, which should be very easy. For an example of a free live chat solution see [url="Comm100"]http://www.comm100.com/livechat/features.aspx[/url].
-This is one of the few cases where relying on a third party tool does not provide user experience problems, as it's a use-case that is quite oblique to the rest of the website experience (works in a popup, and is an isolated sequence of interactions).
+This is one of the few cases where relying on a third party tool does not provide user experience problems, as it's a use-case that is quite oblique to the rest of the website experience (works in a pop-up, and is an isolated sequence of interactions).
 
 [concepts
- 1_key="Chatroom"          1_value="An online congregation point, where many people can talk simultaneously -- over the internet -- in one big text-based conversation"
+ 1_key="Chatroom"          1_value="An online congregation point, where many people can talk simultaneously -- over the Internet -- in one big text-based conversation"
  2_key="Bot"               2_value="A conversant that is powered by Composr code rather than a real human"
  3_key="Shout-box"         3_value="An embedded chatroom"
  4_key="Chat Lobby"        4_value="The screen listing chatrooms and hosting IMs"

@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -13,7 +13,10 @@
  * @package    code_editor
  */
 
-/*EXTRA FUNCTIONS: tempnam*/
+/*EXTRA FUNCTIONS: tempnam|ftp_.*|posix_getuid*/
+
+// Fixup SCRIPT_FILENAME potentially being missing
+$_SERVER['SCRIPT_FILENAME'] = __FILE__;
 
 // Find Composr base directory, and chdir into it
 global $FILE_BASE, $RELATIVE_PATH;
@@ -215,7 +218,7 @@ END;
     </p>
     <hr />
     <ul class="actions_list" role="navigation">
-        <li><a title="ocProducts programming tutorial (this link will open in a new window)" target="_blank" href="http://compo.sr/docs/tut_programming.htm">Read the ocProducts programming tutorial</a></li>
+        <li><a title="ocProducts programming tutorial (this link will open in a new window)" target="_blank" href="http://compo.sr/docs/tut-programming.htm">Read the ocProducts programming tutorial</a></li>
 END;
     if (array_key_exists('base_url', $SITE_INFO)) {
         $_base_url = code_editor_escape_html($SITE_INFO['base_url']);
@@ -457,7 +460,7 @@ END;
 
         // Make backup
         if (file_exists($save_path)) {
-            $backup_path = $save_path . '.' . strval(time());
+            $backup_path = $save_path . '.' . strval(time()) . '_' . strval(mt_rand(0, mt_getrandmax()));
             $c_success = @copy($save_path, $backup_path);
             if ($c_success !== false) {
                 ce_sync_file($backup_path);
@@ -485,7 +488,7 @@ if (window.alert!==null)
 END;
                     return;
                 }
-                @flock($myfile, LOCK_EX);
+                flock($myfile, LOCK_EX);
                 ftruncate($myfile, 0);
                 if (fwrite($myfile, $file) === false) {
                     fclose($myfile);
@@ -503,7 +506,7 @@ if (window.alert!==null)
 END;
                     return;
                 }
-                @flock($myfile, LOCK_UN);
+                flock($myfile, LOCK_UN);
                 fclose($myfile);
             } else { // Via FTP
                 $path2 = tempnam((((str_replace(array('on', 'true', 'yes'), array('1', '1', '1'), strtolower(ini_get('safe_mode'))) == '1') || ((@strval(ini_get('open_basedir')) != '') && (preg_match('#(^|:|;)/tmp($|:|;|/)#', ini_get('open_basedir')) == 0))) ? get_custom_file_base() . '/safe_mode_temp/' : '/tmp/'), 'cmsce');
@@ -565,11 +568,13 @@ END;
                 if (is_null($conn)) { // Via direct access
                     $myfile = @fopen($save_path . '.editfrom', 'wt');
                     if ($myfile !== false) {
+                        flock($myfile, LOCK_EX);
                         fwrite($myfile, $hash);
+                        flock($myfile, LOCK_UN);
                         fclose($myfile);
                     }
                 } else { // Via FTP
-                    $path2 = ce_cms_tempnam('cmsce');
+                    $path2 = ce_cms_tempnam();
 
                     $h = fopen($path2, 'wt');
                     fwrite($h, $hash);
@@ -589,9 +594,9 @@ END;
         ce_sync_file($save_path . '.editfrom');
 
         if (!isset($_POST['delete'])) {
-            $message = "Saved " . code_editor_escape_html($save_path) . " (and if applicable, placed a backup in its directory)!";
+            $message = "Saved " . code_editor_escape_html(str_replace('/', DIRECTORY_SEPARATOR, $save_path)) . " (and if applicable, placed a backup in its directory)!";
         } else {
-            $message = "Deleted " . code_editor_escape_html($save_path) . ". You may edit to recreate the file if you wish however.";
+            $message = "Deleted " . code_editor_escape_html(str_replace('/', DIRECTORY_SEPARATOR, $save_path)) . ". You may edit to recreate the file if you wish however.";
         }
         echo <<<END
 <script>
@@ -676,30 +681,9 @@ function ce_sync_file_move($old, $new)
  */
 function ce_check_master_password($password_given)
 {
-    if (isset($GLOBALS['SITE_INFO']['admin_password'])) { // LEGACY
-        $GLOBALS['SITE_INFO']['master_password'] = $GLOBALS['SITE_INFO']['admin_password'];
-        unset($GLOBALS['SITE_INFO']['admin_password']);
-    }
-
-    global $SITE_INFO;
-    if (!array_key_exists('master_password', $SITE_INFO)) {
-        exit('No master password defined in _config.php currently so cannot authenticate');
-    }
-    $actual_password_hashed = $SITE_INFO['master_password'];
-    if ((function_exists('password_verify')) && (strpos($actual_password_hashed, '$') !== false)) {
-        return password_verify($password_given, $actual_password_hashed);
-    }
-    $salt = '';
-    if ((substr($actual_password_hashed, 0, 1) == '!') && (strlen($actual_password_hashed) == 33)) {
-        $actual_password_hashed = substr($actual_password_hashed, 1);
-        $salt = 'cms';
-
-        // LEGACY
-        if ($actual_password_hashed != md5($password_given . $salt)) {
-            $salt = 'ocp';
-        }
-    }
-    return (((strlen($password_given) != 32) && ($actual_password_hashed == $password_given)) || ($actual_password_hashed == md5($password_given . $salt)));
+    global $FILE_BASE;
+    require_once($FILE_BASE . '/sources/crypt_master.php');
+    return check_master_password($password_given);
 }
 
 /**
@@ -708,7 +692,7 @@ function ce_check_master_password($password_given)
  * @param  string $prefix The prefix of the temporary file name.
  * @return ~string The name of the temporary file (false: error).
  */
-function ce_cms_tempnam($prefix)
+function ce_cms_tempnam($prefix = '')
 {
     global $FILE_BASE;
     $problem_saving = ((str_replace(array('on', 'true', 'yes'), array('1', '1', '1'), strtolower(ini_get('safe_mode'))) == '1') || ((function_exists('get_option')) && (get_option('force_local_temp_dir') == '1')) || ((@strval(ini_get('open_basedir')) != '') && (preg_match('#(^|:|;)/tmp($|:|;|/)#', ini_get('open_basedir')) == 0)));
@@ -721,7 +705,7 @@ function ce_cms_tempnam($prefix)
             $tempnam = tempnam($local_path, $prefix);
         }
     } else {
-        $tempnam = $prefix . strval(mt_rand(0, min(2147483647, mt_getrandmax())));
+        $tempnam = $prefix . strval(mt_rand(0, mt_getrandmax()));
         $myfile = fopen($local_path . '/' . $tempnam, 'wb');
         fclose($myfile);
     }

@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -79,7 +79,7 @@ class Hook_notification_pointstore_request_custom extends Hook_notification__Sta
     public function list_handled_codes()
     {
         $list = array();
-        $list['pointstore_request_custom'] = array(do_lang('POINTSTORE'), do_lang('pointstore:NOTIFICATION_TYPE_pointstore_request_custom'));
+        $list['pointstore_request_custom'] = array(do_lang('pointstore:POINTSTORE'), do_lang('pointstore:NOTIFICATION_TYPE_pointstore_request_custom'));
         return $list;
     }
 }

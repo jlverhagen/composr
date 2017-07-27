@@ -1,6 +1,17 @@
-<?php
+<?php /*
 
-/* Requires PHP5 */
+ Composr
+ Copyright (c) ocProducts, 2004-2016
+
+ See text/EN/licence.txt for full licencing information.
+
+*/
+
+/**
+ * @license    http://opensource.org/licenses/cpal_1.0 Common Public Attribution License
+ * @copyright  ocProducts Ltd
+ * @package    better_mail
+ */
 
 /**
  * Attempt to send an e-mail to the specified recipient. The mail will be forwarding to the CC address specified in the options (if there is one, and if not specified not to cc).
@@ -16,18 +27,18 @@
  * @range  1 5
  * @param  ?array $attachments An list of attachments (each attachment being a map, path=>filename) (null: none)
  * @param  boolean $no_cc Whether to NOT CC to the CC address
- * @param  ?MEMBER $as Convert Comcode->Tempcode as this member (a privilege thing: we don't want people being able to use admin rights by default!) (null: guest)
+ * @param  ?MEMBER $as Convert Comcode->tempcode as this member (a privilege thing: we don't want people being able to use admin rights by default!) (null: guest)
  * @param  boolean $as_admin Replace above with arbitrary admin
  * @param  boolean $in_html HTML-only
  * @param  boolean $coming_out_of_queue Whether to bypass queueing, because this code is running as a part of the queue management tools
  * @param  ID_TEXT $mail_template The template used to show the email
- * @param  boolean $bypass_queue Whether to bypass queueing
+ * @param  ?boolean $bypass_queue Whether to bypass queueing (null: auto-decide)
  * @param  ?array $extra_cc_addresses Extra CC addresses to use (null: none)
  * @param  ?array $extra_bcc_addresses Extra BCC addresses to use (null: none)
  * @param  ?TIME $require_recipient_valid_since Implement the Require-Recipient-Valid-Since header (null: no restriction)
  * @return ?Tempcode A full page (not complete XHTML) piece of Tempcode to output (null: it worked so no Tempcode message)
  */
-function mail_wrap($subject_line, $message_raw, $to_email = null, $to_name = null, $from_email = '', $from_name = '', $priority = 3, $attachments = null, $no_cc = false, $as = null, $as_admin = false, $in_html = false, $coming_out_of_queue = false, $mail_template = 'MAIL', $bypass_queue = false, $extra_cc_addresses = null, $extra_bcc_addresses = null, $require_recipient_valid_since = null)
+function mail_wrap($subject_line, $message_raw, $to_email = null, $to_name = null, $from_email = '', $from_name = '', $priority = 3, $attachments = null, $no_cc = false, $as = null, $as_admin = false, $in_html = false, $coming_out_of_queue = false, $mail_template = 'MAIL', $bypass_queue = null, $extra_cc_addresses = null, $extra_bcc_addresses = null, $require_recipient_valid_since = null)
 {
     if (get_option('smtp_sockets_use') == '0') {
         return non_overridden__mail_wrap($subject_line, $message_raw, $to_email, $to_name, $from_email, $from_name, $priority, $attachments, $no_cc, $as, $as_admin, $in_html, $coming_out_of_queue, $mail_template, $bypass_queue, $extra_cc_addresses, $extra_bcc_addresses, $require_recipient_valid_since);
@@ -50,12 +61,10 @@ function mail_wrap($subject_line, $message_raw, $to_email = null, $to_name = nul
 
     require_code('site');
     require_code('mime_types');
+    require_code('type_sanitisation');
 
     if (is_null($as)) {
         $as = $GLOBALS['FORUM_DRIVER']->get_guest_id();
-    }
-    if (is_null($extra_cc_addresses)) {
-        $extra_cc_addresses = array();
     }
 
     if (count($attachments) == 0) {
@@ -69,11 +78,11 @@ function mail_wrap($subject_line, $message_raw, $to_email = null, $to_name = nul
     }
 
     if (!$coming_out_of_queue) {
-        if (!$GLOBALS['SITE_DB']->table_is_locked('logged_mail_messages')) {
-            $GLOBALS['SITE_DB']->query('DELETE FROM ' . get_table_prefix() . 'logged_mail_messages WHERE m_date_and_time<' . strval(time() - 60 * 60 * 24 * 14) . ' AND m_queued=0'); // Log it all for 2 weeks, then delete
+        if ((mt_rand(0, 100) == 1) && (!$GLOBALS['SITE_DB']->table_is_locked('logged_mail_messages'))) {
+            $GLOBALS['SITE_DB']->query('DELETE FROM ' . get_table_prefix() . 'logged_mail_messages WHERE m_date_and_time<' . strval(time() - 60 * 60 * 24 * intval(get_option('email_log_days'))) . ' AND m_queued=0', 500/*to reduce lock times*/); // Log it all for 2 weeks, then delete
         }
 
-        $through_queue = (!$bypass_queue) && (((cron_installed()) && (get_option('mail_queue') === '1')) || (get_option('mail_queue_debug') === '1'));
+        $through_queue = (!$bypass_queue) && (((cron_installed()) && (get_option('mail_queue') === '1'))) || (get_option('mail_queue_debug') === '1');
         if (!is_null($attachments)) {
             foreach (array_keys($attachments) as $path) {
                 if ((substr($path, 0, strlen(get_custom_file_base() . '/')) != get_custom_file_base() . '/') && (substr($path, 0, strlen(get_file_base() . '/')) != get_file_base() . '/')) {
@@ -82,8 +91,12 @@ function mail_wrap($subject_line, $message_raw, $to_email = null, $to_name = nul
             }
         }
 
+        if (!$in_html) {
+            inject_web_resources_context_to_comcode($message_raw);
+        }
+
         $GLOBALS['SITE_DB']->query_insert('logged_mail_messages', array(
-            'm_subject' => $subject_line,
+            'm_subject' => cms_mb_substr($subject_line, 0, 255),
             'm_message' => $message_raw,
             'm_to_email' => serialize($to_email),
             'm_to_name' => serialize($to_name),
@@ -92,7 +105,7 @@ function mail_wrap($subject_line, $message_raw, $to_email = null, $to_name = nul
             'm_join_time' => $require_recipient_valid_since,
             'm_from_email' => $from_email,
             'm_from_name' => $from_name,
-            'm_priority' => 3,
+            'm_priority' => $priority,
             'm_attachments' => serialize($attachments),
             'm_no_cc' => $no_cc ? 1 : 0,
             'm_as' => $as,
@@ -103,7 +116,7 @@ function mail_wrap($subject_line, $message_raw, $to_email = null, $to_name = nul
             'm_url' => get_self_url(true),
             'm_queued' => $through_queue ? 1 : 0,
             'm_template' => $mail_template,
-        ));
+        ), false, !$through_queue); // No errors if we don't NEED this to work
 
         if ($through_queue) {
             return null;
@@ -118,6 +131,9 @@ function mail_wrap($subject_line, $message_raw, $to_email = null, $to_name = nul
 
     // To and from, and language
     $staff_address = get_option('staff_address');
+    if (!is_email_address($staff_address)) { // Required for security
+        $staff_address = '';
+    }
     if (is_null($to_email)) {
         $to_email = array($staff_address);
     }
@@ -153,25 +169,36 @@ function mail_wrap($subject_line, $message_raw, $to_email = null, $to_name = nul
     if ($from_email == '') {
         $from_email = get_option('staff_address');
     }
+    if (!is_email_address($from_email)) { // Required for security
+        $from_email = '';
+    }
     if ($from_name == '') {
         $from_name = get_site_name();
     }
+    $from_email = str_replace(array("\r", "\n"), array('', ''), $from_email);
+    $from_name = str_replace(array("\r", "\n"), array('', ''), $from_name);
 
-    cms_profile_start_for('mail_wrap');
+    if (!$coming_out_of_queue) {
+        cms_profile_start_for('mail_wrap');
+    }
 
     $theme = method_exists($GLOBALS['FORUM_DRIVER'], 'get_theme') ? $GLOBALS['FORUM_DRIVER']->get_theme() : 'default';
-    if ($theme == 'default') { // Sucks, probably due to sending from Admin Zone...
+    if ($theme == 'default' || $theme == 'admin') { // Sucks, probably due to sending from Admin Zone...
         $theme = $GLOBALS['FORUM_DRIVER']->get_theme(''); // ... So get theme of welcome zone
     }
 
     // Our subject
-    $_subject = do_template('MAIL_SUBJECT', array('_GUID' => '4c7eefb7296e7b7d4f3a4ef0eeeca658', 'SUBJECT_LINE' => $subject_line), $lang, false, null, '.txt', 'text', $theme);
-    $subject = $_subject->evaluate($lang); // Note that this is slightly against spec, because characters aren't forced to be printable us-ascii. But it's better we allow this (which works in practice) than risk incompatibility via charset-base64 encoding.
+    $subject = do_template('MAIL_SUBJECT', array('_GUID' => '44a57c666bb00f96723256e26aade9e5', 'SUBJECT_LINE' => $subject_line), $lang, false, null, '.txt', 'text', $theme);
+    $tightened_subject = $subject->evaluate($lang); // Note that this is slightly against spec, because characters aren't forced to be printable us-ascii. But it's better we allow this (which works in practice) than risk incompatibility via charset-base64 encoding.
+    $tightened_subject = str_replace(array("\r", "\n"), array('', ''), $tightened_subject);
 
     // Evaluate message. Needs doing early so we know if we have any headers
 
     // Misc settings
     $website_email = get_option('website_email');
+    if (!is_email_address($website_email)) { // Required for security
+        $website_email = '';
+    }
     if ($website_email == '') {
         $website_email = $from_email;
     }
@@ -180,39 +207,64 @@ function mail_wrap($subject_line, $message_raw, $to_email = null, $to_name = nul
     global $CID_IMG_ATTACHMENT;
     $CID_IMG_ATTACHMENT = array();
 
-    // Decide message
-    $GLOBALS['NO_LINK_TITLES'] = true;
-    global $LAX_COMCODE;
-    $temp = $LAX_COMCODE;
-    $LAX_COMCODE = true;
-    $html_content = comcode_to_tempcode($message_raw, $as, $as_admin);
-    $LAX_COMCODE = $temp;
-    $GLOBALS['NO_LINK_TITLES'] = false;
+    // Evaluate message. Needs doing early so we know if we have any headers
     if (!$in_html) {
-        $_html_content = $html_content->evaluate($lang);
-        $_html_content = preg_replace('#(keep|for)_session=\w*#', 'filtered=1', $_html_content);
-        if (strpos($_html_content, '<html') !== false) {
-            $message_html = make_string_tempcode($_html_content);
-        } else {
-            $message_html = do_template($mail_template, array(
-                '_GUID' => 'b23069c20202aa59b7450ebf8d49cde1',
-                'CSS' => '{CSS}',
-                'LOGOURL' => get_logo_url(''),
-                'LANG' => $lang,
-                'TITLE' => $subject,
-                'CONTENT' => $_html_content,
-            ), $lang, false, null, '.tpl', 'templates', $theme);
-        }
-        $css = css_tempcode(true, true, $message_html->evaluate($lang), $theme);
-        $_css = $css->evaluate($lang);
-        if (get_option('allow_ext_images') != '1') {
-            $_css = preg_replace_callback('#url\(["\']?(http://[^"]*)["\']?\)#U', '_mail_css_rep_callback', $_css);
-        }
-        $html_evaluated = $message_html->evaluate($lang);
-        $html_evaluated = str_replace('{CSS}', $_css, $html_evaluated);
+        $cache_sig = serialize(array(
+            $lang,
+            $mail_template,
+            $subject,
+            $theme,
+            crc32($message_raw),
+        ));
 
-        // Cleanup the Comcode a bit
-        $message_plain = comcode_to_clean_text($message_raw);
+        static $html_content_cache = array();
+        if (isset($html_content_cache[$cache_sig])) {
+            list($html_evaluated, $message_plain, $EMAIL_ATTACHMENTS) = $html_content_cache[$cache_sig];
+        } else {
+            require_code('media_renderer');
+            push_media_mode(peek_media_mode() | MEDIA_LOWFI);
+
+            $GLOBALS['NO_LINK_TITLES'] = true;
+            global $LAX_COMCODE;
+            $temp = $LAX_COMCODE;
+            $LAX_COMCODE = true;
+            $html_content = comcode_to_tempcode($message_raw, $as, $as_admin);
+            $LAX_COMCODE = $temp;
+            $GLOBALS['NO_LINK_TITLES'] = false;
+
+            $_html_content = $html_content->evaluate($lang);
+            $_html_content = preg_replace('#(keep|for)_session=\w*#', 'filtered=1', $_html_content);
+            if (strpos($_html_content, '<html') !== false) {
+                $message_html = make_string_tempcode($_html_content);
+            } else {
+                $message_html = do_template($mail_template, array(
+                    '_GUID' => 'b23069c20202aa59b7450ebf8d49cde1',
+                    'CSS' => '{CSS}',
+                    'LOGOURL' => get_logo_url(''),
+                    'LANG' => $lang,
+                    'TITLE' => $subject,
+                    'CONTENT' => $_html_content,
+                ), $lang, false, null, '.tpl', 'templates', $theme);
+            }
+            require_css('email');
+            $css = css_tempcode(true, false, $message_html->evaluate($lang), $theme);
+            $_css = $css->evaluate($lang);
+            if (!GOOGLE_APPENGINE) {
+                if (get_option('allow_ext_images') != '1') {
+                    $_css = preg_replace_callback('#url\(["\']?(http://[^"]*)["\']?\)#U', '_mail_css_rep_callback', $_css);
+                }
+            }
+            $html_evaluated = $message_html->evaluate($lang);
+            $html_evaluated = str_replace('{CSS}', $_css, $html_evaluated);
+
+            // Cleanup the Comcode a bit
+            $message_plain = comcode_to_clean_text($message_raw);
+
+            $html_content_cache[$cache_sig] = array($html_evaluated, $message_plain, $EMAIL_ATTACHMENTS);
+
+            pop_media_mode();
+        }
+        $attachments = array_merge(is_null($attachments) ? array() : $attachments, $EMAIL_ATTACHMENTS);
     } else {
         $html_evaluated = $message_raw;
     }
@@ -223,7 +275,9 @@ function mail_wrap($subject_line, $message_raw, $to_email = null, $to_name = nul
 
     // CID attachments
     if (get_option('allow_ext_images') != '1') {
+        $cid_before = array_keys($CID_IMG_ATTACHMENT);
         $html_evaluated = preg_replace_callback('#<img\s([^>]*)src="(http://[^"]*)"#U', '_mail_img_rep_callback', $html_evaluated);
+        $cid_just_html = array_diff(array_keys($CID_IMG_ATTACHMENT), $cid_before);
         $matches = array();
         foreach (array('#<([^"<>]*\s)style="([^"]*)"#', '#<style( [^<>]*)?' . '>(.*)</style>#Us') as $over) {
             $num_matches = preg_match_all($over, $html_evaluated, $matches);
@@ -234,6 +288,12 @@ function mail_wrap($subject_line, $message_raw, $to_email = null, $to_name = nul
                     $html_evaluated = str_replace($matches[0][$i], $altered_outer, $html_evaluated);
                 }
             }
+        }
+
+        // This is a hack to stop the images used by CSS showing as attachments in some mail clients
+        $cid_just_css = array_diff(array_keys($CID_IMG_ATTACHMENT), $cid_just_html);
+        foreach ($cid_just_css as $cid) {
+            $html_evaluated .= '<img width="0" height="0" src="cid:' . $cid . '" />';
         }
     }
     $cid_attachments = array();
@@ -279,7 +339,7 @@ function mail_wrap($subject_line, $message_raw, $to_email = null, $to_name = nul
                 }
             }
             if ($myfile === null) {
-                $myfile = cms_tempnam('email_attachment');
+                $myfile = cms_tempnam();
                 http_download_file($img, null, false, false, 'Composr', null, null, null, null, null, $myfile);
                 if (filesize($myfile) == 0) {
                     continue;
@@ -319,7 +379,7 @@ function mail_wrap($subject_line, $message_raw, $to_email = null, $to_name = nul
                     'temp' => false,
                 );
             } else {
-                $myfile = cms_tempnam('email_attachment');
+                $myfile = cms_tempnam();
                 http_download_file($path, null, false, false, 'Composr', null, null, null, null, null, $myfile);
                 if (!is_null($GLOBALS['HTTP_DOWNLOAD_MIME_TYPE'])) {
                     $mime_type = $GLOBALS['HTTP_DOWNLOAD_MIME_TYPE'];
@@ -378,6 +438,15 @@ function mail_wrap($subject_line, $message_raw, $to_email = null, $to_name = nul
             $to_array[$_to_email] = is_array($to_name) ? $to_name[$i] : $to_name;
         }
     }
+    if (
+        (get_option('use_true_from') == '1') ||
+        ((get_option('use_true_from') == '0') && (preg_replace('#^.*@#', '', $from_email) == preg_replace('#^.*@#', '', get_option('website_email')))) ||
+        ((get_option('use_true_from') == '0') && (preg_replace('#^.*@#', '', $from_email) == preg_replace('#^.*@#', '', get_option('staff_address')))) ||
+        ((addon_installed('tickets')) && (get_option('use_true_from') == '0') && (preg_replace('#^.*@#', '', $from_email) == preg_replace('#^.*@#', '', get_option('ticket_email_from')))) ||
+        ((addon_installed('tickets')) && (get_option('use_true_from') == '0') && (preg_replace('#^.*@#', '', $from_email) == get_domain()))
+    ) {
+        $website_email = $from_email;
+    }
     $message = Swift_Message::newInstance($subject)
         ->setFrom(array($website_email => $from_name))
         ->setReplyTo(array($from_email => $from_name))
@@ -385,8 +454,10 @@ function mail_wrap($subject_line, $message_raw, $to_email = null, $to_name = nul
         ->setDate(time())
         ->setPriority($priority)
         ->setCharset($charset)
-        ->setBody($html_evaluated, 'text/html', $charset)
-        ->addPart($message_plain, 'text/plain', $charset);
+        ->setBody($html_evaluated, 'text/html', $charset);
+    if (!$in_html) {
+        $message->addPart($message_plain, 'text/plain', $charset);
+    }
 
     if ($cc_address != '') {
         if (get_option('bcc') == '0') {
@@ -400,7 +471,7 @@ function mail_wrap($subject_line, $message_raw, $to_email = null, $to_name = nul
 
     if ((count($to_email) == 1) && (!is_null($require_recipient_valid_since))) {
         $headers = $message->getHeaders();
-        $_require_recipient_valid_since = date('D, j M Y H:i:s', $require_recipient_valid_since);
+        $_require_recipient_valid_since = date('r', $require_recipient_valid_since);
         $headers->addTextHeader('Require-Recipient-Valid-Since', $to_email[0] . '; ' . $_require_recipient_valid_since);
     }
 
@@ -416,10 +487,12 @@ function mail_wrap($subject_line, $message_raw, $to_email = null, $to_name = nul
 
     // Send the message, and error collection
     $error = '';
+    $worked = true;
     try {
         $result = $mailer->send($message);
     } catch (Exception $e) {
         $error = $e->getMessage();
+        $worked = false;
     }
     if (($error == '') && (!$result)) {
         $error = 'Unknown error';
@@ -437,17 +510,16 @@ function mail_wrap($subject_line, $message_raw, $to_email = null, $to_name = nul
         }
     }
 
-    cms_profile_end_for('mail_wrap', $subject_line);
-
-    // Return / Error handling
-    $SENDING_MAIL = false;
-    if ($error != '') {
-        if (get_param_integer('keep_hide_mail_failure', 0) == 0) {
-            require_code('site');
-            attach_message(!is_null($error) ? make_string_tempcode($error) : do_lang_tempcode('MAIL_FAIL', escape_html(get_option('staff_address'))), 'warn');
-        } else {
-            return warn_screen(get_screen_title('ERROR_OCCURRED'), do_lang_tempcode('MAIL_FAIL', escape_html(get_option('staff_address'))));
-        }
+    if (!$coming_out_of_queue) {
+        cms_profile_end_for('mail_wrap', $subject_line);
     }
+
+    if (!$worked) {
+        $SENDING_MAIL = false;
+        require_code('site');
+        attach_message(!is_null($error) ? make_string_tempcode($error) : do_lang_tempcode('MAIL_FAIL', escape_html(get_option('staff_address'))), 'warn');
+    }
+
+    $SENDING_MAIL = false;
     return null;
 }

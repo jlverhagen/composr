@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -101,9 +101,12 @@ class MobiquoServerJSON extends MobiquoServer
             if ((is_file(TAPATALK_LOG)) && (is_writable_wrap(TAPATALK_LOG))) {
                 // Request
                 $log_file = fopen(TAPATALK_LOG, 'at');
+                flock($log_file, LOCK_EX);
+                fseek($log_file, 0, SEEK_END);
                 fwrite($log_file, TAPATALK_REQUEST_ID . ' -- ' . date('Y-m-d H:i:s') . " *TRACE*:\n");
                 fwrite($log_file, var_export($e->getTrace(), true));
                 fwrite($log_file, "\n\n");
+                flock($log_file, LOCK_UN);
                 fclose($log_file);
             }
         }
@@ -126,7 +129,7 @@ class MobiquoServerJSON extends MobiquoServer
 
         if (is_string($data)) {
             $data = convert_to_internal_encoding($data, get_charset(), 'utf-8');
-            $data = html_entity_decode($data, ENT_QUOTES, 'UTF-8');
+            $data = html_entity_decode($data, ENT_QUOTES, 'utf-8');
         }
 
         return $data; // No further internal value encoding needed for JSON

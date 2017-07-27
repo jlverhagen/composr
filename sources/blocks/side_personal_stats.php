@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -53,6 +53,10 @@ class Block_side_personal_stats
 
         $member_id = get_member();
 
+        if (get_forum_type() == 'none') {
+            return new Tempcode();
+        }
+
         if (!is_guest($member_id)) {
             $avatar_url = '';
             if (!has_no_forum()) {
@@ -70,7 +74,7 @@ class Block_side_personal_stats
         } else {
             $title = do_lang_tempcode('NOT_LOGGED_IN');
 
-            if (count($_POST) > 0 || (get_page_name() == 'join') || (get_page_name() == 'login')) {
+            if (has_interesting_post_fields() || (get_page_name() == 'join') || (get_page_name() == 'login') || (get_page_name() == 'lost_password')) {
                 $_this_url = build_url(array('page' => ''), '_SELF', array('keep_session' => 1, 'redirect' => 1));
             } else {
                 $_this_url = build_url(array('page' => '_SELF'), '_SELF', array('keep_session' => 1, 'redirect' => 1), true);

@@ -1,6 +1,6 @@
 {+START,IF,{$NEQ,{$COMMA_LIST_GET,{BLOCK_PARAMS},raw},1}}
-	{$SET,wrapper_id,ajax_block_wrapper_{$RAND%}}
-	<div id="{$GET*,wrapper_id}" class="box_wrapper">
+	{$SET,ajax_catalogue_products_category_embed_wrapper,ajax_catalogue_products_category_embed_wrapper_{$RAND%}}
+	<div id="{$GET*,ajax_catalogue_products_category_embed_wrapper}" class="box_wrapper">
 		{+START,SET,sorting}
 			<div class="cart_info">
 				{$SET,show_sort_button,1}
@@ -10,7 +10,7 @@
 					</div></div>
 				{+END}
 
-				{CART_LINK}
+				{$CART_LINK}
 			</div>
 		{+END}
 
@@ -26,7 +26,7 @@
 
 		{+START,IF_EMPTY,{ENTRIES}}
 			<p class="nothing_here">
-				{!NO_ENTRIES}
+				{!NO_ENTRIES,catalogue_entry}
 			</p>
 		{+END}
 
@@ -35,7 +35,7 @@
 		{+END}
 
 		{+START,IF_NON_EMPTY,{PAGINATION}}
-			<div class="float_surrounder ajax_block_wrapper_links">
+			<div class="pagination_spacing float_surrounder ajax_block_wrapper_links">
 				{PAGINATION}
 			</div>
 

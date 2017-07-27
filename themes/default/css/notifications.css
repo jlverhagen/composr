@@ -1,6 +1,6 @@
 /*
  {$BRAND_NAME`}
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 */
 
 /* Web UI */
@@ -120,5 +120,5 @@
 }
 
 .notification_code th {
-	text-align: left;
+	text-align: left !important;
 }

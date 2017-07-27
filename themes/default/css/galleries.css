@@ -1,6 +1,6 @@
 /*
  {$BRAND_NAME`}
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 */
 
 /* Both flow mode and viewing entries */
@@ -52,7 +52,7 @@
 .gallery_regular_thumb:hover .mass_select_marker,
 .flow_mode_thumb:hover .mass_select_marker {
 	{$BETA_CSS_PROPERTY,opacity: 0.5;}
-	{$BETA_CSS_PROPERTY,transform: translateZ(0);} /* Needed to stop size jerk during animation, by forcing it as a layer at all times */
+	{$BETA_CSS_PROPERTY,transform: scale(1);} /* Needed to stop size jerk during animation, by forcing it as a layer at all times */
 }
 .gallery_regular_thumb .delete_cross_button input:hover,
 .flow_mode_thumb .delete_cross_button input:hover,
@@ -121,8 +121,8 @@
 	vertical-align: bottom; /* Removes gap under this centered inline image, by moving it to baseline */
 
 	/* Maybe the thumbnail size has been reduced at some point - guard against this */
-	max-width: {$GET,gallery_thumb_size};
-	max-height: {$GET,gallery_thumb_size};
+	max-width: {$GET,gallery_thumb_size} !important;
+	max-height: {$GET,gallery_thumb_size} !important;
 }
 
 
@@ -172,7 +172,7 @@
 	/*{+START,IF,{$NOT,{$MOBILE}}}*/
 		margin: 0 1em;
 	/*{+END}*/
-	{$BETA_CSS_PROPERTY,transform: translateZ(0);} /* Needed to stop size jerk during animation, by forcing it as a layer at all times */
+	{$BETA_CSS_PROPERTY,transform: scale(1);} /* Needed to stop size jerk during animation, by forcing it as a layer at all times */
 }
 .flow_mode_thumb:hover, body.touch_enabled .flow_mode_thumb {
 	{$BETA_CSS_PROPERTY,opacity: 1.0;}
@@ -180,15 +180,11 @@
 }
 .flow_mode_thumb .img_thumb {
 	{$BETA_CSS_PROPERTY,opacity: 1.0;}
-	{$BETA_CSS_PROPERTY,transform: translateZ(0);} /* Needed to stop size jerk during animation, by forcing it as a layer at all times */
+	{$BETA_CSS_PROPERTY,transform: scale(1);} /* Needed to stop size jerk during animation, by forcing it as a layer at all times */
 }
 
 .flow_mode_thumb img {
 	max-width: 150px; /* Smaller, for carousel */
-}
-
-.flow_mode_video {
-	margin-bottom: 1em;
 }
 
 /* Viewing entries */
@@ -196,10 +192,6 @@
 .gallery_entry_screen {
 	width: 100%;
 	min-height: 100%;
-}
-
-.nav_mid {
-	margin-top: 0.5em;
 }
 
 .slideshow_speed {
@@ -231,13 +223,6 @@
 	}
 /*{+END}*/
 
-/* The timer countdown */
-.changer {
-	font-weight: bold;
-	font-family: Courier, monospace;
-	font-size: 1.2em;
-}
-
 /* side_galleries block */
 
 .side_galleries_block p {
@@ -245,6 +230,9 @@
 }
 
 .side_galleries_block_exp {
+	overflow: hidden;
+	display: block;
+	text-align: left;
 	font-weight: bold;
 	background: none;
 	color: {$GET,slightly_seeded_text};
@@ -261,21 +249,6 @@
 }
 
 /* Image fader block */
-
-.image_fader_box {
-	position: relative;
-	border: 1px solid {$GET,standard_border};
-	display: inline-block;
-}
-
-.image_fader_box img {
-	display: block;
-}
-
-/* If nested in a box already */
-.box_inner>.image_fader_box {
-	border: 0;
-}
 
 .gallery_tease_pic_wrap {
 	margin-bottom: 1.5em;
@@ -314,8 +287,9 @@
 .global_side_panel .gallery_tease_pic_wrap h2, .global_side_panel .gallery_tease_pic_wrap h3 {
 	display: none;
 }
-.global_side_panel .img_thumb_wrap .img_thumb {
+.global_side_panel .img_thumb_wrap .img_thumb:not([width]):not([height]) {
 	max-width: 100%;
+	height: auto;
 }
 
 /* Miscellaneous media handling */

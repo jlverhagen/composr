@@ -1,6 +1,6 @@
 /*
  {$BRAND_NAME`}
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 */
 
 /*
@@ -23,7 +23,7 @@ When editing theme CSS we recommend you comment out code you're removing and hea
 */
 
 /* Used to initiate equations (although running the Theme Wizard replaces these with what the user chooses - which is how it works) */
-{$THEME_WIZARD_COLOR,#94979d,seed,100% 426aa9}
+{$THEME_WIZARD_COLOR,#426aa9,seed,100% 426aa9}
 {$THEME_WIZARD_COLOR,#ffffff,WB,100% FFFFFF}
 {$THEME_WIZARD_COLOR,#000000,BW,100% 000000}
 /*Theme seed is: 426aa9*/
@@ -45,7 +45,7 @@ When editing theme CSS we recommend you comment out code you're removing and hea
 {$THEME_WIZARD_COLOR,#ffffff,native_ui_alertfield_foreground,100% FFFFFF}
 {$THEME_WIZARD_COLOR,#A9A9A9,unfilled_input_text,100% A9A9A9}
 {$THEME_WIZARD_COLOR,#888888,locked_input_field,100% 888888}
-{$THEME_WIZARD_COLOR,#94979d,comfortable_input_field_text,65% area_2_background + 35% WB}
+{$THEME_WIZARD_COLOR,#3d434c,comfortable_input_field_text,20% WB + 65% BW + 15% seed}
 {$THEME_WIZARD_COLOR,#b5b5b5,tab_border,100% b5b5b5}
 {$THEME_WIZARD_COLOR,#008000,adwords_style_text,100% 008000} /* Google adwords style */
 {$THEME_WIZARD_COLOR,#ffffff,floating_section_background,100% WB}
@@ -58,7 +58,7 @@ When editing theme CSS we recommend you comment out code you're removing and hea
 {$THEME_WIZARD_COLOR,#ff8888,light_error_border,100% FF8888}
 {$THEME_WIZARD_COLOR,#fff2f2,light_error_background,95% WB + 5% FF0000}
 {$THEME_WIZARD_COLOR,#d91522,red_highlight_text,80% FF0000 + 20% seed}
-{$THEME_WIZARD_COLOR,#00aa00,green_highlight_text,100% 00AA00}
+{$THEME_WIZARD_COLOR,#009900,green_highlight_text,100% 009900}
 {$THEME_WIZARD_COLOR,#ede2e4,required_background,60% (area_4_background hue_to 0) + 40% area_background}
 {$THEME_WIZARD_COLOR,#ebe6eb,required_2_background,40% (area_4_background hue_to 0) + 60% area_background}
 {$THEME_WIZARD_COLOR,#000000,dark_shadow,100% BW}
@@ -135,6 +135,7 @@ When editing theme CSS we recommend you comment out code you're removing and hea
 /* Footer */
 {$THEME_WIZARD_COLOR,#8ba4ca,footer_tinting,61% seed + 39% WB}
 {$THEME_WIZARD_COLOR,#ffffff,footer_text,100% WB}
+{$THEME_WIZARD_COLOR,#dbe6f7,inverted_text,35% footer_tinting + 65% WB}
 
 /* Used for image generation */
 {$THEME_WIZARD_COLOR,#e8edf6,washed_out,10% (seed sat_to 85) + 90% WB}
@@ -151,11 +152,32 @@ When editing theme CSS we recommend you comment out code you're removing and hea
 {$THEME_WIZARD_COLOR,#597bbf,cnspostindicator,65% (seed sat_to 100) + 35% WB}
 {$THEME_WIZARD_COLOR,#597bf7,cnsredirectindicator,65% (seed sat_to 100) + 35% WB + 000038 - 061600}
 
+/* Range of bright varying colours */
+{$THEME_WIZARD_COLOR,#9c029a,gcol_1,100% #9C029A}
+{$THEME_WIZARD_COLOR,#fa0c00,gcol_2,100% #FA0C00}
+{$THEME_WIZARD_COLOR,#aa6a04,gcol_3,100% #AA6A04}
+{$THEME_WIZARD_COLOR,#5800fa,gcol_4,100% #5800FA}
+{$THEME_WIZARD_COLOR,#0099fa,gcol_5,100% #0099FA}
+{$THEME_WIZARD_COLOR,#859638,gcol_6,100% #859638}
+{$THEME_WIZARD_COLOR,#2bab03,gcol_7,100% #2BAB03}
+{$THEME_WIZARD_COLOR,#7d7e04,gcol_8,100% #7D7E04}
+{$THEME_WIZARD_COLOR,#966038,gcol_9,100% #966038}
+{$THEME_WIZARD_COLOR,#96384a,gcol_10,100% #96384A}
+{$THEME_WIZARD_COLOR,#963895,gcol_11,100% #963895}
+{$THEME_WIZARD_COLOR,#4e3896,gcol_12,100% #4E3896}
+{$THEME_WIZARD_COLOR,#386296,gcol_13,100% #386296}
+{$THEME_WIZARD_COLOR,#389596,gcol_14,100% #389596}
+{$THEME_WIZARD_COLOR,#389653,gcol_15,100% #389653}
+
 /*
 =========================
 ===Overridden Elements===
 =========================
 */
+
+html {
+	overflow-y: scroll; /* This makes rendering smoother, no jerk when browser realises a scrollbar is needed, or between pages with/without */
+}
 
 html, body {
 	border: 0;
@@ -174,6 +196,7 @@ tt, kbd, samp {
 
 abbr {
 	border-bottom: 1px dotted; /* For Safari, which does not have it by default */
+	text-decoration: none;
 }
 
 /* Give all browsers a 'q' tag with smart quotes */
@@ -196,7 +219,7 @@ textarea, input, code {
 /* Our little 'typing' effect, shows a keyboard when focusing input fields */
 /*Doesn't look good in IE10 input[type="text"]:focus, input[type="password"]:focus {
 	background: url('{$IMG_INLINE;,keyboard}') right center no-repeat {$GET,native_ui_background};
-
+}
 input[type="text"][size="6"]:focus, input[type="text"][readonly="true"]:focus {
 	background-image: none;
 }*/
@@ -225,9 +248,6 @@ h1, h2, h3, .faux_h2 {
 	color: {$GET,heading_text};
 	border-bottom: 1px solid {$GET,pale_border};
 }
-h3 {
-	letter-spacing: -0.75px;
-}
 h1 {
 	font-size: 1.6em;
 	margin-top: 0.27em; /* Consistency with boxes (so gap between header and content is consistent), but rationalised against higher em font size */
@@ -237,6 +257,7 @@ h2, .faux_h2 {
 }
 h3 {
 	font-size: 1.1em;
+	letter-spacing: -0.75px;
 }
 h3 a, h3 a:hover {
 	text-decoration: none;
@@ -342,13 +363,19 @@ iframe {
 	direction: {!dir};
 }
 
+
 /*{+START,IF,{$MOBILE}}*/
 	select {
 		max-width: 100px;
+		white-space: nowrap !important;
+	}
+
+	/* This prevents automatic zooming when selecting inputs */
+	input[type="text"], input[type="password"], input[type="color"], input[type="email"], input[type="number"], input[type="range"], input[type="search"], input[type="tel"], input[type="url"], select, textarea {
+		font-size: 16px !important;
 	}
 
 	/* On mobiles we want maximum fluidity */
-
 	table, table.do_next_section {
 		table-layout: auto !important;
 
@@ -366,8 +393,11 @@ iframe {
 /*{+END}*/
 
 /* Cool effect to change how text selection looks; not valid CSS, but is safe */
-::selection {
+.website_body ::selection {
 	background: {$GET,yellow_highlight_background};
+}
+comcode-{$REPLACE,\,,::selection \,comcode-,{$COMCODE_TAGS;,{$WYSIWYG_COMCODE__XML_BLOCK}}\,{$COMCODE_TAGS;,{$WYSIWYG_COMCODE__XML_INLINE}}}, tempcode ::selection {
+	background: {$GET,green_highlight_text};
 }
 
 /* Stop Chrome breaking our datalist display with an arrow */
@@ -431,6 +461,7 @@ body.website_body, #wysiwyg_editor {
 	margin: 0;
 	color: {$GET,slightly_seeded_text};
 	background-color: {$GET,main_background};
+	{$BETA_CSS_PROPERTY,user-select: text !important;}
 }
 
 body#main_website {
@@ -455,6 +486,7 @@ body#standalone_html_wrap {
 }
 
 header {
+	background-color: {$GET,main_background};
 }
 
 header h1 {
@@ -499,6 +531,7 @@ header h1 {
 .logo_outer {
 	display: block;
 	margin: 0;
+	overflow: hidden;
 }
 .logo_outer a, .logo_outer img {
 	display: block;
@@ -506,6 +539,7 @@ header h1 {
 .logo_outer .logo {
 	width: 100%;
 	height: auto;
+	padding: 0; /* Only needed because some external CSS may mess with the common name of ".logo" */
 }
 
 .global_navigation {
@@ -528,19 +562,19 @@ header h1 {
 }
 
 .global_navigation .top_buttons, .global_navigation .top_form {
-	/*{+START,IF,{$NOT,{$MOBILE}}}*/
-		margin-left: 1.5em;
-	/*{+END}*/
 	padding: 0.5em 0;
 	margin-right: 1em;
 	float: right;
 }
 
 .global_navigation .top_buttons {
+	/*{+START,IF,{$NOT,{$MOBILE}}}*/
+		margin-left: 1.5em;
+	/*{+END}*/
 	margin-top: 1px; /* To force it align correctly with the form in a different block (which is taller) */
 }
 
-.global_navigation .top_form {
+.global_navigation .top_form.top_search {
 	margin-top: 3px; /* To force it align correctly with the form in a different block (which is taller) */
 }
 .global_navigation .top_form * {
@@ -548,7 +582,7 @@ header h1 {
 }
 
 .global_navigation .top_login .horizontal_links {
-	margin-left: 1em;
+	margin-left: 0.5em;
 	width: auto;
 	padding-top: 2px; /* To force it align correctly with the form in a different block (which is taller) */
 }
@@ -610,10 +644,10 @@ header h1 {
 	padding: 7px 0 7px 0;
 	/*{+START,IF,{$NOT,{$MOBILE}}}*/
 		/*{+START,IF,{$CONFIG_OPTION,fixed_width}}*/
-			text-align: {!en_right};
+			text-align: {!en_right}; /* Goes on own line in fixed width mode, due to lack of space */
 		/*{+END}*/
 		/*{+START,IF,{$NOT,{$CONFIG_OPTION,fixed_width}}}*/
-			float: {!en_right};
+			float: {!en_right}; /* Sits beside title on non-fixed width */
 		/*{+END}*/
 		margin-left: 0.5em;
 	/*{+END}*/
@@ -714,6 +748,10 @@ body#main_website #main_website_inner, html>body div.global_middle_faux {
 
 .zone_running_docs .comcode_page {
 	line-height: 1.35em;
+}
+.zone_running_docs .comcode_page img:not([width]):not([height]) {
+	max-width: 100%;
+	height: auto;
 }
 
 /*{+START,IF,{$MOBILE}}*/
@@ -826,6 +864,16 @@ body.popup_spacer h2 {
 	width: 50%;
 	padding-{!en_left}: 10px;
 	margin-{!en_left}: 10px;
+}
+
+.global_side_panel .hide_if_in_panel {
+	display: none;
+}
+.hide_if_not_in_panel {
+	display: none;
+}
+.global_side_panel .hide_if_not_in_panel {
+	display: block;
 }
 
 .global_messages {
@@ -944,7 +992,7 @@ footer .special_page_type_form select option {
 footer .global_footer_left .horizontal_buttons, footer .su_form, footer .special_page_type_form {
 	/*{+START,IF,{$NOT,{$MOBILE}}}*/
 		float: left;
-		padding-right: 20px;
+		padding-right: 14px;
 	/*{+END}*/
 }
 footer .global_footer_left .horizontal_buttons {
@@ -959,7 +1007,7 @@ footer .global_footer_left img {
 }
 
 footer .global_footer_left #special_page_type {
-	width: 12em;
+	width: 8em;
 }
 
 footer .global_footer_right {
@@ -1040,7 +1088,7 @@ body .accessibility_hidden { /* Contents should be made visible (or interpreted)
 	position: absolute;
 	top: -256000px;
 	left: 0;
-	visibility: hidden; /* So browser doesn't waste resources rendering */
+	opacity: 0; /* So browser doesn't waste resources rendering (cannot use visibility, Mac Voiceover will not pick up on it) */
 	display: block; /* stops browser bugs where it interacts with the layout flow incorrectly */
 }
 
@@ -1063,7 +1111,7 @@ body .accessibility_hidden { /* Contents should be made visible (or interpreted)
 
 /* Commonly used to indicate there is no content to display */
 .nothing_here, .more_here {
-	font-size: 0.95em;
+	font-size: 13px !important; /* px not em due to careful background positioning */
 	padding-{!en_left}: 15px;
 	margin: 1.5em;
 	margin-{!en_left}: 10px;
@@ -1098,6 +1146,11 @@ div.edited {
 	vertical-align: top;
 }
 
+/* Used to align a back to top image beside screen item buttons */
+.back_to_top_by_buttons {
+	padding-top: 4px;
+}
+
 /* Used to align next to a floated button(s) */
 .vertical_alignment_buttons {
 	line-height: 1.9em;
@@ -1116,12 +1169,18 @@ div.edited {
 	border: 1px solid {$GET,standard_border};
 	{$BETA_CSS_PROPERTY,box-sizing: border-box;}
 	{$BETA_CSS_PROPERTY,box-shadow: 3px 3px 10px {$GET,standard_border};}
+}
+.media_box>a>img:not([width]):not([height]), .media_box>img:not([width]):not([height]) {
 	max-width: 100%;
+	height: auto;
 }
 
 .scale_down { /* Membership of this class is used as a tag to turn on image scale-to-fit */
-	max-width: 100%;
 	{$BETA_CSS_PROPERTY,box-sizing: border-box;}
+}
+.scale_down:not([width]):not([height]) {
+	max-width: 100%;
+	height: auto;
 }
 
 /* Used in a few places to make member links stand out */
@@ -1184,8 +1243,9 @@ body input.button_hyperlink, body input.button_hyperlink:hover {
 .non_link:visited,
 .non_link:hover {
 	color: inherit !important;
-	text-decoration: none;
-	cursor: inherit;
+	text-decoration: none !important;
+	cursor: inherit !important;
+	font-size: 1em !important;
 }
 
 .trinav_wrap {
@@ -1227,12 +1287,14 @@ body input.button_hyperlink, body input.button_hyperlink:hover {
 		padding-top: 1px;
 	/*{+END}*/
 }
-.trinav_mid.text>span:before {
-	content: "(";
-}
-.trinav_mid.text>span:after {
-	content: ")";
-}
+/*{+START,IF,{$NOT,{$MOBILE}}}*/
+	.trinav_mid.text>span:before {
+		content: "(";
+	}
+	.trinav_mid.text>span:after {
+		content: ")";
+	}
+/*{+END}*/
 .trinav_right {
 	float: right;
 	/*{+START,IF,{$NOT,{$MOBILE}}}*/
@@ -1267,10 +1329,12 @@ div.red_alert, p.red_alert, .inline_wip_message {
 div.red_alert, p.red_alert {
 	border: 1px solid {$GET,light_error_border};
 	background: url('{$IMG;,icons/24x24/status/notice}') 0.6em 0.75em no-repeat {$GET,light_error_background};
+	overflow: hidden;
 }
 .inline_wip_message {
 	border: 1px solid {$GET,dark_border};
 	background: url('{$IMG;,icons/24x24/status/notice}') 0.6em 0.75em no-repeat {$GET,area_background};
+	color: {$GET,slightly_seeded_text};
 }
 @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 2dppx) {
 	div.red_alert, p.red_alert {
@@ -1289,9 +1353,9 @@ div.red_alert, p.red_alert {
 
 /* Used when a label is the only thing in front of a textarea/list */
 .lonely_label  {
-	margin-bottom: 0.2em;
-	display: block;
-	font-size: 1.1em;
+	margin-bottom: 0.2em !important;
+	display: block !important;
+	font-size: 1.1em !important;
 }
 .lonely_label+ul, .lonely_label+ol, .lonely_label+p {
 	margin-top: 0.2em;
@@ -1339,7 +1403,7 @@ div.red_alert, p.red_alert {
 	border-left: 0;
 }
 
-th.meta_data_title {
+th.metadata_title {
 	font-weight: bold !important;
 }
 
@@ -1359,7 +1423,10 @@ th.meta_data_title {
 
 .img_thumb { /* Membership of this class is used as a tag to turn on the thumbnail blend effect */
 	{$BETA_CSS_PROPERTY,opacity: 0.7;}
+}
+.img_thumb:not([width]):not([height]) {
 	max-width: 100%;
+	height: auto;
 }
 .img_thumb:hover, body.touch_enabled .img_thumb {
 	{$BETA_CSS_PROPERTY,opacity: 1.0;}
@@ -1391,7 +1458,7 @@ th.meta_data_title {
 
 	overflow: hidden;
 }
-td>.box, .right>.box, .left>.box {
+td>.box, .right .box:first-child:last-child, .left .box:first-child:last-child {
 	margin: 0;
 }
 /* Accordion boxes don't have margins */
@@ -1418,14 +1485,14 @@ td>.box, .right>.box, .left>.box {
 }
 
 .box>.box_inner, .box>.toggleable_tray {
-	margin: 0.5em;
+	margin: 5px; /* not em so that header may be positioned properly */
 }
 .boxless_space .box>.box_inner, .boxless_space .box>.toggleable_tray {
 	margin: 0;
 }
 .email_body .box .box_inner { /* Outlook.com does not support margins or complex use of the sibling selector */
 	margin: 0;
-	padding: 0.5em;
+	padding: 5px; /* not em so that header may be positioned properly */
 }
 
 .box_inner>h1, .box_inner>h2, .box_inner>h3, .box_inner>h4, .box_inner>h5, .box_inner>h6, .toggleable_tray_title, #standalone_html_wrap .box .box .box_inner>h2, #standalone_html_wrap .box .box .box_inner>h3 {
@@ -1434,6 +1501,7 @@ td>.box, .right>.box, .left>.box {
 	background-color: {$GET,box_title_background};
 	background-image: url('{$IMG_INLINE;,gradient}');
 	background-repeat: repeat-x;
+	{$BETA_CSS_PROPERTY,background-image: linear-gradient(to bottom\, {$GET,lgrad}\, {$GET,dgrad});}
 	color: {$GET,box_title_text};
 	text-align: center;
 	font-weight: bold;
@@ -1443,7 +1511,7 @@ td>.box, .right>.box, .left>.box {
 	letter-spacing: 0;
 
 	/* .box_inner set us in the wrong position, so fiddle around a bit to move us back to be flush */
-	margin: -0.506em 0 0.506em -0.506em; /* Would be -0.5 but Opera does not seem to like */
+	margin: -5px 0 5px -5px;
 	padding: 0.4em 0.8em 0.4em 0.3em;
 	width: 100%;
 }
@@ -1510,15 +1578,16 @@ a.toggleable_tray_button { /* Override above for toggleable_tray_button */
 	color: {$GET,slightly_seeded_right_complement_text} !important;
 	text-align: {!en_left};
 	font-size: 15px;
-	margin: 0.5em 0;
+	margin: 0.5em 0 !important;
 	font-family: Arial;
-	padding: 1px 0 2px 21px;
+	padding: 1px 0 2px 21px !important;
 	width: auto;
 	font-weight: bold;
 	text-transform: uppercase;
 	{$BETA_CSS_PROPERTY,border-radius: 0;}
 }
-.global_side_panel .boxless_space .box>.box_inner>h1, .global_side_panel .boxless_space .box>.box_inner>h2, .global_side_panel .boxless_space .box>.box_inner>h3, .global_side_panel .boxless_space .box>.box_inner>h4, .global_side_panel .boxless_space .box>.box_inner>h5, .global_side_panel .boxless_space .box>.box_inner>h6 {
+.global_side_panel .boxless_space .box>.box_inner>h1, .global_side_panel .boxless_space .box>.box_inner>h2, .global_side_panel .boxless_space .box>.box_inner>h3, .global_side_panel .boxless_space .box>.box_inner>h4, .global_side_panel .boxless_space .box>.box_inner>h5, .global_side_panel .boxless_space .box>.box_inner>h6,
+.boxless_space .box .box>.box_inner>h1, .boxless_space .box .box>.box_inner>h2, .boxless_space .box .box>.box_inner>h3, .boxless_space .box .box>.box_inner>h4, .boxless_space .box .box>.box_inner>h5, .boxless_space .box .box>.box_inner>h6 {
 	background: url('{$IMG_INLINE;,1x/boxless_title_leadin_leftcomp}') no-repeat !important;
 	color: {$GET,slightly_seeded_left_complement_text} !important;
 }
@@ -1527,7 +1596,8 @@ a.toggleable_tray_button { /* Override above for toggleable_tray_button */
 		background-image: url('{$IMG_INLINE;,2x/boxless_title_leadin_rightcomp}');
 		background-size: 18px 18px;
 	}
-	.global_side_panel .boxless_space .box>.box_inner>h1, .global_side_panel .boxless_space .box>.box_inner>h2, .global_side_panel .boxless_space .box>.box_inner>h3, .global_side_panel .boxless_space .box>.box_inner>h4, .global_side_panel .boxless_space .box>.box_inner>h5, .global_side_panel .boxless_space .box>.box_inner>h6 {
+	.global_side_panel .boxless_space .box>.box_inner>h1, .global_side_panel .boxless_space .box>.box_inner>h2, .global_side_panel .boxless_space .box>.box_inner>h3, .global_side_panel .boxless_space .box>.box_inner>h4, .global_side_panel .boxless_space .box>.box_inner>h5, .global_side_panel .boxless_space .box>.box_inner>h6,
+	.boxless_space .box .box>.box_inner>h1, .boxless_space .box .box>.box_inner>h2, .boxless_space .box .box>.box_inner>h3, .boxless_space .box .box>.box_inner>h4, .boxless_space .box .box>.box_inner>h5, .boxless_space .box .box>.box_inner>h6 {
 		background-image: url('{$IMG_INLINE;,2x/boxless_title_leadin_leftcomp}');
 		background-size: 18px 18px;
 	}
@@ -1578,8 +1648,8 @@ a.toggleable_tray_button { /* Override above for toggleable_tray_button */
 /* Boxes under boxes shouldn't have the title style - would be ugly */
 
 .box .box .box_inner>h1, .box .box .box_inner>h2, .box .box .box_inner>h3, .box .box .box_inner>h4, .box .box .box_inner>h5, .box .box .box_inner>h6, .box .box .toggleable_tray_title, #standalone_html_wrap .box .box .box .box_inner>h2, #standalone_html_wrap .box .box .box .box_inner>h3 {
-	background: none !important;
-	color: inherit !important;
+	background: none;
+	color: inherit;
 	padding-left: 0;
 	font-size: 1.1em;
 } /* This rule is not applied to boxes under the top level box in the preview (#standalone_html_wrap) as those should show verbatim */
@@ -1612,10 +1682,13 @@ a.toggleable_tray_button { /* Override above for toggleable_tray_button */
 
 .toggleable_tray_button img {
 	float: {!en_right};
-	margin: 0 0.3em !important;
+	margin: 0 0 0 0.3em !important;
+}
+.box .toggleable_tray_button img {
+	margin-right: 0.5em;
 }
 .toggleable_tray_title .toggleable_tray_button img {
-	margin-top: -2px !important;
+	margin: -2px 0.4em 0 0.4em !important;
 }
 .toggleable_tray_button img {
 	width: 20px;
@@ -1662,9 +1735,6 @@ a.toggleable_tray_button { /* Override above for toggleable_tray_button */
 
 .fp_col_block .pagination {
 	float: none;
-}
-.fp_col_block .pagination_per_page {
-	display: none;
 }
 .fp_col_block form + span {
 	margin-left: 0;
@@ -1752,6 +1822,7 @@ a.toggleable_tray_button { /* Override above for toggleable_tray_button */
 	height: 7px;
 	margin-left: 20.2em;
 	position: absolute;
+	right: 13px;
 }
 @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 2dppx) {
 	.box.box_arrow>span {
@@ -1785,7 +1856,7 @@ a.toggleable_tray_button { /* Override above for toggleable_tray_button */
 .whitespace_visible {
 	overflow: auto;
 	outline: 0;
-	white-space: pre-wrap;
+	white-space: pre-wrap !important;
 }
 .whitespace_visible.code {
 	font-family: 'Courier New', 'Courier', monospace;
@@ -1857,6 +1928,7 @@ hr.spaced_rule {
 
 .inline_lined_up>* {
 	white-space: normal;
+	display: inline-block;
 }
 
 /* Something being shown for previewing, on its own so needs focus */
@@ -1910,17 +1982,20 @@ table.scrollable_inside {
 
 .wide_table {
 	width: 100%;
-	/*{+START,IF,{$NOT,{$MOBILE}}}*/
+	/*{+START,IF,{$EQ,{$LANG},EN}}*/
 		table-layout: fixed;
 	/*{+END}*/
 }
 
 .spaced_table th, .spaced_table td {
 	padding: 0.7em;
-	{+START,IF,{$MOBILE}}
-		overflow-x: scroll;
-	{+END}
 }
+
+/*{+START,IF,{$MOBILE}}*/
+	.spaced_table td {
+		overflow-x: auto;
+	}
+/*{+END}*/
 
 /* Undo any descendant spacing for nested tables made in WYSIWYG */
 .results_table table[cellpadding="0"] td, .results_table table[cellpadding="0"] th {
@@ -1936,6 +2011,13 @@ table.scrollable_inside {
 
 .results_table {
 	border-collapse: separate;
+}
+
+.results_table_simplified {
+	border-collapse: collapse;
+}
+
+.results_table, .results_table_simplified {
 	border: 0 !important;
 	border-spacing: 0;
 	margin: 1em 0;
@@ -1948,6 +2030,10 @@ table.scrollable_inside {
 }
 .wide_table_wrap + .wide_table_wrap>.results_table {
 	margin-top: 1em;
+}
+
+.results_table_simplified th, .results_table_simplified td {
+	border: 1px solid {$GET,standard_border} !important;
 }
 
 .results_table>thead:first-child>tr:first-child *:first-child, .results_table>thead:nth-child(2)/*after colspan*/>tr:first-child *:first-child, .results_table>tbody>tr:first-child>*:first-child {
@@ -1992,11 +2078,11 @@ table.scrollable_inside {
 	border-bottom: 1px solid {$GET,standard_border};
 }
 
-table>*>.zebra_0>th, table>*>.zebra_0>td, div.zebra_0 {
+table>*>.zebra_0>th, table>*>.zebra_0>td, div.zebra_0, table.zebra>tbody>tr:nth-child(even)>th, table.zebra>tbody>tr:nth-child(even)>td {
 	background-color: {$GET,area_zebra_background} !important;
 	color: {$GET,slightly_seeded_text};
 }
-table>*>.zebra_1>th, table>*>.zebra_1>td, div.zebra_1 {
+table>*>.zebra_1>th, table>*>.zebra_1>td, div.zebra_1, table.zebra>tbody>tr:nth-child(odd)>th, table.zebra>tbody>tr:nth-child(even)>td {
 	background-color: {$GET,area_background} !important;
 	color: {$GET,slightly_seeded_text};
 }
@@ -2057,16 +2143,21 @@ div.zebra_0+div.zebra_1, div.zebra_1+div.zebra_0 {
 
 .tooltip {
 	font-size: 1em;
-	padding: 0.5em;
-	background-color: {$GET,area_faded_background};
-	{$BETA_CSS_PROPERTY,background-image: linear-gradient(to bottom\, {$GET,area_faded_background}\, {$GET,area_background});}
-	border: 1px solid {$GET,point_of_interest_border};
-	{$BETA_CSS_PROPERTY,box-shadow: 3px 3px 10px {$GET,point_of_interest_border};}
 	z-index: 10000;
 	{$BETA_CSS_PROPERTY,opacity: 0.9;}
 	{$BETA_CSS_PROPERTY,word-wrap: break-word;}
+	min-width: 6em;
+}
+.tooltip_ownlayout {
+	padding: 0.5em;
+	border: 1px solid {$GET,point_of_interest_border};
+	{$BETA_CSS_PROPERTY,box-shadow: 3px 3px 10px {$GET,point_of_interest_border};}
 	{$BETA_CSS_PROPERTY,border-radius: 10px;}
 	color: {$GET,area_text} !important;
+}
+.tooltip_ownlayout, .tooltip_nolayout th.de_th, .tooltip_nolayout td {
+	background-color: {$GET,area_faded_background};
+	{$BETA_CSS_PROPERTY,background-image: linear-gradient(to bottom\, {$GET,area_faded_background}\, {$GET,area_background});}
 }
 .tooltip .box {
 	margin: 0;
@@ -2142,11 +2233,15 @@ div.zebra_0+div.zebra_1, div.zebra_1+div.zebra_0 {
 .results_table_sorter {
 	max-width: {$?,{$MOBILE},315,400}px;
 	float: {!en_left};
-	margin-{!en_right}: 1em;
+	margin-{!en_right}: 0.75em;
 }
 
 .pagination_spacing {
 	margin: 1em 0;
+}
+
+.compacted_subbox_stream .pagination_spacing {
+	margin-left: 1em;
 }
 
 .pagination {
@@ -2157,7 +2252,7 @@ div.zebra_0+div.zebra_1, div.zebra_1+div.zebra_0 {
 .pagination * {
 	vertical-align: middle;
 }
-.pagination .inline {
+.pagination .inline, .pagination nav {
 	display: inline-block;
 }
 
@@ -2209,11 +2304,6 @@ div.zebra_0+div.zebra_1, div.zebra_1+div.zebra_0 {
 	font-weight: bold;
 }
 
-.pagination_per_page {
-	float: {!en_right};
-	margin-{!en_left}: 1em;
-}
-
 .pagination_pages {
 	display: inline;
 }
@@ -2261,6 +2351,9 @@ div.zebra_0+div.zebra_1, div.zebra_1+div.zebra_0 {
 	margin-left: 0 !important;
 	margin-right: 0 !important;
 }
+.compacted_subbox_stream>.raw_ajax_grow_spot>h3 {
+	margin: 1em 5px;
+}
 .compacted_subbox_stream .box {
 	border-top: 1px dotted {$GET,standard_border} !important;
 	border-left: 0;
@@ -2288,6 +2381,14 @@ div.zebra_0+div.zebra_1, div.zebra_1+div.zebra_0 {
 }
 .compacted_subbox_stream .box .associated_details {
 	margin-bottom: 0;
+}
+.compacted_subbox_stream.less_compact .box {
+	padding-top: 1.5em !important;
+	margin: 2em 0;
+}
+.compacted_subbox_stream.less_compact .box_inner>h3 {
+	font-size: 1.3em;
+	margin-bottom: 1em;
 }
 
 .category_sorter {
@@ -2360,7 +2461,7 @@ div.wysiwyg_toolbar_color_finder {
 	{$BETA_CSS_PROPERTY,border-radius: 5px;}
 }
 
-.ajax_loading {
+div.ajax_loading, p.ajax_loading {
 	padding: 2em;
 	text-align: center;
 }
@@ -2446,10 +2547,12 @@ div.wysiwyg_toolbar_color_finder {
 /*{+START,IF,{$MOBILE}}*/
 	.lined_up_boxes .right {
 		width: 100%;
+		float: none;
 	}
 
 	.lined_up_boxes .left {
 		width: 100%;
+		float: none;
 	}
 /*{+END}*/
 
@@ -2461,18 +2564,22 @@ div.wysiwyg_toolbar_color_finder {
 	text-align: center;
 }
 
-.RATING_INLINE_DYNAMIC, .RATING_INLINE_STATIC, .RATING_INLINE_DYNAMIC div, .RATING_INLINE_STATIC div, .RATING_INLINE_DYNAMIC form, .RATING_INLINE_STATIC form {
+.RATING_INLINE, .RATING_INLINE div, .RATING_INLINE form {
 	display: inline;
 }
-.RATING_INLINE_DYNAMIC .rating_outer, .RATING_INLINE_STATIC .rating_outer {
+.RATING_INLINE .rating_outer {
 	padding-left: 2em;
 }
-.RATING_INLINE_DYNAMIC .rating_outer:first-child, .RATING_INLINE_STATIC .rating_outer:first-child {
+.RATING_INLINE .rating_outer:first-child {
 	padding-left: 0;
 }
 
-.post_action_link .RATING_INLINE_DYNAMIC {
-	padding-left: 20px;
+.RATING_INLINE .ajax_loading {
+	padding: 0;
+}
+
+.post_action_link .RATING_INLINE {
+	padding-left: 2em;
 }
 
 .rating_inner img {
@@ -2483,11 +2590,21 @@ div.wysiwyg_toolbar_color_finder {
 	text-align: center;
 }
 
+.rating_stars {
+	min-width: 55px;
+	display: inline-block;
+}
+
 .rating_star {
 	{$BETA_CSS_PROPERTY,opacity: 0.2;} display: inline-block;/*Needed for IE8*/
+	padding-right: 3px;
 }
 .rating_star_highlight {
 	{$BETA_CSS_PROPERTY,opacity: 1.0;} display: inline-block;/*Needed for IE8*/
+}
+
+.rating_likers a+a {
+	padding-left: 2px;
 }
 
 .trackbacks {
@@ -2510,13 +2627,6 @@ div.wysiwyg_toolbar_color_finder {
 	font-weight: bold;
 	padding-left: 0;
 	margin-bottom: 0.3em;
-}
-
-.post .post_avatar {
-	float: left;
-	margin: 0.5em 1em 0.5em 0;
-	width: 50px;
-	height: 50px;
 }
 
 .post .post_subline {
@@ -2554,10 +2664,10 @@ div.wysiwyg_toolbar_color_finder {
 }
 
 div .post_buttons>*, div .buttons_group_faded>* {
-	{$BETA_CSS_PROPERTY,opacity: 0.1;} display: inline-block;/*Needed for IE8*/
-	{$BETA_CSS_PROPERTY,transition-property : opacity;}
-	{$BETA_CSS_PROPERTY,transition-duration : 0.5s;}
-	{$BETA_CSS_PROPERTY,transform: translateZ(0);} /* Needed to stop size jerk during animation, by forcing it as a layer at all times */
+	{$BETA_CSS_PROPERTY,opacity: 0.25;} display: inline-block;/*Needed for IE8*/
+	{$BETA_CSS_PROPERTY,transition-property: opacity;}
+	{$BETA_CSS_PROPERTY,transition-duration: 0.5s;}
+	{$BETA_CSS_PROPERTY,transform: scale(1);} /* Needed to stop size jerk during animation, by forcing it as a layer at all times */
 }
 
 .post_buttons>*[rel="add reply"], .post_buttons>a[rel="back_to_top"] {
@@ -2640,6 +2750,7 @@ div .post_buttons>*, div .buttons_group_faded>* {
 
 .comments_posting_form_inner textarea {
 	color: {$GET,comfortable_input_field_text};
+	width: 100%;
 }
 
 .comments_posting_form_inner table {
@@ -2669,6 +2780,9 @@ div .post_buttons>*, div .buttons_group_faded>* {
 	font-size: 0.85em;
 	font-weight: normal;
 }
+.comments_posting_form_inner .associated_links_block_group li {
+	white-space: normal !important;
+}
 
 .comments_posting_form_end {
 	overflow: hidden;
@@ -2677,18 +2791,19 @@ div .post_buttons>*, div .buttons_group_faded>* {
 		padding: 0;
 		text-align: center;
 	/*{+END}*/
-	/*{+START,IF,{$NOT,{$MOBILE}}}*/
-		margin: 0 0 1em 13.5em;
-	/*{+END}*/
+	/*{+START,IF,{$NOT,{$MOBILE}}}*//*{+START,IF,{$NOT,{!takes_lots_of_space}}}*/
+		margin: 0 0 1em 0;
+	/*{+END}*//*{+END}*/
 }
 
-.comments_posting_form_end input {
-	float: left;
-	margin-right: 0.5em !important;
+.comments_posting_form_end .proceed_button input:first-child, .comments_captcha {
+	margin-left: 180px !important;
 }
 
 .comments_posting_form_end #submit_button {
-	float: right;
+	/*{+START,IF,{$CONFIG_OPTION,enable_previews}}*/
+		float: right;
+	/*{+END}*/
 	margin-right: 1em !important;
 }
 
@@ -2709,12 +2824,12 @@ div .post_buttons>*, div .buttons_group_faded>* {
 =========================
 */
 
-ul.compact_list, ol.compact_list {
+ul.compact_list, .global_side_panel ul, ol.compact_list {
 	margin: 0;
 	padding: 0;
 	text-align: left; /* In case cascading from somewhere */
 }
-ul.compact_list>li, ol.compact_list>li {
+ul.compact_list>li, .global_side_panel ul>li, ol.compact_list>li {
 	margin: 0 0 0 17px;
 	padding: 0;
 }
@@ -2743,15 +2858,15 @@ dl.compact_list>dd {
 	margin: 0;
 }
 
-ul.spaced_list, .spaced_list ul, ol.spaced_list, .spaced_list ol, .zone_running_docs .comcode_page ul, .zone_running_docs .comcode_page ol {
+ul.spaced_list, .spaced_list ul, ol.spaced_list, .spaced_list ol, .zone_running_docs .comcode_page ul:not([class]), .zone_running_docs .comcode_page ol:not([class]) {
 	margin: 0;
 	padding: 0 !important;
 }
-ul.spaced_list, .spaced_list ul, ol.spaced_list, .spaced_list ol, .zone_running_docs .comcode_page ul {
+ul.spaced_list, .spaced_list ul, .zone_running_docs .comcode_page ul:not([class]) {
 	list-style-type: square;
 }
-.spaced_list li, .zone_running_docs .comcode_page li {
-	margin: 0.5em 0 0.5em 25px !important;
+.spaced_list li, .zone_running_docs .comcode_page ul:not([class])>li, .zone_running_docs .comcode_page ol:not([class])>li {
+	margin: 0.5em 0 0.5em 30px !important;
 	padding: 0;
 }
 
@@ -2801,12 +2916,12 @@ li.actions_list_strong {
 }
 
 /*
-A note about display of meta data...
+A note about display of metadata...
 
 It may be displayed using:
  - meta_details_list (usually used on full screen views of content)
  - horizontal_meta_details (usually used on blocks where the meta details are important to encourage a click through)
- - a table (usually used where the content defines its own meta data beyond what all Composr content has, such as a length or resolution)
+ - a table (usually used where the content defines its own metadata beyond what all Composr content has, such as a length or resolution)
  - a tooltip (good for tucking it away, although it's not touch friendly so should only be used if non-important)
 But it should always have role="note" on it (ARIA)
 */
@@ -2825,6 +2940,7 @@ ul.meta_details_list>li {
 
 dl.meta_details_list>dt {
 	float: {!en_left};
+	clear: {!en_left};
 	padding-{!en_right}: 0.4em !important;
 }
 dl.meta_details_list>dt, dl.meta_details_list>dd {
@@ -2837,6 +2953,7 @@ dl.meta_details_list>dt, dl.meta_details_list>dd {
 }
 .meta_details>dl.meta_details_list {
 	margin-bottom: 0;
+	overflow: hidden;
 }
 
 /*
@@ -2854,7 +2971,7 @@ dl.meta_details_list>dt, dl.meta_details_list>dd {
 	{$BETA_CSS_PROPERTY,opacity: 0.4;}
 	{$BETA_CSS_PROPERTY,transition: opacity 0.6s linear;}
 	margin-top: 3em;
-	{$BETA_CSS_PROPERTY,transform: translateZ(0);} /* Needed to stop size jerk during animation, by forcing it as a layer at all times */
+	{$BETA_CSS_PROPERTY,transform: scale(1);} /* Needed to stop size jerk during animation, by forcing it as a layer at all times */
 }
 .quick_self_edit_link img, .quick_self_edit_link span {
 	vertical-align: middle;
@@ -2874,7 +2991,8 @@ dl.meta_details_list>dt, dl.meta_details_list>dd {
 	background: url('{$IMG_INLINE;,icons/24x24/tabs/settings}') right 4px no-repeat;
 	padding-right: 5px;
 	background-origin: content-box;
-	{$BETA_CSS_PROPERTY,transform: translateZ(0);} /* Needed to stop size jerk during animation, by forcing it as a layer at all times */
+	{$BETA_CSS_PROPERTY,transform: scale(1);} /* Needed to stop size jerk during animation, by forcing it as a layer at all times */
+	min-height: 26px;
 }
 @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 2dppx) {
 	.staff_actions {
@@ -2940,12 +3058,16 @@ There is 'actions_list' too (defined elsewhere). These are for links that are gi
 */
 
 ul.associated_links_block_group.horizontal_links>li:first-child:before, p.associated_link:before, div.associated_link:before {
-	content: "( " !important;
+	/*{+START,IF,{$NOT,{$MOBILE}}}*/
+		content: "( " !important;
+	/*{+END}*/
 	{$BETA_CSS_PROPERTY,opacity: 0.7;}
 	font-size: 0.8em;
 }
 ul.associated_links_block_group.horizontal_links>li:last-child:after, p.associated_link:after, div.associated_link:after {
-	content: " )" !important;
+	/*{+START,IF,{$NOT,{$MOBILE}}}*/
+		content: " )" !important;
+	/*{+END}*/
 	{$BETA_CSS_PROPERTY,opacity: 0.7;}
 	font-size: 0.8em;
 }
@@ -2953,7 +3075,9 @@ span.associated_link, a.associated_link, form.associated_link {
 	white-space: nowrap;
 }
 ul.associated_links_block_group>li:before, span.associated_link:before, a.associated_link:before, form.associated_link:before {
-	content: "(" !important;
+	/*{+START,IF,{$NOT,{$MOBILE}}}*/
+		content: "(" !important;
+	/*{+END}*/
 	{$BETA_CSS_PROPERTY,opacity: 0.7;}
 }
 ul.associated_links_block_group>li:first-child:before, span.associated_link:first-child:before, a.associated_link:first-child:before, form.associated_link:first-child:before {
@@ -2963,7 +3087,9 @@ ul.associated_links_block_group.horizontal_links>li:after { /* Undoes the above 
 	content: "" !important;
 }
 ul.associated_links_block_group>li:after, span.associated_link:after, a.associated_link:after, form.associated_link:after {
-	content: ")" !important;
+	/*{+START,IF,{$NOT,{$MOBILE}}}*/
+		content: ")" !important;
+	/*{+END}*/
 	{$BETA_CSS_PROPERTY,opacity: 0.7;}
 }
 
@@ -2971,7 +3097,9 @@ ul.associated_links_block_group.horizontal_links>li:before,
 .horizontal_meta_details li:before,
 .horizontal_links>li:before,
 .horizontal_ticker li:before {
-	content: "\00b7" !important; /* a &middot; */
+	/*{+START,IF,{$NOT,{$MOBILE}}}*/
+		content: "\00b7" !important; /* a &middot; */
+	/*{+END}*/
 	padding: {$?,{$MOBILE},0 0.2em 0 0.1em,0 0.5em 0 0.1em};
 	vertical-align: -20%;
 }
@@ -3034,6 +3162,9 @@ ul.associated_link li img {
 }
 ul.horizontal_links li img, ul.associated_link li img, ul.horizontal_links a, ul.horizontal_links form {
 	vertical-align: middle;
+	/*{+START,IF,{$MOBILE}}*/
+		white-space: nowrap !important;
+	/*{+END}*/
 }
 
 .associated_links_block_group>li{
@@ -3061,6 +3192,9 @@ ul.buttons_group, ul.associated_links_block_group {
 }
 .force_margin {
 	margin-top: 1.5em !important;
+}
+.global_side_panel .force_margin {
+	margin-top: 1em !important;
 }
 
 .associated_link.suggested {
@@ -3147,8 +3281,9 @@ ul.buttons_group, ul.associated_links_block_group {
 	margin-bottom: 2em;
 }
 
-.box___confirm_screen img {
+.box___confirm_screen img:not([width]):not([height]) {
 	max-width: 100%;
+	height: auto;
 }
 
 /*
@@ -3168,6 +3303,9 @@ ul.buttons_group, ul.associated_links_block_group {
 }
 .fields_set_contents .constrain_field, .fields_set_contents input .wide_field {
 	display: inline;
+}
+.constrain_field + .constrain_field {
+	margin: 0.25em 0;
 }
 
 /*
@@ -3202,7 +3340,7 @@ input.magic_image_edit_link {
 	background-position: 96% 3px; /*fallback*/
 	background-position: right 7px top 3px;
 	background-image: url('{$IMG_INLINE;,gradient}');
-	/*{$BETA_CSS_PROPERTY,background: linear-gradient(to bottom, {$GET,lgrad} 0%,{$GET,dgrad} 100%);} If you want a CSS gradient instead of the above image, do something like this*/
+	/*{$BETA_CSS_PROPERTY,background-image: linear-gradient(to bottom\, {$GET,lgrad}\, {$GET,dgrad});} If you want a CSS gradient instead of the above image, do something like this*/
 	color: {$GET,box_title_text} !important;
 	text-decoration: none !important;
 	-webkit-appearance: none;
@@ -3222,7 +3360,7 @@ div>.button_micro:first-child, div>.button_screen:first-child, div>.button_scree
 	padding: 6px 39px 7px 7px;
 	border-width: 2px;
 	font-size: 13px;
-	min-width: {$?,{$MOBILE},10,8}em; /* On mobile it will wrap, but we want it to look aligned when it does */
+	min-width: 8em;
 }
 .buttons__previous.button_screen, .buttons__previous_none.button_screen {
 	padding: 6px 7px 7px 39px !important;
@@ -3230,12 +3368,9 @@ div>.button_micro:first-child, div>.button_screen:first-child, div>.button_scree
 }
 .button_screen_item {
 	padding: 3px 30px 4px 5px;
-	background-position: 96% 3px; /*fallback*/
-	background-position: right 7px top 3px;
 	background-size: 18px 18px;
 	font-size: 13px;
 	/*{+START,IF,{$MOBILE}}*/
-		min-width: 6.5em;
 		margin: 0.25em 0.1em !important;
 	/*{+END}*/
 }
@@ -3244,7 +3379,9 @@ div>.button_micro:first-child, div>.button_screen:first-child, div>.button_scree
 	font-size: 12px;
 	margin: 1px 0.25em 0 0.25em; /* Push it up a bit due to confined space */
 	text-shadow: 1px 1px 1px {$GET,dark_shadow};
-	line-height: 0.9em;
+	/*{+START,IF,{$MOBILE}}*/
+		line-height: 0.9em;
+	/*{+END}*/
 }
 div .button_micro {
 	background-image: none !important; /* Too loud for such a small space */
@@ -3253,8 +3390,12 @@ div .button_micro {
 
 .button_screen, .button_screen_item, .button_micro, .toggleable_tray_button img {
 	{$BETA_CSS_PROPERTY,opacity: 0.85;}
-	{$BETA_CSS_PROPERTY,transform: translateZ(0);} /* Needed to stop size jerk during animation, by forcing it as a layer at all times */
+	{$BETA_CSS_PROPERTY,transform: scale(1);} /* Needed to stop size jerk during animation, by forcing it as a layer at all times */
 	display: inline-block;
+}
+.buttons__previous_none, .buttons__next_none {
+	{$BETA_CSS_PROPERTY,opacity: 0.85 !important;}
+	cursor: not-allowed;
 }
 .button_micro:hover, .button_screen:hover, .button_screen_item:hover {
 	{$BETA_CSS_PROPERTY,opacity: 1.0;}
@@ -3271,6 +3412,9 @@ body.touch_enabled .button_screen, body.touch_enabled .button_screen_item, body.
 .proceed_button {
 	text-align: center;
 }
+.proceed_button:last-child {
+	margin-bottom: 0;
+}
 div.proceed_button_left {
 	text-align: {!en_left};
 }
@@ -3280,6 +3424,7 @@ div.proceed_button_left_2 {
 }
 
 .shunted_button {
+	clear: {!en_right};
 	text-align: {!en_right};
 }
 
@@ -3291,7 +3436,7 @@ div.proceed_button_left_2 {
 }
 
 .mass_select_marker {
-	padding: 0.5em;
+	padding: 0.2em;
 	float: {!en_right};
 	border: 1px solid {$GET,standard_border};
 	margin-{!en_left}: 2em;
@@ -3368,14 +3513,14 @@ Formulaic bindings between CSS classes and icons, for our nice CSS buttons.
 .buttons__calculate {
 	background-image: url('{$IMG,icons/24x24/buttons/calculate}') !important;
 }
-.buttons__changes {
-	background-image: url('{$IMG,icons/24x24/buttons/changes}') !important;
-}
 .buttons__choose {
 	background-image: url('{$IMG,icons/24x24/buttons/choose}') !important;
 }
 .buttons__clear {
 	background-image: url('{$IMG,icons/24x24/buttons/clear}') !important;
+}
+.buttons__ignore {
+	background-image: url('{$IMG,icons/24x24/buttons/ignore}') !important;
 }
 .buttons__closed {
 	background-image: url('{$IMG,icons/24x24/buttons/closed}') !important;
@@ -3440,9 +3585,14 @@ Formulaic bindings between CSS classes and icons, for our nice CSS buttons.
 .buttons__report {
 	background-image: url('{$IMG,icons/24x24/buttons/report}') !important;
 }
-.buttons__restore {
-	background-image: url('{$IMG,icons/24x24/buttons/restore}') !important;
-}
+/*{+START,IF,{$ADDON_INSTALLED,actionlog}}*/
+	.buttons__undo {
+		background-image: url('{$IMG,icons/24x24/buttons/undo}') !important;
+	}
+	.buttons__revisions {
+		background-image: url('{$IMG,icons/24x24/buttons/revisions}') !important;
+	}
+/*{+END}*/
 .buttons__save {
 	background-image: url('{$IMG,icons/24x24/buttons/save}') !important;
 }
@@ -3553,14 +3703,14 @@ Formulaic bindings between CSS classes and icons, for our nice CSS buttons.
 	.buttons__calculate {
 		background-image: url('{$IMG,icons/48x48/buttons/calculate}') !important;
 	}
-	.buttons__changes {
-		background-image: url('{$IMG,icons/48x48/buttons/changes}') !important;
-	}
 	.buttons__choose {
 		background-image: url('{$IMG,icons/48x48/buttons/choose}') !important;
 	}
 	.buttons__clear {
 		background-image: url('{$IMG,icons/48x48/buttons/clear}') !important;
+	}
+	.buttons__ignore {
+		background-image: url('{$IMG,icons/48x48/buttons/ignore}') !important;
 	}
 	.buttons__closed {
 		background-image: url('{$IMG,icons/48x48/buttons/closed}') !important;
@@ -3622,9 +3772,14 @@ Formulaic bindings between CSS classes and icons, for our nice CSS buttons.
 	.buttons__report {
 		background-image: url('{$IMG,icons/48x48/buttons/report}') !important;
 	}
-	.buttons__restore {
-		background-image: url('{$IMG,icons/48x48/buttons/restore}') !important;
-	}
+	/*{+START,IF,{$ADDON_INSTALLED,actionlog}}*/
+		.buttons__undo {
+			background-image: url('{$IMG,icons/48x48/buttons/undo}') !important;
+		}
+		.buttons__revisions {
+			background-image: url('{$IMG,icons/48x48/buttons/revisions}') !important;
+		}
+	/*{+END}*/
 	.buttons__save {
 		background-image: url('{$IMG,icons/48x48/buttons/save}') !important;
 	}
@@ -3719,6 +3874,7 @@ Formulaic bindings between CSS classes and icons, for our nice CSS buttons.
 	width: 100%;
 	height: 0;
 	float: left; /* Stops it breaking up margin collapsing */
+	{$BETA_CSS_PROPERTY,transform: scale(1);} /* Fixes bugginess in Chrome */
 }
 
 /*
@@ -3760,23 +3916,48 @@ Formulaic bindings between CSS classes and icons, for our nice CSS buttons.
 	height: 25px;
 }
 
+/*{+START,IF,{$MOBILE}}*/
+	.tabs {
+		border-bottom: 1px solid {$GET,tab_border};
+		overflow: hidden;
+		height: auto;
+	}
+/*{+END}*/
+
 a.tab, a.tab:visited, a.tab:hover {
 	text-decoration: none;
 }
 
 .tab {
 	float: left;
-	background-image: url('{$IMG;,tab}') !important;
-	padding: 3px 7px 0 7px !important;
+	padding: 3px 6px 0 6px !important;
 	height: 23px;
 	text-align: center;
 	cursor: pointer;
 	line-height: 1em;
 	{$BETA_CSS_PROPERTY,opacity: 0.6;}
+	/*{+START,IF,{$NOT,{$MOBILE}}}*/
+		background-image: url('{$IMG;,tab}') !important;
+	/*{+END}*/
 	/*{+START,IF,{$MOBILE}}*/
-		min-width: 85px; /* Allows 3 per row, neat alignment */
+		min-width: 107px; /* Allows 3 per row, neat alignment */
+		border-left: 1px solid {$GET,tab_border};
+		border-top: 1px solid {$GET,tab_border};
 	/*{+END}*/
 }
+
+a.tab>img+span {
+	padding-top: 0;
+}
+a.tab>span {
+	padding-top: 3px;
+}
+
+/*{+START,IF,{$MOBILE}}*/
+	.tab_surround .tab {
+		min-width: 100px; /* Allows 3 per row, neat alignment (for nested tabs) */
+	}
+/*{+END}*/
 
 .tab * {
 	vertical-align: middle;
@@ -3804,10 +3985,18 @@ a.tab, a.tab:visited, a.tab:hover {
 .tab_first {
 }
 
-.tab_last {
-	border-right: 1px solid;
-	border-color: {$GET,tab_border};
-}
+/*{+START,IF,{$NOT,{$MOBILE}}}*/
+	.tab_last {
+		border-right: 1px solid;
+		border-color: {$GET,tab_border};
+	}
+/*{+END}*/
+
+/*{+START,IF,{$MOBILE}}*/
+	.tab:nth-child(3n+0) {
+		border-right: 1px solid {$GET,tab_border};
+	}
+/*{+END}*/
 
 div[role="tabpanel"] {
 	/*{+START,IF,{$MOBILE}}*/
@@ -3877,7 +4066,7 @@ ul.nl, .nl ul {
 .edit_menu_link_inline, .edit_page_link_inline {
 	{$BETA_CSS_PROPERTY,opacity: 0 !important;} display: inline-block;/*Needed for IE8*/
 	{$BETA_CSS_PROPERTY,transition: opacity 0.5s linear;}
-	{$BETA_CSS_PROPERTY,transform: translateZ(0);} /* Needed to stop size jerk during animation, by forcing it as a layer at all times */
+	{$BETA_CSS_PROPERTY,transform: scale(1);} /* Needed to stop size jerk during animation, by forcing it as a layer at all times */
 }
 div:hover>.edit_menu_link_inline, div:hover>.edit_page_link_inline {
 	{$BETA_CSS_PROPERTY,opacity: 1.0 !important;} display: inline-block;/*Needed for IE8*/
@@ -3922,8 +4111,15 @@ div:hover>.edit_menu_link_inline, div:hover>.edit_page_link_inline {
 
 /* .comcode_quote is used where the [quote] tag is parsed. */
 /* .comcode_code is used where the [code] tag is parsed. */
+.email_body .comcode_quote, .email_body .comcode_code {
+	margin: 1em 0;
+}
 .comcode_quote, .comcode_code {
 	margin: 1em;
+
+	/* Takes off default from email clients */
+	border: 0 !important;
+	padding: 0 !important;
 
 	/* To prevent horizontal overlapping with floats */
 	outline: 0;
@@ -3960,6 +4156,14 @@ td>.comcode_code_wrap>.comcode_quote, td>.comcode_code_wrap>.comcode_code {
 	border-top: 0;
 	white-space: nowrap;
 	overflow: auto;
+}
+
+/* Allow pre tags to work when mixed in, as people do this when pasting */
+pre .comcode_code_wrap {
+	white-space: normal;
+}
+pre .comcode_code_inner {
+	white-space: pre;
 }
 
 .comcode_code_scroll {
@@ -4108,6 +4312,9 @@ body div.comcode_table_of_contents>div.box_inner>ol>li {
 	text-align: left;
 	display: inline-block;
 }
+.ticker * {
+	text-indent: 0;
+}
 
 .shocker {
 	text-align: right;
@@ -4128,14 +4335,17 @@ body div.comcode_table_of_contents>div.box_inner>ol>li {
 	display: inline-block;
 	padding: 0.2em 0.25em;
 	vertical-align: middle;
-	position: relative;
-	top: -0.3em;
-	margin-top: 0.25em; /* Expands the whole line just enough so that our top offset doesn't cause an overflow */
+	line-height: 1em;
+	margin: 1px; /* Needed to stop border getting cropped off */
 }
 .comcode_member_link img {
 	cursor: inherit;
 }
+.comcode_member_link .embedded_mini_avatar {
+	vertical-align: middle;
+}
 .comcode_member_link a {
+	vertical-align: middle;
 	color: {$GET,area_text};
 	text-decoration: none;
 }
@@ -4150,6 +4360,7 @@ body div.comcode_table_of_contents>div.box_inner>ol>li {
 	font-size: 0.9em;
 	/*display: inline-block; Actually table works better, shows margins even when not floated*/
 	display: table;
+	border-collapse: separate;
 	max-width: 100%;
 	background: {$GET,WB};
 }
@@ -4188,13 +4399,15 @@ figure {
 }
 
 a[rel="lightbox"] {
-	display: inline-block; /* Stops "_" showing when we use white-space */
+	text-decoration: none; /* Stops "_" showing when we use white-space */
 }
 
-.attachment img {
+.attachment img, .attachment_img {
 	vertical-align: middle;
+}
+.attachment img:not([width]):not([height]), .attachment_img:not([width]):not([height]) {
 	max-width: 100%;
-	/*height: auto; Would always override HTML height - so we need to make sure that any width+height given in the HTML isn't too big and then max-width won't kick in and cause an inconsistency -- or not give width+height at all, in which case height will indeed auto-scale without needing height:auto here (although be aware that the media renderers will always auto-detect widths+heights as either thumbnail size or from source media)*/
+	height: auto;
 }
 
 .attachment figcaption {
@@ -4226,10 +4439,6 @@ a[rel="lightbox"] {
 .attachment_left .attachment, .attachment_right .attachment {
 	width: 200px;
 	white-space: normal;
-}
-
-.attachment_img {
-	max-width: 100%;
 }
 
 .media_set {
@@ -4265,6 +4474,31 @@ a[rel="lightbox"] {
 	width: {$DIV,{$CONFIG_OPTION,thumb_width},2}px;
 	height: auto;
 }
+
+/* Wrap video code with <div class="responsive_video">...</div> if you want it responsive; jwplayer is doing this by default using its own JS though */
+.responsive_video video {
+	max-width: 100%;
+	height: auto;
+}
+
+/* We normally expect a standard-sized YouTube embed, but for mobile we will lock the size to the browser window */
+/*{+START,IF,{$MOBILE}}*/
+	.youtube_player {
+		overflow: hidden;
+		width: 100%;
+		position: relative;
+		padding-bottom: 56.25%;
+		padding-top: 25px;
+		height: 0;
+	}
+	.youtube_player iframe {
+		position: absolute;
+		top: 0;
+		left: 0;
+		width: 100%;
+		height: 100%;
+	}
+/*{+END}*/
 
 /*
 =========================
@@ -4331,7 +4565,7 @@ a[rel="lightbox"] {
 	}
 
 	a[href$=".rss"].user_link, body div a.feed_link {
-		background: url('{$IMG;,icons/16x16/filetypes/feed}') no-repeat right top; 
+		background: url('{$IMG;,icons/16x16/filetypes/feed}') no-repeat right top;
 		padding: 0 22px 5px 0;
 	}
 
@@ -4440,6 +4674,7 @@ a[rel="lightbox"] {
 	.print_icon {
 		background: url('{$IMG;,icons/24x24/links/print}') no-repeat left top !important;
 		padding: 0 0 5px 32px !important;
+		display: inline-block;
 	}
 
 	@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 2dppx) {
@@ -4467,6 +4702,7 @@ a[title="{!VIRTUAL_ROOT}"]:hover {
 .overlay {
 	overflow: visible;
 	border: 0;
+	{$BETA_CSS_PROPERTY,word-wrap: break-word;}
 }
 
 .overlay_close_button {
@@ -4496,8 +4732,8 @@ a[title="{!VIRTUAL_ROOT}"]:hover {
 
 .overlay .previous_button, .overlay .next_button {
 	{$BETA_CSS_PROPERTY,opacity: 0;}
-	{$BETA_CSS_PROPERTY,transition-property : opacity;}
-	{$BETA_CSS_PROPERTY,transition-duration : 0.5s;}
+	{$BETA_CSS_PROPERTY,transition-property: opacity;}
+	{$BETA_CSS_PROPERTY,transition-duration: 0.5s;}
 }
 .overlay .previous_button:hover, .overlay .next_button:hover, .overlay.mousemove .previous_button, .overlay.mousemove .next_button, body.touch_enabled .overlay.mousemove .previous_button, body.touch_enabled .overlay.mousemove .next_button {
 	{$BETA_CSS_PROPERTY,opacity: 1.0 !important;}
@@ -4520,6 +4756,17 @@ span:not(:empty)+#lightbox_position_in_set:before, span:not(:empty)+#lightbox_fu
 	content: "\00b7" !important;
 	padding-right: 0.5em;
 	vertical-align: middle;
+}
+
+/*
+=========================
+======E-mail rules=======
+=========================
+*/
+
+.email_logo img {
+	max-width: 100%;
+	height: auto;
 }
 
 /*

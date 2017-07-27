@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -61,7 +61,7 @@ class Hook_preview_poll
         $question_plain = post_param_string('question');
         $question = comcode_to_tempcode($question_plain);
         $archive_url = build_url(array('page' => 'polls', 'type' => 'browse'), get_module_zone('polls'));
-        $map2 = array('VOTE_URL' => '', 'SUBMITTER' => strval(get_member()), 'PID' => '', 'FULL_URL' => '', 'CONTENT' => $tpl, 'QUESTION' => $question, 'QUESTION_PLAIN' => $question_plain, 'SUBMIT_URL' => $submit_url, 'ARCHIVE_URL' => $archive_url, 'RESULT_URL' => '', 'ZONE' => '');
+        $map2 = array('VOTE_URL' => '', 'SUBMITTER' => strval(get_member()), 'PID' => '', 'FULL_URL' => '', 'CONTENT' => $tpl, 'QUESTION' => $question, 'QUESTION_PLAIN' => $question_plain, 'SUBMIT_URL' => $submit_url, 'ARCHIVE_URL' => $archive_url, 'RESULT_URL' => '', 'ZONE' => '', 'GIVE_CONTEXT' => false);
         $output = do_template('POLL_BOX', $map2);
 
         return array($output, null);

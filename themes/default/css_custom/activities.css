@@ -1,6 +1,6 @@
 /*
  {$BRAND_NAME`}
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 */
 
 /* Activities feed */
@@ -50,7 +50,6 @@ form.activities_remove .remove_cross {
 	height: 14px;
 	background: url('{$IMG;,stop12}') transparent no-repeat;
 	font-size: 0;
-	color: transparent;
 	border: none;
 	margin-top: 4px;
 	padding: 0;

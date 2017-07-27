@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -26,9 +26,10 @@ class Hook_addon_registry_ldap
     /**
      * Get a list of file permissions to set
      *
+     * @param  boolean $runtime Whether to include wildcards represented runtime-created chmoddable files
      * @return array File permissions to set
      */
-    public function get_chmod_array()
+    public function get_chmod_array($runtime = false)
     {
         return array();
     }
@@ -146,6 +147,7 @@ class Hook_addon_registry_ldap
     public function tpl_preview__administrative__cns_ldap_sync_screen()
     {
         require_lang('cns');
+
         $members_delete = new Tempcode();
         foreach (placeholder_array() as $k => $v) {
             $tpl = do_lorem_template('CNS_LDAP_LIST_ENTRY', array(

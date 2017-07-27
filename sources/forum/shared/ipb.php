@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -344,7 +344,7 @@ class Forum_driver_ipb_shared extends Forum_driver_base
      * Get the forum ID from a forum name.
      *
      * @param  SHORT_TEXT $forum_name The forum name
-     * @return integer The forum ID
+     * @return ?integer The forum ID (null: not found)
      */
     public function forum_id_from_name($forum_name)
     {
@@ -433,7 +433,7 @@ class Forum_driver_ipb_shared extends Forum_driver_base
     }
 
     /**
-     * Get the member ID of the next member after the given one, or NULL.
+     * Get the member ID of the next member after the given one, or null.
      * It cannot be assumed there are no gaps in member IDs, as members may be deleted.
      *
      * @param  MEMBER $member The member ID to increment

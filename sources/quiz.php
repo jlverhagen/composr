@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -29,9 +29,13 @@
  */
 function render_quiz_box($row, $zone = '_SEARCH', $give_context = true, $guid = '')
 {
+    if (is_null($row)) { // Should never happen, but we need to be defensive
+        return new Tempcode();
+    }
+
     require_lang('quiz');
 
-    $date = get_timezoned_date($row['q_add_date']);
+    $date = get_timezoned_date_tempcode($row['q_add_date']);
     $url = build_url(array('page' => 'quiz', 'type' => 'do', 'id' => $row['id']), $zone);
 
     $just_quiz_row = db_map_restrict($row, array('id', 'q_start_text'));
@@ -139,8 +143,10 @@ function render_quiz($questions)
     $fields = new Tempcode();
     foreach ($questions as $i => $q) {
         $name = 'q_' . strval($q['id']);
-        $question = protect_from_escaping((is_string($q['q_question_text']) && !isset($q['q_question_text__text_parsed'])) ? comcode_to_tempcode($q['q_question_text']) : get_translated_tempcode('quiz_questions', $q, 'q_question_text'));
-        $description = protect_from_escaping((is_string($q['q_question_extra_text']) && !isset($q['q_question_extra_text__text_parsed'])) ? comcode_to_tempcode($q['q_question_extra_text']) : get_translated_tempcode('quiz_questions', $q, 'q_question_extra_text'));
+
+        $just_quiz_row = db_map_restrict($q, array('id', 'q_question_text', 'q_question_extra_text'));
+        $question = protect_from_escaping((is_string($q['q_question_text']) && !isset($q['q_question_text__text_parsed'])) ? comcode_to_tempcode($q['q_question_text']) : get_translated_tempcode('quiz_questions', $just_quiz_row, 'q_question_text'));
+        $description = protect_from_escaping((is_string($q['q_question_extra_text']) && !isset($q['q_question_extra_text__text_parsed'])) ? comcode_to_tempcode($q['q_question_extra_text']) : get_translated_tempcode('quiz_questions', $just_quiz_row, 'q_question_extra_text'));
 
         switch ($q['q_type']) {
             case 'MULTIPLECHOICE':

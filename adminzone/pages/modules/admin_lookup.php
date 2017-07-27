@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -46,7 +46,7 @@ class Module_admin_lookup
      * @param  boolean $check_perms Whether to check permissions.
      * @param  ?MEMBER $member_id The member to check permissions as (null: current user).
      * @param  boolean $support_crosslinks Whether to allow cross links to other modules (identifiable via a full-page-link rather than a screen-name).
-     * @param  boolean $be_deferential Whether to avoid any entry-point (or even return NULL to disable the page in the Sitemap) if we know another module, or page_group, is going to link to that entry-point. Note that "!" and "browse" entry points are automatically merged with container page nodes (likely called by page-groupings) as appropriate.
+     * @param  boolean $be_deferential Whether to avoid any entry-point (or even return null to disable the page in the Sitemap) if we know another module, or page_group, is going to link to that entry-point. Note that "!" and "browse" entry points are automatically merged with container page nodes (likely called by page-groupings) as appropriate.
      * @return ?array A map of entry points (screen-name=>language-code/string or screen-name=>[language-code/string, icon-theme-image]) (null: disabled).
      */
     public function get_entry_points($check_perms = true, $member_id = null, $support_crosslinks = true, $be_deferential = false)
@@ -64,7 +64,7 @@ class Module_admin_lookup
     public $param;
 
     /**
-     * Module pre-run function. Allows us to know meta-data for <head> before we start streaming output.
+     * Module pre-run function. Allows us to know metadata for <head> before we start streaming output.
      *
      * @return ?Tempcode Tempcode indicating some kind of exceptional output (null: none).
      */
@@ -73,14 +73,12 @@ class Module_admin_lookup
         $type = get_param_string('type', 'browse');
 
         require_lang('lookup');
+        require_lang('submitban');
+        require_lang('security');
 
         set_helper_panel_tutorial('tut_trace');
 
-        if (addon_installed('securitylogging')) {
-            require_lang('actionlog');
-            $ip_ban_url = build_url(array('page' => 'admin_ip_ban'), get_module_zone('admin_ip_ban'));
-            set_helper_panel_text(comcode_to_tempcode(do_lang('DOC_ACTIONLOG_BAN_HELP', $ip_ban_url->evaluate())));
-        }
+        set_helper_panel_text(comcode_to_tempcode(do_lang('DOC_INVESTIGATE_USER')));
 
         $param = get_param_string('param', get_param_string('id', ''));
 
@@ -147,7 +145,12 @@ class Module_admin_lookup
                 $ip = '';
             }
 
-            $all_banned = collapse_1d_complexity('ip', $GLOBALS['SITE_DB']->query('SELECT ip FROM ' . get_table_prefix() . 'banned_ip WHERE i_ban_positive=1 AND (i_ban_until IS NULL OR i_ban_until>' . strval(time()) . ')'));
+            if (addon_installed('securitylogging')) {
+                $all_banned = collapse_1d_complexity('ip', $GLOBALS['SITE_DB']->query('SELECT ip FROM ' . get_table_prefix() . 'banned_ip WHERE i_ban_positive=1 AND (i_ban_until IS NULL OR i_ban_until>' . strval(time()) . ')'));
+            } else
+            {
+                $all_banned = array();
+            }
 
             $ip_list = new Tempcode();
             $groups = array();
@@ -173,7 +176,7 @@ class Module_admin_lookup
                 }
                 $all_ips[] = $mask;
             }
-            if (strtolower(cms_srv('REQUEST_METHOD')) == 'post') {
+            if (cms_srv('REQUEST_METHOD') == 'POST') {
                 if (!array_key_exists('banned', $_POST)) {
                     $_POST['banned'] = array();
                 }
@@ -234,7 +237,7 @@ class Module_admin_lookup
 
             $member_banned = $GLOBALS['FORUM_DRIVER']->is_banned($id);
             $ip_banned = false;
-            if ($ip != '') {
+            if ($ip != '' && addon_installed('securitylogging')) {
                 $ban_until = $GLOBALS['SITE_DB']->query_select('banned_ip', array('i_ban_until'), array('i_ban_positive' => 1, 'ip' => $ip));
                 if (array_key_exists(0, $ban_until)) {
                     $ip_banned = is_null($ban_until[0]['i_ban_until']) || $ban_until[0]['i_ban_until'] > time();
@@ -248,40 +251,37 @@ class Module_admin_lookup
             $submitter_ban_link = null;
             if (addon_installed('securitylogging')) {
                 if (((get_forum_type() == 'cns') && (!is_guest($id))) && ($id != get_member())) {
-                    $member_ban_link = do_template('ACTIONLOGS_TOGGLE_LINK', array('_GUID' => '840c361ab217959f8b85141497e6e6a6', 'URL' => build_url(array('page' => 'admin_actionlog', 'type' => 'toggle_member_ban', 'id' => $id, 'redirect' => get_self_url(true)), get_module_zone('admin_actionlog'))));
+                    $member_ban_link = do_template('ACTIONLOGS_TOGGLE_LINK', array('_GUID' => '840c361ab217959f8b85141497e6e6a6', 'URL' => build_url(array('page' => 'admin_ip_ban', 'type' => 'toggle_member_ban', 'id' => $id, 'redirect' => get_self_url(true)), get_module_zone('admin_actionlog'))));
                 }
                 if (($ip != '') && ($ip != get_ip_address()) && ($ip != cms_srv('SERVER_ADDR'))) {
-                    $ip_ban_link = do_template('ACTIONLOGS_TOGGLE_LINK', array('_GUID' => '76979d80cdd7d3e664c9a4ec04419bc6', 'URL' => build_url(array('page' => 'admin_actionlog', 'type' => 'toggle_ip_ban', 'id' => $ip), get_module_zone('admin_actionlog'))));
+                    $ip_ban_link = do_template('ACTIONLOGS_TOGGLE_LINK', array('_GUID' => '76979d80cdd7d3e664c9a4ec04419bc6', 'URL' => build_url(array('page' => 'admin_ip_ban', 'type' => 'toggle_ip_ban', 'id' => $ip), get_module_zone('admin_actionlog'))));
                 }
                 if ((!is_guest($id)) && ($id != get_member())) {
-                    $submitter_ban_link = do_template('ACTIONLOGS_TOGGLE_LINK', array('_GUID' => '03834262af908bf78c4eef69e78c8cff', 'URL' => build_url(array('page' => 'admin_actionlog', 'type' => 'toggle_submitter_ban', 'id' => $id, 'redirect' => get_self_url(true)), get_module_zone('admin_actionlog'))));
+                    $submitter_ban_link = do_template('ACTIONLOGS_TOGGLE_LINK', array('_GUID' => '03834262af908bf78c4eef69e78c8cff', 'URL' => build_url(array('page' => 'admin_ip_ban', 'type' => 'toggle_submitter_ban', 'id' => $id, 'redirect' => get_self_url(true)), get_module_zone('admin_actionlog'))));
                 }
             }
 
-            $tpl = do_template(
-                'LOOKUP_SCREEN',
-                array(
-                    '_GUID' => 'dc6effaa043949940b809f6aa5a1f944',
-                    'TITLE' => $this->title,
-                    'ALERTS' => $alerts,
-                    'STATS' => $stats,
-                    'IP_LIST' => $ip_list,
-                    'IP_BANNED' => $ip_banned ? do_lang_tempcode('YES') : do_lang_tempcode('NO'),
-                    'SUBMITTER_BANNED' => $submitter_banned ? do_lang_tempcode('YES') : do_lang_tempcode('NO'),
-                    'MEMBER_BANNED' => $member_banned ? do_lang_tempcode('YES') : do_lang_tempcode('NO'),
-                    'MEMBER_BAN_LINK' => $member_ban_link,
-                    'SUBMITTER_BAN_LINK' => $submitter_ban_link,
-                    'IP_BAN_LINK' => $ip_ban_link,
-                    'ID' => strval($id),
-                    'IP' => $ip,
-                    'NAME' => $name,
-                    'SEARCH_URL' => $search_url,
-                    'AUTHOR_URL' => $author_url,
-                    'POINTS_URL' => $points_url,
-                    'PROFILE_URL' => $profile_url,
-                    'ACTIONLOG_URL' => $actionlog_url
-                )
-            );
+            $tpl = do_template('LOOKUP_SCREEN', array(
+                '_GUID' => 'dc6effaa043949940b809f6aa5a1f944',
+                'TITLE' => $this->title,
+                'ALERTS' => $alerts,
+                'STATS' => $stats,
+                'IP_LIST' => $ip_list,
+                'IP_BANNED' => $ip_banned ? do_lang_tempcode('YES') : do_lang_tempcode('NO'),
+                'SUBMITTER_BANNED' => $submitter_banned ? do_lang_tempcode('YES') : do_lang_tempcode('NO'),
+                'MEMBER_BANNED' => $member_banned ? do_lang_tempcode('YES') : do_lang_tempcode('NO'),
+                'MEMBER_BAN_LINK' => $member_ban_link,
+                'SUBMITTER_BAN_LINK' => $submitter_ban_link,
+                'IP_BAN_LINK' => $ip_ban_link,
+                'ID' => strval($id),
+                'IP' => $ip,
+                'NAME' => $name,
+                'SEARCH_URL' => $search_url,
+                'AUTHOR_URL' => $author_url,
+                'POINTS_URL' => $points_url,
+                'PROFILE_URL' => $profile_url,
+                'ACTIONLOG_URL' => $actionlog_url
+            ));
 
             require_code('templates_internalise_screen');
             return internalise_own_screen($tpl);

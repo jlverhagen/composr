@@ -2,7 +2,7 @@
 
 {$PARAGRAPH,{TEXT}}
 
-<form title="{!PRIMARY_PAGE_FORM}" method="post" action="{URL*}" target="_top" id="catalogue_form">
+<form title="{!PRIMARY_PAGE_FORM}" method="post" action="{URL*}" target="_top" id="catalogue_form" autocomplete="off" onsubmit="return modsecurity_workaround(this);">
 	{$INSERT_SPAMMER_BLACKHOLE}
 
 	<div>
@@ -29,7 +29,9 @@
 		{FIELDS_NEW}
 
 		<script>// <![CDATA[
-			catalogue_field_change_watching();
+			add_event_listener_abstract(window,'load',function() {
+				catalogue_field_change_watching();
+			});
 		//]]></script>
 
 		{+START,INCLUDE,FORM_STANDARD_END}

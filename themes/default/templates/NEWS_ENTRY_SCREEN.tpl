@@ -12,7 +12,7 @@
 			{+START,IF_NON_EMPTY,{AUTHOR_URL}}
 				<li>
 					<span class="field_name">{!AUTHOR}:</span> <a rel="author" itemprop="author" href="{AUTHOR_URL*}" title="{!AUTHOR}: {AUTHOR*}">{AUTHOR*}</a>
-					{+START,INCLUDE,MEMBER_TOOLTIP}{+END}
+					{+START,INCLUDE,MEMBER_TOOLTIP}SUBMITTER={$AUTHOR_MEMBER,{AUTHOR}}{+END}
 				</li>
 			{+END}
 			{+START,IF_EMPTY,{AUTHOR_URL}}{+START,IF_NON_EMPTY,{$USERNAME,{SUBMITTER},1}}
@@ -62,7 +62,7 @@
 			</div>
 		{+END}
 
-		<aside role="navigation" class="box box___news_entry_screen"><div class="box_inner">
+		<aside class="box box___news_entry_screen"><nav class="box_inner">
 			<p class="lonely_label">
 				{$?,{BLOG},{!BLOG_NEWS_UNDER_THESE},{!NEWS_UNDER_THESE}}
 			</p>
@@ -74,10 +74,10 @@
 
 			{+START,IF,{$NOT,{$_GET,blog}}}
 				{$,Actually breadcrumbs will do fine!,<div>
-					<a class="buttons__all2 button_screen" rel="archives" href="\{ARCHIVE_URL*\}"><span>\{!VIEW_ARCHIVE\}</span></a>
+					<a class="button_screen buttons__all2" rel="archives" href="\{ARCHIVE_URL*\}"><span>\{!VIEW_ARCHIVE\}</span></a>
 				</div>}
 			{+END}
-		</div></aside>
+		</nav></aside>
 	</div>
 
 	{$REVIEW_STATUS,news,{ID}}

@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -27,12 +27,16 @@ class overused_globals_test_set extends cms_test_case
 
         require_code('files');
         require_code('files2');
-        $files = get_directory_contents(get_file_base(), '', true);
+        $files = get_directory_contents(get_file_base());
+        $files[] = 'install.php';
         foreach ($files as $file) {
             if ((substr($file, -4) == '.php') && (($file == 'install.php') || (!should_ignore_file($file, IGNORE_BUNDLED_VOLATILE | IGNORE_NONBUNDLED_SCATTERED | IGNORE_CUSTOM_DIR_SUPPLIED_CONTENTS | IGNORE_CUSTOM_DIR_GROWN_CONTENTS)))) {
                 $done_for_file = array();
 
-                $contents = file_get_contents(get_file_base() . '/' . $file);
+                $contents = @file_get_contents(get_file_base() . '/' . $file);
+                if ($contents === false) {
+                    continue; // Probably a race condition between unit tests
+                }
                 if ($file != 'install.php') {
                     if (strpos($contents, '@chdir($FILE_BASE);') !== false) {
                         continue;
@@ -90,7 +94,7 @@ class overused_globals_test_set extends cms_test_case
         ksort($found_globals);
 
         foreach ($found_globals as $global => $count) {
-            if ((!isset($sanctified_globals[$global])) && (strpos($global, '_CACHE') === false) && ($global != 'SITE_INFO') && ($global != 'FILE_BASE') && ($global != 'LAST_TOPIC_ID') && ($global != 'LAST_TOPIC_IS_NEW') && ($global != 'RELATIVE_PATH') && ($global != '_CREATED_FILES') && ($global != '_MODIFIED_FILES')) {
+            if ((!isset($sanctified_globals[$global])) && (strpos($global, '_CACHE') === false) && (strpos($global, 'DEV_MODE') === false) && ($global != 'SITE_INFO') && ($global != 'FILE_BASE') && ($global != 'LAST_TOPIC_ID') && ($global != 'LAST_TOPIC_IS_NEW') && ($global != 'RELATIVE_PATH') && ($global != '_CREATED_FILES') && ($global != '_MODIFIED_FILES')) {
                 $this->assertTrue($count <= 6, 'Don\'t over-use global variables (' . $global . ', ' . integer_format($count) . ' files using).');
             }
         }

@@ -1,6 +1,6 @@
 {+START,IF,{$NEQ,{$COMMA_LIST_GET,{BLOCK_PARAMS},raw},1}}
-	{$SET,wrapper_id,ajax_block_wrapper_{$RAND%}}
-	<div id="{$GET*,wrapper_id}">
+	{$SET,ajax_block_main_activities_wrapper,ajax_block_main_activities_wrapper_{$RAND%}}
+	<div id="{$GET*,ajax_block_main_activities_wrapper}">
 		<div class="float_surrounder">
 			<div id="activities_feed">
 				<div id="activities_general_notify"></div>
@@ -18,30 +18,32 @@
 			</div>
 
 			{+START,IF_NON_EMPTY,{PAGINATION}}
-				<div class="float_surrounder ajax_block_wrapper_links">
+				<div class="pagination_spacing float_surrounder ajax_block_wrapper_links">
 					{PAGINATION}
 				</div>
 			{+END}
 		</div>
 
 		<script>//<![CDATA[
-			window.activities_mode='{MODE;/}';
-			window.activities_member_ids='{MEMBER_IDS;/}';
+			add_event_listener_abstract(window,'load',function() {
+				window.activities_mode='{MODE;/}';
+				window.activities_member_ids='{MEMBER_IDS;/}';
 
-			{+START,IF,{$EQ,{START},0}}
-				// "Grow" means we should keep stacking new content on top of old. If not
-				// then we should allow old content to "fall off" the bottom of the feed.
-				{+START,IF,{GROW}}
-					window.activities_feed_grow=true;
+				{+START,IF,{$EQ,{START},0}}
+					// "Grow" means we should keep stacking new content on top of old. If not
+					// then we should allow old content to "fall off" the bottom of the feed.
+					{+START,IF,{GROW}}
+						window.activities_feed_grow=true;
+					{+END}
+					{+START,IF,{$NOT,{GROW}}}
+						window.activities_feed_grow=false;
+					{+END}
+					window.activities_feed_max={MAX%};
+					if ($('#activities_feed').length!=0) {
+						window.setInterval(s_update_get_data,{REFRESH_TIME%}*1000);
+					}
 				{+END}
-				{+START,IF,{$NOT,{GROW}}}
-					window.activities_feed_grow=false;
-				{+END}
-				window.activities_feed_max={MAX%};
-				if (jQuery('#activities_feed').length!=0) {
-					window.setInterval(s_update_get_data,{REFRESH_TIME%}*1000);
-				}
-			{+END}
+			});
 		//]]></script>
 
 		{+START,IF_NON_EMPTY,{PAGINATION}}

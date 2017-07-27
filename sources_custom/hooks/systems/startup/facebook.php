@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -10,7 +10,7 @@
 /**
  * @license    http://opensource.org/licenses/cpal_1.0 Common Public Attribution License
  * @copyright  ocProducts Ltd
- * @package    facebook
+ * @package    facebook_support
  */
 
 /**
@@ -20,7 +20,7 @@ class Hook_startup_facebook
 {
     public function run($MICRO_BOOTUP, $MICRO_AJAX_BOOTUP)
     {
-        if (running_script('index')) {
+        if (running_script('index') || running_script('preview') || running_script('iframe')) {
             require_javascript('facebook');
             require_code('site');
 

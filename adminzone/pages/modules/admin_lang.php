@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -46,7 +46,7 @@ class Module_admin_lang
      * @param  boolean $check_perms Whether to check permissions.
      * @param  ?MEMBER $member_id The member to check permissions as (null: current user).
      * @param  boolean $support_crosslinks Whether to allow cross links to other modules (identifiable via a full-page-link rather than a screen-name).
-     * @param  boolean $be_deferential Whether to avoid any entry-point (or even return NULL to disable the page in the Sitemap) if we know another module, or page_group, is going to link to that entry-point. Note that "!" and "browse" entry points are automatically merged with container page nodes (likely called by page-groupings) as appropriate.
+     * @param  boolean $be_deferential Whether to avoid any entry-point (or even return null to disable the page in the Sitemap) if we know another module, or page_group, is going to link to that entry-point. Note that "!" and "browse" entry points are automatically merged with container page nodes (likely called by page-groupings) as appropriate.
      * @return ?array A map of entry points (screen-name=>language-code/string or screen-name=>[language-code/string, icon-theme-image]) (null: disabled).
      */
     public function get_entry_points($check_perms = true, $member_id = null, $support_crosslinks = true, $be_deferential = false)
@@ -80,15 +80,21 @@ class Module_admin_lang
     public $title;
 
     /**
-     * Module pre-run function. Allows us to know meta-data for <head> before we start streaming output.
+     * Module pre-run function. Allows us to know metadata for <head> before we start streaming output.
      *
      * @return ?Tempcode Tempcode indicating some kind of exceptional output (null: none).
      */
     public function pre_run()
     {
+        require_code('input_filter_2');
+        modsecurity_workaround_enable();
+
         $type = get_param_string('type', 'browse');
 
         require_lang('lang');
+        require_code('lang2');
+        require_code('lang3');
+        require_code('lang_compile');
 
         set_helper_panel_tutorial('tut_intl');
 
@@ -113,7 +119,6 @@ class Module_admin_lang
                     $this->title = get_screen_title('TRANSLATE_CODE');
                 } else {
                     $lang_file = get_param_string('lang_file');
-                    require_code('lang3');
                     $this->title = get_screen_title('_TRANSLATE_CODE', true, array(escape_html($lang_file), escape_html(lookup_language_full_name($lang))));
                 }
             }
@@ -137,10 +142,10 @@ class Module_admin_lang
      */
     public function run()
     {
-        require_javascript('translate');
+        require_code('input_filter_2');
+        rescue_shortened_post_request();
 
-        require_code('lang2');
-        require_code('lang_compile');
+        require_javascript('translate');
 
         require_css('translations_editor');
 
@@ -415,7 +420,6 @@ class Module_admin_lang
 
         // Make our translation page
         require_code('form_templates');
-        require_code('lang2');
         $lines = '';
         $google = $this->get_google_code($lang);
         $actions = make_string_tempcode('&nbsp;');
@@ -441,7 +445,7 @@ class Module_admin_lang
             $_to_translate[] = $it;
         }
         $to_translate = $_to_translate;
-        foreach ($to_translate as $i=>$it) {
+        foreach ($to_translate as $i => $it) {
             $old = $it['text_original'];
             $current = $this->find_lang_matches($old, $lang);
             $priority = ($last_level === $it['importance_level']) ? null : do_lang('PRIORITY_' . strval($it['importance_level']));
@@ -462,8 +466,6 @@ class Module_admin_lang
         }
 
         $url = build_url(array('page' => '_SELF', 'type' => '_content', 'lang' => $lang, 'start' => $start), '_SELF');
-
-        require_code('lang2');
 
         $_GET['lang'] = $lang;
         require_code('templates_pagination');
@@ -662,7 +664,7 @@ class Module_admin_lang
             if (array_key_exists($name, $for_lang)) {
                 $current = $for_lang[$name];
             } else {
-                $current = '';//$this->find_lang_matches($old,$lang); Too slow / useless for code translation
+                $current = '';//$this->find_lang_matches($old, $lang); Too slow / useless for code translation
             }
             if (($current == '') && (strtolower($name) != $name)) {
                 $trans_lot .= str_replace('\n', "\n", str_replace(array('{', '}'), array('(((', ')))'), $old)) . $delimit;
@@ -678,7 +680,7 @@ class Module_admin_lang
                 $result = convert_to_internal_encoding($result);
 
                 $matches = array();
-                if (preg_match('#<div id=result_box dir="ltr">(.*)</div>#Us', convert_to_internal_encoding($result), $matches) != 0) {
+                if (preg_match('#<div id=result_box dir="ltr">(.*)</div>#Us', $result, $matches) != 0) {
                     $result2 = $matches[1];
                     $result2 = @html_entity_decode($result2, ENT_QUOTES, get_charset());
                     $result2 = preg_replace('#\s?<br>\s?#', "\n", $result2);
@@ -691,7 +693,7 @@ class Module_admin_lang
             if (array_key_exists($name, $for_lang)) {
                 $current = $for_lang[$name];
             } else {
-                $current = '';//$this->find_lang_matches($old,$lang); Too slow / useless for code translation
+                $current = '';//$this->find_lang_matches($old, $lang); Too slow / useless for code translation
             }
             $description = array_key_exists($name, $descriptions) ? $descriptions[$name] : '';
             if (($current == '') && (strtolower($name) != $name) && (array_key_exists($next, $translated_stuff))) {
@@ -752,68 +754,50 @@ class Module_admin_lang
         $descriptions = get_lang_file_section(fallback_lang(), $lang_file);
         $runtime_processing = get_lang_file_section(fallback_lang(), $lang_file, 'runtime_processing');
 
-        if ((count($_POST) == 0) && (strtolower(cms_srv('REQUEST_METHOD')) != 'post')) {
+        if ((count($_POST) == 0) && (cms_srv('REQUEST_METHOD') != 'POST')) {
             warn_exit(do_lang_tempcode('IMPROPERLY_FILLED_IN'));
-        }
-
-        if (!file_exists(get_custom_file_base() . '/lang_custom/' . filter_naughty($lang))) {
-            require_code('files2');
-            make_missing_directory(get_custom_file_base() . '/lang_custom/' . filter_naughty($lang));
         }
 
         $path = get_custom_file_base() . '/lang_custom/' . filter_naughty($lang) . '/' . filter_naughty($lang_file) . '.ini';
         $path_backup = $path . '.' . strval(time());
         if (file_exists($path)) {
             @copy($path, $path_backup) or intelligent_write_error($path_backup);
+            fix_permissions($path_backup);
             sync_file($path_backup);
         }
-        $myfile = @fopen($path, GOOGLE_APPENGINE ? 'wb' : 'at');
-        if ($myfile === false) {
-            intelligent_write_error($path);
-        }
-        @flock($myfile, LOCK_EX);
-        if (!GOOGLE_APPENGINE) {
-            ftruncate($myfile, 0);
-        }
-        fwrite($myfile, "[descriptions]\n");
+        $contents = '';
+        $contents .= "[descriptions]\n";
         foreach ($descriptions as $key => $description) {
-            if (fwrite($myfile, $key . '=' . $description . "\n") == 0) {
-                warn_exit(do_lang_tempcode('COULD_NOT_SAVE_FILE'));
-            }
+            $contents .= $key . '=' . $description . "\n";
         }
-        fwrite($myfile, "\n"); // Weird bug with IIS GOOGLE_APPENGINE?'wb':'wt' writing needs this to be on a separate line
-        fwrite($myfile, "[runtime_processing]\n");
+        $contents .= "\n"; // Weird bug with IIS GOOGLE_APPENGINE?'wb':'wt' writing needs this to be on a separate line
+        $contents .= "[runtime_processing]\n";
         foreach ($runtime_processing as $key => $flag) {
-            if (fwrite($myfile, $key . '=' . $flag . "\n") == 0) {
-                warn_exit(do_lang_tempcode('COULD_NOT_SAVE_FILE'));
-            }
+            $contents .= $key . '=' . $flag . "\n";
         }
-        fwrite($myfile, "\n"); // Weird bug with IIS GOOGLE_APPENGINE?'wb':'wt' writing needs this to be on a separate line
-        fwrite($myfile, "[strings]\n");
+        $contents .= "\n"; // Weird bug with IIS GOOGLE_APPENGINE?'wb':'wt' writing needs this to be on a separate line
+        $contents .= "[strings]\n";
         foreach (array_unique(array_merge(array_keys($for_base_lang), array_keys($for_base_lang_2))) as $key) {
             $val = post_param_string($key, null);
             if (($val === null) && (!array_key_exists($key, $for_base_lang))) {
                 $val = $for_base_lang_2[$key]; // Not in lang, but is in lang_custom, AND not set now - must copy though
             }
             if (($val !== null) && ((!array_key_exists($key, $for_base_lang)) || (str_replace("\n", '\n', $val) != $for_base_lang[$key]))) {
-                if (fwrite($myfile, $key . '=' . str_replace("\n", '\n', $val) . "\n") == 0) {
-                    warn_exit(do_lang_tempcode('COULD_NOT_SAVE_FILE'));
-                }
+                $contents .= $key . '=' . str_replace("\n", '\n', $val) . "\n";
             }
         }
-        @flock($myfile, LOCK_UN);
-        fclose($myfile);
-        fix_permissions($path);
-        sync_file($path);
+        require_code('files');
+        cms_file_put_contents_safe($path, $contents, FILE_WRITE_FIX_PERMISSIONS | FILE_WRITE_SYNC_FILE);
         $path_backup2 = $path . '.latest_in_cms_edit';
         @copy($path, $path_backup2) or intelligent_write_error($path_backup2);
+        fix_permissions($path_backup2);
         sync_file($path_backup2);
 
         log_it('TRANSLATE_CODE');
 
         require_code('caches3');
         erase_cached_language();
-        erase_cached_templates();
+        erase_cached_templates(false, null, TEMPLATE_DECACHE_WITH_LANG);
         persistent_cache_delete('LANGS_LIST');
 
         // Show it worked / Refresh
@@ -830,11 +814,6 @@ class Module_admin_lang
     {
         $lang = post_param_string('lang');
 
-        if (!file_exists(get_custom_file_base() . '/lang_custom/' . filter_naughty($lang))) {
-            require_code('files2');
-            make_missing_directory(get_custom_file_base() . '/lang_custom/' . filter_naughty($lang));
-        }
-
         $lang_files = get_lang_files(fallback_lang());
 
         foreach (array_keys($lang_files) as $lang_file) {
@@ -845,50 +824,52 @@ class Module_admin_lang
 
             $out = '';
 
-            foreach ($for_base_lang_2 + $for_base_lang as $key => $now_val) {
-                $val = post_param_string('l_' . $key, array_key_exists($key, $for_base_lang_2) ? $for_base_lang_2[$key] : $now_val);
-                if ((str_replace("\n", '\n', $val) != $now_val) || (!array_key_exists($key, $for_base_lang)) || ($for_base_lang[$key] != $val) || (!file_exists(get_file_base() . '/lang/' . fallback_lang() . '/' . $lang_file . '.ini'))) {// if it's changed from default Composr, or not in default Composr, or was already changed in language file, or whole file is not in default Composr
+            $one_changed_from_saved = false;
+
+            foreach ($for_base_lang_2 + $for_base_lang as $key => $disk_val) {
+                $val = post_param_string('l_' . $key, str_replace('\n', "\n", array_key_exists($key, $for_base_lang_2) ? $for_base_lang_2[$key] : $disk_val));
+                $changed_from_saved = ($val != str_replace('\n', "\n", $disk_val)); // was already changed in language file
+                $not_a_default = (!array_key_exists($key, $for_base_lang)); // not in default Composr
+                $changed_from_default = !$not_a_default && ($for_base_lang[$key] != $val); // changed from default Composr
+                $no_default_file = (!file_exists(get_file_base() . '/lang/' . fallback_lang() . '/' . $lang_file . '.ini')); // whole file is not in default Composr
+                if ($changed_from_saved || $not_a_default || $changed_from_default || $no_default_file) {
                     $out .= $key . '=' . str_replace("\n", '\n', $val) . "\n";
+                }
+                if ($changed_from_saved) {
+                    $one_changed_from_saved = true;
                 }
             }
 
-            if ($out != '') {
+            if ($out != '' && $one_changed_from_saved) {
                 $path = get_custom_file_base() . '/lang_custom/' . filter_naughty($lang) . '/' . filter_naughty($lang_file) . '.ini';
                 $path_backup = $path . '.' . strval(time());
                 if (file_exists($path)) {
                     @copy($path, $path_backup) or intelligent_write_error($path_backup);
+                    fix_permissions($path_backup);
                     sync_file($path_backup);
                 }
-                $myfile = @fopen($path, GOOGLE_APPENGINE ? 'wb' : 'at');
-                if ($myfile === false) {
-                    intelligent_write_error($path);
-                }
-                @flock($myfile, LOCK_EX);
-                if (!GOOGLE_APPENGINE) {
-                    ftruncate($myfile, 0);
-                }
-                fwrite($myfile, "[descriptions]\n");
-                foreach ($descriptions as $key => $description) {
-                    if (fwrite($myfile, $key . '=' . $description . "\n") == 0) {
-                        warn_exit(do_lang_tempcode('COULD_NOT_SAVE_FILE'));
+                $contents = '';
+                if (count($descriptions) != 0) {
+                    $contents .= "[descriptions]\n";
+                    foreach ($descriptions as $key => $description) {
+                        $contents .= $key . '=' . $description . "\n";
                     }
+                    $contents .= "\n"; // Weird bug with IIS GOOGLE_APPENGINE?'wb':'wt' writing needs this to be on a separate line
                 }
-                fwrite($myfile, "\n"); // Weird bug with IIS GOOGLE_APPENGINE?'wb':'wt' writing needs this to be on a separate line
-                fwrite($myfile, "[runtime_processing]\n");
-                foreach ($runtime_processing as $key => $flag) {
-                    if (fwrite($myfile, $key . '=' . $flag . "\n") == 0) {
-                        warn_exit(do_lang_tempcode('COULD_NOT_SAVE_FILE'));
+                if (count($runtime_processing) != 0) {
+                    $contents .= "[runtime_processing]\n";
+                    foreach ($runtime_processing as $key => $flag) {
+                        $contents .= $key . '=' . $flag . "\n";
                     }
+                    $contents .= "\n"; // Weird bug with IIS GOOGLE_APPENGINE?'wb':'wt' writing needs this to be on a separate line
                 }
-                fwrite($myfile, "\n"); // Weird bug with IIS GOOGLE_APPENGINE?'wb':'wt' writing needs this to be on a separate line
-                fwrite($myfile, "\n[strings]\n");
-                fwrite($myfile, $out);
-                @flock($myfile, LOCK_UN);
-                fclose($myfile);
-                fix_permissions($path);
-                sync_file($path);
+                $contents .= "[strings]\n";
+                $contents .= $out;
+                require_code('files');
+                cms_file_put_contents_safe($path, $contents, FILE_WRITE_FIX_PERMISSIONS | FILE_WRITE_SYNC_FILE);
                 $path_backup2 = $path . '.latest_in_cms_edit';
                 @copy($path, $path_backup2) or intelligent_write_error($path_backup2);
+                fix_permissions($path_backup2);
                 sync_file($path_backup2);
             }
         }
@@ -897,7 +878,7 @@ class Module_admin_lang
 
         require_code('caches3');
         erase_cached_language();
-        erase_cached_templates();
+        erase_cached_templates(false, null, TEMPLATE_DECACHE_WITH_LANG);
         persistent_cache_delete('LANGS_LIST');
 
         // Show it worked / Refresh

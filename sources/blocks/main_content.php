@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -49,7 +49,7 @@ class Block_main_content
     public function caching_environment()
     {
         $info = array();
-        $info['cache_on'] = 'array(array_key_exists(\'as_guest\',$map)?($map[\'as_guest\']==\'1\'):false,array_key_exists(\'render_if_empty\',$map)?$map[\'render_if_empty\']:\'1\',array_key_exists(\'guid\',$map)?$map[\'guid\']:\'\',(array_key_exists(\'give_context\',$map)?$map[\'give_context\']:\'0\')==\'1\',(array_key_exists(\'include_breadcrumbs\',$map)?$map[\'include_breadcrumbs\']:\'0\')==\'1\',array_key_exists(\'no_links\',$map)?$map[\'no_links\']:0,array_key_exists(\'title\',$map)?$map[\'title\']:NULL,array_key_exists(\'param\',$map)?$map[\'param\']:\'download\',array_key_exists(\'id\',$map)?$map[\'id\']:\'\',array_key_exists(\'efficient\',$map)?$map[\'efficient\']:\'_SEARCH\',array_key_exists(\'select\',$map)?$map[\'select\']:\'\',array_key_exists(\'select_b\',$map)?$map[\'select_b\']:\'\',array_key_exists(\'zone\',$map)?$map[\'zone\']:\'_SEARCH\')';
+        $info['cache_on'] = 'array(array_key_exists(\'as_guest\',$map)?($map[\'as_guest\']==\'1\'):false,array_key_exists(\'render_if_empty\',$map)?$map[\'render_if_empty\']:\'1\',array_key_exists(\'guid\',$map)?$map[\'guid\']:\'\',(array_key_exists(\'give_context\',$map)?$map[\'give_context\']:\'0\')==\'1\',(array_key_exists(\'include_breadcrumbs\',$map)?$map[\'include_breadcrumbs\']:\'0\')==\'1\',array_key_exists(\'no_links\',$map)?$map[\'no_links\']:0,array_key_exists(\'title\',$map)?$map[\'title\']:null,array_key_exists(\'param\',$map)?$map[\'param\']:\'download\',array_key_exists(\'id\',$map)?$map[\'id\']:\'\',array_key_exists(\'efficient\',$map)?$map[\'efficient\']:\'_SEARCH\',array_key_exists(\'select\',$map)?$map[\'select\']:\'\',array_key_exists(\'select_b\',$map)?$map[\'select_b\']:\'\',array_key_exists(\'zone\',$map)?$map[\'zone\']:\'_SEARCH\')';
         $info['special_cache_flags'] = CACHE_AGAINST_DEFAULT | CACHE_AGAINST_PERMISSIVE_GROUPS;
         if (addon_installed('content_privacy')) {
             $info['special_cache_flags'] |= CACHE_AGAINST_MEMBER;
@@ -91,17 +91,21 @@ class Block_main_content
         $include_breadcrumbs = (isset($map['include_breadcrumbs']) ? $map['include_breadcrumbs'] : '0') == '1';
 
         if ((!file_exists(get_file_base() . '/sources/hooks/systems/content_meta_aware/' . filter_naughty_harsh($content_type, true) . '.php')) && (!file_exists(get_file_base() . '/sources_custom/hooks/systems/content_meta_aware/' . filter_naughty_harsh($content_type, true) . '.php'))) {
-            return paragraph(do_lang_tempcode('NO_SUCH_CONTENT_TYPE', $content_type), '', 'red_alert');
+            return paragraph(do_lang_tempcode('NO_SUCH_CONTENT_TYPE', escape_html($content_type)), '', 'red_alert');
         }
 
         require_code('content');
         $object = get_content_object($content_type);
         $info = $object->info();
         if ($info === null) {
-            warn_exit(do_lang_tempcode('IMPOSSIBLE_TYPE_USED'));
+            return paragraph(do_lang_tempcode('IMPOSSIBLE_TYPE_USED'), '', 'red_alert');
         }
         if ($title === null) {
-            $title = do_lang('RANDOM_CONTENT', do_lang($info['content_type_label']));
+            if ($content_id === null) {
+                $title = do_lang('RANDOM_CONTENT', do_lang($info['content_type_label']));
+            } else {
+                $title = do_lang($info['content_type_label']);
+            }
         }
         if (((!array_key_exists('id_field_numeric', $info)) || ($info['id_field_numeric'])) && ($content_id !== null) && (!is_numeric($content_id))) {
             list(, $resource_page, $resource_type) = explode(':', $info['view_page_link_pattern']);
@@ -120,8 +124,7 @@ class Block_main_content
 
         $submit_url = $info['add_url'];
         if ($submit_url !== null) {
-            list($submit_url_zone, $submit_url_map, $submit_url_hash) = page_link_decode($submit_url);
-            $submit_url = static_evaluate_tempcode(build_url($submit_url_map, $submit_url_zone, null, false, false, false, $submit_url_hash));
+            $submit_url = page_link_to_url($submit_url);
         } else {
             $submit_url = '';
         }
@@ -216,14 +219,14 @@ class Block_main_content
             $x1 = '';
             $x2 = '';
             if (($select != '') && ($category_field_access !== null)) {
-                $x1 = $this->build_select($select, $info, 'g.' . $category_field_access, is_array($info['category_is_string']) ? $info['category_is_string'][0] : $info['category_is_string']);
+                $x1 = $this->build_select($select, $info, 'r.' . $category_field_access, is_array($info['category_is_string']) ? $info['category_is_string'][0] : $info['category_is_string']);
                 $parent_spec__table_name = array_key_exists('parent_spec__table_name', $info) ? $info['parent_spec__table_name'] : null;
                 if (($parent_spec__table_name !== null) && ($parent_spec__table_name != $info['table'])) {
-                    $query .= ' LEFT JOIN ' . $info['connection']->get_table_prefix() . $parent_spec__table_name . ' parent ON parent.' . $info['parent_spec__field_name'] . '=r.' . $info['id_field'];
+                    $query .= ' LEFT JOIN ' . $info['connection']->get_table_prefix() . $parent_spec__table_name . ' parent ON parent.' . $info['parent_spec__field_name'] . '=r.' . (is_array($info['id_field']) ? implode(',', $info['id_field']) : $info['id_field']);
                 }
             }
             if (($select_b != '') && ($category_field_select !== null)) {
-                $x2 = $this->build_select($select_b, $info, 'g.' . $category_field_select, is_array($info['category_is_string']) ? $info['category_is_string'][1] : $info['category_is_string']);
+                $x2 = $this->build_select($select_b, $info, 'r.' . $category_field_select, is_array($info['category_is_string']) ? $info['category_is_string'][1] : $info['category_is_string']);
             }
 
             if ($where . $x1 . $x2 != '') {
@@ -247,13 +250,13 @@ class Block_main_content
                     '_GUID' => ($guid != '') ? $guid : '13f060922a5ab6c370f218b2ecc6fe9c',
                     'HIGH' => true,
                     'TITLE' => $title,
-                    'MESSAGE' => do_lang_tempcode('NO_ENTRIES'),
-                    'ADD_NAME' => do_lang_tempcode('ADD'),
+                    'MESSAGE' => do_lang_tempcode('NO_ENTRIES', escape_html($content_type)),
+                    'ADD_NAME' => content_language_string($content_type, 'ADD'),
                     'SUBMIT_URL' => str_replace('=%21', '__ignore=1', $submit_url),
                 ));
             }
 
-            $rows = $info['connection']->query('SELECT * ' . $query, 1, mt_rand(0, $cnt - 1), false, false, $lang_fields);
+            $rows = $info['connection']->query('SELECT *,r.' . (is_array($info['id_field']) ? implode(',', $info['id_field']) : $info['id_field']) . ' ' . $query, 1, mt_rand(0, $cnt - 1), false, false, $lang_fields);
             $award_content_row = $rows[0];
 
             // Get content ID
@@ -283,8 +286,8 @@ class Block_main_content
                     '_GUID' => ($guid != '') ? $guid : '12d8cdc62cd78480b83c8daaaa68b686',
                     'HIGH' => true,
                     'TITLE' => $title,
-                    'MESSAGE' => do_lang_tempcode('MISSING_RESOURCE', $content_type),
-                    'ADD_NAME' => do_lang_tempcode('ADD'),
+                    'MESSAGE' => do_lang_tempcode('MISSING_RESOURCE', escape_html($content_type)),
+                    'ADD_NAME' => content_language_string($content_type, 'ADD'),
                     'SUBMIT_URL' => str_replace('=%21', '__ignore=1', $submit_url),
                 ));
             }
@@ -292,14 +295,13 @@ class Block_main_content
         }
 
         if ($award_content_row === null) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE', $content_type));
+            return paragraph(do_lang_tempcode('MISSING_RESOURCE', escape_html($content_type)), '', 'red_alert');
         }
 
         $submit_url = str_replace('%21', $content_id, $submit_url);
 
         if ($info['archive_url'] !== null) {
-            list($archive_url_zone, $archive_url_map, $archive_url_hash) = page_link_decode($info['archive_url']);
-            $archive_url = build_url($archive_url_map, $archive_url_zone, null, false, false, false, $archive_url_hash);
+            $archive_url = page_link_to_tempcode_url($info['archive_url']);
         } else {
             $archive_url = new Tempcode();
         }
@@ -317,7 +319,7 @@ class Block_main_content
             'TYPE' => do_lang_tempcode($info['content_type_label']),
             'TITLE' => $title,
             'RAW_AWARD_DATE' => ($raw_date === null) ? '' : strval($raw_date),
-            'AWARD_DATE' => ($raw_date === null) ? '' : get_timezoned_date($raw_date),
+            'AWARD_DATE' => ($raw_date === null) ? new Tempcode() : get_timezoned_date_tempcode($raw_date),
             'CONTENT' => $rendered_content,
             'SUBMIT_URL' => $submit_url,
             'ARCHIVE_URL' => $archive_url,

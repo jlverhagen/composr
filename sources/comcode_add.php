@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -87,7 +87,6 @@ function _get_details_comcode_tags()
         'carousel' => array('param'),
         'hide' => array('param'),
         'tooltip' => array('param'),
-        'currency' => array('param', 'bracket'),
         'if_in_group' => array('param', 'type'),
         'flash' => array('param'),
         'media' => array('description', 'thumb_url', 'width', 'height', 'framed', 'wysiwyg_editable', 'type', 'thumb', 'length', 'filename', 'mime_type', 'filesize', 'click_url', 'float'),
@@ -97,17 +96,22 @@ function _get_details_comcode_tags()
         'url' => array('param', 'title', 'target', 'rel'),
         'email' => array('param', 'title', 'subject', 'body'),
         'reference' => array('type', 'param'),
-        'page' => array('param'),
+        'page' => array('param', 'external'),
         'snapback' => array('param', 'forum'),
         'post' => array('param', 'forum'),
         'topic' => array('param', 'forum'),
         'attachment' => array('description', 'thumb_url', 'width', 'height', 'framed', 'type', 'thumb', 'length', 'filename', 'mime_type', 'filesize', 'click_url', 'float'),
-        //'attachment_safe'=>array('description','filename','type','width','height','float','thumb_url'),   Merged into attachment in UI
+        //'attachment_safe' => array('description', 'filename', 'type', 'width', 'height', 'float', 'thumb_url'),   Merged into attachment in UI
     );
+
+    if (addon_installed('ecommerce')) {
+        $tag_list['currency'] = array('param', 'bracket');
+    }
+
     ksort($tag_list);
 
     /* // Helps find missing tags
-    require_code('comcode_compiler');
+    init_valid_comcode_tags();
     unset($VALID_COMCODE_TAGS['section']);
     unset($VALID_COMCODE_TAGS['section_controller']);
     unset($VALID_COMCODE_TAGS['tab']);
@@ -177,6 +181,7 @@ function _get_details_comcode_tags()
  *
  * @param  ?string $group Group Name (null: return a specific group)
  * @return array Returns each Group name as key, values as its tags
+ *
  * @ignore
  */
 function _get_group_tags($group = null)
@@ -228,6 +233,7 @@ function _get_group_tags($group = null)
  * Get the non-WYSIWYG tags (ones the WYSIWYG cannot do itself, so are needed even if it is on)
  *
  * @return array List of non-WYSIWYG tags
+ *
  * @ignore
  */
 function _get_non_wysiwyg_tags()
@@ -294,20 +300,111 @@ function comcode_helper_script()
 
     require_code('comcode_compiler');
 
-    if ($type == 'step1') {
-        $content = comcode_helper_script_step1();
-    } elseif ($type == 'step2') {
-        $content = comcode_helper_script_step2();
-    } elseif ($type == 'step3') {
-        $content = comcode_helper_script_step3();
-    } else {
-        warn_exit(do_lang_tempcode('INTERNAL_ERROR'));
+    switch ($type) {
+        case 'replace':
+            $content = comcode_helper_script_replace();
+            break;
+
+        case 'step1':
+            $content = comcode_helper_script_step1();
+            break;
+
+        case 'step2':
+            $content = comcode_helper_script_step2();
+            break;
+
+        case 'step3':
+            $content = comcode_helper_script_step3();
+            break;
+
+        default:
+            warn_exit(do_lang_tempcode('INTERNAL_ERROR'));
     }
 
     $echo = do_template('STANDALONE_HTML_WRAP', array('_GUID' => 'c1f229be68a1137c5b418b0d5d8a7ccf', 'TITLE' => do_lang_tempcode('COMCODE_HELPER'), 'POPUP' => true, 'CONTENT' => $content));
     $echo->handle_symbol_preprocessing();
     $echo->evaluate_echo();
     exit();
+}
+
+/**
+ * Render a step of the Comcode tag helper dialog.
+ *
+ * @return Tempcode The step UI.
+ */
+function comcode_helper_script_replace()
+{
+    $title = get_screen_title('COMCODE_HELPER');
+
+    $tag = get_param_string('tag');
+
+    $keep = symbol_tempcode('KEEP');
+
+    $action = post_param_string('action', '');
+    if ($action != '') {
+        switch ($action) {
+            case 'add':
+                $url = find_script('comcode_helper') . '?type=step1&field_name=' . urlencode(get_param_string('field_name')) . $keep->evaluate();
+                header('Location: ' . escape_header($url));
+                exit();
+
+            case 'edit':
+                $url = str_replace('&type=replace', '&type=step2', get_self_url_easy());
+                header('Location: ' . escape_header($url));
+                exit();
+
+            case 'delete':
+                require_javascript('posting');
+                require_javascript('editing');
+
+                $field_name = filter_naughty_harsh(get_param_string('field_name'));
+                $title = get_screen_title('_COMCODE_HELPER', true, array(escape_html($tag)));
+
+                require_css('widget_plupload');
+
+                return do_template('BLOCK_HELPER_DONE', array(
+                    '_GUID' => 'd5d5888d89b764f81769823ac71d0828',
+                    'TITLE' => $title,
+                    'FIELD_NAME' => $field_name,
+                    'TAG_CONTENTS' => post_param_string('tag_contents', ''),
+                    'SAVE_TO_ID' => get_param_string('save_to_id', ''),
+                    'DELETE' => true,
+                    'BLOCK' => $tag,
+                    'COMCODE' => '',
+                    'COMCODE_SEMIHTML' => '',
+                ));
+        }
+    }
+
+    require_code('form_templates');
+
+    $fields = new Tempcode();
+    $radios = new Tempcode();
+    $radios->attach(form_input_radio_entry('action', 'add', false, do_lang_tempcode('COMCODE_TAG_MODIFIER_ADD', escape_html($tag))));
+    $radios->attach(form_input_radio_entry('action', 'edit', true, do_lang_tempcode('COMCODE_TAG_MODIFIER_EDIT', escape_html($tag))));
+    $radios->attach(form_input_radio_entry('action', 'delete', false, do_lang_tempcode('COMCODE_TAG_MODIFIER_DELETE', escape_html($tag))));
+    $fields->attach(form_input_radio(do_lang_tempcode('ACTION'), '', 'action', $radios, true));
+
+    $post_url = get_self_url();
+
+    $text = do_lang_tempcode('COMCODE_TAG_MODIFIER_CHOICE_TEXT');
+
+    $submit_name = do_lang_tempcode('PROCEED');
+
+    return do_template('FORM_SCREEN', array(
+        '_GUID' => '370058349d048a8be6570bba97c81fa2',
+        'TITLE' => $title,
+        'JAVASCRIPT' => '',
+        'TARGET' => '_self',
+        'SKIP_WEBSTANDARDS' => true,
+        'FIELDS' => $fields,
+        'URL' => $post_url,
+        'TEXT' => $text,
+        'SUBMIT_ICON' => 'buttons__proceed',
+        'SUBMIT_NAME' => $submit_name,
+        'HIDDEN' => '',
+        'THEME' => $GLOBALS['FORUM_DRIVER']->get_theme(),
+    ));
 }
 
 /**
@@ -349,9 +446,9 @@ function comcode_helper_script_step1()
                 $description = do_lang_tempcode('COMCODE_TAG_' . $tag . '_DESCRIPTION');
             }
 
-            $url = find_script('comcode_helper') . '?type=step2&tag=' . urlencode($tag) . '&field_name=' . get_param_string('field_name') . $keep->evaluate();
+            $url = find_script('comcode_helper') . '?type=step2&tag=' . urlencode($tag) . '&field_name=' . urlencode(get_param_string('field_name')) . $keep->evaluate();
             if (get_param_string('utheme', '') != '') {
-                $url .= '&utheme=' . get_param_string('utheme');
+                $url .= '&utheme=' . urlencode(get_param_string('utheme'));
             }
             $link_caption = escape_html($tag);
             $usage = '';
@@ -433,7 +530,7 @@ function comcode_helper_script_step2()
                     $is_advanced = (strpos($descriptiont, do_lang('BLOCK_IND_ADVANCED')) !== false);
                     $descriptiont = trim(str_replace(do_lang('BLOCK_IND_ADVANCED'), '', $descriptiont));
 
-                    $default = array_key_exists($param, $defaults) ? $defaults[$param] : get_param_string('default_' . $param, '');
+                    $default = get_param_string('default_' . $param, array_key_exists($param, $defaults) ? $defaults[$param] : '');
                     if ((!array_key_exists($param, $defaults)) && ($default == '')) {
                         $matches = array();
                         if (preg_match('#' . do_lang('BLOCK_IND_DEFAULT') . ': ["\']([^"]*)["\']#Ui', $descriptiont, $matches) != 0) {
@@ -483,8 +580,7 @@ function comcode_helper_script_step2()
                                 $field = form_input_line($parameter_name, protect_from_escaping($descriptiont), $param, $default, false);
                             }
                         }
-                        if ((($tag == 'attachment') || ($tag == 'attachment_safe')) && (($param == 'type' || $param == 'float' || $param == 'width' || $param == 'height')) && (/*Assumed needs routine heavy control*/
-                            !has_privilege(get_member(), 'use_very_dangerous_comcode'))
+                        if ((($tag == 'attachment') || ($tag == 'attachment_safe')) && (($param == 'type' || $param == 'float' || $param == 'width' || $param == 'height')) && (/*Assumed needs routine heavy control*/!has_privilege(get_member(), 'use_very_dangerous_comcode'))
                         ) {
                             $is_advanced = true;
                         }
@@ -563,9 +659,9 @@ function comcode_helper_script_step2()
     // Further details for the UI...
 
     $keep = symbol_tempcode('KEEP');
-    $post_url = find_script('comcode_helper') . '?type=step3&field_name=' . get_param_string('field_name') . $keep->evaluate();
+    $post_url = find_script('comcode_helper') . '?type=step3&field_name=' . urlencode(get_param_string('field_name')) . $keep->evaluate();
     if (get_param_string('utheme', '') != '') {
-        $post_url .= '&utheme=' . get_param_string('utheme');
+        $post_url .= '&utheme=' . urlencode(get_param_string('utheme'));
     }
     $prefix = get_param_string('prefix', '', true);
     if ($prefix != '') {
@@ -787,7 +883,25 @@ function _try_for_special_comcode_tag_specific_param_ui($tag, $actual_tag, $para
         return true; // Consider 'handled' already
     }
 
-    if ((($tag == 'attachment') || ($tag == 'media')) && ($param == 'type')) {
+    if ((($tag == 'code' || $tag == 'codebox')) && ($param == 'param')) {
+        $list = new Tempcode();
+        $list->attach(form_input_list_entry('', $default == '', ''));
+        $languages = array();
+        if (file_exists(get_file_base() . '/sources_custom/geshi')) {
+            $dh = opendir(get_file_base() . '/sources_custom/geshi');
+            while (($f = readdir($dh)) !== false) {
+                if ($f[0] != '.' && substr($f, -4) == '.php') {
+                    $languages[] = basename($f, '.php');
+                }
+            }
+        } else {
+            $languages[] = 'php';
+        }
+        foreach ($languages as $language) {
+            $list->attach(form_input_list_entry($language, $default == $language, $language));
+        }
+        $fields->attach(form_input_list($parameter_name, $descriptiont, $param, $list, null, false, false));
+    } elseif ((($tag == 'attachment') || ($tag == 'media')) && ($param == 'type')) {
         $list = new Tempcode();
         $list->attach(form_input_list_entry('', $default == '', do_lang('MEDIA_TYPE_')));
         require_code('media_renderer');
@@ -907,7 +1021,7 @@ function _try_for_special_comcode_tag_specific_contents_ui($tag, $actual_tag, &$
         }
 
         $hidden->attach(form_input_hidden('tag_contents', $default_embed));
-        $tag_description = do_lang_tempcode('COMCODE_TAG_attachment_simplified');
+        $tag_description = do_lang_tempcode('COMCODE_TAG_attachment_simplified_DESCRIPTION');
         $has_full_tag_description = true;
 
         if (substr($default_embed, 0, 4) == 'new_') {

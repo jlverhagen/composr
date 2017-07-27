@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -51,10 +51,12 @@ class Hook_notification_download extends Hook_Notification
             return parent::create_category_tree($notification_code, $id); // Too many, so just allow removing UI
         }
 
-        $page_links = get_downloads_tree(null, is_null($id) ? null : intval($id), null, null, null, 5);
+        $page_links = get_downloads_tree(null, is_null($id) ? null : intval($id), null, null, null, ($id === null) ? 0 : 1);
         $filtered = array();
         foreach ($page_links as $p) {
-            $filtered[] = $p;
+            if (strval($p['id']) !== $id) {
+                $filtered[] = $p;
+            }
         }
         return $filtered;
     }
@@ -80,7 +82,7 @@ class Hook_notification_download extends Hook_Notification
     public function list_handled_codes()
     {
         $list = array();
-        $list['download'] = array(do_lang('menus:CONTENT'), do_lang('downloads:NOTIFICATION_TYPE_download'));
+        $list['download'] = array(do_lang('CONTENT'), do_lang('downloads:NOTIFICATION_TYPE_download'));
         return $list;
     }
 

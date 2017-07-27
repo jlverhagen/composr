@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -26,9 +26,10 @@ class Hook_addon_registry_supermember_directory
     /**
      * Get a list of file permissions to set
      *
+     * @param  boolean $runtime Whether to include wildcards represented runtime-created chmoddable files
      * @return array File permissions to set
      */
-    public function get_chmod_array()
+    public function get_chmod_array($runtime = false)
     {
         return array();
     }
@@ -74,7 +75,7 @@ class Hook_addon_registry_supermember_directory
     {
         return array(
             'requires' => array(
-                'collaboration_zone'
+                'collaboration_zone',
             ),
             'recommends' => array(),
             'conflicts_with' => array(),
@@ -133,8 +134,12 @@ class Hook_addon_registry_supermember_directory
      */
     public function tpl_preview__supermembers_screen()
     {
-        require_lang('authors');
-        require_lang('points');
+        if (addon_installed('authors')) {
+            require_lang('authors');
+        }
+        if (addon_installed('points')) {
+            require_lang('points');
+        }
 
         $groups = do_lorem_template('SUPERMEMBERS_SCREEN_GROUP', array(
             'ENTRIES' => array(

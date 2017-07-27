@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -38,6 +38,7 @@ class Hook_config_copyright
             'explanation' => 'CONFIG_OPTION_copyright',
             'shared_hosting_restricted' => '0',
             'list_options' => '',
+            'order_in_category_group' => 3,
 
             'addon' => 'core_configuration',
         );
@@ -50,6 +51,6 @@ class Hook_config_copyright
      */
     public function get_default()
     {
-        return 'Copyright &copy; ' . get_site_name() . ' ' . date('Y') . '';
+        return do_lang('COPYRIGHTED') . ' &copy; $CURRENT_YEAR=' . date('Y') . ' ' . get_site_name();
     }
 }

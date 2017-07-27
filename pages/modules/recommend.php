@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -36,7 +36,7 @@ class Module_recommend
         $info['hacked_by'] = null;
         $info['hack_version'] = null;
         $info['version'] = 5;
-        $info['update_require_upgrade'] = 1;
+        $info['update_require_upgrade'] = true;
         $info['locked'] = false;
         return $info;
     }
@@ -49,7 +49,7 @@ class Module_recommend
         $GLOBALS['SITE_DB']->query_delete('comcode_pages', array(
             'the_zone' => '',
             'the_page' => 'recommend_help',
-        ));
+        ), '', 1);
     }
 
     /**
@@ -64,6 +64,10 @@ class Module_recommend
             require_code('users_active_actions');
             $admin_user = get_first_admin_user();
 
+            $GLOBALS['SITE_DB']->query_delete('comcode_pages', array(
+                'the_zone' => '',
+                'the_page' => 'recommend_help',
+            ), '', 1);
             $GLOBALS['SITE_DB']->query_insert('comcode_pages', array(
                 'the_zone' => '',
                 'the_page' => 'recommend_help',
@@ -84,7 +88,7 @@ class Module_recommend
      * @param  boolean $check_perms Whether to check permissions.
      * @param  ?MEMBER $member_id The member to check permissions as (null: current user).
      * @param  boolean $support_crosslinks Whether to allow cross links to other modules (identifiable via a full-page-link rather than a screen-name).
-     * @param  boolean $be_deferential Whether to avoid any entry-point (or even return NULL to disable the page in the Sitemap) if we know another module, or page_group, is going to link to that entry-point. Note that "!" and "browse" entry points are automatically merged with container page nodes (likely called by page-groupings) as appropriate.
+     * @param  boolean $be_deferential Whether to avoid any entry-point (or even return null to disable the page in the Sitemap) if we know another module, or page_group, is going to link to that entry-point. Note that "!" and "browse" entry points are automatically merged with container page nodes (likely called by page-groupings) as appropriate.
      * @return ?array A map of entry points (screen-name=>language-code/string or screen-name=>[language-code/string, icon-theme-image]) (null: disabled).
      */
     public function get_entry_points($check_perms = true, $member_id = null, $support_crosslinks = true, $be_deferential = false)
@@ -104,7 +108,7 @@ class Module_recommend
     public $type;
 
     /**
-     * Module pre-run function. Allows us to know meta-data for <head> before we start streaming output.
+     * Module pre-run function. Allows us to know metadata for <head> before we start streaming output.
      *
      * @return ?Tempcode Tempcode indicating some kind of exceptional output (null: none).
      */
@@ -120,12 +124,12 @@ class Module_recommend
         if ($type == 'browse') {
             attach_to_screen_header('<meta name="robots" content="noindex" />'); // XHTMLXHTML
 
-            inform_non_canonical_parameter('page_title');
-            inform_non_canonical_parameter('subject');
-            inform_non_canonical_parameter('s_message');
-            inform_non_canonical_parameter('from');
-            inform_non_canonical_parameter('title');
-            inform_non_canonical_parameter('cms');
+            inform_non_canonical_parameter('page_title', false);
+            inform_non_canonical_parameter('subject', false);
+            inform_non_canonical_parameter('s_message', false);
+            inform_non_canonical_parameter('from', false);
+            inform_non_canonical_parameter('title', false);
+            inform_non_canonical_parameter('cms', false);
 
             $page_title = get_param_string('page_title', null, true);
             if (!is_null(get_param_string('from', null, true))) {
@@ -315,7 +319,7 @@ class Module_recommend
             }
         }
 
-        $text = is_null($page_title) ? do_lang_tempcode('RECOMMEND_SITE_TEXT') : new Tempcode();
+        $text = is_null($page_title) ? do_lang_tempcode('RECOMMEND_SITE_TEXT', escape_html(get_site_name())) : new Tempcode();
 
         if (!is_null(get_param_string('from', null, true))) {
             $submit_name = do_lang_tempcode('SEND');
@@ -329,7 +333,7 @@ class Module_recommend
         handle_max_file_size($hidden);
 
         $fields->attach(form_input_line(do_lang_tempcode('SUBJECT'), '', 'subject', $subject, true));
-        $fields->attach(form_input_text_comcode(do_lang_tempcode('MESSAGE'), do_lang_tempcode('RECOMMEND_SUP_MESSAGE'), 'message', $message, $need_message, null, true));
+        $fields->attach(form_input_text_comcode(do_lang_tempcode('MESSAGE'), do_lang_tempcode('RECOMMEND_SUP_MESSAGE', escape_html(get_site_name())), 'message', $message, $need_message, null, true));
 
         if (addon_installed('captcha')) {
             require_code('captcha');
@@ -349,6 +353,7 @@ class Module_recommend
             'JAVASCRIPT' => $javascript,
             'SKIP_WEBSTANDARDS' => true,
             'TITLE' => $this->title,
+            'PREVIEW' => true,
             'HIDDEN' => $hidden,
             'FIELDS' => $fields,
             'URL' => $post_url,
@@ -395,7 +400,7 @@ class Module_recommend
 
         $hidden->attach(form_input_hidden('select_contacts_page', '1'));
 
-        $text = do_lang_tempcode('RECOMMEND_SITE_TEXT_CHOOSE_CONTACTS');
+        $text = do_lang_tempcode('RECOMMEND_SITE_TEXT_CHOOSE_CONTACTS', escape_html(get_site_name()));
 
         $page_title = get_param_string('page_title', null, true);
         if (is_null(get_param_string('from', null, true))) {
@@ -412,11 +417,8 @@ class Module_recommend
                     $possible_name_fields = array('Name', 'Forename', 'First Name', 'Display Name', 'First');
 
                     $fixed_contents = unixify_line_format(file_get_contents($_FILES['upload']['tmp_name']));
-                    $myfile = @fopen($_FILES['upload']['tmp_name'], 'wb');
-                    if ($myfile !== false) {
-                        fwrite($myfile, $fixed_contents);
-                        fclose($myfile);
-                    }
+                    require_code('files');
+                    cms_file_put_contents_safe($_FILES['upload']['tmp_name'], $fixed_contents, FILE_WRITE_FAILURE_SILENT);
 
                     safe_ini_set('auto_detect_line_endings', '1');
                     $myfile = fopen($_FILES['upload']['tmp_name'], 'rt');
@@ -432,47 +434,49 @@ class Module_recommend
 
                     $skip_next_process = false;
 
-                    if ((function_exists('mb_detect_encoding')) && (function_exists('mb_convert_encoding')) && (strlen(mb_detect_encoding($csv_header_line_fields[0], "ASCII,UTF-8,UTF-16,UTF16")) == 0)) { // Apple mail weirdness
-                        // Test string just for Apple mail detection
-                        $test_unicode = utf8_decode(mb_convert_encoding($csv_header_line_fields[0], "UTF-8", "UTF-16"));
-                        if (preg_match('#\?\?ame#u', $test_unicode) != 0) {
-                            foreach ($csv_header_line_fields as $key => $value) {
-                                $csv_header_line_fields[$key] = utf8_decode(mb_convert_encoding($csv_header_line_fields[$key], "UTF-8", "UTF-16"));
+                    if (function_exists('mb_convert_encoding')) {
+                        if ((function_exists('mb_detect_encoding')) && (strlen(mb_detect_encoding($csv_header_line_fields[0], "ASCII,UTF-8,UTF-16,UTF16")) == 0)) { // Apple mail weirdness
+                            // Test string just for Apple mail detection
+                            $test_unicode = utf8_decode(mb_convert_encoding($csv_header_line_fields[0], "UTF-8", "UTF-16"));
+                            if (preg_match('#\?\?ame#u', $test_unicode) != 0) {
+                                foreach ($csv_header_line_fields as $key => $value) {
+                                    $csv_header_line_fields[$key] = utf8_decode(mb_convert_encoding($csv_header_line_fields[$key], "UTF-8", "UTF-16"));
 
-                                $found_email_address = '';
-                                $found_name = '';
+                                    $found_email_address = '';
+                                    $found_name = '';
 
-                                $first_row_exploded = explode(';', $csv_header_line_fields[0]);
+                                    $first_row_exploded = explode(';', $csv_header_line_fields[0]);
 
-                                $email_index = 1; // by default
-                                $name_index = 0; // by default
+                                    $email_index = 1; // by default
+                                    $name_index = 0; // by default
 
-                                foreach ($csv_header_line_fields as $key2 => $value2) {
-                                    if (preg_match('#\?\?ame#', $value2) != 0) {
-                                        $name_index = $key2; // Windows mail
-                                    }
-                                    if (preg_match('#E\-mail#', $value2) != 0) {
-                                        $email_index = $key2; // both
-                                    }
-                                }
-
-                                while (($csv_line = fgetcsv($myfile, 10240, $del)) !== false) { // Reading a CSV record
-                                    foreach ($csv_line as $key2 => $value2) {
-                                        $csv_line[$key2] = utf8_decode(mb_convert_encoding($value2, "UTF-8", "UTF-16"));
+                                    foreach ($csv_header_line_fields as $key2 => $value2) {
+                                        if (preg_match('#\?\?ame#', $value2) != 0) {
+                                            $name_index = $key2; // Windows mail
+                                        }
+                                        if (preg_match('#E\-mail#', $value2) != 0) {
+                                            $email_index = $key2; // both
+                                        }
                                     }
 
-                                    $found_email_address = (array_key_exists($email_index, $csv_line) && strlen($csv_line[$email_index]) > 0) ? $csv_line[$email_index] : '';
-                                    $found_email_address = (preg_match('#.*\@.*\..*#', $found_email_address) != 0) ? preg_replace("#\"#", '', $found_email_address) : '';
-                                    $found_name = $found_email_address;
+                                    while (($csv_line = fgetcsv($myfile, 10240, $del)) !== false) { // Reading a CSV record
+                                        foreach ($csv_line as $key2 => $value2) {
+                                            $csv_line[$key2] = utf8_decode(mb_convert_encoding($value2, "UTF-8", "UTF-16"));
+                                        }
 
-                                    if (strlen($found_email_address) > 0) {
-                                        $skip_next_process = true;
-                                        // Add to the list what we've found
-                                        $fields->attach(form_input_tick($found_name, $found_email_address, 'use_details_' . strval($email_counter), true));
-                                        $hidden->attach(form_input_hidden('details_email_' . strval($email_counter), $found_email_address));
-                                        $hidden->attach(form_input_hidden('details_name_' . strval($email_counter), $found_name));
-                                        $email_counter++;
-                                        $success_read = true;
+                                        $found_email_address = (array_key_exists($email_index, $csv_line) && strlen($csv_line[$email_index]) > 0) ? $csv_line[$email_index] : '';
+                                        $found_email_address = (preg_match('#.*\@.*\..*#', $found_email_address) != 0) ? preg_replace("#\"#", '', $found_email_address) : '';
+                                        $found_name = $found_email_address;
+
+                                        if (strlen($found_email_address) > 0) {
+                                            $skip_next_process = true;
+                                            // Add to the list what we've found
+                                            $fields->attach(form_input_tick($found_name, $found_email_address, 'use_details_' . strval($email_counter), true));
+                                            $hidden->attach(form_input_hidden('details_email_' . strval($email_counter), $found_email_address));
+                                            $hidden->attach(form_input_hidden('details_name_' . strval($email_counter), $found_name));
+                                            $email_counter++;
+                                            $success_read = true;
+                                        }
                                     }
                                 }
                             }
@@ -736,6 +740,6 @@ class Module_recommend
         require_code('autosave');
         clear_cms_autosave();
 
-        return inform_screen($this->title, do_lang_tempcode('RECOMMENDATION_MADE'));
+        return inform_screen($this->title, do_lang_tempcode('RECOMMENDATION_MADE', escape_html(get_site_name())));
     }
 }

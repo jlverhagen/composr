@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -77,7 +77,7 @@ function cns_over_msn()
 }
 
 /**
- * Returns the NEW ID of an imported old ID, for the specified importation type. Whether it returns NULL or gives an error message depends on $fail_ok.
+ * Returns the NEW ID of an imported old ID, for the specified importation type. Whether it returns null or gives an error message depends on $fail_ok.
  *
  * @param  ID_TEXT $type An importation type code, from those Composr has defined (E.g. 'download', 'news', ...)
  * @param  string $id_old The source (old, original) ID of the mapping
@@ -96,7 +96,7 @@ function import_id_remap_get($type, $id_old, $fail_ok = false)
         if ($fail_ok) {
             return null;
         }
-        warn_exit(do_lang_tempcode('IMPORT_NOT_IMPORTED', $type, $id_old));
+        warn_exit(do_lang_tempcode('IMPORT_NOT_IMPORTED', escape_html($type), escape_html($id_old)));
     }
     $REMAP_CACHE[$type][$id_old] = $value;
     return $value;
@@ -147,7 +147,7 @@ function add_wordfilter_word($word, $replacement = '', $substr = 0)
  *
  * @param  PATH $dir Directory
  * @param  string $file Preferred filename
- * @param  boolean $shun_gif Whether GIF files are made as PNG fiels
+ * @param  boolean $shun_gif Whether GIF files are made as PNG files
  * @return string Filename to use
  */
 function find_derivative_filename($dir, $file, $shun_gif = false)

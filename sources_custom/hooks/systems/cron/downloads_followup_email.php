@@ -33,7 +33,7 @@ class Hook_cron_downloads_followup_email
         //    2=debug output with short interval (.01 hour instead of default 24 hours) for manually running cron_bridge.php
         //    1=debug output with normal interval (default 24 hours)
         //    0=no debug output
-        // In Commandr :set_value('downloads_followup_email_debug','1');
+        // In Commandr :set_value('downloads_followup_email_debug', '1');
         $debug_mode = get_value('downloads_followup_email_debug');
         if ($debug_mode != '0' && $debug_mode != '1' && $debug_mode != '2') {
             $debug_mode = '0';
@@ -69,11 +69,11 @@ class Hook_cron_downloads_followup_email
             $last = strval($time - 60 * 60 * 48);
         }
 
-        if (intval($last) > $time - 60 * 60 * $cron_interval) {
+        if (intval($last) > intval($time - 60 * 60 * $cron_interval)) {
             return; // Don't do more than once per $cron_interval (default is 24 hours)
         }
 
-        if (function_exists('set_time_limit')) {
+        if (php_function_allowed('set_time_limit')) {
             @set_time_limit(0);
         }
 
@@ -153,6 +153,7 @@ class Hook_cron_downloads_followup_email
             }
 
             // Send actual notification
+            require_code('notifications');
             dispatch_notification('downloads_followup_email', '', $subject_line, $message, array($member_id), A_FROM_SYSTEM_PRIVILEGED);
         }
 

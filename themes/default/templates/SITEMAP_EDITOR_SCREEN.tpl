@@ -16,7 +16,7 @@
 			<h2>{!SITEMAP}</h2>
 
 			<div class="accessibility_hidden"><label for="tree_list">{!ENTRY}</label></div>
-			<form title="{!PRIMARY_PAGE_FORM}" action="index.php" method="post">
+			<form title="{!PRIMARY_PAGE_FORM}" action="index.php" method="post" autocomplete="off">
 				{$INSERT_SPAMMER_BLACKHOLE}
 
 				<input onchange="update_details_box(this)" style="display: none" type="text" id="tree_list" name="tree_list" value="{$_GET*,id}" />
@@ -29,7 +29,7 @@
 					window.sitemap=new tree_list('tree_list','data/sitemap.php?start_links=1&get_perms=0&label_content_types=1&keep_full_structure=1{$KEEP;/}',null,'',false,null,true);
 				});
 
-				var actions_tpl='{!ACTIONS;/}:<ul role="navigation" class="actions_list">[1]<\/ul><br />';
+				var actions_tpl='{!ACTIONS;/}:<nav><ul class="actions_list">[1]<\/ul><\/nav><br />';
 				var actions_tpl_item='<li><a href="[2]">[1]<\/a><\/li>';
 
 				var info_tpl='<div class="wide_table_wrap"><table class="map_table results_table wide_table autosized_table"><tbody>[1]<\/tbody><\/table><\/div>';
@@ -40,7 +40,6 @@
 				var zone_editor_url='{$PAGE_LINK*;,_SEARCH:admin_zones:_editor:!}';
 				var permission_tree_editor_url='{$PAGE_LINK*;,_SEARCH:admin_permissions:browse:!}';
 				var edit_page_url='{$PAGE_LINK*;,cms:cms_comcode_pages:_edit:page_link=!}';
-				var export_page_url='{$PAGE_LINK*;,_SELF:_SELF:export:page_link=!}';
 				var add_page_url='{$PAGE_LINK*;,_SEARCH:cms_comcode_pages:_edit:page_link=!:example}';
 				var delete_url='{$PAGE_LINK*;,_SELF:_SELF:_delete:zone=[1]:page__[2]=1}';
 				var stats_url='{+START,IF,{$ADDON_INSTALLED,stats}}{$PAGE_LINK*;,_SEARCH:admin_stats:_page:iscreen=!}{+END}';

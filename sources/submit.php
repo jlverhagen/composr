@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -152,14 +152,14 @@ function give_submit_points($type, $member = null)
             return '';
         }
         require_code('points2');
-        system_gift_transfer(do_lang($type), intval($points), get_member());
+        system_gift_transfer(do_lang($type), intval($points), $member);
         return do_lang('SUBMIT_AWARD', integer_format(intval($points)));
     }
     return null;
 }
 
 /**
- * Find a member from their IP address. Unlike plain $GLOBALS['FORUM_DRIVER']->probe_ip, it has the benefit of looking in the adminlogs table also.
+ * Find a member from their IP address. Unlike plain $GLOBALS['FORUM_DRIVER']->probe_ip, it has the benefit of looking in the actionlogs table also.
  *
  * @param  IP $ip The IP address to probe
  * @return array The members found
@@ -167,9 +167,9 @@ function give_submit_points($type, $member = null)
 function wrap_probe_ip($ip)
 {
     if (strpos($ip, '*') !== false) {
-        $a = $GLOBALS['SITE_DB']->query('SELECT DISTINCT member_id AS id FROM ' . get_table_prefix() . 'adminlogs WHERE ip LIKE \'' . db_encode_like(str_replace('*', '%', $ip)) . '\'');
+        $a = $GLOBALS['SITE_DB']->query('SELECT DISTINCT member_id AS id FROM ' . get_table_prefix() . 'actionlogs WHERE ip LIKE \'' . db_encode_like(str_replace('*', '%', $ip)) . '\'');
     } else {
-        $a = $GLOBALS['SITE_DB']->query_select('adminlogs', array('DISTINCT member_id AS id'), array('ip' => $ip));
+        $a = $GLOBALS['SITE_DB']->query_select('actionlogs', array('DISTINCT member_id AS id'), array('ip' => $ip));
     }
     $b = $GLOBALS['FORUM_DRIVER']->probe_ip($ip);
     $r = array();
@@ -199,8 +199,13 @@ function ban_ip($ip, $descrip = '')
     if (($ban != '') && (!compare_ip_address($ban, get_ip_address()))) {
         require_code('failure');
         add_ip_ban($ban, $descrip);
+
+        log_it('IP_BANNED', $ip);
     } elseif (compare_ip_address($ban, get_ip_address())) {
-        attach_message(do_lang_tempcode('AVOIDING_BANNING_SELF'), 'warn');
+        if (addon_installed('securitylogging')) {
+            require_lang('submitban');
+            attach_message(do_lang_tempcode('AVOIDING_BANNING_SELF'), 'warn');
+        }
     }
 }
 
@@ -215,4 +220,6 @@ function unban_ip($ip)
 
     $unban = trim($ip);
     remove_ip_ban($unban);
+
+    log_it('IP_UNBANNED', $ip);
 }

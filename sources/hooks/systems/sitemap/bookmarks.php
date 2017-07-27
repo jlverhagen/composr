@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -155,6 +155,8 @@ class Hook_sitemap_bookmarks extends Hook_sitemap_base
         $screen = $matches[3];
 
         $page = $this->_make_zone_concrete($zone, $page_link);
+
+        $struct = null;
 
         if ($screen == 'view') { // Bookmark (NB: a 'view' page-link isn't real, it's just used as a call identifier - the real page-link is what the bookmark says)
             $id = intval($matches[4]);

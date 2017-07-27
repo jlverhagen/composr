@@ -1,5 +1,11 @@
 {TITLE}
 
+{+START,IF_PASSED,JAVASCRIPT}
+	<script>// <![CDATA[
+		{JAVASCRIPT/}
+	//]]></script>
+{+END}
+
 {+START,IF_NON_EMPTY,{PRE}}
 	<div class="index_screen_fancier_screen_pre" itemprop="description">
 		{PRE}
@@ -11,7 +17,7 @@
 		{+START,IF_PASSED_AND_TRUE,ARRAY}
 			{+START,LOOP,CONTENT}
 				{+START,IF_NON_EMPTY,{_loop_var}}
-					<h2>{_loop_key}</h2>
+					<h2>{_loop_key*}</h2>
 
 					<div class="not_too_tall">
 						{_loop_var}

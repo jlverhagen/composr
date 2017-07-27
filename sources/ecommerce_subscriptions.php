@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -83,7 +83,7 @@ function find_member_subscriptions($member_id, $usergroup_subscriptions_only = f
                 }
                 $usergroup_subscription_row = $usergroup_subscription_rows[$usergroup_subscription_id];
                 $usergroup_subscription_title = get_translated_text($usergroup_subscription_row['s_title']);
-                $usergroup_subscription_description = get_translated_tempcode('f_usergroup_subs', $usergroup_subscription_row, 's_description');
+                $usergroup_subscription_description = get_translated_tempcode('f_usergroup_subs', $usergroup_subscription_row, 's_description', $GLOBALS['FORUM_DB']);
 
                 $usergroup_id = $usergroup_subscription_row['s_group_id'];
                 $usergroup_rows = $GLOBALS['FORUM_DB']->query_select('f_groups', array('*'), array('id' => $usergroup_id), '', 1);
@@ -149,9 +149,9 @@ function find_member_subscriptions($member_id, $usergroup_subscriptions_only = f
                 'type_code' => $sub['s_type_code'],
                 'item_name' => $item_name,
 
-                // These will be NULL for non-usergroup subscriptions
+                // These will be null for non-usergroup subscriptions
                 'usergroup_subscription_id' => $usergroup_subscription_id,
-                'usergroup_subscription_title' => $usergroup_subscription_title, // If not NULL, is same as $item_name -- but it's nice to be verbose/clear
+                'usergroup_subscription_title' => $usergroup_subscription_title, // If not null, is same as $item_name -- but it's nice to be verbose/clear
                 'usergroup_subscription_description' => $usergroup_subscription_description,
                 'usergroup_id' => $usergroup_id,
                 'usergroup_name' => $usergroup_name,
@@ -197,14 +197,14 @@ function prepare_templated_subscription($subscription)
         'SUBSCRIPTION_ID' => strval($subscription['subscription_id']),
         'TYPE_CODE' => $subscription['type_code'],
         'ITEM_NAME' => $subscription['item_name'],
-        'USERGROUP_SUBSCRIPTION_TITLE' => $subscription['usergroup_subscription_title'], // May be NULL, if not a usergroup subscription
+        'USERGROUP_SUBSCRIPTION_TITLE' => $subscription['usergroup_subscription_title'], // May be null, if not a usergroup subscription
         'USERGROUP_SUBSCRIPTION_DESCRIPTION' => is_null($subscription['usergroup_subscription_description']) ? new Tempcode() : $subscription['usergroup_subscription_description'],
         'USERGROUP_SUBSCRIPTION_ID' => is_null($subscription['usergroup_subscription_id']) ? '' : strval($subscription['usergroup_subscription_id']),
         'USERGROUP_ID' => is_null($subscription['usergroup_id']) ? '' : strval($subscription['usergroup_id']),
         'USERGROUP_NAME' => $subscription['usergroup_name'],
         'LENGTH' => strval($subscription['length']),
         'LENGTH_UNITS' => $subscription['length_units'],
-        'PER' => do_lang('_LENGTH_UNIT_' . $subscription['length_units'], integer_format($subscription['length'])),
+        'PER' => do_lang_tempcode('_LENGTH_UNIT_' . $subscription['length_units'], integer_format($subscription['length'])),
         'AMOUNT' => $subscription['amount'],
         '_VIA' => $subscription['via'],
         'VIA' => do_lang_tempcode('PAYMENT_GATEWAY_' . $subscription['via']),

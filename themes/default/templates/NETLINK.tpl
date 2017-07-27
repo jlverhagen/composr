@@ -1,4 +1,4 @@
-<form title="{!JUMP} ({!FORM_AUTO_SUBMITS})" method="get" action="{$FIND_SCRIPT*,netlink}">
+<form title="{!JUMP} ({!FORM_AUTO_SUBMITS})" method="get" action="{$FIND_SCRIPT*,netlink}" autocomplete="off">
 	<div>
 		<div class="constrain_field">
 			<p class="accessibility_hidden"><label for="netlink_url">{!JUMP}</label></p>
@@ -8,7 +8,7 @@
 		</div>
 		{+START,IF,{$NOT,{$JS_ON}}}
 			<p class="proceed_button">
-				<input onclick="disable_button_just_clicked(this);" type="submit" value="{!PROCEED}" class="buttons__proceed button_screen_item" />
+				<input onclick="disable_button_just_clicked(this);" type="submit" value="{!PROCEED}" class="button_screen_item buttons__proceed" />
 			</p>
 		{+END}
 	</div>

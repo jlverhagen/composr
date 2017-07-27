@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -25,22 +25,25 @@
  */
 function init__menus()
 {
-    define('INCLUDE_SITEMAP_NO', 0);
-    define('INCLUDE_SITEMAP_OVER', 1);
-    define('INCLUDE_SITEMAP_UNDER', 2);
+    if (!defined('INCLUDE_SITEMAP_NO')) {
+        define('INCLUDE_SITEMAP_NO', 0);
+        define('INCLUDE_SITEMAP_OVER', 1);
+        define('INCLUDE_SITEMAP_UNDER', 2);
+    }
 }
 
 /**
  * Take a menu identifier, and return a menu created from it.
  *
  * @param  ID_TEXT $type The type of the menu (determines which templates to use)
- * @param  SHORT_TEXT $menu The menu identifier to use (may be the name of a stored menu, or syntax to load from the Sitemap)
+ * @param  SHORT_TEXT $menu The menu identifier to use (may be the name of a editable menu, or syntax to load from the Sitemap)
  * @param  boolean $silent_failure Whether to silently return blank if the menu does not exist
- * @return Tempcode The generated Tempcode of the menu
+ * @param  boolean $apply_highlighting Whether to apply current-screen highlighting
+ * @return array A pair: The generated Tempcode of the menu, the menu nodes
  */
-function build_menu($type, $menu, $silent_failure = false)
+function build_menu($type, $menu, $silent_failure = false, $apply_highlighting = true)
 {
-    $is_sitemap_menu = (preg_match('#^[\w\_]+$#', $menu) == 0);
+    $is_sitemap_menu = (preg_match('#^[' . URL_CONTENT_REGEXP . ']+$#', $menu) == 0);
 
     if ($is_sitemap_menu) {
         $root = _build_sitemap_menu($menu);
@@ -50,25 +53,43 @@ function build_menu($type, $menu, $silent_failure = false)
         // Empty?
         if (count($root['children']) == 0) {
             if ($silent_failure) {
-                return new Tempcode();
+                return array(new Tempcode(), array());
             }
 
             $redirect = get_self_url(true, true);
             $_add_url = build_url(array('page' => 'admin_menus', 'type' => 'edit', 'id' => $menu, 'redirect' => $redirect), 'adminzone');
             $add_url = $_add_url->evaluate();
 
-            return do_template('INLINE_WIP_MESSAGE', array('_GUID' => '276e6600571b8b4717ca742b6e9da17a', 'MESSAGE' => do_lang_tempcode('MISSING_MENU', escape_html($menu), escape_html($add_url))));
+            $content = do_template('INLINE_WIP_MESSAGE', array('_GUID' => '276e6600571b8b4717ca742b6e9da17a', 'MESSAGE' => do_lang_tempcode('MISSING_MENU', escape_html($menu), escape_html($add_url))));
+            return array($content, array());
         }
     }
 
     // Render
-    $content = _render_menu($root, null, $type, true);
+    $content = _render_menu($root, null, $type, true, $apply_highlighting);
+
+    $content->handle_symbol_preprocessing(); // Optimisation: we are likely to have lots of page-links in here, so we want to spawn them to be detected for mass moniker loading
+
+    if (strpos(serialize($root), 'keep_') === false) {/*Will only work if there are no keep_ parameters within the menu itself, as the quick caching will get confused by that*/
+        $content = apply_quick_caching($content);
+    }
 
     // Edit link
     if (((!$is_sitemap_menu) || ($menu == get_option('header_menu_call_string'))) && (has_actual_page_access(get_member(), 'admin_menus'))) {
-        $redirect = get_self_url(true, true);
-        $url_map = array('page' => 'admin_menus', 'type' => 'edit', 'id' => $is_sitemap_menu ? null : $root['content_id'], 'redirect' => $redirect, 'clickable_sections' => (($type == 'popup') || ($type == 'dropdown')) ? 1 : 0);
-        $url = build_url($url_map, get_module_zone('admin_menus'));
+        // We have to build up URL using Tempcode as it needs SELF_URL nested as unevaluated Tempcode, for cache-safety
+        $page_link = get_module_zone('admin_menus') . ':admin_menus:edit';
+        if (!$is_sitemap_menu) {
+            $page_link .= ':' . $root['content_id'];
+        }
+        $page_link .= ':clickable_sections=' . strval((($type == 'popup') || ($type == 'dropdown')) ? 1 : 0);
+        $page_link .= ':redirect=';
+        $_page_link = make_string_tempcode($page_link);
+        $self_url = symbol_tempcode('SELF_URL', array('1'));
+        $self_url = build_closure_tempcode(TC_LANGUAGE_REFERENCE, 'dont_escape_trick', array($self_url), array(UL_ESCAPED));
+        $_page_link->attach($self_url);
+
+        $url = symbol_tempcode('PAGE_LINK', array($_page_link, '0', '0', '0'));
+
         $_content = new Tempcode(); // Done to preserve tree structure, special_page_type=tree
         $_content->attach($content);
         $_content->attach(do_template('MENU_STAFF_LINK', array(
@@ -80,14 +101,15 @@ function build_menu($type, $menu, $silent_failure = false)
         $content = $_content;
     }
 
-    return $content;
+    return array($content, $root);
 }
 
 /**
- * Take a menu identifier, and return the stored menu.
+ * Take a menu identifier, and return the editable menu.
  *
- * @param  SHORT_TEXT $menu The menu identifier to use (the name of a stored menu)
+ * @param  SHORT_TEXT $menu The menu identifier to use (the name of a editable menu)
  * @return array The menu branch structure
+ *
  * @ignore
  */
 function _build_stored_menu($menu)
@@ -120,6 +142,11 @@ function _build_stored_menu($menu)
  */
 function _build_sitemap_menu($menu)
 {
+    static $cache = array();
+    if (isset($cache[$menu])) {
+        return $cache[$menu];
+    }
+
     require_code('sitemap');
 
     $root = _get_menu_root_wrapper();
@@ -218,6 +245,7 @@ function _build_sitemap_menu($menu)
         if ($title !== null) {
             $node['title'] = comcode_to_tempcode($title);
         }
+
         if ($icon !== null) {
             if (find_theme_image('icons/24x24/' . $icon, true) == '' && find_theme_image('icons/32x32/' . $icon, true) != '') {
                 $node['extra_meta']['image'] = find_theme_image('icons/32x32/' . $icon);
@@ -239,6 +267,8 @@ function _build_sitemap_menu($menu)
         }
     }
 
+    $cache[$menu] = $root;
+
     return $root;
 }
 
@@ -246,6 +276,7 @@ function _build_sitemap_menu($menu)
  * Get root branch (an empty shell).
  *
  * @return array The root branch
+ *
  * @ignore
  */
 function _get_menu_root_wrapper()
@@ -274,6 +305,7 @@ function _get_menu_root_wrapper()
  * @param  array $item The database row
  * @param  array $items List of all the database rows for this menu
  * @return array A list of menu branches
+ *
  * @ignore
  */
 function _build_stored_menu_branch($item, $items)
@@ -341,7 +373,13 @@ function _build_stored_menu_branch($item, $items)
                         break;
 
                     case INCLUDE_SITEMAP_UNDER:
-                        $branch['children'] = $extra_branch['children'];
+                        $known_existing_page_links = array();
+                        _find_child_page_links($branch['children'], $known_existing_page_links);
+                        foreach ($extra_branch['children'] as $child) {
+                            if (!isset($known_existing_page_links[$child['page_link']])) {
+                                $branch['children'][] = $child;
+                            }
+                        }
                         break;
                 }
             }
@@ -352,10 +390,30 @@ function _build_stored_menu_branch($item, $items)
 }
 
 /**
+ * Find all page-links under a list of children, recursively.
+ *
+ * @param  array $branches Branches
+ * @param  array $page_links Page-links found
+ *
+ * @ignore
+ */
+function _find_child_page_links($branches, &$page_links)
+{
+    foreach ($branches as $branch) {
+        $page_links[$branch['page_link']] = true;
+
+        if ($branch['children'] !== null) {
+            _find_child_page_links($branch['children'], $page_links);
+        }
+    }
+}
+
+/**
  * Append to all page-links in a branch structure.
  *
  * @param  array $branches Branches
  * @param  string $page_link_append What to append to the page-links
+ *
  * @ignore
  */
 function _append_to_page_links(&$branches, $page_link_append)
@@ -375,10 +433,12 @@ function _append_to_page_links(&$branches, $page_link_append)
  * @param  ?MEMBER $source_member The member the menu is being built as (null: current member)
  * @param  ID_TEXT $type The menu type (determines what templates get used)
  * @param  boolean $as_admin Whether to generate Comcode with admin privilege
+ * @param  boolean $apply_highlighting Whether to apply current-screen highlighting
  * @return Tempcode The generated Tempcode of the menu
+ *
  * @ignore
  */
-function _render_menu($menu, $source_member, $type, $as_admin = false)
+function _render_menu($menu, $source_member, $type, $as_admin = false, $apply_highlighting = true)
 {
     if ($source_member === null) {
         $source_member = get_member();
@@ -393,7 +453,7 @@ function _render_menu($menu, $source_member, $type, $as_admin = false)
     $new_children = array();
     if (isset($menu['children'])) {
         foreach ($menu['children'] as $child) {
-            $branch = _render_menu_branch($child, $codename, $source_member, 0, $type, $as_admin, $menu['children'], 1);
+            $branch = _render_menu_branch($child, $codename, $source_member, 0, $type, $as_admin, $menu['children'], $apply_highlighting, 1);
 
             if ($branch[0] !== null) {
                 $new_children[] = $branch[0];
@@ -409,16 +469,21 @@ function _render_menu($menu, $source_member, $type, $as_admin = false)
             $content->attach($child);
         } else {
             $content->attach(do_template('MENU_BRANCH_' . filter_naughty_harsh($type), $child + array(
-                    'POSITION' => strval($i),
-                    'FIRST' => $i == 0,
-                    'LAST' => $i == $num - 1,
-                    'BRETHREN_COUNT' => strval($num),
-                    'MENU' => $codename,
-                ), null, false, 'MENU_BRANCH_tree'));
+                '_GUID' => 'b5209ec65425bed1207e2f667d9116f6',
+                'POSITION' => strval($i),
+                'FIRST' => $i == 0,
+                'LAST' => $i == $num - 1,
+                'BRETHREN_COUNT' => strval($num),
+                'MENU' => $codename,
+            ), null, false, 'MENU_BRANCH_tree'));
         }
     }
 
-    return do_template('MENU_' . filter_naughty_harsh($type), array('CONTENT' => $content, 'MENU' => $codename), null, false, 'MENU_tree');
+    return do_template('MENU_' . filter_naughty_harsh($type), array(
+        'CONTENT' => $content,
+        'MENU' => $codename,
+        'JAVASCRIPT_HIGHLIGHTING' => !$apply_highlighting,
+    ), null, false, 'MENU_tree');
 }
 
 /**
@@ -431,11 +496,13 @@ function _render_menu($menu, $source_member, $type, $as_admin = false)
  * @param  ID_TEXT $type The menu type (determines what templates get used)
  * @param  boolean $as_admin Whether to generate Comcode with admin privilege
  * @param  array $all_branches Array of all other branches
+ * @param  boolean $apply_highlighting Whether to apply current-screen highlighting
  * @param  integer $the_level The level
- * @return array A pair: array of parameters of the menu branch (or NULL if unrenderable, or Tempcode of something to attach), and whether it is expanded
+ * @return array A pair: array of parameters of the menu branch (or null if unrenderable, or Tempcode of something to attach), and whether it is expanded
+ *
  * @ignore
  */
-function _render_menu_branch($branch, $codename, $source_member, $level, $type, $as_admin, $all_branches, $the_level = 1)
+function _render_menu_branch($branch, $codename, $source_member, $level, $type, $as_admin, $all_branches, $apply_highlighting, $the_level = 1)
 {
     if ($branch['only_on_page'] != '') {
         if (strpos($branch['only_on_page'], '{') !== false) {
@@ -453,6 +520,8 @@ function _render_menu_branch($branch, $codename, $source_member, $level, $type, 
             do_template(
                 'MENU_SPACER_' . filter_naughty_harsh($type),
                 array(
+                    '_GUID' => 'c5209ec65425bed1207e2f667d9116f6',
+
                     // Useful contextual information
                     'MENU' => $codename,
                     'TOP_LEVEL' => $the_level == 1,
@@ -508,43 +577,49 @@ function _render_menu_branch($branch, $codename, $source_member, $level, $type, 
         $url = build_url($map, $zone_name, null, false, false, false, $hash);
 
         // See if this is current page
-        $somewhere_definite = false;
-        $_parts = array();
-        foreach ($all_branches as $_branch) {
-            if (($_branch['page_link'] !== null) && (preg_match('#([\w-]*):([\w-]+|[^/]|$)((:(.*))*)#', $_branch['page_link'], $_parts) != 0)) {
-                if ($_parts[1] == $users_current_zone) {
-                    $somewhere_definite = true;
-                }
-            }
-        }
-        global $REDIRECTED_TO_CACHE;
-        $current_zone = (($zone_name == $users_current_zone) || (($REDIRECTED_TO_CACHE !== null) && ($zone_name == $REDIRECTED_TO_CACHE['r_to_zone']) && (!$somewhere_definite))); // This code is a bit smart, as zone menus usually have a small number of zones on them - redirects will be counted into the zone redirected to, so long as there is no more suitable zone and so long as it is not a transparent redirect
-        if (($zone_name == $users_current_zone) || (($REDIRECTED_TO_CACHE !== null) && ($zone_name == $REDIRECTED_TO_CACHE['r_to_zone']) && (isset($map['page'])) && ($map['page'] == $REDIRECTED_TO_CACHE['r_to_page']))) {
-            $current_page = true;
-
-            $v = mixed();
-
-            foreach ($map as $k => $v) {
-                if (is_integer($v)) {
-                    $v = strval($v);
-                }
-                if (is_object($v)) {
-                    $v = $v->evaluate();
-                }
-                if (($v == '') && ($k == 'page')) {
-                    $v = 'start';
-                    if ($zone_name == $users_current_zone) { // More precision if current zone (don't want to do query for any zone)
-                        global $ZONE;
-                        $v = $ZONE['zone_default_page'];
+        if ($apply_highlighting) {
+            $somewhere_definite = false;
+            $_parts = array();
+            foreach ($all_branches as $_branch) {
+                if (($_branch['page_link'] !== null) && (preg_match('#([' . URL_CONTENT_REGEXP . ']*):([' . URL_CONTENT_REGEXP . ']+|[^/]|$)((:(.*))*)#', $_branch['page_link'], $_parts) != 0)) {
+                    if ($_parts[1] == $users_current_zone) {
+                        $somewhere_definite = true;
                     }
                 }
-                $pv = get_param_string($k, ($k == 'page') ? $dp : null, true);
-                if (($pv !== $v) && (($k != 'page') || ($REDIRECTED_TO_CACHE === null) || (($REDIRECTED_TO_CACHE !== null) && (($v !== $REDIRECTED_TO_CACHE['r_to_page']) || ($zone_name != $REDIRECTED_TO_CACHE['r_to_zone'])))) && (($k != 'type') || ($v != 'browse') || ($pv !== null)) && (($v != $dp) || ($k != 'page') || (get_page_name() != '')) && (substr($k, 0, 5) != 'keep_')) {
-                    $current_page = false;
-                    break;
+            }
+            global $REDIRECTED_TO_CACHE;
+            $current_zone = (($zone_name == $users_current_zone) || (($REDIRECTED_TO_CACHE !== null) && ($zone_name == $REDIRECTED_TO_CACHE['r_to_zone']) && (!$somewhere_definite))); // This code is a bit smart, as zone menus usually have a small number of zones on them - redirects will be counted into the zone redirected to, so long as there is no more suitable zone and so long as it is not a transparent redirect
+            if (($zone_name == $users_current_zone) || (($REDIRECTED_TO_CACHE !== null) && ($zone_name == $REDIRECTED_TO_CACHE['r_to_zone']) && (isset($map['page'])) && ($map['page'] == $REDIRECTED_TO_CACHE['r_to_page']))) {
+                $current_page = true;
+
+                $v = mixed();
+
+                foreach ($map as $k => $v) {
+                    if (is_integer($v)) {
+                        $v = strval($v);
+                    }
+                    if (is_object($v)) {
+                        $v = $v->evaluate();
+                    }
+                    if (($v == '') && ($k == 'page')) {
+                        $v = 'start';
+                        if ($zone_name == $users_current_zone) { // More precision if current zone (don't want to do query for any zone)
+                            global $ZONE;
+                            $v = $ZONE['zone_default_page'];
+                        }
+                    }
+                    $pv = get_param_string($k, ($k == 'page') ? $dp : null, true);
+                    if (($pv !== $v) && (($k != 'page') || ($REDIRECTED_TO_CACHE === null) || (($REDIRECTED_TO_CACHE !== null) && (($v !== $REDIRECTED_TO_CACHE['r_to_page']) || ($zone_name != $REDIRECTED_TO_CACHE['r_to_zone'])))) && (($k != 'type') || ($v != 'browse') || ($pv !== null)) && (($v != $dp) || ($k != 'page') || (get_page_name() != '')) && (substr($k, 0, 5) != 'keep_')) {
+                        $current_page = false;
+                        break;
+                    }
                 }
             }
+        } else {
+            $current_page = false;
+            $current_zone = false;
         }
+
     } else { // URL
         // Carefully translate symbols in the URL
         $_url = $branch['url'];
@@ -566,7 +641,7 @@ function _render_menu_branch($branch, $codename, $source_member, $level, $type, 
     $expand_this = false;
     if (isset($branch['children'])) {
         foreach ($branch['children'] as $child) {
-            list($children2, $_expand_this) = _render_menu_branch($child, $codename, $source_member, $level + 1, $type, $as_admin, $all_branches, $the_level + 1);
+            list($children2, $_expand_this) = _render_menu_branch($child, $codename, $source_member, $level + 1, $type, $as_admin, $all_branches, $apply_highlighting, $the_level + 1);
             if ($_expand_this) {
                 $expand_this = true;
             }
@@ -584,12 +659,13 @@ function _render_menu_branch($branch, $codename, $source_member, $level, $type, 
             $children->attach($child);
         } else {
             $children->attach(do_template('MENU_BRANCH_' . filter_naughty_harsh($type), $child + array(
-                    'POSITION' => strval($i),
-                    'FIRST' => $i == 0,
-                    'LAST' => $i == $num - 1,
-                    'BRETHREN_COUNT' => strval($num),
-                    'MENU' => $codename,
-                ), null, false, 'MENU_BRANCH_tree'));
+                '_GUID' => 'd5209ec65425bed1207e2f667d9116f6',
+                'POSITION' => strval($i),
+                'FIRST' => $i == 0,
+                'LAST' => $i == $num - 1,
+                'BRETHREN_COUNT' => strval($num),
+                'MENU' => $codename,
+            ), null, false, 'MENU_BRANCH_tree'));
         }
     }
     if (($children->is_empty()) && ($url->is_empty())) {

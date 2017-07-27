@@ -1,6 +1,6 @@
 /*
  {$BRAND_NAME`}
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 */
 
 .buildr_navigation {
@@ -73,10 +73,6 @@
 
 .buildr_fadedtext {
 	color: #809FB5;
-}
-
-.buildr_fadedtextarrow {
-	color: #C0CFDA;
 }
 
 .buildr_posttop, .buildr_posttop th {

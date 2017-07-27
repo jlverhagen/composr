@@ -1,11 +1,17 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
 */
+
+/**
+ * @license    http://opensource.org/licenses/cpal_1.0 Common Public Attribution License
+ * @copyright  ocProducts Ltd
+ * @package    composr_release_build
+ */
 
 /*
     NB: Multi line do_template calls may be uglified. You can find those in your IDE using
@@ -14,12 +20,16 @@
 
 i_solemnly_declare(I_UNDERSTAND_SQL_INJECTION | I_UNDERSTAND_XSS | I_UNDERSTAND_PATH_INJECTION);
 
+$title = get_screen_title('Plug in missing GUIDs', false);
+$title->evaluate_echo();
+
 global $FOUND_GUID;
 $FOUND_GUID = array();
 global $GUID_LANDSCAPE;
 $GUID_LANDSCAPE = array();
 global $FILENAME, $IN;
 
+require_code('files');
 require_code('files2');
 
 $limit_file = isset($_GET['file']) ? $_GET['file'] : '';
@@ -29,6 +39,9 @@ if ($limit_file == '') {
     $files = array($limit_file);
 }
 foreach ($files as $i => $file) {
+    if (preg_match('#^exports/#', $file) != 0) {
+        continue;
+    }
     if (substr($file, -4) != '.php') {
         continue;
     }
@@ -40,25 +53,21 @@ foreach ($files as $i => $file) {
 
     echo 'Doing ' . escape_html($file) . '<br />';
 
-    $IN = file_get_contents($file);
+    $IN = file_get_contents(get_custom_file_base() . '/' . $file);
 
-    $out = preg_replace_callback("#do_template\('([^']*)',array\(\s*'([^']+)'=>('[^\']+')#", 'callback', $IN);
-    $out = preg_replace_callback("#do_template\('([^']*)',array\(\s*'([^']+)'=>#", 'callback', $IN);
+    $out = preg_replace_callback("#do_template\('([^']*)', array\(\s*'([^']+)' => ('[^\']+')#", 'callback', $IN); // Existing GUIDs
+    $out = preg_replace_callback("#do_template\('([^']*)', array\(\s*'([^']+)' => #", 'callback', $IN); // Potentially missing GUIDs
 
     if ($IN != $out) {
         echo '<span style="color: orange">Re-saved ' . escape_html($file) . '</span><br />';
 
-        $myfile = fopen(get_file_base() . '/' . $file, 'wb');
-        fwrite($myfile, $out);
-        fclose($myfile);
+        cms_file_put_contents_safe(get_file_base() . '/' . $file, $out, FILE_WRITE_FIX_PERMISSIONS | FILE_WRITE_SYNC_FILE);
     }
 }
-echo 'Finished!';
+echo 'Finished! You will want to check that any changed do_template arrays are not now ugly, because there\'s no autoformatter here.';
 
 if ($limit_file == '') {
-    $guid_file = fopen(get_file_base() . '/data/guids.dat', 'wb');
-    fwrite($guid_file, serialize($GUID_LANDSCAPE));
-    fclose($guid_file);
+    cms_file_put_contents_safe(get_file_base() . '/data/guids.dat', serialize($GUID_LANDSCAPE), FILE_WRITE_FIX_PERMISSIONS | FILE_WRITE_SYNC_FILE);
 }
 
 function callback($match)
@@ -71,20 +80,21 @@ function callback($match)
         $GUID_LANDSCAPE[$match[1]] = array();
     }
     $line = substr_count(substr($IN, 0, strpos($IN, $match[0])), "\n") + 1;
-    if ($match[2] != '_GUID') {
+    if ($match[2] != '_GUID') { // Potentially missing GUIDs
+        // Missing GUIDs
         echo 'Insert needed for ' . escape_html($match[1]) . '<br />';
         $GUID_LANDSCAPE[$match[1]][] = array($FILENAME, $line, $new_guid);
-        return "do_template('" . $match[1] . "',array('_GUID'=>'" . $new_guid . "','" . $match[2] . '\'=>' . (isset($match[3]) ? $match[3] : '');
+        return "do_template('" . $match[1] . "', array('_GUID' => '" . $new_guid . "', '" . $match[2] . '\' => ' . (isset($match[3]) ? $match[3] : '');
     }
-    if (isset($match[3])) {
+    if (isset($match[3])) { // Existing GUIDs
         global $FOUND_GUID;
         $guid_value = str_replace('\'', '', $match[3]);
         if (array_key_exists($guid_value, $FOUND_GUID)) {
             echo 'Repair needed for ' . escape_html($match[1]) . '<br />';
             $GUID_LANDSCAPE[$match[1]][] = array($FILENAME, $line, $new_guid);
-            return "do_template('" . $match[1] . "',array('_GUID'=>'" . $new_guid . "'";
+            return "do_template('" . $match[1] . "', array('_GUID' => '" . $new_guid . "'";
         }
-        $FOUND_GUID[$guid_value] = 1;
+        $FOUND_GUID[$guid_value] = true;
         $GUID_LANDSCAPE[$match[1]][] = array($FILENAME, $line, $guid_value);
     }
     return $match[0];

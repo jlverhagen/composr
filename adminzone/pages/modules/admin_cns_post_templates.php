@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -34,6 +34,8 @@ class Module_admin_cns_post_templates extends Standard_crud_module
     public $menu_label = 'POST_TEMPLATES';
     public $table = 'f_post_templates';
     public $orderer = 't_title';
+    public $donext_entry_content_type = 'post_template';
+    public $donext_category_content_type = null;
 
     /**
      * Find entry-points available within this module.
@@ -41,7 +43,7 @@ class Module_admin_cns_post_templates extends Standard_crud_module
      * @param  boolean $check_perms Whether to check permissions.
      * @param  ?MEMBER $member_id The member to check permissions as (null: current user).
      * @param  boolean $support_crosslinks Whether to allow cross links to other modules (identifiable via a full-page-link rather than a screen-name).
-     * @param  boolean $be_deferential Whether to avoid any entry-point (or even return NULL to disable the page in the Sitemap) if we know another module, or page_group, is going to link to that entry-point. Note that "!" and "browse" entry points are automatically merged with container page nodes (likely called by page-groupings) as appropriate.
+     * @param  boolean $be_deferential Whether to avoid any entry-point (or even return null to disable the page in the Sitemap) if we know another module, or page_group, is going to link to that entry-point. Note that "!" and "browse" entry points are automatically merged with container page nodes (likely called by page-groupings) as appropriate.
      * @return ?array A map of entry points (screen-name=>language-code/string or screen-name=>[language-code/string, icon-theme-image]) (null: disabled).
      */
     public function get_entry_points($check_perms = true, $member_id = null, $support_crosslinks = true, $be_deferential = false)
@@ -55,17 +57,17 @@ class Module_admin_cns_post_templates extends Standard_crud_module
         }
 
         return array(
-                   'browse' => array(do_lang_tempcode('ITEMS_HERE', do_lang_tempcode('POST_TEMPLATES'), make_string_tempcode(escape_html(integer_format($GLOBALS['FORUM_DB']->query_select_value_if_there('f_post_templates', 'COUNT(*)', null, '', true))))), 'menu/adminzone/structure/forum/post_templates'),
-               ) + parent::get_entry_points();
+            'browse' => array(do_lang_tempcode('menus:ITEMS_HERE', do_lang_tempcode('POST_TEMPLATES'), make_string_tempcode(escape_html(integer_format($GLOBALS['FORUM_DB']->query_select_value_if_there('f_post_templates', 'COUNT(*)', null, '', true))))), 'menu/adminzone/structure/forum/post_templates'),
+        ) + parent::get_entry_points();
     }
 
     public $title;
 
     /**
-     * Module pre-run function. Allows us to know meta-data for <head> before we start streaming output.
+     * Module pre-run function. Allows us to know metadata for <head> before we start streaming output.
      *
      * @param  boolean $top_level Whether this is running at the top level, prior to having sub-objects called.
-     * @param  ?ID_TEXT $type The screen type to consider for meta-data purposes (null: read from environment).
+     * @param  ?ID_TEXT $type The screen type to consider for metadata purposes (null: read from environment).
      * @return ?Tempcode Tempcode indicating some kind of exceptional output (null: none).
      */
     public function pre_run($top_level = true, $type = null)
@@ -139,7 +141,7 @@ class Module_admin_cns_post_templates extends Standard_crud_module
             array(
                 array('menu/_generic_admin/add_one', array('_SELF', array('type' => 'add'), '_SELF'), do_lang('ADD_POST_TEMPLATE')),
                 array('menu/_generic_admin/edit_one', array('_SELF', array('type' => 'edit'), '_SELF'), do_lang('EDIT_POST_TEMPLATE')),
-                array('menu/_generic_admin/import', array('_SELF', array('type' => 'import'), '_SELF'), do_lang('IMPORT_STOCK_RESPONSES')),
+                array('menu/_generic_admin/import', array('_SELF', array('type' => 'import'), '_SELF'), do_lang('IMPORT_STOCK_RESPONSES_PT')),
             ),
             do_lang('POST_TEMPLATES')
         );
@@ -175,7 +177,7 @@ class Module_admin_cns_post_templates extends Standard_crud_module
 
         $text = paragraph(do_lang_tempcode('DESCRIPTION_IMPORT_STOCK_RESPONSES_PT'));
 
-        return do_template('FORM_SCREEN', array('TITLE' => $this->title, 'FIELDS' => $fields, 'SUBMIT_ICON' => 'menu___generic_admin__import', 'SUBMIT_NAME' => do_lang_tempcode('IMPORT_STOCK_RESPONSES_PT'), 'URL' => $post_url, 'TEXT' => $text, 'HIDDEN' => ''));
+        return do_template('FORM_SCREEN', array('_GUID' => '7089deefe20d3917020610768e0f7f24', 'TITLE' => $this->title, 'FIELDS' => $fields, 'SUBMIT_ICON' => 'menu___generic_admin__import', 'SUBMIT_NAME' => do_lang_tempcode('IMPORT_STOCK_RESPONSES_PT'), 'URL' => $post_url, 'TEXT' => $text, 'HIDDEN' => ''));
     }
 
     /**
@@ -185,6 +187,8 @@ class Module_admin_cns_post_templates extends Standard_crud_module
      */
     public function _import()
     {
+        require_lang('dearchive');
+
         require_code('uploads');
         is_plupload(true);
 

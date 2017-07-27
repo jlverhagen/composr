@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -37,7 +37,7 @@ class Hook_page_groupings_stats
         }
 
         return array(
-            array('audit', 'menu/adminzone/audit/statistics/statistics', array('admin_stats', array('type' => 'browse'), get_module_zone('admin_stats')), do_lang_tempcode('stats:STATISTICS'), 'stats:DOC_STATISTICS'),
+            array('audit', 'menu/adminzone/audit/statistics/statistics', array('admin_stats', array('type' => 'browse'), get_module_zone('admin_stats')), do_lang_tempcode('STATISTICS'), 'stats:DOC_STATISTICS'),
         );
     }
 }

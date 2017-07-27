@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -38,6 +38,8 @@ class Module_admin_cns_groups extends Standard_crud_module
     public $menu_label = 'USERGROUPS';
     public $orderer = 'g_name';
     public $title_is_multi_lang = true;
+    public $donext_entry_content_type = 'group';
+    public $donext_category_content_type = null;
 
     /**
      * Find entry-points available within this module.
@@ -45,7 +47,7 @@ class Module_admin_cns_groups extends Standard_crud_module
      * @param  boolean $check_perms Whether to check permissions.
      * @param  ?MEMBER $member_id The member to check permissions as (null: current user).
      * @param  boolean $support_crosslinks Whether to allow cross links to other modules (identifiable via a full-page-link rather than a screen-name).
-     * @param  boolean $be_deferential Whether to avoid any entry-point (or even return NULL to disable the page in the Sitemap) if we know another module, or page_group, is going to link to that entry-point. Note that "!" and "browse" entry points are automatically merged with container page nodes (likely called by page-groupings) as appropriate.
+     * @param  boolean $be_deferential Whether to avoid any entry-point (or even return null to disable the page in the Sitemap) if we know another module, or page_group, is going to link to that entry-point. Note that "!" and "browse" entry points are automatically merged with container page nodes (likely called by page-groupings) as appropriate.
      * @return ?array A map of entry points (screen-name=>language-code/string or screen-name=>[language-code/string, icon-theme-image]) (null: disabled).
      */
     public function get_entry_points($check_perms = true, $member_id = null, $support_crosslinks = true, $be_deferential = false)
@@ -55,8 +57,8 @@ class Module_admin_cns_groups extends Standard_crud_module
         }
 
         $ret = array(
-                   'browse' => array('MANAGE_USERGROUPS', 'menu/social/groups'),
-               ) + parent::get_entry_points();
+            'browse' => array('MANAGE_USERGROUPS', 'menu/social/groups'),
+        ) + parent::get_entry_points();
 
         if ($support_crosslinks) {
             require_code('fields');
@@ -69,10 +71,10 @@ class Module_admin_cns_groups extends Standard_crud_module
     public $title;
 
     /**
-     * Module pre-run function. Allows us to know meta-data for <head> before we start streaming output.
+     * Module pre-run function. Allows us to know metadata for <head> before we start streaming output.
      *
      * @param  boolean $top_level Whether this is running at the top level, prior to having sub-objects called.
-     * @param  ?ID_TEXT $type The screen type to consider for meta-data purposes (null: read from environment).
+     * @param  ?ID_TEXT $type The screen type to consider for metadata purposes (null: read from environment).
      * @return ?Tempcode Tempcode indicating some kind of exceptional output (null: none).
      */
     public function pre_run($top_level = true, $type = null)
@@ -236,13 +238,13 @@ class Module_admin_cns_groups extends Standard_crud_module
         $fields->attach(form_input_tick(do_lang_tempcode('OPEN_MEMBERSHIP'), do_lang_tempcode('OPEN_MEMBERSHIP_DESCRIPTION'), 'open_membership', $open_membership == 1));
         $fields->attach(do_template('FORM_SCREEN_FIELD_SPACER', array('_GUID' => '4ec20b3b67c70e1d4136432ae4fd56b6', 'SECTION_HIDDEN' => true, 'TITLE' => do_lang_tempcode('RANK'))));
         if (addon_installed('points')) {
-            $promotion_target_groups = form_input_list_entry('-1', false, do_lang_tempcode('NA_EM'));
+            $promotion_target_groups = form_input_list_entry('', false, do_lang_tempcode('NA_EM'));
             foreach ($rows as $group) {
                 if (($group['id'] != $id) && ($group['id'] != db_get_first_id())) {
                     $promotion_target_groups->attach(form_input_list_entry(strval($group['id']), ($group['id'] == $promotion_target), get_translated_text($group['g_name'], $GLOBALS['FORUM_DB'])));
                 }
             }
-            $fields->attach(form_input_list(do_lang_tempcode('PROMOTION_TARGET'), do_lang_tempcode('DESCRIPTION_PROMOTION_TARGET'), 'promotion_target', $promotion_target_groups));
+            $fields->attach(form_input_list(do_lang_tempcode('PROMOTION_TARGET'), do_lang_tempcode('DESCRIPTION_PROMOTION_TARGET'), 'promotion_target', $promotion_target_groups, null, false, false));
             $fields->attach(form_input_integer(do_lang_tempcode('PROMOTION_THRESHOLD'), do_lang_tempcode('DESCRIPTION_PROMOTION_THRESHOLD'), 'promotion_threshold', $promotion_threshold, false));
         }
 
@@ -305,7 +307,7 @@ class Module_admin_cns_groups extends Standard_crud_module
         $fields->attach(form_input_integer(do_lang_tempcode('FLOOD_CONTROL_ACCESS_SECS'), do_lang_tempcode('DESCRIPTION_FLOOD_CONTROL_ACCESS_SECS'), 'flood_control_access_secs', $flood_control_access_secs, true));
         $fields->attach(form_input_integer(do_lang_tempcode('FLOOD_CONTROL_SUBMIT_SECS'), do_lang_tempcode('DESCRIPTION_FLOOD_CONTROL_SUBMIT_SECS'), 'flood_control_submit_secs', $flood_control_submit_secs, true));
 
-        $fields->attach(meta_data_get_fields('group', is_null($id) ? null : strval($id), false, array('submitter')));
+        $fields->attach(metadata_get_fields('group', is_null($id) ? null : strval($id), false, array('submitter')));
 
         if (addon_installed('content_reviews')) {
             $fields->attach(content_review_get_fields('group', is_null($id) ? null : strval($id)));
@@ -323,13 +325,13 @@ class Module_admin_cns_groups extends Standard_crud_module
 
         // Take permissions from
         $permissions_from_groups = new Tempcode();
-        $permissions_from_groups = form_input_list_entry('-1', false, do_lang_tempcode('NA_EM'));
+        $permissions_from_groups = form_input_list_entry('', false, do_lang_tempcode('NA_EM'));
         foreach ($rows as $group) {
             if ($group['id'] != $id) {
                 $permissions_from_groups->attach(form_input_list_entry(strval($group['id']), false, get_translated_text($group['g_name'], $GLOBALS['FORUM_DB'])));
             }
         }
-        $fields->attach(form_input_list(do_lang_tempcode('DEFAULT_PERMISSIONS_FROM'), do_lang_tempcode(is_null($id) ? 'DESCRIPTION_DEFAULT_PERMISSIONS_FROM_NEW' : 'DESCRIPTION_DEFAULT_PERMISSIONS_FROM'), 'absorb', $permissions_from_groups));
+        $fields->attach(form_input_list(do_lang_tempcode('DEFAULT_PERMISSIONS_FROM'), do_lang_tempcode(is_null($id) ? 'DESCRIPTION_DEFAULT_PERMISSIONS_FROM_NEW' : 'DESCRIPTION_DEFAULT_PERMISSIONS_FROM'), 'absorb', $permissions_from_groups, null, false, false));
 
         $this->appended_actions_already = true;
 
@@ -417,7 +419,7 @@ class Module_admin_cns_groups extends Standard_crud_module
         foreach ($rows as $row) {
             $edit_link = build_url($url_map + array('id' => $row['id']), '_SELF');
 
-            if (($row['id'] == db_get_first_id() + 8) && ($GLOBALS['FORUM_DB']->query_select_value('f_groups', 'COUNT(*)', array('g_is_presented_at_install' => '1')) == 0)) {
+            if (($row['id'] == db_get_first_id() + 8) && ($GLOBALS['FORUM_DB']->query_select_value('f_groups', 'COUNT(*)', array('g_is_presented_at_install' => 1)) == 0)) {
                 $row['g_is_presented_at_install'] = 1;
             }
 
@@ -425,8 +427,8 @@ class Module_admin_cns_groups extends Standard_crud_module
                 protect_from_escaping(cns_get_group_link($row['id'])),
                 ($row['g_is_presented_at_install'] == 1) ? do_lang_tempcode('YES') : do_lang_tempcode('NO'),
                 ($row['g_is_default'] == 1) ? do_lang_tempcode('YES') : do_lang_tempcode('NO'),
-                //($row['g_is_private_club']==1)?do_lang_tempcode('YES'):do_lang_tempcode('NO'),
-                //is_null($row['g_group_leader'])?do_lang_tempcode('NA_EM'):make_string_tempcode($GLOBALS['FORUM_DRIVER']->get_username($row['g_group_leader'])),
+                //($row['g_is_private_club']==1) ? do_lang_tempcode('YES') : do_lang_tempcode('NO'),
+                //is_null($row['g_group_leader']) ? do_lang_tempcode('NA_EM') : make_string_tempcode($GLOBALS['FORUM_DRIVER']->get_username($row['g_group_leader'])),
                 ($row['g_open_membership'] == 1) ? do_lang_tempcode('YES') : do_lang_tempcode('NO'),
             );
             if (addon_installed('points')) {
@@ -460,7 +462,7 @@ class Module_admin_cns_groups extends Standard_crud_module
             $fields->attach(results_entry($fr, true));
         }
 
-        $search_url = null;//build_url(array('page'=>'search','id'=>'cns_clubs'),get_module_zone('search'));
+        $search_url = null; //build_url(array('page' => 'search', 'id' => 'cns_clubs'), get_module_zone('search'));
         $archive_url = build_url(array('page' => 'groups'), get_module_zone('groups'));
 
         return array(results_table(do_lang($this->menu_label), get_param_integer('start', 0), 'start', either_param_integer('max', 20), 'max', $max_rows, $header_row, $fields, $sortables, $sortable, $sort_order, 'sort', null, null, null, 8, 'gdfg43tfdgdfgdrfgd', true), true, $search_url, $archive_url);
@@ -574,7 +576,7 @@ class Module_admin_cns_groups extends Standard_crud_module
      */
     public function copy_members_into($g)
     {
-        if (function_exists('set_time_limit')) {
+        if (php_function_allowed('set_time_limit')) {
             @set_time_limit(0);
         }
         send_http_output_ping();
@@ -604,7 +606,7 @@ class Module_admin_cns_groups extends Standard_crud_module
         if ($_group_leader != '') {
             $group_leader = $GLOBALS['FORUM_DRIVER']->get_member_from_username($_group_leader);
             if (is_null($group_leader)) {
-                warn_exit(do_lang_tempcode('_MEMBER_NO_EXIST', $_group_leader));
+                warn_exit(do_lang_tempcode('_MEMBER_NO_EXIST', escape_html($_group_leader)));
             }
         } else {
             $group_leader = null;
@@ -613,14 +615,8 @@ class Module_admin_cns_groups extends Standard_crud_module
             $group_leader = INTEGER_MAGIC_NULL;
         }
 
-        $promotion_target = post_param_integer('promotion_target', fractional_edit() ? INTEGER_MAGIC_NULL : -1);
-        if ($promotion_target == -1) {
-            $promotion_target = null;
-        }
-        $promotion_threshold = post_param_integer('promotion_threshold', fractional_edit() ? INTEGER_MAGIC_NULL : -1);
-        if ($promotion_threshold == -1) {
-            $promotion_threshold = null;
-        }
+        $promotion_target = post_param_integer('promotion_target', fractional_edit() ? INTEGER_MAGIC_NULL : null);
+        $promotion_threshold = post_param_integer('promotion_threshold', fractional_edit() ? INTEGER_MAGIC_NULL : null);
 
         return array($group_leader, $promotion_target, $promotion_threshold);
     }
@@ -637,7 +633,7 @@ class Module_admin_cns_groups extends Standard_crud_module
         list($group_leader, $promotion_target, $promotion_threshold) = $this->read_in_data();
         $rank_img = post_param_theme_img_code('cns_rank_images', false, 'file', 'theme_img_code', $GLOBALS['FORUM_DB']);
 
-        $meta_data = actual_meta_data_get_fields('group', null, array('submitter'));
+        $metadata = actual_metadata_get_fields('group', null, array('submitter'));
 
         $id = cns_make_group(post_param_string('name'), post_param_integer('is_default', 0), post_param_integer('is_super_admin', 0), post_param_integer('is_super_moderator', 0), post_param_string('title', ''), $rank_img, $promotion_target, $promotion_threshold, $group_leader, post_param_integer('flood_control_submit_secs'), post_param_integer('flood_control_access_secs'), post_param_integer('max_daily_upload_mb'), post_param_integer('max_attachments_per_post'), post_param_integer('max_avatar_width', 100), post_param_integer('max_avatar_height', 100), post_param_integer('max_post_length_comcode'), post_param_integer('max_sig_length_comcode', 10000), post_param_integer('gift_points_base', 0), post_param_integer('gift_points_per_day', 0), post_param_integer('enquire_on_new_ips', 0), post_param_integer('is_presented_at_install', 0), post_param_integer('hidden', 0), post_param_order_field(), post_param_integer('rank_image_pri_only', 0), post_param_integer('open_membership', 0), post_param_integer('is_private_club', 0));
 
@@ -645,8 +641,8 @@ class Module_admin_cns_groups extends Standard_crud_module
 
         $this->copy_members_into($id);
 
-        $absorb = post_param_integer('absorb', -1);
-        if ($absorb != -1) {
+        $absorb = post_param_integer('absorb', null);
+        if ($absorb !== null) {
             cns_group_absorb_privileges_of($id, $absorb);
         }
 
@@ -696,7 +692,7 @@ class Module_admin_cns_groups extends Standard_crud_module
 
         $rank_img = fractional_edit() ? STRING_MAGIC_NULL : post_param_theme_img_code('cns_rank_images', false, 'file', 'theme_img_code', $GLOBALS['FORUM_DB']);
 
-        $meta_data = actual_meta_data_get_fields('group', $id, array('submitter'));
+        $metadata = actual_metadata_get_fields('group', $id, array('submitter'));
 
         $is_super_admin = post_param_integer('is_super_admin', fractional_edit() ? INTEGER_MAGIC_NULL : 0);
         if (($is_super_admin == 0) && ($GLOBALS['FORUM_DB']->query_select_value('f_groups', 'g_is_super_admin', array('id' => intval($id))) == 1) && ($GLOBALS['SITE_DB']->query_select_value('f_groups', 'COUNT(*)', array('g_is_super_admin' => 1)) == 1)) {
@@ -714,13 +710,13 @@ class Module_admin_cns_groups extends Standard_crud_module
             $promotion_target,
             $promotion_threshold,
             $group_leader,
-            post_param_integer('flood_control_submit_secs', INTEGER_MAGIC_NULL),
-            post_param_integer('flood_control_access_secs', INTEGER_MAGIC_NULL),
-            post_param_integer('max_daily_upload_mb', INTEGER_MAGIC_NULL),
-            post_param_integer('max_attachments_per_post', INTEGER_MAGIC_NULL),
+            post_param_integer('flood_control_submit_secs', fractional_edit() ? INTEGER_MAGIC_NULL : 0),
+            post_param_integer('flood_control_access_secs', fractional_edit() ? INTEGER_MAGIC_NULL : 0),
+            post_param_integer('max_daily_upload_mb', fractional_edit() ? INTEGER_MAGIC_NULL : 0),
+            post_param_integer('max_attachments_per_post', fractional_edit() ? INTEGER_MAGIC_NULL : 0),
             post_param_integer('max_avatar_width', fractional_edit() ? INTEGER_MAGIC_NULL : 100),
             post_param_integer('max_avatar_height', fractional_edit() ? INTEGER_MAGIC_NULL : 100),
-            post_param_integer('max_post_length_comcode', INTEGER_MAGIC_NULL),
+            post_param_integer('max_post_length_comcode', fractional_edit() ? INTEGER_MAGIC_NULL : 0),
             post_param_integer('max_sig_length_comcode', fractional_edit() ? INTEGER_MAGIC_NULL : 10000),
             post_param_integer('gift_points_base', fractional_edit() ? INTEGER_MAGIC_NULL : 0),
             post_param_integer('gift_points_per_day', fractional_edit() ? INTEGER_MAGIC_NULL : 0),
@@ -746,8 +742,8 @@ class Module_admin_cns_groups extends Standard_crud_module
         }
 
         if (!fractional_edit()) {
-            $absorb = post_param_integer('absorb', -1);
-            if ($absorb != -1) {
+            $absorb = post_param_integer('absorb', null);
+            if ($absorb !== null) {
                 cns_group_absorb_privileges_of(intval($id), $absorb);
             }
 

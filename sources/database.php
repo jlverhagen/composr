@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -56,7 +56,7 @@ function init__database()
     // Create our main database objects
     global $TABLE_LANG_FIELDS_CACHE;
     $TABLE_LANG_FIELDS_CACHE = array();
-    if ((array_key_exists('db_site', $SITE_INFO)) || (array_key_exists('db_site_user', $SITE_INFO))) {
+    if ((!empty($SITE_INFO['db_site'])) || (!empty($SITE_INFO['db_site_user']))) {
         global $SITE_DB;
         /** The connection to the active site database.
          *
@@ -81,7 +81,7 @@ function db_map_restrict($row, $fields)
     $out = array();
     foreach ($fields as $field) {
         $out[$field] = $row[$field];
-        if (array_key_exists($field . '__text_parsed', $row)) {
+        if (isset($row[$field . '__text_parsed'])) {
             $out[$field . '__text_parsed'] = $row[$field . '__text_parsed'];
         }
         if (array_key_exists($field . '__source_user', $row)) {
@@ -101,7 +101,7 @@ function multi_lang_content()
     global $HAS_MULTI_LANG_CONTENT;
     if ($HAS_MULTI_LANG_CONTENT === null) {
         global $SITE_INFO;
-        $HAS_MULTI_LANG_CONTENT = isset($SITE_INFO['multi_lang_content']) ? ($SITE_INFO['multi_lang_content'] == '1') : true; // For legacy reasons
+        $HAS_MULTI_LANG_CONTENT = isset($SITE_INFO['multi_lang_content']) ? ($SITE_INFO['multi_lang_content'] === '1') : true; // For legacy reasons
     }
     return $HAS_MULTI_LANG_CONTENT;
 }
@@ -128,18 +128,26 @@ function _general_db_init()
  * Reload language fields from the database.
  *
  * @param boolean $full Whether we need to know about non-Comcode language fields
+ * @param ?string $only_table The only table to reload for (null: all tables)
  */
-function reload_lang_fields($full = false)
+function reload_lang_fields($full = false, $only_table = null)
 {
     global $TABLE_LANG_FIELDS_CACHE;
-    $TABLE_LANG_FIELDS_CACHE = array();
+    if ($only_table === null) {
+        $TABLE_LANG_FIELDS_CACHE = array();
+    } else {
+        unset($TABLE_LANG_FIELDS_CACHE[$only_table]);
+    }
 
     if (multi_lang_content() || $full) {
         $like = db_string_equal_to('m_type', 'SHORT_TRANS__COMCODE') . ' OR ' . db_string_equal_to('m_type', 'LONG_TRANS__COMCODE') . ' OR ' . db_string_equal_to('m_type', 'SHORT_TRANS') . ' OR ' . db_string_equal_to('m_type', 'LONG_TRANS') . ' OR ' . db_string_equal_to('m_type', '?SHORT_TRANS__COMCODE') . ' OR ' . db_string_equal_to('m_type', '?LONG_TRANS__COMCODE') . ' OR ' . db_string_equal_to('m_type', '?SHORT_TRANS') . ' OR ' . db_string_equal_to('m_type', '?LONG_TRANS');
     } else {
         $like = db_string_equal_to('m_type', 'SHORT_TRANS__COMCODE') . ' OR ' . db_string_equal_to('m_type', 'LONG_TRANS__COMCODE') . ' OR ' . db_string_equal_to('m_type', '?SHORT_TRANS__COMCODE') . ' OR ' . db_string_equal_to('m_type', '?LONG_TRANS__COMCODE');
     }
-    $sql = 'SELECT m_name,m_table,m_type FROM ' . get_table_prefix() . 'db_meta WHERE ' . $like;
+    $sql = 'SELECT m_name,m_table,m_type FROM ' . get_table_prefix() . 'db_meta WHERE (' . $like . ')';
+    if ($only_table !== null) {
+        $sql .= ' AND ' . db_string_equal_to('m_table', $only_table);
+    }
     $_table_lang_fields = $GLOBALS['SITE_DB']->query($sql, null, null, true);
     if ($_table_lang_fields !== null) {
         foreach ($_table_lang_fields as $lang_field) {
@@ -204,7 +212,7 @@ function db_string_not_equal_to($attribute, $compare)
 }
 
 /**
- * Encode a LIKE string comparision fragement for the database system. The pattern is a mixture of characters and ? and % wilcard symbols.
+ * Encode a LIKE string comparision fragement for the database system. The pattern is a mixture of characters and ? and % wildcard symbols.
  *
  * @param  string $pattern The pattern
  * @return string The encoded pattern
@@ -220,6 +228,26 @@ function db_encode_like($pattern)
     }
 
     return $ret;
+}
+
+/**
+ * Find whether drop table "if exists" is present
+ *
+ * @param  array $db A DB connection
+ * @return boolean Whether it is
+ */
+function db_supports_drop_table_if_exists($db)
+{
+    if (count($db) > 4) { // Okay, we can't be lazy anymore
+        $db = call_user_func_array(array($GLOBALS['DB_STATIC_OBJECT'], 'db_get_connection'), $db);
+        _general_db_init();
+    }
+
+    if (!method_exists($GLOBALS['DB_STATIC_OBJECT'], 'db_supports_drop_table_if_exists')) {
+        return false;
+    }
+
+    return $GLOBALS['DB_STATIC_OBJECT']->db_supports_drop_table_if_exists();
 }
 
 /**
@@ -251,7 +279,7 @@ function db_full_text_assemble($content, $boolean)
 
     if (($GLOBALS['DEV_MODE']) || (!has_solemnly_declared(I_UNDERSTAND_SQL_INJECTION))) {
         require_code('database_security_filter');
-        $GLOBALS['DB_ESCAPE_STRING_LIST'][$content] = true;
+        $GLOBALS['DB_ESCAPE_STRING_LIST'][$GLOBALS['DB_STATIC_OBJECT']->db_escape_string($content)] = true;
     }
 
     return $ret;
@@ -297,6 +325,44 @@ function db_has_expression_ordering($db)
 }
 
 /**
+ * Whether 'OFFSET' syntax is used on limit clauses.
+ *
+ * @param  array $db A DB connection
+ * @return boolean Whether it is
+ */
+function db_uses_offset_syntax($db)
+{
+    if (count($db) > 4) { // Okay, we can't be lazy anymore
+        $db = call_user_func_array(array($GLOBALS['DB_STATIC_OBJECT'], 'db_get_connection'), $db);
+        _general_db_init();
+    }
+
+    if (!method_exists($GLOBALS['DB_STATIC_OBJECT'], 'db_has_expression_ordering')) {
+        return false;
+    }
+    return $GLOBALS['DB_STATIC_OBJECT']->db_uses_offset_syntax($db);
+}
+
+/**
+ * Find whether table truncation support is present
+ *
+ * @param  array $db A DB connection
+ * @return boolean Whether it is
+ */
+function db_supports_truncate_table($db)
+{
+    if (count($db) > 4) { // Okay, we can't be lazy anymore
+        $db = call_user_func_array(array($GLOBALS['DB_STATIC_OBJECT'], 'db_get_connection'), $db);
+        _general_db_init();
+    }
+
+    if (!method_exists($GLOBALS['DB_STATIC_OBJECT'], 'db_supports_truncate_table')) {
+        return false;
+    }
+    return $GLOBALS['DB_STATIC_OBJECT']->db_supports_truncate_table($db);
+}
+
+/**
  * Escape a string so it may be inserted into a query. If SQL statements are being built up and passed using db_query then it is essential that this is used for security reasons. Otherwise, the abstraction layer deals with the situation.
  *
  * @param  string $string The string
@@ -309,14 +375,260 @@ function db_escape_string($string)
         _general_db_init();
     }
 
+    $ret = $GLOBALS['DB_STATIC_OBJECT']->db_escape_string($string);
+
     if (function_exists('has_solemnly_declared')) {
         if (($GLOBALS['DEV_MODE']) || (!has_solemnly_declared(I_UNDERSTAND_SQL_INJECTION))) {
             require_code('database_security_filter');
-            $GLOBALS['DB_ESCAPE_STRING_LIST'][trim($GLOBALS['DB_STATIC_OBJECT']->db_escape_string($string), ' %')] = true;
+            $GLOBALS['DB_ESCAPE_STRING_LIST'][trim($ret, ' %')] = true;
         }
     }
 
-    return $GLOBALS['DB_STATIC_OBJECT']->db_escape_string($string);
+    return $ret;
+}
+
+/**
+ * Call a database function that may be different on different database drivers.
+ * We are using MySQL syntax as a de-facto standard. SQL does not standardise this stuff well.
+ * This is HACKHACK and should move into database drivers into the future.
+ * Basic arithmetic and inequality operators are assumed supported without needing a function.
+ *
+ * @param string $function Function name
+ * @set CONCAT REPLACE SUBSTR LENGTH RAND COALESCE LEAST GREATEST MOD GROUP_CONCAT
+ * @param ?array $args List of string arguments, assumed already quoted/escaped correctly for the particular database (null: none)
+ * @return string SQL fragment
+ */
+function db_function($function, $args = null)
+{
+    if ($args === null) {
+        $args = array(); // TODO: Fix in v11, make like this as default parameter
+    }
+
+    if (method_exists($GLOBALS['DB_STATIC_OBJECT'], 'db_function')) {
+        return $GLOBALS['DB_STATIC_OBJECT']->db_function($function, $args);
+    }
+
+    switch ($function) {
+        case 'CONCAT':
+            switch (get_db_type()) {
+                // Supported on most
+
+                case 'sqlite':
+                    return implode(' || ', $args);
+
+                case 'access':
+                    return implode(' & ', $args);
+            }
+            break;
+
+        case 'REPLACE':
+            if (count($args) != 3) {
+                fatal_exit(do_lang_tempcode('INTERNAL_ERROR'));
+            }
+            switch (get_db_type()) {
+                // Supported on all http://troels.arvin.dk/db/rdbms/#functions-REPLACE
+                // You don't even need to call this function.
+            }
+            break;
+
+        case 'SUBSTR':
+            if (count($args) != 3) {
+                fatal_exit(do_lang_tempcode('INTERNAL_ERROR'));
+            }
+            if ($args[1] != '1') {
+                fatal_exit(do_lang_tempcode('INTERNAL_ERROR')); // Can only act as a 'LEFT'
+            }
+            switch (get_db_type()) {
+                case 'sqlserver':
+                    $function = 'SUBSTRING'; // http://troels.arvin.dk/db/rdbms/#functions-REPLACE
+                    break;
+
+                case 'access':
+                    $function = 'LEFT'; // http://stackoverflow.com/questions/809120/is-there-an-equivalent-to-the-substring-function-in-ms-access-sql
+                    $args = array($args[0], $args[2]);
+                    break;
+            }
+            break;
+
+        case 'LENGTH':
+            if (count($args) != 1) {
+                fatal_exit(do_lang_tempcode('INTERNAL_ERROR'));
+            }
+            switch (get_db_type()) {
+                case 'sqlserver':
+                case 'access':
+                    $function = 'LEN';
+                    break;
+            }
+            break;
+
+        case 'RAND':
+            if (count($args) != 0) {
+                fatal_exit(do_lang_tempcode('INTERNAL_ERROR'));
+            }
+            switch (get_db_type()) {
+                case 'postgresql':
+                case 'sqlite':
+                    $function = 'RANDOM';
+                    break;
+            }
+            break;
+
+        case 'COALESCE':
+            if (count($args) != 2) {
+                fatal_exit(do_lang_tempcode('INTERNAL_ERROR'));
+            }
+            switch (get_db_type()) {
+                case 'access':
+                    $function = 'IIF';
+                    $args[0] .= ' IS NULL';
+                    break;
+            }
+            break;
+
+        case 'LEAST':
+            switch (get_db_type()) {
+                case 'sqlite':
+                    $function = 'MIN';
+                    break;
+                case 'sqlserver':
+                case 'access':
+                    $ret = '(SELECT MIN(X) FROM (';
+                    foreach ($args as $i => $arg) {
+                        if ($i != 0) {
+                            $ret .= ' UNION ALL ';
+                        }
+                        $ret .= 'SELECT ' . $args[0] . ' AS X';
+                    }
+                    $ret .= '))';
+                    return $ret;
+            }
+            break;
+
+        case 'GREATEST':
+            switch (get_db_type()) {
+                case 'sqlite':
+                    $function = 'MAX';
+                    break;
+                case 'sqlserver':
+                case 'access':
+                    $ret = '(SELECT MAX(X) FROM (';
+                    foreach ($args as $i => $arg) {
+                        if ($i != 0) {
+                            $ret .= ' UNION ALL ';
+                        }
+                        $ret .= 'SELECT ' . $args[0] . ' AS X';
+                    }
+                    $ret .= '))';
+                    return $ret;
+            }
+            break;
+
+        case 'MOD':
+            if (count($args) != 2) {
+                fatal_exit(do_lang_tempcode('INTERNAL_ERROR'));
+            }
+            switch (get_db_type()) {
+                case 'access':
+                    return $args[0] . ' MOD ' . $args[1];
+                case 'postgresql':
+                case 'sqlserver':
+                case 'sqlite':
+                    return $args[0] . ' % ' . $args[1];
+            }
+            break;
+
+        // This may not be fully supported on all database systems
+        case 'GROUP_CONCAT':
+            if (count($args) != 2) {
+                fatal_exit(do_lang_tempcode('INTERNAL_ERROR'));
+            }
+            switch (get_db_type()) {
+                case 'oracle':
+                    return 'SELECT LISTAGG(' . $args[0] . ', \',\') WITHIN GROUP (ORDER BY ' . $args[0] . ') FROM ' . $args[1];
+                case 'postgresql':
+                    return 'SELECT array_to_string(array_agg(' . $args[0] . '), \',\') FROM ' . $args[1];
+                case 'sql_server':
+                    return 'STUFF((SELECT \',\'+' . $args[0] . ' FROM ' . $args[1] . ' FOR XML PATH(\'\')), 1, 1, \'\')';
+                case 'access': // Not fully supported
+                    return 'SELECT TOP 1 ' . $args[0] . ' FROM ' . $args[1];
+                case 'ibm': // Not fully supported
+                    return 'SELECT ' . $args[0] . ' FROM ' . $args[1] . ' fetch first 1 rows only';
+                case 'xml':
+                    return 'SELECT X_GROUP_CONCAT(' . $args[0] . ') FROM ' . $args[1];
+                case 'mysql':
+                case 'mysqli':
+                case 'mysql_dbx':
+                case 'sqlite':
+                default:
+                    return 'SELECT GROUP_CONCAT(' . $args[0] . ') FROM ' . $args[1];
+            }
+            break;
+    }
+
+    if (get_db_type() == 'xml') {
+        $function = 'X_' . $function;
+    }
+
+    // Default handling
+    return $function . '(' . implode(',', $args) . ')';
+}
+
+/**
+ * Get the number of rows in a table, with approximation support for performance (if necessary on the particular database backend).
+ *
+ * @param string $table The table name
+ * @param  ?array $where WHERE clauses if it will help get a more reliable number when we're not approximating in map form (null: none)
+ * @param  ?string $where_clause WHERE clauses if it will help get a more reliable number when we're not approximating in SQL form (null: none)
+ * @param  ?object $db The DB connection to check against (null: site's main active forum database)
+ * @return ?integer The count (null: do it normally)
+ */
+function get_table_count_approx($table, $where = null, $where_clause = null, $db = null)
+{
+    if ($db === null) {
+        $db = $GLOBALS['SITE_DB'];
+    }
+
+    if ($where === null) {
+        $where = array();
+    }
+
+    if (method_exists($GLOBALS['DB_STATIC_OBJECT'], 'get_table_count_approx')) {
+        $test = $GLOBALS['DB_STATIC_OBJECT']->get_table_count_approx($table, $where, $where_clause, $db);
+        if ($test !== null) {
+            return $test;
+        }
+    }
+
+    return $db->query_select_value($table, 'COUNT(*)', $where, ($where_clause === null) ? '' : (' AND ' . $where_clause));
+}
+
+/**
+ * Create an SQL cast.
+ * Note if using this in a SELECT clause you should use 'AS', as you can't predict what the CAST is going to set the field name as.
+ *
+ * @param string $field The field identifier
+ * @param string $type The type wanted
+ * @set CHAR INT
+ * @return string The database type
+ */
+function db_cast($field, $type)
+{
+    if (method_exists($GLOBALS['DB_STATIC_OBJECT'], 'db_cast')) {
+        return $GLOBALS['DB_STATIC_OBJECT']->db_cast($field, $type);
+    }
+
+    switch ($type) {
+        case 'CHAR':
+        case 'INT':
+            $_type = $type;
+            break;
+
+        default:
+            fatal_exit(do_lang_tempcode('INTERNAL_ERROR'));
+    }
+
+    return 'CAST(' . $field . ' AS ' . $_type . ')';
 }
 
 /**
@@ -330,7 +642,11 @@ function get_db_type()
     if (!isset($SITE_INFO['db_type'])) {
         return is_dir(get_custom_file_base() . '/uploads/website_specific/' . get_db_site()) ? 'xml' : 'mysql';
     }
-    return $SITE_INFO['db_type'];
+    $ret = $SITE_INFO['db_type'];
+    if ($ret === 'mysql' && !function_exists('mysql_connect')) {
+        $ret = 'mysqli';
+    }
+    return $ret;
 }
 
 /**
@@ -341,11 +657,11 @@ function get_db_type()
 function get_use_persistent()
 {
     global $SITE_INFO;
-    return array_key_exists('use_persistent', $SITE_INFO) ? ($SITE_INFO['use_persistent'] == '1') : false;
+    return (!empty($SITE_INFO['use_persistent'])) ? ($SITE_INFO['use_persistent'] == '1') : false;
 }
 
 /**
- * Get the table prefixes used for all Composr tables, commonly used when you are installing Composr in the same database as your forums. The default table prefix is 'cms4_'. Note that anything that might write to an arbitrary db, must ask that db for it's table prefix (if it needs it of course... the db abstracts away most needs for it)
+ * Get the table prefixes used for all Composr tables, commonly used when you are installing Composr in the same database as your forums. The default table prefix is 'cms_'. Note that anything that might write to an arbitrary db, must ask that db for it's table prefix (if it needs it of course... the db abstracts away most needs for it)
  *
  * @return string The table prefix
  */
@@ -366,7 +682,7 @@ function get_table_prefix()
 function get_db_site_host()
 {
     global $SITE_INFO;
-    return array_key_exists('db_site_host', $SITE_INFO) ? $SITE_INFO['db_site_host'] : 'localhost';
+    return (!empty($SITE_INFO['db_site_host'])) ? $SITE_INFO['db_site_host'] : 'localhost';
 }
 
 /**
@@ -377,7 +693,7 @@ function get_db_site_host()
 function get_db_site()
 {
     global $SITE_INFO;
-    if ((!array_key_exists('db_site', $SITE_INFO)) || ($SITE_INFO['db_site'] === null)) {
+    if (empty($SITE_INFO['db_site'])) {
         return basename(get_file_base());
     }
     return $SITE_INFO['db_site'] . (($GLOBALS['CURRENT_SHARE_USER'] === null) ? '' : ('_' . $GLOBALS['CURRENT_SHARE_USER']));
@@ -392,9 +708,9 @@ function get_db_site_user()
 {
     global $SITE_INFO;
     if ($GLOBALS['CURRENT_SHARE_USER'] !== null) {
-        return substr(md5($SITE_INFO['db_forums_user'] . '_' . $GLOBALS['CURRENT_SHARE_USER']), 0, 16);
+        return substr(md5($SITE_INFO['db_site_user'] . '_' . $GLOBALS['CURRENT_SHARE_USER']), 0, 16);
     }
-    return ((array_key_exists('db_site_user', $SITE_INFO)) && ($SITE_INFO['db_site_user'] !== null)) ? $SITE_INFO['db_site_user'] : 'root';
+    return (!empty($SITE_INFO['db_site_user'])) ? $SITE_INFO['db_site_user'] : 'root';
 }
 
 /**
@@ -416,7 +732,7 @@ function get_db_site_password()
 function get_db_forums_host()
 {
     global $SITE_INFO;
-    return array_key_exists('db_forums_host', $SITE_INFO) ? $SITE_INFO['db_forums_host'] : (array_key_exists('db_site_host', $SITE_INFO) ? $SITE_INFO['db_site_host'] : 'localhost');
+    return (!empty($SITE_INFO['db_forums_host'])) ? $SITE_INFO['db_forums_host'] : (!empty($SITE_INFO['db_site_host']) ? $SITE_INFO['db_site_host'] : 'localhost');
 }
 
 /**
@@ -427,7 +743,7 @@ function get_db_forums_host()
 function get_db_forums()
 {
     global $SITE_INFO;
-    if (!array_key_exists('db_forums', $SITE_INFO)) {
+    if (empty($SITE_INFO['db_forums'])) {
         return get_db_site();
     }
     return $SITE_INFO['db_forums'] . (($GLOBALS['CURRENT_SHARE_USER'] === null) ? '' : ('_' . $GLOBALS['CURRENT_SHARE_USER']));
@@ -441,7 +757,7 @@ function get_db_forums()
 function get_db_forums_user()
 {
     global $SITE_INFO;
-    if (!array_key_exists('db_forums_user', $SITE_INFO)) {
+    if (empty($SITE_INFO['db_forums_user'])) {
         return get_db_site_user();
     }
     if ($GLOBALS['CURRENT_SHARE_USER'] !== null) {
@@ -467,15 +783,27 @@ function get_db_forums_password()
 /**
  * Find whether we are on a multi-site-network.
  *
- * @param  ?object $db The DB connection to check against (null: main active site database)
+ * @param  ?object $db The DB connection to check against (null: site's main active forum database)
  * @return boolean Whether we are
  */
 function is_on_multi_site_network($db = null)
 {
-    if ($db !== null) {
-        return !is_forum_db($db); // If passed connection is not the same as the forum connection, then it must be a multi-site-network
+    static $cache = null;
+    if ($db === null && $cache !== null) {
+        return $cache;
     }
-    return ((get_db_site_host() != get_db_forums_host()) || (get_db_site() != get_db_forums()) || (isset($GLOBALS['FORUM_DRIVER'])) && ($GLOBALS['FORUM_DRIVER']->get_drivered_table_prefix() != get_table_prefix()));
+
+    if (get_forum_type() == 'none') {
+        $cache = false;
+        return false;
+    }
+
+    if ($db !== null) {
+        $ret = !is_forum_db($db); // If passed connection is not the same as the forum connection, then it must be a multi-site-network
+        return $ret;
+    }
+    $cache = ((get_db_site_host() != get_db_forums_host()) || (get_db_site() != get_db_forums()) || (isset($GLOBALS['FORUM_DRIVER'])) && ($GLOBALS['FORUM_DRIVER']->get_drivered_table_prefix() != get_table_prefix()));
+    return $cache;
 }
 
 /**
@@ -486,12 +814,18 @@ function is_on_multi_site_network($db = null)
  */
 function is_forum_db($db)
 {
+    if (isset($db->is_forum_db)) {
+        return $db->is_forum_db;
+    }
+
     if (!is_on_multi_site_network()) {
         // Not on a multi-site-network
         return false;
     }
 
-    return ((isset($GLOBALS['FORUM_DB'])) && ($db->connection_write == $GLOBALS['FORUM_DB']->connection_write));
+    $ret = ((isset($GLOBALS['FORUM_DB'])) && ($db->connection_write == $GLOBALS['FORUM_DB']->connection_write) && ($db->connection_write != $GLOBALS['SITE_DB']->connection_write));
+    $db->is_forum_db = $ret;
+    return $ret;
 }
 
 /**
@@ -521,7 +855,7 @@ class DatabaseConnector
      * @param string $db_user The connection username
      * @param string $db_password The connection password
      * @param string $table_prefix The table prefix
-     * @param boolean $fail_ok Whether to on error echo an error and return with a NULL, rather than giving a critical error
+     * @param boolean $fail_ok Whether to on error echo an error and return with a null, rather than giving a critical error
      * @param ?object         $static Static call object (null: use global static call object)
      */
     public function __construct($db_name, $db_host, $db_user, $db_password, $table_prefix, $fail_ok = false, $static = null)
@@ -549,7 +883,7 @@ class DatabaseConnector
     }
 
     /**
-     * Get the table prefixes used for all Composr tables, commonly used when you are installing Composr in the same database as your forums. The default table prefix is 'cms4_'.
+     * Get the table prefixes used for all Composr tables, commonly used when you are installing Composr in the same database as your forums. The default table prefix is 'cms_'.
      *
      * @return string The table prefix
      */
@@ -559,48 +893,35 @@ class DatabaseConnector
     }
 
     /**
-     * Initialise a filesystem DB that we can use for caching.
-     */
-    public function initialise_filesystem_db()
-    {
-        global $FILECACHE_OBJECT;
-        require_code('database/xml');
-        $chain_db = new DatabaseConnector(get_custom_file_base() . '/caches/persistent', '', '', '', get_table_prefix(), false, object_factory('Database_Static_xml'));
-        $chain_connection = &$chain_db->connection_write;
-        if (count($chain_connection) > 4) { // Okay, we can't be lazy anymore
-            $chain_connection = call_user_func_array(array($chain_db->static_ob, 'db_get_connection'), $chain_connection);
-            _general_db_init();
-        }
-        $FILECACHE_OBJECT = $chain_db;
-    }
-
-    /**
      * Check if a table exists.
      *
-     * @param  ID_TEXT $tablename The table name
+     * @param  ID_TEXT $table_name The table name
+     * @param  boolean $really Check direct, not using meta-table (if possible)
      * @return boolean Whether it exists
      */
-    public function table_exists($tablename)
+    public function table_exists($table_name, $really = false)
     {
-        /*
-        // Just works with MySQL (too complex to do for all SQL's http://forums.whirlpool.net.au/forum-replies-archive.cfm/523219.html)
-
-        $full_tablename=$this->get_table_prefix().$tablename;
-
-        $rows=$this->query("SHOW TABLES LIKE '".$full_tablename."'");
-        foreach ($rows as $row)
-            foreach ($row as $field)
-                    if ($field==$full_tablename) return true;
-        return false;
-        */
-
-        if (array_key_exists($tablename, $this->table_exists_cache)) {
-            return $this->table_exists_cache[$tablename];
+        if ($really && strpos(get_db_type(), 'mysql') !== false) {
+            // Just works with MySQL (too complex to do for all SQL's http://forums.whirlpool.net.au/forum-replies-archive.cfm/523219.html)
+            $full_table_name = $this->get_table_prefix() . $table_name;
+            $rows = $this->query("SHOW TABLES LIKE '" . $full_table_name . "'");
+            foreach ($rows as $row) {
+                foreach ($row as $field) {
+                    if ($field == $full_table_name) {
+                        return true;
+                    }
+                }
+            }
+            return false;
         }
 
-        $test = $this->query_select_value_if_there('db_meta', 'm_name', array('m_table' => $tablename));
-        $this->table_exists_cache[$tablename] = ($test !== null);
-        return $this->table_exists_cache[$tablename];
+        if (array_key_exists($table_name, $this->table_exists_cache)) {
+            return $this->table_exists_cache[$table_name];
+        }
+
+        $test = $this->query_select_value_if_there('db_meta', 'm_name', array('m_table' => $table_name));
+        $this->table_exists_cache[$table_name] = ($test !== null);
+        return $this->table_exists_cache[$table_name];
     }
 
     /**
@@ -610,8 +931,8 @@ class DatabaseConnector
      * @param  ID_TEXT $table_name The table name
      * @param  array $fields The fields
      * @param  boolean $skip_size_check Whether to skip the size check for the table (only do this for addon modules that don't need to support anything other than MySQL)
-     * @param  boolean $skip_null_check Whether to skip the check for NULL string fields
-     * @param  boolean $save_bytes Whether to use lower-byte table storage, with tradeoffs of not being able to support all unicode characters; use this if key length is an issue
+     * @param  boolean $skip_null_check Whether to skip the check for null string fields
+     * @param  ?boolean $save_bytes Whether to use lower-byte table storage, with tradeoffs of not being able to support all unicode characters; use this if key length is an issue (null: auto-detect if needed). Pass as true/false for normal install code to make intentions explicit, maintenance code may use auto-detect.
      */
     public function create_table($table_name, $fields, $skip_size_check = false, $skip_null_check = false, $save_bytes = false)
     {
@@ -634,24 +955,44 @@ class DatabaseConnector
     }
 
     /**
+     * Turn a list of maps into the bulk-insert format used by query_insert.
+     *
+     * @param  array $maps List of maps
+     * @return array The row format for bulk-inserts.
+     */
+    public function bulk_insert_flip($maps)
+    {
+        $data = array();
+        foreach ($maps as $map) {
+            foreach ($map as $key => $val) {
+                if (!isset($data[$key])) {
+                    $data[$key] = array();
+                }
+                $data[$key][] = $val;
+            }
+        }
+        return $data;
+    }
+
+    /**
      * Insert a row.
      *
      * @param  string $table The table name
-     * @param  array $map The insertion map
+     * @param  array $map The insertion map. Each map may point to an array of values for bulk-inserts, as long as the size of each array is the same
      * @param  boolean $ret Whether to return the auto-insert-id
      * @param  boolean $fail_ok Whether to allow failure (outputting a message instead of exiting completely)
      * @param  boolean $save_as_volatile Whether we are saving as a 'volatile' file extension (used in the XML DB driver, to mark things as being non-syndicated to git)
-     * @return integer The ID of the new row
+     * @return mixed The ID of the new row
      */
     public function query_insert($table, $map, $ret = false, $fail_ok = false, $save_as_volatile = false)
     {
         $keys = '';
-        $all_values = array();
+        $all_values = array(); // will usually only have a single entry; for bulk-inserts it will have as many as there are inserts
 
         $eis = $this->static_ob->db_empty_is_null();
 
         foreach ($map as $key => $value) {
-            if ($keys != '') {
+            if ($keys !== '') {
                 $keys .= ', ';
             }
             $keys .= $key;
@@ -665,25 +1006,25 @@ class DatabaseConnector
                 }
                 $values = $all_values[$i];
 
-                if ($values != '') {
+                if ($values !== '') {
                     $values .= ', ';
                 }
 
                 if ($value === null) {
-                    if (($eis) && (is_string($v)) && ($v == '')) {
+                    if (($eis) && ($v === '')) {
                         $values .= '\' \'';
                     } else {
                         $values .= 'NULL';
                     }
                 } else {
-                    if (($eis) && (is_string($v)) && ($v == '')) {
+                    if (($eis) && ($v === '')) {
                         $v = ' ';
                     }
                     if (is_integer($v)) {
                         $values .= strval($v);
                     } elseif (is_float($v)) {
                         $values .= float_to_raw_string($v, 10);
-                    } elseif (($key == 'begin_num') || ($key == 'end_num')) {
+                    } elseif (($key === 'begin_num') || ($key === 'end_num')) {
                         $values .= $v; // Fudge, for all our known large unsigned integers
                     } else {
                         $values .= '\'' . $this->static_ob->db_escape_string($v) . '\'';
@@ -694,17 +1035,21 @@ class DatabaseConnector
             }
         }
 
-        if (count($all_values) == 1) { // usually $all_values only has length of 1
-            if ((in_array($table, array('stats', 'banner_clicks', 'member_tracking', 'usersonline_track', 'download_logging'))) && (substr(get_db_type(), 0, 5) == 'mysql') && (get_value('enable_delayed_inserts') === '1')) {
+        if (count($all_values) === 1) { // usually $all_values only has length of 1
+            if ((function_exists('get_value')) && (get_value('enable_delayed_inserts') === '1') && (in_array($table, array('stats', 'banner_clicks', 'member_tracking', 'usersonline_track', 'download_logging'/*Ideally we would define this list via database_relations.php, but performance matters*/))) && (substr(get_db_type(), 0, 5) === 'mysql')) {
                 $query = 'INSERT DELAYED INTO ' . $this->table_prefix . $table . ' (' . $keys . ') VALUES (' . $all_values[0] . ')';
             } else {
                 $query = 'INSERT INTO ' . $this->table_prefix . $table . ' (' . $keys . ') VALUES (' . $all_values[0] . ')';
             }
         } else {
+            if (count($all_values) === 0) {
+                return null;
+            }
+
             // So we can do batch inserts...
             $all_v = '';
             foreach ($all_values as $v) {
-                if ($all_v != '') {
+                if ($all_v !== '') {
                     $all_v .= ', ';
                 }
                 $all_v .= '(' . $v . ')';
@@ -735,9 +1080,9 @@ class DatabaseConnector
 
         $select = '';
         foreach ($select_map as $key) {
-            //if (!is_string($key)) $key=strval($key);   Should not happen, but won't cause a problem if does. Don't do this check for performance reasons.
+            //if (!is_string($key)) $key = strval($key);   Should not happen, but won't cause a problem if does. Don't do this check for performance reasons.
 
-            if ($select != '') {
+            if ($select !== '') {
                 $select .= ',';
             }
 
@@ -753,7 +1098,7 @@ class DatabaseConnector
                     }
                 }
 
-                if ($where != '') {
+                if ($where !== '') {
                     $where .= ' AND ';
                 }
 
@@ -761,7 +1106,7 @@ class DatabaseConnector
                     $where .= $key . '=' . float_to_raw_string($value, 10);
                 } elseif (is_integer($value)) {
                     $where .= $key . '=' . strval($value);
-                } elseif (($key == 'begin_num') || ($key == 'end_num')) {
+                } elseif (($key === 'begin_num') || ($key === 'end_num')) {
                     $where .= $key . '=' . $value; // Fudge, for all our known large unsigned integers
                 } else {
                     if ($value === null) {
@@ -778,6 +1123,9 @@ class DatabaseConnector
 
             return 'SELECT ' . $select . ' FROM ' . $table . ' WHERE (' . $where . ') ' . $end;
         }
+        if (substr(ltrim($end), 0, 6) !== 'WHERE ') {
+            $end = 'WHERE 1=1 ' . $end; // We force a WHERE so that code of ours that alters queries can work robustly
+        }
         return 'SELECT ' . $select . ' FROM ' . $table . ' ' . $end;
     }
 
@@ -789,7 +1137,7 @@ class DatabaseConnector
      * @param  ?array $where_map The WHERE map [will all be AND'd together] (null: no where conditions)
      * @param  string $end Something to tack onto the end
      * @param  boolean $fail_ok Whether to allow failure (outputting a message instead of exiting completely)
-     * @param  ?array $lang_fields Extra language fields to join in for cache-prefilling. You only need to send this if you are doing a JOIN and carefully craft your query so table field names won't conflict (null: none)
+     * @param  ?array $lang_fields Extra language fields to join in for cache-prefilling. You only need to send this if you are doing a JOIN and carefully craft your query so table field names won't conflict (null: auto-detect, if not a join)
      * @return mixed The first value of the first row returned
      */
     public function query_select_value($table, $selected_value, $where_map = null, $end = '', $fail_ok = false, $lang_fields = null)
@@ -821,14 +1169,14 @@ class DatabaseConnector
     }
 
     /**
-     * Get the specified value from the database, or NULL if there is no matching row (or if the value itself is NULL). This is good for detection existence of records, or for use if they might may or may not be present.
+     * Get the specified value from the database, or null if there is no matching row (or if the value itself is null). This is good for detection existence of records, or for use if they might may or may not be present.
      *
      * @param  string $table The table name
      * @param  string $select The field to select
      * @param  ?array $where_map The WHERE map [will all be AND'd together] (null: no where conditions)
      * @param  string $end Something to tack onto the end
      * @param  boolean $fail_ok Whether to allow failure (outputting a message instead of exiting completely)
-     * @param  ?array $lang_fields Extra language fields to join in for cache-prefilling. You only need to send this if you are doing a JOIN and carefully craft your query so table field names won't conflict (null: none)
+     * @param  ?array $lang_fields Extra language fields to join in for cache-prefilling. You only need to send this if you are doing a JOIN and carefully craft your query so table field names won't conflict (null: auto-detect, if not a join)
      * @return ?mixed The first value of the first row returned (null: nothing found, or null value found)
      */
     public function query_select_value_if_there($table, $select, $where_map = null, $end = '', $fail_ok = false, $lang_fields = null)
@@ -846,7 +1194,7 @@ class DatabaseConnector
      * @param  string $query The complete SQL query
      * @param  boolean $fail_ok Whether to allow failure (outputting a message instead of exiting completely)
      * @param  boolean $skip_safety_check Whether to skip the query safety check
-     * @param  ?array $lang_fields Extra language fields to join in for cache-prefilling. You only need to send this if you are doing a JOIN and carefully craft your query so table field names won't conflict (null: none)
+     * @param  ?array $lang_fields Extra language fields to join in for cache-prefilling. You only need to send this if you are doing a JOIN and carefully craft your query so table field names won't conflict (null: auto-detect, if not a join)
      * @return ?mixed The first value of the first row returned (null: nothing found, or null value found)
      */
     public function query_value_if_there($query, $fail_ok = false, $skip_safety_check = false, $lang_fields = null)
@@ -866,7 +1214,7 @@ class DatabaseConnector
                 }
 
                 if (!has_escaped_dynamic_sql($query)) {
-                    fatal_exit('Dynamic SQL has not been escaped properly');
+                    fatal_exit('Dynamic SQL has not been escaped properly in ' . $query);
                 }
             }
         }
@@ -889,7 +1237,7 @@ class DatabaseConnector
      * @param  ?integer $max The maximum number of rows to select (null: get all)
      * @param  ?integer $start The starting row to select (null: start at first)
      * @param  boolean $fail_ok Whether to allow failure (outputting a message instead of exiting completely)
-     * @param  ?array $lang_fields Extra language fields to join in for cache-prefilling. You only need to send this if you are doing a JOIN and carefully craft your query so table field names won't conflict (null: none)
+     * @param  ?array $lang_fields Extra language fields to join in for cache-prefilling. You only need to send this if you are doing a JOIN and carefully craft your query so table field names won't conflict (null: auto-detect, if not a join)
      * @return array The results (empty array: empty result set)
      */
     public function query_select($table, $select = null, $where_map = null, $end = '', $max = null, $start = null, $fail_ok = false, $lang_fields = null)
@@ -915,18 +1263,24 @@ class DatabaseConnector
      * @param  array $select The SELECT map
      * @param  ?array $where_map The WHERE map [will all be AND'd together] (null: no conditions)
      * @param  string $end Something to tack onto the end of the SQL query
-     * @param  ?array $lang_fields Extra language fields to join in for cache-prefilling. You only need to send this if you are doing a JOIN and carefully craft your query so table field names won't conflict (null: none)
+     * @param  ?array $lang_fields Extra language fields to join in for cache-prefilling. You only need to send this if you are doing a JOIN and carefully craft your query so table field names won't conflict (null: auto-detect, if not a join)
      */
     protected function _automatic_lang_fields(&$table, &$full_table, &$select, &$where_map, &$end, &$lang_fields)
     {
         // Optimisation for entirely automatic translate table linkage (only done on non-joins, as this removes a whole lot of potential complexities -- if people are doing joins they go a little further to do this manually anyway; also we make sure we're operating on our site's table prefix so we don't collect meta info for the wrong table set)
         if ($lang_fields === null) {
-            if (($table != 'translate') && (strpos($table, ' ') === false) && ((isset($GLOBALS['SITE_DB'])) && ($this->table_prefix == $GLOBALS['SITE_DB']->table_prefix) || (get_forum_type() == 'cns'))) {
+            if (
+                ($table !== 'translate') &&
+                (strpos($table, ' ') === false) &&
+                (strpos($end, 'GROUP BY ') === false/*Can only SELECT what is also in GROUP BY*/) &&
+                ((isset($GLOBALS['SITE_DB'])) &&
+                ($this->table_prefix === $GLOBALS['SITE_DB']->table_prefix) || (get_forum_type() === 'cns'))
+            ) {
                 global $TABLE_LANG_FIELDS_CACHE;
                 $lang_fields_provisional = isset($TABLE_LANG_FIELDS_CACHE[$table]) ? $TABLE_LANG_FIELDS_CACHE[$table] : array();
                 $lang_fields = array();
 
-                if ($lang_fields_provisional != array()) {
+                if ($lang_fields_provisional !== array()) {
                     $full_table .= ' main';
 
                     foreach ($select as $i => $s) {
@@ -935,7 +1289,7 @@ class DatabaseConnector
                             break; // Bad API call, but we'll let it fail naturally
                         }
 
-                        if (preg_match('#^[A-Za-z\_\*]+$#', $s) != 0) {
+                        if (preg_match('#^[A-Za-z\_\*]+$#', $s) !== 0) {
                             $select[$i] = 'main.' . $s;
                         }
                     }
@@ -946,13 +1300,13 @@ class DatabaseConnector
                                 break; // Bad API call, but we'll let it fail naturally
                             }
 
-                            if (preg_match('#^[A-Za-z\_]+$#', $i) != 0) {
+                            if (preg_match('#^[A-Za-z\_]+$#', $i) !== 0) {
                                 unset($where_map[$i]);
                                 $where_map['main.' . $i] = $s;
                             }
                         }
                     }
-                    if ($end != '') {
+                    if ($end !== '') {
                         $end = preg_replace('#(^|,|\s)([a-z]+)($|,|\s)#', '${1}main.${2}${3}', $end);
                     }
 
@@ -962,9 +1316,13 @@ class DatabaseConnector
 
                     foreach ($lang_fields_provisional as $lang_field => $field_type) {
                         if (
+                            (isset($select_inv[$field_prefix . '*'])) ||
+
                             (isset($select_inv[$field_prefix . $lang_field])) ||
+
+                            (isset($select_inv['t_' . $lang_field . '.text_original'])) ||
                             ((!is_null($where_map)) && (isset($where_map['t_' . $lang_field . '.text_original']))) ||
-                            (isset($select_inv[$field_prefix . '*']))
+                            (strpos($end, 't_' . $lang_field . '.text_original') !== false)
                         ) {
                             $lang_fields[$lang_field] = $field_type;
                         }
@@ -987,7 +1345,7 @@ class DatabaseConnector
      * @param  ?integer $start The start row to affect (null: no specification)
      * @param  boolean $fail_ok Whether to output an error on failure
      * @param  boolean $skip_safety_check Whether to skip the query safety check
-     * @param  ?array $lang_fields Extra language fields to join in for cache-prefilling. You only need to send this if you are doing a JOIN and carefully craft your query so table field names won't conflict (null: none)
+     * @param  ?array $lang_fields Extra language fields to join in for cache-prefilling. You only need to send this if you are doing a JOIN and carefully craft your query so table field names won't conflict (null: auto-detect, if not a join)
      * @param  string $field_prefix All the core fields have a prefix of this on them, so when we fiddle with language lookup we need to use this (only consider this if you're setting $lang_fields)
      * @return ?mixed The results (null: no result set) (empty array: empty result set)
      */
@@ -1003,7 +1361,7 @@ class DatabaseConnector
                 $val = strval($val);
             }
 
-            if ($key == 'prefix') {
+            if ($key === 'prefix') {
                 // Special case, not within quotes.
                 $search = '#{' . preg_quote($key, '#') . '}#';
                 $replace = $val;
@@ -1026,7 +1384,7 @@ class DatabaseConnector
      * @param  ?integer $start The start row to affect (null: no specification)
      * @param  boolean $fail_ok Whether to output an error on failure
      * @param  boolean $skip_safety_check Whether to skip the query safety check
-     * @param  ?array $lang_fields Extra language fields to join in for cache-prefilling. You only need to send this if you are doing a JOIN and carefully craft your query so table field names won't conflict (null: none)
+     * @param  ?array $lang_fields Extra language fields to join in for cache-prefilling. You only need to send this if you are doing a JOIN and carefully craft your query so table field names won't conflict (null: auto-detect, if not a join)
      * @param  string $field_prefix All the core fields have a prefix of this on them, so when we fiddle with language lookup we need to use this (only consider this if you're setting $lang_fields)
      * @return ?mixed The results (null: no result set) (empty array: empty result set)
      */
@@ -1081,7 +1439,7 @@ class DatabaseConnector
      * @param  ?integer $start The start row to affect (null: no specification)
      * @param  boolean $fail_ok Whether to output an error on failure
      * @param  boolean $get_insert_id Whether to get an insert ID
-     * @param  ?array $lang_fields Extra language fields to join in for cache-prefilling. You only need to send this if you are doing a JOIN and carefully craft your query so table field names won't conflict (null: none)
+     * @param  ?array $lang_fields Extra language fields to join in for cache-prefilling. You only need to send this if you are doing a JOIN and carefully craft your query so table field names won't conflict (null: auto-detect, if not a join)
      * @param  string $field_prefix All the core fields have a prefix of this on them, so when we fiddle with language lookup we need to use this (only consider this if you're setting $lang_fields)
      * @param  boolean $save_as_volatile Whether we are saving as a 'volatile' file extension (used in the XML DB driver, to mark things as being non-syndicated to git)
      * @return ?mixed The results (null: no result set) (empty array: empty result set)
@@ -1091,7 +1449,10 @@ class DatabaseConnector
         global $QUERY_COUNT, $NO_QUERY_LIMIT, $QUERY_LOG, $QUERY_LIST, $DEV_MODE, $IN_MINIKERNEL_VERSION, $QUERY_FILE_LOG, $UPON_QUERY_HOOKS_CACHE;
 
         if ($QUERY_FILE_LOG !== null) {
+            flock($QUERY_FILE_LOG, LOCK_EX);
+            fseek($QUERY_FILE_LOG, 0, SEEK_END);
             fwrite($QUERY_FILE_LOG, $query . ';' . "\n\n");
+            flock($QUERY_FILE_LOG, LOCK_UN);
         }
 
         if ($DEV_MODE) {
@@ -1108,25 +1469,26 @@ class DatabaseConnector
 
         if (!$NO_QUERY_LIMIT) {
             $QUERY_COUNT++;
-            //@exit('!');
-            //if ($QUERY_COUNT>10) @ob_end_clean();@print('Query: '.$query."\n");
+            /*if ($QUERY_COUNT > 10) {
+                cms_ob_end_clean();
+            }
+            @print('Query: ' . $query . "\n");*/
         }
-        static $fb = null;
-        if ($fb === null) {
-            $fb = function_exists('fb');
-        }
-        if (($fb) && (!headers_sent()) && (get_param_integer('keep_firephp_queries', 0) == 1) && (function_exists('fb'))) {
+        if ((!headers_sent()) && (function_exists('fb')) && (get_param_integer('keep_firephp_queries', 0) === 1)) {
             fb('Query: ' . $query);
         }
 
-        if (($QUERY_COUNT == 250) && (get_param_integer('keep_no_query_limit', 0) == 0) && ($GLOBALS['RELATIVE_PATH'] != '_tests') && (count($_POST) == 0) && (get_page_name() != 'admin_importer') && (!$IN_MINIKERNEL_VERSION) && (get_param_string('special_page_type', '') != 'query')) {
+        if (($QUERY_COUNT === 250) && (get_param_integer('keep_no_query_limit', 0) === 0) && ($GLOBALS['RELATIVE_PATH'] !== '_tests') && (count($_POST) === 0) && (get_page_name() !== 'admin_importer') && (!$IN_MINIKERNEL_VERSION) && (get_param_string('special_page_type', '') !== 'query')) {
             cms_profile_start_for('_query:HIGH_VOLUME_ALERT');
 
             $NO_QUERY_LIMIT = true;
             $log_path = get_custom_file_base() . '/data_custom/big_query_screens.log';
             if (is_writable_wrap($log_path)) {
                 $myfile = fopen($log_path, 'at');
-                fwrite($myfile, get_self_url_easy() . "\n");
+                flock($myfile, LOCK_EX);
+                fseek($myfile, 0, SEEK_END);
+                fwrite($myfile, get_self_url_easy(true) . "\n");
+                flock($myfile, LOCK_UN);
                 fclose($myfile);
             }
             if ($DEV_MODE) {
@@ -1147,14 +1509,14 @@ class DatabaseConnector
                         $field_stripped = preg_replace('#.*\.#', '', $field);
 
                         $join = ' LEFT JOIN ' . $this->table_prefix . 'translate t_' . $field_stripped . ' ON t_' . $field_stripped . '.id=' . $field_prefix . $field;
-                        if (strpos($query, 't_' . $field_stripped . '.text_original') === false) {
-                            $join .= ' AND ' . db_string_equal_to('t_' . $field_stripped . '.language', $lang);
-                        }
+                        $join .= ' AND ' . db_string_equal_to('t_' . $field_stripped . '.language', $lang);
 
                         $_query = strtoupper($query);
                         $from_pos = strpos($_query, ' FROM ');
                         $where_pos = strpos($_query, ' WHERE ');
-                        if (($from_pos !== false) && (strpos(substr($_query, 0, $from_pos), '(SELECT') !== false)) {
+                        $from_in_subquery = ($from_pos !== false) && (strpos(substr($_query, 0, $from_pos), '(SELECT') !== false); // FROM clause seems to be in a subquery, so it's mroe robust for us to work backwards
+                        $where_in_subquery = ($where_pos !== false) && (strpos(substr($_query, 0, $where_pos), '(SELECT') !== false); // WHERE clause seems to be in a subquery, so it's mroe robust for us to work backwards
+                        if ($from_in_subquery || $where_in_subquery) {
                             $from_pos = strrpos($_query, ' FROM ');
                             $where_pos = strrpos($_query, ' WHERE ');
                         }
@@ -1183,7 +1545,7 @@ class DatabaseConnector
                         }
 
                         $before_from = substr($query, 0, $from_pos);
-                        if (preg_match('#(COUNT|SUM|AVG|MIN|MAX)\(#', $before_from) == 0) { // If we're returning full result sets (as opposed probably to just joining so we can use translate_field_ref)
+                        if (preg_match('#(COUNT|SUM|AVG|MIN|MAX)\(#', $before_from) === 0) { // If we're returning full result sets (as opposed probably to just joining so we can use translate_field_ref)
                             $original = 't_' . $field_stripped . '.text_original AS t_' . $field_stripped . '__text_original';
                             $parsed = 't_' . $field_stripped . '.text_parsed AS t_' . $field_stripped . '__text_parsed';
 
@@ -1203,7 +1565,7 @@ class DatabaseConnector
                         }
                         $before_from = substr($query, 0, $from_pos);
 
-                        if (preg_match('#(COUNT|SUM|AVG|MIN|MAX)\(#', $before_from) == 0) { // If we're returning full result sets (as opposed probably to just joining so we can use translate_field_ref)
+                        if (preg_match('#(COUNT|SUM|AVG|MIN|MAX)\(#', $before_from) === 0) { // If we're returning full result sets (as opposed probably to just joining so we can use translate_field_ref)
                             $source_user = $field . '__source_user';
                             $parsed = $field . '__text_parsed';
 
@@ -1225,7 +1587,7 @@ class DatabaseConnector
             $before = microtime(true);
         }
         $sub = substr($query, 0, 6); // NB: We don't get 7, because it's time-consuming to check for space/tab/new-lines after 'SELECT', so we'll make the correct assumption SELECT is not a stem of any other keyword
-        if ($sub == 'SELECT' || $sub == 'select' || $sub == '(SELEC' || $sub == '(selec') {
+        if ($sub === 'SELECT' || $sub === 'select' || $sub === '(SELEC' || $sub === '(selec') {
             $connection = &$this->connection_read;
         } else {
             $connection = &$this->connection_write;
@@ -1236,7 +1598,7 @@ class DatabaseConnector
         }
 
         // Special handling for searches, which are slow and specific - we want to recognise if previous active searches were the same and kill them (as this would have been a double form submit)
-        if (($this->dedupe_mode) && (substr(get_db_type(), 0, 5) == 'mysql')) {
+        if (($this->dedupe_mode) && (substr(get_db_type(), 0, 5) === 'mysql')) {
             $query .= '/* ' . get_session_id() . ' */'; // Identify query to session, for accurate de-duping
 
             $real_query = $query;
@@ -1251,7 +1613,7 @@ class DatabaseConnector
             $ret = $this->static_ob->db_query('SHOW FULL PROCESSLIST', $connection, null, null, true);
             if (is_array($ret)) {
                 foreach ($ret as $process) {
-                    if ($process['Info'] == $real_query) {
+                    if ($process['Info'] === $real_query) {
                         $this->static_ob->db_query('KILL ' . strval($process['Id']), $connection, null, null, true);
                     }
                 }
@@ -1285,11 +1647,12 @@ class DatabaseConnector
             $out = array('time' => ($after - $before), 'text' => $text, 'rows' => is_array($ret) ? count($ret) : null);
             $QUERY_LIST[] = $out;
         }
-        /*if (microtime_diff($after,$before)>1.0)  Generally one would use MySQL's own slow query log, which will impact Composr performance less
-        {
+        /*  Generally one would use MySQL's own slow query log, which will impact Composr performance less
+        if (microtime_diff($after, $before) > 1.0) {
             cms_profile_start_for('_query:SLOW_ALERT');
-            cms_profile_end_for('_query:SLOW_ALERT',$query);
-        }*/
+            cms_profile_end_for('_query:SLOW_ALERT', $query);
+        }
+        */
 
         // Run hooks, if any exist
         if ($UPON_QUERY_HOOKS_CACHE !== null) {
@@ -1357,7 +1720,7 @@ class DatabaseConnector
 
         if ($where_map !== null) {
             foreach ($where_map as $key => $value) {
-                if ($where != '') {
+                if ($where !== '') {
                     $where .= ' AND ';
                 }
 
@@ -1365,13 +1728,13 @@ class DatabaseConnector
                     $where .= $key . '=' . float_to_raw_string($value, 10);
                 } elseif (is_integer($value)) {
                     $where .= $key . '=' . strval($value);
-                } elseif (($key == 'begin_num') || ($key == 'end_num')) {
+                } elseif (($key === 'begin_num') || ($key === 'end_num')) {
                     $where .= $key . '=' . $value; // Fudge, for all our known large unsigned integers
                 } else {
                     if ($value === null) {
                         $where .= $key . ' IS NULL';
                     } else {
-                        if ((is_string($value)) && ($value == '') && ($this->static_ob->db_empty_is_null())) {
+                        if (($value === '') && ($this->static_ob->db_empty_is_null())) {
                             $value = ' ';
                         }
                         $where .= db_string_equal_to($key, $value);
@@ -1384,7 +1747,7 @@ class DatabaseConnector
             if (($value === STRING_MAGIC_NULL) || ($value === INTEGER_MAGIC_NULL)) {
                 continue;
             }
-            if ($update != '') {
+            if ($update !== '') {
                 $update .= ', ';
             }
 
@@ -1395,18 +1758,18 @@ class DatabaseConnector
                     $update .= $key . '=' . float_to_raw_string($value, 10);
                 } elseif (is_integer($value)) {
                     $update .= $key . '=' . strval($value);
-                } elseif (($key == 'begin_num') || ($key == 'end_num')) {
+                } elseif (($key === 'begin_num') || ($key === 'end_num')) {
                     $where .= $key . '=' . $value; // Fudge, for all our known large unsigned integers
                 } else {
                     $update .= $key . '=\'' . $this->static_ob->db_escape_string($value) . '\'';
                 }
             }
         }
-        if ($update == '') {
+        if ($update === '') {
             return null;
         }
 
-        if ($where == '') {
+        if ($where === '') {
             return $this->_query('UPDATE ' . $this->table_prefix . $table . ' SET ' . $update . ' ' . $end, $max, $start, $fail_ok, $num_touched);
         } else {
             return $this->_query('UPDATE ' . $this->table_prefix . $table . ' SET ' . $update . ' WHERE (' . $where . ') ' . $end, $max, $start, $fail_ok, $num_touched);
@@ -1426,7 +1789,7 @@ class DatabaseConnector
     public function query_delete($table, $where_map = null, $end = '', $max = null, $start = null, $fail_ok = false)
     {
         if ($where_map === null) {
-            if (($end == '') && (is_null($max)) && (is_null($start)) && (strpos(get_db_type(), 'mysql') !== false)) {
+            if (($end === '') && (is_null($max)) && (is_null($start)) && (db_supports_truncate_table($GLOBALS['SITE_DB']->connection_read))) {
                 $this->_query('TRUNCATE ' . $this->table_prefix . $table, null, null, $fail_ok);
             } else {
                 $this->_query('DELETE FROM ' . $this->table_prefix . $table . ' ' . $end, $max, $start, $fail_ok);
@@ -1437,7 +1800,7 @@ class DatabaseConnector
         $where = '';
 
         foreach ($where_map as $key => $value) {
-            if ($where != '') {
+            if ($where !== '') {
                 $where .= ' AND ';
             }
 
@@ -1445,14 +1808,14 @@ class DatabaseConnector
                 $where .= $key . '=' . float_to_raw_string($value, 10);
             } elseif (is_integer($value)) {
                 $where .= $key . '=' . strval($value);
-            } elseif (($key == 'begin_num') || ($key == 'end_num')) {
+            } elseif (($key === 'begin_num') || ($key === 'end_num')) {
                 $where .= $key . '=' . $value; // Fudge, for all our known large unsigned integers
             } else {
                 if ($value === null) {
                     $where .= $key . ' IS NULL';
                 } else {
-                    if ((is_string($value)) && ($value == '') && ($this->static_ob->db_empty_is_null())) {
-                        $where .= $key . ' IS NULL'; // $value=' ';
+                    if (($value === '') && ($this->static_ob->db_empty_is_null())) {
+                        $where .= $key . ' IS NULL'; // $value = ' ';
                     } else {
                         $where .= db_string_equal_to($key, $value);
                     }
@@ -1505,7 +1868,7 @@ class DatabaseConnector
      * @param  ID_TEXT $table_name The table name
      * @param  ID_TEXT $name The field name
      * @param  ID_TEXT $_type The field type
-     * @param  ?mixed $default The default value (null: no default)
+     * @param  ?mixed $default The default value; for a translatable field should still be a string value (null: null default / default default)
      */
     public function add_table_field($table_name, $name, $_type, $default = null)
     {
@@ -1537,6 +1900,20 @@ class DatabaseConnector
     {
         require_code('database_helper');
         _helper_change_primary_key($this, $table_name, $new_key);
+    }
+
+    /**
+     * Use an *AUTO key for a table that had some other key before.
+     *
+     * @param  ID_TEXT $table_name Table name
+     * @param  ID_TEXT $field_name Field name for new key
+     *
+     * @ignore
+     */
+    public function add_auto_key($table_name, $field_name = 'id')
+    {
+        require_code('database_helper');
+        _helper_add_auto_key($this, $table_name, $field_name);
     }
 
     /**
@@ -1590,7 +1967,7 @@ class DatabaseConnector
             return false; // Actually, we have delayed insert for these so locking is not an issue
         }
 
-        if (substr(get_db_type(), 0, 5) != 'mysql') {
+        if (substr(get_db_type(), 0, 5) != 'mysql' || get_value('innodb') === '1') {
             return false;
         }
 

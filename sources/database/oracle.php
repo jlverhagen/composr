@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -54,25 +54,41 @@ class Database_Static_oracle
     }
 
     /**
-     * Create a table index.
+     * Get SQL for creating a table index.
      *
      * @param  ID_TEXT $table_name The name of the table to create the index on
      * @param  ID_TEXT $index_name The index name (not really important at all)
      * @param  string $_fields Part of the SQL query: a comma-separated list of fields to use on the index
      * @param  array $db The DB connection to make on
+     * @param  ID_TEXT $raw_table_name The table name with no table prefix
+     * @param  string $unique_key_fields The name of the unique key field for the table
+     * @return array List of SQL queries to run
      */
-    public function db_create_index($table_name, $index_name, $_fields, $db)
+    public function db_create_index($table_name, $index_name, $_fields, $db, $raw_table_name, $unique_key_fields)
     {
         if ($index_name[0] == '#') {
+            $ret = array();
             $index_name = substr($index_name, 1);
             $fields = explode(',', $_fields);
             foreach ($fields as $field) {
-                $this->db_query('CREATE INDEX index' . $index_name . ' ON ' . $table_name . '(' . $field . ') INDEXTYPE IS CTXSYS.CONTEXT PARAMETERS(\'lexer theme_lexer\')', $db);
-                $this->db_query('EXEC DBMS_STATS.GATHER_TABLE_STATS(USER,\'' . $table_name . '\',cascade=>TRUE)', $db);
+                $ret[] = 'CREATE INDEX ' . $index_name . ' ON ' . $table_name . '(' . $field . ') INDEXTYPE IS CTXSYS.CONTEXT PARAMETERS(\'lexer theme_lexer\')';
+                $ret[] = 'EXEC DBMS_STATS.GATHER_TABLE_STATS(USER,\'' . $table_name . '\',cascade=>TRUE)';
             }
-            return;
+            return $ret;
         }
-        $this->db_query('CREATE INDEX index' . $index_name . '_' . strval(mt_rand(0, 10000)) . ' ON ' . $table_name . '(' . $_fields . ')', $db);
+
+        $_fields = preg_replace('#\(\d+\)#', '', $_fields);
+
+        $fields = explode(',', $_fields);
+        foreach ($fields as $field) {
+            if (strpos($GLOBALS['SITE_DB']->query_select_value_if_there('db_meta', 'm_type', array('m_table' => $raw_table_name, 'm_name' => $field)), 'LONG') !== false) {
+                // We can't support this in SQL Server http://www.oratable.com/ora-01450-maximum-key-length-exceeded/.
+                // We assume shorter numbers than 250 are only being used on short columns anyway, which will index perfectly fine without any constraint.
+                return array();
+            }
+        }
+
+        return array('CREATE INDEX ' . $index_name . '__' . $table_name . ' ON ' . $table_name . '(' . $_fields . ')');
     }
 
     /**
@@ -128,9 +144,9 @@ class Database_Static_oracle
             'BINARY' => 'smallint',
             'MEMBER' => 'integer',
             'GROUP' => 'integer',
-            'TIME' => 'integer',
-            'LONG_TRANS' => 'integer',
-            'SHORT_TRANS' => 'integer',
+            'TIME' => 'bigint',
+            'LONG_TRANS' => 'bigint',
+            'SHORT_TRANS' => 'bigint',
             'LONG_TRANS__COMCODE' => 'integer',
             'SHORT_TRANS__COMCODE' => 'integer',
             'SHORT_TEXT' => 'text',
@@ -145,13 +161,16 @@ class Database_Static_oracle
     }
 
     /**
-     * Create a new table.
+     * Get SQL for creating a new table.
      *
      * @param  ID_TEXT $table_name The table name
      * @param  array $fields A map of field names to Composr field types (with *#? encodings)
      * @param  array $db The DB connection to make on
+     * @param  ID_TEXT $raw_table_name The table name with no table prefix
+     * @param  boolean $save_bytes Whether to use lower-byte table storage, with tradeoffs of not being able to support all unicode characters; use this if key length is an issue
+     * @return array List of SQL queries to run
      */
-    public function db_create_table($table_name, $fields, $db)
+    public function db_create_table($table_name, $fields, $db, $raw_table_name, $save_bytes = false)
     {
         $type_remap = $this->db_get_type_remap();
 
@@ -189,30 +208,22 @@ class Database_Static_oracle
             $_fields .= ' ' . $perhaps_null . ',' . "\n";
         }
 
-        $this->db_query('CREATE TABLE ' . $table_name . ' (
-          ' . $_fields . '
-          PRIMARY KEY (' . $keys . ')
-        )', $db, null, null);
+        $ret = array();
+
+        $ret[] = 'CREATE TABLE ' . $table_name . ' (' . "\n" . $_fields . '    PRIMARY KEY (' . $keys . ")\n)";
 
         if ($trigger) {
-            $query1 = "
-        CREATE SEQUENCE gen_$table_name
-    ";
-            $query2 = "
-        CREATE OR REPLACE TRIGGER gen_$table_name BEFORE INSERT ON $table_name
-        FOR EACH ROW
-        BEGIN
-            SELECT gen_$table_name.nextval
-            into :new.id
-            from dual;
-        END;
-    ";
-
-            $parsed1 = ociparse($db, $query1);
-            $parsed2 = ociparse($db, $query2);
-            @ociexecute($parsed1);
-            ociexecute($parsed2);
+            $ret[] = "CREATE SEQUENCE gen_$table_name";
+            $ret[] = "CREATE OR REPLACE TRIGGER gen_$table_name BEFORE INSERT ON $table_name
+                FOR EACH ROW
+                BEGIN
+                    SELECT gen_$table_name.nextval
+                    into :new.id
+                    from dual;
+                END";
         }
+
+        return $ret;
     }
 
     /**
@@ -250,14 +261,25 @@ class Database_Static_oracle
     }
 
     /**
+     * Find whether table truncation support is present
+     *
+     * @return boolean Whether it is
+     */
+    public function db_supports_truncate_table()
+    {
+        return true;
+    }
+
+    /**
      * Delete a table.
      *
      * @param  ID_TEXT $table The table name
      * @param  array $db The DB connection to delete on
+     * @return array List of SQL queries to run
      */
     public function db_drop_table_if_exists($table, $db)
     {
-        $this->db_query('DROP TABLE ' . $table, $db, null, null, true);
+        return array('DROP TABLE ' . $table);
     }
 
     /**
@@ -271,7 +293,7 @@ class Database_Static_oracle
     }
 
     /**
-     * Encode a LIKE string comparision fragement for the database system. The pattern is a mixture of characters and ? and % wilcard symbols.
+     * Encode a LIKE string comparision fragement for the database system. The pattern is a mixture of characters and ? and % wildcard symbols.
      *
      * @param  string $pattern The pattern
      * @return string The encoded pattern
@@ -301,7 +323,7 @@ class Database_Static_oracle
      * @param  string $db_host The database host (the server)
      * @param  string $db_user The database connection username
      * @param  string $db_password The database connection password
-     * @param  boolean $fail_ok Whether to on error echo an error and return with a NULL, rather than giving a critical error
+     * @param  boolean $fail_ok Whether to on error echo an error and return with a null, rather than giving a critical error
      * @return ?array A database connection (null: failed)
      */
     public function db_get_connection($persistent, $db_name, $db_host, $db_user, $db_password, $fail_ok = false)
@@ -318,7 +340,7 @@ class Database_Static_oracle
         if (!function_exists('ocilogon')) {
             $error = 'The oracle PHP extension not installed (anymore?). You need to contact the system administrator of this server.';
             if ($fail_ok) {
-                echo $error;
+                echo ((running_script('install')) && (get_param_string('type', '') == 'ajax_db_details')) ? strip_html($error) : $error;
                 return null;
             }
             critical_error('PASSON', $error);
@@ -328,7 +350,7 @@ class Database_Static_oracle
         if ($db === false) {
             $error = 'Could not connect to database-server (' . ocierror() . ')';
             if ($fail_ok) {
-                echo $error;
+                echo ((running_script('install')) && (get_param_string('type', '') == 'ajax_db_details')) ? strip_html($error) : $error;
                 return null;
             }
             critical_error('PASSON', $error); //warn_exit(do_lang_tempcode('CONNECT_DB_ERROR'));
@@ -339,6 +361,21 @@ class Database_Static_oracle
         }
         $this->cache_db[$db_name][$db_host] = $db;
         return $db;
+    }
+
+    /**
+     * Get the number of rows in a table, with approximation support for performance (if necessary on the particular database backend).
+     *
+     * @param string $table The table name
+     * @param array $where WHERE clauses if it will help get a more reliable number when we're not approximating in map form
+     * @param string $where_clause WHERE clauses if it will help get a more reliable number when we're not approximating in SQL form
+     * @param object $db The DB connection to check against
+     * @return ?integer The count (null: do it normally)
+     */
+    public function get_table_count_approx($table, $where, $where_clause, $db)
+    {
+        $sql = 'SELECT NUM_ROWS FROM ALL_TABLES WHERE TABLE_NAME=\'' . strtoupper($db->get_table_prefix() . $table) . '\'';
+        return $db->query_value_if_there($sql, false, true);
     }
 
     /**
@@ -370,6 +407,8 @@ class Database_Static_oracle
      */
     public function db_escape_string($string)
     {
+        $string = fix_bad_unicode($string);
+
         $string = str_replace("'", "''", $string);
         return str_replace('&', '\&', $string);
     }
@@ -387,7 +426,7 @@ class Database_Static_oracle
      */
     public function db_query($query, $db, $max = null, $start = null, $fail_ok = false, $get_insert_id = false)
     {
-        if ((!is_null($start)) && (!is_null($max)) && (strtoupper(substr($query, 0, 7)) == 'SELECT ') || (strtoupper(substr($query, 0, 8)) == '(SELECT ')) {
+        if ((!is_null($start)) && (!is_null($max)) && (strtoupper(substr(ltrim($query), 0, 7)) == 'SELECT ') || (strtoupper(substr(ltrim($query), 0, 8)) == '(SELECT ')) {
             $old_query = $query;
 
             if (is_null($start)) {
@@ -422,24 +461,25 @@ class Database_Static_oracle
 
         $stmt = ociparse($db, $query, 0);
         $results = @ociexecute($stmt);
-        if ((($results === false) || ((strtoupper(substr($query, 0, 7)) == 'SELECT ') || (strtoupper(substr($query, 0, 8)) == '(SELECT ') && ($results === true))) && (!$fail_ok)) {
+        if ((($results === false) || (((strtoupper(substr(ltrim($query), 0, 7)) == 'SELECT ') || (strtoupper(substr(ltrim($query), 0, 8)) == '(SELECT ')) && ($results === true))) && (!$fail_ok)) {
             $err = ocierror($db);
             if (function_exists('ocp_mark_as_escaped')) {
                 ocp_mark_as_escaped($err);
             }
-            if ((!running_script('upgrader')) && (!get_mass_import_mode())) {
+            if ((!running_script('upgrader')) && ((!get_mass_import_mode()) || (get_param_integer('keep_fatalistic', 0) == 1))) {
                 if (!function_exists('do_lang') || is_null(do_lang('QUERY_FAILED', null, null, null, null, false))) {
                     fatal_exit(htmlentities('Query failed: ' . $query . ' : ' . $err));
                 }
 
                 fatal_exit(do_lang_tempcode('QUERY_FAILED', escape_html($query), ($err)));
             } else {
-                echo htmlentities('Database query failed: ' . $query . ' [') . ($err) . htmlentities(']' . '<br />' . "\n");
+                echo htmlentities('Database query failed: ' . $query . ' [') . ($err) . htmlentities(']') . "<br />\n";
                 return null;
             }
         }
 
-        if (($results !== true) && (strtoupper(substr($query, 0, 7)) == 'SELECT ') || (strtoupper(substr($query, 0, 8)) == '(SELECT ') && ($results !== false)) {
+        $sub = substr(ltrim($query), 0, 4);
+        if (($results !== true) && (($sub === '(SEL') || ($sub === 'SELE') || ($sub === 'sele') || ($sub === 'CHEC') || ($sub === 'EXPL') || ($sub === 'REPA') || ($sub === 'DESC') || ($sub === 'SHOW')) && ($results !== false)) {
             return $this->db_get_query_rows($stmt);
         }
 
@@ -501,6 +541,8 @@ class Database_Static_oracle
                         } else {
                             $newrow[$name] = null;
                         }
+                    } elseif ((substr($type, 0, 5) == 'FLOAT') || substr($type, 0, 6) == 'NUMBER') {
+                        $newrow[$name] = floatval($v);
                     } else {
                         if ($v == ' ') {
                             $v = '';

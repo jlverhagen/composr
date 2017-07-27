@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -33,15 +33,17 @@ We continue to prohibit much of what was deprecated in XHTML but brought back in
  */
 function init__webstandards()
 {
-    // These are old doctypes we'll recognise for gracefulness, but we don't accept them as valid
-    define('DOCTYPE_HTML', '<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">');
-    define('DOCTYPE_HTML_STRICT', '<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">');
-    define('DOCTYPE_XHTML', '<!DOCTYPE html>');
-    define('DOCTYPE_XHTML_STRICT', '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">');
-    define('DOCTYPE_XHTML_11', '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">');
+    if (!defined('DOCTYPE_HTML')) {
+        // These are old doctypes we'll recognise for gracefulness, but we don't accept them as valid
+        define('DOCTYPE_HTML', '<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">');
+        define('DOCTYPE_HTML_STRICT', '<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">');
+        define('DOCTYPE_XHTML', '<!DOCTYPE html>');
+        define('DOCTYPE_XHTML_STRICT', '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">');
+        define('DOCTYPE_XHTML_11', '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">');
 
-    // (X)HTML5, the future
-    define('DOCTYPE_XHTML5', '<!DOCTYPE html>');
+        // (X)HTML5, the future
+        define('DOCTYPE_XHTML5', '<!DOCTYPE html>');
+    }
 
     global $WEBSTANDARDS_CHECKER_OFF, $WELL_FORMED_ONLY, $WEBSTANDARDS_JAVASCRIPT, $WEBSTANDARDS_CSS, $WEBSTANDARDS_WCAG, $WEBSTANDARDS_COMPAT, $WEBSTANDARDS_EXT_FILES, $WEBSTANDARDS_MANUAL;
     $WEBSTANDARDS_JAVASCRIPT = true;
@@ -219,8 +221,8 @@ function init__webstandards()
         'head' => array('html'),
         'param' => array('script', 'object'),
         //'link' => array('head', 'link'),  Composr will dynamically optimise things to tend towards correctness, so can't enable this rule
+        //'style' => array('head'), "
         'li' => array('ul', 'ol', 'dd', 'menu', 'dt', 'dl', 'dir'),
-        'style' => array('head'),
         'tbody' => array('table'),
         'tfoot' => array('table'),
         'thead' => array('table'),
@@ -270,21 +272,23 @@ function init__webstandards()
         'menu' => true,
     );
 
-    define('IN_XML_TAG', -3);
-    define('IN_DTD_TAG', -2);
-    define('NO_MANS_LAND', -1);
-    define('IN_COMMENT', 0);
-    define('IN_TAG_NAME', 1);
-    define('STARTING_TAG', 2);
-    define('IN_TAG_BETWEEN_ATTRIBUTES', 3);
-    define('IN_TAG_ATTRIBUTE_NAME', 4);
-    define('IN_TAG_BETWEEN_ATTRIBUTE_NAME_VALUE_LEFT', 5);
-    define('IN_TAG_BETWEEN_ATTRIBUTE_NAME_VALUE_RIGHT', 7);
-    define('IN_TAG_ATTRIBUTE_VALUE_BIG_QUOTES', 10);
-    define('IN_TAG_ATTRIBUTE_VALUE_NO_QUOTES', 12);
-    define('IN_TAG_EMBEDDED_COMMENT', 9);
-    define('IN_TAG_ATTRIBUTE_VALUE_LITTLE_QUOTES', 8);
-    define('IN_CDATA', 11);
+    if (!defined('IN_XML_TAG')) {
+        define('IN_XML_TAG', -3);
+        define('IN_DTD_TAG', -2);
+        define('NO_MANS_LAND', -1);
+        define('IN_COMMENT', 0);
+        define('IN_TAG_NAME', 1);
+        define('STARTING_TAG', 2);
+        define('IN_TAG_BETWEEN_ATTRIBUTES', 3);
+        define('IN_TAG_ATTRIBUTE_NAME', 4);
+        define('IN_TAG_BETWEEN_ATTRIBUTE_NAME_VALUE_LEFT', 5);
+        define('IN_TAG_BETWEEN_ATTRIBUTE_NAME_VALUE_RIGHT', 7);
+        define('IN_TAG_ATTRIBUTE_VALUE_BIG_QUOTES', 10);
+        define('IN_TAG_ATTRIBUTE_VALUE_NO_QUOTES', 12);
+        define('IN_TAG_EMBEDDED_COMMENT', 9);
+        define('IN_TAG_ATTRIBUTE_VALUE_LITTLE_QUOTES', 8);
+        define('IN_CDATA', 11);
+    }
 }
 
 /**
@@ -303,8 +307,8 @@ function init__webstandards()
  */
 function check_xhtml($out, $well_formed_only = false, $is_fragment = false, $webstandards_javascript = true, $webstandards_css = true, $webstandards_wcag = true, $webstandards_compat = true, $webstandards_ext_files = true, $webstandards_manual = false)
 {
-    if (function_exists('set_time_limit')) {
-        @set_time_limit(0);
+    if (php_function_allowed('set_time_limit')) {
+        @set_time_limit(100);
     }
 
     if (function_exists('disable_php_memory_limit')) {
@@ -379,7 +383,7 @@ function check_xhtml($out, $well_formed_only = false, $is_fragment = false, $web
     $stack_size = 0;
     $to_find = array('html' => true, 'head' => true, 'title' => true/*, 'meta' => true*/);
     $only_one_of_stack = array();
-    $only_one_of_template = array('title' => true, 'head' => true, 'body' => true, 'base' => true, 'thead' => true, 'tfoot' => true);
+    $only_one_of_template = array('title' => 1, 'head' => true, '1' => 1, 'base' => 1, 'thead' => 1, 'tfoot' => 1);
     $only_one_of = $only_one_of_template;
     $A_LINKS = array();
     $previous = '';
@@ -392,15 +396,15 @@ function check_xhtml($out, $well_formed_only = false, $is_fragment = false, $web
     $bad_root = false;
 
     $token = _get_next_tag();
-    while (!is_null($token)) {
-        //echo $T_POS.'-'.$POS.' ('.$stack_size.')<br />';
+    while ($token !== null) {
+        //echo $T_POS . '-' . $POS . ' (' . $stack_size . ')<br />';
 
         while ((is_array($token)) && (count($token) != 0)) { // Some kind of error in our token
-            if (is_null($WEBSTANDARDS_CHECKER_OFF)) {
+            if ($WEBSTANDARDS_CHECKER_OFF === null) {
                 foreach ($token[1] as $error) {
                     $errors[] = _xhtml_error($error[0], array_key_exists(1, $error) ? $error[1] : '', array_key_exists(2, $error) ? $error[2] : '', array_key_exists(3, $error) ? $error[3] : '', array_key_exists('raw', $error) ? $error['raw'] : false, array_key_exists('pos', $error) ? $error['pos'] : 0);
                 }
-                if (is_null($token[0])) {
+                if ($token[0] === null) {
                     return array('level_ranges' => $level_ranges, 'tag_ranges' => $TAG_RANGES, 'value_ranges' => $VALUE_RANGES, 'errors' => $errors);
                 }
             }
@@ -411,7 +415,7 @@ function check_xhtml($out, $well_formed_only = false, $is_fragment = false, $web
 
         // Open, close, or monitonic?
         $term = strpos($token, '/');
-        if (!is_null($WEBSTANDARDS_CHECKER_OFF)) {
+        if (!($WEBSTANDARDS_CHECKER_OFF === null)) {
             if ($term === false) {
                 $WEBSTANDARDS_CHECKER_OFF++;
             } elseif ($term == 1) {
@@ -436,7 +440,7 @@ function check_xhtml($out, $well_formed_only = false, $is_fragment = false, $web
             if (isset($to_find[$basis_token])) {
                 unset($to_find[$basis_token]);
             }
-            if ((!$WELL_FORMED_ONLY) && (is_null($WEBSTANDARDS_CHECKER_OFF))) {
+            if ((!$WELL_FORMED_ONLY) && (($WEBSTANDARDS_CHECKER_OFF === null))) {
                 if (((!$is_fragment) && ($stack_size == 0)) && ($basis_token != 'html')) {
                     $errors[] = _xhtml_error('XHTML_BAD_ROOT');
                     $bad_root = true;
@@ -477,7 +481,7 @@ function check_xhtml($out, $well_formed_only = false, $is_fragment = false, $web
             }
 
             // In order to ease webstandards checking, we tolerate these in the parser (but of course, mark as errors)
-            if ((is_null($WEBSTANDARDS_CHECKER_OFF)) && (!$WELL_FORMED_ONLY) && ($term === false) && (isset($MUST_SELFCLOSE_TAGS[$basis_token]))) {
+            if ((($WEBSTANDARDS_CHECKER_OFF === null)) && (!$WELL_FORMED_ONLY) && ($term === false) && (isset($MUST_SELFCLOSE_TAGS[$basis_token]))) {
                 if ($XML_CONSTRAIN) {
                     $errors[] = _xhtml_error('XHTML_NONEMPTY_TAG', $basis_token);
                 }
@@ -491,7 +495,7 @@ function check_xhtml($out, $well_formed_only = false, $is_fragment = false, $web
                     $only_one_of = $only_one_of_template;
                     ++$stack_size;
                 } else {
-                    if ((is_null($WEBSTANDARDS_CHECKER_OFF)) && (!$WELL_FORMED_ONLY) && ((!$XML_CONSTRAIN) || (!isset($MUST_SELFCLOSE_TAGS[$basis_token]))) && (is_null($WEBSTANDARDS_CHECKER_OFF))) { // A tags must not self close even when only an anchor. Makes a weird underlined line effect in firefox
+                    if ((($WEBSTANDARDS_CHECKER_OFF === null)) && (!$WELL_FORMED_ONLY) && ((!$XML_CONSTRAIN) || (!isset($MUST_SELFCLOSE_TAGS[$basis_token]))) && (($WEBSTANDARDS_CHECKER_OFF === null))) { // A tags must not self close even when only an anchor. Makes a weird underlined line effect in firefox
                         if (!$bad_root) {
                             $errors[] = _xhtml_error('XHTML_CEMPTY_TAG', $basis_token);
                         }
@@ -503,7 +507,7 @@ function check_xhtml($out, $well_formed_only = false, $is_fragment = false, $web
             do {
                 // For case 3 (see note below)
                 if (!in_array($basis_token, $TAG_STACK)) {
-                    if ((is_null($WEBSTANDARDS_CHECKER_OFF)) && ($XML_CONSTRAIN)) {
+                    if ((($WEBSTANDARDS_CHECKER_OFF === null)) && ($XML_CONSTRAIN)) {
                         $errors[] = _xhtml_error('XML_NO_CLOSE_MATCH', $basis_token, $previous);
                     }
                     break;
@@ -514,8 +518,8 @@ function check_xhtml($out, $well_formed_only = false, $is_fragment = false, $web
                 $start_pos = array_pop($content_start_stack);
                 array_pop($ATT_STACK);
                 $only_one_of = array_pop($only_one_of_stack);
-                if (is_null($previous)) {
-                    if ((is_null($WEBSTANDARDS_CHECKER_OFF)) && ($XML_CONSTRAIN)) {
+                if ($previous === null) {
+                    if ((($WEBSTANDARDS_CHECKER_OFF === null)) && ($XML_CONSTRAIN)) {
                         $errors[] = _xhtml_error('XML_MORE_CLOSE_THAN_OPEN', $basis_token);
                     }
                     break;
@@ -526,12 +530,12 @@ function check_xhtml($out, $well_formed_only = false, $is_fragment = false, $web
                     // 1) Overlapping tags. We really can't survive this, and it's very invalid. We could only detect it if we broke support for cases (1) and (2). e.g. <i><b></i></b>
                     // 2) Implicit closing. We close everything implicitly until we find the matching tag. E.g. <i><b></i>
                     // 3) Closing something that was never open. This is tricky - we can't survive it if it was opened somewhere as a parent, as we'd end up closing a whole load of tags by rule (2) - but if it's a lone closing, we can skip it. Good e.g. <b></i></b>. Bad e.g. <div><p></div></p></div>
-                    if ((is_null($WEBSTANDARDS_CHECKER_OFF)) && ($XML_CONSTRAIN)) {
+                    if ((($WEBSTANDARDS_CHECKER_OFF === null)) && ($XML_CONSTRAIN)) {
                         $errors[] = _xhtml_error('XML_NO_CLOSE_MATCH', $basis_token, $previous);
                     }
                 }
 
-                if ((!$WELL_FORMED_ONLY) && (is_null($WEBSTANDARDS_CHECKER_OFF))) {
+                if ((!$WELL_FORMED_ONLY) && (($WEBSTANDARDS_CHECKER_OFF === null))) {
                     if ((isset($MUST_SELFCLOSE_TAGS[$previous])) && ($XML_CONSTRAIN)) {
                         $errors[] = _xhtml_error('XHTML_NONEMPTY_TAG', $previous);
                     }
@@ -546,7 +550,7 @@ function check_xhtml($out, $well_formed_only = false, $is_fragment = false, $web
                 $level_ranges[] = array($stack_size, $T_POS, $POS);
                 //echo 'Popped $previous<br />';
 
-                if ((is_null($WEBSTANDARDS_CHECKER_OFF)) && (!$WELL_FORMED_ONLY) && (is_null($WEBSTANDARDS_CHECKER_OFF))) {
+                if ((($WEBSTANDARDS_CHECKER_OFF === null)) && (!$WELL_FORMED_ONLY) && (($WEBSTANDARDS_CHECKER_OFF === null))) {
                     if ($previous == 'script') {
                         $tag_contents = substr($OUT, $start_pos, $T_POS - $start_pos);
                         $c_section = strpos($tag_contents, ']]>');
@@ -576,7 +580,7 @@ function check_xhtml($out, $well_formed_only = false, $is_fragment = false, $web
         return array('level_ranges' => $level_ranges, 'tag_ranges' => $TAG_RANGES, 'value_ranges' => $VALUE_RANGES, 'errors' => $errors);
     }
 
-    if (!$well_formed_only) { // if ((is_null($WEBSTANDARDS_CHECKER_OFF)) || (!$well_formed_only)) // checker-off check needed because it's possible a non-checkable portion foobars up possibility of interpreting the rest of the document such that checking ends early
+    if (!$well_formed_only) { // if ((($WEBSTANDARDS_CHECKER_OFF === null)) || (!$well_formed_only)) // checker-off check needed because it's possible a non-checkable portion foobars up possibility of interpreting the rest of the document such that checking ends early
         if (!$is_fragment) {
             foreach (array_keys($to_find) as $tag) {
                 $errors[] = _xhtml_error('XHTML_MISSING_TAG', $tag);
@@ -616,13 +620,17 @@ function check_xhtml($out, $well_formed_only = false, $is_fragment = false, $web
     if (isset($GLOBALS['SPELLING'])) {
         $stripped = $OUT;
         $matches = array();
-        $num_matches = preg_match_all('#\<style.*\</style\>#Umis', $stripped, $matches);
-        for ($i = 0; $i < $num_matches; $i++) {
-            $stripped = str_replace($matches[0][$i], str_repeat(' ', strlen($matches[0][$i])), $stripped);
+        if (stripos($stripped, '<style') !== false) {
+            $num_matches = preg_match_all('#\<style.*\</style\>#Umis', $stripped, $matches);
+            for ($i = 0; $i < $num_matches; $i++) {
+                $stripped = str_replace($matches[0][$i], str_repeat(' ', strlen($matches[0][$i])), $stripped);
+            }
         }
-        $num_matches = preg_match_all('#\<script.*\</script\>#Umis', $stripped, $matches);
-        for ($i = 0; $i < $num_matches; $i++) {
-            $stripped = str_replace($matches[0][$i], str_repeat(' ', strlen($matches[0][$i])), $stripped);
+        if (stripos($stripped, '<script') !== false) {
+            $num_matches = preg_match_all('#\<script.*\</script\>#Umis', $stripped, $matches);
+            for ($i = 0; $i < $num_matches; $i++) {
+                $stripped = str_replace($matches[0][$i], str_repeat(' ', strlen($matches[0][$i])), $stripped);
+            }
         }
         $stripped = @html_entity_decode(strip_tags($stripped), ENT_QUOTES, get_charset());
         require_code('webstandards2');
@@ -656,6 +664,7 @@ function check_xhtml($out, $well_formed_only = false, $is_fragment = false, $web
  * @param  boolean $raw Whether to not do a lang lookup
  * @param  integer $rel_pos Offset position
  * @return map A map of the error information
+ *
  * @ignore
  */
 function _xhtml_error($error, $param_a = '', $param_b = '', $param_c = '', $raw = false, $rel_pos = 0)
@@ -687,6 +696,9 @@ function _xhtml_error($error, $param_a = '', $param_b = '', $param_c = '', $raw 
  */
 function is_hex($string)
 {
+    if (function_exists('ctype_xdigit')) {
+        return ctype_xdigit($string);
+    }
     return preg_match('#^[\da-f]+$#i', $string) != 0;
 }
 
@@ -783,13 +795,11 @@ function fix_entities($in)
 /**
  * Get the next tag in the current XHTML document.
  *
- * @return ?mixed Either an array of error details, a string of the tag, or NULL for finished (null: no next tag)
+ * @return ?mixed Either an array of error details, a string of the tag, or null for finished (null: no next tag)
  * @ignore
  */
 function _get_next_tag()
 {
-    //   echo '<p>!</p>';
-
     global $PARENT_TAG, $POS, $LINENO, $LINESTART, $OUT, $T_POS, $ENTITIES, $LEN, $ANCESTER_BLOCK, $TAG_STACK, $WEBSTANDARDS_CHECKER_OFF, $TEXT_NO_BLOCK, $INBETWEEN_TEXT;
     global $TAG_RANGES, $VALUE_RANGES;
 
@@ -819,12 +829,12 @@ function _get_next_tag()
             $LINENO++;
             $LINESTART = $POS;
         }
-        //echo $status.' for '.$next.'<br />';
+        //echo $status . ' for ' . $next . '<br />';
 
         // Entity checking
-        if (($next == '&') && ($status != IN_CDATA) && ($status != IN_COMMENT) && (is_null($WEBSTANDARDS_CHECKER_OFF))) {
+        if (($next == '&') && ($status != IN_CDATA) && ($status != IN_COMMENT) && ($WEBSTANDARDS_CHECKER_OFF === null)) {
             $test = test_entity();
-            if (!is_null($test)) {
+            if ($test !== null) {
                 $errors = array_merge($errors, $test);
             }
         }
@@ -852,9 +862,9 @@ function _get_next_tag()
                         $LINESTART = $POS;
                     }
                 }
-                if (($next == '&') && (is_null($WEBSTANDARDS_CHECKER_OFF))) {
+                if (($next == '&') && ($WEBSTANDARDS_CHECKER_OFF === null)) {
                     $test = test_entity();
-                    if (!is_null($test)) {
+                    if ($test !== null) {
                         $errors = array_merge($errors, $test);
                     }
                 }
@@ -976,14 +986,17 @@ function _get_next_tag()
                     if (function_exists('require_code')) {
                         require_code('type_sanitisation');
                     }
-                    if ((preg_match('#^\w+$#', $current_attribute_name) == 0/*optimisation*/) && (!is_alphanumeric(preg_replace('#^([^:]+):#', '${1}', $current_attribute_name)))) {
-                        $errors[] = array('XML_TAG_BAD_ATTRIBUTE', $current_attribute_name);
-                        $current_attribute_name = 'wrong' . strval($POS);
+                    if ((function_exists('ctype_alnum')) && (ctype_alnum($current_attribute_name))) {
+                    } else {
+                        if ((preg_match('#^\w+$#', $current_attribute_name) == 0/*optimisation*/) && (!is_alphanumeric(preg_replace('#^([^:]+):#', '${1}', $current_attribute_name)))) {
+                            $errors[] = array('XML_TAG_BAD_ATTRIBUTE', $current_attribute_name);
+                            $current_attribute_name = 'wrong' . strval($POS);
+                        }
                     }
                     $status = IN_TAG_BETWEEN_ATTRIBUTE_NAME_VALUE_RIGHT;
                 } elseif ($next == '<') {
                     $errors[] = array('XML_TAG_OPEN_ANOMALY', '5');
-                    //return array(NULL,$errors);
+                    //return array(null, $errors);
                     // We have to assume we shouldn't REALLY have found a tag
                     $POS--;
                     $current_tag = '';
@@ -1001,7 +1014,7 @@ function _get_next_tag()
                         $errors[] = array('XML_TAG_CLOSE_ANOMALY');
                     }
                     // Things like nowrap, checked, etc
-                    //return array(NULL,$errors);
+                    //return array(null, $errors);
 
                     if (isset($attribute_map[$current_attribute_name])) {
                         $errors[] = array('XML_TAG_DUPLICATED_ATTRIBUTES', $current_tag);
@@ -1030,7 +1043,7 @@ function _get_next_tag()
                     if ($GLOBALS['XML_CONSTRAIN']) {
                         $errors[] = array('XML_ATTRIBUTE_ERROR');
                     }
-                    //return array(NULL,$errors);  Actually  <blah nowrap ... /> could cause this
+                    //return array(null, $errors);  Actually  <blah nowrap ... /> could cause this
 
                     $status = IN_TAG_BETWEEN_ATTRIBUTES;
                     if (isset($attribute_map[$current_attribute_name])) {
@@ -1207,8 +1220,9 @@ function _get_next_tag()
  * @param  map $attributes A map of attributes (name=>value) the tag has
  * @param  boolean $self_close Whether this is a self-closing tag
  * @param  boolean $close Whether this is a closing tag
- * @param  list $errors Errors detected so far. We will add to these and return
+ * @param  array $errors Errors detected so far. We will add to these and return
  * @return mixed String for tag basis form, or array of error information
+ *
  * @ignore
  */
 function _check_tag($tag, $attributes, $self_close, $close, $errors)
@@ -1249,11 +1263,10 @@ function _check_tag($tag, $attributes, $self_close, $close, $errors)
  *
  * @param  string $full The full tag
  * @return string The basis of the tag
+ *
  * @ignore
  */
 function _get_tag_basis($full)
 {
-    $full = preg_replace('#[/ <>]#', '', $full);
-
-    return $full;
+    return trim($full, '/ <>');
 }

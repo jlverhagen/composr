@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -73,7 +73,7 @@ function ecommerce_get_currency_symbol($currency = null)
 }
 
 /**
- * Find a transaction fee from a transaction amount. Regular fees aren't taken into account.
+ * Get transaction form fields.
  *
  * @param  ?ID_TEXT $trans_id The transaction ID (null: auto-generate)
  * @param  ID_TEXT $purchase_id The purchase ID
@@ -125,7 +125,7 @@ function get_transaction_form_fields($trans_id, $purchase_id, $item_name, $amoun
     $fields->attach(form_input_line(do_lang_tempcode('CARD_START_DATE'), do_lang_tempcode('DESCRIPTION_CARD_START_DATE'), 'start_date', ecommerce_test_mode() ? date('m/y', utctime_to_usertime(time() - 60 * 60 * 24 * 365)) : get_cms_cpf('payment_card_start_date'), true));
     $fields->attach(form_input_line(do_lang_tempcode('CARD_EXPIRY_DATE'), do_lang_tempcode('DESCRIPTION_CARD_EXPIRY_DATE'), 'expiry_date', ecommerce_test_mode() ? date('m/y', utctime_to_usertime(time() + 60 * 60 * 24 * 365)) : get_cms_cpf('payment_card_expiry_date'), true));
     $fields->attach(form_input_integer(do_lang_tempcode('CARD_ISSUE_NUMBER'), do_lang_tempcode('DESCRIPTION_CARD_ISSUE_NUMBER'), 'issue_number', intval(get_cms_cpf('payment_card_issue_number')), false));
-    $fields->attach(form_input_line(do_lang_tempcode('CARD_CV2'), do_lang_tempcode('DESCRIPTION_CARD_CV2'), 'cv2', ecommerce_test_mode() ? '123' : get_cms_cpf('payment_card_cv2'), true));
+    $fields->attach(form_input_line(do_lang_tempcode('CARD_CV2'), do_lang_tempcode('DESCRIPTION_CARD_CV2'), 'cv2', ecommerce_test_mode() ? '123' : '', true));
 
     // Shipping address fields
     require_lang('cns_special_cpf');
@@ -133,7 +133,7 @@ function get_transaction_form_fields($trans_id, $purchase_id, $item_name, $amoun
     $fields->attach(form_input_line(do_lang_tempcode('SPECIAL_CPF__cms_lastname'), '', 'last_name', get_cms_cpf('last_name'), true));
     $fields->attach(form_input_line(do_lang_tempcode('SPECIAL_CPF__cms_street_address'), '', 'address1', get_cms_cpf('street_address'), true));
     $fields->attach(form_input_line(do_lang_tempcode('SPECIAL_CPF__cms_city'), '', 'city', get_cms_cpf('city'), true));
-    $fields->attach(form_input_line(do_lang_tempcode('SPECIAL_CPF__cms_state'), '', 'zip', get_cms_cpf('state'), true));
+    $fields->attach(form_input_line(do_lang_tempcode('SPECIAL_CPF__cms_state'), '', 'state', get_cms_cpf('state'), true));
     $fields->attach(form_input_line(do_lang_tempcode('SPECIAL_CPF__cms_post_code'), '', 'zip', get_cms_cpf('post_code'), true));
     $fields->attach(form_input_line(do_lang_tempcode('SPECIAL_CPF__cms_country'), '', 'country', get_cms_cpf('country'), true));
 
@@ -161,10 +161,12 @@ function get_transaction_fee($amount, $via)
         return 0.0;
     }
 
-    if ((file_exists(get_file_base() . '/sources/hooks/systems/ecommerce_via/' . $via)) || (file_exists(get_file_base() . '/sources_custom/hooks/systems/ecommerce_via/' . $via))) {
+    if ((file_exists(get_file_base() . '/sources/hooks/systems/ecommerce_via/' . $via . '.php')) || (file_exists(get_file_base() . '/sources_custom/hooks/systems/ecommerce_via/' . $via . '.php'))) {
         require_code('hooks/systems/ecommerce_via/' . filter_naughty_harsh($via));
         $object = object_factory('Hook_' . $via);
-        return $object->get_transaction_fee($amount);
+        if (method_exists($object, 'get_transaction_fee')) {
+            return $object->get_transaction_fee($amount);
+        }
     }
 
     return 0.0;
@@ -284,7 +286,7 @@ function find_all_products($site_lang = false)
 /**
  * Find product.
  *
- * @param  ID_TEXT $search The item name/product_id
+ * @param  ID_TEXT $search The item name/product codename
  * @param  boolean $site_lang Whether to make sure the language for item_name is the site default language (crucial for when we read/go to third-party sales systems and use the item_name as a key).
  * @param  boolean $search_item_names Whether $search refers to the item name rather than the product codename
  * @return ?object The product-class object (null: not found).
@@ -327,7 +329,7 @@ function find_product($search, $site_lang = false, $search_item_names = false)
  * @param  ID_TEXT $search The product codename/item name
  * @param  boolean $site_lang Whether to make sure the language for item_name is the site default language (crucial for when we read/go to third-party sales systems and use the item_name as a key).
  * @param  boolean $search_item_names Whether $search refers to the item name rather than the product codename
- * @return array A pair: The product-class map, and the formal product name (both will be NULL if not found).
+ * @return array A pair: The product-class map, and the product codename (both will be null if not found).
  */
 function find_product_row($search, $site_lang = false, $search_item_names = false)
 {
@@ -395,15 +397,18 @@ function dev__ipn_debug($ipn_target, $ipn_message)
 /**
  * Handle IPN's.
  *
- * @return ID_TEXT The ID of the purchase-type (meaning depends on item_name)
+ * @return ?ID_TEXT The ID of the purchase-type (meaning depends on item_name) (null: no transaction; will only return null when not running the 'ecommerce' script)
  */
 function handle_transaction_script()
 {
     if ((file_exists(get_file_base() . '/data_custom/ecommerce.log')) && (is_writable_wrap(get_file_base() . '/data_custom/ecommerce.log'))) {
         $myfile = fopen(get_file_base() . '/data_custom/ecommerce.log', 'at');
+        flock($myfile, LOCK_EX);
+        fseek($myfile, 0, SEEK_END);
         fwrite($myfile, serialize($_POST) . "\n");
         fwrite($myfile, serialize($_GET) . "\n");
         fwrite($myfile, "\n\n");
+        flock($myfile, LOCK_UN);
         fclose($myfile);
     }
 
@@ -413,7 +418,11 @@ function handle_transaction_script()
 
     ob_start();
 
-    list($purchase_id, $item_name, $payment_status, $reason_code, $pending_reason, $memo, $mc_gross, $mc_currency, $txn_id, $parent_txn_id, $period) = $object->handle_transaction();
+    $transaction = $object->handle_transaction();
+    if ($transaction === null) {
+        return null;
+    }
+    list($purchase_id, $item_name, $payment_status, $reason_code, $pending_reason, $memo, $mc_gross, $mc_currency, $txn_id, $parent_txn_id, $period) = $transaction;
 
     $type_code = handle_confirmed_transaction($purchase_id, $item_name, $payment_status, $reason_code, $pending_reason, $memo, $mc_gross, $mc_currency, $txn_id, $parent_txn_id, $period, $via);
 
@@ -440,7 +449,7 @@ function handle_transaction_script()
  * @param  SHORT_TEXT $parent_txn_id The ID of the parent transaction
  * @param  string $period The subscription period (blank: N/A / unknown: trust is correct on the gateway)
  * @param  ID_TEXT $via The payment gateway
- * @return ID_TEXT The product purchased
+ * @return ?ID_TEXT The product purchased (null: error)
  */
 function handle_confirmed_transaction($purchase_id, $item_name, $payment_status, $reason_code, $pending_reason, $memo, $mc_gross, $mc_currency, $txn_id, $parent_txn_id, $period, $via)
 {
@@ -483,13 +492,13 @@ function handle_confirmed_transaction($purchase_id, $item_name, $payment_status,
     // Check price, if one defined
     if (($mc_gross != $found[1]) && ($found[1] != '?')) {
         if (($payment_status == 'Completed') && ($via != 'manual')) {
-            fatal_ipn_exit(do_lang('PURCHASE_WRONG_PRICE', $item_name), $is_subscription);
+            fatal_ipn_exit(do_lang('PURCHASE_WRONG_PRICE', $item_name, $mc_gross, $found[1]), $is_subscription);
         }
     }
     $expected_currency = isset($found[5]) ? $found[5] : get_option('currency');
     if ($mc_currency != $expected_currency) {
         if (($payment_status != 'SCancelled') && ($via != 'manual')) {
-            fatal_ipn_exit(do_lang('PURCHASE_WRONG_CURRENCY'));
+            fatal_ipn_exit(do_lang('PURCHASE_WRONG_CURRENCY', $item_name, $mc_currency, $expected_currency));
         }
     }
 
@@ -520,7 +529,7 @@ function handle_confirmed_transaction($purchase_id, $item_name, $payment_status,
             if ($found[2] != '') {
                 call_user_func_array($found[2], array($purchase_id, $found, $type_code, true)); // Run cancel code
             }
-        } elseif ($item_name == do_lang('shopping:CART_ORDER', $purchase_id)) { // Cart orders have special support for tracking the order status
+        } elseif ((addon_installed('shopping')) && ($item_name == do_lang('shopping:CART_ORDER', $purchase_id))) { // Cart orders have special support for tracking the order status
             $found['ORDER_STATUS'] = 'ORDER_STATUS_awaiting_payment';
 
             if ($found[2] != '') {
@@ -529,6 +538,9 @@ function handle_confirmed_transaction($purchase_id, $item_name, $payment_status,
         }
 
         // Pending transactions stop here
+        if ((get_page_name() == 'purchase') || (get_page_name() == 'shopping')) {
+            return null;
+        }
         fatal_ipn_exit(do_lang('TRANSACTION_NOT_COMPLETE', $type_code . ':' . strval($purchase_id), $payment_status), true);
     }
 
@@ -537,7 +549,7 @@ function handle_confirmed_transaction($purchase_id, $item_name, $payment_status,
         $price = $GLOBALS['SITE_DB']->query_select_value('invoices', 'i_amount', array('id' => intval($purchase_id)));
         if ($price != $mc_gross) {
             if ($via != 'manual') {
-                fatal_ipn_exit(do_lang('PURCHASE_WRONG_PRICE', $item_name));
+                fatal_ipn_exit(do_lang('PURCHASE_WRONG_PRICE', $item_name, $mc_gross, $price));
             }
         }
     }
@@ -655,7 +667,7 @@ function make_cart_payment_button($order_id, $currency)
 
     if (!method_exists($object, 'make_cart_transaction_button')) {
         $amount = $GLOBALS['SITE_DB']->query_select_value('shopping_order', 'tot_price', array('id' => $order_id));
-        return $object->make_transaction_button($order_id, do_lang('CART_ORDER', $order_id), $order_id, $amount, $currency);
+        return $object->make_transaction_button('cart_orders', do_lang('shopping:CART_ORDER', strval($order_id)), strval($order_id), $amount, $currency);
     }
 
     return $object->make_cart_transaction_button($items, $currency, $order_id);

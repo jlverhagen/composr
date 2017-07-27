@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -185,7 +185,7 @@ function add_calendar_event($type, $recurrence, $recurrences, $seg_recurrences, 
 
     if ((addon_installed('commandr')) && (!running_script('install'))) {
         require_code('resource_fs');
-        generate_resourcefs_moniker('event', strval($id), null, null, true);
+        generate_resource_fs_moniker('event', strval($id), null, null, true);
     }
 
     require_code('member_mentions');
@@ -233,12 +233,12 @@ function add_calendar_event($type, $recurrence, $recurrences, $seg_recurrences, 
  * @param  SHORT_INTEGER $allow_comments Whether comments are allowed (0=no, 1=yes, 2=review style)
  * @param  BINARY $allow_trackbacks Whether the event may be trackbacked
  * @param  LONG_TEXT $notes Hidden notes pertaining to the event
- * @param  ?TIME $edit_time Edit time (null: either means current time, or if $null_is_literal, means reset to to NULL)
+ * @param  ?TIME $edit_time Edit time (null: either means current time, or if $null_is_literal, means reset to to null)
  * @param  ?TIME $add_time Add time (null: do not change)
  * @param  ?integer $views Number of views (null: do not change)
  * @param  ?MEMBER $submitter Submitter (null: do not change)
  * @param  ?array $regions The regions (empty: not region-limited) (null: same as empty)
- * @param  boolean $null_is_literal Determines whether some NULLs passed mean 'use a default' or literally mean 'set to NULL'
+ * @param  boolean $null_is_literal Determines whether some nulls passed mean 'use a default' or literally mean 'set to null'
  */
 function edit_calendar_event($id, $type, $recurrence, $recurrences, $seg_recurrences, $title, $content, $priority, $start_year, $start_month, $start_day, $start_monthly_spec_type, $start_hour, $start_minute, $end_year, $end_month, $end_day, $end_monthly_spec_type, $end_hour, $end_minute, $timezone, $do_timezone_conv, $member_calendar, $meta_keywords, $meta_description, $validated, $allow_rating, $allow_comments, $allow_trackbacks, $notes, $edit_time = null, $add_time = null, $views = null, $submitter = null, $regions = null, $null_is_literal = false)
 {
@@ -310,7 +310,7 @@ function edit_calendar_event($id, $type, $recurrence, $recurrences, $seg_recurre
     );
     $update_map += $scheduling_map;
     $update_map += lang_remap_comcode('e_title', $myrow['e_title'], $title);
-    $update_map += update_lang_comcode_attachments('e_content', $myrow['e_content'], $content, 'calendar', strval($id), null, false, $myrow['e_submitter']);
+    $update_map += update_lang_comcode_attachments('e_content', $myrow['e_content'], $content, 'calendar', strval($id), null, $myrow['e_submitter']);
 
     if (!is_null($validated)) {
         $update_map['validated'] = $validated;
@@ -388,7 +388,7 @@ function edit_calendar_event($id, $type, $recurrence, $recurrences, $seg_recurre
 
     if ((addon_installed('commandr')) && (!running_script('install'))) {
         require_code('resource_fs');
-        generate_resourcefs_moniker('event', strval($id));
+        generate_resource_fs_moniker('event', strval($id));
     }
 
     require_code('sitemap_xml');
@@ -468,7 +468,7 @@ function delete_calendar_event($id)
 
     if ((addon_installed('commandr')) && (!running_script('install'))) {
         require_code('resource_fs');
-        expunge_resourcefs_moniker('event', strval($id));
+        expunge_resource_fs_moniker('event', strval($id));
     }
 
     require_code('sitemap_xml');
@@ -499,7 +499,7 @@ function add_event_type($title, $logo, $external_feed = '')
 
     if ((addon_installed('commandr')) && (!running_script('install'))) {
         require_code('resource_fs');
-        generate_resourcefs_moniker('calendar_type', strval($id), null, null, true);
+        generate_resource_fs_moniker('calendar_type', strval($id), null, null, true);
     }
 
     require_code('member_mentions');
@@ -530,8 +530,9 @@ function edit_event_type($id, $title, $logo, $external_feed)
     require_code('urls2');
     suggest_new_idmoniker_for('calendar', 'browse', strval($id), '', $title);
 
-    require_code('files2');
-    delete_upload('themes/default/images_custom/calendar', 'calendar_types', 't_logo', 'id', $id, $logo);
+    $old_theme_img_code = $myrow['t_logo'];
+    require_code('themes2');
+    tidy_theme_img_code($logo, $old_theme_img_code, 'calendar_types', 't_logo');
 
     $map = array(
         't_logo' => $logo,
@@ -542,7 +543,7 @@ function edit_event_type($id, $title, $logo, $external_feed)
 
     if ((addon_installed('commandr')) && (!running_script('install'))) {
         require_code('resource_fs');
-        generate_resourcefs_moniker('calendar_type', strval($id));
+        generate_resource_fs_moniker('calendar_type', strval($id));
     }
 
     log_it('EDIT_EVENT_TYPE', strval($id), $title);
@@ -573,6 +574,11 @@ function delete_event_type($id)
     require_code('files2');
     delete_upload('themes/default/images_custom/calendar', 'calendar_types', 't_logo', 'id', $id);
 
+    $old_theme_img_code = $myrow['t_logo'];
+    require_code('themes2');
+    tidy_theme_img_code(null, $old_theme_img_code, 'calendar_types', 't_logo');
+
+
     $GLOBALS['SITE_DB']->query_delete('calendar_types', array('id' => $id), '', 1);
 
     $GLOBALS['SITE_DB']->query_delete('calendar_interests', array('t_type' => $id));
@@ -589,7 +595,7 @@ function delete_event_type($id)
 
     if ((addon_installed('commandr')) && (!running_script('install'))) {
         require_code('resource_fs');
-        expunge_resourcefs_moniker('calendar_type', strval($id));
+        expunge_resource_fs_moniker('calendar_type', strval($id));
     }
 
     require_code('sitemap_xml');

@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts/Tapatalk, 2004-2015
+ Copyright (c) ocProducts/Tapatalk, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -37,7 +37,7 @@ function get_real_url_func($raw_params)
             $url = static_evaluate_tempcode(build_url(array('page' => 'topicview', 'type' => 'browse', 'id' => $id), get_module_zone('topicview'), null, false, false, true));
             break;
         case 'post':
-            $url = static_evaluate_tempcode(build_url(array('page' => 'topicview', 'type' => 'find_post', 'id' => $id), get_module_zone('topicview'), null, false, false, true, '#post_' . strval($id)));
+            $url = static_evaluate_tempcode(build_url(array('page' => 'topicview', 'type' => 'findpost', 'id' => $id), get_module_zone('topicview'), null, false, false, true, '#post_' . strval($id)));
             break;
         default:
             warn_exit('Unknown content type');

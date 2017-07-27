@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -27,6 +27,10 @@ class Hook_members_buildr
     public function run($member_id)
     {
         if (!addon_installed('buildr')) {
+            return array();
+        }
+
+        if (!$GLOBALS['SITE_DB']->table_exists('w_members')) {
             return array();
         }
 

@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -222,7 +222,9 @@ function xhtmlise_html($html, $definitely_want = false, $snippet = false)
         'optgroup', 'legend', 'area', 'form',
     );
     foreach ($may_not_be_empty as $t) {
-        $new = preg_replace('#<' . $t . '(\s[^>]*)?' . '>\s*</' . $t . '>#', '', $new);
+        if (stripos($new, '<' . $t) !== false) {
+            $new = preg_replace('#<' . $t . '(\s[^>]*)?' . '>\s*</' . $t . '>#', '', $new);
+        }
     }
 
     unset($OUT);
@@ -264,7 +266,7 @@ function extract_html_body($html)
 function xhtml_substr($html, $from, $length = null, $literal_pos = false, $ellipses = false, $grammar_completeness_tolerance = 0.0)
 {
     $html = preg_replace('#<\!--.*($|-->)#Us', '', $html); // Strip comments
-    $html = preg_replace('#\s+#', ' ', $html); // Remove double spaces
+    $html = preg_replace('#[ \t]+#', ' ', $html); // Remove double spaces
 
     // Sort out the negative offset possibility
     if ($from < 0) {
@@ -325,6 +327,7 @@ function xhtml_substr($html, $from, $length = null, $literal_pos = false, $ellip
                         }
                         if (($current_tag != 'br') && ($current_tag != 'img') && ($current_tag != 'hr')) { // A little sanity checking, for HTML used as XHTML
                             $tag_stack[] = $current_tag;
+                            $matches = array();
                             $unbreakable_tag_stack[] = (($current_tag == 'figure') || ($current_tag == 'div') && ($has_xhtml_substr_no_break_somewhere) && (preg_match('#\sclass="[^"<>]*xhtml_substr_no_break[^"<>]*"[^<>]*$#', substr($html, 0, $i)) != 0));
                         }
                     }
@@ -389,12 +392,12 @@ function xhtml_substr($html, $from, $length = null, $literal_pos = false, $ellip
 
                 // The regexp just checks for img tag match and grabs the src into $matches[1]
                 $matches = array();
-                if (isset($html[$i + 1]) && strtolower($html[$i + 1]) == 'i'/*Optimisation before we bother looking harder*/ && preg_match('#^<img[^<>]+src="([^"]+)"#i', substr($html, $i, 1000), $matches) != 0) {
+                if (isset($html[$i + 1]) && strtolower($html[$i + 1]) == 'i'/*Optimisation before we bother looking harder*/ && preg_match('#<img[^<>]+src="([^"]+)"#iA', $html, $matches, 0, $i) != 0) {
                     require_code('images');
                     list($width, $height) = _symbol_image_dims(array(html_entity_decode($matches[1], ENT_QUOTES, get_charset()))); // Safe way to grab image dimensions
                     if ($width == '') {
-                        $width = strval(get_option('thumb_width'));
-                        $height = strval(get_option('thumb_width'));
+                        $width = get_option('thumb_width');
+                        $height = get_option('thumb_width');
                     }
                     $pixels = intval($width) * intval($height);
                     $pixels_per_character = 15 * 15;

@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -26,9 +26,10 @@ class Hook_addon_registry_core_configuration
     /**
      * Get a list of file permissions to set
      *
+     * @param  boolean $runtime Whether to include wildcards represented runtime-created chmoddable files
      * @return array File permissions to set
      */
-    public function get_chmod_array()
+    public function get_chmod_array($runtime = false)
     {
         return array();
     }
@@ -102,6 +103,8 @@ class Hook_addon_registry_core_configuration
             'themes/default/images/icons/24x24/menu/adminzone/setup/config/config.png',
             'themes/default/images/icons/48x48/menu/adminzone/setup/config/config.png',
             'sources/hooks/systems/sitemap/config_category.php',
+            'sources/hooks/systems/config/csrf_token_expire_fresh.php',
+            'sources/hooks/systems/config/csrf_token_expire_new.php',
             'sources/hooks/systems/config/header_menu_call_string.php',
             'sources/hooks/systems/config/max_moniker_length.php',
             'sources/hooks/systems/config/enable_seo_fields.php',
@@ -133,11 +136,22 @@ class Hook_addon_registry_core_configuration
             'sources/hooks/systems/config/session_prudence.php',
             'sources/hooks/systems/config/tornevall_api_password.php',
             'sources/hooks/systems/config/tornevall_api_username.php',
+            'sources/hooks/systems/config/message_received_emails.php',
             'sources/hooks/systems/config/use_true_from.php',
+            'sources/hooks/systems/config/email_log_days.php',
+            'sources/hooks/systems/config/block_top_login.php',
+            'sources/hooks/systems/config/block_top_personal_stats.php',
+            'sources/hooks/systems/config/fixed_width.php',
+            'sources/hooks/systems/config/collapse_user_zones.php',
+            'sources/hooks/systems/config/url_monikers_enabled.php',
+            'sources/hooks/systems/config/tasks_background.php',
+            'sources/hooks/systems/config/moniker_transliteration.php',
             'sources/hooks/systems/config/vote_member_ip_restrict.php',
             'sources/hooks/systems/config/spam_approval_threshold.php',
             'sources/hooks/systems/config/spam_ban_threshold.php',
             'sources/hooks/systems/config/spam_blackhole_detection.php',
+            'sources/hooks/systems/config/forced_preview_option.php',
+            'sources/hooks/systems/config/default_preview_guests.php',
             'sources/hooks/systems/config/spam_block_lists.php',
             'sources/hooks/systems/config/spam_block_threshold.php',
             'sources/hooks/systems/config/spam_cache_time.php',
@@ -146,6 +160,7 @@ class Hook_addon_registry_core_configuration
             'sources/hooks/systems/config/spam_check_usernames.php',
             'sources/hooks/systems/config/spam_stale_threshold.php',
             'sources/hooks/systems/config/stopforumspam_api_key.php',
+            'sources/hooks/systems/config/login_error_secrecy.php',
             'sources/hooks/systems/config/cdn.php',
             'sources/hooks/systems/config/allow_theme_image_selector.php',
             'sources/hooks/systems/config/infinite_scrolling.php',
@@ -163,10 +178,13 @@ class Hook_addon_registry_core_configuration
             'sources/hooks/systems/config/automatic_meta_extraction.php',
             'sources/hooks/systems/config/bcc.php',
             'sources/hooks/systems/config/bottom_show_feedback_link.php',
+            'sources/hooks/systems/config/autogrow.php',
             'sources/hooks/systems/config/bottom_show_rules_link.php',
             'sources/hooks/systems/config/bottom_show_privacy_link.php',
             'sources/hooks/systems/config/bottom_show_sitemap_button.php',
             'sources/hooks/systems/config/bottom_show_top_button.php',
+            'sources/hooks/systems/config/dkim_private_key.php',
+            'sources/hooks/systems/config/dkim_selector.php',
             'sources/hooks/systems/config/crypt_ratchet.php',
             'sources/hooks/systems/config/cc_address.php',
             'sources/hooks/systems/config/security_token_exceptions.php',
@@ -211,6 +229,7 @@ class Hook_addon_registry_core_configuration
             'sources/hooks/systems/config/cpf_enable_name.php',
             'sources/hooks/systems/config/cpf_enable_phone.php',
             'sources/hooks/systems/config/cpf_enable_post_code.php',
+            'sources/hooks/systems/config/cpf_enable_county.php',
             'sources/hooks/systems/config/cpf_enable_state.php',
             'sources/hooks/systems/config/filter_regions.php',
             'sources/hooks/systems/config/cns_show_profile_link.php',
@@ -225,6 +244,7 @@ class Hook_addon_registry_core_configuration
             'sources/hooks/systems/config/send_error_emails_ocproducts.php',
             'sources/hooks/systems/config/session_expiry_time.php',
             'sources/hooks/systems/config/show_docs.php',
+            'sources/hooks/systems/config/keyset_pagination.php',
             'sources/hooks/systems/config/show_inline_stats.php',
             'sources/hooks/systems/config/show_post_validation.php',
             'sources/hooks/systems/config/simplified_donext.php',
@@ -258,6 +278,7 @@ class Hook_addon_registry_core_configuration
             'sources/hooks/systems/config/remember_me_by_default.php',
             'sources/hooks/systems/config/mobile_support.php',
             'sources/hooks/systems/config/complex_uploader.php',
+            'sources/hooks/systems/config/complex_lists.php',
             'sources/hooks/systems/config/wysiwyg.php',
             'sources/hooks/systems/config/editarea.php',
             'sources/hooks/systems/config/autoban.php',
@@ -271,9 +292,9 @@ class Hook_addon_registry_core_configuration
             'sources/hooks/systems/config/imap_password.php',
             'sources/hooks/systems/config/imap_port.php',
             'sources/hooks/systems/config/imap_username.php',
+            'sources/hooks/systems/config/fractional_editing.php',
             'sources/hooks/systems/addon_registry/core_configuration.php',
             'themes/default/templates/CONFIG_CATEGORY_SCREEN.tpl',
-            'themes/default/templates/CONFIG_GROUP.tpl',
             'adminzone/pages/modules/admin_config.php',
             'lang/EN/config.ini',
             'sources/hooks/systems/config/.htaccess',
@@ -292,7 +313,6 @@ class Hook_addon_registry_core_configuration
     public function tpl_previews()
     {
         return array(
-            'templates/CONFIG_GROUP.tpl' => 'administrative__config_category_screen',
             'templates/CONFIG_CATEGORY_SCREEN.tpl' => 'administrative__config_category_screen',
             'templates/XML_CONFIG_SCREEN.tpl' => 'administrative__xml_config_screen'
         );
@@ -307,16 +327,15 @@ class Hook_addon_registry_core_configuration
      */
     public function tpl_preview__administrative__config_category_screen()
     {
-        $groups = new Tempcode();
+        $groups = array();
 
         foreach (placeholder_array() as $k => $group) {
-            $group = do_lorem_template('CONFIG_GROUP', array(
+            $groups[] = array(
                 'GROUP_DESCRIPTION' => lorem_word(),
                 'GROUP_NAME' => $group,
                 'GROUP' => placeholder_fields(),
                 'GROUP_TITLE' => 'ID' . strval($k),
-            ));
-            $groups->attach($group->evaluate());
+            );
         }
 
         return array(

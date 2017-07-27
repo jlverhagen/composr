@@ -111,7 +111,7 @@ You may add new zones, edit zones, delete zones, and move pages between zones fr
 Admin Zone > Structure > Zones.
 You can delete a zone from the bottom of its edit form.
 
-When performing an action that will add, rename or delete a zone, you may need to provide details that tell Composr how it can do this; this is because on the some web hosting configurations, PHP does not have full access to files on the hosting account (lack of suEXEC). These details are the same as you provided when using the Composr quick installer (assuming you used this to install).
+When performing an action that will add, rename or delete a zone, you may need to provide details that tell Composr how it can do this; this is because on the some webhosting configurations, PHP does not have full access to files on the hosting account (lack of suEXEC). These details are the same as you provided when using the Composr quick installer (assuming you used this to install).
 
 [title="3"]Zone logos (advanced)[/title]
 
@@ -165,7 +165,7 @@ Redirections are useful for a number of reasons, including:
 
 To reach the Redirects module go to Admin Zone > Structure > Redirects.
 
-[title="3"]Using redirects to virtually move a module[/title]
+[title="3"]Using redirects to virtually move a module (rename a module)[/title]
 
 If you want a module to behave as if it was completely moved, you can set up a transparent redirect from your desired location to the actual location, and then a non-transparent redirect from the actual location to the desired location.
 
@@ -191,7 +191,7 @@ Now let's try the same for a transparent redirect and see the results. To make o
 
 When you visit the home page you are redirected to the Forums page just like earlier with the normal redirect, but take a look at the URL now: it doesn't reveal that the [tt]forumview[/tt] page was called. The redirect happened within Composr, not your web browser.
 
-[title="3"]Example: Moving a module[/title]
+[title="3"]Example: Moving a module (renaming a module)[/title]
 
 If you wanted to move the [tt]supermembers[/tt] module from the Collaboration Zone to the Site zone, you could set up these redirects:
 1) [tt]site:supermembers[/tt]-->[tt]collaboration:supermembers[/tt] [i]transparent[/i]
@@ -244,8 +244,8 @@ And there we go :)!
 An alternative to using the breadcrumbs XML file would have been to use virtual roots. Composr is packed with power-tools you can use!
 
 [concepts
- 1_key="virtual root"       1_value="Virtual roots allow you to split a Composr tree based content system (such as the download system) so it appears to have multiple databases"
- 2_key="redirection page"   2_value="Allows pages to be redirected to from different zone/page combinations, either transparently, or with a redirection message"
+ 1_key="Virtual root"       1_value="Virtual roots allow you to split a Composr tree based content system (such as the download system) so it appears to have multiple databases"
+ 2_key="Redirection page"   2_value="Allows pages to be redirected to from different zone/page combinations, either transparently, or with a redirection message"
 ]Concepts[/concepts]
 
 [title="2"]See also[/title]

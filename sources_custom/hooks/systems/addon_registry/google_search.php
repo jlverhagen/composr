@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -21,9 +21,10 @@ class Hook_addon_registry_google_search
     /**
      * Get a list of file permissions to set
      *
+     * @param  boolean $runtime Whether to include wildcards represented runtime-created chmoddable files
      * @return array File permissions to set
      */
-    public function get_chmod_array()
+    public function get_chmod_array($runtime = false)
     {
         return array();
     }
@@ -87,7 +88,15 @@ class Hook_addon_registry_google_search
     {
         return 'Embed Google site search onto your site.
 
-This addon consists of two blocks: a side block with the google search form and a main block, where google results are displayed. When you install this addon it will create a standard results page called _google_search; this page can be edited or customised in the same way as any other page. In addition you can create your own page or put a main_google_results block on an existing page. When you add the side_google_search block you can choose a page_name parameter, but it is only needed if you are sending the results to a non-default page you have added the google results block on. [code="Comcode"][block]side_google_search[/block][/code]Note that it is a requirement that your _google_search page is in a zone where the side search block displays, as these two interface together once a search is initiated.';
+This addon consists of two blocks: a side block with the google search form and a main block, where google results are displayed. When you install this addon it will create a standard results page called [tt]_google_search[/tt]; this page can be edited or customised in the same way as any other page.
+
+In addition you can create your own page or put a [tt]main_google_results[/tt] block on an existing page. When you add the [tt]side_google_search[/tt] block you can choose a page_name parameter, but it is only needed if you are sending the results to a non-default page you have added the google results block on.
+
+Example:
+[code=\'Comcode\'][block id="xxx"]side_google_search[/block][/code]
+The [tt]xxx[/tt] is from [tt]var cx = \'xxx\';[/tt] in the code [url="Google provides"]https://cse.google.com/cse/[/url]. We use our own customised JavaScript rather than Google\'s, but we need the ID they embed in it.
+
+Note that it is a requirement that your [tt]_google_search[/tt] page is in a zone where the side search block displays, as these two interface together once a search is initiated.';
     }
 
     /**

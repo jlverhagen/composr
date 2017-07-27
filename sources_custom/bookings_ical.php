@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -27,7 +27,7 @@ function bookables_ical_script()
     //header('Content-Type: text/calendar');
     //header('Content-Disposition: inline; filename="bookables_export.ics"');
 
-    if (function_exists('set_time_limit')) {
+    if (php_function_allowed('set_time_limit')) {
         @set_time_limit(0);
     }
 
@@ -170,7 +170,7 @@ function bookings_ical_script()
         return '';
     }
 
-    if (function_exists('set_time_limit')) {
+    if (php_function_allowed('set_time_limit')) {
         @set_time_limit(0);
     }
 
@@ -183,7 +183,7 @@ function bookings_ical_script()
 
     $id = get_param_integer('id');
     $where = 'bookable_id=' . strval($id) . ' AND (b_year>' . date('Y', $time) . ' OR (b_year=' . date('Y', $time) . ' AND b_month>' . date('m', $time) . ') OR (b_year=' . date('Y', $time) . ' AND b_month=' . date('m', $time) . ' AND b_day>=' . date('d', $time) . '))';
-    $members_with_bookings = $GLOBALS['SITE_DB']->query('SELECT DISTINCT member_id FROM ' . get_table_prefix() . 'booking WHERE ' . $where . ' ORDER BY booked_at DESC', 10000/*reasonable limit*/);
+    $members_with_bookings = $GLOBALS['SITE_DB']->query('SELECT DISTINCT member_id,booked_at FROM ' . get_table_prefix() . 'booking WHERE ' . $where . ' ORDER BY booked_at DESC', 10000/*reasonable limit*/);
     echo "BEGIN:VCALENDAR\n";
     echo "VERSION:2.0\n";
     echo "PRODID:-//ocProducts/Composr//NONSGML v1.0//EN\n";
@@ -238,7 +238,7 @@ function bookings_ical_script()
                 echo "DTSTAMP:" . date('Ymd', $booking['booked_at']) . "T" . date('His', $booking['booked_at']) . "\n";
                 echo "CREATED:" . date('Ymd', $booking['booked_at']) . "T" . date('His', $booking['booked_at']) . "\n";
 
-                echo "SUMMARY:" . ical_escape($bookable_category/*do_lang('TAKEN',$codes)*/) . "\n";
+                echo "SUMMARY:" . ical_escape($bookable_category/*do_lang('TAKEN', $codes)*/) . "\n";
                 echo "DESCRIPTION:" . ical_escape($description) . "\n";
 
                 if (!is_guest($booking['member_id'])) {

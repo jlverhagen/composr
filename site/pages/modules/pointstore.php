@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -36,8 +36,8 @@ class Module_pointstore
         $info['hacked_by'] = null;
         $info['hack_version'] = null;
         $info['version'] = 6;
+        $info['update_require_upgrade'] = true;
         $info['locked'] = false;
-        $info['update_require_upgrade'] = 1;
         return $info;
     }
 
@@ -127,11 +127,15 @@ class Module_pointstore
      * @param  boolean $check_perms Whether to check permissions.
      * @param  ?MEMBER $member_id The member to check permissions as (null: current user).
      * @param  boolean $support_crosslinks Whether to allow cross links to other modules (identifiable via a full-page-link rather than a screen-name).
-     * @param  boolean $be_deferential Whether to avoid any entry-point (or even return NULL to disable the page in the Sitemap) if we know another module, or page_group, is going to link to that entry-point. Note that "!" and "browse" entry points are automatically merged with container page nodes (likely called by page-groupings) as appropriate.
+     * @param  boolean $be_deferential Whether to avoid any entry-point (or even return null to disable the page in the Sitemap) if we know another module, or page_group, is going to link to that entry-point. Note that "!" and "browse" entry points are automatically merged with container page nodes (likely called by page-groupings) as appropriate.
      * @return ?array A map of entry points (screen-name=>language-code/string or screen-name=>[language-code/string, icon-theme-image]) (null: disabled).
      */
     public function get_entry_points($check_perms = true, $member_id = null, $support_crosslinks = true, $be_deferential = false)
     {
+        if (get_forum_type() == 'none') {
+            return array();
+        }
+
         if (!$check_perms || !is_guest($member_id)) {
             return array(
                 '!' => array('POINTSTORE', 'menu/social/pointstore'),
@@ -143,7 +147,7 @@ class Module_pointstore
     public $title;
 
     /**
-     * Module pre-run function. Allows us to know meta-data for <head> before we start streaming output.
+     * Module pre-run function. Allows us to know metadata for <head> before we start streaming output.
      *
      * @return ?Tempcode Tempcode indicating some kind of exceptional output (null: none).
      */
@@ -156,6 +160,8 @@ class Module_pointstore
         breadcrumb_set_parents(array(array('_SELF:_SELF:browse', do_lang_tempcode('POINTSTORE'))));
 
         $this->title = get_screen_title('POINTSTORE');
+
+        $GLOBALS['OUTPUT_STREAMING'] = false;
 
         return null;
     }
@@ -178,6 +184,10 @@ class Module_pointstore
         // Not logged in
         if (is_guest()) {
             access_denied('NOT_AS_GUEST');
+        }
+
+        if (get_forum_type() == 'none') {
+            warn_exit(do_lang_tempcode('NO_FORUM_INSTALLED'));
         }
 
         if ($hook != '') {
@@ -230,7 +240,7 @@ class Module_pointstore
         if (get_option('is_on_forw_buy') == '1') {
             $forwarding_url = build_url(array('page' => '_SELF', 'type' => 'newforwarding', 'id' => 'forwarding'), '_SELF');
 
-            if ($GLOBALS['SITE_DB']->query_value_if_there('SELECT COUNT(*) FROM ' . get_table_prefix() . 'prices WHERE name LIKE \'' . db_encode_like('forw_%') . '\'') > 0) {
+            if ($GLOBALS['SITE_DB']->query_value_if_there('SELECT COUNT(*) FROM ' . get_table_prefix() . 'prices WHERE name LIKE \'' . db_encode_like('forw\_%') . '\'') > 0) {
                 $_pointstore_mail_forwarding_link = $forwarding_url;
             } else {
                 $_pointstore_mail_forwarding_link = null;
@@ -242,7 +252,7 @@ class Module_pointstore
         if (get_option('is_on_pop3_buy') == '1') {
             $pop3_url = build_url(array('page' => '_SELF', 'type' => 'pop3info', 'id' => 'pop3'), '_SELF');
 
-            if ($GLOBALS['SITE_DB']->query_value_if_there('SELECT COUNT(*) FROM ' . get_table_prefix() . 'prices WHERE name LIKE \'' . db_encode_like('pop3_%') . '\'') > 0) {
+            if ($GLOBALS['SITE_DB']->query_value_if_there('SELECT COUNT(*) FROM ' . get_table_prefix() . 'prices WHERE name LIKE \'' . db_encode_like('pop3\_%') . '\'') > 0) {
                 $_pointstore_mail_pop3_link = $pop3_url;
             } else {
                 $_pointstore_mail_pop3_link = null;
@@ -253,7 +263,7 @@ class Module_pointstore
         }
 
         if ((!$pointstore_mail_pop3_link->is_empty()) || (!$pointstore_mail_pop3_link->is_empty())) {
-            $items->attach(do_template('POINTSTORE_MAIL', array('_GUID' => '4a024f39a4065197b2268ecd2923b8d6', 'POINTSTORE_MAIL_POP3_LINK' => $pointstore_mail_pop3_link, 'POINTSTORE_MAIL_FORWARDING_LINK' => $pointstore_mail_forwarding_link), null, false, null, '.txt', 'text'));
+            $items->attach(do_template('POINTSTORE_MAIL', array('_GUID' => '4a024f39a4065197b2268ecd2923b8d6', 'POINTSTORE_MAIL_POP3_LINK' => $pointstore_mail_pop3_link, 'POINTSTORE_MAIL_FORWARDING_LINK' => $pointstore_mail_forwarding_link)));
         }
 
         // --

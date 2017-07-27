@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -38,7 +38,7 @@ function get_staff_actions_list()
         'theme_images' => do_lang_tempcode('THEME_IMAGE_EDITING'),
         'code' => do_lang_tempcode('WEBSTANDARDS'),
     );
-    if (get_param_integer('keep_no_minify', 0) == 0) { // When minification on we need to hard-code CSS list as cannot be auto-detected
+    if (get_param_integer('keep_no_minify', 0) == 0) { // When minification is on we need to hard-code the CSS list as it cannot be auto-detected
         $is_admin = $GLOBALS['FORUM_DRIVER']->is_super_admin(get_member());
         $zone_name = get_zone_name();
         $grouping_codename = 'merged__';
@@ -78,10 +78,8 @@ function get_staff_actions_list()
         'spacer_4' => do_lang_tempcode('DEVELOPMENT_VIEWS'),
         'query' => do_lang_tempcode('VIEW_PAGE_QUERIES'),
         'ide_linkage' => do_lang_tempcode('IDE_LINKAGE'),
+        'memory' => do_lang_tempcode('_MEMORY_USAGE'),
     );
-    if (function_exists('memory_get_usage')) {
-        $list['memory'] = do_lang_tempcode('_MEMORY_USAGE');
-    }
     $special_page_type = get_param_string('special_page_type', 'view');
     $staff_actions = '';
     $started_opt_group = false;
@@ -96,7 +94,7 @@ function get_staff_actions_list()
             continue;
         }
         $staff_actions .= '<option' . (($staff_actions == '') ? ' disabled="disabled" class="label"' : '') . ' ' . (($name == $special_page_type) ? 'selected="selected" ' : '') . 'value="' . escape_html($name) . '">' . (isset($text->codename/*faster than is_object*/) ? $text->evaluate() : escape_html($text)) . '</option>'; // XHTMLXHTML
-        //$staff_actions.=static_evaluate_tempcode(form_input_list_entry($name,($name==$special_page_type),$text,false,$disabled)); Disabled 'proper' way for performance reasons
+        //$staff_actions .= static_evaluate_tempcode(form_input_list_entry($name, ($name == $special_page_type), $text, false, $disabled)); Disabled 'proper' way for performance reasons
     }
     if ($started_opt_group) {
         $staff_actions .= '</optgroup>';
@@ -148,6 +146,10 @@ function get_page_warning_details($zone, $codename, $edit_url)
  */
 function assign_refresh($url, $multiplier = 0.0)
 {
+    if ($url == '') {
+        fatal_exit(do_lang_tempcode('INTERNAL_ERROR'));
+    }
+
     // URL clean up
     if (is_object($url)) {
         $url = $url->evaluate();
@@ -180,23 +182,24 @@ function assign_refresh($url, $multiplier = 0.0)
         return;
     }
 
-    // Redirect via meta tag in standard Composr output
-    if ($must_show_message) {
+    global $FORCE_META_REFRESH;
+
+    if ((!running_script('index')) || ($must_show_message)) {
+        $FORCE_META_REFRESH = true;
+    }
+
+    if ($FORCE_META_REFRESH) {
+        // Redirect via meta tag in standard Composr output
         global $REFRESH_URL;
         $REFRESH_URL[0] = $url;
         $REFRESH_URL[1] = 2.5 * $multiplier;
-        return;
-    }
-
-    // HTTP redirect
-    global $FORCE_META_REFRESH;
-    if ((running_script('index')) && (!$FORCE_META_REFRESH)) {
-        header('Location: ' . $url);
+    } else {
+        // HTTP redirect
+        header('Location: ' . escape_header($url));
         if (strpos($url, '#') === false) {
             $GLOBALS['QUICK_REDIRECT'] = true;
         }
     }
-    return;
 }
 
 /**
@@ -230,17 +233,13 @@ function closed_site()
             throw new CMSException($closed_message);
         }
 
-        if (!headers_sent()) {
-            if ((!browser_matches('ie')) && (strpos(cms_srv('SERVER_SOFTWARE'), 'IIS') === false)) {
-                header('HTTP/1.0 503 Service Temporarily Unavailable');
-            }
-        }
+        set_http_status_code('503');
 
         log_stats('/closed', 0);
 
         $GLOBALS['SCREEN_TEMPLATE_CALLED'] = '';
 
-        if (count($_POST) > 0) {
+        if (has_interesting_post_fields()) {
             $_redirect = build_url(array('page' => ''), '', array('keep_session' => 1));
         } else {
             $_redirect = build_url(array('page' => '_SELF'), '_SELF', array('keep_session' => 1), true);
@@ -289,10 +288,10 @@ function page_not_found($codename, $zone)
             $possibility = strval($possibility); // e.g. '404' page has been converted to integer by PHP, grr
         }
 
-        $from = str_replace('cms_', '', str_replace('admin_', '', $possibility));
-        $to = str_replace('cms_', '', str_replace('admin_', '', $codename));
-        //$dist=levenshtein($from,$to);  If we use this, change > to < also
-        //$threshold=4;
+        $from = str_replace(array('-', 'cms_', 'admin_'), array('_', '', ''), $possibility);
+        $to = str_replace(array('-', 'cms_', 'admin_'), array('_', '', ''), $codename);
+        //$dist = levenshtein($from, $to);  If we use this, change > to < also
+        //$threshold = 4;
         $dist = 0.0;
         similar_text($from, $to, $dist);
         $threshold = 75.0;
@@ -332,6 +331,7 @@ function page_not_found($codename, $zone)
  * @param  array $new_comcode_page_row New row for database, used if necessary (holds submitter etc)
  * @param  boolean $being_included Whether the page is being included from another
  * @return array A tuple: The page HTML (as Tempcode), New Comcode page row, Title, Raw Comcode
+ *
  * @ignore
  */
 function _load_comcode_page_not_cached($string, $zone, $codename, $file_base, $comcode_page_row, $new_comcode_page_row, $being_included = false)
@@ -342,17 +342,13 @@ function _load_comcode_page_not_cached($string, $zone, $codename, $file_base, $c
     $GLOBALS['NO_QUERY_LIMIT'] = true;
 
     // Not cached :(
-    $tmp = fopen($file_base . '/' . $string, 'rb');
-    @flock($tmp, LOCK_SH);
-    $comcode = file_get_contents($file_base . '/' . $string);
+    $comcode = cms_file_get_contents_safe($file_base . '/' . $string);
     if (strpos($string, '_custom/') === false) {
         global $LANG_FILTER_OB;
         $comcode = $LANG_FILTER_OB->compile_time(null, $comcode);
     }
     apply_comcode_page_substitutions($comcode);
     $comcode = fix_bad_unicode($comcode);
-    @flock($tmp, LOCK_UN);
-    fclose($tmp);
 
     if (is_null($new_comcode_page_row['p_submitter'])) {
         $as_admin = true;
@@ -379,6 +375,12 @@ function _load_comcode_page_not_cached($string, $zone, $codename, $file_base, $c
     $_new = do_comcode_attachments($comcode, 'comcode_page', $zone . ':' . $codename, false, null, $as_admin/*Ideally we assign $page_submitter based on this as well so it is safe if the Comcode cache is emptied*/, $page_submitter);
     $_text_parsed = $_new['tempcode'];
     $LAX_COMCODE = $temp;
+
+    // Flatten for performance reasons?
+    if (strpos($comcode, '{$,Quick Cache}') !== false) {
+        $_text_parsed = apply_quick_caching($_text_parsed);
+    }
+
     $text_parsed = $_text_parsed->to_assembly();
 
     // Check it still needs inserting (it might actually be there, but not translated)
@@ -395,7 +397,18 @@ function _load_comcode_page_not_cached($string, $zone, $codename, $file_base, $c
         );
         $map += insert_lang('cc_page_title', clean_html_title($COMCODE_PARSE_TITLE), 1, null, false, null, null, false, null, null, null, true, true);
         if (multi_lang_content()) {
-            $map['string_index'] = $GLOBALS['SITE_DB']->query_insert('translate', array('source_user' => $page_submitter, 'broken' => 0, 'importance_level' => 1, 'text_original' => $comcode, 'text_parsed' => $text_parsed, 'language' => $lang), true, false, true);
+            $map['string_index'] = null;
+            $lock = false;
+            table_id_locking_start($GLOBALS['SITE_DB'], $map['string_index'], $lock);
+
+            $trans_map = array('source_user' => $page_submitter, 'broken' => 0, 'importance_level' => 1, 'text_original' => $comcode, 'text_parsed' => $text_parsed, 'language' => $lang);
+            if ($map['string_index'] === null) {
+                $map['string_index'] = $GLOBALS['SITE_DB']->query_insert('translate', $trans_map, true, false, true);
+            } else {
+                $GLOBALS['SITE_DB']->query_insert('translate', array('id' => $map['string_index']) + $trans_map, true, false, true);
+            }
+
+            table_id_locking_end($GLOBALS['SITE_DB'], $map['string_index'], $lock);
         } else {
             $map['string_index'] = $comcode;
             $map['string_index__source_user'] = $page_submitter;
@@ -484,6 +497,7 @@ function apply_comcode_page_substitutions(&$comcode)
  * @param  array $new_comcode_page_row New row for database, used if nesessary (holds submitter etc)
  * @param  boolean $being_included Whether the page is being included from another
  * @return array A tuple: The page HTML (as Tempcode), New Comcode page row, Title, Raw Comcode
+ *
  * @ignore
  */
 function _load_comcode_page_cache_off($string, $zone, $codename, $file_base, $new_comcode_page_row, $being_included = false)
@@ -502,7 +516,7 @@ function _load_comcode_page_cache_off($string, $zone, $codename, $file_base, $ne
 
     $_comcode_page_row = $GLOBALS['SITE_DB']->query_select('comcode_pages', array('*'), array('the_zone' => $zone, 'the_page' => $codename), '', 1);
 
-    $comcode = file_get_contents($file_base . '/' . $string);
+    $comcode = cms_file_get_contents_safe($file_base . '/' . $string);
     if (strpos($string, '_custom/') === false) {
         global $LANG_FILTER_OB;
         $comcode = $LANG_FILTER_OB->compile_time(null, $comcode);
@@ -542,7 +556,7 @@ function _load_comcode_page_cache_off($string, $zone, $codename, $file_base, $ne
  */
 function clean_html_title($title)
 {
-    $_title = trim(strip_tags($title));
+    $_title = trim(strip_html($title));
     if ($_title == '') { // Complex case
         $matches = array();
         if (preg_match('#<img[^>]*alt="([^"]+)"#', $title, $matches) != 0) {

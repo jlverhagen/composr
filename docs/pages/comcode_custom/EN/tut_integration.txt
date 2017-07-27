@@ -2,7 +2,7 @@
 
 This tutorial will provide details on how to integrate Composr with another web system (known henceforth as the 'other system') installed for your website.
 
-Please note that many systems, especially complex ones, will not easily integrate without reprogramming. In this event, you may wish to hire a company for commercial assistance. Even the kinds of integration here usually require a high level of skill in web technologies and Composr technologies.
+Please note that many systems, especially complex ones, will not easily integrate without reprogramming. In this event, you may wish to hire a company for professional assistance. Even the kinds of integration here usually require a high level of skill in web technologies and Composr technologies.
 
 [contents]decimal,lower-alpha[/contents]
 
@@ -48,7 +48,8 @@ To integrate this page as [tt]site:mypage[/tt], the following steps would need t
 
 [title="3"]The magical way[/title]
 
-Composr can actually handle most things for you if you want to defer control to it:[list="1"]
+Composr can actually handle most things for you if you want to defer control to it:
+[list="1"]
 [*] Copy any [tt].htm[/tt] files into the [tt]pages/html_custom/EN/[/tt] directory ([tt].html[/tt] files should be renamed to [tt].htm[/tt] files)[list]
  [*][i]Unless[/i] the file is meant to be located in a subdirectory and Composr has a zone with the same name as that subdirectory. In this case, you'd place it in the equivalent directory of that zone so that Composr can better automatically rewrite any links to the page:[list]
   [*] For example, don't upload [tt]pages/html_custom/EN/example/test.htm[/tt] if you have a zone named [tt]example[/tt]. Put the file in [tt]example/pages/html_custom/EN/[/tt]
@@ -71,7 +72,7 @@ To clarify, the following linking situations confuse Composr:
  - page trees that go more than one level deep
  - links that go back up a page tree
 
-[title="2"]Embedding[/title]
+[title="2"]Embedding into Composr[/title]
 
 If you wish for the other system to appear directly inside Composr, much like a Composr page, this is a lot more awkward.
 
@@ -84,7 +85,6 @@ An iframe is an HTML construct that allows you to place one site inside a region
  - the title-bar titles would not be reflected in the browser title-bar
 
 To place an iframed system into Composr, the easiest way is to make a new Comcode page which will contain the frame, link that onto your menu, and place the following Comcode into the page:
-
 [code="Comcode"]
 [html]
 <iframe frameBorder="0" scrolling="no" title="whatever the embedded system is" src="whatever the system URL is" style="width: 100%; height: whatever height you want px;">whatever the embedded system is</iframe>
@@ -190,9 +190,11 @@ There are two major problems with this approach:
 If you are trying to integrate a system that is non-interactive, and outputs all important information in either the RSS or Atom families of feed formats, you may be able to perform an integration by simply using the [tt]main_rss[/tt] block in combination with the feed URL (or if it is date based information, overlaying the feed URL onto the calendar).
 This form of integration is most appropriate for news and calendars, although other forms of information do sometimes fit it well.
 
+You can also export Composr data using RSS.
+
 Use of RSS is documented in the [page="_SEARCH:tut_adv_news"]Advanced News tutorial[/page].
 
-[title="2"]Integrating JavaScript libraries[/title]
+[title="2"]Integrating JavaScript libraries into Composr[/title]
 
 There are a number of different techniques you can use.
 
@@ -289,7 +291,7 @@ You could inject a JavaScript element that includes an external URL, or a JavaSc
 
 There is an equivalent [tt]attach_to_screen_footer[/tt] function.
 
-[title="2"]Integrating CSS libraries[/title]
+[title="2"]Integrating CSS libraries into Composr[/title]
 
 There are a number of different techniques you can use.
 
@@ -324,7 +326,7 @@ If you want to include the CSS library from a template, do:
 {$REQUIRE_CSS,example}
 [/code]
 
-[title="2"]Look and feel[/title]
+[title="2"]Look and feel when integrating into Composr[/title]
 
 The other system is unlikely to naturally fit in with your Composr theme: therefore you may need to make an effort to make them look alike. This would either involve changing Composr, changing the other system, or changing both to coalesce visually.
 
@@ -364,11 +366,18 @@ For completeness, this is what the [tt]login[/tt] page [i]does[/i] do:
  - Handles Conceded mode
  - Handles "Become invisible" toggle
 
-If coding a system to create an Composr login automatically (i.e. without needing to direct the user to a POST request) you'd need to set the session cookie to a random number, and then insert a row into the Composr [tt]sessions[/tt] table to match against it.
+If coding a system to create a Composr login automatically (i.e. without needing to direct the user to a POST request) you'd need to set the session cookie to a random number, and then insert a row into the Composr [tt]sessions[/tt] table to match against it.
 
 [title="2"]Creating new forms in HTML but not PHP[/title]
 
 You may need to tune the "Pages without security tokens" option if you are setting up pages with custom forms but not going through the full Composr forms API.
+
+[title="2"]General integration for external systems to access Composr[/title]
+
+As Composr is Open Source, you can add whatever integration code you wish to it so that other systems have a way in.
+
+However, the framework for this has been done for you with the endpoints API, and [page="_SEARCH:tut_mobile_sdk"]Composr Mobile SDK[/page] provides a ready-made set of endpoints covering many common use cases.
+New endpoint hooks can be created by a PHP programmer easily, providing whatever custom REST API integration is required.
 
 [concepts
  1_key="iframe"    1_value="A portion of the main web page that encloses another web page (with its own URL)"
@@ -376,6 +385,7 @@ You may need to tune the "Pages without security tokens" option if you are setti
 
 [title="2"]See also[/title]
 
+ - [page="_SEARCH:tut_mobile_sdk"]Mobile apps via Composr Mobile SDK[/page]
  - [page="_SEARCH:tut_nuances"]Nuances of the forum driver system[/page]
  - [page="_SEARCH:tut_structure"]Composr site structure[/page]
  - [page="_SEARCH:tut_httpauth"]Integrating Composr into a network via HTTP authentication[/page]

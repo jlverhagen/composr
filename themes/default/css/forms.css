@@ -1,6 +1,6 @@
 /*
  {$BRAND_NAME`}
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 */
 
 /* General form-related styles */
@@ -11,6 +11,12 @@
 	}
 /*{+END}*/
 
+.required_field_warning_wrap {
+	/*{+START,IF,{$NOT,{$MOBILE}}}*/
+		text-align: center;
+	/*{+END}*/
+}
+
 .required_field_warning {
 	border: 1px solid {$GET,standard_border};
 	overflow: hidden;
@@ -20,9 +26,9 @@
 	*/
 	font-weight: bold;
 	font-size: 0.85em;
-	margin: 1.5em auto 1em auto;
+	margin: 1.5em 0 1em 0;
 	/*{+START,IF,{$NOT,{$MOBILE}}}*/
-		width: 11em;
+		display: inline-block;
 	/*{+END}*/
 	{$BETA_CSS_PROPERTY,border-radius: 5px;}
 	{$BETA_CSS_PROPERTY,user-select: none;} {$,To stop accidental touching on mobile form filling in}
@@ -58,6 +64,7 @@ div.comcode_supported {
 	border: 1px solid {$GET,light_error_border};
 	background: url('{$IMG;,icons/24x24/status/notice}') 0.6em 0.75em no-repeat {$GET,light_error_background};
 	{$BETA_CSS_PROPERTY,border-radius: 5px;}
+	margin-top: 0.5em;
 }
 @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 2dppx) {
 	.input_error_here {
@@ -69,10 +76,6 @@ div.comcode_supported {
 /* This is used to fix a problem on screen readers (we don't want a paragraph used) */
 span.form_field_name {
 	/*display: inline-block;	Actually, this breaks vertical centring, so let it be inline*/
-}
-
-.locked_field {
-	{$BETA_CSS_PROPERTY,opacity: 0.3;}
 }
 
 /* Overrides .toggleable_tray_button */
@@ -211,8 +214,10 @@ th.form_table_field_name a, /* Extra specificity to take precedence over th.de_t
 }
 
 .form_table .filledin .required {
+	/*	Style rather extreme, but re-enable if you wish
 	background-color: {$GET,area_background} !important;
-	{$BETA_CSS_PROPERTY,background-image: linear-gradient(to bottom\, {$GET,required_2_background}\, {$GET,required_background}) !important;}
+	{$BETA_CSS_PROPERTY,background-image: linear-gradient(to bottom\, {$GET,area_background}\, {$GET,area_2_background}) !important;}
+	*/
 }
 
 /* Field sets */
@@ -279,7 +284,7 @@ th.form_table_field_name a, /* Extra specificity to take precedence over th.de_t
 	display: inline-block;
 }
 .input_dimensions input {
-	width: 3em !important;
+	width: 4em !important;
 }
 .input_dimensions, .input_dimensions * {
 	vertical-align: middle;
@@ -342,7 +347,7 @@ span.validated_checkbox.checked {
 }
 span.validated_checkbox+input[name="validated"].input_tick {
 	padding-right: 0.5em;
-	z-index: 10000;
+	z-index: 100;
 	position: relative;
 	{$BETA_CSS_PROPERTY,opacity: 0;}
 }
@@ -399,7 +404,7 @@ span.validated_checkbox+input[name="validated"].input_tick {
 }
 .page_running_topics .radio_list_picture {
 	/* Numbers based around topic emoticons emoticons */
-	min-height: 30px;
+	min-height: 32px;
 	min-width: 30px;
 }
 .radio_list_picture_na {
@@ -415,6 +420,8 @@ span.validated_checkbox+input[name="validated"].input_tick {
 	float: none;
 	margin: 1em;
 	border: 1px solid {$GET,standard_border};
+	min-height: auto;
+	{$BETA_CSS_PROPERTY,opacity: 1.0;}
 }
 
 .radio_list_picture img {
@@ -543,11 +550,13 @@ span.validated_checkbox+input[name="validated"].input_tick {
 
 /*{+START,IF,{$MOBILE}}*/
 	.mobile.preview_box {
-		padding: 209px 33px 159px 31px;
+		padding: 209px 36px 159px 34px;
+		width: 314px;
+		height: 360px;
 		background: url('{$IMG;,iphone}') no-repeat;
 		cursor: crosshair;
 	}
-	.mobile.preview_box_inner {
+	.mobile .preview_box_inner {
 		overflow: hidden;
 		width: 320px;
 		height: 355px;
@@ -676,7 +685,7 @@ span.validated_checkbox+input[name="validated"].input_tick {
 }
 
 .skip_step_button_wrap {
-	height: 35px;
+	overflow: hidden;
 }
 
 .skip_step_button_wrap div {
@@ -706,6 +715,10 @@ span.validated_checkbox+input[name="validated"].input_tick {
 	margin-bottom: 0.5em;
 }
 
+.fields_set_contents {
+	overflow: hidden;
+}
+
 .fields_set_contents .associated_details {
 	margin-top: 0.2em;
 }
@@ -733,7 +746,7 @@ span.validated_checkbox+input[name="validated"].input_tick {
 	}
 /*{+END}*/
 
-.box___revision_history_wrap {
+.box___revisions_wrap {
 	margin-top: 3em;
 }
 
@@ -754,6 +767,20 @@ span.validated_checkbox+input[name="validated"].input_tick {
 .cke_reset_all div[role="tabpanel"]>:last-child {
 	margin-bottom: 0;
 }
+
+.cke_widget_inline {
+	line-height: 1em !important;
+}
+
+/*{+START,IF,{!takes_lots_of_space}}*/
+	div span .cke_combo_text {
+		width: 70px !important;
+	}
+
+	div span .cke_combo__fontsize .cke_combo_text {
+		width: 50px !important;
+	}
+/*{+END}*/
 
 /* Icons for our custom plugins (we specify ours this way for greatest flexibility) */
 
@@ -845,7 +872,7 @@ span.validated_checkbox+input[name="validated"].input_tick {
 
 /* Composr editing UI */
 
-comcode-{$REPLACE,\,,\,comcode-,{$COMCODE_TAGS;,{$WYSIWYG_COMCODE__XML_BLOCK}}\,{$COMCODE_TAGS;,{$WYSIWYG_COMCODE__XML_INLINE}}} {
+comcode-{$REPLACE,\,,\,comcode-,{$COMCODE_TAGS;,{$WYSIWYG_COMCODE__XML_BLOCK}}\,{$COMCODE_TAGS;,{$WYSIWYG_COMCODE__XML_INLINE}}}, tempcode {
 	background-color: {$GET,native_ui_active_background};
 }
 

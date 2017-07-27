@@ -89,7 +89,7 @@ function internalise_infinite_scrolling(url_stem,wrapper)
 				var load_more_link=document.createElement('div');
 				load_more_link.className='pagination_load_more';
 				var load_more_link_a=document.createElement('a');
-				set_inner_html(load_more_link_a,'{!LOAD_MORE;}');
+				set_inner_html(load_more_link_a,'{!LOAD_MORE;^}');
 				load_more_link_a.href='#';
 				load_more_link_a.onclick=function() { internalise_infinite_scrolling_go(url_stem,wrapper,more_links); return false; }; // Click link -- load
 				load_more_link.appendChild(load_more_link_a);
@@ -177,7 +177,6 @@ function internalise_infinite_scrolling_go(url_stem,wrapper,more_links)
 				url_stub+=(url_stem.indexOf('?')==-1)?'?':'&';
 				url_stub+=matches[1]+'='+matches[2];
 				url_stub+='&raw=1';
-
 				window.infinite_scroll_pending=true;
 
 				return call_block(url_stem+url_stub,'',wrapper_inner,true,function() { window.infinite_scroll_pending=false; internalise_infinite_scrolling(url_stem,wrapper); });
@@ -188,15 +187,23 @@ function internalise_infinite_scrolling_go(url_stem,wrapper,more_links)
 	return false;
 }
 
-function internalise_ajax_block_wrapper_links(url_stem,block,look_for,extra_params,append,forms_too)
+function internalise_ajax_block_wrapper_links(url_stem,block_element,look_for,extra_params,append,forms_too,scroll_to_top)
 {
+	if (!block_element) return;
+
 	if (typeof look_for=='undefined') look_for=[];
 	if (typeof extra_params=='undefined') extra_params=[];
 	if (typeof append=='undefined') append=false;
 	if (typeof forms_too=='undefined') forms_too=false;
+	if (typeof scroll_to_top=='undefined') scroll_to_top=true;
 
-	var _link_wrappers=get_elements_by_class_name(block,'ajax_block_wrapper_links');
-	if (_link_wrappers.length==0) _link_wrappers=[block];
+	var block_pos_y=find_pos_y(block_element,true);
+	if (block_pos_y>get_window_scroll_y()) {
+		scroll_to_top=false;
+	}
+
+	var _link_wrappers=get_elements_by_class_name(block_element,'ajax_block_wrapper_links');
+	if (_link_wrappers.length==0) _link_wrappers=[block_element];
 	var links=[];
 	for (var i=0;i<_link_wrappers.length;i++)
 	{
@@ -262,8 +269,20 @@ function internalise_ajax_block_wrapper_links(url_stem,block,look_for,extra_para
 					}
 				}
 
+				if (typeof window.history.pushState!='undefined')
+				{
+					try
+					{
+						window.has_js_state=true;
+						history.pushState({js: true},document.title,href.replace('&ajax=1','').replace(/&zone=[{$URL_CONTENT_REGEXP_JS}]+/,''));
+					}
+					catch (e) {}; // Exception could have occurred due to cross-origin error (e.g. "Failed to execute 'pushState' on 'History': A history state object with URL 'https://xxx' cannot be created in a document with origin 'http://xxx'")
+				}
+
+				clear_out_tooltips(null);
+
 				// Make AJAX block call
-				return call_block(url_stem+url_stub,'',block,append,function() { window.scrollTo(0,0); },false,post_params);
+				return call_block(url_stem+url_stub,'',block_element,append,function() { if (scroll_to_top) window.scrollTo(0,block_pos_y); },false,post_params);
 			};
 			if (links[i].nodeName.toLowerCase()=='a')
 			{
@@ -278,7 +297,7 @@ function internalise_ajax_block_wrapper_links(url_stem,block,look_for,extra_para
 			{
 				if (links[i].onsubmit)
 				{
-					links[i].onsubmit=function(old_onsubmit) { return function(event) { return old_onsubmit.call(this.event)!==false && submit_func.call(this,event); } }(links[i].onsubmit);
+					links[i].onsubmit=function(old_onsubmit) { return function(event) { return old_onsubmit.call(this,event)!==false && submit_func.call(this,event); } }(links[i].onsubmit);
 				} else
 				{
 					links[i].onsubmit=submit_func;
@@ -294,17 +313,19 @@ function guarded_form_submit(form)
 }
 
 // This function will load a block, with options for parameter changes, and render the results in specified way - with optional callback support
-function call_block(url,new_block_params,target_div,append,callback,scroll_to_top_of_wrapper,post_params,inner)
+function call_block(url,new_block_params,target_div,append,callback,scroll_to_top_of_wrapper,post_params,inner,show_loading_animation)
 {
 	if (typeof scroll_to_top_of_wrapper=='undefined') scroll_to_top_of_wrapper=false;
 	if (typeof post_params=='undefined') post_params=null;
 	if (typeof inner=='undefined') inner=false;
+	if (typeof show_loading_animation=='undefined') show_loading_animation=true;
 	if ((typeof block_data_cache[url]=='undefined') && (new_block_params!=''))
 		block_data_cache[url]=get_inner_html(target_div); // Cache start position. For this to be useful we must be smart enough to pass blank new_block_params if returning to fresh state
 
 	var ajax_url=url;
 	if (new_block_params!='') ajax_url+='&block_map_sup='+window.encodeURIComponent(new_block_params);
-	if (typeof block_data_cache[ajax_url]!='undefined')
+	if (typeof window.cms_theme!='undefined') ajax_url+='&utheme='+window.cms_theme;
+	if (typeof block_data_cache[ajax_url]!='undefined' && post_params==null)
 	{
 		// Show results from cache
 		show_block_html(block_data_cache[ajax_url],target_div,append,inner);
@@ -314,7 +335,7 @@ function call_block(url,new_block_params,target_div,append,callback,scroll_to_to
 
 	// Show loading animation
 	var loading_wrapper=target_div;
-	if ((loading_wrapper.id.indexOf('carousel_')==-1) && (get_inner_html(loading_wrapper).indexOf('ajax_loading')==-1))
+	if ((loading_wrapper.id.indexOf('carousel_')==-1) && (get_inner_html(loading_wrapper).indexOf('ajax_loading_block')==-1) && (show_loading_animation))
 	{
 		var raw_ajax_grow_spot=get_elements_by_class_name(target_div,'raw_ajax_grow_spot');
 		if (typeof raw_ajax_grow_spot[0]!='undefined' && append) loading_wrapper=raw_ajax_grow_spot[0]; // If we actually are embedding new results a bit deeper
@@ -328,7 +349,6 @@ function call_block(url,new_block_params,target_div,append,callback,scroll_to_to
 			} else
 			{
 				loading_wrapper.style.position='relative';
-				loading_wrapper.style.overflow='hidden'; // Stops margin collapsing weirdness
 			}
 		}
 		var loading_image=document.createElement('img');
@@ -368,7 +388,7 @@ function _call_block_render(raw_ajax_result,ajax_url,target_div,append,callback,
 	block_data_cache[ajax_url]=new_html;
 
 	// Remove loading animation if there is one
-	var ajax_loading=get_elements_by_class_name(target_div,'ajax_loading');
+	var ajax_loading=get_elements_by_class_name(target_div,'ajax_loading_block');
 	if (typeof ajax_loading[0]!='undefined')
 	{
 		ajax_loading[0].parentNode.parentNode.removeChild(ajax_loading[0].parentNode);
@@ -426,7 +446,7 @@ function ajax_form_submit__admin__headless(event,form,block_name,map)
 	}
 	for (var i=0;i<form.elements.length;i++)
 	{
-		if (!form.elements[i].disabled)
+		if (!form.elements[i].disabled && typeof form.elements[i].name!='undefined' && form.elements[i].name!=null && form.elements[i].name!='')
 			post+='&'+form.elements[i].name+'='+window.encodeURIComponent(clever_find_value(form,form.elements[i]));
 	}
 	var request=do_ajax_request(maintain_theme_in_link('{$FIND_SCRIPT_NOHTTP;,comcode_convert}'+keep_stub(true)),null,post);
@@ -450,7 +470,7 @@ function ajax_form_submit__admin__headless(event,form,block_name,map)
 
 				set_inner_html(element_replace,xhtml);
 
-				window.fauxmodal_alert('{!SUCCESS;}');
+				window.fauxmodal_alert('{!SUCCESS;^}');
 
 				return false; // We've handled it internally
 			}
@@ -477,7 +497,7 @@ function do_ajax_field_test(url,post)
 			{
 				if (typeof window.console!='undefined') console.log(xmlhttp.responseText);
 
-				fauxmodal_alert(xmlhttp.responseText,null,'{!ERROR_OCCURRED;}',true);
+				fauxmodal_alert(xmlhttp.responseText,null,'{!ERROR_OCCURRED;^}',true);
 			} else
 			{
 				window.fauxmodal_alert(xmlhttp.responseText);
@@ -515,8 +535,11 @@ function do_ajax_request(url,callback__method,post) // Note: 'post' is not an ar
 		window.AJAX_REQUESTS[index]=new XMLHttpRequest();
 	}
 	if (!synchronous) window.AJAX_REQUESTS[index].onreadystatechange=process_request_changes;
-	if (post)
+	if (typeof post!='undefined' && post!==null)
 	{
+		if (post.indexOf('&csrf_token')==-1)
+			post+='&csrf_token='+window.encodeURIComponent(get_csrf_token()); // For CSRF prevention
+
 		window.AJAX_REQUESTS[index].open('POST',url,!synchronous);
 		window.AJAX_REQUESTS[index].setRequestHeader('Content-Type','application/x-www-form-urlencoded');
 		window.AJAX_REQUESTS[index].send(post);
@@ -544,41 +567,63 @@ function process_request_changes()
 	for (i=0;i<window.AJAX_REQUESTS.length;i++)
 	{
 		result=window.AJAX_REQUESTS[i];
-		if ((result!=null) && (result.readyState) && (result.readyState==4))
+		if ((result!=null) && (result.readyState) && (result.readyState==4/*done*/))
 		{
 			window.AJAX_REQUESTS[i]=null;
 
 			// If status is 'OK'
-			if ((result.status) && ((result.status==200) || (result.status==500) || (result.status==400) || (result.status==401)))
+			var result_status=result.status;
+			if (result_status>10000) result_status=0; // Weird IE status, see http://stackoverflow.com/questions/872206/http-status-code-0-what-does-this-mean-in-ms-xmlhttp/905751#905751
+			if ((result_status) && ((result_status==200) || (result_status==500) || (result_status==400) || (result_status==401)))
 			{
 				// Process the result
-				if ((window.AJAX_METHODS[i]) && (typeof window.AJAX_METHODS[i]==='function') && (!result.responseXML/*Not payload handler and not stack trace*/ || result.responseXML.childNodes.length==0))
+				if (window.AJAX_METHODS[i])
 				{
-					return window.AJAX_METHODS[i](result);
+					// Text result? Handle with a very simple call
+					if ((!result.responseXML/*Not payload handler and not stack trace*/ || result.responseXML.childNodes.length==0))
+					{
+						return call_ajax_method(window.AJAX_METHODS[i],result,null);
+					}
 				}
+
 				var xml=handle_errors_in_result(result);
 				if (xml)
 				{
+					// XML result. Handle with a potentially complex call
 					xml.validateOnParse=false;
 					var ajax_result_frame=xml.documentElement;
 					if (!ajax_result_frame) ajax_result_frame=xml;
 					process_request_change(ajax_result_frame,i);
+				} else
+				{
+					// Error parsing
+					if (window.AJAX_METHODS[i])
+					{
+						call_ajax_method(window.AJAX_METHODS[i],null,null);
+					}
 				}
 			}
 			else
 			{
+				// HTTP error...
+
+				if (window.AJAX_METHODS[i])
+				{
+					call_ajax_method(window.AJAX_METHODS[i],null,null);
+				}
+
 				try
 				{
-					if ((result.status==0) || (result.status==12029)) // 0 implies site down, or network down
+					if (result_status==0) // 0 implies site down, or network down
 					{
 						if ((!window.network_down) && (!window.unloaded))
 						{
-							if (result.status==12029) window.fauxmodal_alert('{!NETWORK_DOWN;^}');
+							//window.fauxmodal_alert('{!NETWORK_DOWN;^}');	Annoying because it happens when unsleeping a laptop (for example)
 							window.network_down=true;
 						}
 					} else
 					{
-						if (typeof console.log!='undefined') console.log('{!PROBLEM_RETRIEVING_XML;^}\n'+result.status+': '+result.statusText+'.');
+						if (typeof console.log!='undefined') console.log('{!PROBLEM_RETRIEVING_XML;^}\n'+result_status+': '+result.statusText+'.');
 					}
 				}
 				catch (e)
@@ -614,7 +659,7 @@ function handle_errors_in_result(result)
 		{
 			if (typeof window.console!='undefined') console.log(result);
 
-			fauxmodal_alert(result.responseText,null,'{!ERROR_OCCURRED;}',true);
+			fauxmodal_alert(result.responseText,null,'{!ERROR_OCCURRED;^}',true);
 		}
 		return false;
 	}
@@ -626,10 +671,18 @@ function process_request_change(ajax_result_frame,i)
 	if (!ajax_result_frame) return null; // Needed for Opera
 	if ((typeof window.AJAX_REQUESTS=='undefined') || (!window.AJAX_REQUESTS)) return null; // Probably the page is in process of being navigated away so window object is gone
 
+	var method=null;
+	if ((ajax_result_frame.getElementsByTagName('method')[0]) || (window.AJAX_METHODS[i]))
+	{
+		method=(ajax_result_frame.getElementsByTagName('method')[0])?eval('return '+merge_text_nodes(ajax_result_frame.getElementsByTagName('method')[0])):window.AJAX_METHODS[i];
+	}
+
 	if (ajax_result_frame.getElementsByTagName('message')[0])
 	{
 		// Either an error or a message was returned. :(
 		var message=ajax_result_frame.getElementsByTagName('message')[0].firstChild.data;
+
+		call_ajax_method(method,null,null);
 
 		if (ajax_result_frame.getElementsByTagName('error')[0])
 		{
@@ -643,17 +696,43 @@ function process_request_change(ajax_result_frame,i)
 	}
 
 	var ajax_result=ajax_result_frame.getElementsByTagName('result')[0];
-	if (!ajax_result) return null;
-
-	if ((ajax_result_frame.getElementsByTagName('method')[0]) || (window.AJAX_METHODS[i]))
+	if (!ajax_result)
 	{
-		var method=(ajax_result_frame.getElementsByTagName('method')[0])?eval('return '+merge_text_nodes(ajax_result_frame.getElementsByTagName('method')[0])):window.AJAX_METHODS[i];
-		if (typeof method.response!='undefined') method.response(ajax_result_frame,ajax_result);
-		else method(ajax_result_frame,ajax_result);
+		call_ajax_method(method,null,null);
+		return null;
+	}
 
-	}// else window.fauxmodal_alert('Method required: as it is non-blocking');
+	call_ajax_method(method,ajax_result_frame,ajax_result);
 
 	return null;
+}
+
+function call_ajax_method(method,ajax_result_frame,ajax_result)
+{
+	if (method instanceof Array)
+	{
+		if (ajax_result_frame!=null)
+		{
+			method=(typeof method[0]=='undefined')?null:method[0];
+		} else
+		{
+			method=(typeof method[1]=='undefined')?null:method[1];
+		}
+	} else
+	{
+		if (ajax_result_frame==null) method=null; // No failure method given, so don't call
+	}
+
+	if (method!=null)
+	{
+		if (typeof method.response!='undefined')
+		{
+			method.response(ajax_result_frame,ajax_result);
+		} else
+		{
+			method(ajax_result_frame,ajax_result);
+		}
+	}
 }
 
 function merge_text_nodes(childNodes)

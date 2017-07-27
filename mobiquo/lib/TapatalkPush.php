@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -125,14 +125,14 @@ class TapatalkPush extends TapatalkBasePush
             $this->do_push_post($post_row, $is_new_topic);
 
             // Send mentions
-            comcode_to_tempcode(get_translated_text($post_row['p_post'])); // Just so that the mentions are found
+            comcode_to_tempcode(get_translated_text($post_row['p_post'], $GLOBALS['FORUM_DB'])); // Just so that the mentions are found
             global $MEMBER_MENTIONS_IN_COMCODE;
             if (isset($MEMBER_MENTIONS_IN_COMCODE)) {
                 $this->do_push_mention($post_row, array_unique($MEMBER_MENTIONS_IN_COMCODE));
             }
 
             // Send quotes
-            $comcode = get_translated_text($post_row['p_post']);
+            $comcode = get_translated_text($post_row['p_post'], $GLOBALS['FORUM_DB']);
             $matches = array();
             $num_matches = preg_match_all('#\[quote( param)?="([^"]+)"\]#', $comcode, $matches);
             $quoted_members = array();
@@ -294,16 +294,16 @@ class TapatalkPush extends TapatalkBasePush
 
             'title' => $post_row['t_cache_first_title'],
             'content' => trim(strip_comcode($content)),
-            'author' => $post_row['p_poster_name_if_guest'],
-            'authorid' => strval($post_row['p_poster']),
-            'author_type' => self::check_return_user_type($post_row['p_poster']),
             'dateline' => $post_row['p_time'],
 
+            'author' => $GLOBALS['FORUM_DRIVER']->get_username(get_member()),
+            'authorid' => get_member(),
+            'author_type' => self::check_return_user_type(get_member()),
             'author_ip' => self::getClientIp(),
             'author_ua' => self::getClientUserAgent(),
             'from_app' => self::getIsFromApp(),
 
-            'userid' => implode(',', array_map('strval', $member_ids)),
+            'userid' => implode(',', array_map('strval', $member_ids)), // Being sent to these members
 
             'push' => 1,
         );
@@ -333,9 +333,12 @@ class TapatalkPush extends TapatalkBasePush
         if ((is_file(TAPATALK_LOG)) && (is_writable_wrap(TAPATALK_LOG))) {
             // Request
             $log_file = fopen(TAPATALK_LOG, 'at');
+            flock($log_file, LOCK_EX);
+            fseek($log_file, 0, SEEK_END);
             fwrite($log_file, TAPATALK_REQUEST_ID . ' -- ' . date('Y-m-d H:i:s') . " *PUSH*:\n");
             fwrite($log_file, var_export($arr, true));
             fwrite($log_file, "\n\n");
+            flock($log_file, LOCK_UN);
             fclose($log_file);
         }
 

@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -30,11 +30,15 @@ function init__type_sanitisation()
          * Find whether the specified string is alphanumeric or not.
          *
          * @param  string $string The string to test
-         * @param  boolean $strict Whether to do stricter sanitisation
+         * @param  boolean $strict Whether to do stricter sanitisation, latin alphanumeric only and no dots
          * @return boolean Whether the string is alphanumeric or not
          */
         function is_alphanumeric($string, $strict = false)
         {
+            if ((function_exists('ctype_alnum')) && (ctype_alnum($string))) {
+                return true;
+            }
+
             if ($strict) {
                 return preg_match('#^[\w\-]*$#', $string) != 0;
             }

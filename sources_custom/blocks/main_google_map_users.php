@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -10,6 +10,11 @@
 /**
  * @license    http://opensource.org/licenses/cpal_1.0 Common Public Attribution License
  * @copyright  ocProducts Ltd
+ * @package    user_mappr
+ */
+
+/**
+ * Block class.
  */
 class Block_main_google_map_users
 {
@@ -27,8 +32,7 @@ class Block_main_google_map_users
         $info['hack_version'] = null;
         $info['version'] = 2;
         $info['locked'] = false;
-        $info['parameters'] = array('title', 'region', 'cluster', 'filter_usergroup', 'filter_term', 'geolocate_user', 'username_prefix', 'latitude', 'longitude', 'width', 'height',/*'api_key',no longer used*/
-                                    'zoom', 'center');
+        $info['parameters'] = array('title', 'region', 'cluster', 'filter_usergroup', 'filter_term', 'geolocate_user', 'username_prefix', 'latitude', 'longitude', 'width', 'height',/*'api_key',no longer used*/'zoom', 'center');
         return $info;
     }
 
@@ -75,8 +79,14 @@ class Block_main_google_map_users
         if (!array_key_exists('longitude', $map)) {
             $map['longitude'] = '';
         }
-        $mapwidth = array_key_exists('width', $map) ? $map['width'] : '100%';
-        $mapheight = array_key_exists('height', $map) ? $map['height'] : '300px';
+        $map_width = array_key_exists('width', $map) ? $map['width'] : '100%';
+        if (is_numeric($map_width)) {
+            $map_width .= 'px';
+        }
+        $map_height = array_key_exists('height', $map) ? $map['height'] : '300px';
+        if (is_numeric($map_height)) {
+            $map_height .= 'px';
+        }
         $api_key = array_key_exists('api_key', $map) ? $map['api_key'] : '';
         $set_zoom = array_key_exists('zoom', $map) ? $map['zoom'] : '3';
         $set_center = array_key_exists('center', $map) ? $map['center'] : '0';
@@ -91,11 +101,11 @@ class Block_main_google_map_users
 
             $latitude_cpf_id = $GLOBALS['FORUM_DB']->query_select_value_if_there('f_custom_fields', 'id', array($GLOBALS['FORUM_DB']->translate_field_ref('cf_name') => 'cms_latitude'));
             $longitude_cpf_id = $GLOBALS['FORUM_DB']->query_select_value_if_there('f_custom_fields', 'id', array($GLOBALS['FORUM_DB']->translate_field_ref('cf_name') => 'cms_longitude'));
-            //return paragraph('The maps block has not been installed correctly, the CPFs are missing.','','nothing_here');
+            //return paragraph('The maps block has not been installed correctly, the CPFs are missing.', '', 'nothing_here');
         }
 
         // Data query
-        $query = 'SELECT m_username,mf_member_id,m_primary_group,field_' . strval($latitude_cpf_id) . ',field_' . strval($longitude_cpf_id) . ' FROM ' . $GLOBALS['FORUM_DB']->get_table_prefix() . 'f_member_custom_fields f LEFT JOIN ' . $GLOBALS['FORUM_DB']->get_table_prefix() . 'f_members m ON m.id=f.mf_member_id WHERE ' . db_string_not_equal_to('field_' . strval($longitude_cpf_id), '') . ' AND ' . db_string_not_equal_to('field_' . strval($latitude_cpf_id), '');
+        $query = 'SELECT m_username,mf_member_id,m_primary_group,field_' . strval($latitude_cpf_id) . ',field_' . strval($longitude_cpf_id) . ' FROM ' . $GLOBALS['FORUM_DB']->get_table_prefix() . 'f_member_custom_fields f LEFT JOIN ' . $GLOBALS['FORUM_DB']->get_table_prefix() . 'f_members m ON m.id=f.mf_member_id WHERE field_' . strval($longitude_cpf_id) . ' IS NOT NULL AND field_' . strval($latitude_cpf_id) . ' IS NOT NULL';
 
         // Filtering
         if (!array_key_exists('filter_usergroup', $map)) {
@@ -125,7 +135,7 @@ class Block_main_google_map_users
 
         if (count($members_to_show) == 0) { // If there's nothing to show
             if ($geolocate_user == '0') {// Exit, but only if we can't geolocate users via the block (i.e. self-healing)
-                return paragraph(do_lang_tempcode('NO_ENTRIES'), '', 'nothing_here');
+                return paragraph(do_lang_tempcode('NO_ENTRIES', 'member'), '', 'nothing_here');
             }
         }
 
@@ -135,19 +145,21 @@ class Block_main_google_map_users
             if ($i != 0) {
                 $member_data_js .= ',';
             }
-            $member_data_js .= "['" . addslashes($member_data['m_username']) . "'," .
-                               float_to_raw_string(@floatval($member_data['field_' . strval($latitude_cpf_id)])) . "," .
-                               float_to_raw_string(@floatval($member_data['field_' . strval($longitude_cpf_id)])) . "," .
-                               strval($member_data['m_primary_group']) . "]";
+            $member_data_js .= '[
+                \'' . addslashes($GLOBALS['FORUM_DRIVER']->get_displayname($member_data['m_username'])) . '\',' .
+                float_to_raw_string(@floatval($member_data['field_' . strval($latitude_cpf_id)]), 30) . ',' .
+                float_to_raw_string(@floatval($member_data['field_' . strval($longitude_cpf_id)]), 30) . ',' .
+                strval($member_data['m_primary_group']) . '
+            ]';
         }
         $member_data_js .= "];";
 
         // See if we need to detect the current user's long/lat
-        $member_longitude = get_cms_cpf('longitude', get_member());
-        $member_latitude = get_cms_cpf('latitude', get_member());
-        $update_url = get_base_url() . '/data_custom/set_coordinates.php?mid=' . strval(get_member()) . '&coord=';
+        $member_longitude = @floatval(get_cms_cpf('longitude', get_member()));
+        $member_latitude = @floatval(get_cms_cpf('latitude', get_member()));
+        $set_coord_url = get_base_url() . '/data_custom/set_coordinates.php?mid=' . strval(get_member()) . '&coord=';
         if ((!empty($member_longitude) && !empty($member_latitude)) || (is_guest())) {
-            $update_url = '';
+            $set_coord_url = '';
         }
 
         return do_template('BLOCK_MAIN_GOOGLE_MAP_USERS', array(
@@ -155,12 +167,12 @@ class Block_main_google_map_users
             'TITLE' => $map['title'],
             'GEOLOCATE_USER' => $geolocate_user,
             'CLUSTER' => $cluster,
-            'SET_COORD_URL' => $update_url,
+            'SET_COORD_URL' => $set_coord_url,
             'REGION' => $map['region'],
             'DATA' => $member_data_js,
             'USERNAME_PREFIX' => $map['username_prefix'],
-            'WIDTH' => $mapwidth,
-            'HEIGHT' => $mapheight,
+            'WIDTH' => $map_width,
+            'HEIGHT' => $map_height,
             'LATITUDE' => $map['latitude'],
             'LONGITUDE' => $map['longitude'],
             'ZOOM' => $set_zoom,

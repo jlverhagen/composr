@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts/Tapatalk, 2004-2015
+ Copyright (c) ocProducts/Tapatalk, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -181,9 +181,8 @@ function request_helper_get_file($request_method)
         }
 
         // Save
-        file_put_contents($data_file, serialize($func_file_mapping));
-        fix_permissions($data_file);
-        sync_file($data_file);
+        require_code('files');
+        cms_file_put_contents_safe($data_file, serialize($func_file_mapping), FILE_WRITE_FIX_PERMISSIONS | FILE_WRITE_SYNC_FILE);
     } else {
         $func_file_mapping = unserialize(file_get_contents($data_file));
     }

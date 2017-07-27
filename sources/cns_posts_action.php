@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -44,8 +44,12 @@ function cns_get_post_templates($forum_id)
     $all_templates = $GLOBALS['FORUM_DB']->query_select('f_post_templates', array('*'));
     $apply = array();
     foreach ($all_templates as $template) {
-        require_code('selectcode');
-        $idlist = selectcode_to_idlist_using_db($template['t_forum_multi_code'], 'id', 'f_forums', 'f_forums', 'f_parent_forum', 'f_parent_forum', 'id', true, true, $GLOBALS['FORUM_DB']);
+        if ($template['t_forum_multi_code'] == '*') {
+            $idlist = array($forum_id);
+        } else {
+            require_code('selectcode');
+            $idlist = selectcode_to_idlist_using_db($template['t_forum_multi_code'], 'id', 'f_forums', 'f_forums', 'f_parent_forum', 'f_parent_forum', 'id', true, true, $GLOBALS['FORUM_DB']);
+        }
         if (in_array($forum_id, $idlist)) {
             if (strpos($template['t_text'], '{') !== false) {
                 require_code('tempcode_compiler');
@@ -157,13 +161,18 @@ function cns_make_post($topic_id, $title, $post, $skip_sig = 0, $is_starter = fa
         }
     }
 
+    if ($is_starter && $title == '') {
+        // Probably some weird API usage (e.g. Resource-fs) where title came in with topic not first post
+        $title = $GLOBALS['FORUM_DB']->query_select_value_if_there('f_topics', 't_cache_first_title', array('id' => $topic_id));
+    }
+
     if (!running_script('install')) {
         require_code('antispam');
-        inject_action_spamcheck($poster_name_if_guest, get_param_string('email', null));
+        inject_action_spamcheck($poster_name_if_guest, post_param_string('email', null));
     }
 
     if ($check_permissions) {
-        if (strlen($title) > 120) {
+        if (cms_mb_strlen($title) > 120) {
             warn_exit(do_lang_tempcode('TITLE_TOO_LONG'));
         }
 
@@ -243,11 +252,11 @@ function cns_make_post($topic_id, $title, $post, $skip_sig = 0, $is_starter = fa
         $validated = 1;
     }
     $map = array(
-        'p_title' => substr($title, 0, 255),
+        'p_title' => cms_mb_substr($title, 0, 255),
         'p_ip_address' => $ip_address,
         'p_time' => $time,
         'p_poster' => $anonymous ? db_get_first_id() : $poster,
-        'p_poster_name_if_guest' => substr($poster_name_if_guest, 0, 80),
+        'p_poster_name_if_guest' => cms_mb_substr($poster_name_if_guest, 0, 80),
         'p_validated' => $validated,
         'p_topic_id' => $topic_id,
         'p_is_emphasised' => $is_emphasised,
@@ -298,24 +307,24 @@ function cns_make_post($topic_id, $title, $post, $skip_sig = 0, $is_starter = fa
             require_code('notifications');
             $subject = do_lang('POST_REQUIRING_VALIDATION_MAIL_SUBJECT', $topic_title, null, null, get_site_default_lang());
             $post_text = get_translated_text($map['p_post'], $GLOBALS['FORUM_DB'], get_site_default_lang());
-            $mail = do_notification_lang('POST_REQUIRING_VALIDATION_MAIL', comcode_escape($url), comcode_escape($poster_name_if_guest), array($post_text, strval($anonymous ? db_get_first_id() : $poster)));
+            $mail = do_notification_lang('POST_REQUIRING_VALIDATION_MAIL', comcode_escape($url), comcode_escape($poster_name_if_guest), array($post_text, $poster_name_if_guest, strval($anonymous ? db_get_first_id() : $poster)));
             dispatch_notification('needs_validation', null, $subject, $mail, null, $poster, 3, false, false, null, null, '', '', '', '', null, true);
         }
     } else {
         if ($send_notification) {
             $post_comcode = get_translated_text($map['p_post'], $GLOBALS['FORUM_DB']);
 
-            require_code('cns_posts_action2');
-            cms_profile_start_for('cns_make_post:cns_send_topic_notification');
-            cns_send_topic_notification($url, $topic_id, $forum_id, $anonymous ? db_get_first_id() : $poster, $is_starter, $post_comcode, $topic_title, $intended_solely_for, $is_pt);
-            cms_profile_end_for('cns_make_post:cns_send_topic_notification');
-
             // Send a notification for the inline PP
             if (!is_null($intended_solely_for)) {
                 require_code('notifications');
                 $msubject = do_lang('NEW_PERSONAL_POST_SUBJECT', $topic_title, null, null, get_lang($intended_solely_for));
-                $mmessage = do_notification_lang('NEW_PERSONAL_POST_MESSAGE', comcode_escape($GLOBALS['FORUM_DRIVER']->get_username($anonymous ? db_get_first_id() : $poster, true)), comcode_escape($topic_title), array(comcode_escape($url), $post_comcode, strval($anonymous ? db_get_first_id() : $poster)), get_lang($intended_solely_for));
+                $mmessage = do_notification_lang('NEW_PERSONAL_POST_MESSAGE', comcode_escape($GLOBALS['FORUM_DRIVER']->get_username($anonymous ? db_get_first_id() : $poster, true)), comcode_escape($topic_title), array(comcode_escape($url), $post_comcode, $poster_name_if_guest, get_lang($intended_solely_for), strval($anonymous ? db_get_first_id() : $poster)));
                 dispatch_notification('cns_new_pt', null, $msubject, $mmessage, array($intended_solely_for), $anonymous ? db_get_first_id() : $poster);
+            } else {
+                require_code('cns_posts_action2');
+                cms_profile_start_for('cns_make_post:cns_send_topic_notification');
+                cns_send_topic_notification($url, $topic_id, $forum_id, $anonymous ? db_get_first_id() : $poster, $is_starter, $post_comcode, $topic_title, $intended_solely_for/*limits to this*/, $is_pt, null, null, $poster_name_if_guest);
+                cms_profile_end_for('cns_make_post:cns_send_topic_notification');
             }
         }
     }
@@ -342,8 +351,8 @@ function cns_make_post($topic_id, $title, $post, $skip_sig = 0, $is_starter = fa
                 if (!is_null($read_to_timestamp)) {
                     // Nothing unread since it was read?
                     if ($GLOBALS['FORUM_DB']->query_select_value('f_posts', 'COUNT(*)', array('p_topic_id' => $topic_id), ' AND p_time>' . strval($read_to_timestamp) . ' AND id<>' . strval($post_id)) == 0) {
-                        $read_to_timestamp = time();
-                    } // ... then bump up to now, so our own post doesn't make the topic as a whole seem unread
+                        $read_to_timestamp = time(); // ... then bump up to now, so our own post doesn't make the topic as a whole seem unread
+                    }
                 }
                 cns_ping_topic_read($topic_id, $poster, $read_to_timestamp);
 
@@ -357,14 +366,14 @@ function cns_make_post($topic_id, $title, $post, $skip_sig = 0, $is_starter = fa
                 }
 
                 decache(array(
-                    array('side_cns_personal_topics', array($with)),
+                    array('side_cns_private_topics', array($with)),
                     array('_new_pp', array($with)),
                 ));
             }
         }
 
         if (is_null($intended_solely_for)) {
-            if ($validated == 1) {
+            if (($validated == 1) || ($is_starter)) {
                 require_code('cns_posts_action2');
                 cms_profile_start_for('cns_make_post:cns_force_update_topic_caching');
                 cns_force_update_topic_caching($topic_id, 1, true, $is_starter, $post_id, $time, $title, $map['p_post'], $poster_name_if_guest, $poster);
@@ -372,9 +381,11 @@ function cns_make_post($topic_id, $title, $post, $skip_sig = 0, $is_starter = fa
             }
             if ($validated == 1) {
                 if (!is_null($forum_id)) {
-                    /*if ($sunk==1) {    Don't hide posts to sunk topics actually, it's too weird
-                        $GLOBALS['FORUM_DB']->query('UPDATE '.$GLOBALS['FORUM_DB']->get_table_prefix().'f_forums SET f_cache_num_topics=(f_cache_num_topics+'.(($is_starter)?'1':'0').'),f_cache_num_posts=(f_cache_num_posts+1) WHERE id='.strval($topic_id));
-                    } else {*/
+                    /* Don't hide posts to sunk topics actually, it's too weird
+                    if ($sunk == 1) {
+                        $GLOBALS['FORUM_DB']->query('UPDATE ' . $GLOBALS['FORUM_DB']->get_table_prefix() . 'f_forums SET f_cache_num_topics=(f_cache_num_topics+' . (($is_starter) ? '1' : '0') . '),f_cache_num_posts=(f_cache_num_posts+1) WHERE id=' . strval($topic_id));
+                    } else {
+                    */
                     require_code('cns_posts_action2');
 
                     // Find if the topic is validated. This can be approximate, if we don't get 1 then cns_force_update_forum_caching will do a search, making the code very slightly slower
@@ -423,10 +434,10 @@ function cns_make_post($topic_id, $title, $post, $skip_sig = 0, $is_starter = fa
     }
 
     if ((addon_installed('commandr')) && (!running_script('install'))) {
-        cms_profile_start_for('cns_make_post:generate_resourcefs_moniker');
+        cms_profile_start_for('cns_make_post:generate_resource_fs_moniker');
         require_code('resource_fs');
-        generate_resourcefs_moniker('post', strval($post_id), null, null, true);
-        cms_profile_end_for('cns_make_post:generate_resourcefs_moniker');
+        generate_resource_fs_moniker('post', strval($post_id), null, null, true);
+        cms_profile_end_for('cns_make_post:generate_resource_fs_moniker');
     }
 
     cms_profile_start_for('cns_make_post:dispatch_member_mention_notifications');
@@ -434,10 +445,16 @@ function cns_make_post($topic_id, $title, $post, $skip_sig = 0, $is_starter = fa
     dispatch_member_mention_notifications('post', strval($post_id), $anonymous ? db_get_first_id() : $poster);
     cms_profile_end_for('cns_make_post:dispatch_member_mention_notifications');
 
-    if (($is_starter) && (!$is_pt)) {
+    if (($is_starter) && (!$is_pt) && (!is_null($forum_id))) {
         require_code('sitemap_xml');
         notify_sitemap_node_add('SEARCH:topicview:id=' . strval($topic_id), $time, $last_edit_time, SITEMAP_IMPORTANCE_LOW, 'daily', has_category_access($GLOBALS['FORUM_DRIVER']->get_guest_id(), 'forums', strval($forum_id)));
     }
+
+    // Tidy up auto-save
+    require_code('autosave');
+    clear_cms_autosave();
+
+    set_value('cns_post_count', strval(intval(get_value('cns_post_count')) + 1));
 
     cms_profile_end_for('cns_make_post', '#' . strval($post_id));
 
@@ -479,7 +496,6 @@ function cns_force_update_member_post_count($member_id, $member_post_count_dif =
         if (addon_installed('unvalidated')) {
             $map['p_validated'] = 1;
         }
-        $member_post_count += $GLOBALS['FORUM_DB']->query_select_value('f_posts', 'COUNT(*)', $map);
         $GLOBALS['FORUM_DB']->query_update('f_members', array('m_cache_num_posts' => $member_post_count), array('id' => $member_id));
     } else {
         $GLOBALS['FORUM_DB']->query('UPDATE ' . $GLOBALS['FORUM_DB']->get_table_prefix() . 'f_members SET m_cache_num_posts=(m_cache_num_posts+' . strval($member_post_count_dif) . ') WHERE id=' . strval($member_id));
@@ -496,18 +512,18 @@ function cns_force_update_member_post_count($member_id, $member_post_count_dif =
 function cns_decache_cms_blocks($updated_forum_id, $forum_name = null, $member = null)
 {
     if (is_null($forum_name)) {
-        $forum_name = $GLOBALS['FORUM_DB']->query_select_value('f_forums', 'f_name', array('id' => $updated_forum_id));
+        $forum_name = $GLOBALS['FORUM_DB']->query_select_value_if_there('f_forums', 'f_name', array('id' => $updated_forum_id));
     }
 
     $decache = array(
         array('main_forum_news', null),
         array('main_forum_topics', null),
         array('side_forum_news', null),
-        array('bottom_news', array($forum_name)),
+        array('bottom_news', ($forum_name === null) ? null : array($forum_name)),
     );
 
     if (!is_null($member)) {
-        $decache[] = array('side_cns_personal_topics', array($member));
+        $decache[] = array('side_cns_private_topics', array($member));
         $decache[] = array('_new_pp', array($member));
     }
 

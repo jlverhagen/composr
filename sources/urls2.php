@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -36,7 +36,7 @@ function set_execution_context($new_get, $new_zone = '_SEARCH', $new_current_scr
     $old_current_script = current_script();
 
     foreach ($_GET as $key => $val) {
-		if (is_integer($key)) {
+        if (is_integer($key)) {
             $key = strval($key);
         }
 
@@ -83,30 +83,13 @@ function remove_url_mistakes($url)
 }
 
 /**
- * Given a URL or page-link, return an absolute URL.
- *
- * @param  string $url URL or page-link
- * @return URLPATH URL
- */
-function page_link_as_url($url)
-{
-    $parts = array();
-    if ((preg_match('#([\w-]*):([\w-]+|[^/]|$)((:(.*))*)#', $url, $parts) != 0) && ($parts[1] != 'mailto')) { // Specially encoded page-link. Complex regexp to make sure URLs do not match
-        list($zone, $map, $hash) = page_link_decode($url);
-        $url = static_evaluate_tempcode(build_url($map, $zone, array(), false, false, false, $hash));
-    } else {
-        $url = qualify_url($url, get_base_url());
-    }
-    return $url;
-}
-
-/**
  * Get hidden fields for a form representing 'keep_x'. If we are having a GET form instead of a POST form, we need to do this. This function also encodes the page name, as we'll always want that.
  *
  * @param  ID_TEXT $page The page for the form to go to (blank: don't attach)
  * @param  boolean $keep_all Whether to keep all elements of the current URL represented in this form (rather than just the keep_ fields, and page)
  * @param  ?array $exclude A list of parameters to exclude (null: don't exclude any)
  * @return Tempcode The builtup hidden form fields
+ *
  * @ignore
  */
 function _build_keep_form_fields($page = '', $keep_all = false, $exclude = null)
@@ -122,20 +105,34 @@ function _build_keep_form_fields($page = '', $keep_all = false, $exclude = null)
 
     if (count($_GET) > 0) {
         foreach ($_GET as $key => $val) {
-            if (!is_string($val)) {
-                continue;
-            }
+            $process_for_key = ((substr($key, 0, 5) == 'keep_') || ($keep_all)) && (!in_array($key, $exclude)) && ($key != 'page') && (!skippable_keep($key, $val));
 
-    		if (is_integer($key)) {
-                $key = strval($key);
-            }
+            if (is_array($val)) {
+                foreach ($val as $_key => $_val) { // We'll only support one level deep. Also no keep parameter array support.
+                    if (get_magic_quotes_gpc()) {
+                        $_val = stripslashes($_val);
+                    }
 
-            if (get_magic_quotes_gpc()) {
-                $val = stripslashes($val);
-            }
+                    if ($process_for_key) {
+                        $out->attach(form_input_hidden($key . '[' . $_key . ']', $_val));
+                    }
+                }
+            } else {
+                if (!is_string($val)) {
+                    continue;
+                }
 
-            if (((substr($key, 0, 5) == 'keep_') || ($keep_all)) && (!in_array($key, $exclude)) && ($key != 'page') && (!skippable_keep($key, $val))) {
-                $out->attach(form_input_hidden($key, $val));
+                if (is_integer($key)) {
+                    $key = strval($key);
+                }
+
+                if (get_magic_quotes_gpc()) {
+                    $val = stripslashes($val);
+                }
+
+                if ($process_for_key) {
+                    $out->attach(form_input_hidden($key, $val));
+                }
             }
         }
     }
@@ -151,6 +148,7 @@ function _build_keep_form_fields($page = '', $keep_all = false, $exclude = null)
  * @param  ID_TEXT $key Key name to put value under
  * @param  mixed $value Value (string or array)
  * @return string The builtup hidden form fields
+ *
  * @ignore
  */
 function _fixed_post_parser($key, $value)
@@ -184,22 +182,27 @@ function _fixed_post_parser($key, $value)
  * Relay all POST variables for this URL, to the URL embedded in the form.
  *
  * @param  ?array $exclude A list of parameters to exclude (null: exclude none)
+ * @param  boolean $force_everything Force field labels and descriptions to copy through even when there are huge numbers of parameters
  * @return Tempcode The builtup hidden form fields
+ *
  * @ignore
  */
-function _build_keep_post_fields($exclude = null)
+function _build_keep_post_fields($exclude = null, $force_everything = false)
 {
     $out = '';
     foreach ($_POST as $key => $val) {
-		if (is_integer($key)) {
+        if (is_integer($key)) {
             $key = strval($key);
         }
 
-        if (((!is_null($exclude)) && (in_array($key, $exclude))) || ($key == 'session_id'/*for spam blackhole*/)) {
+        if (((!is_null($exclude)) && (in_array($key, $exclude))) || ($key == 'session_id'/*for spam blackhole*/) || ($key == 'csrf_token')) {
             continue;
         }
 
-        if (count($_POST) > 80) {
+        if (count($_POST) > 80 && !$force_everything) {
+            if (substr($key, 0, 14) == 'tick_on_form__') {
+                continue;
+            }
             if (substr($key, 0, 11) == 'label_for__') {
                 continue;
             }
@@ -218,11 +221,12 @@ function _build_keep_post_fields($exclude = null)
  *
  * @param  URLPATH $url_full The URL to convert to an encoded filename
  * @return string A usable filename based on the URL
+ *
  * @ignore
  */
 function _url_to_filename($url_full)
 {
-    $bad_chars = array('!', '/', '\\', '?', '*', '<', '>', '|', '"', ':');
+    $bad_chars = array('!', '/', '\\', '?', '*', '<', '>', '|', '"', ':', '%', ' ');
     $new_name = $url_full;
     foreach ($bad_chars as $bad_char) {
         $good_char = '!' . strval(ord($bad_char));
@@ -249,12 +253,14 @@ function _url_to_filename($url_full)
  * @param  URLPATH $url The URL to fully qualified
  * @param  URLPATH $url_base The base-URL
  * @return URLPATH Fully qualified URL
+ *
  * @ignore
  */
 function _qualify_url($url, $url_base)
 {
     require_code('obfuscate');
-    if (($url != '') && ($url[0] != '#') && (substr($url, 0, 5) != 'data:') && (substr($url, 0, 7) != 'mailto:') && (substr($url, 0, strlen(mailto_obfuscated())) != mailto_obfuscated())) {
+    $mto = mailto_obfuscated();
+    if (($url != '') && ($url[0] != '#') && (substr($url, 0, 5) != 'data:') && (substr($url, 0, 7) != 'mailto:') && (substr($url, 0, strlen($mto)) != $mto)) {
         if (url_is_local($url)) {
             if ($url[0] == '/') {
                 $parsed = @parse_url($url_base);
@@ -360,7 +366,7 @@ function _fixup_protocolless_urls($in)
         return $in;
     }
 
-    // Rule 1: // If we have a dot before a slash, then this dot is likely part of a domain name (not a file extension)- thus we have an absolute URL.
+    // Rule 1: // If we have a dot somewhere before a slash, then this dot is likely part of a domain name (not a file extension)- thus we have an absolute URL.
     if (preg_match('#\..*/#', $in) != 0) {
         return 'http://' . $in; // Fix it
     }
@@ -389,8 +395,8 @@ function _url_to_page_link($url, $abs_only = false, $perfect_only = true)
     }
 
     // Try and strip any variants of the base URL from our $url variable, to make it relative
-    $non_www_base_url = str_replace('http://www.', 'http://', get_base_url());
-    $www_base_url = str_replace('http://', 'http://www.', get_base_url());
+    $non_www_base_url = str_replace('https://www.', 'https://', str_replace('http://www.', 'http://', get_base_url()));
+    $www_base_url = str_replace('https://', 'https://www.', str_replace('http://', 'http://www.', get_base_url()));
     $url = preg_replace('#^' . preg_quote(get_base_url() . '/', '#') . '#', '', $url);
     $url = preg_replace('#^' . preg_quote($non_www_base_url . '/', '#') . '#', '', $url);
     $url = preg_replace('#^' . preg_quote($www_base_url . '/', '#') . '#', '', $url);
@@ -427,9 +433,9 @@ function _url_to_page_link($url, $abs_only = false, $perfect_only = true)
     // Convert URL Scheme path info into extra implied attribute data
     require_code('url_remappings');
     $does_match = false;
-    foreach (array('PG', 'HTM', 'SIMPLE') as $url_scheme) {
+    foreach (array('PG', 'HTM', 'SIMPLE', 'RAW') as $url_scheme) {
         $mappings = get_remappings($url_scheme);
-        foreach ($mappings as $mapping) { // e.g. array(array('page'=>'wiki','id'=>NULL),'pg/s/ID',true),
+        foreach ($mappings as $mapping) { // e.g. array(array('page' => 'wiki', 'id' => null), 'pg/s/ID', true),
             if (is_null($mapping)) {
                 continue;
             }
@@ -437,35 +443,37 @@ function _url_to_page_link($url, $abs_only = false, $perfect_only = true)
             list($params, $match_string,) = $mapping;
             $match_string_pattern = preg_replace('#[A-Z]+#', '[^\&\?]+', preg_quote($match_string)); // Turn match string into a regexp
 
-            switch ($url_scheme) {
-                case 'PG':
-                    $does_match = (preg_match('#^' . $match_string_pattern . '#', $parsed_url['path']) != 0);
-                    break;
-
-                case 'HTM':
-                case 'SIMPLE':
-                    $does_match = (preg_match('#^' . $match_string_pattern . '#', $parsed_url['path']) != 0);
-                    break;
-            }
+            $does_match = (preg_match('#^' . $match_string_pattern . '#', $parsed_url['path']) != 0);
             if ($does_match) {
                 $attributes = array_merge($attributes, $params);
 
-                switch ($url_scheme) {
-                    case 'PG':
-                    case 'SIMPLE':
-                        $bits_pattern = explode('/', $match_string);
-                        $bits_real = explode('/', $parsed_url['path'], count($bits_pattern));
-                        break;
+                if ($url_scheme == 'HTM') {
+                    if (strpos($parsed_url['path'], '.htm') === false) {
+                        continue;
+                    }
 
-                    case 'HTM':
-                        $bits_pattern = explode('/', preg_replace('#\.htm$#', '', $match_string));
-                        $bits_real = explode('/', preg_replace('#\.htm$#', '', $parsed_url['path']), count($bits_pattern));
-                        break;
+                    $_match_string = preg_replace('#\.htm$#', '', $match_string);
+                    $_path = preg_replace('#\.htm($|\?)#', '', $parsed_url['path']);
+                } else {
+                    if (strpos($parsed_url['path'], '.htm') !== false) {
+                        continue;
+                    }
+
+                    $_match_string = $match_string;
+                    $_path = $parsed_url['path'];
                 }
+
+                $bits_pattern = explode('/', $_match_string);
+                $bits_real = explode('/', $_path, count($bits_pattern));
+
                 foreach ($bits_pattern as $i => $bit) {
                     if ((strtoupper($bit) == $bit) && (array_key_exists(strtolower($bit), $params)) && (is_null($params[strtolower($bit)]))) {
                         $attributes[strtolower($bit)] = $bits_real[$i];
                     }
+                }
+
+                foreach ($attributes as &$attribute) {
+                    $attribute = cms_url_decode_post_process(urldecode($attribute));
                 }
 
                 break 2;
@@ -483,7 +491,7 @@ function _url_to_page_link($url, $abs_only = false, $perfect_only = true)
             $_bit = explode('=', $bit, 2);
 
             if (count($_bit) == 2) {
-                $attributes[$_bit[0]] = $_bit[1];
+                $attributes[$_bit[0]] = cms_url_decode_post_process($_bit[1]);
                 if (strpos($attributes[$_bit[0]], ':') !== false) {
                     if ($perfect_only) {
                         return ''; // Could not convert this URL to a page-link, because it contains a colon
@@ -492,6 +500,11 @@ function _url_to_page_link($url, $abs_only = false, $perfect_only = true)
                 }
             }
         }
+    }
+
+    require_code('site');
+    if (_request_page($attributes['page'], $zone) === false) {
+        return '';
     }
 
     $page = fix_page_name_dashing($zone, $attributes['page']);
@@ -504,7 +517,7 @@ function _url_to_page_link($url, $abs_only = false, $perfect_only = true)
         $page_link .= ':';
     }
     if (array_key_exists('id', $attributes)) {
-        $page_link .= ':' . urldecode($attributes['id']);
+        $page_link .= ':' . $attributes['id'];
     }
     foreach ($attributes as $key => $val) {
         if (!is_string($val)) {
@@ -512,7 +525,7 @@ function _url_to_page_link($url, $abs_only = false, $perfect_only = true)
         }
 
         if (($key != 'page') && ($key != 'type') && ($key != 'id')) {
-            $page_link .= ':' . $key . '=' . urldecode($val);
+            $page_link .= ':' . $key . '=' . cms_url_encode($val);
         }
     }
 
@@ -542,12 +555,8 @@ function _page_path_to_page_link($page)
         $page2 = $matches[1] . ':' . $matches[4];
         if (($matches[2] == 'comcode') || ($matches[2] == 'comcode_custom')) {
             if (file_exists(get_custom_file_base() . '/' . $page)) {
-                $file = file_get_contents(get_custom_file_base() . '/' . $page);
-                if (preg_match('#\[title\](.*)\[/title\]#U', $file, $matches) != 0) {
-                    $page2 .= ' (' . $matches[1] . ')';
-                } elseif (preg_match('#\[title=[\'"]?1[\'"]?\](.*)\[/title\]#U', $file, $matches) != 0) {
-                    $page2 .= ' (' . $matches[1] . ')';
-                }
+                require_code('zones2');
+                $page2 .= ' (' . get_comcode_page_title_from_disk(get_custom_file_base() . '/' . $page) . ')';
                 $page2 = preg_replace('#\[[^\[\]]*\]#', '', $page2);
             }
         }
@@ -583,7 +592,13 @@ function autogenerate_new_url_moniker($ob_info, $url_parts, $zone)
     }
     $db = ((substr($ob_info['table'], 0, 2) != 'f_') || (get_forum_type() == 'none')) ? $GLOBALS['SITE_DB'] : $GLOBALS['FORUM_DB'];
     $where = get_content_where_for_str_id($effective_id, $ob_info);
-    $_moniker_src = $db->query_select($ob_info['table'], $select, $where); // NB: For Comcode pages visited, this won't return anything -- it will become more performant when the page actually loads, so the moniker won't need redoing each time
+    if (isset($where['the_zone'])) {
+        $where['the_zone'] = $zone;
+    }
+    $_moniker_src = $db->query_select($ob_info['table'], $select, $where, '', null, null, true); // NB: For Comcode pages visited, this won't return anything -- it will become more performant when the page actually loads, so the moniker won't need redoing each time
+    if ($_moniker_src === null) {
+        return null; // table missing?
+    }
     $GLOBALS['NO_DB_SCOPE_CHECK'] = $bak;
     if (!array_key_exists(0, $_moniker_src)) {
         return null; // been deleted?
@@ -619,12 +634,23 @@ function autogenerate_new_url_moniker($ob_info, $url_parts, $zone)
  * @param  ID_TEXT $zone The URL zone name (only used for Comcode Page URL monikers).
  * @param  string $moniker_src String from which a moniker will be chosen (may not be blank).
  * @param  boolean $is_new Whether we are sure this is a new moniker (makes things more efficient, saves a query).
+ * @param  ?string $moniker Actual moniker to use (null: generate from $moniker_src). Usually this is left null.
  * @return string The chosen moniker.
  */
-function suggest_new_idmoniker_for($page, $type, $id, $zone, $moniker_src, $is_new = false)
+function suggest_new_idmoniker_for($page, $type, $id, $zone, $moniker_src, $is_new = false, $moniker = null)
 {
     if (get_option('url_monikers_enabled') == '0') {
         return '';
+    }
+
+    static $force_called = array();
+    $ref = $zone . ':' . $page . ':' . $type . ':' . $id;
+    if ($moniker !== null) {
+        $force_called[$ref] = $moniker;
+    } else {
+        if (isset($force_called[$ref])) {
+            return $force_called[$ref];
+        }
     }
 
     if (!$is_new) {
@@ -637,8 +663,10 @@ function suggest_new_idmoniker_for($page, $type, $id, $zone, $moniker_src, $is_n
         $old = $GLOBALS['SITE_DB']->query_select_value_if_there('url_id_monikers', 'm_moniker', array('m_resource_page' => $page, 'm_resource_type' => $type, 'm_resource_id' => $id, 'm_deprecated' => 0), 'ORDER BY id DESC');
         if (!is_null($old)) {
             // See if it is same as current
-            $scope = _give_moniker_scope($page, $type, $id, $zone, '');
-            $moniker = $scope . _choose_moniker($page, $type, $id, $moniker_src, $old, $scope);
+            if ($moniker === null) {
+                $scope = _give_moniker_scope($page, $type, $id, $zone, '');
+                $moniker = $scope . _choose_moniker($page, $type, $id, $moniker_src, $old, $scope);
+            }
             if ($moniker == $old) {
                 return $old; // hmm, ok it can stay actually
             }
@@ -661,14 +689,16 @@ function suggest_new_idmoniker_for($page, $type, $id, $zone, $moniker_src, $is_n
         }
     }
 
-    if (is_numeric($moniker_src)) {
-        $moniker = $id;
-    } else {
-        $scope = _give_moniker_scope($page, $type, $id, $zone, '');
-        $moniker = $scope . _choose_moniker($page, $type, $id, $moniker_src, null, $scope);
+    if ($moniker === null) {
+        if (is_numeric($moniker_src)) {
+            $moniker = $id;
+        } else {
+            $scope = _give_moniker_scope($page, $type, $id, $zone, '');
+            $moniker = $scope . _choose_moniker($page, $type, $id, $moniker_src, null, $scope);
 
-        if (($page == 'news') && ($type == 'view') && (get_value('google_news_urls') === '1')) {
-            $moniker .= '-' . str_pad($id, 3, '0', STR_PAD_LEFT);
+            if (($page == 'news') && ($type == 'view') && (get_value('google_news_urls') === '1')) {
+                $moniker .= '-' . str_pad($id, 3, '0', STR_PAD_LEFT);
+            }
         }
     }
 
@@ -688,6 +718,9 @@ function suggest_new_idmoniker_for($page, $type, $id, $zone, $moniker_src, $is_n
         'm_deprecated' => 0,
         'm_manually_chosen' => 0,
     ));
+
+    global $LOADED_MONIKERS_CACHE;
+    $LOADED_MONIKERS_CACHE = array();
 
     return $moniker;
 }
@@ -713,7 +746,7 @@ function _choose_moniker($page, $type, $id, $moniker_src, $no_exists_check_for =
     $moniker_origin = $moniker;
     $next_num = 1;
     if (is_numeric($moniker)) {
-        $moniker .= '_1';
+        $moniker .= '-1';
     }
     $test = mixed();
     do {
@@ -742,7 +775,7 @@ function _choose_moniker($page, $type, $id, $moniker_src, $no_exists_check_for =
         $test = $GLOBALS['SITE_DB']->query_value_if_there($dupe_sql, false, true);
         if (!is_null($test)) { // Oh dear, will pass to next iteration, but trying a new moniker
             $next_num++;
-            $moniker = $moniker_origin . '_' . strval($next_num);
+            $moniker = $moniker_origin . '-' . strval($next_num);
         }
     } while (!is_null($test));
 
@@ -759,22 +792,42 @@ function _choose_moniker($page, $type, $id, $moniker_src, $no_exists_check_for =
  */
 function _generate_moniker($moniker_src)
 {
-    $moniker_src = strip_comcode($moniker_src);
+    $moniker = strip_comcode($moniker_src);
 
     $max_moniker_length = intval(get_option('max_moniker_length'));
 
-    $moniker = str_replace(array('ä', 'ö', 'ü', 'ß'), array('ae', 'oe', 'ue', 'ss'), $moniker_src);
+    // Transliteration first
+    if ((get_charset() == 'utf-8') && (get_option('moniker_transliteration') == '1')) {
+        if (function_exists('transliterator_transliterate')) {
+            $_moniker = @transliterator_transliterate('Any-Latin; Latin-ASCII; Lower()', $moniker);
+            if (!empty($_moniker)) {
+                $moniker = $_moniker;
+            }
+        } elseif ((function_exists('iconv')) && (get_value('disable_iconv') !== '1')) {
+            $_moniker = @iconv('utf-8', 'ASCII//TRANSLIT//IGNORE', $moniker);
+            if (!empty($_moniker)) {
+                $moniker = $_moniker;
+            }
+        } else {
+            // German has inbuilt transliteration
+            $moniker = str_replace(array('ä', 'ö', 'ü', 'ß'), array('ae', 'oe', 'ue', 'ss'), $moniker);
+        }
+    }
+
+    // Then strip down / substitute to force it to be URL-ready
     $moniker = str_replace("'", '', $moniker);
-    $moniker = strtolower(preg_replace('#[^A-Za-z\d\-]#', '-', $moniker));
-    if (strlen($moniker) > $max_moniker_length) {
-        $pos = strrpos(substr($moniker, 0, $max_moniker_length), '-');
+    $moniker = cms_mb_strtolower(preg_replace('#[^' . URL_CONTENT_REGEXP . ']#', '-', $moniker));
+    if (cms_mb_strlen($moniker) > $max_moniker_length) {
+        $pos = strrpos(cms_mb_substr($moniker, 0, $max_moniker_length), '-');
         if (($pos === false) || ($pos < 12)) {
             $pos = $max_moniker_length;
         }
-        $moniker = substr($moniker, 0, $pos);
+        $moniker = cms_mb_substr($moniker, 0, $pos);
     }
     $moniker = preg_replace('#\-+#', '-', $moniker);
     $moniker = rtrim($moniker, '-');
+
+    // A bit lame, but maybe we'll have to
     if ($moniker == '') {
         $moniker = 'untitled';
     }
@@ -831,7 +884,14 @@ function _give_moniker_scope($page, $type, $id, $zone, $main)
         if (!is_null($ob_info['parent_category_field'])) {
             $select[] = $ob_info['parent_category_field'];
         }
-        $_moniker_src = $GLOBALS['SITE_DB']->query_select($ob_info['table'], $select, get_content_where_for_str_id(($type == '') ? $page : $id, $ob_info));
+        $where = get_content_where_for_str_id(($type == '') ? $page : $id, $ob_info);
+        if (isset($where['the_zone'])) {
+            $where['the_zone'] = $zone;
+        }
+        $_moniker_src = $GLOBALS['SITE_DB']->query_select($ob_info['table'], $select, $where, '', null, null, true);
+        if ($_moniker_src === null) {
+            return $moniker; // table missing?
+        }
         $GLOBALS['NO_DB_SCOPE_CHECK'] = $bak;
         if (!array_key_exists(0, $_moniker_src)) {
             return $moniker; // been deleted?

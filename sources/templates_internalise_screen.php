@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -52,6 +52,9 @@ function internalise_own_screen($screen_content, $refresh_time = null, $refresh_
         if ((substr($key, 0, 5) == 'keep_') && (skippable_keep($key, $param))) {
             continue;
         }
+        if (substr($key, -6) == '_start') {
+            continue;
+        }
         if (get_magic_quotes_gpc()) {
             $param = stripslashes($param);
         }
@@ -62,6 +65,9 @@ function internalise_own_screen($screen_content, $refresh_time = null, $refresh_
         $params .= '&utheme=' . urlencode(get_param_string('utheme', $GLOBALS['FORUM_DRIVER']->get_theme()));
     }
     $params .= '&zone=' . urlencode(get_zone_name());
+    if (get_param_integer('refreshing', 0) == 0) {
+        $params .= '&refreshing=1';
+    }
 
     $url = find_script('iframe') . $params;
 

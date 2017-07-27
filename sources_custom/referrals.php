@@ -1,11 +1,21 @@
-<?php
+<?php /*
+
+ Composr
+ Copyright (c) ocProducts, 2004-2016
+
+ See text/EN/licence.txt for full licencing information.
+
+*/
+
+/**
+ * @license    http://opensource.org/licenses/cpal_1.0 Common Public Attribution License
+ * @copyright  ocProducts Ltd
+ * @package    referrals
+ */
 
 function get_referral_scheme_stats_for($referrer, $scheme_name, $raw = false)
 {
-    $num_total_by_referrer = count($GLOBALS['FORUM_DB']->query_select('f_invites', array('*'), array('i_inviter' => $referrer), 'GROUP BY i_email_address'));
-    if (is_null($num_total_by_referrer)) {
-        $num_total_by_referrer = 0;
-    }
+    $num_total_by_referrer = count($GLOBALS['FORUM_DB']->query_select('f_invites', array('DISTINCT i_email_address'), array('i_inviter' => $referrer)));
     $num_total_qualified_by_referrer = $GLOBALS['SITE_DB']->query_select_value('referees_qualified_for', 'COUNT(*)', array('q_referee' => $referrer, 'q_scheme_name' => $scheme_name));
 
     if (!$raw) {
@@ -483,7 +493,7 @@ function referrer_report_script($ret = false)
         $GLOBALS['FORUM_DB']->get_table_prefix() . $table .
         ' WHERE ' .
         $where .
-        ' GROUP BY i_email_address ORDER BY i_time DESC',
+        (can_arbitrary_groupby() ? ' GROUP BY i_email_address' : '') . ' ORDER BY i_time DESC',
         $max,
         $start
     );
@@ -521,7 +531,7 @@ function referrer_report_script($ret = false)
 
         $deleted = false;
         if (is_null($ref['referee'])) {
-            $deleted = !is_null($GLOBALS['SITE_DB']->query_select_value_if_there('adminlogs', 'id', array('the_type' => 'DELETE_MEMBER', 'param_a' => strval($ref['referee']))));
+            $deleted = !is_null($GLOBALS['SITE_DB']->query_select_value_if_there('actionlogs', 'id', array('the_type' => 'DELETE_MEMBER', 'param_a' => strval($ref['referee']))));
         }
         if ($csv) {
             $data_row[do_lang('REFEREE')] = is_null($ref['referee']) ? do_lang($deleted ? 'REFEREE_DELETED' : 'REFEREE_NOT_SIGNED_UP') : $ref['referee'];

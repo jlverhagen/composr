@@ -201,7 +201,7 @@ function graphwalker($input,$parent,$timesthrough,$onwild,$parton,&$inputstarval
 		debugger("processing an '_' here",2);
 
 		$patternmatched[]="_";
-		$curpmsize=sizeof($patternmatched);
+		$curpmsize=count($patternmatched);
 
 		// If it is the last word in its context
 		if ($whichresult[3]==1) {
@@ -238,7 +238,7 @@ function graphwalker($input,$parent,$timesthrough,$onwild,$parton,&$inputstarval
 			$thatstarvals=$othatstarvals;
 			$topicstarvals=$otopicstarvals;
 
-			$curpdiff=sizeof($patternmatched) - $curpmsize;
+			$curpdiff=count($patternmatched) - $curpmsize;
 
 			for ($curpc=0;$curpc<=$curpdiff;$curpc++){
 				array_pop($patternmatched);
@@ -267,7 +267,7 @@ function graphwalker($input,$parent,$timesthrough,$onwild,$parton,&$inputstarval
 			if (($word!="<input>")&&($word!="<that>")&&($word!="<topic>")){
 
 				$patternmatched[]=$word;
-				$curpmsize=sizeof($patternmatched);
+				$curpmsize=count($patternmatched);
 			}
 
 			debugger("Result not blank and word is not blank. Calling graphwalker.",2);
@@ -283,7 +283,7 @@ function graphwalker($input,$parent,$timesthrough,$onwild,$parton,&$inputstarval
 			// Else we continue down our current node alphabetically to *
 			else {
 
-				$curpdiff=sizeof($patternmatched) - $curpmsize;
+				$curpdiff=count($patternmatched) - $curpmsize;
 
 				for ($curpc=0;$curpc<=$curpdiff;$curpc++){
 					array_pop($patternmatched);
@@ -310,7 +310,7 @@ function graphwalker($input,$parent,$timesthrough,$onwild,$parton,&$inputstarval
 		debugger("Result not blank and word is not blank. Calling graphwalker.",2);
 
 		$patternmatched[]="*";
-		$curpmsize=sizeof($patternmatched);
+		$curpmsize=count($patternmatched);
 
 		// If it is the last word in its context
 		if ($whichresult[5]==1) {
@@ -339,7 +339,7 @@ function graphwalker($input,$parent,$timesthrough,$onwild,$parton,&$inputstarval
 		}
 		else {
 
-			$curpdiff=sizeof($patternmatched) - $curpmsize;
+			$curpdiff=count($patternmatched) - $curpmsize;
 
 			for ($curpc=0;$curpc<=$curpdiff;$curpc++){
 				array_pop($patternmatched);
@@ -402,13 +402,13 @@ function dographquery(&$whichresult, $word, $parent){
 	$whichresult[]=-1;
 	$whichresult[]=-1;
 
-	$selectcode = mysql_query($query);
+	$selectcode = mysqli_query($GLOBALS['SITE_DB']->connection_write[0], $query);
 	if ($selectcode){
-		if(!mysql_numrows($selectcode)){
+		if(!mysqli_num_rows($selectcode)){
 			return $whichresult;
 		}
 		else{
-			while ($q = mysql_fetch_array($selectcode)){
+			while ($q = mysqli_fetch_array($selectcode)){
 				if ($q[1]==1){
 					$whichresult[0]=$q[0];
 
@@ -463,13 +463,13 @@ function findtemplate($id){
 
 	$query = "select template from templates where id=$id";
 	debugger($query,2);
-	$selectcode = mysql_query($query);
+	$selectcode = mysqli_query($GLOBALS['SITE_DB']->connection_write[0], $query);
 	if ($selectcode){
-		if(!mysql_numrows($selectcode)){
+		if(!mysqli_num_rows($selectcode)){
 			return "";
 		}
 		else{
-			while ($q = mysql_fetch_array($selectcode)){
+			while ($q = mysqli_fetch_array($selectcode)){
 				return $q[0];
 			}
 		}
@@ -505,7 +505,7 @@ function addtostar($parton,$word,&$inputstarvals,&$thatstarvals,&$topicstarvals,
 			}
 			// Action 2 is appending to existing star
 			elseif ($action==2){
-				$inputstarvals[sizeof($inputstarvals)-1].= " " . $word;
+				$inputstarvals[count($inputstarvals)-1].= " " . $word;
 			}
 
 		}
@@ -515,7 +515,7 @@ function addtostar($parton,$word,&$inputstarvals,&$thatstarvals,&$topicstarvals,
 				$thatstarvals[]=$word;
 			}
 			elseif ($action==2){
-				$thatstarvals[sizeof($thatstarvals)-1].= " " . $word;
+				$thatstarvals[count($thatstarvals)-1].= " " . $word;
 			}
 
 		}
@@ -525,7 +525,7 @@ function addtostar($parton,$word,&$inputstarvals,&$thatstarvals,&$topicstarvals,
 				$topicstarvals[]=$word;
 			}
 			elseif ($action==2){
-				$topicstarvals[sizeof($topicstarvals)-1].= " " . $word;
+				$topicstarvals[count($topicstarvals)-1].= " " . $word;
 			}
 
 		}
@@ -565,7 +565,7 @@ function fastforward($word,$ffremains){
 		$starwords = $starwords . " " . $currentword;
 		$x++;
 
-		if ($x>=sizeof($ffar)){
+		if ($x>=count($ffar)){
 			break;
 		} else {
 			$currentword=$ffar[$x];
@@ -573,7 +573,7 @@ function fastforward($word,$ffremains){
 
 	}
 
-	for ($y=$x;$y<sizeof($ffar);$y++){
+	for ($y=$x;$y<count($ffar);$y++){
 		$newremains =  $newremains . " " . $ffar[$y];
 	}
 
@@ -603,13 +603,13 @@ function checkcache($combined,&$template,&$inputstarvals,&$thatstarvals,&$topics
 {
 	$ccquery="select template,inputstarvals,thatstarvals,topicstarvals,patternmatched,inputmatched from gmcache where combined='" . addslashes($combined) . "' and " . whichbots();	
 
-	$selectcode = mysql_query($ccquery);
+	$selectcode = mysqli_query($GLOBALS['SITE_DB']->connection_write[0], $ccquery);
 	if ($selectcode){
-		if(!mysql_numrows($selectcode)){
+		if(!mysqli_num_rows($selectcode)){
 			return false;
 		}
 		else{
-			while ($q = mysql_fetch_array($selectcode)){
+			while ($q = mysqli_fetch_array($selectcode)){
 
 				$template=findtemplate($q[0]);
 				$inputstarvals=explode(",",$q[1]);
@@ -649,7 +649,7 @@ function fillcache($combined,$mytemplate,$inputstarvals,$thatstarvals,$topicstar
 
 	$ccquery="insert into gmcache (bot, combined,template,inputstarvals,thatstarvals,topicstarvals,patternmatched,inputmatched) values ($selectbot,'" . addslashes($combined) . "'," . $mytemplate . ",'" . addslashes(arraytostring($inputstarvals)) . "','" . addslashes(arraytostring($thatstarvals)) . "','" . addslashes(arraytostring($topicstarvals)) . "','" . addslashes($patternmatched) . "','" . addslashes($inputmatched) . "')";
 
-	$selectcode = mysql_query($ccquery);
+	$selectcode = mysqli_query($GLOBALS['SITE_DB']->connection_write[0], $ccquery);
 	if ($selectcode){
 	}
 
@@ -669,7 +669,7 @@ function arraytostring($myarray)
 {
 	$retstring="";
 
-	for ($x=0;$x<sizeof($myarray);$x++){
+	for ($x=0;$x<count($myarray);$x++){
 		$retstring .= $myarray[$x] . ",";	
 	}
 

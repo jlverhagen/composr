@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -41,12 +41,15 @@ class Hook_cron_backups
             $last_time = intval(get_value('last_backup'));
             if ($time >= $backup_schedule_time) {
                 decache('main_staff_checklist');
+
                 require_lang('backups');
                 require_code('backup');
-                $max_size = get_value('backup_max_size');
+
+                $max_size = intval(get_value('backup_max_size'));
                 $b_type = get_value('backup_b_type');
                 global $MB2_FILE, $MB2_B_TYPE, $MB2_MAX_SIZE;
-                $end = ((get_option('backup_overwrite') != '1') || ($b_type == 'incremental')) ? uniqid('', true) : 'scheduled';
+                require_code('crypt');
+                $end = ((get_option('backup_overwrite') != '1') || ($b_type == 'incremental')) ? get_rand_password() : 'scheduled';
                 if ($b_type == 'full') {
                     $file = 'restore_' . $end;
                 } elseif ($b_type == 'incremental') {
@@ -54,10 +57,13 @@ class Hook_cron_backups
                 } elseif ($b_type == 'sql') {
                     $file = 'database_' . $end;
                 }
-                $MB2_FILE = $file;
-                $MB2_B_TYPE = $b_type;
-                $MB2_MAX_SIZE = $max_size;
-                register_shutdown_function('make_backup_2');
+
+                if (get_value('avoid_register_shutdown_function') === '1') {
+                    make_backup($file, $b_type, $max_size);
+                } else {
+                    register_shutdown_function('make_backup', $file, $b_type, $max_size);
+                }
+
                 if ($backup_recurrance_days == 0) {
                     delete_value('backup_schedule_time');
                 } else {

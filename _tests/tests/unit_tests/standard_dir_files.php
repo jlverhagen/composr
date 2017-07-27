@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -20,7 +20,7 @@ class standard_dir_files_test_set extends cms_test_case
 {
     public function setUp()
     {
-        if (function_exists('set_time_limit')) {
+        if (php_function_allowed('set_time_limit')) {
             @set_time_limit(0);
         }
 
@@ -32,7 +32,7 @@ class standard_dir_files_test_set extends cms_test_case
         $this->do_dir(get_file_base());
     }
 
-    public function do_dir($dir)
+    private function do_dir($dir)
     {
         $contents = 0;
 
@@ -40,7 +40,11 @@ class standard_dir_files_test_set extends cms_test_case
 
         if (($dh = opendir($dir)) !== false) {
             while (($file = readdir($dh)) !== false) {
-                if (should_ignore_file(preg_replace('#^' . preg_quote(get_file_base() . '/', '#') . '#', '', $dir . '/') . $file, IGNORE_NONBUNDLED_SCATTERED | IGNORE_CUSTOM_DIR_SUPPLIED_CONTENTS, 0)) {
+                if (should_ignore_file(preg_replace('#^' . preg_quote(get_file_base() . '/', '#') . '#', '', $dir . '/') . $file, IGNORE_NONBUNDLED_VERY_SCATTERED | IGNORE_CUSTOM_DIR_SUPPLIED_CONTENTS | IGNORE_CUSTOM_THEMES, 0)) {
+                    continue;
+                }
+
+                if ($file == 'test-a') {
                     continue;
                 }
 
@@ -53,12 +57,26 @@ class standard_dir_files_test_set extends cms_test_case
         }
 
         if ($contents > 0) {
-            if ((!file_exists($dir . '/index.php')) && (!file_exists($dir . '/index.html')) && (strpos($dir, 'ckeditor') === false) && (strpos($dir, 'personal_dicts') === false)) {
-                $this->assertTrue(false, 'touch "' . $dir . '/index.html" ; git add -f "' . $dir . '/index.html"');
+            if (
+                (!file_exists($dir . '/index.php')) &&
+                (strpos($dir, 'ckeditor') === false) &&
+                (strpos($dir, 'personal_dicts') === false) &&
+                (strpos($dir, 'uploads/website_specific') === false)
+            ) {
+                $this->assertTrue(file_exists($dir . '/index.html'), 'touch "' . $dir . '/index.html" ; git add -f "' . $dir . '/index.html"');
             }
 
-            if ((!file_exists($dir . DIRECTORY_SEPARATOR . '.htaccess')) && (!file_exists($dir . '/index.php')) && (!file_exists($dir . '/html_custom')) && (!file_exists($dir . '/EN')) && (strpos($dir, 'ckeditor') === false) && (strpos($dir, 'uploads') === false) && (preg_match('#/data(/|$|\_)#', $dir) == 0) && (strpos($dir, 'themes') === false) && (strpos($dir, 'exports') === false)) {
-                $this->assertTrue(false, 'cp "' . get_file_base() . '/sources/.htaccess" "' . $dir . '/.htaccess" ; git add "' . $dir . '/.htaccess"');
+            if (
+                (!file_exists($dir . '/index.php')) &&
+                (!file_exists($dir . '/html_custom')) &&
+                (!file_exists($dir . '/EN')) &&
+                (strpos($dir, 'ckeditor') === false) &&
+                (strpos($dir, 'uploads') === false) &&
+                (preg_match('#/data(/|$|\_)#', $dir) == 0)
+                && (strpos($dir, 'themes') === false) &&
+                (strpos($dir, 'exports') === false)
+            ) {
+                $this->assertTrue(file_exists($dir . '/.htaccess'), 'cp "' . get_file_base() . '/sources/.htaccess" "' . $dir . '/.htaccess" ; git add "' . $dir . '/.htaccess"');
             }
         }
     }
@@ -67,31 +85,40 @@ class standard_dir_files_test_set extends cms_test_case
     {
         foreach (array('systems', 'blocks', 'modules') as $dir) {
             $a = array();
-            $dh = opendir(get_file_base() . '/sources/hooks/' . $dir);
+            $_dir = get_file_base() . '/sources/hooks/' . $dir;
+            $dh = opendir($_dir);
             while (($f = readdir($dh)) !== false) {
-                $a[] = $f;
+                if ($f == '.DS_Store') {
+                    continue;
+                }
+
+                if (is_file($_dir . '/' . $f . 'index.html')) {
+                    $a[] = $f;
+                }
             }
             closedir($dh);
             sort($a);
 
             $b = array();
-            $dh = opendir(get_file_base() . '/sources_custom/hooks/' . $dir);
+            $_dir = get_file_base() . '/sources_custom/hooks/' . $dir;
+            $dh = opendir($_dir);
             while (($f = readdir($dh)) !== false) {
-                $b[] = $f;
+                if ($f == '.DS_Store') {
+                    continue;
+                }
+
+                if (is_file($_dir . '/' . $f . 'index.html')) {
+                    $b[] = $f;
+                }
             }
             closedir($dh);
             sort($b);
 
             $diff = array_diff($a, $b);
-            $this->assertTrue(count($diff) == 0, 'Missing in sources/' . $dir . ': ' . serialize($diff));
+            $this->assertTrue(count($diff) == 0, 'Missing in sources_custom/hooks/' . $dir . ': ' . serialize($diff));
 
             $diff = array_diff($b, $a);
-            $this->assertTrue(count($diff) == 0, 'Missing in sources_custom/' . $dir . ': ' . serialize($diff));
+            $this->assertTrue(count($diff) == 0, 'Missing in sources/hooks/' . $dir . ': ' . serialize($diff));
         }
-    }
-
-    public function tearDown()
-    {
-        parent::tearDown();
     }
 }

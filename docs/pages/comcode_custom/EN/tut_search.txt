@@ -27,7 +27,11 @@ The [tt]search[/tt] module has many options:
 
 This is the text box where you type the content that you're searching for.
 
-[title="3"]Boolean Search[/title]
+[title="3"]Full-text vs Boolean searching[/title]
+
+By default full-text searches are used. These are inexact but high performance and more natural. For example a search for "think" would match the word "thinking" or "thinker", and words that are not indexed like "the" would be ignored. Results are returned based on how well they match, so you'll get results that don't match your whole query. Word sequence does not matter unless you use quotes around the words that must be in sequence.
+
+You may also do boolean searches which are exact.
 
 Choosing to do a boolean search will make several more options available:
  - Content must contain all of these words
@@ -86,13 +90,17 @@ All these cases are controlled via privileges (the "Autocomplete searches based 
 
 If you have spell checking enabled on your server (pspell or enchant PHP extension), then misspellings will result in a suggestion to run a search on an autocorrected search term. Any keyword terms on the site will be considered real words and not autocorrected.
 
+[title="2"]Result counts[/title]
+
+Unfortunately result counts have to be an approximation. To de-duplicate the result count we'd need to load in the full record sets for each query pattern that runs, which can be incredibly slow, especially if searches are broad.
+
 [title="2"]Improving search results[/title]
 
-The title fields, and meta keyword fields, get precedence when search results are determined. Tuning these manually for your can improve search results considerably.
+The title fields, and meta keyword fields, get precedence when search results are determined. Tuning these manually for your can improve search results considerably. Additionally keywords are individually queried, rather than having to go through full sentence searching -- so you can specify things more precisely, e.g. to include hyphens (which full-text search treats like spaces).
 
-If you are using MySQL, also considering turning the [url="MySQL minimum word length"]http://dev.mysql.com/doc/refman/5.0/en/server-system-variables.html#sysvar_ft_min_word_len[/url] down to 3 (the default 4).
+If you are using MySQL, also considering turning the [url="MySQL minimum word length"]http://dev.mysql.com/doc/refman/5.6/en/server-system-variables.html#sysvar_ft_min_word_len[/url] down to 3 (the default 4).
 
-Ultimately, full-text search effectiveness resides in MySQL (or whatever database you use), not Composr. For example, indexing does not work on very small words, very common words, and may split things up you did not expect to be (e.g. [tt]an-example[/tt] would split to two words).
+Ultimately, full-text search effectiveness resides in MySQL (or whatever database you use), not Composr. For example, indexing does not work on very small words, very common words, and may split things up you did not expect to be (e.g. [tt]an-example[/tt] would split to two words). Also, if there is only one entry in the table, nothing will be returned, because MySQL will only return words that match fewer than 50% of the rows in a table.
 
 True boolean search is much more accurate, but also much slower due to a lack of indexing. Composr will only use true boolean search if boolean search is selected and it thinks MySQL's fulltext-based boolean search won't be able to handle the query itself (e.g. due to using short words). Programmers can alter this logic based on editing the [tt]is_under_radar[/tt] function.
 
@@ -112,7 +120,8 @@ This is a problem that MySQL has with fulltext search. It is not specific to Com
 
 The problem happens particularly when Composr has to combine the fulltext search with other search constraints.
 
-The inherent technical problem is that if you:[list="a"]
+The inherent technical problem is that if you:
+[list="a"]
 [*] run the fulltext first -- you have to spend a lot of time limiting those hits down to those that match other constraints. The time taken doing this can be extreme if only a small percentage (or even 0%) match your other search constraints, especially for a broad match that has potentially 10's of thousands of fulltext hits -- it will basically go on for ever because it never hits a maximum and thus never ends the query.
 [*] run the fulltext last -- MySQL can't use the fulltext index effectively, having to throw away large numbers of matches while intersecting against the huge pool of possible rows that matched the other search constraints.
 [/list]
@@ -147,7 +156,7 @@ DO
         BEGIN
         DECLARE done INT DEFAULT 0;
         DECLARE connid INT UNSIGNED;
-        DECLARE cur1 CURSOR FOR SELECT ID FROM information_schema.PROCESSLIST 
+        DECLARE cur1 CURSOR FOR SELECT ID FROM information_schema.PROCESSLIST
             WHERE COMMAND = 'Query' AND INFO LIKE '%text_original) AGAINST%' AND TIME >= 5;
 
         DECLARE CONTINUE HANDLER FOR SQLSTATE '02000' SET done = 1;
@@ -201,9 +210,11 @@ SET GLOBAL MAX_STATEMENT_TIME=10000;
 [/code]
 (this is for 10 seconds, i.e. 10,000 milliseconds)
 
-[title="3"]Workaround 4: Auto-kill slow searches[/title]
+We actually automatically set this on a session level when you do a search, so there's no need to do anything if you're running MySQL 5.7+.
 
-Another possible workaround might be to switch to InnoDB tables in MySQL 5.6+/MariaDB. However this is untested, and won't stop slow queries (it'll just stop them locking the whole table and slowing other users down).
+[title="3"]Workaround 4: Use InnoDB[/title]
+
+Another workaround is to switch to InnoDB tables in MySQL 5.6+/MariaDB. It won't stop slow queries, it'll just stop them locking the whole table and slowing other users down; your server will still suffer the load, but so long as your server is not overloaded that is likely not an issue.
 
 [concepts
  1_key="Boolean search"   1_value="A search carried out by testing for exact word or phrasal matches to a number of criteria"

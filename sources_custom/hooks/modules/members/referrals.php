@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -28,6 +28,10 @@ class Hook_members_referrals
     {
         if ((!has_zone_access(get_member(), 'adminzone')) && ($member_id !== get_member())) {
             return array();
+        }
+
+        if (!$GLOBALS['SITE_DB']->table_exists('referees_qualified_for')) {
+            return array(); // Not installed somehow
         }
 
         require_code('referrals');
@@ -82,6 +86,10 @@ class Hook_members_referrals
     {
         if ((!has_zone_access(get_member(), 'adminzone')) && ($member_id !== get_member())) {
             return array();
+        }
+
+        if (!$GLOBALS['SITE_DB']->table_exists('referees_qualified_for')) {
+            return array(); // Not installed somehow
         }
 
         require_code('referrals');

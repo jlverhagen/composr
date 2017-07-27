@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -42,11 +42,9 @@ class Hook_attachments_cns_post
             return false;
         }
         $forum_id = $info[0]['p_cache_forum_id'];
-        $forum_id_parent = is_null($forum_id) ? null : $GLOBALS['FORUM_DB']->query_select_value('f_forums', 'f_parent_forum', array('id' => $forum_id));
-        $forum_id_parent_parent = is_null($forum_id_parent) ? null : $GLOBALS['FORUM_DB']->query_select_value('f_forums', 'f_parent_forum', array('id' => $forum_id_parent));
+        $forum_id_parent = is_null($forum_id) ? null : $GLOBALS['FORUM_DB']->query_select_value_if_there('f_forums', 'f_parent_forum', array('id' => $forum_id));
+        $forum_id_parent_parent = is_null($forum_id_parent) ? null : $GLOBALS['FORUM_DB']->query_select_value_if_there('f_forums', 'f_parent_forum', array('id' => $forum_id_parent));
         $poster = $info[0]['p_poster'];
-        $forum_id_parent = is_null($forum_id) ? null : $GLOBALS['FORUM_DB']->query_select_value('f_forums', 'f_parent_forum', array('id' => $forum_id));
-        $forum_id_parent_parent = is_null($forum_id_parent) ? null : $GLOBALS['FORUM_DB']->query_select_value('f_forums', 'f_parent_forum', array('id' => $forum_id_parent));
         $intended_solely_for = $info[0]['p_intended_solely_for'];
         if ((!is_null($intended_solely_for)) && ($poster != get_member()) && ($intended_solely_for != get_member())) {
             return false;

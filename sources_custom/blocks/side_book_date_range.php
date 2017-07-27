@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -14,3 +14,11 @@
  */
 
 // TODO (can optionally take a filter of what bookables to allow choosing from) - for date ranges
+
+class Block_side_book_date_range
+{
+    function run()
+    {
+        return new Tempcode();
+    }
+}

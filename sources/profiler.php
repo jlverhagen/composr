@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -73,9 +73,6 @@ function cms_profile_is_enabled()
     if (!function_exists('get_self_url_easy')) {
         return false;
     }
-    if (!function_exists('clean_file_size')) {
-        return false;
-    }
 
     global $PROFILING_ALLOWED, $PROFILING_LINUX_FULL;
     if (!isset($PROFILING_ALLOWED)) {
@@ -90,6 +87,7 @@ function cms_profile_is_enabled()
  * Start a profiling block, for a specified identifier (of your own choosing).
  *
  * @param  ID_TEXT $identifier Identifier
+ *
  * @ignore
  */
 function _cms_profile_start_for($identifier)
@@ -151,6 +149,7 @@ function _cms_profile_end_for($identifier, $specifics = null)
  * @param  array $at The signature for what we just profiled
  * @param  integer $cnt This will be the nth of this identifier to be logged
  * @return string Log line
+ *
  * @ignore
  */
 function _cms_profile_generate_line($identifier, $at, $cnt)
@@ -168,6 +167,7 @@ function _cms_profile_generate_line($identifier, $at, $cnt)
  * Store a line in the profiling log.
  *
  * @param  string $line Log line
+ *
  * @ignore
  */
 function _cms_profile_log_line($line)
@@ -190,7 +190,7 @@ function _cms_profile_log_line($line)
         $PROFILER_FILEHANDLE = fopen($PROFILER_PATH, 'at');
 
         // Pre-logging
-        _cms_profile_log_line('URL: ' . get_self_url_easy());
+        _cms_profile_log_line('URL: ' . get_self_url_easy(true));
         _cms_profiler_generic_logging();
         _cms_profile_log_line(''); // Spacer line
     }
@@ -220,12 +220,12 @@ function _cms_profiler_script_end()
     global $PROFILING_ALLOWED;
     $PROFILING_ALLOWED = false;
 
+    require_code('files');
+
     // Post-logging
     _cms_profile_log_line(''); // Spacer line
     _cms_profiler_generic_logging();
-    if (function_exists('memory_get_usage')) {
-        _cms_profile_log_line('PHP memory usage: ' . clean_file_size(memory_get_usage()));
-    }
+    _cms_profile_log_line('PHP memory usage: ' . clean_file_size(memory_get_usage()));
     if (function_exists('memory_get_peak_usage')) {
         _cms_profile_log_line('PHP peak memory usage: ' . clean_file_size(memory_get_peak_usage()));
     }

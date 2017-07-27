@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -45,24 +45,21 @@ function inline_language_editing($codename, $lang)
     // Tack language strings onto this file
     list($codename, $value) = explode('=', $codename, 2);
     $myfile = fopen($save_path, 'at');
+    flock($myfile, LOCK_EX);
+    fseek($myfile, 0, SEEK_END);
     fwrite($myfile, "\n" . $codename . '=' . $value);
+    flock($myfile, LOCK_UN);
     fclose($myfile);
     // Fake-load the string
     $LANGUAGE_STRINGS_CACHE[$lang][$codename] = $value;
     // Go through all required files, doing a string replace if needed
     $included_files = get_included_files();
     foreach ($included_files as $inc) {
-        $orig_contents = file_get_contents($inc);
+        $orig_contents = cms_file_get_contents_safe($inc);
         $contents = str_replace("'" . $codename . '=' . $value . "'", "'" . $codename . "'", $orig_contents);
         if ($orig_contents != $contents) {
-            $myfile = fopen($inc, GOOGLE_APPENGINE ? 'wb' : 'at');
-            @flock($myfile, LOCK_EX);
-            if (!GOOGLE_APPENGINE) {
-                ftruncate($myfile, 0);
-            }
-            fwrite($myfile, $contents);
-            @flock($myfile, LOCK_UN);
-            fclose($myfile);
+            require_code('files');
+            cms_file_put_contents_safe($inc, $contents, FILE_WRITE_FIX_PERMISSIONS | FILE_WRITE_SYNC_FILE);
         }
     }
 }
@@ -71,7 +68,7 @@ function inline_language_editing($codename, $lang)
  * Get a list of languages files for the given language. ONLY those that are overridden.
  *
  * @param  ?LANGUAGE_NAME $lang The language (null: uses the current language)
- * @return array The language files
+ * @return array The language files (a map between language file name -and- lang or lang_custom)
  */
 function get_lang_files($lang = null)
 {
@@ -133,7 +130,7 @@ function find_lang_content_names($ids)
 
         $langidfields = array();
         foreach ($all_fields as $f) {
-            if (strpos(substr($f['m_type'], -6), '_TRANS') !== false) {
+            if (strpos($f['m_type'], '_TRANS') !== false) {
                 $langidfields[] = array('m_name' => $f['m_name'], 'm_table' => $f['m_table'], 'key' => '');
             }
         }
@@ -170,7 +167,15 @@ function find_lang_content_names($ids)
                     foreach (array_keys($cma_hooks) as $hook) {
                         require_code('content');
                         $ob = get_content_object($hook);
+                        if (is_null($ob)) {
+                            continue;
+                        }
+
                         $info = $ob->info();
+                        if (is_null($info)) {
+                            continue;
+                        }
+
                         if ($info['table'] == $field['m_table']) {
                             if ($info['title_field_dereference']) {
                                 $ret[$id] = $field['m_table'] . ' \ ' . get_translated_text($test[$id][$info['title_field']]) . ' \ ' . $field['m_name'];
@@ -212,6 +217,7 @@ function create_selection_list_lang_files($lang = null)
     ksort($_lang_files);
 
     require_lang('lang');
+    require_code('lang_compile');
 
     $lang_files = new Tempcode();
     foreach (array_keys($_lang_files) as $lang_file) {

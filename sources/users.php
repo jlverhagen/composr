@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -63,7 +63,7 @@ function init__users()
     $DID_CHANGE_SESSION_ID = false;
 
     // Load all sessions into memory, if possible
-    if (get_option('session_prudence') == '0') {
+    if (get_option('session_prudence') == '0' && function_exists('persistent_cache_get')) {
         $SESSION_CACHE = persistent_cache_get('SESSION_CACHE');
     } else {
         $SESSION_CACHE = null;
@@ -78,25 +78,28 @@ function init__users()
         $SESSION_CACHE = array();
         if ((get_forum_type() == 'cns') && (!is_on_multi_site_network())) {
             $GLOBALS['NO_DB_SCOPE_CHECK'] = true;
-            $_s = $GLOBALS['SITE_DB']->query('SELECT s.*,m.m_primary_group FROM ' . get_table_prefix() . 'sessions s LEFT JOIN ' . $GLOBALS['SITE_DB']->get_table_prefix() . 'f_members m ON m.id=s.member_id' . $where, null, null, false, true);
+            $_s = $GLOBALS['SITE_DB']->query('SELECT s.*,m.m_primary_group FROM ' . get_table_prefix() . 'sessions s LEFT JOIN ' . $GLOBALS['SITE_DB']->get_table_prefix() . 'f_members m ON m.id=s.member_id' . $where . ' ORDER BY the_session', null, null, true, true);
+            if ($_s === null) {
+                $_s = array();
+            }
             $SESSION_CACHE = list_to_map('the_session', $_s);
             $GLOBALS['NO_DB_SCOPE_CHECK'] = false;
         } else {
-            $SESSION_CACHE = list_to_map('the_session', $GLOBALS['SITE_DB']->query('SELECT * FROM ' . get_table_prefix() . 'sessions' . $where));
+            $SESSION_CACHE = list_to_map('the_session', $GLOBALS['SITE_DB']->query('SELECT * FROM ' . get_table_prefix() . 'sessions' . $where . ' ORDER BY the_session'));
         }
-        if (get_option('session_prudence') == '0') {
+        if (get_option('session_prudence') == '0' && function_exists('persistent_cache_set')) {
             persistent_cache_set('SESSION_CACHE', $SESSION_CACHE);
         }
     }
 
     // Canonicalise various disparities in how HTTP auth environment variables are set
-    if (array_key_exists('REDIRECT_REMOTE_USER', $_SERVER)) {
+    if (!empty($_SERVER['REDIRECT_REMOTE_USER'])) {
         $_SERVER['PHP_AUTH_USER'] = preg_replace('#@.*$#', '', $_SERVER['REDIRECT_REMOTE_USER']);
     }
-    if (array_key_exists('PHP_AUTH_USER', $_SERVER)) {
+    if (!empty($_SERVER['PHP_AUTH_USER'])) {
         $_SERVER['PHP_AUTH_USER'] = preg_replace('#@.*$#', '', $_SERVER['PHP_AUTH_USER']);
     }
-    if (array_key_exists('REMOTE_USER', $_SERVER)) {
+    if (!empty($_SERVER['REMOTE_USER'])) {
         $_SERVER['PHP_AUTH_USER'] = preg_replace('#@.*$#', '', $_SERVER['REMOTE_USER']);
     }
 
@@ -171,12 +174,10 @@ function get_member($quick_only = false)
 
     // Try via restricted_manually_enabled_backdoor that someone with full server access can place
     $backdoor_ip_address = mixed(); // Enable to a real IP address to force login from FTP access (if lost admin password)
-    if (array_key_exists('backdoor_ip', $SITE_INFO)) {
-        if (!empty($SITE_INFO['backdoor_ip'])) {
-            $backdoor_ip_address = normalise_ip_address($SITE_INFO['backdoor_ip']);
-        }
+    if (!empty($SITE_INFO['backdoor_ip'])) {
+        $backdoor_ip_address = normalise_ip_address($SITE_INFO['backdoor_ip']);
     }
-    if ((is_string($backdoor_ip_address)) && ($backdoor_ip_address != '') && (get_ip_address() == $backdoor_ip_address)) {
+    if ((is_string($backdoor_ip_address)) && ($backdoor_ip_address != '') && ((get_ip_address() == $backdoor_ip_address) || ((get_ip_address() == '0000:0000:0000:0000:0000:0000:0000:0001') && (($backdoor_ip_address == '::1') || ($backdoor_ip_address == '127.0.0.1'))))) {
         require_code('users_active_actions');
         if (function_exists('restricted_manually_enabled_backdoor')) { // May be trying to check in safe mode when doing above require_code, so recurse
             $MEMBER_CACHED = restricted_manually_enabled_backdoor();
@@ -229,9 +230,11 @@ function get_member($quick_only = false)
             $member = $member_row['member_id'];
 
             if (($member !== null) && ((time() - $member_row['last_activity']) > 10)) { // Performance optimisation. Pointless re-storing the last_activity if less than 3 seconds have passed!
-                //$GLOBALS['SITE_DB']->query_update('sessions',array('last_activity'=>time(),'the_zone'=>get_zone_name(),'the_page'=>get_page_name()),array('the_session'=>$session),'',1);  Done in get_screen_title now
+                if (!running_script('index')) { // For 'index' it happens in get_screen_title, as screen meta-information is used
+                    $GLOBALS['SITE_DB']->query_update('sessions', array('last_activity' => time()), array('the_session' => $session), '', 1);
+                }
                 $SESSION_CACHE[$session]['last_activity'] = time();
-                if (get_option('session_prudence') == '0') {
+                if (get_option('session_prudence') == '0' && function_exists('persistent_cache_set')) {
                     persistent_cache_set('SESSION_CACHE', $SESSION_CACHE);
                 }
             }
@@ -440,7 +443,7 @@ function is_httpauth_login()
     }
 
     require_code('cns_members');
-    return ((array_key_exists('PHP_AUTH_USER', $_SERVER)) && (!is_null(cns_authusername_is_bound_via_httpauth($_SERVER['PHP_AUTH_USER']))));
+    return ((!empty($_SERVER['PHP_AUTH_USER'])) && (!is_null(cns_authusername_is_bound_via_httpauth($_SERVER['PHP_AUTH_USER']))));
 }
 
 /**
@@ -462,7 +465,7 @@ function enforce_sessioned_url($url)
 /**
  * Find what sessions are expired and delete them, and recover an existing one for $member if there is one.
  *
- * @param  ?MEMBER $member User to get a current session for (null: do not try, which guarantees a return result of NULL also)
+ * @param  ?MEMBER $member User to get a current session for (null: do not try, which guarantees a return result of null also)
  * @return ?AUTO_LINK The session ID we rebound to (null: did not rebind)
  */
 function delete_expired_sessions_or_recover($member = null)
@@ -472,19 +475,23 @@ function delete_expired_sessions_or_recover($member = null)
     $ip = get_ip_address(3);
 
     // Delete expired sessions; it's important we do this reasonably routinely, as the session table is loaded up and can get large -- unless we aren't tracking online users, in which case the table is never loaded up
-    if (mt_rand(0, 1000) == 50) {
+    if (mt_rand(0, 100) == 1) {
         if (!$GLOBALS['SITE_DB']->table_is_locked('sessions')) {
-            $GLOBALS['SITE_DB']->query('DELETE FROM ' . get_table_prefix() . 'sessions WHERE last_activity<' . strval(time() - intval(60.0 * 60.0 * max(0.017, floatval(get_option('session_expiry_time'))))));
+            $GLOBALS['SITE_DB']->query('DELETE FROM ' . get_table_prefix() . 'sessions WHERE last_activity<' . strval(time() - intval(60.0 * 60.0 * max(0.017, floatval(get_option('session_expiry_time'))))), 500/*to reduce lock times*/);
         }
     }
 
     // Look through sessions
-    $new_session = null;
     $dirty_session_cache = false;
     global $SESSION_CACHE;
+    $_session = mixed();
     foreach ($SESSION_CACHE as $_session => $row) {
         if (!array_key_exists('member_id', $row)) {
             continue; // Workaround to HHVM weird bug
+        }
+
+        if (is_integer($_session)) {
+            $_session = strval($_session);
         }
 
         // Delete expiry from cache
@@ -502,7 +509,7 @@ function delete_expired_sessions_or_recover($member = null)
         }
     }
     if ($dirty_session_cache) {
-        if (get_option('session_prudence') == '0') {
+        if (get_option('session_prudence') == '0' && function_exists('persistent_cache_set')) {
             persistent_cache_set('SESSION_CACHE', $SESSION_CACHE);
         }
     }
@@ -518,7 +525,7 @@ function delete_expired_sessions_or_recover($member = null)
 function get_member_cookie()
 {
     global $SITE_INFO;
-    if (!array_key_exists('user_cookie', $SITE_INFO)) {
+    if (empty($SITE_INFO['user_cookie'])) {
         $SITE_INFO['user_cookie'] = 'cms_member_id';
     }
     return $SITE_INFO['user_cookie'];
@@ -532,7 +539,7 @@ function get_member_cookie()
 function get_session_cookie()
 {
     global $SITE_INFO;
-    if (!array_key_exists('session_cookie', $SITE_INFO)) {
+    if (empty($SITE_INFO['session_cookie'])) {
         $SITE_INFO['session_cookie'] = 'cms_session';
     }
     return $SITE_INFO['session_cookie'];
@@ -546,7 +553,7 @@ function get_session_cookie()
 function get_pass_cookie()
 {
     global $SITE_INFO;
-    if (!array_key_exists('pass_cookie', $SITE_INFO)) {
+    if (empty($SITE_INFO['pass_cookie'])) {
         $SITE_INFO['pass_cookie'] = 'cms_member_hash';
     }
     return $SITE_INFO['pass_cookie'];
@@ -556,7 +563,7 @@ function get_pass_cookie()
  * Get a cookie value.
  *
  * @param  string $name The name of the cookie
- * @param  ?string $default The default value (null: just use the value NULL)
+ * @param  ?string $default The default value (null: just use the value null)
  * @return ?string The value stored in the cookie (null: the default default)
  */
 function cms_admirecookie($name, $default = null)

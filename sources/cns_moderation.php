@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -46,6 +46,11 @@ function cns_list_multi_moderations($forum_id)
     }
     foreach ($rows as $row) {
         $row['_mm_name'] = get_translated_text($row['mm_name'], $GLOBALS['FORUM_DB']);
+
+        if ($row['mm_forum_multi_code'] == '*') {
+            $out[$row['id']] = $row['_mm_name'];
+            continue;
+        }
 
         require_code('selectcode');
         if ($lots_of_forums) {
@@ -110,5 +115,5 @@ function cns_get_warnings($member_id)
         return array();
     }
 
-    return $GLOBALS['FORUM_DB']->query_select('f_warnings', array('*'), array('w_member_id' => $member_id, 'w_is_warning' => 1));
+    return $GLOBALS['FORUM_DB']->query_select('f_warnings', array('*'), array('w_member_id' => $member_id, 'w_is_warning' => 1), 'ORDER BY w_time');
 }

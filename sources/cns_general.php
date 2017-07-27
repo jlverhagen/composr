@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -56,7 +56,14 @@ function cns_get_forums_stats()
         $out['newest_member_username'] = null;
     }
     if (is_null($out['newest_member_username'])) {
-        $newest_member = $GLOBALS['FORUM_DB']->query('SELECT m_username,id FROM ' . $GLOBALS['FORUM_DB']->get_table_prefix() . 'f_members WHERE m_validated=1 AND id<>' . strval($GLOBALS['FORUM_DRIVER']->get_guest_id()) . ' ORDER BY m_join_time DESC', 1); // Only ordered by m_join_time and not double ordered with ID to make much faster in MySQL
+        $sql = 'SELECT m_username,id FROM ' . $GLOBALS['FORUM_DB']->get_table_prefix() . 'f_members WHERE ';
+        $sql .= db_string_equal_to('m_validated_email_confirm_code', '') . ' AND id<>' . strval($GLOBALS['FORUM_DRIVER']->get_guest_id());
+        if (addon_installed('unvalidated')) {
+            $sql .= ' AND m_validated=1';
+        }
+        $sql .= ' ORDER BY m_join_time DESC';
+        $newest_member = $GLOBALS['FORUM_DB']->query($sql, 1); // Only ordered by m_join_time and not double ordered with ID to make much faster in MySQL
+
         if (array_key_exists(0, $newest_member)) {
             $out['newest_member_id'] = $newest_member[0]['id'];
             $out['newest_member_username'] = $newest_member[0]['m_username'];
@@ -114,9 +121,22 @@ function cns_read_in_member_profile($member_id, $lite = true)
         $out['custom_fields'] = cns_get_all_custom_fields_match_member($member_id, ((get_member() != $member_id) && (!has_privilege(get_member(), 'view_any_profile_field'))) ? 1 : null, ((get_member() != $member_id) && (!has_privilege(get_member(), 'view_any_profile_field'))) ? 1 : null);
 
         // Birthdate
-        if ($row['m_reveal_age'] == 1) {
-            $out['birthdate'] = $row['m_dob_year'] . '/' . $row['m_dob_month'] . '/' . $row['m_dob_day'];
+        $dob = '';
+        $day = $GLOBALS['FORUM_DRIVER']->get_member_row_field($member_id, 'm_dob_day');
+        $month = $GLOBALS['FORUM_DRIVER']->get_member_row_field($member_id, 'm_dob_month');
+        $year = $GLOBALS['FORUM_DRIVER']->get_member_row_field($member_id, 'm_dob_year');
+        if (($day !== null) && ($month !== null) && ($year !== null)) {
+            if ($GLOBALS['FORUM_DRIVER']->get_member_row_field($member_id, 'm_reveal_age') == 1) {
+                if (@strftime('%Y', @mktime(0, 0, 0, 1, 1, 1963)) != '1963') {
+                    $dob = strval($year) . '-' . str_pad(strval($month), 2, '0', STR_PAD_LEFT) . '-' . str_pad(strval($day), 2, '0', STR_PAD_LEFT);
+                } else {
+                    $dob = get_timezoned_date(mktime(12, 0, 0, $month, $day, $year), false, false, true);
+                }
+            } else {
+                $dob = cms_strftime(do_lang('date_no_year'), mktime(12, 0, 0, $month, $day));
+            }
         }
+        $out['birthdate'] = $dob;
 
         // Find title
         $title = get_member_title($member_id);
@@ -135,6 +155,7 @@ function cns_read_in_member_profile($member_id, $lite = true)
 
         // Any warnings?
         if ((has_privilege(get_member(), 'see_warnings')) && (addon_installed('cns_warnings'))) {
+            require_code('cns_moderation');
             $out['warnings'] = cns_get_warnings($member_id);
         }
     }

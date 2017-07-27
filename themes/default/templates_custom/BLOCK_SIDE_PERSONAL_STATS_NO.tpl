@@ -7,8 +7,10 @@
 
 			<div>
 				<div class="constrain_field">
-					<div class="accessibility_hidden"><label for="ps_login_username">{!USERNAME}{+START,IF,{$AND,{$CNS},{$CONFIG_OPTION,one_per_email_address}}} / {!EMAIL_ADDRESS}{+END}</label></div>
-					<input maxlength="80" class="wide_field login_block_username field_input_non_filled" type="text" onfocus="placeholder_focus(this);" onblur="placeholder_blur(this);" value="{!USERNAME}" id="ps_login_username" name="login_username" />
+					<div class="accessibility_hidden"><label for="ps_login_username">{$LOGIN_LABEL}</label></div>
+					<input maxlength="80" class="wide_field login_block_username field_input_non_filled" type="text" onfocus="placeholder_focus(this);" onblur="placeholder_blur(this);" alt="{!USERNAME}" value="{!USERNAME}" id="ps_login_username" name="login_username" />
+				</div>
+				<div class="constrain_field">
 					<div class="accessibility_hidden"><label for="ps_password">{!PASSWORD}</label></div>
 					<input maxlength="255" class="wide_field" type="password" placeholder="{!PASSWORD}" value="" name="password" id="ps_password" />
 				</div>
@@ -29,7 +31,7 @@
 				{+END}
 
 				<p class="proceed_button">
-					<input class="menu__site_meta__user_actions__login button_screen_item" type="submit" value="{!_LOGIN}" />
+					<input class="button_screen_item menu__site_meta__user_actions__login" type="submit" value="{!_LOGIN}" />
 				</p>
 			</div>
 		</form>
@@ -39,10 +41,10 @@
 			<li><a onclick="return open_link_as_overlay(this);" rel="nofollow" href="{FULL_LOGIN_URL*}" title="{!MORE}: {!_LOGIN}">{!MORE}</a></li>
 		</ul>
 
-		{+START,IF_NON_EMPTY,{$CONFIG_OPTION,facebook_appid}}
+		{+START,IF_NON_EMPTY,{$CONFIG_OPTION,facebook_appid}}{+START,IF,{$CONFIG_OPTION,facebook_allow_signups}}
 			{+START,IF_EMPTY,{$FB_CONNECT_UID}}
-				<div style="margin-top: 0.4em; text-align: center"><div class="fb-login-button" data-scope="email,user_birthday,user_about_me,user_hometown,user_location,user_website{+START,IF,{$CONFIG_OPTION,facebook_auto_syndicate}},publish_actions{+END}"></div></div>
+				<div style="margin-top: 0.4em; text-align: center"><div class="fb-login-button" data-scope="email{$,Asking for this stuff is now a big hassle as it needs a screencast(s) making: user_birthday,user_about_me,user_hometown,user_location,user_website}{+START,IF,{$CONFIG_OPTION,facebook_auto_syndicate}},publish_actions,publish_pages{+END}"></div></div>
 			{+END}
-		{+END}
+		{+END}{+END}
 	</div></section>
 {+END}

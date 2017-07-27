@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -43,6 +43,7 @@ function member_get_csv_headings_extended()
     $headings = member_get_csv_headings();
     foreach ($cpfs as $i => $c) { // CPFs take precedence over normal fields of the same name
         $cpfs[$i]['_cf_name'] = get_translated_text($c['cf_name'], $GLOBALS['FORUM_DB']);
+        $cpfs[$i]['_cf_name'] = str_replace(',', (get_charset() == 'utf-8') ? (chr(hexdec('ef')) . chr(hexdec('b9')) . chr(hexdec('90'))) : '', $cpfs[$i]['_cf_name']); // Normal commas break sort_maps_by
         $headings[$cpfs[$i]['_cf_name']] = $i;
     }
 
@@ -53,7 +54,7 @@ function member_get_csv_headings_extended()
 
         $usergroup_subscription_rows = $GLOBALS['FORUM_DB']->query_select('f_usergroup_subs', array('id', 's_title'));
         foreach ($usergroup_subscription_rows as $usergroup_subscription_row) {
-            $item_name = get_translated_text($usergroup_subscription_row['s_title']);
+            $item_name = get_translated_text($usergroup_subscription_row['s_title'], $GLOBALS['FORUM_DB']);
             $headings[$item_name . ' (' . do_lang('SUBSCRIPTION_START_TIME') . ')'] = null;
             $headings[$item_name . ' (' . do_lang('SUBSCRIPTION_TERM_START_TIME') . ')'] = null;
             $headings[$item_name . ' (' . do_lang('SUBSCRIPTION_TERM_END_TIME') . ')'] = null;
@@ -124,7 +125,7 @@ function create_selection_list_timezone_list($timezone = null)
     $time_now = time();
     foreach (get_timezone_list() as $_timezone => $timezone_nice) {
         $timezone_list .= '<option ' . (($timezone == $_timezone) ? 'selected="selected" ' : '') . 'value="' . escape_html($_timezone) . '">' . escape_html($timezone_nice) . '</option>'; // XHTMLXHTML
-        //$timezone_list->attach(do_template('CNS_AUTO_TIME_ZONE_ENTRY',array('_GUID'=>'2aed8a9fcccb52e5d52b5a307a906b3a','HOUR'=>date('H',tz_time($time_now,$_timezone)),'DW'=>date('w',tz_time(time(),$_timezone)),'NAME'=>$_timezone,'SELECTED'=>($timezone==$_timezone),'CLASS'=>'','TEXT'=>$timezone_nice)));
+        //$timezone_list->attach(do_template('CNS_AUTO_TIME_ZONE_ENTRY', array('_GUID' => '2aed8a9fcccb52e5d52b5a307a906b3a', 'HOUR' => date('H', tz_time($time_now, $_timezone)), 'DW' => date('w', tz_time(time(), $_timezone)), 'NAME' => $_timezone, 'SELECTED' => ($timezone == $_timezone), 'CLASS' => '', 'TEXT' => $timezone_nice)));
     }
     return make_string_tempcode($timezone_list);
 }
@@ -210,7 +211,7 @@ function cns_member_external_linker_ask($username, $type, $email_address = '', $
     // If somehow, we're not fully started up, or in a messy state
     require_code('urls');
 
-    @ob_end_clean(); // Emergency output, potentially, so kill off any active buffer
+    cms_ob_end_clean(); // Emergency output, potentially, so kill off any active buffer
 
     $title = get_screen_title('FINISH_PROFILE');
 
@@ -293,7 +294,7 @@ function cns_member_external_linker($username, $password, $type, $email_check = 
     }
 
     // Check that the given address isn't already used (if one_per_email_address on)
-    if ((get_option('one_per_email_address') == '1') && ($email_address != '') && ($email_check)) {
+    if ((get_option('one_per_email_address') != '0') && ($email_address != '') && ($email_check)) {
         $test = $GLOBALS['FORUM_DB']->query_select_value_if_there('f_members', 'm_username', array('m_email_address' => $email_address));
         if (!is_null($test)) {
             global $MEMBER_CACHED;
@@ -305,7 +306,10 @@ function cns_member_external_linker($username, $password, $type, $email_check = 
 
     $require_new_member_validation = get_option('require_new_member_validation') == '1';
     $validated = $require_new_member_validation ? 0 : 1;
-    attach_message(do_lang_tempcode('AWAITING_MEMBER_VALIDATION'), 'notice');
+    if ($require_new_member_validation) {
+        require_code('site');
+        attach_message(do_lang_tempcode('AWAITING_MEMBER_VALIDATION'), 'notice');
+    }
 
     // Add member
     require_code('cns_members_action');
@@ -329,16 +333,16 @@ function cns_read_in_custom_fields($custom_fields, $member_id = null)
     foreach ($custom_fields as $custom_field) {
         $ob = get_fields_hook($custom_field['cf_type']);
 
-        $old_value = is_null($member_id) ? null : $GLOBALS['FORUM_DB']->query_select_value('f_member_custom_fields', 'field_' . strval($custom_field['id']), array('mf_member_id' => $member_id));
+        $old_value = is_null($member_id) ? null : $GLOBALS['FORUM_DB']->query_select_value_if_there('f_member_custom_fields', 'field_' . strval($custom_field['id']), array('mf_member_id' => $member_id));
 
         // Field not required if not yet filled in but member already registered, if PRIVILEGE ON for that. Prevents annoyance for new required CPFs added later.
         if (!member_field_is_required($member_id, 'required_cpfs', $old_value)) {
             $custom_field['cf_required'] = 0;
         }
 
-        $value = $ob->inputted_to_field_value(true, $custom_field, 'uploads/cns_cpf_upload', $old_value);
+        $value = $ob->inputted_to_field_value(true, $custom_field, 'uploads/cns_cpf_upload', ($old_value === null) ? null : array('cv_value' => $old_value));
         if ((fractional_edit()) && ($value != STRING_MAGIC_NULL)) {
-            $rendered = $ob->render_field_value($custom_field, $value, 0, null, 'f_members', $member_id, 'ce_id', 'cf_id', 'field_' . strval($custom_field['id']), $member_id);
+            $rendered = $ob->render_field_value($custom_field, $value, 0, null, 'f_member_custom_fields', $member_id, 'ce_id', 'cf_id', 'field_' . strval($custom_field['id']), $member_id);
             $_POST['field_' . strval($custom_field['id']) . '__altered_rendered_output'] = is_object($rendered) ? $rendered->evaluate() : $rendered;
         }
         $actual_custom_fields[$custom_field['id']] = $value;
@@ -463,18 +467,14 @@ function cns_get_member_fields_settings($mini_mode = true, $member_id = null, $g
 
     $fields = new Tempcode();
 
-    // Human name / Username
+    // Username
     if (cns_field_editable('username', $special_type)) {
         if ((is_null($member_id)) || (has_actual_page_access(get_member(), 'admin_cns_members')) || (has_privilege($member_id, 'rename_self'))) {
-            if (get_option('signup_fullname') == '1') {
-                $fields->attach(form_input_line(do_lang_tempcode('NAME'), do_lang_tempcode('_DESCRIPTION_NAME'), is_null($member_id) ? 'username' : 'edit_username', $username, true));
+            $prohibit_username_whitespace = get_option('prohibit_username_whitespace');
+            if ($prohibit_username_whitespace == '1') {
+                $fields->attach(form_input_codename(do_lang_tempcode('USERNAME'), do_lang_tempcode('DESCRIPTION_USERNAME'), is_null($member_id) ? 'username' : 'edit_username', $username, true));
             } else {
-                $prohibit_username_whitespace = get_option('prohibit_username_whitespace');
-                if ($prohibit_username_whitespace == '1') {
-                    $fields->attach(form_input_codename(do_lang_tempcode('USERNAME'), do_lang_tempcode('DESCRIPTION_USERNAME'), is_null($member_id) ? 'username' : 'edit_username', $username, true));
-                } else {
-                    $fields->attach(form_input_line(do_lang_tempcode('USERNAME'), do_lang_tempcode('DESCRIPTION_USERNAME'), is_null($member_id) ? 'username' : 'edit_username', $username, true));
-                }
+                $fields->attach(form_input_line(do_lang_tempcode('USERNAME'), do_lang_tempcode('DESCRIPTION_USERNAME'), is_null($member_id) ? 'username' : 'edit_username', $username, true));
             }
         }
     }
@@ -554,10 +554,10 @@ function cns_get_member_fields_settings($mini_mode = true, $member_id = null, $g
     }
 
     /*
-    if (!$mini_mode)
-    {
-        if (($doing_international) || ($doing_langs) || ($doing_email_option) || ($doing_wide_option) || ($doing_theme_option) || ($doing_local_forum_options))
-            $fields->attach(do_template('FORM_SCREEN_FIELD_SPACER',array('_GUID'=>'3cd79bbea084ec1fe148edddad7d52b4','FORCE_OPEN'=>is_null($member_id)?true:NULL,'TITLE'=>do_lang_tempcode('SETTINGS'))));
+    if (!$mini_mode) {
+        if (($doing_international) || ($doing_langs) || ($doing_email_option) || ($doing_wide_option) || ($doing_theme_option) || ($doing_local_forum_options)) {
+            $fields->attach(do_template('FORM_SCREEN_FIELD_SPACER', array('_GUID' => '3cd79bbea084ec1fe148edddad7d52b4', 'FORCE_OPEN' => is_null($member_id) ? true : null, 'TITLE' => do_lang_tempcode('SETTINGS'))));
+        }
     }
     */
 
@@ -566,7 +566,7 @@ function cns_get_member_fields_settings($mini_mode = true, $member_id = null, $g
     // Timezones, if enabled
     if ($doing_international) {
         $timezone_list = create_selection_list_timezone_list($timezone);
-        $fields->attach(form_input_list(do_lang_tempcode('TIME_ZONE'), do_lang_tempcode('DESCRIPTION_TIMEZONE_MEMBER'), 'timezone', $timezone_list));
+        $fields->attach(form_input_list(do_lang_tempcode('TIMEZONE'), do_lang_tempcode('DESCRIPTION_TIMEZONE_MEMBER'), 'timezone', $timezone_list));
     }
 
     // Language choice, if we have multiple languages on site
@@ -600,13 +600,13 @@ function cns_get_member_fields_settings($mini_mode = true, $member_id = null, $g
                 $fields->attach(form_input_tick(do_lang_tempcode('PREVIEW_POSTS'), do_lang_tempcode('DESCRIPTION_PREVIEW_POSTS'), 'preview_posts', $preview_posts == 1));
             }
             if (addon_installed('cns_signatures')) {
-                if (get_option('enable_views_sigs_option') == '1') {
+                if (get_option('enable_views_sigs_option', true) === '1') {
                     $fields->attach(form_input_tick(do_lang_tempcode('VIEWS_SIGNATURES'), do_lang_tempcode('DESCRIPTION_VIEWS_SIGNATURES'), 'views_signatures', $views_signatures == 1));
                 } else {
                     $hidden->attach(form_input_hidden('views_signatures', '1'));
                 }
             }
-            //$fields->attach(form_input_tick(do_lang_tempcode('AUTO_NOTIFICATION_CONTRIB_CONTENT'),do_lang_tempcode('DESCRIPTION_AUTO_NOTIFICATION_CONTRIB_CONTENT'),'auto_monitor_contrib_content',$auto_monitor_contrib_content==1));  Now on notifications tab, even though it is technically an account setting
+            //$fields->attach(form_input_tick(do_lang_tempcode('AUTO_NOTIFICATION_CONTRIB_CONTENT'), do_lang_tempcode('DESCRIPTION_AUTO_NOTIFICATION_CONTRIB_CONTENT'), 'auto_monitor_contrib_content', $auto_monitor_contrib_content == 1));  Now on notifications tab, even though it is technically an account setting
             $usergroup_list = new Tempcode();
             $lgroups = $GLOBALS['CNS_DRIVER']->get_usergroup_list(true, true);
             foreach ($lgroups as $key => $val) {
@@ -758,19 +758,18 @@ function cns_get_member_fields_profile($mini_mode = true, $member_id = null, $gr
         if ($existing_field) {
             $value = mixed();
             $value = $custom_fields[$custom_field['id']];
-            if (is_float($value)) {
-                $value = float_to_raw_string($value, 10, true);
-            } elseif (is_integer($value)) {
-                $value = strval($value);
-            }
             if (strpos($storage_type, '_trans') !== false) {
                 $value = ((is_null($value)) || ($value === '0')) ? '' : get_translated_text($value, $GLOBALS['FORUM_DB']);
+            } elseif (is_float($value)) {
+                $value = float_to_raw_string($value, 30, true);
+            } elseif (is_integer($value)) {
+                $value = strval($value);
             }
             if (($custom_field['cf_encrypted'] == 1) && (is_encryption_enabled())) {
                 $value = remove_magic_encryption_marker($value);
             }
 
-            if (!member_field_is_required($member_id, 'required_cpfs', $value)) {
+            if (!member_field_is_required($member_id, 'required_cpfs', $value) && $custom_field['cf_type'] != 'tick'/*HACKHACK*/) {
                 $custom_field['cf_required'] = 0;
             }
         } else {
@@ -810,8 +809,6 @@ function cns_get_member_fields_profile($mini_mode = true, $member_id = null, $gr
         } else {
             $field_groups[$field_cat]->attach($result);
         }
-
-        $hidden->attach(form_input_hidden('label_for__field_' . strval($custom_field['id']), $custom_field['trans_name']));
     }
     if (array_key_exists('', $field_groups)) { // Blank prefix must go first
         $field_groups_blank = $field_groups[''];
@@ -882,8 +879,16 @@ function cns_edit_member($member_id, $email_address, $preview_posts, $dob_day, $
 
         $email_address_required = member_field_is_required($member_id, 'email_address');
 
-        if ((!is_null($email_address)) && ($email_address != '') && (!is_email_address($email_address))) {
+        if ((!is_null($email_address)) && ($email_address != '') && ($email_address != STRING_MAGIC_NULL) && (!is_email_address($email_address))) {
             warn_exit(do_lang_tempcode('_INVALID_EMAIL_ADDRESS', escape_html($email_address)));
+        }
+
+        if ((get_option('one_per_email_address') != '0') && ($email_address != '') && ($email_address != STRING_MAGIC_NULL))
+        {
+            $test = $GLOBALS['FORUM_DB']->query_select_value_if_there('f_members', 'id', array('m_email_address' => $email_address));
+            if ((!is_null($test)) && ($test != $member_id)) {
+                warn_exit(do_lang_tempcode('_EMAIL_ADDRESS_IN_USE'));
+            }
         }
     }
 
@@ -953,12 +958,12 @@ function cns_edit_member($member_id, $email_address, $preview_posts, $dob_day, $
     // Set custom profile field values
     $all_fields_types = collapse_2d_complexity('id', 'cf_type', $all_fields);
     $changes = array();
-    foreach ($custom_fields as $field => $value) {
-        if (!array_key_exists($field, $all_fields_types)) {
+    foreach ($custom_fields as $field_id => $value) {
+        if (!array_key_exists($field_id, $all_fields_types)) {
             continue; // Trying to set a field we're not allowed to (doesn't apply to our group)
         }
 
-        $change = cns_set_custom_field($member_id, $field, $value, $all_fields_types[$field], true);
+        $change = cns_set_custom_field($member_id, $field_id, $value, $all_fields_types[$field_id], true);
         if (!is_null($change)) {
             $changes = array_merge($changes, $change);
         }
@@ -1045,18 +1050,18 @@ function cns_edit_member($member_id, $email_address, $preview_posts, $dob_day, $
     }
 
     $old_username = $GLOBALS['CNS_DRIVER']->get_member_row_field($member_id, 'm_username');
-    if ((!is_null($username)) && ($username != $old_username) && (($skip_checks) || (has_actual_page_access(get_member(), 'admin_cns_members')) || (has_privilege($member_id, 'rename_self')))) { // Username change
+    if ((!is_null($username)) && (!is_null($old_username)) && ($username != $old_username) && (($skip_checks) || (has_actual_page_access(get_member(), 'admin_cns_members')) || (has_privilege($member_id, 'rename_self')))) { // Username change
         $update['m_username'] = $username;
 
         // Reassign personal galleries
         if (addon_installed('galleries')) {
             require_lang('galleries');
-            $personal_galleries = $GLOBALS['SITE_DB']->query('SELECT name,fullname,parent_id FROM ' . get_table_prefix() . 'galleries WHERE name LIKE \'member_' . strval($member_id) . '_%\'');
+            $personal_galleries = $GLOBALS['SITE_DB']->query('SELECT name,fullname,parent_id FROM ' . get_table_prefix() . 'galleries WHERE name LIKE \'member\_' . strval($member_id) . '\_%\'');
             foreach ($personal_galleries as $gallery) {
                 $parent_title = get_translated_text($GLOBALS['SITE_DB']->query_select_value('galleries', 'fullname', array('name' => $gallery['parent_id'])));
                 if (get_translated_text($gallery['fullname']) == do_lang('PERSONAL_GALLERY_OF', $old_username, $parent_title)) {
                     $new_fullname = do_lang('PERSONAL_GALLERY_OF', $username, $parent_title);
-                    $GLOBALS['SITE_DB']->query_update('galleries', lang_remap_comcode('fullname', $gallery['fullname'], $new_fullname, $GLOBALS['FORUM_DB']), array('name' => $gallery['name']), '', 1);
+                    $GLOBALS['SITE_DB']->query_update('galleries', lang_remap_comcode('fullname', $gallery['fullname'], $new_fullname), array('name' => $gallery['name']), '', 1);
                 }
             }
         }
@@ -1084,13 +1089,14 @@ function cns_edit_member($member_id, $email_address, $preview_posts, $dob_day, $
         if (!$skip_checks) {
             if (($member_id == get_member()) || (get_value('disable_password_change_notifications_for_staff') !== '1')) {
                 if (get_page_name() != 'admin_cns_members') {
+                    require_code('notifications');
+
                     $part_b = '';
                     if (!has_actual_page_access(get_member(), 'admin_cns_members')) {
                         $part_b = do_lang('PASSWORD_CHANGED_MAIL_BODY_2', get_ip_address());
                     }
                     $mail = do_notification_lang('PASSWORD_CHANGED_MAIL_BODY', get_site_name(), $part_b, null, get_lang($member_id));
 
-                    require_code('notifications');
                     dispatch_notification('cns_password_changed', null, do_lang('PASSWORD_CHANGED_MAIL_SUBJECT', null, null, null, get_lang($member_id)), $mail, array($member_id), null, 2);
                 }
             }
@@ -1100,6 +1106,10 @@ function cns_edit_member($member_id, $email_address, $preview_posts, $dob_day, $
         $update['m_validated_email_confirm_code'] = '';
         if (addon_installed('unvalidated')) {
             $update['m_validated'] = $validated;
+
+            if (($validated == 1) && ($GLOBALS['CNS_DRIVER']->get_member_row_field($member_id, 'm_validated') == 0)) {
+                $update['m_join_time'] = time(); // So welcome mails go out correctly
+            }
         }
     }
     if (!is_null($highlighted_name)) {
@@ -1157,7 +1167,7 @@ function cns_edit_member($member_id, $email_address, $preview_posts, $dob_day, $
 
     if ((addon_installed('commandr')) && (!running_script('install'))) {
         require_code('resource_fs');
-        generate_resourcefs_moniker('member', strval($member_id));
+        generate_resource_fs_moniker('member', strval($member_id));
     }
 
     decache('main_members');
@@ -1197,7 +1207,7 @@ function cns_delete_member($member_id)
             list(, , $storage_type) = $object->get_field_value_row_bits($field);
 
             if (method_exists($object, 'cleanup')) {
-                $object->cleanup($l);
+                $object->cleanup(array('cv_value' => $l));
             }
 
             if ((strpos($storage_type, '_trans') !== false) && (!is_null($l))) {
@@ -1236,7 +1246,7 @@ function cns_delete_member($member_id)
 
     if ((addon_installed('commandr')) && (!running_script('install'))) {
         require_code('resource_fs');
-        expunge_resourcefs_moniker('member', strval($member_id));
+        expunge_resource_fs_moniker('member', strval($member_id));
     }
 
     decache('main_members');
@@ -1266,6 +1276,7 @@ function cns_ban_member($member_id)
 
     log_it('BAN_MEMBER', strval($member_id), $username);
 
+    require_lang('cns');
     $mail = do_lang('BAN_MEMBER_MAIL', $username, get_site_name(), array(), get_lang($member_id));
     mail_wrap(do_lang('BAN_MEMBER_MAIL_SUBJECT', null, null, null, get_lang($member_id)), $mail, array($email_address), $username, '', '', 2, null, false, null, false, false, false, 'MAIL', false, null, null, $join_time);
 
@@ -1295,6 +1306,7 @@ function cns_unban_member($member_id)
 
     log_it('UNBAN_MEMBER', strval($member_id), $username);
 
+    require_lang('cns');
     $mail = do_lang('UNBAN_MEMBER_MAIL', $username, get_site_name(), array(), get_lang($member_id));
     mail_wrap(do_lang('UNBAN_MEMBER_MAIL_SUBJECT', null, null, null, get_lang($member_id)), $mail, array($email_address), $username, '', '', 2, null, false, null, false, false, false, 'MAIL', false, null, null, $join_time);
 
@@ -1356,30 +1368,27 @@ function cns_edit_custom_field($id, $name, $description, $default, $public_view,
 
     $GLOBALS['FORUM_DB']->query_update('f_custom_fields', $map, array('id' => $id), '', 1);
 
+    require_code('cns_members_action');
+
     list($_type, $index) = get_cpf_storage_for($type);
 
     require_code('database_action');
+
     $GLOBALS['FORUM_DB']->delete_index_if_exists('f_member_custom_fields', 'mcf' . strval($id));
     $GLOBALS['FORUM_DB']->delete_index_if_exists('f_member_custom_fields', '#mcf_ft_' . strval($id));
-    $indices_count = $GLOBALS['FORUM_DB']->query_select_value('db_meta_indices', 'COUNT(*)', array('i_table' => 'f_member_custom_fields'));
-    if ($indices_count < 60) { // Could be 64 but trying to be careful here...
-        if ($index) {
-            if ($_type != 'LONG_TEXT') {
-                $GLOBALS['FORUM_DB']->create_index('f_member_custom_fields', 'mcf' . strval($id), array('field_' . strval($id)), 'mf_member_id');
-            }
-            if (strpos($_type, '_TEXT') !== false) {
-                $GLOBALS['FORUM_DB']->create_index('f_member_custom_fields', '#mcf_ft_' . strval($id), array('field_' . strval($id)), 'mf_member_id');
-            }
-        } elseif ((strpos($type, 'trans') !== false) || ($type == 'posting_field')) { // for efficient joins
-            $GLOBALS['FORUM_DB']->create_index('f_member_custom_fields', 'mcf' . strval($id), array('field_' . strval($id)), 'mf_member_id');
-        }
+
+    if (substr(get_db_type(), 0, 5) == 'mysql') {
+        $GLOBALS['SITE_DB']->query('SET sql_mode=\'\'', null, null, true); // Turn off strict mode
     }
+    $GLOBALS['FORUM_DB']->alter_table_field('f_member_custom_fields', 'field_' . strval($id), $_type); // LEGACY: Field type should not have changed, but bugs can happen, especially between CMS versions, so we allow a CPF edit as a "fixup" op
+
+    build_cpf_indices($id, $index, $type, $_type);
 
     log_it('EDIT_CUSTOM_PROFILE_FIELD', strval($id), $name);
 
     if ((addon_installed('commandr')) && (!running_script('install'))) {
         require_code('resource_fs');
-        generate_resourcefs_moniker('cpf', strval($id));
+        generate_resource_fs_moniker('cpf', strval($id));
     }
 
     $GLOBALS['NO_DB_SCOPE_CHECK'] = $dbs_back;
@@ -1425,7 +1434,7 @@ function cns_delete_custom_field($id)
 
     if ((addon_installed('commandr')) && (!running_script('install'))) {
         require_code('resource_fs');
-        expunge_resourcefs_moniker('cpf', strval($id));
+        expunge_resource_fs_moniker('cpf', strval($id));
     }
 
     if (function_exists('persistent_cache_delete')) {
@@ -1442,21 +1451,25 @@ function cns_delete_custom_field($id)
  * Set a custom profile field for a member.
  *
  * @param  MEMBER $member_id The member.
- * @param  AUTO_LINK $field The field being set.
+ * @param  AUTO_LINK $field_id The field being set.
  * @param  mixed $value The value of the field. For a trans-type field, this can be either a lang-ID to be copied (from forum DB), or an actual string.
  * @param  ?ID_TEXT $type The field type (null: look it up).
  * @param  boolean $defer Whether to defer the change, by returning a result change rather than doing it right away.
  * @return ?array Mapping change (null: none / can't defer).
  */
-function cns_set_custom_field($member_id, $field, $value, $type = null, $defer = false)
+function cns_set_custom_field($member_id, $field_id, $value, $type = null, $defer = false)
 {
+    if ($value === STRING_MAGIC_NULL) {
+        return null;
+    }
+
     if (is_null($type)) {
-        $type = $GLOBALS['FORUM_DB']->query_select_value('f_custom_fields', 'cf_type', array('id' => $field));
+        $type = $GLOBALS['FORUM_DB']->query_select_value('f_custom_fields', 'cf_type', array('id' => $field_id));
     }
 
     cns_get_custom_field_mappings($member_id); // This will do an auto-repair if CPF storage row is missing
 
-    $db_fieldname = 'field_' . strval($field);
+    $db_fieldname = 'field_' . strval($field_id);
 
     global $ANY_FIELD_ENCRYPTED;
     if ($ANY_FIELD_ENCRYPTED === null) {
@@ -1464,10 +1477,13 @@ function cns_set_custom_field($member_id, $field, $value, $type = null, $defer =
     }
 
     if ($ANY_FIELD_ENCRYPTED) {
-        $encrypted = $GLOBALS['FORUM_DB']->query_select_value('f_custom_fields', 'cf_encrypted', array('id' => $field));
+        $encrypted = $GLOBALS['FORUM_DB']->query_select_value('f_custom_fields', 'cf_encrypted', array('id' => $field_id));
         if ($encrypted) {
             require_code('encryption');
-            $current = $GLOBALS['FORUM_DB']->query_select_value('f_member_custom_fields', $db_fieldname, array('mf_member_id' => $member_id));
+            $current = $GLOBALS['FORUM_DB']->query_select_value_if_there('f_member_custom_fields', $db_fieldname, array('mf_member_id' => $member_id));
+            if ($current === null) {
+                return null;
+            }
             if ((remove_magic_encryption_marker($value) == remove_magic_encryption_marker($current)) && (is_data_encrypted($current))) {
                 return null;
             }
@@ -1479,7 +1495,9 @@ function cns_set_custom_field($member_id, $field, $value, $type = null, $defer =
 
     require_code('fields');
     $ob = get_fields_hook($type);
-    list(, , $storage_type) = $ob->get_field_value_row_bits(array('id' => $field, 'cf_default' => '', 'cf_type' => $type));
+    list(, , $storage_type) = $ob->get_field_value_row_bits(array('id' => $field_id, 'cf_default' => '', 'cf_type' => $type));
+
+    static $done_one_posting_field = false;
 
     if (strpos($storage_type, '_trans') !== false) {
         if (is_integer($value)) {
@@ -1488,9 +1506,10 @@ function cns_set_custom_field($member_id, $field, $value, $type = null, $defer =
 
         $map = array();
 
-        $current = $GLOBALS['FORUM_DB']->query_select_value('f_member_custom_fields', $db_fieldname, array('mf_member_id' => $member_id));
+        $current = $GLOBALS['FORUM_DB']->query_select_value_if_there('f_member_custom_fields', $db_fieldname, array('mf_member_id' => $member_id));
         if (is_null($current)) {
-            if ($type == 'posting_field') {
+            if (($type == 'posting_field') && (!$done_one_posting_field)) {
+                $done_one_posting_field = true;
                 require_code('attachments2');
                 $map += insert_lang_comcode_attachments($db_fieldname, 3, $value, 'null', strval($member_id), $GLOBALS['FORUM_DB']);
             } else {
@@ -1499,10 +1518,11 @@ function cns_set_custom_field($member_id, $field, $value, $type = null, $defer =
 
             $GLOBALS['FORUM_DB']->query_update('f_member_custom_fields', $map, array('mf_member_id' => $member_id), '', 1);
         } else {
-            if ($type == 'posting_field') {
+            if (($type == 'posting_field') && (!$done_one_posting_field)) {
+                $done_one_posting_field = true;
                 require_code('attachments2');
                 require_code('attachments3');
-                $map += update_lang_comcode_attachments($db_fieldname, $current, $value, 'null', strval($member_id), $GLOBALS['FORUM_DB'], false, $member_id);
+                $map += update_lang_comcode_attachments($db_fieldname, $current, $value, 'null', strval($member_id), $GLOBALS['FORUM_DB'], $member_id);
             } else {
                 $map += lang_remap_comcode($db_fieldname, $current, $value, $GLOBALS['FORUM_DB']);
             }
@@ -1512,7 +1532,7 @@ function cns_set_custom_field($member_id, $field, $value, $type = null, $defer =
     } else {
         $change = array();
 
-        if (is_string($value)) { // Should not normally be needed, but add some safety in our API
+        if (is_string($value)) {
             switch ($storage_type) {
                 case 'short_trans':
                 case 'long_trans':
@@ -1528,6 +1548,15 @@ function cns_set_custom_field($member_id, $field, $value, $type = null, $defer =
                     $change[$db_fieldname] = $value;
                     break;
             }
+        } elseif ($value === null) {
+            switch ($storage_type) {
+                case 'integer':
+                case 'float':
+                    $change[$db_fieldname] = $value;
+                    break;
+            }
+        } else {
+            $change[$db_fieldname] = $value;
         }
 
         if (!$defer) {
@@ -1538,6 +1567,11 @@ function cns_set_custom_field($member_id, $field, $value, $type = null, $defer =
 
     if (function_exists('decache')) {
         decache('main_members');
+    }
+
+    global $MEMBER_CACHE_FIELD_MAPPINGS;
+    if ((isset($MEMBER_CACHE_FIELD_MAPPINGS)) && (isset($MEMBER_CACHE_FIELD_MAPPINGS[$member_id]))) {
+        unset($MEMBER_CACHE_FIELD_MAPPINGS[$member_id]);
     }
 
     return null;
@@ -1554,16 +1588,19 @@ function cns_set_custom_field($member_id, $field, $value, $type = null, $defer =
  */
 function cns_check_name_valid(&$username, $member_id = null, $password = null, $return_errors = false)
 {
-    /*   $striped_username=$username;           This would be an internationalisation mistake
-    $allowed_characters=array('a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z',
-                                                                                                          'A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z',
-                                                                                                          '0','1','2','3','4','5','6','7','8','9',' ',
-                                                                                                          '#','@',':',';','/',"\\",'.',',','|','!','%','$','^','(','*',')','-','_','+','=','[',']','{','}','~');
-    foreach ($allowed_characters as $allowed_character)
-    {
-        $striped_username=str_replace($allowed_character,'',$striped_username);
+    /* This would be an internationalisation mistake
+    $striped_username = $username;
+    $allowed_characters = array('a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
+                                'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
+                                '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', ' ',
+                                '#', '@', ':', ';', '/', "\\", '.', ',', '|', '!', '%', '$', '^', '(', '*', ')', '-', '_', '+', '=', '[', ']', '{', '}', '~');
+    foreach ($allowed_characters as $allowed_character) {
+        $striped_username = str_replace($allowed_character, '', $striped_username);
     }
-    if ($striped_username!='') warn_exit(do_lang_tempcode('USERNAME_BAD_SYMBOLS'));*/
+    if ($striped_username != '') {
+        warn_exit(do_lang_tempcode('USERNAME_BAD_SYMBOLS'));
+    }
+    */
 
     // Check it doesn't already exist
     if (!is_null($username)) {
@@ -1572,14 +1609,10 @@ function cns_check_name_valid(&$username, $member_id = null, $password = null, $
             $test = $GLOBALS['FORUM_DB']->query_select_value_if_there('f_members', 'id', array('m_username' => $username));
         }
         if ((!is_null($test)) && ($test !== $member_id)) {
-            if (get_option('signup_fullname') == '0') {
-                if ($return_errors) {
-                    return do_lang_tempcode('USERNAME_ALREADY_EXISTS');
-                }
-                warn_exit(do_lang_tempcode('USERNAME_ALREADY_EXISTS'));
-            } else { // Adjust username as required
-                $username = get_username_from_human_name($username);
+            if ($return_errors) {
+                return do_lang_tempcode('USERNAME_ALREADY_EXISTS');
             }
+            warn_exit(do_lang_tempcode('USERNAME_ALREADY_EXISTS'));
         }
         $username_changed = is_null($test);
     } else {
@@ -1636,14 +1669,12 @@ function cns_check_name_valid(&$username, $member_id = null, $password = null, $
 
     // Check for whitespace
     if (!is_null($username)) {
-        if (get_option('signup_fullname') == '0') {
-            $prohibit_username_whitespace = get_option('prohibit_username_whitespace');
-            if (($prohibit_username_whitespace === '1') && (preg_match('#\s#', $username) != 0) && ($username_changed)) {
-                if ($return_errors) {
-                    return do_lang_tempcode('USERNAME_PASSWORD_WHITESPACE');
-                }
-                warn_exit(do_lang_tempcode('USERNAME_PASSWORD_WHITESPACE'));
+        $prohibit_username_whitespace = get_option('prohibit_username_whitespace');
+        if (($prohibit_username_whitespace === '1') && (preg_match('#\s#', $username) != 0) && ($username_changed)) {
+            if ($return_errors) {
+                return do_lang_tempcode('USERNAME_PASSWORD_WHITESPACE');
             }
+            warn_exit(do_lang_tempcode('USERNAME_PASSWORD_WHITESPACE'));
         }
     }
     if (!is_null($password)) {
@@ -1743,7 +1774,7 @@ function cns_member_choose_signature($new_signature, $member_id = null)
     require_code('attachments2');
     require_code('attachments3');
     $map = array();
-    $map += update_lang_comcode_attachments('m_signature', $_signature, $new_signature, 'cns_signature', strval($member_id), $GLOBALS['FORUM_DB'], false, $member_id);
+    $map += update_lang_comcode_attachments('m_signature', $_signature, $new_signature, 'cns_signature', strval($member_id), $GLOBALS['FORUM_DB'], $member_id);
     $GLOBALS['FORUM_DB']->query_update('f_members', $map, array('id' => $member_id), '', 1);
 
     require_code('notifications');
@@ -1833,8 +1864,8 @@ function cns_member_choose_avatar($avatar_url, $member_id = null)
 
     // Cleanup old avatar
     if ((url_is_local($old)) && ((substr($old, 0, 20) == 'uploads/cns_avatars/') || (substr($old, 0, 16) == 'uploads/avatars/')) && ($old != $avatar_url)) {
-        sync_file(rawurldecode($old));
         @unlink(get_custom_file_base() . '/' . rawurldecode($old));
+        sync_file(rawurldecode($old));
     }
 
     $GLOBALS['FORUM_DB']->query_update('f_members', array('m_avatar_url' => $avatar_url), array('id' => $member_id), '', 1);
@@ -1883,10 +1914,10 @@ function cns_member_choose_photo($param_name, $upload_name, $member_id = null)
     if (!(strlen($urls[0]) > 1)) {
         $urls[1] = '';
     }
-    if (((get_base_url() != get_forum_base_url()) || ((array_key_exists('on_msn', $GLOBALS['SITE_INFO'])) && ($GLOBALS['SITE_INFO']['on_msn'] == '1'))) && ($urls[0] != '') && (url_is_local($urls[0]))) {
+    if (((get_base_url() != get_forum_base_url()) || ((!empty($GLOBALS['SITE_INFO']['on_msn'])) && ($GLOBALS['SITE_INFO']['on_msn'] == '1'))) && ($urls[0] != '') && (url_is_local($urls[0]))) {
         $urls[0] = get_base_url() . '/' . $urls[0];
     }
-    if (((get_base_url() != get_forum_base_url()) || ((array_key_exists('on_msn', $GLOBALS['SITE_INFO'])) && ($GLOBALS['SITE_INFO']['on_msn'] == '1'))) && ($urls[1] != '') && (url_is_local($urls[1]))) {
+    if (((get_base_url() != get_forum_base_url()) || ((!empty($GLOBALS['SITE_INFO']['on_msn'])) && ($GLOBALS['SITE_INFO']['on_msn'] == '1'))) && ($urls[1] != '') && (url_is_local($urls[1]))) {
         $urls[1] = get_base_url() . '/' . $urls[1];
     }
 
@@ -1991,5 +2022,21 @@ function update_member_username_caching($member_id, $username)
         list($table, $field, $updating_field) = explode('/', $fix, 3);
         $con = $GLOBALS[(substr($table, 0, 2) == 'f_') ? 'FORUM_DB' : 'SITE_DB'];
         $con->query_update($table, array($field => $username), array($updating_field => $member_id));
+    }
+}
+
+/**
+ * Delete a custom profile field from one of the predefined templates (this is often used by importers).
+ *
+ * @param  ID_TEXT $field The identifier of the boiler custom profile field.
+ */
+function cns_delete_boiler_custom_field($field)
+{
+	require_lang('cns_special_cpf');
+
+    $test = $GLOBALS['SITE_DB']->query_select_value_if_there('f_custom_fields', 'id', array($GLOBALS['SITE_DB']->translate_field_ref('cf_name') => do_lang('DEFAULT_CPF_' . $field . '_NAME')));
+    if (!is_null($test)) {
+        require_code('cns_members_action');
+        cns_delete_custom_field($test);
     }
 }

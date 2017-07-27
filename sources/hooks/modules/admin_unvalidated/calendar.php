@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -45,7 +45,7 @@ class Hook_unvalidated_calendar
         $info['edit_module'] = 'cms_calendar';
         $info['edit_type'] = 'edit';
         $info['edit_identifier'] = 'id';
-        $info['title'] = do_lang_tempcode('EVENT');
+        $info['title'] = do_lang_tempcode('EVENTS');
 
         return $info;
     }

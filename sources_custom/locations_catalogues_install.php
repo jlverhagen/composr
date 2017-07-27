@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -16,7 +16,7 @@
 function init__locations_catalogues_install()
 {
     disable_php_memory_limit();
-    if (function_exists('set_time_limit')) {
+    if (php_function_allowed('set_time_limit')) {
         @set_time_limit(0);
     }
 }
@@ -597,7 +597,7 @@ function recalculate_bounding_long_lat($category)
 {
     static $fields = null;
     if (is_null($fields)) {
-        $fields = $GLOBALS['SITE_DB']->query_select('catalogue_fields', array('*'), array('c_name' => '_catalogue_category'), 'ORDER BY cf_order,' . $GLOBALS['FORUM_DB']->translate_field_ref('cf_name'));
+        $fields = $GLOBALS['SITE_DB']->query_select('catalogue_fields', array('*'), array('c_name' => '_catalogue_category'), 'ORDER BY cf_order,' . $GLOBALS['SITE_DB']->translate_field_ref('cf_name'));
     }
 
     $min_latitude = mixed();

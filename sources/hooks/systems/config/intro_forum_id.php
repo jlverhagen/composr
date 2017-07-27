@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -38,6 +38,7 @@ class Hook_config_intro_forum_id
             'explanation' => 'CONFIG_OPTION_intro_forum_id',
             'shared_hosting_restricted' => '0',
             'list_options' => '',
+            'order_in_category_group' => 9,
 
             'addon' => 'cns_forum',
         );

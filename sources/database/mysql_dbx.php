@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -40,7 +40,7 @@ class Database_Static_mysql_dbx extends Database_super_mysql
      * @param  string $db_host The database host (the server)
      * @param  string $db_user The database connection username
      * @param  string $db_password The database connection password
-     * @param  boolean $fail_ok Whether to on error echo an error and return with a NULL, rather than giving a critical error
+     * @param  boolean $fail_ok Whether to on error echo an error and return with a null, rather than giving a critical error
      * @return ?array A database connection (note for MySQL, it's actually a pair, containing the database name too: because we need to select the name before each query on the connection) (null: error)
      */
     public function db_get_connection($persistent, $db_name, $db_host, $db_user, $db_password, $fail_ok = false)
@@ -48,7 +48,7 @@ class Database_Static_mysql_dbx extends Database_super_mysql
         if (!function_exists('dbx_connect')) {
             $error = 'dbx not on server (anymore?). Try using the \'mysql\' database driver. To use it, edit the _config.php config file.';
             if ($fail_ok) {
-                echo $error;
+                echo ((running_script('install')) && (get_param_string('type', '') == 'ajax_db_details')) ? strip_html($error) : $error;
                 return null;
             }
             critical_error('PASSON', $error);
@@ -72,14 +72,17 @@ class Database_Static_mysql_dbx extends Database_super_mysql
         $this->last_select_db = $db;
 
         global $SITE_INFO;
-        if (!array_key_exists('database_charset', $SITE_INFO)) {
-            $SITE_INFO['database_charset'] = (strtolower(get_charset()) == 'utf-8') ? 'utf8mb4' : 'latin1';
+        if (empty($SITE_INFO['database_charset'])) {
+            $SITE_INFO['database_charset'] = (get_charset() == 'utf-8') ? 'utf8mb4' : 'latin1';
         }
         @dbx_query($db, 'SET NAMES "' . addslashes($SITE_INFO['database_charset']) . '"');
-        @dbx_query($db, 'SET WAIT_TIMEOUT=28800');
-        @dbx_query($db, 'SET SQL_BIG_SELECTS=1');
+        @dbx_query($db, 'SET wait_timeout=28800');
+        @dbx_query($db, 'SET sql_big_selects=1');
+        @dbx_query($db, 'SET max_allowed_packet=104857600');
         if ((get_forum_type() == 'cns') && (!$GLOBALS['IN_MINIKERNEL_VERSION'])) {
             @dbx_query($db, 'SET sql_mode=\'STRICT_ALL_TABLES\'');
+        } else {
+            @dbx_query($db, 'SET sql_mode=\'MYSQL40\''); // We may be in some legacy context, such as backup restoration, upgrader, or another forum driver
         }
         // NB: Can add ,ONLY_FULL_GROUP_BY for testing on what other DBs will do, but can_arbitrary_groupby() would need to be made to return false
 
@@ -94,9 +97,6 @@ class Database_Static_mysql_dbx extends Database_super_mysql
      */
     public function db_has_full_text($db)
     {
-        if ($this->using_innodb()) {
-            return false;
-        }
         return true;
     }
 
@@ -140,6 +140,17 @@ class Database_Static_mysql_dbx extends Database_super_mysql
      */
     public function db_escape_string($string)
     {
+        if (function_exists('ctype_alnum')) {
+            if (ctype_alnum($string)) {
+                return $string; // No non-trivial characters
+            }
+        }
+        if (preg_match('#[^a-zA-Z0-9\.]#', $string) === 0) {
+            return $string; // No non-trivial characters
+        }
+
+        $string = fix_bad_unicode($string);
+
         if (is_null($this->last_select_db)) {
             return addslashes($string);
         }
@@ -168,10 +179,12 @@ class Database_Static_mysql_dbx extends Database_super_mysql
                 return null;
             }
             if (intval($test_result[0]['Value']) < intval(strlen($query) * 1.2)) {
-                /*@mysql_query('SET session max_allowed_packet='.strval(intval(strlen($query)*1.3)),$db); Does not work well, as MySQL server has gone away error will likely just happen instead */
+                /*@mysql_query('SET max_allowed_packet=' . strval(intval(strlen($query) * 1.3)), $db); Does not work well, as MySQL server has gone away error will likely just happen instead */
 
                 if ($get_insert_id) {
-                    fatal_exit(do_lang_tempcode('QUERY_FAILED_TOO_BIG', escape_html($query)));
+                    fatal_exit(do_lang_tempcode('QUERY_FAILED_TOO_BIG', escape_html($query), escape_html(integer_format(strlen($query))), escape_html(integer_format(intval($test_result[0]['Value'])))));
+                } else {
+                    attach_message(do_lang_tempcode('QUERY_FAILED_TOO_BIG', escape_html(substr($query, 0, 300)) . '...', escape_html(integer_format(strlen($query))), escape_html(integer_format(intval($test_result[0]['Value'])))), 'warn');
                 }
                 return null;
             }
@@ -191,7 +204,7 @@ class Database_Static_mysql_dbx extends Database_super_mysql
             if (function_exists('ocp_mark_as_escaped')) {
                 ocp_mark_as_escaped($err);
             }
-            if ((!running_script('upgrader')) && (!get_mass_import_mode()) && (strpos($err, 'Duplicate entry') === false)) {
+            if ((!running_script('upgrader')) && ((!get_mass_import_mode()) || (get_param_integer('keep_fatalistic', 0) == 1)) && (strpos($err, 'Duplicate entry') === false)) {
                 $matches = array();
                 if (preg_match('#/(\w+)\' is marked as crashed and should be repaired#U', $err, $matches) != 0) {
                     $this->db_query('REPAIR TABLE ' . $matches[1], $db_parts);
@@ -202,13 +215,13 @@ class Database_Static_mysql_dbx extends Database_super_mysql
                 }
                 fatal_exit(do_lang_tempcode('QUERY_FAILED', escape_html($query), ($err)));
             } else {
-                echo htmlentities('Database query failed: ' . $query . ' [') . ($err) . htmlentities(']' . '<br />' . "\n");
+                echo htmlentities('Database query failed: ' . $query . ' [') . ($err) . htmlentities(']') . "<br />\n";
                 return null;
             }
         }
 
-        $sub = substr($query, 0, 4);
-        if ((is_object($results)) && (($sub == '(SEL') || ($sub == 'SELE') || ($sub == 'sele') || ($sub == 'CHEC') || ($sub == 'EXPL') || ($sub == 'REPA') || ($sub == 'DESC') || ($sub == 'SHOW'))) {
+        $sub = substr(ltrim($query), 0, 4);
+        if ((is_object($results)) && (($sub === '(SEL') || ($sub === 'SELE') || ($sub === 'sele') || ($sub === 'CHEC') || ($sub === 'EXPL') || ($sub === 'REPA') || ($sub === 'DESC') || ($sub === 'SHOW'))) {
             return $this->db_get_query_rows($results);
         }
 
@@ -256,7 +269,7 @@ class Database_Static_mysql_dbx extends Database_super_mysql
                 $type = $types[$j];
 
                 if (($type == 'int') || ($type == 'integer') || ($type == 'real')) {
-                    if ((is_null($v)) || ($v === '')) { // Roadsend returns empty string instead of NULL
+                    if ((is_null($v)) || ($v === '')) { // Roadsend returns empty string instead of null
                         $newrow[$name] = null;
                     } else {
                         $_v = intval($v);

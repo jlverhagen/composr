@@ -7,7 +7,6 @@ An example of this is you might want to display a gallery on the homepage to pre
 [title="2"]Using the [tt]if_in_group[/tt] tag on a page[/title]
 
 There are two types of places you might want to use the [tt]if_in_group tag[/tt]. One of them is on a normal page which you edit in the normal way. The second is as part of the website template which I will cover further down. To add the code to a normal page you will need to use the example below:
-
 [code="Comcode"]
 [if_in_group="1,2,6,7"]Here would be a custom welcome message which only members of groups 1, 2 6 & 7 would see[/if_in_group]
 
@@ -16,7 +15,7 @@ There are two types of places you might want to use the [tt]if_in_group tag[/tt]
 
 In this example you can see there would be two different messages displayed to 2 different sets of usergroups. You could add as many different as you like. If you only want a message for guests you would just use group 1. If you want to show another message to everyone else, rather than add each number in turn (2,3,4,5,6, ...) you can use [tt]2+[/tt] and this will display to every group numbering 2 and higher.
 
-There are quite a few different syntax you can use to customise which groups will see your messages; there is a [page="_SEARCH:tut_filter"]full list of the syntax here[/page].
+There are quite a few different syntax you can use to customise which groups will see your messages; there is a [page="_SEARCH:tut_selectcode"]full list of the syntax here[/page].
 
 [title="2"]Using an equivalent to [tt]if_in_group[/tt] in templates[/title]
 
@@ -27,6 +26,6 @@ What you want to appear goes here
 {+END}
 [/code]
 
-[box="Thank you Arvixe"]This tutorial was sponsored by [url="Arvixe hosting"]http://www.arvixe.com/5256-223-3-122.html[/url].[/box]
+[box="Thank you Arvixe"]This tutorial was sponsored by [url="Arvixe hosting"]http://arvixe.evyy.net/c/302199/279421/3370[/url].[/box]
 
 {$SET,tutorial_tags,Content,Security,novice}{$SET,tutorial_add_date,Feb 2014}{$SET,tutorial_summary,We give an example of showing different content to different usergroups.}[block]main_tutorial_rating[/block]

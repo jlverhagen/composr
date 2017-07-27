@@ -1,3 +1,4 @@
+{$REQUIRE_JAVASCRIPT,jquery}
 
 <div class="gallery_entry_screen" id="gallery_entry_screen" itemscope="itemscope" itemtype="http://schema.org/{+START,IF_PASSED,VIDEO}Video{+END}{+START,IF_NON_PASSED,VIDEO}Image{+END}Object">
 	{TITLE}
@@ -28,14 +29,14 @@
 
 				<tbody>
 					<tr>
-						<th class="de_th meta_data_title">{!ADDED}</th>
+						<th class="de_th metadata_title">{!ADDED}</th>
 						<td>
 							<time datetime="{$FROM_TIMESTAMP*,Y-m-d\TH:i:s\Z,{ADD_DATE_RAW}}" itemprop="datePublished">{ADD_DATE*}</time>
 						</td>
 					</tr>
 
 					<tr>
-						<th class="de_th meta_data_title">{!BY}</th>
+						<th class="de_th metadata_title">{!BY}</th>
 						<td>
 							<a rel="author" href="{$MEMBER_PROFILE_URL*,{SUBMITTER}}" itemprop="author">{$USERNAME*,{SUBMITTER},1}</a>
 
@@ -44,22 +45,25 @@
 					</tr>
 
 					{+START,IF_NON_EMPTY,{RATING_DETAILS}}
-						<tr>
-							<th class="de_th meta_data_title">{!RATING}</th>
-							<td>{$RATING,{MEDIA_TYPE},{ID},,,,RATING_INLINE_DYNAMIC}</td>
-						</tr>
+						{$SET,rating,{$RATING,{MEDIA_TYPE},{ID},{SUBMITTER},,,RATING_INLINE_DYNAMIC}}
+						{+START,IF_NON_EMPTY,{$TRIM,{$GET,rating}}}
+							<tr>
+								<th class="de_th metadata_title">{!RATING}</th>
+								<td>{$GET,rating}</td>
+							</tr>
+						{+END}
 					{+END}
 
 					{+START,IF_NON_EMPTY,{EDIT_DATE}}
 						<tr>
-							<th class="de_th meta_data_title">{!EDITED}</th>
+							<th class="de_th metadata_title">{!EDITED}</th>
 							<td>{EDIT_DATE*}</td>
 						</tr>
 					{+END}
 
 					{+START,IF,{$INLINE_STATS}}
 						<tr>
-							<th class="de_th meta_data_title">{!COUNT_VIEWS}</th>
+							<th class="de_th metadata_title">{!COUNT_VIEWS}</th>
 							<td>{VIEWS*}</td>
 						</tr>
 					{+END}
@@ -76,7 +80,7 @@
 
 			{+START,IF,{$ADDON_INSTALLED,recommend}}{+START,IF,{$CONFIG_OPTION,enable_ecards}}
 				{+START,IF_NON_PASSED,VIDEO}
-					<p class="associated_link vertical_alignment"><img src="{$IMG*,icons/16x16/filetypes/email_link}" srcset="{$IMG*,icons/16x16/filetypes/email_link} 2x" alt="" /> <a href="{$PAGE_LINK*,:recommend:browse:subject={!ECARD_FOR_YOU_SUBJECT}:page_title={!SEND_AS_ECARD}:s_message={!ECARD_FOR_YOU,{$SELF_URL},{URL*},{$SITE_NAME}}}">{!SEND_AS_ECARD}</a></p>
+					<p class="associated_link vertical_alignment"><img src="{$IMG*,icons/16x16/filetypes/email_link}" srcset="{$IMG*,icons/16x16/filetypes/email_link} 2x" alt="" /> <a href="{$PAGE_LINK*,:recommend:browse:subject={!ECARD_FOR_YOU_SUBJECT}:page_title={!SEND_AS_ECARD}:s_message={!ECARD_FOR_YOU,{$SELF_URL},{URL*},{$SITE_NAME}}:ecard=1}">{!SEND_AS_ECARD}</a></p>
 				{+END}
 			{+END}{+END}
 		</div>
@@ -103,12 +107,12 @@
 			<img class="scale_down" alt="{!IMAGE}" src="{$ENSURE_PROTOCOL_SUITABILITY*,{URL}}" itemprop="contentURL" />
 		{+END}
 		{+START,IF_PASSED,VIDEO}
-			{+START,IF,{$GT,{$META_DATA,video:width},500}}
+			{+START,IF,{$GT,{$METADATA,video:width},500}}
 				{VIDEO}
 			{+END}
 
 			{$,If the video is not large, we will put the boxes right alongside it}
-			{+START,IF,{$NOT,{$GT,{$META_DATA,video:width},500}}}
+			{+START,IF,{$NOT,{$GT,{$METADATA,video:width},500}}}
 				<div class="float_surrounder">
 					<div class="lined_up_boxes">
 						{$GET,boxes}
@@ -122,30 +126,30 @@
 
 			<!-- <p><a href="{URL*}">{!TO_DOWNLOAD_VIDEO}</a></p> -->
 		{+END}
-
-		{+START,IF,{SLIDESHOW}}
-			{+START,IF_NON_EMPTY,{E_TITLE}{COMMENTS}}
-				<p itemprop="caption">
-					{+START,IF_NON_EMPTY,{E_TITLE}}
-						<strong>{E_TITLE*}</strong>{+START,IF_NON_EMPTY,{COMMENTS}} &ndash;{+END}
-					{+END}
-
-					{+START,IF_NON_EMPTY,{COMMENTS}}
-						{COMMENTS}
-					{+END}
-				</p>
-			{+END}
-		{+END}
 	</div>
+
+	{+START,IF,{SLIDESHOW}}
+		{+START,IF_NON_EMPTY,{E_TITLE}{COMMENT_DETAILS}}
+			<p itemprop="caption">
+				{+START,IF_NON_EMPTY,{E_TITLE}}
+					<strong>{E_TITLE*}</strong>
+				{+END}
+
+				{+START,IF_NON_EMPTY,{COMMENT_DETAILS}}
+					{COMMENT_DETAILS}
+				{+END}
+			</p>
+		{+END}
+	{+END}
 
 	{+START,IF,{$NOT,{SLIDESHOW}}}
 		{+START,IF_NON_EMPTY,{DESCRIPTION}}
 			<div itemprop="caption">
-				{DESCRIPTION}
+				{$PARAGRAPH,{DESCRIPTION}}
 			</div>
 		{+END}
 
-		{+START,IF,{$OR,{$NEQ,{MEDIA_TYPE},video},{$GT,{$META_DATA,video:width},500}}}
+		{+START,IF,{$OR,{$NEQ,{MEDIA_TYPE},video},{$GT,{$METADATA,video:width},500}}}
 			<div class="float_surrounder lined_up_boxes">
 				{$GET,boxes}
 			</div>
@@ -169,5 +173,5 @@
 		</div>
 	{+END}
 
-	{+START,IF,{$CONFIG_OPTION,show_screen_actions}}{$BLOCK,failsafe=1,block=main_screen_actions,title={$META_DATA,title}}{+END}
+	{+START,IF,{$CONFIG_OPTION,show_screen_actions}}{$BLOCK,failsafe=1,block=main_screen_actions,title={$METADATA,title}}{+END}
 <!--DO_NOT_REMOVE_THIS_COMMENT--></div>

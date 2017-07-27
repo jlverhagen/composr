@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -30,29 +30,42 @@ function catalogue_file_script()
         @exit(get_option('closed'));
     }
 
+    $table = get_param_string('table');
+    $original_filename = get_param_string('original_filename', null, true);
+    $is_catalogue_type = ($table == 'catalogue_efv_short' || $table == 'catalogue_efv_long');
+    $is_member_type = ($table == 'f_member_custom_fields');
+
+    // Find file
+    switch ($table) {
+        case 'f_member_custom_fields':
+            $upload_dir = 'uploads/cns_cpf_upload';
+            break;
+
+        default:
+            $upload_dir = 'uploads/catalogues';
+            break;
+    }
     $file = filter_naughty(get_param_string('file', false, true));
-    $_full = get_custom_file_base() . '/uploads/catalogues/' . filter_naughty(rawurldecode($file));
+    $_full = get_custom_file_base() . '/' . $upload_dir . '/' . filter_naughty(rawurldecode($file));
     if (!file_exists($_full)) {
         warn_exit(do_lang_tempcode('MISSING_RESOURCE', do_lang_tempcode('FILE')));
     }
     $size = filesize($_full);
 
-    $original_filename = get_param_string('original_filename', null, true);
-
     // Security check; doesn't work for very old attachments (pre-v8)
-    $table = get_param_string('table');
     if ($table != 'catalogue_efv_short' && $table != 'catalogue_efv_long' && $table != 'f_member_custom_fields') {
         access_denied('I_ERROR');
     }
     $entry_id = get_param_integer('id');
     $field_id = get_param_integer('field_id', null);
-    $id_field = get_param_string('id_field');
+    $id_field = filter_naughty_harsh(get_param_string('id_field'));
     $field_id_field = get_param_string('field_id_field', null);
-    $url_field = get_param_string('url_field');
-    $ev = 'uploads/catalogues/' . $file;
-    if ($original_filename !== null) {
-        $ev .= '::' . $original_filename;
-    } else {
+    if ($field_id_field !== null) {
+        $field_id_field = filter_naughty_harsh($field_id_field);
+    }
+    $url_field = filter_naughty_harsh(get_param_string('url_field'));
+    $ev = $upload_dir . '/' . $file;
+    if ($original_filename === null) {
         $original_filename = basename($file);
     }
     $where = array($id_field => $entry_id);
@@ -63,21 +76,35 @@ function catalogue_file_script()
     if (!in_array($ev, explode("\n", preg_replace('#( |::).*$#m', '', $ev_check)))) {
         access_denied('I_ERROR'); // ID mismatch for the file requested, to give a security error
     }
-    if (($table == 'catalogue_efv_short' || $table == 'catalogue_efv_long') && (get_ip_address() != cms_srv('SERVER_ADDR')/*We need to allow media renderer to get through*/)) { // Now check the match, if we support checking on it
-        $c_name = $GLOBALS['SITE_DB']->query_select_value('catalogue_entries', 'c_name', array('id' => $entry_id));
-        if (substr($c_name, 0, 1) != '_') { // Doesn't work on custom fields (this is documented)
-            $cc_id = $GLOBALS['SITE_DB']->query_select_value('catalogue_entries', 'cc_id', array('id' => $entry_id));
-            if (!has_category_access(get_member(), 'catalogues_catalogue', $c_name)) {
-                access_denied('CATALOGUE_ACCESS');
+    if ($original_filename !== null) {
+        $ev .= '::' . $original_filename;
+    }
+    if ($is_catalogue_type) { // Now check the match, if we support checking on it
+        if (get_ip_address() != cms_srv('SERVER_ADDR')/*We need to allow media renderer to get through*/) {
+            $c_name = $GLOBALS['SITE_DB']->query_select_value('catalogue_entries', 'c_name', array('id' => $entry_id));
+            if (substr($c_name, 0, 1) != '_') { // Doesn't work on custom fields (this is documented)
+                $cc_id = $GLOBALS['SITE_DB']->query_select_value('catalogue_entries', 'cc_id', array('id' => $entry_id));
+                if (!has_category_access(get_member(), 'catalogues_catalogue', $c_name)) {
+                    access_denied('CATALOGUE_ACCESS');
+                }
+                if (!has_category_access(get_member(), 'catalogues_category', strval($cc_id))) {
+                    access_denied('CATEGORY_ACCESS');
+                }
             }
-            if (!has_category_access(get_member(), 'catalogues_category', strval($cc_id))) {
-                access_denied('CATEGORY_ACCESS');
+            if (addon_installed('content_privacy')) {
+                require_code('content_privacy');
+                check_privacy('catalogue_entry', strval($entry_id));
             }
         }
-        if (addon_installed('content_privacy')) {
-            require_code('content_privacy');
-            check_privacy('catalogue_entry', strval($entry_id));
-        }
+    }
+
+    // Find submitter
+    if ($is_catalogue_type) {
+        $submitter = $GLOBALS['SITE_DB']->query_select_value('catalogue_entries', 'ce_submitter', array('id' => $entry_id));
+    } elseif ($is_member_type) {
+        $submitter = $entry_id;
+    } else {
+        $submitter = null;
     }
 
     // Send header
@@ -89,12 +116,13 @@ function catalogue_file_script()
         if ((strpos($original_filename, "\n") !== false) || (strpos($original_filename, "\r") !== false)) {
             log_hack_attack_and_exit('HEADER_SPLIT_HACK');
         }
-        if (get_option('immediate_downloads', true) === '1') {
+        if (get_option('immediate_downloads', true) === '1' || get_param_integer('inline', 0) == 1) {
             require_code('mime_types');
-            header('Content-Type: ' . get_mime_type(get_file_extension($original_filename), has_privilege($GLOBALS['SITE_DB']->query_select_value('catalogue_entries', 'ce_submitter', array('id' => $entry_id)), 'comcode_dangerous')) . '; authoritative=true;');
-            header('Content-Disposition: inline; filename="' . str_replace("\r", '', str_replace("\n", '', addslashes($original_filename))) . '"');
+            $as_admin = ($submitter !== null) && (has_privilege($submitter, 'comcode_dangerous'));
+            header('Content-Type: ' . get_mime_type(get_file_extension($original_filename), $as_admin) . '; authoritative=true;');
+            header('Content-Disposition: inline; filename="' . escape_header($original_filename, true) . '"');
         } else {
-            header('Content-Disposition: attachment; filename="' . str_replace("\r", '', str_replace("\n", '', addslashes($original_filename))) . '"');
+            header('Content-Disposition: attachment; filename="' . escape_header($original_filename, true) . '"');
         }
     } else {
         header('Content-Disposition: attachment');
@@ -137,7 +165,7 @@ function catalogue_file_script()
         }
     }
     header('Content-Length: ' . strval($new_length));
-    if (function_exists('set_time_limit')) {
+    if (php_function_allowed('set_time_limit')) {
         @set_time_limit(0);
     }
     error_reporting(0);
@@ -149,13 +177,13 @@ function catalogue_file_script()
     // Send actual data
     $myfile = fopen($_full, 'rb');
     fseek($myfile, $from);
-    /*if ($size==$new_length)    Uses a lot of memory :S
-    {
+    if ($size == $new_length) {
+        cms_ob_end_clean();
         fpassthru($myfile);
-    } else*/
+    } else
     {
         $i = 0;
-        flush(); // Works around weird PHP bug that sends data before headers, on some PHP versions
+        flush(); // LEGACY Works around weird PHP bug that sends data before headers, on some PHP versions
         while ($i < $new_length) {
             $content = fread($myfile, min($new_length - $i, 1048576));
             echo $content;
@@ -288,7 +316,7 @@ function manage_custom_fields_donext_link($content_type)
         $ob = get_content_object($content_type);
         $info = $ob->info();
 
-        if ((array_key_exists('supports_custom_fields', $info)) && ($info['supports_custom_fields']) && (has_privilege(get_member(), 'submit_cat_highrange_content', 'cms_catalogues')) && (has_privilege(get_member(), 'edit_cat_highrange_content', 'cms_catalogues'))) {
+        if (($info['support_custom_fields']) && (has_privilege(get_member(), 'submit_cat_highrange_content', 'cms_catalogues')) && (has_privilege(get_member(), 'edit_cat_highrange_content', 'cms_catalogues'))) {
             $exists = !is_null($GLOBALS['SITE_DB']->query_select_value_if_there('catalogues', 'c_name', array('c_name' => '_' . $content_type)));
 
             return array(
@@ -315,13 +343,16 @@ function manage_custom_fields_entry_points($content_type)
         $ob = get_content_object($content_type);
         $info = $ob->info();
 
-        if ((array_key_exists('supports_custom_fields', $info)) && ($info['supports_custom_fields']) && (has_privilege(get_member(), 'submit_cat_highrange_content', 'cms_catalogues')) && (has_privilege(get_member(), 'edit_cat_highrange_content', 'cms_catalogues'))) {
-            $count = $GLOBALS['SITE_DB']->query_select_value('catalogue_fields', 'COUNT(*)', array('c_name' => '_' . $content_type));
-            $exists = ($count != 0);
+        if (($info['support_custom_fields']) && (has_privilege(get_member(), 'submit_cat_highrange_content', 'cms_catalogues')) && (has_privilege(get_member(), 'edit_cat_highrange_content', 'cms_catalogues'))) {
+            static $count = array();
+            if (!isset($count[$content_type])) {
+                $count[$content_type] = $GLOBALS['SITE_DB']->query_select_value('catalogue_fields', 'COUNT(*)', array('c_name' => '_' . $content_type));
+            }
+            $exists = ($count[$content_type] != 0);
 
             return array(
                 '_SEARCH:cms_catalogues:' . ($exists ? '_edit_catalogue' : 'add_catalogue') . ':_' . $content_type => array(
-                    do_lang_tempcode('ITEMS_HERE', do_lang_tempcode('EDIT_CUSTOM_FIELDS', do_lang($info['content_type_label'])), make_string_tempcode(escape_html(integer_format($count)))),
+                    do_lang_tempcode('menus:ITEMS_HERE', do_lang_tempcode('EDIT_CUSTOM_FIELDS', do_lang($info['content_type_label'])), make_string_tempcode(escape_html(integer_format($count[$content_type])))),
                     'menu/cms/catalogues/edit_one_catalogue'
                 ),
             );
@@ -343,7 +374,7 @@ function has_tied_catalogue($content_type)
         require_code('content');
         $ob = get_content_object($content_type);
         $info = $ob->info();
-        if ((array_key_exists('supports_custom_fields', $info)) && ($info['supports_custom_fields'])) {
+        if ((!is_null($info)) && (array_key_exists('support_custom_fields', $info)) && ($info['support_custom_fields'])) {
             $exists = !is_null($GLOBALS['SITE_DB']->query_select_value_if_there('catalogues', 'c_name', array('c_name' => '_' . $content_type)));
             if ($exists) {
                 $first_cat = $GLOBALS['SITE_DB']->query_select_value_if_there('catalogue_categories', 'MIN(id)', array('c_name' => '_' . $content_type));
@@ -369,10 +400,19 @@ function has_tied_catalogue($content_type)
  */
 function get_bound_content_entry($content_type, $id)
 {
+    if (!addon_installed('catalogues')) {
+        return null;
+    }
+
     // Optimisation: don't keep up looking custom field linkage if we have no custom fields
     static $content_type_has_custom_fields_cache = null;
-    $content_type_has_custom_fields_cache = persistent_cache_get('CONTENT_TYPE_HAS_CUSTOM_FIELDS_CACHE');
-    if (!isset($content_type_has_custom_fields_cache[$content_type])) {
+    if ($content_type_has_custom_fields_cache === null) {
+        $content_type_has_custom_fields_cache = persistent_cache_get('CONTENT_TYPE_HAS_CUSTOM_FIELDS_CACHE');
+    }
+    if ($content_type_has_custom_fields_cache === null) {
+        $content_type_has_custom_fields_cache = array();
+    }
+    if (!array_key_exists($content_type, $content_type_has_custom_fields_cache)) {
         $content_type_has_custom_fields_cache[$content_type] = !is_null($GLOBALS['SITE_DB']->query_select_value_if_there('catalogue_fields', 'id', array(
             'c_name' => '_' . $content_type,
         )));
@@ -381,7 +421,6 @@ function get_bound_content_entry($content_type, $id)
     if (!$content_type_has_custom_fields_cache[$content_type]) {
         return;
     }
-
     return $GLOBALS['SITE_DB']->query_select_value_if_there('catalogue_entry_linkage', 'catalogue_entry_id', array(
         'content_type' => $content_type,
         'content_id' => $id,
@@ -401,13 +440,17 @@ function get_bound_content_entry($content_type, $id)
  */
 function append_form_custom_fields($content_type, $id, &$fields, &$hidden, $field_filter = null, $field_filter_whitelist = true, $add_separate_header = false)
 {
+    if (!addon_installed('catalogues')) {
+        return;
+    }
+
     require_code('catalogues');
 
     $catalogue_entry_id = get_bound_content_entry($content_type, $id);
     if (!is_null($catalogue_entry_id)) {
         $special_fields = get_catalogue_entry_field_values('_' . $content_type, $catalogue_entry_id);
     } else {
-        $special_fields = $GLOBALS['SITE_DB']->query_select('catalogue_fields', array('*'), array('c_name' => '_' . $content_type), 'ORDER BY cf_order,' . $GLOBALS['FORUM_DB']->translate_field_ref('cf_name'));
+        $special_fields = $GLOBALS['SITE_DB']->query_select('catalogue_fields', array('*'), array('c_name' => '_' . $content_type), 'ORDER BY cf_order,' . $GLOBALS['SITE_DB']->translate_field_ref('cf_name'));
     }
 
     $field_groups = array();
@@ -456,8 +499,6 @@ function append_form_custom_fields($content_type, $id, &$fields, &$hidden, $fiel
             $field_groups[$field_cat]->attach($result);
         }
 
-        $hidden->attach(form_input_hidden('label_for__field_' . strval($field['id']), $_cf_name));
-
         unset($result);
         unset($ob);
     }
@@ -469,7 +510,7 @@ function append_form_custom_fields($content_type, $id, &$fields, &$hidden, $fiel
     }
 
     if ($add_separate_header) {
-        $fields->attach(do_template('FORM_SCREEN_FIELD_SPACER', array('TITLE' => do_lang_tempcode('MORE'))));
+        $fields->attach(do_template('FORM_SCREEN_FIELD_SPACER', array('_GUID' => '9ebf9c2c66923907b561364c37224728', 'TITLE' => do_lang_tempcode('MORE'))));
     }
     foreach ($field_groups as $field_group_title => $extra_fields) {
         if (is_integer($field_group_title)) {
@@ -492,6 +533,10 @@ function append_form_custom_fields($content_type, $id, &$fields, &$hidden, $fiel
  */
 function save_form_custom_fields($content_type, $id, $old_id = null)
 {
+    if (!addon_installed('catalogues')) {
+        return;
+    }
+
     if (fractional_edit()) {
         return;
     }
@@ -505,7 +550,7 @@ function save_form_custom_fields($content_type, $id, $old_id = null)
     require_code('catalogues');
 
     // Get field values
-    $fields = $GLOBALS['SITE_DB']->query_select('catalogue_fields', array('*'), array('c_name' => '_' . $content_type), 'ORDER BY cf_order,' . $GLOBALS['FORUM_DB']->translate_field_ref('cf_name'));
+    $fields = $GLOBALS['SITE_DB']->query_select('catalogue_fields', array('*'), array('c_name' => '_' . $content_type), 'ORDER BY cf_order,' . $GLOBALS['SITE_DB']->translate_field_ref('cf_name'));
     $map = array();
     require_code('fields');
     foreach ($fields as $field) {
@@ -550,6 +595,10 @@ function save_form_custom_fields($content_type, $id, $old_id = null)
  */
 function delete_form_custom_fields($content_type, $id)
 {
+    if (!addon_installed('catalogues')) {
+        return;
+    }
+
     require_code('catalogues2');
 
     $existing = get_bound_content_entry($content_type, $id);
@@ -571,6 +620,25 @@ function delete_form_custom_fields($content_type, $id)
  */
 function create_selection_list_field_type($type = '', $limit_to_storage_set = false)
 {
+    static $cache = array();
+    $cache_sig = serialize(array($type, $limit_to_storage_set));
+    if (isset($cache[$cache_sig])) {
+        return $cache[$cache_sig];
+    }
+
+    $do_caching = has_caching_for('block');
+
+    $ret = mixed();
+    if ($do_caching) {
+        $cache_identifier = $cache_sig;
+        $ret = get_cache_entry('_field_type_selection', $cache_identifier, CACHE_AGAINST_NOTHING_SPECIAL, 10000);
+
+        if ($ret !== null) {
+            $cache[$cache_sig] = $ret;
+            return $ret;
+        }
+    }
+
     require_lang('fields');
 
     $all_types = find_all_hooks('systems', 'fields');
@@ -608,7 +676,7 @@ function create_selection_list_field_type($type = '', $limit_to_storage_set = fa
             $_types[] = $o;
             $done_one_in_section = false;
         } else {
-            if (array_key_exists($o, $types)) {
+            if (isset($types[$o])) {
                 $_types[] = $o;
                 unset($types[$o]);
                 $done_one_in_section = true;
@@ -623,15 +691,15 @@ function create_selection_list_field_type($type = '', $limit_to_storage_set = fa
     } else {
         $types = $_types;
     }
-    $_type_list = new Tempcode();
+    $_type_list = '';
     $type_list = new Tempcode();
     $last_type = do_lang_tempcode('OTHER');
     foreach ($types as $_type) {
         if (is_object($_type)) {
-            if (!$_type_list->is_empty()) {
-                $type_list->attach(form_input_list_group($last_type, $_type_list));
+            if ($_type_list !== '') {
+                $type_list->attach(form_input_list_group($last_type, make_string_tempcode($_type_list)));
             }
-            $_type_list = new Tempcode();
+            $_type_list = '';
             $last_type = $_type;
         } else {
             $ob = get_fields_hook($_type);
@@ -642,13 +710,26 @@ function create_selection_list_field_type($type = '', $limit_to_storage_set = fa
             }
 
             foreach ($sub_types as $__type => $_title) {
-                $_type_list->attach(form_input_list_entry($__type, ($__type == $type), $_title));
+                //$_type_list->attach(form_input_list_entry($__type, ($__type == $type), $_title));
+                $_type_list .= '<option value="' . escape_html($__type) . '"' . ($__type == $type ? ' selected="selected"' : '') . '>' . $_title->evaluate() . '</option>'; // XHTMLXHTML
             }
         }
     }
-    if (!$_type_list->is_empty()) {
-        $type_list->attach(form_input_list_group($last_type, $_type_list));
+    if ($_type_list !== '') {
+        $type_list->attach(form_input_list_group($last_type, make_string_tempcode($_type_list)));
     }
 
-    return make_string_tempcode($type_list->evaluate()); // XHTMLXHTML
+    $ret = make_string_tempcode($type_list->evaluate()); // XHTMLXHTML
+
+    $cache[$cache_sig] = $ret;
+
+    if ($do_caching) {
+        require_code('caches2');
+
+        $ret = apply_quick_caching($ret);
+
+        put_into_cache('_field_type_selection', 60 * 60 * 24, $cache_identifier, null, null, '', null, '', $ret);
+    }
+
+    return $ret;
 }

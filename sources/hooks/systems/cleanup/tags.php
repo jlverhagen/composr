@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -45,11 +45,21 @@ class Hook_cleanup_tags
      */
     public function run()
     {
+        require_code('content');
+
         $hooks = find_all_hooks('systems', 'content_meta_aware');
         foreach (array_keys($hooks) as $hook) {
             require_code('hooks/systems/content_meta_aware/' . $hook);
-            $ob = object_factory('Hook_content_meta_aware_' . $hook);
+            $ob = get_content_object($hook);
+            if (is_null($ob)) {
+                continue;
+            }
+
             $info = $ob->info();
+            if (is_null($info)) {
+                continue;
+            }
+
             $seo_type_code = $info['seo_type_code'];
             if (!is_null($seo_type_code)) {
                 $table = $info['table'];
@@ -61,15 +71,19 @@ class Hook_cleanup_tags
                 }
 
                 $sql = 'SELECT m.* FROM ' . get_table_prefix() . 'seo_meta m';
-                $sql .= ' LEFT JOIN ' . get_table_prefix() . $table . ' r ON r.' . $id_field . '=m.meta_for_id AND ' . db_string_equal_to('m.meta_for_type', $seo_type_code);
+                $sql .= ' LEFT JOIN ' . get_table_prefix() . $table . ' r ON ' . db_cast('r.' . $id_field, 'CHAR') . '=m.meta_for_id AND ' . db_string_equal_to('m.meta_for_type', $seo_type_code);
                 $sql .= ' WHERE r.' . $id_field . ' IS NULL AND ' . db_string_equal_to('m.meta_for_type', $seo_type_code);
                 $orphaned = $GLOBALS[(substr($table, 0, 2) == 'f_') ? 'FORUM_DB' : 'SITE_DB']->query($sql);
                 if (count($orphaned) != 0) {
                     foreach ($orphaned as $o) {
-                        delete_lang($o['meta_keywords']);
+                        $keywords = $GLOBALS['SITE_DB']->query_select('seo_meta_keywords', array('meta_keyword'), array('meta_for_type' => $o['meta_for_type'], 'meta_for_id' => $o['meta_for_id']));
+                        foreach ($keywords as $k) {
+                            delete_lang($k['meta_keyword']);
+                        }
+                        $GLOBALS['SITE_DB']->query_delete('seo_meta_keywords', array('meta_for_type' => $o['meta_for_type'], 'meta_for_id' => $o['meta_for_id']));
+
                         delete_lang($o['meta_description']);
                         $GLOBALS['SITE_DB']->query_delete('seo_meta', array('meta_for_type' => $o['meta_for_type'], 'meta_for_id' => $o['meta_for_id']), '', 1);
-                        $GLOBALS['SITE_DB']->query_delete('seo_meta_keywords', array('meta_for_type' => $o['meta_for_type'], 'meta_for_id' => $o['meta_for_id']));
                     }
                 }
             }

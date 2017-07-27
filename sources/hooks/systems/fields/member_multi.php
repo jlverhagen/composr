@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -67,8 +67,8 @@ class Hook_fields_member_multi
      * Get some info bits relating to our field type, that helps us look it up / set defaults.
      *
      * @param  ?array $field The field details (null: new field)
-     * @param  ?boolean $required Whether a default value cannot be blank (null: don't "lock in" a new default value)
-     * @param  ?string $default The given default value as a string (null: don't "lock in" a new default value)
+     * @param  ?boolean $required Whether a default value cannot be blank (null: don't "lock in" a new default value) (may be passed as false also if we want to avoid "lock in" of a new default value, but in this case possible cleanup of $default may still happen where appropriate)
+     * @param  ?string $default The given default value as a string (null: don't "lock in" a new default value) (blank: only "lock in" a new default value if $required is true)
      * @return array Tuple of details (row-type,default-value-to-use,db row-type)
      */
     public function get_field_value_row_bits($field, $required = null, $default = null)
@@ -153,7 +153,7 @@ class Hook_fields_member_multi
      *
      * @param  boolean $editing Whether we were editing (because on edit, it could be a fractional edit)
      * @param  array $field The field details
-     * @param  string $upload_dir Where the files will be uploaded to (null: do not store an upload, return NULL if we would need to do so)
+     * @param  ?string $upload_dir Where the files will be uploaded to (null: do not store an upload, return null if we would need to do so)
      * @param  ?array $old_value Former value of field (null: none)
      * @return ?string The value (null: could not process)
      */

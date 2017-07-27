@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -385,6 +385,10 @@ class CMSModerationWrite
             return false;
         }
 
+        if (!addon_installed('cns_warnings')) {
+            warn_exit(do_lang_tempcode('INTERNAL_ERROR'));
+        }
+
         if (!cns_may_warn_members()) {
             access_denied('I_ERROR');
         }
@@ -445,6 +449,10 @@ class CMSModerationWrite
             return false;
         }
 
+        if (!addon_installed('cns_warnings')) {
+            warn_exit(do_lang_tempcode('INTERNAL_ERROR'));
+        }
+
         if (!cns_may_warn_members()) {
             access_denied('I_ERROR');
         }
@@ -498,6 +506,7 @@ class CMSModerationWrite
         $email = $GLOBALS['FORUM_DRIVER']->get_member_email_address($user_id);
 
         require_code('failure');
+        require_code('failure_spammers');
         syndicate_spammer_report($ip, $username, $email, '', false);
 
         require_code('cns_general_action2');

@@ -9,7 +9,7 @@
 	{!TEXT_REDIRECTS}
 </p>
 
-<form title="{!PRIMARY_PAGE_FORM}" method="post" action="{URL*}">
+<form title="{!PRIMARY_PAGE_FORM}" method="post" action="{URL*}" autocomplete="off">
 	{$INSERT_SPAMMER_BLACKHOLE}
 
 	<h2>{!EXISTING_REDIRECTS}</h2>
@@ -39,7 +39,7 @@
 					{!REDIRECT_TO_PAGE}
 				</th>
 				<th>
-					<abbr title="{!IS_TRANSPARENT_REDIRECT=}">{!REDIRECT_TRANS_SHORT}</abbr>
+					<abbr title="{$STRIP_TAGS,{!IS_TRANSPARENT_REDIRECT}}">{!REDIRECT_TRANS_SHORT}</abbr>
 				</th>
 				<th>
 				</th>
@@ -77,7 +77,7 @@
 					{!REDIRECT_TO_PAGE}
 				</th>
 				<th>
-					<abbr title="{!IS_TRANSPARENT_REDIRECT=}">{!REDIRECT_TRANS_SHORT}</abbr>
+					<abbr title="{$STRIP_TAGS,{!IS_TRANSPARENT_REDIRECT}}">{!REDIRECT_TRANS_SHORT}</abbr>
 				</th>
 				<th>
 				</th>
@@ -89,7 +89,7 @@
 	</table></div>
 
 	<p class="proceed_button">
-		<input accesskey="u" onclick="disable_button_just_clicked(this);" class="buttons__save button_screen" type="submit" value="{!SAVE}" />
+		<input accesskey="u" onclick="disable_button_just_clicked(this);" class="button_screen buttons__save" type="submit" value="{!SAVE}" />
 	</p>
 
 	<hr class="spaced_rule" />

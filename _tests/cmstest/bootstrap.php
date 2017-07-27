@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -18,7 +18,7 @@ function unit_testing_run()
     global $SCREEN_TEMPLATE_CALLED;
     $SCREEN_TEMPLATE_CALLED = '';
 
-    header('Content-Type: text/html');
+    @header('Content-Type: text/html');
 
     safe_ini_set('ocproducts.type_strictness', '0');
     safe_ini_set('ocproducts.xss_detect', '0');
@@ -31,26 +31,9 @@ function unit_testing_run()
 
     $id = get_param_string('id', null);
     if (!is_null($id)) {
-        //ob_start();
-
-        if ($id == '!') {
-            testset_do_header('Running all test sets');
-
-            $sets = find_testsets();
-            foreach ($sets as $set) {
-                run_testset($set);
-            }
-
-            testset_do_footer();
-
-            return;
-        }
-
         testset_do_header('Running test set: ' . escape_html($id));
         run_testset($id);
         testset_do_footer();
-
-        //ob_end_flush();
 
         return;
     }
@@ -58,10 +41,10 @@ function unit_testing_run()
     testset_do_header('Choose a test set');
 
     $sets = find_testsets();
+    echo '(The ones starting <kbd>_</kbd> should be run individually [no concurrency], and also only occasionally except for <kbd>_cqc__function_sigs</kbd> and <kbd>_installer</kbd> which are crucial and to be run first)';
     echo '<ul>';
-    //echo '<li><em><a href="?id=!">All</a></em></li>'.chr(10);             Better to use Chrome "Open all selected links" extension
     foreach ($sets as $set) {
-        echo '<li><a href="?id=' . escape_html($set) . '">' . escape_html($set) . '</a></li>' . "\n";
+        echo '<li><a href="?id=' . escape_html(urlencode($set)) . '&amp;close_if_passed=1">' . escape_html($set) . '</a></li>' . "\n";
     }
     echo '</ul>';
 
@@ -108,7 +91,7 @@ function testset_do_header($title)
 
         <style>
 END;
-    @print(file_get_contents(css_enforce('global', 'default', false)));
+    @print(file_get_contents(css_enforce('global', 'default')));
     echo <<<END
             .screen_title { text-decoration: underline; display: block; background: url('../themes/default/images/icons/48x48/menu/_generic_admin/tool.png') top left no-repeat; min-height: 42px; padding: 10px 0 0 60px; }
             a[target="_blank"], a[onclick$="window.open"] { padding-right: 0; }

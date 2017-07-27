@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -37,7 +37,7 @@ function actual_edit_zone($zone, $title, $default_page, $header_text, $theme, $r
 {
     if ($zone != $new_zone) {
         require_code('type_sanitisation');
-        if (!is_alphanumeric($new_zone, true)) {
+        if (!is_alphanumeric($new_zone)) {
             warn_exit(do_lang_tempcode('BAD_CODENAME'));
         }
 
@@ -49,7 +49,7 @@ function actual_edit_zone($zone, $title, $default_page, $header_text, $theme, $r
         $test = $GLOBALS['SITE_DB']->query_select_value_if_there('zones', 'zone_header_text', array('zone_name' => $new_zone));
         if (!is_null($test)) {
             if ($uniqify) {
-                $new_zone .= '_' . uniqid('', true);
+                $new_zone .= '_' . uniqid('', false);
             } else {
                 warn_exit(do_lang_tempcode('ALREADY_EXISTS', escape_html($new_zone)));
             }
@@ -98,7 +98,7 @@ function actual_edit_zone($zone, $title, $default_page, $header_text, $theme, $r
 
     if ((addon_installed('commandr')) && (!running_script('install'))) {
         require_code('resource_fs');
-        generate_resourcefs_moniker('zone', $zone);
+        generate_resource_fs_moniker('zone', $zone);
     }
 
     return $zone;
@@ -168,7 +168,7 @@ function actual_delete_zone($zone, $force = false, $skip_afm = false)
     }
 
     if (!$force) {
-        if (function_exists('set_time_limit')) {
+        if (php_function_allowed('set_time_limit')) {
             @set_time_limit(0);
         }
         disable_php_memory_limit();
@@ -233,7 +233,7 @@ function actual_delete_zone_lite($zone)
 
     if ((addon_installed('commandr')) && (!running_script('install'))) {
         require_code('resource_fs');
-        expunge_resourcefs_moniker('zone', $zone);
+        expunge_resource_fs_moniker('zone', $zone);
     }
 }
 
@@ -368,27 +368,28 @@ function get_zone_chooser($inline = false, $no_go = null, $reorder = null)
  */
 function get_templates_list()
 {
-    $templates_dir = get_file_base() . '/data/modules/cms_comcode_pages/' . fallback_lang() . '/';
+    require_code('zones2');
+
+    $templates_dirs = array(
+        get_file_base() . '/data/modules/cms_comcode_pages/' . fallback_lang() . '/',
+        get_file_base() . '/data_custom/modules/cms_comcode_pages/' . fallback_lang() . '/',
+    );
     $templates = array();
-    if (($handle = @opendir($templates_dir)) !== false) {
-        $unknown_count = 0;
+    foreach ($templates_dirs as $templates_dir) {
+        if (($handle = @opendir($templates_dir)) !== false) {
+            $unknown_count = 0;
 
-        while (false !== ($entry = readdir($handle))) {
-            if (substr($entry, -4) == '.txt' && $entry[0] != '.') {
-                $template_path = $templates_dir . $entry;
-                $matches = array();
-                if (preg_match('#\[title[^\]]*\](.*)\[/title\]#', file_get_contents($template_path), $matches) != 0) {
-                    $template_title = $matches[1];
-                } else {
-                    $unknown_count++;
-                    $template_title = do_lang('UNKNOWN') . strval($unknown_count);
+            while (false !== ($entry = readdir($handle))) {
+                if (substr($entry, -4) == '.txt' && $entry[0] != '.') {
+                    $template_path = $templates_dir . $entry;
+                    $template_title = get_comcode_page_title_from_disk($template_path);
+                    $templates[basename($entry, '.txt')] = $template_title;
                 }
-                $templates[basename($entry, '.txt')] = $template_title;
             }
-        }
-        asort($templates);
+            asort($templates);
 
-        closedir($handle);
+            closedir($handle);
+        }
     }
     return $templates;
 }
@@ -407,8 +408,10 @@ function get_template_contents($name)
         $templates_dir = get_file_base() . '/data_custom/modules/cms_comcode_pages/' . fallback_lang() . '/';
         $template_path = $templates_dir . $name . '.txt';
     }
-    $templates_dir = get_file_base() . '/data/modules/cms_comcode_pages/' . either_param_string('lang', user_lang()) . '/';
-    $template_path = $templates_dir . $name . '.txt';
+    if (!is_file($template_path)) {
+        $templates_dir = get_file_base() . '/data/modules/cms_comcode_pages/' . either_param_string('lang', user_lang()) . '/';
+        $template_path = $templates_dir . $name . '.txt';
+    }
     if (!is_file($template_path)) {
         $templates_dir = get_file_base() . '/data/modules/cms_comcode_pages/' . fallback_lang() . '/';
         $template_path = $templates_dir . $name . '.txt';
@@ -417,7 +420,12 @@ function get_template_contents($name)
         return '';
     }
 
-    return file_get_contents($template_path);
+    $ret = file_get_contents($template_path);
+
+    $ret = str_replace('{$BASE_URL*}', escape_html(get_base_url()), $ret);
+    $ret = str_replace('{$BASE_URL}', get_base_url(), $ret);
+
+    return $ret;
 }
 
 /**
@@ -450,10 +458,13 @@ function save_comcode_page($zone, $new_file, $lang, $text, $validated, $parent_p
     if (is_null($file)) {
         $file = $new_file; // Not renamed
     }
+    if ($parent_page === null) {
+        $parent_page = '';
+    }
 
     // Check page name
     require_code('type_sanitisation');
-    if (!is_alphanumeric($new_file)) {
+    if ((!is_alphanumeric($new_file)) || (strpos($new_file, '-') !== false && strpos($new_file, '_') !== false)/*can't have both*/) {
         warn_exit(do_lang_tempcode('BAD_CODENAME'));
     }
     require_code('zones2');
@@ -469,9 +480,9 @@ function save_comcode_page($zone, $new_file, $lang, $text, $validated, $parent_p
         $langs = find_all_langs(true);
         $rename_map = array();
         foreach (array_keys($langs) as $lang) {
-            $old_path = zone_black_magic_filterer(filter_naughty($zone) . (($zone != '') ? '/' : '') . 'pages/comcode_custom/' . $lang . '/' . $file . '.txt', true);
+            $old_path = zone_black_magic_filterer(filter_naughty($zone) . (($zone == '') ? '' : '/') . 'pages/comcode_custom/' . $lang . '/' . $file . '.txt', true);
             if (file_exists(get_file_base() . '/' . $old_path)) {
-                $new_path = zone_black_magic_filterer(filter_naughty($zone) . (($zone != '') ? '/' : '') . 'pages/comcode_custom/' . $lang . '/' . $new_file . '.txt', true);
+                $new_path = zone_black_magic_filterer(filter_naughty($zone) . (($zone == '') ? '' : '/') . 'pages/comcode_custom/' . $lang . '/' . $new_file . '.txt', true);
                 if ((file_exists($new_path)) && (fileinode($new_path) != fileinode($old_path)/*avoid issue on case insensitive file systems while changing case*/)) {
                     warn_exit(do_lang_tempcode('ALREADY_EXISTS', escape_html($zone . ':' . $new_file)));
                 }
@@ -483,6 +494,7 @@ function save_comcode_page($zone, $new_file, $lang, $text, $validated, $parent_p
         }
         foreach ($rename_map as $path => $new_path) {
             rename(get_custom_file_base() . '/' . $path, get_custom_file_base() . '/' . $new_path);
+            sync_file_move(get_custom_file_base() . '/' . $path, get_custom_file_base() . '/' . $new_path);
         }
 
         // Got to rename various resources
@@ -506,7 +518,7 @@ function save_comcode_page($zone, $new_file, $lang, $text, $validated, $parent_p
         ), array('the_zone' => $zone, 'p_parent_page' => $file));
     }
 
-    // Set meta-data
+    // Set metadata
     require_code('seo2');
     if (($meta_keywords == '') && ($meta_description == '')) {
         seo_meta_set_for_implicit('comcode_page', $zone . ':' . $new_file, array($text), $text);
@@ -535,41 +547,24 @@ function save_comcode_page($zone, $new_file, $lang, $text, $validated, $parent_p
         'p_order' => $order,
     ));
 
-    // Store page on disk
-    $fullpath = zone_black_magic_filterer(get_custom_file_base() . '/' . filter_naughty($zone) . '/pages/comcode_custom/' . filter_naughty($lang) . '/' . filter_naughty($new_file) . '.txt');
-    if ((!file_exists($fullpath)) || ($text != file_get_contents($fullpath))) {
-        if (!file_exists(dirname($fullpath))) {
-            require_code('files2');
-            make_missing_directory(dirname($fullpath));
-        }
+    // Find file
+    $full_path = zone_black_magic_filterer(get_custom_file_base() . '/' . filter_naughty($zone) . '/pages/comcode_custom/' . filter_naughty($lang) . '/' . filter_naughty($new_file) . '.txt');
+    $file_changed = ((!file_exists($full_path)) || ($text != file_get_contents($full_path)));
 
-        $myfile = @fopen($fullpath, GOOGLE_APPENGINE ? 'wb' : 'at');
-        if ($myfile === false) {
-            intelligent_write_error($fullpath);
+    // Save revision
+    if ($file_changed) {
+        require_code('revisions_engine_files');
+        $revision_engine = new RevisionEngineFiles();
+        list(, , $existing_path) = find_comcode_page($lang, $file, $zone);
+        if ($existing_path != '') {
+            $revision_engine->add_revision(dirname($full_path), $new_file, 'txt', cms_file_get_contents_safe($existing_path), filemtime($existing_path));
         }
-        @flock($myfile, LOCK_EX);
-        if (!GOOGLE_APPENGINE) {
-            ftruncate($myfile, 0);
-        }
-        if (fwrite($myfile, $text) < strlen($text)) {
-            warn_exit(do_lang_tempcode('COULD_NOT_SAVE_FILE'));
-        }
-        @flock($myfile, LOCK_UN);
-        fclose($myfile);
-        sync_file($fullpath);
-        fix_permissions($fullpath);
-
-        $file_changed = true;
-    } else {
-        $file_changed = false;
     }
 
-    // Save backup
-    if ((file_exists($fullpath)) && (get_option('store_revisions') == '1') && ($file_changed)) {
-        $time = time();
-        @copy($fullpath, $fullpath . '.' . strval($time)) or intelligent_write_error($fullpath . '.' . strval($time));
-        fix_permissions($fullpath . '.' . strval($time));
-        sync_file($fullpath . '.' . strval($time));
+    // Store page on disk
+    if ($file_changed) {
+        require_code('files');
+        cms_file_put_contents_safe($full_path, $text, FILE_WRITE_FIX_PERMISSIONS | FILE_WRITE_SYNC_FILE);
     }
 
     // Empty caching
@@ -588,7 +583,7 @@ function save_comcode_page($zone, $new_file, $lang, $text, $validated, $parent_p
 
     if ((addon_installed('commandr')) && (!running_script('install'))) {
         require_code('resource_fs');
-        generate_resourcefs_moniker('comcode_page', $zone . ':' . $new_file);
+        generate_resource_fs_moniker('comcode_page', $zone . ':' . $new_file);
     }
 
     $zone_default_page = get_zone_default_page($zone);
@@ -602,7 +597,7 @@ function save_comcode_page($zone, $new_file, $lang, $text, $validated, $parent_p
         true
     );
 
-    return $fullpath;
+    return $full_path;
 }
 
 /**
@@ -611,6 +606,7 @@ function save_comcode_page($zone, $new_file, $lang, $text, $validated, $parent_p
  * @param  ID_TEXT $zone The zone
  * @param  ID_TEXT $page The page
  * @param  ?ID_TEXT $type The page type (null: Comcode page in Composr's fallback language) [NB: page is deleted in all languages regardless of which is given]
+ * @set modules modules_custom minimodules minimodules_custom comcode comcode_custom html html_custom
  * @param  boolean $use_afm Whether to use the AFM
  */
 function delete_cms_page($zone, $page, $type = null, $use_afm = false)
@@ -634,25 +630,27 @@ function delete_cms_page($zone, $page, $type = null, $use_afm = false)
     if ((substr($type, 0, 7) == 'comcode') || (substr($type, 0, 4) == 'html')) {
         $type_shortened = preg_replace('#/.+#', '', $type);
 
-        if ((substr($type, 0, 7) == 'comcode') && (get_option('store_revisions') == '1')) {
-            $time = time();
-            $fullpath = zone_black_magic_filterer(((strpos($type, 'comcode/') !== false) ? get_file_base() : get_custom_file_base()) . '/' . filter_naughty($zone) . (($zone != '') ? '/' : '') . 'pages/' . filter_naughty($type) . '/' . $_page);
-            $bs_path = zone_black_magic_filterer(str_replace('/comcode/', '/comcode_custom/', $fullpath) . '.' . strval($time));
-            @copy($fullpath, $bs_path) or intelligent_write_error($fullpath);
-            sync_file($bs_path);
-            fix_permissions($bs_path);
+        if (substr($type, 0, 7) == 'comcode') {
+            if (addon_installed('actionlog')) {
+                require_code('revisions_engine_files');
+                $revision_engine = new RevisionEngineFiles();
+                list(, , $existing_path) = find_comcode_page(user_lang(), $page, $zone);
+                if ($existing_path != '') {
+                    $revision_engine->add_revision(dirname($existing_path), $page, 'txt', cms_file_get_contents_safe($existing_path), filemtime($existing_path));
+                }
+            }
         }
 
         $langs = find_all_langs(true);
         foreach (array_keys($langs) as $lang) {
-            $_path = zone_black_magic_filterer(filter_naughty($zone) . (($zone != '') ? '/' : '') . 'pages/' . filter_naughty($type_shortened) . '/' . $lang . '/' . $_page, true);
+            $_path = zone_black_magic_filterer(filter_naughty($zone) . (($zone == '') ? '' : '/') . 'pages/' . filter_naughty($type_shortened) . '/' . $lang . '/' . $_page, true);
             $path = ((strpos($type, 'comcode/') !== false) ? get_file_base() : get_custom_file_base()) . '/' . $_path;
             if (file_exists($path)) {
                 if ($use_afm) {
                     afm_delete_file($_path);
                 } else {
                     unlink(get_custom_file_base() . '/' . $_path);
-                    sync_file($_path);
+                    sync_file(get_custom_file_base() . '/' . $_path);
                 }
             }
         }
@@ -670,19 +668,19 @@ function delete_cms_page($zone, $page, $type = null, $use_afm = false)
             seo_meta_erase_storage('comcode_page', $zone . ':' . $page);
         }
     } else {
-        $_path = zone_black_magic_filterer(filter_naughty($zone) . (($zone != '') ? '/' : '') . 'pages/' . filter_naughty($type) . '/' . $_page, true);
+        $_path = zone_black_magic_filterer(filter_naughty($zone) . (($zone == '') ? '' : '/') . 'pages/' . filter_naughty($type) . '/' . $_page, true);
         $path = ((strpos($type, '_custom') === false) ? get_file_base() : get_custom_file_base()) . '/' . $_path;
         if (file_exists($path)) {
             if ($use_afm) {
                 afm_delete_file($_path);
             } else {
                 unlink(get_custom_file_base() . '/' . $_path);
-                sync_file($_path);
+                sync_file(get_custom_file_base() . '/' . $_path);
             }
         }
     }
 
-    $GLOBALS['SITE_DB']->query_delete('https_pages', array('https_page_name' => $page), '', 1);
+    $GLOBALS['SITE_DB']->query_delete('https_pages', array('https_page_name' => $zone . ':' . $page), '', 1);
 
     if (addon_installed('catalogues')) {
         update_catalogue_content_ref('comcode_page', $page, '');

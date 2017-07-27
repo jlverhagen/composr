@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -23,6 +23,10 @@
  */
 function rules_script()
 {
+    if (!addon_installed('cns_forum')) {
+        warn_exit(do_lang_tempcode('INTERNAL_ERROR'));
+    }
+
     $id = get_param_integer('id', null);
 
     if (is_null($id)) {

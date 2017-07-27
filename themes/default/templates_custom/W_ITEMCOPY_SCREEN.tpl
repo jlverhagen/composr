@@ -9,7 +9,9 @@
 	{$PARAGRAPH,{TEXT}}
 {+END}
 
-<form method="post" enctype="multipart/form-data" action="{$PAGE_LINK*,_SELF:_SELF:uploading=1}">
+<form method="post" enctype="multipart/form-data" action="{$PAGE_LINK*,_SELF:_SELF:uploading=1}" autocomplete="off">
+	{$INSERT_SPAMMER_BLACKHOLE}
+
 	 <div class="wide_table_wrap"><table class="map_table autosized_table results_table wide_table"><tbody>
 		  {+START,IF_PASSED,ITEMS}
 			  <tr>
@@ -72,11 +74,11 @@
 		 <input type="hidden" name="item" value="{ITEM*}" />
 	 {+END}
 	 {+START,IF_PASSED,MEMBER}
-		 <input type="hidden" name="user" value="{MEMBER*}" />
+		 <input type="hidden" name="member" value="{MEMBER*}" />
 	 {+END}
 
 	 <p class="proceed_button">
-		 <input class="buttons__proceed button_screen" type="submit" value="{!PROCEED}" />
+		 <input class="button_screen buttons__proceed" type="submit" value="{!PROCEED}" />
 	 </p>
 </form>
 

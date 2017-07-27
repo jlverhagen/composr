@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -10,7 +10,7 @@
 /**
  * @license    http://opensource.org/licenses/cpal_1.0 Common Public Attribution License
  * @copyright  ocProducts Ltd
- * @package    classifieds
+ * @package    classified_ads
  */
 
 /**
@@ -51,6 +51,10 @@ class Hook_ecommerce_classifieds
      */
     public function get_products()
     {
+        if (!$GLOBALS['SITE_DB']->table_exists('classifieds_prices')) {
+            return array();
+        }
+
         require_lang('classifieds');
 
         $num_products_for_sale = $GLOBALS['SITE_DB']->query_select_value('catalogue_entries e JOIN ' . get_table_prefix() . 'classifieds_prices c ON c.c_catalogue_name=e.c_name', 'COUNT(*)');
@@ -63,7 +67,14 @@ class Hook_ecommerce_classifieds
         $products = array();
         foreach ($prices as $price) {
             if ($price['c_price'] != 0.0) {
-                $products['CLASSIFIEDS_ADVERT_' . strval($price['id'])] = array(PRODUCT_PURCHASE_WIZARD, float_to_raw_string($price['c_price']), 'handle_classifieds_advert', array(), do_lang('CLASSIFIED_ADVERT_BUY', get_translated_text($price['c_label'])));
+                $products['CLASSIFIEDS_ADVERT_' . strval($price['id'])] = array(
+                    PRODUCT_PURCHASE_WIZARD,
+                    float_to_raw_string($price['c_price']),
+                    'handle_classifieds_advert',
+                    array(),
+                    do_lang('CLASSIFIED_ADVERT_BUY', get_translated_text($price['c_label'])),
+                    get_option('currency'),
+                );
             }
         }
 

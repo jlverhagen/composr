@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -37,7 +37,7 @@ class Hook_page_groupings_unvalidated
         }
 
         return array(
-            array('audit', 'menu/adminzone/audit/unvalidated', array('admin_unvalidated', array(), get_module_zone('admin_unvalidated')), do_lang_tempcode('unvalidated:UNVALIDATED_RESOURCES'), 'DOC_UNVALIDATED'),
+            array('audit', 'menu/adminzone/audit/unvalidated', array('admin_unvalidated', array(), get_module_zone('admin_unvalidated')), do_lang_tempcode('unvalidated:UNVALIDATED_RESOURCES'), 'unvalidated:DOC_UNVALIDATED'),
         );
     }
 }

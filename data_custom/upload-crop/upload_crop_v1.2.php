@@ -1,4 +1,9 @@
 <?php
+
+/**
+ * @package    thumbnail_editor
+ */
+
 /*
 * http://www.webmotionuk.com/php-jquery-image-upload-and-crop/
 * Copyright (c) 2008 http://www.webmotionuk.com / http://www.webmotionuk.co.uk
@@ -19,6 +24,9 @@
 * THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *
 */
+
+// Fixup SCRIPT_FILENAME potentially being missing
+$_SERVER['SCRIPT_FILENAME'] = __FILE__;
 
 // Find Composr base directory, and chdir into it
 global $FILE_BASE, $RELATIVE_PATH;
@@ -109,6 +117,17 @@ function resizeImage($image, $width, $height, $scale)
             $source = imagecreatefrompng($image);
             break;
     }
+
+    $transparent = imagecolortransparent($image);
+    if ($transparent >= imagecolorstotal($image)) { // Workaround for corrupt images
+        $transparent = -1;
+    }
+    if ($transparent != -1) {
+        imagealphablending($newImage, false);
+        $_transparent = imagecolorsforindex($image, $transparent);
+        imagecolortransparent($newImage, imagecolorallocate($newImage, $_transparent['red'], $_transparent['green'], $_transparent['blue']));
+    }
+
     imagecopyresampled($newImage, $source, 0, 0, 0, 0, $newImageWidth, $newImageHeight, $width, $height);
 
     switch ($imageType) {
@@ -137,10 +156,21 @@ function resizeThumbnailImage($thumb_image_name, $image, $width, $height, $start
 {
     list($imagewidth, $imageheight, $imageType) = getimagesize($image);
     $imageType = image_type_to_mime_type($imageType);
-
     $newImageWidth = ceil($width * $scale);
     $newImageHeight = ceil($height * $scale);
+
     $newImage = imagecreatetruecolor($newImageWidth, $newImageHeight);
+
+    $transparent = imagecolortransparent($image);
+    if ($transparent >= imagecolorstotal($image)) { // Workaround for corrupt images
+        $transparent = -1;
+    }
+    if ($transparent != -1) {
+        imagealphablending($newImage, false);
+        $_transparent = imagecolorsforindex($image, $transparent);
+        imagecolortransparent($newImage, imagecolorallocate($newImage, $_transparent['red'], $_transparent['green'], $_transparent['blue']));
+    }
+
     switch ($imageType) {
         case "image/gif":
             $source = imagecreatefromgif($image);

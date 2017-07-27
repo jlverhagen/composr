@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -28,7 +28,7 @@ class Hook_commandr_fs_periodic_newsletters extends Resource_fs_base
     public $file_resource_type = 'periodic_newsletter';
 
     /**
-     * Standard commandr_fs function for seeing how many resources are. Useful for determining whether to do a full rebuild.
+     * Standard Commandr-fs function for seeing how many resources are. Useful for determining whether to do a full rebuild.
      *
      * @param  ID_TEXT $resource_type The resource type
      * @return integer How many resources there are
@@ -39,7 +39,7 @@ class Hook_commandr_fs_periodic_newsletters extends Resource_fs_base
     }
 
     /**
-     * Standard commandr_fs function for searching for a resource by label.
+     * Standard Commandr-fs function for searching for a resource by label.
      *
      * @param  ID_TEXT $resource_type The resource type
      * @param  LONG_TEXT $label The resource label
@@ -47,7 +47,7 @@ class Hook_commandr_fs_periodic_newsletters extends Resource_fs_base
      */
     public function find_resource_by_label($resource_type, $label)
     {
-        $_ret = $GLOBALS['SITE_DB']->query_select('newsletter_periodic', array('id'), array('np_subject' => $label));
+        $_ret = $GLOBALS['SITE_DB']->query_select('newsletter_periodic', array('id'), array('np_subject' => $label), 'ORDER BY id');
         $ret = array();
         foreach ($_ret as $r) {
             $ret[] = strval($r['id']);
@@ -56,31 +56,7 @@ class Hook_commandr_fs_periodic_newsletters extends Resource_fs_base
     }
 
     /**
-     * Standard commandr_fs introspection function.
-     *
-     * @return array The properties available for the resource type
-     */
-    protected function _enumerate_file_properties()
-    {
-        return array(
-            'message' => 'LONG_TEXT',
-            'lang' => 'LANGUAGE_NAME',
-            'send_details' => 'LONG_TEXT',
-            'html_only' => 'BINARY',
-            'from_email' => 'SHORT_TEXT',
-            'from_name' => 'SHORT_TEXT',
-            'priority' => 'SHORT_INTEGER',
-            'csv_data' => 'LONG_TEXT',
-            'frequency' => 'SHORT_TEXT',
-            'day' => 'SHORT_INTEGER',
-            'in_full' => 'BINARY',
-            'template' => 'ID_TEXT',
-            'last_sent' => 'TIME',
-        );
-    }
-
-    /**
-     * Standard commandr_fs add function for resource-fs hooks. Adds some resource with the given label and properties.
+     * Standard Commandr-fs add function for resource-fs hooks. Adds some resource with the given label and properties.
      *
      * @param  LONG_TEXT $filename Filename OR Resource label
      * @param  string $path The path (blank: root / not applicable)
@@ -89,7 +65,7 @@ class Hook_commandr_fs_periodic_newsletters extends Resource_fs_base
      */
     public function file_add($filename, $path, $properties)
     {
-        list($properties, $label) = $this->_file_magic_filter($filename, $path, $properties);
+        list($properties, $label) = $this->_file_magic_filter($filename, $path, $properties, $this->file_resource_type);
 
         $message = $this->_default_property_str($properties, 'message');
         $lang = $this->_default_property_str($properties, 'lang');
@@ -103,17 +79,19 @@ class Hook_commandr_fs_periodic_newsletters extends Resource_fs_base
         $day = $this->_default_property_int($properties, 'day');
         $in_full = $this->_default_property_int($properties, 'in_full');
         $template = $this->_default_property_str($properties, 'template');
-        $last_sent = $this->_default_property_int($properties, 'last_sent');
+        $last_sent = $this->_default_property_time($properties, 'last_sent');
 
         require_code('newsletter');
 
         $id = add_periodic_newsletter($label, $message, $lang, $send_details, $html_only, $from_email, $from_name, $priority, $csv_data, $frequency, $day, $in_full, $template, $last_sent);
 
+        $this->_resource_save_extend($this->file_resource_type, strval($id), $filename, $label, $properties);
+
         return strval($id);
     }
 
     /**
-     * Standard commandr_fs load function for resource-fs hooks. Finds the properties for some resource.
+     * Standard Commandr-fs load function for resource-fs hooks. Finds the properties for some resource.
      *
      * @param  SHORT_TEXT $filename Filename
      * @param  string $path The path (blank: root / not applicable). It may be a wildcarded path, as the path is used for content-type identification only. Filenames are globally unique across a hook; you can calculate the path using ->search.
@@ -129,7 +107,7 @@ class Hook_commandr_fs_periodic_newsletters extends Resource_fs_base
         }
         $row = $rows[0];
 
-        return array(
+        $properties = array(
             'label' => $row['np_subject'],
             'message' => $row['np_message'],
             'lang' => $row['np_lang'],
@@ -143,12 +121,14 @@ class Hook_commandr_fs_periodic_newsletters extends Resource_fs_base
             'day' => $row['np_day'],
             'in_full' => $row['np_in_full'],
             'template' => $row['np_template'],
-            'last_sent' => $row['np_last_sent'],
+            'last_sent' => remap_time_as_portable($row['np_last_sent']),
         );
+        $this->_resource_load_extend($resource_type, $resource_id, $properties, $filename, $path);
+        return $properties;
     }
 
     /**
-     * Standard commandr_fs edit function for resource-fs hooks. Edits the resource to the given properties.
+     * Standard Commandr-fs edit function for resource-fs hooks. Edits the resource to the given properties.
      *
      * @param  ID_TEXT $filename The filename
      * @param  string $path The path (blank: root / not applicable)
@@ -158,7 +138,7 @@ class Hook_commandr_fs_periodic_newsletters extends Resource_fs_base
     public function file_edit($filename, $path, $properties)
     {
         list($resource_type, $resource_id) = $this->file_convert_filename_to_id($filename);
-        list($properties,) = $this->_file_magic_filter($filename, $path, $properties);
+        list($properties,) = $this->_file_magic_filter($filename, $path, $properties, $this->file_resource_type);
 
         $label = $this->_default_property_str($properties, 'label');
         $message = $this->_default_property_str($properties, 'message');
@@ -173,17 +153,19 @@ class Hook_commandr_fs_periodic_newsletters extends Resource_fs_base
         $day = $this->_default_property_int($properties, 'day');
         $in_full = $this->_default_property_int($properties, 'in_full');
         $template = $this->_default_property_str($properties, 'template');
-        $last_sent = $this->_default_property_int($properties, 'last_sent');
+        $last_sent = $this->_default_property_time($properties, 'last_sent');
 
         require_code('newsletter');
 
         edit_periodic_newsletter(intval($resource_id), $label, $message, $lang, $send_details, $html_only, $from_email, $from_name, $priority, $csv_data, $frequency, $day, $in_full, $template, $last_sent);
 
+        $this->_resource_save_extend($this->file_resource_type, $resource_id, $filename, $label, $properties);
+
         return $resource_id;
     }
 
     /**
-     * Standard commandr_fs delete function for resource-fs hooks. Deletes the resource.
+     * Standard Commandr-fs delete function for resource-fs hooks. Deletes the resource.
      *
      * @param  ID_TEXT $filename The filename
      * @param  string $path The path (blank: root / not applicable)

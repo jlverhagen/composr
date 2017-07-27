@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -94,7 +94,7 @@ class Hook_pointstore_pop3
      */
     public function config()
     {
-        $rows = $GLOBALS['SITE_DB']->query('SELECT price,name FROM ' . get_table_prefix() . 'prices WHERE name LIKE \'' . db_encode_like('pop3_%') . '\'');
+        $rows = $GLOBALS['SITE_DB']->query('SELECT price,name FROM ' . get_table_prefix() . 'prices WHERE name LIKE \'' . db_encode_like('pop3\_%') . '\'');
         $out = array();
         foreach ($rows as $i => $row) {
             $fields = new Tempcode();

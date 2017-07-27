@@ -5,7 +5,7 @@ function accordion(e)
 	var i,nodes=get_elements_by_class_name(e.parentNode.parentNode,'toggleable_tray');
 	for (i=0;i<nodes.length;i++)
 	{
-		if ((nodes[i].parentNode!=e) && (nodes[i].style.display!='none') && (nodes[i].className.indexOf('accordion_trayitem')!=-1))
+		if ((nodes[i].parentNode!=e) && (nodes[i].style.display!='none') && (nodes[i].parentNode.className.indexOf('accordion_trayitem')!=-1))
 		{
 			toggleable_tray(nodes[i].parentNode,true);
 		}
@@ -50,7 +50,7 @@ function initialise_image_fader_html(data,v,k)
 	{
 		if (data.tease_scrolling_text)
 		{
-			set_inner_html(data.tease_scrolling_text,(data['html'+k]=='')?'{!MEDIA;}':data['html'+k]);
+			set_inner_html(data.tease_scrolling_text,(data['html'+k]=='')?'{!MEDIA;^}':data['html'+k]);
 		}
 	}
 }
@@ -288,7 +288,7 @@ function flip_page(to,pass_id,sections)
 		x=document.getElementById(pass_id+'_section_'+sections[i]);
 		var current_place=document.getElementById(pass_id+'_section_'+sections[current_pos]);
 		//var width=current_place?'100%':null;
-		var width=current_place?find_width(current_place,true,true,true):null;
+		var width=current_place?find_width(current_place,true):null;
 		if (x)
 		{
 			if (x.className=='comcode_big_tab')

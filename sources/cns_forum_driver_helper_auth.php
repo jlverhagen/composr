@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -19,7 +19,7 @@
  */
 
 /**
- * Find if the given member ID and password is valid. If username is NULL, then the member ID is used instead.
+ * Find if the given member ID and password is valid. If username is null, then the member ID is used instead.
  * All authorisation, cookies, and form-logins, are passed through this function.
  * Some forums do cookie logins differently, so a Boolean is passed in to indicate whether it is a cookie login.
  *
@@ -29,7 +29,8 @@
  * @param  SHORT_TEXT $password_hashed The md5-hashed password
  * @param  string $password_raw The raw password
  * @param  boolean $cookie_login Whether this is a cookie login, determines how the hashed password is treated for the value passed in
- * @return array A map of 'id' and 'error'. If 'id' is NULL, an error occurred and 'error' is set
+ * @return array A map of 'id' and 'error'. If 'id' is null, an error occurred and 'error' is set
+ *
  * @ignore
  */
 function _forum_authorise_login($this_ref, $username, $userid, $password_hashed, $password_raw, $cookie_login = false)
@@ -53,11 +54,17 @@ function _forum_authorise_login($this_ref, $username, $userid, $password_hashed,
     require_lang('cns');
     require_code('mail');
 
+    usleep(500000); // Wait for half a second, to reduce brute force potential
+
     $skip_auth = false;
 
     if ($userid === null) {
-        $rows = $this_ref->connection->query_select('f_members', array('*'), array('m_username' => $username), '', 1);
-        if ((!array_key_exists(0, $rows)) && (get_option('one_per_email_address') == '1')) {
+        if (get_option('one_per_email_address') == '2') {
+            $rows = array();
+        } else {
+            $rows = $this_ref->connection->query_select('f_members', array('*'), array('m_username' => $username), '', 1);
+        }
+        if ((!array_key_exists(0, $rows)) && (get_option('one_per_email_address') != '0')) {
             $rows = $this_ref->connection->query_select('f_members', array('*'), array('m_email_address' => $username), 'ORDER BY id ASC', 1);
         }
         if (array_key_exists(0, $rows)) {
@@ -74,13 +81,13 @@ function _forum_authorise_login($this_ref, $username, $userid, $password_hashed,
         // See if LDAP has it -- if so, we can add
         $test = cns_is_on_ldap($username);
         if (!$test) {
-            $out['error'] = is_null($username) ? do_lang_tempcode('MEMBER_NO_EXISTS') : do_lang_tempcode('_MEMBER_NO_EXIST', escape_html($username));
+            $out['error'] = is_null($username) ? do_lang_tempcode((get_option('login_error_secrecy') == '1') ? 'MEMBER_INVALID_LOGIN' : 'MEMBER_NO_EXISTS') : do_lang_tempcode('_MEMBER_NO_EXIST', escape_html($username));
             return $out;
         }
 
         $test_auth = cns_ldap_authorise_login($username, $password_raw);
         if ($test_auth['m_pass_hash_salted'] == '!!!') {
-            $out['error'] = do_lang_tempcode('MEMBER_BAD_PASSWORD');
+            $out['error'] = do_lang_tempcode((get_option('login_error_secrecy') == '1') ? 'MEMBER_INVALID_LOGIN' : 'MEMBER_BAD_PASSWORD');
             return $out;
         }
 
@@ -94,7 +101,7 @@ function _forum_authorise_login($this_ref, $username, $userid, $password_hashed,
                     throw new CMSException(do_lang('ENTER_PROFILE_DETAILS_FINISH'));
                 }
 
-                @ob_end_clean(); // Emergency output, potentially, so kill off any active buffer
+                cms_ob_end_clean(); // Emergency output, potentially, so kill off any active buffer
                 $middle = cns_member_external_linker_ask($username, 'ldap', cns_ldap_guess_email($username));
                 $tpl = globalise($middle, null, '', true);
                 $tpl->evaluate_echo();
@@ -121,7 +128,7 @@ function _forum_authorise_login($this_ref, $username, $userid, $password_hashed,
             }
         }
 
-        $out['error'] = is_null($username) ? do_lang_tempcode('MEMBER_NO_EXIST') : do_lang_tempcode('_MEMBER_NO_EXIST', escape_html($username));
+        $out['error'] = is_null($username) ? do_lang_tempcode((get_option('login_error_secrecy') == '1') ? 'MEMBER_INVALID_LOGIN' : 'MEMBER_NO_EXIST') : do_lang_tempcode((get_option('login_error_secrecy') == '1') ? 'MEMBER_INVALID_LOGIN' : '_MEMBER_NO_EXIST', escape_html($username));
         return $out;
     }
     $row = $rows[0];
@@ -133,7 +140,7 @@ function _forum_authorise_login($this_ref, $username, $userid, $password_hashed,
         // Doesn't exist any more? This is a special case - the 'LDAP member' exists in our DB, but not LDAP. It has been deleted from LDAP or LDAP server has jumped
         /*if (is_null($rows[0]['m_pass_hash_salted']))
         {
-            $out['error'] = do_lang_tempcode('_MEMBER_NO_EXIST', $username);
+            $out['error'] = do_lang_tempcode((get_option('login_error_secrecy') == '1') ? 'MEMBER_INVALID_LOGIN' : '_MEMBER_NO_EXIST', $username);
             return $out;
         } No longer appropriate with new authentication mode - instead we just have to give an invalid password message */
 
@@ -167,13 +174,13 @@ function _forum_authorise_login($this_ref, $username, $userid, $password_hashed,
                 if ($cookie_login) {
                     if ($password_hashed !== $row['m_pass_hash_salted']) {
                         require_code('tempcode'); // This can be incidental even in fast AJAX scripts, if an old invalid cookie is present, so we need Tempcode for do_lang_tempcode
-                        $out['error'] = do_lang_tempcode('MEMBER_BAD_PASSWORD');
+                        $out['error'] = do_lang_tempcode((get_option('login_error_secrecy') == '1') ? 'MEMBER_INVALID_LOGIN' : 'MEMBER_BAD_PASSWORD');
                         return $out;
                     }
                 } else {
                     require_code('crypt');
                     if (!ratchet_hash_verify($password_raw, $row['m_pass_salt'], $row['m_pass_hash_salted'])) {
-                        $out['error'] = do_lang_tempcode('MEMBER_BAD_PASSWORD');
+                        $out['error'] = do_lang_tempcode((get_option('login_error_secrecy') == '1') ? 'MEMBER_INVALID_LOGIN' : 'MEMBER_BAD_PASSWORD');
                         return $out;
                     }
                 }
@@ -181,14 +188,14 @@ function _forum_authorise_login($this_ref, $username, $userid, $password_hashed,
 
             case 'plain':
                 if ($password_hashed !== md5($row['m_pass_hash_salted'])) {
-                    $out['error'] = do_lang_tempcode('MEMBER_BAD_PASSWORD');
+                    $out['error'] = do_lang_tempcode((get_option('login_error_secrecy') == '1') ? 'MEMBER_INVALID_LOGIN' : 'MEMBER_BAD_PASSWORD');
                     return $out;
                 }
                 break;
 
             case 'md5': // Old style plain md5     (also works if both are unhashed: used for LDAP)
                 if (($password_hashed !== $row['m_pass_hash_salted']) && ($password_hashed !== '!!!')) { // The !!! bit would never be in a hash, but for plain text checks using this same code, we sometimes use '!!!' to mean 'Error'.
-                    $out['error'] = do_lang_tempcode('MEMBER_BAD_PASSWORD');
+                    $out['error'] = do_lang_tempcode((get_option('login_error_secrecy') == '1') ? 'MEMBER_INVALID_LOGIN' : 'MEMBER_BAD_PASSWORD');
                     return $out;
                 }
                 break;
@@ -201,7 +208,7 @@ function _forum_authorise_login($this_ref, $username, $userid, $password_hashed,
 
             case 'ldap':
                 if ($password_hashed !== $row['m_pass_hash_salted']) {
-                    $out['error'] = do_lang_tempcode('MEMBER_BAD_PASSWORD');
+                    $out['error'] = do_lang_tempcode((get_option('login_error_secrecy') == '1') ? 'MEMBER_INVALID_LOGIN' : 'MEMBER_BAD_PASSWORD');
                     return $out;
                 }
                 break;
@@ -229,7 +236,7 @@ function _forum_authorise_login($this_ref, $username, $userid, $password_hashed,
 
     // Ok, authorised basically, but we need to see if this is a valid login IP
     if ((cns_get_best_group_property($this_ref->get_members_groups($row['id']), 'enquire_on_new_ips') == 1)) { // High security usergroup membership
-        global $SENT_OUT_VALIDATE_NOTICE;
+        global $SENT_OUT_VALIDATE_NOTICE, $IN_SELF_ROUTING_SCRIPT;
         $ip = get_ip_address(3);
         $test2 = $this_ref->connection->query_select_value_if_there('f_member_known_login_ips', 'i_val_code', array('i_member_id' => $row['id'], 'i_ip' => $ip));
         if (((is_null($test2)) || ($test2 != '')) && (!compare_ip_address($ip, $row['m_ip_address']))) {
@@ -240,7 +247,7 @@ function _forum_authorise_login($this_ref, $username, $userid, $password_hashed,
 
                 $code = !is_null($test2) ? $test2 : uniqid('', true);
                 $this_ref->connection->query_insert('f_member_known_login_ips', array('i_val_code' => $code, 'i_member_id' => $row['id'], 'i_ip' => $ip));
-                $url = find_script('approve_ip') . '?code=' . $code;
+                $url = find_script('approve_ip') . '?code=' . urlencode($code);
                 $url_simple = find_script('approve_ip');
                 require_code('comcode');
                 $mail = do_lang('IP_VERIFY_MAIL', comcode_escape($url), comcode_escape(get_ip_address()), array($url_simple, $code), get_lang($row['id']));
@@ -248,7 +255,7 @@ function _forum_authorise_login($this_ref, $username, $userid, $password_hashed,
                 if ($email_address == '') {
                     $email_address = get_option('staff_address');
                 }
-                if ((running_script('index')) || (running_script('iframe'))) {
+                if ($IN_SELF_ROUTING_SCRIPT) {
                     mail_wrap(do_lang('IP_VERIFY_MAIL_SUBJECT', null, null, null, get_lang($row['id'])), $mail, array($email_address), $row['m_username'], '', '', 1, null, false, null, false, false, false, 'MAIL', false, null, null, $row['m_join_time']);
                 }
 

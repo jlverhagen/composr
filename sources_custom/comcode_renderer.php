@@ -1,11 +1,17 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
 */
+
+/**
+ * @license    http://opensource.org/licenses/cpal_1.0 Common Public Attribution License
+ * @copyright  ocProducts Ltd
+ * @package    comcode_html_whitelist
+ */
 
 if (!function_exists('init__comcode_renderer')) {
     function init__comcode_renderer($in = null)
@@ -17,11 +23,11 @@ if (!function_exists('init__comcode_renderer')) {
         $before = '$urls = get_url(\'\', \'file\' . $_id, \'uploads/attachments\', 2, CMS_UPLOAD_ANYTHING, (!array_key_exists(\'thumb\', $attributes)) || ($attributes[\'thumb\']!=\'0\'), \'\', \'\', true, true, true, true);';
         $after = $before . "
             \$gallery = post_param_string('gallery' . \$_id, '');
-            if (\$gallery != '') {
+            if ((\$gallery != '') && (addon_installed('galleries'))) {
                 \$urls_gal = get_url('', 'file' . \$_id, 'uploads/galleries', 0, CMS_UPLOAD_ANYTHING, true, '', '', true, true, true, true);
                 require_code('galleries2');
 
-                \$description = post_param_string('caption' . \$_id, array_key_exists('description', \$attributes)?\$attributes['description']:'');
+                \$description = post_param_string('caption' . \$_id, array_key_exists('description', \$attributes) ? \$attributes['description'] : '');
 
                 if (is_video(\$urls_gal[0], has_privilege(\$source_member, 'comcode_dangerous'))) {
                     \$video_width = array_key_exists('width', \$attributes) ? intval(\$attributes['width']) : null;
@@ -67,7 +73,10 @@ function comcode_white_listed($tag, $marker, $comcode)
     $comcode_portion = substr($comcode_portion_at_and_after, 0, $end_pos);
 
     require_code('textfiles');
-    $whitelists = explode("\n", read_text_file('comcode_whitelist'));
+    static $whitelists = null;
+    if ($whitelists === null) {
+        $whitelists = explode("\n", read_text_file('comcode_whitelist'));
+    }
 
     if (in_array($comcode_portion, $whitelists)) {
         return true;

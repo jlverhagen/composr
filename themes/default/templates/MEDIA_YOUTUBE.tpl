@@ -1,13 +1,6 @@
 {$SET,player_id,player_{$RAND}}
 
-<div class="webstandards_checker_off">
-	<embed id="{$GET,player_id}" type="application/x-shockwave-flash" width="{WIDTH*}" height="{HEIGHT*}"
-		src="http://www.youtube.com/v/{REMOTE_ID*}?enablejsapi=1"
-		data="http://www.youtube.com/v/{REMOTE_ID*}?enablejsapi=1"
-		wmode="transparent"
-		allowscriptaccess="always" allowfullscreen="true"
-	></embed>
-</div>
+<div class="youtube_player"><div id="{$GET*,player_id}"></div></div>
 
 {+START,IF_NON_EMPTY,{DESCRIPTION}}
 	<figcaption class="associated_details">
@@ -15,22 +8,46 @@
 	</figcaption>
 {+END}
 
-{$,Tie into callback event to see when finished, for our slideshows}
-{$,API: http://code.google.com/apis/youtube/js_api_reference.html#Events}
 <script>// <![CDATA[
-	function youtubeStateChanged(newState)
+	var slideshow_mode=document.getElementById('next_slide');
+
+	{$,Tie into callback event to see when finished, for our slideshows}
+	{$,API: https://developers.google.com/youtube/iframe_api_reference}
+	var {$GET%,player_id};
+	var youtube_callback_{$GET%,player_id}=function()
 	{
-		if (newState==0) player_stopped();
+		{$GET%,player_id}=new YT.Player('{$GET%,player_id}', {
+			width: '{WIDTH;/}',
+			height: '{HEIGHT;/}',
+			videoId: '{REMOTE_ID;/}',
+			events: {
+				'onReady': function() {
+					if (slideshow_mode) {
+						{$GET%,player_id}.playVideo();
+					}
+				},
+				'onStateChange': function(newState) {
+					if (slideshow_mode) {
+						if (newState==0) player_stopped();
+					}
+				}
+			}
+		});
 	}
 
-	add_event_listener_abstract(window,'real_load',function() {
-		if (document.getElementById('next_slide'))
-		{
-			stop_slideshow_timer();
-			window.setTimeout(function() {
-				document.getElementById('{$GET;,player_id}').addEventListener('onStateChange','youtubeStateChanged');
-				document.getElementById('{$GET;,player_id}').playVideo();
-			}, 1000);
-		}
-	});
+	if (typeof window.done_youtube_player_init=='undefined')
+	{
+		var tag=document.createElement('script');
+		tag.src="https://www.youtube.com/iframe_api";
+		var first_script_tag=document.getElementsByTagName('script')[0];
+		first_script_tag.parentNode.insertBefore(tag,first_script_tag);
+		window.done_youtube_player_init=true;
+
+		window.onYouTubeIframeAPIReady=youtube_callback_{$GET%,player_id};
+	} else
+	{
+		add_event_listener_abstract(window,'real_load',function() {
+			youtube_callback_{$GET%,player_id}();
+		});
+	}
 //]]></script>

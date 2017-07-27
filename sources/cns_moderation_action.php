@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -33,6 +33,10 @@
  */
 function cns_make_multi_moderation($name, $post_text, $move_to, $pin_state, $sink_state, $open_state, $forum_multi_code = '*', $title_suffix = '')
 {
+    if (!addon_installed('cns_multi_moderations')) {
+        warn_exit(do_lang_tempcode('INTERNAL_ERROR'));
+    }
+
     require_code('global4');
     prevent_double_submit('ADD_MULTI_MODERATION', null, $name);
 
@@ -52,7 +56,7 @@ function cns_make_multi_moderation($name, $post_text, $move_to, $pin_state, $sin
 
     if ((addon_installed('commandr')) && (!running_script('install'))) {
         require_code('resource_fs');
-        generate_resourcefs_moniker('multi_moderation', strval($id), null, null, true);
+        generate_resource_fs_moniker('multi_moderation', strval($id), null, null, true);
     }
 
     return $id;

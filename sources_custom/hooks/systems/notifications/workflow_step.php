@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -27,7 +27,7 @@ class Hook_notification_workflow_step extends Hook_Notification
     public function list_handled_codes()
     {
         $list = array();
-        $list['workflow_step'] = array(do_lang('CONTENT_VALIDATION'), do_lang('workflows:NOTIFICATION_TYPE_workflow_step'));
+        $list['workflow_step'] = array(do_lang('workflows:CONTENT_VALIDATION'), do_lang('workflows:NOTIFICATION_TYPE_workflow_step'));
         return $list;
     }
 

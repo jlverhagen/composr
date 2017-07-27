@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -102,9 +102,9 @@ function currency_convert($amount, $from_currency, $to_currency = null, $string 
         $_new_amount = get_value_newer_than($cache_key, time() - 60 * 60 * 24 * 2, true);
         $new_amount = is_null($_new_amount) ? null : floatval($_new_amount);
         if (is_null($new_amount)) {
-            $GLOBALS['SITE_DB']->query('DELETE FROM ' . get_table_prefix() . 'values_elective WHERE the_name LIKE \'' . db_encode_like('currency_%') . '\' AND date_and_time<' . strval(time() - 60 * 60 * 24 * 2)); // Cleanup
+            $GLOBALS['SITE_DB']->query('DELETE FROM ' . get_table_prefix() . 'values_elective WHERE the_name LIKE \'' . db_encode_like('currency\_%') . '\' AND date_and_time<' . strval(time() - 60 * 60 * 24 * 2)); // Cleanup
 
-            $google_url = 'http://www.google.com/finance/converter?a=' . (is_float($amount) ? float_to_raw_string($amount) : strval($amount)) . '&from=' . $from_currency . '&to=' . strtoupper($to_currency);
+            $google_url = 'http://www.google.com/finance/converter?a=' . (is_float($amount) ? float_to_raw_string($amount) : strval($amount)) . '&from=' . urlencode($from_currency) . '&to=' . urlencode(strtoupper($to_currency));
             $result = http_download_file($google_url, null, false);
             if (is_string($result)) {
                 $matches = array();
@@ -131,8 +131,9 @@ function currency_convert($amount, $from_currency, $to_currency = null, $string 
     if ($string) {
         list($symbol, $has_primacy) = get_currency_symbol($to_currency);
         $ret = $symbol;
-        $ret .= escape_html(float_format($new_amount)) . '&nbsp;';
+        $ret .= escape_html(float_format($new_amount));
         if (!$has_primacy) {
+            $ret .= '&nbsp;';
             $ret .= escape_html($to_currency);
         }
         return $ret;

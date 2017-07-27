@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -20,6 +20,10 @@ class Hook_upon_query_insults
 {
     public function run_post($ob, $query, $max, $start, $fail_ok, $get_insert_id, $ret)
     {
+        if ($query[0] == 'S') {
+            return;
+        }
+
         if (!isset($GLOBALS['FORUM_DB'])) {
             return;
         }
@@ -30,7 +34,7 @@ class Hook_upon_query_insults
             return;
         }
 
-        //if (strpos($query,$GLOBALS['FORUM_DB']->get_table_prefix().'f_members')!==false && strpos($query,'BY RAND')==false) // to test without registration
+        //if (strpos($query, $GLOBALS['FORUM_DB']->get_table_prefix() . 'f_members') !== false && strpos($query, 'BY RAND') == false) // to test without registration
         if (strpos($query, 'INTO ' . $GLOBALS['FORUM_DB']->get_table_prefix() . 'f_posts') !== false) {
             require_code('permissions');
 
@@ -52,9 +56,12 @@ class Hook_upon_query_insults
 
             $first_post_data = $GLOBALS['FORUM_DB']->query_select('f_posts', array('*'), array('p_topic_id' => $topic_id), 'ORDER BY p_time,id', 1, null, true);
 
-            $first_post = $first_post_data[0]['p_post'];
+            $_first_post = $first_post_data[0]['p_post'];
+            if ($_first_post === 0 || $_first_post === '') { // Still being created
+                return;
+            }
 
-            $first_post = get_translated_text($first_post);
+            $first_post = get_translated_text($_first_post, $GLOBALS['FORUM_DB']);
 
             $_insult = explode('[b]', $first_post);
             $insult = (isset($_insult[1]) && strlen($_insult[1]) > 0) ? $_insult[1] : '';
@@ -92,7 +99,7 @@ class Hook_upon_query_insults
                             require_code('points2');
                             require_lang('insults');
 
-                            $rows = $GLOBALS['FORUM_DB']->query('SELECT g.id FROM ' . $GLOBALS['FORUM_DB']->get_table_prefix() . 'gifts g WHERE ' . $GLOBALS['FORUM_DB']->translate_field_ref('reason') . ' LIKE \'' . db_encode_like('%' . $insult . '%') . '\' AND g.gift_to=' . strval($poster_id), 1, null, true);
+                            $rows = $GLOBALS['FORUM_DB']->query('SELECT g.id FROM ' . $GLOBALS['FORUM_DB']->get_table_prefix() . 'gifts g WHERE ' . $GLOBALS['FORUM_DB']->translate_field_ref('reason') . ' LIKE \'' . db_encode_like('%' . $insult . '%') . '\' AND g.gift_to=' . strval($poster_id), 1, null, true, false, array('reason' => 'SHORT_TRANS'));
 
                             // If the member doesn't get reward yet, give him/her his award
                             if (!isset($rows[0]['id'])) {

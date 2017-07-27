@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -55,9 +55,9 @@ class Hook_rss_points
 
             $author = '';
             if ($row['anonymous'] == 0) {
-                $from = $GLOBALS['FORUM_DRIVER']->get_username($row['gift_from']);
-                if (is_null($from)) {
-                    $from = '';
+                $author = $GLOBALS['FORUM_DRIVER']->get_username($row['gift_from']);
+                if (is_null($author)) {
+                    $author = '';
                 }
             }
 

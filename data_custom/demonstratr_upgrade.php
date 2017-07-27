@@ -1,11 +1,17 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
 */
+
+/**
+ * @license    http://opensource.org/licenses/cpal_1.0 Common Public Attribution License
+ * @copyright  ocProducts Ltd
+ * @package    composr_homesite
+ */
 
 /*
 This is a special script for upgrading Demonstratr with minimal effort.
@@ -29,6 +35,9 @@ Plenty of room for improvement into the future here, e.g. we could move upgraded
 */
 
 /*EXTRA FUNCTIONS: escapeshellarg|shell_exec*/
+
+// Fixup SCRIPT_FILENAME potentially being missing
+$_SERVER['SCRIPT_FILENAME'] = __FILE__;
 
 // Find Composr base directory, and chdir into it
 global $FILE_BASE, $RELATIVE_PATH;
@@ -68,6 +77,10 @@ if (!is_file($FILE_BASE . '/sources/global.php')) {
     exit('<!DOCTYPE html>' . "\n" . '<html lang="EN"><head><title>Critical startup error</title></head><body><h1>Composr startup error</h1><p>The second most basic Composr startup file, sources/global.php, could not be located. This is almost always due to an incomplete upload of the Composr system, so please check all files are uploaded correctly.</p><p>Once all Composr files are in place, Composr must actually be installed by running the installer. You must be seeing this message either because your system has become corrupt since installation, or because you have uploaded some but not all files from our manual installer package: the quick installer is easier, so you might consider using that instead.</p><p>ocProducts maintains full documentation for all procedures and tools, especially those for installation. These may be found on the <a href="http://compo.sr">Composr website</a>. If you are unable to easily solve this problem, we may be contacted from our website and can help resolve it for you.</p><hr /><p style="font-size: 0.8em">Composr is a website engine created by ocProducts.</p></body></html>');
 }
 require($FILE_BASE . '/sources/global.php');
+
+if (get_base_url() != 'http://shareddemo.composr.info') {
+    warn_exit('Must be called for shared demo');
+}
 
 require_code('upgrade');
 require_lang('upgrade');
@@ -110,7 +123,7 @@ if (!file_exists($out_path . '.tmp')) {
     $result = shell_exec($cmd . ' > ' . $out_path . '.tmp');
     $sql_dump_output .= escape_html($result);
     if ((!is_file($out_path . '.tmp')) || (filesize($out_path . '.tmp') == 0)) {
-        //echo $cmd.' > '.$out_path.'.tmp'; // Temporarily reenable ONLY when debugging, for security reasons
+        //echo $cmd . ' > ' . $out_path . '.tmp'; // Temporarily reenable ONLY when debugging, for security reasons
         warn_exit(protect_from_escaping('Failed to create SQL dump (maybe try on command line)...<br /><br />' . $sql_dump_output));
     }
 }

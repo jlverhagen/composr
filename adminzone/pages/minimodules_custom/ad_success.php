@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -16,6 +16,7 @@
 /*
 Simple script to track advertising purchase successes.
 Requires super_logging enabled.
+Probably better to configure tracking codes in Google Analytics TBH.
 
 Assumes 'from' GET parameter used to track what campaign hits came from.
 
@@ -23,6 +24,9 @@ May be very slow to run.
 */
 
 i_solemnly_declare(I_UNDERSTAND_SQL_INJECTION | I_UNDERSTAND_XSS | I_UNDERSTAND_PATH_INJECTION);
+
+$title = get_screen_title('Simple referral tracker', false);
+$title->evaluate_echo();
 
 $success = array();
 $joining = array();
@@ -36,7 +40,7 @@ foreach ($advertiser_sessions as $session) {
     $members_done[$session['member_id']] = 1;
 
     $matches = array();
-    if (!preg_match('#<param>from=([\w\d]+)</param>#', $session['s_get'], $matches)) {
+    if (!preg_match('#<param>from=([' . URL_CONTENT_REGEXP . ']+)</param>#', $session['s_get'], $matches)) {
         continue;
     }
     $from = $matches[1];
@@ -52,7 +56,7 @@ foreach ($advertiser_sessions as $session) {
         echo '<strong>Tracking information for <em>' . $from . '</em> visitor</strong> (' . $session['ip'] . ')&hellip;<br />';
         $places = $GLOBALS['SITE_DB']->query('SELECT the_page,date_and_time,referer FROM ' . $GLOBALS['SITE_DB']->get_table_prefix() . 'stats WHERE member_id=' . strval($member_id) . ' AND date_and_time>=' . strval($session['date_and_time']) . ' ORDER BY date_and_time');
         foreach ($places as $place) {
-            echo '<p>' . escape_html($place['the_page']) . ' at ' . date('Y-m-d H:i:s', $place['date_and_time']) . ' (from ' . escape_html(substr($place['referer'], 0, 200)) . ')</p>';
+            echo '<p>' . escape_html($place['the_page']) . ' at ' . get_timezoned_date($place['date_and_time'], false, false, false, true) . ' (from ' . escape_html(substr($place['referer'], 0, 200)) . ')</p>';
         }
     }
 

@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -26,7 +26,7 @@ class Hook_task_import_member_csv
     /**
      * Run the task hook.
      *
-     * @param  string $default_password The default password to use
+     * @param  ?string $default_password The default password to use (null: skip members with no password)
      * @param  boolean $use_temporary_passwords Whether to assign temporary passwords
      * @param  PATH $path The path of the file to import
      * @return ?array A tuple of at least 2: Return mime-type, content (either Tempcode, or a string, or a filename and file-path pair to a temporary file), map of HTTP headers if transferring immediately, map of ini_set commands if transferring immediately (null: show standard success message)
@@ -35,8 +35,14 @@ class Hook_task_import_member_csv
     {
         require_lang('cns');
         require_code('cns_members_action');
+        require_code('fields');
+
+        require_code('hooks/systems/tasks/download_member_csv');
+        $download_ob = new Hook_task_download_member_csv();
 
         log_it('IMPORT_MEMBER_CSV');
+
+        $GLOBALS['NO_QUERY_LIMIT'] = true;
 
         $num_added = 0;
         $num_edited = 0;
@@ -46,10 +52,15 @@ class Hook_task_import_member_csv
 
         require_code('cns_members_action2');
         $headings = member_get_csv_headings();
-        $all_cpfs = $GLOBALS['FORUM_DB']->query_select('f_custom_fields', array('id', 'cf_default', 'cf_type', 'cf_name'), null, 'ORDER BY cf_order,' . $GLOBALS['FORUM_DB']->translate_field_ref('cf_name'));
+        $all_cpfs = $GLOBALS['FORUM_DB']->query_select('f_custom_fields', array('*'), null, 'ORDER BY cf_order,' . $GLOBALS['FORUM_DB']->translate_field_ref('cf_name'));
         foreach ($all_cpfs as $i => $c) { // CPFs take precedence over normal fields of the same name
             $c['_cf_name'] = get_translated_text($c['cf_name'], $GLOBALS['FORUM_DB']);
+
+            $ob = get_fields_hook($c['cf_type']);
+            list(, $_c['cf_default']) = $ob->get_field_value_row_bits($c, false, $c['cf_default']);
+
             $all_cpfs[$i] = $c;
+
             $headings[$c['_cf_name']] = null;
         }
         $_all_groups = $GLOBALS['FORUM_DRIVER']->get_usergroup_list(false, false, true);
@@ -134,10 +145,10 @@ class Hook_task_import_member_csv
                     }
 
                     // Tidy up forename
-                    $_forename = preg_replace('#[^\w]#', '', preg_replace('#[\s\.].*#', '', $forename));
+                    $_forename = preg_replace('#[^[' . URL_CONTENT_REGEXP . ']]#', '', preg_replace('#[\s\.].*#', '', $forename));
 
                     // Tidy up surname (last bit strips like 'OBE')
-                    $_surname = preg_replace('#[^\w]#', '', trim(preg_replace('#\s*[A-Z\d][A-Z\d]+#', '', $surname)));
+                    $_surname = preg_replace('#[^[' . URL_CONTENT_REGEXP . ']]#', '', trim(preg_replace('#\s*[A-Z\d][A-Z\d]+#', '', $surname)));
 
                     // Put it together
                     $line['Username'] = ucfirst($_forename) . ucfirst($_surname) . $year;
@@ -190,7 +201,7 @@ class Hook_task_import_member_csv
             if (!$new_member) {
                 $member_groups = $GLOBALS['FORUM_DB']->query_select('f_group_members', array('gm_member_id', 'gm_group_id'), array('gm_validated' => 1, 'gm_member_id' => $linked_id));
                 $member_cpfs = list_to_map('mf_member_id', $GLOBALS['FORUM_DB']->query_select('f_member_custom_fields', array('*'), array('mf_member_id' => $linked_id), '', 1));
-                $this_record = $this->_get_csv_member_record($member_cpfs, $GLOBALS['FORUM_DRIVER']->get_member_row($linked_id), $_all_groups, $headings, $all_cpfs, $member_groups); // Remember "+" in PHP won't overwrite existing keys
+                $this_record = $download_ob->_get_csv_member_record($member_cpfs + $GLOBALS['FORUM_DRIVER']->get_member_row($linked_id), $_all_groups, $headings, $all_cpfs, $member_groups, array()); // Remember "+" in PHP won't overwrite existing keys
                 if (!array_key_exists($email_address_key, $line)) {
                     unset($this_record['E-mail address']);
                 }
@@ -252,7 +263,7 @@ class Hook_task_import_member_csv
                     $join_time = mktime(0, 0, 0, intval($parts[1]), intval($parts[0]), intval($parts[2])); // dd-mm-yyyy
                 }
                 if ($join_time > time()) {
-                    $join_time = time(); // Fixes MySQL out of range error that could happen
+                    $join_time = time(); // Fixes database out of range error that could happen
                 }
             } else {
                 $join_time = null;
@@ -301,7 +312,8 @@ class Hook_task_import_member_csv
                 } else {
                     require_code('images');
                     $photo_thumb_url = 'uploads/cns_photos_thumbs/' . uniqid('', true) . '.png';
-                    convert_image($photo_url, $photo_thumb_url, -1, -1, intval(get_option('thumb_width')), false);
+                    $photo_thumb_path = get_custom_file_base() . '/' . $photo_thumb_url;
+                    convert_image($photo_url, $photo_thumb_path, -1, -1, intval(get_option('thumb_width')), false);
                 }
             } else {
                 $photo_thumb_url = '';
@@ -309,16 +321,13 @@ class Hook_task_import_member_csv
             $custom_fields = array();
             foreach ($all_cpfs as $cpf) {
                 $custom_fields[$cpf['id']] = array_key_exists($cpf['_cf_name'], $line) ? $line[$cpf['_cf_name']] : $cpf['cf_default'];
-                if ((!array_key_exists($cpf['_cf_name'], $line)) && ($cpf['cf_type'] == 'list')) {
-                    $parts = explode($custom_fields[$cpf['id']], '|');
-                    $custom_fields[$cpf['id']] = $parts[0];
-                }
+
                 if ($cpf['cf_type'] == 'integer') {
                     $custom_fields[$cpf['id']] = intval($custom_fields[$cpf['id']]);
                 } elseif ($cpf['cf_type'] == 'tick') {
                     $custom_fields[$cpf['id']] = ((strtoupper($custom_fields[$cpf['id']]) == 'YES' || strtoupper($custom_fields[$cpf['id']]) == 'Y' || strtoupper($custom_fields[$cpf['id']]) == 'ON' || $custom_fields[$cpf['id']] == '1') ? 1 : 0);
                 } elseif (($cpf['cf_type'] == 'short_text') || ($cpf['cf_type'] == 'short_trans')) {
-                    $custom_fields[$cpf['id']] = substr(str_replace("\n", ', ', str_replace(',' . "\n", "\n", $custom_fields[$cpf['id']])), 0, 255);
+                    $custom_fields[$cpf['id']] = cms_mb_substr(str_replace("\n", ', ', str_replace(',' . "\n", "\n", $custom_fields[$cpf['id']])), 0, 255);
                 } elseif (($cpf['cf_type'] == 'long_text') || ($cpf['cf_type'] == 'long_trans')) {
                     //$custom_fields[$cpf['id']]=$custom_fields[$cpf['id']];  Duh, no transform required
                 } elseif ($cpf['cf_type'] == 'float') {
@@ -361,6 +370,9 @@ class Hook_task_import_member_csv
             if ($new_member) {
                 if (is_null($password)) {
                     $password = $default_password;
+                    if (is_null($password)) {
+                        continue;
+                    }
                 }
                 if (is_null($salt)) {
                     $salt = '';

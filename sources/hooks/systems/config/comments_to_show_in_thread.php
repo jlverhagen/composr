@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -38,7 +38,7 @@ class Hook_config_comments_to_show_in_thread
             'explanation' => 'CONFIG_OPTION_comments_to_show_in_thread',
             'shared_hosting_restricted' => '0',
             'list_options' => '',
-            'order_in_category_group' => 7,
+            'order_in_category_group' => 5,
 
             'addon' => 'core_feedback_features',
         );

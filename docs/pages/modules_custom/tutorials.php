@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -69,6 +69,9 @@ class Module_tutorials
             't_add_date' => 'TIME',
             't_edit_date' => 'TIME',
         ));
+
+        $GLOBALS['SITE_DB']->create_index('tutorials_external', '#t_title', array('t_title'));
+        $GLOBALS['SITE_DB']->create_index('tutorials_external', '#t_summary', array('t_summary'));
 
         $GLOBALS['SITE_DB']->create_table('tutorials_external_tags', array(
             't_id' => '*AUTO_LINK',
@@ -155,7 +158,7 @@ class Module_tutorials
             ),
             array(
                 'title' => 'SU and the if_in_group tag',
-                'url' => 'https://www.youtube.com/watch?v=J6OGys3s6v8',
+                'url' => 'https://www.youtube.com/watch?v=VKlWTgKbQ0w',
                 'author' => 'Allen Ellis (ocProducts)',
                 'difficulty_level' => 'novice',
                 'summary' => 'How to switch users under your admin login, and how to customise page contents based on usergroup membership.',
@@ -172,6 +175,46 @@ class Module_tutorials
                 'icon' => 'tutorial_icons/video',
                 'media_type' => 'video',
                 'tags' => array('Content'),
+            ),
+            array(
+                'title' => 'Changing the login block in the header',
+                'url' => 'https://youtu.be/0uWdYq_YCeU',
+                'author' => 'Chris Graham (ocProducts)',
+                'difficulty_level' => 'regular',
+                'summary' => 'Themeing tutorial, putting the login block into the header. Note that this was for an older version so is quite outdated.',
+                'icon' => 'tutorial_icons/video',
+                'media_type' => 'video',
+                'tags' => array('Design & Themeing'),
+            ),
+            array(
+                'title' => 'A social site in under 40 minutes',
+                'url' => 'https://youtu.be/Bv6MwqHhxvg',
+                'author' => 'Chris Graham (ocProducts)',
+                'difficulty_level' => 'novice',
+                'summary' => 'This video was originally made for our old ocportal.com front page. Note that this was for an older version so is quite outdated.',
+                'icon' => 'tutorial_icons/video',
+                'media_type' => 'video',
+                'tags' => array('Configuration'),
+            ),
+            array(
+                'title' => 'Installing ocPortal, part 1',
+                'url' => 'https://youtu.be/bniWVljBbF4',
+                'author' => 'Dr Keith Maynard',
+                'difficulty_level' => 'novice',
+                'summary' => 'A tutorial on how to install. Covers downloading and uploading the installer. Note that this was for an older version so is quite outdated.',
+                'icon' => 'tutorial_icons/video',
+                'media_type' => 'video',
+                'tags' => array('Installation'),
+            ),
+            array(
+                'title' => 'Installing ocPortal, part 2',
+                'url' => 'https://youtu.be/bniWVljBbF4',
+                'author' => 'Dr Keith Maynard',
+                'difficulty_level' => 'novice',
+                'summary' => 'A tutorial on how to install. Covers running the installer. Note that this was for an older version so is quite outdated.',
+                'icon' => 'tutorial_icons/video',
+                'media_type' => 'video',
+                'tags' => array('Installation'),
             ),
 
             // Books
@@ -220,7 +263,7 @@ class Module_tutorials
                 'url' => 'http://www.amazon.co.uk/gp/product/B000QEOWF4/ref=as_li_tl?ie=UTF8&camp=1634&creative=6738&creativeASIN=B000QEOWF4&linkCode=as2&tag=ocportal-21&linkId=H47YY5C6UVK3OT2X',
                 'author' => 'John Grant',
                 'difficulty_level' => 'novice',
-                'summary' => 'The days of the image brands are over, and ‘new marketing\' has gone mainstream. The world\'s biggest companies are pursuing a post–advertising strategy, moving away from advertising and investing in leading edge alternatives.',
+                'summary' => 'The days of the image brands are over, and \'new marketing\' has gone mainstream. The world\'s biggest companies are pursuing a post-advertising strategy, moving away from advertising and investing in leading edge alternatives.',
                 'icon' => 'tutorial_icons/book',
                 'media_type' => 'book',
                 'tags' => array('Advice & Guidance'),
@@ -240,7 +283,7 @@ class Module_tutorials
                 'url' => 'http://www.amazon.co.uk/gp/product/B0045U9W4G/ref=as_li_tl?ie=UTF8&camp=1634&creative=6738&creativeASIN=B0045U9W4G&linkCode=as2&tag=ocportal-21&linkId=SM33YMGY2AUHREH2',
                 'author' => 'Dan M. Brown',
                 'difficulty_level' => 'expert',
-                'summary' => 'Successful web design teams depend on clear communication between developers and their clients—and among members of the development team. Wireframes, site maps, flow charts, and other design diagrams establish a common language so designers and project teams can capture ideas, track progress, and keep their stakeholders informed.',
+                'summary' => 'Successful web design teams depend on clear communication between developers and their clients -- and among members of the development team. Wireframes, site maps, flow charts, and other design diagrams establish a common language so designers and project teams can capture ideas, track progress, and keep their stakeholders informed.',
                 'icon' => 'tutorial_icons/book',
                 'media_type' => 'book',
                 'tags' => array('Design & Themeing'),
@@ -257,10 +300,10 @@ class Module_tutorials
             ),
             array(
                 'title' => 'CSS3: The Missing Manual',
-                'url' => 'http://www.amazon.co.uk/gp/product/1449325947/ref=as_li_tl?ie=UTF8&camp=1634&creative=6738&creativeASIN=1449325947&linkCode=as2&tag=ocportal-21&linkId=3BBUGWGWSOYDIJRH',
+                'url' => 'http://www.amazon.co.uk/gp/product/1491918055/ref=as_li_tl?ie=UTF8&camp=1634&creative=6738&creativeASIN=1491918055&linkCode=as2&tag=ocportal-21',
                 'author' => 'David Sawyer McFarland',
                 'difficulty_level' => 'regular',
-                'summary' => 'CSS3 lets you create professional-looking websites, but learning its finer points can be tricky—even for seasoned web developers. This Missing Manual shows you how to take your HTML and CSS skills to the next level, with valuable tips, tricks, and step-by-step instructions.',
+                'summary' => 'CSS3 lets you create professional-looking websites, but learning its finer points can be tricky -- even for seasoned web developers. This Missing Manual shows you how to take your HTML and CSS skills to the next level, with valuable tips, tricks, and step-by-step instructions.',
                 'icon' => 'tutorial_icons/book',
                 'media_type' => 'book',
                 'tags' => array('CSS', 'Design & Themeing', 'Web standards & Accessibility'),
@@ -300,7 +343,7 @@ class Module_tutorials
                 'url' => 'http://www.amazon.co.uk/gp/product/0470223391/ref=as_li_tl?ie=UTF8&camp=1634&creative=6738&creativeASIN=0470223391&linkCode=as2&tag=ocportal-21&linkId=SS2PC3POAQLNO6O7',
                 'author' => 'Jack Trout',
                 'difficulty_level' => 'novice',
-                'summary' => 'Differentiate or Die shows you how to differentiate your products, services, and business in order to dominate the competition. Veteran marketing guru Jack Trout uses real–world examples and his own unique insight to show you how to bind customers to your products for long–term success and loyalty.',
+                'summary' => 'Differentiate or Die shows you how to differentiate your products, services, and business in order to dominate the competition. Veteran marketing guru Jack Trout uses real-world examples and his own unique insight to show you how to bind customers to your products for long-term success and loyalty.',
                 'icon' => 'tutorial_icons/book',
                 'media_type' => 'book',
                 'tags' => array('Advice & Guidance'),
@@ -350,7 +393,7 @@ class Module_tutorials
                 'url' => 'http://www.amazon.co.uk/gp/product/1118008189/ref=as_li_tl?ie=UTF8&camp=1634&creative=6738&creativeASIN=1118008189&linkCode=as2&tag=ocportal-21&linkId=7LKAKZALMFMFERIM',
                 'author' => 'Jon Duckett',
                 'difficulty_level' => 'regular',
-                'summary' => 'A full–color introduction to the basics of HTML and CSS.',
+                'summary' => 'A full-color introduction to the basics of HTML and CSS.',
                 'icon' => 'tutorial_icons/book',
                 'media_type' => 'book',
                 'tags' => array('CSS', 'Design & Themeing', 'Web standards & Accessibility'),
@@ -360,7 +403,7 @@ class Module_tutorials
                 'url' => 'http://www.amazon.co.uk/gp/product/1449363261/ref=as_li_tl?ie=UTF8&camp=1634&creative=6738&creativeASIN=1449363261&linkCode=as2&tag=ocportal-21&linkId=VOOKS2AQ2C72NCJT',
                 'author' => 'Matthew MacDonald',
                 'difficulty_level' => 'regular',
-                'summary' => 'HTML5 is more than a markup language—it\'s a collection of several independent web standards. Fortunately, this expanded guide covers everything you need in one convenient place.',
+                'summary' => 'HTML5 is more than a markup language -- it\'s a collection of several independent web standards. Fortunately, this expanded guide covers everything you need in one convenient place.',
                 'icon' => 'tutorial_icons/book',
                 'media_type' => 'book',
                 'tags' => array('Design & Themeing', 'Web standards & Accessibility'),
@@ -420,7 +463,7 @@ class Module_tutorials
                 'url' => 'http://www.amazon.co.uk/gp/product/1449325572/ref=as_li_tl?ie=UTF8&camp=1634&creative=6738&creativeASIN=1449325572&linkCode=as2&tag=ocportal-21&linkId=NWIM4TFQSEDUYYUV',
                 'author' => 'Brett McLaughlin',
                 'difficulty_level' => 'expert',
-                'summary' => 'If you can build websites with CSS and JavaScript, this book takes you to the next level—creating dynamic, database-driven websites with PHP and MySQL.',
+                'summary' => 'If you can build websites with CSS and JavaScript, this book takes you to the next level -- creating dynamic, database-driven websites with PHP and MySQL.',
                 'icon' => 'tutorial_icons/book',
                 'media_type' => 'book',
                 'tags' => array('PHP', 'Development'),
@@ -508,8 +551,8 @@ class Module_tutorials
                 't_author' => $external_tutorial['author'],
                 't_submitter' => $GLOBALS['FORUM_DRIVER']->get_guest_id(),
                 't_views' => 0,
-                't_add_date' => time(),
-                't_edit_date' => time(),
+                't_add_date' => time() - 60 * 60 * 24 * 365,
+                't_edit_date' => time() - 60 * 60 * 24 * 365,
             ), true);
 
             foreach ($external_tutorial['tags'] as $tag) {
@@ -527,7 +570,7 @@ class Module_tutorials
      * @param  boolean $check_perms Whether to check permissions.
      * @param  ?MEMBER $member_id The member to check permissions as (null: current user).
      * @param  boolean $support_crosslinks Whether to allow cross links to other modules (identifiable via a full-page-link rather than a screen-name).
-     * @param  boolean $be_deferential Whether to avoid any entry-point (or even return NULL to disable the page in the Sitemap) if we know another module, or page_group, is going to link to that entry-point. Note that "!" and "browse" entry points are automatically merged with container page nodes (likely called by page-groupings) as appropriate.
+     * @param  boolean $be_deferential Whether to avoid any entry-point (or even return null to disable the page in the Sitemap) if we know another module, or page_group, is going to link to that entry-point. Note that "!" and "browse" entry points are automatically merged with container page nodes (likely called by page-groupings) as appropriate.
      * @return ?array A map of entry points (screen-name=>language-code/string or screen-name=>[language-code/string, icon-theme-image]) (null: disabled).
      */
     public function get_entry_points($check_perms = true, $member_id = null, $support_crosslinks = true, $be_deferential = false)
@@ -544,11 +587,13 @@ class Module_tutorials
      */
     public function run()
     {
+        i_solemnly_declare(I_UNDERSTAND_SQL_INJECTION | I_UNDERSTAND_XSS | I_UNDERSTAND_PATH_INJECTION);
+
         require_code('tutorials');
 
         $title = get_screen_title('Tutorials &ndash; Learning Composr', false);
 
-        $tag = get_param_string('type', 'Installation');
+        $tag = get_param_string('type', 'Installation', true); // $type, essentially
 
         $tags = list_tutorial_tags(true, ($tag == '' || $tag == 'browse') ? null : $tag);
 
@@ -556,6 +601,7 @@ class Module_tutorials
         $_tutorials = templatify_tutorial_list($tutorials);
 
         return do_template('TUTORIAL_INDEX_SCREEN', array(
+            '_GUID' => '4569ab28e8959d9556dbb6d73c0e834a',
             'TITLE' => $title,
             'TAGS' => $tags,
             'SELECTED_TAG' => $tag,

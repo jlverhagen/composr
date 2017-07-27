@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -46,6 +46,8 @@ class Hook_cron_manual_subscription_notification
         }
         $manual_subscription_expiry_notice = intval(get_option('manual_subscription_expiry_notice'));
 
+        require_lang('ecommerce');
+
         $max = 1000;
         $start = 0;
         do {
@@ -69,7 +71,7 @@ class Hook_cron_manual_subscription_notification
                             $member_name = $GLOBALS['FORUM_DRIVER']->get_username($member_id);
                             if (!is_null($member_name)) { // If not a deleted member
                                 $member_profile_url = $GLOBALS['CNS_DRIVER']->member_profile_url($member_id);
-                                $cancel_url = build_url(array('page' => 'admin_ecommerce', 'type' => 'cancel_subscription', 'subscription_id' => $subscription['subscription_id']), get_module_zone('admin_ecommerce'), null, false, false, true);
+                                $cancel_url = build_url(array('page' => 'admin_ecommerce_logs', 'type' => 'cancel_subscription', 'subscription_id' => $subscription['subscription_id']), get_module_zone('admin_ecommerce'), null, false, false, true);
 
                                 $item_name = $subscription['item_name'];
 

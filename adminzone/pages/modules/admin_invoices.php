@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -46,7 +46,7 @@ class Module_admin_invoices
      * @param  boolean $check_perms Whether to check permissions.
      * @param  ?MEMBER $member_id The member to check permissions as (null: current user).
      * @param  boolean $support_crosslinks Whether to allow cross links to other modules (identifiable via a full-page-link rather than a screen-name).
-     * @param  boolean $be_deferential Whether to avoid any entry-point (or even return NULL to disable the page in the Sitemap) if we know another module, or page_group, is going to link to that entry-point. Note that "!" and "browse" entry points are automatically merged with container page nodes (likely called by page-groupings) as appropriate.
+     * @param  boolean $be_deferential Whether to avoid any entry-point (or even return null to disable the page in the Sitemap) if we know another module, or page_group, is going to link to that entry-point. Note that "!" and "browse" entry points are automatically merged with container page nodes (likely called by page-groupings) as appropriate.
      * @return ?array A map of entry points (screen-name=>language-code/string or screen-name=>[language-code/string, icon-theme-image]) (null: disabled).
      */
     public function get_entry_points($check_perms = true, $member_id = null, $support_crosslinks = true, $be_deferential = false)
@@ -66,7 +66,7 @@ class Module_admin_invoices
     public $title;
 
     /**
-     * Module pre-run function. Allows us to know meta-data for <head> before we start streaming output.
+     * Module pre-run function. Allows us to know metadata for <head> before we start streaming output.
      *
      * @return ?Tempcode Tempcode indicating some kind of exceptional output (null: none).
      */
@@ -235,14 +235,14 @@ class Module_admin_invoices
             $products = $object->get_products(false, $type_code);
             $amount = $products[$type_code][1];
             if ($amount == '?') {
-                warn_exit(do_lang_tempcode('INVOICE_REQURIRED_AMOUNT'));
+                warn_exit(do_lang_tempcode('INVOICE_REQUIRED_AMOUNT'));
             }
         }
 
         $to = post_param_string('to');
         $member_id = $GLOBALS['FORUM_DRIVER']->get_member_from_username($to);
         if (is_null($member_id)) {
-            warn_exit(do_lang_tempcode('_MEMBER_NO_EXIST', $to));
+            warn_exit(do_lang_tempcode('_MEMBER_NO_EXIST', escape_html($to)));
         }
 
         $id = $GLOBALS['SITE_DB']->query_insert('invoices', array(
@@ -271,13 +271,13 @@ class Module_admin_invoices
     public function outstanding()
     {
         $invoices = array();
-        $rows = $GLOBALS['SITE_DB']->query_select('invoices', array('*'), array('i_state' => 'new'));
+        $rows = $GLOBALS['SITE_DB']->query_select('invoices', array('*'), array('i_state' => 'new'), 'ORDER BY i_time');
         foreach ($rows as $row) {
             $invoice_title = do_lang('CUSTOM_PRODUCT_' . $row['i_type_code']);
             $time = get_timezoned_date($row['i_time']);
             $username = $GLOBALS['FORUM_DRIVER']->get_username($row['i_member_id']);
             $profile_url = $GLOBALS['FORUM_DRIVER']->member_profile_url($row['i_member_id'], false, true);
-            $invoices[] = array('INVOICE_TITLE' => $invoice_title, 'PROFILE_URL' => $profile_url, 'USERNAME' => $username, 'ID' => strval($row['id']), 'STATE' => $row['i_state'], 'AMOUNT' => $row['i_amount'], 'TIME' => $time, 'NOTE' => $row['i_note'], 'TYPE_CODE' => $row['i_type_code']);
+            $invoices[] = array('INVOICE_TITLE' => $invoice_title, 'PROFILE_URL' => $profile_url, 'USERNAME' => $username, 'ID' => strval($row['id']), 'STATE' => $row['i_state'], 'AMOUNT' => float_format($row['i_amount']), 'TIME' => $time, 'NOTE' => $row['i_note'], 'TYPE_CODE' => $row['i_type_code']);
         }
         if (count($invoices) == 0) {
             inform_exit(do_lang_tempcode('NO_ENTRIES'));
@@ -294,13 +294,13 @@ class Module_admin_invoices
     public function undelivered()
     {
         $invoices = array();
-        $rows = $GLOBALS['SITE_DB']->query_select('invoices', array('*'), array('i_state' => 'paid'));
+        $rows = $GLOBALS['SITE_DB']->query_select('invoices', array('*'), array('i_state' => 'paid'), 'ORDER BY i_time');
         foreach ($rows as $row) {
             $invoice_title = do_lang('CUSTOM_PRODUCT_' . $row['i_type_code']);
             $time = get_timezoned_date($row['i_time']);
             $username = $GLOBALS['FORUM_DRIVER']->get_username($row['i_member_id']);
             $profile_url = $GLOBALS['FORUM_DRIVER']->member_profile_url($row['i_member_id'], false, true);
-            $invoices[] = array('INVOICE_TITLE' => $invoice_title, 'PROFILE_URL' => $profile_url, 'USERNAME' => $username, 'ID' => strval($row['id']), 'STATE' => $row['i_state'], 'AMOUNT' => $row['i_amount'], 'TIME' => $time, 'NOTE' => $row['i_note'], 'TYPE_CODE' => $row['i_type_code']);
+            $invoices[] = array('INVOICE_TITLE' => $invoice_title, 'PROFILE_URL' => $profile_url, 'USERNAME' => $username, 'ID' => strval($row['id']), 'STATE' => $row['i_state'], 'AMOUNT' => float_format($row['i_amount']), 'TIME' => $time, 'NOTE' => $row['i_note'], 'TYPE_CODE' => $row['i_type_code']);
         }
         if (count($invoices) == 0) {
             inform_exit(do_lang_tempcode('NO_ENTRIES'));

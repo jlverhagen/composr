@@ -1,11 +1,17 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
 */
+
+/**
+ * @license    http://opensource.org/licenses/cpal_1.0 Common Public Attribution License
+ * @copyright  ocProducts Ltd
+ * @package    user_simple_csv_sync
+ */
 
 function init__user_export()
 {
@@ -32,17 +38,17 @@ function init__user_export()
 
 function do_user_export($to_file = true)
 {
-    if (function_exists('set_time_limit')) {
+    if (php_function_allowed('set_time_limit')) {
         @set_time_limit(0);
     }
 
     if ($to_file) {
         $outdir = get_custom_file_base() . '/' . dirname(USER_EXPORT_PATH);
         @mkdir($outdir, 0777);
-        fix_permissions($outdir, 0777);
+        fix_permissions($outdir);
         $tmp_path = $outdir . '/_temp.csv';
         $outfile = fopen($tmp_path, GOOGLE_APPENGINE ? 'wb' : 'ab');
-        @flock($outfile, LOCK_EX);
+        flock($outfile, LOCK_EX);
         if (!GOOGLE_APPENGINE) {
             ftruncate($outfile, 0);
         }
@@ -92,13 +98,12 @@ function do_user_export($to_file = true)
         $start += $max;
     } while (count($rows) > 0);
 
-    @flock($outfile, LOCK_UN);
+    flock($outfile, LOCK_UN);
     fclose($outfile);
     if ($to_file) {
         @mkdir($outdir, 0777);
-        fix_permissions($outdir, 0777);
+        fix_permissions($outdir);
         rename($tmp_path, $outdir . '/' . basename(USER_EXPORT_PATH));
-        sync_file($tmp_path);
         sync_file($outdir . '/' . basename(USER_EXPORT_PATH));
     } else {
         flush();

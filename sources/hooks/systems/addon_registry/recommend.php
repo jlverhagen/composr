@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -26,9 +26,10 @@ class Hook_addon_registry_recommend
     /**
      * Get a list of file permissions to set
      *
+     * @param  boolean $runtime Whether to include wildcards represented runtime-created chmoddable files
      * @return array File permissions to set
      */
-    public function get_chmod_array()
+    public function get_chmod_array($runtime = false)
     {
         return array();
     }
@@ -100,14 +101,10 @@ class Hook_addon_registry_recommend
             'themes/default/images/icons/24x24/menu/site_meta/recommend.png',
             'themes/default/images/icons/48x48/menu/site_meta/recommend.png',
             'themes/default/images/icons/24x24/links/digg.png',
-            'themes/default/images/icons/24x24/links/facebook.png',
             'themes/default/images/icons/24x24/links/stumbleupon.png',
-            'themes/default/images/icons/24x24/links/twitter.png',
             'themes/default/images/icons/24x24/links/favorites.png',
             'themes/default/images/icons/48x48/links/digg.png',
-            'themes/default/images/icons/48x48/links/facebook.png',
             'themes/default/images/icons/48x48/links/stumbleupon.png',
-            'themes/default/images/icons/48x48/links/twitter.png',
             'themes/default/images/icons/48x48/links/favorites.png',
             'sources/hooks/systems/config/points_RECOMMEND_SITE.php',
             'sources/hooks/systems/realtime_rain/recommend.php',

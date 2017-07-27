@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -98,10 +98,10 @@ function put_in_standard_box($content, $title = '', $type = 'default', $width = 
  * @param  ?array $params Parameters sent to the language string (null: none)
  * @param  ?Tempcode $user_online_title Separate title to put into the 'currently viewing' data (null: use $title)
  * @param  ?array $awards Awards to say this has won (null: none)
- * @param  boolean $save_as_meta_data Whether to use this as meta-data for the screen
+ * @param  boolean $save_as_metadata Whether to use this as metadata for the screen
  * @return Tempcode The title Tempcode
  */
-function get_screen_title($title, $dereference_lang = true, $params = null, $user_online_title = null, $awards = null, $save_as_meta_data = true)
+function get_screen_title($title, $dereference_lang = true, $params = null, $user_online_title = null, $awards = null, $save_as_metadata = true)
 {
     global $TITLE_CALLED;
     $TITLE_CALLED = true;
@@ -126,36 +126,32 @@ function get_screen_title($title, $dereference_lang = true, $params = null, $use
     }
 
     if (function_exists('get_session_id')) {
-        if (!$GLOBALS['SITE_DB']->table_is_locked('sessions')) {
-            $change_map = array(
-                'last_activity' => time(),
-            );
-            if (get_value('no_member_tracking') === '1') {
-                $change_map += array(
-                    'the_title' => '',
-                    'the_zone' => '',
-                    'the_page' => '',
-                    'the_type' => '',
-                    'the_id' => '',
-                );
-            } else {
-                $change_map += array(
-                    'the_title' => is_null($user_online_title) ? substr($_title->evaluate(), 0, 255) : $user_online_title->evaluate(),
+        if (get_value('no_member_tracking') !== '1') {
+            if (!$GLOBALS['SITE_DB']->table_is_locked('sessions')) {
+                $change_map = array(
+                    'last_activity' => time(),
+                    'the_title' => is_null($user_online_title) ? cms_mb_substr($_title->evaluate(), 0, 255) : $user_online_title->evaluate(),
                     'the_zone' => get_zone_name(),
-                    'the_page' => substr(get_page_name(), 0, 80),
-                    'the_type' => substr(get_param_string('type', '', true), 0, 80),
-                    'the_id' => substr(get_param_string('id', '', true), 0, 80),
+                    'the_page' => cms_mb_substr(get_page_name(), 0, 80),
+                    'the_type' => cms_mb_substr(get_param_string('type', '', true), 0, 80),
+                    'the_id' => cms_mb_substr(get_param_string('id', '', true), 0, 80),
                 );
-            }
-            $session_id = get_session_id();
-            global $SESSION_CACHE;
-            if ((get_value('disable_user_online_counting') !== '1') || (get_option('session_prudence') == '0') || (!isset($SESSION_CACHE[$session_id])) || ($SESSION_CACHE[$session_id]['last_activity'] < time() - 60 * 60 * 5)) {
-                $GLOBALS['SITE_DB']->query_update('sessions', $change_map, array('the_session' => $session_id), '', 1, null, false, true);
+
+                $session_id = get_session_id();
+                global $SESSION_CACHE;
+                if ((get_value('disable_user_online_counting') !== '1') || (get_option('session_prudence') == '0') || (!isset($SESSION_CACHE[$session_id])) || ($SESSION_CACHE[$session_id]['last_activity'] < time() - 60 * 60 * 5)) {
+                    $GLOBALS['SITE_DB']->query_update('sessions', $change_map, array('the_session' => $session_id), '', 1, null, false, true);
+
+                    if (get_option('session_prudence') == '0' && isset($SESSION_CACHE[$session_id]/*if not logging out?*/)) {
+                        $SESSION_CACHE[$session_id] = $change_map + $SESSION_CACHE[$session_id];
+                        persistent_cache_set('SESSION_CACHE', $SESSION_CACHE);
+                    }
+                }
             }
         }
     }
 
-    if ($save_as_meta_data) {
+    if ($save_as_metadata) {
         global $DISPLAYED_TITLE;
         $DISPLAYED_TITLE = $_title;
     }
@@ -196,6 +192,32 @@ function hyperlink($url, $caption, $external, $escape, $title = '', $accesskey =
 }
 
 /**
+ * Get the Tempcode for a div. Similar to paragraph, but may contain more formatting (such as <br />'s)
+ *
+ * @param  Tempcode $tempcode The Tempcode to put into a div
+ * @param  string $guid GUID for call
+ * @param  ?string $class CSS classname (null: none)
+ * @return Tempcode The generated div with contents
+ */
+function div($tempcode, $guid = '', $class = null)
+{
+    return do_template('DIV', array('_GUID' => $guid, 'TEMPCODE' => $tempcode, 'CLASS' => $class));
+}
+
+/**
+ * Get the Tempcode for a span
+ *
+ * @param  Tempcode $tempcode The Tempcode to put into a span
+ * @param  string $guid GUID for call
+ * @param  ?string $class CSS classname (null: none)
+ * @return Tempcode The generated span with contents
+ */
+function span($tempcode, $guid = '', $class = null)
+{
+    return do_template('SPAN', array('_GUID' => $guid, 'TEMPCODE' => $tempcode, 'CLASS' => $class));
+}
+
+/**
  * Get the Tempcode for a paragraph. This function should only be used with escaped text strings that need to be put into a paragraph, not with sections of HTML. Remember, paragraphs are literally that, and should only be used with templates that don't assume that they are going to put the given parameters into paragraphs themselves.
  *
  * @param  mixed $text The text to put into the paragraph (string or Tempcode)
@@ -206,18 +228,6 @@ function hyperlink($url, $caption, $external, $escape, $title = '', $accesskey =
 function paragraph($text, $guid = '', $class = null)
 {
     return do_template('PARAGRAPH', array('_GUID' => $guid, 'TEXT' => $text, 'CLASS' => $class));
-}
-
-/**
- * Get the Tempcode for a div. Similar to paragraph, but may contain more formatting (such as <br />'s)
- *
- * @param  Tempcode $tempcode The Tempcode to put into a div
- * @param  string $guid GUID for call
- * @return Tempcode The generated div with contents
- */
-function div($tempcode, $guid = '')
-{
-    return do_template('DIV', array('_GUID' => '2b0459e48a6b6420b716e05f21a933ad', 'TEMPCODE' => $tempcode));
 }
 
 /**
@@ -305,8 +315,10 @@ function form_input_list_entry($value, $selected = false, $text = '', $red = fal
     }
 
     /* Causes a small performance hit and very unlikely to be needed
-    if (function_exists('filter_form_field_default')) // Don't include just for this (may not be used on a full input form), preserve memory
-        $selected=(filter_form_field_default($value,$selected?'1':'')=='1');*/
+    if (function_exists('filter_form_field_default')) { // Don't include just for this (may not be used on a full input form), preserve memory
+        $selected = (filter_form_field_default($value, $selected ? '1' : '') == '1');
+    }
+    */
 
     return do_template('FORM_SCREEN_INPUT_LIST_ENTRY', array('_GUID' => 'dd76a2685d0fba5f819ef160b0816d03', 'SELECTED' => $selected, 'DISABLED' => $disabled, 'CLASS' => $red ? 'criticalfield' : '', 'NAME' => is_integer($value) ? strval($value) : $value, 'TEXT' => $text));
 }

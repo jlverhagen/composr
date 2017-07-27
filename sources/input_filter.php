@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -11,6 +11,8 @@
    **** If you ignore this advice, then your website upgrades (e.g. for bug fixes) will likely kill your changes ****
 
 */
+
+/*EXTRA FUNCTIONS: xml_.**/
 
 /**
  * @license    http://opensource.org/licenses/cpal_1.0 Common Public Attribution License
@@ -41,43 +43,53 @@ function init__input_filter()
  */
 function check_input_field_string($name, &$val, $posted = false)
 {
-    if (preg_match('#^\w*$#', $val) != 0) {
+    if (preg_match('#^\w*$#', $val) !== 0) {
         return;
     }
 
     // Security for URL context (not only things that are specifically known URL parameters)
-    if ((preg_match('#^\s*((((j\s*a\s*v\s*a\s*)|(v\s*b\s*))?s\s*c\s*r\s*i\s*p\s*t)|(d\s*a\s*t\s*a\s*))\s*:#i', $val) != 0) && ($name != 'value')/*Don't want autosave triggering this*/) {
+    if ((preg_match('#^\s*((((j\s*a\s*v\s*a\s*)|(v\s*b\s*))?s\s*c\s*r\s*i\s*p\s*t)|(d\s*a\s*t\s*a\s*))\s*:#i', $val) !== 0) && ($name !== 'value')/*Don't want autosave triggering this*/) {
         log_hack_attack_and_exit('SCRIPT_URL_HACK_2', $val);
     }
 
     // Security check for known URL fields. Check for specific things, plus we know we can be pickier in general
-    $is_url = ($name == 'from') || ($name == 'preview_url') || ($name == 'redirect') || ($name == 'redirect_passon') || ($name == 'url');
+    $is_url = ($name === 'from') || ($name === 'preview_url') || ($name === 'redirect') || ($name === 'redirect_passon') || ($name === 'url');
     if ($is_url) {
-        if (preg_match('#\n|\000|<|(".*[=<>])|^\s*((((j\s*a\s*v\s*a\s*)|(v\s*b\s*))?s\s*c\s*r\s*i\s*p\s*t)|(d\s*a\s*t\s*a\s*))\s*:#mi', $val) != 0) {
-            if ($name == 'page') {
+        if (preg_match('#\n|\000|<|(".*[=<>])|^\s*((((j\s*a\s*v\s*a\s*)|(v\s*b\s*))?s\s*c\s*r\s*i\s*p\s*t)|(d\s*a\s*t\s*a\s*))\s*:#mi', $val) !== 0) {
+            if ($name === 'page') { // Stop loops
                 $_GET[$name] = '';
-            } // Stop loops
+            }
             log_hack_attack_and_exit('DODGY_GET_HACK', $name, $val);
         }
 
         // Don't allow external redirections
         if (!$posted && !running_script('external_url_proxy')) {
-            $_val = str_replace('https://', 'http://', $val);
-            if (looks_like_url($_val)) {
+            if (looks_like_url($val)) {
                 $bus = array(
-                    get_base_url(false),
-                    get_forum_base_url(),
-                    'http://ocportal.com/',
+                    get_base_url(false) . '/',
+                    get_base_url(true) . '/',
+                    get_forum_base_url() . '/',
+                    'http://compo.sr/',
+                    'https://compo.sr/',
                 );
+                $allowed_partners = get_allowed_partner_sites();
+                foreach ($allowed_partners as $allowed) {
+                    $bus[] = 'http://' . $allowed . '/';
+                    $bus[] = 'https://' . $allowed . '/';
+                }
                 $ok = false;
                 foreach ($bus as $bu) {
-                    if (substr($_val, 0, strlen($bu)) == $bu) {
+                    if (substr($val, 0, strlen($bu)) === $bu) {
                         $ok = true;
                         break;
                     }
                 }
                 if (!$ok) {
-                    $val = get_base_url(false);
+                    if (function_exists('build_url')) {
+                        $val = static_evaluate_tempcode(build_url(array('page' => ''), 'site'));
+                    } else {
+                        $val = get_base_url(false);
+                    }
                 }
             }
         }
@@ -91,9 +103,9 @@ function check_input_field_string($name, &$val, $posted = false)
         }
 
         // Additional checks for non-privileged users
-        if ((function_exists('has_privilege') || !$posted) && $name != 'page'/*Too early in boot if 'page'*/) {
-            if (!has_privilege(get_member(), 'unfiltered_input') || $GLOBALS['FORCE_INPUT_FILTER_FOR_ALL'] || !$posted/*get parameters really shouldn't be so crazy so as for the filter to do anything!*/) {
-                hard_filter_input_data__html($val);
+        if ((function_exists('has_privilege') || !$posted) && $name !== 'page'/*Too early in boot if 'page'*/) {
+            if ($GLOBALS['FORCE_INPUT_FILTER_FOR_ALL'] || !$posted/*get parameters really shouldn't be so crazy so as for the filter to do anything!*/ || !has_privilege(get_member(), 'unfiltered_input')) {
+                hard_filter_input_data__html($val, true);
                 hard_filter_input_data__filesystem($val);
             }
             @hard_filter_input_data__dynamic_firewall($name, $val); // @'d to stop any internal errors taking stuff down
@@ -112,26 +124,24 @@ function check_posted_field($name, $val)
     $evil = false;
 
     $referer = cms_srv('HTTP_REFERER');
-
-    $is_true_referer = (substr($referer, 0, 7) == 'http://') || (substr($referer, 0, 8) == 'https://');
-
-    if ($is_true_referer) {
-        require_code('users_active_actions');
-        cms_setcookie('has_referers', '1'); // So we know for later requests that "blank" means a malicious external request (from third-party HTTPS URL, or a local file being executed)
+    if ($referer == '') {
+        $referer = cms_srv('HTTP_ORIGIN');
     }
 
-    if ((strtolower(cms_srv('REQUEST_METHOD')) == 'post') && (!is_guest())) {
+    $is_true_referer = (substr($referer, 0, 7) === 'http://') || (substr($referer, 0, 8) === 'https://');
+
+    if ((cms_srv('REQUEST_METHOD') === 'POST') && (!is_guest())) {
         if ($is_true_referer) {
             $canonical_referer_domain = strip_url_to_representative_domain($referer);
             $canonical_baseurl_domain = strip_url_to_representative_domain(get_base_url());
             if ($canonical_referer_domain != $canonical_baseurl_domain) {
-                if (!in_array($name, array('login_username', 'password', 'remember', 'login_invisible'))) {
+                if ((has_interesting_post_fields()) && (!in_array($name, array('login_username', 'password', 'remember', 'login_invisible')))) {
                     $allowed_partners = get_allowed_partner_sites();
                     $found = false;
                     foreach ($allowed_partners as $partner) {
                         $partner = trim($partner);
 
-                        if (($partner != '') && ($canonical_referer_domain == $partner)) {
+                        if (($partner != '') && ($canonical_referer_domain === $partner)) {
                             $found = true;
                             break;
                         }
@@ -141,8 +151,6 @@ function check_posted_field($name, $val)
                     }
                 }
             }
-        } elseif (cms_admirecookie('has_referers') === '1') {
-            $evil = true;
         }
     }
 
@@ -170,16 +178,41 @@ function strip_url_to_representative_domain($url)
  */
 function get_allowed_partner_sites()
 {
-    $allowed_partners = (trim(get_option('allowed_post_submitters')) == '') ? array() : explode("\n", trim(get_option('allowed_post_submitters')));
-    foreach ($GLOBALS['SITE_INFO'] as $key => $_val) {
-        if (substr($key, 0, strlen('ZONE_MAPPING_')) == 'ZONE_MAPPING_') {
+    global $SITE_INFO;
+
+    if (function_exists('get_option')) {
+        $allowed_partners = (trim(get_option('allowed_post_submitters')) === '') ? array() : explode("\n", trim(get_option('allowed_post_submitters')));
+        foreach ($allowed_partners as $allowed_partner) {
+            if (substr($allowed_partner, 0, 4) != 'www.') {
+                $allowed_partners[] = 'www.' . $allowed_partner;
+            }
+        }
+    } else {
+        $allowed_partners = array();
+    }
+
+    $zl = strlen('ZONE_MAPPING_');
+    foreach ($SITE_INFO as $key => $_val) {
+        if ($key !== '' && $key[0] === 'Z' && substr($key, 0, $zl) === 'ZONE_MAPPING_') {
             $allowed_partners[] = $_val[0];
         }
     }
-    $allowed_partners[] = parse_url(get_base_url(), PHP_URL_HOST);
-    if (get_custom_base_url() != get_base_url()) {
-        $allowed_partners[] = parse_url(get_custom_base_url(), PHP_URL_HOST);
+
+    if (isset($SITE_INFO['base_url'])) {
+        $base_url = $SITE_INFO['base_url'];
+        $allowed_partners[] = parse_url($base_url, PHP_URL_HOST);
+    } else {
+        $host = cms_srv('HTTP_HOST');
+        if ($host != '') {
+            $allowed_partners[] = $host;
+        }
     }
+
+    if (isset($SITE_INFO['custom_base_url'])) {
+        $base_url = $SITE_INFO['custom_base_url'];
+        $allowed_partners[] = parse_url($base_url, PHP_URL_HOST);
+    }
+
     return $allowed_partners;
 }
 
@@ -236,10 +269,13 @@ function hard_filter_input_data__dynamic_firewall($name, &$val)
  * Only called for non-privileged users, filters/alters rather than blocks, due to false-positive likelihood.
  *
  * @param  string $val The data
+ * @param  boolean $lite Do a lite-check if we're not sure this is even actually HTML
  */
-function hard_filter_input_data__html(&$val)
+function hard_filter_input_data__html(&$val, $lite = false)
 {
     require_code('comcode');
+
+    init_potential_js_naughty_array();
 
     global $POTENTIAL_JS_NAUGHTY_ARRAY;
 
@@ -282,7 +318,7 @@ function hard_filter_input_data__html(&$val)
     } while ($old_val != $val);
 
     // Tag vectors
-    $bad_tags = 'noscript|script|link|style|meta|iframe|frame|object|embed|applet|html|xml|body|head|form|base|layer|v:vmlframe';
+    $bad_tags = 'noscript|script|link|style|meta|iframe|frame|object|embed|applet|html|xml|body|head|form|base|layer|v:vmlframe|svg';
     $val = preg_replace('#\<(' . $bad_tags . ')#i', '<span', $val); // Intentionally does not strip so as to avoid attacks like <<scriptscript --> <script
     $val = preg_replace('#\</(' . $bad_tags . ')#i', '</span', $val);
 
@@ -304,6 +340,10 @@ function hard_filter_input_data__html(&$val)
         $val = preg_replace('#([<"\'].*\s)o([nN])(.*=)#s', '${1}&#111;${2}${3}', $val);
         $val = preg_replace('#([<"\'].*\s)O([nN])(.*=)#s', '${1}&#79;${2}${3}', $val);
     } while ($before != $val);
+
+    if ($lite) {
+        return;
+    }
 
     // Check tag balancing (we don't want to allow partial tags to compound together against separately checked chunks)
     $len = strlen($val);
@@ -569,7 +609,7 @@ class Field_restriction_loader
         xml_set_character_data_handler($xml_parser, 'startText');
 
         // Run the parser
-        $data = file_get_contents(is_file(get_custom_file_base() . '/data_custom/xml_config/fields.xml') ? (get_custom_file_base() . '/data_custom/xml_config/fields.xml') : (get_file_base() . '/data/xml_config/fields.xml'));
+        $data = cms_file_get_contents_safe(is_file(get_custom_file_base() . '/data_custom/xml_config/fields.xml') ? (get_custom_file_base() . '/data_custom/xml_config/fields.xml') : (get_file_base() . '/data/xml_config/fields.xml'));
         if (trim($data) == '') {
             return;
         }

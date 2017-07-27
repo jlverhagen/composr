@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -26,7 +26,7 @@ class Hook_checklist_newsletter
     /**
      * Find items to include on the staff checklist.
      *
-     * @return array An array of tuples: The task row to show, the number of seconds until it is due (or NULL if not on a timer), the number of things to sort out (or NULL if not on a queue), The name of the config option that controls the schedule (or NULL if no option).
+     * @return array An array of tuples: The task row to show, the number of seconds until it is due (or null if not on a timer), the number of things to sort out (or null if not on a queue), The name of the config option that controls the schedule (or null if no option).
      */
     public function run()
     {
@@ -34,12 +34,10 @@ class Hook_checklist_newsletter
             return array();
         }
 
-        if (get_option('news_update_time', true) == '') {
+        if (get_option('newsletter_update_time', true) == '' || get_option('newsletter_update_time', true) == '0') {
             return array();
         }
-        $limit_hours = intval(get_option('news_update_time', true));
-
-        $limit_hours = intval($limit_hours / 3); // 3 news pieces (+ other stuff) per newsletter seems reasonable
+        $limit_hours = intval(get_option('newsletter_update_time', true));
 
         require_lang('newsletter');
 
@@ -56,11 +54,11 @@ class Hook_checklist_newsletter
         $_status = ($status == 0) ? do_template('BLOCK_MAIN_STAFF_CHECKLIST_ITEM_STATUS_0') : do_template('BLOCK_MAIN_STAFF_CHECKLIST_ITEM_STATUS_1');
 
         require_code('config2');
-        $config_url = config_option_url('news_update_time');
+        $config_url = config_option_url('newsletter_update_time');
 
         $url = build_url(array('page' => 'admin_newsletter', 'type' => 'whatsnew'), 'adminzone');
         list($info, $seconds_due_in) = staff_checklist_time_ago_and_due($seconds_ago, $limit_hours);
         $tpl = do_template('BLOCK_MAIN_STAFF_CHECKLIST_ITEM', array('_GUID' => 'fb9483bb05ad90b9f2b7eba0c53996f4', 'CONFIG_URL' => $config_url, 'URL' => $url, 'STATUS' => $_status, 'TASK' => do_lang_tempcode('NEWSLETTER_SEND'), 'INFO' => $info));
-        return array(array($tpl, $seconds_due_in, null, 'news_update_time'));
+        return array(array($tpl, $seconds_due_in, null, 'newsletter_update_time'));
     }
 }

@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -21,9 +21,10 @@ class Hook_addon_registry_reported_content
     /**
      * Get a list of file permissions to set
      *
+     * @param  boolean $runtime Whether to include wildcards represented runtime-created chmoddable files
      * @return array File permissions to set
      */
-    public function get_chmod_array()
+    public function get_chmod_array($runtime = false)
     {
         return array();
     }
@@ -103,7 +104,7 @@ In the [tt]NEWS_ENTRY_SCREEN[/tt] template you\'ll find the action links are dri
 1_ICON=menu/_generic_admin/add_one
 2_URL={EDIT_URL*}
 2_ACCESSKEY=q
-2_TITLE={!_EDIT_LINK}
+2_TITLE={!EDIT_LINK}
 2_REL=edit
 2_ICON=menu/_generic_admin/edit_this
 3_URL={NEWSLETTER_URL*}
@@ -124,7 +125,7 @@ change to:
 1_ICON=menu/_generic_admin/add_one
 2_URL={EDIT_URL*}
 2_ACCESSKEY=q
-2_TITLE={!_EDIT_LINK}
+2_TITLE={!EDIT_LINK}
 2_REL=edit
 2_ICON=menu/_generic_admin/edit_this
 3_URL={NEWSLETTER_URL*}

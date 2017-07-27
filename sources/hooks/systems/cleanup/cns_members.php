@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -60,6 +60,8 @@ class Hook_cleanup_cns_members
         if (get_forum_type() != 'cns') {
             return new Tempcode();
         }
+
+        require_lang('cns');
 
         require_code('tasks');
         return call_user_func_array__long_task(do_lang('CACHE_MEMBERS'), null, 'cns_members_recache');

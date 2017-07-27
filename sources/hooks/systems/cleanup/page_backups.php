@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -65,6 +65,7 @@ class Hook_cleanup_page_backups
         } while (count($zones) != 0);
 
         // Themes: Templates (various kinds, including CSS files)
+        require_code('themes2');
         $themes = find_all_themes();
         foreach ($themes as $theme) {
             $path = get_custom_file_base() . '/themes/' . filter_naughty($theme) . '/templates_custom';
@@ -97,12 +98,13 @@ class Hook_cleanup_page_backups
         if ($dh !== false) {
             if (!file_exists($path . '/_old_backups')) {
                 mkdir($path . '/_old_backups', 0777);
-                fix_permissions($path . '/_old_backups', 0777);
+                fix_permissions($path . '/_old_backups');
             }
 
             while (($f = readdir($dh)) !== false) {
                 if (is_numeric(get_file_extension($f))) {
                     rename($path . '/' . $f, $path . '/_old_backups/' . $f);
+                    sync_file_move($path . '/' . $f, $path . '/_old_backups/' . $f);
                 }
             }
             closedir($dh);

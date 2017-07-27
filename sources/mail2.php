@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -56,7 +56,7 @@ function _imap_server_spec($server, $port, $type = null)
             $ssl = ($type == 'imaps');
         }
         $server_special_details = $ssl ? '/ssl/novalidate-cert' : '/novalidate-cert';
-        $server_spec = '{' . $server . ':' . strval($port) . '/imap/readonly' . $server_special_details . '}';
+        $server_spec = '{' . $server . ':' . strval($port) . '/imap' . $server_special_details . '}';
     }
     return $server_spec;
 }
@@ -79,7 +79,9 @@ function find_mail_folders($server, $port, $username, $password)
     $server_spec = _imap_server_spec($server, $port);
     $mbox = @imap_open($server_spec . 'INBOX', $username, $password);
     if ($mbox === false) {
-        warn_exit(do_lang_tempcode('IMAP_ERROR', imap_last_error()));
+        $error = imap_last_error();
+        imap_errors(); // Works-around weird PHP bug where "Retrying PLAIN authentication after [AUTHENTICATIONFAILED] Authentication failed. (errflg=1) in Unknown on line 0" may get spit out into any stream (even the backup log)
+        warn_exit(do_lang_tempcode('IMAP_ERROR', $error));
     }
     $_folders = imap_list($mbox, $server_spec, '*');
 
@@ -258,7 +260,9 @@ function _find_mail_bounces($server, $port, $folder, $username, $password, $boun
     $server_spec = _imap_server_spec($server, $port);
     $mbox = @imap_open($server_spec . $folder, $username, $password);
     if ($mbox === false) {
-        warn_exit(do_lang_tempcode('IMAP_ERROR', imap_last_error()));
+        $error = imap_last_error();
+        imap_errors(); // Works-around weird PHP bug where "Retrying PLAIN authentication after [AUTHENTICATIONFAILED] Authentication failed. (errflg=1) in Unknown on line 0" may get spit out into any stream (even the backup log)
+        warn_exit(do_lang_tempcode('IMAP_ERROR', $error));
     }
 
     $out = array();

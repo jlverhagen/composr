@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -24,6 +24,7 @@
  * @param  string $codename The file name (without .txt)
  * @param  ?LANGUAGE_NAME $lang The language to load from (null: none) (blank: search)
  * @return string The path to the file
+ *
  * @ignore
  */
 function _find_text_file_path($codename, $lang)
@@ -75,20 +76,24 @@ function read_text_file($codename, $lang = null, $missing_blank = false)
 
     $tmp = @fopen($path, 'rb');
     if ($tmp === false) {
+        if ($lang !== fallback_lang()) {
+            return read_text_file($codename, fallback_lang(), $missing_blank);
+        }
+
         if ($missing_blank) {
             return '';
         }
-        warn_exit(do_lang_tempcode('MISSING_TEXT_FILE', escape_html($codename)));
+        warn_exit(do_lang_tempcode('MISSING_TEXT_FILE', escape_html($codename), escape_html('text/' . (is_null($lang) ? '' : ($lang . '/')) . $codename . '.txt')));
     }
-    @flock($tmp, LOCK_SH);
+    flock($tmp, LOCK_SH);
     $in = @file_get_contents($path);
-    @flock($tmp, LOCK_UN);
+    flock($tmp, LOCK_UN);
     fclose($tmp);
     $in = unixify_line_format($in);
 
     if (strpos($path, '_custom/') === false) {
         global $LANG_FILTER_OB;
-        $in = $LANG_FILTER_OB->compile_time(null, $in);
+        $in = $LANG_FILTER_OB->compile_time(null, $in, $lang);
     }
 
     return $in;
@@ -109,37 +114,11 @@ function write_text_file($codename, $lang, $out)
     }
     $path = str_replace(get_file_base() . '/text/', get_custom_file_base() . '/text_custom/', $xpath);
 
-    if (!file_exists(dirname($path))) {
-        require_code('files2');
-        make_missing_directory(dirname($path));
-    }
+    require_code('files');
 
-    $myfile = @fopen($path, GOOGLE_APPENGINE ? 'wb' : 'at');
-    if ($myfile === false) {
-        intelligent_write_error($path);
-    }
-    @flock($myfile, LOCK_EX);
-    if (!GOOGLE_APPENGINE) {
-        ftruncate($myfile, 0);
-    }
-    if (fwrite($myfile, $out) < strlen($out)) {
-        warn_exit(do_lang_tempcode('COULD_NOT_SAVE_FILE'));
-    }
-    @flock($myfile, LOCK_UN);
-    fclose($myfile);
-    fix_permissions($path);
-    sync_file($path);
+    cms_file_put_contents_safe($path, $out, FILE_WRITE_FIX_PERMISSIONS | FILE_WRITE_SYNC_FILE);
 
     // Backup with a timestamp (useful if for example an addon update replaces changes)
     $path .= '.' . strval(time());
-    $myfile = @fopen($path, GOOGLE_APPENGINE ? 'wb' : 'at');
-    if ($myfile === false) {
-        intelligent_write_error($path);
-    }
-    if (fwrite($myfile, $out) < strlen($out)) {
-        warn_exit(do_lang_tempcode('COULD_NOT_SAVE_FILE'));
-    }
-    fclose($myfile);
-    fix_permissions($path);
-    sync_file($path);
+    cms_file_put_contents_safe($path, $out, FILE_WRITE_FIX_PERMISSIONS | FILE_WRITE_SYNC_FILE);
 }

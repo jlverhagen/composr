@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -47,7 +47,7 @@ function output_ical()
         return;
     }
 
-    if (function_exists('set_time_limit')) {
+    if (php_function_allowed('set_time_limit')) {
         @set_time_limit(0);
     }
 
@@ -152,6 +152,7 @@ function output_ical()
             $url = $_url->evaluate();
             echo "URL:" . ical_escape($url) . "\n";
 
+            require_code('feedback');
             $forum = find_overridden_comment_forum('calendar', strval($event['e_type']));
             if (is_null($forum)) {
                 $forum = get_option('comments_forum_name');
@@ -159,7 +160,7 @@ function output_ical()
             $start = 0;
             do {
                 $count = 0;
-                $_comments = $GLOBALS['FORUM_DRIVER']->get_forum_topic_posts($GLOBALS['FORUM_DRIVER']->find_topic_id_for_topic_identifier($forum, 'events_' . strval($event['id'])), $count, 1000, $start);
+                $_comments = $GLOBALS['FORUM_DRIVER']->get_forum_topic_posts($GLOBALS['FORUM_DRIVER']->find_topic_id_for_topic_identifier($forum, 'events_' . strval($event['id']), do_lang('COMMENT')), $count, 1000, $start);
                 if (is_array($_comments)) {
                     foreach ($_comments as $comment) {
                         if ($comment['title'] != '') {
@@ -327,7 +328,7 @@ function ical_import($file_name)
     $calendar_nodes = array();
 
     foreach ($events as $key => $items) {
-        $items = preg_replace('#(.+)\n +(.*)\n#', '${1}${2}' . "\n", $items); // Merge split lines
+        $items = preg_replace('#(.+)\n +(.*)\r?\n#', '${1}${2}' . "\n", $items); // Merge split lines
 
         $nodes = explode("\n", $items);
 
@@ -432,8 +433,8 @@ function get_event_data_ical($calendar_nodes)
     $rec_array = array('FREQ', 'BYDAY', 'INTERVAL', 'COUNT');
     $rec_by_day = array('MO', 'TU', 'WE', 'TH', 'FR', 'SA', 'SU');
 
-// if (array_key_exists('LOCATION',$calendar_nodes))
-//    $geo_position=$calendar_nodes['LOCATION'];      We don't support these in Composr, at least not yet
+    //if (array_key_exists('LOCATION', $calendar_nodes))
+    //    $geo_position = $calendar_nodes['LOCATION'];      We don't support these in Composr, at least not yet
 
     if ((array_key_exists('CLASS', $calendar_nodes)) && ($calendar_nodes['CLASS'] == 'PRIVATE')) {
         $is_public = 0;
@@ -537,11 +538,14 @@ function get_event_data_ical($calendar_nodes)
         $url = $calendar_nodes['URL'];
     }
 
+    $all_day = true;
+
     if (array_key_exists('DTSTART', $calendar_nodes)) {
-        $all_day = false;
         if (strlen($calendar_nodes['DTSTART']) == 8) {
             $calendar_nodes['DTSTART'] .= ' 00:00';
-            $all_day = true;
+        }
+        if (substr($calendar_nodes['DTSTART'], -6) != ' 00:00') {
+            $all_day = false;
         }
         $start = strtotime($calendar_nodes['DTSTART']);
         $start_year = intval(date('Y', $start));
@@ -565,7 +569,8 @@ function get_event_data_ical($calendar_nodes)
     if (array_key_exists('DTEND', $calendar_nodes)) {
         if (strlen($calendar_nodes['DTEND']) == 8) {
             $calendar_nodes['DTEND'] .= ' 00:00';
-        } else {
+        }
+        if (substr($calendar_nodes['DTEND'], -6) != ' 00:00') {
             $all_day = false;
         }
         $end = strtotime($calendar_nodes['DTEND']);

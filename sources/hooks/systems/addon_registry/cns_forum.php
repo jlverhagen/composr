@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -26,9 +26,10 @@ class Hook_addon_registry_cns_forum
     /**
      * Get a list of file permissions to set
      *
+     * @param  boolean $runtime Whether to include wildcards represented runtime-created chmoddable files
      * @return array File permissions to set
      */
-    public function get_chmod_array()
+    public function get_chmod_array($runtime = false)
     {
         return array();
     }
@@ -77,7 +78,7 @@ class Hook_addon_registry_cns_forum
     {
         return array(
             'requires' => array(
-                'polls'
+                'polls',
             ),
             'recommends' => array(),
             'conflicts_with' => array(),
@@ -126,8 +127,6 @@ class Hook_addon_registry_cns_forum
             'themes/default/images/icons/48x48/buttons/mark_unread.png',
             'themes/default/images/icons/24x24/buttons/forum.png',
             'themes/default/images/icons/48x48/buttons/forum.png',
-            'themes/default/images/icons/24x24/buttons/history.png',
-            'themes/default/images/icons/48x48/buttons/history.png',
             'themes/default/images/icons/24x24/buttons/linear.png',
             'themes/default/images/icons/48x48/buttons/linear.png',
             'themes/default/images/icons/24x24/buttons/threaded.png',
@@ -150,13 +149,10 @@ class Hook_addon_registry_cns_forum
             'sources/hooks/systems/notifications/cns_new_pt.php',
             'sources/hooks/systems/notifications/cns_topic.php',
             'sources/hooks/systems/content_meta_aware/forum.php',
-            'sources/hooks/systems/content_meta_aware/topic.php',
-            'sources/hooks/systems/content_meta_aware/post.php',
             'sources/hooks/systems/commandr_fs/forums.php',
             'sources/hooks/modules/admin_stats/cns_posting_rates.php',
             'sources/hooks/systems/sitemap/topic.php',
             'sources/hooks/systems/sitemap/forum.php',
-            'themes/default/templates/CNS_BIRTHDAY_LINK.tpl',
             'themes/default/templates/CNS_FORUM_INTRO_QUESTION_POPUP.tpl',
             'themes/default/templates/CNS_MEMBER_PT_RULES_SCREEN.tpl',
             'themes/default/templates/CNS_PT_BETWEEN.tpl',
@@ -187,8 +183,6 @@ class Hook_addon_registry_cns_forum
             'themes/default/templates/CNS_FORUM_TOPIC_WRAPPER.tpl',
             'themes/default/templates/CNS_GUEST_BAR.tpl',
             'themes/default/templates/CNS_GUEST_DETAILS.tpl',
-            'themes/default/templates/CNS_HISTORY_SCREEN.tpl',
-            'themes/default/templates/CNS_HISTORY_POST.tpl',
             'themes/default/templates/CNS_POST_BOX.tpl',
             'themes/default/templates/CNS_MEMBER_BAR.tpl',
             'themes/default/templates/MEMBER_BAR_SEARCH.tpl',
@@ -201,7 +195,6 @@ class Hook_addon_registry_cns_forum
             'themes/default/templates/CNS_POSTING_SCREEN_POSTS.tpl',
             'themes/default/text/CNS_QUOTE_FCOMCODE.txt',
             'themes/default/templates/BLOCK_MAIN_BOTTOM_BAR.tpl',
-            'themes/default/templates/CNS_FORUM_TOPIC_EMOTICON.tpl',
             'themes/default/templates/CNS_TOPIC_FIRST_UNREAD.tpl',
             'themes/default/templates/CNS_TOPIC_MARKER.tpl',
             'themes/default/templates/CNS_TOPIC_POLL.tpl',
@@ -211,8 +204,6 @@ class Hook_addon_registry_cns_forum
             'themes/default/templates/CNS_TOPIC_POLL_BUTTON.tpl',
             'themes/default/templates/CNS_TOPIC_POLL_VIEW_RESULTS.tpl',
             'themes/default/templates/CNS_TOPIC_POST.tpl',
-            'themes/default/templates/CNS_FORUM_TOPIC_ROW_LINK.tpl',
-            'themes/default/templates/CNS_FORUM_TOPIC_ROW_MODIFIER.tpl',
             'themes/default/templates/CNS_TOPIC_SCREEN.tpl',
             'themes/default/templates/CNS_WHISPER_CHOICE_SCREEN.tpl',
             'themes/default/templates/BLOCK_SIDE_CNS_PRIVATE_TOPICS.tpl',
@@ -252,7 +243,6 @@ class Hook_addon_registry_cns_forum
             'forum/pages/modules_custom/index.html',
             'adminzone/pages/modules/admin_cns_forum_groupings.php',
             'adminzone/pages/modules/admin_cns_forums.php',
-            'adminzone/pages/modules/admin_cns_history.php',
             'themes/default/images/cns_general/index.html',
             'themes/default/images/cns_general/new_posts.png',
             'themes/default/images/cns_general/new_posts_redirect.png',
@@ -315,6 +305,7 @@ class Hook_addon_registry_cns_forum
             'themes/default/templates/CNS_PRIVATE_TOPIC_LINK.tpl',
             'themes/default/templates/CNS_PT_FILTERS.tpl',
             'themes/default/templates/CNS_MEMBER_PROFILE_POSTS.tpl',
+            'sources/hooks/systems/cleanup/cns.php',
             'sources/hooks/systems/config/edit_time_limit.php',
             'sources/hooks/systems/config/delete_time_limit.php',
             'sources/hooks/systems/config/enable_add_topic_btn_in_topic.php',
@@ -335,16 +326,14 @@ class Hook_addon_registry_cns_forum
             'sources/hooks/systems/config/seq_post_ids.php',
             'sources/hooks/systems/config/threaded_buttons.php',
             'sources/hooks/systems/config/overt_whisper_suggestion.php',
-            'sources/hooks/systems/config/post_history_days.php',
+            'sources/hooks/systems/config/post_read_history_days.php',
             'sources/hooks/systems/config/is_on_topic_descriptions.php',
             'sources/hooks/systems/config/is_on_topic_emoticons.php',
             'sources/hooks/systems/config/is_on_post_titles.php',
             'sources/hooks/systems/config/is_on_anonymous_posts.php',
             'sources/hooks/systems/config/force_guest_names.php',
-            'sources/hooks/systems/config/forced_preview_option.php',
             'sources/hooks/systems/config/forum_posts_per_page.php',
             'sources/hooks/systems/config/forum_topics_per_page.php',
-            'sources/hooks/systems/config/default_preview_guests.php',
             'sources/hooks/systems/config/delete_trashed_pts.php',
             'sources/hooks/systems/tasks/cns_recache.php',
             'sources/hooks/systems/tasks/cns_topics_recache.php',
@@ -367,8 +356,6 @@ class Hook_addon_registry_cns_forum
             'templates/CNS_MEMBER_BOX.tpl' => 'cns_topic_not_voted_checkboxes_wrap',
             'templates/CNS_EDIT_FORUM_SCREEN_FORUM.tpl' => 'administrative__cns_edit_forum_screen',
             'templates/CNS_EDIT_FORUM_SCREEN.tpl' => 'administrative__cns_edit_forum_screen',
-            'templates/CNS_HISTORY_POST.tpl' => 'administrative__cns_history_screen',
-            'templates/CNS_HISTORY_SCREEN.tpl' => 'administrative__cns_history_screen',
             'templates/CNS_RANK_IMAGE.tpl' => 'cns_rank_image',
             'templates/CNS_POST_BOX.tpl' => 'cns_isolated_post',
             'templates/BLOCK_MAIN_CNS_INVOLVED_TOPICS.tpl' => 'block_main_cns_involved_topics',
@@ -376,9 +363,6 @@ class Hook_addon_registry_cns_forum
             'templates/BLOCK_MAIN_PT_NOTIFICATIONS.tpl' => 'block_pt_notifications',
             'templates/CNS_NOTIFICATION.tpl' => 'block_pt_notifications',
             'templates/CNS_FORUM_TOPIC_ROW_LAST_POST.tpl' => 'cns_forum',
-            'templates/CNS_FORUM_TOPIC_ROW_LINK.tpl' => 'cns_forum',
-            'templates/CNS_FORUM_TOPIC_ROW_MODIFIER.tpl' => 'cns_forum',
-            'templates/CNS_FORUM_TOPIC_EMOTICON.tpl' => 'cns_forum',
             'templates/CNS_PT_BETWEEN.tpl' => 'cns_forum',
             'templates/CNS_TOPIC_MARKER.tpl' => 'cns_forum',
             'templates/CNS_FORUM_TOPIC_ROW.tpl' => 'cns_forum',
@@ -394,8 +378,6 @@ class Hook_addon_registry_cns_forum
             'templates/CNS_MEMBER_BAR.tpl' => 'block_main_member_bar_member',
             'templates/MEMBER_BAR_SEARCH.tpl' => 'block_main_member_bar_search',
             'templates/CNS_GUEST_BAR.tpl' => 'block_main_member_bar_guest',
-            'templates/CNS_BIRTHDAYS.tpl' => 'block_main_bottom_bar',
-            'templates/CNS_BIRTHDAY_LINK.tpl' => 'block_main_bottom_bar',
             'templates/BLOCK_MAIN_MEMBER_BAR.tpl' => 'block_main_member_bar_member',
             'templates/BLOCK_MAIN_BOTTOM_BAR.tpl' => 'block_main_bottom_bar',
             'templates/CNS_FORUM_INTRO_QUESTION_SCREEN.tpl' => 'cns_forum_intro_question_screen',
@@ -483,6 +465,12 @@ class Hook_addon_registry_cns_forum
                 'WITH_POSTER_URL' => placeholder_url(),
                 'WITH_USERNAME' => lorem_word(),
                 'WITH_POSTER_ID' => placeholder_id(),
+                'BY_POSTER_URL' => placeholder_url(),
+                'BY_USERNAME' => lorem_word(),
+                'BY_POSTER_ID' => placeholder_id(),
+                'TO_POSTER_URL' => placeholder_url(),
+                'TO_USERNAME' => lorem_word(),
+                'TO_POSTER_ID' => placeholder_id(),
                 'POSTER_ID' => placeholder_id(),
                 'NUM_POSTS' => placeholder_number(),
                 'HAS_READ' => false,
@@ -529,42 +517,6 @@ class Hook_addon_registry_cns_forum
                 'REORDER_URL' => placeholder_url(),
                 'TITLE' => lorem_title(),
                 'ROOT_FORUM' => $root_forum,
-            )), null, '', true)
-        );
-    }
-
-    /**
-     * Get a preview(s) of a (group of) template(s), as a full standalone piece of HTML in Tempcode format.
-     * Uses sources/lorem.php functions to place appropriate stock-text. Should not hard-code things, as the code is intended to be declaritive.
-     * Assumptions: You can assume all Lang/CSS/JavaScript files in this addon have been pre-required.
-     *
-     * @return array Array of previews, each is Tempcode. Normally we have just one preview, but occasionally it is good to test templates are flexible (e.g. if they use IF_EMPTY, we can test with and without blank data).
-     */
-    public function tpl_preview__administrative__cns_history_screen()
-    {
-        require_css('cns');
-
-        require_lang('cns');
-
-        $content = do_lorem_template('CNS_HISTORY_POST', array(
-            'LABEL' => lorem_phrase(),
-            'LINK' => placeholder_url(),
-            'BUTTONS' => lorem_phrase(),
-            'ACTION' => lorem_phrase(),
-            'ACTION_DATE_AND_TIME' => placeholder_date(),
-            'ACTION_DATE_AND_TIME_RAW' => placeholder_date_raw(),
-            'CREATE_DATE_AND_TIME_RAW' => placeholder_date_raw(),
-            'CREATE_DATE_AND_TIME' => placeholder_date(),
-            'OWNER_MEMBER' => lorem_phrase(),
-            'ALTERER_MEMBER' => lorem_phrase(),
-            'BEFORE' => lorem_phrase(),
-        ));
-
-        return array(
-            lorem_globalise(do_lorem_template('CNS_HISTORY_SCREEN', array(
-                'PAGINATION' => placeholder_pagination(),
-                'TITLE' => lorem_title(),
-                'CONTENT' => $content,
             )), null, '', true)
         );
     }
@@ -679,12 +631,12 @@ class Hook_addon_registry_cns_forum
 
         return array(
             lorem_globalise(do_lorem_template('CNS_POST_BOX', array(
-                                                                  'GIVE_CONTEXT' => true,
-                                                                  'ID' => placeholder_id(),
-                                                                  'POST' => $post,
-                                                                  'URL' => placeholder_url(),
-                                                                  'BREADCRUMBS' => lorem_phrase(),
-                                                              ) + $map + array('ACTUAL_POST' => $post)), null, '', true)
+                'GIVE_CONTEXT' => true,
+                'ID' => placeholder_id(),
+                'POST' => $post,
+                'URL' => placeholder_url(),
+                'BREADCRUMBS' => lorem_phrase(),
+            ) + $map + array('ACTUAL_POST' => $post)), null, '', true)
         );
     }
 
@@ -736,10 +688,16 @@ class Hook_addon_registry_cns_forum
                 'DATE_RAW' => placeholder_date_raw(),
                 'LAST_POST_BY_POSTER_URL' => placeholder_url(),
                 'LAST_POST_BY_USERNAME' => lorem_word(),
-                'LAST_POST_BY_POSTER_ID' => placeholder_id(),
                 'WITH_POSTER_URL' => placeholder_url(),
                 'WITH_USERNAME' => lorem_word(),
                 'WITH_POSTER_ID' => placeholder_id(),
+                'BY_POSTER_URL' => placeholder_url(),
+                'BY_USERNAME' => lorem_word(),
+                'BY_POSTER_ID' => placeholder_id(),
+                'TO_POSTER_URL' => placeholder_url(),
+                'TO_USERNAME' => lorem_word(),
+                'TO_POSTER_ID' => placeholder_id(),
+                'POSTER_ID' => placeholder_id(),
                 'NUM_POSTS' => placeholder_number(),
                 'HAS_READ' => true,
             )));
@@ -979,18 +937,15 @@ class Hook_addon_registry_cns_forum
 
         require_lang('cns');
 
-        $birthdays = new Tempcode();
+        $birthdays = array();
         foreach (placeholder_array() as $k => $v) {
-            $birthdays->attach(do_lorem_template('CNS_BIRTHDAY_LINK', array(
+            $birthdays[] = array(
                 'AGE' => placeholder_number(),
                 'PROFILE_URL' => placeholder_url(),
                 'USERNAME' => lorem_word(),
                 'BIRTHDAY_URL' => placeholder_url(),
-            )));
+            );
         }
-        $birthdays = do_lorem_template('CNS_BIRTHDAYS', array(
-            'BIRTHDAYS' => $birthdays,
-        ));
 
         $foot = do_lorem_template('BLOCK_MAIN_BOTTOM_BAR', array(
             'NEWEST_MEMBER_PROFILE_URL' => placeholder_url(),
@@ -1068,20 +1023,18 @@ class Hook_addon_registry_cns_forum
                 'ID' => placeholder_id() . strval($k),
             ));
 
-            $topic_row_links = do_lorem_template('CNS_FORUM_TOPIC_ROW_LINK', array(
+            $topic_row_links = array();
+            $topic_row_links[] = array(
                 'URL' => placeholder_url(),
                 'IMG' => placeholder_img_code('icons/14x14/cns_topic_modifiers'),
                 'ALT' => lorem_phrase(),
-            ));
+            );
 
-            $topic_row_modifiers = do_lorem_template('CNS_FORUM_TOPIC_ROW_MODIFIER', array(
+            $topic_row_modifiers = array();
+            $topic_row_modifiers[] = array(
                 'IMG' => placeholder_img_code('icons/14x14/cns_topic_modifiers'),
                 'ALT' => lorem_phrase(),
-            ));
-
-            $emoticon = do_lorem_template('CNS_FORUM_TOPIC_EMOTICON', array(
-                'EMOTICON' => 'cns_emoticons/constipated',
-            ));
+            );
 
             $b = do_lorem_template('CNS_USER_MEMBER', array(
                 'FIRST' => true,
@@ -1118,7 +1071,7 @@ class Hook_addon_registry_cns_forum
                 'TOPIC_ROW_MODIFIERS' => $topic_row_modifiers,
                 '_TOPIC_ROW_MODIFIERS' => array(),
                 'POST' => lorem_phrase(),
-                'EMOTICON' => $emoticon,
+                'EMOTICON' => 'cns_emoticons/constipated',
                 'DESCRIPTION' => lorem_paragraph(),
                 'URL' => placeholder_url(),
                 'TITLE' => lorem_phrase(),
@@ -1367,7 +1320,6 @@ class Hook_addon_registry_cns_forum
     {
         require_css('cns');
 
-        //topics
         $topics = new Tempcode();
         if (addon_installed('cns_forum')) {
             foreach (placeholder_array() as $k => $v) {
@@ -1375,20 +1327,18 @@ class Hook_addon_registry_cns_forum
                     'ID' => placeholder_id() . strval($k),
                 ));
 
-                $topic_row_links = do_lorem_template('CNS_FORUM_TOPIC_ROW_LINK', array(
+                $topic_row_links = array();
+                $topic_row_links[] = array(
                     'URL' => placeholder_url(),
                     'IMG' => placeholder_img_code('icons/14x14/cns_topic_modifiers'),
                     'ALT' => lorem_phrase(),
-                ));
+                );
 
-                $topic_row_modifiers = do_lorem_template('CNS_FORUM_TOPIC_ROW_MODIFIER', array(
+                $topic_row_modifiers = array();
+                $topic_row_modifiers[] = array(
                     'IMG' => placeholder_img_code('icons/14x14/cns_topic_modifiers'),
                     'ALT' => lorem_phrase(),
-                ));
-
-                $emoticon = do_lorem_template('CNS_FORUM_TOPIC_EMOTICON', array(
-                    'EMOTICON' => 'cns_emoticons/depressed',
-                ));
+                );
 
                 $b = do_lorem_template('CNS_USER_MEMBER', array(
                     'FIRST' => true,
@@ -1424,7 +1374,7 @@ class Hook_addon_registry_cns_forum
                     'TOPIC_ROW_LINKS' => $topic_row_links,
                     'TOPIC_ROW_MODIFIERS' => $topic_row_modifiers,
                     'POST' => lorem_phrase(),
-                    'EMOTICON' => $emoticon,
+                    'EMOTICON' => 'cns_emoticons/depressed',
                     'DESCRIPTION' => lorem_paragraph(),
                     'URL' => placeholder_url(),
                     'TITLE' => lorem_phrase(),
@@ -1614,6 +1564,7 @@ class Hook_addon_registry_cns_forum
                 $answers->attach(do_lorem_template('CNS_TOPIC_POLL_ANSWER_RESULTS', array(
                     'ID' => placeholder_random_id(),
                     'NUM_VOTES' => '10',
+                    'TOTAL_VOTES' => '45',
                     'WIDTH' => '30',
                     'ANSWER' => lorem_phrase(),
                     'I' => '0',
@@ -1621,6 +1572,7 @@ class Hook_addon_registry_cns_forum
                 $answers->attach(do_lorem_template('CNS_TOPIC_POLL_ANSWER_RESULTS', array(
                     'ID' => placeholder_random_id(),
                     'NUM_VOTES' => '15',
+                    'TOTAL_VOTES' => '45',
                     'WIDTH' => '45',
                     'ANSWER' => lorem_phrase(),
                     'I' => '1',
@@ -1628,6 +1580,7 @@ class Hook_addon_registry_cns_forum
                 $answers->attach(do_lorem_template('CNS_TOPIC_POLL_ANSWER_RESULTS', array(
                     'ID' => placeholder_random_id(),
                     'NUM_VOTES' => '20',
+                    'TOTAL_VOTES' => '45',
                     'WIDTH' => '60',
                     'ANSWER' => lorem_phrase(),
                     'I' => '2',
@@ -1797,6 +1750,7 @@ class Hook_addon_registry_cns_forum
             'MAY_CHANGE_MAX' => lorem_word(),
             'LAST_POSTER' => placeholder_random_id(),
             'FORUM_ID' => placeholder_id(),
+            'TICKET_FORUM' => false,
         ));
 
         return array(

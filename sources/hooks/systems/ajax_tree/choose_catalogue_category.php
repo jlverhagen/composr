@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -45,6 +45,10 @@ class Hook_choose_catalogue_category
             $tree = array();
             $catalogues = $GLOBALS['SITE_DB']->query_select('catalogues', array('c_name'));
             foreach ($catalogues as $catalogue) {
+                if (substr($catalogue['c_name'], 0, 1) == '_') {
+                    continue;
+                }
+
                 $tree = array_merge($tree, get_catalogue_category_tree($catalogue['c_name'], is_null($id) ? null : intval($id), '', null, 1, $addable_filter, $compound_list));
             }
         } else {
@@ -118,6 +122,10 @@ class Hook_choose_catalogue_category
 
             $catalogues = $GLOBALS['SITE_DB']->query_select('catalogues', array('c_name'));
             foreach ($catalogues as $catalogue) {
+                if (substr($catalogue['c_name'], 0, 1) == '_') {
+                    continue;
+                }
+
                 $out .= static_evaluate_tempcode(create_selection_list_catalogue_category_tree($catalogue['c_name'], is_null($it) ? null : intval($it), $addable_filter, $compound_list));
             }
             return make_string_tempcode($out);

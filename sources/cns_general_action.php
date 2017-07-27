@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -43,7 +43,7 @@ function cns_make_post_template($title, $text, $forum_multi_code, $use_default_f
 
     if ((addon_installed('commandr')) && (!running_script('install'))) {
         require_code('resource_fs');
-        generate_resourcefs_moniker('post_template', strval($id), null, null, true);
+        generate_resource_fs_moniker('post_template', strval($id), null, null, true);
     }
 
     return $id;
@@ -61,9 +61,12 @@ function cns_make_post_template($title, $text, $forum_multi_code, $use_default_f
  */
 function cns_make_emoticon($code, $theme_img_code, $relevance_level = 1, $use_topics = 1, $is_special = 0)
 {
-    $test = $GLOBALS['FORUM_DB']->query_select_value_if_there('f_emoticons', 'e_code', array('e_code' => $code));
-    if (!is_null($test)) {
-        warn_exit(do_lang_tempcode('CONFLICTING_EMOTICON_CODE', escape_html($test)));
+    if (!running_script('install')) {
+        $test = $GLOBALS['FORUM_DB']->query_select_value_if_there('f_emoticons', 'e_code', array('e_code' => $code));
+        if (!is_null($test)) {
+            require_lang('cns');
+            warn_exit(do_lang_tempcode('CONFLICTING_EMOTICON_CODE', escape_html($test)));
+        }
     }
 
     $GLOBALS['FORUM_DB']->query_insert('f_emoticons', array(
@@ -76,7 +79,11 @@ function cns_make_emoticon($code, $theme_img_code, $relevance_level = 1, $use_to
 
     if ((addon_installed('commandr')) && (!running_script('install'))) {
         require_code('resource_fs');
-        generate_resourcefs_moniker('emoticon', $code, null, null, true);
+        generate_resource_fs_moniker('emoticon', $code, null, null, true);
+    }
+
+    if (function_exists('decache')) {
+        decache('_emoticon_chooser');
     }
 
     log_it('ADD_EMOTICON', $code, $theme_img_code);
@@ -113,7 +120,7 @@ function cns_make_welcome_email($name, $subject, $text, $send_time, $newsletter 
 
     if ((addon_installed('commandr')) && (!running_script('install'))) {
         require_code('resource_fs');
-        generate_resourcefs_moniker('welcome_email', strval($id), null, null, true);
+        generate_resource_fs_moniker('welcome_email', strval($id), null, null, true);
     }
 
     log_it('ADD_WELCOME_EMAIL', strval($id), $subject);

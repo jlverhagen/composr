@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -44,6 +44,7 @@ function lookup_member_page($member, &$name, &$id, &$ip)
     }
 
     require_code('type_sanitisation');
+    require_lang('submitban');
 
     if (is_numeric($member)) {
         // From member ID
@@ -125,6 +126,10 @@ function lookup_member_page($member, &$name, &$id, &$ip)
  */
 function get_stats_track($member, $ip, $start = 0, $max = 50, $sortable = 'date_and_time', $sort_order = 'DESC')
 {
+    if (!addon_installed('stats')) {
+        return new Tempcode();
+    }
+
     $sortables = array('date_and_time' => do_lang_tempcode('DATE'), 'the_page' => do_lang_tempcode('PAGE'));
     if (((strtoupper($sort_order) != 'ASC') && (strtoupper($sort_order) != 'DESC')) || (!array_key_exists($sortable, $sortables))) {
         log_hack_attack_and_exit('ORDERBY_HACK');
@@ -156,7 +161,11 @@ function get_stats_track($member, $ip, $start = 0, $max = 50, $sortable = 'date_
         if ((substr($page_converted, -4) == '.php') || (substr($page_converted, -4) == '.htm') || (substr($page_converted, -4) == '.txt')) {
             $page_converted = substr($page_converted, 0, strlen($page_converted) - 4);
         }
-        $page_converted = str_replace('/', ': ', $page_converted);
+        if (multi_lang_content()) {
+            $page_converted = str_replace('/', ': ', $page_converted);
+        } else {
+            $page_converted = str_replace('/', ':', preg_replace('#((.*)/)?pages/.*/[' . URL_CONTENT_REGEXP . ']+/(.*)#', '$2/$3', $page_converted));
+        }
 
         if (!is_null($myrow['s_get'])) {
             $get = $myrow['s_get'];
@@ -168,9 +177,9 @@ function get_stats_track($member, $ip, $start = 0, $max = 50, $sortable = 'date_
             if (substr($data, -3) == ', ' . "\n") {
                 $data = substr($data, 0, strlen($data) - 3);
             }
-            $parameters = symbol_truncator(array($data, 35, '1', '1'), 'left');
+            $parameters = symbol_truncator(array($data, 35, '1'), 'left');
         } else {
-            $parameters = '?';
+            $parameters = escape_html('?');
         }
 
         $out->attach(results_entry(array(escape_html($page_converted), escape_html($date), $parameters, escape_html($myrow['browser']), escape_html($myrow['operating_system'])), false));
@@ -186,6 +195,8 @@ function get_stats_track($member, $ip, $start = 0, $max = 50, $sortable = 'date_
  */
 function find_security_alerts($where)
 {
+    require_lang('security');
+
     // Alerts
     $start = get_param_integer('alert_start', 0);
     $max = get_param_integer('alert_max', 50);

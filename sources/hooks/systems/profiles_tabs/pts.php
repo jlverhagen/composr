@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -40,7 +40,7 @@ class Hook_profiles_tabs_pts
      *
      * @param  MEMBER $member_id_of The ID of the member who is being viewed
      * @param  MEMBER $member_id_viewing The ID of the member who is doing the viewing
-     * @param  boolean $leave_to_ajax_if_possible Whether to leave the tab contents NULL, if tis hook supports it, so that AJAX can load it later
+     * @param  boolean $leave_to_ajax_if_possible Whether to leave the tab contents null, if tis hook supports it, so that AJAX can load it later
      * @return array A tuple: The tab title, the tab contents, the suggested tab order, the icon
      */
     public function render_tab($member_id_of, $member_id_viewing, $leave_to_ajax_if_possible = false)
@@ -63,12 +63,12 @@ class Hook_profiles_tabs_pts
 
         $root = get_param_integer('keep_forum_root', db_get_first_id());
 
-        $max = get_param_integer('forum_max', intval(get_option('private_topics_per_page')));
-        $start = get_param_integer('forum_start', get_param_integer('kfs', 0));
+        require_code('templates_pagination');
+        list($max, $start, $sort, $sql_sup, $sql_sup_order_by, $true_start, , $keyset_field_stripped) = get_keyset_pagination_settings('forum_max', intval(get_option('private_topics_per_page')), 'forum_start', 'kfs', 'sort', 'last_post', 'get_forum_sort_order');
 
         $root = db_get_first_id();
 
-        list($content) = cns_render_forumview($id, null, $current_filter_cat, $max, $start, $root, $member_id_of, new Tempcode());
+        list($content) = cns_render_forumview($id, null, $current_filter_cat, $max, $start, $true_start, $sql_sup, $sql_sup_order_by, $keyset_field_stripped, $root, $member_id_of, new Tempcode());
 
         $content = do_template('CNS_MEMBER_PROFILE_PTS', array('_GUID' => '5d0cae3320634a1e4eb345154c853c35', 'CONTENT' => $content));
 

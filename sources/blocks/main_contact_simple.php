@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -79,7 +79,7 @@ class Block_main_contact_simple
             if ($email_from != '') {
                 require_code('type_sanitisation');
                 if (!is_email_address($email_from)) {
-                    warn_exit(do_lang_tempcode('INVALID_EMAIL_ADDRESS'));
+                    return paragraph(do_lang_tempcode('INVALID_EMAIL_ADDRESS'), '', 'red_alert');
                 }
             }
 
@@ -87,16 +87,15 @@ class Block_main_contact_simple
 
             mail_wrap($subject_prefix . $title . $subject_suffix, $body_prefix . $post . $body_suffix, array($to), null, $email_from, $GLOBALS['FORUM_DRIVER']->get_username(get_member()), 3, null, false, get_member());
 
-            if ($email_from != '') {
-                mail_wrap(do_lang('YOUR_MESSAGE_WAS_SENT_SUBJECT', post_param_string('title')), do_lang('YOUR_MESSAGE_WAS_SENT_BODY', $post), array($email_from), null, '', '', 3, null, false, get_member());
+            if ($email_from != '' && get_option('message_received_emails') == '1') {
+                mail_wrap(do_lang('YOUR_MESSAGE_WAS_SENT_SUBJECT', $title), do_lang('YOUR_MESSAGE_WAS_SENT_BODY', $post), array($email_from), null, '', '', 3, null, false, get_member());
             }
 
             attach_message(do_lang_tempcode('MESSAGE_SENT'), 'inform');
 
             $redirect = array_key_exists('redirect', $map) ? $map['redirect'] : '';
             if ($redirect != '') {
-                require_code('urls2');
-                $redirect = page_link_as_url($redirect);
+                $redirect = page_link_to_url($redirect);
                 require_code('site2');
                 assign_refresh($redirect, 0.0);
             }
@@ -144,6 +143,7 @@ class Block_main_contact_simple
             'EM' => $em,
             'DISPLAY' => 'block',
             'TITLE' => $box_title,
+            'SUBMIT_NAME' => do_lang_tempcode('SEND'),
             'COMMENT_URL' => $comment_url,
             'HIDDEN' => $hidden,
         ));

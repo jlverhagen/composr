@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -148,6 +148,8 @@ class Hook_pointstore_custom
             $map += insert_lang('c_mail_body', $mail_body, 2);
             $GLOBALS['SITE_DB']->query_insert('pstore_customs', $map);
         }
+
+        log_it('POINTSTORE_AMEND_CUSTOM_PRODUCTS');
     }
 
     /**
@@ -160,7 +162,14 @@ class Hook_pointstore_custom
         $class = str_replace('hook_pointstore_', '', strtolower(get_class($this)));
 
         $items = array();
+
         $rows = $GLOBALS['SITE_DB']->query_select('pstore_customs', array('*'), array('c_enabled' => 1));
+
+        foreach ($rows as $i => $row) {
+            $rows[$i]['_title'] = get_translated_text($row['c_title']);
+        }
+        sort_maps_by($rows, '_title');
+
         foreach ($rows as $row) {
             if ($row['c_one_per_member'] == 1) {
                 // Test to see if it's been bought
@@ -171,7 +180,8 @@ class Hook_pointstore_custom
             }
 
             $next_url = build_url(array('page' => '_SELF', 'type' => 'action', 'id' => $class, 'sub_id' => $row['id']), '_SELF');
-            $items[] = do_template('POINTSTORE_' . strtoupper($class), array('NEXT_URL' => $next_url, 'TITLE' => get_translated_text($row['c_title']), 'DESCRIPTION' => get_translated_tempcode('pstore_customs', $row, 'c_description')));
+            $just_row = db_map_restrict($row, array('id', 'c_description'));
+            $items[] = do_template('POINTSTORE_' . strtoupper($class), array('NEXT_URL' => $next_url, 'TITLE' =>$row['_title'], 'DESCRIPTION' => get_translated_tempcode('pstore_customs', $just_row, 'c_description')));
         }
         return $items;
     }
@@ -217,7 +227,7 @@ class Hook_pointstore_custom
 
         post_param_integer('confirm'); // Make sure POSTed
         $id = get_param_integer('sub_id');
-        $rows = $GLOBALS['SITE_DB']->query_select('pstore_customs', array('*'), array('id' => $id, 'c_enabled' => 1));
+        $rows = $GLOBALS['SITE_DB']->query_select('pstore_customs', array('*'), array('id' => $id, 'c_enabled' => 1), '', 1);
         if (!array_key_exists(0, $rows)) {
             warn_exit(do_lang_tempcode('MISSING_RESOURCE'));
         }

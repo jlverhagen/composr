@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -40,7 +40,7 @@ class Hook_profiles_tabs_warnings
      *
      * @param  MEMBER $member_id_of The ID of the member who is being viewed
      * @param  MEMBER $member_id_viewing The ID of the member who is doing the viewing
-     * @param  boolean $leave_to_ajax_if_possible Whether to leave the tab contents NULL, if tis hook supports it, so that AJAX can load it later
+     * @param  boolean $leave_to_ajax_if_possible Whether to leave the tab contents null, if tis hook supports it, so that AJAX can load it later
      * @return array A tuple: The tab title, the tab contents, the suggested tab order, the icon
      */
     public function render_tab($member_id_of, $member_id_viewing, $leave_to_ajax_if_possible = false)
@@ -58,7 +58,7 @@ class Hook_profiles_tabs_warnings
         require_css('cns');
 
         $warnings = new Tempcode();
-        $rows = $GLOBALS['FORUM_DB']->query_select('f_warnings', array('*'), array('w_member_id' => $member_id_of, 'w_is_warning' => 1));
+        $rows = $GLOBALS['FORUM_DB']->query_select('f_warnings', array('*'), array('w_member_id' => $member_id_of, 'w_is_warning' => 1), 'ORDER BY w_time');
         foreach ($rows as $row) {
             $warning_by = $GLOBALS['FORUM_DRIVER']->member_profile_hyperlink($row['w_by']);
             $date = get_timezoned_date($row['w_time']);
@@ -71,7 +71,7 @@ class Hook_profiles_tabs_warnings
             if (strlen($row['w_explanation']) > 30) {
                 $row['w_explanation'] = substr($row['w_explanation'], 0, 27) . '...';
             }
-            $explanation = hyperlink(build_url(array('page' => 'warnings', 'type' => '_edit', 'id' => $row['id'], 'redirect' => get_self_url(true)), get_module_zone('warnings')), $row['w_explanation'], false, true, $row['w_explanation_orig']);
+            $explanation = hyperlink(build_url(array('page' => 'warnings', 'type' => '_edit', 'id' => $row['id'], 'redirect' => static_evaluate_tempcode($GLOBALS['FORUM_DRIVER']->member_profile_url($member_id_of, true, true))), get_module_zone('warnings')), $row['w_explanation'], false, true, $row['w_explanation_orig']);
             $warnings->attach(paragraph(do_lang_tempcode('MEMBER_WARNING', $explanation, $warning_by, array(make_string_tempcode(escape_html($date)))), 'treyerhy34y'));
         }
 

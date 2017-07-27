@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -81,7 +81,7 @@ class Hook_notification_calendar_event extends Hook_Notification
     public function list_handled_codes()
     {
         $list = array();
-        $list['calendar_event'] = array(do_lang('menus:CONTENT'), do_lang('calendar:NOTIFICATION_TYPE_calendar_event'));
+        $list['calendar_event'] = array(do_lang('CONTENT'), do_lang('calendar:NOTIFICATION_TYPE_calendar_event'));
         return $list;
     }
 

@@ -1,4 +1,17 @@
-<?php
+<?php /*
+
+ Composr
+ Copyright (c) ocProducts, 2004-2016
+
+ See text/EN/licence.txt for full licencing information.
+
+*/
+
+/**
+ * @license    http://opensource.org/licenses/cpal_1.0 Common Public Attribution License
+ * @copyright  ocProducts Ltd
+ * @package    meta_toolkit
+ */
 
 /*EXTRA FUNCTIONS: diff_simple_2*/
 
@@ -19,7 +32,7 @@ if ($type != 'go') {
     $title->evaluate_echo();
 
     echo '
-        <p>This system will generate a TAR archive to upgrade a site to the files in this Composr installation. You choose which addons to include (both bundled and non-bundled are supported), and the date to get changed files from (both may be auto-detected from the install location).</p>
+        <p>This system will generate a package to upgrade a site to the files in this Composr installation. You choose which addons to include (both bundled and non-bundled are supported), and the date to get changed files from (both may be auto-detected from the install location).</p>
     ';
 }
 
@@ -183,10 +196,10 @@ if ($type == 'auto_probe') {
                     if (!is_null($caption)) {
                         echo ':<br /><br />';
                         /*require_code('geshi');   If you want to see it highlighted
-                                        $geshi=new GeSHi($caption,'diff');
-                                        $geshi->set_header_type(GESHI_HEADER_DIV);
-                                        echo $geshi->parse_code();*/
-                        echo '<div style="overflow: auto; width: 100%; white-space: pre">' . ($caption) . '</div>';
+                        $geshi = new GeSHi($caption, 'diff');
+                        $geshi->set_header_type(GESHI_HEADER_DIV);
+                        echo $geshi->parse_code();*/
+                        echo '<div style="overflow: auto; width: 100%; white-space: pre">' . $caption . '</div>';
                     }
                     echo '</li>';
                 }
@@ -248,7 +261,8 @@ if ($type == 'go') {
 
     require_code('mime_types');
     header('Content-Type: ' . get_mime_type('tar', true) . '; authoritative=true;');
-    header('Content-Disposition: inline; filename="' . str_replace("\r", '', str_replace("\n", '', addslashes($generate_filename))) . '"');
+    header('Content-Disposition: inline; filename="' . escape_header($generate_filename, true) . '"');
+    cms_ob_end_clean();
     $myfile = fopen($gpath, 'rb');
     fpassthru($myfile);
     fclose($myfile);
@@ -259,7 +273,7 @@ echo '
     <form action="' . escape_html(static_evaluate_tempcode(build_url(array('page' => '_SELF', 'type' => 'auto_probe'), '_SELF'))) . '" method="post">
         ' . static_evaluate_tempcode(symbol_tempcode('INSERT_SPAMMER_BLACKHOLE')) . '
 
-        <h2>Auto-probe upgrade TAR settings, and give specialised advice</h2>
+        <h2>Auto-probe upgrade settings, and give specialised advice</h2>
 
         <p>
             <label for="probe_dir">
@@ -282,7 +296,7 @@ echo '
     <form action="' . escape_html(static_evaluate_tempcode(build_url(array('page' => '_SELF', 'type' => 'go'), '_SELF'))) . '" method="post">
         ' . static_evaluate_tempcode(symbol_tempcode('INSERT_SPAMMER_BLACKHOLE')) . '
 
-        <h2>Manually customise upgrade TAR settings</h2>
+        <h2>Manually customise upgrade settings</h2>
 
         <p>
             <label for="cutoff_days">
@@ -329,21 +343,10 @@ function get_addon_structure()
 
         $file_list = $hook_ob->get_file_list();
 
-        $_file_list = array();
-        foreach ($file_list as $file) {
-            if (preg_match('#^[^/]*\.tpl$#', $file) != 0) {
-                $_file_list[] = 'themes/default/templates/' . $file;
-            } elseif (preg_match('#^[^/]*\.css$#', $file) != 0) {
-                $_file_list[] = 'themes/default/css/' . $file;
-            } else {
-                $_file_list[] = $file;
-            }
-        }
-
         if ($place == 'sources') {
-            $struct['bundled'][$hook] = $_file_list;
+            $struct['bundled'][$hook] = $file_list;
         } else {
-            $struct['non_bundled'][$hook] = $_file_list;
+            $struct['non_bundled'][$hook] = $file_list;
         }
     }
     ksort($struct['bundled']);

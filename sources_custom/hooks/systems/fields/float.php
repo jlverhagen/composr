@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -10,6 +10,8 @@
 /**
  * @license    http://opensource.org/licenses/cpal_1.0 Common Public Attribution License
  * @copyright  ocProducts Ltd
+ * @package    data_mappr
+ * @package    user_mappr
  */
 
 /**
@@ -31,7 +33,7 @@ class Hook_fields_float
     {
         $type = '_FLOAT';
         $extra = '';
-        $display = get_translated_text($field['cf_name']);
+        $display = array_key_exists('trans_name', $field) ? $field['trans_name'] : get_translated_text($field['cf_name']);
 
         $range_search = (option_value_from_field_array($field, 'range_search', 'off') == 'on');
         if ($range_search) {
@@ -69,8 +71,8 @@ class Hook_fields_float
      * Get some info bits relating to our field type, that helps us look it up / set defaults.
      *
      * @param  ?array $field The field details (null: new field)
-     * @param  ?boolean $required Whether a default value cannot be blank (null: don't "lock in" a new default value)
-     * @param  ?string $default The given default value as a string (null: don't "lock in" a new default value)
+     * @param  ?boolean $required Whether a default value cannot be blank (null: don't "lock in" a new default value) (may be passed as false also if we want to avoid "lock in" of a new default value, but in this case possible cleanup of $default may still happen where appropriate)
+     * @param  ?string $default The given default value as a string (null: don't "lock in" a new default value) (blank: only "lock in" a new default value if $required is true)
      * @return array Tuple of details (row-type,default-value-to-use,db row-type)
      */
     public function get_field_value_row_bits($field, $required = null, $default = null)
@@ -95,7 +97,7 @@ class Hook_fields_float
     {
         require_lang('locations');
 
-        $_cf_name = get_translated_text($field['cf_name']);
+        $_cf_name = array_key_exists('trans_name', $field) ? $field['trans_name'] : get_translated_text($field['cf_name']);
         if (($_cf_name == do_lang('LATITUDE')) || ($_cf_name == do_lang('LONGITUDE')) || ($_cf_name == 'cms_latitude') || ($_cf_name == 'cms_longitude')) {
             if (is_object($ev)) {
                 if ($ev->evaluate() == do_lang('NA_EM')) {
@@ -116,7 +118,16 @@ class Hook_fields_float
             return '';
         }
 
-        $ev = float_format(floatval($ev));
+        $float = floatval($ev);
+
+        $decimal_points = intval(option_value_from_field_array($field, 'decimal_points', '2'));
+        $decimal_points_behaviour = option_value_from_field_array($field, 'decimal_points_behaviour', 'dp');
+
+        $ev = float_format($float, $decimal_points, $decimal_points_behaviour == 'trim');
+
+        if (($decimal_points_behaviour == 'price') && (substr($ev, -3) == '.00')) {
+            $ev = float_format($float, 0, false);
+        }
 
         if (($GLOBALS['XSS_DETECT']) && (ocp_is_escaped($ev))) {
             ocp_mark_as_escaped($ev);
@@ -195,7 +206,7 @@ class Hook_fields_float
      *
      * @param  boolean $editing Whether we were editing (because on edit, it could be a fractional edit)
      * @param  array $field The field details
-     * @param  ?string $upload_dir Where the files will be uploaded to (null: do not store an upload, return NULL if we would need to do so)
+     * @param  ?string $upload_dir Where the files will be uploaded to (null: do not store an upload, return null if we would need to do so)
      * @param  ?array $old_value Former value of field (null: none)
      * @return ?string The value (null: could not process)
      */
@@ -206,7 +217,7 @@ class Hook_fields_float
         $id = $field['id'];
         $tmp_name = 'field_' . strval($id);
         $default = STRING_MAGIC_NULL;
-        $_cf_name = get_translated_text($field['cf_name']);
+        $_cf_name = array_key_exists('trans_name', $field) ? $field['trans_name'] : get_translated_text($field['cf_name']);
         if ($_cf_name == do_lang('LATITUDE') || $_cf_name == 'cms_latitude') {
             $default = post_param_string('latitude', STRING_MAGIC_NULL);
         }
@@ -214,6 +225,12 @@ class Hook_fields_float
             $default = post_param_string('longitude', STRING_MAGIC_NULL);
         }
 
-        return post_param_string($tmp_name, $default);
+        $ret = post_param_string($tmp_name, $default);
+
+        if (($ret != STRING_MAGIC_NULL) && ($ret != '')) {
+            $ret = float_to_raw_string(float_unformat($ret, $_cf_name == 'cms_latitude' || $_cf_name == 'cms_longitude'), 30);
+        }
+
+        return $ret;
     }
 }

@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -44,7 +44,7 @@ function user_sync__inbound($since = null)
 {
     global $USER_SYNC_IMPORT_LIMIT, $DO_USER_SYNC_OFFSET, $DO_USER_SYNC, $DO_USER_ONLY_ID, $PROGRESS_UPDATE_GAP;
 
-    if (function_exists('set_time_limit')) {
+    if (php_function_allowed('set_time_limit')) {
         @set_time_limit(0);
     }
 
@@ -66,7 +66,7 @@ function user_sync__inbound($since = null)
 
     @ignore_user_abort(false);
 
-    resourcefs_logging__start('inform');
+    resource_fs_logging__start('inform');
 
     // Load import scheme
     require_code('user_sync__customise');
@@ -123,19 +123,18 @@ function user_sync__inbound($since = null)
                 $sql .= ' AND ' . $username_field . '=' . $dbh->quote(is_array($DO_USER_ONLY_ID) ? $DO_USER_ONLY_ID[$j] : $DO_USER_ONLY_ID);
             }
         }
-        $sql .= ' LIMIT ' . strval($DO_USER_SYNC_OFFSET) . ',18446744073709551615';
-        $sth = $dbh->query($sql);
+        $sth = $dbh->query($sql, 18446744073709551615, $DO_USER_SYNC_OFFSET);
 
         // Handle each user
         while (($user = $sth->fetch(PDO::FETCH_ASSOC)) !== false) {
             if (($USER_SYNC_IMPORT_LIMIT !== null) && ($i2 - $DO_USER_SYNC_OFFSET >= $USER_SYNC_IMPORT_LIMIT)) {
-                resourcefs_logging('Partial, got to ' . strval($i2) . ' members', 'inform');
+                resource_fs_logging('Partial, got to ' . strval($i2) . ' members', 'inform');
                 break;
             }
             $i2++;
 
             if ($i != 0 && $i % $PROGRESS_UPDATE_GAP == 0) {
-                resourcefs_logging('Progress update: imported ' . strval($i) . ' members', 'inform');
+                resource_fs_logging('Progress update: imported ' . strval($i) . ' members', 'inform');
             }
 
             // Work out username
@@ -146,9 +145,9 @@ function user_sync__inbound($since = null)
                 }
                 $username .= is_integer($user[$username_field]) ? strval($user[$username_field]) : $user[$username_field];
             }
-            //cns_check_name_valid($username,NULL,NULL,true); // Not really needed
+            //cns_check_name_valid($username, null, null, true); // Not really needed
             if ($username == '') {
-                resourcefs_logging('Blank username cannot be imported.', 'warn');
+                resource_fs_logging('Blank username cannot be imported.', 'warn');
                 continue;
             }
 
@@ -156,7 +155,7 @@ function user_sync__inbound($since = null)
 
             // Bind to existing?
             $member_id = $GLOBALS['FORUM_DRIVER']->get_member_from_username($username);
-            if ((is_null($member_id)) && (get_option('one_per_email_address') == '1') && ($email_address != '')) {
+            if ((is_null($member_id)) && (get_option('one_per_email_address') != '0') && ($email_address != '')) {
                 $member_id = $GLOBALS['FORUM_DRIVER']->get_member_from_email_address($email_address);
             }
 
@@ -219,7 +218,7 @@ function user_sync__inbound($since = null)
                     $cpf_value = is_string($value) ? $value : strval($value);
                     $cpf_values[$cpf_id] = $cpf_value;
                 } else {
-                    resourcefs_logging('Could not bind ' . $key . ' to CPF.', 'warn');
+                    resource_fs_logging('Could not bind ' . $key . ' to CPF.', 'warn');
                 }
             }
 
@@ -305,14 +304,14 @@ function user_sync__inbound($since = null)
         }
         $time_end = time();
         if ($user === false) {
-            resourcefs_logging('Imported ' . strval($i - $DO_USER_SYNC_OFFSET) . ' members in ' . strval($time_end - $time_start) . ' seconds', 'notice');
+            resource_fs_logging('Imported ' . strval($i - $DO_USER_SYNC_OFFSET) . ' members in ' . strval($time_end - $time_start) . ' seconds', 'notice');
         }
     }
 
     // Customised end code
     get_user_sync__finish($dbh, $since);
 
-    resourcefs_logging__end();
+    resource_fs_logging__end();
 }
 
 function user_sync_handle_field_remap($field_name, $remap_scheme, $remote_data, $dbh, $member_id)
@@ -332,7 +331,7 @@ function user_sync_handle_field_remap($field_name, $remap_scheme, $remote_data, 
                 $remap_scheme[1] = $field_name; // Identity map, by default
             }
             if (!array_key_exists($remap_scheme[1], $remote_data)) { // Not found!
-                resourcefs_logging('Requested to import missing remote field, ' . $remap_scheme[1] . '.', 'warn');
+                resource_fs_logging('Requested to import missing remote field, ' . $remap_scheme[1] . '.', 'warn');
                 return user_sync_get_field_default($field_name);
             }
             $remote_value = $remote_data[$remap_scheme[1]];
@@ -347,7 +346,7 @@ function user_sync_handle_field_remap($field_name, $remap_scheme, $remote_data, 
             break;
 
         default: // ???
-            resourcefs_logging('Unknown lookup type (' . $remap_scheme[0] . ').', 'warn');
+            resource_fs_logging('Unknown lookup type (' . $remap_scheme[0] . ').', 'warn');
             return user_sync_get_field_default($field_name);
     }
 
@@ -371,8 +370,8 @@ function user_sync_handle_field_remap($field_name, $remap_scheme, $remote_data, 
                     if (is_numeric($_data)) {
                         $data[$i] = intval($_data);
                     } else { // By name
-                        $resourcefs_ob = get_resource_commandrfs_object('group');
-                        $data[$i] = intval($resourcefs_ob->convert_label_to_id($_data, '', 'group')); // Will be created if it doesn't already exist
+                        $resource_fs_ob = get_resource_commandr_fs_object('group');
+                        $data[$i] = intval($resource_fs_ob->convert_label_to_id($_data, '', 'group')); // Will be created if it doesn't already exist
                     }
                 }
             }
@@ -461,7 +460,7 @@ function user_sync_get_field_default($field_name)
         case 'groups':
             return array();
     }
-    resourcefs_logging('Requested to import unknown field. ' . $field_name . '.', 'warn');
+    resource_fs_logging('Requested to import unknown field. ' . $field_name . '.', 'warn');
     return null; // Should not get here
 }
 
@@ -509,14 +508,16 @@ function user_sync__outbound($member_id)
     $dbh->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_WARNING);
 
     // Try and fetch details of remote user
-    $sql = 'SELECT * FROM ' . $db_table . ' WHERE CONCAT(';
+    $sql = 'SELECT * FROM ' . $db_table . ' WHERE ';
+    $_username_parts = array();
     foreach ($username_fields as $i => $uf) {
         if ($i != 0) {
-            $sql .= ',' . $dbh->quote(' ') . ',';
+            $_username_parts[] = $dbh->quote(' ');
         }
-        $sql .= $uf;
+        $_username_parts[] = $uf;
     }
-    $sql .= ')=' . $dbh->quote($record['m_username']);
+    $sql .= db_function('CONCAT', $_username_parts);
+    $sql .= '=' . $dbh->quote($record['m_username']);
     $sth = $dbh->query($sql);
     $user = $sth->fetch(PDO::FETCH_ASSOC);
 
@@ -620,16 +621,16 @@ UTILITY FUNCTIONS
 
 function user_sync_find_native_fields()
 {
-    /*$native_fields=array();    Actually we don't support importing them all, as our code has to choose defaults
-    $db_meta=$GLOBALS['SITE_DB']->query_select('db_meta',array('m_name'),array('m_table'=>'f_members'));
-    foreach ($db_meta as $_db_meta)
-    {
-        if (substr($_db_meta['m_name'],0,2)=='m_')
-        {
-            $native_fields[]=substr($_db_meta['m_name'],2);
+    /* Actually we don't support importing them all, as our code has to choose defaults
+    $native_fields = array();
+    $db_meta = $GLOBALS['SITE_DB']->query_select('db_meta', array('m_name'), array('m_table' => 'f_members'));
+    foreach ($db_meta as $_db_meta) {
+        if (substr($_db_meta['m_name'], 0, 2) == 'm_') {
+            $native_fields[] = substr($_db_meta['m_name'], 2);
         }
     }
-    return $native_fields;*/
+    return $native_fields;
+    */
 
     return array(
         'pass_hash_salted',

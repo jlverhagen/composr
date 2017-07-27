@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -250,7 +250,7 @@ class CMSPmWrite
             }
         }
 
-        decache('side_cns_personal_topics', array(get_member()));
+        decache('side_cns_private_topics', array(get_member()));
         decache('_new_pp', array(get_member()));
     }
 }

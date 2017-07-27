@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -31,7 +31,7 @@ class Block_main_activities
         $info['hacked_by'] = null;
         $info['hack_version'] = null;
         $info['version'] = 2;
-        $info['update_require_upgrade'] = 1;
+        $info['update_require_upgrade'] = true;
         $info['locked'] = false;
         $info['parameters'] = array('max', 'start', 'param', 'member', 'mode', 'grow', 'refresh_time');
         return $info;
@@ -87,6 +87,8 @@ class Block_main_activities
             $GLOBALS['SITE_DB']->alter_table_field('activities', 'a_pagelink_1', 'SHORT_TEXT', 'a_page_link_1');
             $GLOBALS['SITE_DB']->alter_table_field('activities', 'a_pagelink_2', 'SHORT_TEXT', 'a_page_link_2');
             $GLOBALS['SITE_DB']->alter_table_field('activities', 'a_pagelink_3', 'SHORT_TEXT', 'a_page_link_3');
+
+            $GLOBALS['SITE_DB']->query('UPDATE ' . get_table_prefix() . 'activities SET a_language_string_code=REPLACE(a_language_string_code,\'ocf:\',\'cns:\') WHERE a_language_string_code LIKE \'ocf:%\'');
         }
     }
 
@@ -99,7 +101,7 @@ class Block_main_activities
     /*function caching_environment()
     {
         $info = array();
-        $info['cache_on'] = 'array(array_key_exists(\'grow\',$map)?($map['grow']==\'1\'):true,array_key_exists(\'max\',$map)?intval($map[\'max\']):10,array_key_exists(\'refresh_time\',$map)?intval($map[\'refresh_time\']):30,array_key_exists(\'param\',$map)?$map[\'param\']:do_lang(\'activities:ACTIVITIES_TITLE\'),array_key_exists(\'mode\',$map)?$map[\'mode\']:\'all\',get_member())';
+        $info['cache_on'] = 'array(array_key_exists(\'grow\',$map)?($map['grow']==\'1\'):true,array_key_exists(\'max\',$map)?intval($map[\'max\']):10,array_key_exists(\'refresh_time\',$map)?intval($map[\'refresh_time\']):30,array_key_exists(\'param\',$map)?$map[\'param\']:do_lang(\'activities:ACTIVITY\'),array_key_exists(\'mode\',$map)?$map[\'mode\']:\'all\',get_member())';
         $info['ttl'] = 3;
         return $info;
     }*/
@@ -154,7 +156,7 @@ class Block_main_activities
             $max_rows = $GLOBALS['SITE_DB']->query_value_if_there('SELECT COUNT(*) FROM ' . get_table_prefix() . 'activities WHERE ' . $whereville, false, true);
 
             require_code('templates_pagination');
-            $pagination = pagination(do_lang('ACTIVITIES_TITLE'), $start, $block_id . '_start', $max, $block_id . '_max', $max_rows, false, 5, null, 'tab__activities');
+            $pagination = pagination(do_lang('ACTIVITY'), $start, $block_id . '_start', $max, $block_id . '_max', $max_rows, false, 5, null, 'tab__activities');
 
             $activities = $GLOBALS['SITE_DB']->query('SELECT * FROM ' . get_table_prefix() . 'activities WHERE ' . $whereville . ' ORDER BY a_time DESC', $max, $start, false, true);
 
@@ -187,7 +189,7 @@ class Block_main_activities
 
         return do_template('BLOCK_MAIN_ACTIVITIES', array(
             '_GUID' => 'b4de219116e1b8107553ee588717e2c9',
-            'BLOCK_PARAMS' => block_params_arr_to_str($map),
+            'BLOCK_PARAMS' => block_params_arr_to_str(array('block_id' => $block_id) + $map),
             'MODE' => $mode,
             'MEMBER_IDS' => implode(',', $member_ids),
             'CONTENT' => $content,
@@ -199,6 +201,7 @@ class Block_main_activities
             'MAX' => strval($max),
             'START_PARAM' => $block_id . '_start',
             'MAX_PARAM' => $block_id . '_max',
+            'EXTRA_GET_PARAMS' => (get_param_integer($block_id . '_max', null) === null) ? null : ('&' . $block_id . '_max=' . urlencode(strval($max))),
         ));
     }
 }

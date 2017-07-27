@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -26,9 +26,10 @@ class Hook_addon_registry_stats
     /**
      * Get a list of file permissions to set
      *
+     * @param  boolean $runtime Whether to include wildcards represented runtime-created chmoddable files
      * @return array File permissions to set
      */
-    public function get_chmod_array()
+    public function get_chmod_array($runtime = false)
     {
         return array();
     }
@@ -127,7 +128,6 @@ class Hook_addon_registry_stats
             'sources/hooks/systems/page_groupings/stats.php',
             'sources/hooks/systems/non_active_urls/stats.php',
             'sources/hooks/systems/addon_registry/stats.php',
-            'sources/hooks/modules/admin_import_types/stats.php',
             'sources/hooks/modules/admin_stats/.htaccess',
             'sources_custom/hooks/modules/admin_stats/.htaccess',
             'sources/hooks/modules/admin_stats/index.html',

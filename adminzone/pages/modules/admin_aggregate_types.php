@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -31,10 +31,13 @@ class Module_admin_aggregate_types extends Standard_crud_module
     public $orderer = 'aggregate_label';
     public $title_is_multi_lang = false;
     public $table = 'aggregate_type_instances';
+    public $do_preview = null;
 
     public $add_one_label = null;
     public $edit_this_label = null;
     public $edit_one_label = null;
+    public $donext_entry_content_type = 'aggregate_type_instance';
+    public $donext_category_content_type = null;
 
     /**
      * Find details of the module.
@@ -77,7 +80,7 @@ class Module_admin_aggregate_types extends Standard_crud_module
             'add_time' => 'TIME',
             'edit_time' => '?TIME',
         ));
-        $GLOBALS['SITE_DB']->create_index('aggregate_type_instances', 'aggregate_lookup', array('aggregate_label'/*,'aggregate_type' key would be too long*/));
+        $GLOBALS['SITE_DB']->create_index('aggregate_type_instances', 'aggregate_lookup', array('aggregate_label'/*, 'aggregate_type' key would be too long*/));
     }
 
     /**
@@ -86,7 +89,7 @@ class Module_admin_aggregate_types extends Standard_crud_module
      * @param  boolean $check_perms Whether to check permissions.
      * @param  ?MEMBER $member_id The member to check permissions as (null: current user).
      * @param  boolean $support_crosslinks Whether to allow cross links to other modules (identifiable via a full-page-link rather than a screen-name).
-     * @param  boolean $be_deferential Whether to avoid any entry-point (or even return NULL to disable the page in the Sitemap) if we know another module, or page_group, is going to link to that entry-point. Note that "!" and "browse" entry points are automatically merged with container page nodes (likely called by page-groupings) as appropriate.
+     * @param  boolean $be_deferential Whether to avoid any entry-point (or even return null to disable the page in the Sitemap) if we know another module, or page_group, is going to link to that entry-point. Note that "!" and "browse" entry points are automatically merged with container page nodes (likely called by page-groupings) as appropriate.
      * @return ?array A map of entry points (screen-name=>language-code/string or screen-name=>[language-code/string, icon-theme-image]) (null: disabled).
      */
     public function get_entry_points($check_perms = true, $member_id = null, $support_crosslinks = true, $be_deferential = false)
@@ -105,10 +108,10 @@ class Module_admin_aggregate_types extends Standard_crud_module
     public $title;
 
     /**
-     * Module pre-run function. Allows us to know meta-data for <head> before we start streaming output.
+     * Module pre-run function. Allows us to know metadata for <head> before we start streaming output.
      *
      * @param  boolean $top_level Whether this is running at the top level, prior to having sub-objects called.
-     * @param  ?ID_TEXT $type The screen type to consider for meta-data purposes (null: read from environment).
+     * @param  ?ID_TEXT $type The screen type to consider for metadata purposes (null: read from environment).
      * @return ?Tempcode Tempcode indicating some kind of exceptional output (null: none).
      */
     public function pre_run($top_level = true, $type = null)
@@ -127,7 +130,7 @@ class Module_admin_aggregate_types extends Standard_crud_module
         }
 
         if ($type == 'sync') {
-            inform_non_canonical_parameter('sync_type');
+            inform_non_canonical_parameter('sync_type', false);
 
             $this->title = get_screen_title('SYNCHRONISE_AGGREGATE_TYPES');
         }
@@ -382,9 +385,11 @@ class Module_admin_aggregate_types extends Standard_crud_module
 
         $post_url = build_url(array('page' => '_SELF', 'type' => '_xml'), '_SELF');
 
-        return do_template('XML_CONFIG_SCREEN', array('_GUID' => '2303459e94b959d2edf8444188bbeea9', 'TITLE' => $this->title,
-                                                      'POST_URL' => $post_url,
-                                                      'XML' => file_exists(get_custom_file_base() . '/data_custom/xml_config/aggregate_types.xml') ? file_get_contents(get_custom_file_base() . '/data_custom/xml_config/aggregate_types.xml') : file_get_contents(get_custom_file_base() . '/data/xml_config/aggregate_types.xml'),
+        return do_template('XML_CONFIG_SCREEN', array(
+            '_GUID' => '2303459e94b959d2edf8444188bbeea9',
+            'TITLE' => $this->title,
+            'POST_URL' => $post_url,
+            'XML' => file_exists(get_custom_file_base() . '/data_custom/xml_config/aggregate_types.xml') ? cms_file_get_contents_safe(get_custom_file_base() . '/data_custom/xml_config/aggregate_types.xml') : cms_file_get_contents_safe(get_file_base() . '/data/xml_config/aggregate_types.xml'),
         ));
     }
 
@@ -395,22 +400,10 @@ class Module_admin_aggregate_types extends Standard_crud_module
      */
     public function _xml()
     {
-        if (!file_exists(get_custom_file_base() . '/data_custom')) {
-            require_code('files2');
-            make_missing_directory(get_custom_file_base() . '/data_custom');
-        }
-
-        $myfile = @fopen(get_custom_file_base() . '/data_custom/xml_config/aggregate_types.xml', GOOGLE_APPENGINE ? 'wb' : 'wt');
-        if ($myfile === false) {
-            intelligent_write_error(get_custom_file_base() . '/data_custom/xml_config/aggregate_types.xml');
-        }
+        require_code('files');
+        $path = get_custom_file_base() . '/data_custom/xml_config/aggregate_types.xml';
         $xml = post_param_string('xml');
-        if (fwrite($myfile, $xml) < strlen($xml)) {
-            warn_exit(do_lang_tempcode('COULD_NOT_SAVE_FILE'));
-        }
-        fclose($myfile);
-        fix_permissions(get_custom_file_base() . '/data_custom/xml_config/aggregate_types.xml');
-        sync_file(get_custom_file_base() . '/data_custom/xml_config/aggregate_types.xml');
+        cms_file_put_contents_safe($path, $xml, FILE_WRITE_FIX_PERMISSIONS | FILE_WRITE_SYNC_FILE);
 
         log_it('EDIT_AGGREGATE_TYPES');
 
@@ -443,14 +436,16 @@ class Module_admin_aggregate_types extends Standard_crud_module
 
         $url = build_url(array('page' => '_SELF', 'type' => '_sync'), '_SELF');
 
-        return do_template('FORM_SCREEN', array('_GUID' => '823999c74834fc34a51a6a63cdafeab5', 'TITLE' => $this->title,
-                                                'SKIP_WEBSTANDARDS' => true,
-                                                'HIDDEN' => '',
-                                                'URL' => $url,
-                                                'FIELDS' => $fields,
-                                                'TEXT' => do_lang_tempcode('SELECT_AGGREGATE_TYPES_FOR_SYNC'),
-                                                'SUBMIT_ICON' => 'menu___generic_admin__sync',
-                                                'SUBMIT_NAME' => $submit_name,
+        return do_template('FORM_SCREEN', array(
+            '_GUID' => '823999c74834fc34a51a6a63cdafeab5',
+            'TITLE' => $this->title,
+            'SKIP_WEBSTANDARDS' => true,
+            'HIDDEN' => '',
+            'URL' => $url,
+            'FIELDS' => $fields,
+            'TEXT' => do_lang_tempcode('SELECT_AGGREGATE_TYPES_FOR_SYNC'),
+            'SUBMIT_ICON' => 'menu___generic_admin__sync',
+            'SUBMIT_NAME' => $submit_name,
         ));
     }
 
@@ -461,6 +456,10 @@ class Module_admin_aggregate_types extends Standard_crud_module
      */
     public function _sync()
     {
+        if (!isset($_POST['aggregate_type'])) {
+            warn_exit(do_lang_tempcode('NO_PARAMETER_SENT', escape_html('aggregate_type')));
+        }
+
         $types = $_POST['aggregate_type'];
         foreach ($types as $type) {
             resync_all_aggregate_type_instances($type);

@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -32,8 +32,8 @@ class Hook_task_install_geolocation_data
     {
         $GLOBALS['NO_QUERY_LIMIT'] = true;
 
-        $test = $GLOBALS['SITE_DB']->query_select_value('ip_country', 'COUNT(*)');
-        if ($test > 0) {
+        $test = $GLOBALS['SITE_DB']->query_select_value_if_there('ip_country', 'id');
+        if ($test !== null) {
             return null;
         }
 
@@ -46,7 +46,7 @@ class Hook_task_install_geolocation_data
         }
         $to_insert = array('begin_num' => array(), 'end_num' => array(), 'country' => array());
         while (!feof($file)) {
-            $data = fgets($file, 1024);
+            $data = fgets($file);
             if ($data === false) {
                 continue;
             }

@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -31,6 +31,10 @@
  */
 function render_poll_box($results, $myrow, $zone = '_SEARCH', $include_manage_links = false, $give_context = true, $guid = '')
 {
+    if (is_null($myrow)) { // Should never happen, but we need to be defensive
+        return new Tempcode();
+    }
+
     require_lang('polls');
 
     $just_poll_row = db_map_restrict($myrow, array('id', 'question', 'option1', 'option2', 'option3', 'option4', 'option5', 'option6', 'option7', 'option8', 'option9', 'option10'));
@@ -166,6 +170,7 @@ function vote_in_poll($poll_id, $cast, $myrow = null, $member_id = null, $ip = n
                 '',
                 1
             );
+            persistent_cache_delete('POLL');
 
             $GLOBALS['SITE_DB']->query_insert('poll_votes', array(
                 'v_poll_id' => $poll_id,
@@ -230,12 +235,12 @@ function may_vote_in_poll($poll_id, $member_id, $ip)
 function create_selection_list_polls($it = null, $only_owned = null)
 {
     $where = is_null($only_owned) ? null : array('submitter' => $only_owned);
-    $rows = $GLOBALS['SITE_DB']->query_select('poll', array('question', 'is_current', 'votes1', 'votes2', 'votes3', 'votes4', 'votes5', 'votes6', 'votes7', 'votes8', 'votes9', 'votes10', 'id'), $where, 'ORDER BY is_current DESC,date_and_time,question', 400);
-    if (count($rows) == 400) { // Ok, just new ones
+    $rows = $GLOBALS['SITE_DB']->query_select('poll', array('question', 'is_current', 'votes1', 'votes2', 'votes3', 'votes4', 'votes5', 'votes6', 'votes7', 'votes8', 'votes9', 'votes10', 'id'), $where, 'ORDER BY is_current DESC,date_and_time,question', intval(get_option('general_safety_listing_limit')));
+    if (count($rows) == intval(get_option('general_safety_listing_limit'))) { // Ok, just new ones
         if (is_null($where)) {
             $where = array();
         }
-        $rows = $GLOBALS['SITE_DB']->query_select('poll', array('question', 'is_current', 'votes1', 'votes2', 'votes3', 'votes4', 'votes5', 'votes6', 'votes7', 'votes8', 'votes9', 'votes10', 'id'), $where + array('date_and_time' => null), 'ORDER BY add_time DESC', 400);
+        $rows = $GLOBALS['SITE_DB']->query_select('poll', array('question', 'is_current', 'votes1', 'votes2', 'votes3', 'votes4', 'votes5', 'votes6', 'votes7', 'votes8', 'votes9', 'votes10', 'id'), $where + array('date_and_time' => null), 'ORDER BY add_time DESC', intval(get_option('general_safety_listing_limit')));
     }
     $out = new Tempcode();
     foreach ($rows as $myrow) {

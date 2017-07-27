@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -50,6 +50,10 @@ class Hook_config_comcode_page_default_review_freq
      */
     public function get_default()
     {
+        if (!addon_installed('content_reviews')) {
+            return null;
+        }
+
         return '0';
     }
 }

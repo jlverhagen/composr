@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -36,6 +36,9 @@ class Module_admin_cns_forum_groupings extends Standard_crud_module
     public $javascript = 'if (document.getElementById(\'delete\')) { var form=document.getElementById(\'delete\').form; var crf=function() { form.elements[\'target_forum_grouping\'].disabled=(!form.elements[\'delete\'].checked); }; crf(); form.elements[\'delete\'].onchange=crf; }';
     public $orderer = 'c_title';
     public $title_is_multi_lang = false;
+    public $donext_entry_content_type = 'forum_grouping';
+    public $donext_category_content_type = null;
+    public $do_preview = null;
 
     /**
      * Find entry-points available within this module.
@@ -43,7 +46,7 @@ class Module_admin_cns_forum_groupings extends Standard_crud_module
      * @param  boolean $check_perms Whether to check permissions.
      * @param  ?MEMBER $member_id The member to check permissions as (null: current user).
      * @param  boolean $support_crosslinks Whether to allow cross links to other modules (identifiable via a full-page-link rather than a screen-name).
-     * @param  boolean $be_deferential Whether to avoid any entry-point (or even return NULL to disable the page in the Sitemap) if we know another module, or page_group, is going to link to that entry-point. Note that "!" and "browse" entry points are automatically merged with container page nodes (likely called by page-groupings) as appropriate.
+     * @param  boolean $be_deferential Whether to avoid any entry-point (or even return null to disable the page in the Sitemap) if we know another module, or page_group, is going to link to that entry-point. Note that "!" and "browse" entry points are automatically merged with container page nodes (likely called by page-groupings) as appropriate.
      * @return ?array A map of entry points (screen-name=>language-code/string or screen-name=>[language-code/string, icon-theme-image]) (null: disabled).
      */
     public function get_entry_points($check_perms = true, $member_id = null, $support_crosslinks = true, $be_deferential = false)
@@ -57,9 +60,9 @@ class Module_admin_cns_forum_groupings extends Standard_crud_module
         }
 
         $ret = array(
-                   'browse' => array('FORUM_GROUPINGS', 'menu/_generic_admin/view_this_category'),
-                   'edit' => array(do_lang_tempcode('ITEMS_HERE', do_lang_tempcode('EDIT_FORUM_GROUPING'), make_string_tempcode(escape_html(integer_format($GLOBALS['FORUM_DB']->query_select_value_if_there('f_forum_groupings', 'COUNT(*)', null, '', true))))), 'menu/_generic_admin/view_this_category'),
-               ) + parent::get_entry_points();
+            'browse' => array('FORUM_GROUPINGS', 'menu/_generic_admin/view_this_category'),
+            'edit' => array(do_lang_tempcode('menus:ITEMS_HERE', do_lang_tempcode('EDIT_FORUM_GROUPING'), make_string_tempcode(escape_html(integer_format($GLOBALS['FORUM_DB']->query_select_value_if_there('f_forum_groupings', 'COUNT(*)', null, '', true))))), 'menu/_generic_admin/view_this_category'),
+        ) + parent::get_entry_points();
 
         return $ret;
     }
@@ -67,10 +70,10 @@ class Module_admin_cns_forum_groupings extends Standard_crud_module
     public $title;
 
     /**
-     * Module pre-run function. Allows us to know meta-data for <head> before we start streaming output.
+     * Module pre-run function. Allows us to know metadata for <head> before we start streaming output.
      *
      * @param  boolean $top_level Whether this is running at the top level, prior to having sub-objects called.
-     * @param  ?ID_TEXT $type The screen type to consider for meta-data purposes (null: read from environment).
+     * @param  ?ID_TEXT $type The screen type to consider for metadata purposes (null: read from environment).
      * @return ?Tempcode Tempcode indicating some kind of exceptional output (null: none).
      */
     public function pre_run($top_level = true, $type = null)
@@ -103,7 +106,7 @@ class Module_admin_cns_forum_groupings extends Standard_crud_module
         $this->add_one_cat_label = do_lang_tempcode('ADD_FORUM_GROUPING');
         $this->edit_this_cat_label = do_lang_tempcode('EDIT_THIS_FORUM_GROUPING');
         $this->edit_one_cat_label = do_lang_tempcode('EDIT_FORUM_GROUPING');
-        $this->categories_title = do_lang_tempcode('MODULE_TRANS_NAME_admin_cns_forum_groupings');
+        $this->categories_title = do_lang_tempcode('FORUM_GROUPINGS');
 
         if (get_forum_type() != 'cns') {
             warn_exit(do_lang_tempcode('NO_CNS'));

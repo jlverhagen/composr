@@ -1,11 +1,17 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
 */
+
+/**
+ * @license    http://opensource.org/licenses/cpal_1.0 Common Public Attribution License
+ * @copyright  ocProducts Ltd
+ * @package    facebook_support
+ */
 
 function init__facebook_connect()
 {
@@ -20,34 +26,11 @@ function init__facebook_connect()
     // Initialise Facebook Connect
     require_code('facebook/facebook');
 
-    class CMSFacebook extends BaseFacebook // We don't want any persistence - we store in normal Composr sessions/member rows
-    {
-        protected function setPersistentData($key, $value)
-        {
-        }
-
-        protected function getPersistentData($key, $default = false)
-        {
-        }
-
-        protected function clearPersistentData($key)
-        {
-        }
-
-        protected function clearAllPersistentData()
-        {
-        }
-
-        protected function constructSessionVariableName($key)
-        {
-        }
-    }
-
     global $FACEBOOK_CONNECT;
     $FACEBOOK_CONNECT = mixed();
     $appid = get_option('facebook_appid');
     $appsecret = get_option('facebook_secret_code');
-    $FACEBOOK_CONNECT = new CMSFacebook(array('appId' => $appid, 'secret' => $appsecret));
+    $FACEBOOK_CONNECT = new Facebook(array('appId' => $appid, 'secret' => $appsecret));
 }
 
 // This is only called if we know we have a user logged into Facebook, who has authorised to our app
@@ -77,8 +60,10 @@ function handle_facebook_connection_login($current_logged_in_member)
         return $current_logged_in_member;
     }
     try {
-        $details = $FACEBOOK_CONNECT->api('/me', array('fields' => 'id,name,email,about,bio,website,currency,first_name,last_name,gender,location,hometown'));
+        $details = $FACEBOOK_CONNECT->api('/me', array('fields' => 'id,name,email,about,website,currency,first_name,last_name,gender,location,hometown'));
     } catch (Exception $e) {
+        header('Facebook-Error: ' . escape_header($e->getMessage()));
+
         return $current_logged_in_member;
     }
     if (!is_array($details)) {
@@ -98,7 +83,7 @@ function handle_facebook_connection_login($current_logged_in_member)
         $photo_url = $photo_url['data']['url'];
     }
     if ($photo_url != '') {
-        $photo_url = 'http://graph.facebook.com/' . strval($facebook_uid) . '/picture?type=large'; // In case URL changes
+        $photo_url = 'https://graph.facebook.com/' . strval($facebook_uid) . '/picture?type=large'; // In case URL changes
     }
     $avatar_url = ($photo_url == '') ? mixed() : $photo_url;
     $photo_thumb_url = '';
@@ -143,11 +128,10 @@ function handle_facebook_connection_login($current_logged_in_member)
         $member_id = null;
     }
 
-    /*if (!is_null($member_id)) // Useful for debugging
-    {
+    /*if (!is_null($member_id)) { // Useful for debugging
         require_code('cns_members_action2');
         cns_delete_member($member_id);
-        $member_id=NULL;
+        $member_id = null;
     }*/
 
     if ((!is_null($member_id)) && ($current_logged_in_member !== null) && (!is_guest($current_logged_in_member)) && ($current_logged_in_member != $member_id)) {
@@ -213,15 +197,16 @@ function handle_facebook_connection_login($current_logged_in_member)
     if ((is_null($member_id)) && ($in_a_sane_place)) {
         // Bind to existing Composr login?
         if (!is_null($current_logged_in_member)) {
-            /*if (post_param_integer('associated_confirm',0)==0)     Won't work because Facebook is currently done in JS and cookies force this. If user wishes to cancel they must go to http://www.facebook.com/settings?tab=applications and remove the app, then run a lost password reset.
-            {
-                    $title=get_screen_title('LOGIN_FACEBOOK_HEADER');
-                    $message=do_lang_tempcode('LOGGED_IN_SURE_FACEBOOK',escape_html($GLOBALS['FORUM_DRIVER']->get_username($current_logged_in_member)));
-                    $middle=do_template('CONFIRM_SCREEN',array('_GUID'=>'3d80095b18cf57717d0b091cf3680252','TITLE'=>$title,'TEXT'=>$message,'HIDDEN'=>form_input_hidden('associated_confirm','1'),'URL'=>get_self_url_easy(),'FIELDS'=>''));
-                    $tpl=globalise($middle,NULL,'',true);
-                    $tpl->evaluate_echo();
-                    exit();
-            }*/
+            /* Won't work because Facebook is currently done in JS and cookies force this. If user wishes to cancel they must go to http://www.facebook.com/settings?tab=applications and remove the app, then run a lost password reset.
+            if (post_param_integer('associated_confirm', 0) == 0) {
+                $title = get_screen_title('LOGIN_FACEBOOK_HEADER');
+                $message = do_lang_tempcode('LOGGED_IN_SURE_FACEBOOK', escape_html($GLOBALS['FORUM_DRIVER']->get_username($current_logged_in_member)));
+                $middle = do_template('CONFIRM_SCREEN', array('_GUID' => '3d80095b18cf57717d0b091cf3680252', 'TITLE' => $title, 'TEXT' => $message, 'HIDDEN' => form_input_hidden('associated_confirm', '1'), 'URL' => get_self_url_easy(), 'FIELDS' => ''));
+                $tpl = globalise($middle, null, '', true);
+                $tpl->evaluate_echo();
+                exit();
+            }
+            */
 
             $GLOBALS['FORUM_DB']->query_update('f_members', array('m_password_compat_scheme' => 'facebook', 'm_pass_hash_salted' => $facebook_uid), array('id' => $current_logged_in_member), '', 1);
             require_code('site');
@@ -239,7 +224,7 @@ function handle_facebook_connection_login($current_logged_in_member)
             return null;
         }
 
-        $completion_form_submitted = post_param_string('email_address', '') != '';
+        $completion_form_submitted = (post_param_integer('finishing_profile', 0) == 1);
 
         require_code('cns_members_action2');
 
@@ -279,7 +264,6 @@ function handle_facebook_connection_login($current_logged_in_member)
             require_lang('cns_special_cpf');
             $mappings = array(
                 'about' => do_lang('DEFAULT_CPF_about_NAME'),
-                'bio' => do_lang('DEFAULT_CPF_interests_NAME'),
                 'website' => do_lang('DEFAULT_CPF_website_NAME'),
                 'currency' => 'cms_currency',
                 'first_name' => 'cms_firstname',
@@ -290,7 +274,17 @@ function handle_facebook_connection_login($current_logged_in_member)
                 if (!empty($details[$facebook_field])) {
                     $composr_field_id = find_cms_cpf_field_id($composr_field_title);
                     if (!is_null($composr_field_id)) {
-                        $changes['field_' . strval($composr_field_id)] = $details[$facebook_field];
+                        switch ($facebook_field) {
+                            case 'user_currency':
+                                $changes['field_' . strval($composr_field_id)] = $details[$facebook_field]['user_currency'];
+                                break;
+
+                            default:
+                                if (!is_array($details[$facebook_field])) {
+                                    $changes['field_' . strval($composr_field_id)] = $details[$facebook_field];
+                                }
+                                break;
+                        }
                     }
                 }
             }
@@ -315,6 +309,7 @@ function handle_facebook_connection_login($current_logged_in_member)
                         }
                     }
                 } catch (Exception $e) {
+                    header('Facebook-Error: ' . escape_header($e->getMessage()));
                 }
             }
             if (!empty($changes)) {

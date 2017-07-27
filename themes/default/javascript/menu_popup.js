@@ -89,7 +89,7 @@ function pop_up_menu(id,place,menu,event,outside_fixed_width)
 	var p=e.parentNode;
 
 	// Our own position computation as we are positioning relatively, as things expand out
-	if (abstract_get_computed_style(p.parentNode,'position')=='absolute')
+	if (abstract_get_computed_style(p.parentNode,'position')=='fixed' || abstract_get_computed_style(p.parentNode,'position')=='absolute')
 	{
 		l+=p.offsetLeft;
 		t+=p.offsetTop;
@@ -101,6 +101,7 @@ function pop_up_menu(id,place,menu,event,outside_fixed_width)
 			l+=p.offsetLeft;
 			t+=p.offsetTop-sts(p.style.borderTop);
 			p=p.offsetParent;
+			if ((p) && (abstract_get_computed_style(p,'position')=='fixed')) break;
 			if ((p) && (abstract_get_computed_style(p,'position')=='absolute')) break;
 		}
 	}
@@ -143,7 +144,7 @@ function pop_up_menu(id,place,menu,event,outside_fixed_width)
 			}
 		} else
 		{ // NB: For non-below, we can't assume 'left' is absolute, as it is actually relative to parent node which is itself positioned
-			if (find_pos_x(e.parentNode,true)+e_width+e_parent_width+10>full_width) pos_left-=e_width+e_parent_width;
+			if ((find_pos_x(e.parentNode,true)+e_width+e_parent_width+10>full_width) && (pos_left-e_width-e_parent_width>0)) pos_left-=e_width+e_parent_width;
 		}
 		e.style.left=pos_left+'px';
 	};
@@ -153,7 +154,7 @@ function pop_up_menu(id,place,menu,event,outside_fixed_width)
 		var pos_top=t;
 		if (pos_top+find_height(e)+10>full_height)
 		{
-			var above_pos_top=pos_top-find_height(e,true,true,true)+e_parent_height-10;
+			var above_pos_top=pos_top-find_height(e,true)+e_parent_height-10;
 			if (above_pos_top>0) pos_top=above_pos_top;
 		}
 		e.style.top=pos_top+'px';

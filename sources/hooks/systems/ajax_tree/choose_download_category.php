@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -46,7 +46,7 @@ class Hook_choose_download_category
         $options['levels_to_expand'] = max(0, $levels_to_expand - 1);
 
         if (!has_actual_page_access(null, 'downloads')) {
-            $tree = array();
+            $tree = $compound_list ? array(array(), '') : array();
         }
 
         $out = '';

@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -18,17 +18,18 @@
  */
 class override_notes_consistency_test_set extends cms_test_case
 {
-    public function testUnusedGlobals()
+    public function testOverrideNotesConsistency()
     {
         require_code('files');
         require_code('files2');
-        $files = get_directory_contents(get_file_base(), '', true);
+        $files = get_directory_contents(get_file_base());
+        $files[] = 'install.php';
         foreach ($files as $file) {
             if (substr($file, -4) != '.php') {
                 continue;
             }
 
-            if (should_ignore_file($file, IGNORE_NONBUNDLED_SCATTERED | IGNORE_CUSTOM_DIR_SUPPLIED_CONTENTS | IGNORE_CUSTOM_DIR_GROWN_CONTENTS)) {
+            if (should_ignore_file($file, IGNORE_NONBUNDLED_VERY_SCATTERED | IGNORE_CUSTOM_DIR_SUPPLIED_CONTENTS | IGNORE_CUSTOM_DIR_GROWN_CONTENTS)) {
                 continue;
             }
 
@@ -39,6 +40,9 @@ class override_notes_consistency_test_set extends cms_test_case
             $contents = file_get_contents(get_file_base() . '/' . $file);
 
             if (strpos($contents, 'CQC: No check') !== false) {
+                continue;
+            }
+            if (strpos($contents, 'NO_API_CHECK') !== false) {
                 continue;
             }
 

@@ -1,6 +1,6 @@
-<script src="http://www.google.com/jsapi"></script>
+<script src="https://www.google.com/jsapi"></script>
 {+START,IF,{CLUSTER}}
-	<script src="http://google-maps-utility-library-v3.googlecode.com/svn/trunk/markerclustererplus/src/markerclusterer_packed.js"></script>
+	<script src="https://google-maps-utility-library-v3.googlecode.com/svn/trunk/markerclustererplus/src/markerclusterer_packed.js"></script>
 {+END}
 <script>// <![CDATA[
 	if (typeof window.data_map=='undefined') window.data_map=null;
@@ -133,14 +133,22 @@
 			\});
 		}
 	}
-	google.load('maps','3',{callback: google_map_initialize,other_params:''{+START,IF_NON_EMPTY,{REGION}},region:'{REGION;/}'{+END}});
 //]]></script>
 
-<section class="box box___block_main_google_map"><div class="box_inner">
-	{+START,IF_NON_EMPTY,{TITLE}}
-		<h3>{TITLE*}</h3>
-	{+END}
+{+START,IF_NON_EMPTY,{TITLE}}
+<section class="box box___block_main_google_map inline_block"><div class="box_inner">
+	<h3>{TITLE*}</h3>
+{+END}
 
-	<div id="{DIV_ID*}" style="width:{WIDTH}; height:{HEIGHT}"></div>
+	<div style="width:{WIDTH}; height:{HEIGHT}" id="{DIV_ID*}"></div>
+
+	<script>// <![CDATA[
+		add_event_listener_abstract(window,'load',function() {
+			google.load('maps','3',{callback: google_map_initialize,other_params:'{+START,IF_NON_EMPTY,{$CONFIG_OPTION,google_map_key}}key={$CONFIG_OPTION;/,google_map_key}{+END}'{+START,IF_NON_EMPTY,{REGION}},region:'{REGION;/}'{+END}});
+		});
+	//]]></script>
+
+{+START,IF_NON_EMPTY,{TITLE}}
 </div></section>
+{+END}
 

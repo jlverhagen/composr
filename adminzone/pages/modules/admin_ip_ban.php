@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -37,7 +37,7 @@ class Module_admin_ip_ban
         $info['hack_version'] = null;
         $info['version'] = 5;
         $info['locked'] = true;
-        $info['update_require_upgrade'] = 1;
+        $info['update_require_upgrade'] = true;
         return $info;
     }
 
@@ -83,7 +83,7 @@ class Module_admin_ip_ban
      * @param  boolean $check_perms Whether to check permissions.
      * @param  ?MEMBER $member_id The member to check permissions as (null: current user).
      * @param  boolean $support_crosslinks Whether to allow cross links to other modules (identifiable via a full-page-link rather than a screen-name).
-     * @param  boolean $be_deferential Whether to avoid any entry-point (or even return NULL to disable the page in the Sitemap) if we know another module, or page_group, is going to link to that entry-point. Note that "!" and "browse" entry points are automatically merged with container page nodes (likely called by page-groupings) as appropriate.
+     * @param  boolean $be_deferential Whether to avoid any entry-point (or even return null to disable the page in the Sitemap) if we know another module, or page_group, is going to link to that entry-point. Note that "!" and "browse" entry points are automatically merged with container page nodes (likely called by page-groupings) as appropriate.
      * @return ?array A map of entry points (screen-name=>language-code/string or screen-name=>[language-code/string, icon-theme-image]) (null: disabled).
      */
     public function get_entry_points($check_perms = true, $member_id = null, $support_crosslinks = true, $be_deferential = false)
@@ -97,7 +97,7 @@ class Module_admin_ip_ban
     public $test;
 
     /**
-     * Module pre-run function. Allows us to know meta-data for <head> before we start streaming output.
+     * Module pre-run function. Allows us to know metadata for <head> before we start streaming output.
      *
      * @return ?Tempcode Tempcode indicating some kind of exceptional output (null: none).
      */
@@ -279,17 +279,21 @@ class Module_admin_ip_ban
             preg_match('#^([^\s]+)(.*)$#', $ban, $matches);
             $ip = $matches[1];
             if (preg_match('#^[a-f0-9\.\*:]+$#U', $ip) == 0) {
-                attach_message(do_lang_tempcode('IP_ADDRESS_NOT_VALID', $ip), 'warn');
+                attach_message(do_lang_tempcode('IP_ADDRESS_NOT_VALID', escape_html($ip)), 'warn');
             } else {
                 if (!in_array($ip, $old_bans)) {
                     if ($ip == get_ip_address()) {
-                        attach_message(do_lang_tempcode('WONT_BAN_SELF', $ip), 'warn');
+                        attach_message(do_lang_tempcode('WONT_BAN_SELF', escape_html($ip)), 'warn');
                     } elseif ($ip == cms_srv('SERVER_ADDR')) {
-                        attach_message(do_lang_tempcode('WONT_BAN_SERVER', $ip), 'warn');
+                        attach_message(do_lang_tempcode('WONT_BAN_SERVER', escape_html($ip)), 'warn');
                     } else {
                         ban_ip($ip, isset($matches[2]) ? trim($matches[2]) : '');
                         $old_bans[] = $ip;
                     }
+                } else {
+                    $GLOBALS['SITE_DB']->query_update('banned_ip', array(
+                        'i_descrip' => isset($matches[2]) ? $matches[2] : '',
+                    ), array('ip' => $ip), '', 1);
                 }
             }
         }
@@ -313,7 +317,7 @@ class Module_admin_ip_ban
             $ip = $matches[1];
             if (preg_match('#^[a-f0-9\.]+$#U', $ip) == 0)
             {
-                attach_message(do_lang_tempcode('IP_ADDRESS_NOT_VALID_MAKE_UNBANNABLE', $str), 'warn');
+                attach_message(do_lang_tempcode('IP_ADDRESS_NOT_VALID_MAKE_UNBANNABLE', escape_html($str)), 'warn');
             } else
             {
                 if (!in_array($ip, $unbannable_already))
@@ -324,6 +328,10 @@ class Module_admin_ip_ban
                     ));
                     log_it('MADE_IP_UNBANNABLE', $matches[1]);
                     $unbannable_already[] = $ip;
+                } else {
+                    $GLOBALS['SITE_DB']->query_update('unbannable_ip', array(
+                        'note' => isset($matches[2]) ? $matches[2] : '',
+                    ), array('ip' => $ip), '', 1);
                 }
             }
         }
@@ -343,6 +351,9 @@ class Module_admin_ip_ban
         $id = get_param_integer('id');
         $test = $this->test;
 
+        require_code('cns_members_action');
+        require_code('cns_members_action2');
+
         if (!$test) {
             if ($id == get_member()) {
                 warn_exit(do_lang_tempcode('AVOIDING_BANNING_SELF'));
@@ -354,8 +365,6 @@ class Module_admin_ip_ban
                 return do_template('CONFIRM_SCREEN', array('_GUID' => '4f8c5443497e60e9d636cd45283f2d59', 'TITLE' => $this->title, 'PREVIEW' => $preview, 'FIELDS' => form_input_hidden('confirm', '1'), 'URL' => $url));
             }
 
-            require_code('cns_members_action');
-            require_code('cns_members_action2');
             cns_ban_member($id);
         } else {
             if (post_param_integer('confirm', 0) == 0) {
@@ -364,8 +373,6 @@ class Module_admin_ip_ban
                 return do_template('CONFIRM_SCREEN', array('_GUID' => '6a21b101d5c0621572d0f80606258963', 'TITLE' => $this->title, 'PREVIEW' => $preview, 'FIELDS' => form_input_hidden('confirm', '1'), 'URL' => $url));
             }
 
-            require_code('cns_members_action');
-            require_code('cns_members_action2');
             cns_unban_member($id);
         }
 
@@ -446,6 +453,7 @@ class Module_admin_ip_ban
         }
 
         require_code('failure');
+        require_code('failure_spammers');
         syndicate_spammer_report($ip, is_guest($member_id) ? '' : $GLOBALS['FORUM_DRIVER']->get_username($member_id), $GLOBALS['FORUM_DRIVER']->get_member_email_address($member_id), get_param_string('reason'), true);
         log_it('SYNDICATED_IP_BAN', $ip);
 

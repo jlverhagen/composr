@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -43,6 +43,7 @@ class Hook_task_import_catalogue
     public function run($catalogue_name, $key_field, $new_handling, $delete_handling, $update_handling, $meta_keywords_field, $meta_description_field, $notes_field, $allow_rating, $allow_comments, $allow_trackbacks, $csv_name)
     {
         require_code('catalogues2');
+        require_lang('catalogues');
 
         log_it('IMPORT_CATALOGUE_ENTRIES');
 
@@ -50,7 +51,7 @@ class Hook_task_import_catalogue
 
         // Find out what categories we have in the catalogue
         $categories = array();
-        $cat_rows = $GLOBALS['SITE_DB']->query_select('catalogue_categories', array('cc_title', 'cc_parent_id'), array('c_name' => $catalogue_name));
+        $cat_rows = $GLOBALS['SITE_DB']->query_select('catalogue_categories', array('cc_title', 'cc_parent_id', 'id'), array('c_name' => $catalogue_name));
         foreach ($cat_rows as $cat_row) {
             $categories[get_translated_text($cat_row['cc_title'])] = $cat_row['id'];
 
@@ -80,7 +81,6 @@ class Hook_task_import_catalogue
             if (!array_key_exists($key_field, $csv_field_titles)) {
                 fclose($handle);
                 @unlink($csv_name);
-                sync_file($csv_name);
                 return array(null, do_lang_tempcode('CATALOGUES_IMPORT_MISSING_KEY_FIELD'));
             }
             $found_key = false;
@@ -93,7 +93,6 @@ class Hook_task_import_catalogue
             if (!$found_key) {
                 fclose($handle);
                 @unlink($csv_name);
-                sync_file($csv_name);
                 return array(null, do_lang_tempcode('CATALOGUES_IMPORT_MISSING_KEY_FIELD'));
             }
         }
@@ -105,19 +104,16 @@ class Hook_task_import_catalogue
         if (($meta_keywords_field != '') && (!array_key_exists($meta_keywords_field, $csv_field_titles))) {
             fclose($handle);
             @unlink($csv_name);
-            sync_file($csv_name);
             return array(null, do_lang_tempcode('CATALOGUES_IMPORT_MISSING_META_KEYWORDS_FIELD'));
         }
         if (($meta_description_field != '') && (!array_key_exists($meta_description_field, $csv_field_titles))) {
             fclose($handle);
             @unlink($csv_name);
-            sync_file($csv_name);
             return array(null, do_lang_tempcode('CATALOGUES_IMPORT_MISSING_META_DESCRIPTION_FIELD'));
         }
         if (($notes_field != '') && (!array_key_exists($notes_field, $csv_field_titles))) {
             fclose($handle);
             @unlink($csv_name);
-            sync_file($csv_name);
             return array(null, do_lang_tempcode('CATALOGUES_IMPORT_MISSING_NOTES_FIELD'));
         }
 
@@ -131,7 +127,6 @@ class Hook_task_import_catalogue
             if (!is_null($test)) {
                 fclose($handle);
                 @unlink($csv_name);
-                sync_file($csv_name);
                 return $test;
             }
         }
@@ -151,7 +146,6 @@ class Hook_task_import_catalogue
 
         fclose($handle);
         @unlink($csv_name);
-        sync_file($csv_name);
         return null;
     }
 

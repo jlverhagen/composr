@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -73,7 +73,7 @@ function cns_make_group($name, $is_default = 0, $is_super_admin = 0, $is_super_m
         $test = $GLOBALS['FORUM_DB']->query_select_value_if_there('f_groups', 'id', array($GLOBALS['FORUM_DB']->translate_field_ref('g_name') => $name));
         if (!is_null($test)) {
             if ($uniqify) {
-                $name .= '_' . uniqid('', true);
+                $name .= '_' . uniqid('', false);
             } else {
                 warn_exit(do_lang_tempcode('ALREADY_EXISTS', escape_html($name)));
             }
@@ -131,31 +131,36 @@ function cns_make_group($name, $is_default = 0, $is_super_admin = 0, $is_super_m
     $group_id = $GLOBALS['FORUM_DB']->query_insert('f_groups', $map, true);
 
     if (($group_id > db_get_first_id() + 8) && ($is_private_club == 0) && ($comes_with_permissions)) {
-        // Copy permissions from members
+        // Copy permissions from members...
+
         require_code('cns_groups');
+
         $group_members = get_first_default_group();
+
         $member_access = $GLOBALS['SITE_DB']->query_select('group_privileges', array('*'), array('group_id' => $group_members));
-        foreach ($member_access as $access) {
+        foreach ($member_access as &$access) {
             $access['group_id'] = $group_id;
-            $GLOBALS['SITE_DB']->query_insert('group_privileges', $access, false, true); // failsafe, in case we have put in some permissions for a group since deleted (can happen during install)
         }
+        $GLOBALS['SITE_DB']->query_insert('group_privileges', $GLOBALS['SITE_DB']->bulk_insert_flip($member_access), false, true); // failsafe, in case we have put in some permissions for a group since deleted (can happen during install)
+
         $member_access = $GLOBALS['SITE_DB']->query_select('group_category_access', array('*'), array('group_id' => $group_members));
-        foreach ($member_access as $access) {
+        foreach ($member_access as &$access) {
             $access['group_id'] = $group_id;
-            $GLOBALS['SITE_DB']->query_insert('group_category_access', $access, false, true); // failsafe, in case we have put in some permissions for a group since deleted (can happen during install)
         }
+        $GLOBALS['SITE_DB']->query_insert('group_category_access', $GLOBALS['SITE_DB']->bulk_insert_flip($member_access), false, true); // failsafe, in case we have put in some permissions for a group since deleted (can happen during install)
+
         $member_access = $GLOBALS['SITE_DB']->query_select('group_zone_access', array('*'), array('group_id' => $group_members));
-        foreach ($member_access as $access) {
+        foreach ($member_access as &$access) {
             $access['group_id'] = $group_id;
-            $GLOBALS['SITE_DB']->query_insert('group_zone_access', $access, false, true); // failsafe, in case we have put in some permissions for a group since deleted (can happen during install)
         }
+        $GLOBALS['SITE_DB']->query_insert('group_zone_access', $GLOBALS['SITE_DB']->bulk_insert_flip($member_access), false, true); // failsafe, in case we have put in some permissions for a group since deleted (can happen during install)
     }
 
     log_it('ADD_GROUP', strval($group_id), $name);
 
     if ((addon_installed('commandr')) && (!running_script('install'))) {
         require_code('resource_fs');
-        generate_resourcefs_moniker('group', strval($group_id), null, null, true);
+        generate_resource_fs_moniker('group', strval($group_id), null, null, true);
     }
 
     if ($is_private_club == 1) {
@@ -173,6 +178,10 @@ function cns_make_group($name, $is_default = 0, $is_super_admin = 0, $is_super_m
     persistent_cache_delete('SUPER_ADMIN_GROUPS');
     persistent_cache_delete('SUPER_MODERATOR_GROUPS');
     persistent_cache_delete('OPEN_GROUPS');
+
+    global $USERGROUP_LIST_CACHE, $MODERATOR_GROUP_CACHE;
+    $USERGROUP_LIST_CACHE = null;
+    $MODERATOR_GROUP_CACHE = null;
 
     require_code('member_mentions');
     dispatch_member_mention_notifications('group', strval($group_id));

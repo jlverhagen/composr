@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -24,7 +24,7 @@ function handle_permission_purchase($purchase_id, $details, $type_code)
 {
     $id = intval(substr($type_code, strlen('PERMISSION_')));
 
-    $rows = $GLOBALS['SITE_DB']->query_select('pstore_permissions', array('*'), array('id' => $id));
+    $rows = $GLOBALS['SITE_DB']->query_select('pstore_permissions', array('*'), array('id' => $id), '', 1);
     if (!array_key_exists(0, $rows)) {
         warn_exit(do_lang_tempcode('MISSING_RESOURCE'));
     }
@@ -104,7 +104,14 @@ class Hook_ecommerce_permission
         foreach ($rows as $row) {
             if ($row['p_cost'] != 0) {
                 $cost = floatval($row['p_cost']) / $ppc;
-                $products['PERMISSION_' . strval($row['id'])] = array(PRODUCT_PURCHASE_WIZARD, float_to_raw_string($cost), 'handle_permission_purchase', array(), get_translated_text($row['p_title']));
+                $products['PERMISSION_' . strval($row['id'])] = array(
+                    PRODUCT_PURCHASE_WIZARD,
+                    float_to_raw_string($cost),
+                    'handle_permission_purchase',
+                    array(),
+                    get_translated_text($row['p_title']),
+                    get_option('currency'),
+                );
             }
         }
 

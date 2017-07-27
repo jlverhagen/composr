@@ -43,7 +43,7 @@ function toggle_wysiwyg(name)
 		} else
 		{
 			generate_question_ui(
-				'{!comcode:WHETHER_SAVE_WYSIWYG_SELECTION;}',
+				'{!comcode:WHETHER_SAVE_WYSIWYG_SELECTION;^}',
 				{
 					buttons__cancel: '{!INPUTSYSTEM_CANCEL;^}',
 					buttons__clear: '{!javascript:WYSIWYG_DISABLE_ONCE;^}',
@@ -51,7 +51,7 @@ function toggle_wysiwyg(name)
 					buttons__yes: '{!javascript:WYSIWYG_DISABLE_ALWAYS;^}'
 				},
 				'{!comcode:DISABLE_WYSIWYG;^}',
-				'{!comcode:DISCARD_WYSIWYG_CHANGES;^}',
+				'{!javascript:DISCARD_WYSIWYG_CHANGES;^}',
 				function(saving_cookies)
 				{
 					if (!saving_cookies) return;
@@ -120,19 +120,19 @@ function _toggle_wysiwyg(name)
 		} else
 		{
 			generate_question_ui(
-				'{!comcode:DISCARD_WYSIWYG_CHANGES_NICE;^}',
-				{buttons__cancel: '{!INPUTSYSTEM_CANCEL;^}',buttons__convert: '{!comcode:DISCARD_WYSIWYG_CHANGES_LINE_CONVERT;^}',buttons__no: '{!comcode:DISCARD_WYSIWYG_CHANGES_LINE;^}'},
+				'{!javascript:DISCARD_WYSIWYG_CHANGES_NICE;^}',
+				{buttons__cancel: '{!INPUTSYSTEM_CANCEL;^}',buttons__convert: '{!javascript:DISCARD_WYSIWYG_CHANGES_LINE_CONVERT;^}',buttons__no: '{!javascript:DISCARD_WYSIWYG_CHANGES_LINE;^}'},
 				'{!comcode:DISABLE_WYSIWYG;^}',
-				'{!comcode:DISCARD_WYSIWYG_CHANGES;^}',
+				'{!javascript:DISCARD_WYSIWYG_CHANGES;^}',
 				function(prompt)
 				{
 					if ((!prompt) || (prompt.toLowerCase()=='{!INPUTSYSTEM_CANCEL;^}'.toLowerCase()))
 					{
-						if (saving_cookies)
+						if (read_cookie('use_wysiwyg')=='0')
 							set_cookie('use_wysiwyg','1',3000);
 						return false;
 					}
-					var discard=(prompt.toLowerCase()=='{!comcode:DISCARD_WYSIWYG_CHANGES_LINE;^}'.toLowerCase());
+					var discard=(prompt.toLowerCase()=='{!javascript:DISCARD_WYSIWYG_CHANGES_LINE;^}'.toLowerCase());
 
 					disable_wysiwyg(forms,so,so2,discard);
 				}
@@ -174,6 +174,9 @@ function disable_wysiwyg(forms,so,so2,discard)
 				textarea.disabled=false;
 				textarea.readOnly=false;
 
+				if (typeof window.rebuild_attachment_button_for_next!='undefined')
+					rebuild_attachment_button_for_next(id,'attachment_upload_button');
+
 				// Unload editor
 				var wysiwyg_data=window.wysiwyg_editors[id].getData();
 				try
@@ -191,7 +194,9 @@ function disable_wysiwyg(forms,so,so2,discard)
 				{
 					var url=maintain_theme_in_link('{$FIND_SCRIPT_NOHTTP;,comcode_convert}?from_html=1'+keep_stub());
 					if (window.location.href.indexOf('topics')!=-1) url+='&forum_db=1';
-					var request=do_ajax_request(url,null,'data='+window.encodeURIComponent(wysiwyg_data.replace(new RegExp(String.fromCharCode(8203),'g'),'')));
+					var post='data='+window.encodeURIComponent(wysiwyg_data.replace(new RegExp(String.fromCharCode(8203),'g'),''));
+					post=modsecurity_workaround_ajax(post);
+					var request=do_ajax_request(url,null,post);
 					if ((!request.responseXML) || (!request.responseXML.documentElement.getElementsByTagName('result')[0]))
 					{
 						textarea.value='[semihtml]'+wysiwyg_data+'[/semihtml]';
@@ -219,6 +224,36 @@ function disable_wysiwyg(forms,so,so2,discard)
 	if (so2) so2.style.display='none';
 
 	window.wysiwyg_on=function() { return false; };
+}
+
+window.wysiwyg_readonly_timer={};
+function wysiwyg_set_readonly(name,readonly)
+{
+	if (typeof window.wysiwyg_editors[name]=='undefined')
+	{
+		return;
+	}
+
+	var editor=window.wysiwyg_editors[name];
+	if (editor.document && editor.document.$ && editor.document.$.body)
+	{
+		editor.document.$.body.readOnly=readonly;
+		editor.document.$.body.contentEditable=!readonly;
+		editor.document.$.body.designMode=readonly?'off':'on';
+	}
+
+	// In case it sticks as read only we need a timer to put it back. But only if not already back.
+	if (typeof window.wysiwyg_readonly_timer[name]!='undefined' && window.wysiwyg_readonly_timer[name])
+	{
+		window.clearTimeout(window.wysiwyg_readonly_timer[name]);
+		window.wysiwyg_readonly_timer[name]=null;
+	}
+	if (readonly)
+	{
+		window.wysiwyg_readonly_timer[name]=window.setTimeout(function() {
+			wysiwyg_set_readonly(name,false);
+		},5000);
+	}
 }
 
 // Initialising the HTML editor if requested later (i.e. toggling it to on)
@@ -395,27 +430,37 @@ function wysiwyg_editor_init_for(element,id)
 		}
 	});
 	if (document.getElementById('attachment_store'))
-		window.lang_PREFER_CMS_ATTACHMENTS='{!javascript:PREFER_CMS_ATTACHMENTS;}';
-	window.lang_SPELLCHECKER_ENABLED='{!javascript:SPELLCHECKER_ENABLED;}';
-	window.lang_SPELLCHECKER_DISABLED='{!javascript:SPELLCHECKER_DISABLED;}';
-	window.lang_SPELLCHECKER_TOGGLE='{!javascript:SPELLCHECKER_TOGGLE;}';
-	window.lang_SPELLCHECKER_LABEL='{!javascript:SPELLCHECKER_LABEL;}';
-	window.lang_NO_IMAGE_PASTE_SAFARI='{!javascript:NO_IMAGE_PASTE_SAFARI;}';
+		window.lang_PREFER_CMS_ATTACHMENTS='{!javascript:PREFER_CMS_ATTACHMENTS;^}';
+	window.lang_SPELLCHECKER_ENABLED='{!javascript:SPELLCHECKER_ENABLED;^}';
+	window.lang_SPELLCHECKER_DISABLED='{!javascript:SPELLCHECKER_DISABLED;^}';
+	window.lang_SPELLCHECKER_TOGGLE='{!javascript:SPELLCHECKER_TOGGLE;^}';
+	window.lang_SPELLCHECKER_LABEL='{!javascript:SPELLCHECKER_LABEL;^}';
+	window.lang_NO_IMAGE_PASTE_SAFARI='{!javascript:NO_IMAGE_PASTE_SAFARI;^}';
 
-	// Mainly used by autosaving
-	editor.on('key', function (event) {
+	// Mainly used by autosaving, but also sometimes CKEditor seems to not refresh the textarea (e.g. for one user's site when pressing delete key on an image)
+	var sync=function (event) {
 		if (typeof element.externalOnKeyPress!='undefined')
 		{
 			element.value=editor.getData();
 			element.externalOnKeyPress(event,element);
 		}
+	};
+	editor.on('change',sync);
+	editor.on('mode',function() {
+		var ta=editor.container.$.getElementsByTagName('textarea');
+		if (typeof ta[0]!='undefined')
+			ta[0].onchange=sync; // The source view doesn't fire the 'change' event and we don't want to use the 'key' event
 	});
 
-	// Instant preview of Comcode
 	editor.on('instanceReady', function (event) {
-		if (typeof window.set_up_comcode_autocomplete!='undefined')
-			set_up_comcode_autocomplete(id);
+		editor.setReadOnly(false); // Workaround for CKEditor bug found in 4.5.6, where it started sometimes without contentEditable=true
 
+		if (typeof window.set_up_comcode_autocomplete!='undefined')
+		{
+			set_up_comcode_autocomplete(id);
+		}
+
+		// Instant preview of Comcode
 		find_tags_in_editor(editor,element);
 	});
 	window.setInterval(function() {
@@ -474,7 +519,7 @@ function find_tags_in_editor(editor,element)
 					if (event.pageY) eventCopy.pageY=3000;
 					if (event.clientY) eventCopy.clientY=3000;
 
-					if (typeof window.activate_tooltip!='undefined')
+					if (typeof window.activate_tooltip!='undefined' && typeof this.orig_title!='undefined')
 					{
 						reposition_tooltip(this,eventCopy);
 						this.title=this.orig_title;
@@ -503,7 +548,7 @@ function find_tags_in_editor(editor,element)
 					var field_name=editor.name;
 					if ((typeof window.event!='undefined') && (window.event)) window.event.returnValue=false;
 					if (this.id=='') this.id='comcode_tag_'+Math.round(Math.random()*10000000);
-					var tag_type=this.title.replace(/^\[/,'').replace(/[= \]].*$/,'');
+					var tag_type=this.title.replace(/^\[/,'').replace(/[= \]](.|\n)*$/,'');
 					if (tag_type=='block')
 					{
 						var block_name=this.title.replace(/\[\/block\]$/,'').replace(/^(.|\s)*\]/,'');
@@ -556,7 +601,7 @@ function find_tags_in_editor(editor,element)
 								if (ajax_result)
 								{
 									var tmp_rendered=merge_text_nodes(ajax_result.childNodes);
-									if (tmp_rendered.indexOf('{!CCP_ERROR_STUB;}')==-1)
+									if (tmp_rendered.indexOf('{!CCP_ERROR_STUB;^}')==-1)
 										self_ob.rendered_tooltip=tmp_rendered;
 								}
 								if (typeof self_ob.rendered_tooltip!='undefined')
@@ -664,6 +709,8 @@ function set_textbox(element,text,html)
 
 		window.wysiwyg_editors[element.id].setData(html);
 
+		window.wysiwyg_editors[element.id].updateElement();
+
 		window.setTimeout(function() {
 			find_tags_in_editor(window.wysiwyg_editors[element.id],element);
 		}, 100);
@@ -722,7 +769,9 @@ function insert_textbox(element,text,sel,plain_insert,html)
 				editor.document.getBody().appendHtml(insert);
 			} else
 			{
-				editor.insertHtml(insert);
+				//editor.insertHtml(insert); Actually may break up the parent tag, we want it to nest nicely
+				var element_for_inserting=window.CKEDITOR.dom.element.createFromHtml(insert);
+				editor.insertElement(element_for_inserting);
 			}
 
 			var after=editor.getData();
@@ -736,6 +785,8 @@ function insert_textbox(element,text,sel,plain_insert,html)
 			if (after==before) // Could have just been a window.scrollBy popup-blocker exception, so only do this if the op definitely failed
 				editor.document.getBody().appendHtml(insert);
 		}
+
+		editor.updateElement();
 
 		return;
 	}
@@ -830,7 +881,7 @@ function insert_textbox_wrapping(element,before_wrap_tag,after_wrap_tag)
 		editor.focus(); // Needed on some browsers, but on Opera will defocus our selection
 		var selected_html=get_selected_html(editor);
 
-		if (selected_html=='') selected_html='{!comcode:TEXT_OR_COMCODE_GOES_HERE;}'.toUpperCase();
+		if (selected_html=='') selected_html='{!comcode:TEXT_OR_COMCODE_GOES_HERE;^}'.toUpperCase();
 
 		var new_html='';
 
@@ -841,10 +892,10 @@ function insert_textbox_wrapping(element,before_wrap_tag,after_wrap_tag)
 		{
 			var result_tags=request.responseXML.documentElement.getElementsByTagName('result');
 			var result=result_tags[0];
-			new_html=merge_text_nodes(result.childNodes).replace(/\s*$/,'');
+			new_html=merge_text_nodes(result.childNodes).replace(/\s*$/,''); /* result is an XML-escaped string of HTML, so we get via looking at the node text */
 		} else
 		{
-			new_html = selected_html;
+			new_html=selected_html;
 		}
 
 		if ((editor.getSelection()) && (editor.getSelection().getStartElement().getName()=='kbd')) // Danger Danger - don't want to insert into another Comcode tag. Put it after. They can cut+paste back if they need.
@@ -854,6 +905,8 @@ function insert_textbox_wrapping(element,before_wrap_tag,after_wrap_tag)
 		{
 			editor.insertHtml(new_html);
 		}
+
+		editor.updateElement();
 
 		find_tags_in_editor(editor,element);
 
@@ -971,7 +1024,7 @@ function show_upload_syndication_options(name,syndication_json,no_quota)
 			};
 		}(id,authorised),0);
 
-		html+='<span><label for="'+id+'"><input type="checkbox" '+(checked?'checked="checked" ':'')+'id="'+id+'" name="'+id+'" value="1" />{!upload_syndication:UPLOAD_TO} '+escape_html(label)+(((no_quota) && (num==1))?' ({!_REQUIRED;})':'')+'</label></span>';
+		html+='<span><label for="'+id+'"><input type="checkbox" '+(checked?'checked="checked" ':'')+'id="'+id+'" name="'+id+'" value="1" />{!upload_syndication:UPLOAD_TO} '+escape_html(label)+(((no_quota) && (num==1))?' ({!_REQUIRED;^})':'')+'</label></span>';
 	}
 
 	if ((no_quota) && (num_checked==0))

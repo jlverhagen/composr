@@ -12,7 +12,7 @@
 				<thead>
 					<tr style="border: 1px solid #ccc; background-color: #E3EAF6;">
 						<th colspan="2">{!GIFT}</th>
-						<th width="33%">{!GIFT_PRICE}</th>
+						<th width="33%">{!PRICE}</th>
 						<th width="33%">{!ACTIONS}</th>
 					</tr>
 				</thead>
@@ -30,7 +30,7 @@
 								{!_GIFT_PRICE,{PRICE*}}
 							</td>
 							<td width="33%" style="text-align: center; padding: 10px;">
-								<a title="{NAME*}" href="{GIFT_URL*}">{!PURCHASE}</a>
+								<a title="{NAME*}" href="{GIFT_URL*}">{!GIFT_PURCHASE}</a>
 							</td>
 						</tr>
 					{+END}
@@ -52,16 +52,18 @@
 	</div></div>
 
 	<div class="float_surrounder">
-		<form style="float: left; margin-top: 3px" title="{!SORT_BY}" action="{$SELF_URL*,,,,category=<null>,start=0}" method="post">
-			<p>
+		<form style="float: left; margin-top: 3px" title="{!CATEGORY}" action="{$SELF_URL*,,,,category=<null>,start=0}" method="post" autocomplete="off">
+			{$INSERT_SPAMMER_BLACKHOLE}
+
+			<div>
 				<label for="category">{!CATEGORY}</label>
 				<select id="category" name="category">
 					<option value="">{!ALL_EM}</option>
 					{+START,LOOP,CATEGORIES}
 						<option{+START,IF,{$EQ,{_loop_var},{CATEGORY}}} selected="selected"{+END}>{_loop_var*}</option>
 					{+END}
-				</select><input onclick="disable_button_just_clicked(this);" class="buttons__filter button_micro" type="submit" value="{!FILTER}" />
-			</p>
+				</select><input onclick="disable_button_just_clicked(this);" class="button_micro buttons__filter" type="submit" value="{!FILTER}" />
+			</div>
 		</form>
 
 		{+START,IF_NON_EMPTY,{PAGINATION}}

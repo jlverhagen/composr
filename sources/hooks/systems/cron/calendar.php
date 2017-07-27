@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -53,13 +53,13 @@ class Hook_cron_calendar
 
                 // Dispatch
                 if (is_null($job['j_reminder_id'])) { // It's code/URL
-                    //if (!has_actual_page_access($job['e_submitter'],'admin_commandr')) continue; // Someone was admin but isn't anymore          Actually, really ex-admins could have placed lots of other kinds of traps. It's the responsibility of the staff to check this on a wider basis. There's no use creating tangental management complexity for just one case.
+                    //if (!has_actual_page_access($job['e_submitter'], 'admin_commandr')) continue; // Someone was admin but isn't anymore          Actually, really ex-admins could have placed lots of other kinds of traps. It's the responsibility of the staff to check this on a wider basis. There's no use creating tangental management complexity for just one case.
                     if ($job['e_type'] != db_get_first_id()) {
                         continue; // Very strange
                     }
 
                     $job_text = get_translated_text($job['e_content']);
-                    if (substr($job_text, 0, 7) == 'http://') { // It's URL
+                    if (substr($job_text, 0, 7) == 'http://' || substr($job_text, 0, 8) == 'https://') { // It's a URL
                         require_code('character_sets');
 
                         echo convert_to_internal_encoding(http_download_file($job_text));
@@ -74,6 +74,7 @@ class Hook_cron_calendar
                                 }
                             } else {
                                 $GLOBALS['_EVENT_TIMESTAMP'] = array_key_exists(0, $recurrences) ? usertime_to_utctime($recurrences[0][0]) : mktime($job['e_start_hour'], $job['e_start_minute'], 0, $job['e_start_month'], $start_day_of_month, $job['e_start_year']);
+                                $GLOBALS['event_timestamp'] = $GLOBALS['_EVENT_TIMESTAMP']; // LEGACY with ocPortal go-live dates
 
                                 // Commandr code
                                 require_code('commandr');
@@ -118,7 +119,7 @@ class Hook_cron_calendar
                 $GLOBALS['SITE_DB']->query('DELETE FROM ' . $GLOBALS['SITE_DB']->get_table_prefix() . 'calendar_jobs WHERE ' . $or_list, null, null, false, true);
             }
 
-            $start += 300;
+            //$start += 300;    No, we just deleted, so offsets would have changed
         } while (array_key_exists(0, $jobs));
     }
 }

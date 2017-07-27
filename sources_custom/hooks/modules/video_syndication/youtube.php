@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -69,7 +69,7 @@ class Hook_video_syndication_youtube
         $videos = array();
 
         if (!is_null($local_id)) {
-            // This code is a bit annoying. Ideally we'd do a remote tag search, but Youtube's API is lagged here, and only works for listed videos. We'll therefore look at our local mappings.
+            // This code is a bit annoying. Ideally we'd do a remote tag search, but YouTube's API is lagged here, and only works for listed videos. We'll therefore look at our local mappings.
             $transcoding_id = $GLOBALS['SITE_DB']->query_value_if_there('SELECT t_id FROM ' . get_table_prefix() . 'video_transcoding WHERE t_local_id=' . strval($local_id) . ' AND t_id LIKE \'' . db_encode_like('youtube\_%') . '\'');
             if (is_null($transcoding_id)) {
                 return array(); // Not uploaded yet
@@ -82,14 +82,15 @@ class Hook_video_syndication_youtube
         do {
             if (!is_null($transcoding_id)) {
                 /* EDIT: Actually we looked at transcoding table instead and lookup individual video and process as such
-                    $query_params['category']='sync'.strval($local_id); // Covers {http://gdata.youtube.com/schemas/2007/developertags.cat} and {http://gdata.youtube.com/schemas/2007/keywords.cat}
-                    $xml=$this->_http('https://gdata.youtube.com/feeds/api/users/default/uploads',$query_params);
+                $query_params['category'] = 'sync' . strval($local_id); // Covers {http://gdata.youtube.com/schemas/2007/developertags.cat} and {http://gdata.youtube.com/schemas/2007/keywords.cat}
+                $xml = $this->_http('https://gdata.youtube.com/feeds/api/users/default/uploads', $query_params);
 
-                    if (!isset($parsed->entry)) // Annoying! Youtube search index takes time and doesn't consider unlisted. We therefore need to search much harder.
-                    {
-                            unset($query_params['category']);
-                            $xml=$this->_http('https://gdata.youtube.com/feeds/api/users/default/uploads',$query_params);
-                    }*/
+                if (!isset($parsed->entry)) // Annoying! YouTube search index takes time and doesn't consider unlisted. We therefore need to search much harder.
+                {
+                    unset($query_params['category']);
+                    $xml = $this->_http('https://gdata.youtube.com/feeds/api/users/default/uploads', $query_params);
+                }
+                */
 
                 $xml = $this->_http('https://gdata.youtube.com/feeds/api/users/default/uploads/' . $transcoding_id, array());
 
@@ -233,11 +234,11 @@ class Hook_video_syndication_youtube
 
         $api_url = 'https://uploads.gdata.youtube.com/resumable/feeds/api/users/default/uploads';
 
-        if (function_exists('set_time_limit')) {
+        if (php_function_allowed('set_time_limit')) {
             @set_time_limit(10000);
         }
         try {
-            $test = $this->_http($api_url, array(), 'POST', $xml, 1000.0, $extra_headers/*,$file_path*/);
+            $test = $this->_http($api_url, array(), 'POST', $xml, 1000.0, $extra_headers/*, $file_path*/);
             $response = $this->_http($HTTP_DOWNLOAD_URL, null, 'PUT', null, 10000.0, $extra_headers, $file_path, $mime_type);
 
             if ($is_temp_file) {
@@ -270,7 +271,7 @@ class Hook_video_syndication_youtube
         $is_temp_file = false;
 
         if (substr($url, 0, strlen(get_custom_base_url())) != get_custom_base_url()) {
-            $temppath = cms_tempnam('vimeo_temp_dload');
+            $temppath = cms_tempnam();
             $tempfile = fopen($temppath, 'wb');
             http_download_file($url, 1024 * 1024 * 1024 * 5, true, false, 'Composr', null, null, null, null, null, $tempfile);
 
@@ -317,7 +318,7 @@ class Hook_video_syndication_youtube
 
     public function unbind_remote_video($video)
     {
-        // No-op for youtube, can't be done via Youtube Data API. Fortunately we don't really need this method.
+        // No-op for youtube, can't be done via YouTube Data API. Fortunately we don't really need this method.
         return false;
     }
 
@@ -345,7 +346,7 @@ class Hook_video_syndication_youtube
     public function leave_comment($video, $comment)
     {
         $xml = trim('
-            <' . '?xml version="1.0" encoding="UTF-8"?' . '>
+            <' . '?xml version="1.0" encoding="utf-8"?' . '>
             <entry xmlns="http://www.w3.org/2005/Atom" xmlns:yt="http://gdata.youtube.com/schemas/2007">
                     <content>' . xmlentities($comment) . '</content>
             </entry>
@@ -451,13 +452,8 @@ class Hook_video_syndication_youtube
             }
         }
 
-        if ($params !== null) {
-            $_params = '';
-            foreach ($params as $key => $val) {
-                $_params .= '&' . $key . '=' . urlencode($val);
-            }
-
-            $full_url = $url . '?strict=1&v=2.1' . $_params;
+        if (!empty($params)) {
+            $full_url = $url . '?strict=1&v=2.1&' . http_build_query($params);
         } else {
             $full_url = $url;
         }

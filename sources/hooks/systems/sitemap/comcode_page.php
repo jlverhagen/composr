@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -95,9 +95,10 @@ class Hook_sitemap_comcode_page extends Hook_sitemap_page
         if (($details === false) && (get_option('collapse_user_zones') == '0')) {
             $zone = ($zone == 'site') ? '' : 'site'; // Try different zone
             $details = $this->_request_page_details($page, $zone);
-            if ($details === false) {
-                return null;
-            }
+        }
+
+        if ($details === false) {
+            return null;
         }
 
         $zone_default_page = get_zone_default_page($zone);
@@ -191,21 +192,21 @@ class Hook_sitemap_comcode_page extends Hook_sitemap_page
                 $struct['extra_meta']['db_row'] = $db_row[0] + (($row === null) ? array() : $struct['extra_meta']['db_row']);
             }
         }
-        if (!$got_title) {
-            $page_contents = file_get_contents(get_file_base() . '/' . $path);
-            $matches = array();
-            if (preg_match('#\[title[^\]]*\]#', $page_contents, $matches) != 0) {
-                $start = strpos($page_contents, $matches[0]) + strlen($matches[0]);
-                $end = strpos($page_contents, '[/title]', $start);
-                $_title = substr($page_contents, $start, $end - $start);
-                if ($_title != '') {
-                    $struct['title'] = comcode_to_tempcode($_title, null, true);
-                }
+        $full_path = get_custom_file_base() . '/' . $path;
+        if (!is_file($full_path)) {
+            $full_path = get_file_base() . '/' . $path;
+        }
+        $page_contents = file_get_contents($full_path);
+        if (!$got_title || strpos($page_contents, 'sub=') !== false) {
+            require_code('zones2');
+            $__title = get_comcode_page_title_from_disk($full_path, true, true);
+            if (!$__title->is_empty()) {
+                $struct['title'] = $__title;
             }
         }
 
         if (($options & SITEMAP_GEN_LABEL_CONTENT_TYPES) != 0) {
-            $struct['title'] = make_string_tempcode(do_lang('COMCODE_PAGE') . ': ' . $page);
+            $struct['title'] = make_string_tempcode(do_lang('zones:COMCODE_PAGE') . ': ' . $page);
         }
 
         if (!$this->_check_node_permissions($struct)) {
@@ -236,10 +237,15 @@ class Hook_sitemap_comcode_page extends Hook_sitemap_page
                 }
 
                 if (!$skip_children) {
+                    static $child_rows = array();
                     $start = 0;
                     do {
-                        $child_rows = $GLOBALS['SITE_DB']->query_select('comcode_pages', array('the_page'), $where, 'ORDER BY p_order,the_page', SITEMAP_MAX_ROWS_PER_LOOP, $start);
-                        foreach ($child_rows as $child_row) {
+                        $sz = serialize($where + array('_start' => $start));
+
+                        if (!isset($child_rows[$sz])) {
+                            $child_rows[$sz] = $GLOBALS['SITE_DB']->query_select('comcode_pages', array('the_page'), $where, 'ORDER BY p_order,the_page', SITEMAP_MAX_ROWS_PER_LOOP, $start);
+                        }
+                        foreach ($child_rows[$sz] as $child_row) {
                             $child_page_link = $zone . ':' . $child_row['the_page'];
                             $child_node = $this->get_node($child_page_link, $callback, $valid_node_types, $child_cutoff, $max_recurse_depth, $recurse_level + 1, $options, $zone, $meta_gather, $child_row);
                             if ($child_node !== null) {
@@ -247,7 +253,7 @@ class Hook_sitemap_comcode_page extends Hook_sitemap_page
                             }
                         }
                         $start += SITEMAP_MAX_ROWS_PER_LOOP;
-                    } while (count($child_rows) > 0);
+                    } while (count($child_rows[$sz]) > 0);
                 }
             }
             $struct['children'] = $children;

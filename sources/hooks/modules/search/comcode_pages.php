@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -61,7 +61,7 @@ class Hook_search_comcode_pages extends FieldsSearchHook
     /**
      * Get a list of extra fields to ask for.
      *
-     * @return array A list of maps specifying extra fields
+     * @return ?array A list of maps specifying extra fields (null: no tree)
      */
     public function get_fields()
     {
@@ -280,7 +280,7 @@ class Hook_search_comcode_pages extends FieldsSearchHook
     {
         global $SEARCH__CONTENT_BITS;
 
-        if (function_exists('set_time_limit')) {
+        if (php_function_allowed('set_time_limit')) {
             @set_time_limit(30); // This can be slow.
         }
 
@@ -296,25 +296,29 @@ class Hook_search_comcode_pages extends FieldsSearchHook
             if (strpos($page_request[0], 'COMCODE') === false) {
                 return new Tempcode();
             }
-            $comcode_file = $page_request[count($page_request)-1];
+            $comcode_file = get_custom_file_base() . '/' . $page_request[count($page_request) - 1];
 
             if (file_exists($comcode_file)) {
                 global $LAX_COMCODE;
                 $LAX_COMCODE = true;
-                /*$temp_summary=comcode_to_tempcode(file_get_contents($comcode_file),NULL,true); Tempcode compiler slowed things down so easier just to show full thing
-                    $_temp_summary=$temp_summary->evaluate();
-                    if (strlen($_temp_summary)<500)
-                    {
-                            $summary=$_temp_summary;
-                    } else
-                    {
-                            $entity='&hellip;';
-                            if (function_exists('ocp_mark_as_escaped')) ocp_mark_as_escaped($entity);
-                            $pos=false;//strpos($_temp_summary,'<span class="comcode_highlight">');
-                            if ($pos===false) $pos=0;
-                            $pos2=max(0,$pos-250);
-                            $summary=(($pos2==0)?'':$entity).xhtml_substr($_temp_summary,$pos2,500).$entity;
-                    }*/
+                /* Tempcode compiler slowed things down so easier just to show full thing
+                $temp_summary = comcode_to_tempcode(file_get_contents($comcode_file), null, true);
+                $_temp_summary = $temp_summary->evaluate();
+                if (strlen($_temp_summary) < 500) {
+                    $summary = $_temp_summary;
+                } else {
+                    $entity = '&hellip;';
+                    if (function_exists('ocp_mark_as_escaped')) {
+                        ocp_mark_as_escaped($entity);
+                    }
+                    $pos = false;//strpos($_temp_summary,'<span class="comcode_highlight">');
+                    if ($pos === false) {
+                        $pos = 0;
+                    }
+                    $pos2 = max(0, $pos - 250);
+                    $summary = (($pos2 == 0) ? '' : $entity) . xhtml_substr($_temp_summary, $pos2, 500) . $entity;
+                }
+                */
                 $GLOBALS['OVERRIDE_SELF_ZONE'] = $zone;
                 $backup_search__contents_bits = $SEARCH__CONTENT_BITS;
                 $SEARCH__CONTENT_BITS = null; // We do not want highlighting, as it'll result in far too much Comcode being parsed (ok for short snippets, not many full pages!)

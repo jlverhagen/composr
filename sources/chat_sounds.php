@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -21,7 +21,7 @@
 /**
  * Get the list of all available chat sound effects.
  *
- * @param  boolean $only_overridable Map to NULL if it is not overridable.
+ * @param  boolean $only_overridable Map to null if it is not overridable.
  * @return map All available sound effects (mapping between base code, and actual code).
  */
 function get_effect_set($only_overridable = false)
@@ -45,11 +45,16 @@ function get_effect_set($only_overridable = false)
  *
  * @param  boolean $full_urls Whether to use full URLs in the mappings.
  * @param  ?MEMBER $for_member Get settings overridden for this specific member (null: global settings).
- * @param  boolean $all_members Get global settings and settings overridden for all members (if this is true we'd expect $for_member to be NULL).
+ * @param  boolean $all_members Get global settings and settings overridden for all members (if this is true we'd expect $for_member to be null).
  * @return array The template mappings.
  */
 function get_effect_settings($full_urls = false, $for_member = null, $all_members = false)
 {
+    static $cache = array();
+    if (isset($cache[$full_urls][$for_member][$all_members])) {
+        return $cache[$full_urls][$for_member][$all_members];
+    }
+
     $effects = get_effect_set(!is_null($for_member));
 
     global $EFFECT_SETTINGS_ROWS;
@@ -95,5 +100,8 @@ function get_effect_settings($full_urls = false, $for_member = null, $all_member
             'EFFECT_TITLE' => do_lang('CHAT_EFFECT_' . $base_effect_code),
         );
     }
+
+    $cache[$full_urls][$for_member][$all_members] = $effect_settings;
+
     return $effect_settings;
 }

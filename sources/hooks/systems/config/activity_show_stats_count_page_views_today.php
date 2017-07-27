@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -50,6 +50,10 @@ class Hook_config_activity_show_stats_count_page_views_today
      */
     public function get_default()
     {
+        if (intval(get_option('stats_store_time')) < 24) {
+            return null;
+        }
+
         return '0';
     }
 }

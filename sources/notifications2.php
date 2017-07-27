@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -81,7 +81,7 @@ function notifications_ui($member_id_of)
 
     $lockdown = collapse_2d_complexity('l_notification_code', 'l_setting', $GLOBALS['SITE_DB']->query_select('notification_lockdown', array('*')));
 
-    $cnt_post = count($_POST);
+    $has_interesting_post_fields = has_interesting_post_fields();
 
     $notification_sections = array();
     $hooks = find_all_hooks('systems', 'notifications');
@@ -119,7 +119,7 @@ function notifications_ui($member_id_of)
                 foreach ($_notification_types as $possible => $ntype) {
                     $available = (($possible & $allowed_setting) != 0);
 
-                    if ($cnt_post != 0) {
+                    if ($has_interesting_post_fields) {
                         $checked = post_param_integer('notification_' . $notification_code . '_' . $ntype, 0);
                     } else {
                         $checked = (($possible & $current_setting) != 0) ? 1 : 0;
@@ -171,7 +171,7 @@ function notifications_ui($member_id_of)
     }
 
     // Save via form post
-    if (count($_POST) != 0) {
+    if (has_interesting_post_fields()) {
         foreach ($notification_sections as $notification_section) {
             foreach ($notification_section['NOTIFICATION_CODES'] as $notification_code) {
                 $new_setting = A_NA;
@@ -203,7 +203,7 @@ function notifications_ui($member_id_of)
         $tmp_file = file_get_contents($css_path);
         $matches = array();
         if (preg_match('#(\s|\})th[\s,][^\}]*(\s|\{)background-color:\s*\#([\dA-Fa-f]*);color:\s*\#([\dA-Fa-f]*);#sU', $tmp_file, $matches) != 0) {
-            $color = $matches[3] . '&fg_color=' . $matches[4];
+            $color = $matches[3] . '&fg_color=' . urlencode($matches[4]);
         }
     }
 
@@ -212,7 +212,7 @@ function notifications_ui($member_id_of)
         $auto_monitor_contrib_content = strval($GLOBALS['FORUM_DRIVER']->get_member_row_field($member_id_of, 'm_auto_monitor_contrib_content'));
     }
 
-    $custom_fields = $GLOBALS['FORUM_DRIVER']->get_custom_fields(get_member());
+    $custom_fields = $GLOBALS['FORUM_DRIVER']->get_custom_fields($member_id_of);
     $smart_topic_notification_content = (array_key_exists('smart_topic_notification', $custom_fields)) && ($custom_fields['smart_topic_notification'] == '1');
 
     return do_template('NOTIFICATIONS_MANAGE', array(
@@ -239,7 +239,6 @@ function notifications_ui_advanced($notification_code, $enable_message = null, $
     require_css('notifications');
     require_code('notifications');
     require_lang('notifications');
-    require_javascript('notifications');
     require_javascript('notifications');
     require_all_lang();
 
@@ -275,7 +274,7 @@ function notifications_ui_advanced($notification_code, $enable_message = null, $
 
     $notification_category = get_param_string('id', null);
     if (is_null($notification_category)) {
-        if (count($_POST) != 0) { // If we've just saved via form POST
+        if (has_interesting_post_fields()) { // If we've just saved via form POST
             enable_notifications($notification_code, null, null, A_NA); // Make it clear we've overridden the general value by doing this
 
             foreach (array_keys($_POST) as $key) {
@@ -350,7 +349,7 @@ function notifications_ui_advanced($notification_code, $enable_message = null, $
         $tmp_file = file_get_contents($css_path);
         $matches = array();
         if (preg_match('#(\s|\})th[\s,][^\}]*(\s|\{)background-color:\s*\#([\dA-Fa-f]*);color:\s*\#([\dA-Fa-f]*);#sU', $tmp_file, $matches) != 0) {
-            $color = $matches[3] . '&fg_color=' . $matches[4];
+            $color = $matches[3] . '&fg_color=' . urlencode($matches[4]);
         }
     }
 
@@ -377,6 +376,7 @@ function notifications_ui_advanced($notification_code, $enable_message = null, $
  * @param  ?boolean $force_change_children_to Value to change setting to (null: do not change)
  * @param  boolean $done_get_change Whether we have made a change to the settings
  * @return Tempcode UI
+ *
  * @ignore
  */
 function _notifications_build_category_tree($_notification_types, $notification_code, $ob, $id, $depth, $force_change_children_to, &$done_get_change)
@@ -426,7 +426,7 @@ function _notifications_build_category_tree($_notification_types, $notification_
 
             $available = (($possible & $allowed_setting) != 0);
 
-            if (count($_POST) != 0) {
+            if (has_interesting_post_fields()) {
                 $checked = post_param_integer('notification_' . $notification_category . '_' . $ntype, 0);
             } else {
                 $checked = (($possible & $current_setting) != 0) ? 1 : 0;

@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -32,7 +32,7 @@ class Persistent_caching_xcache
      *
      * @return array The list of objects
      */
-    public function load_objects_list()
+    public function &load_objects_list()
     {
         if (is_null($this->objects_list)) {
             $this->objects_list = xcache_get(get_file_base() . 'PERSISTENT_CACHE_OBJECTS');
@@ -48,7 +48,7 @@ class Persistent_caching_xcache
      *
      * @param  string $key Key
      * @param  ?TIME $min_cache_date Minimum timestamp that entries from the cache may hold (null: don't care)
-     * @return ?mixed The data (null: not found / NULL entry)
+     * @return ?mixed The data (null: not found / null entry)
      */
     public function get($key, $min_cache_date = null)
     {
@@ -73,10 +73,10 @@ class Persistent_caching_xcache
     public function set($key, $data, $flags = 0, $expire_secs = null)
     {
         // Update list of persistent-objects
-        $objects_list = $this->load_objects_list();
-        if (!array_key_exists($key, $objects_list)) {
-            $objects_list[$key] = true;
-            xcache_set(get_file_base() . 'PERSISTENT_CACHE_OBJECTS', $objects_list);
+        $this->load_objects_list();
+        if (!array_key_exists($key, $this->objects_list)) {
+            $this->objects_list[$key] = true;
+            xcache_set(get_file_base() . 'PERSISTENT_CACHE_OBJECTS', $this->objects_list);
         }
 
         xcache_set($key, array(time(), $data), $expire_secs);
@@ -90,9 +90,9 @@ class Persistent_caching_xcache
     public function delete($key)
     {
         // Update list of persistent-objects
-        $objects_list = $this->load_objects_list();
-        unset($objects_list[$key]);
-        //xcache_set(get_file_base() . 'PERSISTENT_CACHE_OBJECTS', $objects_list); Wasteful
+        $this->load_objects_list();
+        unset($this->objects_list[$key]);
+        //xcache_set(get_file_base() . 'PERSISTENT_CACHE_OBJECTS', $this->objects_list); Wasteful
 
         xcache_unset($key);
     }
@@ -103,8 +103,8 @@ class Persistent_caching_xcache
     public function flush()
     {
         // Update list of persistent-objects
-        $objects_list = array();
-        xcache_set(get_file_base() . 'PERSISTENT_CACHE_OBJECTS', $objects_list);
+        $this->objects_list = array();
+        xcache_set(get_file_base() . 'PERSISTENT_CACHE_OBJECTS', $this->objects_list);
 
         xcache_unset_by_prefix('');
     }

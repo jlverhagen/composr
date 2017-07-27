@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -98,7 +98,7 @@ class Hook_rss_comments
         $count = 0;
         $start = 0;
         do {
-            $_comments = $GLOBALS['FORUM_DRIVER']->get_forum_topic_posts($GLOBALS['FORUM_DRIVER']->find_topic_id_for_topic_identifier($forum, $full_title), $count, min($max, 1000), $start);
+            $_comments = $GLOBALS['FORUM_DRIVER']->get_forum_topic_posts($GLOBALS['FORUM_DRIVER']->find_topic_id_for_topic_identifier($forum, $full_title, do_lang('COMMENT')), $count, min($max, 1000), $start);
             if (is_array($_comments)) {
                 $_comments = array_reverse($_comments);
 

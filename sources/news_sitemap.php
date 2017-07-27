@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -25,12 +25,16 @@ function build_news_sitemap()
 {
     require_code('xml');
 
-    $path = get_file_base() . '/data_custom/sitemaps/news_sitemap.xml';
+    $path = get_custom_file_base() . '/data_custom/sitemaps/news_sitemap.xml';
+    if (!file_exists(dirname($path))) {
+        require_code('files2');
+        make_missing_directory(dirname($path));
+    }
 
     cms_profile_start_for('build_news_sitemap');
 
     $sitemap_file = fopen($path, GOOGLE_APPENGINE ? 'wb' : 'at');
-    @flock($sitemap_file, LOCK_EX);
+    flock($sitemap_file, LOCK_EX);
     if (!GOOGLE_APPENGINE) {
         ftruncate($sitemap_file, 0);
     }
@@ -43,6 +47,7 @@ function build_news_sitemap()
 
     $guest_id = $GLOBALS['FORUM_DRIVER']->get_guest_id();
     $has_guest_page_access = has_actual_page_access($guest_id, 'news', $zone);
+    require_code('users2');
     $modal_member_id = get_modal_user();
     $has_member_page_access = true;
     if (!is_null($modal_member_id)) {
@@ -128,7 +133,7 @@ function build_news_sitemap()
         </urlset>
     ');
 
-    @flock($sitemap_file, LOCK_UN);
+    flock($sitemap_file, LOCK_UN);
     fclose($sitemap_file);
     require_code('files');
     sync_file($path);
@@ -137,7 +142,8 @@ function build_news_sitemap()
     $target_url = get_custom_base_url() . '/data_custom/sitemaps/news_sitemap.xml';
 
     if (function_exists('gzencode')) {
-        file_put_contents($path . '.gz', gzencode(file_get_contents($path), -1));
+        require_code('files');
+        cms_file_put_contents_safe($path . '.gz', gzencode(file_get_contents($path), -1), FILE_WRITE_FIX_PERMISSIONS | FILE_WRITE_SYNC_FILE);
         $path .= '.gz';
         $target_url .= '.gz';
     }

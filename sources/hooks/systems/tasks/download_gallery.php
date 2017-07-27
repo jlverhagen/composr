@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -44,7 +44,7 @@ class Hook_task_download_gallery
         $headers = array();
         $headers['Content-Type'] = 'application/octet-stream; authoritative=true;';
         $filename = 'gallery-' . $cat . '.zip';
-        $headers['Content-Disposition'] = 'attachment; filename="' . str_replace("\r", '', str_replace("\n", '', $filename)) . '"';
+        $headers['Content-Disposition'] = 'attachment; filename="' . escape_header($filename) . '"';
 
         $ini_set = array();
         $ini_set['ocproducts.xss_detect'] = '0';
@@ -107,7 +107,7 @@ class Hook_task_download_gallery
             $array[] = array('name' => preg_replace('#^uploads/(galleries|repimages)/#', '', $name), 'time' => $time, 'data' => $data);
         }
 
-        $outfile_path = cms_tempnam('csv');
+        $outfile_path = cms_tempnam();
 
         create_zip_file($array, false, false, $outfile_path);
 

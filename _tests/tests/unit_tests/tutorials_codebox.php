@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -59,6 +59,8 @@ class tutorials_codebox_test_set extends cms_test_case
             'htaccess',
             'Page-link',
             'URL',
+            'objc',
+            'nginx',
 
             // Use this if nothing else (or [font="Courier"]...[/font])
             'Text',

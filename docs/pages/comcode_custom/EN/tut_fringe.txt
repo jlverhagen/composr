@@ -15,7 +15,7 @@ Microsoft created a technology that allows websites to have their own little ico
  - by the browser's address bar
  - in the history browsing interface
  - as a desktop icon
- 
+
 Favicons are supported in Composr, and to use one you just need to edit the [tt]favicon[/tt] theme image.
 
 The default icon supplied with Composr actually contains multiple sizes:
@@ -29,18 +29,31 @@ There are a number of online tools for creating favicon, namely X-Icon-Editor, f
 Editing the [tt]favicon[/tt] theme image:
 1) Go to Admin Zone > Style > Themes. This will take us to the Manage Themes screen.
 2) Next to each theme we have an 'edit' section and there we have an icon to 'manage theme images' which we need to click. Click the icon for the default theme and ignore the warning (the favicon is usually for the whole site regardless of theme, so is best put in the default theme).
-3) We are now lead to a screen containing a number of images grouped by category. We can see the images present and edit them by clicking the expand button placed alongside each category name. The favicon is available under the category given the same name as your site. Select the [tt]favicon[/tt] image.
+3) We are now lead to a screen containing a number of images grouped by category. We can see the images present and edit them by clicking the expand button placed alongside each category name. The favicon is available under the category titled "(unnamed)". Select the [tt]favicon[/tt] image.
 4) You are now lead to a screen "Edit theme image" and in that we can see the current image and the options for uploading new image. Click the "Upload" radio button then the Browse button, then attach your new icon file.
 5) Click "Save".
 
-[title="3"]Apple web clip icons[/title]
+[title="3"]Apple webclip icons[/title]
 
-These icons show on the iPhone and iPod Touch home screens, if you choose to bookmark a site there. They can be set by editing the [tt]webclipicon[/tt] theme image.
+These icons (aka apple touch icons) show on the iOS home screens, if you choose to bookmark a site there. They can be set by editing the [tt]webclipicon[/tt] theme image.
 
 The default icon actually contains multiple sizes:
- - 120&times;120 &ndash; iPhone retina touch iOS7
- - 144&times;144 &ndash; Microsoft Metro tile for pinned site
+ - 120&times;120 &ndash; iPhone/iPod retina touch iOS7
  - 152&times;152 &ndash; iPad retina touch iOS7
+
+Systems will typically get the icon most closely matching their required display size. It is pointless trying to have every possible size of icon, as there are too many variations between software, version, and dpi, to get everything.
+
+iOS automatically adds the curved border and shadow effect for you, unless you alter [tt]HTML_HEAD.tpl[/tt] and change [tt]apple-touch-icon[/tt] to [tt]apple-touch-icon-precomposed[/tt].
+
+To add to the home screen on an iOS device:
+1) open a fresh load of your website in mobile Safari
+2) open the page actions (in the bottom bar it is the box with the upward arrow)
+3) select "Add to home screen"
+4) fill in the details
+5) tap Add
+6) check back on the home screen
+
+Unfortunately iOS has deep caching for the webclip icons, which you cannot clear. Fortunately the default [tt]HTML_HEAD.tpl[/tt] adds a cache-busting parameter which is the file modification time of the image. You still need to remove then re-add the home icon for your site though.
 
 [title="2"]Web fonts[/title]
 
@@ -57,7 +70,7 @@ The WYSIWYG editor will not select a font by default.
 
 Unlike a word processor, whatever is being edited is going to end up inserted into a wider existing document context (i.e. into your overall web design). This means that whatever font was used within that wider context would be the default font. This is best for most cases. For example:
  - If the theme font default is changed, it will sweep across all content automatically
- - You can have different fonts in different contexts. For example, perhaps emails should have a different font to the main website.
+ - You can have different fonts in different contexts. For example, perhaps e-mails should have a different font to the main website.
 
 The default Composr theme defines a font in the [tt]global.css[/tt] as follows:
 [code="CSS"]
@@ -75,7 +88,7 @@ The advice here is simple: use PNG, JPEG or GIF formats, but never other formats
 
 Usually you should always use PNG.
 There are two exceptional cases though:
-1) If you need animation, use GIF
+1) If you need animation, use GIF (soon will be able to do animation using [url="APNG"]http://caniuse.com/#feat=apng[/url] though)
 2) If you do not need transparency, and don't mind some quality loss, use JPEG
 
 [title="3"]Sound and Video[/title]
@@ -169,7 +182,7 @@ You may also wish to have a presence on question and answer sites, such as:
 
  - https://www.email-standards.org/
  - [page="_SEARCH:tut_markup"]Guide to web technologies (including HTML, CSS, and JavaScript)[/page]
- - [page="_SEARCH:tut_metadata"]Meta Data[/page]
+ - [page="_SEARCH:tut_metadata"]Metadata[/page]
  - [page="_SEARCH:tut_browsers"]Browser version requirements[/page]
 
 {$SET,tutorial_tags,core_graphic_text,Design & Themeing,regular}{$SET,tutorial_add_date,Aug 2008}{$SET,tutorial_summary,This tutorial will explain and detail some of the features of web technologies that are often forgotten.}[block]main_tutorial_rating[/block]

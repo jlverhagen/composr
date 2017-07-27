@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -34,9 +34,16 @@ function enter_chat_lobby()
     require_javascript('chat');
     require_javascript('sound');
 
+    chat_room_prune(null);
+
     if ((!array_key_exists(get_member(), get_chatters_in_room(null))) && (!is_invisible())) {
         $GLOBALS['SITE_DB']->query_insert('chat_active', array('member_id' => get_member(), 'date_and_time' => time(), 'room_id' => null));
 
+        // Remove old active/inactive events for this member
+        $GLOBALS['SITE_DB']->query_delete('chat_events', array('e_member_id' => get_member(), 'e_type_code' => 'BECOME_ACTIVE', 'e_room_id' => null));
+        $GLOBALS['SITE_DB']->query_delete('chat_events', array('e_member_id' => get_member(), 'e_type_code' => 'BECOME_INACTIVE', 'e_room_id' => null));
+
+        // Create new BECOME_ACTIVE event
         $GLOBALS['SITE_DB']->query_insert('chat_events', array(
             'e_type_code' => 'BECOME_ACTIVE',
             'e_member_id' => get_member(),
@@ -73,7 +80,7 @@ function show_im_contacts($member_id = null, $simpler = false, $max = null)
     $online_url = $GLOBALS['FORUM_DRIVER']->users_online_url();
     $friends_offline = array();
     $friends_online = array();
-    $friend_rows = $GLOBALS['SITE_DB']->query_select('chat_friends', array('member_liked'), array('member_likes' => $member_id), 'ORDER BY date_and_time', 300);
+    $friend_rows = $GLOBALS['SITE_DB']->query_select('chat_friends', array('member_liked'), array('member_likes' => $member_id), 'ORDER BY date_and_time', intval(get_option('general_safety_listing_limit')));
     $friend_active = get_chatters_in_room(null);
     $users_online_time_seconds = CHAT_ACTIVITY_PRUNE;
     foreach ($friend_rows as $friend) {
@@ -113,19 +120,21 @@ function show_im_contacts($member_id = null, $simpler = false, $max = null)
         $friends = array_merge($friends_offline, $friends_online);
     }
 
-    return do_template('CHAT_FRIENDS', array('_GUID' => '57397daa0c000ea589e3a7a5fd323110', 'FRIENDS' => $friends,
-                                             'FRIENDS_ONLINE' => $friends_online,
-                                             'FRIENDS_OFFLINE' => $friends_offline,
-                                             'CAN_IM' => $can_im,
-                                             'ONLINE_URL' => $online_url,
-                                             'SIMPLER' => $simpler,
+    return do_template('CHAT_FRIENDS', array(
+        '_GUID' => '57397daa0c000ea589e3a7a5fd323110',
+        'FRIENDS' => $friends,
+        'FRIENDS_ONLINE' => $friends_online,
+        'FRIENDS_OFFLINE' => $friends_offline,
+        'CAN_IM' => $can_im,
+        'ONLINE_URL' => $online_url,
+        'SIMPLER' => $simpler,
     ));
 }
 
 /**
  * Prune timed-out private chatrooms.
  *
- * @param  array $row The row of the chat room to possibly prune
+ * @param  array $row The row of the chatroom to possibly prune
  * @return boolean Whether the room was pruned
  */
 function handle_chatroom_pruning($row)

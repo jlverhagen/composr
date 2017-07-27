@@ -1,11 +1,17 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
 */
+
+/**
+ * @license    http://opensource.org/licenses/cpal_1.0 Common Public Attribution License
+ * @copyright  ocProducts Ltd
+ * @package    browser_bookmarks
+ */
 
 /*
 Implementation notes...
@@ -33,7 +39,7 @@ echo <<<END
 <!-- This is an automatically generated file.
      It will be read and overwritten.
      DO NOT EDIT! -->
-<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=utf-8">
 <TITLE>Bookmarks</TITLE>
 <H1>Bookmarks Menu</H1>
 <DL><p>

@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -221,7 +221,7 @@ function strip_attachments_from_comcode($comcode, $inline_image_substitutions = 
             $original_filename = $GLOBALS['SITE_DB']->query_select_value_if_there('attachments', 'a_original_filename', array('id' => intval($matches[4][$i])));
             require_code('images');
             if ((!is_null($original_filename)) && (is_image($original_filename, false))) {
-                $comcode = str_replace($matches[0][$i], '[img="' . $matches[3][$i] . '"]' . find_script('attachment') . '?id=' . $matches[4][$i] . '[/img]', $comcode);
+                $comcode = str_replace($matches[0][$i], '[img="' . $matches[3][$i] . '"]' . find_script('attachment') . '?id=' . urlencode($matches[4][$i]) . '[/img]', $comcode);
             }
         }
     }
@@ -264,12 +264,12 @@ function tapatalk_strip_comcode($data)
     $data = strtr($data, array_flip($shortcuts));
 
     // Emoticons
-    // HACKHACK: Disable emoticons Tapatalk actually has inbuilt. Tapatalk will sub in those that it supports
+    // FUDGE: Disable emoticons Tapatalk actually has inbuilt. Tapatalk will sub in those that it supports
     $emoticon_map = get_tapatalk_to_composr_emoticon_map('perfect_matches');
     $bak = $GLOBALS['FORUM_DRIVER']->EMOTICON_CACHE;
     foreach ($emoticon_map as $tapatalk_code => $composr_code) {
         unset($GLOBALS['FORUM_DRIVER']->EMOTICON_CACHE[$composr_code]);
-        // Actually, Tapatalk emoticon rendering seems erratic in text mode (iOS), but it's best we TRY, because the centered on-own-line image emoticons look very poor
+        // Actually, Tapatalk emoticon rendering seems erratic in text mode (iOS), but it's best we TRY, because the centred on-own-line image emoticons look very poor
     }
     // Map Composr ones back to Tapatalk ones
     $emoticon_map = get_tapatalk_to_composr_emoticon_map('missing_from_composr');

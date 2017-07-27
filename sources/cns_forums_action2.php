@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -48,7 +48,7 @@ function cns_edit_forum_grouping($forum_grouping_id, $title, $description, $expa
 
     if ((addon_installed('commandr')) && (!running_script('install'))) {
         require_code('resource_fs');
-        generate_resourcefs_moniker('forum_grouping', strval($forum_grouping_id));
+        generate_resource_fs_moniker('forum_grouping', strval($forum_grouping_id));
     }
 }
 
@@ -76,7 +76,7 @@ function cns_delete_forum_grouping($forum_grouping_id, $target_forum_grouping_id
 
     if ((addon_installed('commandr')) && (!running_script('install'))) {
         require_code('resource_fs');
-        expunge_resourcefs_moniker('forum_grouping', strval($forum_grouping_id));
+        expunge_resource_fs_moniker('forum_grouping', strval($forum_grouping_id));
     }
 }
 
@@ -180,7 +180,7 @@ function cns_edit_forum($forum_id, $name, $description, $forum_grouping_id, $new
 
     if ((addon_installed('commandr')) && (!running_script('install'))) {
         require_code('resource_fs');
-        generate_resourcefs_moniker('forum', strval($forum_id));
+        generate_resource_fs_moniker('forum', strval($forum_id));
     }
 
     require_code('sitemap_xml');
@@ -240,7 +240,7 @@ function cns_delete_forum($forum_id, $target_forum_id = null, $delete_topics = 0
 
     if ((addon_installed('commandr')) && (!running_script('install'))) {
         require_code('resource_fs');
-        expunge_resourcefs_moniker('forum', strval($forum_id));
+        expunge_resource_fs_moniker('forum', strval($forum_id));
     }
 
     require_code('sitemap_xml');
@@ -258,7 +258,7 @@ function cns_ping_forum_read_all($forum_id)
     if ($or_list == '') {
         return;
     }
-    $topics = $GLOBALS['FORUM_DB']->query('SELECT id FROM ' . $GLOBALS['FORUM_DB']->get_table_prefix() . 'f_topics WHERE (' . $or_list . ') AND t_cache_last_time>' . strval(time() - 60 * 60 * 24 * intval(get_option('post_history_days'))));
+    $topics = $GLOBALS['FORUM_DB']->query('SELECT id FROM ' . $GLOBALS['FORUM_DB']->get_table_prefix() . 'f_topics WHERE (' . $or_list . ') AND t_cache_last_time>' . strval(time() - 60 * 60 * 24 * intval(get_option('post_read_history_days'))));
     $member_id = get_member();
     $or_list = '';
     foreach ($topics as $topic) {
@@ -288,7 +288,7 @@ function cns_ping_forum_read_all($forum_id)
 function cns_ping_forum_unread_all($forum_id)
 {
     $or_list = cns_get_all_subordinate_forums($forum_id, 't_forum_id');
-    $topics = $GLOBALS['FORUM_DB']->query('SELECT id FROM ' . $GLOBALS['FORUM_DB']->get_table_prefix() . 'f_topics WHERE (' . $or_list . ') AND t_cache_last_time>' . strval(time() - 60 * 60 * 24 * intval(get_option('post_history_days'))));
+    $topics = $GLOBALS['FORUM_DB']->query('SELECT id FROM ' . $GLOBALS['FORUM_DB']->get_table_prefix() . 'f_topics WHERE (' . $or_list . ') AND t_cache_last_time>' . strval(time() - 60 * 60 * 24 * intval(get_option('post_read_history_days'))));
     $or_list_2 = '';
     foreach ($topics as $topic) {
         if ($or_list_2 != '') {

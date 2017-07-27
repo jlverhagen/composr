@@ -28,7 +28,7 @@
 	{+START,IF,{$AND,{$NOT,{BLOG}},{$IS_NON_EMPTY,{AUTHOR_URL}}}}
 		<div class="newscat_img newscat_img_author">
 			{+START,IF,{$NOT,{$MOBILE}}}{+START,IF_NON_EMPTY,{CATEGORY}}
-				<img src="{IMG*}" alt="" />
+				<img src="{$ENSURE_PROTOCOL_SUITABILITY*,{IMG}}" alt="" />
 			{+END}{+END}
 		</div>
 	{+END}
@@ -51,7 +51,7 @@
 			{+START,SET,author_details}
 				{+START,IF,{$IS_NON_EMPTY,{AUTHOR_URL}}}
 					{!BY_SIMPLE,<a href="{AUTHOR_URL*}" title="{!AUTHOR}: {AUTHOR*}">{AUTHOR*}</a>}
-					{+START,INCLUDE,MEMBER_TOOLTIP}{+END}
+					{+START,INCLUDE,MEMBER_TOOLTIP}SUBMITTER={$AUTHOR_MEMBER,{AUTHOR}}{+END}
 				{+END}
 
 				{+START,IF,{$IS_EMPTY,{AUTHOR_URL}}}
@@ -69,12 +69,15 @@
 		</ul>
 	</div>
 
-	{+START,IF_NON_EMPTY,{NEWS}}
-		{+START,IF,{$AND,{$NOT,{$IN_STR,{NEWS},<p><div>}},{$NOT,{$IN_STR,{NEWS},<h}}}}<p class="news_summary_p">{+END}
-		{+START,IF,{TRUNCATE}}{$TRUNCATE_LEFT,{NEWS},400,0,1,0,0.4}{+END}
-		{+START,IF,{$NOT,{TRUNCATE}}}{NEWS}{+END}
-		{+START,IF,{$AND,{$NOT,{$IN_STR,{NEWS},<p><div>}},{$NOT,{$IN_STR,{NEWS},<h}}}}</p>{+END}
-	{+END}
+	<div>
+		{+START,IF_NON_EMPTY,{NEWS}}
+			{+START,IF,{$AND,{$NOT,{$IN_STR,{NEWS},<p><div>}},{$NOT,{$IN_STR,{NEWS},<h}}}}<p class="news_summary_p">{+END}
+			{+START,IF,{TRUNCATE}}{$TRUNCATE_LEFT,{NEWS},400,0,1,0,0.4}{+END}
+			{$SET,large_news_posts,{$NOT,{TRUNCATE}}}
+			{+START,IF,{$NOT,{TRUNCATE}}}{NEWS}{+END}
+			{+START,IF,{$AND,{$NOT,{$IN_STR,{NEWS},<p><div>}},{$NOT,{$IN_STR,{NEWS},<h}}}}</p>{+END}
+		{+END}
+	</div>
 
 	{+START,IF_PASSED,TAGS}
 		{+START,IF,{$CONFIG_OPTION,show_content_tagging_inline}}{TAGS}{+END}

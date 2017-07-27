@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -38,6 +38,7 @@ class Hook_config_prohibit_password_whitespace
             'explanation' => 'CONFIG_OPTION_prohibit_password_whitespace',
             'shared_hosting_restricted' => '0',
             'list_options' => '',
+            'order_in_category_group' => 10,
 
             'addon' => 'core_cns',
         );
@@ -50,6 +51,9 @@ class Hook_config_prohibit_password_whitespace
      */
     public function get_default()
     {
+        if (get_forum_type() != 'cns') {
+            return null;
+        }
         return '1';
     }
 }

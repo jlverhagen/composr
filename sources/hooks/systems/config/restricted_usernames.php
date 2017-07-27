@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -38,6 +38,7 @@ class Hook_config_restricted_usernames
             'explanation' => 'CONFIG_OPTION_restricted_usernames',
             'shared_hosting_restricted' => '0',
             'list_options' => '',
+            'order_in_category_group' => 12,
 
             'addon' => 'core_cns',
         );
@@ -50,6 +51,9 @@ class Hook_config_restricted_usernames
      */
     public function get_default()
     {
+        if (get_forum_type() != 'cns') {
+            return null;
+        }
         return do_lang('GUEST') . ', ' . do_lang('SYSTEM') . ', ' . do_lang('UNKNOWN') . ', ' . do_lang('STAFF') . ', ' . do_lang('ADMIN') . ', ' . do_lang('MODERATOR') . ', googlebot';
     }
 }

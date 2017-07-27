@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -36,7 +36,7 @@ class Module_news
         $info['hacked_by'] = null;
         $info['hack_version'] = null;
         $info['version'] = 7;
-        $info['update_require_upgrade'] = 1;
+        $info['update_require_upgrade'] = true;
         $info['locked'] = false;
         return $info;
     }
@@ -100,11 +100,12 @@ class Module_news
                 'id' => '*AUTO',
                 'nc_title' => 'SHORT_TRANS',
                 'nc_owner' => '?MEMBER',
-                'nc_img' => 'ID_TEXT',
+                'nc_img' => 'URLPATH',
                 'notes' => 'LONG_TEXT'
             ));
             $GLOBALS['SITE_DB']->create_index('news_categories', 'ncs', array('nc_owner'));
 
+            require_code('lang3');
             $default_categories = array('general', 'technology', 'difficulties', 'community', 'entertainment', 'business', 'art');
             require_lang('news');
             foreach ($default_categories as $category) {
@@ -134,12 +135,10 @@ class Module_news
             ));
             $GLOBALS['SITE_DB']->create_index('news_category_entries', 'news_entry_category', array('news_entry_category'));
 
-            $groups = $GLOBALS['FORUM_DRIVER']->get_usergroup_list(false, true);
             $categories = $GLOBALS['SITE_DB']->query_select('news_categories', array('id'));
             foreach ($categories as $_id) {
-                foreach (array_keys($groups) as $group_id) {
-                    $GLOBALS['SITE_DB']->query_insert('group_category_access', array('module_the_name' => 'news', 'category_name' => strval($_id['id']), 'group_id' => $group_id));
-                }
+                require_code('permissions2');
+                set_global_category_access('news', $_id['id']);
             }
 
             $GLOBALS['SITE_DB']->create_index('news', 'ftjoin_ititle', array('title'));
@@ -153,6 +152,10 @@ class Module_news
             add_privilege('SEARCH', 'autocomplete_keyword_news', false);
             add_privilege('SEARCH', 'autocomplete_title_news', false);
         }
+
+        if ((!is_null($upgrade_from)) && ($upgrade_from < 7)) {
+            $GLOBALS['SITE_DB']->alter_table_field('news_categories', 'nc_img', 'URLPATH');
+        }
     }
 
     /**
@@ -161,7 +164,7 @@ class Module_news
      * @param  boolean $check_perms Whether to check permissions.
      * @param  ?MEMBER $member_id The member to check permissions as (null: current user).
      * @param  boolean $support_crosslinks Whether to allow cross links to other modules (identifiable via a full-page-link rather than a screen-name).
-     * @param  boolean $be_deferential Whether to avoid any entry-point (or even return NULL to disable the page in the Sitemap) if we know another module, or page_group, is going to link to that entry-point. Note that "!" and "browse" entry points are automatically merged with container page nodes (likely called by page-groupings) as appropriate.
+     * @param  boolean $be_deferential Whether to avoid any entry-point (or even return null to disable the page in the Sitemap) if we know another module, or page_group, is going to link to that entry-point. Note that "!" and "browse" entry points are automatically merged with container page nodes (likely called by page-groupings) as appropriate.
      * @return ?array A map of entry points (screen-name=>language-code/string or screen-name=>[language-code/string, icon-theme-image]) (null: disabled).
      */
     public function get_entry_points($check_perms = true, $member_id = null, $support_crosslinks = true, $be_deferential = false)
@@ -170,11 +173,13 @@ class Module_news
 
         $ret = array(
             'browse' => array('NEWS_ARCHIVE', 'menu/rich_content/news'),
-            'cat_select' => array('NEWS_CATEGORIES', 'menu/_generic_admin/view_archive'),
         );
         if ($has_blogs) {
-            $ret['select'] = array('JUST_NEWS_CATEGORIES', 'menu/rich_content/news');
+            $ret['cat_select'] = array('JUST_NEWS_CATEGORIES', 'menu/_generic_admin/view_archive');
             $ret['blog_select'] = array('BLOGS', 'tabs/member_account/blog');
+            $ret['select'] = array('NEWS_CATEGORIES', 'menu/rich_content/news');
+        } else {
+            $ret['cat_select'] = array('JUST_NEWS_CATEGORIES', 'menu/rich_content/news');
         }
         return $ret;
     }
@@ -193,7 +198,7 @@ class Module_news
     public $category;
 
     /**
-     * Module pre-run function. Allows us to know meta-data for <head> before we start streaming output.
+     * Module pre-run function. Allows us to know metadata for <head> before we start streaming output.
      *
      * @return ?Tempcode Tempcode indicating some kind of exceptional output (null: none).
      */
@@ -212,12 +217,12 @@ class Module_news
             $this->title = get_screen_title('JUST_NEWS_CATEGORIES');
         }
 
-        if ($type == 'select') {
-            $this->title = get_screen_title('NEWS_CATEGORIES');
-        }
-
         if ($type == 'blog_select') {
             $this->title = get_screen_title('BLOGS');
+        }
+
+        if ($type == 'select') {
+            $this->title = get_screen_title('NEWS_CATEGORIES');
         }
 
         if ($type == 'browse') {
@@ -226,21 +231,32 @@ class Module_news
             $select = get_param_string('id', get_param_string('select', '*'));
             $select_and = get_param_string('select_and', '*');
 
+            $news_cat_id = null;
+            $news_cat_rows = array();
+            if (is_numeric($select)) {
+                $news_cat_rows = $GLOBALS['SITE_DB']->query_select('news_categories', array('*'), array('id' => intval($select)), '', 1);
+                if (array_key_exists(0, $news_cat_rows)) {
+                    $news_cat_id = intval($select);
+                }
+            }
+
             // Title
             if ($blog === 1) {
                 $this->title = get_screen_title('BLOG_NEWS_ARCHIVE');
             } else {
-                if (is_numeric($select)) {
-                    $news_cat_title = $GLOBALS['SITE_DB']->query_select('news_categories', array('nc_title'), array('id' => intval($select)), '', 1);
-                    if (array_key_exists(0, $news_cat_title)) {
-                        $news_cat_title[0]['_nc_title'] = get_translated_text($news_cat_title[0]['nc_title']);
-                        $this->title = get_screen_title(make_fractionable_editable('news_category', $select, $news_cat_title[0]['_nc_title']), false);
-                    } else {
-                        $this->title = get_screen_title('NEWS_ARCHIVE');
-                    }
+                if ($news_cat_id !== null) {
+                    $news_cat_rows[0]['_nc_title'] = get_translated_text($news_cat_rows[0]['nc_title']);
+                    $this->title = get_screen_title(make_fractionable_editable('news_category', $select, $news_cat_rows[0]['_nc_title']), false);
                 } else {
                     $this->title = get_screen_title('NEWS_ARCHIVE');
                 }
+            }
+
+            // Metadata
+            if ($news_cat_id !== null) {
+                set_extra_request_metadata(array(
+                    'identifier' => '_SEARCH:news:browse:select=:' . strval($news_cat_id),
+                ), $news_cat_rows[0], 'news_category', strval($news_cat_id));
             }
 
             // Breadcrumbs
@@ -290,10 +306,10 @@ class Module_news
                 $parent_title = do_lang_tempcode('BLOG_NEWS_ARCHIVE');
             } else {
                 if (is_numeric($select)) {
-                    $news_cat_title = $GLOBALS['SITE_DB']->query_select('news_categories', array('nc_title'), array('id' => intval($select)), '', 1);
-                    if (array_key_exists(0, $news_cat_title)) {
-                        $news_cat_title[0]['_nc_title'] = get_translated_text($news_cat_title[0]['nc_title']);
-                        $parent_title = make_string_tempcode(escape_html($news_cat_title[0]['_nc_title']));
+                    $news_cat_rows = $GLOBALS['SITE_DB']->query_select('news_categories', array('nc_title'), array('id' => intval($select)), '', 1);
+                    if (array_key_exists(0, $news_cat_rows)) {
+                        $news_cat_rows[0]['_nc_title'] = get_translated_text($news_cat_rows[0]['nc_title']);
+                        $parent_title = make_string_tempcode(escape_html($news_cat_rows[0]['_nc_title']));
                     } else {
                         $parent_title = do_lang_tempcode('NEWS_ARCHIVE');
                     }
@@ -352,19 +368,12 @@ class Module_news
                 }
             }
 
-            // Meta data
+            // Metadata
             set_extra_request_metadata(array(
-                'created' => date('Y-m-d', $myrow['date_and_time']),
-                'creator' => $myrow['author'],
-                'publisher' => $GLOBALS['FORUM_DRIVER']->get_username($myrow['submitter']),
-                'modified' => is_null($myrow['edit_date']) ? '' : date('Y-m-d', $myrow['edit_date']),
-                'type' => 'News article',
-                'title' => get_translated_text($myrow['title']),
                 'identifier' => '_SEARCH:news:view:' . strval($id),
                 'image' => $og_img,
-                'description' => strip_comcode(get_translated_text($myrow['news'])),
                 'category' => $category,
-            ));
+            ), $myrow, 'news', strval($id));
 
             $this->id = $id;
             $this->blog = $blog;
@@ -424,9 +433,13 @@ class Module_news
         $start = get_param_integer('news_categories_start', 0);
         $max = get_param_integer('news_categories_max', intval(get_option('news_categories_per_page')));
 
-        require_code('selectcode');
         $select = get_param_string('select', '*');
-        $where = selectcode_to_sqlfragment($select, 'r.news_category', 'news_categories', null, 'r.news_category', 'id'); // Note that the parameters are fiddled here so that category-set and record-set are the same, yet SQL is returned to deal in an entirely different record-set (entries' record-set)
+        if ($select == '*') {
+            $where = '1=1';
+        } else {
+            require_code('selectcode');
+            $where = selectcode_to_sqlfragment($select, 'r.news_category', 'news_categories', null, 'r.news_category', 'id'); // Note that the parameters are fiddled here so that category-set and record-set are the same, yet SQL is returned to deal in an entirely different record-set (entries' record-set)
+        }
 
         if (is_null($blogs)) {
             $map = array();
@@ -454,7 +467,7 @@ class Module_news
         $_content = array();
         foreach ($categories as $category) {
             if (has_category_access(get_member(), 'news', strval($category['id']))) {
-                $query = 'SELECT COUNT(*) FROM ' . get_table_prefix() . 'news r' . $join . ' WHERE ' . (((!has_privilege(get_member(), 'see_unvalidated')) && (addon_installed('unvalidated'))) ? 'validated=1 AND ' : '') . ' (news_entry_category=' . strval($category['id']) . ' OR news_category=' . strval($category['id']) . ') AND ' . $where . ' ORDER BY date_and_time DESC';
+                $query = 'SELECT COUNT(*) FROM ' . get_table_prefix() . 'news r' . $join . ' WHERE ' . (((!has_privilege(get_member(), 'see_unvalidated')) && (addon_installed('unvalidated'))) ? 'validated=1 AND ' : '') . ' (news_entry_category=' . strval($category['id']) . ' OR news_category=' . strval($category['id']) . ') AND ' . $where;
                 $count = $GLOBALS['SITE_DB']->query_value_if_there($query);
                 if ($count > 0) {
                     $_content[] = render_news_category_box($category, '_SELF', false, true, $blogs);
@@ -465,15 +478,15 @@ class Module_news
             $content->attach($c);
         }
         if ($content->is_empty()) {
-            inform_exit(do_lang_tempcode('NO_ENTRIES'));
+            inform_exit(do_lang_tempcode('NO_ENTRIES', 'news_category'));
         }
 
-        if ((($blogs !== 1) || (has_privilege(get_member(), 'have_personal_category', 'cms_news'))) && (has_actual_page_access(null, ($blogs === 1) ? 'cms_blogs' : 'cms_news', null, null)) && (has_submit_permission('high', get_member(), get_ip_address(), 'cms_news'))) {
+        if ((($blogs !== 1) || (has_privilege(get_member(), 'have_personal_category', 'cms_news'))) && (has_actual_page_access(null, ($blogs === 1) ? 'cms_blogs' : 'cms_news', null, null)) && (has_submit_permission(($blogs === 1) ? 'mid' : 'high', get_member(), get_ip_address(), 'cms_news'))) {
             $map = array('page' => ($blogs === 1) ? 'cms_blogs' : 'cms_news', 'type' => 'add');
             if (is_numeric($select)) {
                 $map['cat'] = $select;
             }
-            $submit_url = build_url($map, get_module_zone('cms_news'));
+            $submit_url = build_url($map, get_module_zone($map['page']));
         } else {
             $submit_url = new Tempcode();
         }
@@ -500,8 +513,11 @@ class Module_news
         $select = $this->select;
         $select_and = $this->select_and;
 
+        $max = get_param_integer('module_max', intval(get_option('news_entries_per_page')));
+
         // Get category contents
         $inline = get_param_integer('inline', 0) == 1;
+        $filter = either_param_string('active_filter', '');
         $content = do_block('main_news', array(
             'param' => '0',
             'title' => '',
@@ -511,21 +527,22 @@ class Module_news
             'member_based' => ($blog === 1) ? '1' : '0',
             'zone' => '_SELF',
             'days' => '0',
-            'fallback_full' => $inline ? '0' : '10',
-            'fallback_archive' => $inline ? get_option('news_entries_per_page') : '0',
+            'fallback_full' => $inline ? '0' : strval($max),
+            'fallback_archive' => $inline ? strval($max) : '0',
             'no_links' => '1',
             'pagination' => '1',
             'attach_to_url_filter' => '1',
             'block_id' => 'module',
+            'filter' => $filter,
         ));
 
         // Management links
-        if ((($blog !== 1) || (has_privilege(get_member(), 'have_personal_category', 'cms_news'))) && (has_actual_page_access(null, ($blog === 1) ? 'cms_blogs' : 'cms_news', null, null)) && (has_submit_permission('high', get_member(), get_ip_address(), 'cms_news'))) {
+        if ((($blog !== 1) || (has_privilege(get_member(), 'have_personal_category', 'cms_news'))) && (has_actual_page_access(null, ($blog === 1) ? 'cms_blogs' : 'cms_news', null, null)) && (has_submit_permission(($blog === 1) ? 'mid' : 'high', get_member(), get_ip_address(), 'cms_news'))) {
             $map = array('page' => ($blog === 1) ? 'cms_blogs' : 'cms_news', 'type' => 'add');
             if (is_numeric($select)) {
                 $map['cat'] = $select;
             }
-            $submit_url = build_url($map, get_module_zone('cms_news'));
+            $submit_url = build_url($map, get_module_zone($map['page']));
         } else {
             $submit_url = new Tempcode();
         }
@@ -606,7 +623,7 @@ class Module_news
         }
 
         // Management links
-        if ((has_actual_page_access(null, ($blog === 1) ? 'cms_blogs' : 'cms_news', null, null)) && (has_edit_permission('high', get_member(), $myrow['submitter'], ($blog === 1) ? 'cms_blogs' : 'cms_news', array('news', $myrow['news_category'])))) {
+        if ((has_actual_page_access(null, ($blog === 1) ? 'cms_blogs' : 'cms_news', null, null)) && (has_edit_permission(($blog === 1) ? 'mid' : 'high', get_member(), $myrow['submitter'], ($blog === 1) ? 'cms_blogs' : 'cms_news', array('news', $myrow['news_category'])))) {
             $edit_url = build_url(array('page' => ($blog === 1) ? 'cms_blogs' : 'cms_news', 'type' => '_edit', 'id' => $id), get_module_zone(($blog === 1) ? 'cms_blogs' : 'cms_news'));
         } else {
             $edit_url = new Tempcode();
@@ -622,12 +639,12 @@ class Module_news
             $tmp['blog'] = $blog;
         }
         $archive_url = build_url($tmp + propagate_filtercode(), '_SELF');
-        if ((($blog !== 1) || (has_privilege(get_member(), 'have_personal_category', 'cms_news'))) && (has_actual_page_access(null, ($blog === 1) ? 'cms_blogs' : 'cms_news', null, null)) && (has_submit_permission('high', get_member(), get_ip_address(), 'cms_news', array('news', $myrow['news_category'])))) {
+        if ((($blog !== 1) || (has_privilege(get_member(), 'have_personal_category', 'cms_news'))) && (has_actual_page_access(null, ($blog === 1) ? 'cms_blogs' : 'cms_news', null, null)) && (has_submit_permission(($blog === 1) ? 'mid' : 'high', get_member(), get_ip_address(), 'cms_news', array('news', $myrow['news_category'])))) {
             $map = array('page' => ($blog === 1) ? 'cms_blogs' : 'cms_news', 'type' => 'add');
             if (is_numeric($select)) {
                 $map['cat'] = $select;
             }
-            $submit_url = build_url($map, get_module_zone('cms_news'));
+            $submit_url = build_url($map, get_module_zone($map['page']));
         } else {
             $submit_url = new Tempcode();
         }

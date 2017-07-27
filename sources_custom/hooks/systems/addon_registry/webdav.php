@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -21,9 +21,10 @@ class Hook_addon_registry_webdav
     /**
      * Get a list of file permissions to set
      *
+     * @param  boolean $runtime Whether to include wildcards represented runtime-created chmoddable files
      * @return array File permissions to set
      */
-    public function get_chmod_array()
+    public function get_chmod_array($runtime = false)
     {
         return array();
     }
@@ -87,7 +88,7 @@ class Hook_addon_registry_webdav
      */
     public function get_description()
     {
-        return 'Access your website repository as a folder on your computer. See the [page="docs:tut_repository"]Repository Tutorial[/page] for more information.';
+        return 'Access your website repository as a folder on your computer. See the Repository Tutorial (' . get_brand_base_url() . '/docs/tut_repository.htm) for more information.';
     }
 
     /**
@@ -275,7 +276,6 @@ class Hook_addon_registry_webdav
             'sources_custom/sabredav/vendor/sabre/vobject/lib/Sabre/VObject/Component/VEvent.php',
             'sources_custom/sabredav/vendor/sabre/vobject/lib/Sabre/VObject/Component/VFreeBusy.php',
             'sources_custom/sabredav/vendor/sabre/vobject/lib/Sabre/VObject/Component/VJournal.php',
-            'sources_custom/sabredav/vendor/sabre/vobject/lib/Sabre/VObject/Component/Vwebdav.php',
             'sources_custom/sabredav/vendor/sabre/vobject/lib/Sabre/VObject/Component.php',
             'sources_custom/sabredav/vendor/sabre/vobject/lib/Sabre/VObject/DateTimeParser.php',
             'sources_custom/sabredav/vendor/sabre/vobject/lib/Sabre/VObject/Document.php',
@@ -305,7 +305,7 @@ class Hook_addon_registry_webdav
             'data_custom/modules/webdav/locks/index.html',
             'data_custom/modules/webdav/locks/locks.dat',
             'data_custom/modules/webdav/tmp/index.html',
-            'sources_custom/webdav_commandrfs.php',
+            'sources_custom/webdav_commandr_fs.php',
         );
     }
 }

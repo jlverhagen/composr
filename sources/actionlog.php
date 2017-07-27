@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -42,6 +42,7 @@ function actionlog_linkage($type, $a, $b, $_a, $_b)
         }
         $tmp_url = build_url(array('page' => 'admin_themes', 'type' => '_edit_templates', 'theme' => $b, 'f0file' => $a), get_module_zone('admin_themes'));
         $a = basename($a, '.tpl');
+        require_code('templates_interfaces');
         $_a = tpl_crop_text_mouse_over($a, 14);
         $_a = hyperlink($tmp_url, $_a, false, false, $type_str);
         return array($_a, $_b);
@@ -66,7 +67,7 @@ function actionlog_linkage($type, $a, $b, $_a, $_b)
         return array($_a, $_b);
     }
     if (($type == 'ADD_CATALOGUE_CATEGORY' || $type == 'EDIT_CATALOGUE_CATEGORY') && ($b != '')) {
-        $tmp_url = build_url(array('page' => 'catalogues', 'type' => 'browse', 'id' => (!is_numeric($a)) ? $b : $a), get_module_zone('catalogues'));
+        $tmp_url = build_url(array('page' => 'catalogues', 'type' => 'category', 'id' => (!is_numeric($a)) ? $b : $a), get_module_zone('catalogues'));
         $_b = hyperlink($tmp_url, $_b, false, false, $type_str);
         return array($_a, $_b);
     }

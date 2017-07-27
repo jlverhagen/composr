@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -91,7 +91,7 @@ class Hook_notification_filedump extends Hook_Notification
     public function list_handled_codes()
     {
         $list = array();
-        $list['filedump'] = array(do_lang('menus:CONTENT'), do_lang('filedump:NOTIFICATION_TYPE_filedump'));
+        $list['filedump'] = array(do_lang('CONTENT'), do_lang('filedump:NOTIFICATION_TYPE_filedump'));
         return $list;
     }
 

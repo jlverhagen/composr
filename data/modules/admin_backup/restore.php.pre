@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -43,11 +43,18 @@ $CURRENT_SHARE_USER = null;
 $GLOBALS['DEV_MODE'] = false;
 $GLOBALS['SEMI_DEV_MODE'] = true;
 
+if (!defined('ENT_SUBSTITUTE')) { // LEGACY
+    define('ENT_SUBSTITUTE', 0);
+}
+
 @ob_end_clean(); // Reset to have no output buffering by default (we'll use it internally, taking complete control)
 
 // Are we in a special version of PHP?
 define('HHVM', strpos(PHP_VERSION, 'hiphop') !== false);
 define('GOOGLE_APPENGINE', isset($_SERVER['APPLICATION_ID']));
+
+define('URL_CONTENT_REGEXP', '\w\-\x80-\xFF'); // PHP is done using ASCII (don't use the 'u' modifier). Note this doesn't include dots, this is intentional as they can cause problems in filenames
+define('URL_CONTENT_REGEXP_JS', '\w\-\u0080-\uFFFF'); // JavaScript is done using Unicode
 
 $shl = @ini_get('suhosin.memory_limit');
 if (($shl === false) || ($shl == '') || ($shl == '0')) {
@@ -69,7 +76,6 @@ require_code('permissions');
 require_code('minikernel');
 require_code('global3');
 require_code('temporal');
-require_code('caches');
 require_code('files');
 require_code('lang');
 require_code('tempcode');
@@ -80,6 +86,11 @@ require_code('comcode');
 require_code('database');
 require_code('database_action');
 
+// No restoration (needed) on XML DB driver
+if (get_db_type() == 'xml') {
+    warn_exit('Cannot run on XML database driver');
+}
+
 // If we are referencing this file in order to extract dependant url's from a pack
 handle_self_referencing_embedment();
 
@@ -87,74 +98,103 @@ handle_self_referencing_embedment();
 global $INSTALL_LANG, $VERSION, $CHMOD_ARRAY;
 $INSTALL_LANG = (isset($_GET['default_lang'])) ? $_GET['default_lang'] : 'en';
 
-// Languages we can use
+// Language files we can use
 require_lang('global');
 require_lang('critical_error');
 require_lang('installer');
 require_lang('version');
+require_lang('backups');
 
+// Start button if not post
+if (cms_srv('REQUEST_METHOD') != 'POST') {
+    $msg = '';
+    $msg .= '<form action="restore.php" method="post"><input id="proceed_button" class="button_screen buttons__proceed" type="submit" value="' . escape_html(do_lang('START')) . '" onclick="this.disabled=true; this.form.submit();" /></form>';
+    finish_restorer_output($msg);
+}
 
-// Now we actually read into the data file and execute the commented out reinstallation code. This is necessary for re-entrant code, and because we can't load it all through the PHP parser at once!
+// Now we actually read into the data file and execute the commented out reinstallation code.
+// This is necessary for re-entrant code, and because we can't load it all through the PHP parser at once!
 
 $time_start = time();
+$time_max = $time_start + get_param_integer('time_limit', 10);
 
-$myfile = fopen(dirname(__FILE__) . '/restore_data.php', 'rb');
-$i = 0;
+// Open file
+$data_file = fopen(dirname(__FILE__) . '/restore_data.php', 'rb');
+
+// Skip forward for offset in this iteration
 $offset = get_param_integer('start_offset', 0);
 if ($offset != 0) {
-    fseek($myfile, $offset);
+    fseek($data_file, $offset);
     $found_start = true;
 } else {
     $found_start = false;
 }
+
+// Run SQL commands
 $sql_buildup = '';
-$start_line = 0;
-while (($line = fgets($myfile, 10000000)) !== false) {
+while (($line = fgets($data_file)) !== false) {
     if (!$found_start) {
-        if (trim($line) == '//COMMANDS BEGIN') {
+        // Not got to the data start yet
+        if (trim($line) == '//COMMANDS BEGIN...') {
             $found_start = true;
-            $start_line = $i;
         }
-    } else {
-        if (substr($line, 0, 2) != '//') {
-            break; // Done
-        }
-
-        $line = substr($line, 2);
-
-        $is_new_command = false;
-        $valid_cmd_starts = array(
-            '$GLOBALS[\'SITE_DB\']->query_insert(\'',
-            '$GLOBALS[\'SITE_DB\']->drop_table_if_exists(\'',
-            '$GLOBALS[\'SITE_DB\']->create_table(\'',
-            '$GLOBALS[\'SITE_DB\']->delete_index_if_exists(\'',
-            '$GLOBALS[\'SITE_DB\']->create_index(\'',
-        );
-        foreach ($valid_cmd_starts as $valid_cmd_start) {
-            $is_new_command = $is_new_command || (substr(ltrim($line), 0, strlen($valid_cmd_start)) == $valid_cmd_start);
-        }
-        if (($is_new_command) && ($sql_buildup != '')) {
-            $success = @eval($sql_buildup); // NB: Query errors are echo'd out as DB API knows restoration script is running
-            if ($success === false) {
-                header('Content-type: text/plain');
-                exit('Failed on: ' . $sql_buildup);
-            }
-            $sql_buildup = '';
-        }
-        if ((time() >= $time_start + 20) && ($sql_buildup == '')) {
-            $refresh_url = 'restore.php?start=' . strval($i + $start_line + get_param_integer('start', 0)) . '&start_offset=' . strval(ftell($myfile));
-            echo '<meta http-equiv="refresh" content="0;url=' . $refresh_url . '" /> Please wait, continuing.';
-            //header('Location: '.$refresh_url);   Can result in "This web page has a redirect loop" error
-            exit();
-        }
-
-        $sql_buildup .= $line . "\n";
-
-        $i++;
+        continue;
     }
-}
-fclose($myfile);
 
+    if (substr($line, 0, 2) != '//') {
+        // Done
+        break;
+    }
+
+    // Strip comment
+    $line = substr($line, 2);
+
+    // Find if it is a new command
+    $is_new_command = false;
+    $valid_cmd_starts = array(
+        '$GLOBALS[\'SITE_DB\']->query_insert(\'',
+        '$GLOBALS[\'SITE_DB\']->drop_table_if_exists(\'',
+        '$GLOBALS[\'SITE_DB\']->create_table(\'',
+        '$GLOBALS[\'SITE_DB\']->delete_index_if_exists(\'',
+        '$GLOBALS[\'SITE_DB\']->create_index(\'',
+    );
+    foreach ($valid_cmd_starts as $valid_cmd_start) {
+        if (substr(ltrim($line), 0, strlen($valid_cmd_start)) == $valid_cmd_start) {
+            $is_new_command = true;
+            break;
+        }
+    }
+
+    if (($is_new_command) && ($sql_buildup != '')) {
+        // Run command
+        $success = @eval($sql_buildup); // NB: Query errors are echo'd out as DB API knows restoration script is running
+        if ($success === false) {
+            header('Content-type: text/plain');
+            exit('Failed on: ' . $sql_buildup);
+        }
+        $sql_buildup = '';
+
+        // Need to go to a new iteration?
+        if (time() >= $time_max) {
+            $refresh_url = 'restore.php?start_offset=' . strval($offset);
+
+            $msg = '';
+            $msg .= '<form action="' . escape_html($refresh_url) . '" method="post"><input id="proceed_button" class="button_screen buttons__proceed" type="submit" value="' . escape_html(do_lang('CONTINUE_RESTORATION')) . '" onclick="this.disabled=true; this.form.submit();" /></form>';
+            $msg .= '<script>var button=document.getElementById(\'proceed_button\'); button.disabled=true; button.form.submit();</script>';
+            finish_restorer_output($msg);
+        }
+    }
+
+    // Keep building up
+    $sql_buildup .= $line . "\n";
+
+    // Offset
+    $offset = ftell($data_file);
+}
+
+fclose($data_file);
+
+// Run any remaining command
 if ($sql_buildup != '') {
     $success = @eval($sql_buildup);
     if ($success === false) {
@@ -165,14 +205,26 @@ if ($sql_buildup != '') {
 }
 
 
+//{!!DB!!}
+
+
+// Done
+$msg = do_lang('BACKUP_RESTORE_SUCCESS');
+finish_restorer_output($msg);
+
+/**
+ * Show some output
+ *
+ * @param  string $msg The message to show. Must be in HTML format.
+ */
+function finish_restorer_output($msg)
 {
-    !!DB!!}
-
-
-require_code('tempcode_compiler');
-$css_nocache = _do_template('default', '/css/', 'no_cache', 'no_cache', 'EN', '.css');
-$tpl = do_template('RESTORE_HTML_WRAP', array('_GUID' => '8e3b9d894d8ef06b5057fb654f7db59b', 'CSS_NOCACHE' => $css_nocache, 'MESSAGE' => do_lang('SUCCESS')));
-echo $tpl->evaluate();
+    require_code('tempcode_compiler');
+    $css_nocache = _do_template('default', '/css/', 'no_cache', 'no_cache', 'EN', '.css');
+    $tpl = do_template('RESTORE_HTML_WRAP', array('_GUID' => '8e3b9d894d8ef06b5057fb654f7db59b', 'CSS_NOCACHE' => $css_nocache, 'MESSAGE' => $msg));
+    echo $tpl->evaluate();
+    exit();
+}
 
 /**
  * This function is a very important one when coding. It allows you to include a source code file (from root/sources/ or root/sources_custom/) through the proper channels.
@@ -190,8 +242,8 @@ function require_code($codename)
     $REQUIRED_BEFORE[$codename] = 1;
     if (@is_array($FILE_ARRAY)) {
         $file = file_array_get('sources/' . $codename . '.php');
-        $file = str_replace('<?php', '', $file);
-        $file = str_replace('', '', $file);
+        $file = str_replace('<' . '?php', '', $file);
+        $file = str_replace('?' . '>', '', $file);
         eval($file);
         @call_user_func('init__' . str_replace('/', '__', $codename));
     } else {
@@ -256,24 +308,22 @@ function handle_self_referencing_embedment()
         }
         if ($type == 'css') {
             header('Content-Type: text/css');
-            if (!file_exists(get_file_base() . '/themes/default/css/global.css')) {
-                $file = file_array_get('themes/default/css/global.css');
-                echo $file;
-                $file = file_array_get('themes/default/css/install.css');
-                echo $file;
-            } else {
-                $path = get_file_base() . '/themes/default/templates_cached/EN/install.css';
-                if (!file_exists($path)) {
-                    $path = get_file_base() . '/themes/default/css/install.css';
-                }
-                require_once($path);
 
-                $path = get_file_base() . '/themes/default/templates_cached/EN/global.css';
-                if (!file_exists($path)) {
-                    $path = get_file_base() . '/themes/default/css/global.css';
-                }
-                require_once($path);
-            }
+            $output = '';
+
+            $path = get_file_base() . '/themes/default/css/install.css';
+            $file = file_get_contents($path);
+            require_code('tempcode_compiler');
+            $css = template_to_tempcode($file, 0, false, '');
+            $output .= $css->evaluate();
+
+            $path = get_file_base() . '/themes/default/css/global.css';
+            $file = file_get_contents($path);
+            require_code('tempcode_compiler');
+            $css = template_to_tempcode($file, 0, false, '');
+            $output .= $css->evaluate();
+
+            echo $output;
 
             exit();
         }

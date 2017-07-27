@@ -1,11 +1,12 @@
 /*
  {$BRAND_NAME`}
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 */
 
 .screen_actions_outer {
 	margin: 2em 0;
 	overflow: visible !important;
+	{$BETA_CSS_PROPERTY,box-sizing: border-box;}
 
 	/* Needed so the :after clearfix works in a constrained context */
 	display: inline-block;
@@ -42,11 +43,12 @@
 }
 
 .screen_actions div a span {
-	display: none;
+	visibility: hidden;
 }
 
 .screen_actions .facebook_like {
 	margin-right: 0;
+	min-width: 90px; /* Facebook is absolute'ing out of its space so we need to reserve extra space */
 }
 
 .screen_actions .print {

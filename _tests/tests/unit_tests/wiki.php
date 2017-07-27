@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -34,7 +34,7 @@ class wiki_test_set extends cms_test_case
         set_category_permissions_from_environment('wiki_page', strval($this->id), 'cms_wiki');
 
         // Check the page was actully created
-        $this->assertTrue('test notes' == $GLOBALS['FORUM_DB']->query_select_value('wiki_pages', 'notes', array('id' => $this->id)));
+        $this->assertTrue('test notes' == $GLOBALS['SITE_DB']->query_select_value('wiki_pages', 'notes', array('id' => $this->id)));
     }
 
     public function testEditWikiPage()
@@ -44,17 +44,12 @@ class wiki_test_set extends cms_test_case
         wiki_edit_page($this->id, 'title-edited', 'test description', 'notes_edited', 0, '', '');
 
         //C heck the page was edited
-        $this->assertTrue('notes_edited' == $GLOBALS['FORUM_DB']->query_select_value('wiki_pages', 'notes', array('id' => $this->id)));
+        $this->assertTrue('notes_edited' == $GLOBALS['SITE_DB']->query_select_value('wiki_pages', 'notes', array('id' => $this->id)));
     }
 
     public function testDeleteWikipage()
     {
         // Delete Wiki+ page
         wiki_delete_page($this->id);
-    }
-
-    public function tearDown()
-    {
-        parent::tearDown();
     }
 }

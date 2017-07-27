@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -21,7 +21,7 @@
 /**
  * Hook class.
  */
-class Hook_search_filedump
+class Hook_search_filedump extends FieldsSearchHook
 {
     /**
      * Find details for this search hook.
@@ -154,7 +154,7 @@ class Hook_search_filedump
                 if (!is_image($url)) {
                     $tpl = paragraph(hyperlink($url, $caption, true, true), 'dfdsfu09wl;f');
                     if ($file_breadcrumbs != array()) {
-                        $tpl->attach(paragraph(do_lang_tempcode('LOCATED_IN', breadcrumb_segments_to_tempcode($file_breadcrumbs))));
+                        $tpl->attach(paragraph(do_lang_tempcode('LOCATED_IN', breadcrumb_segments_to_tempcode($file_breadcrumbs)), '', 'breadcrumbs'));
                     }
 
                     $out[$i]['template'] = do_template('SIMPLE_PREVIEW_BOX', array(
@@ -162,9 +162,10 @@ class Hook_search_filedump
                         'ID' => $_path,
                         'TITLE' => basename($_path),
                         'SUMMARY' => $tpl,
+                        'RESOURCE_TYPE' => '_filedump_file',
                     ));
                 } else {
-                    if (function_exists('set_time_limit')) {
+                    if (php_function_allowed('set_time_limit')) {
                         @set_time_limit(5);
                     }
 
@@ -176,6 +177,7 @@ class Hook_search_filedump
                         'SUMMARY' => $tpl,
                         'BREADCRUMBS' => $file_breadcrumbs,
                         'URL' => $url,
+                        'RESOURCE_TYPE' => '_filedump_file_image',
                     ));
                 }
 

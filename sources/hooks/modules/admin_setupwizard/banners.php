@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -46,7 +46,7 @@ class Hook_sw_banners
      */
     public function get_fields($field_defaults)
     {
-        if (!addon_installed('banners')) {
+        if (!addon_installed('banners') || post_param_integer('addon_banners', null) === 0) {
             return new Tempcode();
         }
 
@@ -69,7 +69,7 @@ class Hook_sw_banners
      */
     public function set_fields()
     {
-        if (!addon_installed('banners')) {
+        if (!addon_installed('banners') || post_param_integer('addon_banners', null) === 0) {
             return;
         }
 

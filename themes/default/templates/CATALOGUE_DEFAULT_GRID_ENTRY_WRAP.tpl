@@ -2,24 +2,28 @@
 	<h3><span class="name">{$TRUNCATE_LEFT,{FIELD_0},25,1,1}</h3>
 
 	{+START,SET,TOOLTIP}
-		<table class="map_table results_table">
-			<tbody>
-				{FIELDS_GRID}
-			</tbody>
-		</table>
+		{+START,IF_NON_EMPTY,{$TRIM,{FIELDS_GRID}}}
+			<table class="map_table results_table">
+				<tbody>
+					{FIELDS_GRID}
+				</tbody>
+			</table>
+		{+END}
 	{+END}
 
 	{$SET,displayed_thumb,0}
 
+	{$SET,view_url,{$?,{$AND,{$MOBILE},{$IS_NON_EMPTY,{FIELDS_GRID}}},{$PAGE_LINK,_SELF:catalogues:entry:{ID}},{VIEW_URL}}}
+
 	{+START,IF_PASSED,FIELD_1_THUMB}
 		{+START,IF_NON_EMPTY,{FIELD_1_THUMB}}
 			<div class="catalogue_entry_box_thumbnail">
-				{+START,IF_NON_EMPTY,{VIEW_URL}}
-					<a onmouseover="if (typeof window.activate_tooltip!='undefined') activate_tooltip(this,event,'{$GET*;^,TOOLTIP}','500px');" href="{VIEW_URL*}">{FIELD_1_THUMB}</a>
+				{+START,IF_NON_EMPTY,{$GET,view_url}}
+					<a onmouseover="if (typeof window.activate_tooltip!='undefined') activate_tooltip(this,event,'{$TRIM*;^,{$GET,TOOLTIP}}','500px');" href="{$GET*,view_url}">{FIELD_1_THUMB}</a>
 				{+END}
 
-				{+START,IF_EMPTY,{VIEW_URL}}
-					<span onmouseover="if (typeof window.activate_tooltip!='undefined') activate_tooltip(this,event,'{$GET*;^,TOOLTIP}','500px');">{FIELD_1_THUMB}</span>
+				{+START,IF_EMPTY,{$GET,view_url}}
+					<span onmouseover="if (typeof window.activate_tooltip!='undefined') activate_tooltip(this,event,'{$TRIM*;^,{$GET,TOOLTIP}}','500px');">{FIELD_1_THUMB}</span>
 				{+END}
 			</div>
 
@@ -28,18 +32,18 @@
 	{+END}
 
 	{+START,IF,{$NOT,{$GET,displayed_thumb}}}
-		{+START,IF_NON_EMPTY,{VIEW_URL}}
+		{+START,IF_NON_EMPTY,{$GET,view_url}}
 			<p>
-				<a onmouseover="if (typeof window.activate_tooltip!='undefined') activate_tooltip(this,event,'{$GET*;^,TOOLTIP}','500px');" href="{VIEW_URL*}">{!VIEW}</a>
+				<a onmouseover="if (typeof window.activate_tooltip!='undefined') activate_tooltip(this,event,'{$TRIM*;^,{$GET,TOOLTIP}}','500px');" href="{$GET*,view_url}">{!VIEW}</a>
 			</p>
 		{+END}
 
-		{+START,IF_EMPTY,{VIEW_URL}}
+		{+START,IF_EMPTY,{$GET,view_url}}
 			{$GET,TOOLTIP}
 		{+END}
 	{+END}
 
-	{+START,IF_NON_EMPTY,{RATING}}
+	{+START,IF,{ALLOW_RATING}}
 		<div class="ratings">
 			{RATING}
 		</div>

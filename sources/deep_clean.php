@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -61,7 +61,7 @@ function deep_clean($d, $heading = '')
             $d = preg_replace('#^\s*<h\d[^<>]*>\s*' . preg_quote($heading, '') . '\s*</h\d>#', '', $d);
             $d = preg_replace('#^\s*' . preg_quote($heading, '') . '\s*([^\w])#', '$1', $d);
         } else {
-            $d = preg_replace('#^\s*' . preg_quote($heading, '') . '\s*\n#', '', $d);
+            $d = preg_replace('#^\s*' . preg_quote($heading, '') . '\s*\r?\n#', '', $d);
         }
     }
 
@@ -129,10 +129,10 @@ function deep_clean($d, $heading = '')
         // Inherits/nones
         do {
             $orig_d = $d;
-            $d = preg_replace('#"\s*[\w-]+: *(inherit|none|0|0px|rgb\(0, 0, 0\))"\s*#', '""', $d); // Only property
-            $d = preg_replace('#"\s*[\w-]+: *(inherit|none|0|0px|rgb\(0, 0, 0\));\s*#', '"', $d); // First property
-            $d = preg_replace('#\s*;\s*[\w-]+: *(inherit|none|0|0px|rgb\(0, 0, 0\));?"#', '"', $d); // Last property
-            $d = preg_replace('#\s*;\s*[\w-]+: *(inherit|none|0|0px|rgb\(0, 0, 0\))\s*;\s*#', '; ', $d); // Middle property
+            $d = preg_replace('#"\s*[\w\-]+: *(inherit|none|0|0px|rgb\(0, 0, 0\))"\s*#', '""', $d); // Only property
+            $d = preg_replace('#"\s*[\w\-]+: *(inherit|none|0|0px|rgb\(0, 0, 0\));\s*#', '"', $d); // First property
+            $d = preg_replace('#\s*;\s*[\w\-]+: *(inherit|none|0|0px|rgb\(0, 0, 0\));?"#', '"', $d); // Last property
+            $d = preg_replace('#\s*;\s*[\w\-]+: *(inherit|none|0|0px|rgb\(0, 0, 0\))\s*;\s*#', '; ', $d); // Middle property
             $changed = ($orig_d != $d);
         } while ($changed);
 

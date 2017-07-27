@@ -54,23 +54,23 @@ function deletebot($bot)
 {
 
 	$q="delete from bot where bot=$bot";	
-    $e = mysql_query($q);
+    $e = mysqli_query($GLOBALS['SITE_DB']->connection_write[0], $q);
     if ($e){
     }
     $q="delete from patterns where bot=$bot";	
-    $e = mysql_query($q);
+    $e = mysqli_query($GLOBALS['SITE_DB']->connection_write[0], $q);
     if ($e){
     }
     $q="delete from templates where bot=$bot";
-    $e = mysql_query($q);
+    $e = mysqli_query($GLOBALS['SITE_DB']->connection_write[0], $q);
     if ($e){
     }
     $q="delete from bots where id=$bot"; 
-    $e = mysql_query($q);
+    $e = mysqli_query($GLOBALS['SITE_DB']->connection_write[0], $q);
     if ($e){
     }
     $q="delete from gmcache";			
-    $e = mysql_query($q);
+    $e = mysqli_query($GLOBALS['SITE_DB']->connection_write[0], $q);
     if ($e){
     }
 
@@ -93,15 +93,15 @@ function deletebot($bot)
 function deletejustbot($bot){			
 
 	$q="delete from bots where id=$bot"; 
-    $e = mysql_query($q);
+    $e = mysqli_query($GLOBALS['SITE_DB']->connection_write[0], $q);
     if ($e){
     }
 	$q="delete from bot where bot=$bot";	
-	$e = mysql_query($q);
+	$e = mysqli_query($GLOBALS['SITE_DB']->connection_write[0], $q);
 	if ($e){
 	}
     $q="delete from gmcache";			
-    $e = mysql_query($q);
+    $e = mysqli_query($GLOBALS['SITE_DB']->connection_write[0], $q);
     if ($e){
     }
 
@@ -117,7 +117,7 @@ function deletejustbot($bot){
 function flushcache()
 {
     $q="delete from gmcache";			
-    $e = mysql_query($q);
+    $e = mysqli_query($GLOBALS['SITE_DB']->connection_write[0], $q);
     if ($e){
     }
 }
@@ -134,8 +134,8 @@ function flushcache()
 function upperkeysarray($testa)
 {
     $newtesta=array();
-    $newkeys=array_keys($testa);
-    for ($x=0;$x<sizeof($newkeys);$x++){
+    $newkeys=@array_keys($testa);
+    for ($x=0;$x<count($newkeys);$x++){
         $newtesta[strtoupper($newkeys[$x])]=$testa[$newkeys[$x]];
     }
     return $newtesta;
@@ -201,13 +201,13 @@ function findwordid($word,$parent)
     $word=addslashes($word);
     $query="select id,isend from patterns where word='$word' and parent=$parent";	
 
-    $selectcode = mysql_query($query);
+    $selectcode = mysqli_query($GLOBALS['SITE_DB']->connection_write[0], $query);
     if ($selectcode){
-        if(!mysql_numrows($selectcode)){
+        if(!mysqli_num_rows($selectcode)){
             return 0;
         }
         else{
-            while ($q = mysql_fetch_array($selectcode)){
+            while ($q = mysqli_fetch_array($selectcode)){
                 
                 if ($q[1]==1){
                     setnotend($q[0]);
@@ -242,13 +242,13 @@ function findwordidstar($word,$parent)
     }
     $query="select id,isend from patterns where parent=$parent and word is null and ordera=$val";	
     
-    $selectcode = mysql_query($query);
+    $selectcode = mysqli_query($GLOBALS['SITE_DB']->connection_write[0], $query);
     if ($selectcode){
-        if(!mysql_numrows($selectcode)){
+        if(!mysqli_num_rows($selectcode)){
             return 0;
         }
         else{
-            while ($q = mysql_fetch_array($selectcode)){
+            while ($q = mysqli_fetch_array($selectcode)){
                 
                 if ($q[1]==1){
                     setnotend($q[0]);
@@ -274,7 +274,7 @@ function setnotend($wordid)
 {
 
     $query="update patterns set isend=0 where id=$wordid";
-    $q=mysql_query($query);
+    $q=mysqli_query($GLOBALS['SITE_DB']->connection_write[0], $query);
     if ($q){
 
     }
@@ -312,12 +312,12 @@ function insertmysentence($mybigsentence)
     //Use split
     $allwords=explode(" ",$mybigsentence);
     $qadd="";
-    for ($x=0;$x<sizeof($allwords)+1;$x++){
+    for ($x=0;$x<count($allwords)+1;$x++){
 
         // Last word in context
         $lwic=0;
 
-        if ($x==sizeof($allwords)){
+        if ($x==count($allwords)){
             $word="";
         }
         else {
@@ -333,11 +333,11 @@ function insertmysentence($mybigsentence)
         }
         
         // Find out if it is the last word in its context
-        if ($x==(sizeof($allwords)-1)){
+        if ($x==(count($allwords)-1)){
             $lwic=1;
         }
 		// Prevent some warnings by checking this first.
-		elseif (($x+1) >= (sizeof($allwords))){
+		elseif (($x+1) >= (count($allwords))){
 
 		}
         elseif ((strtoupper($allwords[$x+1])=="<THAT>") || (strtoupper($allwords[$x+1])=="<TOPIC>")){
@@ -413,11 +413,11 @@ function insertmysentence($mybigsentence)
 function insertwordpattern($qadd)
 {
 
-    $qcode=mysql_query("insert into patterns(bot,id,word,ordera,parent,isend) values $qadd");
+    $qcode=mysqli_query($GLOBALS['SITE_DB']->connection_write[0], "insert into patterns(bot,id,word,ordera,parent,isend) values $qadd");
 
 	if ($qcode){
 
-		return mysql_insert_id();
+		return mysqli_insert_id($GLOBALS['SITE_DB']->connection_write[0]);
 	}
 
 }
@@ -452,7 +452,7 @@ function insertmytemplate($idused,$template)
         $template=addslashes($template);
         $query="insert into templates (bot,id,template,pattern,that,topic) values ($selectbot, $idused,'$template','$pattern','$that','$topic')";
 
-        $qcode=mysql_query($query);
+        $qcode=mysqli_query($GLOBALS['SITE_DB']->connection_write[0], $query);
         if ($qcode){
         }
     }
@@ -472,10 +472,10 @@ function templateexists($idused)
 {
     $query="select id from templates where id=$idused";
 
-    $qcode=mysql_query($query);
+    $qcode=mysqli_query($GLOBALS['SITE_DB']->connection_write[0], $query);
 
     if ($qcode){
-        if(!mysql_numrows($qcode)){
+        if(!mysqli_num_rows($qcode)){
             return false;
         }
     }
@@ -541,7 +541,7 @@ function startS($parser,$name,$attrs)
     if (strtoupper($name)=="PROPERTY"){
         $q="insert into bot (bot,name,value) values ($selectbot,'" . addslashes($attrs["NAME"]) . "','" . addslashes($attrs["VALUE"]) . "')";	
 
-        $qcode=mysql_query($q);
+        $qcode=mysqli_query($GLOBALS['SITE_DB']->connection_write[0], $q);
         if ($qcode){
         }
 
@@ -557,12 +557,12 @@ function startS($parser,$name,$attrs)
 
 		$asbot=addslashes($bot);
 		$q="insert into bots (id,botname) values (null,'$asbot')";	
-		$qcode=mysql_query($q);
+		$qcode=mysqli_query($GLOBALS['SITE_DB']->connection_write[0], $q);
 
 		if ($areinc==1){
 			if ($qcode){
 			}
-			$newbotid=mysql_insert_id();
+			$newbotid=mysqli_insert_id($GLOBALS['SITE_DB']->connection_write[0]);
 		}
 		else {
 			$newbotid=$existbotid;
@@ -657,9 +657,9 @@ function botexists($name){
     // search to get existing id
 	$name=addslashes($name);
     $q="select id from bots where botname='$name'";
-    $selectcode = mysql_query($q);
+    $selectcode = mysqli_query($GLOBALS['SITE_DB']->connection_write[0], $q);
     if ($selectcode) {
-        while ($q = mysql_fetch_array($selectcode)){
+        while ($q = mysqli_fetch_array($selectcode)){
 			return true;
         }
     }
@@ -686,13 +686,13 @@ function getbotvalue($name)
 
     $q="select value from bot where name=" . addslashes($name) . " and bot=$selectbot";	
 
-    $selectcode = mysql_query($q);
+    $selectcode = mysqli_query($GLOBALS['SITE_DB']->connection_write[0], $q);
     if ($selectcode){
-        if(!mysql_numrows($selectcode)){
+        if(!mysqli_num_rows($selectcode)){
                 return DEFAULTPREDICATEVALUE;
         }
         else{
-            while ($q = mysql_fetch_array($selectcode)){
+            while ($q = mysqli_fetch_array($selectcode)){
                 return $q["value"];
             }
         }
@@ -715,9 +715,9 @@ function getbotid ($name)
     // search to get existing id
 	$name=addslashes($name);
     $q="select id from bots where botname='$name'";
-    $selectcode = mysql_query($q);
+    $selectcode = mysqli_query($GLOBALS['SITE_DB']->connection_write[0], $q);
     if ($selectcode) {
-        while ($q = mysql_fetch_array($selectcode)){
+        while ($q = mysqli_fetch_array($selectcode)){
                 return $q["id"];
         }
     }
@@ -1100,7 +1100,7 @@ function learnallfiles($curbot)
 function learnstring($xmlstring)
 {
 
-    if (function_exists('set_time_limit')) @set_time_limit(600);
+    if (php_function_allowed('set_time_limit')) @set_time_limit(600);
     $xml_parser = xml_parser_create();
     xml_parser_set_option($xml_parser,XML_OPTION_CASE_FOLDING,0);
     xml_set_element_handler($xml_parser, "startElement", "endElement");
@@ -1132,7 +1132,7 @@ function learnstring($xmlstring)
 function learn($file)
 {
 
-    if (function_exists('set_time_limit')) @set_time_limit(600);
+    if (php_function_allowed('set_time_limit')) @set_time_limit(600);
     $xml_parser = xml_parser_create();
     xml_parser_set_option($xml_parser,XML_OPTION_CASE_FOLDING,0);
     xml_set_element_handler($xml_parser, "startElement", "endElement");
@@ -1180,7 +1180,7 @@ function makesrphp($inarray,$sname)
 
     $myphp="\$" . $sname . "search=array(\n";
 
-    for ($x=0;$x<sizeof($inarray);$x++){
+    for ($x=0;$x<count($inarray);$x++){
 
         $searchvar=cleanforsearch($inarray[$x][0]);
 
@@ -1201,7 +1201,7 @@ function makesrphp($inarray,$sname)
 
     $myphp.="\$" . $sname . "replace=array(\n";
 
-    for ($x=0;$x<sizeof($inarray);$x++){
+    for ($x=0;$x<count($inarray);$x++){
         $myphp.="\"myfunc('" . cleanforreplace($inarray[$x][1]) . "')\",\n";
     }
 
@@ -1288,7 +1288,7 @@ function loadaimlcategory($aimlstring,$botid)
 function makesplitterphp($splitterarray)
 {
     $splitterphp="\$likeperiodsearch=array(\n";
-    for ($x=0;$x<sizeof($splitterarray);$x++){
+    for ($x=0;$x<count($splitterarray);$x++){
         
         $splitterphp.="\"" . $splitterarray[$x] . "\",\n";
 
@@ -1296,7 +1296,7 @@ function makesplitterphp($splitterarray)
     $splitterphp.=");\n";
 
     $splitterphp.="\$likeperiodreplace=array(\n";
-    for ($x=0;$x<sizeof($splitterarray);$x++){
+    for ($x=0;$x<count($splitterarray);$x++){
         
         $splitterphp.="\"" . "." . "\",\n";
 

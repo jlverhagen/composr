@@ -5,12 +5,12 @@
 </p>
 
 <div class="box box___cns_join_step1_screen"><div class="box_inner">
-	<div>
+	<div class="cns_join_rules">
 		{RULES}
 	</div>
 </div></div>
 
-<form title="{!PRIMARY_PAGE_FORM}" class="cns_join_1" method="post" action="{URL*}">
+<form title="{!PRIMARY_PAGE_FORM}" class="cns_join_1" method="post" action="{URL*}" autocomplete="off">
 	{$INSERT_SPAMMER_BLACKHOLE}
 
 	<p>
@@ -29,10 +29,10 @@
 
 	<p>
 		{+START,IF,{$JS_ON}}
-			<button onclick="disable_button_just_clicked(this); window.top.location='{$PAGE_LINK;*,:}'; return false;" class="buttons__no button_screen">{!I_DISAGREE}</button>
+			<button onclick="disable_button_just_clicked(this); window.top.location='{$PAGE_LINK;*,:}'; return false;" class="button_screen buttons__no">{!I_DISAGREE}</button>
 		{+END}
 
-		<input accesskey="u" onclick="disable_button_just_clicked(this);" class="buttons__yes button_screen" type="submit" value="{!PROCEED}"{+START,IF,{$JS_ON}} disabled="disabled"{+END} id="proceed_button" />
+		<input accesskey="u" onclick="disable_button_just_clicked(this);" class="button_screen buttons__yes" type="submit" value="{!PROCEED}"{+START,IF,{$JS_ON}} disabled="disabled"{+END} id="proceed_button" />
 	</p>
 </form>
 

@@ -7,16 +7,20 @@
 		</div>
 	{+END}
 
-	<div class="ratings">
-		{RATING}
-	</div>
+	{+START,IF,{ALLOW_RATING}}
+		<div class="ratings">
+			{RATING}
+		</div>
+	{+END}
 
 	<div class="price_box">
 		<span class="price">{$CURRENCY_SYMBOL}{$FLOAT_FORMAT*,{FIELD_2_PLAIN}}</span>
 	</div>
 
 	<div class="buttons_group">
-		<a class="buttons__cart_add button_screen_item" href="{ADD_TO_CART*}" title="{!ADD_TO_CART}"><span>{!BUY}</span></a>
-		<a class="buttons__more button_screen_item" href="{VIEW_URL*}" title="{!VIEW_PRODUCT}"><span>{!VIEW}</span></a>			
+		{+START,IF_PASSED,ADD_TO_CART}
+			<a class="button_screen_item buttons__cart_add" href="{ADD_TO_CART*}" title="{!ADD_TO_CART}"><span>{!BUY}</span></a>
+		{+END}
+		<a class="button_screen_item buttons__more" href="{VIEW_URL*}" title="{!VIEW_PRODUCT}"><span>{!VIEW}</span></a>
 	</div>
 </div></section>

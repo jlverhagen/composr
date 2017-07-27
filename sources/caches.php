@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -28,25 +28,27 @@ function init__caches()
     global $BLOCK_CACHE_ON_CACHE;
     $BLOCK_CACHE_ON_CACHE = null;
 
-    // These are ways we might enhance block caching with standardised (queryable) additional caching restraints
-    define('CACHE_AGAINST_NOTHING_SPECIAL', 0);
-    // -
-    define('CACHE_AGAINST_STAFF_STATUS', 1);
-    define('CACHE_AGAINST_MEMBER', 2);
-    define('CACHE_AGAINST_PERMISSIVE_GROUPS', 4);
-    define('CACHE_AGAINST_BOT_STATUS', 8);
-    define('CACHE_AGAINST_TIMEZONE', 16);
-    // -
-    define('CACHE_AGAINST_DEFAULT', CACHE_AGAINST_BOT_STATUS | CACHE_AGAINST_TIMEZONE);
+    if (!defined('CACHE_AGAINST_NOTHING_SPECIAL')) {
+        // These are ways we might enhance block caching with standardised (queryable) additional caching restraints
+        define('CACHE_AGAINST_NOTHING_SPECIAL', 0);
+        // -
+        define('CACHE_AGAINST_STAFF_STATUS', 1);
+        define('CACHE_AGAINST_MEMBER', 2);
+        define('CACHE_AGAINST_PERMISSIVE_GROUPS', 4);
+        define('CACHE_AGAINST_BOT_STATUS', 8);
+        define('CACHE_AGAINST_TIMEZONE', 16);
+        // -
+        define('CACHE_AGAINST_DEFAULT', CACHE_AGAINST_BOT_STATUS | CACHE_AGAINST_TIMEZONE);
+    }
 
     global $PERSISTENT_CACHE, $SITE_INFO;
-    /** The persistent cache access object (NULL if there is no persistent cache).
+    /** The persistent cache access object (null if there is no persistent cache).
      *
      * @global ?object $PERSISTENT_CACHE
      */
     $PERSISTENT_CACHE = null;
 
-    $use_persistent_cache = ((array_key_exists('use_persistent_cache', $SITE_INFO)) && ($SITE_INFO['use_persistent_cache'] != '') && ($SITE_INFO['use_persistent_cache'] != '0'));// Default to off because badly configured caches can result in lots of very slow misses and lots of lost sessions || ((!array_key_exists('use_persistent_cache',$SITE_INFO)) && ((function_exists('xcache_get')) || (function_exists('wincache_ucache_get')) || (function_exists('apc_fetch')) || (function_exists('eaccelerator_get')) || (function_exists('mmcache_get'))));
+    $use_persistent_cache = (!empty($SITE_INFO['use_persistent_cache'])); // Default to off because badly configured caches can result in lots of very slow misses
     if (($use_persistent_cache) && (!$GLOBALS['IN_MINIKERNEL_VERSION'])) {
         if ((class_exists('Memcached')) && (($SITE_INFO['use_persistent_cache'] == 'memcached') || ($SITE_INFO['use_persistent_cache'] == '1'))) {
             require_code('persistent_caching/memcached');
@@ -57,7 +59,7 @@ function init__caches()
         } elseif ((function_exists('apc_fetch')) && (($SITE_INFO['use_persistent_cache'] == 'apc') || ($SITE_INFO['use_persistent_cache'] == '1'))) {
             require_code('persistent_caching/apc');
             $PERSISTENT_CACHE = new Persistent_caching_apccache();
-        } elseif (((function_exists('eaccelerator_put')) || (function_exists('mmcache_put'))) && (($SITE_INFO['use_persistent_cache'] == 'eaccelerator') || ($SITE_INFO['use_persistent_cache'] == '1'))) {
+        } elseif ((function_exists('eaccelerator_put')) && (($SITE_INFO['use_persistent_cache'] == 'eaccelerator') || ($SITE_INFO['use_persistent_cache'] == '1'))) {
             require_code('persistent_caching/eaccelerator');
             $PERSISTENT_CACHE = new Persistent_caching_eacceleratorcache();
         } elseif ((function_exists('xcache_get')) && (($SITE_INFO['use_persistent_cache'] == 'xcache') || ($SITE_INFO['use_persistent_cache'] == '1'))) {
@@ -70,14 +72,15 @@ function init__caches()
             require_code('persistent_caching/filesystem');
             $PERSISTENT_CACHE = new Persistent_caching_filecache();
         }
+        // NB: sources/hooks/systems/checks/persistent_cache.php also references some of this ^
     }
 
     /** The smart cache (self-learning cache).
      *
      * @global boolean $SMART_CACHE
      */
-    global $SMART_CACHE, $RELATIVE_PATH;
-    if (running_script('index') || running_script('iframe')) {
+    global $SMART_CACHE, $RELATIVE_PATH, $IN_SELF_ROUTING_SCRIPT;
+    if ($IN_SELF_ROUTING_SCRIPT) {
         $zone = $RELATIVE_PATH;
         $page = get_param_string('page', ''); // Not get_page_name for bootstrap order reasons
         $screen = get_param_string('type', 'browse');
@@ -91,14 +94,19 @@ function init__caches()
     $SMART_CACHE = new Self_learning_cache($bucket_name);
 
     // Some loading from the smart cache
-    global $JAVASCRIPT, $CSSS;
-    $test = $SMART_CACHE->get('JAVASCRIPT');
+    global $CSS_OUTPUT_STARTED_LIST, $JS_OUTPUT_STARTED_LIST;
+    $CSS_OUTPUT_STARTED_LIST = array();
+    $JS_OUTPUT_STARTED_LIST = array();
+    global $JAVASCRIPTS, $JS_OUTPUT_STARTED_LIST, $CSSS, $CSS_OUTPUT_STARTED_LIST;
+    $test = $SMART_CACHE->get('JAVASCRIPTS');
     if ($test !== null) {
-        $JAVASCRIPT += $test;
+        $JAVASCRIPTS += $test;
+        $JS_OUTPUT_STARTED_LIST += $test;
     }
     $test = $SMART_CACHE->get('CSSS');
     if ($test !== null) {
         $CSSS += $test;
+        $CSS_OUTPUT_STARTED_LIST += $test;
     }
 }
 
@@ -130,6 +138,8 @@ class Self_learning_cache
     private $data = null; // null means "Nothing loaded"
     private $keys_inital = array();
     private $pending_save = false;
+    public $paused = false;
+    public $empty = true;
 
     /**
      * Constructor. Initialise our cache.
@@ -139,7 +149,13 @@ class Self_learning_cache
     public function __construct($bucket_name)
     {
         $this->bucket_name = $bucket_name;
-        $this->path = get_custom_file_base() . '/caches/self_learning/' . filter_naughty(str_replace(array('/', '\\', ':'), array('__', '__', '__'), $bucket_name)) . '.gcd';
+        $dir = get_custom_file_base() . '/caches/self_learning';
+        if (!is_dir($dir)) {
+            require_code('files2');
+            make_missing_directory($dir);
+        }
+        //$this->path = $dir . '/' . filter_naughty(str_replace(array('/', '\\', ':'), array('__', '__', '__'), $bucket_name)) . '.gcd'; Windows has a 260 character path limit, so we can't do it this way
+        $this->path = $dir . '/' . filter_naughty(md5($bucket_name)) . '.gcd';
         $this->load();
     }
 
@@ -174,15 +190,8 @@ class Self_learning_cache
         $data = persistent_cache_get(array('SELF_LEARNING_CACHE', $this->bucket_name));
         if ($data !== null) {
             $this->data = $data;
-        } else {
-            $_data = '';
-            $myfile = @fopen($this->path, 'rb');
-            if ($myfile !== false) {
-                @flock($myfile, LOCK_SH);
-                while (!feof($myfile)) {
-                    $_data .= fread($myfile, 1024);
-                }
-            }
+        } elseif (is_file($this->path)) {
+            $_data = cms_file_get_contents_safe($this->path);
             if ($_data !== false) {
                 $this->data = @unserialize($_data);
                 if ($this->data === false) {
@@ -192,6 +201,8 @@ class Self_learning_cache
                 $this->data = null;
             }
         }
+
+        $this->empty = empty($this->data);
 
         if ($this->data !== null) {
             $this->keys_initial = array_flip(array_keys($this->data));
@@ -231,6 +242,10 @@ class Self_learning_cache
      */
     public function set($key, $value)
     {
+        if ($this->paused) {
+            return;
+        }
+
         if (!isset($this->data[$key]) || $this->data[$key] !== $value) {
             $this->data[$key] = $value;
 
@@ -254,6 +269,10 @@ class Self_learning_cache
         }
 
         if ((!isset($this->data[$key][$value])) && !array_key_exists($value, $this->data[$key]) || $this->data[$key][$value] !== $value_2) {
+            if ($this->paused) {
+                return true;
+            }
+
             $this->data[$key][$value] = $value_2;
 
             $this->save(false);
@@ -281,8 +300,20 @@ class Self_learning_cache
                 register_shutdown_function(array($this, '_page_cache_resave'));
             }
             $this->pending_save = true;
+            return;
         }
 
+        $this->_page_cache_resave();
+    }
+
+    /**
+     * Actually save the cache.
+     * Has to be public for register_shutdown_function.
+     *
+     * @ignore
+     */
+    public function _page_cache_resave()
+    {
         if ($GLOBALS['PERSISTENT_CACHE'] !== null) {
             persistent_cache_set(array('SELF_LEARNING_CACHE', $this->bucket_name), $this->data);
             return;
@@ -291,12 +322,8 @@ class Self_learning_cache
         if (!is_null($this->path)) {
             $contents = serialize($this->data);
 
-            if (file_put_contents($this->path, $contents, LOCK_EX) < strlen($contents)) {
-                unlink($this->path);
-                fix_permissions($this->path);
-                warn_exit(do_lang_tempcode('COULD_NOT_SAVE_FILE'));
-            }
-            fix_permissions($this->path);
+            require_code('files');
+            cms_file_put_contents_safe($this->path, $contents, FILE_WRITE_FIX_PERMISSIONS);
         } else {
             fatal_exit(do_lang_tempcode('INTERNAL_ERROR'));
         }
@@ -333,11 +360,13 @@ class Self_learning_cache
         if ($dh !== false) {
             while (($f = readdir($dh)) !== false) {
                 if (substr($f, -4) == '.gcd') {
-                    unlink(get_custom_file_base() . '/caches/self_learning/' . $f);
+                    @unlink(get_custom_file_base() . '/caches/self_learning/' . $f);
                 }
             }
             closedir($dh);
         }
+
+        erase_persistent_cache();
 
         global $SMART_CACHE;
         if ($SMART_CACHE !== null) {
@@ -351,12 +380,12 @@ class Self_learning_cache
  *
  * @param  mixed $key Key
  * @param  ?TIME $min_cache_date Minimum timestamp that entries from the cache may hold (null: don't care)
- * @return ?mixed The data (null: not found / NULL entry)
+ * @return ?mixed The data (null: not found / null entry)
  */
 function persistent_cache_get($key, $min_cache_date = null)
 {
     global $PERSISTENT_CACHE;
-    //if (($GLOBALS['DEV_MODE']) && (mt_rand(0,3) == 1)) return NULL;  Annoying when doing performance tests, but you can enable to test persistent cache more
+    //if (($GLOBALS['DEV_MODE']) && (mt_rand(0, 3) == 1)) return null;  Annoying when doing performance tests, but you can enable to test persistent cache more
     if ($PERSISTENT_CACHE === null) {
         return null;
     }
@@ -436,6 +465,12 @@ function persistent_cache_delete($key, $substring = false)
  */
 function erase_persistent_cache()
 {
+    static $done_once = false;
+    if ($done_once) {
+        return;
+    }
+    $done_once = true;
+
     $path = get_custom_file_base() . '/safe_mode_temp';
     if (is_dir($path)) {
         $d = opendir($path);
@@ -465,14 +500,16 @@ function erase_persistent_cache()
     }
     $d = opendir($path);
     while (($e = readdir($d)) !== false) {
-        if (substr($e, -4) == '.htm') {
+        if ((substr($e, -4) == '.htm' || substr($e, -4) == '.xml') && (strpos($e, '__failover_mode') === false)) {
             // Ideally we'd lock while we delete, but it's not stable (and the workaround would be too slow for our efficiency context). So some people reading may get errors while we're clearing the cache. Fortunately this is a rare op to perform.
             @unlink(get_custom_file_base() . '/caches/guest_pages/' . $e);
         }
     }
     closedir($d);
-    @file_put_contents(get_custom_file_base() . '/data_custom/failover_rewritemap.txt', '', LOCK_EX);
-    @file_put_contents(get_custom_file_base() . '/data_custom/failover_rewritemap__mobile.txt', '', LOCK_EX);
+
+    require_code('files');
+    cms_file_put_contents_safe(get_custom_file_base() . '/data_custom/failover_rewritemap.txt', '', FILE_WRITE_FAILURE_SILENT | FILE_WRITE_FIX_PERMISSIONS);
+    cms_file_put_contents_safe(get_custom_file_base() . '/data_custom/failover_rewritemap__mobile.txt', '', FILE_WRITE_FAILURE_SILENT | FILE_WRITE_FIX_PERMISSIONS);
 
     global $PERSISTENT_CACHE;
     if ($PERSISTENT_CACHE === null) {
@@ -496,9 +533,9 @@ function has_caching_for($type)
 
     $setting = (get_option('is_on_' . $type . '_cache') == '1');
 
-    $positive = (get_param_integer('keep_cache', 0) == 1) || (get_param_integer('cache', 0) == 1) || (get_param_integer('cache_' . $type . 's', 0) == 1);
+    $positive = (get_param_integer('keep_cache', 0) == 1) || (get_param_integer('cache', 0) == 1) || (get_param_integer('keep_cache_' . $type . 's', 0) == 1) || (get_param_integer('cache_' . $type . 's', 0) == 1);
 
-    $not_negative = (get_param_integer('keep_cache', null) !== 0) && (get_param_integer('cache_' . $type . 's', null) !== 0) && (get_param_integer('cache', null) !== 0);
+    $not_negative = (get_param_integer('keep_cache', null) !== 0) && (get_param_integer('cache', null) !== 0) && (get_param_integer('keep_cache_' . $type . 's', null) !== 0) && (get_param_integer('cache_' . $type . 's', null) !== 0);
 
     return ($setting || $positive) && (strpos(get_param_string('special_page_type', ''), 't') === false) && $not_negative;
 }
@@ -560,25 +597,27 @@ function get_cache_entry($codename, $cache_identifier, $special_cache_flags, $tt
     $det = array($codename, $cache_identifier, md5($cache_identifier), $special_cache_flags, $ttl, $tempcode, $caching_via_cron, $map);
 
     global $SMART_CACHE;
-    $test = $SMART_CACHE->get('blocks_needed');
+    $test = (get_page_name() == 'admin_addons'/*special case*/) ? array() : $SMART_CACHE->get('blocks_needed');
     if (count($test) < 20) {
         $SMART_CACHE->append('blocks_needed', serialize($det));
     } else {
         $SMART_CACHE->get('blocks_needed', false); // Disable it for this smart-cache bucket, we probably have some block(s) with the cache signature varying too much
     }
 
-    $ret = _get_cache_entries(array($det));
-    return $ret[0];
+    $rets = _get_cache_entries(array($det), $special_cache_flags);
+    return $rets[0];
 }
 
 /**
  * Ability to do multiple get_cache_entry at once, for performance reasons.
  *
  * @param  array $dets An array of tuples of parameters (as per get_cache_entry, almost)
+ * @param  ?integer $special_cache_flags Special cache flags (null: unknown)
  * @return array Array of results
+ *
  * @ignore
  */
-function _get_cache_entries($dets)
+function _get_cache_entries($dets, $special_cache_flags = null)
 {
     static $cache = array();
 
@@ -588,24 +627,44 @@ function _get_cache_entries($dets)
 
     $rets = array();
 
+    require_code('temporal');
+    $staff_status = (($special_cache_flags !== null) && (($special_cache_flags & CACHE_AGAINST_STAFF_STATUS) !== 0)) ? ($GLOBALS['FORUM_DRIVER']->is_staff(get_member()) ? 1 : 0) : null;
+    $member = (($special_cache_flags !== null) && (($special_cache_flags & CACHE_AGAINST_MEMBER) !== 0)) ? get_member() : null;
+    $groups = (($special_cache_flags !== null) && (($special_cache_flags & CACHE_AGAINST_PERMISSIVE_GROUPS) !== 0)) ? implode(',', array_map('strval', filter_group_permissivity($GLOBALS['FORUM_DRIVER']->get_members_groups(get_member())))) : '';
+    $is_bot = (($special_cache_flags !== null) && (($special_cache_flags & CACHE_AGAINST_BOT_STATUS) !== 0)) ? (is_null(get_bot_type()) ? 0 : 1) : null;
+    $timezone = (($special_cache_flags !== null) && (($special_cache_flags & CACHE_AGAINST_TIMEZONE) !== 0)) ? get_users_timezone(get_member()) : '';
+
     // Bulk load
     if ($GLOBALS['PERSISTENT_CACHE'] === null) {
-        require_code('temporal');
-        $staff_status = $GLOBALS['FORUM_DRIVER']->is_staff(get_member());
-        $the_member = get_member();
-        $groups = implode(',', array_map('strval', filter_group_permissivity($GLOBALS['FORUM_DRIVER']->get_members_groups(get_member()))));
-        $is_bot = is_null(get_bot_type()) ? 0 : 1;
-        $timezone = get_users_timezone(get_member());
-
         $do_query = false;
 
         $sql = 'SELECT cached_for,identifier,the_value,date_and_time,dependencies FROM ' . get_table_prefix() . 'cache WHERE ';
         $sql .= db_string_equal_to('the_theme', $GLOBALS['FORUM_DRIVER']->get_theme());
-        $sql .= ' AND (staff_status=' . ($staff_status ? '1' : '0') . ' OR staff_status IS NULL)';
-        $sql .= ' AND (the_member=' . strval($the_member) . ' OR the_member IS NULL)';
-        $sql .= ' AND (' . db_string_equal_to('groups', $groups) . ' OR ' . db_string_equal_to('groups', '') . ')';
-        $sql .= ' AND (is_bot=' . strval($is_bot) . ' OR is_bot IS NULL)';
-        $sql .= ' AND (' . db_string_equal_to('timezone', $timezone) . ' OR ' . db_string_equal_to('timezone', '') . ')';
+        if ($staff_status === null) {
+            $sql .= ' AND staff_status IS NULL';
+        } else {
+            $sql .= ' AND staff_status=' . strval($staff_status);
+        }
+        if ($member === null) {
+            $sql .= ' AND the_member IS NULL';
+        } else {
+            $sql .= ' AND the_member=' . strval($member);
+        }
+        if ($groups === null) {
+            $sql .= ' AND ' . db_string_equal_to('groups', '');
+        } else {
+            $sql .= ' AND ' . db_string_equal_to('groups', $groups);
+        }
+        if ($is_bot === null) {
+            $sql .= ' AND is_bot IS NULL';
+        } else {
+            $sql .= ' AND is_bot=' . strval($is_bot);
+        }
+        if ($timezone === null) {
+            $sql .= ' AND ' . db_string_equal_to('timezone', '');
+        } else {
+            $sql .= ' AND ' . db_string_equal_to('timezone', $timezone);
+        }
         $sql .= ' AND ' . db_string_equal_to('lang', user_lang());
         $sql .= ' AND (1=0';
         foreach ($dets as $det) {
@@ -639,7 +698,7 @@ function _get_cache_entries($dets)
         if ($GLOBALS['PERSISTENT_CACHE'] !== null) {
             $theme = $GLOBALS['FORUM_DRIVER']->get_theme();
             $lang = user_lang();
-            $cache_row = persistent_cache_get(array('CACHE', $codename, $md5_cache_identifier, $lang, $theme));
+            $cache_row = persistent_cache_get(array('CACHE', $codename, $md5_cache_identifier, $lang, $theme, $staff_status, $member, $groups, $is_bot, $timezone));
 
             if ($cache_row === null) { // No
                 if ($caching_via_cron) {
@@ -738,6 +797,5 @@ function _get_cache_entries($dets)
         $cache[$sz] = $ret;
         $rets[] = $ret;
     }
-
     return $rets;
 }

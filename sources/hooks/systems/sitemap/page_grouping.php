@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -79,7 +79,7 @@ class Hook_sitemap_page_grouping extends Hook_sitemap_base
             list($_page_grouping) = $link;
 
             if (($_page_grouping == '') || ($_page_grouping == $page_grouping)) {
-                if ((is_array($link)) && (is_string($link[2][2]))) {
+                if ((is_array($link[2])) && (is_string($link[2][2]))) {
                     $pages_found[$link[2][2] . ':' . $link[2][0]] = true;
                 }
             }
@@ -207,6 +207,11 @@ class Hook_sitemap_page_grouping extends Hook_sitemap_base
                     $title = $link[3];
                     $icon = $link[1];
 
+                    $child_description = null;
+                    if (isset($link[4])) {
+                        $child_description = (is_object($link[4])) ? $link[4] : comcode_lang_string($link[4]);
+                    }
+
                     if (!is_array($link[2])) { // Plain URL
                         $children[] = array(
                             'title' => $title,
@@ -217,9 +222,9 @@ class Hook_sitemap_page_grouping extends Hook_sitemap_base
                             'page_link' => null,
                             'url' => $link[2],
                             'extra_meta' => array(
-                                'description' => null,
-                                'image' => null,
-                                'image_2x' => null,
+                                'description' => $child_description,
+                                'image' => ($icon === null) ? null : find_theme_image('icons/24x24/' . $icon),
+                                'image_2x' => ($icon === null) ? null : find_theme_image('icons/48x48/' . $icon),
                                 'add_date' => null,
                                 'edit_date' => null,
                                 'submitter' => null,
@@ -273,11 +278,6 @@ class Hook_sitemap_page_grouping extends Hook_sitemap_base
                     }
                     $page_type = strtolower($details[0]);
 
-                    $child_description = null;
-                    if (isset($link[4])) {
-                        $child_description = (is_object($link[4])) ? $link[4] : comcode_lang_string($link[4]);
-                    }
-
                     $child_links[] = array($title, $child_page_link, $icon, $page_type, $child_description);
                 }
             }
@@ -288,7 +288,8 @@ class Hook_sitemap_page_grouping extends Hook_sitemap_base
                     // Any left-behind pages
                     // NB: Code largely repeated in zone.php
                     $orphaned_pages = array();
-                    foreach ((($zone == 'site') && (($options & SITEMAP_GEN_COLLAPSE_ZONES) != 0)) ? array('site', '') : array($zone) as $_zone) {
+                    $zones_to_search = (($zone == 'site') && (($options & SITEMAP_GEN_COLLAPSE_ZONES) != 0)) ? array('site', '') : array($zone);
+                    foreach ($zones_to_search as $_zone) {
                         $pages = find_all_pages_wrap($_zone, false, /*$consider_redirects=*/true, /*$show_method = */0, /*$page_type = */($zone != $_zone) ? 'comcode' : null);
                         foreach ($pages as $page => $page_type) {
                             if (is_integer($page)) {
@@ -331,6 +332,19 @@ class Hook_sitemap_page_grouping extends Hook_sitemap_base
 
                     $child_links[] = array(titleify($page), $child_page_link, null, $page_type, null);
                 }
+
+                if (($zone == '') || ($zone == 'site')) {
+                    $all_zones = find_all_zones(false, false, true);
+                    $zone_sitemap_ob = $this->_get_sitemap_object('zone');
+                    foreach ($all_zones as $zone) {
+                        if (!in_array($zone, array('', 'site', 'adminzone', 'cms', 'collaboration', 'forum'))) {
+                            $child_node = $zone_sitemap_ob->get_node($zone . ':', $callback, $valid_node_types, $child_cutoff, $max_recurse_depth, $recurse_level + 1, $options, $zone, $meta_gather);
+                            if ($child_node !== null) {
+                                $children[] = $child_node;
+                            }
+                        }
+                    }
+                }
             }
 
             $consider_validation = (($options & SITEMAP_GEN_CONSIDER_VALIDATION) != 0);
@@ -365,8 +379,10 @@ class Hook_sitemap_page_grouping extends Hook_sitemap_base
                     }
 
                     if (preg_match('#^([^:]*):([^:]*)(:browse|:\w+=|$)#', $child_page_link, $matches) != 0) {
+                        // Linking to a page, possibly all entry points under a module
                         $child_node = $page_sitemap_ob->get_node($child_page_link, $callback, $valid_node_types, $child_cutoff, $max_recurse_depth, $recurse_level + 1, $options, $zone, $meta_gather, $child_row);
                     } else {
+                        // Linking to a deep entry-point
                         $child_node = $entry_point_sitemap_ob->get_node($child_page_link, $callback, $valid_node_types, $child_cutoff, $max_recurse_depth, $recurse_level + 1, $options, $zone, $meta_gather, $child_row);
                     }
                 }

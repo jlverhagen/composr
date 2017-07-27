@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -103,7 +103,7 @@ class Forum_driver_vb_shared extends Forum_driver_base
 
         $name = 'cms_' . $name;
         if ((!isset($GLOBALS['SITE_INFO']['vb_version'])) || ($GLOBALS['SITE_INFO']['vb_version'] >= 3.6)) {
-            $r = $this->connection->query('SELECT f.profilefieldid FROM ' . $this->connection->get_table_prefix() . 'profilefield f LEFT JOIN ' . $this->connection->get_table_prefix() . 'phrase p ON (' . db_string_equal_to('product', 'vbulletin') . ' AND p.varname=CONCAT(\'field\',f.profilefieldid,\'_title\')) WHERE ' . db_string_equal_to('p.text', $name));
+            $r = $this->connection->query('SELECT f.profilefieldid FROM ' . $this->connection->get_table_prefix() . 'profilefield f LEFT JOIN ' . $this->connection->get_table_prefix() . 'phrase p ON (' . db_string_equal_to('product', 'vbulletin') . ' AND p.varname=' . db_function('CONCAT', array('\'field\'', 'f.profilefieldid', '\'_title\'')) . ') WHERE ' . db_string_equal_to('p.text', $name));
         } else {
             $r = $this->connection->query('SELECT profilefieldid FROM ' . $_POST['vb_table_prefix'] . 'profilefield WHERE ' . db_string_equal_to('title', $name) . '\'');
         }
@@ -313,7 +313,7 @@ class Forum_driver_vb_shared extends Forum_driver_base
      * Get the forum ID from a forum name.
      *
      * @param  SHORT_TEXT $forum_name The forum name
-     * @return integer The forum ID
+     * @return ?integer The forum ID (null: not found)
      */
     public function forum_id_from_name($forum_name)
     {
@@ -357,7 +357,7 @@ class Forum_driver_vb_shared extends Forum_driver_base
      * @param  SHORT_TEXT $poster_name_if_guest The name of the poster
      * @param  ?AUTO_LINK $parent_id ID of post being replied to (null: N/A)
      * @param  boolean $staff_only Whether the reply is only visible to staff
-     * @return array Topic ID (may be NULL), and whether a hidden post has been made
+     * @return array Topic ID (may be null), and whether a hidden post has been made
      */
     public function make_post_forum_topic($forum_name, $topic_identifier, $member, $post_title, $post, $content_title, $topic_identifier_encapsulation_prefix, $content_url = null, $time = null, $ip = null, $validated = null, $topic_validated = 1, $skip_post_checks = false, $poster_name_if_guest = '', $parent_id = null, $staff_only = false)
     {
@@ -576,7 +576,7 @@ class Forum_driver_vb_shared extends Forum_driver_base
     }
 
     /**
-     * Get the member ID of the next member after the given one, or NULL.
+     * Get the member ID of the next member after the given one, or null.
      * It cannot be assumed there are no gaps in member IDs, as members may be deleted.
      *
      * @param  MEMBER $member The member ID to increment
@@ -603,7 +603,7 @@ class Forum_driver_vb_shared extends Forum_driver_base
 
     /**
      * Get the name relating to the specified member ID.
-     * If this returns NULL, then the member has been deleted. Always take potential NULL output into account.
+     * If this returns null, then the member has been deleted. Always take potential null output into account.
      *
      * @param  MEMBER $member The member ID
      * @return ?SHORT_TEXT The member name (null: member deleted)
@@ -719,7 +719,7 @@ class Forum_driver_vb_shared extends Forum_driver_base
             }
             $this->EMOTICON_CACHE[$myrow['smilietext']] = array('EMOTICON_IMG_CODE_DIR', $src, $myrow['smilietext']);
         }
-        uksort($this->EMOTICON_CACHE, 'strlen_sort');
+        uksort($this->EMOTICON_CACHE, '_strlen_sort');
         $this->EMOTICON_CACHE = array_reverse($this->EMOTICON_CACHE);
         return $this->EMOTICON_CACHE;
     }
@@ -845,7 +845,7 @@ class Forum_driver_vb_shared extends Forum_driver_base
     public function set_custom_field($member, $field, $value)
     {
         if ((!isset($GLOBALS['SITE_INFO']['vb_version'])) || ($GLOBALS['SITE_INFO']['vb_version'] >= 3.6)) {
-            $id = $this->connection->query_value_if_there('SELECT f.profilefieldid FROM ' . $this->connection->get_table_prefix() . 'profilefield f LEFT JOIN ' . $this->connection->get_table_prefix() . 'phrase p ON (' . db_string_equal_to('product', 'vbulletin') . ' AND p.varname=CONCAT(\'field\',f.profilefieldid,\'_title\')) WHERE ' . db_string_equal_to('p.text', 'cms_' . $field));
+            $id = $this->connection->query_value_if_there('SELECT f.profilefieldid FROM ' . $this->connection->get_table_prefix() . 'profilefield f LEFT JOIN ' . $this->connection->get_table_prefix() . 'phrase p ON (' . db_string_equal_to('product', 'vbulletin') . ' AND p.varname=' . db_function('CONCAT', array('\'field\'', 'f.profilefieldid', '\'_title\'')) . ') WHERE ' . db_string_equal_to('p.text', 'cms_' . $field));
         } else {
             $id = $this->connection->query_select_value_if_there('profilefield', 'profilefieldid', array('title' => 'cms_' . $field));
         }
@@ -868,9 +868,9 @@ class Forum_driver_vb_shared extends Forum_driver_base
     public function get_custom_fields($member)
     {
         if ((!isset($GLOBALS['SITE_INFO']['vb_version'])) || ($GLOBALS['SITE_INFO']['vb_version'] >= 3.6)) {
-            $rows = $this->connection->query('SELECT f.profilefieldid,p.text AS title FROM ' . $this->connection->get_table_prefix() . 'profilefield f LEFT JOIN ' . $this->connection->get_table_prefix() . 'phrase p ON (' . db_string_equal_to('product', 'vbulletin') . ' AND p.varname=CONCAT(\'field\',f.profilefieldid,\'_title\')) WHERE p.text LIKE \'' . db_encode_like('cms_%') . '\'');
+            $rows = $this->connection->query('SELECT f.profilefieldid,p.text AS title FROM ' . $this->connection->get_table_prefix() . 'profilefield f LEFT JOIN ' . $this->connection->get_table_prefix() . 'phrase p ON (' . db_string_equal_to('product', 'vbulletin') . ' AND p.varname=' . db_function('CONCAT', array('\'field\'', 'f.profilefieldid', '\'_title\'')) . ') WHERE p.text LIKE \'' . db_encode_like('cms\_%') . '\'');
         } else {
-            $rows = $this->connection->query('SELECT profilefieldid,title FROM ' . $this->connection->get_table_prefix() . 'profilefield WHERE title LIKE \'' . db_encode_like('cms_%') . '\'');
+            $rows = $this->connection->query('SELECT profilefieldid,title FROM ' . $this->connection->get_table_prefix() . 'profilefield WHERE title LIKE \'' . db_encode_like('cms\_%') . '\'');
         }
         $values = $this->connection->query_select('userfield', array('*'), array('userid' => $member), '', 1);
         if (!array_key_exists(0, $values)) {

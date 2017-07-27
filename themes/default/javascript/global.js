@@ -119,7 +119,7 @@ function script_load_stuff()
 			for (var i=0;i<stuck_navs.length;i++)
 			{
 				var stuck_nav=stuck_navs[i];
-				var stuck_nav_height=(typeof stuck_nav.real_height=='undefined')?find_height(stuck_nav,true,true):stuck_nav.real_height;
+				var stuck_nav_height=(typeof stuck_nav.real_height=='undefined')?find_height(stuck_nav,true):stuck_nav.real_height;
 				stuck_nav.real_height=stuck_nav_height;
 				var pos_y=find_pos_y(stuck_nav.parentNode,true);
 				var footer_height=find_height(document.getElementsByTagName('footer')[0]);
@@ -132,9 +132,9 @@ function script_load_stuff()
 					var extra_height=(get_window_scroll_y()-pos_y);
 					if (extra_height>0)
 					{
-						var width=find_width(stuck_nav);
-						var height=find_height(stuck_nav);
-						var stuck_nav_width=find_width(stuck_nav,true,true);
+						var width=find_width(stuck_nav,true);
+						var height=find_height(stuck_nav,true);
+						var stuck_nav_width=find_width(stuck_nav,true);
 						if (!abstract_get_computed_style(stuck_nav,'width')) // May be centered or something, we should be careful
 						{
 							stuck_nav.parentNode.style.width=width+'px';
@@ -176,9 +176,50 @@ function script_load_stuff()
 		set_font_size(font_size);
 	}
 
-	// Fix Flashes own cleanup code so if the SWFMovie was removed from the page
-	// it doesn't display errors.
-	window["__flash__removeCallback"]=function (instance, name) {
+	/*
+	// Fake onmouseout events for DOM elements removed (fixes issues with stuck tooltips)
+	if (typeof window.MutationObserver!='undefined')
+	{
+		var observer=new MutationObserver(function(mutations) {
+			mutations.forEach(function(mutation) {
+				if (mutation.type=='childList')
+				{
+					var node,child_node,i,j,k;
+					for (i=0;i<mutation.removedNodes.length;i++)
+					{
+						node=mutation.removedNodes[i];
+						if (node.onmouseout) node.onmouseout();
+						if (typeof node.getElementsByTagName!='undefined')
+						{
+							var child_nodes=node.getElementsByTagName('*');
+							for (j=0;j<child_nodes.length;j++)
+							{
+								child_node=child_nodes[j];
+								if (child_node.onmouseout)
+								{
+									child_node.onmouseout.call(child_node);
+								}
+								if (typeof child_node.simulated_events!='undefined' && typeof child_node.simulated_events.mouseout!='undefined')
+								{
+									for (k=0;k<child_node.simulated_events.mouseout.length;k++)
+									{
+										child_node.simulated_events.mouseout[k].call(child_node);
+									}
+								}
+							}
+						}
+					}
+				}
+			});
+		});
+		observer.observe(document.body,{childList: true,subtree: true});
+	}
+
+	^ Disabled this because it is not reliable and possibly non-performant. Instead we will manually call clear_out_tooltips(null); at appropriate places.
+	*/
+
+	// Fix Flashes own cleanup code so if the SWFMovie was removed from the page it doesn't display errors.
+	window["__flash__removeCallback"]=function(instance, name) {
 		try {
 			if (instance) {
 				instance[name]=null;
@@ -187,6 +228,16 @@ function script_load_stuff()
 
 		}
 	};
+
+	// If back button pressed back from an AJAX-generated page variant we need to refresh page because we aren't doing full JS state management
+	window.has_js_state=false;
+	window.onpopstate=function(event) {
+		window.setTimeout(function() {
+			if (window.location.hash=='' && window.has_js_state) {
+				window.location.reload();
+			}
+		},0);
+	}
 
 	if (typeof window.script_load_stuff_b!='undefined') window.script_load_stuff_b(); // This is designed to allow you to easily define additional initialisation code in JAVASCRIPT_CUSTOM_GLOBALS.tpl
 
@@ -285,7 +336,7 @@ function new_html__initialise(element)
 
 			// Convert a/img title attributes into Composr tooltips
 			/*{+START,IF,{$CONFIG_OPTION,js_overlays}}*/
-				convert_tooltip(element);
+				if (element.className.indexOf('activate_rich_semantic_tooltip')==-1) convert_tooltip(element);
 			/*{+END}*/
 
 			break;
@@ -306,7 +357,7 @@ function new_html__initialise(element)
 						}
 						return false;
 					} }(element);
-					element.title=element.title.replace('{!LINK_NEW_WINDOW;}','');
+					element.title=element.title.replace('{!LINK_NEW_WINDOW;^}','');
 					if (element.title==' ') element.title='';
 				}
 			/*{+END}*/
@@ -341,23 +392,17 @@ function new_html__initialise(element)
 			/*{+START,IF,{$CONFIG_OPTION,js_overlays}}*/
 				//convert_tooltip(element);	Not useful
 
-				// Convert a/img title attributes into Composr tooltips
+				// Convert form element title attributes into Composr tooltips
 				var elements,j;
 				elements=element.elements;
 				for (j=0;j<elements.length;j++)
 				{
-					if (typeof elements[j].title!='undefined')
-					{
-						convert_tooltip(elements[j]);
-					}
+					if (typeof elements[j].title!='undefined' && typeof elements[j]['original-title']=='undefined'/*check tipsy not used*/ && elements[j].className.indexOf('no_tooltip')==-1) convert_tooltip(elements[j]);
 				}
 				elements=element.getElementsByTagName('input'); // Lame, but JS DOM does not include type="image" ones in form.elements
 				for (j=0;j<elements.length;j++)
 				{
-					if ((elements[j].type=='image') && (typeof elements[j].title!='undefined'))
-					{
-						convert_tooltip(elements[j]);
-					}
+					if (elements[j].type=='image' && typeof elements[j].title!='undefined' && typeof elements[j]['original-title']=='undefined'/*check tipsy not used*/ && elements[j].className.indexOf('no_tooltip')==-1) convert_tooltip(elements[j]);
 				}
 			/*{+END}*/
 
@@ -428,6 +473,7 @@ function staff_unload_action()
 {
 	undo_staff_unload_action();
 
+	// If clicking a download link then don't show the animation
 	if (document.activeElement && typeof document.activeElement.href!='undefined' && document.activeElement.href!=null)
 	{
 		var url=document.activeElement.href.replace(/.*:\/\/[^\/:]+/,'');
@@ -435,6 +481,13 @@ function staff_unload_action()
 			return;
 	}
 
+	// If doing a meta refresh then don't show the animation
+	if ((typeof document.querySelector!='undefined') && document.querySelector('meta[http-equiv="Refresh"]'))
+	{
+		return;
+	}
+
+	// Show the animation
 	var bi=document.getElementById('main_website_inner');
 	if (bi)
 	{
@@ -455,6 +508,7 @@ function staff_unload_action()
 	window.setTimeout( function() { if (document.getElementById('loading_image')) document.getElementById('loading_image').src+=''; } , 100); // Stupid workaround for Google Chrome not loading an image on unload even if in cache
 	document.body.appendChild(div);
 
+	// Allow unloading of the animation
 	add_event_listener_abstract(window,'pageshow',undo_staff_unload_action);
 	add_event_listener_abstract(window,'keydown',undo_staff_unload_action);
 	add_event_listener_abstract(window,'click',undo_staff_unload_action);
@@ -530,7 +584,7 @@ function check_field_for_blankness(field,event)
 
 	var ee=document.getElementById('error_'+field.id);
 
-	if ((value.replace(/\s/g,'')=='') || (value=='****') || (value=='{!POST_WARNING;^}') || (value=='{!THREADED_REPLY_NOTICE;^,{!POST_WARNING}}'))
+	if ((value.replace(/\s/g,'')=='') || (value=='****') || (value==field.alt) || (value=='{!POST_WARNING;^}') || (value=='{!THREADED_REPLY_NOTICE;^,{!POST_WARNING}}'))
 	{
 		if (event)
 		{
@@ -575,7 +629,13 @@ function disable_button_just_clicked(input,permanent)
 	input.style.cursor='wait';
 	if (!permanent)
 	{
+		var timeout=null;
 		var goback=function() {
+			if (timeout!=null)
+			{
+				window.clearTimeout(timeout);
+				timeout=null;
+			}
 			if (input.under_timer)
 			{
 				input.disabled=false;
@@ -583,7 +643,21 @@ function disable_button_just_clicked(input,permanent)
 				input.style.cursor='default';
 			}
 		};
-		window.setTimeout(goback,5000);
+		timeout=window.setTimeout(goback,5000);
+
+		if (input.form.target=='preview_iframe')
+		{
+			var interval=window.setInterval(function() {
+				if (frames['preview_iframe'].document && frames['preview_iframe'].document.body) {
+					if (interval!=null)
+					{
+						window.clearInterval(interval);
+						interval=null;
+					}
+					goback();
+				}
+			},500);
+		}
 	} else input.under_timer=false;
 
 	add_event_listener_abstract(window,'pagehide',goback);
@@ -1019,7 +1093,7 @@ function browser_matches(code)
 	var is_safari=browser.indexOf('applewebkit')!=-1;
 	var is_chrome=browser.indexOf('chrome/')!=-1;
 	var is_gecko=(browser.indexOf('gecko')!=-1) && !is_safari;
-	var _is_ie=((browser.indexOf('msie')!=-1) || (browser.indexOf('trident')!=-1));
+	var _is_ie=((browser.indexOf('msie')!=-1) || (browser.indexOf('trident')!=-1) || (browser.indexOf('edge/')!=-1));
 	var is_ie_8=(browser.indexOf('msie 8')!=-1) && (_is_ie);
 	var is_ie_8_plus=is_ie_8;
 	var is_ie_9=(browser.indexOf('msie 9')!=-1) && (_is_ie);
@@ -1078,7 +1152,7 @@ function confirm_session(callback)
 	var url='{$FIND_SCRIPT_NOHTTP;,confirm_session}'+keep_stub(true);
 
 	// First see if session already established
-	require_javascript('javascript_ajax');
+	require_javascript('ajax',window.do_ajax_request);
 	if (typeof window.do_ajax_request=='undefined') return;
 	var ret=do_ajax_request(url+keep_stub(true),function(ret) {
 		if (!ret) return;
@@ -1091,7 +1165,7 @@ function confirm_session(callback)
 
 		// But non blank tells us the username, and there is an implication that no session is confirmed for this login
 
-		if (ret.responseText=='{!GUEST;}') // Hmm, actually whole login was lost, so we need to ask for username too
+		if (ret.responseText=='{!GUEST;^}') // Hmm, actually whole login was lost, so we need to ask for username too
 		{
 			window.fauxmodal_prompt(
 				'{!USERNAME;^}',
@@ -1100,7 +1174,7 @@ function confirm_session(callback)
 				{
 					_confirm_session(callback,promptt,url);
 				},
-				'{!_LOGIN;}'
+				'{!_LOGIN;^}'
 			);
 			return;
 		}
@@ -1125,7 +1199,7 @@ function _confirm_session(callback,username,url)
 				},'login_username='+window.encodeURIComponent(username)+'&password='+window.encodeURIComponent(promptt));
 			} else callback(false);
 		},
-		'{!_LOGIN;}',
+		'{!_LOGIN;^}',
 		'password'
 	);
 }
@@ -1163,14 +1237,19 @@ function require_css(sheet)
 	link.setAttribute('href','{$FIND_SCRIPT_NOHTTP;,sheet}?sheet='+sheet+keep_stub());
 	document.getElementsByTagName('head')[0].appendChild(link);
 }
-function require_javascript(script,lang)
+function require_javascript(script,detector)
 {
+	// Check it is not already loading
 	if (document.getElementById('loading_js_'+script)) return;
+
+	// Check it is already loaded
+	if (typeof detector!='undefined') return; // Some object reference into the file passed in was defined, so the file must have been loaded already
+
+	// Load it
 	var link=document.createElement('script');
 	link.setAttribute('id','loading_js_'+script);
 	link.setAttribute('type','text/javascript');
 	var url='{$FIND_SCRIPT_NOHTTP;,javascript}?script='+script+keep_stub();
-	if (lang) url=url+'&lang='+lang;
 	link.setAttribute('src',url);
 	document.getElementsByTagName('head')[0].appendChild(link);
 }
@@ -1249,7 +1328,7 @@ function select_tab(id,tab,from_url,automated)
 		}
 	}
 
-	if (typeof window['load_tab__'+tab]!='undefined') window['load_tab__'+tab](automated); // Usually an AJAX loader
+	if (typeof window['load_tab__'+tab]!='undefined') window['load_tab__'+tab](automated,document.getElementById(id+'_'+tab)); // Usually an AJAX loader
 
 	return false;
 }
@@ -1314,7 +1393,7 @@ function set_tray_theme_image(pic,before_theme_img,after_theme_img,before1_url,a
 function toggleable_tray(element,no_animate,cookie_id_name)
 {
 	if (typeof element=='string') element=document.getElementById(element);
-	if (!element) return;
+	if (!element) return false;
 
 	if (element.className.indexOf('toggleable_tray')==-1) // Suspicious, maybe we need to probe deeper
 	{
@@ -1346,8 +1425,8 @@ function toggleable_tray(element,no_animate,cookie_id_name)
 	}
 	if (pic) // Currently in action?
 	{
-		if (matches_theme_image(pic.src,'{$IMG;,1x/trays/expcon}')) return;
-		if (matches_theme_image(pic.src,'{$IMG;,1x/trays/expcon2}')) return;
+		if (matches_theme_image(pic.src,'{$IMG;,1x/trays/expcon}')) return false;
+		if (matches_theme_image(pic.src,'{$IMG;,1x/trays/expcon2}')) return false;
 	}
 
 	element.setAttribute('aria-expanded',(type=='none')?'false':'true');
@@ -1392,9 +1471,9 @@ function toggleable_tray(element,no_animate,cookie_id_name)
 			if (pic)
 			{
 				set_tray_theme_image(pic,'contract','expand','{$IMG;,1x/trays/contract}','{$IMG;,1x/trays/expand}','{$IMG;,2x/trays/expand}','{$IMG;,1x/trays/expand2}','{$IMG;,2x/trays/expand2}');
-				pic.setAttribute('alt',pic.getAttribute('alt').replace('{!CONTRACT;}','{!EXPAND;}'));
-				pic.title='{!EXPAND;}'; // Needs doing because convert_tooltip may not have run yet
-				pic.cms_tooltip_title='{!EXPAND;}';
+				pic.setAttribute('alt',pic.getAttribute('alt').replace('{!CONTRACT;^}','{!EXPAND;^}'));
+				pic.title='{!EXPAND;^}'; // Needs doing because convert_tooltip may not have run yet
+				pic.cms_tooltip_title='{!EXPAND;^}';
 			}
 			element.style.display='none';
 		}
@@ -1475,8 +1554,8 @@ function toggleable_tray_done(element,final_height,animate_dif,orig_overflow,ani
 		{
 			set_tray_theme_image(pic,'expcon','contract','{$IMG;,1x/trays/expcon}','{$IMG;,1x/trays/contract}','{$IMG;,2x/trays/contract}','{$IMG;,1x/trays/contract2}','{$IMG;,2x/trays/contract2}');
 		}
-		pic.setAttribute('alt',pic.getAttribute('alt').replace((animate_dif<0)?'{!CONTRACT;}':'{!EXPAND;}',(animate_dif<0)?'{!EXPAND;}':'{!CONTRACT;}'));
-		pic.cms_tooltip_title=(animate_dif<0)?'{!EXPAND;}':'{!CONTRACT;}';
+		pic.setAttribute('alt',pic.getAttribute('alt').replace((animate_dif<0)?'{!CONTRACT;^}':'{!EXPAND;^}',(animate_dif<0)?'{!EXPAND;^}':'{!CONTRACT;^}'));
+		pic.cms_tooltip_title=(animate_dif<0)?'{!EXPAND;^}':'{!CONTRACT;^}';
 	}
 	trigger_resize(true);
 }
@@ -1498,12 +1577,14 @@ function handle_tray_cookie_setting(id)
 }
 
 /* Animate the loading of a frame */
-function animate_frame_load(pf,frame,leave_gap_top)
+function animate_frame_load(pf,frame,leave_gap_top,leave_height)
 {
 	if (!pf) return;
 	if (typeof leave_gap_top=='undefined') leave_gap_top=0;
+	if (typeof leave_height=='undefined') leave_height=false;
 
-	pf.style.height=window.top.get_window_height()+'px'; // Enough to stop jumping around
+	if (!leave_height)
+		pf.style.height=window.top.get_window_height()+'px'; // Enough to stop jumping around
 
 	illustrate_frame_load(pf,frame);
 
@@ -1516,6 +1597,8 @@ function animate_frame_load(pf,frame,leave_gap_top)
 }
 function illustrate_frame_load(pf,frame)
 {
+	pf.style.height='80px';
+
 	/*{+START,IF,{$CONFIG_OPTION,enable_animations}}*/
 		var head='<style>',cssText='';
 		if (!browser_matches('ie8'))
@@ -1550,12 +1633,20 @@ function illustrate_frame_load(pf,frame)
 		}
 		head+=cssText+'<\/style>';
 
-		if (!window.frames[frame]) return;
-		if (!window.frames[frame].document) return;
-		var doc=window.frames[frame].document;
-		if (!doc) return;
-		var de=doc.documentElement;
-		if (!de) return;
+		try
+		{
+			if (!window.frames[frame]) return;
+			if (!window.frames[frame].document) return;
+			var doc=window.frames[frame].document;
+			if (!doc) return;
+			var de=doc.documentElement;
+			if (!de) return;
+		}
+		catch (e) // May be connection interference somehow
+		{
+			pf.scrolling='auto';
+			return;
+		}
 		var body=de.getElementsByTagName('body');
 		if (body.length==0)
 		{
@@ -1747,19 +1838,19 @@ function get_window_height(win)
 function get_window_scroll_width(win)
 {
 	if (typeof win=='undefined') win=window;
+
 	return win.document.body.scrollWidth;
 }
-function get_window_scroll_height(win,dont_allow_iframe_size)
+function get_window_scroll_height(win)
 {
 	if (typeof win=='undefined') win=window;
-	if (typeof dont_allow_iframe_size=='undefined') dont_allow_iframe_size=false;
 
-	var rect;
-	rect=win.document.body.parentNode.getBoundingClientRect();
-	var a=rect.bottom-rect.top;
-	rect=win.document.body.getBoundingClientRect();
-	var b=rect.bottom-rect.top;
+	var rect_a=win.document.body.parentNode.getBoundingClientRect();
+	var a=rect_a.bottom-rect_a.top;
+	var rect_b=win.document.body.getBoundingClientRect();
+	var b=rect_b.bottom-rect_b.top;
 	if (a>b) return a;
+
 	return b;
 }
 function get_window_scroll_x(win)
@@ -1786,6 +1877,8 @@ function get_window_scroll_y(win)
 }
 function find_pos_x(obj,not_relative) /* if not_relative is true it gets the position relative to the browser window, else it will be relative to the most recent position:absolute/relative going up the element tree */
 {
+	if (!obj) return 0;
+
 	if (typeof not_relative=='undefined') not_relative=false;
 	var ret=obj.getBoundingClientRect().left+get_window_scroll_x();
 	if (!not_relative)
@@ -1794,7 +1887,7 @@ function find_pos_x(obj,not_relative) /* if not_relative is true it gets the pos
 		while (obj!=null)
 		{
 			position=abstract_get_computed_style(obj,'position');
-			if (position=='absolute' || position=='relative')
+			if (position=='fixed' || position=='absolute' || position=='relative')
 			{
 				ret-=find_pos_x(obj,true);
 				break;
@@ -1806,6 +1899,8 @@ function find_pos_x(obj,not_relative) /* if not_relative is true it gets the pos
 }
 function find_pos_y(obj,not_relative) /* if not_relative is true it gets the position relative to the browser window, else it will be relative to the most recent position:absolute/relative going up the element tree */
 {
+	if (!obj) return 0;
+
 	if (typeof not_relative=='undefined') not_relative=false;
 	var ret=obj.getBoundingClientRect().top+get_window_scroll_y();
 	if (!not_relative)
@@ -1814,7 +1909,7 @@ function find_pos_y(obj,not_relative) /* if not_relative is true it gets the pos
 		while (obj!=null)
 		{
 			position=abstract_get_computed_style(obj,'position');
-			if (position=='absolute' || position=='relative')
+			if (position=='fixed' || position=='absolute' || position=='relative')
 			{
 				ret-=find_pos_y(obj,true);
 				break;
@@ -1824,53 +1919,33 @@ function find_pos_y(obj,not_relative) /* if not_relative is true it gets the pos
 	}
 	return ret;
 }
-function find_width(obj,take_padding,take_margin,take_border)
+function find_width(obj,take_padding_and_border) // if take_padding_and_border is not set returns contentWidth+padding+border, else just contentWidth; margin never included
 {
-	if (typeof take_padding=='undefined') take_padding=false;
-	if (typeof take_margin=='undefined') take_margin=false;
-	if (typeof take_border=='undefined') take_border=false;
+	if (typeof take_padding_and_border=='undefined') take_padding_and_border=false;
 
 	if (!obj) return 0;
 
 	var ret=obj.offsetWidth;
-	if (take_padding)
+	if (take_padding_and_border)
 	{
 		ret-=sts(abstract_get_computed_style(obj,'padding-left'));
 		ret-=sts(abstract_get_computed_style(obj,'padding-right'));
-	}
-	if (take_margin)
-	{
-		ret-=sts(abstract_get_computed_style(obj,'margin-left'));
-		ret-=sts(abstract_get_computed_style(obj,'margin-right'));
-	}
-	if (take_border)
-	{
 		ret-=sts(abstract_get_computed_style(obj,'border-left-width'));
 		ret-=sts(abstract_get_computed_style(obj,'border-right-width'));
 	}
 	return ret;
 }
-function find_height(obj,take_padding,take_margin,take_border)
+function find_height(obj,take_padding_and_border)
 {
-	if (typeof take_padding=='undefined') take_padding=false;
-	if (typeof take_margin=='undefined') take_margin=false;
-	if (typeof take_border=='undefined') take_border=false;
+	if (typeof take_padding_and_border=='undefined') take_padding_and_border=false;
 
 	if (!obj) return 0;
 
 	var ret=obj.offsetHeight;
-	if (take_padding)
+	if (take_padding_and_border)
 	{
 		ret-=sts(abstract_get_computed_style(obj,'padding-top'));
 		ret-=sts(abstract_get_computed_style(obj,'padding-bottom'));
-	}
-	if (take_margin)
-	{
-		ret-=sts(abstract_get_computed_style(obj,'margin-top'));
-		ret-=sts(abstract_get_computed_style(obj,'margin-bottom'));
-	}
-	if (take_border)
-	{
 		ret-=sts(abstract_get_computed_style(obj,'border-top-width'));
 		ret-=sts(abstract_get_computed_style(obj,'border-bottom-width'));
 	}
@@ -1927,15 +2002,26 @@ function key_pressed(event,key,no_error_if_bad)
 	}
 
 	/* Special cases, we remap what we accept if we detect an alternative was pressed */
-	if ((key=='-') && (event.keyCode==173)) key=173; /* Firefox '-' */
-	if ((key=='-') && (event.keyCode==189)) key=189; /* Safari '-' */
-	if (key=='-') key=109; /* Other browsers '-' */
-	if (key=='/') key=191; /* Normal '/' */
-	if ((key=='.') && (event.keyCode==190)) key=190; /* Normal '.' */
-	if ((key=='.') && (event.keyCode==110)) key=110; /* Keypad '.' */
-	if ((key=='_') && (event.keyCode==173) && (event.shiftKey)) key=173; /* Firefox '_' */
-	if ((key=='_') && (event.keyCode==189) && (event.shiftKey)) key=189; /* Safari '_' */
-	if (key=='_') key=0; /* Other browsers '_'; This one is a real shame as the key code 0 is shared by lots of symbols */
+	if ((key==='-') && (event.keyCode==173)) key=173; /* Firefox '-' */
+	if ((key==='-') && (event.keyCode==189)) key=189; /* Safari '-' */
+	if (key==='-') key=109; /* Other browsers '-' */
+	if (key==='/') key=191; /* Normal '/' */
+	if ((key==='.') && (event.keyCode==190)) key=190; /* Normal '.' */
+	if ((key==='.') && (event.keyCode==110)) key=110; /* Keypad '.' */
+	if ((key==='_') && (event.keyCode==173) && (event.shiftKey)) key=173; /* Firefox '_' */
+	if ((key==='_') && (event.keyCode==189) && (event.shiftKey)) key=189; /* Safari '_' */
+	if (key==='_') key=0; /* Other browsers '_'; This one is a real shame as the key code 0 is shared by lots of symbols */
+
+	// Special case of allowing a unicode range
+	if ((key.constructor==String) && (key.match(/^\d+-\d+$/)))
+	{
+		var unicode=event.charCode;
+		if (unicode==0) unicode=event.keyCode;
+		if ((unicode>=key.replace(/-\d+$/,'')) && (unicode<=key.replace(/^\d+-/,'')))
+		{
+			return true;
+		}
+	}
 
 	// Where we have an ASCII correspondance or can automap to one
 	if (key.constructor==String) // NB we are not case sensitive on letters. And we cannot otherwise pass in characters that need shift pressed.
@@ -1950,10 +2036,185 @@ function key_pressed(event,key,no_error_if_bad)
 	return ((typeof event.keyCode!='undefined') && (event.keyCode==key)); // Whether we have a match to what was pressed
 }
 
+function menu_active_selection(menu_id)
+{
+	add_event_listener_abstract(window,'load',function() {
+		_menu_active_selection(menu_id);
+	});
+}
+
+function _menu_active_selection(menu_id)
+{
+	var menu_element=document.getElementById(menu_id);
+	var possibilities=[],is_selected,url;
+	if (menu_element.nodeName.toLowerCase()=='select')
+	{
+		for (var i=0;i<menu_element.options.length;i++)
+		{
+			url=menu_element.options[i].value;
+			is_selected=menu_item_is_selected(url);
+			if (is_selected!==null)
+			{
+				possibilities.push({
+					url: url,
+					score: is_selected,
+					element: menu_element.options[i]
+				});
+			}
+		}
+
+		if (possibilities.length>0)
+		{
+			possibilities.sort(function(a,b) {
+				return a.score-b.score
+			})
+
+			var min_score=possibilities[0].score;
+			for (var i=0;i<possibilities.length;i++)
+			{
+				if (possibilities[i].score!=min_score) break;
+				possibilities[i].element.selected=true;
+			}
+		}
+	} else
+	{
+		var menu_items=get_elements_by_class_name(menu_element,'non_current'),a;
+		for (var i=0;i<menu_items.length;i++)
+		{
+			a=null;
+			for (var j=0;j<menu_items[i].childNodes.length;j++)
+			{
+				if (menu_items[i].childNodes[j].nodeName.toLowerCase()=='a')
+				{
+					a=menu_items[i].childNodes[j];
+				}
+			}
+			if (a==null)
+			{
+				continue;
+			}
+
+			url=(a.getAttribute('href')=='')?'':a.href;
+			is_selected=menu_item_is_selected(url);
+			if (is_selected!==null)
+			{
+				possibilities.push({
+					url: url,
+					score: is_selected,
+					element: menu_items[i]
+				});
+			}
+		}
+
+		if (possibilities.length>0)
+		{
+			possibilities.sort(function(a,b) {
+				return a.score-b.score
+			})
+
+			var min_score=possibilities[0].score;
+			for (var i=0;i<possibilities.length;i++)
+			{
+				if (possibilities[i].score!=min_score) break;
+				possibilities[i].element.className=possibilities[i].element.className.replace('non_current','current');
+			}
+		}
+	}
+}
+
+function menu_item_is_selected(url)
+{
+	if (url=='') return null;
+
+	var current_url=window.location.toString();
+	if (current_url==url) return 0;
+	var global_breadcrumbs=document.getElementById('global_breadcrumbs');
+	if (global_breadcrumbs)
+	{
+		var links=global_breadcrumbs.getElementsByTagName('a');
+		for (var i=0;i<links.length;i++)
+		{
+			if (url==links[links.length-1-i].href) return i+1;
+		}
+	}
+	return null;
+}
+
+function modsecurity_workaround(form)
+{
+	var temp_form=document.createElement('form');
+	temp_form.method='post';
+	if (form.target!=null && form.target!='') temp_form.target=form.target;
+	temp_form.action=form.action;
+
+	var data=$(form).serialize();
+	data=_modsecurity_workaround(data);
+
+	var input=document.createElement('input');
+	input.type='hidden';
+	input.name='_data';
+	input.value=data;
+	temp_form.appendChild(input);
+
+	if (typeof form.elements['csrf_token']!='undefined')
+	{
+		var csrf_input=document.createElement('input');
+		csrf_input.type='hidden';
+		csrf_input.name='csrf_token';
+		csrf_input.value=form.elements['csrf_token'].value;
+		temp_form.appendChild(csrf_input);
+	}
+
+	temp_form.style.display='none';
+	document.body.appendChild(temp_form);
+
+	window.setTimeout(function() {
+		temp_form.submit();
+
+		temp_form.parentNode.removeChild(temp_form);
+	},0);
+
+	return false;
+}
+
+function modsecurity_workaround_ajax(data)
+{
+	return '_data='+window.encodeURIComponent(_modsecurity_workaround(data));
+}
+
+function _modsecurity_workaround(data)
+{
+	var remapper={
+		'\\': '<',
+		'/': '>',
+		'<': '\'',
+		'>': '"',
+		'\'': '/',
+		'"': '\\',
+		'%': '&',
+		'&': '%',
+		'@': ':',
+		':': '@',
+	};
+	var out='';
+	var len=data.length,character;
+	for (var i=0;i<len;i++) {
+		character=data[i];
+		if (typeof remapper[character]!='undefined')
+		{
+			out+=remapper[character];
+		} else
+		{
+			out+=character;
+		}
+	}
+	return out;
+}
+
 function convert_tooltip(element)
 {
 	var title=element.title;
-	if ((title!='') && (element.className.indexOf('leave_native_tooltip')==-1))
+	if ((title!='') && (element.className.indexOf('leave_native_tooltip')==-1) && (element.parentNode.className.indexOf('leave_native_tooltip')==-1) && (document.body.className.indexOf(' touch_enabled') == -1))
 	{
 		// Remove old tooltip
 		if (element.nodeName=='img' && element.alt=='') element.alt=element.title;
@@ -1972,6 +2233,7 @@ function convert_tooltip(element)
 			// Stop the tooltip code adding to these events, by defining our own (it will not overwrite existing events).
 			if (!element.onmouseout) element.onmouseout=function() {};
 			if (!element.onmousemove) element.onmouseover=function() {};
+			if (!element.onmousemove) element.onmouseleave=function() {};
 
 			// And now define nice listeners for it all...
 			var win=get_main_cms_window(true);
@@ -2020,7 +2282,7 @@ function clear_out_tooltips(tooltip_being_opened)
 
 function preactivate_rich_semantic_tooltip(ob,event,have_links)
 {
-	if (typeof ob.ttitle=='undefined') ob.ttitle=ob.title;
+	if (typeof ob.ttitle=='undefined') ob.ttitle=((typeof ob.attributes['data-title']!='undefined')?ob.getAttribute('data-title'):ob.title);
 	ob.title='';
 	ob.onmouseover=null;
 	ob.onclick=function() { activate_rich_semantic_tooltip(ob,event,have_links); };
@@ -2034,7 +2296,7 @@ function activate_rich_semantic_tooltip(ob,event,have_links)
 //  ac is the object to have the tooltip
 //  event is the event handler
 //  tooltip is the text for the tooltip
-//  width is in pixels (but you need 'px' on the end), can be null or auto but both of these will actually instead result in the default max-width of 360px
+//  width is in pixels (but you need 'px' on the end), can be null or auto
 //  pic is the picture to show in the top-left corner of the tooltip; should be around 30px x 30px
 //  height is the maximum height of the tooltip for situations where an internal but unusable scrollbar is wanted
 //  bottom is set to true if the tooltip should definitely appear upwards; rarely use this parameter
@@ -2042,10 +2304,19 @@ function activate_rich_semantic_tooltip(ob,event,have_links)
 //  lights_off is set to true if the image is to be dimmed
 //  force_width is set to true if you want width to not be a max width
 //  win is the window to open in
-//  have_links is set to true if we activate/deactivate by clicking due to possible links in the tooltip
+//  have_links is set to true if we activate/deactivate by clicking due to possible links in the tooltip or the need for it to work on mobile
 function activate_tooltip(ac,event,tooltip,width,pic,height,bottom,no_delay,lights_off,force_width,win,have_links)
 {
 	if (window.is_doing_a_drag) return; // Don't want tooltips appearing when doing a drag and drop operation
+
+	if (!ac) return;
+
+	//console.log('activate_tooltip');
+
+	if (!have_links)
+	{
+		if (document.body.className.indexOf(' touch_enabled') != -1) return; // Too erratic
+	}
 
 	if (typeof width=='undefined' || !width) var width='auto';
 	if (typeof pic=='undefined') pic='';
@@ -2057,8 +2328,10 @@ function activate_tooltip(ac,event,tooltip,width,pic,height,bottom,no_delay,ligh
 	if (typeof win=='undefined') win=window;
 	if (typeof have_links=='undefined') have_links=false;
 
-	if (!page_loaded) return;
+	if (!window.page_loaded) return;
 	if ((typeof tooltip!='function') && (tooltip=='')) return;
+
+	if ((typeof ac.deactivated_at!='undefined') && (ac.deactivated_at!=null) && (Date.now()-ac.deactivated_at<200)) return;
 
 	register_mouse_listener(event);
 
@@ -2067,7 +2340,7 @@ function activate_tooltip(ac,event,tooltip,width,pic,height,bottom,no_delay,ligh
 	// Add in move/leave events if needed
 	if (!have_links)
 	{
-		if (!ac.onmouseout) ac.onmouseout=function(event) { if (!event) var event=window.event; win.deactivate_tooltip(ac); };
+		if (!ac.onmouseout && !ac.onmouseleave) ac.onmouseout=function(event) { win.deactivate_tooltip(ac); };
 		if (!ac.onmousemove) ac.onmousemove=function(event) { if (!event) var event=window.event; win.reposition_tooltip(ac,event,false,false,null,false,win); };
 	} else
 	{
@@ -2079,6 +2352,7 @@ function activate_tooltip(ac,event,tooltip,width,pic,height,bottom,no_delay,ligh
 	if (tooltip=='') return;
 
 	ac.is_over=true;
+	ac.deactivated_at=null;
 	ac.tooltip_on=false;
 	ac.initial_width=width;
 	ac.have_links=have_links;
@@ -2100,18 +2374,19 @@ function activate_tooltip(ac,event,tooltip,width,pic,height,bottom,no_delay,ligh
 		tooltip_element=win.document.createElement('div');
 		tooltip_element.role='tooltip';
 		tooltip_element.style.display='none';
-		tooltip_element.className='tooltip boxless_space'+(have_links?' have_links':'');
+		var rt_pos=tooltip.indexOf('results_table');
+		tooltip_element.className='tooltip '+((rt_pos==-1 || rt_pos>100)?'tooltip_ownlayout':'tooltip_nolayout')+' boxless_space'+(have_links?' have_links':'');
 		if (ac.className.substr(0,3)=='tt_')
 		{
 			tooltip_element.className+=' '+ac.className;
 		}
-		if (!force_width)
-		{
-			tooltip_element.style.maxWidth=width;
-			tooltip_element.style.width='auto'; // Needed for Opera, else it uses maxWidth for width too
-		} else
+		if (force_width)
 		{
 			tooltip_element.style.width=width;
+		} else
+		{
+			tooltip_element.style.maxWidth=(width=='auto')?((get_window_width(win)-30-window.mouse_x)+'px'):width;
+			tooltip_element.style.width='auto'; // Needed for Opera, else it uses maxWidth for width too
 		}
 		if ((height) && (height!='auto'))
 		{
@@ -2172,8 +2447,8 @@ function activate_tooltip(ac,event,tooltip,width,pic,height,bottom,no_delay,ligh
 
 		ac.tooltip_on=true;
 		tooltip_element.style.display='block';
-		if (tooltip_element.style.width=='auto')
-			tooltip_element.style.width=find_width(tooltip_element,true,true,true)+'px'; // Fix it, to stop the browser retroactively reflowing ambiguous layer widths on mouse movement
+		if ((tooltip_element.style.width=='auto') && ((tooltip_element.childNodes.length!=1) || (tooltip_element.childNodes[0].nodeName.toLowerCase()!='img')))
+			tooltip_element.style.width=(find_width(tooltip_element,true)+1/*for rounding issues from em*/)+'px'; // Fix it, to stop the browser retroactively reflowing ambiguous layer widths on mouse movement
 
 		if (!no_delay)
 		{
@@ -2187,6 +2462,10 @@ function activate_tooltip(ac,event,tooltip,width,pic,height,bottom,no_delay,ligh
 }
 function reposition_tooltip(ac,event,bottom,starting,tooltip_element,force_width,win)
 {
+	if (!ac.is_over) return;
+
+	//console.log('reposition_tooltip');
+
 	if (!starting) // Real JS mousemove event, so we assume not a screen reader and have to remove natural tooltip
 	{
 		if (ac.getAttribute('title')) ac.setAttribute('title','');
@@ -2194,7 +2473,7 @@ function reposition_tooltip(ac,event,bottom,starting,tooltip_element,force_width
 			ac.parentNode.setAttribute('title',''); // Do not want second tooltips that are not useful
 	}
 
-	if (!page_loaded) return;
+	if (!window.page_loaded) return;
 	if (!ac.tooltip_id) { if ((typeof ac.onmouseover!='undefined') && (ac.onmouseover)) ac.onmouseover(event); return; }  // Should not happen but written as a fail-safe
 
 	if ((typeof tooltip_element=='undefined') || (!tooltip_element)) var tooltip_element=document.getElementById(ac.tooltip_id);
@@ -2235,13 +2514,13 @@ function reposition_tooltip(ac,event,bottom,starting,tooltip_element,force_width
 		catch(ignore) {}
 
 		// Work out which direction to render in
-		var width=find_width(tooltip_element);
+		var width=find_width(tooltip_element,true);
 		if (tooltip_element.style.width=='auto')
 		{
 			if (width<200) width=200; // Give some breathing room, as might already have painfully-wrapped when it found there was not much space
 		}
 		var height=find_height(tooltip_element);
-		var x_excess=x-get_window_width(win)-get_window_scroll_x(win)+width;
+		var x_excess=x-get_window_width(win)-get_window_scroll_x(win)+width+10/*magic tolerance factor*/;
 		if (x_excess>0) // Either we explicitly gave too much width, or the width auto-calculated exceeds what we THINK is the maximum width in which case we have to re-compensate with an extra contingency to stop CSS/JS vicious disagreement cycles
 		{
 			var x_before=x;
@@ -2265,9 +2544,12 @@ function reposition_tooltip(ac,event,bottom,starting,tooltip_element,force_width
 }
 function deactivate_tooltip(ac,tooltip_element)
 {
+	if (ac.is_over) ac.deactivated_at=Date.now();
 	ac.is_over=false;
 
-	if ((!page_loaded) || (!ac.tooltip_id)) return;
+	//console.log('deactivate_tooltip');
+
+	if (typeof ac.tooltip_id=='undefined') return;
 
 	if (typeof tooltip_element=='undefined')
 		tooltip_element=document.getElementById(ac.tooltip_id);
@@ -2296,7 +2578,7 @@ function resize_frame(name,min_height)
 		}
 		if (h+'px'!=frame_element.style.height)
 		{
-			if (frame_element.scrolling!='auto')
+			if ((frame_element.scrolling!='auto' && frame_element.scrolling!='yes') || (frame_element.style.height=='0') || (frame_element.style.height=='0px'))
 			{
 				frame_element.style.height=((h>=min_height)?h:min_height)+'px';
 				if (frame_window.parent) window.setTimeout(function() { if (frame_window.parent) frame_window.parent.trigger_resize(); },0);
@@ -2420,7 +2702,7 @@ function add_event_listener_abstract(element,the_event,func,capture)
 {
 	if (element)
 	{
-		if ((element==window) && ((the_event=='load') && ((page_fully_loaded) || (document.readyState=='complete'))) || ((the_event=='real_load') && (document.readyState=='complete')))
+		if ((element==window) && ((the_event=='load') && ((window.page_fully_loaded) || (document.readyState=='interactive') || (document.readyState=='complete'))) || ((the_event=='real_load') && (document.readyState=='complete')))
 		{
 			window.setTimeout(func,0);
 			return true;
@@ -2542,7 +2824,7 @@ function keep_stub(starting_query_string,skip_session,context) // starting_query
 	}
 	if (!done_session)
 	{
-		var session=read_cookie('{$SESSION_COOKIE_NAME;}');
+		var session=get_session_id();
 		gap_symbol=(((to_add=='') && (starting_query_string))?'?':'&');
 		if (session) to_add=to_add+gap_symbol+'keep_session='+window.encodeURIComponent(session);
 	}
@@ -2559,6 +2841,16 @@ function keep_stub(starting_query_string,skip_session,context) // starting_query
 	}
 
 	return to_add;
+}
+
+function get_csrf_token()
+{
+	return read_cookie('{$SESSION_COOKIE_NAME;}'); // Session also works as a CSRF-token, as client-side knows it (AJAX)
+}
+
+function get_session_id()
+{
+	return read_cookie('{$SESSION_COOKIE_NAME;}');
 }
 
 /* Get an element's HTML, including the element itself */
@@ -2720,7 +3012,8 @@ function inner_html_load(xml_string) {
 	{
 		try
 		{
-			xml=(new DOMParser()).parseFromString(xml_string,"application/xml");
+			xml=(new DOMParser()).parseFromString(xml_string,'application/xml');
+			if ((xml) && (xml.documentElement.nodeName=='parsererror')) xml=null;
 		}
 		catch (e) { xml=null; }
 
@@ -2780,24 +3073,40 @@ function inner_html_copy(dom_node,xml_doc,level,script_tag_dependencies) {
 				var a_name=xml_doc.attributes[a].name,a_value=xml_doc.attributes[a].value,evt=(a_name.substr(0,2)=='on');
 				if (!evt) {
 					switch (a_name) {
-						case 'class': this_node.className=a_value; break;
-						case 'for': this_node.htmlFor=a_value; break;
-						default: this_node.setAttribute(a_name,a_value);
+						case 'class':
+							this_node.className=a_value;
+							break;
+						case 'for':
+							this_node.htmlFor=a_value;
+							break;
+						default:
+							try {
+								this_node.setAttribute(a_name,a_value);
+							}
+							catch (e) {};
+							break;
 					}
 				} else
 				{
-					this_node[a_name]=eval('var x=function(event) { '+a_value+' }; x;');
+					try {
+						this_node[a_name]=eval('var x=function(event) { '+a_value+' }; x;');
+					}
+					catch (e) {};
 				}
 			}
 
 			// append node
 			if ((node_upper=='SCRIPT') || (node_upper=='LINK')/* || (node_upper=='STYLE') Causes weird IE bug*/)
 			{
+				if ((node_upper=='SCRIPT') && (document.querySelector('script[src="'+this_node.src+'"]'))) return;
+				if ((node_upper=='LINK') && (document.querySelector('link[href="'+this_node.href+'"]'))) return;
+
 				if (node_upper=='SCRIPT')
 				{
 					script_tag_dependencies['to_load'].push(this_node);
 					this_node.async=false;
 					this_node.onload=this_node.onreadystatechange=function() {
+						// Once this <script src="..."> has loaded, we need to execute any <script>...</script> code. So we need to tie into load state for this
 						if ((typeof this_node.readyState=='undefined') || (this_node.readyState=='complete') || (this_node.readyState=='loaded'))
 						{
 							var found=0,i;
@@ -2810,6 +3119,9 @@ function inner_html_copy(dom_node,xml_doc,level,script_tag_dependencies) {
 							}
 							if (found==0) // Now we know all to_loads are loaded, we do the to_runs
 							{
+								if (typeof window.console!='undefined')
+										console.log('All AJAX-injected script tags loaded');
+
 								for (i=0;i<script_tag_dependencies['to_run'].length;i++)
 								{
 									if (typeof window.execScript!='undefined')
@@ -2899,6 +3211,7 @@ function inner_html_copy(dom_node,xml_doc,level,script_tag_dependencies) {
 function set_outer_html(element,target_html)
 {
 	var p=element.parentNode;
+	var ref=element.nextSibling;
 	p.removeChild(element);
 
 	set_inner_html(element,target_html,false,true);
@@ -2908,7 +3221,7 @@ function set_outer_html(element,target_html)
 	{
 		ci=c[0];
 		element.removeChild(ci);
-		p.appendChild(ci);
+		p.insertBefore(ci,ref);
 	}
 }
 
@@ -2975,7 +3288,7 @@ function set_inner_html(element,target_html,append,force_dom)
 					} else
 					{
 						var r=document.getElementById(r_id);
-						r.parentNode.removeChild(r);
+						if (r && r.parentNode) r.parentNode.removeChild(r);
 					}
 				}, 0); // Delayed so we know DOM has loaded
 			}
@@ -3107,13 +3420,13 @@ function apply_rating_highlight_and_ajax_code(likes,initial_rating,content_type,
 /* Google Analytics tracking for links; particularly useful if you have no server-side stat collection */
 function ga_track(ob,category,action)
 {
-	/*{+START,IF_NON_EMPTY,{$CONFIG_OPTION,google_analytics}}{+START,IF,{$NOR,{$IS_STAFF},{$IS_ADMIN}}}*/
-		if (typeof category=='undefined') category='{!URL;}';
-		if (typeof action=='undefined') action=ob?ob.href:'{!UNKNOWN;}';
+	/*{+START,IF_NON_EMPTY,{$CONFIG_OPTION,google_analytics}}*/
+		if (typeof category=='undefined') category='{!URL;^}';
+		if (typeof action=='undefined') action=ob?ob.href:'{!UNKNOWN;^}';
 
 		try
 		{ 
-			_gaq.push(['_trackEvent',category,action]); 
+			ga('send','event',category,action); 
 		}
 		catch(err) {}
 
@@ -3125,7 +3438,7 @@ function ga_track(ob,category,action)
 
 			return false;
 		}
-	/*{+END}{+END}*/
+	/*{+END}*/
 
 	return null;
 }
@@ -3164,7 +3477,7 @@ function click_link(link)
 	if ((!cancelled) && (link.href))
 	{
 		if (link.getAttribute('target')) window.open(link.href,link.getAttribute('target'));
-		window.location=link.href;
+		else window.location=link.href;
 	}
 }
 
@@ -3397,7 +3710,7 @@ function topic_reply(is_threaded,ob,id,replying_to_username,replying_to_post,rep
 	{
 		post.value='{!QUOTED_REPLY_MESSAGE;^}'.replace(/\\{1\\}/g,replying_to_username).replace(/\\{2\\}/g,replying_to_post_plain);
 		post.strip_on_focus=post.value;
-		post.style.color='gray';
+		post.className+=' field_input_non_filled';
 	} else
 	{
 		if (typeof post.strip_on_focus!='undefined' && post.value==post.strip_on_focus)
@@ -3459,11 +3772,11 @@ function setup_word_counter(post,count_element)
 		{
 			try
 			{
-				var text_value=window.CKEDITOR.instances[post.name].getData();
+				var text_value=window.CKEDITOR.instances[post.id].getData();
 				var matches=text_value.replace(/<[^<|>]+?>|&nbsp;/gi,' ').match(/\b/g);
 				var count=0;
 				if(matches) count=matches.length/2;
-				set_inner_html(count_element,'{!WORDS;}'.replace('\\{1\\}',count));
+				set_inner_html(count_element,'{!WORDS;^}'.replace('\\{1\\}',count));
 			}
 			catch (e) {}
 		}
@@ -3480,7 +3793,9 @@ function add_captcha_checking(form)
 			var url='{$FIND_SCRIPT;,snippet}?snippet=captcha_wrong&name='+window.encodeURIComponent(form.elements['captcha'].value);
 			if (!do_ajax_field_test(url))
 			{
-				form.elements['captcha'].src+='&'; // Force it to reload latest captcha
+				var image=document.getElementById('captcha_image');
+				if (!image) image=document.getElementById('captcha_frame');
+				image.src+='&'; // Force it to reload latest captcha
 				document.getElementById('submit_button').disabled=false;
 				return false;
 			}
@@ -3504,6 +3819,33 @@ function set_up_change_monitor(id)
 			if (ch) _set_up_change_monitor(ch.parentNode);
 		}
 	});
+}
+
+/* Used by audio CAPTCHA. Wave files won't play inline anymore on Firefox (https://bugzilla.mozilla.org/show_bug.cgi?id=890516) */
+function play_self_audio_link(ob)
+{
+	if (browser_matches('gecko') || true/*actually it works well generally*/)
+	{
+		require_javascript('sound',window.SoundManager);
+
+		var timer=window.setInterval(function() {
+			if (typeof window.soundManager=='undefined') return;
+
+			window.clearInterval(timer);
+
+			window.soundManager.setup({
+				url: get_base_url()+'/data',
+				debugMode: false,
+				onready: function() {
+					var sound_object=window.soundManager.createSound({url: ob.href});
+					if (sound_object) sound_object.play();
+				}
+			});
+		},50);
+
+		return false;
+	}
+	return null;
 }
 
 /* Used by MASS_SELECT_MARKER.tpl */
@@ -3550,70 +3892,91 @@ function confirm_delete(form,multi,callback)
 	return false;
 }
 
+function has_iframe_loaded(iframe)
+{
+	var has_loaded=false;
+	try
+	{
+		has_loaded=(typeof iframe!='undefined') && (iframe!=null) && (iframe.contentWindow.location.host!='');
+	}
+	catch (e) {};
+	return has_loaded;
+}
+
+function has_iframe_ownership(iframe)
+{
+	var has_ownership=false;
+	try
+	{
+		has_ownership=(typeof iframe!='undefined') && (iframe!=null) && (iframe.contentWindow.location.host==window.location.host) && (iframe.contentWindow.document!=null);
+	}
+	catch (e) {};
+	return has_ownership;
+}
+
 // LEGACY: IE8
 // Production steps of ECMA-262, Edition 5, 15.4.4.14
 // Reference: http://es5.github.io/#x15.4.4.14
-if (!Array.prototype.indexOf) {
-  Array.prototype.indexOf = function(searchElement, fromIndex) {
+if (typeof Array.prototype.indexOf=='undefined') {
+	Array.prototype.indexOf = function(searchElement, fromIndex) {
+		var k;
 
-	var k;
+		// 1. Let O be the result of calling ToObject passing
+		//	the this value as the argument.
+		if (this == null) {
+			throw new TypeError('"this" is null or not defined');
+		}
 
-	// 1. Let O be the result of calling ToObject passing
-	//	the this value as the argument.
-	if (this == null) {
-	  throw new TypeError('"this" is null or not defined');
-	}
+		var O = Object(this);
 
-	var O = Object(this);
+		// 2. Let lenValue be the result of calling the Get
+		//	internal method of O with the argument "length".
+		// 3. Let len be ToUint32(lenValue).
+		var len = O.length >>> 0;
 
-	// 2. Let lenValue be the result of calling the Get
-	//	internal method of O with the argument "length".
-	// 3. Let len be ToUint32(lenValue).
-	var len = O.length >>> 0;
+		// 4. If len is 0, return -1.
+		if (len === 0) {
+			return -1;
+		}
 
-	// 4. If len is 0, return -1.
-	if (len === 0) {
-	  return -1;
-	}
+		// 5. If argument fromIndex was passed let n be
+		//	ToInteger(fromIndex); else let n be 0.
+		var n = (typeof fromIndex == 'undefined') ? 0 : fromIndex;
 
-	// 5. If argument fromIndex was passed let n be
-	//	ToInteger(fromIndex); else let n be 0.
-	var n = +fromIndex || 0;
+		if (Math.abs(n) === Infinity) {
+			n = 0;
+		}
 
-	if (Math.abs(n) === Infinity) {
-	  n = 0;
-	}
+		// 6. If n >= len, return -1.
+		if (n >= len) {
+			return -1;
+		}
 
-	// 6. If n >= len, return -1.
-	if (n >= len) {
-	  return -1;
-	}
+		// 7. If n >= 0, then Let k be n.
+		// 8. Else, n<0, Let k be len - abs(n).
+		//	If k is less than 0, then let k be 0.
+		k = Math.max(n >= 0 ? n : len - Math.abs(n), 0);
 
-	// 7. If n >= 0, then Let k be n.
-	// 8. Else, n<0, Let k be len - abs(n).
-	//	If k is less than 0, then let k be 0.
-	k = Math.max(n >= 0 ? n : len - Math.abs(n), 0);
-
-	// 9. Repeat, while k < len
-	while (k < len) {
-	  var kValue;
-	  // a. Let Pk be ToString(k).
-	  //   This is implicit for LHS operands of the in operator
-	  // b. Let kPresent be the result of calling the
-	  //	HasProperty internal method of O with argument Pk.
-	  //   This step can be combined with c
-	  // c. If kPresent is true, then
-	  //	i.  Let elementK be the result of calling the Get
-	  //		internal method of O with the argument ToString(k).
-	  //   ii.  Let same be the result of applying the
-	  //		Strict Equality Comparison Algorithm to
-	  //		searchElement and elementK.
-	  //  iii.  If same is true, return k.
-	  if (k in O && O[k] === searchElement) {
-		return k;
-	  }
-	  k++;
-	}
-	return -1;
-  };
+		// 9. Repeat, while k < len
+		while (k < len) {
+			var kValue;
+			// a. Let Pk be ToString(k).
+			//   This is implicit for LHS operands of the in operator
+			// b. Let kPresent be the result of calling the
+			//	HasProperty internal method of O with argument Pk.
+			//   This step can be combined with c
+			// c. If kPresent is true, then
+			//	i.  Let elementK be the result of calling the Get
+			//		internal method of O with the argument ToString(k).
+			//   ii.  Let same be the result of applying the
+			//		Strict Equality Comparison Algorithm to
+			//		searchElement and elementK.
+			//  iii.  If same is true, return k.
+			if (k in O && O[k] === searchElement) {
+				return k;
+			}
+			k++;
+		}
+		return -1;
+	};
 }

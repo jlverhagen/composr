@@ -5,10 +5,10 @@ SecFilterScanPOST Off
 SecRuleRemoveById 300018 340147 340014 950119 950120 973331
 </IfModule>
 
-<IfModule mod_php5.c>
+<IfModule mod_php7.c>
 # Composr needs uploads; many hosts leave these low
-php_value post_max_size "16M"
-php_value upload_max_filesize "16M"
+php_value post_max_size "500M"
+php_value upload_max_filesize "500M"
 
 # Turn insecure things off
 php_flag allow_url_fopen off
@@ -21,16 +21,25 @@ php_value max_input_vars "2000"
 
 # This causes unstability (and is known/documented to) but some hosts turn it on
 php_value mbstring.func_overload "0"
+php_flag mail.add_x_header off
 
 # Suhosin can cause problems on configuration, language editing, and Catalogue forms, which use a lot of fields
 php_value suhosin.post.max_vars "2000"
+php_value suhosin.get.max_vars "100"
 php_value suhosin.request.max_vars "2000"
 php_value suhosin.cookie.max_vars "100"
-php_value suhosin.cookie.max_name_length "150"
 php_value suhosin.post.max_value_length "100000000"
+php_value suhosin.get.max_value_length "512"
 php_value suhosin.request.max_value_length "100000000"
-php_value suhosin.post.max_totalname_length "20000"
-php_value suhosin.request.max_totalname_length "20000"
+php_value suhosin.cookie.max_value_length "10000"
+php_value suhosin.post.max_name_length "64"
+php_value suhosin.get.max_name_length "64"
+php_value suhosin.request.max_name_length "64"
+php_value suhosin.cookie.max_name_length "64"
+php_value suhosin.post.max_totalname_length "256"
+php_value suhosin.get.max_totalname_length "256"
+php_value suhosin.request.max_totalname_length "256"
+php_value suhosin.cookie.max_totalname_length "256"
 php_flag suhosin.cookie.encrypt off
 php_flag suhosin.sql.union off
 php_flag suhosin.sql.comment off
@@ -48,7 +57,7 @@ php_value auto_append_file none
 # php_value open_basedir "/tmp:/home/blah/public_html/composr/"		But needs customising for your server and only works outside php.ini in PHP6+
 
 # Set Composr to handle 404 errors. Assume Composr is in the root
-<FilesMatch !"\.(jpg|jpeg|gif|png|ico)$">
+<FilesMatch !"\.(jpg|jpeg|gif|png|ico|svg|css|js)$">
 ErrorDocument 404 /index.php?page=404
 </FilesMatch>
 
@@ -59,7 +68,7 @@ AddOutputFilterByType DEFLATE text/html text/plain text/xml text/css application
 </IfModule>
 </IfModule>
 
-# We do not want for tar files, due to IE bug http://blogs.msdn.com/b/wndp/archive/2006/08/21/content-encoding-not-equal-content-type.aspx (IE won't decompress again as it thinks it's a mistake)
+# We do not want for TAR files, due to IE bug http://blogs.msdn.com/b/wndp/archive/2006/08/21/content-encoding-not-equal-content-type.aspx (IE won't decompress again as it thinks it's a mistake)
 <IfModule mod_setenvif.c>
 SetEnvIfNoCase Request_URI \.tar$ no-gzip dont-vary
 </IfModule>
@@ -91,23 +100,29 @@ SetEnvIfNoCase Request_URI (.*/templates_cached/[^/]*/[^/]*\.(css|js)) no-gzip
 
 # Anything that would point to a real file should actually be allowed to do so. If you have a "RewriteBase /subdir" command, you may need to change to "%{DOCUMENT_ROOT}/subdir/$1".
 RewriteCond $1 ^\d+.shtml [OR]
+RewriteCond $1 \.(css|js|png|jpg|jpeg|gif) [OR]
 RewriteCond %{DOCUMENT_ROOT}/$1 -f [OR]
 RewriteCond %{DOCUMENT_ROOT}/$1 -l [OR]
-RewriteCond %{DOCUMENT_ROOT}/$1 -d
-RewriteRule (.*) - [L]
+RewriteCond %{DOCUMENT_ROOT}/$1 -d [OR]
+RewriteCond $1 -f [OR]
+RewriteCond $1 -l [OR]
+RewriteCond $1 -d
+RewriteRule ^(.*) - [L]
 
 # crossdomain.xml is actually Composr-driven
 RewriteRule ^crossdomain.xml data/crossdomain.php
 
 # WebDAV implementation (requires the non-bundled WebDAV addon)
 RewriteRule ^webdav(/.*|$) data_custom/webdav.php [E=HTTP_AUTHORIZATION:%{HTTP:Authorization},L]
+RewriteCond %{HTTP_HOST} ^webdav\..*
+RewriteRule ^(.*)$ data_custom/webdav.php [E=HTTP_AUTHORIZATION:%{HTTP:Authorization},L]
 
 #FAILOVER STARTS
 ### LEAVE THIS ALONE, AUTOMATICALLY MAINTAINED ###
 #FAILOVER ENDS
 
 # Redirect away from modules called directly by URL. Helpful as it allows you to "run" a module file in a debugger and still see it running.
-RewriteRule ^([^=]*)pages/(modules|modules\_custom)/([^/]*)\.php$ $1index.php\?page=$3 [L,QSA,R]
+RewriteRule ^([^=]*)pages/(modules|modules_custom)/([^/]*)\.php$ $1index.php\?page=$3 [L,QSA,R]
 
 # PG STYLE: These have a specially reduced form (no need to make it too explicit that these are Wiki+). We shouldn't shorten them too much, or the actual zone or base URL might conflict
 RewriteRule ^([^=]*)pg/s/([^\&\?]*)/index\.php$ $1index.php\?page=wiki&id=$2 [L,QSA]
@@ -116,7 +131,7 @@ RewriteRule ^([^=]*)pg/s/([^\&\?]*)/index\.php$ $1index.php\?page=wiki&id=$2 [L,
 RewriteRule ^([^=]*)pg/([^/\&\?]*)/([^/\&\?]*)/([^\&\?]*)/index\.php(.*)$ $1index.php\?page=$2&type=$3&id=$4$5 [L,QSA]
 RewriteRule ^([^=]*)pg/([^/\&\?]*)/([^/\&\?]*)/index\.php(.*)$ $1index.php\?page=$2&type=$3$4 [L,QSA]
 RewriteRule ^([^=]*)pg/([^/\&\?]*)/index\.php(.*)$ $1index.php\?page=$2$3 [L,QSA]
-RewriteRule ^([^=]*)pg/index\.php(.*)$ $1index.php\?page=$3 [L,QSA]
+RewriteRule ^([^=]*)pg/index\.php(.*)$ $1index.php\?page=$2 [L,QSA]
 
 # PG STYLE: Now the same as the above sets, but without any additional parameters (and thus no index.php)
 RewriteRule ^([^=]*)pg/s/([^\&\?]*)$ $1index.php\?page=wiki&id=$2 [L,QSA]
@@ -158,6 +173,6 @@ RewriteRule ^([^/\&\?]+)\.htm$ index.php\?page=$1 [L,QSA]
 
 
 order allow,deny
+allow from all
 # IP bans go here (leave this comment here! If this file is writeable, Composr will write in IP bans below, in sync with its own DB-based banning - this makes DOS/hack attack prevention stronger)
 # deny from xxx.xx.x.x (leave this comment here!)
-allow from all

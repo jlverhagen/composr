@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -86,13 +86,12 @@ class Hook_fields_reference_multi
      * Get some info bits relating to our field type, that helps us look it up / set defaults.
      *
      * @param  ?array $field The field details (null: new field)
-     * @param  ?boolean $required Whether a default value cannot be blank (null: don't "lock in" a new default value)
-     * @param  ?string $default The given default value as a string (null: don't "lock in" a new default value)
+     * @param  ?boolean $required Whether a default value cannot be blank (null: don't "lock in" a new default value) (may be passed as false also if we want to avoid "lock in" of a new default value, but in this case possible cleanup of $default may still happen where appropriate)
+     * @param  ?string $default The given default value as a string (null: don't "lock in" a new default value) (blank: only "lock in" a new default value if $required is true)
      * @return array Tuple of details (row-type,default-value-to-use,db row-type)
      */
     public function get_field_value_row_bits($field, $required = null, $default = null)
     {
-        unset($field);
         return array('long_unescaped', $default, 'long');
     }
 
@@ -154,12 +153,16 @@ class Hook_fields_reference_multi
      */
     public function get_field_inputter($_cf_name, $_cf_description, $field, $actual_value, $new)
     {
-        /*$_list=new Tempcode();
-        $list=create_selection_list_catalogue_entries_tree($field['c_name'],intval($actual_value),NULL,false);
-        if (($field['cf_required']==0) || ($actual_value==='') || (is_null($actual_value)) || ($list->is_empty()))
-            $_list->attach(form_input_list_entry('',(($actual_value==='') || (is_null($actual_value))),do_lang_tempcode('NA_EM')));
+        /*
+        require_code('catalogues');
+        $_list = new Tempcode();
+        $list = create_selection_list_catalogue_entries_tree($field['c_name'], intval($actual_value), null, false);
+        if (($field['cf_required'] == 0) || ($actual_value === '') || (is_null($actual_value)) || ($list->is_empty())) {
+            $_list->attach(form_input_list_entry('', (($actual_value === '') || (is_null($actual_value))), do_lang_tempcode('NA_EM')));
+        }
         $_list->attach($list);
-        return form_input_list($_cf_name,$_cf_description,'field_'.strval($field['id']),$_list,NULL,false,$field['cf_required']==1);*/
+        return form_input_list($_cf_name, $_cf_description, 'field_' . strval($field['id']), $_list, null, false, $field['cf_required'] == 1);
+        */
         $options = array();
         if (($field['cf_type'] != 'reference_multi') && (substr($field['cf_type'], 0, 3) == 'cx_')) {
             $options['catalogue_name'] = substr($field['cf_type'], 3);
@@ -173,7 +176,7 @@ class Hook_fields_reference_multi
      *
      * @param  boolean $editing Whether we were editing (because on edit, it could be a fractional edit)
      * @param  array $field The field details
-     * @param  ?string $upload_dir Where the files will be uploaded to (null: do not store an upload, return NULL if we would need to do so)
+     * @param  ?string $upload_dir Where the files will be uploaded to (null: do not store an upload, return null if we would need to do so)
      * @param  ?array $old_value Former value of field (null: none)
      * @return ?string The value (null: could not process)
      */

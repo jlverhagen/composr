@@ -23,7 +23,7 @@ window.tree_list=function(name,hook,root_id,options,multi_selection,tabindex,all
 	if (root_id!==null) url+='&id='+window.encodeURIComponent(root_id);
 	url+='&options='+options;
 	url+='&default='+window.encodeURIComponent(document.getElementById(name).value);
-	do_ajax_request(url,this,false);
+	do_ajax_request(url,this);
 
 	register_mouse_listener();
 };
@@ -246,7 +246,7 @@ tree_list.prototype.render_tree=function(xml,html,element)
 				if (node.getAttribute('description')) description=escape_html('. '+node.getAttribute('description'));
 				description_in_use=escaped_title+': {!TREE_LIST_SELECT*;^}'+description+((node.getAttribute('serverid')=='')?(' ('+escape_html(node.getAttribute('serverid'))+')'):'');
 			}
-			set_inner_html(node_self,'<div><input class="ajax_tree_expand_icon"'+(this.tabindex?(' tabindex="'+this.tabindex+'"'):'')+' type="image" alt="'+((!initially_expanded)?'{!EXPAND;^}':'{!CONTRACT;^}')+': '+escaped_title+'" title="'+((!initially_expanded)?'{!EXPAND;^}':'{!CONTRACT;^}')+'" id="'+this.name+'texp_c_'+node.getAttribute('id')+'" src="'+((!initially_expanded)?'{$IMG*;,1x/treefield/expand}':'{$IMG*;,1x/treefield/collapse}').replace(/^https?:/,window.location.protocol)+'" /> <img class="ajax_tree_cat_icon" alt="{!CATEGORY;^}" src="'+'{$IMG*;,1x/treefield/category}'.replace(/^https?:/,window.location.protocol)+'" srcset="'+'{$IMG*;,2x/treefield/category} 2x'.replace(/^https?:/,window.location.protocol)+'" /> <label id="'+this.name+'tsel_c_'+node.getAttribute('id')+'" for="'+this.name+'tsel_r_'+node.getAttribute('id')+'" onmouseout="if (typeof window.deactivate_tooltip!=\'undefined\') deactivate_tooltip(this);" onmousemove="if (typeof window.activate_tooltip!=\'undefined\') reposition_tooltip(this,event);" onmouseover="if (typeof window.activate_tooltip!=\'undefined\') activate_tooltip(this,event,'+(node.getAttribute('description_html')?'':'escape_html')+'(this.childNodes[0].title),\'auto\');" class="ajax_tree_magic_button '+colour+'"><input '+(this.tabindex?('tabindex="'+this.tabindex+'" '):'')+'id="'+this.name+'tsel_r_'+node.getAttribute('id')+'" style="position: absolute; left: -10000px" type="radio" name="_'+this.name+'" value="1" title="'+description_in_use+'" />'+escaped_title+'</label> <span id="'+this.name+'extra_'+node.getAttribute('id')+'">'+extra+'</span></div>');
+			set_inner_html(node_self,'<div><input class="ajax_tree_expand_icon"'+(this.tabindex?(' tabindex="'+this.tabindex+'"'):'')+' type="image" alt="'+((!initially_expanded)?'{!EXPAND;^}':'{!CONTRACT;^}')+': '+escaped_title+'" title="'+((!initially_expanded)?'{!EXPAND;^}':'{!CONTRACT;^}')+'" id="'+this.name+'texp_c_'+node.getAttribute('id')+'" src="'+((!initially_expanded)?'{$IMG*;,1x/treefield/expand}':'{$IMG*;,1x/treefield/collapse}').replace(/^https?:/,window.location.protocol)+'" srcset="'+((!initially_expanded)?'{$IMG*;,2x/treefield/expand}':'{$IMG*;,2x/treefield/collapse}').replace(/^https?:/,window.location.protocol)+' 2x" /> <img class="ajax_tree_cat_icon" alt="{!CATEGORY;^}" src="'+'{$IMG*;,1x/treefield/category}'.replace(/^https?:/,window.location.protocol)+'" srcset="'+'{$IMG*;,2x/treefield/category} 2x'.replace(/^https?:/,window.location.protocol)+'" /> <label id="'+this.name+'tsel_c_'+node.getAttribute('id')+'" for="'+this.name+'tsel_r_'+node.getAttribute('id')+'" onmouseout="if (typeof window.deactivate_tooltip!=\'undefined\') deactivate_tooltip(this);" onmousemove="if (typeof window.activate_tooltip!=\'undefined\') reposition_tooltip(this,event);" onmouseover="if (typeof window.activate_tooltip!=\'undefined\') activate_tooltip(this,event,'+(node.getAttribute('description_html')?'':'escape_html')+'(this.childNodes[0].title),\'auto\');" class="ajax_tree_magic_button '+colour+'"><input '+(this.tabindex?('tabindex="'+this.tabindex+'" '):'')+'id="'+this.name+'tsel_r_'+node.getAttribute('id')+'" style="position: absolute; left: -10000px" type="radio" name="_'+this.name+'" value="1" title="'+description_in_use+'" />'+escaped_title+'</label> <span id="'+this.name+'extra_'+node.getAttribute('id')+'">'+extra+'</span></div>');
 			var expand_button=node_self.getElementsByTagName('input')[0];
 			var _this=this;
 			expand_button.oncontextmenu=function() { return false; };
@@ -279,7 +279,7 @@ tree_list.prototype.render_tree=function(xml,html,element)
 			a.childNodes[0].object=this;
 			a.object=this;
 			a.onmousedown=function(event) { // To disable selection of text when holding shift or control
-				if (event.ctrlKey || event.shiftKey)
+				if (event.ctrlKey || event.metaKey || event.shiftKey)
 				{
 					if (typeof event=='undefined') event=window.event;
 					if (typeof event.preventDefault!='undefined') event.preventDefault();
@@ -320,6 +320,8 @@ tree_list.prototype.render_tree=function(xml,html,element)
 			}
 		} else // Assume entry
 		{
+			new_html=null;
+
 			escaped_title=escape_html((typeof node.getAttribute('title')!='undefined')?node.getAttribute('title'):'');
 			if (escaped_title=='') escaped_title='{!NA_EM;^}';
 
@@ -347,7 +349,7 @@ tree_list.prototype.render_tree=function(xml,html,element)
 			a.childNodes[0].object=this;
 			a.object=this;
 			a.onmousedown=function(event) { // To disable selection of text when holding shift or control
-				if (event.ctrlKey || event.shiftKey)
+				if (event.ctrlKey || event.metaKey || event.shiftKey)
 				{
 					if (typeof event=='undefined') event=window.event;
 					if (typeof event.preventDefault!='undefined') event.preventDefault();
@@ -550,6 +552,7 @@ tree_list.prototype.handle_tree_click=function(event,automated) // Not called as
 		}
 
 		expand_button.src='{$IMG;,1x/treefield/collapse}'.replace(/^https?:/,window.location.protocol);
+		expand_button.srcset='{$IMG;,2x/treefield/collapse}'.replace(/^https?:/,window.location.protocol)+' 2x';
 		expand_button.title=expand_button.title.replace('{!EXPAND;^}','{!CONTRACT;^}');
 		expand_button.alt=expand_button.alt.replace('{!EXPAND;^}','{!CONTRACT;^}');
 	} else
@@ -565,6 +568,7 @@ tree_list.prototype.handle_tree_click=function(event,automated) // Not called as
 		html_node.style.display='none';
 
 		expand_button.src='{$IMG;,1x/treefield/expand}'.replace(/^https?:/,window.location.protocol);
+		expand_button.srcset='{$IMG;,2x/treefield/expand}'.replace(/^https?:/,window.location.protocol)+' 2x';
 		expand_button.title=expand_button.title.replace('{!CONTRACT;^}','{!EXPAND;^}');
 		expand_button.alt=expand_button.alt.replace('{!CONTRACT;^}','{!EXPAND;^}');
 	}

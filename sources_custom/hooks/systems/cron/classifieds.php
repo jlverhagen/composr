@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -10,7 +10,7 @@
 /**
  * @license    http://opensource.org/licenses/cpal_1.0 Common Public Attribution License
  * @copyright  ocProducts Ltd
- * @package    classifieds
+ * @package    classified_ads
  */
 
 /**
@@ -27,13 +27,17 @@ class Hook_cron_classifieds
             return;
         }
 
+        if (!$GLOBALS['SITE_DB']->table_exists('classifieds_prices')) {
+            return;
+        }
+
         $last = get_value('last_classified_refresh');
         $time = time();
         if ((!is_null($last)) && (intval($last) > $time - 60 * 60)) {
             return; // Don't do more than once per hour
         }
 
-        if (function_exists('set_time_limit')) {
+        if (php_function_allowed('set_time_limit')) {
             @set_time_limit(0);
         }
 

@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -41,7 +41,7 @@ class Module_admin_community_billboard extends Standard_crud_module
         $info['organisation'] = 'ocProducts';
         $info['hacked_by'] = null;
         $info['hack_version'] = null;
-        $info['update_require_upgrade'] = 1;
+        $info['update_require_upgrade'] = true;
         $info['version'] = 4;
         $info['locked'] = false;
         return $info;
@@ -90,10 +90,10 @@ class Module_admin_community_billboard extends Standard_crud_module
     public $title;
 
     /**
-     * Module pre-run function. Allows us to know meta-data for <head> before we start streaming output.
+     * Module pre-run function. Allows us to know metadata for <head> before we start streaming output.
      *
      * @param  boolean $top_level Whether this is running at the top level, prior to having sub-objects called.
-     * @param  ?ID_TEXT $type The screen type to consider for meta-data purposes (null: read from environment).
+     * @param  ?ID_TEXT $type The screen type to consider for metadata purposes (null: read from environment).
      * @return ?Tempcode Tempcode indicating some kind of exceptional output (null: none).
      */
     public function pre_run($top_level = true, $type = null)
@@ -153,7 +153,7 @@ class Module_admin_community_billboard extends Standard_crud_module
      * @param  boolean $check_perms Whether to check permissions.
      * @param  ?MEMBER $member_id The member to check permissions as (null: current user).
      * @param  boolean $support_crosslinks Whether to allow cross links to other modules (identifiable via a full-page-link rather than a screen-name).
-     * @param  boolean $be_deferential Whether to avoid any entry-point (or even return NULL to disable the page in the Sitemap) if we know another module, or page_group, is going to link to that entry-point. Note that "!" and "browse" entry points are automatically merged with container page nodes (likely called by page-groupings) as appropriate.
+     * @param  boolean $be_deferential Whether to avoid any entry-point (or even return null to disable the page in the Sitemap) if we know another module, or page_group, is going to link to that entry-point. Note that "!" and "browse" entry points are automatically merged with container page nodes (likely called by page-groupings) as appropriate.
      * @return ?array A map of entry points (screen-name=>language-code/string or screen-name=>[language-code/string, icon-theme-image]) (null: disabled).
      */
     public function get_entry_points($check_perms = true, $member_id = null, $support_crosslinks = true, $be_deferential = false)
@@ -182,7 +182,7 @@ class Module_admin_community_billboard extends Standard_crud_module
             'the_message' => do_lang_tempcode('MESSAGE'),
             'days' => do_lang_tempcode('NUMBER_DAYS'),
             'order_time' => do_lang_tempcode('ORDER_DATE'),
-            'member_id' => do_lang_tempcode('OWNER'),
+            'member_id' => do_lang_tempcode('metadata:OWNER'),
         );
         if (((strtoupper($sort_order) != 'ASC') && (strtoupper($sort_order) != 'DESC')) || (!array_key_exists($sortable, $sortables))) {
             log_hack_attack_and_exit('ORDERBY_HACK');
@@ -193,7 +193,7 @@ class Module_admin_community_billboard extends Standard_crud_module
             do_lang_tempcode('NUMBER_DAYS'),
             do_lang_tempcode('ORDER_DATE'),
             do_lang_tempcode('_UP_FOR'),
-            do_lang_tempcode('OWNER'),
+            do_lang_tempcode('metadata:OWNER'),
             do_lang_tempcode('ACTIONS'),
         ), $sortables, 'sort', $sortable . ' ' . $sort_order);
 
@@ -260,23 +260,6 @@ class Module_admin_community_billboard extends Standard_crud_module
         $text = do_template('COMMUNITY_BILLBOARD_DETAILS', array('_GUID' => 'dcc7a8b027d450a3c17c79b23b39cd87', 'USERNAME' => $username, 'DAYS_ORDERED' => integer_format($myrow['days']), 'DATE_RAW' => strval($date_raw), 'DATE' => $date));
 
         return array($fields, $hidden, new Tempcode(), $text);
-    }
-
-    /**
-     * Get posted access map.
-     *
-     * @return array A map of access permissions
-     */
-    public function get_permissions()
-    {
-        $groups = $GLOBALS['FORUM_DRIVER']->get_usergroup_list(false, true);
-        $output = array();
-        foreach (array_keys($groups) as $group_id) {
-            $value = post_param_integer('access_' . $group_id, 0);
-            $output[$group_id] = $value;
-        }
-
-        return $output;
     }
 
     /**

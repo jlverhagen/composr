@@ -9,7 +9,7 @@
 	{$PARAGRAPH,{TEXT}}
 {+END}
 
-<form method="post" enctype="multipart/form-data" action="{$PAGE_LINK*,_SELF:_SELF}">
+<form method="post" enctype="multipart/form-data" action="{$PAGE_LINK*,_SELF:_SELF}" autocomplete="off">
 	{$INSERT_SPAMMER_BLACKHOLE}
 
 	<input type="hidden" name="type" value="{PAGE_TYPE*}" />
@@ -70,7 +70,7 @@
 	</tbody></table></div>
 
 	<p class="proceed_button">
-		<input class="buttons__proceed button_screen" type="submit" value="{!PROCEED}" />
+		<input class="button_screen buttons__proceed" type="submit" value="{!PROCEED}" />
 	</p>
 </form>
 

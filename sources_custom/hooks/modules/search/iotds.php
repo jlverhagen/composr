@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -27,6 +27,10 @@ class Hook_search_iotds extends FieldsSearchHook
     public function info($check_permissions = true)
     {
         if (!module_installed('iotds')) {
+            return null;
+        }
+
+        if (!$GLOBALS['SITE_DB']->table_exists('iotd')) {
             return null;
         }
 
@@ -64,7 +68,7 @@ class Hook_search_iotds extends FieldsSearchHook
     /**
      * Get a list of extra fields to ask for.
      *
-     * @return array A list of maps specifying extra fields
+     * @return ?array A list of maps specifying extra fields (null: no tree)
      */
     public function get_fields()
     {

@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -21,9 +21,10 @@ class Hook_addon_registry_activity_feed
     /**
      * Get a list of file permissions to set
      *
+     * @param  boolean $runtime Whether to include wildcards represented runtime-created chmoddable files
      * @return array File permissions to set
      */
-    public function get_chmod_array()
+    public function get_chmod_array($runtime = false)
     {
         return array();
     }
@@ -175,8 +176,7 @@ The blocks provided are [tt]main_activities[/tt] and the status entry box is cal
             'themes/default/css_custom/activities.css',
             'sources_custom/hooks/systems/profiles_tabs/activities.php',
             'sources_custom/hooks/systems/profiles_tabs/posts.php',
-            'uploads/addon_avatar_normalise/index.html',
-            'uploads/addon_icon_normalise/index.html',
+            'sources_custom/hooks/systems/config/syndicate_site_activity_default.php',
             'sources_custom/activities.php',
         );
     }

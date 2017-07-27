@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -24,10 +24,10 @@ Notes about hook info...
  - id_field may be array (which means that ":" works as a delimiter) (if so, the first one is the main ID, while the second one is assumed to be a qualifier)
   - unless, parent_spec__table_name!=table, where we require a single id_field, knowing it is a join field in all tables
  - category_field may be array of two (if so, the second one is assumed the main category, while the first is assumed to be for supplemental permission checking)
- - category_field may be NULL
+ - category_field may be null
  - category_type may be array
  - category_type may be '<page>' or '<zone>' (meaning "use page/zone permissions instead")
- - category_type may be NULL
+ - category_type may be null
  - category_type may be missing
  - add_url may contain '!' (meaning "parent category ID goes here")
  - submitter_field may be a field:regexp
@@ -79,7 +79,7 @@ function may_view_content_behind($member_id, $content_type, $content_id, $type_h
 
     // FUDGE: Extra check for private topics
     $topic_id = null;
-    if (($content_type == 'post') && (get_forum_type() == 'ocf')) {
+    if (($content_type == 'post') && (get_forum_type() == 'cns')) {
         $post_rows = $GLOBALS['FORUM_DB']->query_select('f_posts', array('p_topic_id', 'p_intended_solely_for', 'p_poster'), array('id' => intval($content_id)), '', 1);
         if (!array_key_exists(0, $post_rows)) {
             return false;
@@ -89,7 +89,7 @@ function may_view_content_behind($member_id, $content_type, $content_id, $type_h
         }
         $topic_id = $post_rows[0]['p_topic_id'];
     }
-    if (($content_type == 'topic') && (get_forum_type() == 'ocf')) {
+    if (($content_type == 'topic') && (get_forum_type() == 'cns')) {
         $topic_id = intval($content_id);
     }
     if (!is_null($topic_id)) {
@@ -119,13 +119,13 @@ function get_content_object($content_type)
         return $cache[$content_type];
     }
 
-    $path = 'hooks/systems/content_meta_aware/' . filter_naughty_harsh($content_type);
+    $path = 'hooks/systems/content_meta_aware/' . filter_naughty_harsh($content_type, true);
     if ((file_exists(get_file_base() . '/sources/' . $path . '.php')) || (file_exists(get_file_base() . '/sources_custom/' . $path . '.php'))) {
         require_code($path);
         $ob = object_factory('Hook_content_meta_aware_' . filter_naughty_harsh($content_type), true);
     } else {
         // Okay, maybe it's a resource type (more limited functionality).
-        $path = 'hooks/systems/resource_meta_aware/' . filter_naughty_harsh($content_type);
+        $path = 'hooks/systems/resource_meta_aware/' . filter_naughty_harsh($content_type, true);
         if ((file_exists(get_file_base() . '/sources/' . $path . '.php')) || (file_exists(get_file_base() . '/sources_custom/' . $path . '.php'))) {
             require_code('hooks/systems/resource_meta_aware/' . filter_naughty_harsh($content_type));
             $ob = object_factory('Hook_resource_meta_aware_' . filter_naughty_harsh($content_type), true);
@@ -142,21 +142,21 @@ function get_content_object($content_type)
  * Find a different content type code from the one had.
  *
  * @param  ID_TEXT $type_has Content type type we know
- * @set addon content_type meta_hook search_hook seo_type_code feedback_type_code permissions_type_code module table
+ * @set addon content_type meta_hook search_hook seo_type_code feedback_type_code permissions_type_code module table commandr_filesystem_hook rss_hook attachment_hook unvalidated_hook notification_hook sitemap_hook
  * @param  ID_TEXT $type_id Content type ID we know
  * @param  ID_TEXT $type_wanted Desired content type
- * @set addon content_type meta_hook search_hook seo_type_code feedback_type_code permissions_type_code module table
+ * @set addon content_type meta_hook search_hook seo_type_code feedback_type_code permissions_type_code module table commandr_filesystem_hook rss_hook attachment_hook unvalidated_hook notification_hook sitemap_hook
  * @return ID_TEXT Corrected content type type (blank: could not find)
  */
 function convert_composr_type_codes($type_has, $type_id, $type_wanted)
 {
     $real_type_wanted = $type_wanted;
 
-    $type_id = preg_replace('#^catalogues__\w+_#', 'catalogues_', $type_id);
+    $type_id = preg_replace('#^catalogues__[' . URL_CONTENT_REGEXP . ']+_#', 'catalogues_', $type_id);
 
     // Search content-meta-aware hooks
     $found_type_id = '';
-    $cma_hooks = find_all_hooks('systems', 'content_meta_aware');
+    $cma_hooks = find_all_hooks('systems', 'content_meta_aware') + find_all_hooks('systems', 'resource_meta_aware');
     foreach (array_keys($cma_hooks) as $content_type) {
         if ((($type_has == 'content_type') && ($content_type == $type_id)) || ($type_has != 'content_type')) {
             $cma_ob = get_content_object($content_type);
@@ -179,17 +179,17 @@ function convert_composr_type_codes($type_has, $type_id, $type_wanted)
  * Find content type info, for a particular content type type we know.
  *
  * @param  ID_TEXT $type_has Content type type we know
- * @set addon content_type meta_hook search_hook seo_type_code feedback_type_code permissions_type_code module table
+ * @set addon content_type meta_hook search_hook seo_type_code feedback_type_code permissions_type_code module table commandr_filesystem_hook rss_hook attachment_hook unvalidated_hook notification_hook sitemap_hook
  * @param  ID_TEXT $type_id Content type ID we know
  * @return array Content type info list (blank: could not find)
  */
 function convert_composr_type_codes_multiple($type_has, $type_id)
 {
-    $type_id = preg_replace('#^catalogues__\w+_#', 'catalogues_', $type_id);
+    $type_id = preg_replace('#^catalogues__[' . URL_CONTENT_REGEXP . ']+_#', 'catalogues_', $type_id);
 
     // Search content-meta-aware hooks
     $found_type_ids = array();
-    $cma_hooks = find_all_hooks('systems', 'content_meta_aware');
+    $cma_hooks = find_all_hooks('systems', 'content_meta_aware') + find_all_hooks('systems', 'resource_meta_aware');
     foreach (array_keys($cma_hooks) as $content_type) {
         if ((($type_has == 'content_type') && ($content_type == $type_id)) || ($type_has != 'content_type')) {
             $cma_ob = get_content_object($content_type);
@@ -209,10 +209,10 @@ function convert_composr_type_codes_multiple($type_has, $type_id)
  *
  * @param  ID_TEXT $content_type Content type
  * @param  ID_TEXT $content_id Content ID
- * @param  boolean $resourcefs_style Whether to use the content API as resource-fs requires (may be slightly different)
+ * @param  boolean $resource_fs_style Whether to use the content API as resource-fs requires (may be slightly different)
  * @return array Tuple: title, submitter, content hook info, the content row, URL (for use within current browser session), URL (for use in emails / sharing)
  */
-function content_get_details($content_type, $content_id, $resourcefs_style = false)
+function content_get_details($content_type, $content_id, $resource_fs_style = false)
 {
     $cma_ob = get_content_object($content_type);
     if (!is_object($cma_ob)) {
@@ -220,11 +220,15 @@ function content_get_details($content_type, $content_id, $resourcefs_style = fal
     }
     $cma_info = $cma_ob->info();
 
+    if ($cma_info === null) {
+        return array(null, null, null, null, null, null);
+    }
+
     $db = $cma_info['connection'];
 
     $content_row = content_get_row($content_id, $cma_info);
     if (is_null($content_row)) {
-        if (($content_type == 'comcode_page') && (strpos($content_id, ':') !== false) && (!$resourcefs_style)) {
+        if (($content_type == 'comcode_page') && (strpos($content_id, ':') !== false) && (!$resource_fs_style)) {
             list($zone, $page) = explode(':', $content_id, 2);
 
             $members = $GLOBALS['FORUM_DRIVER']->member_group_query($GLOBALS['FORUM_DRIVER']->get_super_admin_groups(), 1);
@@ -263,7 +267,7 @@ function content_get_details($content_type, $content_id, $resourcefs_style = fal
 
     $title_field = $cma_info['title_field'];
     $title_field_dereference = $cma_info['title_field_dereference'];
-    if (($resourcefs_style) && (array_key_exists('title_field__resource_fs', $cma_info))) {
+    if (($resource_fs_style) && (array_key_exists('title_field__resource_fs', $cma_info))) {
         $title_field = $cma_info['title_field__resource_fs'];
         $title_field_dereference = $cma_info['title_field_dereference__resource_fs'];
     }
@@ -271,13 +275,13 @@ function content_get_details($content_type, $content_id, $resourcefs_style = fal
         $content_title = do_lang($cma_info['content_type_label']);
     } else {
         if (strpos($title_field, 'CALL:') !== false) {
-            $content_title = call_user_func(trim(substr($title_field, 5)), array('id' => $content_id), $resourcefs_style);
+            $content_title = call_user_func(trim(substr($title_field, 5)), array('id' => $content_id), $resource_fs_style);
         } else {
             $_content_title = $content_row[$title_field];
             $content_title = $title_field_dereference ? get_translated_text($_content_title, $db) : $_content_title;
-            if (($content_title == '') && (!$resourcefs_style)) {
+            if (($content_title == '') && (!$resource_fs_style)) {
                 $content_title = do_lang($cma_info['content_type_label']) . ' (#' . (is_string($content_id) ? $content_id : strval($content_id)) . ')';
-                if ($content_type == 'image' || $content_type == 'video') { // A bit of a fudge, but worth doing
+                if (($content_type == 'image' || $content_type == 'video') && (addon_installed('galleries'))) { // A bit of a fudge, but worth doing
                     require_lang('galleries');
                     $fullname = $GLOBALS['SITE_DB']->query_select_value_if_there('galleries', 'fullname', array('name' => $content_row['cat']));
                     if (!is_null($fullname)) {
@@ -288,7 +292,7 @@ function content_get_details($content_type, $content_id, $resourcefs_style = fal
         }
     }
 
-    if (isset($cma_info['submitter_field'])) {
+    if (!is_null($cma_info['submitter_field'])) {
         if (strpos($cma_info['submitter_field'], ':') !== false) {
             $bits = explode(':', $cma_info['submitter_field']);
             $matches = array();
@@ -375,7 +379,7 @@ function get_content_where_for_str_id($str_id, $cma_info, $table_alias = null)
 {
     $where = array();
     $id_field = $cma_info['id_field'];
-    $id_parts = explode(':', $str_id);
+    $id_parts = is_array($id_field) ? explode(':', $str_id) : array($str_id);
     $id_parts = array_reverse($id_parts);
     foreach (is_array($id_field) ? $id_field : array($id_field) as $i => $id_field_part) {
         $val = array_key_exists($i, $id_parts) ? $id_parts[$i] : '';
@@ -396,4 +400,30 @@ function append_content_select_for_id(&$select, $cma_info, $table_alias = null)
     foreach (is_array($cma_info['id_field']) ? $cma_info['id_field'] : array($cma_info['id_field']) as $id_field_part) {
         $select[] = (($table_alias === null) ? '' : ($table_alias . '.')) . $id_field_part;
     }
+}
+
+/**
+ * Get an action language string for a particular content type based on a stub.
+ * If it can't get a match it'll just use the stub.
+ *
+ * @param  string $content_type The content type
+ * @param  string $string The language string stub (must itself be a valid language string)
+ * @return Tempcode Tempcode of language string
+ */
+function content_language_string($content_type, $string)
+{
+    $object = get_content_object($content_type);
+    $info = $object->info();
+    $regexp = $info['actionlog_regexp'];
+
+    do_lang($info['content_type_label']); // This forces the language file to load if there is one, as it'll include the language file reference within content_type_label
+
+    $string_custom = str_replace('\w+', $string, $regexp);
+    $test = do_lang($string_custom, null, null, null, null, false);
+    if ($test === null) {
+        $test = do_lang($string);
+    }
+
+    //return do_lang_tempcode($string_custom); // Assumes that the lang string stays memory resident, but our probing only guarantees it's resident NOW
+    return protect_from_escaping($test); // But this should work as the string is rolled into the Tempcode permanently
 }

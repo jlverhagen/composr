@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -40,7 +40,7 @@ class Hook_profiles_tabs_friends
      *
      * @param  MEMBER $member_id_of The ID of the member who is being viewed
      * @param  MEMBER $member_id_viewing The ID of the member who is doing the viewing
-     * @param  boolean $leave_to_ajax_if_possible Whether to leave the tab contents NULL, if tis hook supports it, so that AJAX can load it later
+     * @param  boolean $leave_to_ajax_if_possible Whether to leave the tab contents null, if tis hook supports it, so that AJAX can load it later
      * @return array A tuple: The tab title, the tab contents, the suggested tab order, the icon
      */
     public function render_tab($member_id_of, $member_id_viewing, $leave_to_ajax_if_possible = false)
@@ -62,9 +62,9 @@ class Hook_profiles_tabs_friends
         require_code('chat');
         if (($member_id_of != $member_id_viewing) && (!is_guest())) {
             if (!member_befriended($member_id_of)) {
-                $add_friend_url = build_url(array('page' => 'chat', 'type' => 'friend_add', 'member_id' => $member_id_of, 'redirect' => get_self_url(true)), get_module_zone('chat'));
+                $add_friend_url = build_url(array('page' => 'chat', 'type' => 'friend_add', 'member_id' => $member_id_of, 'redirect' => static_evaluate_tempcode($GLOBALS['FORUM_DRIVER']->member_profile_url($member_id_of, true, true))), get_module_zone('chat'));
             } else {
-                $remove_friend_url = build_url(array('page' => 'chat', 'type' => 'friend_remove', 'member_id' => $member_id_of, 'redirect' => get_self_url(true)), get_module_zone('chat'));
+                $remove_friend_url = build_url(array('page' => 'chat', 'type' => 'friend_remove', 'member_id' => $member_id_of, 'redirect' => static_evaluate_tempcode($GLOBALS['FORUM_DRIVER']->member_profile_url($member_id_of, true, true))), get_module_zone('chat'));
             }
         }
 

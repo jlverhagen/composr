@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -25,6 +25,9 @@
  */
 function comcode_convert_script()
 {
+    require_code('input_filter_2');
+    modsecurity_workaround_enable();
+
     prepare_for_known_ajax_response();
 
     attach_to_screen_header('<meta name="robots" content="noindex" />'); // XHTMLXHTML
@@ -42,6 +45,8 @@ function comcode_convert_script()
 
         require_code('form_templates');
 
+        require_css('forms');
+
         $fields->attach(form_input_huge(do_lang_tempcode('TEXT'), '', 'data', '', true));
 
         $radio_list = new Tempcode();
@@ -57,6 +62,7 @@ function comcode_convert_script()
 
         $fields->attach(form_input_tick('Raw text output', '', 'raw_output', true));
         $fields->attach(form_input_tick('Reindent output', '', 'reindent', false));
+        $fields->attach(form_input_tick('Do intensive conversion', '', 'force', false));
 
         $javascript = "
             var form=document.getElementById('semihtml').form;
@@ -67,6 +73,7 @@ function comcode_convert_script()
                 document.getElementById('is_semihtml').disabled=(value!=0);
                 document.getElementById('lax').disabled=(value!=0);
                 document.getElementById('fix_bad_html').disabled=(value==1);
+                document.getElementById('force').disabled=(value!=1);
             };
             form.elements['from_html'][0].onclick=refresh_locked_inputs;
             form.elements['from_html'][1].onclick=refresh_locked_inputs;
@@ -131,7 +138,7 @@ function comcode_convert_script()
 
     } elseif ($from_html == 1) { // "Convert HTML/semihtml to Comcode"
         require_code('comcode_from_html');
-        $out = trim(semihtml_to_comcode($data));
+        $out = trim(semihtml_to_comcode($data, post_param_integer('force', 0) == 1));
     }
 
     $box_title = get_param_string('box_title', '');
@@ -143,13 +150,15 @@ function comcode_convert_script()
         $stripped_new = preg_replace('#<!--.*-->#Us', '', preg_replace('#\s+#', '', $new));
         $stripped_old = preg_replace('#<!--.*-->#Us', '', preg_replace('#\s+#', '', $out));
         if (($box_title != '') && ($stripped_new != $stripped_old)) {
-            /*$myfile=fopen(get_file_base().'/a','wb');
-            fwrite($myfile,preg_replace('#<!--.*-->#Us','',preg_replace('#\s+#',chr(10),$new)));
+            /*
+            $myfile = fopen(get_file_base() . '/a', 'wb');
+            fwrite($myfile, preg_replace('#<!--.*-->#Us', '', preg_replace('#\s+#', chr(10), $new)));
             fclose($myfile);
 
-            $myfile=fopen(get_file_base().'/b','wb');
-            fwrite($myfile,preg_replace('#<!--.*-->#Us','',preg_replace('#\s+#',chr(10),$out)));
-            fclose($myfile);*/
+            $myfile = fopen(get_file_base() . '/b', 'wb');
+            fwrite($myfile, preg_replace('#<!--.*-->#Us', '', preg_replace('#\s+#', chr(10), $out)));
+            fclose($myfile);
+            */
 
             $out = $new . do_lang('BROKEN_XHTML_FIXED');
         } else {

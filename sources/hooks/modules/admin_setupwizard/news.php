@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -56,7 +56,7 @@ class Hook_sw_news
      */
     public function get_fields($field_defaults)
     {
-        if (!addon_installed('news')) {
+        if (!addon_installed('news') || post_param_integer('addon_news', null) === 0) {
             return new Tempcode();
         }
 
@@ -80,7 +80,7 @@ class Hook_sw_news
      */
     public function set_fields()
     {
-        if (!addon_installed('news')) {
+        if (!addon_installed('news') || post_param_integer('addon_news', null) === 0) {
             return;
         }
 
@@ -98,7 +98,7 @@ class Hook_sw_news
             $news_cats = $GLOBALS['SITE_DB']->query_select('news_categories', array('id'), array('nc_owner' => null));
             foreach ($news_cats as $news_cat) {
                 if (($news_cat['id'] > db_get_first_id()) && ($news_cat['id'] < db_get_first_id() + 7)) {
-                    require_code('news');
+                    require_code('news2');
                     delete_news_category($news_cat['id']);
                 }
             }

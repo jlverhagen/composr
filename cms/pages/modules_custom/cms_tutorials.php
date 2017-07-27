@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -29,13 +29,15 @@ class Module_cms_tutorials extends Standard_crud_module
     public $menu_label = 'TUTORIALS';
     public $select_name = 'TUTORIALS';
     public $orderer = 't_title';
+    public $orderer_is_multi_lang = false;
     public $table = 'tutorials_external';
+    public $do_preview = null;
 
     /**
-     * Module pre-run function. Allows us to know meta-data for <head> before we start streaming output.
+     * Module pre-run function. Allows us to know metadata for <head> before we start streaming output.
      *
      * @param  boolean $top_level Whether this is running at the top level, prior to having sub-objects called.
-     * @param  ?ID_TEXT $type The screen type to consider for meta-data purposes (null: read from environment).
+     * @param  ?ID_TEXT $type The screen type to consider for metadata purposes (null: read from environment).
      * @return ?Tempcode Tempcode indicating some kind of exceptional output (null: none).
      */
     public function pre_run($top_level = true, $type = null)
@@ -83,14 +85,14 @@ class Module_cms_tutorials extends Standard_crud_module
      * @param  boolean $check_perms Whether to check permissions.
      * @param  ?MEMBER $member_id The member to check permissions as (null: current user).
      * @param  boolean $support_crosslinks Whether to allow cross links to other modules (identifiable via a full-page-link rather than a screen-name).
-     * @param  boolean $be_deferential Whether to avoid any entry-point (or even return NULL to disable the page in the Sitemap) if we know another module, or page_group, is going to link to that entry-point. Note that "!" and "browse" entry points are automatically merged with container page nodes (likely called by page-groupings) as appropriate.
+     * @param  boolean $be_deferential Whether to avoid any entry-point (or even return null to disable the page in the Sitemap) if we know another module, or page_group, is going to link to that entry-point. Note that "!" and "browse" entry points are automatically merged with container page nodes (likely called by page-groupings) as appropriate.
      * @return ?array A map of entry points (screen-name=>language-code/string or screen-name=>[language-code/string, icon-theme-image]) (null: disabled).
      */
     public function get_entry_points($check_perms = true, $member_id = null, $support_crosslinks = true, $be_deferential = false)
     {
         return array(
-                   'browse' => array('tutorials:TUTORIALS', 'menu/pages/help'),
-               ) + parent::get_entry_points();
+            'browse' => array('tutorials:TUTORIALS', 'menu/pages/help'),
+        ) + parent::get_entry_points();
     }
 
     /**
@@ -114,26 +116,42 @@ class Module_cms_tutorials extends Standard_crud_module
     /**
      * Get Tempcode for an external tutorial adding/editing form.
      *
-     * @param  ?AUTO_LINK $id ID (NULL: not added yet)
+     * @param  ?AUTO_LINK $id ID (null: not added yet)
      * @param  URLPATH $url URL
      * @param  SHORT_TEXT $title Title
      * @param  LONG_TEXT $summary Summary
      * @param  URLPATH $icon Icon
-     * @param  ID_TEXT $media_type Media type
+     * @param  ?ID_TEXT $media_type Media type (null: default)
      * @set document video audio slideshow book
      * @param  ID_TEXT $difficulty_level Difficulty level
      * @set novice regular expert
      * @param  BINARY $pinned Whether is pinned
      * @param  ID_TEXT $author Author
-     * @param  array $tags List of tags
+     * @param  ?array $tags List of tags (null: default)
      * @return array A pair: the Tempcode for the visible fields, and the Tempcode for the hidden fields
      */
-    public function get_form_fields($id = null, $url = '', $title = '', $summary = '', $icon = '', $media_type = 'document', $difficulty_level = 'regular', $pinned = 0, $author = '', $tags = null)
+    public function get_form_fields($id = null, $url = '', $title = '', $summary = '', $icon = '', $media_type = null, $difficulty_level = 'regular', $pinned = 0, $author = '', $tags = null)
     {
         if ($author == '') {
             $author = $GLOBALS['FORUM_DRIVER']->get_username(get_member());
             if ($GLOBALS['FORUM_DRIVER']->is_staff(get_member())) {
                 $author .= ', ocProducts';
+            }
+        }
+
+        if ($media_type === null) {
+            $media_type = get_param_string('media_type', 'document');
+        }
+
+        if ($tags === null || $icon == '') {
+            $tag = get_param_string('tag', null);
+            if ($tag !== null) {
+                if ($tags === null) {
+                    $tags = array($tag);
+                }
+                if ($icon == '') {
+                    $icon = 'tutorial_icons/' . strtolower($tag);
+                }
             }
         }
         if ($tags === null) {
@@ -144,7 +162,7 @@ class Module_cms_tutorials extends Standard_crud_module
 
         $hidden = new Tempcode();
 
-        $fields->attach(form_input_url('URL', 'The direct URL to the tutorial (be it on a private website, on YouTube, etc).', 'url', $url, true));
+        $fields->attach(form_input_url('URL', 'The direct URL to the tutorial (be it on a private website, on the forum, on YouTube, etc).', 'url', $url, true));
 
         $fields->attach(form_input_line('Title', 'The title to the tutorial.', 'title', $title, true));
 
@@ -152,7 +170,7 @@ class Module_cms_tutorials extends Standard_crud_module
 
         require_code('themes2');
         $ids = get_all_image_ids_type('tutorial_icons');
-        $fields->attach(form_input_theme_image('Icon', 'Icon for the tutorial.', 'icon', $ids, $icon));
+        $fields->attach(form_input_theme_image('Icon', 'Icon for the tutorial.', 'icon', $ids, null, $icon));
 
         $content = new Tempcode();
         foreach (array('document', 'video', 'audio', 'slideshow', 'book') as $_media_type) {
@@ -259,6 +277,8 @@ class Module_cms_tutorials extends Standard_crud_module
             ));
         }
 
+        @unlink(get_custom_file_base() . '/uploads/website_specific/tutorial_sigs.dat');
+
         return strval($id);
     }
 
@@ -303,6 +323,8 @@ class Module_cms_tutorials extends Standard_crud_module
                 't_tag' => $tag,
             ));
         }
+
+        @unlink(get_custom_file_base() . '/uploads/website_specific/tutorial_sigs.dat');
     }
 
     /**
@@ -316,5 +338,7 @@ class Module_cms_tutorials extends Standard_crud_module
 
         $GLOBALS['SITE_DB']->query_delete('tutorials_external', array('id' => $id), '', 1);
         $GLOBALS['SITE_DB']->query_delete('tutorials_external_tags', array('t_id' => $id));
+
+        @unlink(get_custom_file_base() . '/uploads/website_specific/tutorial_sigs.dat');
     }
 }

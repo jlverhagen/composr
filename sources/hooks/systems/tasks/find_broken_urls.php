@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -113,7 +113,7 @@ class Hook_task_find_broken_urls
         $temp = $LAX_COMCODE;
         $LAX_COMCODE = true;
 
-        $sql = 'SELECT m_name,m_table FROM ' . $GLOBALS['SITE_DB']->get_table_prefix() . 'db_meta WHERE m_type LIKE \'' . db_encode_like('%LONG_TRANS__COMCODE%') . '\'';
+        $sql = 'SELECT m_name,m_table FROM ' . $GLOBALS['SITE_DB']->get_table_prefix() . 'db_meta WHERE m_type LIKE \'' . db_encode_like('%LONG\_TRANS\_\_COMCODE%') . '\'';
         $possible_comcode_fields = $GLOBALS['SITE_DB']->query($sql);
         foreach ($possible_comcode_fields as $field) {
             if ($field['m_table'] == 'seo_meta') {
@@ -231,7 +231,7 @@ class Hook_task_find_broken_urls
             }
         }
 
-        $lax_comcode = $temp;
+        $LAX_COMCODE = $temp;
     }
 
     /**
@@ -274,6 +274,9 @@ class Hook_task_find_broken_urls
             }
 
             $test = http_download_file($url, 0, false);
+            if (($test === null) && ($GLOBALS['HTTP_MESSAGE'] == '403')) {
+                $test = http_download_file($url, 1, false); // Try without HEAD, sometimes it's not liked
+            }
             if ((is_null($test)) && (in_array($GLOBALS['HTTP_MESSAGE'], array('404', 'could not connect to host')))) {
                 $found_404[] = array('URL' => $url, 'SPOT' => $spot);
             }

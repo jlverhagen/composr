@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -31,14 +31,15 @@ class Hook_content_meta_aware_member
      */
     public function info($zone = null)
     {
-        if (get_forum_type() != 'cns') {
+        if (get_forum_type() != 'cns' || !isset($GLOBALS['FORUM_DB'])) {
             return null;
         }
 
         return array(
-            'supports_custom_fields' => false,
+            'support_custom_fields' => false,
 
-            'content_type_label' => 'MEMBER',
+            'content_type_label' => 'global:MEMBER',
+            'content_type_universal_label' => 'Profile',
 
             'connection' => $GLOBALS['FORUM_DB'],
             'table' => 'f_members',
@@ -59,20 +60,24 @@ class Hook_content_meta_aware_member
             'title_field' => 'm_username',
             'title_field_dereference' => false,
             'description_field' => 'm_title',
-            'thumb_field' => 'm_avatar_url',
+            'thumb_field' => addon_installed('cns_member_avatars') ? 'm_avatar_url' : null,
+            'thumb_field_is_theme_image' => false,
+            'alternate_icon_theme_image' => null,
 
             'view_page_link_pattern' => '_SEARCH:members:view:_WILD',
             'edit_page_link_pattern' => '_SEARCH:members:view:_WILD',
             'edit_page_link_pattern_post' => '_SEARCH:members:view:_WILD:only_tab=edit:only_subtab=settings',
             'edit_page_link_field' => 'edit_username',
             'view_category_page_link_pattern' => null,
-            'add_url' => '',
+            'add_url' => has_actual_page_access(get_member(), 'admin_cns_members') ? '_SEARCH:admin_cns_members:step1' : null,
             'archive_url' => ((!is_null($zone)) ? $zone : get_module_zone('members')) . ':members',
 
             'support_url_monikers' => (get_option('username_profile_links') == '0'),
 
             'views_field' => null,
+            'order_field' => null,
             'submitter_field' => 'id',
+            'author_field' => null,
             'add_time_field' => 'm_join_time',
             'edit_time_field' => null,
             'date_field' => 'm_join_time',
@@ -82,9 +87,14 @@ class Hook_content_meta_aware_member
 
             'feedback_type_code' => null,
 
-            'permissions_type_code' => null, // NULL if has no permissions
+            'permissions_type_code' => null, // null if has no permissions
 
             'search_hook' => 'cns_members',
+            'rss_hook' => 'cns_members',
+            'attachment_hook' => null,
+            'unvalidated_hook' => 'cns_members',
+            'notification_hook' => 'cns_new_member',
+            'sitemap_hook' => 'member',
 
             'addon_name' => 'core_cns',
 
@@ -94,7 +104,11 @@ class Hook_content_meta_aware_member
             'commandr_filesystem_hook' => 'groups',
             'commandr_filesystem__is_folder' => false,
 
-            'rss_hook' => 'cns_members',
+            'support_revisions' => false,
+
+            'support_privacy' => false,
+
+            'support_content_reviews' => true,
 
             'actionlog_regexp' => '\w+_MEMBER',
 

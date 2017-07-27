@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -36,6 +36,7 @@ class Module_authors
         $info['hacked_by'] = null;
         $info['hack_version'] = null;
         $info['version'] = 4;
+        $info['update_require_upgrade'] = true;
         $info['locked'] = true;
         return $info;
     }
@@ -46,6 +47,8 @@ class Module_authors
     public function uninstall()
     {
         $GLOBALS['SITE_DB']->drop_table_if_exists('authors');
+
+        delete_privilege('set_own_author_profile');
     }
 
     /**
@@ -65,7 +68,7 @@ class Module_authors
                 'skills' => 'LONG_TRANS__COMCODE',
             ));
 
-            $GLOBALS['SITE_DB']->create_index('authors', 'findmemberlink', array('member_id'));
+            add_privilege('SUBMISSION', 'set_own_author_profile');
         }
 
         if ((!is_null($upgrade_from)) && ($upgrade_from < 3)) {
@@ -74,6 +77,12 @@ class Module_authors
 
         if ((!is_null($upgrade_from)) && ($upgrade_from < 4)) {
             $GLOBALS['SITE_DB']->alter_table_field('authors', 'forum_handle', '?MEMBER', 'member_id');
+
+            $GLOBALS['SITE_DB']->delete_index_if_exists('authors', 'findmemberlink');
+        }
+
+        if ((is_null($upgrade_from)) || ($upgrade_from < 4)) {
+            $GLOBALS['SITE_DB']->create_index('authors', 'findmemberlink', array('member_id'));
         }
     }
 
@@ -83,7 +92,7 @@ class Module_authors
      * @param  boolean $check_perms Whether to check permissions.
      * @param  ?MEMBER $member_id The member to check permissions as (null: current user).
      * @param  boolean $support_crosslinks Whether to allow cross links to other modules (identifiable via a full-page-link rather than a screen-name).
-     * @param  boolean $be_deferential Whether to avoid any entry-point (or even return NULL to disable the page in the Sitemap) if we know another module, or page_group, is going to link to that entry-point. Note that "!" and "browse" entry points are automatically merged with container page nodes (likely called by page-groupings) as appropriate.
+     * @param  boolean $be_deferential Whether to avoid any entry-point (or even return null to disable the page in the Sitemap) if we know another module, or page_group, is going to link to that entry-point. Note that "!" and "browse" entry points are automatically merged with container page nodes (likely called by page-groupings) as appropriate.
      * @return ?array A map of entry points (screen-name=>language-code/string or screen-name=>[language-code/string, icon-theme-image]) (null: disabled).
      */
     public function get_entry_points($check_perms = true, $member_id = null, $support_crosslinks = true, $be_deferential = false)
@@ -100,7 +109,7 @@ class Module_authors
     public $author;
 
     /**
-     * Module pre-run function. Allows us to know meta-data for <head> before we start streaming output.
+     * Module pre-run function. Allows us to know metadata for <head> before we start streaming output.
      *
      * @return ?Tempcode Tempcode indicating some kind of exceptional output (null: none).
      */
@@ -109,12 +118,12 @@ class Module_authors
         $type = get_param_string('type', 'browse');
 
         require_lang('authors');
+        require_code('authors');
 
         $author = get_param_string('id', null);
         if (is_null($author)) {
             if (is_guest()) {
-                global $EXTRA_HEAD;
-                $EXTRA_HEAD->attach('<meta name="robots" content="noindex" />'); // XHTMLXHTML
+                attach_to_screen_header('<meta name="robots" content="noindex" />'); // XHTMLXHTML
 
                 warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'author'));
             }
@@ -135,7 +144,31 @@ class Module_authors
 
         seo_meta_load_for('authors', $author);
 
+        $rows = $GLOBALS['SITE_DB']->query_select('authors', array('*'), array('author' => $author), '', 1);
+        if (!array_key_exists(0, $rows)) {
+            if ((has_actual_page_access(get_member(), 'cms_authors')) && (has_edit_author_permission(get_member(), $author))) {
+                set_http_status_code('404');
+
+                $_author_add_url = build_url(array('page' => 'cms_authors', 'type' => '_add', 'id' => $author), get_module_zone('cms_authors'));
+                $author_add_url = $_author_add_url->evaluate();
+                $message = do_lang_tempcode('NO_SUCH_AUTHOR_CONFIGURE_ONE', escape_html($author), escape_html($author_add_url));
+
+                attach_message($message, 'inform');
+            } else {
+                $message = do_lang_tempcode('NO_SUCH_AUTHOR', escape_html($author));
+            }
+            $details = array('author' => $author, 'url' => '', 'member_id' => get_author_id_from_name($author), 'description' => null, 'skills' => null,);
+        } else {
+            $details = $rows[0];
+        }
+
+        // Metadata
+        set_extra_request_metadata(array(
+            'identifier' => '_SEARCH:authors:browse:' . $author,
+        ), $details, 'author', $author);
+
         $this->author = $author;
+        $this->details = $details;
 
         return null;
     }
@@ -148,8 +181,6 @@ class Module_authors
     public function run()
     {
         set_feed_url('?mode=authors&select=');
-
-        require_code('authors');
 
         // Decide what we're doing
         $type = get_param_string('type', 'browse');
@@ -169,24 +200,7 @@ class Module_authors
     public function show_author()
     {
         $author = $this->author;
-
-        $rows = $GLOBALS['SITE_DB']->query_select('authors', array('*'), array('author' => $author), '', 1);
-        if (!array_key_exists(0, $rows)) {
-            if ((has_actual_page_access(get_member(), 'cms_authors')) && (has_edit_author_permission(get_member(), $author))) {
-                set_http_status_code('404');
-
-                $_author_add_url = build_url(array('page' => 'cms_authors', 'type' => '_add', 'author' => $author), get_module_zone('cms_authors'));
-                $author_add_url = $_author_add_url->evaluate();
-                $message = do_lang_tempcode('NO_SUCH_AUTHOR_CONFIGURE_ONE', escape_html($author), escape_html($author_add_url));
-
-                attach_message($message, 'inform');
-            } else {
-                $message = do_lang_tempcode('NO_SUCH_AUTHOR', escape_html($author));
-            }
-            $details = array('author' => $author, 'url' => '', 'member_id' => $GLOBALS['FORUM_DRIVER']->get_member_from_username($author), 'description' => null, 'skills' => null,);
-        } else {
-            $details = $rows[0];
-        }
+        $details = $this->details;
 
         // Links associated with the mapping between the author and a forum member
         $handle = get_author_id_from_name($author);
@@ -236,7 +250,7 @@ class Module_authors
             if ($count > 50) {
                 $downloads_released = paragraph(do_lang_tempcode('TOO_MANY_TO_CHOOSE_FROM'));
             } else {
-                $rows = $GLOBALS['SITE_DB']->query_select('download_downloads', array('*'), array('author' => $author, 'validated' => 1));
+                $rows = $GLOBALS['SITE_DB']->query_select('download_downloads', array('*'), array('author' => $author, 'validated' => 1), 'ORDER BY add_date');
                 foreach ($rows as $myrow) {
                     if (addon_installed('content_privacy')) {
                         require_code('content_privacy');
@@ -263,7 +277,7 @@ class Module_authors
             if ($count > 50) {
                 $news_released = paragraph(do_lang_tempcode('TOO_MANY_TO_CHOOSE_FROM'));
             } else {
-                $rows = $GLOBALS['SITE_DB']->query_select('news', array('*'), array('author' => $author, 'validated' => 1));
+                $rows = $GLOBALS['SITE_DB']->query_select('news', array('*'), array('author' => $author, 'validated' => 1), 'ORDER BY date_and_time');
                 foreach ($rows as $i => $row) {
                     if (addon_installed('content_privacy')) {
                         require_code('content_privacy');

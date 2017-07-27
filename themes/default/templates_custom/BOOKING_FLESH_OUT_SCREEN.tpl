@@ -16,7 +16,7 @@
 							<h3>{SUPPLEMENT_TITLE*} ({!OPTIONAL_SUPPLEMENT})</h3>
 
 							{+START,IF,{SUPPLEMENT_SUPPORTS_QUANTITY}}
-								{!QUANTITY}
+								{!QUANTITY}:
 
 								<select onchange="recalculate_price(this.form);" id="bookable_{BOOKABLE_ID*}_supplement_{SUPPLEMENT_ID*}_quantity" name="bookable_{BOOKABLE_ID*}_supplement_{SUPPLEMENT_ID*}_quantity">
 									{$SET,quantity,0}
@@ -52,7 +52,7 @@
 	<p>{!_BOOKING_FLESH_OUT}</p>
 {+END}
 
-<form action="{POST_URL*}" method="post">
+<form action="{POST_URL*}" method="post" autocomplete="off">
 	{$INSERT_SPAMMER_BLACKHOLE}
 
 	<div>
@@ -72,12 +72,12 @@
 	{+END}
 
 	<p class="proceed_button">
-		<input class="buttons__proceed button_screen" type="submit" value="{$?,{$IS_GUEST},{!PROCEED},{!BOOK}}" />
+		<input class="button_screen buttons__proceed" type="submit" value="{$?,{$IS_GUEST},{!PROCEED},{!BOOK}}" />
 	</p>
 </form>
 
 {+START,IF,{$JS_ON}}
-	<form action="{BACK_URL*}" method="post">
+	<form action="{BACK_URL*}" method="post" autocomplete="off">
 		<div>
 			{HIDDEN}
 			<input type="image" title="{!NEXT_ITEM_BACK}" alt="{!NEXT_ITEM_BACK}" src="{$IMG*,icons/48x48/menu/_generic_admin/back}" / /></p>

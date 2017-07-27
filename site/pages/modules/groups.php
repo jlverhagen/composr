@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -46,7 +46,7 @@ class Module_groups
      * @param  boolean $check_perms Whether to check permissions.
      * @param  ?MEMBER $member_id The member to check permissions as (null: current user).
      * @param  boolean $support_crosslinks Whether to allow cross links to other modules (identifiable via a full-page-link rather than a screen-name).
-     * @param  boolean $be_deferential Whether to avoid any entry-point (or even return NULL to disable the page in the Sitemap) if we know another module, or page_group, is going to link to that entry-point. Note that "!" and "browse" entry points are automatically merged with container page nodes (likely called by page-groupings) as appropriate.
+     * @param  boolean $be_deferential Whether to avoid any entry-point (or even return null to disable the page in the Sitemap) if we know another module, or page_group, is going to link to that entry-point. Note that "!" and "browse" entry points are automatically merged with container page nodes (likely called by page-groupings) as appropriate.
      * @return ?array A map of entry points (screen-name=>language-code/string or screen-name=>[language-code/string, icon-theme-image]) (null: disabled).
      */
     public function get_entry_points($check_perms = true, $member_id = null, $support_crosslinks = true, $be_deferential = false)
@@ -67,7 +67,7 @@ class Module_groups
     public $club;
 
     /**
-     * Module pre-run function. Allows us to know meta-data for <head> before we start streaming output.
+     * Module pre-run function. Allows us to know metadata for <head> before we start streaming output.
      *
      * @return ?Tempcode Tempcode indicating some kind of exceptional output (null: none).
      */
@@ -75,6 +75,12 @@ class Module_groups
     {
         $type = get_param_string('type', 'browse');
 
+        if (get_forum_type() != 'cns') {
+            warn_exit(do_lang_tempcode('NO_CNS'));
+        } else {
+            cns_require_all_forum_stuff();
+        }
+        require_css('cns');
         require_lang('cns');
 
         if ($type == 'browse') {
@@ -88,7 +94,8 @@ class Module_groups
                 warn_exit(do_lang_tempcode('INTERNAL_ERROR'));
             }
 
-            $map = has_privilege(get_member(), 'see_hidden_groups') ? array('id' => $id) : array('id' => $id, 'g_hidden' => 0);
+            $members_groups = $GLOBALS['CNS_DRIVER']->get_members_groups(get_member());
+            $map = ((has_privilege(get_member(), 'see_hidden_groups')) || (in_array($id, $members_groups))) ? array('id' => $id) : array('id' => $id, 'g_hidden' => 0);
             $groups = $GLOBALS['FORUM_DB']->query_select('f_groups', array('*'), $map, '', 1);
             if (!array_key_exists(0, $groups)) {
                 warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'group'));
@@ -102,16 +109,8 @@ class Module_groups
             breadcrumb_set_parents(array(array('_SELF:_SELF:browse', do_lang_tempcode('USERGROUPS'))));
 
             set_extra_request_metadata(array(
-                'created' => '',
-                'creator' => is_null($group['g_group_leader']) ? '' : $GLOBALS['FORUM_DRIVER']->get_username($group['g_group_leader']),
-                'publisher' => '', // blank means same as creator
-                'modified' => '',
-                'type' => 'Usergroup',
-                'title' => comcode_escape($group_name),
                 'identifier' => '_SEARCH:groups:view:' . strval($id),
-                'description' => '',
-                'image' => find_theme_image('icons/48x48/menu/social/groups'),
-            ));
+            ), $group, 'group', strval($id));
 
             $this->title = get_screen_title($club ? 'CLUB' : 'VIEW_USERGROUP', true, array(make_fractionable_editable('group', $id, $group_name)));
 
@@ -181,12 +180,6 @@ class Module_groups
      */
     public function run()
     {
-        if (get_forum_type() != 'cns') {
-            warn_exit(do_lang_tempcode('NO_CNS'));
-        } else {
-            cns_require_all_forum_stuff();
-        }
-        require_css('cns');
         require_code('cns_groups_action');
         require_code('cns_groups_action2');
         require_code('cns_groups2');
@@ -230,9 +223,11 @@ class Module_groups
     {
         $staff_groups = array_merge($GLOBALS['FORUM_DRIVER']->get_super_admin_groups(), $GLOBALS['FORUM_DRIVER']->get_moderator_groups());
 
-        $sql = 'SELECT * FROM ' . $GLOBALS['FORUM_DB']->get_table_prefix() . 'f_groups g WHERE ';
+        $members_groups = $GLOBALS['CNS_DRIVER']->get_members_groups(get_member());
+
+        $sql = 'SELECT g.* FROM ' . $GLOBALS['FORUM_DB']->get_table_prefix() . 'f_groups g WHERE ';
         if (!has_privilege(get_member(), 'see_hidden_groups')) {
-            $sql .= 'g_hidden=0 AND ';
+            $sql .= '(g_hidden=0 OR g.id IN (' . implode(',', array_map('strval', $members_groups)) . ')) AND ';
         }
         $sql .= '(g_promotion_target IS NOT NULL';
         if (db_has_subqueries($GLOBALS['FORUM_DB'])) {
@@ -243,7 +238,9 @@ class Module_groups
         }
         $sql .= ')';
         $sql .= ' ORDER BY g_order,' . $GLOBALS['FORUM_DB']->translate_field_ref('g_name');
-        $groups = $GLOBALS['FORUM_DB']->query($sql);
+        global $TABLE_LANG_FIELDS_CACHE;
+        $lang_fields = isset($TABLE_LANG_FIELDS_CACHE['f_groups']) ? $TABLE_LANG_FIELDS_CACHE['f_groups'] : array();
+        $groups = $GLOBALS['FORUM_DB']->query($sql, null, null, false, false, $lang_fields);
 
         foreach ($groups as $g_id => $row) {
             $groups[$g_id]['_name'] = get_translated_text($row['g_name'], $GLOBALS['FORUM_DB']);
@@ -327,7 +324,7 @@ class Module_groups
 
             $rank_image = $row['g_rank_image'];
             if ($rank_image != '') {
-                $rank_image_tpl = do_template('CNS_RANK_IMAGE', array('GROUP_NAME' => $group_name, 'IMG' => $rank_image, 'IS_LEADER' => false));
+                $rank_image_tpl = do_template('CNS_RANK_IMAGE', array('_GUID' => '3753739ac2bebcfb9fff8b80e4bd71d0', 'GROUP_NAME' => $group_name, 'IMG' => $rank_image, 'IS_LEADER' => false));
             } else {
                 $rank_image_tpl = new Tempcode();
             }
@@ -377,7 +374,7 @@ class Module_groups
 
                 $rank_image = $row['g_rank_image'];
                 if ($rank_image != '') {
-                    $rank_image_tpl = do_template('CNS_RANK_IMAGE', array('GROUP_NAME' => $group_name, 'IMG' => $rank_image, 'IS_LEADER' => false));
+                    $rank_image_tpl = do_template('CNS_RANK_IMAGE', array('_GUID' => '598558286a1f701fe5f4a59ed94bff3a', 'GROUP_NAME' => $group_name, 'IMG' => $rank_image, 'IS_LEADER' => false));
                 } else {
                     $rank_image_tpl = new Tempcode();
                 }
@@ -409,9 +406,9 @@ class Module_groups
         //-Others
         $start = get_param_integer('others_start', 0);
         $max = get_param_integer('others_max', intval(get_option('normal_groups_per_page')));
-        $sql = 'SELECT * FROM ' . $GLOBALS['FORUM_DB']->get_table_prefix() . 'f_groups g WHERE ';
+        $sql = 'SELECT g.* FROM ' . $GLOBALS['FORUM_DB']->get_table_prefix() . 'f_groups g WHERE ';
         if (!has_privilege(get_member(), 'see_hidden_groups')) {
-            $sql .= 'g_hidden=0 AND ';
+            $sql .= '(g_hidden=0 OR g.id IN (' . implode(',', array_map('strval', $members_groups)) . ')) AND ';
         }
         $sql .= '(g_promotion_target IS NULL';
         if (db_has_subqueries($GLOBALS['FORUM_DB'])) {
@@ -423,8 +420,8 @@ class Module_groups
         $sql .= ' AND g.id<>' . strval(db_get_first_id());
         $sql .= ')';
         $sql .= ' ORDER BY g_order,' . $GLOBALS['FORUM_DB']->translate_field_ref('g_name');
-        $_others = $GLOBALS['FORUM_DB']->query($sql, $max, $start);
-        $max_rows = $GLOBALS['FORUM_DB']->query_value_if_there(str_replace('SELECT * ', 'SELECT COUNT(*) ', $sql));
+        $_others = $GLOBALS['FORUM_DB']->query($sql, $max, $start, false, false, $lang_fields);
+        $max_rows = $GLOBALS['FORUM_DB']->query_value_if_there(str_replace('SELECT * ', 'SELECT COUNT(*) ', $sql), false, false, $lang_fields);
         $has_images = false;
         foreach ($_others as $row) {
             if ($row['g_rank_image'] != '') {
@@ -439,7 +436,7 @@ class Module_groups
 
             $rank_image = $row['g_rank_image'];
             if ($rank_image != '') {
-                $rank_image_tpl = do_template('CNS_RANK_IMAGE', array('GROUP_NAME' => $group_name, 'IMG' => $rank_image, 'IS_LEADER' => false));
+                $rank_image_tpl = do_template('CNS_RANK_IMAGE', array('_GUID' => 'e43b9775c7ab9a524f0073f749c75cd1', 'GROUP_NAME' => $group_name, 'IMG' => $rank_image, 'IS_LEADER' => false));
             } else {
                 $rank_image_tpl = new Tempcode();
             }
@@ -588,7 +585,12 @@ class Module_groups
             $primary_members = new Tempcode();
             foreach ($_primary_members as $i => $primary_member) {
                 $url = $GLOBALS['FORUM_DRIVER']->member_profile_url($primary_member['gm_member_id'], false, true);
-                $temp = do_template('CNS_VIEW_GROUP_MEMBER', array('_GUID' => 'b96b674ac713e9790ecb78c15af1baab', 'ID' => strval($primary_member['gm_member_id']), 'NAME' => $primary_member['m_username'], 'URL' => $url));
+                $temp = do_template('CNS_VIEW_GROUP_MEMBER', array(
+                    '_GUID' => 'b96b674ac713e9790ecb78c15af1baab',
+                    'ID' => strval($primary_member['gm_member_id']),
+                    'NAME' => $primary_member['m_username'],
+                    'URL' => $url,
+                ));
                 $primary_members->attach(results_entry(array($temp), false));
             }
             $fields_title = results_field_title(array(do_lang_tempcode('PRIMARY_MEMBERS')), $sortables, 'p_sort', $sortable . ' ' . $sort_order);
@@ -616,13 +618,25 @@ class Module_groups
                 $url = $GLOBALS['FORUM_DRIVER']->member_profile_url($secondary_member['gm_member_id'], false, true);
                 $remove_url = build_url(array('page' => '_SELF', 'type' => 'remove_from', 'id' => $id, 'member_id' => $secondary_member['gm_member_id']), '_SELF');
                 $may_control = (cns_may_control_group($id, get_member()) && (!$secondary_member['implicit']));
-                $temp = do_template('CNS_VIEW_GROUP_MEMBER' . ($may_control ? '_SECONDARY' : ''), array('ID' => strval($secondary_member['gm_member_id']), 'REMOVE_URL' => $remove_url, 'NAME' => $m_username, 'URL' => $url));
+                $temp = do_template('CNS_VIEW_GROUP_MEMBER' . ($may_control ? '_SECONDARY' : ''), array(
+                    'ID' => strval($secondary_member['gm_member_id']),
+                    'REMOVE_URL' => $remove_url,
+                    'NAME' => $m_username,
+                    'URL' => $url,
+                ));
                 $secondary_members->attach(results_entry(array($temp), false));
             } elseif (!$add_url->is_empty()) {
                 $url = $GLOBALS['FORUM_DRIVER']->member_profile_url($secondary_member['gm_member_id'], false, true);
                 $accept_url = build_url(array('page' => '_SELF', 'type' => 'accept', 'id' => $id, 'member_id' => $secondary_member['gm_member_id']), '_SELF');
                 $decline_url = build_url(array('page' => '_SELF', 'type' => 'decline', 'id' => $id, 'member_id' => $secondary_member['gm_member_id']), '_SELF');
-                $temp = do_template('CNS_VIEW_GROUP_MEMBER_PROSPECTIVE', array('_GUID' => '16e93cf50a14e3b6a3bdf31525fd5e7f', 'ID' => strval($secondary_member['gm_member_id']), 'ACCEPT_URL' => $accept_url, 'DECLINE_URL' => $decline_url, 'NAME' => $m_username, 'URL' => $url));
+                $temp = do_template('CNS_VIEW_GROUP_MEMBER_PROSPECTIVE', array(
+                    '_GUID' => '16e93cf50a14e3b6a3bdf31525fd5e7f',
+                    'ID' => strval($secondary_member['gm_member_id']),
+                    'ACCEPT_URL' => $accept_url,
+                    'DECLINE_URL' => $decline_url,
+                    'NAME' => $m_username,
+                    'URL' => $url,
+                ));
                 $prospective_members->attach(results_entry(array($temp), false));
             }
         }

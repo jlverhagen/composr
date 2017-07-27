@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -145,7 +145,7 @@ class Hook_vb3
             'copyrighttext' => 'copyright',
             'maxposts' => 'forum_posts_per_page',
             'maxthreads' => 'forum_topics_per_page',
-            //'reputationenable'=>'is_on_points',
+            //'reputationenable' => 'is_on_points',
             'gzipoutput' => 'gzip_output',
             'regimagecheck' => 'use_captchas',
             'moderatenewmembers' => 'require_new_member_validation'
@@ -432,14 +432,14 @@ class Hook_vb3
                 } else {
                     if ($row['avatarid'] != 0) {
                         $avatar_rows = $db->query('SELECT * FROM ' . $table_prefix . 'avatar WHERE avatarid=' . strval($row['avatarid']));
-                        $setting_row = $db->query('SELECT value,defaultvalue FROM ' . $table_prefix . 'setting WHERE varname=\'avatarpath\'');
+                        $setting_row = $db->query('SELECT value,defaultvalue FROM ' . $table_prefix . 'setting WHERE ' . db_string_equal_to('varname', 'avatarpath'));
                         $setting = ($setting_row[0]['value'] == '') ? $setting_row[0]['defaultvalue'] : $setting_row[0]['value'];
                         if (array_key_exists(0, $avatar_rows)) {
                             $avatar_row = $avatar_rows[0];
                             $relpath = rawurldecode($avatar_row['avatarpath']);
                             if ((file_exists(get_custom_file_base() . '/uploads/cns_avatars/' . basename($relpath))) || (@rename($file_base . '/uploads/' . $setting . $relpath, get_custom_file_base() . '/uploads/cns_avatars/' . basename($relpath)))) {
                                 $avatar_url = 'uploads/cns_avatars/' . basename($relpath);
-                                sync_file($avatar_url);
+                                sync_file(get_custom_file_base() . '/' . $avatar_url);
                             }
                         }
                     }
@@ -655,8 +655,8 @@ class Hook_vb3
         $rows = $db->query('SELECT * FROM ' . $table_prefix . 'threadread', null, null, true);
         if (!is_null($rows)) {
             foreach ($rows as $row) {
-                $member_id = import_id_remap_get('member', $row['userid'], true);
-                $topic_id = import_id_remap_get('topic', $row['threadid'], true);
+                $member_id = import_id_remap_get('member', strval($row['userid']), true);
+                $topic_id = import_id_remap_get('topic', strval($row['threadid']), true);
                 if (is_null($member_id)) {
                     continue;
                 }
@@ -880,22 +880,18 @@ class Hook_vb3
             }
         }
         if ($filename != '') {
+            require_code('files');
+
             $filename = find_derivative_filename('uploads/' . $sections, $filename);
             $path = get_custom_file_base() . '/uploads/' . $sections . '/' . $filename . ($obfuscate ? '.dat' : '');
-            $myfile = @fopen($path, 'wb') or warn_exit(do_lang_tempcode('WRITE_ERROR', escape_html('uploads/' . $sections . '/' . $filename . ($obfuscate ? '.dat' : ''))));
-            if (fwrite($myfile, $data) < strlen($data)) {
-                warn_exit(do_lang_tempcode('COULD_NOT_SAVE_FILE'));
-            }
-            fclose($myfile);
-            fix_permissions($path);
-            sync_file($path);
+            cms_file_put_contents_safe($path, $data, FILE_WRITE_FIX_PERMISSIONS | FILE_WRITE_SYNC_FILE);
 
             $url = 'uploads/' . $sections . '/' . $filename . ($obfuscate ? '.dat' : '');
 
             if ($thumbnail_data == '') {
                 if ($thumbnail) {
                     $t_filename = $filename;
-                    $thumb_url = 'uploads/' . $sections . '_thumbs/' . find_derivative_filename('_thumbs', $t_filename, true);
+                    $thumb_url = 'uploads/' . $sections . '_thumbs/' . find_derivative_filename('uploads/' . $sections . '_thumbs', $t_filename, true);
                     require_code('images');
                     convert_image(get_custom_base_url() . '/' . $url, $thumb_url, -1, -1, intval(get_option('thumb_width')), false, null, true);
                     return array($url, $thumb_url);
@@ -905,14 +901,8 @@ class Hook_vb3
             } else {
                 $thumb_filename = find_derivative_filename('uploads/' . $sections . '_thumbs', $filename);
                 $path = get_custom_file_base() . '/uploads/' . $sections . '_thumbs/' . $thumb_filename;
-                $myfile = @fopen($path, 'wb') or warn_exit(do_lang_tempcode('WRITE_ERROR', escape_html('uploads/' . $sections . '_thumbs/' . $thumb_filename)));
-                if (fwrite($myfile, $thumbnail_data) < strlen($thumbnail_data)) {
-                    warn_exit(do_lang_tempcode('COULD_NOT_SAVE_FILE'));
-                }
-                fclose($myfile);
+                cms_file_put_contents_safe($path, $thumbnail_data, FILE_WRITE_FIX_PERMISSIONS | FILE_WRITE_SYNC_FILE);
                 $thumb_url = 'uploads/' . $sections . '/' . $thumb_filename;
-                fix_permissions($path);
-                sync_file($path);
 
                 return array($url, $thumb_url);
             }
@@ -1172,6 +1162,8 @@ class Hook_vb3
         require_code('custom_comcode');
         require_code('comcode_compiler');
 
+        init_valid_comcode_tags();
+
         $rows = $db->query('SELECT * FROM ' . $table_prefix . 'bbcode');
         foreach ($rows as $row) {
             if (import_check_if_imported('custom_comcode', strval($row['bbcodeid']))) {
@@ -1303,7 +1295,7 @@ class Hook_vb3
          Thread edited. (visible: ?; open: ?; sticky: ?)
          Thread moved to '*'.
          Thread Removed
-        adminlog
+        actionlog
         */
     }
 

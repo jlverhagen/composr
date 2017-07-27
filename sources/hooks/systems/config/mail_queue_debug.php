@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -34,10 +34,11 @@ class Hook_config_mail_queue_debug
             'human_name' => 'MAIL_QUEUE_DEBUG',
             'type' => 'tick',
             'category' => 'SITE',
-            'group' => 'EMAIL',
+            'group' => '_EMAIL',
             'explanation' => 'CONFIG_OPTION_mail_queue_debug',
             'shared_hosting_restricted' => '0',
             'list_options' => '',
+            'order_in_category_group' => 8,
 
             'addon' => 'core_configuration',
         );

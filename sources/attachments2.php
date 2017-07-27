@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -20,6 +20,7 @@
 
 /*
 Adding attachments.
+(Editing/deleting is in attachments3.php)
 */
 
 /**
@@ -39,7 +40,7 @@ function do_comcode_attachments($comcode, $type, $id, $previewing_only = false, 
     require_lang('comcode');
     require_code('comcode_compiler');
 
-    if (function_exists('set_time_limit')) {
+    if (php_function_allowed('set_time_limit')) {
         @set_time_limit(600); // Thumbnail generation etc can take some time
     }
 
@@ -75,7 +76,7 @@ function do_comcode_attachments($comcode, $type, $id, $previewing_only = false, 
     $has_one = false;
     $may_have_one = false;
     foreach ($_POST as $key => $value) {
-        if (preg_match('#^hidFileID\_#i', $key) != 0) {
+        if (is_string($key) && preg_match('#^hidFileID\_#i', $key) != 0) {
             require_code('uploads');
             $may_have_one = is_plupload();
         }
@@ -118,24 +119,33 @@ function do_comcode_attachments($comcode, $type, $id, $previewing_only = false, 
         $COMCODE_ATTACHMENTS[$id] = array();
     }
 
+    // Also the WYSIWYG-edited ones, which the Comcode parser won't find
+    $matches = array();
+    $num_matches = preg_match_all('#attachment.php\?id=(\d+)#', $comcode, $matches);
+    for ($i = 0; $i < $num_matches; $i++) {
+        $COMCODE_ATTACHMENTS[$id][] = array('tag_type' => null, 'time' => time(), 'type' => 'existing', 'initial_id' => null, 'id' => $matches[1][$i], 'attachmenttype' => '', 'comcode' => null);
+    }
+
     // Put in our new attachment IDs (replacing the new_* markers)
     $ids_present = array();
     for ($i = 0; $i < count($COMCODE_ATTACHMENTS[$id]); $i++) {
         $attachment = $COMCODE_ATTACHMENTS[$id][$i];
 
-        // If it's a new one, we need to change the comcode to reference the ID we made for it
-        if ($attachment['type'] == 'new') {
-            $marker_id = intval(substr($attachment['initial_id'], 4)); // After 'new_'
+        if (!is_null($attachment['initial_id'])) {
+            // If it's a new one, we need to change the comcode to reference the ID we made for it
+            if ($attachment['type'] == 'new') {
+                $marker_id = intval(substr($attachment['initial_id'], 4)); // After 'new_'
 
-            $comcode = preg_replace('#(\[(attachment|attachment_safe)[^\]]*\])new_' . strval($marker_id) . '(\[/)#', '${1}' . strval($attachment['id']) . '${3}', $comcode);
+                $comcode = preg_replace('#(\[(attachment|attachment_safe)[^\]]*\])new_' . strval($marker_id) . '(\[/)#', '${1}' . strval($attachment['id']) . '${3}', $comcode);
 
-            if (!is_null($type)) {
+                if (!is_null($type)) {
+                    $connection->query_insert('attachment_refs', array('r_referer_type' => $type, 'r_referer_id' => $id, 'a_id' => $attachment['id']));
+                }
+            } else {
+                // (Re-)Reference it
+                $connection->query_delete('attachment_refs', array('r_referer_type' => $type, 'r_referer_id' => $id, 'a_id' => $attachment['id']), '', 1);
                 $connection->query_insert('attachment_refs', array('r_referer_type' => $type, 'r_referer_id' => $id, 'a_id' => $attachment['id']));
             }
-        } else {
-            // (Re-)Reference it
-            $connection->query_delete('attachment_refs', array('r_referer_type' => $type, 'r_referer_id' => $id, 'a_id' => $attachment['id']), '', 1);
-            $connection->query_insert('attachment_refs', array('r_referer_type' => $type, 'r_referer_id' => $id, 'a_id' => $attachment['id']));
         }
 
         $ids_present[] = $attachment['id'];
@@ -173,10 +183,15 @@ function do_comcode_attachments($comcode, $type, $id, $previewing_only = false, 
  * @param  ID_TEXT $type The type the attachment will be used for (e.g. download)
  * @param  ID_TEXT $id The ID the attachment will be used for
  * @param  object $connection The database connection to use
+ *
  * @ignore
  */
 function _handle_data_url_attachments(&$comcode, $type, $id, $connection)
 {
+    if (substr($comcode, 0, 6) == '[html]') {
+        return; // The whole thing is probably [html]. Probably came from WYSIWYG. We can't do the "data:" conversion during semihtml_to_comcode as that doesn't know $type and $id. And would be a bad idea to re-parse [html] context here.
+    }
+
     if (function_exists('imagepng')) {
         $matches = array();
         $matches2 = array();
@@ -235,6 +250,7 @@ function _handle_data_url_attachments(&$comcode, $type, $id, $connection)
  * @param  ID_TEXT $id The ID the attachment will be used for
  * @param  array $matches_extract Reg-exp grabbed parameters from the extract marker attachment (we will re-use them for each individual attachment)
  * @param  object $connection The database connection to use
+ *
  * @ignore
  */
 function _handle_attachment_extraction(&$comcode, $key, $type, $id, $matches_extract, $connection)
@@ -242,6 +258,7 @@ function _handle_attachment_extraction(&$comcode, $key, $type, $id, $matches_ext
     require_code('uploads');
     require_code('files');
     require_code('files2');
+    require_lang('dearchive');
 
     $myfile = mixed();
 
@@ -308,7 +325,10 @@ function _handle_attachment_extraction(&$comcode, $key, $type, $id, $matches_ext
                     $place = get_custom_file_base() . '/uploads/attachments/' . $_file;
                     $i++;
                 }
-                file_put_contents($place, ''); // Lock it in ASAP, to stop race conditions
+                if (@file_put_contents($place, '') === false) { // Lock it in ASAP, to stop race conditions
+                    intelligent_write_error($place);
+                }
+                sync_file($place);
 
                 $i = 2;
                 $_file_thumb = basename($entry['path']);
@@ -319,7 +339,10 @@ function _handle_attachment_extraction(&$comcode, $key, $type, $id, $matches_ext
                     $place_thumb = get_custom_file_base() . '/uploads/attachments_thumbs/' . $_file_thumb;
                     $i++;
                 }
-                file_put_contents($place_thumb, ''); // Lock it in ASAP, to stop race conditions
+                if (@file_put_contents($place_thumb, '') === false) { // Lock it in ASAP, to stop race conditions
+                    intelligent_write_error($place_thumb);
+                }
+                sync_file($place_thumb);
 
                 if ($arcext == 'tar') {
                     $file_details = tar_get_file($myfile, $entry['path'], false, $place);
@@ -330,15 +353,17 @@ function _handle_attachment_extraction(&$comcode, $key, $type, $id, $matches_ext
                     );
 
                     $out_file = @fopen($place, 'wb') or intelligent_write_error($place);
+                    flock($out_file, LOCK_EX);
                     $more = mixed();
                     do {
                         $more = zip_entry_read($entry['zip_entry']);
                         if ($more !== false) {
                             if (fwrite($out_file, $more) < strlen($more)) {
-                                warn_exit(do_lang_tempcode('COULD_NOT_SAVE_FILE'));
+                                warn_exit(do_lang_tempcode('COULD_NOT_SAVE_FILE', escape_html($place)));
                             }
                         }
                     } while (($more !== false) && ($more != ''));
+                    flock($out_file, LOCK_UN);
                     fclose($out_file);
 
                     zip_entry_close($entry['zip_entry']);
@@ -423,7 +448,7 @@ function _check_attachment_count()
 
         $may_have_one = false;
         foreach ($_POST as $key => $value) {
-            if (preg_match('#^hidFileID\_#i', $key) != 0) {
+            if (is_string($key) && preg_match('#^hidFileID\_#i', $key) != 0) {
                 require_code('uploads');
                 $may_have_one = is_plupload();
             }
@@ -470,7 +495,12 @@ function insert_lang_comcode_attachments($field_name, $level, $text, $type, $id,
 
     $_info = do_comcode_attachments($text, $type, $id, false, $connection, $insert_as_admin, $for_member);
     $text_parsed = $_info['tempcode']->to_assembly();
-    $source_user = (function_exists('get_member')) ? get_member() : $GLOBALS['FORUM_DRIVER']->get_guest_id();
+
+    if ($for_member === null) {
+        $source_user = (function_exists('get_member')) ? get_member() : $GLOBALS['FORUM_DRIVER']->get_guest_id();
+    } else {
+        $source_user = $for_member;
+    }
 
     if (!multi_lang_content()) {
         final_attachments_from_preview($id, $connection);
@@ -483,30 +513,40 @@ function insert_lang_comcode_attachments($field_name, $level, $text, $type, $id,
     }
 
     $lang_id = null;
+    $lock = false;
+    table_id_locking_start($connection, $lang_id, $lock);
 
     if (user_lang() == 'Gibb') { // Debug code to help us spot language layer bugs. We expect &keep_lang=EN to show EnglishEnglish content, but otherwise no EnglishEnglish content.
-        $lang_id = $connection->query_insert('translate', array('source_user' => $source_user, 'broken' => 0, 'importance_level' => $level, 'text_original' => 'EnglishEnglishWarningWrongLanguageWantGibberishLang', 'text_parsed' => '', 'language' => 'EN'), true);
-    }
-    if (is_null($lang_id)) {
-        $lang_id = $connection->query_insert('translate', array(
+        $map = array(
             'source_user' => $source_user,
             'broken' => 0,
             'importance_level' => $level,
-            'text_original' => $_info['comcode'],
-            'text_parsed' => $text_parsed,
-            'language' => user_lang(),
-        ), true);
+            'text_original' => 'EnglishEnglishWarningWrongLanguageWantGibberishLang',
+            'text_parsed' => '',
+            'language' => 'EN',
+        );
+        if ($lang_id === null) {
+            $lang_id = $connection->query_insert('translate', $map, true);
+        } else {
+            $connection->query_insert('translate', array('id' => $lang_id) + $map);
+        }
+    }
+
+    $map = array(
+        'source_user' => $source_user,
+        'broken' => 0,
+        'importance_level' => $level,
+        'text_original' => $_info['comcode'],
+        'text_parsed' => $text_parsed,
+        'language' => user_lang(),
+    );
+    if ($lang_id === null) {
+        $lang_id = $connection->query_insert('translate', $map, true);
     } else {
-        $connection->query_insert('translate', array(
-            'id' => $lang_id,
-            'source_user' => $source_user,
-            'broken' => 0,
-            'importance_level' => $level,
-            'text_original' => $_info['comcode'],
-            'text_parsed' => $text_parsed,
-            'language' => user_lang(),
-        ));
+        $connection->query_insert('translate', array('id' => $lang_id) + $map);
     }
+
+    table_id_locking_end($connection, $lang_id, $lock);
 
     final_attachments_from_preview($id, $connection);
 

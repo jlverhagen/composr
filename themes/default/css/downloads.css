@@ -1,6 +1,6 @@
 /*
  {$BRAND_NAME`}
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 */
 
 /* Download boxes */
@@ -46,10 +46,6 @@
 	vertical-align: top;
 }
 
-.download_gallery_image span.block {
-	display: block;
-}
-
 .download_gallery_image img {
 	width: 150px;
 }
@@ -57,17 +53,18 @@
 /* Floated Right */
 
 /*{+START,IF,{$NOT,{$MOBILE}}}*/
-	.download_meta_data {
+	.download_metadata {
 		float: {!en_right};
 		width: 17em;
 	}
 /*{+END}*/
 
-.download_meta_data .ratings, .download_meta_data .trackbacks {
+.download_metadata .ratings, .download_metadata .trackbacks {
 	width: 100%;
+	margin-top: 1em;
 }
 
-.download_meta_data .ratings br {
+.download_metadata .ratings br {
 	display: none;
 }
 

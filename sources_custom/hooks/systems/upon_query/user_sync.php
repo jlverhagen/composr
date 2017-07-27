@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -20,12 +20,24 @@ class Hook_upon_query_user_sync
 {
     public function run_post($ob, $query, $max, $start, $fail_ok, $get_insert_id, $ret)
     {
+        if ($query[0] == 'S') {
+            return;
+        }
+
         if (!function_exists('get_value')) {
             return; // Installer?
         }
 
+        if (!$GLOBALS['VALUES_FULLY_LOADED']) {
+            return;
+        }
+
+        if (strpos($query, 'f_member') === false) {
+            return;
+        }
+
         if (get_value('user_sync_enabled') === '1') {
-            $prefix = preg_quote(get_table_prefix(), '#');
+            $prefix = preg_quote($GLOBALS['FORUM_DB']->get_table_prefix(), '#');
 
             $matches = array();
             if (

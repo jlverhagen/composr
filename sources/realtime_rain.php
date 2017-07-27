@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -114,11 +114,11 @@ function get_realtime_events($from, $to)
  * Make a realtime event bubble's title fit in the available space.
  *
  * @param  string $text Idealised title.
- * @return string Cropped title, with tooltip for full title.
+ * @return Tempcode Cropped title, with tooltip for full title.
  */
 function rain_truncate_for_title($text)
 {
-    return symbol_truncator(array($text, '40', '1'), 'left');
+    return protect_from_escaping(symbol_truncator(array($text, '40', '1'), 'left'));
 }
 
 /**
@@ -144,7 +144,7 @@ function rain_get_country_image($ip_address)
 }
 
 /**
- * Returns a map with an icon and multiplicity parameter (that may be NULL).
+ * Returns a map with an icon and multiplicity parameter (that may be null).
  *
  * @param  ?IP $ip_address An IP address (used to check against bots) (null: no IP).
  * @param  TIME $timestamp A timestamp (used to check for logged sent emails).

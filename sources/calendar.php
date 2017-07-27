@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -25,11 +25,15 @@ function init__calendar()
 {
     require_code('temporal2');
 
-    define('DETECT_CONFLICT_SCOPE_NONE', 0);
-    define('DETECT_CONFLICT_SCOPE_SAME_MEMBER', 1);
-    define('DETECT_CONFLICT_SCOPE_SAME_MEMBER_OR_SAME_TYPE_IF_GLOBAL', 2);
-    define('DETECT_CONFLICT_SCOPE_SAME_MEMBER_OR_SAME_TYPE', 2);
-    define('DETECT_CONFLICT_SCOPE_ALL', 3);
+    if (!defined('DETECT_CONFLICT_SCOPE_NONE')) {
+        define('DETECT_CONFLICT_SCOPE_NONE', 0);
+        define('DETECT_CONFLICT_SCOPE_SAME_MEMBER', 1);
+        define('DETECT_CONFLICT_SCOPE_SAME_MEMBER_OR_SAME_TYPE_IF_GLOBAL', 2);
+        define('DETECT_CONFLICT_SCOPE_SAME_MEMBER_OR_SAME_TYPE', 2);
+        define('DETECT_CONFLICT_SCOPE_ALL', 3);
+    }
+
+    require_lang('calendar');
 }
 
 /**
@@ -43,6 +47,10 @@ function init__calendar()
  */
 function render_event_box($row, $zone = '_SEARCH', $give_context = true, $guid = '')
 {
+    if (is_null($row)) { // Should never happen, but we need to be defensive
+        return new Tempcode();
+    }
+
     require_css('calendar');
     require_lang('calendar');
 
@@ -52,6 +60,7 @@ function render_event_box($row, $zone = '_SEARCH', $give_context = true, $guid =
 
     return do_template('CALENDAR_EVENT_BOX', array(
         '_GUID' => ($guid != '') ? $guid : '0eaa10d9fab32599ff095e1121d41c43',
+        'ID' => strval($row['id']),
         'TITLE' => get_translated_text($row['e_title']),
         'SUMMARY' => get_translated_tempcode('calendar_events', $just_event_row, 'e_content'),
         'URL' => $url,
@@ -70,6 +79,10 @@ function render_event_box($row, $zone = '_SEARCH', $give_context = true, $guid =
  */
 function render_calendar_type_box($row, $zone = '_SEARCH', $give_context = true, $guid = '')
 {
+    if (is_null($row)) { // Should never happen, but we need to be defensive
+        return new Tempcode();
+    }
+
     require_lang('calendar');
 
     $map = array('page' => 'calendar', 'type' => 'browse');
@@ -94,6 +107,7 @@ function render_calendar_type_box($row, $zone = '_SEARCH', $give_context = true,
         'URL' => $url,
         'FRACTIONAL_EDIT_FIELD_NAME' => $give_context ? null : 'title',
         'FRACTIONAL_EDIT_FIELD_URL' => $give_context ? null : '_SEARCH:cms_catalogues:__edit_category:' . strval($row['id']),
+        'RESOURCE_TYPE' => 'calendar_type',
     ));
 }
 
@@ -130,7 +144,7 @@ function date_from_week_of_year($year, $week)
 
     $basis = strval($year) . '-' . str_pad(strval($week), 2, '0', STR_PAD_LEFT);
     $time = mktime(12, 0, 0, 1, 1, $year);
-    for ($i = ($week == 52) ? 350/*conditional to stop it finding week as previous year overlap week of same number*/ : -7; $i < 366; $i++) {
+    for ($i = ($week == 52) ? 350/*conditional to stop it finding week as previous year overlap week of same number*/ : -7; $i < 365 + 7; $i++) {
         $new_time = $time + 60 * 60 * 24 * $i;
         $w = intval(date('w', $new_time));
         if ((($ssw) && ($w == 0)) || ((!$ssw) && ($w == 1))) {
@@ -148,7 +162,7 @@ function date_from_week_of_year($year, $week)
 /**
  * Find a list of pairs specifying the times the event occurs, for 20 years into the future, in user-time.
  *
- * @param  ID_TEXT $timezone The timezone for the event (null: current user's timezone)
+ * @param  ID_TEXT $timezone The timezone for the event
  * @param  BINARY $do_timezone_conv Whether the time should be converted to the viewer's own timezone
  * @param  integer $start_year The year the event starts at. This and the below are in server time
  * @param  integer $start_month The month the event starts at
@@ -192,6 +206,7 @@ function find_periods_recurrence($timezone, $do_timezone_conv, $start_year, $sta
 
     $times = array();
     $i = 0;
+    $happened_count = 0;
     $parts = explode(' ', $recurrence);
     if (count($parts) != 1) {
         $recurrence = $parts[0];
@@ -345,8 +360,12 @@ function find_periods_recurrence($timezone, $do_timezone_conv, $start_year, $sta
         $starts_within = (($a >= $period_start) && ($a < $period_end));
         $ends_within = (($b > $period_start) && ($b <= $period_end));
         $spans = (($a < $period_start) && ($b > $period_end));
-        if (($starts_within || $ends_within || $spans) && (in_array($mask[$i % $mask_len], array('1', 'y')))) {
-            $times[] = array(max($period_start, $a), min($period_end, $b), $a, $b, $_a, $_b);
+        $mask_covers = (in_array($mask[$i % $mask_len], array('1', 'y')));
+        if ($mask_covers) {
+            if ($starts_within || $ends_within || $spans) {
+                $times[] = array(max($period_start, $a), min($period_end, $b), $a, $b, $_a, $_b);
+            }
+            $happened_count++;
         }
         $i++;
 
@@ -355,7 +374,7 @@ function find_periods_recurrence($timezone, $do_timezone_conv, $start_year, $sta
         $start_month += $dif_month;
         if ($start_monthly_spec_type == 'day_of_month') {
             $start_day += $dif_day;
-            //$start_day_of_month=$start_day;   Is static actually
+            //$start_day_of_month = $start_day;   Is static actually
         } else {
             $start_day_of_month = find_concrete_day_of_month($start_year, $start_month, $start_day, $start_monthly_spec_type, is_null($start_hour) ? find_timezone_start_hour_in_utc($timezone, $start_year, $start_month, $start_day, $start_monthly_spec_type) : $start_hour, is_null($start_minute) ? find_timezone_start_minute_in_utc($timezone, $start_year, $start_month, $start_day, $start_monthly_spec_type) : $start_minute, $timezone, $do_timezone_conv == 1);
         }
@@ -391,10 +410,10 @@ function find_periods_recurrence($timezone, $do_timezone_conv, $start_year, $sta
             $end_year = null;
         }
 
-        if ($i == 300) {
+        if ($i == intval(get_option('general_safety_listing_limit'))) {
             break; // Let's be reasonable
         }
-    } while (($recurrence != '') && ($recurrence != 'none') && ($a < $period_end) && ((is_null($recurrences)) || ($i < $recurrences)));
+    } while (($recurrence != '') && ($recurrence != 'none') && ($a < $period_end) && ((is_null($recurrences)) || ($happened_count < $recurrences)));
 
     return $times;
 }
@@ -402,8 +421,8 @@ function find_periods_recurrence($timezone, $do_timezone_conv, $start_year, $sta
 /**
  * We have just jumped a UTC-based date (i.e. timezoneless) forward by calendar units, compensate for any DST ramifications in the target timezone.
  *
- * @param  integer $hour Current hour
- * @param  integer $minute Current minute
+ * @param  ?integer $hour Current hour (null: no start time)
+ * @param  ?integer $minute Current minute (null: no start time)
  * @param  integer $day_of_month Current day
  * @param  integer $month Current month
  * @param  integer $year Current year
@@ -412,11 +431,16 @@ function find_periods_recurrence($timezone, $do_timezone_conv, $start_year, $sta
  * @param  integer $dif_day Jump in days that just happened
  * @param  integer $dif_month Jump in month that just happened
  * @param  integer $dif_year Jump in year that just happened
+ *
  * @ignore
  */
 function _compensate_for_dst_change(&$hour, &$minute, $day_of_month, $month, $year, $timezone, $do_timezone_conv, $dif_day, $dif_month, $dif_year)
 {
     // NB: When debugging this be a little careful that the DST change for viewing timezone may not be the same as $timezone, so the hour may indeed jump about in expected output  ---  also check e_do_timezone_conv may not be set on the event, as that heavily effects what you see in the timestamp pipeline
+
+    if ($hour === null) {
+        return;
+    }
 
     $new_time_utc = mktime($hour, $minute, 0, $month, $day_of_month, $year);
     $old_time_utc = mktime($hour, $minute, 0, $month - $dif_month, $day_of_month - $dif_day, $year - $dif_year);
@@ -530,7 +554,7 @@ function regenerate_event_reminder_jobs($id, $force = false)
                 'j_event_id' => $id
             ));
         } else {
-            if (function_exists('set_time_limit')) {
+            if (php_function_allowed('set_time_limit')) {
                 @set_time_limit(0);
             }
 
@@ -540,7 +564,7 @@ function regenerate_event_reminder_jobs($id, $force = false)
 
                 foreach ($reminders as $reminder) {
                     $GLOBALS['SITE_DB']->query_insert('calendar_jobs', array(
-                        'j_time' => usertime_to_utctime($recurrences[0][0]) - $reminder['n_seconds_before'],
+                        'j_time' => usertime_to_utctime($recurrences[0][0], $reminder['n_member_id']) - $reminder['n_seconds_before'],
                         'j_reminder_id' => $reminder['id'],
                         'j_member_id' => $reminder['n_member_id'],
                         'j_event_id' => $event['id']
@@ -581,24 +605,24 @@ function date_range($from, $to, $do_time = true, $force_absolute = false, $timez
     if (($to - $from > 60 * 60 * 24) || (!$do_time) || ($force_absolute)) {
         if (!$do_time) {
             if ($force_absolute) { // Absolute, no time (with length)
-                $date1 = locale_filter(date(do_lang('calendar_date_verbose'), $from));
-                $date2 = locale_filter(date(do_lang('calendar_date_verbose'), $to));
+                $date1 = cms_strftime(do_lang('calendar_date_verbose'), $from);
+                $date2 = cms_strftime(do_lang('calendar_date_verbose'), $to);
             } else {
                 return $_length; // No time (with length)
             }
         } else { // Absolute, time (with length)
-            $date1 = locale_filter(date(do_lang(($to - $from > 60 * 60 * 24 * 5) ? 'calendar_date_range_single_long' : 'calendar_date_range_single'), $from));
-            $date2 = locale_filter(date(do_lang(($to - $from > 60 * 60 * 24 * 5) ? 'calendar_date_range_single_long' : 'calendar_date_range_single'), $to));
+            $date1 = cms_strftime(do_lang(($to - $from > 60 * 60 * 24 * 5) ? 'calendar_date_range_single_long' : 'calendar_date_range_single'), $from);
+            $date2 = cms_strftime(do_lang(($to - $from > 60 * 60 * 24 * 5) ? 'calendar_date_range_single_long' : 'calendar_date_range_single'), $to);
         }
     } else { // Just time (with length)
         $pm_a = date('a', $from);
         $pm_b = date('a', $to);
         if ($pm_a == $pm_b) {
-            $date1 = locale_filter(cms_strftime(do_lang('calendar_minute_ampm_known'), $from));
-            $date2 = locale_filter(cms_strftime(do_lang('calendar_minute'), $to));
+            $date1 = cms_strftime(do_lang('calendar_minute_ampm_known'), $from);
+            $date2 = cms_strftime(do_lang('calendar_minute'), $to);
         } else {
-            $date1 = locale_filter(cms_strftime(do_lang('calendar_minute'), $from));
-            $date2 = locale_filter(cms_strftime(do_lang('calendar_minute'), $to));
+            $date1 = cms_strftime(do_lang('calendar_minute'), $from);
+            $date2 = cms_strftime(do_lang('calendar_minute'), $to);
         }
         $_date1 = str_replace(do_lang('calendar_minute_no_minutes'), '', $date1);
         $_date2 = str_replace(do_lang('calendar_minute_no_minutes'), '', $date2);
@@ -606,7 +630,7 @@ function date_range($from, $to, $do_time = true, $force_absolute = false, $timez
             $date1 = $_date1;
             $date2 = $_date2;
         }
-        $date = locale_filter(date(do_lang('calendar_date_verbose'), $from));
+        $date = cms_strftime(do_lang('calendar_date_verbose'), $from);
         return do_lang('EVENT_TIME_RANGE_WITHIN_DAY' . (($timezone == '') ? '' : '_WITH_TIMEZONE'), $date, $date1, array($date2, $_length, $timezone));
     }
 
@@ -621,7 +645,7 @@ function date_range($from, $to, $do_time = true, $force_absolute = false, $timez
  * @param  boolean $restrict Whether to restrict only to viewable events for the current member (rarely pass this as false!)
  * @param  ?TIME $period_start The timestamp that found times must exceed. In user-time (null: use find_periods_recurrence default)
  * @param  ?TIME $period_end The timestamp that found times must not exceed. In user-time (null: use find_periods_recurrence default)
- * @param  ?array $filter The type filter (null: none)
+ * @param  ?array $filter The type filter, as used by the calendar module internally (null: none)
  * @param  boolean $do_rss Whether to include RSS/iCal events in the results
  * @param  ?BINARY $private Whether to show private events (1) or public events (0) (null: both public and private)
  * @return array A list of events happening, with time details
@@ -685,7 +709,7 @@ function calendar_matches($auth_member_id, $member_id, $restrict, $period_start,
             $feed_url = post_param_string('feed_' . strval($i), cms_admirecookie('feed_' . strval($i), ''));
             require_code('users_active_actions');
             cms_setcookie('feed_' . strval($i), $feed_url);
-            if (($feed_url != '') && (preg_match('#^[\w\d\-\_]*$#', $feed_url) == 0)) {
+            if (($feed_url != '') && (preg_match('#^[\w\-]*$#', $feed_url) == 0)) {
                 $feed_urls_todo[$feed_url] = null;
             }
         }
@@ -701,7 +725,7 @@ function calendar_matches($auth_member_id, $member_id, $restrict, $period_start,
 
         // Overlay it
         foreach ($feed_urls_todo as $feed_url => $event_type) {
-            $temp_file_path = cms_tempnam('feed');
+            $temp_file_path = cms_tempnam();
             require_code('files');
             $write_to_file = fopen($temp_file_path, 'wb');
             http_download_file($feed_url, 1024 * 512, false, false, 'Composr', null, null, null, null, null, $write_to_file);
@@ -719,7 +743,7 @@ function calendar_matches($auth_member_id, $member_id, $restrict, $period_start,
                 $calendar_nodes = array();
 
                 foreach ($events as $key => $items) {
-                    $items = preg_replace('#(.+)\n +(.*)\n#', '${1}${2}' . "\n", $items); // Merge split lines
+                    $items = preg_replace('#(.+)\n +(.*)\r?\n#', '${1}${2}' . "\n", $items); // Merge split lines
 
                     $nodes = explode("\n", $items);
 
@@ -792,7 +816,7 @@ function calendar_matches($auth_member_id, $member_id, $restrict, $period_start,
                         $full_url = '';
                     }
                     if ((array_key_exists('title', $item)) && (array_key_exists('clean_add_date', $item)) && ($full_url != '')) {
-                        $event = array('e_recurrence' => 'none', 'e_content' => array_key_exists('news', $item) ? $item['news'] : '', 'e_title' => $item['title'], 'e_id' => $full_url, 'e_priority' => 'na', 't_logo' => 'calendar/rss', 'e_recurrences' => 1, 'e_seg_recurrences' => '', 'e_timezone' => get_users_timezone());
+                        $event = array('e_recurrence' => 'none', 'e_content' => array_key_exists('news', $item) ? $item['news'] : '', 'e_title' => $item['title'], 'e_id' => $full_url, 'e_priority' => 'na', 't_logo' => 'calendar/rss', 'e_recurrences' => 1, 'e_seg_recurrences' => '', 'e_timezone' => get_users_timezone(), 'validated' => 1);
                         if (!is_null($event_type)) {
                             $event['t_logo'] = $_event_types[$event_type]['t_logo'];
                         }
@@ -818,12 +842,13 @@ function calendar_matches($auth_member_id, $member_id, $restrict, $period_start,
     if ($where != '') {
         $where .= ' AND ';
     }
+    // Limitation: won't find anything that started *over* a month before $period_start. Which is reasonable.
     $where .= '(((e_start_month>=' . strval(intval(date('m', $period_start)) - 1) . ' AND e_start_year=' . date('Y', $period_start) . ' OR e_start_year>' . date('Y', $period_start) . ') AND (e_start_month<=' . strval(intval(date('m', $period_end)) + 1) . ' AND e_start_year=' . date('Y', $period_end) . ' OR e_start_year<' . date('Y', $period_end) . ')) OR ' . db_string_not_equal_to('e_recurrence', 'none') . ')';
 
     $where = ' WHERE ' . $where;
     $event_count = $GLOBALS['SITE_DB']->query_value_if_there('SELECT COUNT(*) FROM ' . $GLOBALS['SITE_DB']->get_table_prefix() . 'calendar_events e' . $privacy_join . ' LEFT JOIN ' . $GLOBALS['SITE_DB']->get_table_prefix() . 'calendar_types t ON e.e_type=t.id' . $where);
-    if ($event_count > 2000) {
-        attach_message(do_lang_tempcode('TOO_MANY_TO_CHOOSE_FROM'), 'inform');
+    if ($event_count > intval(get_option('general_safety_listing_limit')) * 5) {
+        attach_message(do_lang_tempcode('TOO_MANY_TO_CHOOSE_FROM'), 'notice');
         return array();
     }
     $events = $GLOBALS['SITE_DB']->query('SELECT *,e.id AS e_id FROM ' . $GLOBALS['SITE_DB']->get_table_prefix() . 'calendar_events e' . $privacy_join . ' LEFT JOIN ' . $GLOBALS['SITE_DB']->get_table_prefix() . 'calendar_types t ON e.e_type=t.id' . $where);
@@ -859,7 +884,7 @@ function create_selection_list_events($only_owned, $it, $edit_viewable_events = 
     if (!is_null($only_owned)) {
         $where['e_submitter'] = $only_owned;
     }
-    if ($GLOBALS['SITE_DB']->query_select_value('calendar_events', 'COUNT(*)') > 500) {
+    if ($GLOBALS['SITE_DB']->query_select_value('calendar_events', 'COUNT(*)') > intval(get_option('general_safety_listing_limit'))) {
         warn_exit(do_lang_tempcode('TOO_MANY_TO_CHOOSE_FROM'));
     }
     $events = $GLOBALS['SITE_DB']->query_select('calendar_events', array('id', 'e_title', 'e_type'), $where);
@@ -950,11 +975,11 @@ function detect_conflicts($member_id, $skip_id, $start_year, $start_month, $star
                 case DETECT_CONFLICT_SCOPE_SAME_MEMBER:
                 case DETECT_CONFLICT_SCOPE_SAME_MEMBER_OR_SAME_TYPE_IF_GLOBAL:
                     if ($member_calendar !== $event['e_member_calendar']) {
-                        continue 2; // we know one is not global, so we can do a direct compare, knowing NULL will not equal any member value
+                        continue 2; // we know one is not global, so we can do a direct compare, knowing null will not equal any member value
                     }
                     break;
                 case DETECT_CONFLICT_SCOPE_SAME_MEMBER_OR_SAME_TYPE:
-                    if (($type != $event['e_type']) && ($member_calendar !== $event['e_member_calendar']/*we know we don't need to consider a NULL to NULL match separately as it can't happen in this branch*/)) {
+                    if (($type != $event['e_type']) && ($member_calendar !== $event['e_member_calendar']/*we know we don't need to consider a null to null match separately as it can't happen in this branch*/)) {
                         continue 2;
                     }
                     break;
@@ -1068,7 +1093,7 @@ function find_timezone_end_minute_in_utc($timezone, $year, $month, $day, $monthl
 /**
  * Get the UTC start time for a specified UTC time event.
  *
- * @param  ID_TEXT $timezone The timezone it is in; used to derive $hour and $minute if those are NULL, such that they start the day correctly for this timezone
+ * @param  ID_TEXT $timezone The timezone it is in; used to derive $hour and $minute if those are null, such that they start the day correctly for this timezone
  * @param  integer $year Year
  * @param  integer $month Month
  * @param  integer $day Day
@@ -1355,17 +1380,9 @@ function find_concrete_day_of_month($year, $month, $day, $monthly_spec_type, $ho
             if (strtotime('+0 Tuesday', mktime(0, 0, 0, 1, 1, 2013)) != mktime(0, 0, 0, 1, 1, 2013)) {
                 $month_start -= 1; // This "-1" is needed on SOME PHP versions, to set the window 1 second before where we're looking to make it find something right at the start of the actual window
             }
-            if (function_exists('date_default_timezone_set')) {
-                date_default_timezone_set($timezone);
-            } else {
-                safe_ini_set('date.timezone', $timezone);
-            }
+            date_default_timezone_set($timezone);
             $timestamp = strtotime('+' . strval($nth) . ' ' . ($days[$day % 7]), $month_start);
-            if (function_exists('date_default_timezone_set')) {
-                date_default_timezone_set('UTC');
-            } else {
-                safe_ini_set('date.timezone', 'UTC');
-            }
+            date_default_timezone_set('UTC');
             // Load these up in UTC (where we want them, where $hour and $minute already are)
             $day_of_month = intval(date('d', $timestamp));
             $month = intval(date('m', $timestamp));
@@ -1379,17 +1396,9 @@ function find_concrete_day_of_month($year, $month, $day, $monthly_spec_type, $ho
             $nth = intval(1.0 + floatval($day) / 7.0);
 
             $month_end = mktime(0, 0, 0, $month + 1, 0, $year);
-            if (function_exists('date_default_timezone_set')) {
-                date_default_timezone_set($timezone);
-            } else {
-                safe_ini_set('date.timezone', $timezone);
-            }
+            date_default_timezone_set($timezone);
             $timestamp = strtotime('-' . strval($nth) . ' ' . ($days[$day % 7]), $month_end + 1);
-            if (function_exists('date_default_timezone_set')) {
-                date_default_timezone_set('UTC');
-            } else {
-                safe_ini_set('date.timezone', 'UTC');
-            }
+            date_default_timezone_set('UTC');
             // Load these up in UTC (where we want them, where $hour and $minute already are)
             $day_of_month = intval(date('d', $timestamp));
             $month = intval(date('m', $timestamp));
@@ -1474,13 +1483,13 @@ function monthly_spec_type_chooser($day_of_month, $month, $year, $default_monthl
         $timestamp = mktime(0, 0, 0, $month, $day_of_month, $year);
 
         if (substr($monthly_spec_type, 0, 4) == 'dow_') {
-            $nth = locale_filter(date('jS', mktime(0, 0, 0, 1, intval(floatval($day) / 7.0) + 1, $year))); // Bit of a hack. Uses the date locales nth stuff, even when it's not actually a day-of-month here.
+            $nth = cms_strftime('%e%o', mktime(0, 0, 0, 1, intval(floatval($day) / 7.0) + 1, $year)); // Bit of a hack. Uses the date locales nth stuff, even when it's not actually a day-of-month here.
         } else {
-            $nth = locale_filter(date('jS', mktime(0, 0, 0, $month, $day, $year))); // Bit of a hack. Uses the date locales nth stuff, even when it's not actually a day-of-month here.
+            $nth = cms_strftime('%e%o', mktime(0, 0, 0, $month, $day, $year)); // Bit of a hack. Uses the date locales nth stuff, even when it's not actually a day-of-month here.
         }
-        $dow = locale_filter(date('l', $timestamp));
+        $dow = cms_strftime('%a', $timestamp);
 
-        $month_name = locale_filter(date('M', $timestamp));
+        $month_name = cms_strftime('%b', $timestamp);
 
         $text = do_lang_tempcode('CALENDAR_MONTHLY_RECURRENCE_CONCRETE_' . $monthly_spec_type, escape_html($nth), escape_html($dow), escape_html($month_name));
         $description = do_lang_tempcode('CALENDAR_MONTHLY_RECURRENCE_' . $monthly_spec_type);
@@ -1513,7 +1522,7 @@ function adjust_event_dates_for_a_recurrence($day, $event, $timezone)
         $orig_concrete_start_day = start_find_concrete_day_of_month_wrap($event);
 
         // Adjust for the fact that this was given in the user's timezone, while event is in UTC
-        //$first_timestamp=mktime(is_null($event['e_start_hour'])?0:$event['e_start_hour'],is_null($event['e_start_minute'])?0:$event['e_start_minute'],0,$orig_start_month,$orig_concrete_start_day,$orig_start_year);	Wrong, DST could be issue
+        //$first_timestamp = mktime(is_null($event['e_start_hour']) ? 0 : $event['e_start_hour'], is_null($event['e_start_minute']) ? 0 : $event['e_start_minute'], 0, $orig_start_month, $orig_concrete_start_day, $orig_start_year);	Wrong, DST could be issue
         $incident_timestamp = mktime(is_null($event['e_start_hour']) ? 0 : $event['e_start_hour'], is_null($event['e_start_minute']) ? 0 : $event['e_start_minute'], 0, $recurrence_start_month, $recurrence_start_day, $recurrence_start_year);
         $shifted_incident_timestamp = tz_time($incident_timestamp, $timezone);
         $day_dif_due_to_timezone = intval(date('z', $incident_timestamp)) - intval(date('z', $shifted_incident_timestamp));
@@ -1679,7 +1688,7 @@ function end_find_concrete_day_of_month_wrap($event)
 /**
  * Find details of when an event happens. Preferably the next recurrence, but if it is in the past, the first.
  *
- * @param  ID_TEXT $timezone The timezone for the event (null: current user's timezone)
+ * @param  ?ID_TEXT $timezone The timezone for the event (null: current user's timezone)
  * @param  BINARY $do_timezone_conv Whether the time should be converted to the viewer's own timezone
  * @param  integer $start_year The year the event starts at. This and the below are in server time
  * @param  integer $start_month The month the event starts at
@@ -1702,6 +1711,10 @@ function end_find_concrete_day_of_month_wrap($event)
  */
 function get_calendar_event_first_date($timezone, $do_timezone_conv, $start_year, $start_month, $start_day, $start_monthly_spec_type, $start_hour, $start_minute, $end_year, $end_month, $end_day, $end_monthly_spec_type, $end_hour, $end_minute, $recurrence, $recurrences, $force_first = false)
 {
+    if ($timezone === null) {
+        $timezone = get_users_timezone();
+    }
+
     if ($force_first) {
         $times = array();
     } else {
@@ -1723,9 +1736,9 @@ function get_calendar_event_first_date($timezone, $do_timezone_conv, $start_year
     $do_time = !is_null($start_hour);
     if (is_null($to)) {
         if (!$do_time) {
-            $written_date = locale_filter(date(do_lang('calendar_date_verbose'), $from));
+            $written_date = cms_strftime(do_lang('calendar_date_verbose'), $from);
         } else {
-            $written_date = locale_filter(date(do_lang(($to - $from > 60 * 60 * 24 * 5) ? 'calendar_date_range_single_long' : 'calendar_date_range_single'), $from));
+            $written_date = cms_strftime(do_lang(($to - $from > 60 * 60 * 24 * 5) ? 'calendar_date_range_single_long' : 'calendar_date_range_single'), $from);
         }
     } else {
         $written_date = date_range($from, $to, $do_time, true);

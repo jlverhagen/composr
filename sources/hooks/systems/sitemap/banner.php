@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -123,15 +123,15 @@ class Hook_sitemap_banner extends Hook_sitemap_content
         list($content_id, $row, $partial_struct) = $_;
 
         $struct = array(
-                      'page_link' => $page_link,
+            'page_link' => $page_link,
 
-                      'sitemap_priority' => SITEMAP_IMPORTANCE_NONE,
-                      'sitemap_refreshfreq' => 'never',
+            'sitemap_priority' => SITEMAP_IMPORTANCE_NONE,
+            'sitemap_refreshfreq' => 'never',
 
-                      'privilege_page' => $this->get_privilege_page($page_link),
+            'privilege_page' => $this->get_privilege_page($page_link),
 
-                      'edit_url' => build_url(array('page' => 'cms_banners', 'type' => '_edit', 'id' => $content_id), get_module_zone('cms_banners')),
-                  ) + $partial_struct;
+            'edit_url' => build_url(array('page' => 'cms_banners', 'type' => '_edit', 'id' => $content_id), get_module_zone('cms_banners')),
+        ) + $partial_struct;
 
         $struct['permissions'][] = array(
             'type' => 'privilege',

@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -46,7 +46,7 @@ class Hook_symbol_CATALOGUE_ENTRY_ALL_FIELD_VALUES
                     $value = $map['FIELDS']->evaluate();
                 } else {
                     $tpl_set = $map['CATALOGUE'];
-                    $_value = do_template('CATALOGUE_' . $tpl_set . '_FIELDMAP_ENTRY_WRAP', $map + array('ENTRY_SCREEN' => true), null, false, 'CATALOGUE_DEFAULT_FIELDMAP_ENTRY_WRAP');
+                    $_value = do_template('CATALOGUE_' . $tpl_set . '_FIELDMAP_ENTRY_WRAP', $map + array('GIVE_CONTEXT' => false, 'ENTRY_SCREEN' => true), null, false, 'CATALOGUE_DEFAULT_FIELDMAP_ENTRY_WRAP');
                     $value = $_value->evaluate();
                 }
             } else {
@@ -57,7 +57,7 @@ class Hook_symbol_CATALOGUE_ENTRY_ALL_FIELD_VALUES
                     $catalogue = load_catalogue_row($catalogue_name, true);
                     if ($catalogue !== null) {
                         $tpl_set = $catalogue_name;
-                        $map = get_catalogue_entry_map($entry[0], array('c_display_type' => C_DT_FIELDMAPS) + $catalogue, 'PAGE', $tpl_set, null);
+                        $map = get_catalogue_entry_map($entry[0], array('c_display_type' => C_DT_FIELDMAPS) + $catalogue, 'PAGE', $tpl_set);
                         if ((array_key_exists(1, $param)) && ($param[1] == '1')) {
                             $value = $map['FIELDS']->evaluate();
                         } else {

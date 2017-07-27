@@ -35,6 +35,8 @@ WorldPay and SecPay are popular alternatives to PayPal. There are many other alt
 
 To accept website payments via credit card, [url="you will need a Business Account"]https://www.paypal.com/us/webapps/helpcenter/helphub/article/?solutionId=FAQ2347[/url]. The business accounts are free, but the fees are higher.
 
+You will need to have SSL set up for your site, as PayPal requires IPN messages to go via SSL from Sep 30, 2016, and we have already imposed this in our default code.
+
 [title="3"]Configuration[/title]
 
 To configure the payment gateway settings go to Admin Zone > Setup > Configuration > eCommerce options.
@@ -103,10 +105,10 @@ The option requirements for PayPal are as follows:
 	</tr>
 	<tr>
 		<th>
-			Email address
+			Gateway username
 		</th>
 		<td>
-			For PayPal it is your PayPal email address, but for other gateways it probably is just be any you receive email on
+			For PayPal it is your PayPal e-mail address, but for other gateways it probably is just be any you receive e-mail on
 		</td>
 	</tr>
 	<tr>
@@ -122,7 +124,7 @@ The option requirements for PayPal are as follows:
 			[Testing mode] Gateway username
 		</th>
 		<td>
-			Your PayPal email address (for the testing mode one, it's your sandbox PayPal email address).
+			Your PayPal e-mail address (for the testing mode one, it's your sandbox PayPal e-mail address).
 		</td>
 	</tr>
 </tbody></table>
@@ -175,7 +177,7 @@ The eCommerce system has a central transactional framework. Each type of product
 1) product name (a codename, not intended for humans to read)
 2) product ID
 3) amount
-Any transaction that goes through is matched to a product that will then verify the payment and dispatch the sale. The product is matched via the product name -- i.e. the product name in the transaction matches the name of a product for sale. The product will usually see if the amount is correct for that product, and it will use the ID to find how to dispatch the sale. For example, on our old site (when Composr was commercial) the 'lifetime registration' product stores the site-ID in this, and thus when the transaction went through it knew what site has been registered and could go and then send out the key etc.
+Any transaction that goes through is matched to a product that will then verify the payment and dispatch the sale. The product is matched via the product name -- i.e. the product name in the transaction matches the name of a product for sale. The product will usually see if the amount is correct for that product, and it will use the ID to find how to dispatch the sale. For example, on our old site (when Composr was commercial software) the 'lifetime registration' product stores the site-ID in this, and thus when the transaction went through it knew what site has been registered and could go and then send out the key etc.
 
 [title="4"]Actual code (for programmers)[/title]
 
@@ -275,7 +277,7 @@ This catalogue has some hard-coded fields:
  - [b]Stock level warning point[/b] -- the point at which you should be e-mailed if the stock level reaches
  - [b]Whether stock is being maintained[/b] -- whether you want stock control (as above)
  - [b]Tax rate[/b] -- the tax rate, a percentage chosen from a list (you may edit the catalogue to change what is shown in the list)
- - [b]Weight[/b] -- the items weight, in units of your choosing (but all items must consistently use the same units); the weight will operate with the config option that specifies how much it costs to ship a unit of weight ("Shipping cost factor")
+ - [b]Weight[/b] -- the item's weight, in units of your choosing (but all items must consistently use the same units); the weight will operate with the config option that specifies how much it costs to ship a unit of weight ("Shipping cost factor")
  - [b]Description[/b] -- a description for the item
 
 By default the catalogue is configured to allow product reviews, but you may turn these off if you wish.
@@ -327,7 +329,7 @@ If you think users may be making delayed purchases as guests, you may want to co
 
 When orders are purchased, an e-mail is sent out to the staff so they can fulfil the order, and the stock level is adjusted.
 
-Orders may be reviewed by the purchaser from their [tt]orders[/tt] module (linked from their member profile)
+Orders may be reviewed by the purchaser from their [tt]shopping[/tt] module (linked from their member profile)
 
 Order status can be changed (e.g. marked as dispatched) from:
 Audit > eCommerce > eCommerce orders
@@ -370,7 +372,7 @@ Admin Zone > Audit > eCommerce > Logs
 
 [surround]
 [media width="150" description="Inputting a manual transaction" float="right"]data_custom/images/docs/tut_ecommerce/ecommerce_manual.png[/media]
-While Composr supports manual transactions to be entered. This is possible in the Admin Zone module. Entering a manual transaction will trigger any code associated with the purchase of a product (such as a usergroup promotion).
+Composr supports manual transactions to be entered. This is possible in the Admin Zone module. Entering a manual transaction will trigger any code associated with the purchase of a product (such as a usergroup promotion).
 
 Manual transactions may also be used to input transactions that are totally external to Composr, and thus otherwise immeasurable by the charting. For example, an organisations expenditure may be recorded by manually inputting a negative transaction for the special 'Other' product.
 [/surround]

@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -43,12 +43,16 @@ class CMSSearchRead
 
         $sql1 = ' FROM ' . $table_prefix . 'f_posts p';
         if ($keywords != '') {
-            $sql1 .= ' FORCE INDEX (p_title)';
+            if (strpos(get_db_type(), 'mysql') !== false) {
+                $sql1 .= ' FORCE INDEX (p_title)';
+            }
         }
         $sql1 .= ' JOIN ' . $table_prefix . 'f_topics t ON t.t_cache_first_post_id=p.id LEFT JOIN ' . $table_prefix . 'f_forums f ON f.id=t.t_forum_id WHERE 1=1';
         $sql2 = ' FROM ' . $table_prefix . 'f_topics t';
         if ($keywords != '') {
-            $sql2 .= ' FORCE INDEX (t_description)';
+            if (strpos(get_db_type(), 'mysql') !== false) {
+                $sql2 .= ' FORCE INDEX (t_description)';
+            }
         }
         $sql2 .= ' JOIN ' . $table_prefix . 'f_posts p ON t.t_cache_first_post_id=p.id LEFT JOIN ' . $table_prefix . 'f_forums f ON f.id=t.t_forum_id WHERE 1=1';
 
@@ -73,7 +77,7 @@ class CMSSearchRead
         } elseif (!is_null($searchuser)) {
             $_userid = $GLOBALS['FORUM_DRIVER']->get_member_from_username($searchuser);
             if (is_null($_userid)) {
-                warn_exit(do_lang_tempcode('_USER_NO_EXIST', escape_html($searchuser)));
+                warn_exit(do_lang_tempcode('_MEMBER_NO_EXIST', escape_html($searchuser)));
             }
             $where .= ' AND t_cache_first_member_id=' . strval($_userid);
         }
@@ -111,7 +115,11 @@ class CMSSearchRead
         if (($keywords != '') && (!$titleonly)) {
             $full_sql1 .= ' LIMIT ' . strval($max + $start);
         } else {
-            $full_sql1 .= ' LIMIT ' . strval($start) . ',' . strval($max);
+            if (db_uses_offset_syntax($GLOBALS['FORUM_DB']->connection_read)) {
+                $full_sql1 .= ' LIMIT ' . strval($max) . ' OFFSET ' . strval($start);
+            } else {
+                $full_sql1 .= ' LIMIT ' . strval($start) . ',' . strval($max);
+            }
         }
 
         if ($keywords != '') {
@@ -183,22 +191,28 @@ class CMSSearchRead
             if ($search_sql == '') {
                 $search_sql = '1=1';
             }
-            $sql = '
-				FROM ' . $table_prefix . 'f_posts p' . (($keywords == '') ? '' : ' FORCE INDEX (p_post)') . '
-				JOIN ' . $table_prefix . 'translate trans ON trans.id=p.p_post
-				JOIN ' . $table_prefix . 'f_topics t ON p.p_topic_id=t.id
-				JOIN ' . $table_prefix . 'f_forums f ON t.t_forum_id=f.id
-				WHERE ' . $search_sql;
+            $sql = 'FROM ' . $table_prefix . 'f_posts p';
+            if (strpos(get_db_type(), 'mysql') !== false) {
+                $sql .= (($search_sql == '1=1') ? '' : ' FORCE INDEX (p_post)');
+            }
+            $sql .= '
+                JOIN ' . $table_prefix . 'translate trans ON trans.id=p.p_post
+                JOIN ' . $table_prefix . 'f_topics t ON p.p_topic_id=t.id
+                JOIN ' . $table_prefix . 'f_forums f ON t.t_forum_id=f.id
+                WHERE ' . $search_sql;
         } else {
             $search_sql = preg_replace('#\?#', 'p_post', $w);
             if ($search_sql == '') {
                 $search_sql = '1=1';
             }
-            $sql = '
-				FROM ' . $table_prefix . 'f_posts p' . (($keywords == '') ? '' : ' FORCE INDEX (p_post)') . '
-				JOIN ' . $table_prefix . 'f_topics t ON p.p_topic_id=t.id
-				JOIN ' . $table_prefix . 'f_forums f ON t.t_forum_id=f.id
-				WHERE ' . $search_sql;
+            $sql = 'FROM ' . $table_prefix . 'f_posts p';
+            if (strpos(get_db_type(), 'mysql') !== false) {
+                $sql .= (($search_sql == '1=1') ? '' : ' FORCE INDEX (p_post)');
+            }
+            $sql .= '
+                JOIN ' . $table_prefix . 'f_topics t ON p.p_topic_id=t.id
+                JOIN ' . $table_prefix . 'f_forums f ON t.t_forum_id=f.id
+                WHERE ' . $search_sql;
         }
         $sql .= ' AND p_cache_forum_id IN (' . get_allowed_forum_sql() . ')';
         if (addon_installed('unvalidated')) {
@@ -213,7 +227,7 @@ class CMSSearchRead
         } elseif (!is_null($searchuser)) {
             $_userid = $GLOBALS['FORUM_DRIVER']->get_member_from_username($searchuser);
             if (is_null($_userid)) {
-                warn_exit(do_lang_tempcode('_USER_NO_EXIST', escape_html($searchuser)));
+                warn_exit(do_lang_tempcode('_MEMBER_NO_EXIST', escape_html($searchuser)));
             }
             $sql .= ' AND p_poster=' . strval($_userid);
         }
@@ -246,7 +260,7 @@ class CMSSearchRead
             }
         }
 
-        if (function_exists('set_time_limit')) {
+        if (php_function_allowed('set_time_limit')) {
             @set_time_limit(10);
         }
 

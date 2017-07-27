@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -48,7 +48,7 @@ class Module_admin_phpinfo
      * @param  boolean $check_perms Whether to check permissions.
      * @param  ?MEMBER $member_id The member to check permissions as (null: current user).
      * @param  boolean $support_crosslinks Whether to allow cross links to other modules (identifiable via a full-page-link rather than a screen-name).
-     * @param  boolean $be_deferential Whether to avoid any entry-point (or even return NULL to disable the page in the Sitemap) if we know another module, or page_group, is going to link to that entry-point. Note that "!" and "browse" entry points are automatically merged with container page nodes (likely called by page-groupings) as appropriate.
+     * @param  boolean $be_deferential Whether to avoid any entry-point (or even return null to disable the page in the Sitemap) if we know another module, or page_group, is going to link to that entry-point. Note that "!" and "browse" entry points are automatically merged with container page nodes (likely called by page-groupings) as appropriate.
      * @return ?array A map of entry points (screen-name=>language-code/string or screen-name=>[language-code/string, icon-theme-image]) (null: disabled).
      */
     public function get_entry_points($check_perms = true, $member_id = null, $support_crosslinks = true, $be_deferential = false)
@@ -82,7 +82,7 @@ class Module_admin_phpinfo
             }
         }
         if (!$found_issues) {
-            attach_message(do_lang_tempcode('NO_SERVER_ISSUES_FOUND'), 'inform', true);
+            attach_message(do_lang_tempcode('menus:NO_SERVER_ISSUES_FOUND'), 'inform', true);
         }
 
         require_lang('menus');
@@ -98,9 +98,13 @@ class Module_admin_phpinfo
         set_helper_panel_text(comcode_lang_string('DOC_PHPINFO'));
 
         ob_start();
-        if ((function_exists('phpinfo')) && (strpos(@ini_get('disable_functions'), 'phpinfo') === false)) {
+        if (php_function_allowed('phpinfo')) {
+            // PHP-info...
+
             phpinfo();
         } else {
+            // Alternative to PHP-info...
+
             var_dump(PHP_VERSION);
             var_dump($_SERVER);
             var_dump($_ENV);
@@ -115,6 +119,9 @@ class Module_admin_phpinfo
                 var_dump(phpcredits());
             }
         }
+
+        // Gather and cleanup the above...
+
         require_code('xhtml');
         $out = xhtmlise_html(ob_get_contents());
         ob_end_clean();
@@ -137,33 +144,78 @@ class Module_admin_phpinfo
         $url_parts = parse_url(get_base_url());
         $out = str_replace('<img border="0" src="/', '<img border="0" style="padding-top: 20px" src="http://' . escape_html($url_parts['host']) . '/', $out);
 
+        // Current run-time details...
+
         $out .= '<h2>Run-time details</h2>';
-        $out .= '<p>Your IP address: ' . escape_html(get_ip_address()) . '</p>';
-        if ((function_exists('posix_getpwuid')) && (strpos(@ini_get('disable_functions'), 'posix_getpwuid') === false)) {
+        $out .= '<p><strong>Your IP address</strong>: ' . escape_html(get_ip_address()) . '</p>';
+        if ((php_function_allowed('posix_getuid')) && (php_function_allowed('posix_getpwuid'))) {
             $user = posix_getuid();
             $suexec = ($user == fileowner(get_file_base() . '/index.php'));
             $dets = posix_getpwuid($user);
-            $out .= '<p>Running as user: ' . escape_html($dets['name']) . ' (' . ($suexec ? 'suEXEC or similar' : 'Not suEXEC') . ')</p>';
-        } elseif (strpos(@ini_get('disable_functions'), 'shell_exec') === false) {
+            $out .= '<p><strong>Running as user</strong>: ' . escape_html($dets['name']) . ' (' . ($suexec ? 'suEXEC or similar' : 'Not suEXEC') . ')</p>';
+        } elseif (php_function_allowed('shell_exec')) {
             $test = @shell_exec('whoami');
             if (!empty($test)) {
-                if (function_exists('get_current_user') && strpos(@ini_get('disable_functions'), 'get_current_user') === false) {
+                if (php_function_allowed('get_current_user')) {
                     $suexec = ($test == get_current_user());
                 } else {
                     $suexec = null;
                 }
-                $out .= '<p>Running as user: ' . escape_html($test) . (is_null($suexec) ? '' : (' (' . ($suexec ? 'suEXEC or similar' : 'Not suEXEC') . ')')) . '</p>';
+                $out .= '<p><strong>Running as user</strong>: ' . escape_html($test) . (is_null($suexec) ? '' : (' (' . ($suexec ? 'suEXEC or similar' : 'Not suEXEC') . ')')) . '</p>';
             }
         } else {
-            $tmp = cms_tempnam('');
+            $tmp = cms_tempnam();
             $user = @fileowner($tmp);
             @unlink($tmp);
             $suexec = ($user == fileowner(get_file_base() . '/index.php'));
-            $out .= '<p>Running as user: ' . escape_html(($suexec && (function_exists('posix_getpwuid')) && (strpos(@ini_get('disable_functions'), 'get_current_user') === false)) ? get_current_user() : ('#' . strval($user))) . ' (' . ($suexec ? 'suEXEC or similar' : 'Not suEXEC') . ')</p>';
+            $out .= '<p><strong>Running as user</strong>: ' . escape_html((($suexec) && (php_function_allowed('get_current_user'))) ? get_current_user() : ('#' . strval($user))) . ' (' . ($suexec ? 'suEXEC or similar' : 'Not suEXEC') . ')</p>';
         }
-        if (function_exists('php_sapi_name')) {
-            $out .= '<p>PHP configured as: ' . escape_html(php_sapi_name()) . '</p>';
+        if (php_function_allowed('php_sapi_name')) {
+            $out .= '<p><strong>PHP configured as</strong>: ' . escape_html(php_sapi_name()) . '</p>';
         }
+
+        require_code('global4');
+        $out .= '<p><strong>Normative performance</strong>: ' . float_format(find_normative_performance(), 0) . '%</p>';
+
+        if (function_exists('mysqli_get_server_version') && get_db_type() == 'mysqli') {
+            $__mysql_version = @mysqli_get_server_version($GLOBALS['SITE_DB']->connection_read[0]);
+            if ($__mysql_version !== false) {
+                $_mysql_version = strval($__mysql_version);
+                $mysql_version = strval(intval(substr($_mysql_version, 0, strlen($_mysql_version) - 4))) . '.' . strval(intval(substr($_mysql_version, -4, 2))) . '.' . strval(intval(substr($_mysql_version, -2, 2)));
+                $out .= '<p><strong>MySQL version</strong>: ' . $mysql_version . '</p>';
+            }
+        }
+
+        if (function_exists('pg_version') && get_db_type() == 'postgresql') {
+            $postgresql_version = @pg_version($GLOBALS['SITE_DB']->connection_read);
+            if ($postgresql_version !== false) {
+                $out .= '<p><strong>PostgreSQL server version</strong>: ' . escape_html($postgresql_version['server']) . '</p>';
+                $out .= '<p><strong>PostgreSQL client version</strong>: ' . escape_html($postgresql_version['client']) . '</p>';
+                $out .= '<p><strong>PostgreSQL protocol version</strong>: ' . escape_html($postgresql_version['protocol']) . '</p>';
+            }
+        }
+
+        if (php_function_allowed('shell_exec')) {
+            $commands = array(
+                'uptime',
+                'cat /proc/cpuinfo',
+                'cat /proc/meminfo',
+                'cat /proc/diskstats',
+                'iotop',
+                'iostat',
+                'top -l 1 -s 0',
+                'ps -Af',
+            );
+
+            foreach ($commands as $command) {
+                $output = @shell_exec($command);
+                if (!empty($output)) {
+                    $out .= '<p style="margin-bottom: 0"><strong>' . escape_html($command) . '</strong>:</p><p style="margin-top: 0; font-family: courier; white-space: pre; overflow: auto; width: 100%">' . escape_html($output) . '</p>';
+                }
+            }
+        }
+
+        // Output...
 
         require_code('xhtml');
         $ret = make_string_tempcode(xhtmlise_html($out));

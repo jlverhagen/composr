@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -40,7 +40,7 @@ class Hook_paypal
      */
     protected function _get_remote_form_url()
     {
-        return 'https://secure.worldpay.com/wcc/purchase';
+        return ecommerce_test_mode() ? 'https://www.sandbox.paypal.com/cgi-bin/webscr' : 'https://www.paypal.com/cgi-bin/webscr';
     }
 
     /**
@@ -67,6 +67,15 @@ class Hook_paypal
             $user_details['state'] = get_cms_cpf('state');
             $user_details['zip'] = get_cms_cpf('post_code');
             $user_details['country'] = get_cms_cpf('country');
+
+            require_code('locations');
+            if (find_country_name_from_iso($user_details['country'])  === null) {
+                $user_details['country'] = ''; // PayPal only allows valid countries
+            }
+
+            if (($user_details['address1'] == '') || ($user_details['city'] == '') || ($user_details['zip'] == '') || ($user_details['country'] == '')) {
+                $user_details = array(); // Causes error on PayPal due to it crashing when trying to validate the address
+            }
         }
 
         return do_template('ECOM_BUTTON_VIA_PAYPAL', array(
@@ -127,12 +136,12 @@ class Hook_paypal
     }
 
     /**
-     * Find whether the hook auto-cancels (if it does, auto cancel the given trans-ID).
+     * Find whether the hook auto-cancels (if it does, auto cancel the given subscription).
      *
-     * @param  string $trans_id Transaction ID to cancel.
+     * @param  AUTO_LINK $subscription_id ID of the subscription to cancel.
      * @return ?boolean True: yes. False: no. (null: cancels via a user-URL-directioning)
      */
-    public function auto_cancel($trans_id)
+    public function auto_cancel($subscription_id)
     {
         return null;
     }
@@ -151,11 +160,11 @@ class Hook_paypal
     /**
      * Handle IPN's. The function may produce output, which would be returned to the Payment Gateway. The function may do transaction verification.
      *
-     * @return array A long tuple of collected data.
+     * @return ?array A long tuple of collected data (null: no transaction; will only return null when not running the 'ecommerce' script).
      */
     public function handle_transaction()
     {
-        $purchase_id = post_param_integer('custom', '-1');
+        $purchase_id = post_param_string('custom', '-1');
 
         // Read in stuff we'll just log
         $reason_code = post_param_string('reason_code', '');
@@ -176,8 +185,12 @@ class Hook_paypal
         if (($tax != '') && (intval($tax) > 0) && ($mc_gross != '')) {
             $mc_gross = float_to_raw_string(floatval($mc_gross) - floatval($tax));
         }
-        /*$shipping=post_param_string('shipping','');  Actually, the hook will have added shipping to the overall product cost
-        if (($shipping!='') && (intval($shipping)>0) && ($mc_gross!='')) $mc_gross=float_to_raw_string(floatval($mc_gross)-floatval($shipping));*/
+        /* Actually, the hook will have added shipping to the overall product cost
+        $shipping = post_param_string('shipping', '');
+        if (($shipping != '') && (intval($shipping) > 0) && ($mc_gross != '')) {
+            $mc_gross = float_to_raw_string(floatval($mc_gross) - floatval($shipping));
+        }
+        */
         $mc_currency = post_param_string('mc_currency', ''); // May be blank for subscription
 
         // More stuff that we might need
@@ -227,9 +240,15 @@ class Hook_paypal
             case 'send_money':
             case 'virtual_terminal':
             default:
+                if (!running_script('ecommerce')) {
+                    return null;
+                }
                 exit(); // Non-supported for IPN in Composr
         }
         $payment_status = post_param_string('payment_status', '');
+        if (($payment_status == 'Pending') && (ecommerce_test_mode())) {
+            $payment_status = 'Completed';
+        }
         switch ($payment_status) {
             // Subscription
             case '': // We map certain values of txn_type for subscriptions over to payment_status, as subscriptions have no payment status but similar data in txn_type which we do not use
@@ -239,11 +258,17 @@ class Hook_paypal
                     case 'subscr_signup':
                         // SECURITY: Check it's a kind of subscription we would actually have generated
                         if (post_param_integer('recurring') != 1) {
+                            if (!running_script('ecommerce')) {
+                                return null;
+                            }
                             fatal_ipn_exit(do_lang('IPN_SUB_RECURRING_WRONG'));
                         }
 
                         // SECURITY: Check user is not giving themselves a free trial (we don't support trials)
                         if ((post_param_string('amount1', '') != '') || (post_param_string('amount2', '') != '') || (post_param_string('mc_amount1', '') != '') || (post_param_string('mc_amount2', '') != '') || (post_param_string('period1', '') != '') || (post_param_string('period2', '') != '')) {
+                            if (!running_script('ecommerce')) {
+                                return null;
+                            }
                             fatal_ipn_exit(do_lang('IPN_BAD_TRIAL'));
                         }
 
@@ -255,9 +280,15 @@ class Hook_paypal
                         break;
 
                     case 'subscr_payment':
+                        if (!running_script('ecommerce')) {
+                            return null;
+                        }
                         exit(); // We don't need to track individual payments
 
                     case 'subscr_failed':
+                        if (!running_script('ecommerce')) {
+                            return null;
+                        }
                         exit(); // PayPal auto-cancels at a configured point ("To avoid unnecessary cancellations, you can specify that PayPal should reattempt failed payments before canceling subscriptions."). So, we only listen to the actual cancellation signal.
 
                     case 'subscr_modify':
@@ -266,6 +297,9 @@ class Hook_paypal
                         break;
 
                     case 'subscr_cancel':
+                        if (!running_script('ecommerce')) {
+                            return null;
+                        }
                         exit(); // We ignore cancel transactions as we don't want to process them immediately - we just let things run until the end-of-term (see below). Maybe ideally we would process these in Composr as a separate state, but it would over-complicate things
 
                     case 'subscr_eot': // NB: An 'eot' means "end of *final* term" (i.e. if a payment fail / cancel / natural last term, has happened). PayPal's terminology is a little dodgy here.
@@ -295,12 +329,18 @@ class Hook_paypal
             case 'Canceled_Reversal':
             case 'Voided':
             case 'Processed': // Mass-payments
+                if (!running_script('ecommerce')) {
+                    return null;
+                }
                 exit(); // Non-supported for IPN in Composr
         }
 
         // SECURITY: Ignore sandbox transactions if we are not in test mode
         if (post_param_integer('test_ipn', 0) == 1) {
             if (!ecommerce_test_mode()) {
+                if (!running_script('ecommerce')) {
+                    return null;
+                }
                 exit();
             }
         }
@@ -308,40 +348,51 @@ class Hook_paypal
         // SECURITY: Post back to PayPal system to validate
         if ((!ecommerce_test_mode()) && (!$GLOBALS['FORUM_DRIVER']->is_super_admin(get_member())/*allow debugging if your test IP was intentionally back-doored*/)) {
             require_code('files');
-            $pure_post = isset($GLOBALS['PURE_POST']) ? $GLOBALS['PURE_POST'] : $_POST;
+            $pure_post = empty($GLOBALS['PURE_POST']) ? $_POST : $GLOBALS['PURE_POST'];
             if (get_magic_quotes_gpc()) {
                 $pure_post = array_map('stripslashes', $pure_post);
             }
             $x = 0;
             $res = mixed();
             do { // Try up to 3 times
-                $res = http_download_file('http://' . (ecommerce_test_mode() ? 'www.sandbox.paypal.com' : 'www.paypal.com') . '/cgi-bin/webscr', null, false, false, 'Composr', $pure_post + array('cmd' => '_notify-validate'));
+                $res = http_download_file('https://' . (ecommerce_test_mode() ? 'www.sandbox.paypal.com' : 'www.paypal.com') . '/cgi-bin/webscr', null, false, false, 'Composr', $pure_post + array('cmd' => '_notify-validate'));
                 $x++;
             } while ((is_null($res)) && ($x < 3));
             if (is_null($res)) {
+                if (!running_script('ecommerce')) {
+                    return null;
+                }
                 fatal_ipn_exit(do_lang('IPN_SOCKET_ERROR'));
             }
             if (!(strcmp($res, 'VERIFIED') == 0)) {
+                if (!running_script('ecommerce')) {
+                    return null;
+                }
                 fatal_ipn_exit(do_lang('IPN_UNVERIFIED') . ' - ' . $res . ' - ' . flatten_slashed_array($pure_post, true), strpos($res, '<html') !== false);
             }
         }
 
         // SECURITY: Check it came into our own account
+        $receiver_email = post_param_string('receiver_email', null);
+        if ($receiver_email === null) {
+            $receiver_email = post_param_string('business');
+        }
         $primary_paypal_email = get_option('primary_paypal_email');
-        $receiver_email = post_param_string('receiver_email');
-        if ($primary_paypal_email != '') {
-            if ($receiver_email != $primary_paypal_email) {
-                fatal_ipn_exit(do_lang('IPN_EMAIL_ERROR'));
+        if ($primary_paypal_email == '') {
+            $primary_paypal_email = $this->_get_payment_address();
+        }
+        if ($receiver_email != $primary_paypal_email && $receiver_email != $this->_get_payment_address()) {
+            if (!running_script('ecommerce')) {
+                return null;
             }
-        } else {
-            if ($receiver_email != $this->_get_payment_address()) {
-                fatal_ipn_exit(do_lang('IPN_EMAIL_ERROR'));
-            }
+            fatal_ipn_exit(do_lang('IPN_EMAIL_ERROR', $receiver_email, $primary_paypal_email));
         }
 
         // Shopping cart
         if (addon_installed('shopping')) {
-            $this->store_shipping_address($purchase_id);
+            if (preg_match('#' . str_replace('xxx', '.*', preg_quote(do_lang('shopping:CART_ORDER', 'xxx'), '#')) . '#', $item_name) != 0) {
+                $this->store_shipping_address(intval($purchase_id));
+            }
         }
 
         return array($purchase_id, $item_name, $payment_status, $reason_code, $pending_reason, $memo, $mc_gross, $mc_currency, $txn_id, $parent_txn_id, $period);
@@ -374,6 +425,15 @@ class Hook_paypal
             $user_details['state'] = get_cms_cpf('state');
             $user_details['zip'] = get_cms_cpf('post_code');
             $user_details['country'] = get_cms_cpf('country');
+
+            require_code('locations');
+            if (find_country_name_from_iso($user_details['country'])  === null) {
+                $user_details['country'] = ''; // PayPal only allows valid countries
+            }
+
+            if (($user_details['address1'] == '') || ($user_details['city'] == '') || ($user_details['zip'] == '') || ($user_details['country'] == '')) {
+                $user_details = array(); // Causes error on PayPal due to it crashing when trying to validate the address
+            }
         }
 
         return do_template('ECOM_CART_BUTTON_VIA_PAYPAL', array(

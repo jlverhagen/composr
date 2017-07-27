@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -26,9 +26,10 @@ class Hook_addon_registry_core_notifications
     /**
      * Get a list of file permissions to set
      *
+     * @param  boolean $runtime Whether to include wildcards represented runtime-created chmoddable files
      * @return array File permissions to set
      */
-    public function get_chmod_array()
+    public function get_chmod_array($runtime = false)
     {
         return array();
     }
@@ -159,6 +160,8 @@ class Hook_addon_registry_core_notifications
             'sources_custom/hooks/systems/notification_types_extended/.htaccess',
             'sources_custom/hooks/systems/notification_types_extended/index.html',
             'sources/hooks/systems/rss/web_notifications.php',
+            'sources/hooks/systems/commandr_fs_extended_member/notifications_enabled.php',
+            'sources/hooks/systems/config/block_top_notifications.php',
         );
     }
 

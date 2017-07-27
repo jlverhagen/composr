@@ -6,6 +6,7 @@ This tutorial is an introduction to the artistic side of web development -- web 
 
 [title="2"]Introduction[/title]
 
+[media width="250" description="" float="right"]data_custom/images/docs/tut_design/image.png[/media]
 With the improvement in web technology, web design has grown from cheesy layouts consisting of big borders, tiled background and animated GIFs -- to an application of the creative arts, blending into the wider commercial design industry.
 
 Nowadays visitors expect an important website to be as impressive as a glossy magazine, or a TV show, and good design is the route to this.
@@ -108,7 +109,7 @@ The de-facto standard software for making web designs is Photoshop. Photoshop is
 
 Instead of Photoshop you could consider:
  - [url="Paint.net"]http://www.getpaint.net/[/url] (free, Windows-only)
- - [url="GIMP"]http://www.gimp.org/[/url] / [url="GIMPshop"]http://plasticbugs.com/[/url] (free)
+ - [url="GIMP"]http://www.gimp.org/[/url] / [url="GIMPshop"]https://www.gimpshop.com/[/url] (free)
  - [url="Corel Paint Shop Pro"]http://www.jasc.com/[/url] (cheaper than Photoshop -- but less powerful)
 
 There is an enormous amount to know when it comes to using this kind of software, including:
@@ -219,11 +220,12 @@ If in doubt, you could survey what is important, but chances are you won't get a
  - http://www.creativebloq.com/netmag/6-questions-every-homepage-should-answer-101413151
  - http://www.userfocus.co.uk/resources/guidelines.html
  - http://www.webdesignerdepot.com/2013/11/4-essential-ux-rules-taught-by-eye-tracking-research/
- - http://www.getfinch.com/2011/03/ux-is-mostly-desirability/
+ - http://archived.getfinch.com/2011/03/ux-is-mostly-desirability/
  - http://www.designyourway.net/drb/small-design-and-usability-details-matter-a-lot-more-than-you-think/
  - https://econsultancy.com/blog/62892-the-a-z-of-ux-design-principles-from-the-big-tech-firms-experts
  - http://www.uxaxioms.com/
  - http://thedesignblitz.com/web-design-mistakes-to-avoid/
+ - https://pixabay.com/
  - [page="_SEARCH:tut_markup"]Guide to web technologies (including HTML, CSS, and JavaScript)[/page]
  - [page="_SEARCH:tut_themes"]Themeing your site[/page]
  - [page="_SEARCH:tut_accessibility"]Helping improve site accessibility for disabled users[/page]

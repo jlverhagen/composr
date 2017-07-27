@@ -29,11 +29,11 @@ class UnitTestCase extends SimpleTestCase {
      *                             the class name if none specified.
      *    @access public
      */
-    function UnitTestCase($label = false) {
+    function __construct($label = false) {
         if (! $label) {
             $label = get_class($this);
         }
-        $this->SimpleTestCase($label);
+        parent::__construct($label);
     }
 
     /**
@@ -45,7 +45,7 @@ class UnitTestCase extends SimpleTestCase {
      *    @return boolean           True on pass
      *    @access public
      */
-    function assertTrue($result, $message = false) {
+    function assertTrue($result, $message = '%s') {
         return $this->assert(new TrueExpectation(), $result, $message);
     }
 

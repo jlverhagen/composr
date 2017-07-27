@@ -6,7 +6,7 @@
 
 		{+START,IF,{$NOT,{GIVE_CONTEXT}}}
 			{+START,IF_NON_EMPTY,{ID}}
-				<a href="{URL*}">{+START,FRACTIONAL_EDITABLE,{NAME},name,_SEARCH:cms_downloads:__edit:{ID}}{NAME*}{+END}</a>
+				<a href="{URL*}">{NAME*}</a>
 			{+END}
 			{+START,IF_EMPTY,{ID}}
 				{NAME*}
@@ -37,12 +37,12 @@
 			<div class="download_box_pic"><a href="{URL*}">{IMGCODE}</a></div>
 		{+END}
 
-		<div class="download_box_description {+START,IF_NON_EMPTY,{IMGCODE}}pic{+END}">
+		<div class="download_box_description{+START,IF_NON_EMPTY,{IMGCODE}} pic{+END}">
 			{$PARAGRAPH,{$TRUNCATE_LEFT,{DESCRIPTION},460,0,1}}
 		</div>
 
 		{+START,IF_NON_EMPTY,{BREADCRUMBS}}
-			<nav class="breadcrumbs" itemprop="breadcrumb" role="navigation"><p>{!LOCATED_IN,{BREADCRUMBS}}</p></nav>
+			<nav class="breadcrumbs" itemprop="breadcrumb"><p>{!LOCATED_IN,{BREADCRUMBS}}</p></nav>
 		{+END}
 	</div>
 
@@ -54,7 +54,7 @@
 			{+START,IF_NON_PASSED,LICENCE}
 				<li><a href="{URL*}">{!MORE_INFO}</a></li>
 				{+START,IF,{MAY_DOWNLOAD}}
-					<li><a{+START,IF,{$NOT,{$INLINE_STATS}}} onclick="return ga_track(this,'{!DOWNLOAD;*}','{ORIGINAL_FILENAME;*}');"{+END} title="{!DOWNLOAD_NOW}: {$CLEAN_FILE_SIZE*,{FILE_SIZE}}" href="{DOWNLOAD_URL*}">{!DOWNLOAD_NOW}</a></li>
+					<li><a{+START,IF,{$NOT,{$INLINE_STATS}}} onclick="return ga_track(this,'{!DOWNLOAD;*}','{ORIGINAL_FILENAME;*}');"{+END} title="{!DOWNLOAD_NOW}: {FILE_SIZE*}" href="{DOWNLOAD_URL*}">{!DOWNLOAD_NOW}</a></li>
 				{+END}
 			{+END}
 		</ul>

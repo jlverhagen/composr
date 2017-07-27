@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -74,15 +74,22 @@ class Block_main_cns_involved_topics
             $forum2 = null;
         }
         $where_more = '';
+        /*
+        Actually including this just slows down the COUNT part of the query due to lack of indexability
         if (!is_null($forum1)) {
             $where_more .= ' AND p_cache_forum_id<>' . strval($forum1);
         }
         if (!is_null($forum2)) {
             $where_more .= ' AND p_cache_forum_id<>' . strval($forum2);
         }
-        $rows = $GLOBALS['FORUM_DB']->query('SELECT DISTINCT p_topic_id FROM ' . $GLOBALS['FORUM_DB']->get_table_prefix() . 'f_posts WHERE p_poster=' . strval($member_id_of) . $where_more . ' ORDER BY p_time DESC', $max, $start, false, true);
+        */
+        $rows = $GLOBALS['FORUM_DB']->query('SELECT DISTINCT p_topic_id,p_time FROM ' . $GLOBALS['FORUM_DB']->get_table_prefix() . 'f_posts WHERE p_poster=' . strval($member_id_of) . $where_more . ' ORDER BY p_time DESC', $max, $start, false, true);
         if (count($rows) != 0) {
-            $max_rows = $GLOBALS['FORUM_DB']->query_value_if_there('SELECT COUNT(DISTINCT p_topic_id) FROM ' . $GLOBALS['FORUM_DB']->get_table_prefix() . 'f_posts WHERE p_poster=' . strval($member_id_of) . $where_more, false, true);
+            if (get_bot_type() === null) {
+                $max_rows = $GLOBALS['FORUM_DB']->query_value_if_there('SELECT COUNT(DISTINCT p_topic_id) FROM ' . $GLOBALS['FORUM_DB']->get_table_prefix() . 'f_posts WHERE p_poster=' . strval($member_id_of) . $where_more, false, true);
+            } else {
+                $max_rows = count($rows); // We don't want bots hogging resources on somewhere they don't need to dig into
+            }
 
             $moderator_actions = '';
             $has_topic_marking = has_delete_permission('mid', get_member(), $member_id_of, 'topics');
@@ -109,7 +116,7 @@ class Block_main_cns_involved_topics
             }
             $query .= ' WHERE ' . $where;
             if (multi_lang_content()) {
-                $topic_rows = $GLOBALS['FORUM_DB']->query($query, null, null, false, true, array('p_cache_first_post' => 'LONG_TRANS__COMCODE'));
+                $topic_rows = $GLOBALS['FORUM_DB']->query($query, null, null, false, true, array('t_cache_first_post' => 'LONG_TRANS__COMCODE'));
             } else {
                 $topic_rows = $GLOBALS['FORUM_DB']->query($query, null, null, false, true);
             }
@@ -151,13 +158,16 @@ class Block_main_cns_involved_topics
             }
         }
 
-        return do_template('BLOCK_MAIN_CNS_INVOLVED_TOPICS', array('_GUID' => '3f1025f5d3391d43afbdfa292721aa09', 'BLOCK_PARAMS' => block_params_arr_to_str($map),
-                                                                   'TOPICS' => $topics,
+        return do_template('BLOCK_MAIN_CNS_INVOLVED_TOPICS', array(
+            '_GUID' => '3f1025f5d3391d43afbdfa292721aa09',
+            'BLOCK_PARAMS' => block_params_arr_to_str(array('block_id' => $block_id) + $map),
+            'TOPICS' => $topics,
 
-                                                                   'START' => strval($start),
-                                                                   'MAX' => strval($max),
-                                                                   'START_PARAM' => $block_id . '_start',
-                                                                   'MAX_PARAM' => $block_id . '_max',
+            'START' => strval($start),
+            'MAX' => strval($max),
+            'START_PARAM' => $block_id . '_start',
+            'MAX_PARAM' => $block_id . '_max',
+            'EXTRA_GET_PARAMS' => (get_param_integer($block_id . '_max', null) === null) ? null : ('&' . $block_id . '_max=' . urlencode(strval($max))),
         ));
     }
 }

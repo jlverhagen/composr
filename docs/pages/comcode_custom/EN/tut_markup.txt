@@ -20,44 +20,71 @@ Composr is built on top of standard web/Internet protocols, languages and [abbr=
 
 	<tbody>
 		<tr>
-			<td>[abbr="Transfer Control Protocol / Internet Protocol"]TCP/IP[/abbr]</td>
+			<th colspan="3"><em>Miscellaneous protocols</em></th>
+		</tr>
+		<tr>
+			<td>[abbr="File Transfer Protocol"][url="http://www.w3.org/Protocols/rfc959/"]FTP[/url][/abbr] and [abbr="Security File Transfer Protocol"][url="https://tools.ietf.org/html/draft-ietf-secsh-filexfer-02"]SFTP[/url][/abbr]</td>
+			<td>This is the standard for uploading files to a server.</td>
+			<td>It is good to set up an SFTP client (FTP is not secure, so best avoided) and use that for uploading/downloading files. It is more convenient and reliable than using a webhosting control panel's file manager.</td>
+		</tr>
+		<tr>
+			<td>[abbr="Internet Message Access Protocol"][url="https://tools.ietf.org/html/rfc3501"]IMAP[/url][/abbr] and [abbr="Post Office Protocol 3"][url="https://tools.ietf.org/html/rfc1939"]POP3[/url][/abbr]</td>
+			<td>These are the common protocols for accessing e-mail.</td>
+			<td>Unless you use webmail, you'll be using these already. You don't need any special understanding of them.</td>
+		</tr>
+		<tr>
+			<td>[abbr="Transfer Control Protocol / Internet Protocol"][url="https://tools.ietf.org/html/rfc793"]TCP[/url]/[url="https://tools.ietf.org/html/rfc1700"]IP[/url][/abbr]</td>
 			<td>This is the protocol for transmitting Internet data.</td>
 			<td>You won't need much awareness except knowing what IP addresses are and are used for (explained in the [page="_SEARCH:tut_trace"]Using IP addresses to trace users tutorial[/page]).</td>
 		</tr>
 		<tr>
-			<td>[abbr="HyperText Transfer Protocol"]HTTP[/abbr]</td>
+			<td>[abbr="Domain Name System"][url="https://tools.ietf.org/html/rfc1101"]DNS[/url][/abbr]</td>
+			<td>This is the protocol for looking up the IP address for a domain name.</td>
+			<td>When you buy and configure a domain name, you are using DNS.</td>
+		</tr>
+		<tr>
+			<td>[abbr="Simple Mail Transfer Protocol"][url="https://tools.ietf.org/html/rfc2821"]SMTP[/url][/abbr]</td>
+			<td>This is the protocol for sending e-mail.</td>
+			<td>Unless you use webmail, you'll be using these already. You don't need any special understanding of it.</td>
+		</tr>
+		<tr>
+			<td>[abbr="Multipurpose Internet Mail Extensions"][url="https://tools.ietf.org/html/rfc2045"]MIME[/url][/abbr]</td>
+			<td>This is the standard for the composition of e-mails.</td>
+			<td>You don't need to know anything about MIME specifically, but a basic awareness that e-mails can have dual text and HTML versions, and contain both attachments and inline images, is useful.</td>
+		</tr>
+		<tr>
+			<td>[abbr="DomainKeys Identified Mail"][url="https://tools.ietf.org/html/rfc6376"]DKIM[/url][/abbr]</td>
+			<td>This is the standard for signing e-mails.</td>
+			<td>You don't need to know about this, unless you are configuring it to run on Composr generated e-mails.</td>
+		</tr>
+		<tr>
+			<td>[abbr="Sender Policy Framework"][url="http://www.openspf.org/"]SPF[/url][/abbr]</td>
+			<td>This is the protocol for limiting what servers can send e-mail for a particula domain.</td>
+			<td>It is advised to set this up to reduce spam and fraud.</td>
+		</tr>
+
+		<tr>
+			<th colspan="3"><em>Web</em></th>
+		</tr>
+		<tr>
+			<td>[abbr="HyperText Transfer Protocol"][url="http://tools.ietf.org/html/rfc2616"]HTTP[/url][/abbr] with some [url="common extensions"]https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers[/url]</td>
 			<td>This is the protocol for transmitting web data.</td>
 			<td>You won't need much awareness that web [abbr="Uniform Resource Locator"]URL[/abbr]s come from the HTTP standard, as do cookies, as does HTTP authentication (not used on many sites, but sometimes useful).</td>
 		</tr>
 		<tr>
-			<td>[abbr="eXtensible Markup Language"]XML[/abbr] (including [abbr="Really Simple Syndication"]RSS[/abbr], Atom, [abbr="Outline Processor Markup Language"]OPML[/abbr], [abbr="Extensible Stylesheet Language Transformations"]XSLT[/abbr], [abbr="Scalable Vector Graphics"]SVG[/abbr] and use in [abbr="Asynchronous JavaScript and XML"]AJAX[/abbr])</td>
-			<td>XML is a standard for structuring data, used for many web formats that Composr supports, as well as a few configurable parts of Composr. RSS, Atom and OPML are feed technology, to export Composr news. XSLT is a technology we use to make RSS, Atom and OPML display in a web browser.</td>
-			<td>You won't need much awareness of XML unless doing particular advanced configuration.</td>
+			<td>Web server</td>
+			<td>This is the software application that serves data over HTTP, and ties into PHP; Apache and [abbr="Internet Information Server"]IIS[/abbr] are examples of the web server applications Composr can use.</td>
+			<td>An awareness of web server configuration may be important. For example, how to configure Apache via [tt].htaccess[/tt] files.</td>
 		</tr>
 		<tr>
-			<td>[abbr="JavaScript Object Notation"]JSON[/abbr]</td>
-			<td>This is a popular alternative to XML and is commonly used for web APIs between servers or between servers and web browsers.</td>
-			<td>You won't need to know JSON.</td>
-		</tr>
-		<tr>
-			<td>[abbr="eXtensible HyperText Markup Language 5"]XHTML5[/abbr], [abbr="HyperText Markup Language 5"]HTML5[/abbr] (and microformats)</td>
+			<td>[abbr="eXtensible HyperText Markup Language 5"]XHTML5[/abbr], [abbr="HyperText Markup Language 5"][url="http://www.w3.org/TR/html5/"]HTML5[/url][/abbr] (and microformats)</td>
 			<td>This is the standard for web pages. XHTML is (for all intents and purposes) a more formal version of HTML, and we ensure Composr is written to this to make things clear and consistent. You will usually hear people talk about HTML rather than XHTML, and practically you can consider them the same.</td>
 			<td>Knowing (X)HTML is crucial to defining layouts and general template editing.</td>
 		</tr>
 		<tr>
-			<td>[abbr="Cascading Style Sheets"]CSS[/abbr]</td>
+			<td>[abbr="Cascading Style Sheets"][url="http://www.w3.org/Style/CSS/Overview.en.html"]CSS[/url][/abbr]</td>
 			<td>This is the standard for styling web pages; it ties into the (X)HTML.</td>
 			<td>Knowing CSS is crucial for adjusting theme styles.</td>
-		</tr>
-		<tr>
-			<td>JavaScript (aka ECMA-Script) [i](optional)[/i] and [abbr="Document Object Model"]DOM[/abbr]</td>
-			<td>This is the standard to make web pages interactive; it ties into the (X)HTML.</td>
-			<td>You will only need to know JavaScript if doing particularly advanced themeing.</td>
-		</tr>
-		<tr>
-			<td>Dublin Core</td>
-			<td>This is the standard for adding meta-data to web pages; it ties into the XHTML.</td>
-			<td>You are unlikely to need any awareness of this.</td>
 		</tr>
 		<tr>
 			<td>PHP</td>
@@ -65,49 +92,132 @@ Composr is built on top of standard web/Internet protocols, languages and [abbr=
 			<td>Knowledge of PHP is only required if changing core Composr code.</td>
 		</tr>
 		<tr>
-			<td>Web server</td>
-			<td>this is the software application that serves data over HTTP, and ties into PHP; Apache and [abbr="Internet Information Server"]IIS[/abbr] are examples of the web server applications Composr can use.</td>
-			<td>An awareness of web server configuration may be important. For example, how to configure Apache via [tt].htaccess[/tt] files.</td>
+			<td>JavaScript (aka [url="http://www.ecma-international.org/publications/standards/Ecma-290.htm"]ECMAScript[/url]) [i](optional)[/i], [abbr="Document Object Model"][url="http://www.w3.org/DOM/DOMTR"]DOM[/url][/abbr], and [url="http://www.w3.org/TR/XMLHttpRequest/"]XMLHttpRequest[/url]</td>
+			<td>This is the standard to make web pages interactive; it ties into the (X)HTML.</td>
+			<td>You will only need to know JavaScript if doing particularly advanced themeing.</td>
 		</tr>
 		<tr>
-			<td>[abbr="Structured Query Language"]SQL[/abbr]</td>
-			<td>This is the standard for accessing/manipulating data inside databases; Composr uses it to talk to the database (e.g. [tt]SELECT * FROM table WHERE something='somevalue'[/tt]), which is usually the MySQL database application.</td>
-			<td>A basic understanding of SQL is useful. Sometimes going down to the database level, bypassing Composr, is useful. For example, to make a bulk text change across the system you could write some queries to do so.</td>
+			<td>[abbr="Scalable Vector Graphics"][url="http://www.w3.org/Graphics/SVG/"]SVG[/url][/abbr]</td>
+			<td>Vector graphics standard, used for drawing statistics graphs.</td>
+			<td>You are unlikely to need any awareness of this.</td>
 		</tr>
 		<tr>
-			<td>[abbr="File Transfer Protocol"]FTP[/abbr] or [abbr="Security File Transfer Protocol"]SFTP[/abbr]</td>
-			<td>This is the standard for uploading files to a server.</td>
-			<td>It is good to set up an SFTP client (FTP is not secure, so best avoided) and use that for uploading/downloading files. It is more convenient and reliable than using a web hosting control panel's file manager.</td>
+			<td>[url="https://developers.google.com/search/reference/robots_txt"]robots.txt[/url]</td>
+			<td>Robots exclusion standard. Google's version of the specification is the most accurate to what search engines now support.</td>
+			<td>Knowing this may be important for [abbr="Search Engine Optimisation"]SEO[/abbr].</td>
+		</tr>
+
+		<tr>
+			<th colspan="3"><em>Accessibility and Internationalisation</em></th>
 		</tr>
 		<tr>
-			<td>[abbr="Internet Message Access Protocol"]IMAP[/abbr] and [abbr="Post Office Protocol 3"]POP3[/abbr]</td>
-			<td>These are the common protocols for accessing e-mail.</td>
-			<td>Unless you use webmail, you'll be using these already. You don't need any special understanding of them.</td>
+			<td>[url="http://www.w3.org/TR/WAI-WEBCONTENT/"]WCAG 1.0[/url] and [url="http://www.w3.org/TR/WCAG20/"]2.0[/url] and [url="http://www.w3.org/WAI/intro/aria"]WAI-ARIA[/url]</td>
+			<td>Accessibility standards, particularly for blind users.</td>
+			<td>We support the highest levels of compliance (AAA).</td>
 		</tr>
 		<tr>
-			<td>[abbr="Simple Mail Transfer Protocol"]SMTP[/abbr]</td>
-			<td>This is the protocol for sending e-mail.</td>
-			<td>Unless you use webmail, you'll be using these already. You don't need any special understanding of it.</td>
-		</tr>
+			<td>[url="http://en.wikipedia.org/wiki/Access_key#UK_Government_recommendation_for_access_keys"]UK Gov. recommendation for access keys[/url] and [url="https://zoek.officielebekendmakingen.nl/stcrt-2006-136-p23-SC75949.html"]Besluit Kwaliteit Rijksoverheidswebsites[/url] and [url="http://www.section508.gov"]Section 508[/url]</td>
+			<td>Detailed accessibility standards from particular countries.</td>
+			<td>We support these standards.</td>
+		</td>
 		<tr>
-			<td>File formats like iCalendar, CSV files, JPEG, PNG, Zip, Tar, Gzip</td>
-			<td>These are used in specific areas of Composr, for reading and writing special file types. PNG is an image file format. PNG is used in favour to GIF, as it supports images more than 256 colours, 'alpha transparency' (blended transparency that is not tied to background colour) and is not encumbered by software patents.</td>
-			<td>The ability to use image editors, and choose appropriate image file types, is definitely useful. Being able to import and export appropriately-structured CSV files (spreadsheets) is also useful.</td>
+			<td>[url="http://www.w3.org/WAI/intro/atag.php"]ATAG[/url]</td>
+			<td>Accessibility standards for site authors.</td>
+			<td>We are fully compliant.</td>
 		</tr>
 		<tr>
 			<td>ISO character sets and Unicode (UTF-8)</td>
 			<td>These are the alternative standards for Internationalisation support; Composr supports both.</td>
 			<td>By default Composr uses UTF-8 which means you don't really need much awareness of character sets. It is useful to know how UTF-8 works (particular how some character use more than one byte)</td>
 		</tr>
+
 		<tr>
-			<td>[abbr="Multipurpose Internet Mail Extensions"]MIME[/abbr]</td>
-			<td>This is the standard for the composition of e-mails.</td>
-			<td>You don't need to know anything about MIME specifically, but a basic awareness that e-mails can have dual text and HTML versions, and contain both attachments and inline images, is useful.</td>
+			<th colspan="3"><em>Data &amp; Feeds</em></th>
 		</tr>
 		<tr>
-			<td>[abbr="Lightweight Directory Access Protocol"]LDAP[/abbr]</td>
+			<td>[abbr="eXtensible Markup Language"][url="http://www.w3.org/TR/2008/REC-xml-20081126/"]XML[/url][/abbr] (including [abbr="Really Simple Syndication"][url="http://cyber.law.harvard.edu/rss/rss.html"]RSS[/url][/abbr], [url="http://tools.ietf.org/html/rfc4287"]Atom[/url], [abbr="Outline Processor Markup Language"][url="http://www.opml.org/spec1.html"]OPML[/url][/abbr], [abbr="Extensible Stylesheet Language Transformations"][url="http://www.w3.org/TR/xslt20/"]XSLT[/url][/abbr], [url="http://www.sitemaps.org/"]XML Sitemaps[/url] and [url="https://support.google.com/news/publisher/answer/74288?hl=en"]Google News Sitemaps[/url], and use in [abbr="Asynchronous JavaScript and XML"]AJAX[/abbr])</td>
+			<td>XML is a standard for structuring data, used for many web formats that Composr supports, as well as a few configurable parts of Composr. RSS, Atom and OPML are feed technology, to export Composr news. XSLT is a technology we use to make RSS, Atom and OPML display in a web browser.</td>
+			<td>You won't need much awareness of XML unless doing particular advanced configuration.</td>
+		</tr>
+		<tr>
+			<td>File formats like [url="http://tools.ietf.org/html/rfc5545"]iCalendar 2.0[/url], CSV files, JPEG, PNG, Zip, Tar, Gzip</td>
+			<td>These are used in specific areas of Composr, for reading and writing special file types. PNG is an image file format. PNG is used in favour to GIF, as it supports images more than 256 colours, 'alpha transparency' (blended transparency that is not tied to background colour) and is not encumbered by software patents.</td>
+			<td>The ability to use image editors, and choose appropriate image file types, is definitely useful. Being able to import and export appropriately-structured CSV files (spreadsheets) is also useful.</td>
+		</tr>
+		<tr>
+			<td>[abbr="Lightweight Directory Access Protocol"][url="http://tools.ietf.org/html/rfc4510"]LDAP 3[/url][/abbr]</td>
 			<td>This is the standard for having shared logins on a computer network, which Composr can use.</td>
 			<td>This is only relevant if you are setting up a corporate Intranet.</td>
+		</tr>
+		<tr>
+			<td>[url="http://www.webdav.org/"]WebDav[/url]</td>
+			<td>A network file system.</td>
+			<td>This can be used with [page="_SEARCH:tut_repository"]The Repository[/page] for accessing the Commandr-fs filesystem.</td>
+		</tr>
+		<tr>
+			<td>[abbr="JavaScript Object Notation"][url="http://www.json.org/"]JSON[/url][/abbr]</td>
+			<td>This is a popular alternative to XML and is commonly used for web APIs between servers or between servers and web browsers.</td>
+			<td>You won't need to know JSON.</td>
+		</tr>
+		<tr>
+			<td>[abbr="Structured Query Language"][url="http://en.wikipedia.org/wiki/Sql"]SQL[/url][/abbr]</td>
+			<td>This is the standard for accessing/manipulating data inside databases; Composr uses it to talk to the database (e.g. [tt]SELECT * FROM table WHERE something='somevalue'[/tt]), which is usually the MySQL database application.</td>
+			<td>A basic understanding of SQL is useful. Sometimes going down to the database level, bypassing Composr, is useful. For example, to make a bulk text change across the system you could write some queries to do so.</td>
+		</tr>
+		<tr>
+			<td>[url="http://www.opensearch.org/Home"]OpenSearch 1.0[/url]</td>
+			<td>This allows site searching (with auto-completion) integrated direct into web browsers.</td>
+			<td>You are unlikely to need any awareness of this.</td>
+		</tr>
+
+		<tr>
+			<th colspan="3"><em>Metadata</em></th>
+		</tr>
+
+		<tr>
+			<td>[url="http://developers.facebook.com/docs/opengraph/"]Open Graph[/url]</td>
+			<td>Facebook-originated metadata standard, with data being embedded into normal web pages.</td>
+			<td>This is automatically included in Composr's templates. Further documentation is in the [page="_SEARCH:tut_facebook"]Facebook Support[/page] tutorial.</td>
+		</tr>
+		<tr>
+			<td>[url="http://schema.org/"]schema.org[/url]</td>
+			<td>Search Engine originating standard for providing extra data about objects within web pages.</td>
+			<td>This is automatically included in Composr's templates.</td>
+		</tr>
+		<tr>
+			<td>[url="http://dublincore.org/"]Dublin Core[/url] and <a href="{$BASE_URL}/cmscore.rdf" title="Composr Core is a simple extension to Dublin Core, extending it to encapsulate social-networking data.">Composr Core</a></td>
+			<td>This is the standard for adding metadata to web pages; it ties into the XHTML.</td>
+			<td>This is automatically included in Composr's templates.</td>
+		</tr>
+		<tr>
+			<td>[url="http://microformats.org/wiki/hcalendar"]hCalendar[/url]</td>
+			<td>Standard for embedding calendar data within web pages.</td>
+			<td>This is automatically included in Composr's templates (calendar).</td>
+		</tr>
+		<tr>
+			<td>[url="http://microformats.org/wiki/hcard"]hCard[/url]</td>
+			<td>Standard for embedding contacts data within web pages.</td>
+			<td>This is automatically included in Composr's templates (member profiles).</td>
+		</tr>
+		<tr>
+			<td>[url="http://microformats.org/wiki/hreview"]hReview[/url]</td>
+			<td>Standard for embedding user review data within web pages.</td>
+			<td>This is automatically included in Composr's templates (content comments/reviews).</td>
+		</tr>
+		<tr>
+			<td>[url="http://microformats.org/wiki/rel-nofollow"]rel-nofollow[/url], [url="http://microformats.org/wiki/rel-enclosure"]rel-enclosure[/url], [url="http://microformats.org/wiki/rel-license"]rel-license[/url], [url="http://microformats.org/wiki/rel-tag"]rel-tag[/url]</td>
+			<td>Standards for describing linking behaviour.</td>
+			<td>This is automatically included in Composr's templates.</td>
+		</tr>
+		<tr>
+			<td>[url="http://gmpg.org/xfn/"]XFN[/url]</td>
+			<td>Standard for showing how website users are friends of each other.</td>
+			<td>This is automatically included in Composr's templates [size=".85"](limited support)[/size].</td>
+		</tr>
+		<tr>
+			<td>[url="http://oembed.com/"]oEmbed[/url]</td>
+			<td>Provide extra information (e.g. thumbnails) for a link to a page on a site.</td>
+			<td>Composr can automatically locate oEmbed data for included links.</td>
 		</tr>
 	</tbody>
 </table>
@@ -143,11 +253,15 @@ Composr itself provides the following protocols and languages...
 		</tr>
 		<tr>
 			<td>[page="_SELF:tut_filtercode"]Filtercode[/page]</td>
-			<td>For filtering results, simpler than SQL.</td>
+			<td>For filtering results via property querying, simpler than SQL.</td>
 		</tr>
 		<tr>
 			<td>[page="_SELF:tut_selectcode"]Selectcode[/page]</td>
-			<td>For selecting particular results based on ID/category/tree-position.</td>
+			<td>For selecting particular results via ID, ID range, category, or tree-position.</td>
+		</tr>
+		<tr>
+			<td>Language packs</td>
+			<td>Translation of a site into different/multiple languages</td>
 		</tr>
 	</tbody>
 </table>
@@ -266,7 +380,7 @@ Now, some HTML elements...
 	</thead>
 
 	<tbody>
-		<tr>
+		<tr class="zebra_0">
 			<td>
 				<p><kbd>&lt;a&gt;</kbd></p>
 			</td>
@@ -276,7 +390,7 @@ Now, some HTML elements...
 				(text to display when hovered-over).</p>
 			</td>
 		</tr>
-		<tr>
+		<tr class="zebra_1">
 			<td>
 				<p><kbd>&lt;body&gt;</kbd></p>
 			</td>
@@ -285,7 +399,7 @@ Now, some HTML elements...
 				<strong>Required</strong>.</p>
 			</td>
 		</tr>
-		<tr>
+		<tr class="zebra_0">
 			<td>
 				<p><kbd>&lt;div&gt;</kbd></p>
 			</td>
@@ -294,7 +408,7 @@ Now, some HTML elements...
 				below.)</p>
 			</td>
 		</tr>
-		<tr>
+		<tr class="zebra_1">
 			<td>
 				<p><kbd>&lt;em&gt;</kbd></p>
 			</td>
@@ -302,7 +416,7 @@ Now, some HTML elements...
 				<p>Adds emphasis to the text it surrounds.</p>
 			</td>
 		</tr>
-		<tr>
+		<tr class="zebra_0">
 			<td>
 				<p><kbd>&lt;fieldset&gt;</kbd></p>
 			</td>
@@ -312,7 +426,7 @@ Now, some HTML elements...
 				tag below.)</p>
 			</td>
 		</tr>
-		<tr>
+		<tr class="zebra_1">
 			<td>
 				<p><kbd>&lt;form&gt;</kbd></p>
 			</td>
@@ -324,7 +438,7 @@ Now, some HTML elements...
 				or <kbd>post</kbd>)</p>
 			</td>
 		</tr>
-		<tr>
+		<tr class="zebra_0">
 			<td>
 				<p><kbd>&lt;h1&gt;</kbd>
 				to <kbd>&lt;h6&gt;</kbd></p>
@@ -336,17 +450,17 @@ Now, some HTML elements...
 				is the least important.</p>
 			</td>
 		</tr>
-		<tr>
+		<tr class="zebra_1">
 			<td>
 				<p><kbd>&lt;head&gt;</kbd></p>
 			</td>
 			<td>
-				<p>The meta-data section of the document. Contains
+				<p>The metadata section of the document. Contains
 				information about the document which isn&rsquo;t displayed, but
 				used by the browser in other ways. <strong>Required</strong>.</p>
 			</td>
 		</tr>
-		<tr>
+		<tr class="zebra_0">
 			<td>
 				<p><kbd>&lt;html&gt;</kbd></p>
 			</td>
@@ -354,7 +468,7 @@ Now, some HTML elements...
 				<p>The main tag in an XHTML document. <strong>Required</strong>.</p>
 			</td>
 		</tr>
-		<tr>
+		<tr class="zebra_1">
 			<td>
 				<p><kbd>&lt;img
 				/&gt;</kbd></p>
@@ -369,7 +483,7 @@ Now, some HTML elements...
 				(text to display when hovered-over).</p>
 			</td>
 		</tr>
-		<tr>
+		<tr class="zebra_0">
 			<td>
 				<p><kbd>&lt;input
 				/&gt;</kbd></p>
@@ -394,7 +508,7 @@ Now, some HTML elements...
 				(see CSS and JavaScript sections below)).</p>
 			</td>
 		</tr>
-		<tr>
+		<tr class="zebra_1">
 			<td>
 				<p><kbd>&lt;label&gt;</kbd></p>
 			</td>
@@ -404,7 +518,7 @@ Now, some HTML elements...
 				(the ID of the form element associated with this <kbd>&lt;label&gt;</kbd>).</p>
 			</td>
 		</tr>
-		<tr>
+		<tr class="zebra_0">
 			<td>
 				<p><kbd>&lt;legend&gt;</kbd></p>
 			</td>
@@ -412,7 +526,7 @@ Now, some HTML elements...
 				<p>A caption for a <kbd>&lt;fieldset&gt;</kbd>.</p>
 			</td>
 		</tr>
-		<tr>
+		<tr class="zebra_1">
 			<td>
 				<p><kbd>&lt;li&gt;</kbd></p>
 			</td>
@@ -421,7 +535,7 @@ Now, some HTML elements...
 				and <kbd>&lt;ol&gt;</kbd>).</p>
 			</td>
 		</tr>
-		<tr>
+		<tr class="zebra_0">
 			<td>
 				<p><kbd>&lt;ol&gt;</kbd></p>
 			</td>
@@ -430,7 +544,7 @@ Now, some HTML elements...
 				list.</p>
 			</td>
 		</tr>
-		<tr>
+		<tr class="zebra_1">
 			<td>
 				<p><kbd>&lt;optgroup&gt;</kbd></p>
 			</td>
@@ -441,7 +555,7 @@ Now, some HTML elements...
 				(the label for the option group).</p>
 			</td>
 		</tr>
-		<tr>
+		<tr class="zebra_0">
 			<td>
 				<p><kbd>&lt;option&gt;</kbd></p>
 			</td>
@@ -451,7 +565,7 @@ Now, some HTML elements...
 				(the value to be sent to the server when the form is submitted).</p>
 			</td>
 		</tr>
-		<tr>
+		<tr class="zebra_1">
 			<td>
 				<p><kbd>&lt;p&gt;</kbd></p>
 			</td>
@@ -460,7 +574,7 @@ Now, some HTML elements...
 				used.</p>
 			</td>
 		</tr>
-		<tr>
+		<tr class="zebra_0">
 			<td>
 				<p><kbd>&lt;select&gt;</kbd></p>
 			</td>
@@ -471,7 +585,7 @@ Now, some HTML elements...
 				(see CSS and JavaScript sections below)).</p>
 			</td>
 		</tr>
-		<tr>
+		<tr class="zebra_1">
 			<td>
 				<p><kbd>&lt;span&gt;</kbd></p>
 			</td>
@@ -480,7 +594,7 @@ Now, some HTML elements...
 				below.)</p>
 			</td>
 		</tr>
-		<tr>
+		<tr class="zebra_0">
 			<td>
 				<p><kbd>&lt;strong&gt;</kbd></p>
 			</td>
@@ -489,7 +603,7 @@ Now, some HTML elements...
 				<strong>bold</strong>).</p>
 			</td>
 		</tr>
-		<tr>
+		<tr class="zebra_1">
 			<td>
 				<p><kbd>&lt;sub&gt;</kbd></p>
 			</td>
@@ -497,7 +611,7 @@ Now, some HTML elements...
 				<p>Designates text as subscript.</p>
 			</td>
 		</tr>
-		<tr>
+		<tr class="zebra_0">
 			<td>
 				<p><kbd>&lt;sup&gt;</kbd></p>
 			</td>
@@ -505,7 +619,7 @@ Now, some HTML elements...
 				<p>Designates text as superscript.</p>
 			</td>
 		</tr>
-		<tr>
+		<tr class="zebra_1">
 			<td>
 				<p><kbd>&lt;table&gt;</kbd></p>
 			</td>
@@ -517,7 +631,7 @@ Now, some HTML elements...
 				non-visual browsers).</p>
 			</td>
 		</tr>
-		<tr>
+		<tr class="zebra_0">
 			<td>
 				<p><kbd>&lt;td&gt;</kbd></p>
 			</td>
@@ -525,7 +639,7 @@ Now, some HTML elements...
 				<p>A table cell.</p>
 			</td>
 		</tr>
-		<tr>
+		<tr class="zebra_1">
 			<td>
 				<p><kbd>&lt;textarea&gt;</kbd></p>
 			</td>
@@ -539,7 +653,7 @@ Now, some HTML elements...
 				(see CSS and JavaScript sections below)).</p>
 			</td>
 		</tr>
-		<tr>
+		<tr class="zebra_0">
 			<td>
 				<p><kbd>&lt;th&gt;</kbd></p>
 			</td>
@@ -547,7 +661,7 @@ Now, some HTML elements...
 				<p>A table header cell.</p>
 			</td>
 		</tr>
-		<tr>
+		<tr class="zebra_1">
 			<td>
 				<p><kbd>&lt;title&gt;</kbd></p>
 			</td>
@@ -556,7 +670,7 @@ Now, some HTML elements...
 				browser&rsquo;s title bar, for example). <strong>Required</strong>.</p>
 			</td>
 		</tr>
-		<tr>
+		<tr class="zebra_0">
 			<td>
 				<p><kbd>&lt;tr&gt;</kbd></p>
 			</td>
@@ -564,7 +678,7 @@ Now, some HTML elements...
 				<p>A table row.</p>
 			</td>
 		</tr>
-		<tr>
+		<tr class="zebra_1">
 			<td>
 				<p><kbd>&lt;ul&gt;</kbd></p>
 			</td>
@@ -593,7 +707,7 @@ Although the above table doesn't list all of the XHTML elements (it lists approx
 		</thead>
 
 		<tbody>
-			<tr>
+			<tr class="zebra_0">
 				<td>
 					<p><kbd>class</kbd></p>
 				</td>
@@ -602,7 +716,7 @@ Although the above table doesn't list all of the XHTML elements (it lists approx
 					and jazz-up appearances. (See CSS section below.)</p>
 				</td>
 			</tr>
-			<tr>
+			<tr class="zebra_1">
 				<td>
 					<p><kbd>id</kbd></p>
 				</td>
@@ -611,7 +725,7 @@ Although the above table doesn't list all of the XHTML elements (it lists approx
 					(see CSS and JavaScript sections below).</p>
 				</td>
 			</tr>
-			<tr>
+			<tr class="zebra_0">
 				<td>
 					<p><kbd>style</kbd></p>
 				</td>
@@ -623,7 +737,7 @@ Although the above table doesn't list all of the XHTML elements (it lists approx
 					CSS section below.)</p>
 				</td>
 			</tr>
-			<tr>
+			<tr class="zebra_1">
 				<td>
 					<p><kbd>title</kbd></p>
 				</td>
@@ -696,7 +810,7 @@ What follows is an example XHTML document, utilising all of the above principles
 					<a href="http://example.com/login.html" title="Log in to example.com">Login</a>
 				</li>
 				<li>
-					<a href="http:// example.com/register.html" title="Register an account at example.com">Register</a>
+					<a href="http://example.com/register.html" title="Register an account at example.com">Register</a>
 				</li>
 			</ul>
 		</div>
@@ -797,7 +911,7 @@ Some commonly used properties are listed below...
 	</thead>
 
 	<tbody>
-		<tr>
+		<tr class="zebra_0">
 			<td>
 				<p><kbd>background</kbd></p>
 			</td>
@@ -805,7 +919,7 @@ Some commonly used properties are listed below...
 				<p>The background colour and image.</p>
 			</td>
 		</tr>
-		<tr>
+		<tr class="zebra_1">
 			<td>
 				<p><kbd>border</kbd></p>
 			</td>
@@ -814,7 +928,7 @@ Some commonly used properties are listed below...
 				borders (in a box) the specified element.</p>
 			</td>
 		</tr>
-		<tr>
+		<tr class="zebra_0">
 			<td>
 				<p><kbd>display</kbd></p>
 			</td>
@@ -823,7 +937,7 @@ Some commonly used properties are listed below...
 				element (i.e. change it from a block-level to an inline element).</p>
 			</td>
 		</tr>
-		<tr>
+		<tr class="zebra_1">
 			<td>
 				<p><kbd>position</kbd></p>
 			</td>
@@ -831,7 +945,7 @@ Some commonly used properties are listed below...
 				<p>The mode with which to place the element.</p>
 			</td>
 		</tr>
-		<tr>
+		<tr class="zebra_0">
 			<td>
 				<p><kbd>height</kbd></p>
 			</td>
@@ -839,7 +953,7 @@ Some commonly used properties are listed below...
 				<p>The height.</p>
 			</td>
 		</tr>
-		<tr>
+		<tr class="zebra_1">
 			<td>
 				<p><kbd>width</kbd></p>
 			</td>
@@ -847,7 +961,7 @@ Some commonly used properties are listed below...
 				<p>The width.</p>
 			</td>
 		</tr>
-		<tr>
+		<tr class="zebra_0">
 			<td>
 				<p><kbd>font</kbd></p>
 			</td>
@@ -855,7 +969,7 @@ Some commonly used properties are listed below...
 				<p>Font options and configuration.</p>
 			</td>
 		</tr>
-		<tr>
+		<tr class="zebra_1">
 			<td>
 				<p><kbd>list-style</kbd></p>
 			</td>
@@ -863,7 +977,7 @@ Some commonly used properties are listed below...
 				<p>How to layout and draw a list.</p>
 			</td>
 		</tr>
-		<tr>
+		<tr class="zebra_0">
 			<td>
 				<p><kbd>margin</kbd></p>
 			</td>
@@ -873,7 +987,7 @@ Some commonly used properties are listed below...
 				(think of it as a &ldquo;moat&rdquo; for an element).</p>
 			</td>
 		</tr>
-		<tr>
+		<tr class="zebra_1">
 			<td>
 				<p><kbd>padding</kbd></p>
 			</td>
@@ -883,7 +997,7 @@ Some commonly used properties are listed below...
 				it as the cavity in a cavity wall).</p>
 			</td>
 		</tr>
-		<tr>
+		<tr class="zebra_0">
 			<td>
 				<p><kbd>bottom</kbd></p>
 			</td>
@@ -892,7 +1006,7 @@ Some commonly used properties are listed below...
 				element&rsquo;s parent&rsquo;s border.</p>
 			</td>
 		</tr>
-		<tr>
+		<tr class="zebra_1">
 			<td>
 				<p><kbd>left</kbd></p>
 			</td>
@@ -901,7 +1015,7 @@ Some commonly used properties are listed below...
 				right of the element&rsquo;s parent&rsquo;s border.</p>
 			</td>
 		</tr>
-		<tr>
+		<tr class="zebra_0">
 			<td>
 				<p><kbd>right</kbd></p>
 			</td>
@@ -910,7 +1024,7 @@ Some commonly used properties are listed below...
 				the left of the element&rsquo;s parent&rsquo;s border.</p>
 			</td>
 		</tr>
-		<tr>
+		<tr class="zebra_1">
 			<td>
 				<p><kbd>top</kbd></p>
 			</td>
@@ -919,7 +1033,7 @@ Some commonly used properties are listed below...
 				element&rsquo;s parent&rsquo;s border.</p>
 			</td>
 		</tr>
-		<tr>
+		<tr class="zebra_0">
 			<td>
 				<p><kbd>color</kbd></p>
 			</td>
@@ -927,7 +1041,7 @@ Some commonly used properties are listed below...
 				<p>The colour of <strong>text</strong>.</p>
 			</td>
 		</tr>
-		<tr>
+		<tr class="zebra_1">
 			<td>
 				<p><kbd>text-align</kbd></p>
 			</td>
@@ -935,7 +1049,7 @@ Some commonly used properties are listed below...
 				<p>The horizontal alignment of text.</p>
 			</td>
 		</tr>
-		<tr>
+		<tr class="zebra_0">
 			<td>
 				<p><kbd>text-decoration</kbd></p>
 			</td>
@@ -944,7 +1058,7 @@ Some commonly used properties are listed below...
 				or overline.</p>
 			</td>
 		</tr>
-		<tr>
+		<tr class="zebra_1">
 			<td>
 				<p><kbd>text-indent</kbd></p>
 			</td>
@@ -1029,7 +1143,7 @@ Another feature of JavaScript is its event model. You can specify JavaScript fun
 	</thead>
 
 	<tbody>
-		<tr>
+		<tr class="zebra_0">
 			<td>
 				<p><kbd>onload</kbd></p>
 			</td>
@@ -1040,7 +1154,7 @@ Another feature of JavaScript is its event model. You can specify JavaScript fun
 				tags.</p>
 			</td>
 		</tr>
-		<tr>
+		<tr class="zebra_1">
 			<td>
 				<p><kbd>onchange</kbd></p>
 			</td>
@@ -1051,7 +1165,7 @@ Another feature of JavaScript is its event model. You can specify JavaScript fun
 				etc.).</p>
 			</td>
 		</tr>
-		<tr>
+		<tr class="zebra_0">
 			<td>
 				<p><kbd>onsubmit</kbd></p>
 			</td>
@@ -1061,7 +1175,7 @@ Another feature of JavaScript is its event model. You can specify JavaScript fun
 				tag.</p>
 			</td>
 		</tr>
-		<tr>
+		<tr class="zebra_1">
 			<td>
 				<p><kbd>onkeypress</kbd></p>
 			</td>
@@ -1071,7 +1185,7 @@ Another feature of JavaScript is its event model. You can specify JavaScript fun
 				exceptions.</p>
 			</td>
 		</tr>
-		<tr>
+		<tr class="zebra_0">
 			<td>
 				<p><kbd>onclick</kbd></p>
 			</td>
@@ -1116,7 +1230,7 @@ It should also be stressed as a last point that [b]JavaScript is not secure[/b];
  - http://www.html.net/
  - http://www.tizag.com/
  - http://www.davesite.com/webstation/html/
- - http://www.w3schools.com/xhtml/default.asp
+ - http://www.w3schools.com/html/default.asp
  - http://jarmin.com/accessibility/index.html
  - http://en.wikiversity.org/wiki/Web_design
 
@@ -1142,11 +1256,8 @@ It should also be stressed as a last point that [b]JavaScript is not secure[/b];
  - http://www.tizag.com/
  - http://javascriptkit.com/
  - https://developer.mozilla.org/en-US/docs/Web/JavaScript
- - http://www.devguru.com/technologies/javascript/home.asp
+ - http://www.devguru.com/content/technologies/javascript/home.html
  - http://www.w3schools.com/js/default.asp
- - http://www.w3schools.com/htmldom/default.asp
- - http://www.w3schools.com/dhtml/default.asp
- - http://www.w3schools.com/dom/default.asp
  - https://developer.mozilla.org/en-US/docs/Web/API/Document_Object_Model
  - https://jquery.com/
 
@@ -1164,6 +1275,7 @@ Some cool effects:
 [title="2"]Miscellaneous[/title]
 
  - http://uitest.com/
+ - https://dev.twitter.com/cards/getting-started (you may want to implement this yourself if you use Twitter)
 
 [concepts
  1_key="XML"                  1_value="eXtensible Markup Language: a format for structuring other languages that fit well into a tree structure"
@@ -1171,19 +1283,19 @@ Some cool effects:
  3_key="XHTML"                3_value="eXtensible HyperText Markup Language: HTML adapted to follow XML rules"
  4_key="CSS"                  4_value="Cascading Style Sheets: a technology that allows style to be specified in a config-file like fashion, and mapped to XHTML structure"
  5_key="JavaScript"           5_value="The standard client-side scripting language for the Internet, allowing web pages to be dynamic without reloading of pages. In standardisation, it is known as ECMA-Script, but that term is rarely used."
- 6_key="tag"                  6_value="A piece of structure: an XML tree is made up of tags"
- 7_key="element"              7_value="Another name for a tag really"
- 8_key="(tag) attribute"      8_value="Tags may contain attributes that specify properties for the tag"
- 9_key="inline (tag)"         9_value="A tag that wraps around a portion of HTML to apply something to it, or to use it"
- 10_key="block (tag)"         10_value="A tag that takes up a boxed area of the screen space, and may have its own background. Block tags force a visual line-break after them, unless they are styled to be inline"
- 11_key="(tag) class"         11_value="A tag class is generally used so as to join XHTML tags to CSS styles"
+ 6_key="Tag"                  6_value="A piece of structure: an XML tree is made up of tags"
+ 7_key="Element"              7_value="Another name for a tag really"
+ 8_key="(Tag) Attribute"      8_value="Tags may contain attributes that specify properties for the tag"
+ 9_key="Inline (tag)"         9_value="A tag that wraps around a portion of HTML to apply something to it, or to use it"
+ 10_key="Block (tag)"         10_value="A tag that takes up a boxed area of the screen space, and may have its own background. Block tags force a visual line-break after them, unless they are styled to be inline"
+ 11_key="(Tag) Class"         11_value="A tag class is generally used so as to join XHTML tags to CSS styles"
  12_key="(XML) ID"            12_value="An ID is generally used so as to allow JavaScript code to reference specific XHTML tags"
  13_key="(JavaScript) event"  13_value="JavaScript hooks on to web browser actions via an event model; tags 'fire' events, and JavaScript can be set up to launch certain code upon the event firing"
  14_key="(CSS) selector"      14_value="CSS rules apply to certain tags, and selectors are used to determine which tags; selectors are very powerful"
  15_key="(CSS) property"      15_value="CSS rules specify values for properties in order to style"
  16_key="DOM"                 16_value="Document Object Model. A scheme of referencing a document based upon the XHRML structure. Usually used with JavaScript."
  17_key="DHTML"               17_value="Dynamic HTML. Almost a synonym for JavaScript"
- 18_key="client-side"         18_value="Code that is processed on a viewer's computer. The opposite of server-side"
+ 18_key="Client-side"         18_value="Code that is processed on a viewer's computer. The opposite of server-side"
 ]Concepts[/concepts]
 
 [title="2"]See also[/title]

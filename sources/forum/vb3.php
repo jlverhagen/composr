@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -216,8 +216,8 @@ class Forum_driver_vb3 extends forum_driver_vb_shared
     protected function _get_super_admin_groups()
     {
         return array(6);
-        //   $admin_group=$this->connection->query_select_value('usergroup','usergroupid',array('title'=>'Administrators'));      Wrong
-        //   return array($admin_group);
+        //$admin_group = $this->connection->query_select_value('usergroup', 'usergroupid', array('title' => 'Administrators'));      Wrong
+        //return array($admin_group);
     }
 
     /**
@@ -229,8 +229,8 @@ class Forum_driver_vb3 extends forum_driver_vb_shared
     protected function _get_moderator_groups()
     {
         return array(5);
-        //   $moderator_group=$this->connection->query_select_value('usergroup','usergroupid',array('title'=>'Super Moderators'));   Wrong
-        //   return array($moderator_group);
+        //$moderator_group = $this->connection->query_select_value('usergroup', 'usergroupid', array('title' => 'Super Moderators'));   Wrong
+        //return array($moderator_group);
     }
 
     /**
@@ -270,18 +270,16 @@ class Forum_driver_vb3 extends forum_driver_vb_shared
     {
         // User
         cms_setcookie(get_member_cookie(), strval($id));
-        $_COOKIE[get_member_cookie()] = strval($id);
 
         // Password
         $password_hashed = $this->get_member_row_field($id, 'password');
         global $SITE_INFO;
         $_password = md5($password_hashed . $SITE_INFO['vb_unique_id']);
         cms_setcookie(get_pass_cookie(), $_password);
-        $_COOKIE[get_pass_cookie()] = $_password;
     }
 
     /**
-     * Find if the given member ID and password is valid. If username is NULL, then the member ID is used instead.
+     * Find if the given member ID and password is valid. If username is null, then the member ID is used instead.
      * All authorisation, cookies, and form-logins, are passed through this function.
      * Some forums do cookie logins differently, so a Boolean is passed in to indicate whether it is a cookie login.
      *
@@ -290,7 +288,7 @@ class Forum_driver_vb3 extends forum_driver_vb_shared
      * @param  SHORT_TEXT $password_hashed The md5-hashed password
      * @param  string $password_raw The raw password
      * @param  boolean $cookie_login Whether this is a cookie login
-     * @return array A map of 'id' and 'error'. If 'id' is NULL, an error occurred and 'error' is set
+     * @return array A map of 'id' and 'error'. If 'id' is null, an error occurred and 'error' is set
      */
     public function forum_authorise_login($username, $userid, $password_hashed, $password_raw, $cookie_login = false)
     {
@@ -308,12 +306,12 @@ class Forum_driver_vb3 extends forum_driver_vb_shared
         }
 
         if (!array_key_exists(0, $rows) || $rows[0] === null) { // All hands to lifeboats
-            $out['error'] = (do_lang_tempcode('_MEMBER_NO_EXIST', $username));
+            $out['error'] = do_lang_tempcode((get_option('login_error_secrecy') == '1') ? 'MEMBER_INVALID_LOGIN' : '_MEMBER_NO_EXIST', $username);
             return $out;
         }
         $row = $rows[0];
         if ($this->is_banned($row['userid'])) { // All hands to the guns
-            $out['error'] = (do_lang_tempcode('YOU_ARE_BANNED'));
+            $out['error'] = do_lang_tempcode('YOU_ARE_BANNED');
             return $out;
         }
 
@@ -321,12 +319,14 @@ class Forum_driver_vb3 extends forum_driver_vb_shared
         if (!(((md5($row['password'] . $SITE_INFO['vb_unique_id']) == $password_hashed) && ($cookie_login))
               || ((!$cookie_login) && ($row['password'] == md5($password_hashed . $row['salt']))))
         ) {
-            $out['error'] = (do_lang_tempcode('MEMBER_BAD_PASSWORD'));
+            $out['error'] = do_lang_tempcode((get_option('login_error_secrecy') == '1') ? 'MEMBER_INVALID_LOGIN' : 'MEMBER_BAD_PASSWORD');
             return $out;
         }
 
-        require_code('users_active_actions');
-        cms_eatcookie('sessionhash');
+        if (substr(get_member_cookie(), 0, 5) != 'cms__') {
+            require_code('users_active_actions');
+            cms_eatcookie('sessionhash');
+        }
 
         $out['id'] = $row['userid'];
         return $out;

@@ -1,3 +1,4 @@
+{$,If may rate}
 {+START,IF_EMPTY,{ERROR}}
 	{+START,IF,{$JS_ON}}
 		{$REQUIRE_JAVASCRIPT,ajax}
@@ -33,7 +34,7 @@
 
 	{+START,IF,{$NOT,{$JS_ON}}}
 		{+START,IF,{$NOT,{$GET,block_embedded_forms}}}
-			<form title="{!RATE}" onsubmit="if (this.elements[0].selectedIndex==0) { window.fauxmodal_alert('{!IMPROPERLY_FILLED_IN=;}'); return false; } else return true;" action="{URL*}" method="post">
+			<form title="{!RATE}" onsubmit="if (this.elements[0].selectedIndex==0) { window.fauxmodal_alert('{!IMPROPERLY_FILLED_IN=;}'); return false; } else return true;" action="{URL*}" method="post" autocomplete="off">
 				{$INSERT_SPAMMER_BLACKHOLE}
 
 				{+START,LOOP,ALL_RATING_CRITERIA}
@@ -57,14 +58,14 @@
 							</select>
 
 							{+START,IF,{SIMPLISTIC}}
-								<input onclick="disable_button_just_clicked(this);" class="feedback__rate button_micro" type="submit" value="{!RATE}" />
+								<input onclick="disable_button_just_clicked(this);" class="button_micro feedback__rate" type="submit" value="{!RATE}" />
 							{+END}
 						</div>
 					</div>
 				{+END}
 				{+START,IF,{$NOT,{SIMPLISTIC}}}
 					<div>
-						<input onclick="disable_button_just_clicked(this);" class="feedback__rate button_micro" type="submit" value="{!RATE}" />
+						<input onclick="disable_button_just_clicked(this);" class="button_micro feedback__rate" type="submit" value="{!RATE}" />
 					</div>
 				{+END}
 			</form>

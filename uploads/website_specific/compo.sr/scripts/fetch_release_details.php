@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  You may not distribute a modified version of this file, unless it is solely as a Composr modification.
  See text/EN/licence.txt for full licencing information.
@@ -11,8 +11,11 @@
 /**
  * @license    http://opensource.org/licenses/cpal_1.0 Common Public Attribution License
  * @copyright  ocProducts Ltd
- * @package    composrcom
+ * @package    composr_homesite
  */
+
+// Fixup SCRIPT_FILENAME potentially being missing
+$_SERVER['SCRIPT_FILENAME'] = __FILE__;
 
 // Find Composr base directory, and chdir into it
 global $FILE_BASE, $RELATIVE_PATH;
@@ -41,14 +44,14 @@ $news_id = get_param_integer('news_id');
 
 header('Content-type: text/plain; charset=' . get_charset());
 
-$news_rows = $GLOBALS['SITE_DB']->query_select('news', array('*'), array('validated' => 1, 'id' => $news_id));
+$news_rows = $GLOBALS['SITE_DB']->query_select('news', array('*'), array('validated' => 1, 'id' => $news_id), '', 1);
 if ((array_key_exists(0, $news_rows)) && (has_category_access($GLOBALS['FORUM_DRIVER']->get_guest_id(), 'news', $news_rows[0]['news_category']))) {
     $_news_html = get_translated_tempcode('news', $news_rows[0], 'news_article'); // To force it to evaluate, so we can know the TAR URL
     $news_html = $_news_html->evaluate();
-    $news = get_translated_text($news_rows[0]['news_article']);
+    $news = static_evaluate_tempcode(comcode_to_tempcode(get_translated_text($news_rows[0]['news_article']), null, true));
 
     $matches = array();
-    preg_match('#"(http://compo.sr/upgrades/[^"]*.cms)"#', $news_html, $matches);
+    preg_match('#"(https?://compo.sr/upgrades/[^"]*\.cms)"#', $news_html, $matches);
     $tar_url = array_key_exists(1, $matches) ? $matches[1] : '';
     $changes = '';
     if (preg_match('#<br />([^>]*the following.*:<br /><ul>)#U', $news_html, $matches) != 0) {

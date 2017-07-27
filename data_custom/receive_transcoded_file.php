@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -10,8 +10,11 @@
 /**
  * @license    http://opensource.org/licenses/cpal_1.0 Common Public Attribution License
  * @copyright  ocProducts Ltd
- * @package    core
+ * @package    transcoder
  */
+
+// Fixup SCRIPT_FILENAME potentially being missing
+$_SERVER['SCRIPT_FILENAME'] = __FILE__;
 
 // Find Composr base directory, and chdir into it
 global $FILE_BASE, $RELATIVE_PATH;
@@ -61,17 +64,22 @@ function run()
 
     require_code('files');
     $file_handle = @fopen(get_custom_file_base() . '/uploads/' . $type . '/' . $file, 'wb') or intelligent_write_error(get_custom_file_base() . '/uploads/' . $type . '/' . $file);
+    flock($file_handle, LOCK_EX);
     http_download_file($_GET['url'], null, false, false, 'Composr', null, null, null, null, null, $file_handle, null, null, 6.0);
+    flock($file_handle, LOCK_UN);
     fclose($file_handle);
 
-    // move the old media file to the archive directory - '/uploads/'.$type.'/archive/'
+    // move the old media file to the archive directory - '/uploads/' . $type . '/archive/'
     $new_url = 'uploads/' . $type . '/' . rawurlencode($file);
     if (isset($get_old_file[0]['url']) && is_string($get_old_file[0]['url']) && $get_old_file[0]['url'] != $new_url && strlen($get_old_file[0]['url']) > 0) {
         $movedir = dirname(str_replace('/uploads/' . $type . '/', '/uploads/' . $type . '_archive_addon/', str_replace('\\', '/', get_custom_file_base()) . '/' . rawurldecode($get_old_file[0]['url'])));
         @mkdir($movedir, 0777);
         require_code('files');
-        fix_permissions($movedir, 0777);
-        rename(str_replace('\\', '/', get_custom_file_base()) . '/' . rawurldecode($get_old_file[0]['url']), str_replace('/uploads/' . $type . '/', '/uploads/' . $type . '_archive_addon/', str_replace('\\', '/', get_custom_file_base()) . '/' . rawurldecode($get_old_file[0]['url'])));
+        fix_permissions($movedir);
+        $from_path = str_replace('\\', '/', get_custom_file_base()) . '/' . rawurldecode($get_old_file[0]['url']);
+        $to_path = str_replace('/uploads/' . $type . '/', '/uploads/' . $type . '_archive_addon/', str_replace('\\', '/', get_custom_file_base()) . '/' . rawurldecode($get_old_file[0]['url']));
+        rename($from_path, $to_path);
+        sync_file_move($from_path, $to_path);
     }
 
     switch ($type) {

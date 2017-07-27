@@ -10,9 +10,10 @@ During basic configuration, you will be familiarising yourself with Composr for 
 
 [surround]
 [media width="150" description="Reaching the Admin Zone from the main website" float="right"]data_custom/images/docs/tut_configuration/reaching_adminzone.png[/media]
-When the installer finishes, you have a choice to either:[list="a"]
+When the installer finishes, you have a choice to either:
+[list="a"]
 [*] view your website
-[*] run the Admin Zone's Setup Wizard (recommend)
+[*] run the Admin Zone's Setup Wizard (recommended)
 [/list]
 
 In either case you will be required to log in. Log in using an administration username. If you installed using Conversr (Composr's own forum system), the username and password will have been specified during installation (with the username being 'admin' by default).
@@ -92,13 +93,13 @@ You will want to change your logo to give your site an individual identity. You 
 When you change images, styling, or low-level HTML structure (defined in templates), you are editing the theme of the site. Therefore to do it, you should go to Admin Zone > Style > Themes.
 When you choose to manage images in the default theme, you will be warned against editing the default theme; for this simple task, the warning is irrelevant, and we therefore recommend you click 'ok'. If you are feeling adventurous, you could add a new theme, and continue sculpting your theme as you go.
 
-Choose [tt]logo/-logo[/tt] (the logo for the Welcome Zone, and the logo for any zone that does not have its own) from the drop-down list presented. After clicking the button you will see the current image; all you need to do is create your own replacement on your computer (as a [tt].jpeg[/tt]/[tt].jpg[/tt], [tt].png[/tt], [tt].gif[/tt] or [tt].png[/tt] file) and choose to browse for it to upload. You do not need to erase the current URL, as your upload will replace it, and you definitely should leave the 'Name' field unchanged.
+Choose [tt]logo/-logo[/tt] (the logo for the Welcome Zone, and the logo for any zone that does not have its own) from the drop-down list presented. After clicking the button you will see the current image; all you need to do is create your own replacement on your computer (as a [tt].jpeg[/tt]/[tt].jpg[/tt], [tt].gif[/tt] or [tt].png[/tt] file) and choose to browse for it to upload. You do not need to erase the current URL, as your upload will replace it, and you definitely should leave the 'Name' field unchanged.
 
 Your choice of image file formats:
- - Use either [tt].png[/tt], [tt].jpg[/tt], or [tt].gif[/tt] files.
+ - Use either [tt].png[/tt], [tt].jpg[/tt], or [tt].gif[/tt] files:
   - [tt].jpg[/tt] is usually the best choice for a logo, because the file size can be very low. Be aware though that the JPEG format is a 'lossy' format, i.e. the higher the compression, the lower the quality of the image. JPEG does not support transparency.
-  - [tt].png[/tt] never loses quality, and also supports transparency -- but the sizes are a bit larger
-  - [tt].gif[/tt] is only really a good idea if you need animation, which is unlikely for a logo
+  - [tt].png[/tt] never loses quality, and also supports transparency -- but the sizes are a bit larger.
+  - [tt].gif[/tt] is only really a good idea if you need animation, which is unlikely for a logo. Soon will be able to do animation with [tt].png[/tt] via [url="APNG"]http://caniuse.com/#feat=apng[/url].
  - Do not ever try and use [tt].bmp[/tt] files with Composr, as they do not have proper compression, and are designed for Windows only.
 [/surround]
 
@@ -127,12 +128,12 @@ Examples of scheduling tasks:
  - Sending out automatic newsletters
  - Sending newsletters (dripping out e-mails over a period of time, to stop resource spiking)
 
-The [tt]data/cron_bridge.php[/tt] file can either be run by passing the PHP file through the PHP interpreter (common), or by calling the URL (see "Help -- my web host does not support CRON!"). More details are in the following sections. Don't call up the URL by hand because if you do then Composr will start assuming the CRON bridge scheduler is working from then on which can make testing it a bit harder (once it is called once it is marked 'working' by the system -- applicable features will become available, and the todo item will be removed from the checklist on the front page of the Admin Zone).
+The [tt]data/cron_bridge.php[/tt] file can either be run by passing the PHP file through the PHP interpreter (common), or by calling the URL (see "Help -- my webhost does not support CRON!"). More details are in the following sections. Don't call up the URL by hand because if you do then Composr will start assuming the CRON bridge scheduler is working from then on which can make testing it a bit harder (once it is called once it is marked 'working' by the system -- applicable features will become available, and the todo item will be removed from the checklist on the front page of the Admin Zone).
 
 [title="3"]Specific advice for Linux[/title]
 
-[media width="150" description="Setting up CRON in the cPanel web hosting control panel (different control panels vary in their UI)" float="right"]data_custom/images/docs/tut_configuration/cron.png[/media]
-On Linux, the system level scheduler is 'Cron', and the process of adding a task is known as 'setting up a Cronjob'. Many web hosting control panels allow you to do this.
+[media width="150" description="Setting up CRON in the cPanel webhosting control panel (different control panels vary in their UI)" float="right"]data_custom/images/docs/tut_configuration/cron.png[/media]
+On Linux, the system level scheduler is 'Cron', and the process of adding a task is known as 'setting up a Cronjob'. Many webhosting control panels allow you to do this.
 
 The following command might work for a Composr installation in the [tt]/home/examplesite/htdocs[/tt] directory:
 [code="Bash"]
@@ -182,11 +183,11 @@ The following is a Windows Vista scheduler step by step process for scheduling t
 17) Click 'OK'
 This should have now added a schedule within Windows scheduler to run the [tt]cron_bridge.php[/tt] file every 5 minutes. This step by step was created using Windows Vista, the process may change slightly in other versions of Windows.
 
-[title="3"]Help -- my web host does not support CRON![/title]
+[title="3"]Help -- my webhost does not support CRON![/title]
 
 In the event your hosting platform does not allow you access to CRON, there are a number of options available to you. These options work to call the [tt]data/cron_bridge.php[/tt] script by URL, rather than via a direct command on the server.
 
- - EasyCron provide direct instructions for Composr, and free and paid plans: http://www.easycron.com/tutorials/how-to-set-up-cron-job-for-ocportal (actually the instructions are for ocPortal, but this is just the old name for Composr)
+ - EasyCron provide direct instructions for Composr, and free and paid plans: https://www.easycron.com/cron-job-tutorials/how-to-set-up-cron-job-for-composr
  - Other free options are http://www.mywebcron.com/ (up to every 5 minutes), http://www.setcronjob.com/ (up to every 5 minutes but the schedule needs to be re-set every week) and http://www.onlinecronjobs.com/ (up to 5 jobs twice a day).
 
 Simply sign up and  add the URL i.e. [tt]http://yourbaseurl/data/cron_bridge.php[/tt] to the scheduler and set how often you want it to run.
@@ -225,4 +226,4 @@ It's not advertised in the interface, but it is possible for a user to join a cl
  - [page="_SEARCH:tut_adv_configuration"]Advanced Configuration[/page]
  - [page="_SEARCH:tut_notifications"]Notifications[/page]
 
-{$SET,tutorial_tags,zone_logos,setupwizard,help_page,core_configuration,Configuration,Installation,pinned,novice}{$SET,tutorial_add_date,Aug 2008}{$SET,tutorial_summary,Once Composr is installed, there is some basic configuration to do before your website is ready to open. We discuss it here.}[block]main_tutorial_rating[/block]
+{$SET,tutorial_tags,zone_logos,setupwizard,help_page,core_configuration,Configuration,Installation,novice}{$SET,tutorial_add_date,Aug 2008}{$SET,tutorial_summary,Once Composr is installed, there is some basic configuration to do before your website is ready to open. We discuss it here.}[block]main_tutorial_rating[/block]

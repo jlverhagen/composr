@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -35,6 +35,10 @@ class Hook_rss_iotds
             return null;
         }
 
+        if (!$GLOBALS['SITE_DB']->table_exists('iotd')) {
+            return null;
+        }
+
         if (!has_actual_page_access(get_member(), 'iotds')) {
             return null;
         }
@@ -63,7 +67,7 @@ class Hook_rss_iotds
             $view_url = build_url(array('page' => 'iotds', 'type' => 'view', 'id' => $row['id']), get_module_zone('iotds'), null, false, false, true);
 
             if (($prefix == 'RSS_') && (get_option('is_on_comments') == '1') && ($row['allow_comments'] >= 1)) {
-                $if_comments = do_template('RSS_ENTRY_COMMENTS', array('_GUID' => 'a8ccf291cb27c8ffb34f023416b85664', 'COMMENT_URL' => $view_url, 'ID' => strval($row['id'])));
+                $if_comments = do_template('RSS_ENTRY_COMMENTS', array('_GUID' => 'a8ccf291cb27c8ffb34f023416b85664', 'COMMENT_URL' => $view_url, 'ID' => strval($row['id'])), null, false, null, '.xml', 'xml');
             } else {
                 $if_comments = new Tempcode();
             }

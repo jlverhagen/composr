@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -38,11 +38,11 @@ class Hook_cns_auth_aef
     {
         if ($cookie_login) {
             if ($row['m_pass_hash_salted'] != $password_hashed) {
-                return do_lang_tempcode('MEMBER_BAD_PASSWORD');
+                return do_lang_tempcode((get_option('login_error_secrecy') == '1') ? 'MEMBER_INVALID_LOGIN' : 'MEMBER_BAD_PASSWORD');
             }
         } else {
             if (md5($row['m_pass_salt'] . trim($password_raw)) != $row['m_pass_hash_salted']) {
-                return do_lang_tempcode('MEMBER_BAD_PASSWORD');
+                return do_lang_tempcode((get_option('login_error_secrecy') == '1') ? 'MEMBER_INVALID_LOGIN' : 'MEMBER_BAD_PASSWORD');
             }
         }
 

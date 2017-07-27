@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -35,7 +35,7 @@ class Module_admin_staff
         $info['organisation'] = 'ocProducts';
         $info['hacked_by'] = null;
         $info['hack_version'] = null;
-        $info['update_require_upgrade'] = 1;
+        $info['update_require_upgrade'] = true;
         $info['version'] = 3;
         $info['locked'] = true;
         return $info;
@@ -46,6 +46,7 @@ class Module_admin_staff
      */
     public function uninstall()
     {
+        $GLOBALS['SITE_DB']->query_delete('group_page_access', array('page_name' => 'admin_staff'));
     }
 
     /**
@@ -68,7 +69,7 @@ class Module_admin_staff
      * @param  boolean $check_perms Whether to check permissions.
      * @param  ?MEMBER $member_id The member to check permissions as (null: current user).
      * @param  boolean $support_crosslinks Whether to allow cross links to other modules (identifiable via a full-page-link rather than a screen-name).
-     * @param  boolean $be_deferential Whether to avoid any entry-point (or even return NULL to disable the page in the Sitemap) if we know another module, or page_group, is going to link to that entry-point. Note that "!" and "browse" entry points are automatically merged with container page nodes (likely called by page-groupings) as appropriate.
+     * @param  boolean $be_deferential Whether to avoid any entry-point (or even return null to disable the page in the Sitemap) if we know another module, or page_group, is going to link to that entry-point. Note that "!" and "browse" entry points are automatically merged with container page nodes (likely called by page-groupings) as appropriate.
      * @return ?array A map of entry points (screen-name=>language-code/string or screen-name=>[language-code/string, icon-theme-image]) (null: disabled).
      */
     public function get_entry_points($check_perms = true, $member_id = null, $support_crosslinks = true, $be_deferential = false)
@@ -81,7 +82,7 @@ class Module_admin_staff
     public $title;
 
     /**
-     * Module pre-run function. Allows us to know meta-data for <head> before we start streaming output.
+     * Module pre-run function. Allows us to know metadata for <head> before we start streaming output.
      *
      * @return ?Tempcode Tempcode indicating some kind of exceptional output (null: none).
      */
@@ -141,8 +142,8 @@ class Module_admin_staff
         }
 
         $admin_groups = array_merge($GLOBALS['FORUM_DRIVER']->get_super_admin_groups(), $GLOBALS['FORUM_DRIVER']->get_moderator_groups());
-        $staff = $GLOBALS['FORUM_DRIVER']->member_group_query($admin_groups, 400);
-        if (count($staff) >= 400) {
+        $staff = $GLOBALS['FORUM_DRIVER']->member_group_query($admin_groups, intval(get_option('general_safety_listing_limit')));
+        if (count($staff) >= intval(get_option('general_safety_listing_limit'))) {
             warn_exit(do_lang_tempcode('TOO_MANY_TO_CHOOSE_FROM'));
         }
         $available = new Tempcode();
@@ -192,7 +193,7 @@ class Module_admin_staff
                 continue;
             }
             if (substr($key, 0, 6) == 'staff_') {
-                $id = intval($val); // e.g. $key=staff_2, $val=2  - so could also say $id=intval(substr($key,6));
+                $id = intval($val); // e.g. $key = staff_2, $val = 2  - so could also say $id = intval(substr($key, 6));
 
                 $this->_staff_edit($id, post_param_string('role_' . strval($id)));
 

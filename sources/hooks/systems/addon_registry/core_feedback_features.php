@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -26,9 +26,10 @@ class Hook_addon_registry_core_feedback_features
     /**
      * Get a list of file permissions to set
      *
+     * @param  boolean $runtime Whether to include wildcards represented runtime-created chmoddable files
      * @return array File permissions to set
      */
-    public function get_chmod_array()
+    public function get_chmod_array($runtime = false)
     {
         return array();
     }
@@ -301,7 +302,7 @@ class Hook_addon_registry_core_feedback_features
             'POST_WARNING' => lorem_phrase(),
             'COMMENT_TEXT' => lorem_sentence_html(),
             'GET_EMAIL' => lorem_word_html(),
-            'EMAIL_OPTIONAL' => lorem_word_html(),
+            'EMAIL_OPTIONAL' => true,
             'GET_TITLE' => true,
             'EM' => placeholder_emoticon_chooser(),
             'DISPLAY' => 'block',
@@ -355,6 +356,7 @@ class Hook_addon_registry_core_feedback_features
                 'POSTER_DETAILS' => new Tempcode(),
                 'ID' => placeholder_id() . strval($i),
                 'POST' => lorem_phrase(),
+                'IS_UNREAD' => false,
                 'POST_COMCODE' => lorem_phrase(),
                 'CHILDREN' => lorem_phrase(),
                 'OTHER_IDS' => array(

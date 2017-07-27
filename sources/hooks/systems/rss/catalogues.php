@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -44,8 +44,13 @@ class Hook_rss_catalogues
             return null;
         }
 
-        $filters_1 = selectcode_to_sqlfragment($_filters, 'id', 'catalogue_categories', 'cc_parent_id', 'id', 'id'); // Note that the parameters are fiddled here so that category-set and record-set are the same, yet SQL is returned to deal in an entirely different record-set (entries' record-set)
-        $filters = selectcode_to_sqlfragment($_filters, 'cc_id', 'catalogue_categories', 'cc_parent_id', 'cc_id', 'id'); // Note that the parameters are fiddled here so that category-set and record-set are the same, yet SQL is returned to deal in an entirely different record-set (entries' record-set)
+        if (preg_match('#^[\d\!\-\+\*\#\~\>\,]*$#', $_filters) != 0) {
+            $filters_1 = selectcode_to_sqlfragment($_filters, 'id', 'catalogue_categories', 'cc_parent_id', 'id', 'id'); // Note that the parameters are fiddled here so that category-set and record-set are the same, yet SQL is returned to deal in an entirely different record-set (entries' record-set)
+            $filters = selectcode_to_sqlfragment($_filters, 'cc_id', 'catalogue_categories', 'cc_parent_id', 'cc_id', 'id'); // Note that the parameters are fiddled here so that category-set and record-set are the same, yet SQL is returned to deal in an entirely different record-set (entries' record-set)
+        } else {
+            $filters_1 = db_string_equal_to('c_name', $_filters);
+            $filters = db_string_equal_to('c_name', $_filters);
+        }
 
         require_code('catalogues');
 
@@ -80,9 +85,10 @@ class Hook_rss_catalogues
         $content = new Tempcode();
         foreach ($rows as $row) {
             if ((count($_categories) == 300) && (!array_key_exists($row['cc_id'], $categories))) {
-                $val = $GLOBALS['SITE_DB']->query_value_if_there('SELECT cc_title FROM ' . get_table_prefix() . 'catalogue_categories WHERE id=' . strval($row['cc_id']) . ' AND (' . $filters_1 . ')', false, true);
-                if (!is_null($val)) {
-                    $categories[$row['cc_id']] = get_translated_text($val);
+                $val = $GLOBALS['SITE_DB']->query('SELECT id,c_name,cc_title FROM ' . get_table_prefix() . 'catalogue_categories WHERE id=' . strval($row['cc_id']) . ' AND (' . $filters_1 . ')');
+                if (array_key_exists(0, $val)) {
+                    $categories[$row['cc_id']] = $val[0];
+                    $categories[$row['cc_id']]['_title'] = get_translated_text($val[0]['cc_title']);
                 }
             }
             if (!array_key_exists($row['cc_id'], $categories)) {

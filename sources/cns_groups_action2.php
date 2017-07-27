@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -69,7 +69,7 @@ function cns_edit_group($group_id, $name, $is_default, $is_super_admin, $is_supe
     $test = $GLOBALS['FORUM_DB']->query_select_value_if_there('f_groups', 'id', array($GLOBALS['FORUM_DB']->translate_field_ref('g_name') => $name));
     if ((!is_null($test)) && ($test != $group_id)) {
         if ($uniqify) {
-            $name .= '_' . uniqid('', true);
+            $name .= '_' . uniqid('', false);
         } else {
             warn_exit(do_lang_tempcode('ALREADY_EXISTS', escape_html($name)));
         }
@@ -172,7 +172,7 @@ function cns_edit_group($group_id, $name, $is_default, $is_super_admin, $is_supe
 
     if ((addon_installed('commandr')) && (!running_script('install'))) {
         require_code('resource_fs');
-        generate_resourcefs_moniker('group', strval($group_id));
+        generate_resource_fs_moniker('group', strval($group_id));
     }
 
     persistent_cache_delete('GROUPS');
@@ -241,7 +241,7 @@ function cns_delete_group($group_id, $target_group = null)
 
     if ((addon_installed('commandr')) && (!running_script('install'))) {
         require_code('resource_fs');
-        expunge_resourcefs_moniker('group', strval($group_id));
+        expunge_resource_fs_moniker('group', strval($group_id));
     }
 
     persistent_cache_delete('GROUPS_COUNT');

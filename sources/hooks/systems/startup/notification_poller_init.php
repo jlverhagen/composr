@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -28,7 +28,7 @@ class Hook_startup_notification_poller_init
      */
     public function run()
     {
-        if ((running_script('index')) && (!is_guest()) && (get_option('notification_poll_frequency') != '0')) {
+        if ((running_script('index')) && (!is_guest()) && (get_option('notification_poll_frequency') != '') && (get_option('notification_poll_frequency') != '0')) {
             require_javascript('notification_poller');
             require_javascript('ajax');
 

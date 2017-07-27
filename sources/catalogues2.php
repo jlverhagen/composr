@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -36,7 +36,7 @@ function init__catalogues2()
  */
 function catalogue_to_tree($catalogue_name)
 {
-    $new_root = actual_add_catalogue_category($catalogue_name, do_lang('ROOT'), '', '', null, '');
+    $new_root = actual_add_catalogue_category($catalogue_name, get_translated_text($GLOBALS['SITE_DB']->query_select_value('catalogues', 'c_title', array('c_name' => $catalogue_name))), '', '', null, '');
     $GLOBALS['SITE_DB']->query('UPDATE ' . get_table_prefix() . 'catalogue_categories SET cc_parent_id=' . strval($new_root) . ' WHERE id<>' . strval($new_root) . ' AND ' . db_string_equal_to('c_name', $catalogue_name));
     $GLOBALS['SITE_DB']->query_update('catalogues', array('c_is_tree' => 1), array('c_name' => $catalogue_name), '', 1);
 }
@@ -77,7 +77,7 @@ function actual_add_catalogue($name, $title, $description, $display_type, $is_tr
     }
 
     require_code('type_sanitisation');
-    if (!is_alphanumeric($name, true)) {
+    if (!is_alphanumeric($name)) {
         warn_exit(do_lang_tempcode('BAD_CODENAME'));
     }
 
@@ -85,7 +85,7 @@ function actual_add_catalogue($name, $title, $description, $display_type, $is_tr
     $test = $GLOBALS['SITE_DB']->query_select_value_if_there('catalogues', 'c_name', array('c_name' => $name));
     if (!is_null($test)) {
         if ($uniqify) {
-            $name .= '_' . uniqid('', true);
+            $name .= '_' . uniqid('', false);
         } else {
             warn_exit(do_lang_tempcode('ALREADY_EXISTS', escape_html($name)));
         }
@@ -140,7 +140,7 @@ function actual_add_catalogue($name, $title, $description, $display_type, $is_tr
 
     if ((addon_installed('commandr')) && (!running_script('install'))) {
         require_code('resource_fs');
-        generate_resourcefs_moniker('catalogue', $name, null, null, true);
+        generate_resource_fs_moniker('catalogue', $name, null, null, true);
     }
 
     require_code('member_mentions');
@@ -163,7 +163,7 @@ function actual_add_catalogue($name, $title, $description, $display_type, $is_tr
  * @param  mixed $name The name of the field (either language string map or string)
  * @param  mixed $description A description (either language string map or string)
  * @param  ID_TEXT $type The type of the field
- * @param  integer $order The field order (the field order determines what order the fields are displayed within an entry)
+ * @param  ?integer $order The field order (the field order determines what order the fields are displayed within an entry) (null: next)
  * @param  BINARY $defines_order Whether this field defines the catalogue order
  * @param  BINARY $visible Whether this is a visible field
  * @param  BINARY $searchable Whether the field is usable as a search key
@@ -175,8 +175,17 @@ function actual_add_catalogue($name, $title, $description, $display_type, $is_tr
  * @param  ?AUTO_LINK $id Force this ID (null: auto-increment as normal)
  * @return AUTO_LINK Field ID
  */
-function actual_add_catalogue_field($c_name, $name, $description, $type, $order, $defines_order, $visible, $searchable, $default, $required, $put_in_category = 1, $put_in_search = 1, $options = '', $id = null)
+function actual_add_catalogue_field($c_name, $name, $description = '', $type = 'short_text', $order = null, $defines_order = 0, $visible = 1, $searchable = 0, $default = '', $required = 0, $put_in_category = 1, $put_in_search = 1, $options = '', $id = null)
 {
+    if (is_null($order)) {
+        $order = $GLOBALS['SITE_DB']->query_select_value('catalogue_fields', 'MAX(cf_order)', array('c_name' => $c_name));
+        if (is_null($order)) {
+            $order = 0;
+        } else {
+            $order++;
+        }
+    }
+
     $map = array(
         'c_name' => $c_name,
         'cf_type' => $type,
@@ -212,7 +221,7 @@ function actual_add_catalogue_field($c_name, $name, $description, $type, $order,
 
     $ob = get_fields_hook($type);
 
-    if (function_exists('set_time_limit')) {
+    if (php_function_allowed('set_time_limit')) {
         @set_time_limit(0);
     }
 
@@ -225,17 +234,17 @@ function actual_add_catalogue_field($c_name, $name, $description, $type, $order,
 
             list($raw_type, $default, $_type) = $ob->get_field_value_row_bits($map + array('id' => $cf_id), $required == 1, $default);
 
-            $map = array('cf_id' => $cf_id, 'ce_id' => $entry);
+            $entry_map = array('cf_id' => $cf_id, 'ce_id' => $entry);
             if (strpos($_type, '_trans') !== false) {
-                $map += insert_lang_comcode('cv_value', is_null($default) ? '' : $default, 3);
+                $entry_map += insert_lang_comcode('cv_value', is_null($default) ? '' : $default, 3);
             } elseif ($_type == 'float') {
-                $map['cv_value'] = ((is_null($default)) || ($default == '')) ? null : floatval($default);
+                $entry_map['cv_value'] = ((is_null($default)) || ($default == '')) ? null : floatval($default);
             } elseif ($_type == 'integer') {
-                $map['cv_value'] = ((is_null($default)) || ($default == '')) ? null : intval($default);
+                $entry_map['cv_value'] = ((is_null($default)) || ($default == '')) ? null : intval($default);
             } else {
-                $map['cv_value'] = ((is_null($default)) || ($type == 'list')) ? '' : $default;
+                $entry_map['cv_value'] = ((is_null($default)) || ($type == 'list')) ? '' : $default;
             }
-            $GLOBALS['SITE_DB']->query_insert('catalogue_efv_' . $_type, $map);
+            $GLOBALS['SITE_DB']->query_insert('catalogue_efv_' . $_type, $entry_map);
         }
 
         $start += 300;
@@ -269,14 +278,14 @@ function actual_edit_catalogue($old_name, $name, $title, $description, $display_
         $test = $GLOBALS['SITE_DB']->query_select_value_if_there('catalogues', 'c_name', array('c_name' => $name));
         if (!is_null($test)) {
             if ($uniqify) {
-                $name .= '_' . uniqid('', true);
+                $name .= '_' . uniqid('', false);
             } else {
                 warn_exit(do_lang_tempcode('ALREADY_EXISTS', escape_html($name)));
             }
         }
 
         require_code('type_sanitisation');
-        if (!is_alphanumeric($name, true)) {
+        if (!is_alphanumeric($name)) {
             warn_exit(do_lang_tempcode('BAD_CODENAME'));
         }
     }
@@ -333,7 +342,7 @@ function actual_edit_catalogue($old_name, $name, $title, $description, $display_
     if ((addon_installed('commandr')) && (!running_script('install'))) {
         if ($old_name != $name) { // We want special stability in catalogue addressing
             require_code('resource_fs');
-            generate_resourcefs_moniker('catalogue', $name);
+            generate_resource_fs_moniker('catalogue', $name);
         }
     }
 
@@ -362,7 +371,7 @@ function actual_delete_catalogue($name)
     $myrow = $rows[0];
 
     // Delete anything involved (ha ha destruction!)
-    if (function_exists('set_time_limit')) {
+    if (php_function_allowed('set_time_limit')) {
         @set_time_limit(0);
     }
     do {
@@ -397,7 +406,7 @@ function actual_delete_catalogue($name)
 
     if ((addon_installed('commandr')) && (!running_script('install'))) {
         require_code('resource_fs');
-        expunge_resourcefs_moniker('catalogue', $name);
+        expunge_resource_fs_moniker('catalogue', $name);
     }
 
     if (substr($name, 0, 1) == '_') {
@@ -511,7 +520,7 @@ function actual_add_catalogue_category($catalogue_name, $title, $description, $n
 
     if (is_null($order)) {
         $order = $GLOBALS['SITE_DB']->query_select_value('catalogue_categories', 'MAX(cc_order)', array('c_name' => $catalogue_name));
-        if (is_null($order)) {
+        if ((is_null($order)) || ($order >= 2147483648)) {
             $order = 0;
         } else
         {
@@ -545,6 +554,8 @@ function actual_add_catalogue_category($catalogue_name, $title, $description, $n
     }
     $id = $GLOBALS['SITE_DB']->query_insert('catalogue_categories', $map, true);
 
+    store_in_catalogue_cat_treecache($id, $parent_id); // *must* run before calculate_category_child_count_cache
+
     calculate_category_child_count_cache($parent_id);
 
     log_it('ADD_CATALOGUE_CATEGORY', strval($id), get_translated_text($map['cc_title']));
@@ -558,8 +569,6 @@ function actual_add_catalogue_category($catalogue_name, $title, $description, $n
         seo_meta_set_for_explicit('catalogue_category', strval($id), $meta_keywords, $meta_description);
     }
 
-    store_in_catalogue_cat_treecache($id, $parent_id);
-
     if (!is_null($parent_id)) {
         require_code('notifications2');
         copy_notifications_to_new_child('catalogue_entry', strval($parent_id), strval($id));
@@ -567,7 +576,7 @@ function actual_add_catalogue_category($catalogue_name, $title, $description, $n
 
     if ((addon_installed('commandr')) && (!running_script('install'))) {
         require_code('resource_fs');
-        generate_resourcefs_moniker('catalogue_category', strval($id), null, null, true);
+        generate_resource_fs_moniker('catalogue_category', strval($id), null, null, true);
     }
 
     if (function_exists('get_member')) {
@@ -577,7 +586,7 @@ function actual_add_catalogue_category($catalogue_name, $title, $description, $n
 
     require_code('sitemap_xml');
     notify_sitemap_node_add(
-        'SEARCH:catalogues:browse:' . strval($id),
+        'SEARCH:catalogues:category:' . strval($id),
         $add_date,
         null,
         is_null($parent_id) ? SITEMAP_IMPORTANCE_MEDIUM : SITEMAP_IMPORTANCE_LOW,
@@ -593,7 +602,7 @@ function actual_add_catalogue_category($catalogue_name, $title, $description, $n
  */
 function rebuild_catalogue_cat_treecache()
 {
-    if (function_exists('set_time_limit')) {
+    if (php_function_allowed('set_time_limit')) {
         @set_time_limit(0);
     }
 
@@ -677,7 +686,7 @@ function calculate_category_child_count_cache($cat_id, $recursive_updates = true
 
     $catalogue_name = $GLOBALS['SITE_DB']->query_select_value_if_there('catalogue_categories', 'c_name', array('id' => $cat_id));
 
-    $num_rec_children = $GLOBALS['SITE_DB']->query_select_value('catalogue_cat_treecache', 'COUNT(*)', array('cc_ancestor_id' => $cat_id)) - 1;
+    $num_rec_children = max(0, $GLOBALS['SITE_DB']->query_select_value('catalogue_cat_treecache', 'COUNT(*)', array('cc_ancestor_id' => $cat_id)) - 1);
     $num_rec_entries = $GLOBALS['SITE_DB']->query_select_value('catalogue_cat_treecache t JOIN ' . get_table_prefix() . 'catalogue_entries e ON e.cc_id=t.cc_id', 'COUNT(*)', array('ce_validated' => 1, 't.cc_ancestor_id' => $cat_id, 'c_name' => $catalogue_name/*important, else custom field cats could be included*/));
 
     $GLOBALS['SITE_DB']->query_insert('catalogue_childcountcache', array(
@@ -784,14 +793,16 @@ function actual_edit_catalogue_category($id, $title, $description, $notes, $pare
 
     log_it('EDIT_CATALOGUE_CATEGORY', strval($id), $title);
 
+    decache('main_cc_embed');
+
     if ((addon_installed('commandr')) && (!running_script('install'))) {
         require_code('resource_fs');
-        generate_resourcefs_moniker('catalogue_category', strval($id));
+        generate_resource_fs_moniker('catalogue_category', strval($id));
     }
 
     require_code('sitemap_xml');
     notify_sitemap_node_edit(
-        'SEARCH:catalogues:browse:' . strval($id),
+        'SEARCH:catalogues:category:' . strval($id),
         has_category_access($GLOBALS['FORUM_DRIVER']->get_guest_id(), 'catalogues_catalogue', $rows[0]['c_name']) && has_category_access($GLOBALS['FORUM_DRIVER']->get_guest_id(), 'catalogues_category', strval($id))
     );
 }
@@ -800,7 +811,7 @@ function actual_edit_catalogue_category($id, $title, $description, $notes, $pare
  * Delete a catalogue category.
  *
  * @param  AUTO_LINK $id The ID of the category
- * @param  boolean $deleting_all Whether we're deleting everything under the category; if FALSE we will actively reassign child categories to be directly under the root
+ * @param  boolean $deleting_all Whether we're deleting everything under the category; if FALSE we will actively reassign child categories and entries up a level (if tree) or deletes (if not tree)
  */
 function actual_delete_catalogue_category($id, $deleting_all = false)
 {
@@ -826,20 +837,23 @@ function actual_delete_catalogue_category($id, $deleting_all = false)
     delete_upload('uploads/repimages', 'catalogue_categories', 'rep_image', 'id', $id);
 
     if (!$deleting_all) { // If not deleting the whole catalogue
-        if (function_exists('set_time_limit')) {
+        if (php_function_allowed('set_time_limit')) {
             @set_time_limit(0);
         }
 
-        // If we're in a tree
         if ($myrow['c_is_tree'] == 1) {
+            // If we're in a tree...
+
             $GLOBALS['SITE_DB']->query_update('catalogue_categories', array('cc_parent_id' => $myrow['cc_parent_id']), array('cc_parent_id' => $id));
             $GLOBALS['SITE_DB']->query_update('catalogue_entries', array('cc_id' => $myrow['cc_parent_id']), array('cc_id' => $id));
         } else { // If we're not in a tree catalogue we can't move them, we have to delete
-            if (function_exists('set_time_limit')) {
+            // If we're not in a tree...
+
+            if (php_function_allowed('set_time_limit')) {
                 @set_time_limit(0);
             }
 
-            $GLOBALS['SITE_DB']->query_delete('catalogue_categories', array('cc_parent_id' => $id)); // Does nothing, in theory
+            $GLOBALS['SITE_DB']->query_delete('catalogue_categories', array('cc_parent_id' => $id)); // Does nothing, in theory, as it's not a tree!
             $start = 0;
             do {
                 $entries = $GLOBALS['SITE_DB']->query_select('catalogue_entries', array('id'), array('cc_id' => $id), '', 500, $start);
@@ -858,6 +872,8 @@ function actual_delete_catalogue_category($id, $deleting_all = false)
     require_code('seo2');
     seo_meta_erase_storage('catalogue_category', strval($id));
 
+    $_title = get_translated_text($myrow['cc_title']);
+
     // Delete lang
     delete_lang($myrow['cc_title']);
     delete_lang($myrow['cc_description']);
@@ -871,15 +887,17 @@ function actual_delete_catalogue_category($id, $deleting_all = false)
 
     calculate_category_child_count_cache($old_parent_id);
 
-    log_it('DELETE_CATALOGUE_CATEGORY', strval($id), get_translated_text($myrow['cc_title']));
+    log_it('DELETE_CATALOGUE_CATEGORY', strval($id), $_title);
+
+    decache('main_cc_embed');
 
     if ((addon_installed('commandr')) && (!running_script('install'))) {
         require_code('resource_fs');
-        expunge_resourcefs_moniker('catalogue_category', strval($id));
+        expunge_resource_fs_moniker('catalogue_category', strval($id));
     }
 
     require_code('sitemap_xml');
-    notify_sitemap_node_delete('SEARCH:catalogues:browse:' . strval($id));
+    notify_sitemap_node_delete('SEARCH:catalogues:category:' . strval($id));
 }
 
 /**
@@ -947,11 +965,12 @@ function actual_add_catalogue_entry($category_id, $validated, $notes, $allow_rat
 
         if (is_null($title)) {
             $title = $val;
-
             require_code('global4');
             prevent_double_submit('ADD_CATALOGUE_ENTRY', null, $title);
         }
     }
+
+    static $done_one_posting_field = false;
 
     $id = $GLOBALS['SITE_DB']->query_insert('catalogue_entries', $imap, true);
     foreach ($map as $field_id => $val) {
@@ -970,7 +989,8 @@ function actual_add_catalogue_entry($category_id, $validated, $notes, $allow_rat
         );
 
         if (strpos($raw_type, '_trans') !== false) {
-            if ($type == 'posting_field') {
+            if (($type == 'posting_field') && (!$done_one_posting_field)) {
+                $done_one_posting_field = true;
                 require_code('attachments2');
                 $smap += insert_lang_comcode_attachments('cv_value', 3, $val, 'catalogue_entry', strval($id));
             } else {
@@ -978,7 +998,7 @@ function actual_add_catalogue_entry($category_id, $validated, $notes, $allow_rat
             }
         } else {
             if ($sup_table_name == 'short') {
-                $val = substr($val, 0, 255);
+                $val = cms_mb_substr($val, 0, 255);
             }
 
             if ($sup_table_name == 'float') {
@@ -1010,7 +1030,14 @@ function actual_add_catalogue_entry($category_id, $validated, $notes, $allow_rat
                 }
             }
         }
-        seo_meta_set_for_implicit('catalogue_entry', strval($id), $seo_source_map, '');
+        foreach ($fields as $field_id => $cf_type) {
+            if (($cf_type == 'long_trans') || ($cf_type == 'long_text') || ($cf_type == 'posting_field')) {
+                $meta_description = isset($map[$field_id]) ? $map[$field_id] : '';
+                break;
+            }
+        }
+
+        seo_meta_set_for_implicit('catalogue_entry', strval($id), $seo_source_map, $meta_description);
     } else {
         seo_meta_set_for_explicit('catalogue_entry', strval($id), $meta_keywords, $meta_description);
     }
@@ -1031,14 +1058,14 @@ function actual_add_catalogue_entry($category_id, $validated, $notes, $allow_rat
             $subject = do_lang('CATALOGUE_ENTRY_NOTIFICATION_MAIL_SUBJECT', get_site_name(), strip_comcode($title), array($catalogue_title));
             $self_url = build_url(array('page' => 'catalogues', 'type' => 'entry', 'id' => $id), get_module_zone('catalogues'), null, false, false, true);
             $mail = do_notification_lang('CATALOGUE_ENTRY_NOTIFICATION_MAIL', comcode_escape(get_site_name()), comcode_escape(strip_comcode($title)), array(comcode_escape($self_url->evaluate()), comcode_escape($catalogue_title)));
-            dispatch_notification('catalogue_entry__' . $catalogue_name, strval($id), $subject, $mail, $privacy_limits);
+            dispatch_notification('catalogue_entry__' . $catalogue_name, strval($category_id), $subject, $mail, $privacy_limits);
         }
 
         log_it('ADD_CATALOGUE_ENTRY', strval($id), $title);
 
         if ((addon_installed('commandr')) && (!running_script('install'))) {
             require_code('resource_fs');
-            generate_resourcefs_moniker('catalogue_entry', strval($id), null, null, true);
+            generate_resource_fs_moniker('catalogue_entry', strval($id), null, null, true);
         }
     }
 
@@ -1075,11 +1102,11 @@ function actual_add_catalogue_entry($category_id, $validated, $notes, $allow_rat
  * @param  array $map A map of field IDs, to values, that defines the entries settings
  * @param  ?SHORT_TEXT $meta_keywords Meta keywords for this resource (null: do not edit)
  * @param  ?LONG_TEXT $meta_description Meta description for this resource (null: do not edit)
- * @param  ?TIME $edit_time Edit time (null: either means current time, or if $null_is_literal, means reset to to NULL)
+ * @param  ?TIME $edit_time Edit time (null: either means current time, or if $null_is_literal, means reset to to null)
  * @param  ?TIME $add_time Add time (null: do not change)
  * @param  ?integer $views Number of views (null: do not change)
  * @param  ?MEMBER $submitter Submitter (null: do not change)
- * @param  boolean $null_is_literal Determines whether some NULLs passed mean 'use a default' or literally mean 'set to NULL'
+ * @param  boolean $null_is_literal Determines whether some nulls passed mean 'use a default' or literally mean 'set to null
  */
 function actual_edit_catalogue_entry($id, $category_id, $validated, $notes, $allow_rating, $allow_comments, $allow_trackbacks, $map, $meta_keywords = '', $meta_description = '', $edit_time = null, $add_time = null, $views = null, $submitter = null, $null_is_literal = false)
 {
@@ -1132,6 +1159,8 @@ function actual_edit_catalogue_entry($id, $category_id, $validated, $notes, $all
 
     @ignore_user_abort(true);
 
+    static $done_one_posting_field = false;
+
     $GLOBALS['SITE_DB']->query_update('catalogue_entries', $update_map, array('id' => $id), '', 1);
 
     require_code('fields');
@@ -1153,10 +1182,11 @@ function actual_edit_catalogue_entry($id, $category_id, $validated, $notes, $all
             if (is_null($_val)) {
                 $smap += insert_lang_comcode('cv_value', $val, 3);
             } else {
-                if ($type == 'posting_field') {
+                if (($type == 'posting_field') && (!$done_one_posting_field)) {
+                    $done_one_posting_field = true;
                     require_code('attachments2');
                     require_code('attachments3');
-                    $smap += update_lang_comcode_attachments('cv_value', $_val, $val, 'catalogue_entry', strval($id), null, false, $original_submitter);
+                    $smap += update_lang_comcode_attachments('cv_value', $_val, $val, 'catalogue_entry', strval($id), null, $original_submitter);
                 } else {
                     $smap += lang_remap_comcode('cv_value', $_val, $val);
                 }
@@ -1196,7 +1226,7 @@ function actual_edit_catalogue_entry($id, $category_id, $validated, $notes, $all
 
         if ((addon_installed('commandr')) && (!running_script('install'))) {
             require_code('resource_fs');
-            generate_resourcefs_moniker('catalogue_entry', strval($id));
+            generate_resource_fs_moniker('catalogue_entry', strval($id));
         }
 
         if ($just_validated) {
@@ -1211,7 +1241,7 @@ function actual_edit_catalogue_entry($id, $category_id, $validated, $notes, $all
             require_code('notifications');
             $subject = do_lang('CATALOGUE_ENTRY_NOTIFICATION_MAIL_SUBJECT', get_site_name(), strip_comcode($title), array($catalogue_title));
             $mail = do_notification_lang('CATALOGUE_ENTRY_NOTIFICATION_MAIL', comcode_escape(get_site_name()), comcode_escape(strip_comcode($title)), array(comcode_escape($self_url->evaluate()), comcode_escape($catalogue_title)));
-            dispatch_notification('catalogue_entry__' . $catalogue_name, strval($id), $subject, $mail, $privacy_limits);
+            dispatch_notification('catalogue_entry__' . $catalogue_name, strval($category_id), $subject, $mail, $privacy_limits);
         }
     }
 
@@ -1241,7 +1271,10 @@ function actual_edit_catalogue_entry($id, $category_id, $validated, $notes, $all
  */
 function actual_delete_catalogue_entry($id)
 {
-    $old_category_id = $GLOBALS['SITE_DB']->query_select_value('catalogue_entries', 'cc_id', array('id' => $id));
+    $old_category_id = $GLOBALS['SITE_DB']->query_select_value_if_there('catalogue_entries', 'cc_id', array('id' => $id));
+    if ($old_category_id === null) {
+        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'catalogue_entry'));
+    }
 
     $catalogue_name = $GLOBALS['SITE_DB']->query_select_value('catalogue_entries', 'c_name', array('id' => $id));
 
@@ -1291,7 +1324,7 @@ function actual_delete_catalogue_entry($id)
     require_code('notifications');
     delete_all_notifications_on('comment_posted', 'catalogues_' . strval($id));
 
-    $GLOBALS['SITE_DB']->query_update('catalogue_fields f JOIN ' . $GLOBALS['SITE_DB']->get_table_prefix() . 'catalogue_efv_short v ON v.cf_id=f.id', array('cv_value' => ''), array('cv_value' => strval($id), 'cf_type' => 'ck_' . $catalogue_name));
+    update_catalogue_content_ref('ck_' . $catalogue_name, strval($id), '');
     update_catalogue_content_ref('catalogue_entry', strval($id), '');
 
     require_code('seo2');
@@ -1307,7 +1340,7 @@ function actual_delete_catalogue_entry($id)
 
     if ((addon_installed('commandr')) && (!running_script('install'))) {
         require_code('resource_fs');
-        expunge_resourcefs_moniker('catalogue_entry', strval($id));
+        expunge_resource_fs_moniker('catalogue_entry', strval($id));
     }
 
     require_code('sitemap_xml');

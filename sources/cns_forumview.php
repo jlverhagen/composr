@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -19,6 +19,82 @@
  */
 
 /**
+ * Get the active forum sort order from a URL specifier.
+ *
+ * @param string $_sort Sort order keyword.
+ * @return array A tuple: Sort order in SQL form, keyset pagination field pattern, keyset pagination field.
+ */
+function get_forum_sort_order_simplified($_sort = 'first_post')
+{
+    return get_forum_sort_order($_sort, true);
+}
+
+/**
+ * Get the active forum sort order from a URL specifier.
+ *
+ * @param string $_sort Sort order keyword.
+ * @param boolean $simplified Whether to not include pinning etc in the order.
+ * @return array A tuple: Sort order in SQL form, keyset pagination field pattern, keyset pagination field.
+ */
+function get_forum_sort_order($_sort = 'first_post', $simplified = false)
+{
+    $sort = 't_cascading DESC,t_pinned DESC,';
+    if (get_option('enable_sunk') == '1') {
+        $sort .= 't_sunk ASC,';
+    }
+
+    if ($simplified) {
+        $sort = '';
+    }
+
+    switch ($_sort) {
+        case 'first_post':
+            $sort .= 't_cache_first_time DESC';
+            $keyset_field = 't_cache_first_time<XXX';
+            $keyset_field_stripped = 'first_time';
+            break;
+
+        case 'title':
+            $sort .= 't_cache_first_title ASC';
+            $keyset_field = 't_cache_first_title>\'XXX\'';
+            $keyset_field_stripped = 'first_title';
+            break;
+
+        case 'read_time':
+            $sort .= 'l_time DESC';
+            $keyset_field = null;
+            $keyset_field_stripped = null;
+            break;
+
+        case 'post_time':
+            $sort .= 'pos.p_time DESC';
+            $keyset_field = 'pos.p_time<XXX';
+            $keyset_field_stripped = 'p_time';
+            break;
+
+        case 'post_time_grouped':
+            $sort .= 'MAX(pos.p_time) DESC';
+            $keyset_field = 'MAX(pos.p_time)<XXX';
+            $keyset_field_stripped = 'p_time';
+            break;
+
+        case 'last_post':
+        default:
+            $sort .= 't_cache_last_time DESC';
+            $keyset_field = 't_cache_last_time<XXX';
+            $keyset_field_stripped = 'last_time';
+            break;
+    }
+
+    if ($GLOBALS['FORUM_DRIVER']->get_topics() < intval(get_option('keyset_pagination'))) { // Not enabled
+        $keyset_field = null;
+        $keyset_field_stripped = null;
+    }
+
+    return array($sort, $keyset_field, $keyset_field_stripped);
+}
+
+/**
  * Render the Conversr forumview.
  *
  * @param  ?integer $id Forum ID (null: private topics).
@@ -26,12 +102,16 @@
  * @param  string $current_filter_cat The filter category (blank if no filter)
  * @param  integer $max Maximum results to show
  * @param  integer $start Offset for result showing
+ * @param  integer $true_start True offset when disconsidering keyset pagination
+ * @param  string $sql_sup Extra SQL to append for where clause.
+ * @param  string $sql_sup_order_by Extra SQL to append as order clause.
+ * @param  string $keyset_field_stripped Keyset field name so that we can extract values from DB result sets
  * @param  AUTO_LINK $root Virtual root
  * @param  ?MEMBER $of_member_id The member to show private topics of (null: not showing private topics)
  * @param  Tempcode $breadcrumbs The breadcrumbs
  * @return mixed Either Tempcode (an interface that must be shown) or a pair: The main Tempcode, the forum name (string). For a PT view, it is always a tuple, never raw Tempcode (as it can go inside a tabset).
  */
-function cns_render_forumview($id, $forum_info, $current_filter_cat, $max, $start, $root, $of_member_id, $breadcrumbs)
+function cns_render_forumview($id, $forum_info, $current_filter_cat, $max, $start, $true_start, $sql_sup, $sql_sup_order_by, $keyset_field_stripped, $root, $of_member_id, $breadcrumbs)
 {
     require_css('cns');
 
@@ -43,7 +123,7 @@ function cns_render_forumview($id, $forum_info, $current_filter_cat, $max, $star
         }
 
         require_code('cns_forumview_pt');
-        $details = cns_get_private_topics($start, $max, $of_member_id);
+        $details = cns_get_private_topics($start, $true_start, $max, $sql_sup, $sql_sup_order_by, $of_member_id);
         $root_forum_name = $GLOBALS['FORUM_DB']->query_select_value('f_forums', 'f_name', array('id' => $root));
         $pt_username = $GLOBALS['FORUM_DRIVER']->get_username($of_member_id);
         $pt_displayname = $GLOBALS['FORUM_DRIVER']->get_username($of_member_id, true);
@@ -52,7 +132,7 @@ function cns_render_forumview($id, $forum_info, $current_filter_cat, $max, $star
         }
         $details['name'] = do_lang_tempcode('PRIVATE_TOPICS_OF', escape_html($pt_displayname), escape_html($pt_username));
     } else {
-        $details = cns_get_forum_view($id, $forum_info, $start, $max);
+        $details = cns_get_forum_view($id, $forum_info, $start, $true_start, $max, $sql_sup, $sql_sup_order_by);
 
         if ((array_key_exists('question', $details)) && (is_null(get_bot_type()))) {
             // Was there a question answering attempt?
@@ -108,7 +188,7 @@ function cns_render_forumview($id, $forum_info, $current_filter_cat, $max, $star
                             $poster = do_lang_tempcode('NA_EM');
                         }
 
-                        $topic_url = build_url(array('page' => 'topicview', 'id' => $subforum['last_topic_id'], 'type' => 'first_unread'), get_module_zone('topicview'));
+                        $topic_url = build_url(array('page' => 'topicview', 'type' => 'first_unread', 'id' => $subforum['last_topic_id']), get_module_zone('topicview'));
                         $topic_url->attach('#first_unread');
 
                         $latest = do_template('CNS_FORUM_LATEST', array(
@@ -130,6 +210,9 @@ function cns_render_forumview($id, $forum_info, $current_filter_cat, $max, $star
                     // Work out where the subforum URL is
                     if (($subforum['redirection'] != '') && (!is_numeric($subforum['redirection']))) {
                         $subforum_url = $subforum['redirection'];
+                        if (url_is_local($subforum_url)) {
+                            $subforum_url = get_base_url() . '/' . $subforum_url;
+                        }
 
                         $subforum_num_posts = do_lang_tempcode('NA_EM');
                         $subforum_num_topics = do_lang_tempcode('NA_EM');
@@ -171,14 +254,14 @@ function cns_render_forumview($id, $forum_info, $current_filter_cat, $max, $star
                         }
                     }
 
-                    $edit_url = has_actual_page_access(get_member(), 'admin_cns_forums') ? build_url(array('page' => 'admin_cns_forums', 'type' => '_edit', 'id' => $subforum['id']), 'adminzone') : new Tempcode();
+                    $edit_url = has_actual_page_access(get_member(), 'admin_cns_forums') ? build_url(array('page' => 'admin_cns_forums', 'type' => '_edit', 'id' => $subforum['id']), get_module_zone('admin_cns_forums')) : new Tempcode();
 
                     $forum_rules_url = '';
                     $intro_question_url = '';
                     if (!$subforum['intro_question']->is_empty()) {
                         if ($subforum['intro_answer'] == '') {
                             $keep = keep_symbol(array());
-                            $intro_rules_url = find_script('rules') . '?id=' . rawurlencode(strval($subforum['id'])) . $keep;
+                            $forum_rules_url = find_script('rules') . '?id=' . rawurlencode(strval($subforum['id'])) . $keep;
                         } else {
                             $keep = keep_symbol(array());
                             $intro_question_url = find_script('rules') . '?id=' . rawurlencode(strval($subforum['id'])) . $keep;
@@ -253,7 +336,7 @@ function cns_render_forumview($id, $forum_info, $current_filter_cat, $max, $star
         $moderator_actions .= '<option value="open_topics">' . do_lang('OPEN_TOPIC') . '</option>';
         $moderator_actions .= '<option value="close_topics">' . do_lang('CLOSE_TOPIC') . '</option>';
     }
-    if ((!is_null($id)) && (cns_may_perform_multi_moderation($id))) {
+    if ((!is_null($id)) && (addon_installed('cns_multi_moderations')) && (cns_may_perform_multi_moderation($id))) {
         $multi_moderations = cns_list_multi_moderations($id);
         if (count($multi_moderations) != 0) {
             require_lang('cns_multi_moderations');
@@ -269,6 +352,7 @@ function cns_render_forumview($id, $forum_info, $current_filter_cat, $max, $star
     $topics = new Tempcode();
     $pinned = false;
     $num_unread = 0;
+    $keyset_value = null;
     foreach ($details['topics'] as $topic) {
         if (($pinned) && (!in_array('pinned', $topic['modifiers']))) {
             $topics->attach(do_template('CNS_PINNED_DIVIDER'));
@@ -278,6 +362,10 @@ function cns_render_forumview($id, $forum_info, $current_filter_cat, $max, $star
         if (in_array('unread', $topic['modifiers'])) {
             $num_unread++;
         }
+
+        if (!$pinned && $keyset_field_stripped !== null && isset($topic[$keyset_field_stripped])) {
+            $keyset_value = $topic[$keyset_field_stripped]; // We keep overwriting this value until the last loop iteration
+        }
     }
 
     // Buttons
@@ -285,7 +373,7 @@ function cns_render_forumview($id, $forum_info, $current_filter_cat, $max, $star
     if ((!is_guest()) && ($type != 'pt')) {
         if (get_option('enable_mark_forum_read') == '1') {
             $read_url = build_url(array('page' => 'topics', 'type' => 'mark_read', 'id' => $id), get_module_zone('topics'));
-            $button_array[] = array('immediate' => true, 'title' => do_lang_tempcode('_MARK_READ'), 'url' => $read_url, 'img' => 'buttons__mark_read_forum');
+            $button_array[] = array('immediate' => true, 'title' => do_lang_tempcode('MARK_READ'), 'url' => $read_url, 'img' => 'buttons__mark_read_forum');
         }
     }
     if ($type != 'pt') {
@@ -303,8 +391,8 @@ function cns_render_forumview($id, $forum_info, $current_filter_cat, $max, $star
     }
     if ($type == 'pt') {
         //There has been debate in the past whether to have a link from PTs to the forum or not! Currently using the Social menu is considered canon - templating could add a button in though.
-        //$archive_url=$GLOBALS['FORUM_DRIVER']->forum_url(db_get_first_id(),true);
-        //$button_array[]=array('immediate'=>false,'title'=>do_lang_tempcode('ROOT_FORUM'),'url'=>$archive_url,'img'=>'buttons__forum');
+        //$archive_url = $GLOBALS['FORUM_DRIVER']->forum_url(db_get_first_id(), true);
+        //$button_array[] = array('immediate' => false, 'title' => do_lang_tempcode('ROOT_FORUM'), 'url' => $archive_url, 'img' => 'buttons__forum');
     }
     if (array_key_exists('may_post_topic', $details)) {
         if ($type == 'pt') {
@@ -328,7 +416,7 @@ function cns_render_forumview($id, $forum_info, $current_filter_cat, $max, $star
         }
 
         require_code('templates_pagination');
-        $pagination = pagination(do_lang_tempcode('FORUM_TOPICS'), $start, 'forum_start', $max, 'forum_max', $details['max_rows'], false, 5, null, ($type == 'pt' && get_page_name() == 'members') ? 'tab__pts' : '');
+        $pagination = pagination(make_string_tempcode(escape_html($forum_name)), $true_start, 'forum_start', $max, 'forum_max', $details['max_rows'], false, 5, null, ($type == 'pt' && get_page_name() == 'members') ? 'tab__pts' : '', $keyset_value);
 
         $sort = array_key_exists('sort', $details) ? $details['sort'] : 'last_post';
         $topic_wrapper = do_template('CNS_FORUM_TOPIC_WRAPPER', array(
@@ -412,13 +500,6 @@ function cns_get_topic_array($topic_row, $member_id, $hot_topic_definition, $inv
     } else {
         $topic['first_post'] = new Tempcode();
     }
-
-    // Pre-load it, so meta-data isn't altered later
-    $bak = $GLOBALS['META_DATA'];
-    $topic_row_tedit = array('id' => $topic_row['id'], 't_cache_first_post' => $topic_row['t_cache_first_post'], 't_cache_first_post__text_parsed' => multi_lang_content() ? null : $topic_row['t_cache_first_post__text_parsed'], 't_cache_first_post__source_user' => multi_lang_content() ? null : $topic_row['t_cache_first_post__source_user']);
-    $topic['first_post'] = get_translated_tempcode('f_topics', $topic_row_tedit, 't_cache_first_post', $GLOBALS['FORUM_DB']);
-    $topic['first_post']->evaluate();
-    $GLOBALS['META_DATA'] = $bak;
 
     $topic['id'] = $topic_row['id'];
     $topic['num_views'] = $topic_row['t_num_views'];
@@ -516,13 +597,13 @@ function cns_get_topic_array($topic_row, $member_id, $hot_topic_definition, $inv
  * @param  array $topic The details (array containing: last_post_id, id, modifiers, emoticon, first_member_id, first_username, first_post, num_posts, num_views).
  * @param  boolean $has_topic_marking Whether the viewing member has the facility to mark off topics (send as false if there are no actions for them to perform).
  * @param  boolean $pt Whether the topic is a Private Topic.
- * @param  ?string $show_forum The forum name (null: do not show the forum name).
+ * @param  ?object $show_forum The forum name (null: do not show the forum name).
  * @return Tempcode The topic row.
  */
 function cns_render_topic($topic, $has_topic_marking, $pt = false, $show_forum = null)
 {
-    if ((array_key_exists('last_post_id', $topic)) && (!is_null($topic['last_post_id']))) {
-        $last_post_url = build_url(array('page' => 'topicview', 'id' => $topic['last_post_id'], 'type' => 'findpost'), get_module_zone('topicview'));
+    if ((array_key_exists('last_post_id', $topic)) && (!is_null($topic['last_post_id'])) && (get_bot_type() === null)) {
+        $last_post_url = build_url(array('page' => 'topicview', 'type' => 'findpost', 'id' => $topic['last_post_id']), get_module_zone('topicview'));
         $last_post_url->attach('#post_' . strval($topic['last_post_id']));
         if (!is_null($topic['last_member_id'])) {
             if ($topic['last_member_id'] != $GLOBALS['CNS_DRIVER']->get_guest_id()) {
@@ -544,31 +625,28 @@ function cns_render_topic($topic, $has_topic_marking, $pt = false, $show_forum =
         $last_post = do_lang_tempcode('NA_EM');
     }
     $map = array('page' => 'topicview', 'id' => $topic['id']);
-    if ((array_key_exists('forum_id', $topic)) && (is_null(get_bot_type())) && (get_param_integer('forum_start', 0) != 0)) {
-        $map['kfs' . strval($topic['forum_id'])] = get_param_integer('forum_start', 0);
+    if ((array_key_exists('forum_id', $topic)) && (is_null(get_bot_type()))) {
+        require_code('templates_pagination');
+        list(, , , , , $true_start, $compound) = get_keyset_pagination_settings('forum_max', intval(get_option('forum_topics_per_page')), 'forum_start', 'kfs' . strval($topic['forum_id']), 'sort', 'last_post'/*not used for what we're doing*/, 'get_forum_sort_order');
+        if ($true_start != 0) {
+            $map['kfs' . strval($topic['forum_id'])] = $compound;
+        }
     }
     $url = build_url($map, get_module_zone('topicview'));
 
     // Modifiers
-    $topic_row_links = new Tempcode();
+    $topic_row_links = array();
     $modifiers = $topic['modifiers'];
     if (in_array('unread', $modifiers)) {
-        $first_unread_url = build_url(array('page' => 'topicview', 'id' => $topic['id'], 'type' => 'first_unread'), get_module_zone('topicview'));
+        $first_unread_url = build_url(array('page' => 'topicview', 'type' => 'first_unread', 'id' => $topic['id']), get_module_zone('topicview'));
         $first_unread_url->attach('#first_unread');
-        $topic_row_links->attach(do_template('CNS_FORUM_TOPIC_ROW_LINK', array('_GUID' => '6f52881ed999f4c543c9d8573b37fa48', 'URL' => $first_unread_url, 'IMG' => 'unread', 'ALT' => do_lang_tempcode('JUMP_TO_FIRST_UNREAD'))));
+        $topic_row_links[] = array('URL' => $first_unread_url, 'IMG' => 'unread', 'ALT' => do_lang_tempcode('JUMP_TO_FIRST_UNREAD'));
     }
-    $topic_row_modifiers = new Tempcode();
+    $topic_row_modifiers = array();
     foreach ($modifiers as $modifier) {
         if ($modifier != 'unread') {
-            $topic_row_modifiers->attach(do_template('CNS_FORUM_TOPIC_ROW_MODIFIER', array('_GUID' => 'fbcb8791b571187fd699aa6796c3f401', 'IMG' => $modifier, 'ALT' => do_lang_tempcode('MODIFIER_' . $modifier))));
+            $topic_row_modifiers[] = array('IMG' => $modifier, 'ALT' => do_lang_tempcode('MODIFIER_' . $modifier));
         }
-    }
-
-    // Emoticon
-    if ($topic['emoticon'] != '') {
-        $emoticon = do_template('CNS_FORUM_TOPIC_EMOTICON', array('_GUID' => 'dfbe0e4a11b3caa4d2da298ff23ca221', 'EMOTICON' => $topic['emoticon']));
-    } else {
-        $emoticon = new Tempcode();
     }
 
     if ((!is_null($topic['first_member_id'])) && (!is_guest($topic['first_member_id']))) {
@@ -613,12 +691,12 @@ function cns_render_topic($topic, $has_topic_marking, $pt = false, $show_forum =
     // Page jump
     $max = intval(get_option('forum_posts_per_page'));
     require_code('templates_result_launcher');
-    $pages = results_launcher(do_lang_tempcode('NAMED_TOPIC', escape_html($title)), 'topicview', $topic['id'], $max, $topic['num_posts'], 'view', 5);
+    $pages = results_launcher(do_lang_tempcode('NAMED_TOPIC', escape_html($title)), 'topicview', $topic['id'], $max, $topic['num_posts'], 'view', 5, 'topic_start');
 
     // Tpl
     $post = $topic['first_post'];
     if (!is_null($show_forum)) {
-        $hover = do_lang_tempcode('FORUM_AND_TIME_HOVER', escape_html($show_forum), escape_html(get_timezoned_date($topic['first_time'])));
+        $hover = do_lang_tempcode('FORUM_AND_TIME_HOVER', $show_forum, protect_from_escaping(escape_html(get_timezoned_date($topic['first_time']))));
         $breadcrumbs = breadcrumb_segments_to_tempcode(cns_forum_breadcrumbs($topic['forum_id'], null, null, false));
     } else {
         $hover = protect_from_escaping(is_null($topic['first_time']) ? '' : escape_html(get_timezoned_date($topic['first_time'])));
@@ -639,7 +717,7 @@ function cns_render_topic($topic, $has_topic_marking, $pt = false, $show_forum =
         'TOPIC_ROW_MODIFIERS' => $topic_row_modifiers,
         '_TOPIC_ROW_MODIFIERS' => $modifiers,
         'POST' => $post,
-        'EMOTICON' => $emoticon,
+        'EMOTICON' => $topic['emoticon'],
         'DESCRIPTION' => $topic['description'],
         'URL' => $url,
         'TITLE' => $title,
@@ -657,10 +735,13 @@ function cns_render_topic($topic, $has_topic_marking, $pt = false, $show_forum =
  * @param  AUTO_LINK $forum_id The forum ID.
  * @param  array $forum_info The forum row.
  * @param  integer $start The start row for getting details of topics in the forum (i.e. 0 is newest, higher is starting further back in time).
+ * @param  integer $true_start True offset when disconsidering keyset pagination
  * @param  ?integer $max The maximum number of topics to get detail of (null: default).
+ * @param  string $sql_sup Extra SQL to append.
+ * @param  string $sql_sup_order_by Extra SQL to append as order clause.
  * @return array The details.
  */
-function cns_get_forum_view($forum_id, $forum_info, $start = 0, $max = null)
+function cns_get_forum_view($forum_id, $forum_info, $start = 0, $true_start = 0, $max = null, $sql_sup = '', $sql_sup_order_by = '')
 {
     if (is_null($max)) {
         $max = intval(get_option('forum_topics_per_page'));
@@ -704,7 +785,7 @@ function cns_get_forum_view($forum_id, $forum_info, $start = 0, $max = null)
         if ($child_or_list != '') {
             $child_or_list .= ' AND ';
         }
-        $query = 'SELECT DISTINCT t_forum_id FROM ' . $GLOBALS['FORUM_DB']->get_table_prefix() . 'f_topics t LEFT JOIN ' . $GLOBALS['FORUM_DB']->get_table_prefix() . 'f_read_logs l ON (t.id=l_topic_id AND l_member_id=' . strval(get_member()) . ') WHERE t_forum_id IS NOT NULL AND ' . $child_or_list . 't_cache_last_time>' . strval(time() - 60 * 60 * 24 * intval(get_option('post_history_days'))) . ' AND (l_time<t_cache_last_time OR l_time IS NULL)';
+        $query = 'SELECT DISTINCT t_forum_id FROM ' . $GLOBALS['FORUM_DB']->get_table_prefix() . 'f_topics t LEFT JOIN ' . $GLOBALS['FORUM_DB']->get_table_prefix() . 'f_read_logs l ON (t.id=l_topic_id AND l_member_id=' . strval(get_member()) . ') WHERE t_forum_id IS NOT NULL AND ' . $child_or_list . 't_cache_last_time>' . strval(time() - 60 * 60 * 24 * intval(get_option('post_read_history_days'))) . ' AND (l_time<t_cache_last_time OR l_time IS NULL)';
         if ((!has_privilege(get_member(), 'see_unvalidated')) && (addon_installed('unvalidated'))) {
             $query .= ' AND t_validated=1';
         }
@@ -821,16 +902,6 @@ function cns_get_forum_view($forum_id, $forum_info, $start = 0, $max = null)
         }
         $where = $extra . ' (t_forum_id=' . strval($forum_id) . ' OR (t_cascading=1 ' . $extra2 . '))';
     }
-    $sort = get_param_string('sort', $forum_info['f_order']);
-    $sort2 = 't_cache_last_time DESC';
-    if ($sort == 'first_post') {
-        $sort2 = 't_cache_first_time DESC';
-    } elseif ($sort == 'title') {
-        $sort2 = 't_cache_first_title ASC';
-    }
-    if (get_option('enable_sunk') == '1') {
-        $sort2 = 't_sunk ASC,' . $sort2;
-    }
     if (is_guest()) {
         $query = 'SELECT ttop.*,NULL AS l_time';
         if (multi_lang_content()) {
@@ -840,12 +911,8 @@ function cns_get_forum_view($forum_id, $forum_info, $start = 0, $max = null)
         }
         $query .= ' FROM ' . $GLOBALS['FORUM_DB']->get_table_prefix() . 'f_topics ttop';
         if (strpos(get_db_type(), 'mysql') !== false) {
-            $query .= ' USE INDEX (' . ((get_option('enable_sunk') == '1') ? 'topic_order_2' : 'topic_order_3') . ')';
+            $query .= ' FORCE INDEX (' . ((get_option('enable_sunk') == '1') ? 'topic_order_2' : 'topic_order_3') . ')';
         }
-        if (!multi_lang_content()) {
-            $query .= ' LEFT JOIN ' . $GLOBALS['FORUM_DB']->get_table_prefix() . 'f_posts p ON p.id=ttop.t_cache_first_post_id';
-        }
-        $query .= ' WHERE ' . $where . ' ORDER BY t_cascading DESC,t_pinned DESC,' . $sort2;
     } else {
         $query = 'SELECT ttop.*,l_time';
         if (multi_lang_content()) {
@@ -855,20 +922,20 @@ function cns_get_forum_view($forum_id, $forum_info, $start = 0, $max = null)
         }
         $query .= ' FROM ' . $GLOBALS['FORUM_DB']->get_table_prefix() . 'f_topics ttop';
         if (strpos(get_db_type(), 'mysql') !== false) {
-            $query .= ' USE INDEX (' . ((get_option('enable_sunk') == '1') ? 'topic_order_2' : 'topic_order_3') . ')';
+            $query .= ' FORCE INDEX (' . ((get_option('enable_sunk') == '1') ? 'topic_order_2' : 'topic_order_3') . ')';
         }
         $query .= ' LEFT JOIN ' . $GLOBALS['FORUM_DB']->get_table_prefix() . 'f_read_logs l ON ttop.id=l.l_topic_id AND l.l_member_id=' . strval(get_member());
-        if (!multi_lang_content()) {
-            $query .= ' LEFT JOIN ' . $GLOBALS['FORUM_DB']->get_table_prefix() . 'f_posts p ON p.id=ttop.t_cache_first_post_id';
-        }
-        $query .= ' WHERE ' . $where . ' ORDER BY t_cascading DESC,t_pinned DESC,' . $sort2;
     }
+    if (!multi_lang_content()) {
+        $query .= ' LEFT JOIN ' . $GLOBALS['FORUM_DB']->get_table_prefix() . 'f_posts p ON p.id=ttop.t_cache_first_post_id';
+    }
+    $query .= ' WHERE ' . $where . $sql_sup . $sql_sup_order_by;
     if (($start < 200) && (multi_lang_content())) {
         $topic_rows = $GLOBALS['FORUM_DB']->query($query, $max, $start, false, false, array('t_cache_first_post' => 'LONG_TRANS__COMCODE'));
     } else { // deep search, so we need to make offset more efficient, trade-off is more queries
         $topic_rows = $GLOBALS['FORUM_DB']->query($query, $max, $start);
     }
-    if (($start == 0) && (count($topic_rows) < $max)) {
+    if (($true_start == 0) && (count($topic_rows) < $max)) {
         $max_rows = $max; // We know that they're all on this screen
     } else {
         $max_rows = $GLOBALS['FORUM_DB']->query_value_if_there('SELECT COUNT(*) FROM ' . $GLOBALS['FORUM_DB']->get_table_prefix() . 'f_topics WHERE ' . $where, false, true);
@@ -927,7 +994,7 @@ function cns_get_forum_view($forum_id, $forum_info, $start = 0, $max = null)
         $out['may_change_max'] = true;
         $out['may_move_topics'] = true;
         if (has_privilege(get_member(), 'multi_delete_topics')) {
-            $out['may_delete_topics'] = true; // Only super admins can casually delete topics - other staff are expected to trash them. At least deleted posts or trashed topics can be restored!
+            $out['may_delete_topics'] = true; // Only super admins can casually delete topics - other staff are expected to trash them. At least trashed topics can be restored!
         }
     }
     return $out;

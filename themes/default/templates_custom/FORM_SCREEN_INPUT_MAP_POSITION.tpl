@@ -1,4 +1,4 @@
-<script src="http://www.google.com/jsapi"></script>
+<script src="https://www.google.com/jsapi"></script>
 <script>// <![CDATA[
 	var marker,map,last_point;
 	function google_map_users_initialize()
@@ -57,6 +57,7 @@
 	{
 		var latLng=new google.maps.LatLng(latitude,longitude);
 		marker.setPosition(latLng);
+		map.setCenter(latLng);
 		map.setZoom(12);
 	}
 
@@ -67,10 +68,6 @@
 			try
 			{
 				navigator.geolocation.getCurrentPosition(function(position) {
-					var initial_location=new google.maps.LatLng(position.coords.latitude,position.coords.longitude);
-
-					map.setCenter(initial_location);
-
 					place_marker(position.coords.latitude,position.coords.longitude)
 
 					document.getElementById('{NAME;/}_latitude').value=position.coords.latitude;
@@ -80,8 +77,6 @@
 			catch (e) {}
 		}
 	}
-
-	google.load('maps', '3',  {callback: google_map_users_initialize, other_params:''});
 //]]></script>
 
 <div id="map_position_{NAME*}" style="width:100%; height:300px"></div>
@@ -97,3 +92,11 @@
 </label>
 
 <input class="button_micro buttons__search" type="button" value="{!FIND_ME}" onclick="geolocate_user_for_map_field(); return false;" />
+
+<script>// <![CDATA[
+	add_event_listener_abstract(window,'load',function() {
+		window.setTimeout(function() {
+			google.load('maps','3', {callback: google_map_users_initialize, other_params:'{+START,IF_NON_EMPTY,{$CONFIG_OPTION,google_map_key}}key={$CONFIG_OPTION;/,google_map_key}{+END}'});
+		},0); // Timeout is needed, as if this form works in a member profile tab, the run-time set_inner_html handler may run the JavaScript in an odd-order
+	});
+//]]></script>

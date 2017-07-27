@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -36,8 +36,13 @@ class Hook_page_groupings_help_page
             return array();
         }
 
+        $zone = get_comcode_zone('help', false);
+        if ($zone === null) {
+            return array();
+        }
+
         return array(
-            array('site_meta', 'menu/pages/help', array('help', array(), get_comcode_zone('help')), do_lang_tempcode('HELP')),
+            array('site_meta', 'menu/pages/help', array('help', array(), $zone), do_lang_tempcode('HELP')),
         );
     }
 }

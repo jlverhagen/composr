@@ -1,11 +1,17 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
 */
+
+/**
+ * @license    http://opensource.org/licenses/cpal_1.0 Common Public Attribution License
+ * @copyright  ocProducts Ltd
+ * @package    user_simple_csv_sync
+ */
 
 function init__user_import()
 {
@@ -32,7 +38,7 @@ function init__user_import()
 
 function do_user_import()
 {
-    if (function_exists('set_time_limit')) {
+    if (php_function_allowed('set_time_limit')) {
         @set_time_limit(0);
     }
 
@@ -109,6 +115,7 @@ function do_user_import()
                 if (!is_null($username)) {
                     // Add
                     if (is_null($password)) {
+                        require_code('crypt');
                         $password = produce_salt();
                     }
                     cns_make_member($username, $password, $email_address, $groups, $dob_day, $dob_month, $dob_year, $custom_fields, $timezone, $primary_group, 1, null, null, '', null, '', 0, 0, 1, '', $photo_url, '', 1, null, null, 1, 1, null, '', false, 'plain');

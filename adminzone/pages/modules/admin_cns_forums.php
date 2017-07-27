@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -38,6 +38,8 @@ class Module_admin_cns_forums extends Standard_crud_module
     public $javascript = 'if (document.getElementById(\'delete\')) { var form=document.getElementById(\'delete\').form; var crf=function() { form.elements[\'target_forum\'].disabled=(!form.elements[\'delete\'].checked); form.elements[\'delete_topics\'].disabled=(!form.elements[\'delete\'].checked); }; crf(); form.elements[\'delete\'].onchange=crf; }';
     public $menu_label = 'SECTION_FORUMS';
     public $do_preview = null;
+    public $donext_entry_content_type = 'forum';
+    public $donext_category_content_type = null;
 
     /**
      * Find entry-points available within this module.
@@ -45,7 +47,7 @@ class Module_admin_cns_forums extends Standard_crud_module
      * @param  boolean $check_perms Whether to check permissions.
      * @param  ?MEMBER $member_id The member to check permissions as (null: current user).
      * @param  boolean $support_crosslinks Whether to allow cross links to other modules (identifiable via a full-page-link rather than a screen-name).
-     * @param  boolean $be_deferential Whether to avoid any entry-point (or even return NULL to disable the page in the Sitemap) if we know another module, or page_group, is going to link to that entry-point. Note that "!" and "browse" entry points are automatically merged with container page nodes (likely called by page-groupings) as appropriate.
+     * @param  boolean $be_deferential Whether to avoid any entry-point (or even return null to disable the page in the Sitemap) if we know another module, or page_group, is going to link to that entry-point. Note that "!" and "browse" entry points are automatically merged with container page nodes (likely called by page-groupings) as appropriate.
      * @return ?array A map of entry points (screen-name=>language-code/string or screen-name=>[language-code/string, icon-theme-image]) (null: disabled).
      */
     public function get_entry_points($check_perms = true, $member_id = null, $support_crosslinks = true, $be_deferential = false)
@@ -55,8 +57,8 @@ class Module_admin_cns_forums extends Standard_crud_module
         }
 
         $ret = array(
-                   'browse' => array('MANAGE_FORUMS', 'menu/social/forum/forums'),
-               ) + parent::get_entry_points();
+            'browse' => array('MANAGE_FORUMS', 'menu/social/forum/forums'),
+        ) + parent::get_entry_points();
 
         if ($support_crosslinks) {
             $ret['_SEARCH:admin_cns_forum_groupings:add'] = array('ADD_FORUM_GROUPING', 'menu/_generic_admin/add_one_category');
@@ -80,10 +82,10 @@ class Module_admin_cns_forums extends Standard_crud_module
     public $title;
 
     /**
-     * Module pre-run function. Allows us to know meta-data for <head> before we start streaming output.
+     * Module pre-run function. Allows us to know metadata for <head> before we start streaming output.
      *
      * @param  boolean $top_level Whether this is running at the top level, prior to having sub-objects called.
-     * @param  ?ID_TEXT $type The screen type to consider for meta-data purposes (null: read from environment).
+     * @param  ?ID_TEXT $type The screen type to consider for metadata purposes (null: read from environment).
      * @return ?Tempcode Tempcode indicating some kind of exceptional output (null: none).
      */
     public function pre_run($top_level = true, $type = null)
@@ -168,7 +170,9 @@ class Module_admin_cns_forums extends Standard_crud_module
 
         require_code('templates_donext');
         require_code('fields');
-        return do_next_manager(get_screen_title('MANAGE_FORUMS'), comcode_to_tempcode(do_lang('DOC_FORUMS') . "\n\n" . do_lang('DOC_FORUM_GROUPINGS'), null, true),
+        return do_next_manager(
+            get_screen_title('MANAGE_FORUMS'),
+            comcode_to_tempcode(do_lang('DOC_FORUMS') . "\n\n" . do_lang('DOC_FORUM_GROUPINGS'), null, true),
             array_merge($menu_links, manage_custom_fields_donext_link('post'), manage_custom_fields_donext_link('topic'), manage_custom_fields_donext_link('forum')),
             do_lang('MANAGE_FORUMS')
         );
@@ -226,11 +230,13 @@ class Module_admin_cns_forums extends Standard_crud_module
         $list->attach(form_input_list_entry('last_post', $order == 'last_post', do_lang_tempcode('FORUM_ORDER_BY_LAST_POST')));
         $list->attach(form_input_list_entry('first_post', $order == 'first_post', do_lang_tempcode('FORUM_ORDER_BY_FIRST_POST')));
         $list->attach(form_input_list_entry('title', $order == 'title', do_lang_tempcode('FORUM_ORDER_BY_TITLE')));
-        $fields->attach(form_input_list(do_lang_tempcode('TOPIC_ORDER'), do_lang_tempcode('DESCRIPTION_TOPIC_ORDER'), 'order', $list));
+        $fields->attach(form_input_list(do_lang_tempcode('TOPIC_ORDER'), do_lang_tempcode('DESCRIPTION_TOPIC_ORDER'), 'topic_order', $list));
         $fields->attach(form_input_tick(do_lang_tempcode('IS_THREADED'), do_lang_tempcode('DESCRIPTION_IS_THREADED'), 'is_threaded', $is_threaded == 1));
-        $fields->attach(form_input_tick(do_lang_tempcode('ALLOWS_ANONYMOUS_POSTS'), do_lang_tempcode('DESCRIPTION_ALLOWS_ANONYMOUS_POSTS'), 'allows_anonymous_posts', $allows_anonymous_posts == 1));
+        if (get_option('is_on_anonymous_posts') == '1') {
+            $fields->attach(form_input_tick(do_lang_tempcode('ALLOWS_ANONYMOUS_POSTS'), do_lang_tempcode('DESCRIPTION_ALLOWS_ANONYMOUS_POSTS'), 'allows_anonymous_posts', $allows_anonymous_posts == 1));
+        }
     
-        $fields->attach(meta_data_get_fields('forum', is_null($id) ? null : strval($id)));
+        $fields->attach(metadata_get_fields('forum', is_null($id) ? null : strval($id)));
 
         if (addon_installed('content_reviews')) {
             $fields->attach(content_review_get_fields('forum', is_null($id) ? null : strval($id)));
@@ -260,8 +266,8 @@ class Module_admin_cns_forums extends Standard_crud_module
         $forum_groupings = new Tempcode();
 
         if ($huge) {
-            $all_forums = $GLOBALS['FORUM_DB']->query_select('f_forums', array('id', 'f_name', 'f_position', 'f_forum_grouping_id', 'f_order_sub_alpha', 'f_parent_forum'), array('f_parent_forum' => $id), 'ORDER BY f_parent_forum,f_position', 300);
-            if (count($all_forums) == 300) {
+            $all_forums = $GLOBALS['FORUM_DB']->query_select('f_forums', array('id', 'f_name', 'f_position', 'f_forum_grouping_id', 'f_order_sub_alpha', 'f_parent_forum'), array('f_parent_forum' => $id), 'ORDER BY f_parent_forum,f_position', intval(get_option('general_safety_listing_limit')));
+            if (count($all_forums) == intval(get_option('general_safety_listing_limit'))) {
                 return paragraph(do_lang_tempcode('TOO_MANY_TO_CHOOSE_FROM'));
             }
         } else {
@@ -316,7 +322,7 @@ class Module_admin_cns_forums extends Standard_crud_module
 
             if (is_null($i)) {
                 if (!is_null($forums)) {
-                    $forum_groupings->attach(do_template('CNS_EDIT_FORUM_SCREEN_GROUPING', array('_GUID' => '889173769e237b917b7e06eda0fb4350', 'ORDERINGS' => $orderings, 'GROUPING' => $C_TITLE[$forum_grouping_id], 'SUBFORUMS' => $forums)));
+                    $forum_groupings->attach(do_template('CNS_EDIT_FORUM_SCREEN_GROUPING', array('_GUID' => '889173769e237b917b7e06eda0fb4350', 'ORDERINGS' => $orderings, 'GROUPING' => isset($C_TITLE[$forum_grouping_id]) ? $C_TITLE[$forum_grouping_id] : do_lang('UNKNOWN'), 'SUBFORUMS' => $forums)));
                     $forum_grouping_position++;
                 }
                 $forums = new Tempcode();
@@ -385,7 +391,7 @@ class Module_admin_cns_forums extends Standard_crud_module
      */
     public function edit()
     {
-        $huge = ($GLOBALS['FORUM_DB']->query_select_value('f_forums', 'COUNT(*)') > 300);
+        $huge = ($GLOBALS['FORUM_DB']->query_select_value('f_forums', 'COUNT(*)') > intval(get_option('general_safety_listing_limit')));
 
         $all_forums = array();
         $forums = $this->get_forum_tree(db_get_first_id(), $GLOBALS['FORUM_DB']->query_select_value('f_forums', 'f_name', array('id' => db_get_first_id())), $all_forums, 0, 1, null, null, $huge);
@@ -409,9 +415,9 @@ class Module_admin_cns_forums extends Standard_crud_module
         $all = $GLOBALS['FORUM_DB']->query_select('f_forums', array('id', 'f_parent_forum', 'f_forum_grouping_id'));
         $ordering = array();
         foreach ($all as $forum) {
-            $cat_order = post_param_integer('forum_grouping_order_' . (is_null($forum['f_parent_forum']) ? '' : strval($forum['f_parent_forum'])) . '_' . (is_null($forum['f_forum_grouping_id']) ? '' : strval($forum['f_forum_grouping_id'])), -1);
-            $order = post_param_integer('order_' . strval($forum['id']), -1);
-            if (($cat_order != -1) && ($order != -1)) { // Should only be -1 if since deleted
+            $cat_order = post_param_integer('forum_grouping_order_' . (is_null($forum['f_parent_forum']) ? '' : strval($forum['f_parent_forum'])) . '_' . (is_null($forum['f_forum_grouping_id']) ? '' : strval($forum['f_forum_grouping_id'])), null);
+            $order = post_param_integer('order_' . strval($forum['id']), null);
+            if (($cat_order !== null) && ($order !== null)) { // Should only be null if since created
                 if (!array_key_exists($forum['f_parent_forum'], $ordering)) {
                     $ordering[$forum['f_parent_forum']] = array();
                 }
@@ -534,12 +540,12 @@ class Module_admin_cns_forums extends Standard_crud_module
     {
         require_code('cns_forums_action2');
 
-        $parent_forum = post_param_integer('parent_forum', -1);
+        $parent_forum = post_param_integer('parent_forum');
         $name = post_param_string('name');
 
-        $meta_data = actual_meta_data_get_fields('forum', null);
+        $metadata = actual_metadata_get_fields('forum', null);
 
-        $id = strval(cns_make_forum($name, post_param_string('description'), post_param_integer('forum_grouping_id'), null, $parent_forum, post_param_order_field(), post_param_integer('post_count_increment', 0), post_param_integer('order_sub_alpha', 0), post_param_string('intro_question'), post_param_string('intro_answer'), post_param_string('redirection'), post_param_string('order'), post_param_integer('is_threaded', 0), post_param_integer('allows_anonymous_posts', 0)));
+        $id = strval(cns_make_forum($name, post_param_string('description'), post_param_integer('forum_grouping_id'), null, $parent_forum, post_param_order_field(), post_param_integer('post_count_increment', 0), post_param_integer('order_sub_alpha', 0), post_param_string('intro_question'), post_param_string('intro_answer'), post_param_string('redirection'), post_param_string('topic_order'), post_param_integer('is_threaded', 0), post_param_integer('allows_anonymous_posts', 0)));
 
         set_url_moniker('forum', $id);
 
@@ -596,22 +602,21 @@ class Module_admin_cns_forums extends Standard_crud_module
      */
     public function edit_actualisation($id)
     {
-        $meta_data = actual_meta_data_get_fields('forum', $id);
+        $metadata = actual_metadata_get_fields('forum', $id);
 
         cns_edit_forum(
             intval($id),
             post_param_string('name'),
             post_param_string('description', STRING_MAGIC_NULL),
-            post_param_integer('forum_grouping_id', INTEGER_MAGIC_NULL),
-            post_param_integer('parent_forum', INTEGER_MAGIC_NULL),
+            post_param_integer('forum_grouping_id', fractional_edit() ? INTEGER_MAGIC_NULL : false),
+            post_param_integer('parent_forum', fractional_edit() ? INTEGER_MAGIC_NULL : null/*root forum*/),
             fractional_edit() ? INTEGER_MAGIC_NULL : post_param_order_field(),
-            post_param_integer('post_count_increment',
-            fractional_edit() ? INTEGER_MAGIC_NULL : 0),
+            post_param_integer('post_count_increment', fractional_edit() ? INTEGER_MAGIC_NULL : 0),
             post_param_integer('order_sub_alpha', fractional_edit() ? INTEGER_MAGIC_NULL : 0),
             post_param_string('intro_question', STRING_MAGIC_NULL),
             post_param_string('intro_answer', STRING_MAGIC_NULL),
             post_param_string('redirection', STRING_MAGIC_NULL),
-            post_param_string('order', STRING_MAGIC_NULL),
+            post_param_string('topic_order', STRING_MAGIC_NULL),
             post_param_integer('is_threaded', fractional_edit() ? INTEGER_MAGIC_NULL : 0),
             post_param_integer('allows_anonymous_posts', fractional_edit() ? INTEGER_MAGIC_NULL : 0),
             post_param_integer('reset_intro_acceptance', 0) == 1

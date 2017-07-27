@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -53,11 +53,13 @@ class Hook_login_provider_facebook
                         }
                     }
                 } catch (Exception $e) {
+                    header('Facebook-Error: ' . escape_header($e->getMessage()));
+
                     // User will know what is wrong already (Facebook wil have said), so don't show on our end
                 }
             }
 
-            safe_ini_set('ocproducts.type_strictness', '1');
+            //safe_ini_set('ocproducts.type_strictness', '1');
         }
         return $member;
     }

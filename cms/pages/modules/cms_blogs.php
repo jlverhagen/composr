@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -50,11 +50,15 @@ class Module_cms_blogs extends Standard_crud_module
      * @param  boolean $check_perms Whether to check permissions.
      * @param  ?MEMBER $member_id The member to check permissions as (null: current user).
      * @param  boolean $support_crosslinks Whether to allow cross links to other modules (identifiable via a full-page-link rather than a screen-name).
-     * @param  boolean $be_deferential Whether to avoid any entry-point (or even return NULL to disable the page in the Sitemap) if we know another module, or page_group, is going to link to that entry-point. Note that "!" and "browse" entry points are automatically merged with container page nodes (likely called by page-groupings) as appropriate.
+     * @param  boolean $be_deferential Whether to avoid any entry-point (or even return null to disable the page in the Sitemap) if we know another module, or page_group, is going to link to that entry-point. Note that "!" and "browse" entry points are automatically merged with container page nodes (likely called by page-groupings) as appropriate.
      * @return ?array A map of entry points (screen-name=>language-code/string or screen-name=>[language-code/string, icon-theme-image]) (null: disabled).
      */
     public function get_entry_points($check_perms = true, $member_id = null, $support_crosslinks = true, $be_deferential = false)
     {
+        if (!has_privilege(get_member(), 'have_personal_category', 'cms_news')) {
+            return null;
+        }
+
         $ret = array(
             'browse' => array('MANAGE_BLOGS', 'tabs/member_account/blog'),
         );
@@ -68,10 +72,10 @@ class Module_cms_blogs extends Standard_crud_module
     public $title;
 
     /**
-     * Module pre-run function. Allows us to know meta-data for <head> before we start streaming output.
+     * Module pre-run function. Allows us to know metadata for <head> before we start streaming output.
      *
      * @param  boolean $top_level Whether this is running at the top level, prior to having sub-objects called.
-     * @param  ?ID_TEXT $type The screen type to consider for meta-data purposes (null: read from environment).
+     * @param  ?ID_TEXT $type The screen type to consider for metadata purposes (null: read from environment).
      * @return ?Tempcode Tempcode indicating some kind of exceptional output (null: none).
      */
     public function pre_run($top_level = true, $type = null)
@@ -182,7 +186,7 @@ class Module_cms_blogs extends Standard_crud_module
         $fh[] = do_lang_tempcode('ADDED');
         $fh[] = do_lang_tempcode('COUNT_VIEWS');
         if (addon_installed('unvalidated')) {
-            $fh[] = do_lang_tempcode('VALIDATED');
+            $fh[] = protect_from_escaping(do_template('COMCODE_ABBR', array('_GUID' => '204d1050402b48e5c2c9539763a3fe50', 'TITLE' => do_lang_tempcode('VALIDATED'), 'CONTENT' => do_lang_tempcode('VALIDATED_SHORT'))));
         }
         $fh[] = do_lang_tempcode('ACTIONS');
         $header_row = results_field_title($fh, $sortables, 'sort', $sortable . ' ' . $sort_order);
@@ -256,9 +260,6 @@ class Module_cms_blogs extends Standard_crud_module
             $notes = get_param_string('notes', $notes);
 
             if (is_null($main_news_category)) {
-                global $NON_CANONICAL_PARAMS;
-                $NON_CANONICAL_PARAMS[] = 'cat';
-
                 $param_cat = get_param_string('cat', '');
                 if ($param_cat == '') {
                     $main_news_category = null;
@@ -299,7 +300,7 @@ class Module_cms_blogs extends Standard_crud_module
             }
         }
         if ($cats1->is_empty()) {
-            warn_exit(do_lang_tempcode('NO_CATEGORIES'));
+            warn_exit(do_lang_tempcode('NO_CATEGORIES', 'news_category'));
         }
         if (addon_installed('authors')) {
             $hidden->attach(form_input_hidden('author', $author));
@@ -328,7 +329,7 @@ class Module_cms_blogs extends Standard_crud_module
         $fields2->attach(seo_get_fields($this->seo_type, is_null($id) ? null : strval($id)));
 
         require_code('activities');
-        $fields2->attach(get_syndication_option_fields());
+        $fields2->attach(get_syndication_option_fields('news'));
 
         return array($fields, $hidden, null, null, null, null, make_string_tempcode($fields2->evaluate())/*XHTMLXHTML*/);
     }
@@ -351,12 +352,12 @@ class Module_cms_blogs extends Standard_crud_module
     /**
      * Standard crud_module cat getter.
      *
-     * @param  AUTO_LINK $id The entry for which the cat is sought
+     * @param  ID_TEXT $id The entry for which the cat is sought
      * @return string The cat
      */
     public function get_cat($id)
     {
-        $temp = $GLOBALS['SITE_DB']->query_select_value_if_there('news', 'news_category', array('id' => $id));
+        $temp = $GLOBALS['SITE_DB']->query_select_value_if_there('news', 'news_category', array('id' => intval($id)));
         if (is_null($temp)) {
             warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'news'));
         }
@@ -440,8 +441,6 @@ class Module_cms_blogs extends Standard_crud_module
         $allow_rating = post_param_integer('allow_rating', 0);
         $allow_comments = post_param_integer('allow_comments', 0);
         $allow_trackbacks = post_param_integer('allow_trackbacks', 0);
-        require_code('feedback2');
-        send_trackbacks(post_param_string('send_trackbacks', ''), $title, $news);
         $notes = post_param_string('notes', '');
 
         require_code('themes2');
@@ -461,9 +460,12 @@ class Module_cms_blogs extends Standard_crud_module
             }
         }
 
-        $meta_data = actual_meta_data_get_fields('news', null);
+        $metadata = actual_metadata_get_fields('news', null);
 
-        $id = add_news($title, $news, $author, $validated, $allow_rating, $allow_comments, $allow_trackbacks, $notes, $news_article, $main_news_category, $news_category, $meta_data['add_time'], $meta_data['submitter'], $meta_data['views'], null, null, $url);
+        $id = add_news($title, $news, $author, $validated, $allow_rating, $allow_comments, $allow_trackbacks, $notes, $news_article, $main_news_category, $news_category, $metadata['add_time'], $metadata['submitter'], $metadata['views'], null, null, $url);
+
+        require_code('feedback2');
+        send_trackbacks(post_param_string('send_trackbacks', ''), $title, $news);
 
         set_url_moniker('news', strval($id));
 
@@ -578,9 +580,9 @@ class Module_cms_blogs extends Standard_crud_module
             }
         }
 
-        $meta_data = actual_meta_data_get_fields('news', strval($id));
+        $metadata = actual_metadata_get_fields('news', strval($id));
 
-        edit_news(intval($id), $title, post_param_string('news', STRING_MAGIC_NULL), post_param_string('author', STRING_MAGIC_NULL), $validated, $allow_rating, $allow_comments, $allow_trackbacks, $notes, $news_article, $main_news_category, $news_category, post_param_string('meta_keywords', STRING_MAGIC_NULL), post_param_string('meta_description', STRING_MAGIC_NULL), $url, $meta_data['add_time'], $meta_data['edit_time'], $meta_data['views'], $meta_data['submitter'], null, true);
+        edit_news(intval($id), $title, post_param_string('news', STRING_MAGIC_NULL), post_param_string('author', STRING_MAGIC_NULL), $validated, $allow_rating, $allow_comments, $allow_trackbacks, $notes, $news_article, $main_news_category, $news_category, post_param_string('meta_keywords', STRING_MAGIC_NULL), post_param_string('meta_description', STRING_MAGIC_NULL), $url, $metadata['add_time'], $metadata['edit_time'], $metadata['views'], $metadata['submitter'], null, true);
     }
 
     /**
@@ -622,7 +624,16 @@ class Module_cms_blogs extends Standard_crud_module
             has_privilege(get_member(), 'submit_cat_midrange_content', 'cms_news') ? array('cms_news', array('type' => 'add_category'), '_SELF') : null, // Add one category
             has_privilege(get_member(), 'edit_own_cat_midrange_content', 'cms_news') ? array('cms_news', array('type' => 'edit_category'), '_SELF') : null, // Edit one category
             is_null($cat) ? null : has_privilege(get_member(), 'edit_own_cat_midrange_content', 'cms_news') ? array('cms_news', array('type' => '_edit_category', 'id' => $cat), '_SELF') : null, // Edit this category
-            null // View this category
+            null, // View this category
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            do_lang('BLOG_NEWS_ARTICLE'),
+            'news_category'
         );
     }
 
@@ -738,7 +749,7 @@ class Module_cms_blogs extends Standard_crud_module
             }
 
             require_code('tasks');
-            $ret = call_user_func_array__long_task(do_lang('IMPORT_WORDPRESS'), $this->title, 'import_rss', array($is_validated, $download_images, $to_own_account, $import_blog_comments, $import_to_blog, $rss_url, $rss));
+            $ret = call_user_func_array__long_task(do_lang('IMPORT_WORDPRESS'), $this->title, 'import_rss', array($is_validated, $download_images, $to_own_account, $import_blog_comments, $import_to_blog, $rss));
 
             return $ret;
         } elseif (get_param_string('method') == 'db') { // Importing directly from wordpress DB

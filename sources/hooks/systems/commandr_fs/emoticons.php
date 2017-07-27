@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -28,7 +28,7 @@ class Hook_commandr_fs_emoticons extends Resource_fs_base
     public $file_resource_type = 'emoticon';
 
     /**
-     * Standard commandr_fs function for seeing how many resources are. Useful for determining whether to do a full rebuild.
+     * Standard Commandr-fs function for seeing how many resources are. Useful for determining whether to do a full rebuild.
      *
      * @param  ID_TEXT $resource_type The resource type
      * @return integer How many resources there are
@@ -39,7 +39,7 @@ class Hook_commandr_fs_emoticons extends Resource_fs_base
     }
 
     /**
-     * Standard commandr_fs function for searching for a resource by label.
+     * Standard Commandr-fs function for searching for a resource by label.
      *
      * @param  ID_TEXT $resource_type The resource type
      * @param  LONG_TEXT $label The resource label
@@ -56,22 +56,7 @@ class Hook_commandr_fs_emoticons extends Resource_fs_base
     }
 
     /**
-     * Standard commandr_fs introspection function.
-     *
-     * @return array The properties available for the resource type
-     */
-    protected function _enumerate_file_properties()
-    {
-        return array(
-            'theme_img_code' => 'SHORT_TEXT',
-            'relevance_level' => 'INTEGER',
-            'use_topics' => 'BINARY',
-            'is_special' => 'BINARY',
-        );
-    }
-
-    /**
-     * Standard commandr_fs add function for resource-fs hooks. Adds some resource with the given label and properties.
+     * Standard Commandr-fs add function for resource-fs hooks. Adds some resource with the given label and properties.
      *
      * @param  LONG_TEXT $filename Filename OR Resource label
      * @param  string $path The path (blank: root / not applicable)
@@ -80,7 +65,7 @@ class Hook_commandr_fs_emoticons extends Resource_fs_base
      */
     public function file_add($filename, $path, $properties)
     {
-        list($properties, $label) = $this->_file_magic_filter($filename, $path, $properties);
+        list($properties, $label) = $this->_file_magic_filter($filename, $path, $properties, $this->file_resource_type);
 
         require_code('cns_general_action');
 
@@ -90,11 +75,14 @@ class Hook_commandr_fs_emoticons extends Resource_fs_base
         $is_special = $this->_default_property_int($properties, 'is_special');
 
         cns_make_emoticon($label, $theme_img_code, $relevance_level, $use_topics, $is_special);
+
+        $this->_resource_save_extend($this->file_resource_type, $label, $filename, $label, $properties);
+
         return $label;
     }
 
     /**
-     * Standard commandr_fs load function for resource-fs hooks. Finds the properties for some resource.
+     * Standard Commandr-fs load function for resource-fs hooks. Finds the properties for some resource.
      *
      * @param  SHORT_TEXT $filename Filename
      * @param  string $path The path (blank: root / not applicable). It may be a wildcarded path, as the path is used for content-type identification only. Filenames are globally unique across a hook; you can calculate the path using ->search.
@@ -110,17 +98,19 @@ class Hook_commandr_fs_emoticons extends Resource_fs_base
         }
         $row = $rows[0];
 
-        return array(
+        $properties = array(
             'label' => $row['e_code'],
             'theme_img_code' => $row['e_theme_img_code'],
             'relevance_level' => $row['e_relevance_level'],
             'use_topics' => $row['e_use_topics'],
             'is_special' => $row['e_is_special'],
         );
+        $this->_resource_load_extend($resource_type, $resource_id, $properties, $filename, $path);
+        return $properties;
     }
 
     /**
-     * Standard commandr_fs edit function for resource-fs hooks. Edits the resource to the given properties.
+     * Standard Commandr-fs edit function for resource-fs hooks. Edits the resource to the given properties.
      *
      * @param  ID_TEXT $filename The filename
      * @param  string $path The path (blank: root / not applicable)
@@ -130,7 +120,7 @@ class Hook_commandr_fs_emoticons extends Resource_fs_base
     public function file_edit($filename, $path, $properties)
     {
         list($resource_type, $resource_id) = $this->file_convert_filename_to_id($filename);
-        list($properties,) = $this->_file_magic_filter($filename, $path, $properties);
+        list($properties,) = $this->_file_magic_filter($filename, $path, $properties, $this->file_resource_type);
 
         require_code('cns_general_action2');
 
@@ -142,11 +132,13 @@ class Hook_commandr_fs_emoticons extends Resource_fs_base
 
         cns_edit_emoticon($resource_id, $label, $theme_img_code, $relevance_level, $use_topics, $is_special);
 
+        $this->_resource_save_extend($this->file_resource_type, $resource_id, $filename, $label, $properties);
+
         return $resource_id;
     }
 
     /**
-     * Standard commandr_fs delete function for resource-fs hooks. Deletes the resource.
+     * Standard Commandr-fs delete function for resource-fs hooks. Deletes the resource.
      *
      * @param  ID_TEXT $filename The filename
      * @param  string $path The path (blank: root / not applicable)

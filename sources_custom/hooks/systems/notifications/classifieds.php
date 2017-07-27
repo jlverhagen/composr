@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -10,7 +10,7 @@
 /**
  * @license    http://opensource.org/licenses/cpal_1.0 Common Public Attribution License
  * @copyright  ocProducts Ltd
- * @package    classifieds
+ * @package    classified_ads
  */
 
 /**
@@ -26,6 +26,10 @@ class Hook_notification_classifieds extends Hook_Notification
      */
     public function list_handled_codes()
     {
+        if (!$GLOBALS['SITE_DB']->table_exists('classifieds_prices')) {
+            return array();
+        }
+
         $list = array();
         $catalogues = $GLOBALS['SITE_DB']->query_select('classifieds_prices', array('DISTINCT c_catalogue_name'), null, '', null, null, true);
         if (is_null($catalogues)) {

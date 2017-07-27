@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -38,7 +38,7 @@ class Hook_fields_just_time
         $type = '_JUST_TIME';
         $special = $this->get_search_filter_from_env($field);
         $extra = '';
-        $display = get_translated_text($field['cf_name']);
+        $display = array_key_exists('trans_name', $field) ? $field['trans_name'] : get_translated_text($field['cf_name']);
 
         $range_search = (option_value_from_field_array($field, 'range_search', 'off') == 'on');
         if ($range_search) {
@@ -91,8 +91,8 @@ class Hook_fields_just_time
      * Get some info bits relating to our field type, that helps us look it up / set defaults.
      *
      * @param  ?array $field The field details (null: new field)
-     * @param  ?boolean $required Whether a default value cannot be blank (null: don't "lock in" a new default value)
-     * @param  ?string $default The given default value as a string (null: don't "lock in" a new default value)
+     * @param  ?boolean $required Whether a default value cannot be blank (null: don't "lock in" a new default value) (may be passed as false also if we want to avoid "lock in" of a new default value, but in this case possible cleanup of $default may still happen where appropriate)
+     * @param  ?string $default The given default value as a string (null: don't "lock in" a new default value) (blank: only "lock in" a new default value if $required is true)
      * @return array Tuple of details (row-type,default-value-to-use,db row-type)
      */
     public function get_field_value_row_bits($field, $required = null, $default = null)
@@ -134,7 +134,7 @@ class Hook_fields_just_time
                     $time_bits[2] = '00';
                 }
                 $time = mktime(intval($time_bits[0]), intval($time_bits[1]), intval($time_bits[2]));
-                //$time=utctime_to_usertime($time);   No, as we have no idea what date it is for, so cannot do DST changes
+                //$time = utctime_to_usertime($time);   No, as we have no idea what date it is for, so cannot do DST changes
             }
             $ev = get_timezoned_time($time, false, null, true);
         }
@@ -184,12 +184,16 @@ class Hook_fields_just_time
      *
      * @param  boolean $editing Whether we were editing (because on edit, it could be a fractional edit)
      * @param  array $field The field details
-     * @param  ?string $upload_dir Where the files will be uploaded to (null: do not store an upload, return NULL if we would need to do so)
+     * @param  ?string $upload_dir Where the files will be uploaded to (null: do not store an upload, return null if we would need to do so)
      * @param  ?array $old_value Former value of field (null: none)
      * @return ?string The value (null: could not process)
      */
     public function inputted_to_field_value($editing, $field, $upload_dir = 'uploads/catalogues', $old_value = null)
     {
+        if (fractional_edit()) {
+            return STRING_MAGIC_NULL;
+        }
+
         $id = $field['id'];
         $stub = 'field_' . strval($id);
         return $this->input_from($stub);

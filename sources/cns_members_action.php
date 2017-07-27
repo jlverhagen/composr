@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -48,7 +48,8 @@ function member_field_is_required($member_id, $field_class, $current_value = nul
             $current_value = $GLOBALS['FORUM_DRIVER']->get_member_row_field($member_id, ($field_class == 'dob') ? ('m_' . $field_class . '_day') : ('m_' . $field_class));
         }
 
-        if ((empty($current_value)) && (has_privilege($editing_member, 'bypass_' . $field_class . '_if_already_empty'))) {
+        $cv = trim($current_value);
+        if ((@empty($cv)) && (has_privilege($editing_member, 'bypass_' . $field_class . '_if_already_empty'))) {
             return false;
         }
     }
@@ -98,9 +99,11 @@ function member_field_is_required($member_id, $field_class, $current_value = nul
  * @param  LONG_TEXT $pt_rules_text Rules that other members must agree to before they may start a PT with the member.
  * @param  ?TIME $on_probation_until When the member is on probation until (null: not on probation)
  * @param  BINARY $auto_mark_read Mark topics as read automatically
+ * @param  BINARY $profile_views Total number of views to the profile
+ * @param  BINARY $total_sessions Total number of sessions (basically, visits)
  * @return AUTO_LINK The ID of the new member.
  */
-function cns_make_member($username, $password, $email_address, $secondary_groups, $dob_day, $dob_month, $dob_year, $custom_fields, $timezone = null, $primary_group = null, $validated = 1, $join_time = null, $last_visit_time = null, $theme = '', $avatar_url = null, $signature = '', $is_perm_banned = 0, $preview_posts = null, $reveal_age = 0, $title = '', $photo_url = '', $photo_thumb_url = '', $views_signatures = 1, $auto_monitor_contrib_content = null, $language = null, $allow_emails = 1, $allow_emails_from_staff = 1, $ip_address = null, $validated_email_confirm_code = '', $check_correctness = true, $password_compatibility_scheme = null, $salt = '', $last_submit_time = null, $id = null, $highlighted_name = 0, $pt_allow = '*', $pt_rules_text = '', $on_probation_until = null, $auto_mark_read = 1)
+function cns_make_member($username, $password, $email_address, $secondary_groups, $dob_day, $dob_month, $dob_year, $custom_fields, $timezone = null, $primary_group = null, $validated = 1, $join_time = null, $last_visit_time = null, $theme = '', $avatar_url = null, $signature = '', $is_perm_banned = 0, $preview_posts = null, $reveal_age = 0, $title = '', $photo_url = '', $photo_thumb_url = '', $views_signatures = 1, $auto_monitor_contrib_content = null, $language = null, $allow_emails = 1, $allow_emails_from_staff = 1, $ip_address = null, $validated_email_confirm_code = '', $check_correctness = true, $password_compatibility_scheme = null, $salt = '', $last_submit_time = null, $id = null, $highlighted_name = 0, $pt_allow = '*', $pt_rules_text = '', $on_probation_until = null, $auto_mark_read = 1, $profile_views = 0, $total_sessions = 0)
 {
     require_code('form_templates');
 
@@ -185,6 +188,14 @@ function cns_make_member($username, $password, $email_address, $secondary_groups
             require_code('type_sanitisation');
             if ((!is_email_address($email_address)) && ($email_address != '')) {
                 warn_exit(do_lang_tempcode('_INVALID_EMAIL_ADDRESS', escape_html($email_address)));
+            }
+        }
+
+        if ((get_option('one_per_email_address') != '0') && ($email_address != ''))
+        {
+            $test = $GLOBALS['FORUM_DB']->query_select_value_if_there('f_members', 'id', array('m_email_address' => $email_address));
+            if (!is_null($test)) {
+                warn_exit(do_lang_tempcode('_EMAIL_ADDRESS_IN_USE'));
             }
         }
     }
@@ -280,8 +291,8 @@ function cns_make_member($username, $password, $email_address, $secondary_groups
         'm_password_change_code' => '',
         'm_password_compat_scheme' => $password_compatibility_scheme,
         'm_on_probation_until' => $on_probation_until,
-        'm_profile_views' => 0,
-        'm_total_sessions' => 0,
+        'm_profile_views' => $profile_views,
+        'm_total_sessions' => $total_sessions,
         'm_auto_mark_read' => $auto_mark_read,
     );
     $map += insert_lang_comcode('m_signature', $signature, 4, $GLOBALS['FORUM_DB']);
@@ -290,10 +301,6 @@ function cns_make_member($username, $password, $email_address, $secondary_groups
         $map['id'] = $id;
     }
     $member_id = $GLOBALS['FORUM_DB']->query_insert('f_members', $map, true);
-
-    if (get_option('signup_fullname') == '1') {
-        $GLOBALS['FORUM_DRIVER']->set_custom_field($id, 'fullname', preg_replace('# \(\d+\)$#', '', $username));
-    }
 
     if ($check_correctness) {
         // If it was an invite/recommendation, award the referrer
@@ -317,7 +324,7 @@ function cns_make_member($username, $password, $email_address, $secondary_groups
     $value = mixed();
 
     // Store custom fields
-    $row = array('mf_member_id' => $member_id);
+    $row = array();
     $all_fields_types = collapse_2d_complexity('id', 'cf_type', $all_fields);
     foreach ($custom_fields as $field_num => $value) {
         if (!array_key_exists($field_num, $all_fields_types)) {
@@ -326,22 +333,17 @@ function cns_make_member($username, $password, $email_address, $secondary_groups
 
         $row['field_' . strval($field_num)] = $value;
     }
-    require_code('locations_cpfs');
-    autofill_geo_cpfs();
 
     // Set custom field row
-    $all_fields_regardless = $GLOBALS['FORUM_DB']->query_select('f_custom_fields', array('id', 'cf_type', 'cf_default'));
+    $all_fields_regardless = $GLOBALS['FORUM_DB']->query_select('f_custom_fields', array('id', 'cf_type', 'cf_default', 'cf_required'));
     foreach ($all_fields_regardless as $field) {
         $ob = get_fields_hook($field['cf_type']);
-        list(, , $storage_type) = $ob->get_field_value_row_bits($field);
+        list(, $default, $storage_type) = $ob->get_field_value_row_bits($field, $field['cf_required'] == 1, $field['cf_default'], $GLOBALS['FORUM_DB']);
 
         if (array_key_exists('field_' . strval($field['id']), $row)) {
             $value = $row['field_' . strval($field['id'])];
         } else {
-            $value = $field['cf_default'];
-            if (strpos($value, '|') !== false) {
-                $value = preg_replace('#\|.*$#', '', $value);
-            }
+            $value = $default;
         }
 
         $row['field_' . strval($field['id'])] = $value;
@@ -360,7 +362,10 @@ function cns_make_member($username, $password, $email_address, $secondary_groups
             }
         }
     }
-    $GLOBALS['FORUM_DB']->query_insert('f_member_custom_fields', $row);
+    $GLOBALS['FORUM_DB']->query_insert('f_member_custom_fields', array('mf_member_id' => $member_id) + $row);
+
+    require_code('locations_cpfs');
+    autofill_geo_cpfs($member_id);
 
     // Any secondary work...
 
@@ -391,7 +396,7 @@ function cns_make_member($username, $password, $email_address, $secondary_groups
 
     if ((addon_installed('commandr')) && (!running_script('install'))) {
         require_code('resource_fs');
-        generate_resourcefs_moniker('member', strval($member_id), null, null, true);
+        generate_resource_fs_moniker('member', strval($member_id), null, null, true);
     }
 
     $password_change_days = get_option('password_change_days');
@@ -408,6 +413,8 @@ function cns_make_member($username, $password, $email_address, $secondary_groups
     if (function_exists('decache')) {
         decache('main_members');
     }
+
+    set_value('cns_member_count', strval(intval(get_value('cns_member_count')) + 1));
 
     require_code('sitemap_xml');
     notify_sitemap_node_add('SEARCH:members:view:' . strval($member_id), $join_time, null, SITEMAP_IMPORTANCE_LOW, 'monthly', true);
@@ -473,29 +480,41 @@ function cns_make_boiler_custom_field($type)
  * Find how to store a field in the database.
  *
  * @param  ID_TEXT $type The field type.
- * @return array A pair: the DB field type, whether to index.
+ * @param  BINARY $encrypted Whether the field is encrypted.
+ * @param  string $__default The default value to use.
+ * @return array A tuple: the DB field type, whether to index, the default (in correct data type).
  */
-function get_cpf_storage_for($type)
+function get_cpf_storage_for($type, $encrypted = 0, $__default = '')
 {
+    $default = mixed();
+
     require_code('fields');
     $ob = get_fields_hook($type);
-    list(, , $storage_type) = $ob->get_field_value_row_bits(array('id' => null, 'cf_type' => $type, 'cf_default' => ''));
-    $_type = 'SHORT_TEXT';
+    list(, $_default, $storage_type) = $ob->get_field_value_row_bits(array('id' => null, 'cf_type' => $type, 'cf_default' => $__default), false, $__default);
+    $_type = ($encrypted == 1) ? 'LONG_TEXT' : 'SHORT_TEXT';
     switch ($storage_type) {
         case 'short_trans':
             $_type = 'SHORT_TRANS__COMCODE';
+            $default = $_default;
             break;
         case 'long_trans':
             $_type = 'LONG_TRANS__COMCODE';
+            $default = $_default;
             break;
         case 'long':
             $_type = 'LONG_TEXT';
+            $default = $_default;
             break;
         case 'integer':
             $_type = '?INTEGER';
+            $default = ($_default == '') ? null : intval($_default);
             break;
         case 'float':
             $_type = '?REAL';
+            $default = ($_default == '') ? null : floatval($_default);
+            break;
+        default:
+            $default = $_default;
             break;
     }
 
@@ -520,7 +539,7 @@ function get_cpf_storage_for($type)
             break;
     }
 
-    return array($_type, $index);
+    return array($_type, $index, $default);
 }
 
 /**
@@ -594,40 +613,39 @@ function cns_make_custom_field($name, $locked = 0, $description = '', $default =
         'cf_order' => $order,
         'cf_only_group' => $only_group,
         'cf_show_on_join_form' => $show_on_join_form,
-        'cf_options' => $options,
     );
-    $map += insert_lang('cf_name', $name, 2, $GLOBALS['FORUM_DB']);
-    $map += insert_lang('cf_description', $description, 2, $GLOBALS['FORUM_DB']);
-    $id = $GLOBALS['FORUM_DB']->query_insert('f_custom_fields', $map + array('cf_encrypted' => $encrypted), true, true);
-    if (is_null($id)) {
-        $id = $GLOBALS['FORUM_DB']->query_insert('f_custom_fields', $map, true); // Still upgrading, cf_encrypted does not exist yet
+
+    // LEGACY
+    $_version_database = get_value('ocf_version');
+    if ($_version_database === null) {
+        $_version_database = get_value('cns_version');
+    }
+    if ((intval($_version_database) !== 8) && (intval($_version_database) !== 9)) {
+        $map['cf_options'] = $options;
     }
 
-    list($_type, $index) = get_cpf_storage_for($type);
+    if (substr($name, 0, 4) == 'cms_') {
+        require_code('lang3');
+        $map += lang_code_to_static_content('cf_name', $name, false, 2, $GLOBALS['FORUM_DB']);
+    } else {
+        $map += insert_lang('cf_name', $name, 2, $GLOBALS['FORUM_DB']);
+    }
+    $map += insert_lang('cf_description', $description, 2, $GLOBALS['FORUM_DB']);
+    $id = $GLOBALS['FORUM_DB']->query_insert('f_custom_fields', $map + array('cf_encrypted' => $encrypted), true);
+
+    list($_type, $index, $_default) = get_cpf_storage_for($type, $encrypted, $default);
 
     require_code('database_action');
 
-    $GLOBALS['FORUM_DB']->add_table_field('f_member_custom_fields', 'field_' . strval($id), $_type); // Default will be made explicit when we insert rows
+    $GLOBALS['FORUM_DB']->add_table_field('f_member_custom_fields', 'field_' . strval($id), $_type, $_default);
 
-    $indices_count = $GLOBALS['FORUM_DB']->query_select_value('db_meta_indices', 'COUNT(*)', array('i_table' => 'f_member_custom_fields'));
-    if ($indices_count < 60) { // Could be 64 but trying to be careful here...
-        if ($index) {
-            if ($_type != 'LONG_TEXT') {
-                $GLOBALS['FORUM_DB']->create_index('f_member_custom_fields', 'mcf' . strval($id), array('field_' . strval($id)), 'mf_member_id');
-            }
-            if (strpos($_type, '_TEXT') !== false) {
-                $GLOBALS['FORUM_DB']->create_index('f_member_custom_fields', '#mcf_ft_' . strval($id), array('field_' . strval($id)), 'mf_member_id');
-            }
-        } elseif ((strpos($type, 'trans') !== false) || ($type == 'posting_field')) { // for efficient joins
-            $GLOBALS['FORUM_DB']->create_index('f_member_custom_fields', 'mcf' . strval($id), array('field_' . strval($id)), 'mf_member_id');
-        }
-    }
+    build_cpf_indices($id, $index, $type, $_type);
 
     log_it('ADD_CUSTOM_PROFILE_FIELD', strval($id), $name);
 
     if ((addon_installed('commandr')) && (!running_script('install'))) {
         require_code('resource_fs');
-        generate_resourcefs_moniker('cpf', strval($id), null, null, true);
+        generate_resource_fs_moniker('cpf', strval($id), null, null, true);
     }
 
     if (function_exists('decache')) {
@@ -641,4 +659,29 @@ function cns_make_custom_field($name, $locked = 0, $description = '', $default =
 
     $GLOBALS['NO_DB_SCOPE_CHECK'] = $dbs_back;
     return $id;
+}
+
+/**
+ * Make custom profile field indices.
+ *
+ * @param  AUTO_LINK $id CPF ID.
+ * @param  boolean $index Whether an index is needed for search purposes (there may be other reasons though).
+ * @param  ID_TEXT $type CPF type.
+ * @param  ID_TEXT $_type Underlying field type.
+ */
+function build_cpf_indices($id, $index, $type, $_type)
+{
+    $indices_count = $GLOBALS['FORUM_DB']->query_select_value('db_meta_indices', 'COUNT(*)', array('i_table' => 'f_member_custom_fields'));
+    if ($indices_count < 60) { // Could be 64 but trying to be careful here...
+        if ($index) {
+            if ($_type != 'LONG_TEXT') {
+                $GLOBALS['FORUM_DB']->create_index('f_member_custom_fields', 'mcf' . strval($id), array('field_' . strval($id)), 'mf_member_id');
+            }
+            if (strpos($_type, '_TEXT') !== false) {
+                $GLOBALS['FORUM_DB']->create_index('f_member_custom_fields', '#mcf_ft_' . strval($id), array('field_' . strval($id)), 'mf_member_id');
+            }
+        } elseif ((strpos($type, 'trans') !== false) || ($type == 'posting_field')) { // for efficient joins
+            $GLOBALS['FORUM_DB']->create_index('f_member_custom_fields', 'mcf' . strval($id), array('field_' . strval($id)), 'mf_member_id');
+        }
+    }
 }

@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -10,6 +10,7 @@
 /**
  * @license    http://opensource.org/licenses/cpal_1.0 Common Public Attribution License
  * @copyright  ocProducts Ltd
+ * @package    reported_content
  */
 
 /**
@@ -30,7 +31,7 @@ class Module_report_content
         $info['hacked_by'] = null;
         $info['hack_version'] = null;
         $info['version'] = 3;
-        $info['update_require_upgrade'] = 1;
+        $info['update_require_upgrade'] = true;
         $info['locked'] = false;
         return $info;
     }
@@ -66,10 +67,24 @@ class Module_report_content
         }
     }
 
+    /**
+     * Find entry-points available within this module.
+     *
+     * @param  boolean $check_perms Whether to check permissions.
+     * @param  ?MEMBER $member_id The member to check permissions as (null: current user).
+     * @param  boolean $support_crosslinks Whether to allow cross links to other modules (identifiable via a full-page-link rather than a screen-name).
+     * @param  boolean $be_deferential Whether to avoid any entry-point (or even return null to disable the page in the Sitemap) if we know another module, or page_group, is going to link to that entry-point. Note that "!" and "browse" entry points are automatically merged with container page nodes (likely called by page-groupings) as appropriate.
+     * @return ?array A map of entry points (screen-name=>language-code/string or screen-name=>[language-code/string, icon-theme-image]) (null: disabled).
+     */
+    public function get_entry_points($check_perms = true, $member_id = null, $support_crosslinks = true, $be_deferential = false)
+    {
+        return array();
+    }
+
     public $title;
 
     /**
-     * Module pre-run function. Allows us to know meta-data for <head> before we start streaming output.
+     * Module pre-run function. Allows us to know metadata for <head> before we start streaming output.
      *
      * @return ?Tempcode Tempcode indicating some kind of exceptional output (null: none).
      */
@@ -80,6 +95,8 @@ class Module_report_content
         $type = get_param_string('type', 'browse');
 
         require_lang('report_content');
+
+        attach_to_screen_header('<meta name="robots" content="noindex" />'); // XHTMLXHTML
 
         if ($type == 'browse') {
             $this->title = get_screen_title('REPORT_CONTENT');
@@ -218,7 +235,7 @@ class Module_report_content
         ) {
             warn_exit(do_lang_tempcode('ALREADY_REPORTED_CONTENT'));
         }
-        list($content_title, , $cma_info, $content_url) = content_get_details($content_type, $content_id);
+        list($content_title, , $cma_info, , $content_url) = content_get_details($content_type, $content_id);
 
         // Create reported post...
         $forum_id = $GLOBALS['FORUM_DRIVER']->forum_id_from_name(get_option('reported_posts_forum'));
@@ -258,7 +275,7 @@ class Module_report_content
         ));
         if ($count >= intval(get_option('reported_times'))) {
             // Mark as unvalidated
-            if ((isset($cma_info['validated_field'])) && (strpos($cma_info['table'], '(') === false)) {
+            if ((!is_null($cma_info['validated_field'])) && (strpos($cma_info['table'], '(') === false)) {
                 $db = $GLOBALS[(substr($cma_info['table'], 0, 2) == 'f_') ? 'FORUM_DB' : 'SITE_DB'];
                 $db->query_update($cma_info['table'], array($cma_info['validated_field'] => 0), get_content_where_for_str_id($content_id, $cma_info));
             }
@@ -279,7 +296,7 @@ class Module_report_content
 }
 
 
-/*HACKHACK...
+/*FUDGE...
 
 Before this can be an official Composr feature new content_meta_aware hooks are needed. Currently for instance there's no 'post' one.
 */

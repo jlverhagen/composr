@@ -29,7 +29,7 @@
 {+START,IF_NON_EMPTY,{WIKI_TREE}}
 	<h2>{!ID_ASSISTANCE_TOOL}</h2>
 
-	<form title="{!PRIMARY_PAGE_FORM}" method="post" action="index.php">
+	<form title="{!PRIMARY_PAGE_FORM}" method="post" action="index.php" autocomplete="off">
 		{$INSERT_SPAMMER_BLACKHOLE}
 
 		<p><label for="mtp_tree">{!BROWSE_ID_INSERT}</label></p>
@@ -43,7 +43,9 @@
 				<script>// <![CDATA[
 					{$REQUIRE_JAVASCRIPT,ajax}
 					{$REQUIRE_JAVASCRIPT,tree_list}
-					new tree_list('mtp_tree','data/ajax_tree.php?hook=choose_wiki_page{$KEEP;/}','','');
+					add_event_listener_abstract(window,'load',function() {
+						new tree_list('mtp_tree','data/ajax_tree.php?hook=choose_wiki_page{$KEEP;/}','','');
+					});
 				//]]></script>
 			{+END}
 
@@ -52,7 +54,7 @@
 					{WIKI_TREE}
 				</select>
 
-				<input class="menu___generic_admin__add_to_category button_screen_item" type="button" value="{!ADD}" onclick="if (this.form.elements['tree'].value!='') document.getElementById('children').value+=this.form.elements['tree'].value+'\n'" />
+				<input class="button_screen_item menu___generic_admin__add_to_category" type="button" value="{!ADD}" onclick="if (this.form.elements['tree'].value!='') document.getElementById('children').value+=this.form.elements['tree'].value+'\n'" />
 			{+END}
 		</div>
 	</form>

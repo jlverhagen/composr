@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -12,6 +12,9 @@
  * @copyright  ocProducts Ltd
  * @package    free_article_import
  */
+
+// Fixup SCRIPT_FILENAME potentially being missing
+$_SERVER['SCRIPT_FILENAME'] = __FILE__;
 
 // Find Composr base directory, and chdir into it
 global $FILE_BASE, $RELATIVE_PATH;
@@ -44,11 +47,13 @@ if (!is_file($FILE_BASE . '/sources/global.php')) {
 }
 require($FILE_BASE . '/sources/global.php');
 
-if (function_exists('set_time_limit')) {
+if (php_function_allowed('set_time_limit')) {
     @set_time_limit(0);
 }
 
 require_code('news');
+require_code('news2');
+require_code('seo2');
 
 if (!$GLOBALS['FORUM_DRIVER']->is_super_admin(get_member())) {
     access_denied();
@@ -71,10 +76,8 @@ foreach ($categories_default as $category) {
         $id = add_news_category($category, '', '');
         $categories_existing[$id] = $category;
 
-        $groups = $GLOBALS['FORUM_DRIVER']->get_usergroup_list(false, true);
-        foreach (array_keys($groups) as $group_id) {
-            $GLOBALS['SITE_DB']->query_insert('group_category_access', array('module_the_name' => 'news', 'category_name' => strval($id), 'group_id' => $group_id));
-        }
+        require_code('permissions2');
+        set_global_category_access('news', $id);
     }
 }
 
@@ -112,10 +115,8 @@ while (($r = fgetcsv($csvfile, 1024000)) !== false) {
         $categories_existing[$id] = $r[0];
         $main_news_category = $id;
 
-        $groups = $GLOBALS['FORUM_DRIVER']->get_usergroup_list(false, true);
-        foreach (array_keys($groups) as $group_id) {
-            $GLOBALS['SITE_DB']->query_insert('group_category_access', array('module_the_name' => 'news', 'category_name' => strval($id), 'group_id' => $group_id));
-        }
+        require_code('permissions2');
+        set_global_category_access('news', $id);
     }
     $author = trim($r[2]);
     $title = trim($r[3]);
@@ -163,7 +164,7 @@ function parse_ezinearticles($r)
     preg_match('#<h1>(.*)</h1>#Us', $f, $matches);
     $title = html_entity_decode($matches[1], ENT_QUOTES, get_charset());
 
-    $f = http_download_file_cached('http://ezinearticles.com/ezinepublisher/?id=' . $id, $r[1]);
+    $f = http_download_file_cached('http://ezinearticles.com/ezinepublisher/?id=' . urlencode($id), $r[1]);
 
     $matches = array();
     preg_match('#<textarea id="formatted-article" wrap="physical" style="width:98%;height:200px;" readonly>(.*)</textarea>#Us', $f, $matches);
@@ -302,8 +303,9 @@ function http_download_file_cached($url, $referer = '', $cookies = null)
     } else {
         sleep(3);
 
+        require_code('files');
         $data = http_download_file($url, null, true, false, 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/33.0.1750.146 Safari/537.36', null, $cookies, 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8', null, 'en-US,en;q=0.8', null, $referer);
-        file_put_contents($cache_file, $data);
+        cms_file_put_contents_safe($cache_file, $data, FILE_WRITE_FIX_PERMISSIONS);
     }
     return $data;
 }

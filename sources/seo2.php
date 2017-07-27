@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -143,6 +143,7 @@ function seo_meta_set_for_explicit($type, $id, $keywords, $description)
  * @param  array $keyword_sources Array of content strings to summarise from
  * @param  SHORT_TEXT $description The description to use
  * @return array A pair: Keyword string generated, Description generated
+ *
  * @ignore
  */
 function _seo_meta_find_data($keyword_sources, $description = '')
@@ -199,8 +200,7 @@ function _seo_meta_find_data($keyword_sources, $description = '')
 
                 if ($in_word) {
                     // Exiting word
-                    if (($i == $len - 1) || ((!$is_word_char) && ((!$word_is_caps) || ($at != ' ') || (/*continuation of Proper Noun*/
-                                    cms_mb_strtolower(cms_mb_substr($source, $i + 1, 1)) == cms_mb_substr($source, $i + 1, 1))))
+                    if (($i == $len - 1) || ((!$is_word_char) && ((!$word_is_caps) || ($at != ' ') || (/*continuation of Proper Noun*/cms_mb_strtolower(cms_mb_substr($source, $i + 1, 1)) == cms_mb_substr($source, $i + 1, 1))))
                     ) {
                         while ((cms_mb_strlen($this_word) != 0) && (cms_mb_substr($this_word, -1) == '\'' || cms_mb_substr($this_word, -1) == '-' || cms_mb_substr($this_word, -1) == '.')) {
                             $this_word = cms_mb_substr($this_word, 0, cms_mb_strlen($this_word) - 1);
@@ -236,8 +236,7 @@ function _seo_meta_find_data($keyword_sources, $description = '')
 
                 if ($in_word) {
                     // Exiting word
-                    if (($i == $len - 1) || ((!$is_word_char) && ((!$word_is_caps) || ($at != ' ') || (/*continuation of Proper Noun*/
-                                    strtolower(substr($source, $i + 1, 1)) == substr($source, $i + 1, 1))))
+                    if (($i == $len - 1) || ((!$is_word_char) && ((!$word_is_caps) || ($at != ' ') || (/*continuation of Proper Noun*/strtolower(substr($source, $i + 1, 1)) == substr($source, $i + 1, 1))))
                     ) {
                         $this_word = substr($source, $from, $i - $from);
                         while ((strlen($this_word) != 0) && (substr($this_word, -1) == '\'' || substr($this_word, -1) == '-' || substr($this_word, -1) == '.')) {
@@ -292,9 +291,16 @@ function _seo_meta_find_data($keyword_sources, $description = '')
     require_code('xhtml');
     $description = strip_comcode($description, true);
     $description = trim(preg_replace('#\s+---+\s+#', ' ', $description));
+    $description = preg_replace('#\n+#', ' ', $description);
 
-    if (strlen($description) > 160) {
-        $description = substr($description, 0, 157) . '...';
+    if (cms_mb_strlen($description) > 160) {
+        if (get_charset() == 'utf-8') {
+            $description = cms_mb_substr($description, 0, 159);
+            $description .= '…';
+        } else {
+            $description = cms_mb_substr($description, 0, 157);
+            $description .= '...';
+        }
     }
 
     return array($imp, $description);

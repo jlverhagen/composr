@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -339,7 +339,7 @@ class Hook_phpbb2
                         $filename = $row['user_avatar'];
                         if ((file_exists(get_custom_file_base() . '/uploads/cns_avatars/' . $filename)) || (@rename($file_base . '/' . $avatar_path . '/' . $filename, get_custom_file_base() . '/uploads/cns_avatars/' . $filename))) {
                             $avatar_url = 'uploads/cns_avatars/' . $filename;
-                            sync_file($avatar_url);
+                            sync_file(get_custom_file_base() . '/' . $avatar_url);
                         } else {
                             if ($STRICT_FILE) {
                                 warn_exit(do_lang_tempcode('MISSING_AVATAR', escape_html($filename)));
@@ -354,7 +354,7 @@ class Hook_phpbb2
                         $filename = $row['user_avatar'];
                         if ((file_exists(get_custom_file_base() . '/uploads/cns_avatars/' . $filename)) || (@rename($file_base . '/' . $avatar_gallery_path . '/' . $filename, get_custom_file_base() . '/uploads/cns_avatars/' . $filename))) {
                             $avatar_url = 'uploads/cns_avatars/' . substr($filename, strrpos($filename, '/'));
-                            sync_file($avatar_url);
+                            sync_file(get_custom_file_base() . '/' . $avatar_url);
                         } else {
                             // Try as a pack avatar then
                             $striped_filename = str_replace('/', '_', $filename);
@@ -652,7 +652,11 @@ class Hook_phpbb2
             $server_path = $rows[0]['config_value'];
             $server_name = $rows[1]['config_value'];
             $server_port = $rows[2]['config_value'];
-            $OLD_BASE_URL = ($server_port == '80') ? ('http://' . $server_name . $server_path) : ('http://' . $server_name . ':' . $server_port . $server_path);
+            if ($server_port == '443') {
+                $OLD_BASE_URL = 'https://' . $server_name . $server_path;
+            } else {
+                $OLD_BASE_URL = ($server_port == '80') ? ('http://' . $server_name . $server_path) : ('http://' . $server_name . ':' . $server_port . $server_path);
+            }
         }
         $post = preg_replace_callback('#' . preg_quote($OLD_BASE_URL) . '/(viewtopic\.php\?t=)(\d*)#', array($this, '_fix_links_callback_topic'), $post);
         $post = preg_replace_callback('#' . preg_quote($OLD_BASE_URL) . '/(viewforum\.php\?f=)(\d*)#', array($this, '_fix_links_callback_forum'), $post);
@@ -708,10 +712,10 @@ class Hook_phpbb2
                 }
 
                 $source_path = $file_base . '/' . $upload_dir . '/' . $row['physical_filename'];
-                $new_filename = find_derivative_filename('attachments', $row['physical_filename']);
+                $new_filename = find_derivative_filename('uploads/attachments', $row['physical_filename']);
                 $target_path = get_custom_file_base() . '/uploads/attachments/' . $new_filename;
                 if ((@rename($source_path, $target_path))) {
-                    sync_file($target_path);
+                    sync_file(get_custom_file_base() . '/' . $target_path);
 
                     $url = 'uploads/attachments/' . urlencode($new_filename);
                     $thumb_url = '';

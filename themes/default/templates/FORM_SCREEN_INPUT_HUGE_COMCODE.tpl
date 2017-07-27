@@ -5,9 +5,9 @@
 
 		{COMCODE}
 
-		<span class="field_name">
-			<label for="{NAME*}">{PRETTY_NAME*}</label>
-		</span>
+		<p class="field_name lonely_label">
+			<label for="{NAME*}">{PRETTY_NAME*}:</label>
+		</p>
 
 		<span id="required_readable_marker__{$?,{$IS_EMPTY,{NAME*}},{$RAND},{NAME*}}" style="display: {$?,{REQUIRED*},inline,none}"><span class="required_star">*</span> <span class="accessibility_hidden">{!REQUIRED}</span></span>
 
@@ -33,7 +33,7 @@
 		<script>// <![CDATA[
 			set_up_change_monitor('form_table_field_input__{$GET,randomised_id}');
 			manage_scroll_height(document.getElementById('{NAME;/}'));
-			{+START,INCLUDE,AUTOCOMPLETE_LOAD,.js,javascript}{+END}
+			{+START,INCLUDE,AUTOCOMPLETE_LOAD,.js,javascript}WYSIWYG={$IN_STR,{REQUIRED},wysiwyg}{+END}
 		//]]></script>
 	</td>
 </tr>

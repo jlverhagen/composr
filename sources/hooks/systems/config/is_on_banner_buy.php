@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -51,6 +51,6 @@ class Hook_config_is_on_banner_buy
      */
     public function get_default()
     {
-        return (!addon_installed('banners')) ? null : '1';
+        return (!addon_installed('banners')) ? null : ((get_site_default_lang() == fallback_lang()) ? '1' : '0');
     }
 }

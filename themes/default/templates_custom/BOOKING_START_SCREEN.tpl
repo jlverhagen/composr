@@ -18,7 +18,7 @@
 {+END}
 
 {+START,IF_NON_EMPTY,{CATEGORIES}}
-	<form action="{POST_URL*}" method="post">
+	<form action="{POST_URL*}" method="post" autocomplete="off">
 		{$INSERT_SPAMMER_BLACKHOLE}
 
 		<div>
@@ -161,7 +161,7 @@
 		</div>
 
 		<p class="proceed_button">
-			<input class="buttons__proceed button_screen" type="submit" value="{!PROCEED}" />
+			<input class="button_screen buttons__proceed" type="submit" value="{!PROCEED}" />
 		</p>
 	</form>
 {+END}

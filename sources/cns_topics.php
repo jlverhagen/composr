@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -31,6 +31,10 @@
  */
 function render_topic_box($row, $zone = '_SEARCH', $give_context = true, $include_breadcrumbs = true, $root = null, $guid = '')
 {
+    if (is_null($row)) { // Should never happen, but we need to be defensive
+        return new Tempcode();
+    }
+
     require_lang('cns');
 
     $map = array('page' => 'topicview', 'id' => $row['id']);
@@ -64,6 +68,7 @@ function render_topic_box($row, $zone = '_SEARCH', $give_context = true, $includ
         'BREADCRUMBS' => $breadcrumbs,
         'FRACTIONAL_EDIT_FIELD_NAME' => $give_context ? null : 'title',
         'FRACTIONAL_EDIT_FIELD_URL' => $give_context ? null : '_SEARCH:topics:_edit_topic:' . strval($row['id']),
+        'RESOURCE_TYPE' => 'topic',
     ));
 }
 
@@ -87,7 +92,11 @@ function cns_get_topic_where($topic_id, $member_id = null)
         $where .= ' AND (p_intended_solely_for=' . strval($member_id) . ' OR p_poster=' . strval($member_id) . ' OR p_intended_solely_for IS NULL)';
     }
     if ((!has_privilege($member_id, 'see_unvalidated')) && (addon_installed('unvalidated'))) {
-        $where .= ' AND (p_validated=1 OR ((p_poster<>' . strval($GLOBALS['FORUM_DRIVER']->get_guest_id()) . ' OR ' . db_string_equal_to('p_ip_address', get_ip_address()) . ') AND p_poster=' . strval($member_id) . '))';
+        if (is_guest($member_id)) {
+            $where .= ' AND (p_validated=1 OR (' . db_string_equal_to('p_ip_address', get_ip_address()) . ' AND p_poster=' . strval($member_id) . '))';
+        } else {
+            $where .= ' AND (p_validated=1 OR p_poster=' . strval($member_id) . ')';
+        }
     }
     return $where;
 }
@@ -267,18 +276,18 @@ function cns_has_read_topic($topic_id, $topic_last_time = null, $member_id = nul
         }
     }
 
-    $post_history_days_ago = time() - 60 * 60 * 24 * intval(get_option('post_history_days'));
+    $post_read_history_days_ago = time() - 60 * 60 * 24 * intval(get_option('post_read_history_days'));
 
-    if ((get_option('post_history_days') != '0') && (get_value('avoid_normal_topic_history') !== '1')) {
+    if ((get_option('post_read_history_days') != '0') && (get_value('avoid_normal_topic_read_history') !== '1')) {
         // Occasionally we need to delete old entries
-        if (mt_rand(0, 1000) == 123) {
+        if (mt_rand(0, 100) == 1) {
             if (!$GLOBALS['SITE_DB']->table_is_locked('f_read_logs')) {
-                $GLOBALS['FORUM_DB']->query('DELETE FROM ' . $GLOBALS['FORUM_DB']->get_table_prefix() . 'f_read_logs WHERE l_time<' . strval($post_history_days_ago) . ' AND l_time<>0');
+                $GLOBALS['FORUM_DB']->query('DELETE FROM ' . $GLOBALS['FORUM_DB']->get_table_prefix() . 'f_read_logs WHERE l_time<' . strval($post_read_history_days_ago) . ' AND l_time<>0', 500/*to reduce lock times*/);
             }
         }
     }
 
-    if ($topic_last_time < $post_history_days_ago) {
+    if ($topic_last_time < $post_read_history_days_ago) {
         return true; // We don't store that old
     }
     if (is_null($member_last_time)) {

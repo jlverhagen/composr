@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -25,10 +25,6 @@
  */
 function init__uploads()
 {
-    if (function_exists('set_time_limit')) {
-        @set_time_limit(0); // On some server setups, slow uploads can trigger the time-out
-    }
-
     if (!defined('CMS_UPLOAD_ANYTHING')) {
         define('CMS_UPLOAD_IMAGE', 1);
         define('CMS_UPLOAD_VIDEO', 2);
@@ -56,15 +52,20 @@ function init__uploads()
  */
 function post_param_multi_source_upload($name, $upload_to, $required = true, $is_edit = false, &$filename = null, &$thumb_url = null, $upload_type = 15, $copy_to_server = false)
 {
-    $thumb_specify_name = $name . '__url__thumb';
+    $thumb_specify_name = $name . '__thumb__url';
+    $test = post_param_string($thumb_specify_name, '');
+    if ($test == '') {
+        $thumb_specify_name = $name . '__thumb__filedump';
+    }
 
     // Upload
     // ------
 
     require_code('uploads');
     $field_file = $name . '__upload';
-    $thumb_attach_name = $name . '__upload__thumb';
-    if ((is_plupload()) || (((array_key_exists($field_file, $_FILES)) && (is_uploaded_file($_FILES[$field_file]['tmp_name']))))) {
+    $thumb_attach_name = $name . '__thumb__upload';
+    is_plupload(true);
+    if (((array_key_exists($field_file, $_FILES)) && ((is_plupload()) || (is_uploaded_file($_FILES[$field_file]['tmp_name']))))) {
         $urls = get_url('', $field_file, $upload_to, 0, $upload_type, $thumb_url !== null, $thumb_specify_name, $thumb_attach_name);
 
         if ((substr($urls[0], 0, 8) != 'uploads/') && (is_null(http_download_file($urls[0], 0, false))) && (!is_null($GLOBALS['HTTP_MESSAGE_B']))) {
@@ -328,8 +329,6 @@ function get_url($specify_name, $attach_name, $upload_folder, $obfuscate = 0, $e
     }
 
     if (!file_exists($upload_folder_full)) {
-        @mkdir(get_custom_file_base() . '/uploads', 0777);
-
         require_code('files2');
         make_missing_directory($upload_folder_full);
     }
@@ -342,9 +341,9 @@ function get_url($specify_name, $attach_name, $upload_folder, $obfuscate = 0, $e
     require_code('images');
     if ((($enforce_type & CMS_UPLOAD_VIDEO) != 0) || (($enforce_type & CMS_UPLOAD_AUDIO) != 0)) {
         require_code('files2');
-        $max_size = get_max_file_size();
+        $max_size = get_max_file_size(null, null, false);
     } else {
-        $max_size = get_max_image_size();
+        $max_size = get_max_image_size(false);
     }
     if (($attach_name != '') && (array_key_exists($attach_name, $filearrays)) && ((is_uploaded_file($filearrays[$attach_name]['tmp_name'])) || ($plupload_uploaded))) { // If we uploaded
         if (!has_privilege($member_id, 'exceed_filesize_limit')) {
@@ -376,7 +375,7 @@ function get_url($specify_name, $attach_name, $upload_folder, $obfuscate = 0, $e
             return array('', '', '', '');
         }
         if (($copy_to_server) && (!url_is_local($url[0]))) {
-            $path2 = cms_tempnam('cmsfc');
+            $path2 = cms_tempnam();
             $tmpfile = fopen($path2, 'wb');
 
             $file = http_download_file($url[0], $max_size, true, false, 'Composr', null, null, null, null, null, $tmpfile);
@@ -495,21 +494,23 @@ function get_url($specify_name, $attach_name, $upload_folder, $obfuscate = 0, $e
     }
 
     $out[0] = $url[0];
+    $out[1] = '';
     $out[2] = $url[1];
+    $out[3] = '';
 
     // Generate thumbnail if needed
     if (($make_thumbnail) && ($url[0] != '') && ($is_image)) {
         if ((array_key_exists($thumb_attach_name, $filearrays)) && ((is_uploaded_file($filearrays[$thumb_attach_name]['tmp_name'])) || ($plupload_uploaded_thumb))) { // If we uploaded
-            if ($filearrays[$thumb_attach_name]['size'] > get_max_image_size()) {
+            if ($filearrays[$thumb_attach_name]['size'] > get_max_image_size(false)) {
                 if ($accept_errors) {
-                    attach_message(do_lang_tempcode('FILE_TOO_BIG', escape_html(integer_format(get_max_image_size()))), 'warn');
+                    attach_message(do_lang_tempcode('FILE_TOO_BIG', escape_html(integer_format(get_max_image_size(false)))), 'warn');
                     return array('', '', '', '');
                 } else {
-                    warn_exit(do_lang_tempcode('FILE_TOO_BIG', escape_html(integer_format(get_max_image_size()))));
+                    warn_exit(do_lang_tempcode('FILE_TOO_BIG', escape_html(integer_format(get_max_image_size(false)))));
                 }
             }
 
-            $_thumb = _get_upload_url($member_id, $thumb_attach_name, $thumb_folder, $upload_folder_full, CMS_UPLOAD_IMAGE, 0, $accept_errors);
+            $_thumb = _get_upload_url($member_id, $thumb_attach_name, $thumb_folder, $thumb_folder_full, CMS_UPLOAD_IMAGE, 0, $accept_errors);
             $thumb = $_thumb[0];
         } elseif (array_key_exists($thumb_specify_name, $_POST)) { // If we specified
             $_thumb = _get_specify_url($member_id, $thumb_specify_name, $thumb_folder, CMS_UPLOAD_IMAGE, $accept_errors);
@@ -521,15 +522,18 @@ function get_url($specify_name, $attach_name, $upload_folder, $obfuscate = 0, $e
                 } else {
                     $ext = '';
                 }
-                $thumb_filename = preg_replace('#[^\w\.]#', 'x', basename($url[0]));
+                $thumb_filename = preg_replace('#[^' . URL_CONTENT_REGEXP . '\.]#', 'x', basename($url[0]));
                 $place = $thumb_folder_full . '/' . $thumb_filename . $ext;
                 $i = 2;
                 while (file_exists($place)) {
-                    $thumb_filename = strval($i) . preg_replace('#[^\w\.]#', 'x', basename($url[0]));
+                    $thumb_filename = strval($i) . preg_replace('#[^' . URL_CONTENT_REGEXP . '\.]#', 'x', basename($url[0]));
                     $place = $thumb_folder_full . '/' . $thumb_filename . $ext;
                     $i++;
                 }
-                file_put_contents($place, ''); // Lock it in ASAP, to stop race conditions
+                if (@file_put_contents($place, '') === false) { // Lock it in ASAP, to stop race conditions
+                    intelligent_write_error($place);
+                }
+                sync_file($place);
                 $url_full = url_is_local($url[0]) ? get_custom_base_url() . '/' . $url[0] : $url[0];
 
                 convert_image($url_full, $place, -1, -1, intval(get_option('thumb_width')), true, null, false, $only_make_smaller);
@@ -548,7 +552,7 @@ function get_url($specify_name, $attach_name, $upload_folder, $obfuscate = 0, $e
         $out[1] = $thumb;
     } elseif ($make_thumbnail) {
         if ((array_key_exists($thumb_attach_name, $filearrays)) && ((is_uploaded_file($filearrays[$thumb_attach_name]['tmp_name'])) || ($plupload_uploaded_thumb))) { // If we uploaded
-            if ($filearrays[$thumb_attach_name]['size'] > get_max_image_size()) {
+            if ($filearrays[$thumb_attach_name]['size'] > get_max_image_size(false)) {
                 if ($accept_errors) {
                     attach_message(do_lang_tempcode('FILE_TOO_BIG', escape_html(integer_format(get_max_image_size()))), 'warn');
                     return array('', '', '', '');
@@ -557,7 +561,7 @@ function get_url($specify_name, $attach_name, $upload_folder, $obfuscate = 0, $e
                 }
             }
 
-            $_thumb = _get_upload_url($member_id, $thumb_attach_name, $thumb_folder, $upload_folder_full, CMS_UPLOAD_IMAGE, 0, $accept_errors);
+            $_thumb = _get_upload_url($member_id, $thumb_attach_name, $thumb_folder, $thumb_folder_full, CMS_UPLOAD_IMAGE, 0, $accept_errors);
             $thumb = $_thumb[0];
         } elseif (array_key_exists($thumb_specify_name, $_POST)) {
             $_thumb = _get_specify_url($member_id, $thumb_specify_name, $thumb_folder, CMS_UPLOAD_IMAGE, $accept_errors);
@@ -565,17 +569,15 @@ function get_url($specify_name, $attach_name, $upload_folder, $obfuscate = 0, $e
         }
         if (!is_null($thumb)) {
             $out[1] = $thumb;
-        } else {
-            $out[1] = '';
         }
     }
 
     // For reentrance of previews
     if ($specify_name != '') {
-        $_POST[$specify_name] = array_key_exists(0, $out) ? $out[0] : '';
+        $_POST[$specify_name] = $out[0];
     }
     if ($thumb_specify_name != '') {
-        $_POST[$thumb_specify_name] = array_key_exists(1, $out) ? $out[1] : '';
+        $_POST[$thumb_specify_name] = $out[1];
     }
 
     if (count($filearrays) != 0) {
@@ -594,6 +596,7 @@ function get_url($specify_name, $attach_name, $upload_folder, $obfuscate = 0, $e
  * @param  integer $enforce_type The type of upload it is (bitmask, from CMS_UPLOAD_* constants)
  * @param  boolean $accept_errors Whether to accept upload errors
  * @return array A pair: the URL and the filename
+ *
  * @ignore
  */
 function _get_specify_url($member_id, $specify_name, $upload_folder, $enforce_type = 15, $accept_errors = false)
@@ -608,6 +611,16 @@ function _get_specify_url($member_id, $specify_name, $upload_folder, $enforce_ty
     //  So lets check we are allowed to download it!
     if (($url[0] != '') && (url_is_local($url[0]))) {
         $missing_ok = false;
+
+        // Check the file exists
+        if ((!file_exists(get_custom_file_base() . '/' . rawurldecode($url[0]))) && (!$missing_ok)) {
+            if ($accept_errors) {
+                attach_message(do_lang_tempcode('MISSING_FILE'), 'warn');
+                return array('', '');
+            } else {
+                warn_exit(do_lang_tempcode('MISSING_FILE'));
+            }
+        }
 
         // Its not in the upload folder, so maybe we aren't allowed to download it
         if (
@@ -635,16 +648,6 @@ function _get_specify_url($member_id, $specify_name, $upload_folder, $enforce_ty
                 if (@strcmp(substr($shouldbe, 0, 8000), substr($actuallyis, 0, 8000)) != 0) {
                     log_hack_attack_and_exit('TRY_TO_DOWNLOAD_SCRIPT');
                 }
-            }
-        }
-
-        // Check the file exists
-        if ((!file_exists(get_custom_file_base() . '/' . rawurldecode($url[0]))) && (!$missing_ok)) {
-            if ($accept_errors) {
-                attach_message(do_lang_tempcode('MISSING_FILE'), 'warn');
-                return array('', '');
-            } else {
-                warn_exit(do_lang_tempcode('MISSING_FILE'));
             }
         }
     }
@@ -691,6 +694,7 @@ function _get_specify_url($member_id, $specify_name, $upload_folder, $enforce_ty
  * @param  integer $enforce_type The type of upload it is (bitmask, from CMS_UPLOAD_* constants)
  * @param  boolean $accept_errors Whether to accept upload errors
  * @return boolean Success status
+ *
  * @ignore
  */
 function _check_enforcement_of_type($member_id, $file, $enforce_type, $accept_errors = false)
@@ -781,6 +785,7 @@ function _check_enforcement_of_type($member_id, $file, $enforce_type, $accept_er
  * @param  boolean $accept_errors Whether to accept upload errors
  * @param  ?string $filename Filename to use (null: choose one)
  * @return array A pair: the URL and the filename
+ *
  * @ignore
  */
 function _get_upload_url($member_id, $attach_name, $upload_folder, $upload_folder_full, $enforce_type = 15, $obfuscate = 0, $accept_errors = false, $filename = null)
@@ -813,14 +818,17 @@ function _get_upload_url($member_id, $attach_name, $upload_folder, $upload_folde
         if (($obfuscate == 0) || ($obfuscate == 3) || (strlen($file) > 150)) {
             $filename = preg_replace('#\..*\.#', '.', $file);
             $place = $upload_folder_full . '/' . $filename;
-            $i = 2;
             // Hunt with sensible names until we don't get a conflict
+            $i = 2;
             while (file_exists($place)) {
                 $filename = strval($i) . preg_replace('#\..*\.#', '.', $file);
                 $place = $upload_folder_full . '/' . $filename;
                 $i++;
             }
-            file_put_contents($place, ''); // Lock it in ASAP, to stop race conditions
+            if (@file_put_contents($place, '') === false) { // Lock it in ASAP, to stop race conditions
+                intelligent_write_error($place);
+            }
+            sync_file($place);
         } else { // A result of some randomness
             $ext = get_file_extension($file);
             $ext = (($obfuscate == 2) && (!is_image($file))) ? 'dat' : get_file_extension($file);

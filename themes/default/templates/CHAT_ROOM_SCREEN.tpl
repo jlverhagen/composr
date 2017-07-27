@@ -1,16 +1,22 @@
 {TITLE}
 
+{$REQUIRE_JAVASCRIPT,jquery}
 {$REQUIRE_JAVASCRIPT,widget_color}
 {$REQUIRE_CSS,widget_color}
 
 {+START,IF_NON_EMPTY,{INTRODUCTION}}<p>{INTRODUCTION}</p>{+END}
 
 {CHAT_SOUND}
+<script>
+// <![CDATA[
+	add_event_listener_abstract(window,'load',prepare_chat_sounds);
+// ]]>
+</script>
 
 <div class="chat_posting_area">
 	<div class="float_surrounder">
 		<div class="left">
-			<form autocomplete="off" title="{!MESSAGE}" action="{MESSAGES_PHP*}?action=post&amp;room_id={CHATROOM_ID*}" method="post" style="display: inline;">
+			<form title="{!MESSAGE}" action="{MESSAGES_PHP*}?action=post&amp;room_id={CHATROOM_ID*}" method="post" class="inline" autocomplete="off">
 				{$INSERT_SPAMMER_BLACKHOLE}
 
 				<div style="display: inline;">
@@ -22,8 +28,10 @@
 			</form>
 		</div>
 		<div class="left">
-			<form autocomplete="off" title="{SUBMIT_VALUE*}" action="{MESSAGES_PHP*}?action=post&amp;room_id={CHATROOM_ID*}" method="post" style="display: inline;">
-				<input type="button" class="buttons__send button_micro" name="post_now" onclick="return chat_post(event,{CHATROOM_ID*},'post',document.getElementById('font_name').options[document.getElementById('font_name').selectedIndex].value,document.getElementById('text_colour').value);" value="{SUBMIT_VALUE*}" />
+			<form title="{SUBMIT_VALUE*}" action="{MESSAGES_PHP*}?action=post&amp;room_id={CHATROOM_ID*}" method="post" class="inline" autocomplete="off">
+				{$INSERT_SPAMMER_BLACKHOLE}
+
+				<input type="button" class="button_micro buttons__send" onclick="return chat_post(event,{CHATROOM_ID*},'post',document.getElementById('font_name').options[document.getElementById('font_name').selectedIndex].value,document.getElementById('text_colour').value);" value="{SUBMIT_VALUE*}" />
 			</form>
 			{+START,IF,{$NOT,{$MOBILE}}}
 				{MICRO_BUTTONS}
@@ -46,7 +54,7 @@
 					<li><a onclick="return open_link_as_overlay(this);" class="link_exempt" title="{!COMCODE_MESSAGE,Comcode} {!LINK_NEW_WINDOW}" target="_blank" href="{COMCODE_HELP*}"><img src="{$IMG*,icons/16x16/editor/comcode}" srcset="{$IMG*,icons/32x32/editor/comcode} 2x" class="vertical_alignment" alt="" /></a></li>
 				{+END}
 				{+START,IF_NON_EMPTY,{CHATCODE_HELP}}
-					<li><a onclick="return open_link_as_overlay(this);" class="link_exempt" title="{!CHATCODE_HELP=} {!LINK_NEW_WINDOW}" target="_blank" href="{CHATCODE_HELP*}">{!CHATCODE_HELP=}</a></li>
+					<li><a onclick="return open_link_as_overlay(this);" class="link_exempt" title="{$STRIP_TAGS,{!CHATCODE_HELP}} {!LINK_NEW_WINDOW}" target="_blank" href="{CHATCODE_HELP*}">{!CHATCODE_HELP}</a></li>
 				{+END}
 			</ul>
 		{+END}
@@ -59,7 +67,7 @@
 	{!USERS_IN_CHATROOM} <span id="chat_members_update">{CHATTERS}</span>
 </p></div>
 
-<form title="{$STRIP_TAGS,{!CHAT_OPTIONS_DESCRIPTION}}" class="below_main_chat_window" onsubmit="return check_chat_options(this);" method="post" action="{OPTIONS_URL*}">
+<form title="{$STRIP_TAGS,{!CHAT_OPTIONS_DESCRIPTION}}" class="below_main_chat_window" onsubmit="return check_chat_options(this);" method="post" action="{OPTIONS_URL*}" autocomplete="off">
 	{$INSERT_SPAMMER_BLACKHOLE}
 
 	<div class="box box___chat_screen_options box_prominent"><div class="box_inner">
@@ -99,19 +107,21 @@
 			</p>
 
 			<p>
-				<input class="buttons__save button_screen_item" onclick="var form=this.form; window.fauxmodal_confirm('{!SAVE_COMPUTER_USING_COOKIE}',function(answer) { if (answer) form.submit(); }); return false;" type="submit" value="{!CHAT_CHANGE_OPTIONS=}" />
+				<input class="button_screen_item buttons__save" onclick="var form=this.form; window.fauxmodal_confirm('{!SAVE_COMPUTER_USING_COOKIE}',function(answer) { if (answer) form.submit(); }); return false;" type="submit" value="{$STRIP_TAGS,{!CHAT_CHANGE_OPTIONS}}" />
 			</p>
 		</div>
 
 		<div class="chat_room_actions">
 			<p class="lonely_label">{!ACTIONS}:</p>
-			<ul role="navigation" class="actions_list">
-				{+START,LOOP,LINKS}
-					{+START,IF_NON_EMPTY,{_loop_var}}
-						<li class="icon_14_{_loop_key*}">{_loop_var}</li>
+			<nav>
+				<ul class="actions_list">
+					{+START,LOOP,LINKS}
+						{+START,IF_NON_EMPTY,{_loop_var}}
+							<li class="icon_14_{_loop_key*}">{_loop_var}</li>
+						{+END}
 					{+END}
-				{+END}
-			</ul>
+				</ul>
+			</nav>
 		</div>
 	</div></div>
 </form>

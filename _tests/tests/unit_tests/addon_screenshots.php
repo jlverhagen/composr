@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -45,16 +45,7 @@ class addon_screenshots_test_set extends cms_test_case
                     }
                 }
 
-                if ($ob->get_category() == 'Development') { // Do not want dev screenshots
-                    // These are defined as exceptions where we won't enforce our screenshot rule
-                    if (in_array($hook, array(
-                        'composer',
-                    ))) {
-                        continue;
-                    }
-
-                    $this->assertTrue(!$exists, 'Unnecessary addon screenshot: ' . $hook);
-                } else { // Do want screenshots
+                if ($ob->get_category() != 'Development') {
                     // These are defined as exceptions where we won't enforce our screenshot rule
                     if (in_array($hook, array(
                     ))) {

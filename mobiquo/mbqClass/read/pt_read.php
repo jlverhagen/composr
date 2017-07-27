@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -48,7 +48,8 @@ class CMSPtRead
 
         $topics = array();
         foreach ($_topics as $topic) {
-            $extra = ' AND p_time>COALESCE((SELECT l_time FROM ' . $table_prefix . 'f_read_logs l WHERE l_topic_id=p.p_topic_id AND l_member_id=' . strval(get_member()) . '),0) AND p_time>' . strval(time() - 60 * 60 * 24 * intval(get_option('post_history_days')));
+            $p_time_low = db_function('COALESCE', array('(SELECT l_time FROM ' . $table_prefix . 'f_read_logs l WHERE l_topic_id=p.p_topic_id AND l_member_id=' . strval(get_member()) . ')', '0'));
+            $extra = ' AND p_time>' . $p_time_low . ' AND p_time>' . strval(time() - 60 * 60 * 24 * intval(get_option('post_read_history_days')));
             $unread_num = $GLOBALS['FORUM_DB']->query_select_value('f_posts p', 'COUNT(*)', array('p.p_topic_id' => $topic['topic_id']), $extra);
 
             $participants = get_topic_participants($topic['topic_id'], null, $topic);
@@ -67,8 +68,8 @@ class CMSPtRead
                 'new_post' => ($unread_num > 0),
                 'unread_num' => $unread_num,
                 'can_invite' => true,
-                'can_edit' => has_privilege(get_member(), 'moderate_personal_topic'),
-                'can_close' => has_privilege(get_member(), 'moderate_personal_topic'),
+                'can_edit' => has_privilege(get_member(), 'moderate_private_topic'),
+                'can_close' => has_privilege(get_member(), 'moderate_private_topic'),
                 'can_upload' => $can_upload,
                 'is_closed' => ($topic['t_is_open'] == 0),
                 'delete_mode' => 1, // soft-delete mode only
@@ -117,10 +118,15 @@ class CMSPtRead
         $sql .= ' FROM ' . $table_prefix . 'f_posts p JOIN ' . $table_prefix . 'f_topics t ON t.id=p.p_topic_id';
         $sql .= ' WHERE ' . tapatalk_get_topic_where($topic_id);
         $sql .= ' ORDER BY p_time,p.id';
-        $_posts = $GLOBALS['FORUM_DB']->query('SELECT *,p.id AS post_id,t.id AS topic_id' . $sql, $max, $start);
+        $_posts = $GLOBALS['FORUM_DB']->query('SELECT *,p.id AS post_id,p.p_topic_id AS topic_id' . $sql, $max, $start);
         $total_post_count = $GLOBALS['FORUM_DB']->query_value_if_there('SELECT COUNT(*)' . $sql);
 
-        $extra = ' AND p_time>GREATEST(' . strval(time() - 60 * 60 * 24 * intval(get_option('post_history_days'))) . ',COALESCE(0,(SELECT l_time FROM ' . $table_prefix . 'f_read_logs l WHERE l_topic_id=p.p_topic_id AND l_member_id=' . strval(get_member()) . ')))';
+        $last_read_sql = db_function('COALESCE' , array('(SELECT l_time FROM ' . $table_prefix . 'f_read_logs l WHERE l_topic_id=p.p_topic_id AND l_member_id=' . strval(get_member()) . ')', '0'));
+
+        $extra = ' AND p_time>' . db_function('GREATEST', array(
+            strval(time() - 60 * 60 * 24 * intval(get_option('post_read_history_days'))),
+            $last_read_sql
+        ));
         $unread_num = $GLOBALS['FORUM_DB']->query_select_value('f_posts p', 'COUNT(*)', array('p.p_topic_id' => $topic_id), $extra);
 
         $topic_read_time = $GLOBALS['FORUM_DB']->query_select_value_if_there('f_read_logs', 'l_time', array('l_member_id' => get_member(), 'l_topic_id' => $topic_id));
@@ -163,8 +169,8 @@ class CMSPtRead
             'total_posts' => $total_post_count,
             'new_post' => ($unread_num > 0),
             'can_invite' => true,
-            'can_edit' => has_privilege(get_member(), 'moderate_personal_topic'),
-            'can_close' => has_privilege(get_member(), 'moderate_personal_topic'),
+            'can_edit' => has_privilege(get_member(), 'moderate_private_topic'),
+            'can_close' => has_privilege(get_member(), 'moderate_private_topic'),
             'can_upload' => $can_upload,
             'is_closed' => ($topic_details[0]['t_is_open'] == 0),
             'delete_mode' => 1, // soft-delete mode only

@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -38,6 +38,7 @@ class Hook_config_oembed_html_whitelist
             'explanation' => 'CONFIG_OPTION_oembed_html_whitelist',
             'shared_hosting_restricted' => '0',
             'list_options' => '',
+            'order_in_category_group' => 4,
 
             'addon' => 'core_rich_media',
         );
@@ -50,6 +51,6 @@ class Hook_config_oembed_html_whitelist
      */
     public function get_default()
     {
-        return "youtube.com\nyoutu.be\nvimeo.com\ndailymotion.com\nslideshare.net\nscribd.com\nsoundcloud.com\ntwitter.com\nembed.ly\nmaps.google.com\nmaps.google.co.uk\nimgur.com\nustream.tv\njustin.tv\napi.embed.ly\nnoembed.com";
+        return "youtube.com\nyoutu.be\nvimeo.com\ndailymotion.com\nslideshare.net\nscribd.com\nsoundcloud.com\ntwitter.com\nembed.ly\nmaps.google.com\nmaps.google.co.uk\nimgur.com\nustream.tv\njustin.tv\napi.embed.ly\nnoembed.com\nfacebook.com";
     }
 }

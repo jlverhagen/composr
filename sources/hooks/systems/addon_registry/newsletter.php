@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -26,9 +26,10 @@ class Hook_addon_registry_newsletter
     /**
      * Get a list of file permissions to set
      *
+     * @param  boolean $runtime Whether to include wildcards represented runtime-created chmoddable files
      * @return array File permissions to set
      */
-    public function get_chmod_array()
+    public function get_chmod_array($runtime = false)
     {
         return array();
     }
@@ -111,6 +112,7 @@ class Hook_addon_registry_newsletter
             'themes/default/images/icons/48x48/menu/adminzone/tools/newsletter/index.html',
             'sources/hooks/systems/block_ui_renderers/newsletters.php',
             'sources/hooks/modules/admin_setupwizard/newsletter.php',
+            'sources/hooks/systems/tasks/import_newsletter_subscribers.php',
             'sources/hooks/systems/config/interest_levels.php',
             'sources/hooks/systems/config/newsletter_text.php',
             'sources/hooks/systems/config/newsletter_title.php',
@@ -126,10 +128,13 @@ class Hook_addon_registry_newsletter
             'themes/default/templates/NEWSLETTER_SUBSCRIBERS_SCREEN.tpl',
             'adminzone/pages/modules/admin_newsletter.php',
             'lang/EN/newsletter.ini',
+            'sources/hooks/systems/config/newsletter_update_time.php',
             'sources/hooks/systems/commandr_fs/newsletters.php',
             'sources/hooks/systems/commandr_fs/periodic_newsletters.php',
-            'sources/hooks/systems/resource_meta_aware/newsletters.php',
-            'sources/hooks/systems/resource_meta_aware/periodic_newsletters.php',
+            'sources/hooks/systems/commandr_fs/newsletter_subscribers.php',
+            'sources/hooks/systems/resource_meta_aware/newsletter.php',
+            'sources/hooks/systems/resource_meta_aware/periodic_newsletter.php',
+            'sources/hooks/systems/resource_meta_aware/newsletter_subscriber.php',
             'site/pages/modules/newsletter.php',
             'sources/blocks/main_newsletter_signup.php',
             'sources/hooks/modules/admin_import/newsletter_subscribers.php',
@@ -305,7 +310,6 @@ class Hook_addon_registry_newsletter
      */
     public function tpl_preview__block_main_newsletter_signup()
     {
-        require_lang('javascript');
         return array(
             lorem_globalise(do_lorem_template('BLOCK_MAIN_NEWSLETTER_SIGNUP', array(
                 'URL' => placeholder_url(),

@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -111,7 +111,7 @@ function download_map($realm, $sx, $sy)
     for ($x = $x_min; $x <= $x_max; $x++) {
         for ($y = $y_min; $y <= $y_max; $y++) {
             // Check the room exists
-            $rooms = $GLOBALS['SITE_DB']->query_select('w_rooms', array('*'), array('location_x' => $x, 'location_y' => $y, 'location_realm' => $realm));
+            $rooms = $GLOBALS['SITE_DB']->query_select('w_rooms', array('*'), array('location_x' => $x, 'location_y' => $y, 'location_realm' => $realm), '', 1);
             if (!array_key_exists(0, $rooms)) {
                 continue;
             }

@@ -25,20 +25,20 @@
 <div class="box box___pointstore_confirm_screen"><div class="box_inner">
 	<div class="float_surrounder">
 		<div class="right">
-			<form title="{!NO}" class="inline" method="post" action="{CANCEL_URL*}">
+			<form title="{!NO}" class="inline" method="post" action="{CANCEL_URL*}" autocomplete="off">
 				{$INSERT_SPAMMER_BLACKHOLE}
 
 				<div class="inline">
-					<input class="buttons__no button_screen" type="submit" value="{!NO}" />
+					<input class="button_screen buttons__no" type="submit" value="{!NO}" />
 				</div>
 			</form>
 
-			<form title="{!YES}" class="inline" action="{PROCEED_URL*}" method="post">
+			<form title="{!YES}" class="inline" action="{PROCEED_URL*}" method="post" autocomplete="off">
 				{$INSERT_SPAMMER_BLACKHOLE}
 
 				<div class="inline">
 					{KEEP}
-					<input accesskey="u" onclick="disable_button_just_clicked(this);" class="buttons__yes button_screen" type="submit" value="{!YES}" />
+					<input accesskey="u" onclick="disable_button_just_clicked(this);" class="button_screen buttons__yes" type="submit" value="{!YES}" />
 				</div>
 			</form>
 		</div>

@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -26,9 +26,10 @@ class Hook_addon_registry_core_comcode_pages
     /**
      * Get a list of file permissions to set
      *
+     * @param  boolean $runtime Whether to include wildcards represented runtime-created chmoddable files
      * @return array File permissions to set
      */
-    public function get_chmod_array()
+    public function get_chmod_array($runtime = false)
     {
         return array();
     }
@@ -101,9 +102,7 @@ class Hook_addon_registry_core_comcode_pages
         return array(
             'themes/default/images/icons/24x24/menu/cms/comcode_page_edit.png',
             'themes/default/images/icons/48x48/menu/cms/comcode_page_edit.png',
-            'sources/hooks/systems/config/number_revisions_show.php',
             'sources/hooks/systems/config/points_COMCODE_PAGE_ADD.php',
-            'sources/hooks/systems/config/store_revisions.php',
             'sources/hooks/systems/addon_registry/core_comcode_pages.php',
             'themes/default/templates/COMCODE_PAGE_EDIT_ACTIONS.tpl',
             'themes/default/templates/COMCODE_PAGE_BOX.tpl',
@@ -158,12 +157,12 @@ class Hook_addon_registry_core_comcode_pages
             'themes/default/images/icons/48x48/contact_methods/email.png',
             'themes/default/images/icons/48x48/contact_methods/index.html',
             'themes/default/images/icons/48x48/contact_methods/telephone.png',
-        	'themes/default/images/icons/24x24/links/google_plus.png',
-        	'themes/default/images/icons/24x24/links/skype.png',
-        	'themes/default/images/icons/24x24/links/xmpp.png',
-        	'themes/default/images/icons/48x48/links/google_plus.png',
-        	'themes/default/images/icons/48x48/links/skype.png',
-        	'themes/default/images/icons/48x48/links/xmpp.png',
+            'themes/default/images/icons/24x24/links/google_plus.png',
+            'themes/default/images/icons/24x24/links/skype.png',
+            'themes/default/images/icons/24x24/links/xmpp.png',
+            'themes/default/images/icons/48x48/links/google_plus.png',
+            'themes/default/images/icons/48x48/links/skype.png',
+            'themes/default/images/icons/48x48/links/xmpp.png',
             'themes/default/images/icons/24x24/tiers/bronze.png',
             'themes/default/images/icons/24x24/tiers/gold.png',
             'themes/default/images/icons/24x24/tiers/index.html',
@@ -209,12 +208,14 @@ class Hook_addon_registry_core_comcode_pages
                 'TABLE' => placeholder_table(),
                 'SUBMIT_NAME' => lorem_word(),
                 'POST_URL' => placeholder_url(),
+                'HIDDEN' => '',
                 'TEXT' => lorem_paragraph_html(),
                 'LINKS' => array(array(
-                                     'LINK_IMAGE' => placeholder_image_url(),
-                                     'LINK_URL' => placeholder_url(),
-                                     'LINK_TEXT' => lorem_phrase(),
-                                 )),
+                    'LINK_IMAGE' => placeholder_image_url(),
+                    'LINK_URL' => placeholder_url(),
+                    'LINK_TEXT' => lorem_phrase(),
+                )),
+                'FILTER' => '',
             )), null, '', true)
         );
     }
@@ -229,6 +230,7 @@ class Hook_addon_registry_core_comcode_pages
     public function tpl_preview__comcode_page_edit_actions()
     {
         require_lang('zones');
+
         return array(
             lorem_globalise(do_lorem_template('COMCODE_PAGE_EDIT_ACTIONS', array(
                 'EDIT_URL' => placeholder_url(),

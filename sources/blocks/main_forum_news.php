@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -76,8 +76,6 @@ class Block_main_forum_news
 
         $optimise = (array_key_exists('optimise', $map)) && ($map['optimise'] == '1');
 
-        $num_topics = intval($num_topics);
-
         $date_key = array_key_exists('date_key', $map) ? $map['date_key'] : 'firsttime';
 
         $rows = array();
@@ -131,7 +129,7 @@ class Block_main_forum_news
             $myrow = $rows[$i];
 
             $id = $myrow['id'];
-            $date = get_timezoned_date($myrow[$date_key]);
+            $date = get_timezoned_date_tempcode($myrow[$date_key]);
             $author_url = (((array_key_exists('member_based', $map)) && ($map['member_based'] == '1')) || (!addon_installed('authors'))) ? new Tempcode() : build_url(array('page' => 'authors', 'type' => 'browse', 'author' => $myrow['firstusername']), get_module_zone('authors'));
             $author = $myrow['firstusername'];
             $news_title = escape_html($myrow['title']);

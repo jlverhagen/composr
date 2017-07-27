@@ -3,7 +3,7 @@ var precision_editing=((typeof window.cms_is_staff!='undefined') && window.cms_i
 var toolbar=[];
 if (precision_editing)
 	toolbar.push(['Source','-']);
-toolbar.push(['Cut','Copy','Paste',precision_editing?'PasteText':null,precision_editing?'PasteFromWord':null{+START,IF,{$VALUE_OPTION,commercial_spellchecker}},'-','SpellChecker', 'Scayt'{+END}]);
+toolbar.push(['Cut','Copy','Paste',precision_editing?'PasteText':null,precision_editing?'PasteFromWord':null,precision_editing?'PasteCode':null{+START,IF,{$VALUE_OPTION,commercial_spellchecker}},'-','SpellChecker', 'Scayt'{+END}]);
 toolbar.push(['Undo','Redo',precision_editing?'-':null,precision_editing?'Find':null,precision_editing?'Replace':null,(typeof document.body.spellcheck!='undefined')?'spellchecktoggle':null,'-',precision_editing?'SelectAll':null,'RemoveFormat']);
 toolbar.push(['Link','Unlink']);
 toolbar.push(precision_editing?'/':'-');
@@ -26,13 +26,13 @@ if (use_composr_toolbar)
 	toolbar.push(['composr_block','composr_comcode',precision_editing?'composr_page':null,'composr_quote',precision_editing?'composr_box':null,'composr_code']);
 
 var editor_settings={
-	skin: 'kama', // TODO: Put back to moono
+	skin: 'kama',
 	enterMode : window.CKEDITOR.ENTER_BR,
 	uiColor : wysiwyg_color,
-	ocpTheme : '{$THEME;}',
+	ocpTheme : '{$THEME;^}',
 	fontSize_sizes : '0.6em;0.85em;1em;1.1em;1.2em;1.3em;1.4em;1.5em;1.6em;1.7em;1.8em;2em',
-	removePlugins: '',
-	extraPlugins: 'showcomcodeblocks,imagepaste,autogrow,spellchecktoggle'+(use_composr_toolbar?',composr':''),
+	removePlugins: '{+START,IF,{$NOT,{$CONFIG_OPTION,autogrow}}}autogrow{+END}',
+	extraPlugins: 'showcomcodeblocks,imagepaste,spellchecktoggle'+(use_composr_toolbar?',composr':''),
 	{+START,IF,{$NEQ,{$CKEDITOR_PATH},data_custom/ckeditor}}
 		customConfig: '',
 	{+END}
@@ -55,5 +55,9 @@ var editor_settings={
 	allowedContent: true,
 	browserContextMenuOnCtrl: true,
 	comcodeXMLBlockTags: '{$COMCODE_TAGS;,{$WYSIWYG_COMCODE__XML_BLOCK}}',
-	comcodeXMLInlineTags: '{$COMCODE_TAGS;,{$WYSIWYG_COMCODE__XML_INLINE}}'
+	comcodeXMLInlineTags: '{$COMCODE_TAGS;,{$WYSIWYG_COMCODE__XML_INLINE}}',
+	{+START,IF,{$CONFIG_OPTION,autogrow}}
+		autoGrow_onStartup: true,
+	{+END}
+	magicline_everywhere: true
 };

@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -29,7 +29,7 @@ Group membership mechanism is hard-coded for Linux and Active Directory LDAP:
 
 We assume groups are always referenced as 'cn'.
 
-When looping over results, we always have to skip non-numeric keys, which are for meta-data returned within result set (e.g. 'count'). Ugly, I know - you'd think LDAP would be neater ;).
+When looping over results, we always have to skip non-numeric keys, which are for metadata returned within result set (e.g. 'count'). Ugly, I know - you'd think LDAP would be neater ;).
 */
 
 /**
@@ -67,7 +67,7 @@ function cms_ldap_escape($str, $for_dn = false)
 
     $ret = str_replace($meta_chars, $quoted_meta_chars, $str);
     require_code('character_sets');
-    return convert_to_internal_encoding($ret, get_charset(), 'utf8');
+    return convert_to_internal_encoding($ret, get_charset(), 'utf-8');
 }
 
 /**
@@ -79,7 +79,7 @@ function cms_ldap_escape($str, $for_dn = false)
 function ldap_unescape($str)
 {
     require_code('character_sets');
-    return convert_to_internal_encoding($str, 'utf8', get_charset());
+    return convert_to_internal_encoding($str, 'utf-8', get_charset());
 }
 
 /**
@@ -239,8 +239,8 @@ function cns_ldap_bind()
         /*
         Example for Active Directory, if domain is chris4.com
 
-        $login='cn=Administrator,cn=Users,dc=chris4,dc=com'; // Log in using full name (cn) [in this case, same as username, but not always]
-        $login='Administrator@chris4.com'; // Log in using username (sAMAccountName)
+        $login = 'cn=Administrator,cn=Users,dc=chris4,dc=com'; // Log in using full name (cn) [in this case, same as username, but not always]
+        $login = 'Administrator@chris4.com'; // Log in using username (sAMAccountName)
         */
         $test = @ldap_bind($LDAP_CONNECTION, $login, get_option('ldap_bind_password')); // This sometimes causes errors, and isn't always needed. Hence error output is suppressed
         if ($test === false) {

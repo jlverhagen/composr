@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -21,11 +21,12 @@ class lang_duplication_test_set extends cms_test_case
     public function setUp()
     {
         require_code('lang_compile');
+        require_code('lang2');
 
         parent::setUp();
     }
 
-    public function testLangMistakes()
+    public function testLangDuplication()
     {
         $verbose = false;
 
@@ -35,39 +36,56 @@ class lang_duplication_test_set extends cms_test_case
 
         $all_keys = array();
 
-        $dh = opendir(get_file_base() . '/lang/EN/');
-        while (($file = readdir($dh)) !== false) {
-            if (substr($file, -4) != '.ini') {
-                continue;
+        $exceptions = array(
+            'GOOGLE_MAP',
+            'GOOGLE_MAP_KEY',
+            'CONFIG_OPTION_google_map_key',
+        );
+
+        $lang_files = get_lang_files(fallback_lang());
+        foreach (array_keys($lang_files) as $file) {
+            $path = get_file_base() . '/lang/EN/' . $file . '.ini';
+            if (!is_file($path)) {
+                $path = get_file_base() . '/lang_custom/EN/' . $file . '.ini';
             }
-            if ($file[0] == '.') {
-                continue;
-            }
+
+            $c = file_get_contents($path);
+
+            $c = preg_replace('#^.*\[strings\]#s', '', $c); // Remove descriptions section
 
             $input = array();
-            _get_lang_file_map(get_file_base() . '/lang/EN/' . $file, $input, 'strings', false);
+            _get_lang_file_map($path, $input, 'strings', false, true, 'EN');
 
             foreach ($input as $key => $val) {
-                if (!isset($vals[$val])) {
+                if (in_array($key, $exceptions)) {
+                    continue;
+                }
+
+                if (isset($vals[$val])) {
+                    if (get_param_integer('debug', 0) == 1) {
+                        @print('<p><strong>' . escape_html($val) . '</strong>:<br />' . escape_html($file . ':' . $key . ' = ' . implode(' = ', $vals[$val])) . '</p>');
+                    }
+                } else {
                     $vals[$val] = array();
                 }
-                $vals[$val][] = $key;
+                $vals[$val][] = $file . ':' . $key;
 
-                if (isset($all_keys[$key])) {
-                    $this->assertTrue(false, 'Duplication for key ' . $key . ' string');
-                }
+                $this->assertTrue(!isset($all_keys[$key]), 'Duplication for key ' . $key . ' string');
+
                 $all_keys[$key] = true;
+
+                // Check for duplication within the file...
+                $this->assertTrue(substr_count($c, "\n" . $key . '=') == 1, 'Duplication for key ' . $key . ' string within a single file');
             }
 
             $num += count($input);
         }
-        closedir($dh);
 
         $num_unique = count($vals);
 
         $percentage_duplicated = 100.0 - 100.0 * floatval($num_unique) / floatval($num);
 
-        $this->assertTrue($percentage_duplicated < 8.0, 'Overall heavy duplication'); // Ideally we'd lower it, but 6% is what it was when this test was written. We're testing it's not getting worse.
+        $this->assertTrue($percentage_duplicated < 8.1, 'Overall heavy duplication'); // Ideally we'd lower it, but 6% is what it was when this test was written. We're testing it's not getting worse.
 
         // Find if there is any unnecessary underscoring
         /*foreach (array_keys($all_keys) as $key) {     Was useful once, but there are reasonable cases remaining
@@ -87,10 +105,5 @@ class lang_duplication_test_set extends cms_test_case
             }
         }
         //@var_dump($vals);exit();
-    }
-
-    public function tearDown()
-    {
-        parent::tearDown();
     }
 }

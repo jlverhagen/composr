@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -74,11 +74,11 @@ class Block_main_quotes
 
         $place = _find_text_file_path($file, '');
         if ($place == '') {
-            warn_exit(do_lang_tempcode('_MISSING_RESOURCE', escape_html($file), escape_html(do_lang('FILE'))));
+            return paragraph(do_lang_tempcode('_MISSING_RESOURCE', escape_html($file), escape_html(do_lang('FILE'))), '', 'red_alert');
         }
 
         if (!file_exists($place)) {
-            warn_exit(do_lang_tempcode('DIRECTORY_NOT_FOUND', escape_html($place)));
+            return paragraph(do_lang_tempcode('DIRECTORY_NOT_FOUND', escape_html($place)), '', 'red_alert');
         }
         $edit_url = new Tempcode();
         if (($file == 'quotes') && (has_actual_page_access(get_member(), 'quotes', 'adminzone'))) {
@@ -99,11 +99,11 @@ class Block_main_quotes
         if ($myfile === false) {
             return '';
         }
-        @flock($myfile, LOCK_SH);
+        flock($myfile, LOCK_SH);
         $i = 0;
         $line = array();
         while (true) {
-            $line[$i] = fgets($myfile, 1024);
+            $line[$i] = fgets($myfile);
 
             if (($line[$i] === false) || ($line[$i] === null)) {
                 break;
@@ -117,7 +117,7 @@ class Block_main_quotes
             return '';
         }
         $r = mt_rand(0, $i - 1);
-        @flock($myfile, LOCK_UN);
+        flock($myfile, LOCK_UN);
         fclose($myfile);
         return trim($line[$r]);
     }

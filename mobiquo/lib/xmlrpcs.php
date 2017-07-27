@@ -511,7 +511,7 @@ class xmlrpc_server
 	 * @param array   $dispmap the dispatch map with definition of exposed services
 	 * @param boolean $servicenow set to false to prevent the server from runnung upon construction
 	 */
-	function xmlrpc_server($dispMap=NULL,$serviceNow=true)
+	function __construct($dispMap=NULL,$serviceNow=true)
 	{
 		// if ZLIB is enabled, let the server by default accept compressed requests,
 		// and compress responses sent to clients that support them
@@ -921,7 +921,7 @@ class xmlrpc_server
 		$req_encoding=guess_encoding(isset($_SERVER['CONTENT_TYPE'])?$_SERVER['CONTENT_TYPE']:'',
 			$data);
 
-		return NULL;
+		return null;
 	}
 
 	/**

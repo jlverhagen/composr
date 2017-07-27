@@ -14,7 +14,7 @@ function initialise_slideshow()
 
 	add_event_listener_abstract(window,'keypress',toggle_slideshow_timer);
 
-	add_event_listener_abstract(document.getElementById('gallery_entry_screen'),'click',function(event) {
+	add_event_listener_abstract(document.getElementById('gallery_nav'),'click',function(event) {
 		if (typeof event=='undefined') event=window.event;
 
 		if (event.altKey || event.metaKey)
@@ -82,7 +82,7 @@ function toggle_slideshow_timer()
 
 function stop_slideshow_timer(message)
 {
-	if (typeof message=='undefined') message='{!galleries:STOPPED;}';
+	if (typeof message=='undefined') message='{!galleries:STOPPED;^}';
 	var changer=document.getElementById('changer_wrap');
 	if (changer) set_inner_html(changer,message);
 	if (window.slideshow_timer) window.clearInterval(window.slideshow_timer);
@@ -108,7 +108,7 @@ function slideshow_forward()
 {
 	if (window.slideshow_current_position==window.slideshow_total_slides-1)
 	{
-		stop_slideshow_timer('{!galleries:LAST_SLIDE;}');
+		stop_slideshow_timer('{!galleries:LAST_SLIDE;^}');
 		return false;
 	}
 
@@ -119,7 +119,14 @@ function slideshow_forward()
 
 function slideshow_ensure_loaded(slide,callback)
 {
-	if (typeof window.slideshow_slides[slide]!='undefined') return; // Already have it
+	if (typeof window.slideshow_slides[slide]!='undefined')
+	{
+		if (typeof callback!='undefined')
+		{
+			callback();
+		}
+		return; // Already have it
+	}
 
 	if (window.slideshow_current_position==slide) // Ah, it's where we are, so save that in
 	{
@@ -169,7 +176,7 @@ function slideshow_show_slide(slide)
 				fade_element_old.style.position='absolute';
 			} // else probably a video
 
-			var cleaned_slide_html=window.slideshow_slides[slide].replace(/<!DOCTYPE [^>]*>/i,'').replace(/<script[^>]*>(.|\n)*?<\/script>/gi,'');
+			var cleaned_slide_html=window.slideshow_slides[slide].replace(/<!DOCTYPE [^>]*>/i,'');
 			set_inner_html(document.getElementById('gallery_entry_screen'),cleaned_slide_html);
 
 			var fade_elements=get_elements_by_class_name(document.body,'scale_down');
@@ -203,7 +210,7 @@ function slideshow_show_slide(slide)
 		}
 
 		if (window.slideshow_current_position!=window.slideshow_total_slides-1)
-			slideshow_ensure_loaded(slide+1,false);
+			slideshow_ensure_loaded(slide+1);
 		else
 			document.getElementById('gallery_entry_screen').style.cursor='';
 	});

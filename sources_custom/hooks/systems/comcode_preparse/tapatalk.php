@@ -1,7 +1,7 @@
 <?php /*
 
- ocPortal
- Copyright (c) ocProducts/Tapatalk, 2004-2015
+ Composr
+ Copyright (c) ocProducts/Tapatalk, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -18,7 +18,7 @@
  */
 class Hook_comcode_preparse_tapatalk
 {
-    function preparse(&$comcode)
+    public function preparse(&$comcode)
     {
         if (!defined('IN_MOBIQUO')) {
             $protocol = tacit_https() ? 'https:' : 'http:';

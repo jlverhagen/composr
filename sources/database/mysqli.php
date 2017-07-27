@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -41,7 +41,7 @@ class Database_Static_mysqli extends Database_super_mysql
      * @param  string $db_host The database host (the server)
      * @param  string $db_user The database connection username
      * @param  string $db_password The database connection password
-     * @param  boolean $fail_ok Whether to on error echo an error and return with a NULL, rather than giving a critical error
+     * @param  boolean $fail_ok Whether to on error echo an error and return with a null, rather than giving a critical error
      * @return ?array A database connection (note for MySQL, it's actually a pair, containing the database name too: because we need to select the name before each query on the connection) (null: error)
      */
     public function db_get_connection($persistent, $db_name, $db_host, $db_user, $db_password, $fail_ok = false)
@@ -49,7 +49,7 @@ class Database_Static_mysqli extends Database_super_mysql
         if (!function_exists('mysqli_connect')) {
             $error = 'MySQLi not on server (anymore?). Try using the \'mysql\' database driver. To use it, edit the _config.php config file.';
             if ($fail_ok) {
-                echo $error;
+                echo ((running_script('install')) && (get_param_string('type', '') == 'ajax_db_details')) ? strip_html($error) : $error;
                 return null;
             }
             critical_error('PASSON', $error);
@@ -58,19 +58,24 @@ class Database_Static_mysqli extends Database_super_mysql
         // Potential caching
         $x = serialize(array($db_name, $db_host));
         if (array_key_exists($x, $this->cache_db)) {
-            if ($this->last_select_db[1] != $db_name) {
+            if ($this->last_select_db[1] !== $db_name) {
                 mysqli_select_db($this->cache_db[$x], $db_name);
                 $this->last_select_db = array($this->cache_db[$x], $db_name);
             }
 
             return array($this->cache_db[$x], $db_name);
         }
-        $db = @mysqli_connect(($persistent ? 'p:' : '') . $db_host, $db_user, $db_password);
+        $db_port = 3306;
+        if (strpos($db_host, ':') !== false) {
+            list($db_host, $_db_port) = explode(':', $db_host);
+            $db_port = intval($_db_port);
+        }
+        $db = @mysqli_connect(($persistent ? 'p:' : '') . $db_host, $db_user, $db_password, '', $db_port);
 
         if ($db === false) {
             $error = 'Could not connect to database-server (when authenticating) (' . mysqli_connect_error() . ')';
             if ($fail_ok) {
-                echo $error;
+                echo ((running_script('install')) && (get_param_string('type', '') == 'ajax_db_details')) ? strip_html($error) : $error;
                 return null;
             }
             critical_error('PASSON', $error); //warn_exit(do_lang_tempcode('CONNECT_DB_ERROR'));
@@ -94,18 +99,21 @@ class Database_Static_mysqli extends Database_super_mysql
         $this->cache_db[$x] = $db;
 
         global $SITE_INFO;
-        if (!array_key_exists('database_charset', $SITE_INFO)) {
-            $SITE_INFO['database_charset'] = (strtolower(get_charset()) == 'utf-8') ? 'utf8mb4' : 'latin1';
+        if (empty($SITE_INFO['database_charset'])) {
+            $SITE_INFO['database_charset'] = (get_charset() == 'utf-8') ? 'utf8mb4' : 'latin1';
         }
         if (function_exists('mysqli_set_charset')) {
-            mysqli_set_charset($db, $SITE_INFO['database_charset']);
+            @mysqli_set_charset($db, $SITE_INFO['database_charset']);
         } else {
             @mysqli_query($db, 'SET NAMES "' . addslashes($SITE_INFO['database_charset']) . '"');
         }
-        @mysqli_query($db, 'SET WAIT_TIMEOUT=28800');
-        @mysqli_query($db, 'SET SQL_BIG_SELECTS=1');
+        @mysqli_query($db, 'SET wait_timeout=28800');
+        @mysqli_query($db, 'SET sql_big_selects=1');
+        @mysqli_query($db, 'SET max_allowed_packet=104857600');
         if ((get_forum_type() == 'cns') && (!$GLOBALS['IN_MINIKERNEL_VERSION'])) {
             @mysqli_query($db, 'SET sql_mode=STRICT_ALL_TABLES');
+        } else {
+            @mysqli_query($db, 'SET sql_mode=\'MYSQL40\''); // We may be in some legacy context, such as backup restoration, upgrader, or another forum driver
         }
         // NB: Can add ,ONLY_FULL_GROUP_BY for testing on what other DBs will do, but can_arbitrary_groupby() would need to be made to return false
 
@@ -120,10 +128,6 @@ class Database_Static_mysqli extends Database_super_mysql
      */
     public function db_has_full_text($db)
     {
-        if ($this->using_innodb()) {
-            return false;
-        }
-
         return true;
     }
 
@@ -167,7 +171,18 @@ class Database_Static_mysqli extends Database_super_mysql
      */
     public function db_escape_string($string)
     {
-        if (is_null($this->last_select_db)) {
+        if (function_exists('ctype_alnum')) {
+            if (ctype_alnum($string)) {
+                return $string; // No non-trivial characters
+            }
+        }
+        if (preg_match('#[^a-zA-Z0-9\.]#', $string) === 0) {
+            return $string; // No non-trivial characters
+        }
+
+        $string = fix_bad_unicode($string);
+
+        if ($this->last_select_db === null) {
             return addslashes($string);
         }
         return mysqli_real_escape_string($this->last_select_db[0], $string);
@@ -195,16 +210,18 @@ class Database_Static_mysqli extends Database_super_mysql
                 return null;
             }
             if (intval($test_result[0]['Value']) < intval(strlen($query) * 1.2)) {
-                /*@mysql_query('SET session max_allowed_packet='.strval(intval(strlen($query)*1.3)),$db); Does not work well, as MySQL server has gone away error will likely just happen instead */
+                /*@mysql_query('SET max_allowed_packet=' . strval(intval(strlen($query) * 1.3)), $db); Does not work well, as MySQL server has gone away error will likely just happen instead */
 
                 if ($get_insert_id) {
-                    fatal_exit(do_lang_tempcode('QUERY_FAILED_TOO_BIG', escape_html($query)));
+                    fatal_exit(do_lang_tempcode('QUERY_FAILED_TOO_BIG', escape_html($query), escape_html(integer_format(strlen($query))), escape_html(integer_format(intval($test_result[0]['Value'])))));
+                } else {
+                    attach_message(do_lang_tempcode('QUERY_FAILED_TOO_BIG', escape_html(substr($query, 0, 300)) . '...', escape_html(integer_format(strlen($query))), escape_html(integer_format(intval($test_result[0]['Value'])))), 'warn');
                 }
                 return null;
             }
         }
 
-        if ($this->last_select_db[1] != $db_name) {
+        if ($this->last_select_db[1] !== $db_name) {
             mysqli_select_db($db, $db_name);
             $this->last_select_db = array($db, $db_name);
         }
@@ -233,9 +250,9 @@ class Database_Static_mysqli extends Database_super_mysql
             if (function_exists('ocp_mark_as_escaped')) {
                 ocp_mark_as_escaped($err);
             }
-            if ((!running_script('upgrader')) && (!get_mass_import_mode()) && (strpos($err, 'Duplicate entry') === false)) {
+            if ((!running_script('upgrader')) && ((!get_mass_import_mode()) || (get_param_integer('keep_fatalistic', 0) == 1)) && (strpos($err, 'Duplicate entry') === false)) {
                 $matches = array();
-                if (preg_match('#/(\w+)\' is marked as crashed and should be repaired#U', $err, $matches) != 0) {
+                if (preg_match('#/(\w+)\' is marked as crashed and should be repaired#U', $err, $matches) !== 0) {
                     $this->db_query('REPAIR TABLE ' . $matches[1], $db_parts);
                 }
 
@@ -244,19 +261,18 @@ class Database_Static_mysqli extends Database_super_mysql
                 }
                 fatal_exit(do_lang_tempcode('QUERY_FAILED', escape_html($query), ($err)));
             } else {
-                echo htmlentities('Database query failed: ' . $query . ' [') . ($err) . htmlentities(']' . '<br />' . "\n");
+                echo htmlentities('Database query failed: ' . $query . ' [') . ($err) . htmlentities(']') . "<br />\n";
                 return null;
             }
         }
 
-        $sub = substr(ltrim($query), 0, 7);
-        $sub = substr($query, 0, 4);
-        if (($results !== true) && (($sub == '(SEL') || ($sub == 'SELE') || ($sub == 'sele') || ($sub == 'CHEC') || ($sub == 'EXPL') || ($sub == 'REPA') || ($sub == 'DESC') || ($sub == 'SHOW')) && ($results !== false)) {
+        $sub = substr(ltrim($query), 0, 4);
+        if (($results !== true) && (($sub === '(SEL') || ($sub === 'SELE') || ($sub === 'sele') || ($sub === 'CHEC') || ($sub === 'EXPL') || ($sub === 'REPA') || ($sub === 'DESC') || ($sub === 'SHOW')) && ($results !== false)) {
             return $this->db_get_query_rows($results);
         }
 
         if ($get_insert_id) {
-            if (strtoupper(substr($query, 0, 7)) == 'UPDATE ') {
+            if (strtoupper(substr($query, 0, 7)) === 'UPDATE ') {
                 return mysqli_affected_rows($db);
             }
             $ins = mysqli_insert_id($db);
@@ -290,25 +306,25 @@ class Database_Static_mysqli extends Database_super_mysql
 
         $out = array();
         $newrow = array();
-        while (!is_null(($row = mysqli_fetch_row($results)))) {
+        while (($row = mysqli_fetch_row($results)) !== null) {
             $j = 0;
             foreach ($row as $v) {
                 $name = $names[$j];
                 $type = $types[$j];
 
                 if (($type === 'int') || ($type === 'integer') || ($type === 'real') || ($type === 1) || ($type === 3) || ($type === 8)) {
-                    if ((is_null($v)) || ($v === '')) { // Roadsend returns empty string instead of NULL
+                    if ((($v === null)) || ($v === '')) { // Roadsend returns empty string instead of null
                         $newrow[$name] = null;
                     } else {
                         $_v = intval($v);
-                        if (strval($_v) != $v) {
+                        if (strval($_v) !== $v) {
                             $newrow[$name] = floatval($v);
                         } else {
                             $newrow[$name] = $_v;
                         }
                     }
                 } elseif (($type === 16) || ($type === 'bit')) {
-                    if ((strlen($v) == 1) && (ord($v[0]) <= 1)) {
+                    if ((strlen($v) === 1) && (ord($v[0]) <= 1)) {
                         $newrow[$name] = ord($v); // 0/1 char for BIT field
                     } else {
                         $newrow[$name] = intval($v);

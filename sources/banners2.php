@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -19,6 +19,135 @@
  */
 
 /**
+ * Get Tempcode for a banner type 'feature box' for the given row
+ *
+ * @param  array $row The database field row of it
+ * @param  ID_TEXT $zone The zone to use
+ * @param  boolean $give_context Whether to include context (i.e. say WHAT this is, not just show the actual content)
+ * @param  ID_TEXT $guid Overridden GUID to send to templates (blank: none)
+ * @return Tempcode A box for it, linking to the full page
+ */
+function render_banner_type_box($row, $zone = '_SEARCH', $give_context = true, $guid = '')
+{
+    if (is_null($row)) { // Should never happen, but we need to be defensive
+        return new Tempcode();
+    }
+
+    require_lang('banners');
+
+    $url = new Tempcode();
+
+    $_title = $row['id'];
+    if ($_title == '') {
+        $_title = do_lang('_DEFAULT');
+    }
+    $title = $give_context ? do_lang('CONTENT_IS_OF_TYPE', do_lang('BANNER_TYPE'), $_title) : $_title;
+
+    $num_entries = $GLOBALS['SITE_DB']->query_select_value('banners', 'COUNT(*)', array('validated' => 1));
+    $entry_details = do_lang_tempcode('CATEGORY_SUBORDINATE_2', escape_html(integer_format($num_entries)));
+
+    return do_template('SIMPLE_PREVIEW_BOX', array(
+        '_GUID' => ($guid != '') ? $guid : 'ba1f8d9da6b65415483d0d235f29c3d4',
+        'ID' => $row['id'],
+        'TITLE' => $title,
+        'SUMMARY' => '',
+        'ENTRY_DETAILS' => $entry_details,
+        'URL' => $url,
+        'RESOURCE_TYPE' => 'banner_type',
+    ));
+}
+
+/**
+ * Get Tempcode for a banner 'feature box' for the given row
+ *
+ * @param  array $row The database field row of it
+ * @param  ID_TEXT $zone The zone to use
+ * @param  boolean $give_context Whether to include context (i.e. say WHAT this is, not just show the actual content)
+ * @param  ID_TEXT $guid Overridden GUID to send to templates (blank: none)
+ * @return Tempcode A box for it, linking to the full page
+ */
+function render_banner_box($row, $zone = '_SEARCH', $give_context = true, $guid = '')
+{
+    if (is_null($row)) { // Should never happen, but we need to be defensive
+        return new Tempcode();
+    }
+
+    require_lang('banners');
+    require_code('banners');
+
+    $just_banner_row = db_map_restrict($row, array('name', 'caption'));
+
+    $url = new Tempcode();
+
+    $_title = $row['name'];
+    $title = $give_context ? do_lang('CONTENT_IS_OF_TYPE', do_lang('BANNER'), $_title) : $_title;
+
+    $summary = show_banner($row['name'], $row['b_title_text'], get_translated_tempcode('banners', $just_banner_row, 'caption'), $row['b_direct_code'], $row['img_url'], '', $row['site_url'], $row['b_type'], $row['submitter']);
+
+    return do_template('SIMPLE_PREVIEW_BOX', array(
+        '_GUID' => ($guid != '') ? $guid : 'aaea5f7f64297ab46aa3b3182fb57c37',
+        'ID' => $row['name'],
+        'TITLE' => $title,
+        'TITLE_PLAIN' => $_title,
+        'SUMMARY' => $summary,
+        'URL' => $url,
+        'FRACTIONAL_EDIT_FIELD_NAME' => $give_context ? null : 'name',
+        'FRACTIONAL_EDIT_FIELD_URL' => $give_context ? null : '_SEARCH:cms_banners:__edit:' . $row['name'],
+        'RESOURCE_TYPE' => 'banner',
+    ));
+}
+
+/**
+ * Get a nice, formatted XHTML list to select a banner type
+ *
+ * @param  ?mixed $it The currently selected banner type (null: none selected)
+ * @return Tempcode The list of banner types
+ */
+function create_selection_list_banner_types($it = null)
+{
+    if (is_string($it)) {
+        $it = array($it);
+    }
+
+    $list = new Tempcode();
+    $rows = $GLOBALS['SITE_DB']->query_select('banner_types', array('id', 't_image_width', 't_image_height', 't_is_textual'), null, 'ORDER BY id');
+    foreach ($rows as $row) {
+        $caption = ($row['id'] == '') ? do_lang('_DEFAULT') : $row['id'];
+
+        if ($row['t_is_textual'] == 1) {
+            $type_line = do_lang_tempcode('BANNER_TYPE_LINE_TEXTUAL', escape_html($caption));
+        } else {
+            $type_line = do_lang_tempcode('BANNER_TYPE_LINE', escape_html($caption), escape_html(strval($row['t_image_width'])), escape_html(strval($row['t_image_height'])));
+        }
+
+        $list->attach(form_input_list_entry($row['id'], in_array($row['id'], $it), $type_line));
+    }
+    return $list;
+}
+
+/**
+ * Get a list of banners.
+ *
+ * @param  ?ID_TEXT $it The ID of the banner selected by default (null: no specific default)
+ * @param  ?MEMBER $only_owned Only show banners owned by the member (null: no such restriction)
+ * @return Tempcode The list
+ */
+function create_selection_list_banners($it = null, $only_owned = null)
+{
+    $where = is_null($only_owned) ? null : array('submitter' => $only_owned);
+    $rows = $GLOBALS['SITE_DB']->query_select('banners', array('name'), $where, 'ORDER BY name', 150);
+    if (count($rows) == 300) {
+        $rows = $GLOBALS['SITE_DB']->query_select('banners', array('name'), $where, 'ORDER BY add_date DESC', 150);
+    }
+    $out = new Tempcode();
+    foreach ($rows as $myrow) {
+        $selected = ($myrow['name'] == $it);
+        $out->attach(form_input_list_entry($myrow['name'], $selected));
+    }
+
+    return $out;
+}
+/**
  * Get the Tempcode for the form to add a banner, with the information passed along to it via the parameters already added in.
  *
  * @param  boolean $simplified Whether to simplify the banner interface (for the Point Store buy process)
@@ -32,7 +161,7 @@
  * @range  1 max
  * @param  ?integer $campaignremaining The number of hits the banner may have (null: not applicable for this banner type)
  * @range  0 max
- * @param  SHORT_INTEGER $the_type The type of banner (0=permanent, 1=campaign, 2=default)
+ * @param  SHORT_INTEGER $the_type The type of banner (0=permanent, 1=campaign, 2=fallback)
  * @set    0 1 2
  * @param  ?TIME $expiry_date The banner expiry date (null: never expires)
  * @param  ?MEMBER $submitter The banners submitter (null: current member)
@@ -65,11 +194,15 @@ function get_banner_form_fields($simplified = false, $name = '', $image_url = ''
     if (!$simplified) {
         $types = create_selection_list_banner_types($b_type);
         if ($types->is_empty()) {
-            warn_exit(do_lang_tempcode('NO_CATEGORIES'));
+            warn_exit(do_lang_tempcode('NO_CATEGORIES', 'banner_type'));
         }
         $fields->attach(form_input_list(do_lang_tempcode('BANNER_TYPE'), do_lang_tempcode('_DESCRIPTION_BANNER_TYPE'), 'b_type', $types, null, false, false));
+
+        $image_banner = false; // Not known
     } else {
         $fields->attach(form_input_hidden('b_type', $b_type));
+
+        $image_banner = $GLOBALS['SITE_DB']->query_select_value_if_there('banner_types', 't_is_textual', array('id' => $b_type)) === 0;
     }
 
     if (get_option('enable_staff_notes') == '1') {
@@ -99,7 +232,9 @@ function get_banner_form_fields($simplified = false, $name = '', $image_url = ''
 
     $field_set->attach(form_input_line(do_lang_tempcode('IMAGE_URL'), do_lang_tempcode('DESCRIPTION_URL_BANNER'), 'image_url', $image_url, false));
 
-    $field_set->attach(form_input_line_comcode(do_lang_tempcode('BANNER_TITLE_TEXT'), do_lang_tempcode('DESCRIPTION_BANNER_TITLE_TEXT'), 'title_text', $title_text, false));
+    if (!$image_banner) {
+        $field_set->attach(form_input_line_comcode(do_lang_tempcode('BANNER_TITLE_TEXT'), do_lang_tempcode('DESCRIPTION_BANNER_TITLE_TEXT'), 'title_text', $title_text, false));
+    }
 
     if (has_privilege(get_member(), 'use_html_banner')) {
         $field_set->attach(form_input_text(do_lang_tempcode('BANNER_DIRECT_CODE'), do_lang_tempcode('DESCRIPTION_BANNER_DIRECT_CODE'), 'direct_code', $direct_code, false));
@@ -107,33 +242,35 @@ function get_banner_form_fields($simplified = false, $name = '', $image_url = ''
 
     $fields->attach(alternate_fields_set__end($set_name, $set_title, '', $field_set, $required));
 
-    $fields->attach(form_input_line_comcode(do_lang_tempcode('DESCRIPTION'), do_lang_tempcode('DESCRIPTION_BANNER_DESCRIPTION'), 'caption', $caption, false));
+    $fields->attach(form_input_line_comcode(do_lang_tempcode('DESCRIPTION'), do_lang_tempcode($image_banner ? 'DESCRIPTION_BANNER_DESCRIPTION_SIMPLE' : 'DESCRIPTION_BANNER_DESCRIPTION'), 'caption', $caption, false));
 
-    $fields->attach(do_template('FORM_SCREEN_FIELD_SPACER', array('_GUID' => '1184532268cd8a58adea01c3637dc4c5', 'TITLE' => do_lang_tempcode('DEPLOYMENT_DETERMINATION'))));
+    if (!$simplified) {
+        $fields->attach(do_template('FORM_SCREEN_FIELD_SPACER', array('_GUID' => '1184532268cd8a58adea01c3637dc4c5', 'TITLE' => do_lang_tempcode('DEPLOYMENT_DETERMINATION'))));
 
-    if (has_privilege(get_member(), 'full_banner_setup')) {
-        $radios = new Tempcode();
-        $radios->attach(form_input_radio_entry('the_type', strval(BANNER_PERMANENT), ($the_type == BANNER_PERMANENT), do_lang_tempcode('BANNER_PERMANENT')));
-        $radios->attach(form_input_radio_entry('the_type', strval(BANNER_CAMPAIGN), ($the_type == BANNER_CAMPAIGN), do_lang_tempcode('BANNER_CAMPAIGN')));
-        $radios->attach(form_input_radio_entry('the_type', strval(BANNER_DEFAULT), ($the_type == BANNER_DEFAULT), do_lang_tempcode('BANNER_DEFAULT')));
-        $fields->attach(form_input_radio(do_lang_tempcode('DEPLOYMENT_AGREEMENT'), do_lang_tempcode('DESCRIPTION_BANNER_TYPE'), 'the_type', $radios));
-        $fields->attach(form_input_integer(do_lang_tempcode('HITS_ALLOCATED'), do_lang_tempcode('DESCRIPTION_HITS_ALLOCATED'), 'campaignremaining', $campaignremaining, false));
-        $total_importance = $GLOBALS['SITE_DB']->query_value_if_there('SELECT SUM(importance_modulus) FROM ' . get_table_prefix() . 'banners WHERE ' . db_string_not_equal_to('name', $name));
-        if (is_null($total_importance)) {
-            $total_importance = 0;
+        if (has_privilege(get_member(), 'full_banner_setup')) {
+            $radios = new Tempcode();
+            $radios->attach(form_input_radio_entry('the_type', strval(BANNER_PERMANENT), ($the_type == BANNER_PERMANENT), do_lang_tempcode('BANNER_PERMANENT')));
+            $radios->attach(form_input_radio_entry('the_type', strval(BANNER_CAMPAIGN), ($the_type == BANNER_CAMPAIGN), do_lang_tempcode('BANNER_CAMPAIGN')));
+            $radios->attach(form_input_radio_entry('the_type', strval(BANNER_FALLBACK), ($the_type == BANNER_FALLBACK), do_lang_tempcode('BANNER_FALLBACK')));
+            $fields->attach(form_input_radio(do_lang_tempcode('DEPLOYMENT_AGREEMENT'), do_lang_tempcode('DESCRIPTION_BANNER_TYPE'), 'the_type', $radios));
+            $fields->attach(form_input_integer(do_lang_tempcode('HITS_ALLOCATED'), do_lang_tempcode('DESCRIPTION_HITS_ALLOCATED'), 'campaignremaining', $campaignremaining, false));
+            $total_importance = $GLOBALS['SITE_DB']->query_value_if_there('SELECT SUM(importance_modulus) FROM ' . get_table_prefix() . 'banners WHERE ' . db_string_not_equal_to('name', $name));
+            if (is_null($total_importance)) {
+                $total_importance = 0;
+            }
+            $fields->attach(form_input_integer(do_lang_tempcode('IMPORTANCE_MODULUS'), do_lang_tempcode('DESCRIPTION_IMPORTANCE_MODULUS', strval($total_importance), strval($importancemodulus)), 'importancemodulus', $importancemodulus, true));
         }
-        $fields->attach(form_input_integer(do_lang_tempcode('IMPORTANCE_MODULUS'), do_lang_tempcode('DESCRIPTION_IMPORTANCE_MODULUS', strval($total_importance), strval($importancemodulus)), 'importancemodulus', $importancemodulus, true));
-    }
 
-    $fields->attach(form_input_date(do_lang_tempcode('EXPIRY_DATE'), do_lang_tempcode('DESCRIPTION_EXPIRY_DATE'), 'expiry_date', false, is_null($expiry_date), true, $expiry_date, 2));
+        $fields->attach(form_input_date(do_lang_tempcode('EXPIRY_DATE'), do_lang_tempcode('DESCRIPTION_EXPIRY_DATE'), 'expiry_date', false, is_null($expiry_date), true, $expiry_date, 2));
 
-    $fields->attach(do_template('FORM_SCREEN_FIELD_SPACER', array('TITLE' => do_lang_tempcode('ADVANCED'), 'SECTION_HIDDEN' => empty($b_types) && empty($regions))));
+        $fields->attach(do_template('FORM_SCREEN_FIELD_SPACER', array('_GUID' => '6df9d181757c40237d9459b06075de97', 'TITLE' => do_lang_tempcode('ADVANCED'), 'SECTION_HIDDEN' => empty($b_types) && empty($regions))));
 
-    $fields->attach(form_input_multi_list(do_lang_tempcode('SECONDARY_CATEGORIES'), '', 'b_types', create_selection_list_banner_types($b_types)));
+        $fields->attach(form_input_multi_list(do_lang_tempcode('SECONDARY_CATEGORIES'), '', 'b_types', create_selection_list_banner_types($b_types)));
 
-    if (get_option('filter_regions') == '1') {
-        require_code('locations');
-        $fields->attach(form_input_regions($regions));
+        if (get_option('filter_regions') == '1') {
+            require_code('locations');
+            $fields->attach(form_input_regions($regions));
+        }
     }
 
     $javascript = '
@@ -281,7 +418,7 @@ function check_banner($title_text = '', $direct_code = '', $b_type = '', $b_type
  * @param  integer $importancemodulus The banners "importance modulus"
  * @range  1 max
  * @param  LONG_TEXT $notes Any notes associated with the banner
- * @param  SHORT_INTEGER $the_type The type of banner (0=permanent, 1=campaign, 2=default)
+ * @param  SHORT_INTEGER $the_type The type of banner (a BANNER_* constant)
  * @set    0 1 2
  * @param  ?TIME $expiry_date The banner expiry date (null: never)
  * @param  ?MEMBER $submitter The banners submitter (null: current member)
@@ -321,7 +458,7 @@ function add_banner($name, $imgurl, $title_text, $caption, $direct_code, $campai
     $test = $GLOBALS['SITE_DB']->query_select_value_if_there('banners', 'name', array('name' => $name));
     if (!is_null($test)) {
         if ($uniqify) {
-            $name .= '_' . uniqid('', true);
+            $name .= '_' . uniqid('', false);
         } else {
             warn_exit(do_lang_tempcode('ALREADY_EXISTS', escape_html($name)));
         }
@@ -369,7 +506,7 @@ function add_banner($name, $imgurl, $title_text, $caption, $direct_code, $campai
 
     if ((addon_installed('commandr')) && (!running_script('install'))) {
         require_code('resource_fs');
-        generate_resourcefs_moniker('banner', $name, null, null, true);
+        generate_resource_fs_moniker('banner', $name, null, null, true);
     }
 
     require_code('member_mentions');
@@ -393,7 +530,7 @@ function add_banner($name, $imgurl, $title_text, $caption, $direct_code, $campai
  * @param  integer $importancemodulus The banners "importance modulus"
  * @range  1 max
  * @param  LONG_TEXT $notes Any notes associated with the banner
- * @param  SHORT_INTEGER $the_type The type of banner (0=permanent, 1=campaign, 2=default)
+ * @param  SHORT_INTEGER $the_type The type of banner (a BANNER_* constant)
  * @set    0 1 2
  * @param  ?TIME $expiry_date The banner expiry date (null: never)
  * @param  ?MEMBER $submitter The banners submitter (null: leave unchanged)
@@ -401,9 +538,9 @@ function add_banner($name, $imgurl, $title_text, $caption, $direct_code, $campai
  * @param  ID_TEXT $b_type The banner type (can be anything, where blank means 'normal')
  * @param  ?array $b_types The secondary banner types (empty: no secondary banner types) (null: same as empty)
  * @param  ?array $regions The regions (empty: not region-limited) (null: same as empty)
- * @param  ?TIME $edit_time Edit time (null: either means current time, or if $null_is_literal, means reset to to NULL)
+ * @param  ?TIME $edit_time Edit time (null: either means current time, or if $null_is_literal, means reset to to null)
  * @param  ?TIME $add_time Add time (null: do not change)
- * @param  boolean $null_is_literal Determines whether some NULLs passed mean 'use a default' or literally mean 'set to NULL'
+ * @param  boolean $null_is_literal Determines whether some nulls passed mean 'use a default' or literally mean 'set to null'
  * @param  boolean $uniqify Whether to force the name as unique, if there's a conflict
  * @return ID_TEXT The name
  */
@@ -420,7 +557,7 @@ function edit_banner($old_name, $name, $imgurl, $title_text, $caption, $direct_c
         $test = $GLOBALS['SITE_DB']->query_select_value_if_there('banners', 'name', array('name' => $name));
         if (!is_null($test)) {
             if ($uniqify) {
-                $name .= '_' . uniqid('', true);
+                $name .= '_' . uniqid('', false);
             } else {
                 warn_exit(do_lang_tempcode('ALREADY_EXISTS', escape_html($name)));
             }
@@ -496,7 +633,7 @@ function edit_banner($old_name, $name, $imgurl, $title_text, $caption, $direct_c
 
     if ((addon_installed('commandr')) && (!running_script('install'))) {
         require_code('resource_fs');
-        generate_resourcefs_moniker('banner', $name);
+        generate_resource_fs_moniker('banner', $name);
     }
 
     return $name;
@@ -537,7 +674,7 @@ function delete_banner($name)
 
     if ((addon_installed('commandr')) && (!running_script('install'))) {
         require_code('resource_fs');
-        expunge_resourcefs_moniker('banner', $name);
+        expunge_resource_fs_moniker('banner', $name);
     }
 }
 
@@ -558,7 +695,7 @@ function add_banner_type($id, $is_textual, $image_width, $image_height, $max_fil
     $test = $GLOBALS['SITE_DB']->query_select_value_if_there('banner_types', 'id', array('id' => $id));
     if (!is_null($test)) {
         if ($uniqify) {
-            $id .= '_' . uniqid('', true);
+            $id .= '_' . uniqid('', false);
         } else {
             warn_exit(do_lang_tempcode('ALREADY_EXISTS', escape_html($id)));
         }
@@ -577,7 +714,7 @@ function add_banner_type($id, $is_textual, $image_width, $image_height, $max_fil
 
     if ((addon_installed('commandr')) && (!running_script('install'))) {
         require_code('resource_fs');
-        generate_resourcefs_moniker('banner_type', $id);
+        generate_resource_fs_moniker('banner_type', $id);
     }
 
     require_code('member_mentions');
@@ -605,7 +742,7 @@ function edit_banner_type($old_id, $id, $is_textual, $image_width, $image_height
         $test = $GLOBALS['SITE_DB']->query_select_value_if_there('banner_types', 'id', array('id' => $id));
         if (!is_null($test)) {
             if ($uniqify) {
-                $id .= '_' . uniqid('', true);
+                $id .= '_' . uniqid('', false);
             } else {
                 warn_exit(do_lang_tempcode('ALREADY_EXISTS', escape_html($id)));
             }
@@ -630,7 +767,7 @@ function edit_banner_type($old_id, $id, $is_textual, $image_width, $image_height
 
     if ((addon_installed('commandr')) && (!running_script('install'))) {
         require_code('resource_fs');
-        generate_resourcefs_moniker('banner_type', $id);
+        generate_resource_fs_moniker('banner_type', $id);
     }
 
     return $id;
@@ -655,6 +792,6 @@ function delete_banner_type($id)
 
     if ((addon_installed('commandr')) && (!running_script('install'))) {
         require_code('resource_fs');
-        expunge_resourcefs_moniker('banner_type', $id);
+        expunge_resource_fs_moniker('banner_type', $id);
     }
 }

@@ -1,20 +1,20 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
 */
 
 /**
- * @license        http://opensource.org/licenses/cpal_1.0 Common Public Attribution License
- * @copyright    ocProducts Ltd
- * @package        unit_testing
+ * @license    http://opensource.org/licenses/cpal_1.0 Common Public Attribution License
+ * @copyright  ocProducts Ltd
+ * @package    testing_platform
  */
 
 /**
- * ocPortal test case class (unit testing).
+ * Composr test case class (unit testing).
  */
 class xss_test_set extends cms_test_case
 {
@@ -66,6 +66,8 @@ class xss_test_set extends cms_test_case
         $parsed = strtolower(static_evaluate_tempcode(comcode_to_tempcode($comcode, $GLOBALS['FORUM_DRIVER']->get_guest_id())));
 
         $this->assertTrue(strpos($parsed, '<script') === false);
+
+        set_privilege(1, 'allow_html', false);
     }
 
     public function testInputFilter()
@@ -101,17 +103,17 @@ class xss_test_set extends cms_test_case
 
         ob_start();
         @print(get_param_string('id')); // Print an unverified input parameter, but surpress our XSS error
-		ob_end_clean();
+        ob_end_clean();
 
-		safe_ini_set('ocproducts.xss_detect', '0');
+        safe_ini_set('ocproducts.xss_detect', '0');
 
-		set_error_handler($temp);
+        set_error_handler($temp);
 
-		$setting = ini_get('ocproducts.xss_detect');
-        if (!empty($setting)) {
-    		$this->assertTrue(strpos($php_errormsg, 'XSS vulnerability') !== false, empty($setting) ? 'ocProducts PHP not running' : null);
+        $setting = ini_get('ocproducts.xss_detect');
+        if ($setting !== false) {
+            $this->assertTrue(strpos($php_errormsg, 'XSS vulnerability') !== false, ($setting === false) ? 'ocProducts PHP not running' : '%s');
         }
-	}
+    }
 
     public function testXSSDetectorOnAndWorkingComplex1()
     {
@@ -122,7 +124,7 @@ class xss_test_set extends cms_test_case
         safe_ini_set('ocproducts.xss_detect', '1');
 
         ob_start();
-        $tpl = do_template('PARAGRAPH', array('TEXT' => get_param_string('id')));
+        $tpl = do_template('PARAGRAPH', array('_GUID' => '8bca69a1088b0ca260321cd3117aabbe', 'TEXT' => get_param_string('id')));
         @$tpl->evaluate_echo();
         ob_end_clean();
 
@@ -131,8 +133,8 @@ class xss_test_set extends cms_test_case
         set_error_handler($temp);
 
         $setting = ini_get('ocproducts.xss_detect');
-        if (!empty($setting)) {
-            $this->assertTrue(strpos($this->found_error, 'XSS vulnerability') !== false, empty($setting) ? 'ocProducts PHP not running' : null);
+        if ($setting !== false) {
+            $this->assertTrue(strpos($this->found_error, 'XSS vulnerability') !== false, ($setting === false) ? 'ocProducts PHP not running' : '%s');
         }
     }
 
@@ -145,8 +147,8 @@ class xss_test_set extends cms_test_case
         safe_ini_set('ocproducts.xss_detect', '1');
 
         ob_start();
-        $_tpl = do_template('PARAGRAPH', array('TEXT' => get_param_string('id')));
-        $tpl = do_template('PARAGRAPH', array('TEXT' => $_tpl));
+        $_tpl = do_template('PARAGRAPH', array('_GUID' => '809e41570771a797998d59f8e3dc7a0b', 'TEXT' => get_param_string('id')));
+        $tpl = do_template('PARAGRAPH', array('_GUID' => '89dd3a60565dab73c2796c8a754095ba', 'TEXT' => $_tpl));
         @$tpl->evaluate_echo();
         ob_end_clean();
 
@@ -155,8 +157,8 @@ class xss_test_set extends cms_test_case
         set_error_handler($temp);
 
         $setting = ini_get('ocproducts.xss_detect');
-        if (!empty($setting)) {
-            $this->assertTrue(strpos($this->found_error, 'XSS vulnerability') !== false, empty($setting) ? 'ocProducts PHP not running' : null);
+        if ($setting !== false) {
+            $this->assertTrue(strpos($this->found_error, 'XSS vulnerability') !== false, ($setting === false) ? 'ocProducts PHP not running' : '%s');
         }
     }
 
@@ -170,8 +172,8 @@ class xss_test_set extends cms_test_case
 
         ob_start();
         $_tpl = new Tempcode();
-        $_tpl->attach(do_template('PARAGRAPH', array('TEXT' => get_param_string('id'))));
-        $tpl = do_template('PARAGRAPH', array('TEXT' => $_tpl));
+        $_tpl->attach(do_template('PARAGRAPH', array('_GUID' => 'a9e8285ac5ef71d93eedaaf6b81f4384', 'TEXT' => get_param_string('id'))));
+        $tpl = do_template('PARAGRAPH', array('_GUID' => 'd2e942317451ffed9a5d75c13c85a350', 'TEXT' => $_tpl));
         @$tpl->evaluate_echo();
         ob_end_clean();
 
@@ -180,8 +182,8 @@ class xss_test_set extends cms_test_case
         set_error_handler($temp);
 
         $setting = ini_get('ocproducts.xss_detect');
-        if (!empty($setting)) {
-            $this->assertTrue(strpos($this->found_error, 'XSS vulnerability') !== false, empty($setting) ? 'ocProducts PHP not running' : null);
+        if ($setting !== false) {
+            $this->assertTrue(strpos($this->found_error, 'XSS vulnerability') !== false, ($setting === false) ? 'ocProducts PHP not running' : '%s');
         }
     }
 }

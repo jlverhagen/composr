@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -62,7 +62,7 @@ class Block_bottom_rss
      */
     public function run($map)
     {
-        $url = array_key_exists('param', $map) ? $map['param'] : (get_brand_base_url() . '/backend.php?type=rss&mode=news&select=16,17,18,19,20'); // http://channel9.msdn.com/Feeds/RSS/
+        $url = empty($map['param']) ? (get_brand_base_url() . '/backend.php?type=rss&mode=news') : $map['param'];
 
         require_code('rss');
         $rss = new CMS_RSS($url);
@@ -95,7 +95,7 @@ class Block_bottom_rss
             }
 
             $_title = $item['title'];
-            $date = array_key_exists('clean_add_date', $item) ? get_timezoned_date($item['clean_add_date']) : array_key_exists('add_date', $item) ? $item['add_date'] : '';
+            $date = array_key_exists('clean_add_date', $item) ? get_timezoned_date_tempcode($item['clean_add_date']) : array_key_exists('add_date', $item) ? make_string_tempcode($item['add_date']) : new Tempcode();
 
             $_postdetailss[] = array('DATE' => $date, 'FULL_URL' => $full_url, 'NEWS_TITLE' => $_title);
         }

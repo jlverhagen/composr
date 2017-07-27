@@ -1,6 +1,6 @@
 /*
  {$BRAND_NAME`}
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 */
 
 .block_main_members {
@@ -18,6 +18,9 @@
 	padding: 0.5em;
 	{$BETA_CSS_PROPERTY,box-sizing: border-box;} /* Exact percentage widths are chosen to match the per_row block parameter */
 	min-width: 30em;
+}
+.block_main_members__avatars>div {
+	min-width: 0 !important;
 }
 .block_main_members>div>.box {
 	margin: 0;
@@ -109,4 +112,9 @@
 .advanced_member_search .search_button {
 	float: right;
 	margin-top: 0.6em;
+}
+
+.advanced_member_search .search_option, .advanced_member_search .search_button {
+	/* Force a neat float alignment */
+	min-height: 2.7em;
 }

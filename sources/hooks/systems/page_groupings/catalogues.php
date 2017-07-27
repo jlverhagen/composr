@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -47,7 +47,7 @@ class Hook_page_groupings_catalogues
             $ret[] = array('cms', 'menu/rich_content/catalogues/catalogues', array('cms_catalogues', array('type' => 'browse'), get_module_zone('cms_catalogues')), do_lang_tempcode('ITEMS_HERE', do_lang_tempcode('catalogues:CATALOGUES'), make_string_tempcode(escape_html(integer_format($GLOBALS['SITE_DB']->query_select_value_if_there('catalogues', 'COUNT(*)', null, '', true))))), 'catalogues:DOC_CATALOGUES');
         }
         if ($exhaustive) {
-            $catalogues = $GLOBALS['SITE_DB']->query_select('catalogues', array('c_name', 'c_title', 'c_description', 'c_ecommerce', 'c_is_tree'), null, 'ORDER BY c_add_date', 50, null, true);
+            $catalogues = $GLOBALS['SITE_DB']->query_select('catalogues', array('*'), null, 'ORDER BY c_add_date', 50, null, true);
             if (!is_null($catalogues)) {
                 $ret2 = array();
                 $count = 0;
@@ -80,7 +80,7 @@ class Hook_page_groupings_catalogues
 
                         if ($row['c_is_tree'] == 0) {
                             $num_categories = $GLOBALS['SITE_DB']->query_select_value('catalogue_categories', 'COUNT(*)', array('c_name' => $row['c_name']));
-                            /*if ($num_categories==0) { // Actually we should show an empty index - catalogue exists, show it does
+                            /*if ($num_categories == 0) { // Actually we should show an empty index - catalogue exists, show it does
                                 continue;
                             }
                             else*/
@@ -91,7 +91,7 @@ class Hook_page_groupings_catalogues
                             }
                         }
 
-                        $ret2[] = array($page_grouping, $menu_icon, array('catalogues', array('type' => 'index', 'id' => $row['c_name']), get_module_zone('catalogues')), make_string_tempcode(escape_html(get_translated_text($row['c_title']))), get_translated_tempcode('catalogues', $row, 'c_description'));
+                        $ret2[] = array($page_grouping, $menu_icon, array('catalogues', array('type' => 'index', 'id' => $row['c_name'], 'tree' => $row['c_is_tree']), get_module_zone('catalogues')), make_string_tempcode(escape_html(get_translated_text($row['c_title']))), get_translated_tempcode('catalogues', $row, 'c_description'));
                     }
                 }
 
@@ -99,7 +99,7 @@ class Hook_page_groupings_catalogues
             }
         }
 
-        //$ret[]=array('rich_content','menu/rich_content/catalogues/catalogues',array('catalogues',array(),get_module_zone('catalogues')),do_lang_tempcode('catalogues:CATALOGUES'));  Lame
+        //$ret[] = array('rich_content', 'menu/rich_content/catalogues/catalogues', array('catalogues', array(), get_module_zone('catalogues')), do_lang_tempcode('catalogues:CATALOGUES'));  Lame
 
         return $ret;
     }

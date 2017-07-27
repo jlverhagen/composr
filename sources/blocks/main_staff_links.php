@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -38,7 +38,7 @@ class Block_main_staff_links
         $info['version'] = 3;
         $info['locked'] = false;
         $info['parameters'] = array();
-        $info['update_require_upgrade'] = 1;
+        $info['update_require_upgrade'] = true;
         return $info;
     }
 
@@ -47,7 +47,7 @@ class Block_main_staff_links
      */
     public function uninstall()
     {
-        $GLOBALS['SITE_DB']->drop_table_if_exists('stafflinks');
+        $GLOBALS['SITE_DB']->drop_table_if_exists('staff_links');
     }
 
     /**
@@ -72,7 +72,7 @@ class Block_main_staff_links
     public function install($upgrade_from = null, $upgrade_from_hack = null)
     {
         if ((is_null($upgrade_from)) || ($upgrade_from < 3)) {
-            $GLOBALS['SITE_DB']->create_table('stafflinks', array(
+            $GLOBALS['SITE_DB']->create_table('staff_links', array(
                 'id' => '*AUTO',
                 'link' => 'URLPATH',
                 'link_title' => 'SHORT_TEXT',
@@ -84,30 +84,28 @@ class Block_main_staff_links
                 'compo.sr (topics with unread posts)' => get_brand_page_url(array('page' => 'vforums', 'type' => 'unread'), 'forum'),
                 'ocProducts (web development services)' => 'http://ocproducts.com/',
                 'Transifex (Composr language translations)' => 'https://www.transifex.com/organization/ocproducts/dashboard',
-                'Google Alerts' => 'http://www.google.com/alerts',
-                'Google Analytics' => 'http://www.google.com/analytics/',
-                'Google Webmaster Tools' => 'https://www.google.com/webmasters/tools',
-                'Google Apps (gmail for domains, etc)' => 'http://www.google.com/apps/intl/en/group/index.html',
                 'Google Chrome (web browser)' => 'http://www.google.com/chrome',
                 'Google Chrome addons' => 'https://chrome.google.com/extensions/featured/web_dev',
+                'Google Alerts' => 'http://www.google.com/alerts',
+                'Google Apps (gmail for domains, etc)' => 'http://www.google.com/apps/intl/en/group/index.html',
+                'Google Analytics' => 'http://www.google.com/analytics/',
                 'SharedCount (social sharing stats)' => 'http://www.sharedcount.com/',
                 'Facebook Insights (Facebook Analytics)' => 'https://developers.facebook.com/docs/insights/',
-                'Paint.net (free graphics tool)' => 'http://www.getpaint.net/',
+                'Paint.net (free graphics tool, Windows)' => 'http://www.getpaint.net/',
                 'PNGGauntlet (compress PNG files, Windows)' => 'http://benhollis.net/software/pnggauntlet/',
                 'ImageOptim (compress PNG files, Mac)' => 'http://imageoptim.pornel.net/',
                 'Find Icons (free icons)' => 'http://findicons.com/',
-                'stock.xchng (free stock art)' => 'http://sxc.hu/',
+                'FreeImages (free stock art)' => 'http://www.freeimages.com/',
                 'Kompozer (Web design tool)' => 'http://www.kompozer.net/',
                 'DiffMerge' => 'http://www.sourcegear.com/diffmerge/',
                 'Jing (record screencasts)' => 'http://www.jingproject.com/',
-                'SiteRay (site quality auditing)' => 'http://www.silktide.com/siteray',
                 'Smashing Magazine (web design articles)' => 'http://www.smashingmagazine.com/',
                 'w3schools (learn web technologies)' => 'http://www.w3schools.com/',
-                // NB: Not including a web host, as the user will likely already have one
-                //'GoDaddy (Domains and SSL certificates)'=>'http://www.godaddy.com/', // A bit overly-specific, plus similar to the above
+                // NB: Not including a webhost, as the user will likely already have one
+                //'GoDaddy (Domains and SSL certificates)' => 'http://www.godaddy.com/', // A bit overly-specific, plus similar to the above
             );
             foreach ($default_links as $link_title => $url) {
-                $GLOBALS['SITE_DB']->query_insert('stafflinks', array(
+                $GLOBALS['SITE_DB']->query_insert('staff_links', array(
                     'link' => $url,
                     'link_title' => $link_title,
                     'link_desc' => $link_title,
@@ -129,7 +127,7 @@ class Block_main_staff_links
         $newdata = post_param_string('staff_links_edit', null);
         if (!is_null($newdata)) {
             $items = explode("\n", $newdata);
-            $GLOBALS['SITE_DB']->query_delete('stafflinks');
+            $GLOBALS['SITE_DB']->query_delete('staff_links');
 
             foreach ($items as $i) {
                 $q = trim($i);
@@ -152,8 +150,8 @@ class Block_main_staff_links
                     } else {
                         $link_desc = $link_title;
                     }
-                    $GLOBALS['SITE_DB']->query_insert('stafflinks', array(
-                        'link' => $link,
+                    $GLOBALS['SITE_DB']->query_insert('staff_links', array(
+                        'link' => substr($link, 0, 255),
                         'link_title' => $link_title,
                         'link_desc' => $link_desc,
                     ));
@@ -165,7 +163,7 @@ class Block_main_staff_links
             log_it('STAFF_LINKS');
         }
 
-        $rows = $GLOBALS['SITE_DB']->query_select('stafflinks', array('*'));
+        $rows = $GLOBALS['SITE_DB']->query_select('staff_links', array('*'));
         $formatted_staff_links = array();
         $unformatted_staff_links = array();
         foreach ($rows as $r) {
@@ -184,10 +182,7 @@ class Block_main_staff_links
             $unformatted_staff_links[] = array('LINKS' => $r['link'] . '=' . $r['link_desc']);
         }
 
-        $map_comcode = '';
-        foreach ($map as $key => $val) {
-            $map_comcode .= ' ' . $key . '="' . addslashes($val) . '"';
-        }
+        $map_comcode = get_block_ajax_submit_map($map);
         return do_template('BLOCK_MAIN_STAFF_LINKS', array('_GUID' => '555150e7f1626ae0689158b1ecc1d85b', 'URL' => get_self_url(), 'BLOCK_NAME' => 'main_staff_links', 'MAP' => $map_comcode, 'FORMATTED_LINKS' => $formatted_staff_links, 'UNFORMATTED_LINKS' => $unformatted_staff_links));
     }
 }

@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -21,9 +21,10 @@ class Hook_addon_registry_booking
     /**
      * Get a list of file permissions to set
      *
+     * @param  boolean $runtime Whether to include wildcards represented runtime-created chmoddable files
      * @return array File permissions to set
      */
-    public function get_chmod_array()
+    public function get_chmod_array($runtime = false)
     {
         return array();
     }
@@ -108,7 +109,10 @@ You may wish to deny access to the usergroup and member directories when using t
     public function get_dependencies()
     {
         return array(
-            'requires' => array(),
+            'requires' => array(
+                'calendar',
+                'ecommerce',
+            ),
             'recommends' => array(),
             'conflicts_with' => array()
         );
@@ -155,7 +159,6 @@ You may wish to deny access to the usergroup and member directories when using t
             'sources_custom/blocks/main_choose_to_book.php',
             'sources_custom/hooks/modules/members/booking.php',
             'themes/default/templates_custom/BLOCK_SIDE_BOOK_DATE_RANGE.tpl',
-            'themes/default/templates_custom/BLOCK_SIDE_CHOOSE_SHOWING.tpl',
             'themes/default/templates_custom/BLOCK_MAIN_CHOOSE_TO_BOOK.tpl',
             'themes/default/javascript_custom/booking.js',
             'data_custom/bookings_ical.php',

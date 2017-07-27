@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -10,6 +10,11 @@
 /**
  * @license    http://opensource.org/licenses/cpal_1.0 Common Public Attribution License
  * @copyright  ocProducts Ltd
+ * @package    bankr
+ */
+
+/**
+ * Hook class.
  */
 class Hook_cron_bank
 {
@@ -18,7 +23,9 @@ class Hook_cron_bank
      */
     public function run()
     {
-        //if (!addon_installed('bank')) return;
+        if (!$GLOBALS['SITE_DB']->table_exists('bank')) {
+            return;
+        }
 
         $to_be_restored = $GLOBALS['SITE_DB']->query('SELECT * FROM ' . get_table_prefix() . 'bank WHERE add_time<' . strval(time() - (30 * 24 * 60 * 60)), null, null, true);
         if (is_null($to_be_restored)) {

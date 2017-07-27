@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -135,7 +135,7 @@ function cns_get_topic_tree($forum_id = null, $breadcrumbs = null, $title = null
  *
  * @param  ?MEMBER $member_id The member that the view privileges are done for (null: current member).
  * @param  ?AUTO_LINK $base_forum The forum we are starting from (null: capture the whole tree).
- * @param  ?array $selected_forum The forum(s) to select by default (null: no preference). Only applies if !$topics_too. An array of AUTO_LINK's (for IDs) or strings (for names).
+ * @param  ?array $selected_forum The forum(s) to select by default (null: no preference). An array of AUTO_LINK's (for IDs) or strings (for names).
  * @param  boolean $use_compound_list Whether to generate a compound list (a list of all the ancesters, for each point in the forum tree) as well as the tree.
  * @param  ?integer $levels The number of recursive levels to search (null: all)
  * @param  ?TIME $updated_since Time from which content must be updated (null: no limit).
@@ -263,7 +263,7 @@ function cns_get_forum_tree($member_id = null, $base_forum = null, $breadcrumbs 
                 $cat_bit = array_key_exists($forum['f_forum_grouping_id'], $FORUM_GROUPINGS_TITLES_CACHE) ? $FORUM_GROUPINGS_TITLES_CACHE[$forum['f_forum_grouping_id']] : do_lang('NA');
             }
 
-            $below = cns_get_forum_tree($member_id, $forum['id'], $child_breadcrumbs, $skip, $forum, $use_compound_list, $levels, $do_stats, $updated_since);
+            $below = cns_get_forum_tree($member_id, $forum['id'], $child_breadcrumbs, $skip, $forum, $use_compound_list, ($levels === null) ? null : ($levels - 1), $do_stats, $updated_since);
             if ($use_compound_list) {
                 list($below, $_compound_list) = $below;
                 $compound_list .= strval($forum['id']) . ',' . $_compound_list;

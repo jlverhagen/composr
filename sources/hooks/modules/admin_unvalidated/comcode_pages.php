@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -41,7 +41,7 @@ class Hook_unvalidated_comcode_pages
         $info['edit_module'] = 'cms_comcode_pages';
         $info['edit_type'] = '_edit';
         $info['edit_identifier'] = 'page_link';
-        $info['title'] = do_lang_tempcode('COMCODE_PAGE');
+        $info['title'] = do_lang_tempcode('COMCODE_PAGES');
 
         return $info;
     }

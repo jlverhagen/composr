@@ -3,10 +3,14 @@
 		{+START,IF_NON_EMPTY,{TITLE}}<h3>{TITLE}</h3>{+END}
 
 		<form title="{!_LOGIN}" onsubmit="if (check_field_for_blankness(this.elements['login_username'],event)) { disable_button_just_clicked(this); return true; } return false;" action="{LOGIN_URL*}" method="post" autocomplete="on">
+			{$INSERT_SPAMMER_BLACKHOLE}
+
 			<div>
 				<div class="constrain_field">
-					<div class="accessibility_hidden"><label for="ps_login_username">{!USERNAME}{+START,IF,{$AND,{$CNS},{$CONFIG_OPTION,one_per_email_address}}} / {!EMAIL_ADDRESS}{+END}</label></div>
-					<input maxlength="80" class="wide_field login_block_username field_input_non_filled" type="text" onfocus="placeholder_focus(this);" onblur="placeholder_blur(this);" value="{!USERNAME}" id="ps_login_username" name="login_username" />
+					<div class="accessibility_hidden"><label for="ps_login_username">{$LOGIN_LABEL}</label></div>
+					<input maxlength="80" class="wide_field login_block_username field_input_non_filled" type="text" onfocus="placeholder_focus(this);" onblur="placeholder_blur(this);" alt="{!USERNAME}" value="{!USERNAME}" id="ps_login_username" name="login_username" />
+				</div>
+				<div class="constrain_field">
 					<div class="accessibility_hidden"><label for="ps_password">{!PASSWORD}</label></div>
 					<input maxlength="255" class="wide_field" type="password" placeholder="{!PASSWORD}" value="" name="password" id="ps_password" />
 				</div>
@@ -27,7 +31,7 @@
 				{+END}
 
 				<p class="proceed_button">
-					<input class="menu__site_meta__user_actions__login button_screen_item" type="submit" value="{!_LOGIN}" />
+					<input class="button_screen_item menu__site_meta__user_actions__login" type="submit" value="{!_LOGIN}" />
 				</p>
 			</div>
 		</form>

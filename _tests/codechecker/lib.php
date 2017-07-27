@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -126,7 +126,7 @@ function find_all_hooks($type, $entry)
     if ($dh !== false) {
         foreach ($dh as $file) {
             $basename = basename($file, '.php');
-            if (($file[0] != '.') && ($file == $basename . '.php')/* && (preg_match('#^[\w\-]*$#',$basename)!=0) Let's trust - performance*/) {
+            if (($file[0] != '.') && ($file == $basename . '.php')/* && (preg_match('#^[\w\-]*$#', $basename) !=0 ) Let's trust - performance*/) {
                 $out[$basename] = 'sources';
             }
         }
@@ -137,7 +137,7 @@ function find_all_hooks($type, $entry)
     if ($dh !== false) {
         foreach ($dh as $file) {
             $basename = basename($file, '.php');
-            if (($file[0] != '.') && ($file == $basename . '.php')/* && (preg_match('#^[\w\-]*$#',$basename)!=0) Let's trust - performance*/) {
+            if (($file[0] != '.') && ($file == $basename . '.php')/* && (preg_match('#^[\w\-]*$#', $basename) != 0) Let's trust - performance*/) {
                 $out[$basename] = 'sources_custom';
             }
         }
@@ -231,7 +231,9 @@ function die_html_trace($message)
 {
     echo $message . '<br /><br />';
 
-    @ob_end_clean(); // Emergency output, potentially, so kill off any active buffer
+    while (ob_get_level() > 0) { // Emergency output, potentially, so kill off any active buffer
+        ob_end_clean();
+    }
     $_trace = debug_backtrace();
     $trace = '';
     foreach ($_trace as $stage) {
@@ -280,9 +282,11 @@ function log_warning($warning, $i = -1, $absolute = false)
     list($pos, $line, $full_line) = pos_to_line_details($i, $absolute);
 
     echo 'WARNING "' . $FILENAME . '" ' . $line . ' ' . $pos . ' ' . 'PHP: ' . $warning . cnl();
-// if (!isset($MYFILE_WARNINGS)) $MYFILE_WARNINGS=fopen('warnings_'.$START_TIME.'.log','at');
-// fwrite($MYFILE_WARNINGS,$FILENAME.': '.$warning.' (at line '.$line.', position '.$pos.')  ['.$full_line.']'."\n");
-    //fclose($MYFILE_WARNINGS);
+// if (!isset($MYFILE_WARNINGS)) $MYFILE_WARNINGS = fopen('warnings_' . $START_TIME . '.log', 'at');
+// flock($MYFILE_WARNINGS, LOCK_EX);
+// fwrite($MYFILE_WARNINGS, $FILENAME . ': ' . $warning . ' (at line ' . $line . ', position ' . $pos . ')  [' . $full_line . ']' . "\n");
+// flock($MYFILE_WARNINGS, LOCK_UN);
+// fclose($MYFILE_WARNINGS);
 }
 
 function log_special($type, $value)
@@ -345,6 +349,16 @@ function do_lang_tempcode($x, $a = null, $b = null, $c = null)
 function escape_html($in)
 {
     return $in;
+}
+
+function php_function_allowed($function)
+{
+    return true;
+}
+
+function integer_format($num)
+{
+    return number_format($num);
 }
 
 function attach_message($message, $message_type)

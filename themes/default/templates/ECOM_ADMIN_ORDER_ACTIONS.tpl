@@ -1,5 +1,5 @@
 <div class="vertical_align">
-	<form title="{!ACTION}: {ORDER_TITLE*}" method="post" action="{ORDER_ACTUALISE_URL*}" onsubmit="return confirm_admin_order_actions(this.elements['action'].value,this);">
+	<form title="{!ACTION}: {ORDER_TITLE*}" method="post" action="{ORDER_ACTUALISE_URL*}" onsubmit="return confirm_admin_order_actions(this.elements['action'].value,this);" autocomplete="off">
 		{$INSERT_SPAMMER_BLACKHOLE}
 
 		<label class="accessibility_hidden" for="action">{!ACTION}</label>
@@ -25,7 +25,7 @@
 		</select>
 
 		{+START,IF,{$NOT,{$JS_ON}}}
-			<input class="buttons__proceed button_screen_item" type="submit" name="action_button" title="{!PROCEED}: {ORDER_TITLE*}" value="{!PROCEED_SHORT}" />
+			<input class="button_screen_item buttons__proceed" type="submit" name="action_button" title="{!PROCEED}: {ORDER_TITLE*}" value="{!PROCEED_SHORT}" />
 		{+END}
 	</form>
 </div>

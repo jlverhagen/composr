@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -21,9 +21,10 @@ class Hook_addon_registry_user_simple_csv_sync
     /**
      * Get a list of file permissions to set
      *
+     * @param  boolean $runtime Whether to include wildcards represented runtime-created chmoddable files
      * @return array File permissions to set
      */
-    public function get_chmod_array()
+    public function get_chmod_array($runtime = false)
     {
         return array();
     }
@@ -85,7 +86,7 @@ class Hook_addon_registry_user_simple_csv_sync
      */
     public function get_description()
     {
-        return 'A simple system for importing and exporting member CSV files automatically, on a scheduler. This is intended as a base for programmers seeking to integrate simple user synching, and requires custom programming to customise it.';
+        return 'A simple system for importing and exporting member CSV files automatically, on a scheduler. This is intended as a base for programmers seeking to integrate simple user synching, and requires custom programming to customise it. The [tt]data_custom/modules/user_export[/tt] directory should be protected with a [tt].htaccess[/tt] file, restricting it to particular IP addresses.';
     }
 
     /**
@@ -132,7 +133,6 @@ class Hook_addon_registry_user_simple_csv_sync
         return array(
             'sources_custom/hooks/systems/addon_registry/user_simple_csv_sync.php',
             'data_custom/modules/user_export/in.csv',
-            'data_custom/modules/user_export/out.csv',
             'data_custom/user_export.php',
             'data_custom/user_import.php',
             'sources_custom/hooks/systems/cron/user_export.php',

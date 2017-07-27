@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -48,11 +48,17 @@ class Module_admin_ecommerce_logs
      * @param  boolean $check_perms Whether to check permissions.
      * @param  ?MEMBER $member_id The member to check permissions as (null: current user).
      * @param  boolean $support_crosslinks Whether to allow cross links to other modules (identifiable via a full-page-link rather than a screen-name).
-     * @param  boolean $be_deferential Whether to avoid any entry-point (or even return NULL to disable the page in the Sitemap) if we know another module, or page_group, is going to link to that entry-point. Note that "!" and "browse" entry points are automatically merged with container page nodes (likely called by page-groupings) as appropriate.
+     * @param  boolean $be_deferential Whether to avoid any entry-point (or even return null to disable the page in the Sitemap) if we know another module, or page_group, is going to link to that entry-point. Note that "!" and "browse" entry points are automatically merged with container page nodes (likely called by page-groupings) as appropriate.
      * @return ?array A map of entry points (screen-name=>language-code/string or screen-name=>[language-code/string, icon-theme-image]) (null: disabled).
      */
     public function get_entry_points($check_perms = true, $member_id = null, $support_crosslinks = true, $be_deferential = false)
     {
+        if (get_value('unofficial_ecommerce') !== '1') {
+            if (get_forum_type() != 'cns') {
+                return null;
+            }
+        }
+
         $ret = array(
             'browse' => array('ECOMMERCE', 'menu/adminzone/audit/ecommerce/ecommerce'),
             'trigger' => array('MANUAL_TRANSACTION', 'menu/rich_content/ecommerce/purchase'),
@@ -65,7 +71,8 @@ class Module_admin_ecommerce_logs
         if ($support_crosslinks) {
             $ret['_SEARCH:admin_invoices:browse'] = array('INVOICES', 'menu/adminzone/audit/ecommerce/invoices');
             if (addon_installed('shopping')) {
-                $ret['_SEARCH:admin_orders:browse'] = array('shopping:ORDERS', 'menu/adminzone/audit/ecommerce/orders');
+                require_lang('shopping');
+                $ret['_SEARCH:admin_orders:browse'] = array('ORDERS', 'menu/adminzone/audit/ecommerce/orders');
             }
         }
 
@@ -75,7 +82,7 @@ class Module_admin_ecommerce_logs
     public $title;
 
     /**
-     * Module pre-run function. Allows us to know meta-data for <head> before we start streaming output.
+     * Module pre-run function. Allows us to know metadata for <head> before we start streaming output.
      *
      * @return ?Tempcode Tempcode indicating some kind of exceptional output (null: none).
      */
@@ -153,12 +160,14 @@ class Module_admin_ecommerce_logs
         require_code('ecommerce');
         require_code('ecommerce2');
 
-        if ((get_value('unofficial_ecommerce') != '1') && (count(find_all_hooks('systems', 'ecommerce')) == 8)) {
+        if (get_value('unofficial_ecommerce') !== '1') {
             if (get_forum_type() != 'cns') {
                 warn_exit(do_lang_tempcode('NO_CNS'));
-            } else {
-                cns_require_all_forum_stuff();
             }
+        }
+
+        if (get_forum_type() == 'cns') {
+            cns_require_all_forum_stuff();
         }
 
         $type = get_param_string('type', 'browse');
@@ -175,7 +184,7 @@ class Module_admin_ecommerce_logs
         if ($type == 'profit_loss') {
             return $this->profit_loss();
         }
-        //if ($type=='balance_sheet') return $this->balance_sheet();
+        //if ($type == 'balance_sheet') return $this->balance_sheet();
         if ($type == 'trigger') {
             return $this->trigger();
         }
@@ -303,7 +312,7 @@ class Module_admin_ecommerce_logs
 
         $results_table = results_table(do_lang('TRANSACTIONS'), $start, 'start', $max, 'max', $max_rows, $fields_title, $fields, $sortables, $sortable, $sort_order, 'sort');
 
-        $post_url = build_url(array('page' => '_SELF', 'type' => 'logs'/*,'start'=>$start,'max'=>$max*/, 'sort' => $sortable . ' ' . $sort_order), '_SELF');
+        $post_url = build_url(array('page' => '_SELF', 'type' => 'logs'/*, 'start' => $start, 'max' => $max*/, 'sort' => $sortable . ' ' . $sort_order), '_SELF');
 
         $products = new Tempcode();
         $product_rows = $GLOBALS['SITE_DB']->query_select('transactions', array('DISTINCT t_type_code'), null, 'ORDER BY t_type_code');
@@ -446,7 +455,7 @@ class Module_admin_ecommerce_logs
         $txn_id = 'manual-' . substr(uniqid('', true), 0, 10);
         $parent_txn_id = '';
 
-        $_type_code = $products[$type_code][4];
+        $item_name = $products[$type_code][4];
 
         if ($products[$type_code][0] == PRODUCT_SUBSCRIPTION) {
             if (($purchase_id == '') || (post_param_string('username', '') != '')) {
@@ -548,21 +557,21 @@ class Module_admin_ecommerce_logs
     public function get_types($from, $to, $unpaid_invoices_count = false)
     {
         $types = array(
-            'OPENING' => array('TYPE' => do_lang_tempcode('OPENING_BALANCE'), 'AMOUNT' => 0, 'SPECIAL' => true),
-            'INTEREST_PLUS' => array('TYPE' => do_lang_tempcode('M_INTEREST_PLUS'), 'AMOUNT' => 0, 'SPECIAL' => false),
+            'OPENING' => array('TYPE' => do_lang_tempcode('OPENING_BALANCE'), 'AMOUNT' => 0.0, 'SPECIAL' => true),
+            'INTEREST_PLUS' => array('TYPE' => do_lang_tempcode('M_INTEREST_PLUS'), 'AMOUNT' => 0.0, 'SPECIAL' => false),
         );
         $products = find_all_products();
         foreach ($products as $type_code => $details) {
-            $types[$type_code] = array('TYPE' => $details[4], 'AMOUNT' => 0, 'SPECIAL' => false);
+            $types[$type_code] = array('TYPE' => $details[4], 'AMOUNT' => 0.0, 'SPECIAL' => false);
         }
         $types += array(
-            'COST' => array('TYPE' => do_lang_tempcode('EXPENSES'), 'AMOUNT' => 0, 'SPECIAL' => false),
-            'TRANS' => array('TYPE' => do_lang_tempcode('TRANSACTION_FEES'), 'AMOUNT' => 0, 'SPECIAL' => false),
-            'WAGE' => array('TYPE' => do_lang_tempcode('WAGES'), 'AMOUNT' => 0, 'SPECIAL' => false),
+            'COST' => array('TYPE' => do_lang_tempcode('EXPENSES'), 'AMOUNT' => 0.0, 'SPECIAL' => false),
+            'TRANS' => array('TYPE' => do_lang_tempcode('TRANSACTION_FEES'), 'AMOUNT' => 0.0, 'SPECIAL' => false),
+            'WAGE' => array('TYPE' => do_lang_tempcode('WAGES'), 'AMOUNT' => 0.0, 'SPECIAL' => false),
             'INTEREST_MINUS' => array('TYPE' => do_lang_tempcode('M_INTEREST_MINUS'), 'AMOUNT' => 0.0, 'SPECIAL' => false),
-            'TAX' => array('TYPE' => do_lang_tempcode('TAX_GENERAL'), 'AMOUNT' => 0, 'SPECIAL' => false),
-            'CLOSING' => array('TYPE' => do_lang_tempcode('CLOSING_BALANCE'), 'AMOUNT' => 0, 'SPECIAL' => true),
-            'PROFIT' => array('TYPE' => do_lang_tempcode('NET_PROFIT'), 'AMOUNT' => 0, 'SPECIAL' => true),
+            'TAX' => array('TYPE' => do_lang_tempcode('TAX_GENERAL'), 'AMOUNT' => 0.0, 'SPECIAL' => false),
+            'CLOSING' => array('TYPE' => do_lang_tempcode('CLOSING_BALANCE'), 'AMOUNT' => 0.0, 'SPECIAL' => true),
+            'PROFIT' => array('TYPE' => do_lang_tempcode('NET_PROFIT'), 'AMOUNT' => 0.0, 'SPECIAL' => true),
         );
 
         require_code('currency');
@@ -570,7 +579,7 @@ class Module_admin_ecommerce_logs
         $transactions = $GLOBALS['SITE_DB']->query('SELECT * FROM ' . $GLOBALS['SITE_DB']->get_table_prefix() . 'transactions WHERE t_time<' . strval($to) . ' AND ' . db_string_equal_to('t_status', 'Completed') . ' ORDER BY t_time');
         foreach ($transactions as $transaction) {
             if ($transaction['t_time'] > $from) {
-                $types['TRANS']['AMOUNT'] += get_transaction_fee($transaction['t_amount'], $transaction['t_via']);
+                $types['TRANS']['AMOUNT'] += get_transaction_fee(floatval($transaction['t_amount']), $transaction['t_via']);
             }
 
             if ($unpaid_invoices_count) {
@@ -585,26 +594,26 @@ class Module_admin_ecommerce_logs
 
             $transaction['t_amount'] = currency_convert(floatval($transaction['t_amount']), $transaction['t_currency'], get_option('currency'));
 
-            $types['CLOSING']['AMOUNT'] += $transaction['t_amount'];
+            $types['CLOSING']['AMOUNT'] += floatval($transaction['t_amount']);
 
             if ($transaction['t_time'] < $from) {
-                $types['OPENING']['AMOUNT'] += $transaction['t_amount'] - get_transaction_fee($transaction['t_amount'], $transaction['t_via']);
+                $types['OPENING']['AMOUNT'] += floatval($transaction['t_amount']) - get_transaction_fee(floatval($transaction['t_amount']), $transaction['t_via']);
                 continue;
             }
 
-            if (($transaction['t_type_code'] == 'OTHER') && ($transaction['t_amount'] < 0)) {
-                $types['COST']['AMOUNT'] += $transaction['t_amount'];
+            if (($transaction['t_type_code'] == 'OTHER') && (floatval($transaction['t_amount']) < 0.0)) {
+                $types['COST']['AMOUNT'] += floatval($transaction['t_amount']);
             } elseif ($transaction['t_type_code'] == 'TAX') {
-                $types['TAX']['AMOUNT'] += $transaction['t_amount'];
+                $types['TAX']['AMOUNT'] += floatval($transaction['t_amount']);
             } elseif ($transaction['t_type_code'] == 'INTEREST') {
-                $types[$type_code][($transaction['t_amount'] < 0) ? 'INTEREST_MINUS' : 'INTEREST_PLUS']['AMOUNT'] += $transaction['t_amount'];
+                $types[$type_code][(floatval($transaction['t_amount']) < 0.0) ? 'INTEREST_MINUS' : 'INTEREST_PLUS']['AMOUNT'] += floatval($transaction['t_amount']);
             } elseif ($transaction['t_type_code'] == 'WAGE') {
-                $types['WAGE']['AMOUNT'] += $transaction['t_amount'];
+                $types['WAGE']['AMOUNT'] += floatval($transaction['t_amount']);
             } else {
                 if (!array_key_exists($type_code, $types)) {
-                    $types[$type_code] = array('TYPE' => $type_code, 'AMOUNT' => 0, 'SPECIAL' => false); // In case product no longer exists
+                    $types[$type_code] = array('TYPE' => $type_code, 'AMOUNT' => 0.0, 'SPECIAL' => false); // In case product no longer exists
                 }
-                $types[$type_code]['AMOUNT'] += $transaction['t_amount'];
+                $types[$type_code]['AMOUNT'] += floatval($transaction['t_amount']);
             }
         }
 
@@ -726,7 +735,11 @@ class Module_admin_ecommerce_logs
             $expiry_time = strtotime('+' . strval($s_length) . ' ' . $time_period_units[$s_length_units], $subs['s_time']);
             $expiry_date = get_timezoned_date($expiry_time, false, false, false, true);
             $member_link = $GLOBALS['FORUM_DRIVER']->member_profile_hyperlink($subs['s_member_id'], true, '', false);
-            $cancel_url = build_url(array('page' => '_SELF', 'type' => 'cancel_subscription', 'subscription_id' => $subs['id']), '_SELF');
+            if ($subs['s_state'] == 'cancelled') {
+                $cancel_url = new Tempcode();
+            } else {
+                $cancel_url = build_url(array('page' => '_SELF', 'type' => 'cancel_subscription', 'subscription_id' => $subs['id']), '_SELF');
+            }
 
             $data[$item_name][] = array($member_link, $expiry_date, $cancel_url, $subs['id']);
         }
@@ -773,7 +786,7 @@ class Module_admin_ecommerce_logs
         }
 
         // We need to get confirmation via POST, for security/confirmation reasons
-        $preview = do_lang_tempcode('CANCEL_MANUAL_SUBSCRIPTION_CONFIRM', $item_name, $username);
+        $preview = do_lang_tempcode('CANCEL_MANUAL_SUBSCRIPTION_CONFIRM', $item_name, escape_html($username));
         $fields = form_input_hidden('id', strval($id));
         $map = array('page' => '_SELF', 'type' => get_param_string('type'), 'subscription_id' => $id);
         $url = build_url($map, '_SELF');

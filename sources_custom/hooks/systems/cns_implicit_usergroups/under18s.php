@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -10,6 +10,11 @@
 /**
  * @license    http://opensource.org/licenses/cpal_1.0 Common Public Attribution License
  * @copyright  ocProducts Ltd
+ * @package    under18s
+ */
+
+/**
+ * Hook class.
  */
 class Hook_implicit_usergroups_under18s
 {
@@ -61,6 +66,8 @@ class Hook_implicit_usergroups_under18s
     public function is_member_within($member_id, $group_id)
     {
         if ($member_id == get_member()) {
+            // IDEA: Support timezones, decide age based on user's own timezone
+
             $eago = intval(date('Y')) - 18;
             $row = $GLOBALS['FORUM_DRIVER']->get_member_row($member_id);
             $dob_year = $row['m_dob_year'];

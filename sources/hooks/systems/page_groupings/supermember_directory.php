@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -33,6 +33,10 @@ class Hook_page_groupings_supermember_directory
     public function run($member_id = null, $extensive_docs = false)
     {
         if (!addon_installed('supermember_directory')) {
+            return array();
+        }
+
+        if (!addon_installed('collaboration_zone')) {
             return array();
         }
 

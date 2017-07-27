@@ -4,14 +4,14 @@
 	{!CONFIRM_REMOVE_PERIODIC}
 </p>
 
-<form title="{!PRIMARY_PAGE_FORM}" method="post" action="{URL*}">
+<form title="{!PRIMARY_PAGE_FORM}" method="post" action="{URL*}" autocomplete="off">
 	{$INSERT_SPAMMER_BLACKHOLE}
 
 	{+START,IF_PASSED,HIDDEN}{HIDDEN}{+END}
 
 	<div>
 		<div class="proceed_button">
-			<input class="buttons__proceed button_screen" onclick="this.disabled=true; this.form.submit();" accesskey="u" type="submit" value="{!PROCEED}" />
+			<input class="button_screen buttons__proceed" onclick="this.disabled=true; this.form.submit();" accesskey="u" type="submit" value="{!PROCEED}" />
 		</div>
 	</div>
 </form>

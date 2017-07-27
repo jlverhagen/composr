@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -33,7 +33,7 @@ function _choose_language($title, $tip = false, $allow_all_selection = false)
         return user_lang();
     }
 
-    $lang = either_param_string('lang', /*get_param_string('keep_lang',NULL)*/
+    $lang = either_param_string('lang', /*get_param_string('keep_lang', null)*/
         null);
     if ($lang !== null) {
         return filter_naughty($lang);
@@ -90,7 +90,8 @@ function _find_all_langs($even_empty_langs = false)
 
     // NB: This code is heavily optimised
 
-    $_langs = array();
+    $_langs = array(fallback_lang() => 'lang');
+
     if (!in_safe_mode()) {
         $test = persistent_cache_get('LANGS_LIST');
         if ($test !== null) {
@@ -102,9 +103,7 @@ function _find_all_langs($even_empty_langs = false)
             while (false !== ($file = readdir($_dir))) {
                 if ((!isset($file[5])) && ($file[0] != '.') && (($file == 'EN') || (!should_ignore_file('lang_custom/' . $file, IGNORE_ACCESS_CONTROLLERS)))) {
                     if (is_dir(get_custom_file_base() . '/lang_custom/' . $file)) {
-                        if (($even_empty_langs) || (/*optimisation*/
-                            is_file(get_custom_file_base() . '/lang_custom/' . $file . '/global.ini'))
-                        ) {
+                        if (($even_empty_langs) || (/*optimisation*/is_file(get_custom_file_base() . '/lang_custom/' . $file . '/global.ini'))) {
                             $_langs[$file] = 'lang_custom';
                         } else {
                             $_dir2 = @opendir(get_custom_file_base() . '/lang_custom/' . $file);
@@ -127,14 +126,16 @@ function _find_all_langs($even_empty_langs = false)
             if ($_dir !== false) {
                 while (false !== ($file = readdir($_dir))) {
                     if ((!isset($file[5])) && ($file[0] != '.') && (($file == 'EN') || (!should_ignore_file('lang_custom/' . $file, IGNORE_ACCESS_CONTROLLERS)))) {
-                        if ($even_empty_langs) {
-                            $_langs[$file] = 'lang_custom';
-                        } else {
-                            $_dir2 = opendir(get_file_base() . '/lang_custom/' . $file);
-                            while (false !== ($file2 = readdir($_dir2))) {
-                                if (substr($file2, -4) == '.ini') {
-                                    $_langs[$file] = 'lang_custom';
-                                    break;
+                        if (is_dir(get_file_base() . '/lang_custom/' . $file)) {
+                            if ($even_empty_langs) {
+                                $_langs[$file] = 'lang_custom';
+                            } else {
+                                $_dir2 = opendir(get_file_base() . '/lang_custom/' . $file);
+                                while (false !== ($file2 = readdir($_dir2))) {
+                                    if (substr($file2, -4) == '.ini') {
+                                        $_langs[$file] = 'lang_custom';
+                                        break;
+                                    }
                                 }
                             }
                         }
@@ -144,7 +145,7 @@ function _find_all_langs($even_empty_langs = false)
             }
         }
     }
-    $_dir = opendir(get_file_base() . '/lang/');
+    $_dir = @opendir(get_file_base() . '/lang/');
     if ($_dir !== false) {
         while (false !== ($file = readdir($_dir))) {
             if ((!isset($_langs[$file])) && ($file[0] != '.') && (!isset($file[5])) && (($file == 'EN') || (!should_ignore_file('lang/' . $file, IGNORE_ACCESS_CONTROLLERS)))) {
@@ -169,6 +170,7 @@ function _find_all_langs($even_empty_langs = false)
  * @param  ?LANGUAGE_NAME $select_lang The language to have selected by default (null: uses the current language)
  * @param  boolean $show_unset Whether to show languages that have no language details currently defined for them
  * @return Tempcode The language selector
+ *
  * @ignore
  */
 function _create_selection_list_langs($select_lang = null, $show_unset = false)
@@ -204,6 +206,58 @@ function _create_selection_list_langs($select_lang = null, $show_unset = false)
 }
 
 /**
+ * Take a .ini language string and save it into a translated language string in the database, for all translations.
+ *
+ * @param  ID_TEXT $field_name The field name
+ * @param  ID_TEXT $code The language string codename
+ * @param  boolean $comcode Whether the given codes value is to be parsed as Comcode
+ * @param  integer $level The level of importance this language string holds
+ * @param  ?object $connection The database connection to use (null: standard site connection)
+ * @return array The language string ID save fields
+ */
+function lang_code_to_default_content($field_name, $code, $comcode = false, $level = 2, $connection = null)
+{
+    $insert_map = insert_lang($field_name, do_lang($code), $level, null, $comcode);
+    if (multi_lang_content()) {
+        $langs = find_all_langs();
+        foreach ($langs as $lang => $lang_type) {
+            if ($lang != user_lang()) {
+                if (is_file(get_file_base() . '/' . $lang_type . '/' . $lang . '/critical_error.ini')) { // Make sure it's a reasonable looking pack, not just a stub (Google Translate addon can be made to go nuts otherwise)
+                    insert_lang($field_name, do_lang($code, '', '', '', $lang), $level, $connection, true, $insert_map[$field_name], $lang);
+                }
+            }
+        }
+    }
+    return $insert_map;
+}
+
+/**
+ * Take a static string and save it into a translated language string in the database, for all translations.
+ *
+ * @param  ID_TEXT $field_name The field name
+ * @param  ID_TEXT $str The static string
+ * @param  boolean $comcode Whether the given codes value is to be parsed as Comcode
+ * @param  integer $level The level of importance this language string holds
+ * @param  ?object $connection The database connection to use (null: standard site connection)
+ * @return array The language string ID save fields
+ */
+function lang_code_to_static_content($field_name, $str, $comcode = false, $level = 2, $connection = null)
+{
+    $insert_map = insert_lang($field_name, $str, $level, $connection, $comcode);
+    if (multi_lang_content()) {
+        $langs = find_all_langs();
+        foreach ($langs as $lang => $lang_type) {
+            if ($lang != user_lang()) {
+                if (is_file(get_file_base() . '/' . $lang_type . '/' . $lang . '/critical_error.ini')) { // Make sure it's a reasonable looking pack, not just a stub
+                    insert_lang($field_name, $str, $level, $connection, $comcode, $insert_map[$field_name], $lang);
+                }
+            }
+        }
+    }
+    return $insert_map;
+}
+
+/**
  * Insert a language string into the translation table, and returns the ID.
  *
  * @param  ID_TEXT $field_name The field name
@@ -221,6 +275,7 @@ function _create_selection_list_langs($select_lang = null, $show_unset = false)
  * @param  boolean $preparse_mode Whether to generate a fatal error if there is invalid Comcode
  * @param  boolean $save_as_volatile Whether we are saving as a 'volatile' file extension (used in the XML DB driver, to mark things as being non-syndicated to subversion)
  * @return array The language string ID save fields
+ *
  * @ignore
  */
 function _insert_lang($field_name, $text, $level, $connection = null, $comcode = false, $id = null, $lang = null, $insert_as_admin = false, $pass_id = null, $text_parsed = null, $wrap_pos = null, $preparse_mode = true, $save_as_volatile = false)
@@ -262,31 +317,26 @@ function _insert_lang($field_name, $text, $level, $connection = null, $comcode =
         return $ret;
     }
 
-    if (($id === null) && (multi_lang())) { // Needed as MySQL auto-increment works separately for each combo of other key values (i.e. language in this case). We can't let a language string ID get assigned to something entirely different in another language. This MySQL behaviour is not well documented, it may work differently on different versions.
-        $connection->query('LOCK TABLES ' . get_table_prefix() . 'translate', null, null, true);
-        $lock = true;
-        $id = $connection->query_select_value('translate', 'MAX(id)');
-        $id = ($id === null) ? null : ($id + 1);
-    } else {
-        $lock = false;
-    }
+    $lock = false;
+    table_id_locking_start($connection, $id, $lock);
 
     if ($lang == 'Gibb') { // Debug code to help us spot language layer bugs. We expect &keep_lang=EN to show EnglishEnglish content, but otherwise no EnglishEnglish content.
+        $map = array('source_user' => $source_user, 'broken' => 0, 'importance_level' => $level, 'text_original' => 'EnglishEnglishWarningWrongLanguageWantGibberishLang', 'text_parsed' => '', 'language' => 'EN');
         if ($id === null) {
-            $id = $connection->query_insert('translate', array('source_user' => $source_user, 'broken' => 0, 'importance_level' => $level, 'text_original' => 'EnglishEnglishWarningWrongLanguageWantGibberishLang', 'text_parsed' => '', 'language' => 'EN'), true, false, $save_as_volatile);
+            $id = $connection->query_insert('translate', $map, true, false, $save_as_volatile);
         } else {
-            $connection->query_insert('translate', array('id' => $id, 'source_user' => $source_user, 'broken' => 0, 'importance_level' => $level, 'text_original' => 'EnglishEnglishWarningWrongLanguageWantGibberishLang', 'text_parsed' => '', 'language' => 'EN'), false, false, $save_as_volatile);
+            $connection->query_insert('translate', array('id' => $id) + $map, false, false, $save_as_volatile);
         }
     }
-    if (($id === null) || ($id === 0)) { //==0 because unless MySQL NO_AUTO_VALUE_ON_ZERO is on, 0 insertion is same as NULL is same as "use autoincrement"
-        $id = $connection->query_insert('translate', array('source_user' => $source_user, 'broken' => 0, 'importance_level' => $level, 'text_original' => $text, 'text_parsed' => $text_parsed, 'language' => $lang), true, false, $save_as_volatile);
+
+    $map = array('source_user' => $source_user, 'broken' => 0, 'importance_level' => $level, 'text_original' => $text, 'text_parsed' => $text_parsed, 'language' => $lang);
+    if (($id === null) || ($id === 0)) { //==0 because unless MySQL NO_AUTO_VALUE_ON_ZERO is on, 0 insertion is same as null is same as "use autoincrement"
+        $id = $connection->query_insert('translate', $map, true, false, $save_as_volatile);
     } else {
-        $connection->query_insert('translate', array('id' => $id, 'source_user' => $source_user, 'broken' => 0, 'importance_level' => $level, 'text_original' => $text, 'text_parsed' => $text_parsed, 'language' => $lang), false, false, $save_as_volatile);
+        $connection->query_insert('translate', array('id' => $id) + $map, false, false, $save_as_volatile);
     }
 
-    if ($lock) {
-        $connection->query('UNLOCK TABLES', null, null, true);
-    }
+    table_id_locking_end($connection, $id, $lock);
 
     if (count($connection->text_lookup_cache) < 5000) {
         if ($_text_parsed !== null) {
@@ -312,12 +362,12 @@ function _insert_lang($field_name, $text, $level, $connection = null, $comcode =
  * @param  ?string $pass_id The special identifier for this language string on the page it will be displayed on; this is used to provide an explicit binding between languaged elements and greater templated areas (null: none)
  * @param  ?MEMBER $for_member The member that owns the content this is for (null: current member)
  * @param  boolean $as_admin Whether to generate Comcode as arbitrary admin
- * @param  boolean $backup_string Whether to backup the language string before changing it
  * @param  boolean $leave_source_user Whether to leave the source member as-is (as opposed to resetting it to the current member)
  * @return array The language string ID save fields
+ *
  * @ignore
  */
-function _lang_remap($field_name, $id, $text, $connection = null, $comcode = false, $pass_id = null, $for_member = null, $as_admin = false, $backup_string = false, $leave_source_user = false)
+function _lang_remap($field_name, $id, $text, $connection = null, $comcode = false, $pass_id = null, $for_member = null, $as_admin = false, $leave_source_user = false)
 {
     if ($id === 0) {
         return insert_lang($field_name, $text, 3, $connection, $comcode, null, null, $as_admin, $pass_id);
@@ -362,22 +412,6 @@ function _lang_remap($field_name, $id, $text, $connection = null, $comcode = fal
         $text_parsed = $_text_parsed->to_assembly();
     } else {
         $text_parsed = '';
-    }
-
-    if (($backup_string) && (multi_lang_content())) {
-        $current = $connection->query_select('translate', array('*'), array('id' => $id, 'language' => $lang), '', 1);
-        if (!array_key_exists(0, $current)) {
-            $current = $connection->query_select('translate', array('*'), array('id' => $id), '', 1);
-        }
-
-        $connection->query_insert('translate_history', array(
-            'lang_id' => $id,
-            'language' => $current[0]['language'],
-            'text_original' => $current[0]['text_original'],
-            'broken' => $current[0]['broken'],
-            'action_member' => get_member(),
-            'action_time' => time()
-        ));
     }
 
     if (!multi_lang_content()) {
@@ -448,88 +482,90 @@ function parse_translated_text($table, &$row, $field_name, $connection, $lang, $
         if (array_key_exists(0, $_result)) {
             $result = $_result[0];
         }
-    }
 
-    if (($result === null) && (multi_lang_content())) { // A missing translation
-        if ($force) {
-            $GLOBALS['NO_QUERY_LIMIT'] = $nql_backup;
-            return null;
-        }
-
-        $result = $connection->query_select_value_if_there('translate', 'text_parsed', array('id' => $entry, 'language' => get_site_default_lang()));
-        if ($result === null) {
-            $result = $connection->query_select_value_if_there('translate', 'text_parsed', array('id' => $entry));
-        }
-
-        if (($result !== null) && ($result != '')) {
-            $connection->text_lookup_cache[$entry] = new Tempcode();
-            if (!$connection->text_lookup_cache[$entry]->from_assembly($result, true)) {
-                $result = null;
+        if ($result === null) { // A missing translation
+            if ($force) {
+                $GLOBALS['NO_QUERY_LIMIT'] = $nql_backup;
+                return null;
             }
-        }
 
-        if (($result === null) || ($result == '')) {
-            require_code('comcode'); // might not have been loaded for a quick-boot
-            require_code('permissions');
-
-            $result = $connection->query_select('translate', array('text_original', 'source_user'), array('id' => $entry, 'language' => get_site_default_lang()), '', 1);
-            if (!array_key_exists(0, $result)) {
-                $result = $connection->query_select('translate', array('text_original', 'source_user'), array('id' => $entry), '', 1);
+            $result = $connection->query_select_value_if_there('translate', 'text_parsed', array('id' => $entry, 'language' => get_site_default_lang()));
+            if ($result === null) {
+                $result = $connection->query_select_value_if_there('translate', 'text_parsed', array('id' => $entry));
             }
-            $result = array_key_exists(0, $result) ? $result[0] : null;
 
-            $temp = $LAX_COMCODE;
-            $LAX_COMCODE = true;
-            _lang_remap($field_name, $entry, ($result === null) ? '' : $result['text_original'], $connection, true, null, $result['source_user'], $as_admin, false, true);
-            if ($SEARCH__CONTENT_BITS !== null) {
-                $ret = comcode_to_tempcode($result['text_original'], $result['source_user'], $as_admin, null, null, $connection, false, false, false, false, false, $SEARCH__CONTENT_BITS);
+            if (($result !== null) && ($result != '')) {
+                $connection->text_lookup_cache[$entry] = new Tempcode();
+                if (!$connection->text_lookup_cache[$entry]->from_assembly($result, true)) {
+                    $result = null;
+                }
+            }
+
+            if (($result === null) || ($result == '')) {
+                require_code('comcode'); // might not have been loaded for a quick-boot
+                require_code('permissions');
+
+                $result = $connection->query_select('translate', array('text_original', 'source_user'), array('id' => $entry, 'language' => get_site_default_lang()), '', 1);
+                if (!array_key_exists(0, $result)) {
+                    $result = $connection->query_select('translate', array('text_original', 'source_user'), array('id' => $entry), '', 1);
+                }
+                $result = array_key_exists(0, $result) ? $result[0] : null;
+
+                $temp = $LAX_COMCODE;
+                $LAX_COMCODE = true;
+                _lang_remap($field_name, $entry, ($result === null) ? '' : $result['text_original'], $connection, true, null, $result['source_user'], $as_admin, true);
+                if ($SEARCH__CONTENT_BITS !== null) {
+                    $ret = comcode_to_tempcode($result['text_original'], $result['source_user'], $as_admin, null, null, $connection, false, false, false, false, false, $SEARCH__CONTENT_BITS);
+                    $LAX_COMCODE = $temp;
+                    $GLOBALS['NO_QUERY_LIMIT'] = $nql_backup;
+                    return $ret;
+                }
                 $LAX_COMCODE = $temp;
+                $ret = get_translated_tempcode($table, $row, $field_name, $connection, $lang);
                 $GLOBALS['NO_QUERY_LIMIT'] = $nql_backup;
                 return $ret;
             }
+
+            $GLOBALS['NO_QUERY_LIMIT'] = $nql_backup;
+            return $connection->text_lookup_cache[$entry];
+        }
+    }
+
+    // Missing parsed Comcode...
+
+    require_code('comcode'); // might not have been loaded for a quick-boot
+    require_code('permissions');
+
+    $temp = $LAX_COMCODE;
+    $LAX_COMCODE = true;
+
+    if (multi_lang_content()) {
+        _lang_remap($field_name, $entry, $result['text_original'], $connection, true, null, $result['source_user'], $as_admin, true);
+
+        if ($SEARCH__CONTENT_BITS !== null) {
+            $ret = comcode_to_tempcode($result['text_original'], $result['source_user'], $as_admin, null, null, $connection, false, false, false, false, false, $SEARCH__CONTENT_BITS);
             $LAX_COMCODE = $temp;
-            $ret = get_translated_tempcode($table, $row, $field_name, $connection, $lang);
             $GLOBALS['NO_QUERY_LIMIT'] = $nql_backup;
             return $ret;
         }
+    } else {
+        $map = _lang_remap($field_name, $entry, $row[$field_name], $connection, true, null, $row[$field_name . '__source_user'], $as_admin, true);
 
-        $GLOBALS['NO_QUERY_LIMIT'] = $nql_backup;
-        return $connection->text_lookup_cache[$entry];
-    } else { // Missing parsed Comcode
-        require_code('comcode'); // might not have been loaded for a quick-boot
-        require_code('permissions');
+        $connection->query_update($table, $map, $row, '', 1);
+        $row = $map + $row;
 
-        $temp = $LAX_COMCODE;
-        $LAX_COMCODE = true;
-
-        if (multi_lang_content()) {
-            _lang_remap($field_name, $entry, $result['text_original'], $connection, true, null, $result['source_user'], $as_admin, false, true);
-
-            if ($SEARCH__CONTENT_BITS !== null) {
-                $ret = comcode_to_tempcode($result['text_original'], $result['source_user'], $as_admin, null, null, $connection, false, false, false, false, false, $SEARCH__CONTENT_BITS);
-                $LAX_COMCODE = $temp;
-                $GLOBALS['NO_QUERY_LIMIT'] = $nql_backup;
-                return $ret;
-            }
-        } else {
-            $map = _lang_remap($field_name, $entry, $row[$field_name], $connection, true, null, $row[$field_name . '__source_user'], $as_admin, false, true);
-
-            $connection->query_update($table, $map, $row, '', 1);
-            $row = $map + $row;
-
-            if ($SEARCH__CONTENT_BITS !== null) {
-                $ret = comcode_to_tempcode($row[$field_name], $row[$field_name . '__source_user'], $as_admin, null, null, $connection, false, false, false, false, false, $SEARCH__CONTENT_BITS);
-                $LAX_COMCODE = $temp;
-                $GLOBALS['NO_QUERY_LIMIT'] = $nql_backup;
-                return $ret;
-            }
+        if ($SEARCH__CONTENT_BITS !== null) {
+            $ret = comcode_to_tempcode($row[$field_name], $row[$field_name . '__source_user'], $as_admin, null, null, $connection, false, false, false, false, false, $SEARCH__CONTENT_BITS);
+            $LAX_COMCODE = $temp;
+            $GLOBALS['NO_QUERY_LIMIT'] = $nql_backup;
+            return $ret;
         }
-
-        $LAX_COMCODE = $temp;
-        $ret = get_translated_tempcode($table, $row, $field_name, $connection, $lang);
-        $GLOBALS['NO_QUERY_LIMIT'] = $nql_backup;
-        return $ret;
     }
+
+    $LAX_COMCODE = $temp;
+    $ret = get_translated_tempcode($table, $row, $field_name, $connection, $lang, false, false, false, true);
+    $GLOBALS['NO_QUERY_LIMIT'] = $nql_backup;
+    return $ret;
 }
 
 /**
@@ -537,6 +573,7 @@ function parse_translated_text($table, &$row, $field_name, $connection, $lang, $
  *
  * @param  ID_TEXT $lang_code The language string ID
  * @return Tempcode The parsed Comcode
+ *
  * @ignore
  */
 function _comcode_lang_string($lang_code)
@@ -567,6 +604,9 @@ function _comcode_lang_string($lang_code)
                 $ret = get_translated_tempcode('cached_comcode_pages', $comcode_page_row_cached_only, 'string_index', null, null, true);
                 if ($ret === null) { // Not existent in our language, we'll need to lookup and insert, and get again
                     $looked_up = do_lang($lang_code, null, null, null, null, false);
+                    if ($looked_up === null) {
+                        return make_string_tempcode(escape_html('{!' . $lang_code . '}'));
+                    }
                     $GLOBALS['SITE_DB']->query_insert('translate', array('id' => $comcode_page[0]['string_index'], 'source_user' => get_member(), 'broken' => 0, 'importance_level' => 1, 'text_original' => $looked_up, 'text_parsed' => '', 'language' => user_lang()), true, false, true);
                     $ret = get_translated_tempcode('cached_comcode_pages', $comcode_page_row_cached_only, 'string_index');
                 }

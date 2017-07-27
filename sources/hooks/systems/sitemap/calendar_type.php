@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -123,15 +123,15 @@ class Hook_sitemap_calendar_type extends Hook_sitemap_content
         list($content_id, $row, $partial_struct) = $_;
 
         $struct = array(
-                      'page_link' => $page_link,
+            'page_link' => $page_link,
 
-                      'sitemap_priority' => SITEMAP_IMPORTANCE_MEDIUM,
-                      'sitemap_refreshfreq' => 'weekly',
+            'sitemap_priority' => SITEMAP_IMPORTANCE_MEDIUM,
+            'sitemap_refreshfreq' => 'weekly',
 
-                      'privilege_page' => $this->get_privilege_page($page_link),
+            'privilege_page' => $this->get_privilege_page($page_link),
 
-                      'edit_url' => build_url(array('page' => 'cms_calendar', 'type' => '_edit_category', 'id' => $content_id), get_module_zone('cms_calendar')),
-                  ) + $partial_struct;
+            'edit_url' => build_url(array('page' => 'cms_calendar', 'type' => '_edit_category', 'id' => $content_id), get_module_zone('cms_calendar')),
+        ) + $partial_struct;
 
         if (!$this->_check_node_permissions($struct)) {
             return null;

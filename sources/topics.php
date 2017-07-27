@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -30,7 +30,7 @@ API interfaces with...
 This API does not handle posting, although it can render a posting form. The feedback system and the cns_forum addon handle posting separately.
 
 
-The chat rooms and activity feeds are NOT topics, and not handled through this system.
+The chatrooms and activity feeds are NOT topics, and not handled through this system.
 The non-threaded cns_forum view has its own rendering.
 
 */
@@ -55,7 +55,7 @@ class CMS_Topic
     // Will be filled up during processing
     public $all_posts_ordered = null;
     public $is_threaded = null;
-    public $topic_id = null; // May need setting, if posts were loaded in manually rather than letting the class load them; may be left as NULL but functionality degrades somewhat
+    public $topic_id = null; // May need setting, if posts were loaded in manually rather than letting the class load them; may be left as null but functionality degrades somewhat
     public $topic_last_read = null;
     public $reverse = false;
 
@@ -105,7 +105,7 @@ class CMS_Topic
             return new Tempcode();
         }
 
-        $topic_id = $GLOBALS['FORUM_DRIVER']->find_topic_id_for_topic_identifier($forum_name, $content_type . '_' . $content_id);
+        $topic_id = $GLOBALS['FORUM_DRIVER']->find_topic_id_for_topic_identifier($forum_name, $content_type . '_' . $content_id, do_lang('COMMENT'));
 
         // Settings we need
         $max_thread_depth = get_param_integer('max_thread_depth', intval(get_option('max_thread_depth')));
@@ -169,9 +169,9 @@ class CMS_Topic
                 }
             }
 
-            // Environment meta data
+            // Environment metadata
             $this->inject_rss_url($forum_name, $content_type, $content_id);
-            $this->inject_meta_data();
+            $this->inject_metadata();
 
             // Make-a-comment form
             if ($may_reply) {
@@ -337,7 +337,7 @@ class CMS_Topic
     public function load_from_topic($topic_id, $num_to_show_limit, $start = 0, $reverse = null, $posts = null, $load_spacer_posts_too = false)
     {
         $this->topic_id = $topic_id;
-        $this->topic_last_read = is_guest() ? null : $GLOBALS['FORUM_DB']->query_select_value_if_there('f_read_logs', 'l_time', array('l_member_id' => get_member(), 'l_topic_id' => $this->topic_id));
+        $this->topic_last_read = (is_guest() || get_forum_type() != 'cns') ? null : $GLOBALS['FORUM_DB']->query_select_value_if_there('f_read_logs', 'l_time', array('l_member_id' => get_member(), 'l_topic_id' => $this->topic_id));
         $this->reverse = $reverse;
 
         if (get_param_integer('threaded', null) === 1) {
@@ -368,7 +368,7 @@ class CMS_Topic
             $this->total_posts,
             $this->is_threaded ? 5000 : $num_to_show_limit,
             $this->is_threaded ? 0 : $start,
-            $GLOBALS['FORUM_DRIVER']->get_member_row_field(get_member(), 'm_auto_mark_read') == 1, // $mark_read,
+            get_forum_type() == 'cns' && $GLOBALS['FORUM_DRIVER']->get_member_row_field(get_member(), 'm_auto_mark_read') == 1, // $mark_read,
             $reverse,
             true,
             $posts,
@@ -759,7 +759,8 @@ class CMS_Topic
             if (get_forum_type() == 'cns') {
                 require_code('cns_topicview');
                 require_code('cns_posts');
-                $post += cns_get_details_to_show_post($post, $topic_info);
+                $only_post = (($depth == 0) && (count($rendered) == 1) && ((!isset($post['children'])) || (count($post['children']) == 0)));
+                $post += cns_get_details_to_show_post($post, $topic_info, $only_post);
             }
 
             // Misc details
@@ -846,13 +847,15 @@ class CMS_Topic
                 // Signature
                 require_code('cns_posts');
                 $sig = new Tempcode();
-                if ((($GLOBALS['CNS_DRIVER']->get_member_row_field(get_member(), 'm_views_signatures') == 1) || (get_option('enable_views_sigs_option') == '0')) && (!isset($post['skip_sig'])) && ($post['skip_sig'] == 0) && (addon_installed('cns_signatures'))) {
+                if ((($GLOBALS['CNS_DRIVER']->get_member_row_field(get_member(), 'm_views_signatures') == 1) || (get_option('enable_views_sigs_option', true) === '0')) && (!isset($post['skip_sig'])) && ($post['skip_sig'] == 0) && (addon_installed('cns_signatures'))) {
                     global $SIGNATURES_CACHE;
 
                     if (array_key_exists($post['member'], $SIGNATURES_CACHE)) {
                         $sig = $SIGNATURES_CACHE[$post['member']];
                     } else {
-                        $sig = get_translated_tempcode('f_members', $GLOBALS['CNS_DRIVER']->get_member_row($post['member']), 'm_signature', $GLOBALS['FORUM_DB']);
+                        $member_row = $GLOBALS['CNS_DRIVER']->get_member_row($post['member']);
+                        $just_member_row = db_map_restrict($member_row, array('id', 'm_signature'));
+                        $sig = get_translated_tempcode('f_members', $just_member_row, 'm_signature', $GLOBALS['FORUM_DB']);
                         $SIGNATURES_CACHE[$post['member']] = $sig;
                     }
                 }
@@ -877,7 +880,7 @@ class CMS_Topic
                 if (!$is_spacer_post) {
                     if (!is_guest($post['member'])) {
                         require_code('cns_members2');
-                        $poster_details = render_member_box($post, false, $hooks, $hook_objects, false, null, false);
+                        $poster_details = render_member_box($post['member'], false, $hooks, $hook_objects, false, null, false);
                     } else {
                         $custom_fields = new Tempcode();
                         if ((array_key_exists('ip_address', $post)) && (addon_installed('cns_forum'))) {
@@ -914,7 +917,7 @@ class CMS_Topic
             }
 
             // Child posts
-            $children = mixed(); // NULL
+            $children = mixed(); // null
             $other_ids = array();
             if (array_key_exists('children', $post)) {
                 foreach ($post['children'][1] as $u) {
@@ -925,6 +928,7 @@ class CMS_Topic
                 }
             }
 
+            // Ratings
             if (get_forum_type() == 'cns') {
                 require_code('feedback');
                 actualise_rating(true, 'post', strval($post['id']), get_self_url(), $post['title']);
@@ -933,25 +937,30 @@ class CMS_Topic
                 $rating = new Tempcode();
             }
 
+            // Mark read
             if (array_key_exists('intended_solely_for', $post)) {
                 // Has now read
-                decache('side_cns_personal_topics', null, get_member());
+                decache('side_cns_private_topics', null, get_member());
                 decache('_new_pp', null, get_member());
                 decache('_get_pts', null, get_member());
             }
 
-            // Make sure that pre-processing happens to pick up meta data 'image' for post attachment -- but only for the first post
+            // Make sure that pre-processing happens to pick up metadata 'image' for post attachment -- but only for the first post
             if (($depth == 0) && ($sequence->is_empty_shell())) {
                 $message_eval = $post['message']->evaluate();
 
                 // Also scan for <img> tag, in case it was put in manually
-                if ((!isset($GLOBALS['META_DATA']['image'])) || ($GLOBALS['META_DATA']['image'] == find_theme_image('icons/48x48/menu/social/forum/forums'))) {
+                if ((!isset($GLOBALS['METADATA']['image'])) || ($GLOBALS['METADATA']['image'] == find_theme_image('icons/48x48/menu/social/forum/forums'))) {
                     $matches = array();
                     if (preg_match('#<img\s[^<>]*src="([^"]*)"#', $message_eval, $matches) != 0) {
-                        $GLOBALS['META_DATA']['image'] = html_entity_decode($matches[1], ENT_QUOTES, get_charset());
+                        set_extra_request_metadata(array(
+                            'image' => html_entity_decode($matches[1], ENT_QUOTES, get_charset()),
+                        ));
                     }
                 }
             }
+
+            // Render...
 
             $is_unread = is_null($this->topic_last_read) || ($this->topic_last_read <= $post['date']) || ((get_forum_type() == 'cns') && ($this->topic_last_read <= $post['p_last_edit_time']));
             if ($post['member'] == get_member()) {
@@ -1004,7 +1013,6 @@ class CMS_Topic
                 )));
             }
 
-            // Render
             $sequence->attach($post_tempcode);
         }
 
@@ -1088,7 +1096,7 @@ class CMS_Topic
     /**
      * Put posts count into environment.
      */
-    public function inject_meta_data()
+    public function inject_metadata()
     {
         set_extra_request_metadata(array(
             'numcomments' => strval(count($this->all_posts_ordered)),

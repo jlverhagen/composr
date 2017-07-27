@@ -6,7 +6,7 @@
 
 {+START,IF,{$NOT,{$IS_GUEST}}}
 	<div class="box box___support_tickets_screen"><div class="box_inner vertical_alignment">
-		<form title="{!FILTER}" class="float_surrounder" id="ticket_type_form" action="{$URL_FOR_GET_FORM*,{$SELF_URL,0,1}}" method="get" onsubmit="try { window.scrollTo(0,0); } catch(e) {}">
+		<form title="{!FILTER}" class="float_surrounder" id="ticket_type_form" action="{$URL_FOR_GET_FORM*,{$SELF_URL,0,1}}" method="get" onsubmit="try { window.scrollTo(0,0); } catch(e) {}" autocomplete="off">
 			{$HIDDENS_FOR_GET_FORM,{$SELF_URL,0,1},ticket_type_id,open}
 
 			<div class="float_surrounder">
@@ -26,14 +26,14 @@
 				</div>
 
 				<div class="inline spaced">
-					<input onclick="disable_button_just_clicked(this);" class="buttons__filter button_screen_item" type="submit" value="{!FILTER}" />
+					<input onclick="disable_button_just_clicked(this);" class="button_screen_item buttons__filter" type="submit" value="{!FILTER}" />
 				</div>
 			</div>
 		</form>
 	</div></div>
 
 	{+START,IF_EMPTY,{LINKS}}
-		{$?,{$HAS_PRIVILEGE,support_operator},<p class="nothing_here">{!NO_ENTRIES}</p>,<p>{!SUPPORT_NO_TICKETS}</p>}
+		{$?,{$HAS_PRIVILEGE,support_operator},<p class="nothing_here">{!NO_ENTRIES}</p>,{$PARAGRAPH,{!SUPPORT_NO_TICKETS}}}
 	{+END}
 	{+START,IF_NON_EMPTY,{LINKS}}
 		<div class="wide_table_wrap"><table class="columned_table results_table wide_table support_tickets autosized_table">
@@ -69,6 +69,6 @@
 {+END}
 
 <p class="buttons_group">
-	<a class="buttons__add_ticket button_screen" rel="add" href="{ADD_TICKET_URL*}"><span>{!ADD_TICKET}</span></a>
+	<a class="button_screen buttons__add_ticket" rel="add" href="{ADD_TICKET_URL*}"><span>{!ADD_TICKET}</span></a>
 </p>
 

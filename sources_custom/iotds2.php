@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -68,7 +68,7 @@ function add_iotd($url, $title, $caption, $thumb_url, $current, $allow_rating, $
 
     if ((addon_installed('commandr')) && (!running_script('install'))) {
         require_code('resource_fs');
-        generate_resourcefs_moniker('iotd', strval($id), null, null, true);
+        generate_resource_fs_moniker('iotd', strval($id), null, null, true);
     }
 
     require_code('sitemap_xml');
@@ -89,11 +89,11 @@ function add_iotd($url, $title, $caption, $thumb_url, $current, $allow_rating, $
  * @param  SHORT_INTEGER $allow_comments Whether comments are allowed (0=no, 1=yes, 2=review style)
  * @param  BINARY $allow_trackbacks Whether the IOTD may be trackbacked
  * @param  LONG_TEXT $notes Notes for the IOTD
- * @param  ?TIME $edit_time Edit time (null: either means current time, or if $null_is_literal, means reset to to NULL)
+ * @param  ?TIME $edit_time Edit time (null: either means current time, or if $null_is_literal, means reset to to null)
  * @param  ?TIME $add_time Add time (null: do not change)
  * @param  ?integer $views Number of views (null: do not change)
  * @param  ?MEMBER $submitter Submitter (null: do not change)
- * @param  boolean $null_is_literal Determines whether some NULLs passed mean 'use a default' or literally mean 'set to NULL'
+ * @param  boolean $null_is_literal Determines whether some nulls passed mean 'use a default' or literally mean 'set to null'
  */
 function edit_iotd($id, $title, $caption, $thumb_url, $url, $allow_rating, $allow_comments, $allow_trackbacks, $notes, $edit_time = null, $add_time = null, $views = null, $submitter = null, $null_is_literal = false)
 {
@@ -155,7 +155,7 @@ function edit_iotd($id, $title, $caption, $thumb_url, $url, $allow_rating, $allo
 
     if ((addon_installed('commandr')) && (!running_script('install'))) {
         require_code('resource_fs');
-        generate_resourcefs_moniker('iotd', strval($id));
+        generate_resource_fs_moniker('iotd', strval($id));
     }
 
     require_code('sitemap_xml');
@@ -192,7 +192,7 @@ function delete_iotd($id)
 
     if ((addon_installed('commandr')) && (!running_script('install'))) {
         require_code('resource_fs');
-        expunge_resourcefs_moniker('iotd', strval($id));
+        expunge_resource_fs_moniker('iotd', strval($id));
     }
 
     require_code('sitemap_xml');

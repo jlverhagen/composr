@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -37,8 +37,8 @@ class Hook_page_groupings_polls
         }
 
         return array(
-            array('cms', 'menu/social/polls', array('cms_polls', array('type' => 'browse'), get_module_zone('cms_polls')), do_lang_tempcode('ITEMS_HERE', do_lang_tempcode('polls:POLLS'), make_string_tempcode(escape_html(integer_format($GLOBALS['SITE_DB']->query_select_value_if_there('poll', 'COUNT(*)', null, '', true))))), 'polls:DOC_POLLS'),
-            array('social', 'menu/social/polls', array('polls', array(), get_module_zone('polls')), do_lang_tempcode('polls:POLLS')),
+            array('cms', 'menu/social/polls', array('cms_polls', array('type' => 'browse'), get_module_zone('cms_polls')), do_lang_tempcode('ITEMS_HERE', do_lang_tempcode('POLLS'), make_string_tempcode(escape_html(integer_format($GLOBALS['SITE_DB']->query_select_value_if_there('poll', 'COUNT(*)', null, '', true))))), 'polls:DOC_POLLS'),
+            array('social', 'menu/social/polls', array('polls', array(), get_module_zone('polls')), do_lang_tempcode('POLLS')),
         );
     }
 }

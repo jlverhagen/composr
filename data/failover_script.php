@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -17,6 +17,9 @@
  * @copyright  ocProducts Ltd
  * @package    failover
  */
+
+// Fixup SCRIPT_FILENAME potentially being missing
+$_SERVER['SCRIPT_FILENAME'] = __FILE__;
 
 // Find Composr base directory, and chdir into it
 global $FILE_BASE, $RELATIVE_PATH;
@@ -42,22 +45,21 @@ if (!is_file($FILE_BASE . '/sources/global.php')) {
 
 require($FILE_BASE . '/_config.php');
 
-if (function_exists('php_sapi_name')) {
-    if (php_sapi_name() != 'cli') {
-        header('Content-type: text/plain');
-    }
+$cli = ((function_exists('php_sapi_name')) && (strpos(@ini_get('disable_functions'), 'php_sapi_name') === false) && (php_sapi_name() == 'cli') && (empty($_SERVER['REMOTE_ADDR'])) && (empty($_ENV['REMOTE_ADDR'])));
+if ($cli) {
+    header('Content-type: text/plain');
 }
 
 $required_settings = array(
     'fast_spider_cache',
     'any_guest_cached_too',
     'failover_mode',
-    //'failover_message',	Actually, may be blank
+    //'failover_message',   Actually, may be blank
     'failover_cache_miss_message',
-    //'failover_loadtime_threshold',	Actually, may be blank
-    //'failover_loadaverage_threshold',	Actually, may be blank
+    //'failover_loadtime_threshold',    Actually, may be blank
+    //'failover_loadaverage_threshold', Actually, may be blank
     'failover_email_contact',
-    //'failover_check_urls',	Actually, may be blank
+    //'failover_check_urls',    Actually, may be blank
     'base_url',
 );
 
@@ -257,16 +259,18 @@ function set_failover_mode($new_mode)
     $orig_config_contents = $config_contents;
     $config_contents = preg_replace('#^(\$SITE_INFO\[\'failover_mode\'\]\s*=\s*\')[^\']+(\';)#m', '$1' . addslashes($new_mode) . '$2', $config_contents);
 
-    if ($orig_config_contents == $config_contents) {
+    if ($orig_config_contents == $config_contents) { // No change needed
         return;
-    } // No change needed
+    }
 
-    file_put_contents($path, $config_contents, LOCK_EX);
+    require_code('files');
+
+    cms_file_put_contents_safe($path, $config_contents, FILE_WRITE_FIX_PERMISSIONS);
 
     $SITE_INFO['failover_mode'] = $new_mode;
 
     if ((!empty($SITE_INFO['failover_apache_rewritemap_file'])) && (is_file($FILE_BASE . '/data_custom/failover_rewritemap.txt'))) {
-        $htaccess_contents = file_get_contents($FILE_BASE . '/.htaccess');
+        $htaccess_contents = cms_file_get_contents_safe($FILE_BASE . '/.htaccess');
 
         $htaccess_contents = preg_replace('#^RewriteMap.*\n+#s', '', $htaccess_contents);
 
@@ -305,10 +309,10 @@ function set_failover_mode($new_mode)
                 );
                 $regexp = '(' . str_replace(' ', '\ ', implode('|', $browsers)) . ')';
 
-                //$new_code.='RewriteMap failover_mode txt:'.$FILE_BASE.'/data_custom/failover_rewritemap.txt'."\n";	Has to be defined in main Apache config
+                //$new_code .= 'RewriteMap failover_mode txt:' . $FILE_BASE . '/data_custom/failover_rewritemap.txt' . "\n";    Has to be defined in main Apache config
                 $new_code .= 'RewriteCond %{QUERY_STRING} !keep_failover [NC]' . "\n";
                 $new_code .= 'RewriteRule ^(.*) ${failover_mode:\$1} [L,QSA]' . "\n";
-                //$new_code.='RewriteMap failover_mode__mobile txt:'.$FILE_BASE.'/data_custom/failover_rewritemap__mobile.txt'."\n";
+                //$new_code .= 'RewriteMap failover_mode__mobile txt:' . $FILE_BASE . '/data_custom/failover_rewritemap__mobile.txt' . "\n";
                 $new_code .= 'RewriteCond %{QUERY_STRING} !keep_failover [NC]' . "\n";
                 $new_code .= 'RewriteCond %{HTTP_USER_AGENT} ' . $regexp . "\n";
                 $new_code .= 'RewriteRule ^(.*) ${failover_mode__mobile:\$1} [L,QSA]' . "\n";
@@ -318,6 +322,6 @@ function set_failover_mode($new_mode)
 
         $htaccess_contents = preg_replace('/#FAILOVER STARTS.*#FAILOVER ENDS\n+/s', $new_code, $htaccess_contents);
 
-        file_put_contents($FILE_BASE . '/.htaccess', $htaccess_contents, LOCK_EX);
+        cms_file_put_contents_safe($FILE_BASE . '/.htaccess', $htaccess_contents, FILE_WRITE_FIX_PERMISSIONS);
     }
 }

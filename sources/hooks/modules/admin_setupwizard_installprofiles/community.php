@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -93,11 +93,11 @@ class Hook_admin_setupwizard_installprofiles_community
             ),
             'PANEL_LEFT' => array(),
             'PANEL_RIGHT' => array(
-                                 'side_users_online',
-                                 'side_stats',
-                                 'side_calendar',
-                                 'side_shoutbox',
-                             ) + ((get_option('sitewide_im') == '1') ? array('side_friends') : array()),
+                'side_users_online',
+                'side_stats',
+                'side_calendar',
+                'side_shoutbox',
+            ) + ((get_option('sitewide_im', true) === '1') ? array('side_friends') : array()),
         );
     }
 

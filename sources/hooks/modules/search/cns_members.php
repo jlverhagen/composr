@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -21,7 +21,7 @@
 /**
  * Hook class.
  */
-class Hook_search_cns_members
+class Hook_search_cns_members extends FieldsSearchHook
 {
     /**
      * Find details for this search hook.
@@ -35,7 +35,7 @@ class Hook_search_cns_members
             return null;
         }
 
-        if (($GLOBALS['FORUM_DB']->query_select_value('f_members', 'COUNT(*)') <= 3) && (get_param_string('id', '') != 'cns_members') && (get_param_integer('search_cns_members', 0) != 1)) {
+        if (($GLOBALS['FORUM_DRIVER']->get_members() <= 3) && (get_param_string('id', '') != 'cns_members') && (get_param_integer('search_cns_members', 0) != 1)) {
             return null;
         }
 
@@ -68,13 +68,11 @@ class Hook_search_cns_members
     /**
      * Get a list of extra fields to ask for.
      *
-     * @return array A list of maps specifying extra fields
+     * @return ?array A list of maps specifying extra fields (null: no tree)
      */
     public function get_fields()
     {
         require_code('cns_members');
-
-        $indexes = collapse_2d_complexity('i_fields', 'i_name', $GLOBALS['FORUM_DB']->query_select('db_meta_indices', array('i_fields', 'i_name'), array('i_table' => 'f_member_custom_fields')));
 
         $fields = array();
         if (has_privilege(get_member(), 'view_profiles')) {
@@ -97,15 +95,16 @@ class Hook_search_cns_members
             $fields[] = array('NAME' => '_age_range', 'DISPLAY' => do_lang_tempcode('AGE_RANGE'), 'TYPE' => '_TEXT', 'SPECIAL' => $age_range);
         }
 
-        $map = has_privilege(get_member(), 'see_hidden_groups') ? array() : array('g_hidden' => 0);
-        $group_count = $GLOBALS['FORUM_DB']->query_select_value('f_groups', 'COUNT(*)');
+        $where = '1=1';
+        if (!has_privilege(get_member(), 'see_hidden_groups')) {
+            $members_groups = $GLOBALS['CNS_DRIVER']->get_members_groups(get_member());
+            $where .= ' AND (g_hidden=0 OR g.id IN (' . implode(',', array_map('strval', $members_groups)) . '))';
+        }
+        $group_count = $GLOBALS['FORUM_DB']->query_select_value('f_groups g', 'COUNT(*)');
         if ($group_count > 300) {
-            $map['g_is_private_club'] = 0;
+            $where .= ' AND g_is_private_club=0';
         }
-        if ($map == array()) {
-            $map = null;
-        }
-        $rows = $GLOBALS['FORUM_DB']->query_select('f_groups', array('id', 'g_name'), $map, 'ORDER BY g_order,' . $GLOBALS['FORUM_DB']->translate_field_ref('g_name'));
+        $rows = $GLOBALS['FORUM_DB']->query('SELECT g.id,g_name FROM ' . $GLOBALS['FORUM_DB']->get_table_prefix() . 'f_groups g WHERE ' . $where . ' ORDER BY g_order,' . $GLOBALS['FORUM_DB']->translate_field_ref('g_name'), null, null, false, false, array('g_name' => 'SHORT_TRANS'));
         $groups = form_input_list_entry('', false, '---');
         $default_group = get_param_string('option__user_group', '');
         $group_titles = array();
@@ -188,7 +187,7 @@ class Hook_search_cns_members
 
         require_lang('cns');
 
-        $indexes = collapse_2d_complexity('i_fields', 'i_name', $GLOBALS['FORUM_DB']->query_select('db_meta_indices', array('i_fields', 'i_name'), array('i_table' => 'f_member_custom_fields')));
+        $indexes = collapse_2d_complexity('i_fields', 'i_name', $GLOBALS['FORUM_DB']->query_select('db_meta_indices', array('i_fields', 'i_name'), array('i_table' => 'f_member_custom_fields'), 'ORDER BY i_name'));
 
         // Calculate our where clause (search)
         if ($author != '') {
@@ -224,13 +223,20 @@ class Hook_search_cns_members
                     $temp = '?=' . float_to_raw_string(floatval($param));
                 } elseif ($storage_type == 'list') {
                     $temp = db_string_equal_to('?', $param);
-                } elseif ((array_key_exists('field_' . strval($row['id']), $indexes)) && (db_has_full_text($GLOBALS['SITE_DB']->connection_read)) && (method_exists($GLOBALS['SITE_DB']->static_ob, 'db_has_full_text_boolean')) && ($GLOBALS['SITE_DB']->static_ob->db_has_full_text_boolean()) && (!is_under_radar($param))) {
+                } elseif (
+                    (array_key_exists('field_' . strval($row['id']), $indexes)) &&
+                    ($indexes['field_' . strval($row['id'])][0] == '#') &&
+                    (db_has_full_text($GLOBALS['SITE_DB']->connection_read)) &&
+                    (method_exists($GLOBALS['SITE_DB']->static_ob, 'db_has_full_text_boolean')) &&
+                    ($GLOBALS['SITE_DB']->static_ob->db_has_full_text_boolean()) &&
+                    (!is_under_radar($param))
+                ) {
                     $temp = db_full_text_assemble('"' . $param . '"', true);
                 } else {
                     list($temp,) = db_like_assemble($param);
                 }
                 if ((($row['cf_type'] == 'short_trans') || ($row['cf_type'] == 'long_trans')) && (multi_lang_content())) {
-                    $where_clause .= preg_replace('#\?#', 't' . strval(count($trans_fields) + 1) . '.text_original', $temp);
+                    $where_clause .= preg_replace('#\?#', 't' . strval(count($trans_fields) + 2/*for the 2 fields prepended to $trans_fields in the get_search_rows call*/) . '.text_original', $temp);
                 } else {
                     if ($index_issue) { // MySQL limit for fulltext index querying
                         list($temp,) = db_like_assemble($param);
@@ -239,7 +245,7 @@ class Hook_search_cns_members
                 }
             }
             if (strpos($storage_type, '_trans') === false) {
-                if (!$index_issue) {// MySQL limit for fulltext index querying
+                if (!$index_issue) { // MySQL limit for fulltext index querying
                     $raw_fields[] = 'field_' . strval($row['id']);
                 }
             } else {
@@ -288,8 +294,10 @@ class Hook_search_cns_members
             $where_clause .= 'm_validated=1';
         }
 
+        $where_clause .= ' AND r.id IS NOT NULL';
+
         // Calculate and perform query
-        $rows = get_search_rows(null, null, $content, $boolean_search, $boolean_operator, $only_search_meta, $direction, $max, $start, $only_titles, 'f_members r JOIN ' . get_table_prefix() . 'f_member_custom_fields a ON r.id=a.mf_member_id' . $table, array('!' => '!', 'm_signature' => 'LONG_TRANS__COMCODE') + $trans_fields, $where_clause, $content_where, $remapped_orderer, 'r.*,a.*,r.id AS id', $raw_fields);
+        $rows = get_search_rows(null, null, $content, $boolean_search, $boolean_operator, $only_search_meta, $direction, $max, $start, $only_titles, 'f_members r JOIN ' . $GLOBALS['FORUM_DB']->get_table_prefix() . 'f_member_custom_fields a ON r.id=a.mf_member_id' . $table, array('!' => '!', 'm_signature' => 'LONG_TRANS__COMCODE') + $trans_fields, $where_clause, $content_where, $remapped_orderer, 'r.*,a.*,r.id AS id', $raw_fields);
 
         $out = array();
         foreach ($rows as $i => $row) {
@@ -317,6 +325,10 @@ class Hook_search_cns_members
      */
     public function render($row)
     {
+        if (is_null($row['id'])) {
+            return new Tempcode(); // Should not happen, some weird DB corruption probably
+        }
+
         require_code('cns_members');
         if (get_param_integer('option__emails_only', 0) == 1) {
             $link = $GLOBALS['FORUM_DRIVER']->member_profile_hyperlink($row['id'], false, $row['m_username'], false);

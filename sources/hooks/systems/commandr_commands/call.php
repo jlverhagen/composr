@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -40,9 +40,8 @@ class Hook_commandr_command_call
                 return array('', '', '', do_lang('MISSING_PARAM', '1', 'call'));
             }
 
-            $details = page_link_decode($parameters[0]);
-            $url = build_url($details[1], $details[0]);
-            return array('window.open(unescape("' . urlencode($url->evaluate()) . '"),"commandr_window1","");', '', do_lang('SUCCESS'), '');
+            $url = page_link_to_url($parameters[0]);
+            return array('window.open(\'' . addslashes($url) . '\',\'commandr_window1\',\'\');', '', do_lang('SUCCESS'), '');
         }
     }
 }

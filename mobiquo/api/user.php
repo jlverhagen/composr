@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts/Tapatalk, 2004-2015
+ Copyright (c) ocProducts/Tapatalk, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -39,13 +39,13 @@ function login_func($raw_params)
         if (is_null($GLOBALS['FORUM_DRIVER']->get_member_from_username($username))) {
             $response = mobiquo_val(array(
                 'result' => mobiquo_val(true, 'boolean'),
-                'result_text' => mobiquo_val(do_lang('USER_NO_EXIST'), 'base64'),
+                'result_text' => mobiquo_val(do_lang('MEMBER_NO_EXIST'), 'base64'),
                 'status' => mobiquo_val('2', 'string'),
             ), 'struct');
             return mobiquo_response($response);
         }
 
-        warn_exit(do_lang_tempcode('USER_BAD_PASSWORD'));
+        warn_exit(do_lang_tempcode('MEMBER_BAD_PASSWORD'));
     }
 
     require_once(COMMON_CLASS_PATH_READ . '/user_read.php');
@@ -88,7 +88,7 @@ function login_func($raw_params)
         'ignored_uids' => mobiquo_val($user_details['ignored_uids'], 'string'),
     );
 
-    if ($user_details['display_text'] != $user_details['username']) {
+    if (isset($user_details['display_text'])) {
         $arr += array(
             'display_text' => mobiquo_val($user_details['display_text'], 'base64'),
         );
@@ -348,7 +348,7 @@ function get_recommended_user_func($raw_params)
     require_once(COMMON_CLASS_PATH_READ . '/user_read.php');
 
     list($start, $max) = get_pagination_positions($params, 0, 1, 20);
-    //$mode=$params[2];	Not used, we don't differentiate Tapatalk vs non-Tapatalk users
+    //$mode = $params[2];   Not used, we don't differentiate Tapatalk vs non-Tapatalk users
 
     $user_object = new CMSUserRead();
     list($total, $_users) = $user_object->get_recommended_users($start, $max);

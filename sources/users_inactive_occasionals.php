@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -24,6 +24,7 @@
  *
  * @param  URLPATH $url The URL to enforce results in session persistence for the user
  * @return URLPATH The fixed URL
+ *
  * @ignore
  */
 function _enforce_sessioned_url($url)
@@ -46,11 +47,10 @@ function _enforce_sessioned_url($url)
 
     if (strpos($url, '?') === false) {
         $url_scheme = get_option('url_scheme');
-        if (($url_scheme == 'HTM') || ($url_scheme == 'SIMPLE')) {
-            $url .= '?';
-        } else {
-            $url .= '/index.php?';
+        if (($url_scheme == 'PG') && (substr($url, -strlen('/index.php')) != '/index.php')) {
+            $url .= '/index.php';
         }
+        $url .= '?';
     } else {
         $url .= '&';
     }
@@ -83,9 +83,10 @@ function _enforce_sessioned_url($url)
  * @param  MEMBER $member Logged in member
  * @param  BINARY $session_confirmed Whether the session should be considered confirmed
  * @param  boolean $invisible Whether the session should be invisible
+ * @param  boolean $create_cookie Whether to create the cookie for the session
  * @return ID_TEXT New session ID
  */
-function create_session($member, $session_confirmed = 0, $invisible = false)
+function create_session($member, $session_confirmed = 0, $invisible = false, $create_cookie = true)
 {
     global $SESSION_CACHE, $MEMBER_CACHED;
     $MEMBER_CACHED = $member;
@@ -95,6 +96,7 @@ function create_session($member, $session_confirmed = 0, $invisible = false)
     }
 
     $new_session = mixed();
+    $prior_session_row = mixed();
     $restored_session = delete_expired_sessions_or_recover($member);
     if (is_null($restored_session)) { // We're force to make a new one
         // Generate random session
@@ -113,15 +115,13 @@ function create_session($member, $session_confirmed = 0, $invisible = false)
             'cache_username' => $username,
             'the_title' => '',
             'the_zone' => get_zone_name(),
-            'the_page' => substr(get_page_name(), 0, 80),
-            'the_type' => substr(get_param_string('type', '', true), 0, 80),
-            'the_id' => substr(either_param_string('id', ''), 0, 80),
+            'the_page' => cms_mb_substr(get_page_name(), 0, 80),
+            'the_type' => cms_mb_substr(get_param_string('type', '', true), 0, 80),
+            'the_id' => cms_mb_substr(get_param_string('id', ''), 0, 80),
         );
-        if (!$GLOBALS['SITE_DB']->table_is_locked('sessions')) { // Better to have no session than a 5+ second loading page
-            $GLOBALS['SITE_DB']->query_insert('sessions', $new_session_row, false, true);
-            if ((get_forum_type() == 'cns') && (!$GLOBALS['FORUM_DB']->table_is_locked('f_members'))) {
-                $GLOBALS['FORUM_DB']->query('UPDATE ' . $GLOBALS['FORUM_DB']->get_table_prefix() . 'f_members SET m_total_sessions=m_total_sessions+1 WHERE id=' . strval($member), 1, null, true);
-            }
+        $GLOBALS['SITE_DB']->query_insert('sessions', $new_session_row, false, true);
+        if ((get_forum_type() == 'cns') && (!$GLOBALS['FORUM_DB']->table_is_locked('f_members'))) {
+            $GLOBALS['FORUM_DB']->query('UPDATE ' . $GLOBALS['FORUM_DB']->get_table_prefix() . 'f_members SET m_total_sessions=m_total_sessions+1 WHERE id=' . strval($member), 1, null, true);
         }
 
         $SESSION_CACHE[$new_session] = $new_session_row;
@@ -131,38 +131,38 @@ function create_session($member, $session_confirmed = 0, $invisible = false)
         $new_session = $restored_session;
         $prior_session_row = $SESSION_CACHE[$new_session];
         $new_session_row = array(
-            'the_title' => '',
+            'the_title' => $prior_session_row['the_title'],
             'the_zone' => get_zone_name(),
             'the_page' => get_page_name(),
-            'the_type' => substr(either_param_string('type', ''), 0, 80),
-            'the_id' => substr(either_param_string('id', ''), 0, 80),
+            'the_type' => cms_mb_substr(get_param_string('type', ''), 0, 80),
+            'the_id' => cms_mb_substr(get_param_string('id', ''), 0, 80),
             'last_activity' => time(),
             'ip' => get_ip_address(3),
             'session_confirmed' => $session_confirmed,
         );
         $big_change = ($prior_session_row['last_activity'] < time() - 10) || ($prior_session_row['session_confirmed'] != $session_confirmed) || ($prior_session_row['ip'] != $new_session_row['ip']);
         if ($big_change) {
-            if (!$GLOBALS['SITE_DB']->table_is_locked('sessions')) {// Better to have wrong session than a 5+ second loading page
-                $GLOBALS['SITE_DB']->query_update('sessions', $new_session_row, array('the_session' => $new_session), '', 1, null, false, true);
-            }
+            $GLOBALS['SITE_DB']->query_update('sessions', $new_session_row, array('the_session' => $new_session), '', 1, null, false, true);
         }
 
         $SESSION_CACHE[$new_session] = array_merge($SESSION_CACHE[$new_session], $new_session_row);
     }
 
     if ($big_change) { // Only update the persistent cache for non-trivial changes.
-        if (get_option('session_prudence') == '0') {// With session prudence we don't store all these in persistent cache due to the size of it all. So only re-save if that's not on.
+        if (get_option('session_prudence') == '0') { // With session prudence we don't store all these in persistent cache due to the size of it all. So only re-save if that's not on.
             persistent_cache_set('SESSION_CACHE', $SESSION_CACHE);
         }
     }
 
-    set_session_id($new_session, is_guest($member));
+    if (($create_cookie) || (empty($_COOKIE[get_session_cookie()]))) {
+        set_session_id($new_session, is_guest($member));
+    }
 
     // New sessions=Login points
     if ((!is_null($member)) && (!is_guest($member)) && (addon_installed('points')) && (addon_installed('stats'))) {
         // See if this is the first visit today
         global $SESSION_CACHE;
-        $test = isset($SESSION_CACHE[get_session_id()]['last_activity']) ? $SESSION_CACHE[get_session_id()]['last_activity'] : null;
+        $test = isset($prior_session_row['last_activity']) ? $prior_session_row['last_activity'] : null;
         if ($test === null) {
             $test = $GLOBALS['SITE_DB']->query_select_value('stats', 'MAX(date_and_time)', array('member_id' => $member));
         }
@@ -205,11 +205,10 @@ function set_session_id($id, $guest_session = false)  // NB: Guests sessions can
 
     // Save cookie
     $timeout = $guest_session ? (time() + intval(60.0 * 60.0 * max(0.017, floatval(get_option('session_expiry_time'))))) : null;
-    /*if (($GLOBALS['DEV_MODE']) && (get_param_integer('keep_debug_has_cookies',0)==0))      Useful for testing non-cookie support, but annoying if left on
-    {
-        $test=false;
+    /*if (($GLOBALS['DEV_MODE']) && (get_param_integer('keep_debug_has_cookies', 0) == 0)) {     Useful for testing non-cookie support, but annoying if left on
+        $test = false;
     } else {*/
-    $test = @setcookie(get_session_cookie(), $id, $timeout, get_cookie_path()); // Set a session cookie with our session ID. We only use sessions for secure browser-session login... the database and url's do the rest
+    $test = @setcookie(get_session_cookie(), $id, $timeout, get_cookie_path(), get_cookie_domain()); // Set a session cookie with our session ID. We only use sessions for secure browser-session login... the database and url's do the rest
     if (is_null($test)) {
         $test = false;
     }
@@ -232,7 +231,8 @@ function set_session_id($id, $guest_session = false)  // NB: Guests sessions can
 function force_httpauth()
 {
     if (empty($_SERVER['PHP_AUTH_USER'])) {
-        header('WWW-Authenticate: Basic realm="' . addslashes(get_site_name()) . '"');
+        header('WWW-Authenticate: Basic realm="' . escape_header(get_site_name(), true) . '"');
+        require_code('global3');
         set_http_status_code('401');
         exit();
     }
@@ -257,6 +257,10 @@ function try_su_login($member)
         $GLOBALS['FORUM_DRIVER']->forum_layer_initialise();
     }
     if (has_privilege($member, 'assume_any_member')) {
+        if ($ks == do_lang('GUEST', null, null, null, fallback_lang())) {
+            $ks = do_lang('GUEST');
+        }
+
         $su = $GLOBALS['FORUM_DRIVER']->get_member_from_username($ks);
         if ((is_null($su)) && (is_numeric($ks))) {
             $su = intval($ks);
@@ -283,8 +287,10 @@ function try_su_login($member)
                 critical_error('YOU_ARE_BANNED');
             }
         }
-        $GLOBALS['IS_ACTUALLY_ADMIN'] = true;
-        $GLOBALS['IS_ACTUALLY'] = $member;
+        if (get_param_integer('keep_su_strict', 0) == 0) {
+            $GLOBALS['IS_ACTUALLY_ADMIN'] = true;
+            $GLOBALS['IS_ACTUALLY'] = $member;
+        }
 
         if ((get_forum_type() == 'cns') && (get_param_integer('keep_su_online', 0) == 1)) {
             require_code('crypt');
@@ -298,15 +304,21 @@ function try_su_login($member)
                 'cache_username' => $GLOBALS['FORUM_DRIVER']->get_username($member),
                 'the_title' => '',
                 'the_zone' => get_zone_name(),
-                'the_page' => substr(get_page_name(), 0, 80),
-                'the_type' => substr(get_param_string('type', '', true), 0, 80),
-                'the_id' => substr(either_param_string('id', ''), 0, 80),
+                'the_page' => cms_mb_substr(get_page_name(), 0, 80),
+                'the_type' => cms_mb_substr(get_param_string('type', '', true), 0, 80),
+                'the_id' => cms_mb_substr(get_param_string('id', ''), 0, 80),
             );
             $GLOBALS['SITE_DB']->query_insert('sessions', $new_session_row);
             global $FLOOD_CONTROL_ONCE;
             $FLOOD_CONTROL_ONCE = false;
             $GLOBALS['FORUM_DRIVER']->cns_flood_control($member);
             $GLOBALS['SITE_DB']->query_update('sessions', array('session_invisible' => 1), array('the_session' => get_session_id()), '', 1);
+
+            if (get_option('session_prudence') == '0') { // With session prudence we don't store all these in persistent cache due to the size of it all. So only re-save if that's not on.
+                global $SESSION_CACHE;
+                $SESSION_CACHE[get_session_id()] = array('session_invisible' => 1) + $new_session_row;
+                persistent_cache_set('SESSION_CACHE', $SESSION_CACHE);
+            }
         }
     }
 
@@ -316,7 +328,7 @@ function try_su_login($member)
 /**
  * Try and login via HTTP authentication. This function is only called if HTTP authentication is currently active. With HTTP authentication we trust the PHP_AUTH_USER setting.
  *
- * @return ?MEMBER Logged in member (null: no login happened)
+ * @return ?MEMBER Logged in member (null: no log in happened)
  */
 function try_httpauth_login()
 {
@@ -336,7 +348,7 @@ function try_httpauth_login()
                 throw new CMSException(do_lang('ENTER_PROFILE_DETAILS_FINISH'));
             }
 
-            @ob_end_clean(); // Emergency output, potentially, so kill off any active buffer
+            cms_ob_end_clean(); // Emergency output, potentially, so kill off any active buffer
             $middle = cns_member_external_linker_ask($_SERVER['PHP_AUTH_USER'], ((get_value('windows_auth_is_enabled') !== '1') || is_null($LDAP_CONNECTION)) ? 'httpauth' : 'ldap');
             $tpl = globalise($middle, null, '', true);
             $tpl->evaluate_echo();
@@ -356,7 +368,7 @@ function try_httpauth_login()
 /**
  * Do a cookie login.
  *
- * @return MEMBER Logged in member (null: no login happened)
+ * @return ?MEMBER Logged in member (null: no log in happened)
  */
 function try_cookie_login()
 {

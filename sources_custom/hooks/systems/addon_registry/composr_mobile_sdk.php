@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -21,9 +21,10 @@ class Hook_addon_registry_composr_mobile_sdk
     /**
      * Get a list of file permissions to set
      *
+     * @param  boolean $runtime Whether to include wildcards represented runtime-created chmoddable files
      * @return array File permissions to set
      */
-    public function get_chmod_array()
+    public function get_chmod_array($runtime = false)
     {
         return array();
     }
@@ -87,7 +88,9 @@ class Hook_addon_registry_composr_mobile_sdk
      */
     public function get_description()
     {
-        return 'Server support for Composr Mobile SDK, including Composr mobile APIs and push notification support for iOS and Android.';
+        return 'Server support for Composr Mobile SDK, including Composr mobile APIs and push notification support for iOS and Android.
+
+The documentation for this addon is covered in a dedicated tutorial (' . get_brand_base_url() . '/docs/tut_mobile_sdk.htm).';
     }
 
     /**
@@ -108,7 +111,10 @@ class Hook_addon_registry_composr_mobile_sdk
     public function get_dependencies()
     {
         return array(
-            'requires' => array('PHP5.3', 'Conversr'),
+            'requires' => array(
+                'PHP5.3',
+                'Conversr',
+            ),
             'recommends' => array(),
             'conflicts_with' => array()
         );
@@ -164,6 +170,7 @@ class Hook_addon_registry_composr_mobile_sdk
             'data_custom/modules/composr_mobile_sdk/android/index.html',
             'data_custom/modules/composr_mobile_sdk/ios/index.html',
             'sources_custom/composr_mobile_sdk/index.html',
+            'sources_custom/composr_mobile_sdk/.htaccess',
             'sources_custom/composr_mobile_sdk/android/index.html',
             'sources_custom/composr_mobile_sdk/ios/index.html',
             'lang_custom/EN/composr_mobile_sdk.ini',
@@ -179,6 +186,7 @@ class Hook_addon_registry_composr_mobile_sdk
             'sources_custom/hooks/endpoints/account/login.php',
             'sources_custom/hooks/endpoints/account/lost_password.php',
             'sources_custom/hooks/endpoints/account/setup_push_notifications.php',
+            'sources_custom/hooks/endpoints/content/commandr_fs.php',
             'sources_custom/hooks/endpoints/misc/contact_us.php',
             // Also see cns_tapatalk addon for more useful endpoints, but via Tapatalk API. At some point we likely will merge this into a single framework
 

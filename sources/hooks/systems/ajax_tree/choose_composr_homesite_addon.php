@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -32,7 +32,7 @@ class Hook_choose_composr_homesite_addon
     public function get_file($id)
     {
         $stub = (get_param_integer('localhost', 0) == 1) ? get_base_url() : 'http://compo.sr';
-        $v = 'Version ' . float_to_raw_string(cms_version_number(), 1);
+        $v = 'Version ' . float_to_raw_string(cms_version_number(), 2, true);
         if (!is_null($id)) {
             $v = $id;
         }
@@ -84,7 +84,7 @@ class Hook_choose_composr_homesite_addon
 
         $num_matches = preg_match_all('#<entry id="(\d+)"[^<>]* title="([^"]+)"#', $file, $matches);
         for ($i = 0; $i < $num_matches; $i++) {
-            $list->attach(form_input_list_entry('http://compo.sr/site/dload.php?id=' . $matches[1][$i], false, $prefix . $matches[2][$i]));
+            $list->attach(form_input_list_entry('http://compo.sr/site/dload.php?id=' . urlencode($matches[1][$i]), false, $prefix . $matches[2][$i]));
         }
 
         $num_matches = preg_match_all('#<category id="(\d+)" title="([^"]+)"#', $file, $matches);

@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -46,7 +46,7 @@ class Module_admin_banners
      * @param  boolean $check_perms Whether to check permissions.
      * @param  ?MEMBER $member_id The member to check permissions as (null: current user).
      * @param  boolean $support_crosslinks Whether to allow cross links to other modules (identifiable via a full-page-link rather than a screen-name).
-     * @param  boolean $be_deferential Whether to avoid any entry-point (or even return NULL to disable the page in the Sitemap) if we know another module, or page_group, is going to link to that entry-point. Note that "!" and "browse" entry points are automatically merged with container page nodes (likely called by page-groupings) as appropriate.
+     * @param  boolean $be_deferential Whether to avoid any entry-point (or even return null to disable the page in the Sitemap) if we know another module, or page_group, is going to link to that entry-point. Note that "!" and "browse" entry points are automatically merged with container page nodes (likely called by page-groupings) as appropriate.
      * @return ?array A map of entry points (screen-name=>language-code/string or screen-name=>[language-code/string, icon-theme-image]) (null: disabled).
      */
     public function get_entry_points($check_perms = true, $member_id = null, $support_crosslinks = true, $be_deferential = false)
@@ -59,7 +59,7 @@ class Module_admin_banners
     public $title;
 
     /**
-     * Module pre-run function. Allows us to know meta-data for <head> before we start streaming output.
+     * Module pre-run function. Allows us to know metadata for <head> before we start streaming output.
      *
      * @return ?Tempcode Tempcode indicating some kind of exceptional output (null: none).
      */
@@ -68,6 +68,7 @@ class Module_admin_banners
         $type = get_param_string('type', 'browse');
 
         require_lang('banners');
+        require_code('banners');
 
         if ($type == 'browse') {
             $also_url = build_url(array('page' => 'cms_banners'), get_module_zone('cms_banners'));
@@ -86,8 +87,6 @@ class Module_admin_banners
      */
     public function run()
     {
-        require_lang('banners');
-
         $type = get_param_string('type', 'browse');
 
         if ($type == 'browse') {
@@ -125,11 +124,11 @@ class Module_admin_banners
         require_code('templates_results_table');
         $field_titles_arr = array(do_lang_tempcode('NAME'), do_lang_tempcode('TYPE'), do_lang_tempcode('BANNER_TYPE'));
         if ($has_banner_network) {
-            $field_titles_arr = array_merge($field_titles_arr, array(do_lang_tempcode('BANNER_HITSFROM'), do_lang_tempcode('BANNER_VIEWSFROM')));
+            $field_titles_arr = array_merge($field_titles_arr, array(do_lang_tempcode('BANNER_HITS_FROM'), do_lang_tempcode('BANNER_VIEWS_FROM')));
         }
-        $field_titles_arr = array_merge($field_titles_arr, array(do_lang_tempcode('BANNER_HITSTO'), do_lang_tempcode('BANNER_VIEWSTO'), do_lang_tempcode('BANNER_CLICKTHROUGH'), do_lang_tempcode('IMPORTANCE_MODULUS'), do_lang_tempcode('SUBMITTER'), do_lang_tempcode('ADDED')));
+        $field_titles_arr = array_merge($field_titles_arr, array(do_lang_tempcode('BANNER_HITS_TO'), do_lang_tempcode('BANNER_VIEWS_TO'), do_lang_tempcode('BANNER_CLICKTHROUGH'), do_lang_tempcode('IMPORTANCE_MODULUS'), do_lang_tempcode('SUBMITTER'), do_lang_tempcode('ADDED')));
         if (addon_installed('unvalidated')) {
-            $field_titles_arr[] = do_lang_tempcode('VALIDATED');
+            $field_titles_arr[] = protect_from_escaping(do_template('COMCODE_ABBR', array('_GUID' => '7a2ed997384b823b25dc3c70d4ff82d6', 'TITLE' => do_lang_tempcode('VALIDATED'), 'CONTENT' => do_lang_tempcode('VALIDATED_SHORT'))));
         }
         $fields_title = results_field_title($field_titles_arr, $sortables, 'sort', $sortable . ' ' . $sort_order);
 
@@ -146,14 +145,14 @@ class Module_admin_banners
                 case BANNER_CAMPAIGN:
                     $type = do_lang_tempcode('BANNER_HITS_LEFT', do_lang_tempcode('BANNER_CAMPAIGN'), make_string_tempcode(integer_format($myrow['campaign_remaining'])));
                     break;
-                case BANNER_DEFAULT:
-                    $type = do_lang_tempcode('BANNER_DEFAULT');
+                case BANNER_FALLBACK:
+                    $type = do_lang_tempcode('BANNER_FALLBACK');
                     break;
             }
 
             $banner_type = $myrow['b_type'];
             if ($banner_type == '') {
-                $banner_type = do_lang('GENERAL');
+                $banner_type = do_lang('_DEFAULT');
             }
 
             $date_and_time = get_timezoned_date($myrow['add_date'], false);

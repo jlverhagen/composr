@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -35,8 +35,8 @@ class Module_admin_permissions
         $info['organisation'] = 'ocProducts';
         $info['hacked_by'] = null;
         $info['hack_version'] = null;
-        $info['version'] = 8;
-        $info['update_require_upgrade'] = 1;
+        $info['version'] = 9;
+        $info['update_require_upgrade'] = true;
         $info['locked'] = true;
         return $info;
     }
@@ -92,9 +92,9 @@ class Module_admin_permissions
             $guest_groups = $GLOBALS['FORUM_DRIVER']->get_members_groups($GLOBALS['FORUM_DRIVER']->get_guest_id());
             foreach ($usergroups as $id => $name) {
                 $GLOBALS['SITE_DB']->query_insert('group_zone_access', array('zone_name' => '', 'group_id' => $id));
-                //$GLOBALS['SITE_DB']->query_insert('group_zone_access',array('zone_name'=>'docs','group_id'=>$id)); Docs are admin only now
+                //$GLOBALS['SITE_DB']->query_insert('group_zone_access', array('zone_name' => 'docs', 'group_id' => $id)); Docs are admin only now
                 $GLOBALS['SITE_DB']->query_insert('group_zone_access', array('zone_name' => 'forum', 'group_id' => $id));
-                if ($id != $guest_groups[0]) {
+                if ($id != $guest_groups[0] || get_forum_type() == 'none') {
                     $GLOBALS['SITE_DB']->query_insert('group_zone_access', array('zone_name' => 'site', 'group_id' => $id));
                 }
                 if ($id != $guest_groups[0]) {
@@ -123,7 +123,6 @@ class Module_admin_permissions
                 $GLOBALS['SITE_DB']->query_insert('group_page_access', array('page_name' => 'admin_addons', 'zone_name' => 'adminzone', 'group_id' => $id)); // We don't want people installing new code
                 $GLOBALS['SITE_DB']->query_insert('group_page_access', array('page_name' => 'admin_email_log', 'zone_name' => 'adminzone', 'group_id' => $id)); // We don't want people snooping on admin emails (e.g. password reset)
             }
-            $GLOBALS['SITE_DB']->create_index('group_page_access', 'group_id', array('group_id'));
 
             // False privileges
             $false_permissions = get_false_permissions();
@@ -143,7 +142,31 @@ class Module_admin_permissions
 
         if ((is_null($upgrade_from)) || ($upgrade_from < 8)) {
             add_privilege('SUBMISSION', 'unfiltered_input', false);
+        }
+
+        if ((!is_null($upgrade_from)) && ($upgrade_from < 8)) {
+            if (!privilege_exists('perform_keyword_check')) {
+                add_privilege('SUBMISSION', 'perform_keyword_check', false);
+            }
+        }
+
+        if ((is_null($upgrade_from)) || ($upgrade_from < 9)) {
+            $GLOBALS['SITE_DB']->create_index('group_page_access', 'group_id', array('group_id'));
+        }
+
+        if ((!is_null($upgrade_from)) && ($upgrade_from < 9)) {
             rename_privilege('bypass_word_filter', 'bypass_wordfilter');
+
+            delete_privilege('view_revision_history');
+            delete_privilege('view_content_history');
+            delete_privilege('restore_content_history');
+            delete_privilege('delete_content_history');
+
+            delete_privilege('avoid_simplified_adminzone_look');
+
+            $GLOBALS['SITE_DB']->query_update('privilege_list', array('p_section' => 'GENERAL_SETTINGS'), array('the_name' => 'may_enable_staff_notifications'), '', 1);
+            $GLOBALS['SITE_DB']->query_update('privilege_list', array('the_default' => 0), array('the_name' => 'have_personal_category'), '', 1);
+            $GLOBALS['SITE_DB']->query_update('privilege_list', array('p_section' => 'VOTE'), array('the_name' => 'vote_in_polls'), '', 1);
         }
     }
 
@@ -153,7 +176,7 @@ class Module_admin_permissions
      * @param  boolean $check_perms Whether to check permissions.
      * @param  ?MEMBER $member_id The member to check permissions as (null: current user).
      * @param  boolean $support_crosslinks Whether to allow cross links to other modules (identifiable via a full-page-link rather than a screen-name).
-     * @param  boolean $be_deferential Whether to avoid any entry-point (or even return NULL to disable the page in the Sitemap) if we know another module, or page_group, is going to link to that entry-point. Note that "!" and "browse" entry points are automatically merged with container page nodes (likely called by page-groupings) as appropriate.
+     * @param  boolean $be_deferential Whether to avoid any entry-point (or even return null to disable the page in the Sitemap) if we know another module, or page_group, is going to link to that entry-point. Note that "!" and "browse" entry points are automatically merged with container page nodes (likely called by page-groupings) as appropriate.
      * @return ?array A map of entry points (screen-name=>language-code/string or screen-name=>[language-code/string, icon-theme-image]) (null: disabled).
      */
     public function get_entry_points($check_perms = true, $member_id = null, $support_crosslinks = true, $be_deferential = false)
@@ -182,7 +205,7 @@ class Module_admin_permissions
     public $title;
 
     /**
-     * Module pre-run function. Allows us to know meta-data for <head> before we start streaming output.
+     * Module pre-run function. Allows us to know metadata for <head> before we start streaming output.
      *
      * @return ?Tempcode Tempcode indicating some kind of exceptional output (null: none).
      */
@@ -248,13 +271,13 @@ class Module_admin_permissions
                 breadcrumb_set_self(do_lang_tempcode('CHOOSE'));
             } else {
                 breadcrumb_set_parents(array(array('_SELF:_SELF:page', do_lang_tempcode('PAGE_ACCESS'))));
-                breadcrumb_set_self(($zone == '') ? do_lang('_WELCOME') : escape_html($zone));
+                breadcrumb_set_self(($zone == '') ? do_lang('_WELCOME') : $zone);
             }
         }
 
         if ($type == '_page') {
             $zone = post_param_string('zone');
-            breadcrumb_set_parents(array(array('_SELF:_SELF:page', do_lang_tempcode('PAGE_ACCESS')), array('_SELF:_SELF:page:zone=' . $zone, ($zone == '') ? do_lang('_WELCOME') : escape_html($zone))));
+            breadcrumb_set_parents(array(array('_SELF:_SELF:page', do_lang_tempcode('PAGE_ACCESS')), array('_SELF:_SELF:page:zone=' . $zone, ($zone == '') ? do_lang('_WELCOME') : $zone)));
             breadcrumb_set_self(do_lang_tempcode('DONE'));
         }
 
@@ -284,7 +307,7 @@ class Module_admin_permissions
      */
     public function run()
     {
-        if (function_exists('set_time_limit')) {
+        if (php_function_allowed('set_time_limit')) {
             @set_time_limit(60);
         }
         send_http_output_ping();
@@ -433,7 +456,7 @@ class Module_admin_permissions
             $tmp_file = file_get_contents($css_path);
             $matches = array();
             if (preg_match('#(\s|\})th[\s,][^\}]*(\s|\{)background-color:\s*\#([\dA-Fa-f]*);color:\s*\#([\dA-Fa-f]*);#sU', $tmp_file, $matches) != 0) {
-                $color = $matches[3] . '&fg_color=' . $matches[4];
+                $color = $matches[3] . '&fg_color=' . urlencode($matches[4]);
             }
         }
 
@@ -462,7 +485,7 @@ class Module_admin_permissions
             $tmp_file = file_get_contents($css_path);
             $matches = array();
             if (preg_match('#(\s|\})th[\s,][^\}]*(\s|\{)background-color:\s*\#([\dA-Fa-f]*);color:\s*\#([\dA-Fa-f]*);#sU', $tmp_file, $matches) != 0) {
-                $color = $matches[3] . '&fg_color=' . $matches[4];
+                $color = $matches[3] . '&fg_color=' . urlencode($matches[4]);
             }
         }
 
@@ -612,8 +635,8 @@ class Module_admin_permissions
                 $id = substr($key, 5);
                 if ((substr($id, 0, 4) == 'new_') || (!array_key_exists(intval($id), $mkeylang))) {
                     $GLOBALS['SITE_DB']->query_insert('match_key_messages', array(
-                                                                                'k_match_key' => $val
-                                                                            ) + insert_lang_comcode('k_message', post_param_string('msg_' . $id), 2));
+                        'k_match_key' => $val
+                    ) + insert_lang_comcode('k_message', post_param_string('msg_' . $id), 2));
                 } else {
                     $map = array(
                         'k_match_key' => $val
@@ -987,7 +1010,7 @@ class Module_admin_permissions
     {
         require_all_lang();
 
-        if ((count($_POST) == 0) && (strtolower(cms_srv('REQUEST_METHOD')) != 'post')) {
+        if ((count($_POST) == 0) && (cms_srv('REQUEST_METHOD') != 'POST')) {
             warn_exit(do_lang_tempcode('PERMISSION_TRAGEDY_PREVENTED'));
         }
 

@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -36,8 +36,8 @@ class Module_chat
         $info['hacked_by'] = null;
         $info['hack_version'] = null;
         $info['version'] = 12;
+        $info['update_require_upgrade'] = true;
         $info['locked'] = false;
-        $info['update_require_upgrade'] = 1;
         return $info;
     }
 
@@ -67,12 +67,12 @@ class Module_chat
         $GLOBALS['SITE_DB']->query_delete('comcode_pages', array(
             'the_zone' => 'site',
             'the_page' => 'userguide_chatcode',
-        ));
+        ), '', 1);
 
         $GLOBALS['SITE_DB']->query_delete('comcode_pages', array(
             'the_zone' => 'site',
             'the_page' => 'popup_blockers',
-        ));
+        ), '', 1);
     }
 
     /**
@@ -100,11 +100,10 @@ class Module_chat
             ));
 
             $GLOBALS['SITE_DB']->create_index('chat_rooms', 'room_name', array('room_name'));
-            $GLOBALS['SITE_DB']->create_index('chat_rooms', 'is_im', array('is_im'/*, 'room_name' makes key too long*/));
             $GLOBALS['SITE_DB']->create_index('chat_rooms', 'first_public', array('is_im', 'id'));
             $GLOBALS['SITE_DB']->create_index('chat_rooms', 'allow_list', array('allow_list(30)'));
 
-            // Create our default chat room. By default, this will be as the shoutbox
+            // Create our default chatroom. By default, this will be as the shoutbox
             $map = array(
                 'is_im' => 0,
                 'allow_list_groups' => '',
@@ -137,7 +136,7 @@ class Module_chat
 
             $usergroups = $GLOBALS['FORUM_DRIVER']->get_usergroup_list(false, true);
             foreach (array_keys($usergroups) as $id) {
-                $GLOBALS['SITE_DB']->query_insert('group_page_access', array('page_name' => 'cms_chat', 'zone_name' => 'cms', 'group_id' => $id)); // Don't want to let anyone do chat room moderation just because we let them manage content
+                $GLOBALS['SITE_DB']->query_insert('group_page_access', array('page_name' => 'cms_chat', 'zone_name' => 'cms', 'group_id' => $id)); // Don't want to let anyone do chatroom moderation just because we let them manage content
             }
 
             add_privilege('SECTION_CHAT', 'create_private_room', true);
@@ -166,7 +165,7 @@ class Module_chat
             $GLOBALS['SITE_DB']->create_index('chat_events', 'event_ordering', array('e_date_and_time'));
 
             $GLOBALS['SITE_DB']->create_table('chat_active', array(
-                'id' => '*AUTO', // serves no purpose really, but needed as room_id can be NULL but is in compound key
+                'id' => '*AUTO', // serves no purpose really, but needed as room_id can be null but is in compound key
                 'member_id' => 'MEMBER',
                 'room_id' => '?AUTO_LINK',
                 'date_and_time' => 'TIME',
@@ -184,14 +183,8 @@ class Module_chat
             $rooms = $GLOBALS['SITE_DB']->query_select('chat_rooms', array('id'));
             foreach ($rooms as $room) {
                 // Set access
-                $admin_groups = $GLOBALS['FORUM_DRIVER']->get_super_admin_groups();
-                $groups = $GLOBALS['FORUM_DRIVER']->get_usergroup_list(false, true);
-                foreach (array_keys($groups) as $group_id) {
-                    if (in_array($group_id, $admin_groups)) {
-                        continue;
-                    }
-                    $GLOBALS['SITE_DB']->query_insert('group_category_access', array('module_the_name' => 'chat', 'category_name' => strval($room['id']), 'group_id' => $group_id));
-                }
+                require_code('permissions2');
+                set_global_category_access('chat', $room['id']);
             }
 
             add_privilege('SECTION_CHAT', 'moderate_my_private_rooms', true);
@@ -203,12 +196,20 @@ class Module_chat
             $GLOBALS['SITE_DB']->rename_table('chat_buddies', 'chat_friends');
 
             $GLOBALS['SITE_DB']->alter_table_field('chat_messages', 'user_id', 'MEMBER', 'member_id');
+
+            $GLOBALS['SITE_DB']->query_update('actionlogs', array('the_type' => 'DELETE_CHATROOM'), array('the_type' => 'DELETE_ROOM'));
+
+            $GLOBALS['SITE_DB']->delete_index_if_exists('chat_rooms', 'is_im');
         }
 
         if ((is_null($upgrade_from)) || ($upgrade_from < 12)) {
             require_code('users_active_actions');
             $admin_user = get_first_admin_user();
 
+            $GLOBALS['SITE_DB']->query_delete('comcode_pages', array(
+                'the_zone' => 'site',
+                'the_page' => 'userguide_chatcode',
+            ), '', 1);
             $GLOBALS['SITE_DB']->query_insert('comcode_pages', array(
                 'the_zone' => 'site',
                 'the_page' => 'userguide_chatcode',
@@ -221,6 +222,10 @@ class Module_chat
                 'p_order' => 0,
             ));
 
+            $GLOBALS['SITE_DB']->query_delete('comcode_pages', array(
+                'the_zone' => 'site',
+                'the_page' => 'popup_blockers',
+            ), '', 1);
             $GLOBALS['SITE_DB']->query_insert('comcode_pages', array(
                 'the_zone' => 'site',
                 'the_page' => 'popup_blockers',
@@ -232,10 +237,8 @@ class Module_chat
                 'p_show_as_edit' => 0,
                 'p_order' => 0,
             ));
-        }
 
-        if ((!is_null($upgrade_from)) && ($upgrade_from < 12)) {
-            $GLOBALS['SITE_DB']->query_update('adminlogs', array('the_type' => 'DELETE_CHATROOM'), array('the_type' => 'DELETE_ROOM'));
+            $GLOBALS['SITE_DB']->create_index('chat_rooms', 'is_im', array('is_im'/*, 'room_name' makes key too long*/));
         }
     }
 
@@ -245,7 +248,7 @@ class Module_chat
      * @param  boolean $check_perms Whether to check permissions.
      * @param  ?MEMBER $member_id The member to check permissions as (null: current user).
      * @param  boolean $support_crosslinks Whether to allow cross links to other modules (identifiable via a full-page-link rather than a screen-name).
-     * @param  boolean $be_deferential Whether to avoid any entry-point (or even return NULL to disable the page in the Sitemap) if we know another module, or page_group, is going to link to that entry-point. Note that "!" and "browse" entry points are automatically merged with container page nodes (likely called by page-groupings) as appropriate.
+     * @param  boolean $be_deferential Whether to avoid any entry-point (or even return null to disable the page in the Sitemap) if we know another module, or page_group, is going to link to that entry-point. Note that "!" and "browse" entry points are automatically merged with container page nodes (likely called by page-groupings) as appropriate.
      * @return ?array A map of entry points (screen-name=>language-code/string or screen-name=>[language-code/string, icon-theme-image]) (null: disabled).
      */
     public function get_entry_points($check_perms = true, $member_id = null, $support_crosslinks = true, $be_deferential = false)
@@ -266,7 +269,7 @@ class Module_chat
     public $room_row;
 
     /**
-     * Module pre-run function. Allows us to know meta-data for <head> before we start streaming output.
+     * Module pre-run function. Allows us to know metadata for <head> before we start streaming output.
      *
      * @return ?Tempcode Tempcode indicating some kind of exceptional output (null: none).
      */
@@ -279,7 +282,11 @@ class Module_chat
         if ($type == 'browse') {
             set_feed_url('?mode=chat&select=');
 
-            $this->title = get_screen_title($GLOBALS['IS_ACTUALLY_ADMIN'] ? 'SU_CHATTING_AS' : 'CHAT_LOBBY', true, array(escape_html($GLOBALS['FORUM_DRIVER']->get_username(get_member()))));
+            $this->title = get_screen_title('CHAT_LOBBY', true, array(escape_html($GLOBALS['FORUM_DRIVER']->get_username(get_member()))));
+
+            if ($GLOBALS['IS_ACTUALLY_ADMIN']) {
+                attach_message(do_lang_tempcode('SU_CHATTING_AS', escape_html($GLOBALS['FORUM_DRIVER']->get_username(get_member()))), 'notice');
+            }
         }
 
         if ($type == 'room') {
@@ -287,7 +294,7 @@ class Module_chat
             set_feed_url('?mode=chat&select=' . strval($room_id));
             $this->room_id = $room_id;
 
-            $room_check = $GLOBALS['SITE_DB']->query_select('chat_rooms', array('id', 'room_name', 'is_im', 'allow_list', 'allow_list_groups', 'disallow_list', 'disallow_list_groups', 'room_owner'), array('id' => $room_id), '', 1);
+            $room_check = $GLOBALS['SITE_DB']->query_select('chat_rooms', array('*'), array('id' => $room_id), '', 1);
             if (!array_key_exists(0, $room_check)) {
                 warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'chat'));
             }
@@ -297,16 +304,25 @@ class Module_chat
             breadcrumb_set_parents(array(array('_SELF:_SELF:browse', do_lang_tempcode('CHAT_LOBBY_END_CHAT'))));
 
             $this->title = get_screen_title('_CHATROOM', true, array(escape_html($this->room_row['room_name'])));
-        }
 
-        if ($type == 'download_logs') {
-            inform_non_canonical_parameter('id');
-
-            $this->title = get_screen_title('CHAT_DOWNLOAD_LOGS');
+            // Metadata
+            set_extra_request_metadata(array(
+                'identifier' => '_SEARCH:chat:room:' . strval($room_id),
+            ), $room_check[0], 'chat', strval($room_id));
         }
 
         if ($type == 'browse' || $type == 'room') {
             breadcrumb_set_parents(array(array('_SELF:_SELF:browse', do_lang_tempcode('CHAT_LOBBY'))));
+        }
+
+        if ($type == 'download_logs') {
+            attach_to_screen_header('<meta name="robots" content="noindex" />'); // XHTMLXHTML
+
+            $this->title = get_screen_title('CHAT_DOWNLOAD_LOGS');
+        }
+
+        if ($type == '_download_logs') {
+            $this->title = get_screen_title('CHAT_DOWNLOAD_LOGS');
         }
 
         if ($type == 'private') {
@@ -341,12 +357,8 @@ class Module_chat
             $this->title = get_screen_title('DUMP_FRIEND');
         }
 
-        if ($type == 'chat_save_options') {
+        if ($type == 'options') {
             $this->title = get_screen_title('CHATROOM');
-        }
-
-        if ($type == '_chat_download_logs') {
-            $this->title = get_screen_title('CHAT_DOWNLOAD_LOGS');
         }
 
         if ($type == 'set_effects') {
@@ -434,7 +446,7 @@ class Module_chat
     }
 
     /**
-     * The UI to choose a chat room.
+     * The UI to choose a chatroom.
      *
      * @return Tempcode The UI
      */
@@ -484,7 +496,7 @@ class Module_chat
         if (count($rows) == 200) { // Ah, limit to not show private ones then
             $rows = $GLOBALS['SITE_DB']->query_select('chat_rooms', array('*'), array('is_im' => 0, 'allow_list' => ''), 'ORDER BY room_name DESC', 200);
         }
-        $fields = new Tempcode();
+        $chatrooms = array();
         foreach ($rows as $myrow) {
             // Check to see if we are on the room's allow list, if we aren't, don't display the room :D
             $showroom = check_chatroom_access($myrow, true, $member_id);
@@ -493,8 +505,7 @@ class Module_chat
                 $users = get_chatters_in_room($myrow['id']);
                 $usernames = get_chatters_in_room_tpl($users);
                 $url = build_url(array('page' => '_SELF', 'type' => 'room', 'id' => $myrow['id']), '_SELF');
-                $room_link = do_template('CHAT_ROOM_LINK', array('_GUID' => '7a7c65df7fbb6b27c1ef8ce30eb55654', 'PRIVATE' => $myrow['allow_list'] != '' || $myrow['allow_list_groups'] != '', 'ID' => strval($myrow['id']), 'NAME' => $myrow['room_name'], 'USERNAMES' => $usernames, 'URL' => $url));
-                $fields->attach($room_link);
+                $chatrooms[] = array('PRIVATE' => $myrow['allow_list'] != '' || $myrow['allow_list_groups'] != '', 'ID' => strval($myrow['id']), 'NAME' => $myrow['room_name'], 'USERNAMES' => $usernames, 'URL' => $url);
             }
         }
 
@@ -547,7 +558,7 @@ class Module_chat
         ));
 
         if (!is_guest()) {
-            $seteffects_link = hyperlink(build_url(array('page' => '_SELF', 'type' => 'set_effects'/*,'redirect'=>get_self_url(true,true)*/), '_SELF'), do_lang_tempcode('CHAT_SET_EFFECTS'), true, false);
+            $seteffects_link = hyperlink(build_url(array('page' => '_SELF', 'type' => 'set_effects'/*, 'redirect' => get_self_url(true,true)*/), '_SELF'), do_lang_tempcode('CHAT_SET_EFFECTS'), true, false);
         } else {
             $seteffects_link = new Tempcode();
         }
@@ -573,7 +584,7 @@ class Module_chat
             'CAN_IM' => $can_im,
             'URL_ADD_FRIEND' => $post_url_add_friend,
             'URL_REMOVE_FRIENDS' => $post_url_remove_friends,
-            'CHATROOMS' => $fields,
+            'CHATROOMS' => $chatrooms,
             'PRIVATE_CHATROOM' => $private_room,
             'MOD_LINK' => $mod_link,
             'BLOCKING_LINK' => $blocking_link,
@@ -583,7 +594,7 @@ class Module_chat
     }
 
     /**
-     * The UI for a chat room.
+     * The UI for a chatroom.
      *
      * @return Tempcode The UI
      */
@@ -606,7 +617,7 @@ class Module_chat
         $posting_name = do_lang_tempcode('SEND_MESSAGE');
         $keep = symbol_tempcode('KEEP');
         $posting_url = find_script('messages') . '?mode=2&room_id=' . strval($room_id) . $keep->evaluate();
-        $messages_link = find_script('messages') . '?room_id=' . strval($room_id) . '&zone=' . get_zone_name() . $keep->evaluate();
+        $messages_link = find_script('messages') . '?room_id=' . strval($room_id) . '&zone=' . urlencode(get_zone_name()) . $keep->evaluate();
         $buttons = new Tempcode();
         $_buttons = array(
             //'url', Bloat
@@ -620,7 +631,7 @@ class Module_chat
             //$_buttons[] = 'html'; Bloat
         }
         foreach ($_buttons as $button) {
-            $buttons->attach(do_template('COMCODE_EDITOR_BUTTON', array('_GUID' => '4fd75edb2d091b1c78a71c653efb18f0', 'DIVIDER' => false, 'FIELD_NAME' => 'post', 'TITLE' => do_lang_tempcode('INPUT_COMCODE_' . $button), 'B' => $button)));
+            $buttons->attach(do_template('COMCODE_EDITOR_BUTTON', array('_GUID' => '4fd75edb2d091b1c78a71c653efb18f0', 'DIVIDER' => false, 'IS_POSTING_FIELD' => false, 'FIELD_NAME' => 'post', 'TITLE' => do_lang_tempcode('INPUT_COMCODE_' . $button), 'B' => $button)));
         }
 
         if (!is_guest()) {
@@ -642,7 +653,7 @@ class Module_chat
             'i',
         );
         foreach ($_micro_buttons as $button) {
-            $micro_buttons->attach(do_template('COMCODE_EDITOR_MICRO_BUTTON', array('_GUID' => '3ced1e569e0c6feaeadbc09f7f89e7ee', 'FIELD_NAME' => 'post', 'TITLE' => do_lang_tempcode('INPUT_COMCODE_' . $button), 'B' => $button)));
+            $micro_buttons->attach(do_template('COMCODE_EDITOR_MICRO_BUTTON', array('_GUID' => '3ced1e569e0c6feaeadbc09f7f89e7ee', 'IS_POSTING_FIELD' => false, 'FIELD_NAME' => 'post', 'TITLE' => do_lang_tempcode('INPUT_COMCODE_' . $button), 'B' => $button)));
         }
 
         $user_colour = ((array_key_exists(0, $prefs)) && ($prefs[0] != '')) ? $prefs[0] : get_option('chat_default_post_colour');
@@ -674,7 +685,7 @@ class Module_chat
         $download_url = build_url(array('page' => '_SELF', 'type' => 'download_logs', 'id' => $room_id), '_SELF');
         $download_link = hyperlink($download_url, do_lang_tempcode('CHAT_DOWNLOAD_LOGS'), true, false);
 
-        $seteffects_link = hyperlink(build_url(array('page' => '_SELF', 'type' => 'set_effects'/*,'redirect'=>get_self_url(true,true)*/), '_SELF'), do_lang_tempcode('CHAT_SET_EFFECTS'), true, false);
+        $seteffects_link = hyperlink(build_url(array('page' => '_SELF', 'type' => 'set_effects'/*, 'redirect' => get_self_url(true,true)*/), '_SELF'), do_lang_tempcode('CHAT_SET_EFFECTS'), true, false);
 
         $links = array('edit2' => $admin_link, 'tools' => $mod_link, 'export' => $download_link, 'sound_effects' => $seteffects_link);
 
@@ -704,7 +715,7 @@ class Module_chat
     }
 
     /**
-     * The UI to create a private chat room.
+     * The UI to create a private chatroom.
      *
      * @return Tempcode The UI
      */
@@ -735,9 +746,9 @@ class Module_chat
     }
 
     /**
-     * The actualiser to add a chat room.
+     * The actualiser to add a chatroom.
      *
-     * @return Tempcode The UI to choose a chat room (probably what was just added, but...)
+     * @return Tempcode The UI to choose a chatroom (probably what was just added, but...)
      */
     public function _chat_private()
     {
@@ -756,7 +767,7 @@ class Module_chat
         list($allow2, $allow2_groups, $disallow2, $disallow2_groups) = read_in_chat_perm_fields();
         $allow = explode(',', $allow2);
 
-        $meta_data = actual_meta_data_get_fields('chat', null);
+        $metadata = actual_metadata_get_fields('chat', null);
 
         $new_room_id = add_chatroom(post_param_string('c_welcome'), $room_name, get_member(), $allow2, $allow2_groups, $disallow2, $disallow2_groups, $room_lang);
 
@@ -781,15 +792,8 @@ class Module_chat
         }
 
         // Set access
-        $admin_groups = $GLOBALS['FORUM_DRIVER']->get_super_admin_groups();
-        $groups = $GLOBALS['FORUM_DRIVER']->get_usergroup_list(false, true);
-        $GLOBALS['SITE_DB']->query_delete('group_category_access', array('module_the_name' => 'chat', 'category_name' => strval($new_room_id)));
-        foreach (array_keys($groups) as $group_id) {
-            if (in_array($group_id, $admin_groups)) {
-                continue;
-            }
-            $GLOBALS['SITE_DB']->query_insert('group_category_access', array('module_the_name' => 'chat', 'category_name' => strval($new_room_id), 'group_id' => $group_id));
-        }
+        require_code('permissions2');
+        set_global_category_access('chat', $new_room_id);
 
         $url = build_url(array('page' => '_SELF', 'type' => 'room', 'id' => $new_room_id), '_SELF');
         return redirect_screen($this->title, $url, do_lang_tempcode('SUCCESS'));
@@ -817,7 +821,7 @@ class Module_chat
         foreach ($blocked as $row) {
             $username = $GLOBALS['FORUM_DRIVER']->get_username($row['member_blocked'], true);
             if (!is_null($username)) {
-                $fields->attach(form_input_tick(do_lang_tempcode('BLOCK_THEM', escape_html($username)), do_lang_tempcode('_BLOCK_MEMBER', $username), 'block_' . strval($row['member_blocked']), true));
+                $fields->attach(form_input_tick(do_lang_tempcode('BLOCK_THEM', escape_html($username)), do_lang_tempcode('_BLOCK_MEMBER', escape_html($username)), 'block_' . strval($row['member_blocked']), true));
             }
         }
 
@@ -975,7 +979,7 @@ class Module_chat
             $username = post_param_string('friend_username');
             $member_id = $GLOBALS['FORUM_DRIVER']->get_member_from_username($username);
             if ((is_null($member_id)) || (is_guest($member_id))) {
-                warn_exit(do_lang_tempcode('_USER_NO_EXIST', escape_html($username)));
+                warn_exit(do_lang_tempcode('_MEMBER_NO_EXIST', escape_html($username)));
             }
         } else {
             $username = $GLOBALS['FORUM_DRIVER']->get_username($member_id, true);
@@ -1092,7 +1096,7 @@ class Module_chat
         $posting_url = build_url(array('page' => '_SELF', 'type' => '_download_logs'), '_SELF', null, false, true);
 
         if (count($chatrooms) == 0) {
-            inform_exit(do_lang_tempcode('NO_CATEGORIES'));
+            inform_exit(do_lang_tempcode('NO_CATEGORIES', 'chat'));
         }
 
         return do_template('FORM_SCREEN', array('_GUID' => '6741ef01d1c6dd8d2de9be3290666db7', 'GET' => true, 'SKIP_WEBSTANDARDS' => true, 'HIDDEN' => '', 'TITLE' => $this->title, 'FIELDS' => $fields, 'SUBMIT_ICON' => 'buttons__proceed', 'SUBMIT_NAME' => $posting_name, 'URL' => $posting_url, 'TEXT' => ''));
@@ -1112,7 +1116,7 @@ class Module_chat
 
         // We have the messages, now we have to create a nice little text file...
         $keep = symbol_tempcode('KEEP');
-        $mod_url = find_script('download_chat_logs') . '?room=' . strval($room) . '&start=' . strval($start_date_and_time) . '&finish=' . strval($finish_date_and_time) . '&zone=' . get_zone_name() . $keep->evaluate();
+        $mod_url = find_script('download_chat_logs') . '?room=' . strval($room) . '&start=' . strval($start_date_and_time) . '&finish=' . strval($finish_date_and_time) . '&zone=' . urlencode(get_zone_name()) . $keep->evaluate();
 
         return redirect_screen($this->title, $mod_url);
     }
@@ -1130,7 +1134,6 @@ class Module_chat
             access_denied('NOT_AS_GUEST');
         }
 
-        require_lang('javascript');
         require_javascript('chat');
         require_javascript('sound');
         require_javascript('plupload');

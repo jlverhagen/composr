@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -36,8 +36,8 @@ class Module_admin_import
         $info['hacked_by'] = null;
         $info['hack_version'] = null;
         $info['version'] = 7;
+        $info['update_require_upgrade'] = true;
         $info['locked'] = false;
-        $info['update_require_upgrade'] = 1;
         return $info;
     }
 
@@ -49,6 +49,8 @@ class Module_admin_import
         $GLOBALS['SITE_DB']->drop_table_if_exists('import_id_remap');
         $GLOBALS['SITE_DB']->drop_table_if_exists('import_session');
         $GLOBALS['SITE_DB']->drop_table_if_exists('import_parts_done');
+
+        $GLOBALS['SITE_DB']->query_delete('group_page_access', array('page_name' => 'admin_import'));
     }
 
     /**
@@ -60,10 +62,17 @@ class Module_admin_import
     public function install($upgrade_from = null, $upgrade_from_hack = null)
     {
         if ((!is_null($upgrade_from)) && ($upgrade_from < 7)) {
-            $GLOBALS['SITE_DB']->alter_table_field('import_id_remap', 'id_session', 'ID_TEXT');
-            $GLOBALS['SITE_DB']->alter_table_field('import_session', 'imp_session', 'ID_TEXT');
-            $GLOBALS['SITE_DB']->add_table_field('import_parts_done', 'id', '*AUTO');
+            $GLOBALS['SITE_DB']->alter_table_field('import_id_remap', 'id_session', '*ID_TEXT');
+
+            $GLOBALS['SITE_DB']->alter_table_field('import_session', 'imp_session', '*ID_TEXT');
+
+            $GLOBALS['SITE_DB']->add_auto_key('import_parts_done');
             $GLOBALS['SITE_DB']->alter_table_field('import_parts_done', 'imp_session', 'ID_TEXT');
+
+            if ((strpos(get_db_type(), 'mysql') !== false) && (get_charset() == 'utf-8')) {
+                // Ccould not be made utf8mb4 in advance but can be now because 'id' fields was added as the key
+                $GLOBALS['SITE_DB']->query('ALTER TABLE ' . get_table_prefix() . 'import_parts_done CONVERT TO CHARACTER SET utf8mb4');
+            }
         }
 
         if ((!is_null($upgrade_from)) && ($upgrade_from < 6)) {
@@ -112,7 +121,7 @@ class Module_admin_import
      * @param  boolean $check_perms Whether to check permissions.
      * @param  ?MEMBER $member_id The member to check permissions as (null: current user).
      * @param  boolean $support_crosslinks Whether to allow cross links to other modules (identifiable via a full-page-link rather than a screen-name).
-     * @param  boolean $be_deferential Whether to avoid any entry-point (or even return NULL to disable the page in the Sitemap) if we know another module, or page_group, is going to link to that entry-point. Note that "!" and "browse" entry points are automatically merged with container page nodes (likely called by page-groupings) as appropriate.
+     * @param  boolean $be_deferential Whether to avoid any entry-point (or even return null to disable the page in the Sitemap) if we know another module, or page_group, is going to link to that entry-point. Note that "!" and "browse" entry points are automatically merged with container page nodes (likely called by page-groupings) as appropriate.
      * @return ?array A map of entry points (screen-name=>language-code/string or screen-name=>[language-code/string, icon-theme-image]) (null: disabled).
      */
     public function get_entry_points($check_perms = true, $member_id = null, $support_crosslinks = true, $be_deferential = false)
@@ -125,7 +134,7 @@ class Module_admin_import
     public $title;
 
     /**
-     * Module pre-run function. Allows us to know meta-data for <head> before we start streaming output.
+     * Module pre-run function. Allows us to know metadata for <head> before we start streaming output.
      *
      * @return ?Tempcode Tempcode indicating some kind of exceptional output (null: none).
      */
@@ -316,8 +325,8 @@ class Module_admin_import
                 $GLOBALS['SITE_DB']->query_delete('import_parts_done');
                 $GLOBALS['SITE_DB']->query_delete('import_id_remap');
             } else {
-                $GLOBALS['SITE_DB']->query('DELETE FROM ' . get_table_prefix() . 'import_parts_done WHERE imp_id NOT LIKE \'' . db_encode_like('cns_%') . '\'');
-                $GLOBALS['SITE_DB']->query('DELETE FROM ' . get_table_prefix() . 'import_id_remap WHERE (id_type NOT LIKE \'' . db_encode_like('cns_%') . '\'' . ') AND ' . db_string_not_equal_to('id_type', 'category') . ' AND ' . db_string_not_equal_to('id_type', 'forum') . ' AND ' . db_string_not_equal_to('id_type', 'topic') . ' AND ' . db_string_not_equal_to('id_type', 'post') . ' AND ' . db_string_not_equal_to('id_type', 'f_poll') . ' AND ' . db_string_not_equal_to('id_type', 'group') . ' AND ' . db_string_not_equal_to('id_type', 'member'));
+                $GLOBALS['SITE_DB']->query('DELETE FROM ' . get_table_prefix() . 'import_parts_done WHERE imp_id NOT LIKE \'' . db_encode_like('cns\_%') . '\'');
+                $GLOBALS['SITE_DB']->query('DELETE FROM ' . get_table_prefix() . 'import_id_remap WHERE (id_type NOT LIKE \'' . db_encode_like('cns\_%') . '\'' . ') AND ' . db_string_not_equal_to('id_type', 'category') . ' AND ' . db_string_not_equal_to('id_type', 'forum') . ' AND ' . db_string_not_equal_to('id_type', 'topic') . ' AND ' . db_string_not_equal_to('id_type', 'post') . ' AND ' . db_string_not_equal_to('id_type', 'f_poll') . ' AND ' . db_string_not_equal_to('id_type', 'group') . ' AND ' . db_string_not_equal_to('id_type', 'member'));
             }
 
             $session = get_session_id();
@@ -357,9 +366,9 @@ class Module_admin_import
         $fields = new Tempcode();
         require_code('form_templates');
         if (!method_exists($object, 'probe_db_access')) {
-            $fields->attach(form_input_line(do_lang_tempcode('DATABASE_NAME'), do_lang_tempcode('_FROM_IMPORTING_SYSTEM'), 'db_name', $db_name, true));
-            $fields->attach(form_input_line(do_lang_tempcode('DATABASE_USERNAME'), do_lang_tempcode('_FROM_IMPORTING_SYSTEM'), 'db_user', $db_user, true));
-            $fields->attach(form_input_password(do_lang_tempcode('DATABASE_PASSWORD'), do_lang_tempcode('_FROM_IMPORTING_SYSTEM'), 'db_password', false)); // Not required as there may be a blank password
+            $fields->attach(form_input_line(do_lang_tempcode('installer:DATABASE_NAME'), do_lang_tempcode('_FROM_IMPORTING_SYSTEM'), 'db_name', $db_name, true));
+            $fields->attach(form_input_line(do_lang_tempcode('installer:DATABASE_USERNAME'), do_lang_tempcode('_FROM_IMPORTING_SYSTEM'), 'db_user', $db_user, true));
+            $fields->attach(form_input_password(do_lang_tempcode('installer:DATABASE_PASSWORD'), do_lang_tempcode('_FROM_IMPORTING_SYSTEM'), 'db_password', false)); // Not required as there may be a blank password
             $fields->attach(form_input_line(do_lang_tempcode('TABLE_PREFIX'), do_lang_tempcode('_FROM_IMPORTING_SYSTEM'), 'db_table_prefix', $db_table_prefix, true));
         }
         $fields->attach(form_input_line(do_lang_tempcode('FILE_BASE'), do_lang_tempcode('FROM_IMPORTING_SYSTEM'), 'old_base_dir', $old_base_dir, true));
@@ -532,12 +541,12 @@ class Module_admin_import
     {
         $refresh_url = get_self_url(true, false, array('type' => 'import'), true);
         $refresh_time = either_param_integer('refresh_time', 15); // Shouldn't default, but reported on some systems to do so
-        if (function_exists('set_time_limit')) {
+        if (php_function_allowed('set_time_limit')) {
             @set_time_limit($refresh_time);
             safe_ini_set('display_errors', '0'); // So that the timeout message does not show, which made the user not think the refresh was going to happen automatically, and could thus result in double-requests
         }
         send_http_output_ping();
-        header('Content-type: text/html; charset=' . get_charset());
+
         safe_ini_set('log_errors', '0');
         global $I_REFRESH_URL;
         $I_REFRESH_URL = $refresh_url;
@@ -652,8 +661,10 @@ class Module_admin_import
         }
         if (!$all_skipped) {
             $lang_code = 'SUCCESS';
-            if (count($GLOBALS['ATTACHED_MESSAGES_RAW']) != 0) {
-                $lang_code = 'SOME_ERRORS_OCCURRED';
+            foreach ($GLOBALS['ATTACHED_MESSAGES_RAW'] as $message) {
+                if ($message[1] == 'warn') {
+                    $lang_code = 'SOME_ERRORS_OCCURRED';
+                }
             }
             $out->attach(do_template('IMPORT_MESSAGE', array('_GUID' => '4c4860d021814ffd1df6e21e712c7b44', 'MESSAGE' => do_lang_tempcode($lang_code))));
         }
@@ -682,13 +693,13 @@ class Module_admin_import
             $count = 0;
 
             $extra = is_null($field_name_also) ? '' : (' OR ' . db_string_equal_to('m_name', $field_name_also));
-            $fields = $GLOBALS['SITE_DB']->query('SELECT m_table,m_name FROM ' . $GLOBALS['SITE_DB']->get_table_prefix() . 'db_meta WHERE (NOT (m_table LIKE \'' . db_encode_like('f_%') . '\')) AND (' . db_string_equal_to('m_type', $db_abstraction) . ' OR ' . db_string_equal_to('m_type', '*' . $db_abstraction) . ' OR ' . db_string_equal_to('m_type', '?' . $db_abstraction) . $extra . ')');
+            $fields = $GLOBALS['SITE_DB']->query('SELECT m_table,m_name FROM ' . $GLOBALS['SITE_DB']->get_table_prefix() . 'db_meta WHERE (NOT (m_table LIKE \'' . db_encode_like('f\_%') . '\')) AND (' . db_string_equal_to('m_type', $db_abstraction) . ' OR ' . db_string_equal_to('m_type', '*' . $db_abstraction) . ' OR ' . db_string_equal_to('m_type', '?' . $db_abstraction) . $extra . ')');
             foreach ($fields as $field) {
                 if ($field['m_table'] == 'stats') {
                     continue; // Lots of data and it's not important
                 }
 
-                //echo '(working) '.$field['m_table'].'/'.$field['m_name'].'<br />';
+                //echo '(working) ' . $field['m_table'] . '/' . $field['m_name'] . '<br />';
 
                 $values = $GLOBALS['SITE_DB']->query_select($field['m_table'], array('*'));
                 foreach ($values as $value) {
@@ -719,9 +730,10 @@ class Module_admin_import
 
         // _config.php
         global $FILE_BASE;
+        require_code('files');
         $config_file = '_config.php';
-        $config_file_handle = @fopen($FILE_BASE . '/' . $config_file, GOOGLE_APPENGINE ? 'wb' : 'wt') or intelligent_write_error($FILE_BASE . '/' . $config_file);
-        fwrite($config_file_handle, "<" . "?php\n");
+        $config_contents = '';
+        $config_contents .= "<" . "?php\n";
         global $SITE_INFO;
         $SITE_INFO['forum_type'] = 'cns';
         $SITE_INFO['cns_table_prefix'] = $SITE_INFO['table_prefix'];
@@ -732,12 +744,9 @@ class Module_admin_import
         $SITE_INFO['board_prefix'] = get_base_url();
         foreach ($SITE_INFO as $key => $val) {
             $_val = str_replace('\\', '\\\\', $val);
-            fwrite($config_file_handle, '$SITE_INFO[\'' . $key . '\']=\'' . $_val . "';\n");
+            $config_contents .= '$SITE_INFO[\'' . $key . '\']=\'' . $_val . "';\n";
         }
-        fwrite($config_file_handle, "?" . ">\n");
-        fclose($config_file_handle);
-        fix_permissions($FILE_BASE . '/' . $config_file);
-        sync_file($FILE_BASE . '/' . $config_file);
+        cms_file_put_contents_safe($FILE_BASE . '/' . $config_file, $config_contents, FILE_WRITE_FIX_PERMISSIONS | FILE_WRITE_SYNC_FILE);
         $out->attach(paragraph(do_lang_tempcode('CNS_CONVERTED_INFO')));
 
         // Add zone formally

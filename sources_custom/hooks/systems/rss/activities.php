@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -31,6 +31,10 @@ class Hook_rss_activities
      */
     public function run($_filters, $cutoff, $prefix, $date_string, $max)
     {
+        if (!$GLOBALS['SITE_DB']->table_exists('activities')) {
+            return null;
+        }
+
         require_lang('activities');
         require_code('activities');
 
@@ -64,6 +68,6 @@ class Hook_rss_activities
             $content->attach(do_template($prefix . 'ENTRY', array('VIEW_URL' => $view_url, 'SUMMARY' => $summary, 'EDIT_DATE' => $edit_date, 'IF_COMMENTS' => $if_comments, 'TITLE' => $news_title, 'CATEGORY_RAW' => $category_raw, 'CATEGORY' => $category, 'AUTHOR' => $author, 'ID' => $id, 'NEWS' => $news, 'DATE' => $news_date), null, false, null, '.xml', 'xml'));
         }
 
-        return array($content, do_lang('ACTIVITIES_TITLE'));
+        return array($content, do_lang('ACTIVITY'));
     }
 }

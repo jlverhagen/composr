@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -40,7 +40,12 @@ class Hook_cron_insults
         $insult_points = (isset($_insult_points) && is_numeric($_insult_points)) ? intval($_insult_points) : 10;
 
         // who to insult?
-        $selected_members = $GLOBALS['FORUM_DB']->query('SELECT id FROM ' . $GLOBALS['FORUM_DB']->get_table_prefix() . 'f_members WHERE  id <> ' . strval($GLOBALS['FORUM_DRIVER']->get_guest_id()) . ' ORDER BY RAND( ) ', 2, null, true);
+        $sql = 'SELECT id FROM ' . $GLOBALS['FORUM_DB']->get_table_prefix() . 'f_members WHERE id<>' . strval($GLOBALS['FORUM_DRIVER']->get_guest_id()) . ' AND ' . db_string_equal_to('m_validated_email_confirm_code', '');
+        if (addon_installed('unvalidated')) {
+            $sql .= ' AND m_validated=1';
+        }
+        $sql .= ' ORDER BY ' . db_function('RAND');
+        $selected_members = $GLOBALS['FORUM_DB']->query($sql, 2, null, true);
         $selected_member1 = (isset($selected_members[0]['id']) && $selected_members[0]['id'] > 0) ? $selected_members[0]['id'] : 0;
         $selected_member2 = (isset($selected_members[1]['id']) && $selected_members[1]['id'] > 0) ? $selected_members[1]['id'] : 0;
 
@@ -74,7 +79,7 @@ class Hook_cron_insults
                 $subject = do_lang('INSULT_PT_TOPIC', $displayname2, $displayname1, array($username2, $username1));
 
                 require_code('cns_topics_action');
-                $topic_id = cns_make_topic(null, $subject, '', 1, 1, 0, 0, 0, $selected_member2, $selected_member1, true, 0, null, '');
+                $topic_id = cns_make_topic(null, '', '', 1, 1, 0, 0, 0, $selected_member2, $selected_member1, true, 0, null, '');
 
                 require_code('cns_posts_action');
                 $post_id = cns_make_post($topic_id, $subject, $insult_pt_topic_post, 0, true, 1, 0, do_lang('SYSTEM'), null, null, $GLOBALS['FORUM_DRIVER']->get_guest_id(), null, null, null, false, true, null, true, $subject, 0, null, true, true, true);

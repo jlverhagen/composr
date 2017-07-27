@@ -27,7 +27,7 @@ function open_link_as_overlay(ob,width,height,target)
 		if ((typeof width=='undefined') || (!width)) var width='800';
 		if ((typeof height=='undefined') || (!height)) var height='auto';
 		var url=(typeof ob.href=='undefined')?ob.action:ob.href;
-		if (/:\/\/(.[^/]+)/.exec(url)[1]!=window.location.hostname) return true; // Cannot overlay, different domain
+		if (/:\/\/(.[^\/]+)/.exec(url)[1]!=window.location.hostname) return true; // Cannot overlay, different domain
 		if ((typeof target=='undefined') || (!target)) var target='_top';
 		var url_stripped=url.replace(/#.*/,'');
 		var new_url=url_stripped+((url_stripped.indexOf('?')==-1)?'?':'&')+'wide_high=1'+url.replace(/^[^\#]+/,'');
@@ -87,7 +87,7 @@ function open_link_as_overlay(ob,width,height,target)
 	{
 		if (typeof is_video=='undefined') is_video=false;
 		var has_full_button=(typeof a.childNodes[0]=='undefined') || (a.href!==a.childNodes[0].src);
-		_open_image_into_lightbox(a.href,a.title,null,null,has_full_button,is_video);
+		_open_image_into_lightbox(a.href,(typeof a.cms_tooltip_title!='undefined')?a.cms_tooltip_title:a.title,null,null,has_full_button,is_video);
 	}
 
 	function _open_image_into_lightbox(initial_img_url,description,x,n,has_full_button,is_video)
@@ -101,7 +101,7 @@ function open_link_as_overlay(ob,width,height,target)
 				<p id="lightbox_meta" style="display: none" class="associated_link associated_links_block_group"> \
 					<span id="lightbox_description">'+description+'</span> \
 					'+((n===null)?'':('<span id="lightbox_position_in_set"><span id="lightbox_position_in_set_x">'+x+'</span> / <span id="lightbox_position_in_set_n">'+n+'</span></span>'))+' \
-					'+(is_video?'':('<span id="lightbox_full_link"><a href="'+escape_html(initial_img_url)+'" target="_blank" title="{$STRIP_TAGS;,{!SEE_FULL_IMAGE}} {!LINK_NEW_WINDOW;}">{!SEE_FULL_IMAGE;}</a></span>'))+' \
+					'+(is_video?'':('<span id="lightbox_full_link"><a href="'+escape_html(initial_img_url)+'" target="_blank" title="{$STRIP_TAGS;,{!SEE_FULL_IMAGE}} {!LINK_NEW_WINDOW;^}">{!SEE_FULL_IMAGE;^}</a></span>'))+' \
 				</p> \
 			</div> \
 		';
@@ -259,7 +259,7 @@ function open_link_as_overlay(ob,width,height,target)
 
 function fauxmodal_confirm(question,callback,title)
 {
-	if (typeof title=='undefined') title='{!Q_SURE;}';
+	if (typeof title=='undefined') title='{!Q_SURE;^}';
 
 	/*{+START,IF,{$CONFIG_OPTION,js_overlays}}*/
 		var my_confirm={
@@ -289,7 +289,7 @@ function fauxmodal_alert(notice,callback,title,unescaped)
 {
 	if ((typeof callback=='undefined') || (!callback)) var callback=function() {};
 
-	if (typeof title=='undefined' || title===null) var title='{!MESSAGE;}';
+	if (typeof title=='undefined' || title===null) var title='{!MESSAGE;^}';
 	if (typeof unescaped=='undefined') unescaped=false;
 
 	/*{+START,IF,{$CONFIG_OPTION,js_overlays}}*/
@@ -469,7 +469,7 @@ function ModalWindow()
 		BOX_NORTH_PERIPHERARY: 4,
 		BOX_SOUTH_PERIPHERARY: 4,
 		VCENTRE_FRACTION_SHIFT: 0.5, // Fraction of remaining top gap also removed (as overlays look better slightly higher than vertical centre)
-		LOADING_SCREEN_HEIGHT: 10,
+		LOADING_SCREEN_HEIGHT: 100,
 
 		// Properties
 		box_wrapper: null,
@@ -612,14 +612,14 @@ function ModalWindow()
 			this.box_wrapper.childNodes[0].style.width=box_width;
 			this.box_wrapper.childNodes[0].style.height=box_height;
 			var iframe=this.box_wrapper.getElementsByTagName('iframe');
-			if ((typeof iframe[0]!='undefined') && (iframe[0].contentWindow) && (iframe[0].contentWindow.location.host==window.location.host) && (iframe[0].contentWindow.document) && (iframe[0].contentWindow.document.body)) // Balance iframe height
+			if ((has_iframe_ownership(iframe[0])) && (iframe[0].contentWindow.document.body)) // Balance iframe height
 			{
 				iframe[0].style.width='100%';
 				if (height=='auto')
 				{
 					if (!init)
 					{
-						detected_box_height=get_window_scroll_height(iframe[0].contentWindow,true);
+						detected_box_height=get_window_scroll_height(iframe[0].contentWindow);
 						iframe[0].style.height=detected_box_height+'px';
 					}
 				} else
@@ -675,7 +675,7 @@ function ModalWindow()
 				{+END}
 
 				if ((init) || (was_fixed)) do_scroll=true;
-				if (/*maybe a navigation has happened and we need to scroll back up*/(typeof iframe[0]!='undefined') && (typeof iframe[0].contentWindow.scrolled_up_for=='undefined'))
+				if (/*maybe a navigation has happened and we need to scroll back up*/(typeof iframe[0]!='undefined') && (has_iframe_ownership(iframe[0])) && (typeof iframe[0].contentWindow.scrolled_up_for=='undefined'))
 				{
 					do_scroll=true;
 				}
@@ -691,7 +691,7 @@ function ModalWindow()
 				try // Scroll to top to see
 				{
 					this.top_window.scrollTo(0,0);
-					if (typeof iframe[0]!='undefined')
+					if ((typeof iframe[0]!='undefined') && (has_iframe_ownership(iframe[0])))
 						iframe[0].contentWindow.scrolled_up_for=true;
 				}
 				catch (e) {}
@@ -856,12 +856,12 @@ function ModalWindow()
 
 					container.appendChild(iframe);
 
-					animate_frame_load(iframe,'overlay_iframe',50);
+					animate_frame_load(iframe,'overlay_iframe',50,true);
 
 					window.setTimeout(function() { _this.add_event(_this.box_wrapper,'click',_this.clickout_finished); },1000);
 
 					this.add_event(iframe,'load',function() {
-						if ((iframe.contentWindow.location.host==window.location.host) && (iframe.contentWindow.document) && (typeof iframe.contentWindow.document.getElementsByTagName('h1')[0]=='undefined') && (typeof iframe.contentWindow.document.getElementsByTagName('h2')[0]=='undefined'))
+						if ((has_iframe_ownership(iframe)) && (typeof iframe.contentWindow.document.getElementsByTagName('h1')[0]=='undefined') && (typeof iframe.contentWindow.document.getElementsByTagName('h2')[0]=='undefined'))
 						{
 							if (iframe.contentWindow.document.title!='')
 							{
@@ -874,7 +874,14 @@ function ModalWindow()
 					// Fiddle it, to behave like a popup would
 					var name=this.name;
 					var make_frame_like_popup=function() {
-						if ((iframe) && (iframe.contentWindow) && (iframe.contentWindow.location.host==window.location.host) && (iframe.contentWindow.document) && (iframe.contentWindow.document.body) && (typeof iframe.contentWindow.document.body.done_popup_trans=='undefined'))
+						if (iframe.parentNode.parentNode.parentNode.parentNode==null && _this.iframe_restyle_timer!=null)
+						{
+							clearInterval(_this.iframe_restyle_timer);
+							_this.iframe_restyle_timer=null;
+							return;
+						}
+
+						if ((has_iframe_ownership(iframe)) && (iframe.contentWindow.document.body) && (typeof iframe.contentWindow.document.body.done_popup_trans=='undefined'))
 						{
 							iframe.contentWindow.document.body.style.background='transparent';
 
@@ -943,6 +950,12 @@ function ModalWindow()
 							if (get_inner_html(iframe.contentWindow.document.body).length>300) // Loaded now
 							{
 								iframe.contentWindow.document.body.done_popup_trans=true;
+							}
+						} else
+						{
+							if (has_iframe_loaded(iframe) && !has_iframe_ownership(iframe)) {
+								iframe.scrolling='yes';
+								iframe.style.height='500px';
 							}
 						}
 

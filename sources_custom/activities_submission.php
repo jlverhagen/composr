@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -70,7 +70,6 @@ function activities_addon_syndicate_described_activity($a_language_string_code =
                 'a_page_link_3' => $a_page_link_3,
                 'a_time' => time(),
                 'a_addon' => $a_addon,
-                'a_is_public' => $a_is_public
             );
         $stored_id = $GLOBALS['SITE_DB']->query_insert('activities', $row, true);
 
@@ -78,7 +77,7 @@ function activities_addon_syndicate_described_activity($a_language_string_code =
         log_newest_activity($stored_id, 1000, true/*We do want to force it, IDs can get out of sync on dev sites*/);
 
         // External places
-        if (($a_is_public == 1) && (!$GLOBALS['IS_ACTUALLY_ADMIN']/*SU means oauth'd user is not intended user*/)) {
+        if (($a_is_public == 1) && (($a_language_string_code == 'RAW_DUMP') || (!$GLOBALS['IS_ACTUALLY_ADMIN']/*SU means oauth'd user is not intended user*/))) {
             $dests = find_all_hooks('systems', 'syndication');
             foreach (array_keys($dests) as $hook) {
                 require_code('hooks/systems/syndication/' . $hook);
@@ -121,12 +120,12 @@ function activities_ajax_submit_handler()
     $guest_id = intval($GLOBALS['FORUM_DRIVER']->get_guest_id());
 
     if (!is_guest(get_member())) {
-        $map['STATUS'] = trim(either_param_string('status', ''));
+        $map['STATUS'] = trim(post_param_string('status', ''));
 
         if ((post_param_string('zone', '') != '') && ($map['STATUS'] != '') && ($map['STATUS'] != do_lang('activities:TYPE_HERE'))) {
             comcode_to_tempcode($map['STATUS'], $guest_id, false, null);
 
-            $map['PRIVACY'] = either_param_string('privacy', 'private');
+            $map['PRIVACY'] = post_param_string('privacy', 'private');
 
             if (strlen(strip_tags($map['STATUS'])) < strlen($map['STATUS'])) {
                 $help_zone = get_comcode_zone('userguide_comcode', false);
@@ -151,9 +150,9 @@ function activities_ajax_submit_handler()
                         ($map['PRIVACY'] == 'public') ? 1 : 0
                     );
 
-                    if ($stored_id > 0) {
+                    if ($stored_id !== null) {
                         $response .= '<success>1</success><feedback>Message received.</feedback>';
-                    } elseif ($stored_id == -1) {
+                    } else {
                         $response .= '<success>0</success><feedback>Message already received.</feedback>';
                     }
                 }
@@ -305,8 +304,6 @@ function activities_ajax_removal_handler()
  * Maintains a text file in data_custom. This contains the latest activity's ID.
  * Since the JavaScript polls for updates, it can check against this before
  * running any PHP.
- * Locking timeout code provided by "administrator at proxy-list dot org" on
- * http://php.net/manual/en/function.flock.php
  *
  * @param  integer $id The ID we are going to write to the file
  * @param  integer $timeout Our timeout in milliseconds (how long we should keep trying). Default: 1000
@@ -316,48 +313,9 @@ function log_newest_activity($id, $timeout = 1000, $force = false)
 {
     $file_path = get_custom_file_base() . '/data_custom/latest_activity.txt';
 
-    if (!file_exists(dirname($file_path))) {
-        require_code('files2');
-        make_missing_directory(dirname($file_path));
+    $old_id = @file_get_contents($file_path);
+    if (($force) || ($old_id === false) || (intval($old_id) < $id)) {
+        require_code('files');
+        cms_file_put_contents_safe($file_path, strval($id), FILE_WRITE_FAILURE_SOFT | FILE_WRITE_FIX_PERMISSIONS | FILE_WRITE_SYNC_FILE);
     }
-
-    // Grab a pointer for appending to this file
-    // NOTE: ALWAYS open as append! Opening as write will wipe the file during
-    // the fopen call, which is before we have a lock.
-    $fp = @fopen($file_path, GOOGLE_APPENGINE ? 'w+' : 'a+');
-
-    // Only bother running if this file can be opened
-    if ($fp !== false) {
-        // Grab our current time in milliseconds
-        $start_time = microtime(true);
-
-        $sleep_multiplier = floatval($timeout) / 10.0;
-
-        @flock($fp, LOCK_EX);
-
-        // Read the current value
-        rewind($fp);
-        $old_id = intval(fgets($fp, 1024));
-        // See if we should be updating the file (IDs increase numerically)
-        if ($force || ($old_id < $id)) {
-            // If so then wipe the file (since we're in append mode,
-            // but we want to overwrite)
-            if (!GOOGLE_APPENGINE) {
-                ftruncate($fp, 0);
-            }
-
-            // Save our new ID
-            fwrite($fp, strval($id));
-        }
-
-        @flock($fp, LOCK_UN);
-        fclose($fp);
-    } else {
-        if (function_exists('attach_message')) {
-            attach_message(intelligent_write_error_inline($file_path), 'warn');
-        }
-    }
-
-    fix_permissions($file_path);
-    sync_file($file_path);
 }

@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -51,6 +51,6 @@ class Hook_config_is_on_topic_pin_buy
      */
     public function get_default()
     {
-        return (!addon_installed('cns_forum')) ? null : '1';
+        return has_no_forum() ? null : '1';
     }
 }

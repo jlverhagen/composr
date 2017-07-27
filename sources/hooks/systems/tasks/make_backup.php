@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -36,6 +36,6 @@ class Hook_task_make_backup
     {
         require_code('backup');
 
-        return array('text/html', make_backup_2($file, $b_type, $max_size));
+        return array('text/html', make_backup($file, $b_type, $max_size));
     }
 }

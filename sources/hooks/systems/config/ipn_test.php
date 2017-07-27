@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -38,7 +38,7 @@ class Hook_config_ipn_test
             'explanation' => 'CONFIG_OPTION_ipn_test',
             'shared_hosting_restricted' => '0',
             'list_options' => '',
-            'order_in_category_group' => 1,
+            'order_in_category_group' => 2,
 
             'addon' => 'ecommerce',
         );

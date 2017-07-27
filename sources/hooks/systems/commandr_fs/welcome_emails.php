@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -28,7 +28,7 @@ class Hook_commandr_fs_welcome_emails extends Resource_fs_base
     public $file_resource_type = 'welcome_email';
 
     /**
-     * Standard commandr_fs function for seeing how many resources are. Useful for determining whether to do a full rebuild.
+     * Standard Commandr-fs function for seeing how many resources are. Useful for determining whether to do a full rebuild.
      *
      * @param  ID_TEXT $resource_type The resource type
      * @return integer How many resources there are
@@ -39,7 +39,7 @@ class Hook_commandr_fs_welcome_emails extends Resource_fs_base
     }
 
     /**
-     * Standard commandr_fs function for searching for a resource by label.
+     * Standard Commandr-fs function for searching for a resource by label.
      *
      * @param  ID_TEXT $resource_type The resource type
      * @param  LONG_TEXT $label The resource label
@@ -47,7 +47,7 @@ class Hook_commandr_fs_welcome_emails extends Resource_fs_base
      */
     public function find_resource_by_label($resource_type, $label)
     {
-        $_ret = $GLOBALS['FORUM_DB']->query_select('f_welcome_emails', array('id'), array('w_name' => $label));
+        $_ret = $GLOBALS['FORUM_DB']->query_select('f_welcome_emails', array('id'), array('w_name' => $label), 'ORDER BY id');
         $ret = array();
         foreach ($_ret as $r) {
             $ret[] = strval($r['id']);
@@ -56,24 +56,7 @@ class Hook_commandr_fs_welcome_emails extends Resource_fs_base
     }
 
     /**
-     * Standard commandr_fs introspection function.
-     *
-     * @return array The properties available for the resource type
-     */
-    protected function _enumerate_file_properties()
-    {
-        return array(
-            'subject' => 'SHORT_TRANS',
-            'text' => 'LONG_TRANS',
-            'send_time' => 'INTEGER',
-            'newsletter' => '?AUTO_LINK',
-            'usergroup' => '?AUTO_LINK',
-            'usergroup_type' => 'ID_TEXT',
-        );
-    }
-
-    /**
-     * Standard commandr_fs add function for resource-fs hooks. Adds some resource with the given label and properties.
+     * Standard Commandr-fs add function for resource-fs hooks. Adds some resource with the given label and properties.
      *
      * @param  LONG_TEXT $filename Filename OR Resource label
      * @param  string $path The path (blank: root / not applicable)
@@ -82,23 +65,26 @@ class Hook_commandr_fs_welcome_emails extends Resource_fs_base
      */
     public function file_add($filename, $path, $properties)
     {
-        list($properties, $label) = $this->_file_magic_filter($filename, $path, $properties);
+        list($properties, $label) = $this->_file_magic_filter($filename, $path, $properties, $this->file_resource_type);
 
         require_code('cns_general_action');
 
         $subject = $this->_default_property_str($properties, 'subject');
         $text = $this->_default_property_str($properties, 'text');
         $send_time = $this->_default_property_int($properties, 'send_time');
-        $newsletter = $this->_default_property_int_null($properties, 'newsletter');
-        $usergroup = $this->_default_property_int_null($properties, 'usergroup');
+        $newsletter = $this->_default_property_resource_id_null('newsletter', $properties, 'newsletter');
+        $usergroup = $this->_default_property_group_null($properties, 'usergroup');
         $usergroup_type = $this->_default_property_str($properties, 'usergroup_type');
 
         $id = cns_make_welcome_email($label, $subject, $text, $send_time, $newsletter, $usergroup, $usergroup_type);
+
+        $this->_resource_save_extend($this->file_resource_type, strval($id), $filename, $label, $properties);
+
         return strval($id);
     }
 
     /**
-     * Standard commandr_fs load function for resource-fs hooks. Finds the properties for some resource.
+     * Standard Commandr-fs load function for resource-fs hooks. Finds the properties for some resource.
      *
      * @param  SHORT_TEXT $filename Filename
      * @param  string $path The path (blank: root / not applicable). It may be a wildcarded path, as the path is used for content-type identification only. Filenames are globally unique across a hook; you can calculate the path using ->search.
@@ -114,19 +100,21 @@ class Hook_commandr_fs_welcome_emails extends Resource_fs_base
         }
         $row = $rows[0];
 
-        return array(
+        $properties = array(
             'label' => $row['w_name'],
             'subject' => get_translated_text($row['w_subject'], $GLOBALS['FORUM_DB']),
             'text' => get_translated_text($row['w_text'], $GLOBALS['FORUM_DB']),
             'send_time' => $row['w_send_time'],
-            'newsletter' => $row['w_newsletter'],
-            'usergroup' => $row['w_usergroup'],
+            'newsletter' => remap_resource_id_as_portable('newsletter', $row['w_newsletter']),
+            'usergroup' => remap_resource_id_as_portable('group', $row['w_usergroup']),
             'usergroup_type' => $row['w_usergroup_type'],
         );
+        $this->_resource_load_extend($resource_type, $resource_id, $properties, $filename, $path);
+        return $properties;
     }
 
     /**
-     * Standard commandr_fs edit function for resource-fs hooks. Edits the resource to the given properties.
+     * Standard Commandr-fs edit function for resource-fs hooks. Edits the resource to the given properties.
      *
      * @param  ID_TEXT $filename The filename
      * @param  string $path The path (blank: root / not applicable)
@@ -136,7 +124,7 @@ class Hook_commandr_fs_welcome_emails extends Resource_fs_base
     public function file_edit($filename, $path, $properties)
     {
         list($resource_type, $resource_id) = $this->file_convert_filename_to_id($filename);
-        list($properties,) = $this->_file_magic_filter($filename, $path, $properties);
+        list($properties,) = $this->_file_magic_filter($filename, $path, $properties, $this->file_resource_type);
 
         require_code('cns_general_action2');
 
@@ -144,17 +132,19 @@ class Hook_commandr_fs_welcome_emails extends Resource_fs_base
         $subject = $this->_default_property_str($properties, 'subject');
         $text = $this->_default_property_str($properties, 'text');
         $send_time = $this->_default_property_int($properties, 'send_time');
-        $newsletter = $this->_default_property_int_null($properties, 'newsletter');
-        $usergroup = $this->_default_property_int_null($properties, 'usergroup');
+        $newsletter = $this->_default_property_resource_id_null('newsletter', $properties, 'newsletter');
+        $usergroup = $this->_default_property_group_null($properties, 'usergroup');
         $usergroup_type = $this->_default_property_str($properties, 'usergroup_type');
 
         cns_edit_welcome_email(intval($resource_id), $label, $subject, $text, $send_time, $newsletter, $usergroup, $usergroup_type);
+
+        $this->_resource_save_extend($this->file_resource_type, $resource_id, $filename, $label, $properties);
 
         return $resource_id;
     }
 
     /**
-     * Standard commandr_fs delete function for resource-fs hooks. Deletes the resource.
+     * Standard Commandr-fs delete function for resource-fs hooks. Deletes the resource.
      *
      * @param  ID_TEXT $filename The filename
      * @param  string $path The path (blank: root / not applicable)

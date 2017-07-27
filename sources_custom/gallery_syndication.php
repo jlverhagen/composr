@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -180,7 +180,7 @@ function _get_local_video($row)
     }
 
     $tags = array_reverse($categories);
-    list($keywords,) = seo_meta_get_for('video', $row['id']);
+    list($keywords,) = seo_meta_get_for('video', strval($row['id']));
     if ($keywords != '') {
         $tags = array_unique(array_merge($tags, array_map('trim', explode(',', $keywords))));
     }

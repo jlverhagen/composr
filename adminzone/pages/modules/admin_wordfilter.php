@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -37,7 +37,7 @@ class Module_admin_wordfilter
         $info['hack_version'] = null;
         $info['version'] = 4;
         $info['locked'] = true;
-        $info['update_require_upgrade'] = 1;
+        $info['update_require_upgrade'] = true;
         return $info;
     }
 
@@ -62,11 +62,11 @@ class Module_admin_wordfilter
                 'id' => '*AUTO',
                 'word' => 'SHORT_TEXT',
                 'w_replacement' => 'SHORT_TEXT',
-                'w_substr' => '*BINARY'
+                'w_substr' => 'BINARY'
             ));
 
             $naughties = array(
-                'arsehole', 'asshole', 'arse', 'bastard', 'cock', 'cocked', 'cocksucker', 'crap', 'cunt', 'cum',
+                'arsehole', 'asshole', 'arse', 'bastard', 'cock', 'cocked', 'cocksucker', 'cunt', 'cum',
                 'blowjob', 'bollocks', 'bondage', 'bugger', 'buggery', 'dickhead', 'dildo', 'faggot', 'fuck', 'fucked', 'fucking',
                 'fucker', 'gayboy', 'jackoff', 'jerk-off', 'motherfucker', 'nigger', 'piss', 'pissed', 'puffter', 'pussy',
                 'queers', 'retard', 'shag', 'shagged',
@@ -78,7 +78,12 @@ class Module_admin_wordfilter
         }
 
         if ((!is_null($upgrade_from)) && ($upgrade_from < 4)) {
-            $GLOBALS['SITE_DB']->add_table_field('wordfilter', 'id', '*AUTO');
+            $GLOBALS['SITE_DB']->add_auto_key('wordfilter');
+
+            if ((strpos(get_db_type(), 'mysql') !== false) && (get_charset() == 'utf-8')) {
+                // Ccould not be made utf8mb4 in advance but can be now because 'id' fields was added as the key
+                $GLOBALS['SITE_DB']->query('ALTER TABLE ' . get_table_prefix() . 'wordfilter CONVERT TO CHARACTER SET utf8mb4');
+            }
         }
     }
 
@@ -88,7 +93,7 @@ class Module_admin_wordfilter
      * @param  boolean $check_perms Whether to check permissions.
      * @param  ?MEMBER $member_id The member to check permissions as (null: current user).
      * @param  boolean $support_crosslinks Whether to allow cross links to other modules (identifiable via a full-page-link rather than a screen-name).
-     * @param  boolean $be_deferential Whether to avoid any entry-point (or even return NULL to disable the page in the Sitemap) if we know another module, or page_group, is going to link to that entry-point. Note that "!" and "browse" entry points are automatically merged with container page nodes (likely called by page-groupings) as appropriate.
+     * @param  boolean $be_deferential Whether to avoid any entry-point (or even return null to disable the page in the Sitemap) if we know another module, or page_group, is going to link to that entry-point. Note that "!" and "browse" entry points are automatically merged with container page nodes (likely called by page-groupings) as appropriate.
      * @return ?array A map of entry points (screen-name=>language-code/string or screen-name=>[language-code/string, icon-theme-image]) (null: disabled).
      */
     public function get_entry_points($check_perms = true, $member_id = null, $support_crosslinks = true, $be_deferential = false)
@@ -101,7 +106,7 @@ class Module_admin_wordfilter
     public $title;
 
     /**
-     * Module pre-run function. Allows us to know meta-data for <head> before we start streaming output.
+     * Module pre-run function. Allows us to know metadata for <head> before we start streaming output.
      *
      * @return ?Tempcode Tempcode indicating some kind of exceptional output (null: none).
      */

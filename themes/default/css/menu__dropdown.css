@@ -1,6 +1,6 @@
 /*
  {$BRAND_NAME`}
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 */
 
 /*
@@ -13,6 +13,11 @@ For example:
 */
 
 
+/* For a Comcode page we probably don't want to fit it alongside other stuff, so wrap the floats */
+.comcode_page .menu_type__dropdown {
+	overflow: hidden;
+}
+
 .global_navigation .menu_type__dropdown {
 	float: left;
 }
@@ -23,12 +28,7 @@ For example:
 	margin-{!en_right}: -1px;
 	margin-bottom: 0;
 	{$BETA_CSS_PROPERTY,transition: color\,background-color 0.5s linear;}
-	/*{+START,IF,{$EQ,{$LANG},EN}}*/
-		font-size: 0.9em;
-	/*{+END}*/
-	/*{+START,IF,{$NEQ,{$LANG},EN}}*/
-		font-size: 0.72em;
-	/*{+END}*/
+	font-size: 0.9em;
 	padding: 0.5em 0.25em;
 }
 
@@ -37,7 +37,6 @@ For example:
 }
 
 .menu_type__dropdown li.toplevel.last {
-	float: none !important; /* so it eats all space remaining */
 	overflow: hidden; /* so it is shunted against its left-hand neighbours without overlapping */
 	margin-{!en_right}: 0 !important; /* as would cause wrapping with the overflow hidden */
 	position: relative;
@@ -111,10 +110,6 @@ For example:
 	font-weight: normal;
 	border-bottom: 1px solid {$GET,standard_border};
 	min-height: 20px;
-
-	/* We do want wrapping for this, as menu labels could be longer than the available space between the start of the dropdown label and the edge of the fixed width */
-	max-width: 18em;
-	white-space: normal;
 }
 
 .menu_type__dropdown .nlevel .menu_spacer {
@@ -170,7 +165,6 @@ body .menu_type__dropdown .nlevel .has_img>a, body .menu_type__dropdown .nlevel.
 
 .menu_type__dropdown .nlevel .has_img>img {
 	width: 20px;
-	float: left; /* So that wrapping alignment is neat */
 }
 
 
@@ -179,5 +173,5 @@ body .menu_type__dropdown .nlevel .has_img>a, body .menu_type__dropdown .nlevel.
 }
 
 .menu_type__dropdown img {
-	margin-right: 0.5em;
+	margin-right: 0.2em;
 }

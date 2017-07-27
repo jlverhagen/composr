@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -43,7 +43,7 @@ class forum_poll_test_set extends cms_test_case
 
     public function testEditPoll()
     {
-        cns_edit_poll($this->poll_id, 'Who am I?', 1, 1, 1, 4, 1, array(1, 2, 3), 'nothing');
+        cns_edit_poll($this->poll_id, 'Who am I?', 1, 1, 1, 4, 1, array('1', '2', '3'), 'nothing');
 
         $this->assertTrue('Who am I?' == $GLOBALS['FORUM_DB']->query_select_value('f_polls', 'po_question', array('id' => $this->poll_id)));
     }

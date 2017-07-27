@@ -70,7 +70,9 @@ In the Admin Zone you can define what notification types are "locked-down". You 
  - Stop any member from receiving particular notification types
  - Force members to receive particular notifications types
 
-Access this from Admin Zone > Setup > Notification lock-down.
+Locked-down notifications will not show on the user's notification configuration at all.
+
+Set lock-downs from Admin Zone > Setup > Notification lock-down.
 
 You will see the following columns:
  - Notification title (the column title is actually unlabelled, but this is what it is)
@@ -78,7 +80,7 @@ You will see the following columns:
  - "Not locked down, free choice" -- this is a checkbox, defaulting to 'On'. If you uncheck it then the members will have the settings that you choose in the interface (i.e. they can no longer choose their own settings). If it stays checked, the following checkboxes have no effect.
  - "Member's typical notification type" -- specifies that a notification type will be forcibly sent out in the member's average way they've set to receive notifications
  - (All the different ways of receiving notifications) -- the checkbox selections here determine [i]specifically[/i] how members will forcibly receive this notification type (you will not typically use this in combination with "Member's typical notification type").
- 
+
 If no checkboxes are checked then the members will not be able to receive the notification type at all. This is quite a common configuration, essentially allowing you to turn off a notification type for the whole website.
 
 Note that the settings apply to all members (while respecting the notification permissions). You cannot set lock-downs against specific usergroups.
@@ -101,6 +103,14 @@ Digest e-mails provide combined summaries of activity.
 It is possible digest e-mails could become very long. In this case, Composr would struggle to parse their Comcode. Composr therefore implements a 100kb limit per digest.
 
 Members are informed if the limit is exceeded (while still given the subjects of each digest item). The member may then choose to change their settings to something more manageable (such as more regular, or smaller, digests).
+
+[title="3"]Debugging[/title]
+
+Digests are sent out via the scheduler. A member can only choose to receive digests if the scheduler is set up and if they have configured an e-mail address.
+
+Digests are not sent out at any specific time (to avoid overloading outbound e-mail each night), but rather each member's digests are individually time-tracked using the [tt]digestives_consumed[/tt] table. For each member there is a timestamp in that table representing when each of their digest's was last sent. When the scheduler runs it looks to see what digests are due and sends them if there's any content for them.
+
+Actual digest content is queued up in the [tt]digestives_tin[/tt] table.
 
 [title="2"]See also[/title]
 

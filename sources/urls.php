@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -18,6 +18,25 @@
  * @package    core
  */
 
+/*
+Conversions...
+
+Page-link -> Structs : page_link_decode
+Page-link -> Tempcode : (none)
+Page-link -> URL : page_link_to_url
+Structs -> Page-link : build_page_link
+Structs -> Tempcode : build_url
+Structs -> URL : _build_url
+Tempcode -> Page-link : (none)
+Tempcode -> Structs : (none)
+Tempcode -> URL : static_evaluate_tempcode
+URL -> Page-link : url_to_page_link
+URL -> Structs : parse_url
+URL -> Tempcode : N/A
+
+(Structs aren't consistent, and just refer to some kind of PHP data structure involving arrays)
+*/
+
 /**
  * Standard code module initialisation function.
  *
@@ -28,8 +47,8 @@ function init__urls()
     global $HTTPS_PAGES_CACHE;
     $HTTPS_PAGES_CACHE = null;
 
-    global $USE_REWRITE_PARAMS_CACHE;
-    $USE_REWRITE_PARAMS_CACHE = null;
+    global $CAN_TRY_URL_SCHEMES_CACHE;
+    $CAN_TRY_URL_SCHEMES_CACHE = null;
 
     global $HAS_KEEP_IN_URL_CACHE;
     $HAS_KEEP_IN_URL_CACHE = null;
@@ -57,34 +76,34 @@ function init__urls()
     global $SELF_URL_CACHED;
     $SELF_URL_CACHED = null;
 
-    define('SELF_REDIRECT', '!--:)defUNLIKELY');
+    global $HAS_NO_KEEP_CONTEXT, $NO_KEEP_CONTEXT_STACK;
+    $HAS_NO_KEEP_CONTEXT = false;
+    $NO_KEEP_CONTEXT_STACK = array();
+
+    if (!defined('SELF_REDIRECT')) {
+        define('SELF_REDIRECT', '!--:)defUNLIKELY');
+    }
 }
 
 /**
  * Get a well formed URL equivalent to the current URL. Reads direct from the environment and does no clever mapping at all. This function should rarely be used.
  *
+ * @param boolean $script_name_if_cli Return the script name instead of a URL, if running on the CLI. If this is set to false it will return the base URL instead.
  * @return URLPATH The URL
  */
-function get_self_url_easy()
+function get_self_url_easy($script_name_if_cli = false)
 {
+    $cli = ((php_function_allowed('php_sapi_name')) && (php_sapi_name() == 'cli') && (cms_srv('REMOTE_ADDR') == ''));
+    if ($cli) {
+        if ($script_name_if_cli) {
+            return $_SERVER['argv'][0];
+        }
+        return get_base_url();
+    }
+
     $protocol = tacit_https() ? 'https' : 'http';
     $self_url = $protocol . '://' . cms_srv('HTTP_HOST');
-    $ruri = cms_srv('REQUEST_URI');
-    if ($ruri != '') {
-        if (substr($ruri, 0, 1) != '/') {
-            $self_url .= '/';
-        }
-        $self_url .= $ruri;
-    } else {
-        $s = cms_srv('PHP_SELF');
-        if (substr($s, 0, 1) != '/') {
-            $self_url .= '/';
-        }
-        $self_url .= $s;
-        if ((array_key_exists('QUERY_STRING', $_SERVER)) && ($_SERVER['QUERY_STRING'] != '')) {
-            $self_url .= '?' . $_SERVER['QUERY_STRING'];
-        }
-    }
+    $self_url .= cms_srv('REQUEST_URI');
     return $self_url;
 }
 
@@ -95,7 +114,7 @@ function get_self_url_easy()
  * @param  boolean $root_if_posted Whether to direct to the default page if there was a POST request leading to where we are now (i.e. to avoid missing post fields when we go to this URL)
  * @param  ?array $extra_params A map of extra parameters for the URL (null: none)
  * @param  boolean $posted_too Whether to also keep POSTed data, in the GET request (useful if either_param_string is used to get the data instead of post_param_string - of course the POST data must be of the not--persistent-state-changing variety)
- * @param  boolean $avoid_remap Whether to avoid mod_rewrite (sometimes essential so we can assume the standard URL parameter addition scheme in templates)
+ * @param  boolean $avoid_remap Whether to avoid URL Schemes (sometimes essential so we can assume the standard URL parameter addition scheme in templates)
  * @return mixed The URL (Tempcode or string)
  */
 function get_self_url($evaluate = false, $root_if_posted = false, $extra_params = null, $posted_too = false, $avoid_remap = false)
@@ -104,14 +123,14 @@ function get_self_url($evaluate = false, $root_if_posted = false, $extra_params 
         $extra_params = array();
     }
 
-    global $SELF_URL_CACHED;
+    global $SELF_URL_CACHED, $IN_SELF_ROUTING_SCRIPT;
     $cacheable = ($evaluate) && (!$root_if_posted) && ($extra_params === array()) && (!$posted_too) && (!$avoid_remap);
     if (($cacheable) && ($SELF_URL_CACHED !== null)) {
         return $SELF_URL_CACHED;
     }
 
     if (running_script('execute_temp')) {
-        return get_self_url_easy();
+        return get_base_url();
     }
 
     if ($posted_too) {
@@ -132,20 +151,23 @@ function get_self_url($evaluate = false, $root_if_posted = false, $extra_params 
         $extra_params = array_merge($post_array, $extra_params);
     }
     $page = '_SELF';
-    if (($root_if_posted) && (count($_POST) != 0)) {
+    $zone = '_SELF';
+    if (($root_if_posted) && (has_interesting_post_fields()) || !$IN_SELF_ROUTING_SCRIPT) {
         $page = '';
+        $zone = 'site';
+        unset($extra_params['page']);
     }
     $params = array('page' => $page);
     $skip = array();
     foreach ($extra_params as $key => $val) {
         if ($val === null) {
-            $skip[$key] = 1;
+            $skip[$key] = true;
         } else {
             $params[$key] = $val;
         }
     }
 
-    $url = build_url($params, '_SELF', $skip, true, $avoid_remap);
+    $url = build_url($params, $zone, $skip, true, $avoid_remap);
     if ($evaluate) {
         $ret = $url->evaluate();
         if ($cacheable) {
@@ -161,22 +183,22 @@ function get_self_url($evaluate = false, $root_if_posted = false, $extra_params 
  * Encode a URL component in such a way that it won't get nuked by Apache %2F blocking security and url encoded '&' screwing. The get_param_string function will map it back. Hackerish but necessary.
  *
  * @param  URLPATH $url_part The URL to encode
- * @param  ?boolean $consider_rewrite Whether we have to consider mod_rewrite (null: don't know, look up)
+ * @param  ?boolean $can_try_url_schemes Whether we have to consider URL Schemes (null: don't know, look up)
  * @return URLPATH The encoded result
  */
-function cms_url_encode($url_part, $consider_rewrite = null)
+function cms_url_encode($url_part, $can_try_url_schemes = null)
 {
     // Slipstream for 99.99% of data
     $url_part_encoded = urlencode($url_part);
-    if ($url_part_encoded == $url_part) {
+    if ($url_part_encoded === $url_part) {
         return $url_part_encoded;
     }
 
-    if ($consider_rewrite === null) {
-        $consider_rewrite = can_try_mod_rewrite();
+    if ($can_try_url_schemes === null) {
+        $can_try_url_schemes = can_try_url_schemes();
     }
-    if ($consider_rewrite) { // These interfere with mod_rewrite processing because they get pre-decoded and make things ambiguous
-        //$url_part=str_replace(':','(colon)',$url_part); We'll ignore theoretical problem here- we won't expect there to be a need for encodings within redirect URL paths (params is fine, handles naturally)
+    if ($can_try_url_schemes) { // These interfere with URL Scheme processing because they get pre-decoded and make things ambiguous
+        //$url_part = str_replace(':', '(colon)', $url_part); We'll ignore theoretical problem here- we won't expect there to be a need for encodings within redirect URL paths (params is fine, handles naturally)
         $url_part = str_replace(array('/', '&', '#'), array(':slash:', ':amp:', ':uhash:'), $url_part); // horrible but mod_rewrite does it so we need to
     }
     $url_part = urlencode($url_part);
@@ -187,18 +209,18 @@ function cms_url_encode($url_part, $consider_rewrite = null)
  * Encode a URL component, as per cms_url_encode but without slashes being encoded.
  *
  * @param  URLPATH $url_part The URL to encode
- * @param  ?boolean $consider_rewrite Whether we have to consider mod_rewrite (null: don't know, look up)
+ * @param  ?boolean $can_try_url_schemes Whether we have to consider URL Schemes (null: don't know, look up)
  * @return URLPATH The encoded result
  */
-function cms_url_encode_mini($url_part, $consider_rewrite = null)
+function cms_url_encode_mini($url_part, $can_try_url_schemes = null)
 {
     // Slipstream for 99.99% of data
     $url_part_encoded = urlencode($url_part);
-    if ($url_part_encoded == $url_part) {
+    if ($url_part_encoded === $url_part) {
         return $url_part_encoded;
     }
 
-    return str_replace('%3Aslash%3A', '/', cms_url_encode($url_part, $consider_rewrite));
+    return str_replace('%3Aslash%3A', '/', cms_url_encode($url_part, $can_try_url_schemes));
 }
 
 /**
@@ -209,11 +231,32 @@ function cms_url_encode_mini($url_part, $consider_rewrite = null)
  */
 function cms_url_decode_post_process($url_part)
 {
-    if ((strpos($url_part, ':') !== false) && (can_try_mod_rewrite())) {
+    if ((strpos($url_part, ':') !== false) && (can_try_url_schemes())) {
         $url_part = str_replace(array(':uhash:', ':amp:', ':slash:'), array('#', '&', '/'), $url_part);
-        //$url_part=str_replace('(colon)',':',$url_part);
+        //$url_part = str_replace('(colon)', ':', $url_part);
     }
     return $url_part;
+}
+
+/**
+ * Place a global marker as to whether we're skipping keep parameters.
+ *
+ * @param  boolean $setting Temporary setting
+ */
+function push_no_keep_context($setting = true)
+{
+    global $HAS_NO_KEEP_CONTEXT, $NO_KEEP_CONTEXT_STACK;
+    array_push($NO_KEEP_CONTEXT_STACK, $HAS_NO_KEEP_CONTEXT);
+    $HAS_NO_KEEP_CONTEXT = $setting;
+}
+
+/**
+ * Remove the global marker as to whether we're skipping keep parameters. Never call this more than you've called push_no_keep_context().
+ */
+function pop_no_keep_context()
+{
+    global $HAS_NO_KEEP_CONTEXT, $NO_KEEP_CONTEXT_STACK;
+    $HAS_NO_KEEP_CONTEXT = array_pop($NO_KEEP_CONTEXT_STACK);
 }
 
 /**
@@ -225,7 +268,10 @@ function cms_url_decode_post_process($url_part)
  */
 function skippable_keep($key, $val)
 {
-    global $BOT_TYPE_CACHE;
+    global $BOT_TYPE_CACHE, $HAS_NO_KEEP_CONTEXT;
+    if ($HAS_NO_KEEP_CONTEXT) {
+        return true;
+    }
     if ($BOT_TYPE_CACHE === false) {
         get_bot_type();
     }
@@ -235,13 +281,13 @@ function skippable_keep($key, $val)
 
     static $nkp = null;
     if ($nkp === null) {
-        $nkp = (isset($GLOBALS['SITE_INFO']['no_keep_params'])) && ($GLOBALS['SITE_INFO']['no_keep_params'] == '1');
+        $nkp = (isset($GLOBALS['SITE_INFO']['no_keep_params'])) && ($GLOBALS['SITE_INFO']['no_keep_params'] === '1');
     }
     if ($nkp) {
         return true;
     }
 
-    return ((($key == 'keep_session') && (isset($_COOKIE['has_cookies']))) || (($key == 'keep_has_js') && ($val == '1'))) && ((isset($_COOKIE['js_on'])) || (get_option('detect_javascript') == '0'));
+    return ((($key === 'keep_session') && (isset($_COOKIE['has_cookies']))) || (($key === 'keep_has_js') && ($val === '1'))) && ((isset($_COOKIE['js_on'])) || (get_option('detect_javascript') === '0'));
 }
 
 /**
@@ -256,13 +302,14 @@ function is_page_https($zone, $page)
 {
     static $off = null;
     if ($off === null) {
-        $off = (!addon_installed('ssl')) || (in_safe_mode()) || (!function_exists('persistent_cache_get'));
+        global $SITE_INFO;
+        $off = (!addon_installed('ssl')) || (in_safe_mode()) || (!function_exists('persistent_cache_get') || (!empty($SITE_INFO['no_ssl'])));
     }
     if ($off) {
         return false;
     }
 
-    if (($page == 'login') && (get_page_name() == 'login')) { // Because how login can be called from any arbitrary page, which may or may not be on HTTPS. We want to maintain HTTPS if it is there to avoid warning on form submission
+    if (($page === 'login') && (get_page_name() === 'login')) { // Because how login can be called from any arbitrary page, which may or may not be on HTTPS. We want to maintain HTTPS if it is there to avoid warning on form submission
         if (tacit_https()) {
             return true;
         }
@@ -288,36 +335,63 @@ function is_page_https($zone, $page)
 }
 
 /**
- * Find if mod_rewrite is in use
+ * Find if a URL Scheme is in use
  *
- * @param  boolean $avoid_remap Whether to explicitly avoid using mod_rewrite. While it might seem weird to put this in as a function parameter, it removes duplicated logic checks in the code.
- * @return boolean Whether mod_rewrite is in use
+ * @param  boolean $avoid_remap Whether to explicitly avoid using URL Schemes. While it might seem weird to put this in as a function parameter, it removes duplicated logic checks in the code.
+ * @return boolean Whether a URL Scheme is in use
  */
-function can_try_mod_rewrite($avoid_remap = false)
+function can_try_url_schemes($avoid_remap = false)
 {
     if (!function_exists('get_option')) {
         return false;
     }
     $url_scheme = get_option('url_scheme');
-    return (($url_scheme != 'RAW') && (get_param_integer('keep_no_url_scheme', 0) == 0) && ((!array_key_exists('block_mod_rewrite', $GLOBALS['SITE_INFO'])) || ($GLOBALS['SITE_INFO']['block_mod_rewrite'] == '0')) && (!$avoid_remap)); // If we don't have the option on or are not using apache, return
+    return (($url_scheme !== 'RAW') && (get_param_integer('keep_no_url_scheme', 0) === 0) && ((empty($GLOBALS['SITE_INFO']['block_url_schemes'])) || ($GLOBALS['SITE_INFO']['block_url_schemes'] !== '1')) && (!$avoid_remap)); // If we don't have the option on or are not using apache, return
+}
+
+/**
+ * Find if keep_ parameters are in use
+ *
+ * @return boolean Whether they are
+ */
+function has_keep_parameters()
+{
+    static $answer = null;
+    if ($answer !== null) {
+        return $answer;
+    }
+
+    foreach (array_keys($_GET) as $key) {
+        if (
+            isset($key[0]) &&
+            $key[0] == 'k' &&
+            substr($key, 0, 5) == 'keep_'
+            //&& $key != 'keep_devtest' && $key != 'keep_show_loading'/*If testing memory use we don't want this to trigger it as it breaks the test*/
+        ) {
+            $answer = true;
+            return $answer;
+        }
+    }
+    $answer = false;
+    return $answer;
 }
 
 /**
  * Build and return a proper URL, from the $vars array.
  * Note: URL parameters should always be in lower case (one of the coding standards)
  *
- * @param  array $vars A map of parameter names to parameter values. E.g. array('page'=>'example','type'=>'foo','id'=>2). Values may be strings or integers, or Tempcode, or NULL. NULL indicates "skip this". 'page' cannot be NULL.
+ * @param  array $vars A map of parameter names to parameter values. E.g. array('page'=>'example','type'=>'foo','id'=>2). Values may be strings or integers, or Tempcode, or null. null indicates "skip this". 'page' cannot be null.
  * @param  ID_TEXT $zone_name The zone the URL is pointing to. YOU SHOULD NEVER HARD CODE THIS- USE '_SEARCH', '_SELF' (if you're self-referencing your own page) or the output of get_module_zone.
- * @param  ?array $skip Variables to explicitly not put in the URL (perhaps because we have $keep_all set, or we are blocking certain keep_ values). The format is of a map where the keys are the names, and the values are 1. (null: don't skip any)
+ * @param  ?array $skip Variables to explicitly not put in the URL (perhaps because we have $keep_all set, or we are blocking certain keep_ values). The format is of a map where the keys are the names, and the values are true. (null: don't skip any)
  * @param  boolean $keep_all Whether to keep all non-skipped parameters that were in the current URL, in this URL
- * @param  boolean $avoid_remap Whether to avoid mod_rewrite (sometimes essential so we can assume the standard URL parameter addition scheme in templates)
+ * @param  boolean $avoid_remap Whether to avoid URL Schemes (sometimes essential so we can assume the standard URL parameter addition scheme in templates)
  * @param  boolean $skip_keep Whether to skip actually putting on keep_ parameters (rarely will this skipping be desirable)
  * @param  string $hash Hash portion of the URL (blank: none). May or may not start '#' - code will put it on if needed
  * @return Tempcode The URL in Tempcode format.
  */
 function build_url($vars, $zone_name = '', $skip = null, $keep_all = false, $avoid_remap = false, $skip_keep = false, $hash = '')
 {
-    if (empty($vars['page'])) { // For SEO purposes we need to make sure we get the right URL
+    if (empty($vars['page']) && running_script('index')) { // For SEO purposes we need to make sure we get the right URL
         $vars['page'] = get_zone_default_page($zone_name);
         if ($vars['page'] === null) {
             $vars['page'] = 'start';
@@ -329,23 +403,23 @@ function build_url($vars, $zone_name = '', $skip = null, $keep_all = false, $avo
     global $SITE_INFO;
     if (
         (isset($SITE_INFO['no_keep_params'])) &&
-        ($SITE_INFO['no_keep_params'] == '1') &&
-        ((get_option('url_monikers_enabled') == '0') || (!is_numeric($id)/*i.e. not going to trigger a URL moniker query*/) && ((is_null($id)) || (strpos($id, '/') !== false)))
+        ($SITE_INFO['no_keep_params'] === '1') &&
+        ((get_option('url_monikers_enabled') === '0') || (!is_numeric($id)/*i.e. not going to trigger a URL moniker query*/) && ((is_null($id)) || (strpos($id, '/') !== false)))
     ) {
-        if (($id === null) && (isset($vars['type'])) && ($vars['type'] == 'browse')) {
+        if (($id === null) && (isset($vars['type'])) && ($vars['type'] === 'browse') && (!$keep_all)) {
             unset($vars['type']); // Redundant, let it default, this is our convention
         }
 
-        if ($vars['page'] == '_SELF') {
+        if ($vars['page'] === '_SELF') {
             $vars['page'] = get_page_name();
         }
-        if ($zone_name == '_SELF') {
+        if ($zone_name === '_SELF') {
             $zone_name = get_zone_name();
         }
-        if ($zone_name == '_SEARCH') {
+        if ($zone_name === '_SEARCH') {
             $zone_name = get_page_zone($vars['page']);
         }
-        if (($hash != '') && (substr($hash, 0, 1) != '#')) {
+        if (($hash !== '') && ($hash[0] !== '#')) {
             $hash = '#' . $hash;
         }
         return make_string_tempcode(_build_url($vars, $zone_name, $skip, $keep_all, $avoid_remap, true, $hash));
@@ -372,7 +446,7 @@ function build_url($vars, $zone_name = '', $skip = null, $keep_all = false, $avo
  * Build and return a proper page-link, from the $vars array.
  * Note: URL parameters should always be in lower case (one of the coding standards)
  *
- * @param  array $vars A map of parameter names to parameter values. E.g. array('page'=>'example','type'=>'foo','id'=>2). Values may be strings or integers, or Tempcode, or NULL. NULL indicates "skip this". 'page' cannot be NULL.
+ * @param  array $vars A map of parameter names to parameter values. E.g. array('page'=>'example','type'=>'foo','id'=>2). Values may be strings or integers, or Tempcode, or null. null indicates "skip this". 'page' cannot be null.
  * @param  ID_TEXT $zone_name The zone the URL is pointing to. YOU SHOULD NEVER HARD CODE THIS- USE '_SEARCH', '_SELF' (if you're self-referencing your own page) or the output of get_module_zone.
  * @param  ?array $skip Variables to explicitly not put in the URL (perhaps because we have $keep_all set, or we are blocking certain keep_ values). The format is of a map where the keys are the names, and the values are 1. (null: don't skip any)
  * @param  string $hash Hash portion of the URL (blank: none). May or may not start '#' - code will put it on if needed
@@ -382,7 +456,7 @@ function build_page_link($vars, $zone_name = '', $skip = null, $hash = '')
 {
     $id = isset($vars['id']) ? $vars['id'] : null;
 
-    $page_link = $zone_name . ':' . /*urlencode not needed in reality, performance*/($vars['page']);
+    $page_link = $zone_name . ':' . /*urlencode not needed in reality, performance*/(isset($vars['page']) ? $vars['page'] : '');
     if ((isset($vars['type'])) || (array_key_exists('type', $vars))) {
         if (isset($vars['type']->codename/*faster than is_object*/)) {
             $page_link .= ':';
@@ -415,9 +489,6 @@ function build_page_link($vars, $zone_name = '', $skip = null, $hash = '')
         if (is_integer($val)) {
             $val = strval($val);
         }
-        if ($val === null) {
-            $val = '<null>';
-        }
 
         if ($key !== 'page') {
             if (is_integer($key)) {
@@ -426,14 +497,14 @@ function build_page_link($vars, $zone_name = '', $skip = null, $hash = '')
 
             if (isset($val->codename/*faster than is_object*/)) {
                 $page_link .= ':' . $key . '=';
-                $page_link .= $val->evaluate();
+                $page_link .= urlencode($val->evaluate());
             } else {
                 $page_link .= ':' . $key . '=' . (($val === null) ? '<null>' : urlencode($val));
             }
         }
     }
 
-    if (($hash != '') && (substr($hash, 0, 1) != '#')) {
+    if (($hash !== '') && ($hash[0] !== '#')) {
         $hash = '#' . $hash;
     }
 
@@ -455,7 +526,7 @@ function url_monikers_enabled()
     if (get_param_integer('keep_urlmonikers', null) === 0) {
         return false;
     }
-    if (get_option('url_monikers_enabled') != '1') {
+    if (get_option('url_monikers_enabled') !== '1') {
         return false;
     }
     return true;
@@ -465,38 +536,38 @@ function url_monikers_enabled()
  * Build and return a proper URL, from the $vars array.
  * Note: URL parameters should always be in lower case (one of the coding standards)
  *
- * @param  array $vars A map of parameter names to parameter values. Values may be strings or integers, or NULL. NULL indicates "skip this". 'page' cannot be NULL.
+ * @param  array $vars A map of parameter names to parameter values. Values may be strings or integers, or null. null indicates "skip this". 'page' cannot be null.
  * @param  ID_TEXT $zone_name The zone the URL is pointing to. YOU SHOULD NEVER HARD CODE THIS- USE '_SEARCH', '_SELF' (if you're self-referencing your own page) or the output of get_module_zone.
  * @param  ?array $skip Variables to explicitly not put in the URL (perhaps because we have $keep_all set, or we are blocking certain keep_ values). The format is of a map where the keys are the names, and the values are 1. (null: don't skip any)
  * @param  boolean $keep_all Whether to keep all non-skipped parameters that were in the current URL, in this URL
- * @param  boolean $avoid_remap Whether to avoid mod_rewrite (sometimes essential so we can assume the standard URL parameter addition scheme in templates)
+ * @param  boolean $avoid_remap Whether to avoid URL Schemes (sometimes essential so we can assume the standard URL parameter addition scheme in templates)
  * @param  boolean $skip_keep Whether to skip actually putting on keep_ parameters (rarely will this skipping be desirable)
- * @param  string $hash Hash portion of the URL (blank: none).
+ * @param  string $hash Hash portion of the URL (blank: none). May or may not start '#' - code will put it on if needed
  * @return string The URL in string format.
  *
  * @ignore
  */
 function _build_url($vars, $zone_name = '', $skip = null, $keep_all = false, $avoid_remap = false, $skip_keep = false, $hash = '')
 {
-    global $HAS_KEEP_IN_URL_CACHE, $USE_REWRITE_PARAMS_CACHE, $BOT_TYPE_CACHE, $WHAT_IS_RUNNING_CACHE, $KNOWN_AJAX;
+    global $HAS_KEEP_IN_URL_CACHE, $CAN_TRY_URL_SCHEMES_CACHE, $BOT_TYPE_CACHE, $WHAT_IS_RUNNING_CACHE, $KNOWN_AJAX, $IN_SELF_ROUTING_SCRIPT;
 
     $has_page = isset($vars['page']);
+
+    if (($hash !== '') && ($hash[0] !== '#')) {
+        $hash = '#' . $hash;
+    }
 
     // Build up our URL base
     $stub = get_base_url(is_page_https($zone_name, $has_page ? $vars['page'] : ''), $zone_name);
     $stub .= '/';
 
-    if ((!isset($vars['id'])) && (isset($vars['type'])) && ($vars['type'] == 'browse')) {
-        unset($vars['type']); // Redundant, let it default, this is our convention
-    }
-
     // For bots we explicitly unset skippable injected 'keep_' params because it bloats the crawl-space
     if (($BOT_TYPE_CACHE !== null) && (get_bot_type() !== null)) {
         foreach ($vars as $key => $val) {
-            if ($key == 'redirect') {
+            if ($key === 'redirect') {
                 unset($vars[$key]);
             }
-            if ((substr($key, 0, 5) == 'keep_') && (skippable_keep($key, $val))) {
+            if ((substr($key, 0, 5) === 'keep_') && (skippable_keep($key, $val))) {
                 unset($vars[$key]);
             }
         }
@@ -523,7 +594,7 @@ function _build_url($vars, $zone_name = '', $skip = null, $keep_all = false, $av
             }
 
             $is_keep = false;
-            $appears_keep = (($key[0] == 'k') && (substr($key, 0, 5) == 'keep_'));
+            $appears_keep = (($key[0] === 'k') && (substr($key, 0, 5) === 'keep_'));
             if ($appears_keep) {
                 if ((!$skip_keep) && (!skippable_keep($key, $val))) {
                     $is_keep = true;
@@ -550,6 +621,10 @@ function _build_url($vars, $zone_name = '', $skip = null, $keep_all = false, $av
         $vars += $keep_actual;
     }
 
+    if ((!isset($vars['id'])) && (isset($vars['type'])) && ($vars['type'] === 'browse') && (!$keep_all)) {
+        unset($vars['type']); // Redundant, let it default, this is our convention
+    }
+
     global $URL_MONIKERS_ENABLED_CACHE;
     if ($URL_MONIKERS_ENABLED_CACHE === null) {
         $URL_MONIKERS_ENABLED_CACHE = url_monikers_enabled();
@@ -557,7 +632,7 @@ function _build_url($vars, $zone_name = '', $skip = null, $keep_all = false, $av
     if ($URL_MONIKERS_ENABLED_CACHE) {
         $test = find_id_moniker($vars, $zone_name);
         if ($test !== null) {
-            if (substr($test, 0, 1) == '/') { // relative to zone root
+            if (substr($test, 0, 1) === '/') { // relative to zone root
                 $parts = explode('/', substr($test, 1), 3);
                 $vars['page'] = $parts[0];
                 if (isset($parts[1])) {
@@ -582,29 +657,33 @@ function _build_url($vars, $zone_name = '', $skip = null, $keep_all = false, $av
 
     // Apply dashes if needed
     if ($has_page) {
-        if ((strpos($vars['page'], '_') !== false) && ($vars['page'] != '_SELF')) {
+        if ((strpos($vars['page'], '_') !== false) && ($vars['page'] !== '_SELF')) {
             $vars['page'] = str_replace('_', '-', $vars['page']);
         }
     }
 
-    // We either use mod_rewrite, or return a standard parameterisation
-    if (($USE_REWRITE_PARAMS_CACHE === null) || ($avoid_remap)) {
-        $use_rewrite_params = can_try_mod_rewrite($avoid_remap);
+    // We either use a URL Scheme, or return a standard parameterisation
+    if (($CAN_TRY_URL_SCHEMES_CACHE === null) || ($avoid_remap)) {
+        $can_try_url_schemes = can_try_url_schemes($avoid_remap);
         if (!$avoid_remap) {
-            $USE_REWRITE_PARAMS_CACHE = $use_rewrite_params;
+            $CAN_TRY_URL_SCHEMES_CACHE = $can_try_url_schemes;
         }
     } else {
-        $use_rewrite_params = $USE_REWRITE_PARAMS_CACHE;
+        $can_try_url_schemes = $CAN_TRY_URL_SCHEMES_CACHE;
+    }
+    $_what_is_running = $WHAT_IS_RUNNING_CACHE;
+    if (!$IN_SELF_ROUTING_SCRIPT && $has_page) {
+        $_what_is_running = 'index';
     }
     $test_rewrite = null;
-    $self_page = ((!$has_page) || ((function_exists('get_zone_name')) && (get_zone_name() == $zone_name) && (($vars['page'] == '_SELF') || ($vars['page'] == get_page_name())))) && ((!isset($vars['type'])) || ($vars['type'] == get_param_string('type', 'browse'))) && ($hash != '#_top') && (!$KNOWN_AJAX);
-    if ($use_rewrite_params) {
-        if ((!$self_page) || ($WHAT_IS_RUNNING_CACHE === 'index')) {
+    $self_page = ((!$has_page) || ((function_exists('get_zone_name')) && (get_zone_name() === $zone_name) && (($vars['page'] === '_SELF') || ($vars['page'] === get_page_name())))) && ((!isset($vars['type'])) || ($vars['type'] === get_param_string('type', 'browse', true))) && ($hash !== '#_top') && (!$KNOWN_AJAX);
+    if ($can_try_url_schemes) {
+        if ((!$self_page) || ($_what_is_running === 'index')) {
             $test_rewrite = _url_rewrite_params($zone_name, $vars, count($keep_actual) > 0);
         }
     }
     if ($test_rewrite === null) {
-        $url = (($self_page) && ($WHAT_IS_RUNNING_CACHE !== 'index')) ? find_script($WHAT_IS_RUNNING_CACHE) : ($stub . 'index.php');
+        $url = (($self_page) && ($_what_is_running !== 'index')) ? find_script($_what_is_running) : ($stub . 'index.php');
 
         // Fix sort order
         if (isset($vars['id'])) {
@@ -627,7 +706,7 @@ function _build_url($vars, $zone_name = '', $skip = null, $keep_all = false, $av
         $symbol = '?';
         foreach ($vars as $key => $val) {
             if ($val === null) {
-                continue; // NULL means skip
+                continue; // null means skip
             }
 
             if (!isset($key[0]/*Faster than is_string*/) && $key !== '') {
@@ -656,6 +735,7 @@ function _build_url($vars, $zone_name = '', $skip = null, $keep_all = false, $av
  * @param  ID_TEXT $key Primary field name
  * @param  array $val Array
  * @param  array $vars Flat array to write into
+ *
  * @ignore
  */
 function _handle_array_var_append($key, $val, &$vars)
@@ -679,7 +759,7 @@ function _handle_array_var_append($key, $val, &$vars)
 }
 
 /**
- * Attempt to use mod_rewrite to improve this URL.
+ * Attempt to use a URL Scheme to improve this URL.
  *
  * @param  ID_TEXT $zone_name The name of the zone for this
  * @param  array $vars A map of variables to include in our URL
@@ -717,7 +797,7 @@ function _url_rewrite_params($zone_name, $vars, $force_index_php = false)
                 $vars[$key] = strval($vars[$key]);
             }
 
-            if (!(((isset($vars[$key])) || (($val === null) && ($key == 'type') && ((isset($vars['id'])) || (array_key_exists('id', $vars))))) && (($key != 'page') || ($vars[$key] != '') || ($val === '')) && ((!isset($vars[$key]) && !array_key_exists($key, $vars)/*NB this is just so the next clause does not error, we have other checks for non-existence*/) || ($vars[$key] != '') || (!$last)) && (($val === null) || ($vars[$key] == $val)))) {
+            if (!(((isset($vars[$key])) || (($val === null) && ($key === 'type') && ((isset($vars['id'])) || (array_key_exists('id', $vars))))) && (($key !== 'page') || ($vars[$key] != '') || ($val === '')) && ((!isset($vars[$key]) && !array_key_exists($key, $vars)/*NB this is just so the next clause does not error, we have other checks for non-existence*/) || ($vars[$key] != '') || (!$last)) && (($val === null) || ($vars[$key] === $val)))) {
                 $good = false;
                 break;
             }
@@ -729,12 +809,12 @@ function _url_rewrite_params($zone_name, $vars, $force_index_php = false)
                     continue;
                 }
 
-                if ((substr($key, 0, 5) == 'keep_') && (!skippable_keep($key, $val))) {
+                if ((substr($key, 0, 5) === 'keep_') && (!skippable_keep($key, $val))) {
                     $good = false;
                 }
             }
             foreach ($vars as $key => $val) {
-                if ((!array_key_exists($key, $remapping)) && ($val !== null) && (($key != 'page') || ($vars[$key] != ''))) {
+                if ((!array_key_exists($key, $remapping)) && ($val !== null) && (($key !== 'page') || ($vars[$key] != ''))) {
                     $good = false;
                 }
             }
@@ -779,7 +859,7 @@ function _url_rewrite_params($zone_name, $vars, $force_index_php = false)
                 $extra_vars += $vars;
             }
             $makeup = str_replace('TYPE', 'browse', $makeup);
-            if ($makeup == '') {
+            if ($makeup === '') {
                 switch ($url_scheme) {
                     case 'HTM':
                         $makeup .= get_zone_default_page($zone_name) . '.htm';
@@ -790,7 +870,7 @@ function _url_rewrite_params($zone_name, $vars, $force_index_php = false)
                         break;
                 }
             }
-            if (($extra_vars != array()) || ($force_index_php)) {
+            if (($extra_vars !== array()) || ($force_index_php)) {
                 $first = true;
                 $_makeup = '';
                 foreach ($extra_vars as $key => $val) { // Add these in explicitly
@@ -806,8 +886,8 @@ function _url_rewrite_params($zone_name, $vars, $force_index_php = false)
                     $_makeup .= ($first ? '?' : '&') . $key . '=' . cms_url_encode($val, true);
                     $first = false;
                 }
-                if ($_makeup != '') {
-                    if ($url_scheme == 'PG') {
+                if ($_makeup !== '') {
+                    if ($url_scheme === 'PG') {
                         $makeup .= '/index.php';
                     }
                     $makeup .= $_makeup;
@@ -829,18 +909,22 @@ function _url_rewrite_params($zone_name, $vars, $force_index_php = false)
  */
 function url_is_local($url)
 {
-    if (substr($url, 0, 7) == 'themes/' || substr($url, 0, 8) == 'uploads/') {
+    if ($url === '') {
         return true;
     }
 
-    if ($url == '') {
+    if ($url[0] === 't' && substr($url, 0, 7) === 'themes/' || $url[0] === 'u' && substr($url, 0, 8) === 'uploads/') {
         return true;
     }
-    if (preg_match('#^[^:\{%]*$#', $url) != 0) {
+    if ($url[0] === 'h' && (substr($url, 0, 7) === 'http://' || substr($url, 0, 8) === 'https://')) {
+        return false;
+    }
+
+    if (preg_match('#^[^:\{%]*$#', $url) !== 0) {
         return true;
     }
     $first_char = $url[0];
-    return (strpos($url, '://') === false) && ($first_char != '{') && (substr($url, 0, 7) != 'mailto:') && (substr($url, 0, 5) != 'data:') && ($first_char != '%');
+    return (strpos($url, '://') === false) && ($first_char !== '{') && (substr($url, 0, 7) !== 'mailto:') && (substr($url, 0, 5) !== 'data:') && ($first_char !== '%');
 }
 
 /**
@@ -857,7 +941,7 @@ function looks_like_url($value, $lax = false)
             return true;
         }
         $at = substr($value, 0, 1);
-        if ($at == '%' || $at == '{') {
+        if ($at === '%' || $at === '{') {
             return true;
         }
     }
@@ -865,19 +949,19 @@ function looks_like_url($value, $lax = false)
         (
         ((strpos($value, '.php') !== false) ||
          (strpos($value, '.htm') !== false) ||
-         (substr($value, 0, 1) == '#') ||
-         (substr($value, 0, 15) == '{$TUTORIAL_URL') ||
-         (substr($value, 0, 13) == '{$FIND_SCRIPT') ||
-         (substr($value, 0, 17) == '{$BRAND_BASE_URL') ||
-         (substr($value, 0, 10) == '{$BASE_URL') ||
-         (substr($value, 0, 3) == '../') ||
-         (substr(strtolower($value), 0, 11) == 'javascript:') ||
-         (substr($value, 0, 4) == 'tel:') ||
-         (substr($value, 0, 7) == 'mailto:') ||
-         (substr($value, 0, 7) == 'http://') ||
-         (substr($value, 0, 8) == 'https://') ||
-         (substr($value, 0, 7) == 'sftp://') ||
-         (substr($value, 0, 6) == 'ftp://'))
+         (substr($value, 0, 1) === '#') ||
+         (substr($value, 0, 15) === '{$TUTORIAL_URL') ||
+         (substr($value, 0, 13) === '{$FIND_SCRIPT') ||
+         (substr($value, 0, 17) === '{$BRAND_BASE_URL') ||
+         (substr($value, 0, 10) === '{$BASE_URL') ||
+         (substr($value, 0, 3) === '../') ||
+         (substr(strtolower($value), 0, 11) === 'javascript:') ||
+         (substr($value, 0, 4) === 'tel:') ||
+         (substr($value, 0, 7) === 'mailto:') ||
+         (substr($value, 0, 7) === 'http://') ||
+         (substr($value, 0, 8) === 'https://') ||
+         (substr($value, 0, 7) === 'sftp://') ||
+         (substr($value, 0, 6) === 'ftp://'))
         ) && (strpos($value, '<') === false);
 }
 
@@ -899,12 +983,13 @@ function build_keep_form_fields($page = '', $keep_all = false, $exclude = null)
  * Relay all POST variables for this URL, to the URL embedded in the form.
  *
  * @param  ?array $exclude A list of parameters to exclude (null: exclude none)
+ * @param  boolean $force_everything Force field labels and descriptions to copy through even when there are huge numbers of parameters
  * @return Tempcode The builtup hidden form fields
  */
-function build_keep_post_fields($exclude = null)
+function build_keep_post_fields($exclude = null, $force_everything = false)
 {
     require_code('urls2');
-    return _build_keep_post_fields($exclude);
+    return _build_keep_post_fields($exclude, $force_everything);
 }
 
 /**
@@ -944,7 +1029,7 @@ function page_link_decode($page_link)
         $hash = '';
     } else {
         $hash_pos = strpos($page_link, '#');
-        $hash = substr($page_link, $hash_pos);
+        $hash = substr($page_link, $hash_pos + 1);
         $page_link = substr($page_link, 0, $hash_pos);
     }
     if (strpos($page_link, "\n") === false) {
@@ -955,7 +1040,7 @@ function page_link_decode($page_link)
         $bits[count($bits) - 1] .= substr($page_link, $term_pos);
     }
     $zone = $bits[0];
-    if ($zone == '_SEARCH') {
+    if ($zone === '_SEARCH') {
         if (isset($bits[1])) {
             $zone = get_page_zone($bits[1], false);
             if ($zone === null) {
@@ -964,14 +1049,14 @@ function page_link_decode($page_link)
         } else {
             $zone = '';
         }
-    } elseif (($zone == 'site') && (get_option('collapse_user_zones') == '1')) {
+    } elseif (($zone === 'site') && (get_option('collapse_user_zones') === '1')) {
         $zone = '';
-    } elseif ($zone == '_SELF') {
+    } elseif ($zone === '_SELF') {
         $zone = get_zone_name();
     }
-    if (isset($bits[1])) {
-        if ($bits[1] != '') {
-            if ($bits[1] == '_SELF') {
+    if ((isset($bits[1])) && (strpos($bits[1], '=') === false)) {
+        if ($bits[1] !== '') {
+            if ($bits[1] === '_SELF') {
                 $attributes = array('page' => get_page_name());
             } else {
                 $attributes = array('page' => $bits[1]);
@@ -986,10 +1071,10 @@ function page_link_decode($page_link)
     unset($bits[0]);
     $i = 0;
     foreach ($bits as $bit) {
-        if (($bit != '') || ($i == 1)) {
-            if (($i == 0) && (strpos($bit, '=') === false)) {
+        if (($bit !== '') || ($i === 1)) {
+            if (($i === 0) && (strpos($bit, '=') === false)) {
                 $_bit = array('type', $bit);
-            } elseif (($i == 1) && (strpos($bit, '=') === false)) {
+            } elseif (($i === 1) && (strpos($bit, '=') === false)) {
                 $_bit = array('id', $bit);
             } else {
                 $_bit = explode('=', $bit, 2);
@@ -999,12 +1084,12 @@ function page_link_decode($page_link)
         }
         if (isset($_bit[1])) {
             $decoded = urldecode($_bit[1]);
-            if (($decoded != '') && ($decoded[0] == '{') && (strlen($decoded) > 2) && (intval($decoded[1]) > 51)) { // If it is in template format (symbols)
+            if (($decoded !== '') && ($decoded[0] === '{') && (strlen($decoded) > 2) && (intval($decoded[1]) > 51)) { // If it is in template format (symbols)
                 require_code('tempcode_compiler');
                 $_decoded = template_to_tempcode($decoded);
                 $decoded = $_decoded->evaluate();
             }
-            if ($decoded == '<null>') {
+            if ($decoded === '<null>') {
                 $attributes[$_bit[0]] = null;
             } else {
                 $attributes[$_bit[0]] = $decoded;
@@ -1056,6 +1141,36 @@ function url_to_page_link($url, $abs_only = false, $perfect_only = true)
 }
 
 /**
+ * Given a URL or page-link, return an absolute URL.
+ *
+ * @param  string $url URL or page-link
+ * @return URLPATH URL
+ */
+function page_link_to_url($url)
+{
+    $parts = array();
+    if ((preg_match('#([' . URL_CONTENT_REGEXP . ']*):([' . URL_CONTENT_REGEXP . ']+|[^/]|$)((:(.*))*)#', $url, $parts) != 0) && ($parts[1] != 'mailto')) { // Specially encoded page-link. Complex regexp to make sure URLs do not match
+        list($zone, $map, $hash) = page_link_decode($url);
+        $url = static_evaluate_tempcode(build_url($map, $zone, array(), false, false, false, $hash));
+    } else {
+        $url = qualify_url($url, get_base_url());
+    }
+    return $url;
+}
+
+/**
+ * Given a page-link, return an absolute URL.
+ *
+ * @param  string $page_link Page-link
+ * @return Tempcode URL
+ */
+function page_link_to_tempcode_url($page_link)
+{
+    list($zone, $map, $hash) = page_link_decode($page_link);
+    return build_url($map, $zone, array(), false, false, false, $hash);
+}
+
+/**
  * Convert a local page file path to a written page-link.
  *
  * @param  string $page The path.
@@ -1089,11 +1204,22 @@ function load_moniker_hooks()
             return;
         }
 
+        $no_monikers_in = array( // FUDGE: Optimisation, not ideal! But it saves file loading and memory
+            'author' => true,
+            'banner' => true,
+            'banner_type' => true,
+            'calendar_type' => true,
+            'catalogue' => true,
+            'post' => true,
+            'wiki_page' => true,
+            'wiki_post' => true,
+        );
+
         $CONTENT_OBS = array();
         $hooks = find_all_hooks('systems', 'content_meta_aware');
         foreach ($hooks as $hook => $sources_dir) {
-            if ($hook == 'banner' || $hook == 'banner_type' || $hook == 'catalogue' || $hook == 'post') {
-                continue; // FUDGE: Optimisation, not ideal!
+            if (isset($no_monikers_in[$hook])) {
+                continue;
             }
 
             $info_function = extract_module_functions(get_file_base() . '/' . $sources_dir . '/hooks/systems/content_meta_aware/' . $hook . '.php', array('info'), null, false, 'Hook_content_meta_aware_' . $hook);
@@ -1101,6 +1227,9 @@ function load_moniker_hooks()
                 $ob_info = is_array($info_function[0]) ? call_user_func_array($info_function[0][0], $info_function[0][1]) : eval($info_function[0]);
 
                 if ($ob_info === null) {
+                    continue;
+                }
+                if (!isset($ob_info['view_page_link_pattern'])) {
                     continue;
                 }
                 $ob_info['_hook'] = $hook;
@@ -1133,7 +1262,7 @@ function find_id_moniker($url_parts, $zone)
     if (strpos($url_parts['page'], '[') !== false) {
         return null; // A regexp in a comparison URL, in breadcrumbs code
     }
-    if ($zone == '[\w\_\-]*') {
+    if ($zone == '[\w\-]*') {
         return null; // Part of a breadcrumbs regexp
     }
 
@@ -1143,11 +1272,11 @@ function find_id_moniker($url_parts, $zone)
         load_moniker_hooks();
     }
     if (!array_key_exists('id', $url_parts)) {
-        if (is_file(get_file_base() . '/' . $zone . '/pages/modules/' . $url_parts['page'] . '.php')) {// Wasteful of resources
+        if (@is_file(get_file_base() . '/' . $zone . '/pages/modules/' . $url_parts['page'] . '.php')) {// Wasteful of resources
             return null;
         }
         if (($zone == '') && (get_option('collapse_user_zones') == '1')) {
-            if (is_file(get_file_base() . '/site/pages/modules/' . $url_parts['page'] . '.php')) {// Wasteful of resources
+            if (@is_file(get_file_base() . '/site/pages/modules/' . $url_parts['page'] . '.php')) {// Wasteful of resources
                 return null;
             }
         }
@@ -1156,7 +1285,7 @@ function find_id_moniker($url_parts, $zone)
         if (!function_exists('_request_page')) {
             return null; // In installer
         }
-        $page_place = _request_page($url_parts['page'], $zone);
+        $page_place = _request_page(str_replace('-', '_', $url_parts['page']), $zone);
         if ($page_place[0] == 'REDIRECT') {
             $url_parts['page'] = $page_place[1]['r_to_page'];
             $zone = $page_place[1]['r_to_zone'];
@@ -1172,13 +1301,11 @@ function find_id_moniker($url_parts, $zone)
             $url_parts['type'] = 'browse';
         }
         if ($url_parts['type'] === null) {
-            $url_parts['type'] = 'browse'; // NULL means "do not take from environment"; so we default it to 'browse' (even though it might actually be left out when URL Schemes are off, we know it cannot be for URL Schemes)
+            $url_parts['type'] = 'browse'; // null means "do not take from environment"; so we default it to 'browse' (even though it might actually be left out when URL Schemes are off, we know it cannot be for URL Schemes)
         }
 
-        if (array_key_exists('id', $url_parts)) {
-            if ($url_parts['id'] === null) {
-                $url_parts['id'] = strval(db_get_first_id());
-            }
+        if ($url_parts['id'] === null) {
+            return null;
         }
 
         $effective_id = $url_parts['id'];
@@ -1213,9 +1340,19 @@ function find_id_moniker($url_parts, $zone)
                 $or_list = '';
                 foreach ($LOADED_MONIKERS_CACHE as $type => $pages) {
                     foreach ($pages as $page => $ids) {
+                        $first_it = true;
+
                         foreach ($ids as $id => $status) {
                             if ($status !== true) {
                                 continue;
+                            }
+
+                            if ($first_it) {
+                                if (!is_string($page)) {
+                                    $page = strval($page);
+                                }
+
+                                $first_it = false;
                             }
 
                             if (is_integer($id)) {
@@ -1348,13 +1485,16 @@ function ensure_protocol_suitability($url)
  */
 function check_url_exists($url, $test_freq_secs)
 {
-    $test1 = $GLOBALS['SITE_DB']->query_select('urls_checked', array('url_check_time', 'url_exists'), array('url' => $url));
+    $test1 = $GLOBALS['SITE_DB']->query_select('urls_checked', array('url_check_time', 'url_exists'), array('url' => $url), 'ORDER BY url_check_time DESC', 1);
 
     if ((!isset($test1[0])) || ($test1[0]['url_check_time'] < time() - $test_freq_secs)) {
         $test2 = http_download_file($url, 0, false);
-        $exists = is_null($test2) ? 0 : 1;
+        if (($test2 === null) && ($GLOBALS['HTTP_MESSAGE'] == '403')) {
+            $test2 = http_download_file($url, 1, false); // Try without HEAD, sometimes it's not liked
+        }
+        $exists = (($test2 === null) && ($GLOBALS['HTTP_MESSAGE'] != 401)) ? 0 : 1;
 
-        if (!isset($test1[0])) {
+        if (isset($test1[0])) {
             $GLOBALS['SITE_DB']->query_delete('urls_checked', array(
                 'url' => $url,
             ));

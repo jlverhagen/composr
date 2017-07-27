@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -26,9 +26,10 @@ class Hook_addon_registry_core_cleanup_tools
     /**
      * Get a list of file permissions to set
      *
+     * @param  boolean $runtime Whether to include wildcards represented runtime-created chmoddable files
      * @return array File permissions to set
      */
-    public function get_chmod_array()
+    public function get_chmod_array($runtime = false)
     {
         return array();
     }
@@ -114,6 +115,7 @@ class Hook_addon_registry_core_cleanup_tools
             'lang/EN/cleanup.ini',
             'sources/hooks/systems/cleanup/.htaccess',
             'sources_custom/hooks/systems/cleanup/.htaccess',
+            'sources/hooks/systems/cleanup/lost_disk_content.php',
             'sources/hooks/systems/cleanup/admin_theme_images.php',
             'sources/hooks/systems/cleanup/blocks.php',
             'sources/hooks/systems/cleanup/broken_urls.php',
@@ -121,7 +123,7 @@ class Hook_addon_registry_core_cleanup_tools
             'sources/hooks/systems/cleanup/index.html',
             'sources_custom/hooks/systems/cleanup/index.html',
             'sources/hooks/systems/cleanup/language.php',
-            'sources/hooks/systems/cleanup/mysql.php',
+            'sources/hooks/systems/cleanup/mysql_optimise.php',
             'sources/hooks/systems/cleanup/orphaned_lang_strings.php',
             'sources/hooks/systems/cleanup/orphaned_uploads.php',
             'sources/hooks/systems/cleanup/templates.php',
@@ -159,20 +161,25 @@ class Hook_addon_registry_core_cleanup_tools
      */
     public function tpl_preview__administrative__cleanup_completed_screen()
     {
-        require_lang('stats');
-        $url = array();
+        $urls = array();
         foreach (placeholder_array() as $v) {
-            $url[] = array(
+            $urls[] = array(
                 'URL' => placeholder_url(),
+                'PATH' => lorem_phrase(),
             );
         }
 
         $message = do_lorem_template('CLEANUP_ORPHANED_UPLOADS', array(
-            'FOUND' => $url,
+            'FOUND' => $urls,
         ));
-        $message->attach(do_lorem_template('CLEANUP_PAGE_STATS', array(
-            'STATS_BACKUP_URL' => placeholder_url(),
-        )));
+
+        if (addon_installed('stats')) {
+            require_lang('stats');
+            $message->attach(do_lorem_template('CLEANUP_PAGE_STATS', array(
+                'STATS_BACKUP_URL' => placeholder_url(),
+            )));
+        }
+
         return array(
             lorem_globalise(do_lorem_template('CLEANUP_COMPLETED_SCREEN', array(
                 'TITLE' => lorem_title(),

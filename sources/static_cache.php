@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -20,11 +20,14 @@
 
 /*
 This file is designed to be able to work as standalone, should you want to hook rewrite rules directly into it.
-This allows static cache to run even when ocPortal is itself not booting at all.
+This allows static cache to run even when Composr is itself not booting at all.
 */
 
 if (!isset($GLOBALS['FILE_BASE'])) {
-    // Find ocPortal base directory, and chdir into it
+    // Fixup SCRIPT_FILENAME potentially being missing
+$_SERVER['SCRIPT_FILENAME'] = __FILE__;
+
+// Find Composr base directory, and chdir into it
     global $FILE_BASE;
     $FILE_BASE = (strpos(__FILE__, './') === false) ? __FILE__ : realpath(__FILE__);
     $FILE_BASE = dirname(dirname($FILE_BASE));
@@ -33,9 +36,11 @@ if (!isset($GLOBALS['FILE_BASE'])) {
 
     require($FILE_BASE . '/_config.php');
 
-    define('STATIC_CACHE__FAST_SPIDER', 1);
-    define('STATIC_CACHE__GUEST', 2);
-    define('STATIC_CACHE__FAILOVER_MODE', 4);
+    if (!defined('STATIC_CACHE__FAST_SPIDER')) {
+        define('STATIC_CACHE__FAST_SPIDER', 1);
+        define('STATIC_CACHE__GUEST', 2);
+        define('STATIC_CACHE__FAILOVER_MODE', 4);
+    }
 
     static_cache(STATIC_CACHE__FAILOVER_MODE);
 }
@@ -47,13 +52,14 @@ if (!isset($GLOBALS['FILE_BASE'])) {
  */
 function static_cache__get_self_url_easy()
 {
+    // May not be called from Composr, so can't rely on Composr's normal fixup_bad_php_env_vars function having being called
     $self_url = '';
     if (!empty($_SERVER['REQUEST_URI'])) {
         $self_url .= $_SERVER['REQUEST_URI'];
     } elseif (!empty($_SERVER['PHP_SELF'])) {
         $self_url .= $_SERVER['PHP_SELF'];
-        if (!empty($_SERVER['QUERY_STRING'])) {
-            $self_url .= '?' . $_SERVER['QUERY_STRING'];
+        if (count($_GET) != 0) {
+            $self_url .= '?' . http_build_query($_GET);
         }
     }
     return $self_url;
@@ -69,10 +75,34 @@ function can_static_cache()
     if (isset($_GET['redirect'])) {
         return false;
     }
-    /*$url_easy=static_cache__get_self_url_easy();
-    if (strpos($url_easy,'sort=')!==false) return false;	Actually this stops very useful caching, esp on the forum - better to just reduce the cache time to a fraction of an hour
-    if (strpos($url_easy,'start=')!==false) return false;
-    if (strpos($url_easy,'max=')!==false) return false;*/
+
+    global $EXTRA_HEAD;
+    if ($EXTRA_HEAD !== null) {
+        if (strpos($EXTRA_HEAD->evaluate(), '<meta name="robots" content="noindex"') !== false) {
+            return false; // Too obscure to waste cache space with
+        }
+    }
+
+    global $NON_CANONICAL_PARAMS;
+    if ($NON_CANONICAL_PARAMS !== null) {
+        foreach ($NON_CANONICAL_PARAMS as $param => $block_page_from_static_cache_if_present) {
+            if (isset($_GET[$param])) {
+                if ($block_page_from_static_cache_if_present) {
+                    return false; // Too parameterised
+                }
+            }
+        }
+    }
+
+    if ((isset($_GET['page'])) && ($_GET['page'] == '404')) {
+        return false;
+    }
+
+    global $HTTP_STATUS_CODE;
+    if ($HTTP_STATUS_CODE == '404') {
+        return false;
+    }
+
     return true;
 }
 
@@ -177,11 +207,13 @@ function static_cache($mode)
     }
     foreach ($param_sets as $param) {
         $fast_cache_path = $_fast_cache_path;
-        if ($param['non_bot']) {
-            $fast_cache_path .= '__non-bot';
-        }
-        if ($param['no_js']) {
-            $fast_cache_path .= '__no-js';
+        if (!$param['failover_mode']) {
+            if ($param['non_bot']) {
+                $fast_cache_path .= '__non-bot';
+            }
+            if ($param['no_js']) {
+                $fast_cache_path .= '__no-js';
+            }
         }
         if ($param['mobile']) {
             $fast_cache_path .= '__mobile';
@@ -208,8 +240,8 @@ function static_cache($mode)
         if (($mtime > time() - $expires) || (($mode & STATIC_CACHE__FAILOVER_MODE) != 0)) {
             // Only bots can do HTTP caching, as they won't try to login and end up reaching a previously cached page
             if ((($mode & STATIC_CACHE__FAST_SPIDER) != 0) && (($mode & STATIC_CACHE__FAILOVER_MODE) == 0) && (function_exists('cms_srv'))) {
-                header("Pragma: public");
-                header("Cache-Control: max-age=" . strval($expires));
+                header('Pragma: public');
+                header('Cache-Control: max-age=' . strval($expires));
                 header('Expires: ' . gmdate('D, d M Y H:i:s', time() + $expires) . ' GMT');
                 header('Last-Modified: ' . gmdate('D, d M Y H:i:s', $mtime) . ' GMT');
 
@@ -233,6 +265,7 @@ function static_cache($mode)
             }
             if (($mode & STATIC_CACHE__FAILOVER_MODE) != 0) {
                 $contents .= "\n\n" . '<!-- Served ' . htmlentities($fast_cache_path) . ' -->';
+                $contents .= '<failover />';
             }
             exit($contents);
         } else {

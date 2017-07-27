@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -50,6 +50,6 @@ class Hook_config_enable_add_topic_btn_in_topic
      */
     public function get_default()
     {
-        return '1';
+        return (do_lang('takes_lots_of_space') == '1') ? '0' : '1';
     }
 }

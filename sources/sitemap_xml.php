@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -29,7 +29,9 @@ function init__sitemap_xml()
 
     require_code('sitemap');
 
-    define('URLS_PER_SITEMAP_SET', 250); // Limit is 50,000, but we are allowed up to 50,000 sets, so let's be performant here and have small sets
+    if (!defined('URLS_PER_SITEMAP_SET')) {
+        define('URLS_PER_SITEMAP_SET', 250); // Limit is 50,000, but we are allowed up to 50,000 sets, so let's be performant here and have small sets
+    }
 }
 
 /**
@@ -71,7 +73,7 @@ function sitemap_xml_build()
 function rebuild_sitemap_set($set_number, $last_time)
 {
     // Open
-    $sitemaps_out_temppath = cms_tempnam('cmssmap'); // We write to temporary path first to minimise the time our target file is invalid (during generation)
+    $sitemaps_out_temppath = cms_tempnam(); // We write to temporary path first to minimise the time our target file is invalid (during generation)
     $sitemaps_out_file = fopen($sitemaps_out_temppath, 'wb');
     $sitemaps_out_path = get_custom_file_base() . '/data_custom/sitemaps/set_' . strval($set_number) . '.xml';
     $blob = '<' . '?xml version="1.0" encoding="' . get_charset() . '"?' . '>
@@ -85,7 +87,11 @@ function rebuild_sitemap_set($set_number, $last_time)
         $page_link = $node['page_link'];
         list($zone, $attributes, $hash) = page_link_decode($page_link);
 
-        if (!has_actual_page_access(get_member(), $attributes['page'], $zone)) {
+        if (!has_actual_page_access($GLOBALS['FORUM_DRIVER']->get_guest_id(), $attributes['page'], $zone)) {
+            continue;
+        }
+
+        if (substr($attributes['page'], 0, 1) == '_') {
             continue;
         }
 
@@ -129,13 +135,18 @@ function rebuild_sitemap_set($set_number, $last_time)
     fwrite($sitemaps_out_file, $blob);
     fclose($sitemaps_out_file);
     @unlink($sitemaps_out_path);
+    if (!file_exists(dirname($sitemaps_out_path))) {
+        require_code('files2');
+        make_missing_directory(dirname($sitemaps_out_path));
+    }
     rename($sitemaps_out_temppath, $sitemaps_out_path);
     sync_file($sitemaps_out_path);
     fix_permissions($sitemaps_out_path);
 
     // Gzip
     if (function_exists('gzencode')) {
-        file_put_contents($sitemaps_out_path . '.gz', gzencode(file_get_contents($sitemaps_out_path), -1));
+        require_code('files');
+        cms_file_put_contents_safe($sitemaps_out_path . '.gz', gzencode(file_get_contents($sitemaps_out_path), -1), FILE_WRITE_FIX_PERMISSIONS | FILE_WRITE_SYNC_FILE);
     }
 }
 
@@ -145,7 +156,7 @@ function rebuild_sitemap_set($set_number, $last_time)
 function rebuild_sitemap_index()
 {
     // Open
-    $sitemaps_out_temppath = cms_tempnam('cmssmapindex'); // We write to temporary path first to minimise the time our target file is invalid (during generation)
+    $sitemaps_out_temppath = cms_tempnam(); // We write to temporary path first to minimise the time our target file is invalid (during generation)
     $sitemaps_out_file = fopen($sitemaps_out_temppath, 'wb');
     $sitemaps_out_path = get_custom_file_base() . '/data_custom/sitemaps/index.xml';
     $blob = '<' . '?xml version="1.0" encoding="' . get_charset() . '"?' . '>
@@ -157,6 +168,12 @@ function rebuild_sitemap_index()
     foreach ($sitemap_sets as $sitemap_set) {
         $path = get_custom_file_base() . '/data_custom/sitemaps/set_' . strval($sitemap_set['set_number']) . '.xml';
         $url = get_custom_base_url() . '/data_custom/sitemaps/set_' . strval($sitemap_set['set_number']) . '.xml';
+
+        if ((is_file($path)) && (filesize($path) < 120)) {
+            // Google gives hard errors on empty sets
+            continue;
+        }
+
         if (is_file($path . '.gz')) {
             // Point to .gz if we have been gzipping. We cannot assume we have consistently managed that
             $path .= '.gz';
@@ -179,6 +196,10 @@ function rebuild_sitemap_index()
     fwrite($sitemaps_out_file, $blob);
     fclose($sitemaps_out_file);
     @unlink($sitemaps_out_path);
+    if (!file_exists(dirname($sitemaps_out_path))) {
+        @mkdir(dirname($sitemaps_out_path), 0777);
+        fix_permissions(dirname($sitemaps_out_path));
+    }
     rename($sitemaps_out_temppath, $sitemaps_out_path);
     sync_file($sitemaps_out_path);
     fix_permissions($sitemaps_out_path);
@@ -226,7 +247,7 @@ function build_sitemap_cache_table()
 
     $GLOBALS['NO_QUERY_LIMIT'] = true;
 
-    if (function_exists('set_time_limit')) {
+    if (php_function_allowed('set_time_limit')) {
         @set_time_limit(0);
     }
 
@@ -234,7 +255,7 @@ function build_sitemap_cache_table()
 
     // Load ALL URL ID monikers (for efficiency)
     global $LOADED_MONIKERS_CACHE;
-    if ($GLOBALS['SITE_DB']->query_select_value('url_id_monikers', 'COUNT(*)', array('m_deprecated' => 0)) < 10000) {
+    if ($GLOBALS['SITE_DB']->query_select_value('url_id_monikers', 'COUNT(*)'/*, array('m_deprecated' => 0) Poor performance to include this and it's unnecessary*/) < 10000) {
         $results = $GLOBALS['SITE_DB']->query_select('url_id_monikers', array('m_moniker', 'm_resource_page', 'm_resource_type', 'm_resource_id'), array('m_deprecated' => 0));
         foreach ($results as $result) {
             $LOADED_MONIKERS_CACHE[$result['m_resource_page']][$result['m_resource_type']][$result['m_resource_id']] = $result['m_moniker'];
@@ -242,7 +263,7 @@ function build_sitemap_cache_table()
     }
 
     // Load ALL guest permissions (for efficiency)
-    load_up_all_module_category_permissions(get_member());
+    load_up_all_module_category_permissions($GLOBALS['FORUM_DRIVER']->get_guest_id());
 
     // Runs via a callback mechanism, so we don't need to load an arbitrary complex structure into memory.
     $callback = '_sitemap_cache_node';
@@ -253,7 +274,7 @@ function build_sitemap_cache_table()
         /*$valid_node_types=*/null,
         /*$child_cutoff=*/null,
         /*$max_recurse_depth=*/null,
-        /*$options=*/SITEMAP_GEN_CHECK_PERMS,
+        /*$options=*/SITEMAP_GEN_CHECK_PERMS | SITEMAP_GEN_CONSIDER_VALIDATION,
         /*$zone=*/'_SEARCH',
         $meta_gather
     );
@@ -264,6 +285,7 @@ function build_sitemap_cache_table()
  * Callback for reference a Sitemap node in the cache.
  *
  * @param  array $node The Sitemap node
+ *
  * @ignore
  */
 function _sitemap_cache_node($node)

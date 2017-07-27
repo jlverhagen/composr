@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -26,9 +26,10 @@ class Hook_addon_registry_downloads
     /**
      * Get a list of file permissions to set
      *
+     * @param  boolean $runtime Whether to include wildcards represented runtime-created chmoddable files
      * @return array File permissions to set
      */
-    public function get_chmod_array()
+    public function get_chmod_array($runtime = false)
     {
         return array();
     }
@@ -278,7 +279,6 @@ class Hook_addon_registry_downloads
             'DATE_RAW' => placeholder_date_raw(),
             'DATE' => placeholder_date(),
             'EDIT_DATE_RAW' => '',
-            'SIZE' => placeholder_number(),
             'URL' => placeholder_url(),
             'NAME' => lorem_phrase(),
             'BREADCRUMBS' => placeholder_breadcrumbs(),
@@ -331,7 +331,6 @@ class Hook_addon_registry_downloads
                 'DATE_RAW' => placeholder_date_raw(),
                 'DATE' => placeholder_date(),
                 'EDIT_DATE_RAW' => '',
-                'SIZE' => placeholder_number(),
                 'URL' => placeholder_url(),
                 'NAME' => lorem_phrase(),
                 'BREADCRUMBS' => placeholder_breadcrumbs(),
@@ -368,24 +367,26 @@ class Hook_addon_registry_downloads
      */
     public function tpl_preview__download_screen()
     {
-        require_lang('galleries');
         $images_details = new Tempcode();
-        foreach (placeholder_array() as $row) {
-            $image = do_lorem_template('DOWNLOAD_SCREEN_IMAGE', array(
-                'ID' => placeholder_id(),
-                'VIEW_URL' => placeholder_url(),
-                'EDIT_URL' => placeholder_url(),
-                'THUMB' => placeholder_image(),
-                'DESCRIPTION' => lorem_phrase(),
-            ));
+        if (addon_installed('galleries')) {
+            require_lang('galleries');
+            foreach (placeholder_array() as $row) {
+                $image = do_lorem_template('DOWNLOAD_SCREEN_IMAGE', array(
+                    'ID' => placeholder_id(),
+                    'VIEW_URL' => placeholder_url(),
+                    'EDIT_URL' => placeholder_url(),
+                    'THUMB' => placeholder_image(),
+                    'DESCRIPTION' => lorem_phrase(),
+                ));
 
-            $cell = do_lorem_template('DOWNLOAD_GALLERY_IMAGE_CELL', array(
-                'CONTENT' => $image,
-            ));
+                $cell = do_lorem_template('DOWNLOAD_GALLERY_IMAGE_CELL', array(
+                    'CONTENT' => $image,
+                ));
 
-            $images_details->attach(do_lorem_template('DOWNLOAD_GALLERY_ROW', array(
-                'CELLS' => $cell,
-            )));
+                $images_details->attach(do_lorem_template('DOWNLOAD_GALLERY_ROW', array(
+                    'CELLS' => $cell,
+                )));
+            }
         }
 
         return array(

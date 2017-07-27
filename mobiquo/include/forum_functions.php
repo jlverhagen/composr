@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -70,7 +70,7 @@ function get_num_unread_topics($forum_id, $subscribed_only = false, $member_id =
         $sql .= ' ' . cns_get_all_subordinate_forums($forum_id, 't.t_forum_id');
     }
     $sql .= ' AND (l_time IS NULL OR l_time<t_cache_last_time)'; // Cannot get join match OR gets one and it is behind of last post
-    $sql .= ' AND t_cache_last_time>' . strval(time() - 60 * 60 * 24 * intval(get_option('post_history_days'))); // Within tracking range
+    $sql .= ' AND t_cache_last_time>' . strval(time() - 60 * 60 * 24 * intval(get_option('post_read_history_days'))); // Within tracking range
     if (addon_installed('unvalidated')) {
         $sql .= ' AND t_validated=1';
     }
@@ -310,9 +310,9 @@ function render_topic_to_tapatalk($topic_id, $return_html, $start, $max, $detail
         'reply_number' => mobiquo_val($details['t_cache_num_posts'] - 1, 'int'),
         'new_post' => mobiquo_val(is_topic_unread($topic_id, $member_id, $details), 'boolean'),
         'short_content' => mobiquo_val(generate_shortened_post($details, true), 'base64'),
-        /*'is_moved'=>, We don't have these topic shells in Composr
-        'is_merged'=>,
-        'real_topic_id'=>,*/
+        /*'is_moved' =>, We don't have these topic shells in Composr
+        'is_merged' =>,
+        'real_topic_id' => ,*/
         'can_upload' => mobiquo_val(true, 'boolean'),
     );
 
@@ -334,6 +334,10 @@ function render_topic_to_tapatalk($topic_id, $return_html, $start, $max, $detail
         $sql .= ' WHERE ' . tapatalk_get_topic_where($topic_id, $member_id);
         $sql .= ' ORDER BY p_time,p.id';
         $_posts = $GLOBALS['FORUM_DB']->query('SELECT *,p.id AS post_id,t.id AS topic_id,f.id AS forum_id' . $sql, $max, $start);
+
+        $sql = '';
+        $sql .= ' FROM ' . $table_prefix . 'f_posts p';
+        $sql .= ' WHERE ' . tapatalk_get_topic_where($topic_id, $member_id);
         $total_post_count = $GLOBALS['FORUM_DB']->query_value_if_there('SELECT COUNT(*) ' . $sql);
 
         $posts = array();
@@ -677,6 +681,7 @@ function prepare_post_for_tapatalk($post, $return_html = false)
     }
 
     $content = static_evaluate_tempcode(do_template('TAPATALK_POST_WRAPPER', array(
+        '_GUID' => 'ef6a156778d1bcaf9228c8bddef938fc',
         'CONTENT' => $content,
         'WHISPER_USERNAME' => $whisper_username,
         'HAS_POLL' => $has_poll,
@@ -690,7 +695,7 @@ function prepare_post_for_tapatalk($post, $return_html = false)
     ), null, false, null, '.txt', 'text'));
 
     if ($return_html) {
-        /*	The below works okay for Android. Unfortunately the Windows Mobile build has a very poor HTML rendered that can only do a handful of tags and entities.
+        /*  The below works okay for Android. Unfortunately the Windows Mobile build has a very poor HTML rendered that can only do a handful of tags and entities.
         So instead we render as text and convert that to 'HTML'.
 
         $content = strip_attachments_from_comcode($content, true);
@@ -699,7 +704,7 @@ function prepare_post_for_tapatalk($post, $return_html = false)
         require_code('comcode_from_html');
         $content = force_clean_comcode($content);
 
-        // HACKHACK: Disable emoticons. Tapatalk will sub in those that it supports. If we don't do this it replaces them all with the normal smile emoticon using a dum replacer for any inline images
+        // FUDGE: Disable emoticons. Tapatalk will sub in those that it supports. If we don't do this it replaces them all with the normal smile emoticon using a dum replacer for any inline images
         $emoticon_map = get_tapatalk_to_composr_emoticon_map('perfect_matches');
         $bak = $GLOBALS['FORUM_DRIVER']->EMOTICON_CACHE;
         foreach ($emoticon_map as $tapatalk_code => $composr_code) {
@@ -785,8 +790,8 @@ function get_post_attachments($post_id, $attachment_id = null, $non_image_only =
             }
 
             if (!is_image($attachment_row[0]['a_thumb_url'])) {
-                continue;
-            } // Can't deal with this
+                continue; // Can't deal with this
+            }
 
             $attachments[] = _get_attachment($attachment_row[0]);
         }
@@ -831,8 +836,8 @@ function _get_attachment($attachment_row)
     $url = find_script('attachment') . '?id=' . strval($attachment_row['id']);
 
     if (!is_image($attachment_row['a_url'])) {
-        $url = $thumb_url;
-    } // Can't deal with this
+        $url = $thumb_url; // Can't deal with this
+    }
 
     return array(
         'id' => $attachment_row['id'],
@@ -940,7 +945,7 @@ function report_post($post_id, $reason = '')
     $table_prefix = $GLOBALS['FORUM_DB']->get_table_prefix();
 
     $post_info = $GLOBALS['FORUM_DB']->query_select('f_posts p JOIN ' . $table_prefix . 'f_topics t on t.id=p.p_topic_id', array('*', 'p.id AS post_id', 't.id AS topic_id'), array('p.id' => $post_id), '', 1);
-    if (!isset($post_info[0])) {
+    if (!array_key_exists(0, $post_info)) {
         warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'post'));
     }
 
@@ -975,8 +980,9 @@ function report_post($post_id, $reason = '')
         $member = '[page="_SEARCH:members:view:' . strval($post_info[0]['p_poster']) . '"]' . $poster . '[/page]';
     }
 
-    $__post = preg_replace('#\[staff_note\].*\[/staff_note\]#Us', '', get_translated_text($post_info[0]['p_post'], $GLOBALS['FORUM_DB']));
-    $post = do_template('CNS_REPORTED_POST_FCOMCODE', array('POST_ID' => strval($post_id), 'MEMBER' => $member, 'TOPIC_TITLE' => $topic_title, 'POST' => $__post, 'POSTER' => $poster), null, false, null, '.txt', 'text');
+    require_code('comcode_cleanup');
+    $__post = comcode_censored_raw_code_access(get_translated_text($post_info[0]['p_post'], $GLOBALS['FORUM_DB']), $post_info[0]['p_poster']);
+    $post = do_template('CNS_REPORTED_POST_FCOMCODE', array('_GUID' => '6e9a43a3503c357b52b724e11d3d4eef', 'POST_ID' => strval($post_id), 'MEMBER' => $member, 'TOPIC_TITLE' => $topic_title, 'POST' => $__post, 'POSTER' => $poster), null, false, null, '.txt', 'text');
     if ($reason != '') {
         $post->attach($reason);
     }

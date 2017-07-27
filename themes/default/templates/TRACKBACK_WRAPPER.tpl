@@ -10,13 +10,13 @@
 
 	{+START,IF_NON_EMPTY,{TRACKBACKS}}
 		{+START,IF,{$HAS_ACTUAL_PAGE_ACCESS,_SEARCH:admin_trackbacks}}
-		<form title="{!TRACKBACKS}" action="{$PAGE_LINK*,_SEARCH:admin_trackbacks:delete:redirect={$SELF_URL}}" method="post">
+		<form title="{!TRACKBACKS}" action="{$PAGE_LINK*,_SEARCH:admin_trackbacks:delete:redirect={$SELF_URL}}" method="post" autocomplete="off">
 			{$INSERT_SPAMMER_BLACKHOLE}
 		{+END}
 		{TRACKBACKS}
 		{+START,IF,{$HAS_ACTUAL_PAGE_ACCESS,_SEARCH:admin_trackbacks}}
 			<p class="proceed_button">
-				<input onclick="disable_button_just_clicked(this);" class="menu___generic_admin__delete button_screen" type="submit" value="{!MANAGE_TRACKBACKS}" />
+				<input onclick="disable_button_just_clicked(this);" class="button_screen menu___generic_admin__delete" type="submit" value="{!MANAGE_TRACKBACKS}" />
 			</p>
 		</form>
 		{+END}

@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -31,8 +31,8 @@ class Module_buildr
         $info['hacked_by'] = null;
         $info['hack_version'] = null;
         $info['version'] = 3;
+        $info['update_require_upgrade'] = true;
         $info['locked'] = false;
-        $info['update_require_upgrade'] = 1;
         return $info;
     }
 
@@ -53,7 +53,9 @@ class Module_buildr
         $GLOBALS['SITE_DB']->drop_table_if_exists('w_travelhistory');
 
         require_code('files');
-        deldir_contents(get_custom_file_base() . '/uploads/buildr_addon', true);
+        if (!$GLOBALS['DEV_MODE']) {
+            deldir_contents(get_custom_file_base() . '/uploads/buildr_addon', true);
+        }
 
         require_code('buildr');
 
@@ -253,7 +255,7 @@ class Module_buildr
                 'a28' => 'SHORT_TEXT',
                 'a29' => 'SHORT_TEXT',
                 'a30' => 'SHORT_TEXT',
-            ), true);
+            ), true, false, true);
 
             require_code('buildr');
 
@@ -273,7 +275,7 @@ class Module_buildr
      * @param  boolean $check_perms Whether to check permissions.
      * @param  ?MEMBER $member_id The member to check permissions as (null: current user).
      * @param  boolean $support_crosslinks Whether to allow cross links to other modules (identifiable via a full-page-link rather than a screen-name).
-     * @param  boolean $be_deferential Whether to avoid any entry-point (or even return NULL to disable the page in the Sitemap) if we know another module, or page_group, is going to link to that entry-point. Note that "!" and "browse" entry points are automatically merged with container page nodes (likely called by page-groupings) as appropriate.
+     * @param  boolean $be_deferential Whether to avoid any entry-point (or even return null to disable the page in the Sitemap) if we know another module, or page_group, is going to link to that entry-point. Note that "!" and "browse" entry points are automatically merged with container page nodes (likely called by page-groupings) as appropriate.
      * @return ?array A map of entry points (screen-name=>language-code/string or screen-name=>[language-code/string, icon-theme-image]) (null: disabled).
      */
     public function get_entry_points($check_perms = true, $member_id = null, $support_crosslinks = true, $be_deferential = false)
@@ -286,7 +288,7 @@ class Module_buildr
     public $title;
 
     /**
-     * Module pre-run function. Allows us to know meta-data for <head> before we start streaming output.
+     * Module pre-run function. Allows us to know metadata for <head> before we start streaming output.
      *
      * @return ?Tempcode Tempcode indicating some kind of exceptional output (null: none).
      */
@@ -294,9 +296,10 @@ class Module_buildr
     {
         i_solemnly_declare(I_UNDERSTAND_SQL_INJECTION | I_UNDERSTAND_XSS | I_UNDERSTAND_PATH_INJECTION);
 
-        $type = get_param_string('type', 'room');
+        $type = either_param_string('type', 'room');
 
         require_lang('buildr');
+        require_lang('metadata');
 
         if ($type == 'confirm') {
             $this->title = get_screen_title('W_CONFIRM_TITLE');
@@ -507,7 +510,7 @@ class Module_buildr
 
             $out = new Tempcode();
 
-            $rows = $GLOBALS['SITE_DB']->query_select('items', array('*'), array('copy_owner' => null));
+            $rows = $GLOBALS['SITE_DB']->query_select('items', array('*'), array('copy_owner' => null), 'ORDER BY name');
             foreach ($rows as $myrow) {
                 $owner = $GLOBALS['SITE_DB']->query_select_value('w_itemdef', 'owner', array('name' => $myrow['name']));
                 if (!is_null($owner)) {
@@ -723,8 +726,7 @@ class Module_buildr
                 $tpl = do_template('W_REALM_SCREEN', array(
                     '_GUID' => '7ae26fe1766aed02233e1be84772759b',
                     'PRICE' => integer_format(get_price('mud_realm')),
-                    'TEXT' => paragraph(do_lang_tempcode('W_ADD_REALM_TEXT',
-                        integer_format($left))),
+                    'TEXT' => paragraph(do_lang_tempcode('W_ADD_REALM_TEXT', integer_format($left))),
                     'TITLE' => $this->title,
                     'PAGE_TYPE' => 'addrealm',
                     'QA' => $_qa,
@@ -758,7 +760,7 @@ class Module_buildr
                 $tpl = do_template('W_PORTAL_SCREEN', array(
                     '_GUID' => '69e74a964f69721d0381a920c4a25ce5',
                     'PRICE' => integer_format(get_price('mud_portal')),
-                    'TEXT' => paragraph(do_lang_tempcode('W_ADD_PORTAL_TEXT')),
+                    'TEXT' => paragraph(do_lang_tempcode('W_ABOUT_PORTALS')),
                     'TITLE' => $this->title,
                     'PORTAL_TEXT' => '',
                     'PAGE_TYPE' => 'addportal',
@@ -805,8 +807,8 @@ class Module_buildr
             }
             if ($type == 'teleport-person') {
                 $ast = strpos($param, ':');
-                $b = strpos($param, ':', $ast + 1);
-                $realm = substr($param, 0, $ast);
+                $b = @strpos($param, ':', $ast + 1);
+                $realm = intval(substr($param, 0, $ast));
                 $x = intval(substr($param, $ast + 1, $b - $ast - 1));
                 $y = intval(substr($param, $b + 1));
                 basic_enter_room($dest_member_id, $realm, $x, $y);

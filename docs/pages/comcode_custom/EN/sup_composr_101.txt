@@ -10,7 +10,7 @@ It's a fantastic CMS that allows you easily build the infrastructure for a vibra
 
 [title="2"]Free Trial[/title]
 
-It costs you nothing to try out Composr. You can set up a 30 day demo account with Arvixe web hosting. Why? Well you have 30 days completely free Composr optimised hosting to get used to working with Composr. Any work you do is saved and should you wish to purchase hosting its one click away.
+It costs you nothing to try out Composr. You can set up a 30 day demo account with Arvixe webhosting. Why? Well you have 30 days completely free Composr optimised hosting to get used to working with Composr. Any work you do is saved and should you wish to purchase hosting its one click away.
 
 [title="3"]Try out Composr with Arvixe[/title]
 
@@ -23,7 +23,7 @@ The username will be used for the name of your demo site.
 
 My username was &ldquo;ocptutor&rdquo; therefore my demo site can be found at
 
-[url="http://ocptutor.ocportal.arvixe.com/"]http://ocptutor.ocportal.arvixe.com/[/url]
+[tt]http://ocptutor.ocportal.arvixe.com/[/tt] (UPDATE: the site is no longer live)
 [/box]
 
 [media description="Composr demo site" thumb="1"]data_custom/images/docs/sup_composr_101/8140649df759280fe2588f4fce756d89.png[/media]
@@ -127,6 +127,6 @@ Composr has created the following for us:
 
 It's easy to see from this initial install just how powerful and flexible Composr is, however the initial install includes so much more than listed above and I will work my way through these in other tutorials.
 
-[box="Thank you Arvixe"]This tutorial was sponsored by [url="Arvixe hosting"]http://www.arvixe.com/5256-223-3-122.html[/url].[/box]
+[box="Thank you Arvixe"]This tutorial was sponsored by [url="Arvixe hosting"]http://arvixe.evyy.net/c/302199/279421/3370[/url].[/box]
 
 {$SET,tutorial_tags,Introduction,novice}{$SET,tutorial_add_date,Nov 2014}{$SET,tutorial_summary,Composr is a very comprehensive Content management system "CMS" That can be set up and used by just about anyone. I'll go over some of the basics of setup.}[block]main_tutorial_rating[/block]

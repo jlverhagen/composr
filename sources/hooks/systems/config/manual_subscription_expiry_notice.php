@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -38,6 +38,7 @@ class Hook_config_manual_subscription_expiry_notice
             'explanation' => 'CONFIG_OPTION_manual_subscription_expiry_notice',
             'shared_hosting_restricted' => '0',
             'list_options' => '',
+            'required' => false,
 
             'addon' => 'ecommerce',
         );

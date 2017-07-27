@@ -51,7 +51,7 @@ class SimpleTestCase {
      *                            the class name is used.
      *    @access public
      */
-    function SimpleTestCase($label = false) {
+    function __construct($label = false) {
         if ($label) {
             $this->_label = $label;
         }
@@ -122,7 +122,7 @@ class SimpleTestCase {
      *    @return boolean                    True if all tests passed.
      *    @access public
      */
-    function run(&$reporter) {
+    function run($reporter) {
         $context = &SimpleTest::getContext();
         $context->setTest($this);
         $context->setReporter($reporter);
@@ -305,13 +305,13 @@ class SimpleTestCase {
      *    @return boolean                        True on pass
      *    @access public
      */
-    function assert(&$expectation, $compare, $message = '%s') {
+    function assert($expectation, $compare, $message = '%s') {
         if ($expectation->test($compare)) {
-            return $this->pass(sprintf(
+            return $this->pass(@sprintf(
                     $message,
                     $expectation->overlayMessage($compare, $this->_reporter->getDumper())));
         } else {
-            return $this->fail(sprintf(
+            return $this->fail(@sprintf(
                     $message,
                     $expectation->overlayMessage($compare, $this->_reporter->getDumper())));
         }
@@ -494,7 +494,7 @@ class TestSuite {
      *                            of the test.
      *    @access public
      */
-    function TestSuite($label = false) {
+    function __construct($label = false) {
         $this->_label = $label;
         $this->_test_cases = array();
     }
@@ -586,7 +586,7 @@ class TestSuite {
      *    @param SimpleReporter $reporter    Current test reporter.
      *    @access public
      */
-    function run(&$reporter) {
+    function run($reporter) {
         $reporter->paintGroupStart($this->getLabel(), $this->getSize());
         for ($i = 0, $count = count($this->_test_cases); $i < $count; $i++) {
             if (is_string($this->_test_cases[$i])) {
@@ -662,7 +662,7 @@ class BadTestSuite {
      *                            of the test.
      *    @access public
      */
-    function BadTestSuite($label, $error) {
+    function __construct($label, $error) {
         $this->_label = $label;
         $this->_error = $error;
     }
@@ -681,7 +681,7 @@ class BadTestSuite {
      *    @param SimpleReporter $reporter    Current test reporter.
      *    @access public
      */
-    function run(&$reporter) {
+    function run($reporter) {
         $reporter->paintGroupStart($this->getLabel(), $this->getSize());
         $reporter->paintFail('Bad TestSuite [' . $this->getLabel() .
                 '] with error [' . $this->_error . ']');

@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -44,7 +44,7 @@ class Hook_notification_adminzone_dashboard_accessed extends Hook_notification__
     public function list_handled_codes()
     {
         $list = array();
-        $list['adminzone_dashboard_accessed'] = array(do_lang('security:SECURITY'), do_lang('NOTIFICATION_TYPE_adminzone_dashboard_accessed'));
+        $list['adminzone_dashboard_accessed'] = array(do_lang('SECURITY'), do_lang('NOTIFICATION_TYPE_adminzone_dashboard_accessed'));
         return $list;
     }
 }

@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -42,6 +42,10 @@ class Hook_realtime_rain_calendar
             foreach ($rows as $row) {
                 $timestamp = $row[2];
                 $member_id = $row[1]['e_submitter'];
+
+                if ($timestamp[2] < $timestamp) {
+                    continue;
+                }
 
                 $drops[] = rain_get_special_icons(null, $timestamp) + array(
                         'TYPE' => 'calendar',

@@ -17,6 +17,13 @@ The Composr WYSIWYG editor is CKEditor. It is enabled by default via the "Enable
 
 [i]For programmers[/i]: Composr can, in principle, support almost any WYSIWYG editor component. Composr binds itself to the editor via JavaScript code stored in Composr's [tt]WYSIWYG_LOAD.tpl[/tt], [tt]WYSIWYG_SETTINGS.tpl[/tt], and [tt]posting.js[/tt] templates. The editor itself is stored in [tt]data/ckeditor[/tt].
 
+[title="2"]Link parsing[/title]
+
+Automatic link parsing, and some other minor Comcode features, are not guaranteed to work when using the WYSIWYG editor. This is due to a complex set of conditions for what depth/type of Comcode parsing Composr goes into. These conditions are designed to minimalise corruption through incorrect or unnecessary assumptions made by Composr.
+You should use the features of the editor to explicitly mark up your content as you want it and think of it as mainly an alternative to writing Comcode, rather than a supplement to it.
+
+One scenario where automatic link detection runs is when an explicit anchor tag has already been added. Composr will assume you want any written URLs to display literally and that you'll use anchor tags explicitly when you want them.
+
 [title="2"]Highlighting of Comcode tags[/title]
 
 Comcode tags that can not be represented visually in the editor will be shown either as:
@@ -89,7 +96,8 @@ There are currently 6 ways to get images (and other files) into the WYSIWYG edit
 
 [title="3"]Attachments[/title]
 
-Composr has its own system for making attachments. If the WYSIWYG editor is for a 'Post area' then there will be either:[list="a"]
+Composr has its own system for making attachments. If the WYSIWYG editor is for a 'Post area' then there will be either:
+[list="a"]
 [*] an attachment facility beneath it
 [*] attachment upload via the WYSIWYG's image button (if the "Simplified attachments UI" option is on, which is the default)
 [/list]
@@ -181,7 +189,7 @@ If you do not want Comcode conversion, you can disable the Composr "Convert XHTM
 
 [title="2"]Problem areas, and turning the editor off[/title]
 
-Sometimes WYSIWYG editing is more trouble than it's worth. When particularly complex layouts are produced, or code pasted from documents, it can still result messy and slow code; especially when content is long. This is particularly bad for web-sites that favour very high web standards (such as perfect WCAG accessibility), which will always need to have a degree of hand-coding in them, to maintain those high standards.
+Sometimes WYSIWYG editing is more trouble than it's worth. When particularly complex layouts are produced, or code pasted from documents, it can still result messy and slow code; especially when content is long. This is particularly bad for websites that favour very high web standards (such as perfect WCAG accessibility), which will always need to have a degree of hand-coding in them, to maintain those high standards.
 
 Generally it's also not a good idea to have anything that is not directly WYSIWYG in the WYSIWYG editor, including careful use of tags to apply custom CSS styles, or JavaScript. Various things can relate to it getting stripped or corrupted.
 

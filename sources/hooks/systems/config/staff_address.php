@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -31,10 +31,10 @@ class Hook_config_staff_address
     public function get_details()
     {
         return array(
-            'human_name' => 'EMAIL',
+            'human_name' => 'EMAIL_ADDRESS',
             'type' => 'line',
             'category' => 'SITE',
-            'group' => 'EMAIL',
+            'group' => '_EMAIL',
             'explanation' => 'CONFIG_OPTION_staff_address',
             'shared_hosting_restricted' => '0',
             'list_options' => '',

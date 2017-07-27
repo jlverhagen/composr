@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -50,7 +50,7 @@ class Hook_sw_catalogues
      */
     public function get_fields($field_defaults)
     {
-        if (!addon_installed('catalogues')) {
+        if (!addon_installed('catalogues') || post_param_integer('addon_catalogues', null) === 0) {
             return new Tempcode();
         }
 
@@ -79,7 +79,7 @@ class Hook_sw_catalogues
      */
     public function set_fields()
     {
-        if (!addon_installed('catalogues')) {
+        if (!addon_installed('catalogues') || post_param_integer('addon_catalogues', null) === 0) {
             return;
         }
 
@@ -91,7 +91,6 @@ class Hook_sw_catalogues
                 require_lang('catalogues');
                 require_code('menus2');
                 delete_menu_item_simple(do_lang('DEFAULT_CATALOGUE_PROJECTS_TITLE'));
-                delete_menu_item_simple('_SEARCH:catalogues:projects:index');
                 delete_menu_item_simple('_SEARCH:cms_catalogues:add_entry:catalogue_name=projects');
                 delete_menu_item_simple('_SEARCH:catalogues:index:projects');
             }

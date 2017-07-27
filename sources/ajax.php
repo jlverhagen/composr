@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -30,14 +30,14 @@ function cor_prepare()
     require_code('input_filter');
     $allowed_partners = get_allowed_partner_sites();
     if (in_array(preg_replace('#^.*://([^:/]*).*$#', '${1}', $_SERVER['HTTP_ORIGIN']), $allowed_partners)) {
-        header('Access-Control-Allow-Origin: ' . str_replace("\n", '', str_replace("\r", '', $_SERVER['HTTP_ORIGIN'])));
+        header('Access-Control-Allow-Origin: ' . /*escape_header  function not needed and may not be loaded yet*/($_SERVER['HTTP_ORIGIN']));
 
         if ((isset($_SERVER['REQUEST_METHOD'])) && ($_SERVER['REQUEST_METHOD'] == 'OPTIONS')) {
             header('Access-Control-Allow-Credentials: true');
 
             // Send pre-flight response
             if (isset($_SERVER['ACCESS_CONTROL_REQUEST_HEADERS'])) {
-                header('Access-Control-Allow-Headers: ' . str_replace("\n", '', str_replace("\r", '', $_SERVER['ACCESS_CONTROL_REQUEST_HEADERS'])));
+                header('Access-Control-Allow-Headers: ' . /*escape_header  function not needed and may not be loaded yet*/($_SERVER['ACCESS_CONTROL_REQUEST_HEADERS']));
             }
             $methods = 'GET,POST,PUT,HEAD,OPTIONS';
             if (isset($_SERVER['ACCESS_CONTROL_REQUEST_HEADERS'])) {
@@ -93,11 +93,11 @@ function username_check_script()
     require_code('cns_members_action2');
     require_lang('cns');
 
-    $username = get_param_string('username', null, true);
+    $username = post_param_string('username', null, true);
     if (!is_null($username)) {
         $username = trim($username);
     }
-    $password = either_param_string('password', null);
+    $password = post_param_string('password', null);
     if (!is_null($password)) {
         $password = trim($password);
     }
@@ -179,8 +179,12 @@ function namelike_script()
             echo '<option value="' . escape_html($name) . '" displayname="" />';
         }
     } elseif ($special == 'search') {
-        require_code('search');
-        $names = find_search_suggestions($id, get_param_string('search_type', ''));
+        if (addon_installed('search')) {
+            require_code('search');
+            $names = find_search_suggestions($id, get_param_string('search_type', ''));
+        } else {
+            $names = array();
+        }
 
         foreach ($names as $name) {
             echo '<option value="' . escape_html($name) . '" displayname="" />';
@@ -190,7 +194,10 @@ function namelike_script()
             $rows = $GLOBALS['SITE_DB']->query_select('chat_friends', array('member_liked'), array('member_likes' => get_member()), 'ORDER BY date_and_time', 100);
             $names = array();
             foreach ($rows as $row) {
-                $names[$row['member_liked']] = $GLOBALS['FORUM_DRIVER']->get_username($row['member_liked']);
+                $username = $GLOBALS['FORUM_DRIVER']->get_username($row['member_liked']);
+                if (!is_null($username)) {
+                    $names[$row['member_liked']] = $username;
+                }
             }
 
             foreach ($names as $name) {
@@ -280,6 +287,9 @@ function find_permissions_script()
  */
 function store_autosave()
 {
+    require_code('input_filter_2');
+    modsecurity_workaround_enable();
+
     prepare_for_known_ajax_response();
 
     $member_id = get_member();
@@ -371,7 +381,7 @@ function fractional_edit_script()
 
     $supports_comcode = get_param_integer('supports_comcode', 0) == 1;
     $param_name = get_param_string('edit_param_name');
-    if (isset($_POST[$param_name . '__altered_rendered_output'])) {
+    if (isset($_POST[$param_name . '__altered_rendered_output'])) { // This will potentially be written into by module, as a better thing to render
         $edited = $_POST[$param_name . '__altered_rendered_output'];
     } else {
         $edited = post_param_string($param_name);
@@ -421,16 +431,16 @@ function edit_ping_script()
     $GLOBALS['SITE_DB']->query('DELETE FROM ' . $GLOBALS['SITE_DB']->get_table_prefix() . 'edit_pings WHERE the_time<' . strval(time() - 200));
 
     $GLOBALS['SITE_DB']->query_delete('edit_pings', array(
-        'the_page' => get_page_name(),
-        'the_type' => get_param_string('type'),
-        'the_id' => get_param_string('id', false, true),
+        'the_page' => cms_mb_substr(get_page_name(), 0, 80),
+        'the_type' => cms_mb_substr(get_param_string('type'), 0, 80),
+        'the_id' => cms_mb_substr(get_param_string('id', '', true), 0, 80),
         'the_member' => get_member()
     ));
 
     $GLOBALS['SITE_DB']->query_insert('edit_pings', array(
-        'the_page' => get_page_name(),
-        'the_type' => get_param_string('type'),
-        'the_id' => get_param_string('id', false, true),
+        'the_page' => cms_mb_substr(get_page_name(), 0, 80),
+        'the_type' => cms_mb_substr(get_param_string('type'), 0, 80),
+        'the_id' => cms_mb_substr(get_param_string('id', '', true), 0, 80),
         'the_time' => time(),
         'the_member' => get_member()
     ));
@@ -459,8 +469,11 @@ function ajax_tree_script()
     require_code('xml');
     header('Content-Type: text/xml');
     $hook = filter_naughty_harsh(get_param_string('hook'));
-    require_code('hooks/systems/ajax_tree/' . $hook);
-    $object = object_factory('Hook_' . $hook);
+    require_code('hooks/systems/ajax_tree/' . $hook, true);
+    $object = object_factory('Hook_' . $hook, true);
+    if ($object === null) {
+        warn_exit(do_lang_tempcode('INTERNAL_ERROR'));
+    }
     $id = get_param_string('id', '', true);
     if ($id == '') {
         $id = null;
@@ -513,15 +526,15 @@ function load_template_script()
 {
     prepare_for_known_ajax_response();
 
-    if (!has_actual_page_access(get_member(), 'admin_themes', 'adminzone')) {
+    if (!has_actual_page_access(get_member(), 'admin_themes')) {
         exit();
     }
 
     safe_ini_set('ocproducts.xss_detect', '0');
 
     $theme = filter_naughty(get_param_string('theme'));
-    $id = filter_naughty(get_param_string('id'));
-    $directory = filter_naughty(get_param_string('directory', 'templates'));
+    $id = filter_naughty(basename(get_param_string('id')));
+    $directory = filter_naughty(get_param_string('directory', dirname(get_param_string('id'))));
 
     $x = get_custom_file_base() . '/themes/' . $theme . '/' . $directory . '_custom/' . $id;
     if (!file_exists($x)) {
@@ -533,6 +546,7 @@ function load_template_script()
     if (!file_exists($x)) {
         $x = get_file_base() . '/themes/default/' . $directory . '/' . $id;
     }
+
     if (file_exists($x)) {
         echo file_get_contents($x);
     }
@@ -550,7 +564,29 @@ function sheet_script()
     header('Content-Type: text/css');
     $sheet = get_param_string('sheet');
     if ($sheet != '') {
-        echo str_replace('../../../', '', file_get_contents(css_enforce(filter_naughty_harsh($sheet))));
+        $path = css_enforce(filter_naughty($sheet), get_param_string('theme', null));
+        if ($path != '') {
+            echo str_replace('../../../', '', file_get_contents($path));
+        }
+    }
+}
+
+/**
+ * AJAX script for dynamic inclusion of JavaScript.
+ *
+ * @ignore
+ */
+function script_script()
+{
+    prepare_for_known_ajax_response();
+
+    header('Content-Type: application/javascript');
+    $script = get_param_string('script');
+    if ($script != '') {
+        $path = javascript_enforce(filter_naughty($script), get_param_string('theme', null));
+        if ($path != '') {
+            echo str_replace('../../../', '', file_get_contents($path));
+        }
     }
 }
 
@@ -563,6 +599,13 @@ function snippet_script()
 {
     prepare_for_known_ajax_response();
 
+    global $RELATIVE_PATH, $ZONE;
+    $test = get_module_zone(get_page_name());
+    if ($test !== null) {
+        $RELATIVE_PATH = $test;
+        $ZONE = null;
+    }
+
     header('Content-Type: text/plain; charset=' . get_charset());
     convert_data_encodings(true);
     $hook = filter_naughty_harsh(get_param_string('snippet'));
@@ -572,7 +615,7 @@ function snippet_script()
     $tempcode->handle_symbol_preprocessing();
     $out = $tempcode->evaluate();
 
-    if ((strpos($out, "\n") !== false) && (strpos($hook, '__text') !== false)) { // Is HTML
+    if ((strpos($out, "\n") !== false) && (strpos($hook, '__text') === false)) { // Is HTML
         if ((!function_exists('simplexml_load_string')) || ((function_exists('simplexml_load_string')) && (@simplexml_load_string('<wrap>' . preg_replace('#&\w+;#', '', $out) . '</wrap>') === false))) { // Optimisation-- check first via optimised native PHP function if possible
             require_code('xhtml');
             $out = xhtmlise_html($out, true);

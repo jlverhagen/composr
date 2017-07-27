@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -38,6 +38,7 @@ class Hook_config_support_operator
             'explanation' => 'CONFIG_OPTION_support_operator',
             'shared_hosting_restricted' => '0',
             'list_options' => '',
+            'order_in_category_group' => 2,
 
             'addon' => 'tickets',
         );
@@ -50,6 +51,7 @@ class Hook_config_support_operator
      */
     public function get_default()
     {
+        require_lang('tickets');
         $test = do_lang('SUPPORT_OPERATOR');
         if (is_null($GLOBALS['FORUM_DRIVER']->get_member_from_username($test))) {
             return '';

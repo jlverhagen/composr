@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -32,7 +32,7 @@ RSS IMPORT (works very well with Wordpress and Blogger, which use RSS as an inte
  * @param  ?AUTO_LINK $id Force an ID (null: don't force an ID)
  * @return AUTO_LINK The ID of our new news category
  */
-function add_news_category($title, $img, $notes, $owner = null, $id = null)
+function add_news_category($title, $img = 'newscats/general', $notes = '', $owner = null, $id = null)
 {
     require_code('global4');
     prevent_double_submit('ADD_NEWS_CATEGORY', null, $title);
@@ -52,7 +52,7 @@ function add_news_category($title, $img, $notes, $owner = null, $id = null)
 
     if ((addon_installed('commandr')) && (!running_script('install'))) {
         require_code('resource_fs');
-        generate_resourcefs_moniker('news_category', strval($id), null, null, true);
+        generate_resource_fs_moniker('news_category', strval($id), null, null, true);
     }
 
     decache('side_news_categories');
@@ -104,7 +104,7 @@ function edit_news_category($id, $title, $img, $notes, $owner)
 
     if ((addon_installed('commandr')) && (!running_script('install'))) {
         require_code('resource_fs');
-        generate_resourcefs_moniker('news_category', strval($id));
+        generate_resource_fs_moniker('news_category', strval($id));
     }
 
     if (is_null($title)) {
@@ -130,6 +130,7 @@ function edit_news_category($id, $title, $img, $notes, $owner)
     tidy_theme_img_code($img, $myrow['nc_img'], 'news_categories', 'nc_img');
 
     decache('main_news');
+    decache('main_image_fader_news');
     decache('side_news');
     decache('side_news_archive');
     decache('bottom_news');
@@ -196,7 +197,7 @@ function delete_news_category($id)
 
     if ((addon_installed('commandr')) && (!running_script('install'))) {
         require_code('resource_fs');
-        expunge_resourcefs_moniker('news_category', strval($id));
+        expunge_resource_fs_moniker('news_category', strval($id));
     }
 
     require_code('sitemap_xml');
@@ -256,7 +257,7 @@ function add_news($title, $news, $author = null, $validated = 1, $allow_rating =
     if (is_null($main_news_category)) {
         $main_news_category_id = $GLOBALS['SITE_DB']->query_select_value_if_there('news_categories', 'id', array('nc_owner' => $submitter));
         if (is_null($main_news_category_id)) {
-            if (!has_privilege(get_member(), 'have_personal_category', 'cms_news')) {
+            if ((!has_privilege(get_member(), 'have_personal_category', 'cms_news')) && (!running_script('stress_test_loader'))) {
                 fatal_exit(do_lang_tempcode('INTERNAL_ERROR'));
             }
 
@@ -270,11 +271,8 @@ function add_news($title, $news, $author = null, $validated = 1, $allow_rating =
             $main_news_category_id = $GLOBALS['SITE_DB']->query_insert('news_categories', $map, true);
             $already_created_personal_category = true;
 
-            $groups = $GLOBALS['FORUM_DRIVER']->get_usergroup_list(false, true);
-
-            foreach (array_keys($groups) as $group_id) {
-                $GLOBALS['SITE_DB']->query_insert('group_category_access', array('module_the_name' => 'news', 'category_name' => strval($main_news_category_id), 'group_id' => $group_id));
-            }
+            require_code('permissions2');
+            set_global_category_access('news', $main_news_category_id);
         }
     } else {
         $main_news_category_id = $main_news_category;
@@ -323,11 +321,8 @@ function add_news($title, $news, $author = null, $validated = 1, $allow_rating =
                 $map += insert_lang('nc_title', do_lang('MEMBER_CATEGORY', $GLOBALS['FORUM_DRIVER']->get_username($submitter, true)), 2);
                 $news_category_id = $GLOBALS['SITE_DB']->query_insert('news_categories', $map, true);
 
-                $groups = $GLOBALS['FORUM_DRIVER']->get_usergroup_list(false, true);
-
-                foreach (array_keys($groups) as $group_id) {
-                    $GLOBALS['SITE_DB']->query_insert('group_category_access', array('module_the_name' => 'news', 'category_name' => strval($news_category_id), 'group_id' => $group_id));
-                }
+                require_code('permissions2');
+                set_global_category_access('news', $news_category_id);
             } else {
                 $news_category_id = $value;
             }
@@ -353,11 +348,11 @@ function add_news($title, $news, $author = null, $validated = 1, $allow_rating =
 
     if ((addon_installed('commandr')) && (!running_script('install'))) {
         require_code('resource_fs');
-        generate_resourcefs_moniker('news', strval($id), null, null, true);
+        generate_resource_fs_moniker('news', strval($id), null, null, true);
     }
 
-    if ((function_exists('fsockopen')) && (strpos(@ini_get('disable_functions'), 'shell_exec') === false) && (function_exists('xmlrpc_encode'))) {
-        if (function_exists('set_time_limit')) {
+    if (php_function_allowed('fsockopen')) {
+        if (php_function_allowed('set_time_limit')) {
             @set_time_limit(0);
         }
 
@@ -371,27 +366,11 @@ function add_news($title, $news, $author = null, $validated = 1, $allow_rating =
             foreach ($listeners as $listener) {
                 $data = $listener['watching_channel'];
                 if ($listener['rem_protocol'] == 'xml-rpc') {
-                    $request = xmlrpc_encode_request($listener['rem_procedure'], $data);
-                    $length = strlen($request);
-                    $_length = strval($length);
-                    $packet = <<<END
-POST /{$listener['rem_path']} HTTP/1.0
-Host: {$listener['rem_ip']}
-Content-Type: text/xml
-Content-length: {$_length}
-
-{$request}
-END;
-                }
-                $errno = 0;
-                $errstr = '';
-                $mysock = @fsockopen($listener['rem_ip'], $listener['rem_port'], $errno, $errstr, 6.0);
-                if ($mysock !== false) {
-                    @fwrite($mysock, $packet);
-                    @fclose($mysock);
-                }
-                $start += 100;
+                    require_code('xmlrpc');
+                    xml_rpc('http://' . $listener['rem_ip'] . ':' . strval($listener['rem_port']) . '/' . $listener['rem_path'], $listener['rem_procedure'], $data, true);
+                } // Other protocols not supported
             }
+            $start += 100;
         } while (array_key_exists(0, $listeners));
     }
 
@@ -407,13 +386,14 @@ END;
     }
     if (($meta_keywords == '') && ($meta_description == '')) {
         $meta_description = ($news == '') ? $news_article : $news;
-        seo_meta_set_for_implicit('news', strval($id), array($title, $meta_description/*,$news_article*/), $meta_description); // News article could be used, but it's probably better to go for the summary only to avoid crap
+        seo_meta_set_for_implicit('news', strval($id), array($title, $meta_description/*, $news_article*/), $meta_description); // News article could be used, but it's probably better to go for the summary only to avoid crap
     } else {
         seo_meta_set_for_explicit('news', strval($id), $meta_keywords, $meta_description);
     }
 
     if ($validated == 1) {
         decache('main_news');
+        decache('main_image_fader_news');
         decache('side_news');
         decache('side_news_archive');
         decache('bottom_news');
@@ -423,9 +403,18 @@ END;
     }
 
     if ((!get_mass_import_mode()) && ($validated == 1) && (get_option('site_closed') == '0') && (!$GLOBALS['DEV_MODE']) && (has_category_access($GLOBALS['FORUM_DRIVER']->get_guest_id(), 'news', strval($main_news_category_id)))) {
-        register_shutdown_function('send_rss_ping');
+        if (get_value('avoid_register_shutdown_function') === '1') {
+            send_rss_ping();
+        } else {
+            register_shutdown_function('send_rss_ping');
+        }
+
         require_code('news_sitemap');
-        register_shutdown_function('build_news_sitemap');
+        if (get_value('avoid_register_shutdown_function') === '1') {
+            build_news_sitemap();
+        } else {
+            register_shutdown_function('build_news_sitemap');
+        }
     }
 
     require_code('member_mentions');
@@ -477,17 +466,17 @@ function send_rss_ping($show_errors = true)
  * @param  BINARY $allow_trackbacks Whether the news may have trackbacks
  * @param  LONG_TEXT $notes Notes for the news
  * @param  LONG_TEXT $news_article The news entry (blank means no entry)
- * @param  AUTO_LINK $main_news_category The primary news category (null: personal)
+ * @param  ?AUTO_LINK $main_news_category The primary news category (null: personal)
  * @param  ?array $news_categories The IDs of the news categories that this is in (null: do not change)
  * @param  SHORT_TEXT $meta_keywords Meta keywords
  * @param  LONG_TEXT $meta_description Meta description
  * @param  ?URLPATH $image URL to the image for the news entry (blank: use cat image) (null: don't delete existing)
  * @param  ?TIME $add_time Add time (null: do not change)
- * @param  ?TIME $edit_time Edit time (null: either means current time, or if $null_is_literal, means reset to to NULL)
+ * @param  ?TIME $edit_time Edit time (null: either means current time, or if $null_is_literal, means reset to to null)
  * @param  ?integer $views Number of views (null: do not change)
  * @param  ?MEMBER $submitter Submitter (null: do not change)
  * @param  ?array $regions The regions (empty: not region-limited) (null: same as empty)
- * @param  boolean $null_is_literal Determines whether some NULLs passed mean 'use a default' or literally mean 'set to NULL'
+ * @param  boolean $null_is_literal Determines whether some nulls passed mean 'use a default' or literally mean 'set to null'
  */
 function edit_news($id, $title, $news, $author, $validated, $allow_rating, $allow_comments, $allow_trackbacks, $notes, $news_article, $main_news_category, $news_categories, $meta_keywords, $meta_description, $image, $add_time = null, $edit_time = null, $views = null, $submitter = null, $regions = null, $null_is_literal = false)
 {
@@ -529,7 +518,7 @@ function edit_news($id, $title, $news, $author, $validated, $allow_rating, $allo
         'validated' => $validated,
         'author' => $author,
     );
-    $update_map += update_lang_comcode_attachments('news_article', $_news_article, $news_article, 'news', strval($id), null, false, $rows[0]['submitter']);
+    $update_map += update_lang_comcode_attachments('news_article', $_news_article, $news_article, 'news', strval($id), null, $rows[0]['submitter']);
     $update_map += lang_remap_comcode('title', $_title, $title);
     $update_map += lang_remap_comcode('news', $_news, $news);
 
@@ -567,7 +556,7 @@ function edit_news($id, $title, $news, $author, $validated, $allow_rating, $allo
 
     if ((addon_installed('commandr')) && (!running_script('install'))) {
         require_code('resource_fs');
-        generate_resourcefs_moniker('news', strval($id));
+        generate_resource_fs_moniker('news', strval($id));
     }
 
     $GLOBALS['SITE_DB']->query_update('news', $update_map, array('id' => $id), '', 1);
@@ -592,13 +581,18 @@ function edit_news($id, $title, $news, $author, $validated, $allow_rating, $allo
     seo_meta_set_for_explicit('news', strval($id), $meta_keywords, $meta_description);
 
     decache('main_news');
+    decache('main_image_fader_news');
     decache('side_news');
     decache('side_news_archive');
     decache('bottom_news');
     decache('side_news_categories');
 
     if (($validated == 1) && (has_category_access($GLOBALS['FORUM_DRIVER']->get_guest_id(), 'news', strval($main_news_category)))) {
-        register_shutdown_function('send_rss_ping');
+        if (get_value('avoid_register_shutdown_function') === '1') {
+            send_rss_ping();
+        } else {
+            register_shutdown_function('send_rss_ping');
+        }
     }
 
     require_code('feedback');
@@ -689,6 +683,7 @@ function delete_news($id)
     seo_meta_erase_storage('news', strval($id));
 
     decache('main_news');
+    decache('main_image_fader_news');
     decache('side_news');
     decache('side_news_archive');
     decache('bottom_news');
@@ -702,7 +697,7 @@ function delete_news($id)
 
     if ((addon_installed('commandr')) && (!running_script('install'))) {
         require_code('resource_fs');
-        expunge_resourcefs_moniker('news', strval($id));
+        expunge_resource_fs_moniker('news', strval($id));
     }
 
     require_code('sitemap_xml');
@@ -728,7 +723,7 @@ function import_rss_fields($import_to_blog)
     $field_set->attach(form_input_upload(do_lang_tempcode('UPLOAD'), '', 'file_anytype', false, null, null, true, 'rss,xml,atom'));
     $field_set->attach(form_input_url(do_lang_tempcode('URL'), '', 'rss_feed_url', '', false));
 
-    $fields->attach(alternate_fields_set__end($set_name, $set_title, do_lang_tempcode('DESCRIPTION_WP_XML'), $field_set, $required));
+    $fields->attach(alternate_fields_set__end($set_name, $set_title, do_lang_tempcode('DESCRIPTION_RSS_FEED'), $field_set, $required));
 
     $fields->attach(do_template('FORM_SCREEN_FIELD_SPACER', array('_GUID' => '56ae4f6ded172f27ca37e86f4f6df8ef', 'SECTION_HIDDEN' => false, 'TITLE' => do_lang_tempcode('ADVANCED'))));
 
@@ -755,6 +750,7 @@ DIRECT WORDPRESS DATABASE IMPORT (imports more than RSS import can)
  * Get data from the Wordpress DB
  *
  * @return array Result structure
+ *
  * @ignore
  */
 function _get_wordpress_db_data()
@@ -783,7 +779,7 @@ function _get_wordpress_db_data()
         $data[$user_id] = $user;
 
         // Fetch user posts/pages
-        $posts = $db->query('SELECT * FROM ' . $db_table_prefix . '_posts WHERE post_author=' . strval($user_id) . ' AND (post_type=\'post\' OR post_type=\'page\') AND post_status<>\'auto-draft\'');
+        $posts = $db->query('SELECT * FROM ' . $db_table_prefix . '_posts WHERE post_author=' . strval($user_id) . ' AND (' . db_string_equal_to('post_type', 'post') . ' OR ' . db_string_equal_to('post_type', 'page') . ') AND ' . db_string_not_equal_to('post_status', 'auto-draft'));
         foreach ($posts as $post) {
             $post_id = $post['ID'];
             $post['post_id'] = $post_id; // Consistency with XML feed
@@ -898,6 +894,7 @@ function _news_import_grab_images_and_fix_links($download_images, &$data, $impor
  *
  * @param  string $data HTML (passed by reference)
  * @param  URLPATH $url URL
+ *
  * @ignore
  */
 function _news_import_grab_image(&$data, $url)
@@ -927,7 +924,9 @@ function _news_import_grab_image(&$data, $url)
     }
 
     $target_handle = fopen($target_path, 'wb') or intelligent_write_error($target_path);
+    flock($target_handle, LOCK_EX);
     $result = http_download_file($url, null, false, false, 'Composr', null, null, null, null, null, $target_handle);
+    flock($target_handle, LOCK_UN);
     fclose($target_handle);
     sync_file($target_path);
     fix_permissions($target_path);

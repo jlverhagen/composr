@@ -1,11 +1,17 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
- See text/en/licence.txt for full licencing information.
+ See text/EN/licence.txt for full licencing information.
 
 */
+
+/**
+ * @license    http://opensource.org/licenses/cpal_1.0 Common Public Attribution License
+ * @copyright  ocProducts Ltd
+ * @package    composr_release_build
+ */
 
 /*EXTRA FUNCTIONS: shell_exec|escapeshellarg*/
 
@@ -13,8 +19,6 @@ i_solemnly_declare(I_UNDERSTAND_SQL_INJECTION | I_UNDERSTAND_XSS | I_UNDERSTAND_
 
 restrictify();
 safe_ini_set('ocproducts.xss_detect', '0');
-
-define('SOLUTION_FORUM', 283); // The forum ID on compo.sr for problem solution posts
 
 $_title = get_screen_title('Composr bugfix tool', false);
 $_title->evaluate_echo();
@@ -37,7 +41,7 @@ if (strpos($git_result, 'git: command not found') !== false) {
 // Actualisation
 // =============
 
-if (strtoupper(cms_srv('REQUEST_METHOD')) == 'POST') {
+if (cms_srv('REQUEST_METHOD') == 'POST') {
     $git_commit_id = post_param_string('git_commit_id', '');
 
     $done = array();
@@ -78,7 +82,7 @@ if (strtoupper(cms_srv('REQUEST_METHOD')) == 'POST') {
     $submit_to = post_param_string('submit_to');
     global $REMOTE_BASE_URL;
 
-    $REMOTE_BASE_URL = ($submit_to == 'live') ? (get_brand_base_url()) : (get_base_url());
+    $REMOTE_BASE_URL = ($submit_to == 'live') ? get_brand_base_url() : get_base_url();
 
     // If no tracker issue number was given, one is made
     $tracker_id = post_param_integer('tracker_id', null);
@@ -88,7 +92,8 @@ if (strtoupper(cms_srv('REQUEST_METHOD')) == 'POST') {
     if ($affects != '') {
         $tracker_additional = 'Affects: ' . $affects;
     }
-    if ($tracker_id === null) {
+    $is_new_on_tracker = ($tracker_id === null);
+    if ($is_new_on_tracker) {
         // Make tracker issue
         $tracker_id = create_tracker_issue($version_dotted, $tracker_title, $tracker_message, $tracker_additional);
     } else {
@@ -96,11 +101,19 @@ if (strtoupper(cms_srv('REQUEST_METHOD')) == 'POST') {
         $tracker_comment_message = 'Automated response: ' . $tracker_title . "\n\n" . $tracker_message . "\n\n" . $tracker_additional;
         create_tracker_post($tracker_id, $tracker_comment_message);
     }
-    $tracker_url = $REMOTE_BASE_URL . '/tracker/view.php?id=' . strval($tracker_id);
+    if ($tracker_id === null) {
+        $tracker_url = null;
+    } else {
+        $tracker_url = $REMOTE_BASE_URL . '/tracker/view.php?id=' . strval($tracker_id);
+    }
 
     // A git commit and push happens on the changed files, with the ID number of the tracker issue in it
     if ($git_commit_id == '') {
-        $git_commit_message = 'Commited fix to issue #' . strval($tracker_id) . ' (' . $tracker_url . '). [' . $title . ']';
+        if ($tracker_id === null) {
+            $git_commit_message = $title;
+        } else {
+            $git_commit_message = 'Committed fix to issue #' . strval($tracker_id) . ' (' . $tracker_url . '). [' . $title . ']';
+        }
         if ($submit_to == 'live') {
             $git_commit_id = do_git_commit($git_commit_message, $fixed_files);
         } else {
@@ -108,9 +121,9 @@ if (strtoupper(cms_srv('REQUEST_METHOD')) == 'POST') {
         }
     }
     if ($git_commit_id !== null) {
-        $git_url = 'https://github.com/chrisgraham/Composr/commit/' . $git_commit_id;
+        $git_url = COMPOSR_REPOS_URL . '/commit/' . $git_commit_id;
         if (post_param_string('git_commit_id', '') == '') {
-            $done['Commited to git'] = $git_url;
+            $done['Committed to git'] = $git_url;
         }
     } else {
         $git_url = null;
@@ -123,42 +136,23 @@ if (strtoupper(cms_srv('REQUEST_METHOD')) == 'POST') {
     }
     $tracker_comment_message .= 'A hotfix (a TAR of files to upload) have been uploaded to this issue. These files are made to the latest intra-version state (i.e. may roll in earlier fixes too if made to the same files) - so only upload files newer than what you have already. Always take backups of files you are replacing or keep a copy of the manual installer for your version, and only apply fixes you need. These hotfixes are not necessarily reliable or well supported. Not sure how to extract TAR files to your Windows computer? Try 7-zip (http://www.7-zip.org/).';
     create_tracker_post($tracker_id, $tracker_comment_message);
-    // A tar of fixed files is uploaded to the tracker issue (correct relative file paths intact)
+    // A TAR of fixed files is uploaded to the tracker issue (correct relative file paths intact)
     upload_to_tracker_issue($tracker_id, create_hotfix_tar($tracker_id, $fixed_files));
     // The tracker issue gets closed
     close_tracker_issue($tracker_id);
-    $done[(post_param_string('tracker_id', '') == '') ? 'Created new tracker issue' : 'Responded to existing tracker issue'] = $tracker_url;
-
-    // A bug is posted in the bugs catalogue, linking to the tracker
-    $post_to_bug_catalogue = !is_null(post_param_string('post_to_bug_catalogue', null));
-    if ($post_to_bug_catalogue) {
-        $ce_title = $title;
-        $ce_description = $notes;
-        $ce_affects = $affects;
-        $ce_fix = 'This issue is properly filed (and managed) on the tracker. See issue [url="#' . strval($tracker_id) . '"]' . $tracker_url . '[/url].';
-        $entry_id = post_in_bugs_catalogue(get_version_pretty__from_dotted($version_dotted), $ce_title, $ce_description, $ce_affects, $ce_fix);
-        $ce_url = $REMOTE_BASE_URL . '/site/catalogues/entry/' . strval($entry_id) . '.htm';
-        $done['Added to bugs catalogue'] = $ce_url;
+    if ($tracker_url !== null) {
+        $done[$is_new_on_tracker ? 'Created new tracker issue' : 'Responded to existing tracker issue'] = $tracker_url;
     }
 
     // If a forum post ID was given, an automatic reply is given pointing to the tracker issue
     $post_id = post_param_integer('post_id', null);
     if ($post_id !== null) {
         $post_reply_title = 'Automated fix message';
-        $post_reply_message = 'This issue has now been filed on the tracker ' . ((post_param_string('tracker_id', '') == '') ? 'as' : 'in') . ' issue [url="#' . strval($tracker_id) . '"]' . $tracker_url . '[/url], with a fix.';
+        $post_reply_message = 'This issue has now been filed on the tracker ' . ($is_new_on_tracker ? 'as' : 'in') . ' issue [url="#' . strval($tracker_id) . '"]' . $tracker_url . '[/url], with a fix.';
         $post_important = 1;
         $reply_id = create_forum_post($post_id, $post_reply_title, $post_reply_message, $post_important);
         $reply_url = $REMOTE_BASE_URL . '/forum/topicview/findpost/' . strval($reply_id) . '.htm';
         $done['Posted reply'] = $reply_url;
-    }
-
-    // Problem solution system
-    $recog_error_substring = post_param_string('recog_error_substring', '');
-    if ($recog_error_substring != '') {
-        $recog_post = 'Your error seems to match a known and fixed bug in Composr (' . $title . ').' . "\n\n" . '[title="2"]How did this happen?[/title]' . "\n\n" . 'The bug description is as follows...' . "\n\n" . $notes . "\n\n" . '[title="2"]How do I fix it?[/title]' . "\n\n" . 'A hotfix is available under issue [url="#' . strval($tracker_id) . '"]' . $tracker_url . '[/url].';
-        $recog_topic_id = create_forum_topic(SOLUTION_FORUM, $recog_error_substring, $recog_post);
-        $recog_topic_url = $REMOTE_BASE_URL . '/forum/topicview/browse/' . strval($recog_topic_id) . '.htm';
-        $done['Posted recognition signature'] = $recog_topic_url;
     }
 
     // Show progress
@@ -215,8 +209,8 @@ if ((count($files) == 0) && (@$_GET['full_scan'] != '1')) {
     if (count($files) == 0) {
         $files = push_bugfix_do_dir(get_file_base(), $git_found, 24 * 60 * 60 * 14);
     }
-    /*$git_status='required="required"';
-    $git_status_2='';*/
+    /*$git_status = 'required="required"';
+    $git_status_2 = '';*/
     $git_status_3 = '<strong>Git commit ID</strong>';
     $choose_files_label = '<strong>Choose files</strong>';
 }
@@ -263,15 +257,6 @@ echo <<<END
     </fieldset>
 
     <fieldset>
-        <legend>Recognition signature <em>(optional)</em></legend>
-
-        <div>
-            <label for="recog_error_substring">Error message substring <span style="font-size: 0.8em">(use <kbd>xxx</kbd> to make a wild-card)</span></label>
-            <input size="40" name="recog_error_substring" id="recog_error_substring" type="text" value="" placeholder="optional" />
-        </div>
-    </fieldset>
-
-    <fieldset>
         <legend>Post to</legend>
 
         <div>
@@ -282,11 +267,6 @@ echo <<<END
         <div>
             <label for="tracker_id">Tracker ID to attach to <span style="font-size: 0.8em">(if not entered a new one will be made)</span></label>
             <input name="tracker_id" id="tracker_id" type="number" value="" placeholder="optional" />
-        </div>
-
-        <div>
-            <label for="post_to_bug_catalogue">Post to bug catalogue <span style="font-size: 0.8em">(if hotfix is worth advertising and issue is new)</span></label>
-            <input checked="checked" type="checkbox" id="post_to_bug_catalogue" name="post_to_bug_catalogue" />
         </div>
 
         <div>
@@ -354,13 +334,21 @@ END;
 function create_tracker_issue($version_dotted, $tracker_title, $tracker_message, $tracker_additional)
 {
     $args = func_get_args();
-    return intval(make_call(__FUNCTION__, array('parameters' => $args)));
+    $result = make_call(__FUNCTION__, array('parameters' => $args));
+    if ($result === false) {
+        return null;
+    }
+    return intval($result);
 }
 
 function create_tracker_post($tracker_id, $tracker_comment_message)
 {
     $args = func_get_args();
-    make_call(__FUNCTION__, array('parameters' => $args));
+    $result = make_call(__FUNCTION__, array('parameters' => $args));
+    if ($result === false) {
+        return null;
+    }
+    return intval($result);
 }
 
 function do_git_commit($git_commit_message, $files)
@@ -394,7 +382,7 @@ function do_git_commit($git_commit_message, $files)
 function close_tracker_issue($tracker_id)
 {
     $args = func_get_args();
-    make_call(__FUNCTION__, array('parameters' => $args));
+    $result = make_call(__FUNCTION__, array('parameters' => $args));
 }
 
 function create_hotfix_tar($tracker_id, $files)
@@ -403,7 +391,7 @@ function create_hotfix_tar($tracker_id, $files)
     $builds_path = get_builds_path();
     if (!file_exists($builds_path . '/builds/hotfixes')) {
         mkdir($builds_path . '/builds/hotfixes', 0777);
-        fix_permissions($builds_path . '/builds/hotfixes', 0777);
+        fix_permissions($builds_path . '/builds/hotfixes');
     }
     chdir($builds_path . '/builds/hotfixes');
     $tar = ((DIRECTORY_SEPARATOR == '\\') ? ('tar') : 'COPYFILE_DISABLE=1 tar');
@@ -416,27 +404,29 @@ function create_hotfix_tar($tracker_id, $files)
     return $tar_path;
 }
 
-function post_in_bugs_catalogue($version_pretty, $ce_title, $ce_description, $ce_affects, $ce_fix)
-{
-    $args = func_get_args();
-    return intval(make_call(__FUNCTION__, array('parameters' => $args)));
-}
-
 function create_forum_post($replying_to_post, $post_reply_title, $post_reply_message, $post_important)
 {
     $args = func_get_args();
-    return intval(make_call(__FUNCTION__, array('parameters' => $args)));
+    $result = make_call(__FUNCTION__, array('parameters' => $args));
+    if ($result === false) {
+        return null;
+    }
+    return intval($result);
 }
 
 function create_forum_topic($forum_id, $topic_title, $post)
 {
     $args = func_get_args();
-    return intval(make_call(__FUNCTION__, array('parameters' => $args)));
+    $result = make_call(__FUNCTION__, array('parameters' => $args));
+    if ($result === false) {
+        return null;
+    }
+    return intval($result);
 }
 
 function upload_to_tracker_issue($tracker_id, $tar_path)
 {
-    make_call('upload_to_tracker_issue', array('parameters' => array(strval($tracker_id))), $tar_path);
+    $result = make_call('upload_to_tracker_issue', array('parameters' => array(strval($tracker_id))), $tar_path);
 }
 
 function make_call($call, $params, $file = null)
@@ -452,11 +442,11 @@ function make_call($call, $params, $file = null)
     }
 
     $opts = array('http' =>
-                      array(
-                          'method' => 'POST',
-                          'header' => $header,
-                          'content' => $data_url,
-                      )
+        array(
+            'method' => 'POST',
+            'header' => $header,
+            'content' => $data_url,
+        )
     );
 
     $context = stream_context_create($opts);
@@ -465,6 +455,10 @@ function make_call($call, $params, $file = null)
     $call_url = $REMOTE_BASE_URL . '/data_custom/composr_homesite_web_service.php?call=' . urlencode($call);
 
     $result = @file_get_contents($call_url, false, $context);
+    if ($result == 'Access Denied' || $result == 'No master password defined in _config.php currently so cannot authenticate') {
+        echo '<p>' . $result . '</p>';
+        $result = false;
+    }
     if ($result === false) {
         echo '
             <form method="post" target="_blank" action="' . escape_html($call_url) . '">
@@ -489,9 +483,6 @@ function make_call($call, $params, $file = null)
             </form>
         ';
         $result = '';
-    }
-    if ($result == 'Access Denied') {
-        echo '<p>Access denied</p>';
     }
     return $result;
 }

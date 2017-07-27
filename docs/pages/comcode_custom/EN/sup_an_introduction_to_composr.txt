@@ -36,9 +36,9 @@ There is a huge amount of bundled addons which make up the most common component
 
 There are lots of bundled features in Composr, and additionally there is another set of non-bundled features which can be added from within your software.
 
-When you install Composr all of the standard features are available to you. This includes if you install using a system like Softaculous on [url="http://www.arvixe.com/5256-223-3-122.html"]Arvixe hosting[/url]. Of course you may decide that you do not need all of the features for your website and many of the standard features can be removed with just three clicks from the Admin Zone homepage.
+When you install Composr all of the standard features are available to you. This includes if you install using a system like Softaculous on [url="http://arvixe.evyy.net/c/302199/279421/3370"]Arvixe hosting[/url]. Of course you may decide that you do not need all of the features for your website and many of the standard features can be removed with just three clicks from the Admin Zone homepage.
 
-In the [page="_SEARCH:sup_finding_your_way_around_the_composr_adminzone_part_1"]next tutorial[/page] I will be giving a brief tour of all the Admin Zone sections but here is a quick guide of how to remove an addon.
+In the [page="_SEARCH:sup_finding_your_way_around_the_composr_adminzone"]next tutorial[/page] I will be giving a brief tour of all the Admin Zone sections but here is a quick guide of how to remove an addon.
 
 [media width="150" description="Removing addons from Composr" float="right"]data_custom/images/docs/sup_an_introduction_to_composr/049698f7423d7d50c27c0db33631755f.png[/media]
 Go to Admin Zone > Structure > Addons. From there you can remove your chosen addon. This will then take you to a confirmation page. You can also delete several addons at a time through this screen too. Please be careful to only remove addons you are sure are not needed by you or by other installed features.
@@ -47,7 +47,7 @@ Another of Composr's strongest features is the inbuilt security. This strength i
 
 As a user of Composr of the [page="forum:"]Composr forums[/page], you have access to the original developers of the software. Chris Graham who is the main programmer behind Composr is a regular user of the forums. This doesn't mean he will give free support or implement new features for free! However, it does give a level of access that other CMS offer. Between Chris, his team and the rest of the friendly community, you will find the available level of help is impressive!
 
-For developers who are looking to implement their own features or make modifications, the CMS is completely open source, meaning you can make modifications and have access to the source code behind the software. The code has been intentionally designed to be very clean to make it easier to modify where needed.
+For developers who are looking to implement their own features or make modifications, the CMS is completely Open Source, meaning you can make modifications and have access to the source code behind the software. The code has been intentionally designed to be very clean to make it easier to modify where needed.
 
 Accessibility is a huge plus point for Composr and goes much further than any other CMS in support for visually impaired users. As far as I know Composr is the only CMS where it is possible to fully manage your site without help from a sighted person. The Composr forums have a number of visually impaired users who have their own development section to help the Composr team with their understanding of issues.
 
@@ -60,8 +60,8 @@ It has been said that the feature set for Composr can be a little overwhelming f
 [*] If in doubt, ask for help!
 [/list]
 
-The [page="_SEARCH:sup_finding_your_way_around_the_composr_adminzone_part_1"]next tutorial[/page] will be a tour of the Composr Admin Zone in detail to help you to find your way around the key elements when setting up a new website.
+The [page="_SEARCH:sup_finding_your_way_around_the_composr_adminzone"]next tutorial[/page] will be a tour of the Composr Admin Zone in detail to help you to find your way around the key elements when setting up a new website.
 
-[box="Thank you Arvixe"]This tutorial was sponsored by [url="Arvixe hosting"]http://www.arvixe.com/5256-223-3-122.html[/url].[/box]
+[box="Thank you Arvixe"]This tutorial was sponsored by [url="Arvixe hosting"]http://arvixe.evyy.net/c/302199/279421/3370[/url].[/box]
 
 {$SET,tutorial_tags,Introduction,Security,novice}{$SET,tutorial_add_date,Mar 2013}{$SET,tutorial_summary,In this first Composr tutorial of mine I give a brief overview of Composr.}[block]main_tutorial_rating[/block]

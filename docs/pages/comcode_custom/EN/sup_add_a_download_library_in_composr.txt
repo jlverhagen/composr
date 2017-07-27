@@ -11,7 +11,7 @@ The system comes with all of the features you would expect which include:
 [*] The ability to limit downloads of files by using Composr's point system to "sell" the downloads
 [*] Protection to stop users leeching your files
 [*] Allows for comments and rating for files
-[*] Assign Licenses to files which users must agree to before being able to download the file
+[*] Assign Licences to files which users must agree to before being able to download the file
 [*] Attach a representative image for the file
 [*] Basic support for file versioning
 [/list]
@@ -53,6 +53,6 @@ Possibilities include:
 [/list]
 All these are via the [tt]main_multi_content[/tt] block, which is highly configurable.
 
-[box="Thank you Arvixe"]This tutorial was sponsored by [url="Arvixe hosting"]http://www.arvixe.com/5256-223-3-122.html[/url].[/box]
+[box="Thank you Arvixe"]This tutorial was sponsored by [url="Arvixe hosting"]http://arvixe.evyy.net/c/302199/279421/3370[/url].[/box]
 
 {$SET,tutorial_tags,Content,Downloads,downloads,novice}{$SET,tutorial_add_date,Nov 2013}{$SET,tutorial_summary,Composr offers a fully equipped and well-rounded system for uploading your files and sharing them to your website visitors.}[block]main_tutorial_rating[/block]

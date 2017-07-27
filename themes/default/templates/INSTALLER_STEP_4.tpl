@@ -1,4 +1,4 @@
-<form title="{!PRIMARY_PAGE_FORM}" action="{URL*}" method="post" onsubmit="return submit_settings(this);">
+<form title="{!PRIMARY_PAGE_FORM}" action="{URL*}" method="post" onsubmit="return submit_settings(this);" autocomplete="off">
 	{HIDDEN}
 
 	<div>
@@ -9,7 +9,7 @@
 		</div>
 
 		<p class="proceed_button">
-			<input class="buttons__proceed button_screen" type="submit" value="{!INSTALL} Composr" />
+			<input class="button_screen buttons__proceed" type="submit" value="{!INSTALL} Composr" />
 		</p>
 	</div>
 </form>

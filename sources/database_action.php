@@ -1,7 +1,7 @@
 <?php /*
 
  Composr
- Copyright (c) ocProducts, 2004-2015
+ Copyright (c) ocProducts, 2004-2016
 
  See text/EN/licence.txt for full licencing information.
 
@@ -145,6 +145,13 @@ function get_db_keywords()
         'WHILE', 'WINDOW', 'WITH', 'WITHIN', 'WITHOUT', 'WITH_CUBE', 'WITH_LPAREN', 'WITH_ROLLUP',
         'WLM', 'WORK', 'WORKSPACE', 'WRITE', 'WRITETEXT', 'X509', 'XMLELEMENT', 'XOR',
         'YEAR', 'YEARDAY', 'YEARS', 'YEAR_MONTH', 'YES', 'YESNO', 'ZEROFILL', 'ZONE', 'GET',
+
+        // Added in MySQL 5.7
+        'ACCOUNT', 'ALWAYS', 'CHANNEL', 'COMPRESSION', 'ENCRYPTION', 'FILE_BLOCK_SIZE', 'FILTER', 'FOLLOWS', 'GENERATED',
+        'GROUP_REPLICATION', 'INSTANCE', 'JSON', 'MASTER_TLS_VERSION', 'MAX_STATEMENT_TIME', 'NEVER', 'OPTIMIZER_COSTS',
+        'PARSE_GCOL_EXPR', 'PRECEDES', 'REPLICATE_DO_DB', 'REPLICATE_DO_TABLE', 'REPLICATE_IGNORE_DB', 'REPLICATE_IGNORE_TABLE',
+        'REPLICATE_REWRITE_DB', 'REPLICATE_WILD_DO_TABLE', 'REPLICATE_WILD_IGNORE_TABLE', 'ROTATE', 'STORED', 'VALIDATION',
+        'VIRTUAL', 'WITHOUT', 'XID',
     );
     return $words;
 }
@@ -167,9 +174,7 @@ function get_false_permissions()
         array('STAFF_ACTIONS', 'see_stack_dump'),
         array('STAFF_ACTIONS', 'view_profiling_modes'),
         array('STAFF_ACTIONS', 'access_overrun_site'),
-        array('STAFF_ACTIONS', 'view_content_history'),
-        array('STAFF_ACTIONS', 'restore_content_history'),
-        array('STAFF_ACTIONS', 'delete_content_history'),
+        array('SUBMISSION', 'feature'),
         array('SUBMISSION', 'bypass_validation_highrange_content'),
         array('SUBMISSION', 'bypass_validation_midrange_content'),
         array('SUBMISSION', 'edit_highrange_content'),
@@ -206,7 +211,6 @@ function get_false_permissions()
         array('SUBMISSION', 'exceed_filesize_limit'),
         array('SUBMISSION', 'draw_to_server'),
         array('GENERAL_SETTINGS', 'open_virtual_roots'),
-        array('GENERAL_SETTINGS', 'view_revision_history'),
         array('GENERAL_SETTINGS', 'sees_javascript_error_alerts'),
         array('GENERAL_SETTINGS', 'see_software_docs'),
         array('GENERAL_SETTINGS', 'see_unvalidated'),
@@ -232,7 +236,6 @@ function get_true_permissions()
         array('SUBMISSION', 'submit_midrange_content'),
         array('SUBMISSION', 'submit_lowrange_content'),
         array('SUBMISSION', 'bypass_validation_lowrange_content'),
-        array('SUBMISSION', 'set_own_author_profile'),
         array('_FEEDBACK', 'rate'),
         array('_FEEDBACK', 'comment'),
         array('VOTE', 'vote_in_polls'),
@@ -247,7 +250,7 @@ function get_true_permissions()
  * @param  ID_TEXT $name The name of the option
  * @return boolean Whether it exists
  */
-function permission_exists($name)
+function privilege_exists($name)
 {
     $test = $GLOBALS['SITE_DB']->query_select_value_if_there('privilege_list', 'the_name', array('the_name' => $name));
     return !is_null($test);
@@ -264,13 +267,34 @@ function permission_exists($name)
 function add_privilege($section, $name, $default = false, $not_even_mods = false)
 {
     if (!$not_even_mods) { // NB: Don't actually need to explicitly give admins privileges
+        $ins_privilege = array();
+        $ins_group_id = array();
+        $ins_the_page = array();
+        $ins_module_the_name = array();
+        $ins_category_name = array();
+        $ins_the_value = array();
+
         $usergroups = $GLOBALS['FORUM_DRIVER']->get_usergroup_list(false, true);
         $admin_groups = array_merge($GLOBALS['FORUM_DRIVER']->get_super_admin_groups(), $GLOBALS['FORUM_DRIVER']->get_moderator_groups());
         foreach (array_keys($usergroups) as $id) {
             if (($default) || (in_array($id, $admin_groups))) {
-                $GLOBALS['SITE_DB']->query_insert('group_privileges', array('privilege' => $name, 'group_id' => $id, 'the_page' => '', 'module_the_name' => '', 'category_name' => '', 'the_value' => 1));
+                $ins_privilege[] = $name;
+                $ins_group_id[] = $id;
+                $ins_the_page[] = '';
+                $ins_module_the_name[] = '';
+                $ins_category_name[] = '';
+                $ins_the_value[] = 1;
             }
         }
+
+        $GLOBALS['SITE_DB']->query_insert('group_privileges', array(
+            'privilege' => $ins_privilege,
+            'group_id' => $ins_group_id,
+            'the_page' => $ins_the_page,
+            'module_the_name' => $ins_module_the_name,
+            'category_name' => $ins_category_name,
+            'the_value' => $ins_the_value,
+        ));
     }
 
     $GLOBALS['SITE_DB']->query_insert('privilege_list', array('p_section' => $section, 'the_name' => $name, 'the_default' => ($default ? 1 : 0)));
@@ -319,14 +343,14 @@ function rename_privilege($old, $new)
 }
 
 /**
- * Delete a privilege, and every usergroup is then relaxed from the restrictions of this permission.
+ * Delete a privilege.
  *
  * @param  ID_TEXT $name The codename of the permission
  */
 function delete_privilege($name)
 {
     $GLOBALS['SITE_DB']->query_delete('privilege_list', array('the_name' => $name), '', 1);
-    $GLOBALS['SITE_DB']->query('DELETE FROM ' . get_table_prefix() . 'group_privileges WHERE ' . db_string_not_equal_to('module_the_name', 'forums') . ' AND ' . db_string_equal_to('privilege', $name));
+    $GLOBALS['SITE_DB']->query('DELETE FROM ' . get_table_prefix() . 'group_privileges WHERE ' . db_string_equal_to('privilege', $name));
 }
 
 /**
