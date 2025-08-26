@@ -42,7 +42,7 @@ function init__lang_compile()
  */
 function require_lang_compile(string $codename, ?string $lang, ?string $type, string $cache_path, bool $ignore_errors = false) : bool
 {
-    global $LANGUAGE_STRINGS_CACHE, $REQUIRE_LANG_LOOP, $LANG_LOADED_LANG;
+    global $LANGUAGE_STRINGS_CACHE, $LANG_LOADED_LANG;
 
     $desire_cache = (function_exists('has_caching_for') && has_caching_for('lang'));
     if ($desire_cache) {
@@ -108,7 +108,6 @@ function require_lang_compile(string $codename, ?string $lang, ?string $type, st
 
         if (($bad) && ($lang !== fallback_lang())) { // Still some hope
             require_lang($codename, fallback_lang(), $type, $ignore_errors);
-            $REQUIRE_LANG_LOOP--;
             $fallback_cache_path = get_custom_file_base() . '/caches/lang/' . fallback_lang() . '/' . $codename . '.lcd';
             if (is_file($fallback_cache_path)) {
                 require_code('files');
