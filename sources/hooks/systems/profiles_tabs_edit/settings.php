@@ -370,6 +370,20 @@ class Hook_profiles_tabs_edit_settings
             return null;
         }
 
+        // Geo-location check
+        
+        require_code('locations');
+
+        // Compare IP geolocation to set region and warn if there is a mismatch
+        $geo = geolocate_ip();
+        if ($geo !== null) {
+            $region = get_region();
+            if (!cms_empty_safe($region) && (!is_location_within($region, [$geo]))) {
+                require_lang('locations');
+                attach_message(do_lang_tempcode('GEOLOCATION_REGION_MISMATCH', escape_html($geo)), 'warn');
+            }
+        }
+
         // UI
 
         $title = do_lang_tempcode('SETTINGS');

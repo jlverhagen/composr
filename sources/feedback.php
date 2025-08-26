@@ -179,8 +179,15 @@ function embed_feedback_systems(string $feedback_type, string $content_id, int $
             actualise_post_comment($allow_comments >= 1, $feedback_type, $content_id, $content_url, $content_title, $forum, true, null, false, true, false, null, null, $time);
         }
     }
+
+    // Pass in parameters which get injected dynamically in the form and may not get processed if going back (e.g. after an error)
+    $hidden = new Tempcode();
+    if (post_param_integer('parent_id', null) !== null) {
+        $hidden->attach(form_input_hidden('parent_id', strval(post_param_integer('parent_id'))));
+    }
+
     $rating_details = get_rating_box($content_url, $content_title, $feedback_type, $content_id, $allow_rating == 1, $submitter);
-    $comment_details = get_comments($feedback_type, $allow_comments == 1, $content_id, false, $forum, null, null, false, null, $submitter, $allow_comments == 2);
+    $comment_details = get_comments($feedback_type, $allow_comments == 1, $content_id, false, $forum, null, null, false, null, $submitter, $allow_comments == 2, null, $hidden);
     $trackback_details = get_trackbacks($feedback_type, $content_id, $allow_trackbacks == 1);
 
     if (is_object($content_url)) {
