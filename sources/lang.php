@@ -556,6 +556,7 @@ function require_lang(string $codename, ?string $lang = null, ?string $type = nu
 
             foreach ($PAGE_CACHE_LANGS_REQUESTED as $request) {
                 list($that_codename, $that_lang) = $request;
+                @unlink($cfb . '/caches/lang/' . $that_lang . '/' . $that_codename . '.lcd');
                 unset($LANG_REQUESTED_LANG[$that_lang][$that_codename]);
                 require_lang($that_codename, $that_lang, null, $ignore_errors);
             }
