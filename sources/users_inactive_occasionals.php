@@ -183,7 +183,7 @@ function create_session(int $member_id, int $session_confirmed = 0, bool $invisi
             $geo = geolocate_ip($ip_address);
             if ($geo !== null) {
                 $region = get_region();
-                if (!cms_empty_safe($region) && (!is_location_within($region, [$geo]))) {
+                if (!cms_empty_safe($region) && (!is_location_within($region, [$geo])) && function_exists('attach_message')) {
                     require_lang('locations');
                     attach_message(do_lang_tempcode('GEOLOCATION_REGION_MISMATCH', escape_html($geo)), 'warn');
                 }
