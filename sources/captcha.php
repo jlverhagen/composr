@@ -656,9 +656,7 @@ function enforce_captcha(bool $regenerate_on_error = true)
     if (use_captcha()) {
         $error_message = do_lang_tempcode('INVALID_SECURITY_CODE_ENTERED');
         if (!check_captcha(null, $regenerate_on_error, $error_message)) {
-            set_http_status_code(500);
-
-            warn_exit($error_message, false);
+            warn_exit($error_message, false, false, 500);
         }
     }
 }
