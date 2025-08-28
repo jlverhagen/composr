@@ -38,26 +38,37 @@ class privacy_hooks_test_set extends cms_test_case
                 continue;
             }
 
+            // Base hook info validation
             $this->assertTrue(((isset($info['label'])) && (($info['label'] === null) || (is_string($info['label'])))), 'Invalid label property in hook ' . $hook);
             $this->assertTrue(((isset($info['description'])) && (($info['description'] === null) || (is_string($info['description'])))), 'Invalid description property in hook ' . $hook);
-
             $this->assertTrue((isset($info['label']) && (do_lang($info['label'], null, null, null, null, false) !== null)), 'The label property in hook ' . $hook . ' is not a valid language codename.');
             $this->assertTrue((isset($info['description']) && (do_lang($info['description'], null, null, null, null, false) !== null)), 'The description property in hook ' . $hook . ' is not a valid language codename.');
 
+            // Validation on cookies
+            $reasons = [];
             foreach ($info['cookies'] as $name => $x) {
+                $this->assertTrue(is_alphanumeric(str_replace('*', '', $name)), 'Defined cookies must be alphanumeric (wildcard allowed); invalid cookie name ' . $name . ' in ' . $hook . '. Maybe you tried to define multiple cookies on the same key, which is not allowed.');
+
                 if (!is_array($x)) {
                     continue;
                 }
-
-                $this->assertTrue(is_alphanumeric(str_replace('*', '', $name)), 'Defined cookies must be alphanumeric (wildcard allowed); invalid cookie name ' . $name . ' in ' . $hook . '. Maybe you tried to define multiple cookies on the same key, which is not allowed.');
 
                 foreach (['reason', 'category'] as $required_property) {
                     $this->assertTrue(array_key_exists($required_property, $x), 'Required cookie property ' . $required_property . ' not defined in ' . $hook . ', cookie ' . $name);
                 }
 
                 if (isset($x['category'])) {
-                    $this->assertTrue(in_array($x['category'], ['ESSENTIAL', 'PERSONALIZATION', 'ANALYTICS', 'MARKETING', 'NON-ESSENTIAL']), 'Invalid cookie category for ' . $hook . ',cookie ' . $name);
+                    $this->assertTrue(in_array($x['category'], ['ESSENTIAL', 'PERSONALIZATION', 'ANALYTICS', 'MARKETING', 'NON-ESSENTIAL']), 'Invalid cookie category for ' . $hook . ', cookie ' . $name);
                 }
+
+                // Keeping track of duplicated reasons across cookies
+                if (isset($x['reason'])) {
+                    $reason = (is_object($x['reason'])) ? $x['reason']->evaluate() : $x['reason'];
+                    $reasons[$reason][] = $hook . '/' . $name;
+                }
+            }
+            foreach ($reasons as $reason => $cookies) {
+                $this->assertTrue(count($cookies) <= 1, 'More than one cookie shares the same reason text (' . $reason . '): ' . implode(', ', $cookies));
             }
 
             foreach ($info['positive'] as $x) {
