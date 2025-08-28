@@ -1070,13 +1070,9 @@
                     // TODO: broken / does not seem to clear cookies like it should on denial
                     var cookieConsentAutoClear = function cookieConsentAutoClear(cookieCategory) {
                         cookieCategory = strVal(cookieCategory);
-                        console.log(cookieCategory);
-                        
-                        console.dir($cms.getCookieData());
                         
                         if (typeof $cms.getCookieData[cookieCategory] === 'undefined') {
                             // TODO: informational error / warning
-                            console.log('-empty-');
                             return [];
                         }
                         
@@ -1087,9 +1083,6 @@
                                 name: new RegExp('^' + cookieRegexStr)
                             }
                         });
-                        
-                        console.dir(returnValue);
-                        
                         return returnValue;
                     };
                     var cookieConsentOptions = {
