@@ -1338,6 +1338,14 @@ where:
 			<td>Get the name for the session cookie</td>
 		</tr>
 		<tr style="background: #FFDDDD">
+			<td>{$MEMBER_COOKIE_NAME}</td>
+			<td>Get the name for the "remember me" member ID cookie</td>
+		</tr>
+		<tr style="background: #FFDDDD">
+			<td>{$PASS_COOKIE_NAME}</td>
+			<td>Get the name for the "remember me" password hash cookie</td>
+		</tr>
+		<tr style="background: #FFDDDD">
 			<td>{$COOKIE_PATH}</td>
 			<td>Get the cookie save path</td>
 		</tr>

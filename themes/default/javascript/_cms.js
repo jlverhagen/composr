@@ -188,6 +188,18 @@
      * @method
      * @returns {string}
      */
+    $cms.getMemberCookie = $util.constant(strVal('{$MEMBER_COOKIE_NAME;}'));
+    /**
+     * @memberof $cms
+     * @method
+     * @returns {string}
+     */
+    $cms.getPassCookie = $util.constant(strVal('{$PASS_COOKIE_NAME;}'));
+    /**
+     * @memberof $cms
+     * @method
+     * @returns {string}
+     */
     $cms.getCookiePath = $util.constant(strVal('{$COOKIE_PATH;}'));
     /**
      * @memberof $cms
