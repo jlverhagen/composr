@@ -25,6 +25,7 @@ class privacy_hooks_test_set extends cms_test_case
         $info_messages = [];
 
         require_code('privacy');
+        require_code('type_sanitisation');
 
         $all_tables = collapse_1d_complexity('m_table', $GLOBALS['SITE_DB']->query_select('db_meta', ['DISTINCT m_table']));
         $found_tables = [];
@@ -43,8 +44,20 @@ class privacy_hooks_test_set extends cms_test_case
             $this->assertTrue((isset($info['label']) && (do_lang($info['label'], null, null, null, null, false) !== null)), 'The label property in hook ' . $hook . ' is not a valid language codename.');
             $this->assertTrue((isset($info['description']) && (do_lang($info['description'], null, null, null, null, false) !== null)), 'The description property in hook ' . $hook . ' is not a valid language codename.');
 
-            foreach ($info['cookies'] as $x) {
-                $this->assertTrue($x === null || is_array($x) && array_key_exists('reason', $x) && array_key_exists('category', $x) && in_array($x['category'], ['ESSENTIAL', 'PERSONALIZATION', 'ANALYTICS', 'MARKETING', 'NON-ESSENTIAL']), 'Invalid cookie definition in ' . $hook . ' (' . serialize($x) . ')');
+            foreach ($info['cookies'] as $name => $x) {
+                if (!is_array($x)) {
+                    continue;
+                }
+
+                $this->assertTrue(is_alphanumeric(str_replace('*', '', $name)), 'Defined cookies must be alphanumeric (wildcard allowed); invalid cookie name ' . $name . ' in ' . $hook . '. Maybe you tried to define multiple cookies on the same key, which is not allowed.');
+
+                foreach (['reason', 'category'] as $required_property) {
+                    $this->assertTrue(array_key_exists($required_property, $x), 'Required cookie property ' . $required_property . ' not defined in ' . $hook . ', cookie ' . $name);
+                }
+
+                if (isset($x['category'])) {
+                    $this->assertTrue(in_array($x['category'], ['ESSENTIAL', 'PERSONALIZATION', 'ANALYTICS', 'MARKETING', 'NON-ESSENTIAL']), 'Invalid cookie category for ' . $hook . ',cookie ' . $name);
+                }
             }
 
             foreach ($info['positive'] as $x) {
