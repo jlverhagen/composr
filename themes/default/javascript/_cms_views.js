@@ -1060,32 +1060,82 @@
         if (strVal($cms.configOption('google_analytics')).trim() && !$cms.isStaff() && !$cms.isAdmin()) {
             this.initializeGoogleAnalytics();
         }
+        
+        //$cms.setCookie('use_wysiwyg', '0', 'PERSONALIZATION', 90);
 
         // Cookie Consent plugin by Orestbida - https://cookieconsent.orestbida.com
         if (($cms.runningScript() === 'index') && ($dom.$('meta[http-equiv="Refresh"]') === null) && (window.parent === window)) {
             $cms.requireJavascript('cookie_consent').then(function () {
                 $cms.requireCss(['cookie_consent', 'cookie_consent_override']).then(function () {
-                    var cookieConsentOptions = {};
+                    // TODO: broken / does not seem to clear cookies like it should on denial
+                    var cookieConsentAutoClear = function cookieConsentAutoClear(cookieCategory) {
+                        cookieCategory = strVal(cookieCategory);
+                        console.log(cookieCategory);
+                        
+                        console.dir($cms.getCookieData());
+                        
+                        if (typeof $cms.getCookieData[cookieCategory] === 'undefined') {
+                            // TODO: informational error / warning
+                            console.log('-empty-');
+                            return [];
+                        }
+                        
+                        var returnValue = $cms.getCookieData[cookieCategory].map(function (cookieRegexStr) {
+                            cookieRegexStr = strVal(cookieRegexStr);
+                            
+                            return {
+                                name: new RegExp('^' + cookieRegexStr)
+                            }
+                        });
+                        
+                        console.dir(returnValue);
+                        
+                        return returnValue;
+                    };
+                    var cookieConsentOptions = {
+                        revision: 1
+                    };
+                    
                     cookieConsentOptions['categories'] = {
                         'ESSENTIAL': {
                             enabled: true,
-                            readOnly: true
+                            readOnly: true,
+                            autoClear: {
+                                reloadPage: true,
+                                cookies: cookieConsentAutoClear('ESSENTIAL')
+                            }
                         },
                         'PERSONALIZATION': {
                             enabled: true,
-                            readOnly: false
+                            readOnly: false,
+                            autoClear: {
+                                reloadPage: true,
+                                cookies: cookieConsentAutoClear('PERSONALIZATION')
+                            }
                         },
                         'MARKETING': {
                             enabled: false,
                             readOnly: false,
+                            autoClear: {
+                                reloadPage: true,
+                                cookies: cookieConsentAutoClear('MARKETING')
+                            }
                         },
                         'ANALYTICS': {
                             enabled: true,
-                            readOnly: false
+                            readOnly: false,
+                            autoClear: {
+                                reloadPage: true,
+                                cookies: cookieConsentAutoClear('ANALYTICS')
+                            }
                         },
                         'NON-ESSENTIAL': {
                             enabled: true,
-                            readOnly: false
+                            readOnly: false,
+                            autoClear: {
+                                reloadPage: true,
+                                cookies: cookieConsentAutoClear('NON-ESSENTIAL')
+                            }
                         }
                     };
     

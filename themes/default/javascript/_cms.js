@@ -210,6 +210,12 @@
     /**
      * @memberof $cms
      * @method
+     * @returns {array}
+     */
+    $cms.getCookieData = $util.constant(JSON.parse('{$COOKIE_DATA_JSON;}'));
+    /**
+     * @memberof $cms
+     * @method
      * @returns {string}
      */
     $cms.runningScript = $util.constant(strVal(symbols.RUNNING_SCRIPT));

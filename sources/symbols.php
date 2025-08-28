@@ -6194,6 +6194,55 @@ function ecv_PASS_COOKIE_NAME(string $lang, array $escaped, array $param) : stri
  * @param  array $param Parameters to the symbol. For all but directive it is an array of strings. For directives it is an array of Tempcode objects. Actually there may be template-style parameters in here, as an influence of singular_bind and these may be Tempcode, but we ignore them.
  * @return string The result
  */
+function ecv_COOKIE_DATA_JSON(string $lang, array $escaped, array $param) : string
+{
+    $value = '{}';
+
+    if (function_exists('find_all_hook_obs')) {
+        $_value = [];
+
+        require_code('privacy');
+
+        $hook_obs = find_all_hook_obs('systems', 'privacy', 'Hook_privacy_');
+        foreach ($hook_obs as $hook => $hook_ob) {
+            $info = $hook_ob->info();
+
+            if ($info === null) {
+                continue;
+            }
+
+            foreach ($info['cookies'] as $name => $cookie_info) {
+                if (!isset($cookie_info['category'])) {
+                    continue;
+                }
+                
+                // In JavaScript, we will be treating this string as a regular expression. We need to escape expressions except the wildcard.
+                $_value[$cookie_info['category']][] = str_replace('\*', '.*', preg_quote($name, '/'));
+            }
+        }
+
+        $value = @json_encode($_value);
+        if ($value === false) {
+            $value = '{}';
+        }
+    }
+
+    if (!empty($escaped)) {
+        apply_tempcode_escaping($escaped, $value);
+    }
+    return $value;
+}
+
+/**
+ * Evaluate a particular Tempcode symbol.
+ *
+ * @ignore
+ *
+ * @param  LANGUAGE_NAME $lang The language to evaluate this symbol in (some symbols refer to language elements)
+ * @param  array $escaped Array of escaping operations
+ * @param  array $param Parameters to the symbol. For all but directive it is an array of strings. For directives it is an array of Tempcode objects. Actually there may be template-style parameters in here, as an influence of singular_bind and these may be Tempcode, but we ignore them.
+ * @return string The result
+ */
 function ecv_BROWSER_UA(string $lang, array $escaped, array $param) : string
 {
     $browser = get_browser_string();
