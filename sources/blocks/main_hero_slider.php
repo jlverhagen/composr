@@ -109,7 +109,7 @@ PHP;
         $show_scroll_down = !empty($map['show_scroll_down']);
         $interval = isset($map['interval']) ? strval(intval($map['interval']) * 1000) : null;
         $check_perms = isset($map['check']) ? ($map['check'] != '0') : true;
-        $sort = !empty($map['sort']) ? $map['sort'] : 'recent ASC';
+        $sort = !empty($map['sort']) ? $map['sort'] : 'title ASC';
 
         // Check if the gallery exists
         $gallery_name = $GLOBALS['SITE_DB']->query_select_value_if_there('galleries', 'name', ['name' => $gallery_name]);
