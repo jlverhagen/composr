@@ -4091,7 +4091,7 @@ function has_js() : bool
     if (get_param_integer('keep_has_js', null) === 0) {
         return false;
     }
-    return (isset($_COOKIE['js_on'])) && ($_COOKIE['js_on'] == '1');
+    return (isset($_COOKIE['has_js'])) && ($_COOKIE['has_js'] == '1');
 }
 
 /**
@@ -5629,7 +5629,7 @@ function statistical_update_model(string $table, int $view_count) : int
  * @param  ?float $days Days to store; not applicable for session cookies unless expiring it (null: default) (-14: expire the cookie)
  * @return boolean The result of the PHP setcookie command
  */
-function cms_setcookie(string $name, string $value, string $category = 'UNCATEGORIZED', bool $session = false, bool $httponly = true, ?float $days = null) : bool
+function cms_setcookie(string $name, string $value, string $category = 'NON-ESSENTIAL', bool $session = false, bool $httponly = true, ?float $days = null) : bool
 {
     // User rejected cookies; eat the existing cookie and bail out
     if (($value != '') && (!allowed_cookies($category))) {

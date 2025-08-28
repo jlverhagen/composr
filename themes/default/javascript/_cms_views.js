@@ -1067,23 +1067,23 @@
                 $cms.requireCss(['cookie_consent', 'cookie_consent_override']).then(function () {
                     var cookieConsentOptions = {};
                     cookieConsentOptions['categories'] = {
-                        ESSENTIAL: {
+                        'ESSENTIAL': {
                             enabled: true,
                             readOnly: true
                         },
-                        PERSONALIZATION: {
+                        'PERSONALIZATION': {
                             enabled: true,
                             readOnly: false
                         },
-                        MARKETING: {
+                        'MARKETING': {
                             enabled: false,
                             readOnly: false,
                         },
-                        ANALYTICS: {
+                        'ANALYTICS': {
                             enabled: true,
                             readOnly: false
                         },
-                        UNCATEGORIZED: {
+                        'NON-ESSENTIAL': {
                             enabled: true,
                             readOnly: false
                         }
@@ -1130,9 +1130,9 @@
                                     description: '{!DESCRIPTION_COOKIE_CATEGORY_ANALYTICS;^}'
                                 },
                                 {
-                                    title: 'UNCATEGORIZED',
-                                    linkedCategory: 'UNCATEGORIZED',
-                                    description: '{!DESCRIPTION_COOKIE_CATEGORY_UNCATEGORIZED;^}'
+                                    title: 'NON-ESSENTIAL',
+                                    linkedCategory: 'NON-ESSENTIAL',
+                                    description: '{!DESCRIPTION_COOKIE_CATEGORY_NON_ESSENTIAL;^}'
                                 },
                             ]
                         }
@@ -1190,13 +1190,13 @@
 
         // Tell the server we have JavaScript, so do not degrade things for reasons of compatibility - plus also set other things the server would like to know
         if ($cms.configOption('detect_javascript')) {
-            $cms.setCookie('js_on', 1, 'UNCATEGORIZED', 120);
+            $cms.setCookie('has_js', 1, 'NON-ESSENTIAL', 120);
         }
 
         if ($cms.configOption('is_on_timezone_detection')) {
             if (!window.parent || (window.parent === window)) {
-                $cms.setCookie('client_time', (new Date()).toString(), 'PERSONALIZATION', 120);
-                $cms.setCookie('client_time_ref', (Date.now() / 1000), 'PERSONALIZATION', 120);
+                $cms.setCookie('client_time', (new Date()).toString(), 'NON-ESSENTIAL', 120);
+                $cms.setCookie('client_time_ref', (Date.now() / 1000), 'NON-ESSENTIAL', 120);
             }
         }
 

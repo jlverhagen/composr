@@ -53,7 +53,7 @@ class Hook_privacy_core extends Hook_privacy_base
                     'reason' => do_lang_tempcode('COOKIE_has_cookies'),
                 ],
                 'has_js' => (get_option('detect_javascript') == '0') ? null : [
-                    'category' => 'ESSENTIAL',
+                    'category' => 'NON-ESSENTIAL',
                     'reason' => do_lang_tempcode('COOKIE_has_js'),
                 ],
                 'cc_cookie' => [
@@ -65,7 +65,7 @@ class Hook_privacy_core extends Hook_privacy_base
                     'reason' => do_lang_tempcode('COOKIE_session'),
                 ],
                 'last_visit' => [
-                    'category' => 'PERSONALIZATION',
+                    'category' => 'NON-ESSENTIAL',
                     'reason' => do_lang_tempcode('COOKIE_last_visit'),
                 ],
                 get_member_cookie() . ' & ' . get_pass_cookie() => [
@@ -77,7 +77,7 @@ class Hook_privacy_core extends Hook_privacy_base
                     'reason' => do_lang_tempcode('COOKIE_invisible'),
                 ],
                 'cms_autosave_*' => [
-                    'category' => 'PERSONALIZATION',
+                    'category' => 'NON-ESSENTIAL',
                     'reason' => do_lang_tempcode('COOKIE_autosave'),
                 ],
                 'tray_*, hide*, og_*' => [
