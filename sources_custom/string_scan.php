@@ -11381,11 +11381,14 @@ function string_scan($lang, $do_guessing = false, $only_exists = true)
         COOKIE_has_cookies
         COOKIE_has_js
         COOKIE_last_visit
-        COOKIE_automatic_login
+        COOKIE_automatic_login_member
+        COOKIE_automatic_login_password
         COOKIE_invisible
         COOKIE_session
         COOKIE_cc_cookie
-        COOKIE_trays
+        COOKIE_trays_tray
+        COOKIE_trays_hide
+        COOKIE_trays_og
         COOKIE_use_wysiwyg
         COOKIE_client_time
         COOKIE_font_size
