@@ -47,35 +47,57 @@ function init__symbols()
  */
 function ecv(string $lang, array $escaped, int $type, string $name, array $param, string $template_name = '')
 {
+    static $symbols = null;
+
     $name = trim($name);
 
-    // SYMBOLS...
+    // SYMBOLS
+
     if ($type === TC_SYMBOL) {
-        // Built-in
+        // Special names
         if ($name === '?') {
-            $value = call_user_func('ecv_TERNARY', $lang, $escaped, $param);
-        } elseif (function_exists('ecv_' . $name)) {
-            $value = call_user_func('ecv_' . $name, $lang, $escaped, $param);
-        } else {
-            // Maybe a hook?
-            static $extra_symbols = null;
-            if ($extra_symbols === null) {
-                if (running_script('install')) {
-                    $extra_symbols = ['BETA_CSS_PROPERTY' => []]; // Needed for installer to look good ('find_all_hooks' won't run in initial steps of quick installer)
-                } else {
-                    $extra_symbols = [];
-                    $hooks = find_all_hooks('systems', 'symbols');
-                    foreach (array_keys($hooks) as $hook) {
-                        $extra_symbols[$hook] = [];
-                    }
-                }
+            $name = 'TERNARY';
+        }
+        if ($name === '') {
+            $name = 'COMMENT';
+        }
+
+        // Prepare symbols if we have not done so already
+        if ($symbols === null) {
+            $symbols = [];
+            if (running_script('install')) {
+                require_code('hooks/systems/symbols/BETA_CSS_PROPERTY');
+                $symbols = ['BETA_CSS_PROPERTY' => object_factory('Hook_symbol_BETA_CSS_PROPERTY')]; // Needed for installer to look good ('get_hook_ob' won't run in initial steps of quick installer)
             }
-            if (isset($extra_symbols[$name])) {
-                if (!isset($extra_symbols[$name]['ob'])) {
-                    require_code('hooks/systems/symbols/' . filter_naughty_harsh($name));
-                    $extra_symbols[$name]['ob'] = object_factory('Hook_symbol_' . filter_naughty_harsh($name));
+        }
+
+        // Find the symbol hook / object
+        if (!running_script('install') && !isset($symbols[$name])) {
+            $symbols[$name] = get_hook_ob('systems', 'symbols', $name, 'Hook_symbol_', true);
+        }
+
+        if (isset($symbols[$name])) {
+            // Found it!
+            $info = $symbols[$name]->info();
+            if ($info === null) {
+                $value = ''; // Silent fail / return blank if the symbol exists but is disabled
+            } else {
+                $value = $symbols[$name]->run($param, $lang, $escaped);
+            }
+
+            if (!empty($escaped)) {
+                if (is_object($value)) {
+                    $value = $value->evaluate();
                 }
-                $value = $extra_symbols[$name]['ob']->run($param);
+                apply_tempcode_escaping($escaped, $value);
+            }
+        } else {
+            // The symbol is a defined constant?
+            if (defined($name)) {
+                $value = @strval(constant($name));
+                if (!is_string($value)) {
+                    $value = strval($value);
+                }
 
                 if (!empty($escaped)) {
                     if (is_object($value)) {
@@ -84,37 +106,16 @@ function ecv(string $lang, array $escaped, int $type, string $name, array $param
                     apply_tempcode_escaping($escaped, $value);
                 }
             } else {
-                // A less common symbol?
-                if (defined($name)) {
-                    $value = @strval(constant($name));
-                    if (!is_string($value)) {
-                        $value = strval($value);
-                    }
+                // Symbol does not exist at all
+                $value = '';
+                if ($GLOBALS['XSS_DETECT']) {
+                    ocp_mark_as_escaped($value);
+                }
 
-                    if (!empty($escaped)) {
-                        if (is_object($value)) {
-                            $value = $value->evaluate();
-                        }
-                        apply_tempcode_escaping($escaped, $value);
-                    }
-                } else {
-                    require_code('symbols2');
-                    if (function_exists('ecv2_' . $name)) {
-                        global $SYMBOLS2_CAUSE;
-                        $SYMBOLS2_CAUSE[] = $name;
+                if (!running_script('install')) {
+                    trigger_error(do_lang('MISSING_SYMBOL', escape_html($name)), E_USER_NOTICE);
 
-                        $value = call_user_func('ecv2_' . $name, $lang, $escaped, $param); // A constant?
-                    } else { // Error :-(
-                        $value = '';
-                        if ($GLOBALS['XSS_DETECT']) {
-                            ocp_mark_as_escaped($value);
-                        }
-                        if (!running_script('install')) {
-                            trigger_error(do_lang('MISSING_SYMBOL', escape_html($name)), E_USER_NOTICE);
-
-                            persistent_cache_delete('HOOKS'); // May be a cache issue, find it on refresh
-                        }
-                    }
+                    persistent_cache_delete('HOOKS'); // May be a cache issue, find it on refresh
                 }
             }
         }

@@ -24,17 +24,32 @@
 class Hook_symbol_STOCK_CHECK
 {
     /**
+     * Get information about this symbol.
+     *
+     * @return ?array Array of information (null: hook disabled)
+     */
+    public function info() : ?array
+    {
+        if (!addon_installed('shopping')) {
+            return null;
+        }
+
+        return [
+            'compile' => SYMBOL_COMPILE_STATIC_NONE,
+            'public' => false,
+        ];
+    }
+
+    /**
      * Run function for symbol hooks. Searches for tasks to perform.
      *
      * @param  array $param Symbol parameters
+     * @param  string $lang The language to evaluate this symbol in (some symbols refer to language elements)
+     * @param  array $escaped Array of escaping operations
      * @return string Result
      */
-    public function run(array $param) : string
+    public function run(array $param, string $lang, array $escaped) : string
     {
-        if (!addon_installed('shopping')) {
-            return '';
-        }
-
         $value = '';
 
         if (!@cms_empty_safe($param[0])) {

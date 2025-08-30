@@ -24,12 +24,27 @@
 class Hook_symbol_SYMBOL_DATA_AS_JSON
 {
     /**
+     * Get information about this symbol.
+     *
+     * @return ?array Array of information (null: hook disabled)
+     */
+    public function info() : ?array
+    {
+        return [
+            'compile' => SYMBOL_COMPILE_STATIC_NONE,
+            'public' => false,
+        ];
+    }
+
+    /**
      * Run function for symbol hooks. Searches for tasks to perform.
      *
      * @param  array $param Symbol parameters
+     * @param  string $lang The language to evaluate this symbol in (some symbols refer to language elements)
+     * @param  array $escaped Array of escaping operations
      * @return string Result
      */
-    public function run(array $param) : string
+    public function run(array $param, string $lang, array $escaped) : string
     {
         global $ZONE;
 
@@ -38,6 +53,7 @@ class Hook_symbol_SYMBOL_DATA_AS_JSON
 
         $lang = user_lang();
 
+        /*
         $value = [
             'PAGE'              => ecv_PAGE($lang, [], []),
             'ZONE'              => ecv_ZONE($lang, [], []),
@@ -59,8 +75,23 @@ class Hook_symbol_SYMBOL_DATA_AS_JSON
             'IS_HTTPAUTH_LOGIN' => ecv_IS_HTTPAUTH_LOGIN($lang, [], []),
             'IS_A_COOKIE_LOGIN' => ecv_IS_A_COOKIE_LOGIN($lang, [], []),
             'CSP_NONCE'         => ecv_CSP_NONCE($lang, [], []),
+            'COUNTRY'         => ecv_COUNTRY($lang, [], []),
             'RUNNING_SCRIPT'    => current_script(),
         ];
+        */
+
+        // Implement public hooks into the JSON
+        $value = [];
+        $hook_obs = find_all_hook_obs('systems', 'symbols', 'Hook_symbol_');
+        foreach ($hook_obs as $hook => $ob) {
+            $info = $ob->info();
+            if (isset($info['public']) && ($info['public'] === true)) {
+                $value[$hook] = $ob->run([], $lang, []);
+            }
+        }
+
+        // We need the current running script
+        $value['RUNNING_SCRIPT'] = current_script();
 
         require_code('urls');
 
@@ -68,13 +99,6 @@ class Hook_symbol_SYMBOL_DATA_AS_JSON
         $value['zone_default_page'] = ($ZONE !== null) ? $ZONE['zone_default_page'] : '';
         $value['sees_javascript_error_alerts'] = (has_privilege(get_member(), 'sees_javascript_error_alerts')) && (get_option('javascript_error_alerts') == '1');
         $value['can_try_url_schemes'] = can_try_url_schemes();
-
-        require_code('locations');
-        $country = get_country();
-
-        if (!empty($country)) {
-            $value['COUNTRY'] = $country;
-        }
 
         return json_encode($value, JSON_UNESCAPED_SLASHES | JSON_NUMERIC_CHECK);
     }

@@ -24,17 +24,32 @@
 class Hook_symbol_GALLERY_VIDEO_FOR_URL
 {
     /**
+     * Get information about this symbol.
+     *
+     * @return ?array Array of information (null: hook disabled)
+     */
+    public function info() : ?array
+    {
+        if (!addon_installed('galleries')) {
+            return null;
+        }
+
+        return [
+            'compile' => SYMBOL_COMPILE_STATIC_IF_AGGRESSIVE,
+            'public' => false,
+        ];
+    }
+
+    /**
      * Run function for symbol hooks. Searches for tasks to perform.
      *
      * @param  array $param Symbol parameters
+     * @param  string $lang The language to evaluate this symbol in (some symbols refer to language elements)
+     * @param  array $escaped Array of escaping operations
      * @return string Result
      */
-    public function run(array $param) : string
+    public function run(array $param, string $lang, array $escaped) : string
     {
-        if (!addon_installed('galleries')) {
-            return '';
-        }
-
         $value = '';
 
         if (!empty($param[0])) {
@@ -67,6 +82,8 @@ class Hook_symbol_GALLERY_VIDEO_FOR_URL
                     $allow_trackbacks = isset($param[5]) ? ((intval($param[5]) == 1) ? 1 : 0) : 1;
 
                     $id = add_video($title, $cat, '', $url, '', 1, $allow_rating, $allow_comments, $allow_trackbacks, do_lang('VIDEO_WAS_AUTO_IMPORTED'), $length, $width, $height);
+
+                    $value = strval($id);
                 }
             }
         }

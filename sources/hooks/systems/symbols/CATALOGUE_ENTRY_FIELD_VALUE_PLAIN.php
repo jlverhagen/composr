@@ -24,17 +24,32 @@
 class Hook_symbol_CATALOGUE_ENTRY_FIELD_VALUE_PLAIN
 {
     /**
+     * Get information about this symbol.
+     *
+     * @return ?array Array of information (null: hook disabled)
+     */
+    public function info() : ?array
+    {
+        if (!addon_installed('catalogues')) {
+            return null;
+        }
+
+        return [
+            'compile' => SYMBOL_COMPILE_STATIC_NONE,
+            'public' => false,
+        ];
+    }
+
+    /**
      * Run function for symbol hooks. Searches for tasks to perform.
      *
      * @param  array $param Symbol parameters
+     * @param  string $lang The language to evaluate this symbol in (some symbols refer to language elements)
+     * @param  array $escaped Array of escaping operations
      * @return string Result
      */
-    public function run(array $param) : string
+    public function run(array $param, string $lang, array $escaped) : string
     {
-        if (!addon_installed('catalogues')) {
-            return '';
-        }
-
         $value = mixed();
         $value = '';
         if ((isset($param[0])) && (is_numeric($param[0])) && (isset($param[1])) && (is_numeric($param[1]))) {

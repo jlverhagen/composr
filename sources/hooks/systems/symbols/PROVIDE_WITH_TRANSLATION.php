@@ -24,12 +24,27 @@
 class Hook_symbol_PROVIDE_WITH_TRANSLATION
 {
     /**
+     * Get information about this symbol.
+     *
+     * @return ?array Array of information (null: hook disabled)
+     */
+    public function info() : ?array
+    {
+        return [
+            'compile' => SYMBOL_COMPILE_STATIC_NONE,
+            'public' => false,
+        ];
+    }
+
+    /**
      * Run function for symbol hooks. Searches for tasks to perform.
      *
      * @param  array $param Symbol parameters
+     * @param  string $lang The language to evaluate this symbol in (some symbols refer to language elements)
+     * @param  array $escaped Array of escaping operations
      * @return string Result
      */
-    public function run(array $param) : string
+    public function run(array $param, string $lang, array $escaped) : string
     {
         require_code('translation');
 
@@ -64,15 +79,12 @@ class Hook_symbol_PROVIDE_WITH_TRANSLATION
 
         switch ($context) {
             case TRANS_TEXT_CONTEXT__PLAIN:
+            case TRANS_TEXT_CONTEXT__HTML_INLINE:
                 $text .= ' (' . $text_translated . ')';
                 break;
 
             case TRANS_TEXT_CONTEXT__HTML_BLOCK:
                 $text .= '<br /><div class="box box__translation"><div class="box_inner">' . $text_translated . '</div></div>'; // Comes with a "Powered by" message
-                break;
-
-            case TRANS_TEXT_CONTEXT__HTML_INLINE:
-                $text .= ' (' . $text_translated . ')';
                 break;
         }
 
