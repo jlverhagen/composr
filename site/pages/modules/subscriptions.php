@@ -302,8 +302,7 @@ class Module_subscriptions
         }
 
         if (!in_array($payment_gateway, ['', 'manual', 'points'])) {
-            require_code('hooks/systems/payment_gateway/' . filter_naughty_harsh($payment_gateway, true));
-            $payment_gateway_object = object_factory(filter_naughty_harsh($payment_gateway, true));
+            $payment_gateway_object = get_hook_ob('systems', 'payment_gateway', filter_naughty_harsh($payment_gateway, true), 'Hook_payment_gateway_');
             if ($payment_gateway_object->auto_cancel($id) !== true) {
                 // Because we cannot TRIGGER a REMOTE cancellation, we have it so the local user action triggers that notification, informing the staff to manually do a remote cancellation
                 require_code('notifications');

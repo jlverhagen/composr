@@ -705,8 +705,6 @@ function get_catalogue_entries(string $catalogue_name, ?int $category_id, ?int $
     $can_do_db_sorting = ($order_by != 'distance');
 
     require_code('content');
-    require_code('hooks/systems/content_meta_aware/catalogue_entry');
-    $cma_ob = object_factory('Hook_content_meta_aware_catalogue_entry');
 
     if (($do_sorting) && ($can_do_db_sorting)) {
         $virtual_order_by = $order_by;
@@ -714,7 +712,7 @@ function get_catalogue_entries(string $catalogue_name, ?int $category_id, ?int $
         if ($order_by == 'add_date') {
             $virtual_order_by = 'r.ce_add_date';
         } elseif (($order_by == 'compound_rating') || ($order_by == 'average_rating') || ($order_by == 'fixed_random')) {
-            $ob = object_factory('Hook_content_meta_aware_catalogue_entry');
+            $ob = get_hook_ob('systems', 'content_meta_aware', 'catalogue_entry', 'Hook_content_meta_aware_');
             $info = $ob->info();
             if ($info === null) {
                 fatal_exit(do_lang_tempcode('INTERNAL_ERROR', escape_html('a2d4bd7810295652ac74b806940f5a85')));
@@ -726,7 +724,7 @@ function get_catalogue_entries(string $catalogue_name, ?int $category_id, ?int $
                 $virtual_order_by = 'r.ce_add_date'; // Should not happen
             }
         } elseif ((is_numeric($order_by)) && (isset($fields[intval($order_by)]))) { // Ah, so it's saying the nth field of this catalogue
-            $ob = object_factory('Hook_content_meta_aware_catalogue_entry');
+            $ob = get_hook_ob('systems', 'content_meta_aware', 'catalogue_entry', 'Hook_content_meta_aware_');
             $info = $ob->info();
             if ($info === null) {
                 fatal_exit(do_lang_tempcode('INTERNAL_ERROR', escape_html('a18b8249f6725fe2acbc8c6e81782776')));

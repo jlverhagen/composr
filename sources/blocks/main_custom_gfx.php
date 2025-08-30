@@ -68,7 +68,7 @@ class Block_main_custom_gfx
         }
 
         require_code('hooks/blocks/main_custom_gfx/' . filter_naughty_harsh($type_id, true), true);
-        $object = object_factory('Hook_main_custom_gfx_' . filter_naughty_harsh($type_id, true));
+        $object = get_hook_ob('blocks', 'main_custom_gfx', filter_naughty_harsh($type_id, true), 'Hook_main_custom_gfx_');
         return $object->run($map, $this);
     }
 

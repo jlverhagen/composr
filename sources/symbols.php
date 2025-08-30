@@ -66,7 +66,6 @@ function ecv(string $lang, array $escaped, int $type, string $name, array $param
         if ($symbols === null) {
             $symbols = [];
             if (running_script('install')) {
-                require_code('hooks/systems/symbols/BETA_CSS_PROPERTY');
                 $symbols = ['BETA_CSS_PROPERTY' => object_factory('Hook_symbol_BETA_CSS_PROPERTY')]; // Needed for installer to look good ('get_hook_ob' won't run in initial steps of quick installer)
             }
         }
@@ -878,8 +877,7 @@ function ecv(string $lang, array $escaped, int $type, string $name, array $param
                 }
                 if (isset($extra_directives[$name])) {
                     if (!isset($extra_directives[$name]['ob'])) {
-                        require_code('hooks/systems/directives/' . filter_naughty_harsh($name));
-                        $extra_directives[$name]['ob'] = object_factory('Hook_directive_' . filter_naughty_harsh($name));
+                        $extra_directives[$name]['ob'] = get_hook_ob('systems', 'directives', filter_naughty_harsh($name), 'Hook_directive_');
                     }
                     $value = $extra_directives[$name]['ob']->run($param);
                 } else {

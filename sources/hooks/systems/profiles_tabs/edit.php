@@ -92,8 +92,7 @@ class Hook_profiles_tabs_edit
             if (($only_tab === null) || (preg_match('#(^|,)' . preg_quote($hook, '#') . '(,|$)#', $only_tab) != 0)) {
                 send_http_output_ping();
 
-                require_code('hooks/systems/profiles_tabs_edit/' . filter_naughty_harsh($hook));
-                $ob = object_factory('Hook_profiles_tabs_edit_' . filter_naughty_harsh($hook));
+                $ob = get_hook_ob('systems', 'profiles_tabs_edit', filter_naughty_harsh($hook), 'Hook_profiles_tabs_edit_');
                 if ($ob->is_active($member_id_of, $member_id_viewing)) {
                     $tab = $ob->render_tab($member_id_of, $member_id_viewing, $only_tab !== $hook && $leave_to_ajax_if_possible);
 

@@ -78,8 +78,7 @@ $mode = get_param_string('mode'); // bundle | unbundle
 $addon_name = get_param_string('addon');
 
 if ($mode == 'unbundle') {
-    require_code('hooks/systems/addon_registry/' . filter_naughty_harsh($addon_name));
-    $ob = object_factory('Hook_addon_registry_' . filter_naughty_harsh($addon_name));
+    $ob = get_hook_ob('systems', 'addon_registry', filter_naughty_harsh($addon_name), 'Hook_addon_registry_');
     $files = $ob->get_file_list();
     foreach ($files as $path) {
         $new_file = null;

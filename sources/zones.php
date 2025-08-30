@@ -770,9 +770,9 @@ function load_module_page(string $string, string $codename) : object
 
     require_code(filter_naughty($string));
     if (class_exists('Mx_' . filter_naughty_harsh($codename))) {
-        $object = object_factory('Mx_' . filter_naughty_harsh($codename));
+        $object = object_factory('Mx_' . filter_naughty_harsh($codename), false, [], true);
     } else {
-        $object = object_factory('Module_' . filter_naughty_harsh($codename));
+        $object = object_factory('Module_' . filter_naughty_harsh($codename), false, [], true);
     }
 
     _check_module_installation_status($object, $codename);
@@ -978,7 +978,7 @@ function find_all_hook_obs(string $type, string $subtype, string $classname_pref
     foreach ($hooks as $hook => $hook_dir) {
         require_code('hooks/' . $type . '/' . $subtype . '/' . $hook, false, $hook_dir == 'sources_custom');
 
-        $ob = object_factory(class_exists(str_replace('Hook_', 'Hx_', $classname_prefix) . $hook) ? (str_replace('Hook_', 'Hx_', $classname_prefix) . $hook) : ($classname_prefix . $hook), true);
+        $ob = object_factory(class_exists(str_replace('Hook_', 'Hx_', $classname_prefix) . $hook) ? (str_replace('Hook_', 'Hx_', $classname_prefix) . $hook) : ($classname_prefix . $hook), true, [], true);
         if ($ob !== null) {
             $hooks[$hook] = $ob;
         } else {
@@ -1006,7 +1006,7 @@ function get_hook_ob(string $type, string $subtype, string $hook, string $classn
 
     require_code('hooks/' . $type . '/' . $subtype . '/' . $hook, !$fail_ok);
 
-    $ob = object_factory(class_exists(str_replace('Hook_', 'Hx_', $classname_prefix) . $hook) ? (str_replace('Hook_', 'Hx_', $classname_prefix) . $hook) : ($classname_prefix . $hook), true);
+    $ob = object_factory(class_exists(str_replace('Hook_', 'Hx_', $classname_prefix) . $hook) ? (str_replace('Hook_', 'Hx_', $classname_prefix) . $hook) : ($classname_prefix . $hook), true, [], true);
     if ((!$fail_ok) && ($ob === null)) {
         warn_exit(do_lang_tempcode('INTERNAL_ERROR', escape_html('f45146eaa359580bb0d10db80263e9c3')));
     }
@@ -1523,7 +1523,7 @@ function do_block_hunt_file(string $codename, array $map = []) : array
         return [$object, $new_security_scope];
     }
 
-    $_object = object_factory('Block_' . $codename);
+    $_object = object_factory('Block_' . filter_naughty_harsh($codename, true), false, [], true);
     return [$_object, $new_security_scope];
 }
 

@@ -766,8 +766,7 @@ function should_ignore_file(string $path, int $bitmask = 0) : bool
                         $addon_files = array_merge($addon_files, array_map('cms_strtolower_ascii', $addon_info['files']));
                     }
                 } else { // Running from outside the software
-                    require_code('hooks/systems/addon_registry/' . filter_naughty_harsh($hook));
-                    $hook_ob = object_factory('Hook_addon_registry_' . filter_naughty_harsh($hook));
+                    $hook_ob = get_hook_ob('systems', 'addon_registry', filter_naughty_harsh($hook), 'Hook_addon_registry_');
                     if ($place == 'sources_custom') {
                         $addon_files_nonbundled = array_merge($addon_files_nonbundled, array_map(function_exists('cms_strtolower_ascii') ? 'cms_strtolower_ascii' : 'strtolower', $hook_ob->get_file_list()));
                     } else {

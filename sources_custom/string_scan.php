@@ -30,9 +30,7 @@ function string_scan($lang, $do_guessing = false, $only_exists = true)
                 continue;
             }
 
-            require_code('hooks/systems/addon_registry/' . filter_naughty_harsh($hook));
-
-            $ob = object_factory('Hook_addon_registry_' . filter_naughty_harsh($hook));
+            $ob = get_hook_ob('systems', 'addon_registry', filter_naughty_harsh($hook), 'Hook_addon_registry_');
             if (method_exists($ob, 'tpl_previews')) {
                 $previews = $ob->tpl_previews();
                 foreach ($previews as $template => $preview) {
@@ -12370,9 +12368,7 @@ function string_scan($lang, $do_guessing = false, $only_exists = true)
                 continue;
             }
 
-            require_code('hooks/systems/config/' . filter_naughty_harsh($hook));
-
-            $ob = object_factory('Hook_config_' . filter_naughty_harsh($hook));
+            $ob = get_hook_ob('systems', 'config', filter_naughty_harsh($hook), 'Hook_config_');
             if (method_exists($ob, 'get_details')) {
                 $details = $ob->get_details();
 

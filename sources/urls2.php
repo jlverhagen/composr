@@ -982,7 +982,7 @@ function find_id_via_url_moniker(string $content_type, string $url_moniker) : ?s
     require_code($path);
 
     require_code('content');
-    $cma_ob = object_factory('Hook_content_meta_aware_' . filter_naughty_harsh($content_type, true));
+    $cma_ob = get_hook_ob('systems', 'content_meta_aware', filter_naughty_harsh($content_type, true), 'Hook_content_meta_aware_');
     $cma_info = $cma_ob->info();
     if ($cma_info === null) {
         return null;

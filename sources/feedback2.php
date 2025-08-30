@@ -55,8 +55,7 @@ function set_comment_forum_for(string $feedback_code, ?string $category_id, stri
     if (get_forum_type() == 'cns') {
         require_code('content');
         $cma_hook = convert_cms_type_codes('feedback_type_code', $feedback_code, 'content_type');
-        require_code('hooks/systems/content_meta_aware/' . filter_naughty_harsh($cma_hook, true));
-        $cma_ob = object_factory('Hook_content_meta_aware_' . filter_naughty_harsh($cma_hook, true));
+        $cma_ob = get_hook_ob('systems', 'content_meta_aware', filter_naughty_harsh($cma_hook, true), 'Hook_content_meta_aware_');
         $info = $cma_ob->info();
         if ($info === null) {
             return;
@@ -106,8 +105,7 @@ function trackback_script()
     $hooks = find_all_hooks('systems', 'trackback');
     foreach (array_keys($hooks) as $hook) {
         if ($hook == $feedback_type) {
-            require_code('hooks/systems/trackback/' . filter_naughty_harsh($hook));
-            $object = object_factory('Hook_trackback_' . filter_naughty_harsh($hook), true);
+            $object = get_hook_ob('systems', 'trackback', filter_naughty_harsh($hook), 'Hook_trackback_', true);
             if ($object === null) {
                 continue;
             }

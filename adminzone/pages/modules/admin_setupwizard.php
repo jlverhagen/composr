@@ -472,8 +472,7 @@ class Module_admin_setupwizard
         $addon_list_override_to_off_by_default = [];
         $addon_list_force_on = [];
         if ($installprofile != '') {
-            require_code('hooks/modules/admin_setupwizard_installprofiles/' . filter_naughty_harsh($installprofile));
-            $object = object_factory('Hook_admin_setupwizard_installprofiles_' . filter_naughty_harsh($installprofile));
+            $object = get_hook_ob('modules', 'admin_setupwizard_installprofiles', filter_naughty_harsh($installprofile), 'Hook_admin_setupwizard_installprofiles_');
             $profile_addons = $object->get_addon_list();
             list($addon_list_on_by_default, $addon_list_advanced_on_by_default) = $profile_addons;
             if (array_key_exists(2, $profile_addons)) {
@@ -745,8 +744,7 @@ class Module_admin_setupwizard
                     $path = get_file_base() . '/sources/hooks/modules/admin_setupwizard/' . filter_naughty_harsh($hook) . '.php';
                 }
                 if (strpos(cms_file_get_contents_safe($path, FILE_READ_LOCK), 'get_fields') !== false) { // Memory optimisation
-                    require_code('hooks/modules/admin_setupwizard/' . filter_naughty_harsh($hook));
-                    $hook = object_factory('Hook_sw_' . filter_naughty_harsh($hook), true);
+                    $hook = get_hook_ob('modules', 'admin_setupwizard', filter_naughty_harsh($hook), 'Hook_sw_', true);
                     if ($hook === null) {
                         continue;
                     }
@@ -758,8 +756,7 @@ class Module_admin_setupwizard
                 }
             }
         }
-        require_code('hooks/modules/admin_setupwizard/core'); // Core one explicitly goes last
-        $hook = object_factory('Hook_sw_core', true);
+        $hook = get_hook_ob('modules', 'admin_setupwizard', 'core', 'Hook_sw_', true);
         if (method_exists($hook, 'get_fields')) {
             list($hook_fields, $hook_hidden) = $hook->get_fields($field_defaults);
             $hidden .= $hook_hidden->evaluate();
@@ -805,7 +802,7 @@ class Module_admin_setupwizard
         $installprofile = post_param_string('installprofile', '');
         if ($installprofile != '') {
             require_code('hooks/modules/admin_setupwizard_installprofiles/' . filter_naughty_harsh($installprofile));
-            $object = object_factory('Hook_admin_setupwizard_installprofiles_' . filter_naughty_harsh($installprofile));
+            $object = get_hook_ob('modules', 'admin_setupwizard_installprofiles', filter_naughty_harsh($installprofile), 'Hook_admin_setupwizard_installprofiles_');
             $default_blocks = $object->default_blocks();
         } else {
             $default_blocks = null;
@@ -941,8 +938,7 @@ class Module_admin_setupwizard
 
         $installprofile = post_param_string('installprofile', '');
         if ($installprofile != '') {
-            require_code('hooks/modules/admin_setupwizard_installprofiles/' . filter_naughty_harsh($installprofile));
-            $object = object_factory('Hook_admin_setupwizard_installprofiles_' . filter_naughty_harsh($installprofile));
+            $object = get_hook_ob('modules', 'admin_setupwizard_installprofiles', filter_naughty_harsh($installprofile), 'Hook_admin_setupwizard_installprofiles_');
             $field_defaults = $object->field_defaults();
         } else {
             $field_defaults = [];
@@ -1129,11 +1125,7 @@ class Module_admin_setupwizard
 
         if ($installprofile != '') {
             // Run any specific code for the profile
-            $object = null;
-            if ((is_file(get_file_base() . '/sources/hooks/modules/admin_setupwizard_installprofiles/' . $installprofile . '.php')) || (is_file(get_file_base() . '/sources_custom/hooks/modules/admin_setupwizard_installprofiles/' . $installprofile . '.php'))) {
-                require_code('hooks/modules/admin_setupwizard_installprofiles/' . filter_naughty_harsh($installprofile));
-                $object = object_factory('Hook_admin_setupwizard_installprofiles_' . filter_naughty_harsh($installprofile), true);
-            }
+            $object = get_hook_ob('modules', 'admin_setupwizard_installprofiles', filter_naughty_harsh($installprofile), 'Hook_admin_setupwizard_installprofiles_', true);
             if ($object !== null) {
                 $object->install_code();
                 $installprofileblocks = $object->default_blocks();

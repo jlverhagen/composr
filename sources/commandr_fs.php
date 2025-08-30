@@ -178,8 +178,7 @@ class Commandr_fs
 
         if ($meta_root_node !== null) {
             // We're underneath a meta root node (a directory which is generated dynamically)
-            require_code('hooks/systems/commandr_fs/' . filter_naughty_harsh($meta_root_node_type));
-            $object = object_factory('Hook_commandr_fs_' . filter_naughty_harsh($meta_root_node_type));
+            $object = get_hook_ob('systems', 'commandr_fs', filter_naughty_harsh($meta_root_node_type), 'Hook_commandr_fs_');
             $current_dir = $object->listing($meta_dir, $meta_root_node, $this);
 
             if ($full_paths) {
@@ -558,8 +557,7 @@ class Commandr_fs
 
         if ($meta_root_node !== null) {
             // We're underneath a meta root node (a directory which is generated dynamically)
-            require_code('hooks/systems/commandr_fs/' . filter_naughty_harsh($meta_root_node_type));
-            $object = object_factory('Hook_commandr_fs_' . filter_naughty_harsh($meta_root_node_type));
+            $object = get_hook_ob('systems', 'commandr_fs', filter_naughty_harsh($meta_root_node_type), 'Hook_commandr_fs_');
             return $object->make_directory($meta_dir, $meta_root_node, $directory_name, $this);
         }
 
@@ -582,8 +580,7 @@ class Commandr_fs
 
         if ($meta_root_node !== null) {
             // We're underneath a meta root node (a directory which is generated dynamically)
-            require_code('hooks/systems/commandr_fs/' . filter_naughty_harsh($meta_root_node_type));
-            $object = object_factory('Hook_commandr_fs_' . filter_naughty_harsh($meta_root_node_type));
+            $object = get_hook_ob('systems', 'commandr_fs', filter_naughty_harsh($meta_root_node_type), 'Hook_commandr_fs_');
             $listing = $object->listing($meta_dir, $meta_root_node, $this);
 
             // Remove contents
@@ -657,15 +654,13 @@ class Commandr_fs
         $to_move_meta_root_node = '';
         $to_move_meta_root_node_type = '';
         $this->_discern_meta_dir($to_move_meta_dir, $to_move_meta_root_node, $to_move_meta_root_node_type, $to_move);
-        require_code('hooks/systems/commandr_fs/' . filter_naughty_harsh($to_move_meta_root_node_type));
-        $to_move_object = object_factory('Hook_commandr_fs_' . filter_naughty_harsh($to_move_meta_root_node_type));
+        $to_move_object = get_hook_ob('systems', 'commandr_fs', filter_naughty_harsh($to_move_meta_root_node_type), 'Hook_commandr_fs_');
 
         $destination_meta_dir = [];
         $destination_meta_root_node = '';
         $destination_meta_root_node_type = '';
         $this->_discern_meta_dir($destination_meta_dir, $destination_meta_root_node, $destination_meta_root_node_type, $destination);
-        require_code('hooks/systems/commandr_fs/' . filter_naughty_harsh($destination_meta_root_node_type));
-        $destination_object = object_factory('Hook_commandr_fs_' . filter_naughty_harsh($destination_meta_root_node_type));
+        $destination_object = get_hook_ob('systems', 'commandr_fs', filter_naughty_harsh($destination_meta_root_node_type), 'Hook_commandr_fs_');
 
         if ($destination_meta_root_node == $to_move_meta_root_node_type) {
             if (method_exists($to_move_object, 'folder_save')) { // Resource-fs wants a better renaming technique
@@ -709,15 +704,13 @@ class Commandr_fs
         $to_move_meta_root_node = '';
         $to_move_meta_root_node_type = '';
         $this->_discern_meta_dir($to_move_meta_dir, $to_move_meta_root_node, $to_move_meta_root_node_type, $to_move);
-        require_code('hooks/systems/commandr_fs/' . filter_naughty_harsh($to_move_meta_root_node_type));
-        $to_move_object = object_factory('Hook_commandr_fs_' . filter_naughty_harsh($to_move_meta_root_node_type));
+        $to_move_object = get_hook_ob('systems', 'commandr_fs', filter_naughty_harsh($to_move_meta_root_node_type), 'Hook_commandr_fs_');
 
         $destination_meta_dir = [];
         $destination_meta_root_node = '';
         $destination_meta_root_node_type = '';
         $this->_discern_meta_dir($destination_meta_dir, $destination_meta_root_node, $destination_meta_root_node_type, $destination);
-        require_code('hooks/systems/commandr_fs/' . filter_naughty_harsh($destination_meta_root_node_type));
-        $destination_object = object_factory('Hook_commandr_fs_' . filter_naughty_harsh($destination_meta_root_node_type));
+        $destination_object = get_hook_ob('systems', 'commandr_fs', filter_naughty_harsh($destination_meta_root_node_type), 'Hook_commandr_fs_');
 
         if ($destination_meta_root_node == $to_move_meta_root_node_type) {
             if (method_exists($to_move_object, 'file_save')) { // Resource-fs wants a better renaming technique
@@ -749,8 +742,7 @@ class Commandr_fs
 
         if ($meta_root_node !== null) {
             // We're underneath a meta root node (a directory which is generated dynamically)
-            require_code('hooks/systems/commandr_fs/' . filter_naughty_harsh($meta_root_node_type));
-            $object = object_factory('Hook_commandr_fs_' . filter_naughty_harsh($meta_root_node_type));
+            $object = get_hook_ob('systems', 'commandr_fs', filter_naughty_harsh($meta_root_node_type), 'Hook_commandr_fs_');
             return $object->remove_file($meta_dir, $meta_root_node, $filename, $this);
         }
 
@@ -773,8 +765,7 @@ class Commandr_fs
 
         if ($meta_root_node !== null) {
             // We're underneath a meta root node (a directory which is generated dynamically)
-            require_code('hooks/systems/commandr_fs/' . filter_naughty_harsh($meta_root_node_type));
-            $object = object_factory('Hook_commandr_fs_' . filter_naughty_harsh($meta_root_node_type));
+            $object = get_hook_ob('systems', 'commandr_fs', filter_naughty_harsh($meta_root_node_type), 'Hook_commandr_fs_');
             return $object->read_file($meta_dir, $meta_root_node, $filename, $this);
         }
 
@@ -798,8 +789,7 @@ class Commandr_fs
 
         if ($meta_root_node !== null) {
             // We're underneath a meta root node (a directory which is generated dynamically)
-            require_code('hooks/systems/commandr_fs/' . filter_naughty_harsh($meta_root_node_type));
-            $object = object_factory('Hook_commandr_fs_' . filter_naughty_harsh($meta_root_node_type));
+            $object = get_hook_ob('systems', 'commandr_fs', filter_naughty_harsh($meta_root_node_type), 'Hook_commandr_fs_');
             return $object->get_file_size($meta_dir, $meta_root_node, $filename, $force_calculate, $this);
         }
 
@@ -823,8 +813,7 @@ class Commandr_fs
 
         if ($meta_root_node !== null) {
             // We're underneath a meta root node (a directory which is generated dynamically)
-            require_code('hooks/systems/commandr_fs/' . filter_naughty_harsh($meta_root_node_type));
-            $object = object_factory('Hook_commandr_fs_' . filter_naughty_harsh($meta_root_node_type));
+            $object = get_hook_ob('systems', 'commandr_fs', filter_naughty_harsh($meta_root_node_type), 'Hook_commandr_fs_');
             return $object->write_file($meta_dir, $meta_root_node, $filename, $contents, $this) !== false;
         }
 
@@ -848,8 +837,7 @@ class Commandr_fs
 
         if ($meta_root_node !== null) {
             // We're underneath a meta root node (a directory which is generated dynamically)
-            require_code('hooks/systems/commandr_fs/' . filter_naughty_harsh($meta_root_node_type));
-            $object = object_factory('Hook_commandr_fs_' . filter_naughty_harsh($meta_root_node_type));
+            $object = get_hook_ob('systems', 'commandr_fs', filter_naughty_harsh($meta_root_node_type), 'Hook_commandr_fs_');
             $old_contents = $object->read_file($meta_dir, $meta_root_node, $filename, $this);
             return $object->write_file($meta_dir, $meta_root_node, $filename, $old_contents . $contents, $this);
         }

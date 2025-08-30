@@ -148,8 +148,7 @@ class Hook_commandr_fs_etc
         $hooks = find_all_hooks('systems', 'commandr_fs_extended_config');
         $extended_config_filename = preg_replace('#^_(.*)s' . preg_quote('.' . RESOURCE_FS_DEFAULT_EXTENSION, '#') . '$#', '${1}', $file_name);
         if (array_key_exists($extended_config_filename, $hooks)) {
-            require_code('hooks/systems/commandr_fs_extended_config/' . filter_naughty_harsh($extended_config_filename));
-            $ob = object_factory('Hook_commandr_fs_extended_config__' . filter_naughty_harsh($extended_config_filename));
+            $ob = get_hook_ob('systems', 'commandr_fs_extended_config', filter_naughty_harsh($extended_config_filename), 'Hook_commandr_fs_extended_config__');
             return $ob->read_file($meta_dir, $meta_root_node, $file_name, $commandr_fs);
         }
 
@@ -206,8 +205,7 @@ class Hook_commandr_fs_etc
         $hooks = find_all_hooks('systems', 'commandr_fs_extended_config');
         $extended_config_filename = preg_replace('#^_(.*)s' . preg_quote('.' . RESOURCE_FS_DEFAULT_EXTENSION, '#') . '$#', '${1}', $file_name);
         if (array_key_exists($extended_config_filename, $hooks)) {
-            require_code('hooks/systems/commandr_fs_extended_config/' . filter_naughty_harsh($extended_config_filename));
-            $ob = object_factory('Hook_commandr_fs_extended_config__' . filter_naughty_harsh($extended_config_filename));
+            $ob = get_hook_ob('systems', 'commandr_fs_extended_config', filter_naughty_harsh($extended_config_filename), 'Hook_commandr_fs_extended_config__');
             return $ob->write_file($meta_dir, $meta_root_node, $file_name, $contents, $commandr_fs);
         }
 

@@ -116,8 +116,7 @@ function find_media_renderers(string $url, array $attributes, bool $as_admin, ?i
             continue;
         }
 
-        require_code('hooks/systems/media_rendering/' . filter_naughty_harsh($hook));
-        $obs[$hook] = object_factory('Hook_media_rendering_' . filter_naughty_harsh($hook));
+        $obs[$hook] = get_hook_ob('systems', 'media_rendering', filter_naughty_harsh($hook), 'Hook_media_rendering_');
     }
 
     if (($as_admin) && ($limit_to !== null)) { // Don't check mime-types etc if admin and forced type
@@ -236,7 +235,7 @@ function render_media_url($url, $url_safe, array $attributes, bool $as_admin = f
         $attributes['filename'] = $original_filename;
     }
 
-    $ob = object_factory('Hook_media_rendering_' . filter_naughty_harsh($hook));
+    $ob = get_hook_ob('systems', 'media_rendering', filter_naughty_harsh($hook), 'Hook_media_rendering_');
     $ret = $ob->render($url, $url_safe, $attributes, $as_admin, $source_member, $url_to_scan_against, $original_filename);
 
     if ((array_key_exists('float', $attributes)) && ($hook != 'image_websafe')) {

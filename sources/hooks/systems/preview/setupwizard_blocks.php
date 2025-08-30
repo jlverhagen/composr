@@ -47,8 +47,7 @@ class Hook_preview_setupwizard_blocks
 
         $installprofile = post_param_string('installprofile', '');
         if ($installprofile != '') {
-            require_code('hooks/modules/admin_setupwizard_installprofiles/' . filter_naughty_harsh($installprofile));
-            $object = object_factory('Hook_admin_setupwizard_installprofiles_' . filter_naughty_harsh($installprofile));
+            $object = get_hook_ob('modules', 'admin_setupwizard_installprofiles', filter_naughty_harsh($installprofile), 'Hook_admin_setupwizard_installprofiles_');
             $installprofileblocks = $object->default_blocks();
             $block_options = $object->block_options();
         } else {

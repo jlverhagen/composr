@@ -309,8 +309,7 @@ function cns_authorise_login(object $this_ref, ?string $username, ?int $member_i
                         $out['failed_login'] = false; // Internal error, not a failed login
                         return $out;
                     }
-                    require_code('hooks/systems/cns_auth/' . filter_naughty_harsh($password_compat_scheme, true));
-                    $ob = object_factory('Hook_cns_auth_' . filter_naughty_harsh($password_compat_scheme, true));
+                    $ob = get_hook_ob('systems', 'cns_auth', filter_naughty_harsh($password_compat_scheme, true), 'Hook_cns_auth_');
                     $error = $ob->auth($row['m_username'], $row['id'], $password_mixed, $row);
                     if ($error !== null) {
                         $out['error'] = $error;

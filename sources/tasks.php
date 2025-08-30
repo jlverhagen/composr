@@ -103,8 +103,7 @@ function execute_task_background(array $task_row)
 
     $args = @unserialize($task_row['t_args']);
     if ($args !== false) {
-        require_code('hooks/systems/tasks/' . filter_naughty_harsh($hook));
-        $ob = object_factory('Hook_task_' . filter_naughty_harsh($hook));
+        $ob = get_hook_ob('systems', 'tasks', filter_naughty_harsh($hook), 'Hook_task_');
         $mim_before = get_mass_import_mode();
         $temp_result = call_user_func_array([$ob, 'run'], $args);
         set_mass_import_mode($mim_before);
@@ -199,8 +198,7 @@ function call_user_func_array__long_task(string $plain_title, ?object $title, st
         $old_limit = cms_disable_time_limit();
 
         // Run task
-        require_code('hooks/systems/tasks/' . filter_naughty_harsh($hook));
-        $ob = object_factory('Hook_task_' . filter_naughty_harsh($hook));
+        $ob = get_hook_ob('systems', 'tasks', filter_naughty_harsh($hook), 'Hook_task_');
         task_log_open();
         task_log(null, 'Starting task ' . $hook);
         $mim_before = get_mass_import_mode();

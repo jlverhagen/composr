@@ -1075,8 +1075,7 @@ class Module_tickets
 
         // Search under all hooks we've asked to search under
         $results = [];
-        require_code('hooks/modules/search/catalogue_entries');
-        $object = object_factory('Hook_search_catalogue_entries');
+        $object = get_hook_ob('modules', 'search', 'catalogue_entries', 'Hook_search_');
         $info = $object->info();
         if ($info === null) {
             return null;

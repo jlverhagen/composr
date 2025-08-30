@@ -1083,11 +1083,8 @@ function reinstall_addon_soft(string $addon_name, ?array $ini_info = null)
         warn_exit(do_lang_tempcode('ADDON_WARNING_INCOMPATIBILITIES_VERSION', escape_html(float_to_raw_string(cms_version_number())), escape_html($addon_name)));
     }
 
-    $hook_path = 'hooks/systems/addon_registry/' . filter_naughty($addon_name);
-    if (is_file(get_file_base() . '/sources/' . $hook_path . '.php') || is_file(get_file_base() . '/sources_custom/' . $hook_path . '.php')) {
-        require_code($hook_path);
-        $ob = object_factory('Hook_addon_registry_' . filter_naughty_harsh($addon_name));
-
+    $ob = get_hook_ob('systems', 'addon_registry', filter_naughty_harsh($addon_name), 'Hook_addon_registry_', true);
+    if ($ob !== null) {
         if (method_exists($ob, 'uninstall')) {
             $old = cms_extend_time_limit(15);
             $ob->uninstall();
@@ -1334,9 +1331,7 @@ function upgrade_addon_soft(string $addon_name) : int
     if (!hook_exists('systems', 'addon_registry', $addon_name)) {
         return 0;
     }
-    $code_file = 'hooks/systems/addon_registry/' . filter_naughty($addon_name);
-    require_code($code_file);
-    $ob = object_factory('Hook_addon_registry_' . filter_naughty_harsh($addon_name));
+    $ob = get_hook_ob('systems', 'addon_registry', filter_naughty_harsh($addon_name), 'Hook_addon_registry_');
 
     require_code('version');
 
@@ -1722,9 +1717,7 @@ function uninstall_addon_soft(string $addon_name)
         if (!hook_exists('systems', 'addon_registry', $addon_name)) {
             return;
         }
-        $code_file = 'hooks/systems/addon_registry/' . filter_naughty($addon_name);
-        require_code($code_file);
-        $ob = object_factory('Hook_addon_registry_' . filter_naughty_harsh($addon_name));
+        $ob = get_hook_ob('systems', 'addon_registry', filter_naughty_harsh($addon_name), 'Hook_addon_registry_');
 
         if (method_exists($ob, 'uninstall')) {
             $ob->uninstall();

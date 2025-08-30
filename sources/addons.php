@@ -335,7 +335,7 @@ function find_addon_icon(string $addon_name, bool $pick_default = true, ?string 
             if ($_data !== null) {
                 $data = clean_php_file_for_eval($_data['data']);
                 cms_eval($data, $tar_path . ': ' . $path, false);
-                $ob = object_factory('Hook_addon_registry_' . filter_naughty_harsh($addon_name, true), true);
+                $ob = object_factory('Hook_addon_registry_' . filter_naughty_harsh($addon_name, true), true, [], true);
                 if (($ob !== null) && (method_exists($ob, 'get_default_icon'))) {
                     $file = $ob->get_default_icon();
                     if (file_exists(get_file_base() . '/' . $file)) {

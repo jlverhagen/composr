@@ -1689,8 +1689,7 @@ function preprocess_raw_data_for(string $hook_name, int $start_time = 0, ?int $e
         $end_time = time() - 1;
     }
 
-    require_code('hooks/modules/admin_stats/' . filter_naughty($hook_name));
-    $hook_ob = object_factory('Hook_admin_stats_' . $hook_name, true);
+    $hook_ob = get_hook_ob('modules', 'admin_stats', filter_naughty_harsh($hook_name, true), 'Hook_admin_stats_', true);
     if ($hook_ob === null) {
         return;
     }

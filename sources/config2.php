@@ -395,8 +395,7 @@ function get_default_option(string $name) : ?string
         return null;
     }
 
-    require_code($path);
-    $ob = object_factory('Hook_config_' . filter_naughty_harsh($name, true));
+    $ob = get_hook_ob('systems', 'config', filter_naughty_harsh($name, true), 'Hook_config_');
 
     $value = $ob->get_default();
     if ($value === null) {
@@ -544,13 +543,13 @@ function config_update_value_ref(string $old_setting, string $setting, string $t
  */
 function config_option_url(string $name) : ?object
 {
+    // Check if the config option either does not exist or is disabled
     $value = get_option($name, true);
     if ($value === null) {
         return null;
     }
 
-    require_code('hooks/systems/config/' . filter_naughty_harsh($name));
-    $ob = object_factory('Hook_config_' . filter_naughty_harsh($name));
+    $ob = get_hook_ob('systems', 'config', filter_naughty_harsh($name), 'Hook_config_');
     $details = $ob->get_details();
 
     $url_map = ['page' => 'admin_config', 'type' => 'category', 'id' => $details['category']];

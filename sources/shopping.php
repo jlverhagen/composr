@@ -576,8 +576,7 @@ function make_cart_payment_button(int $order_id, string $currency, int $price_po
     $invoicing_breakdown = generate_invoicing_breakdown($type_code, $item_name, strval($order_id), $price, $tax, $shipping_cost, $shipping_tax);
 
     $payment_gateway = get_option('payment_gateway');
-    require_code('hooks/systems/payment_gateway/' . filter_naughty_harsh($payment_gateway));
-    $payment_gateway_object = object_factory('Hook_payment_gateway_' . filter_naughty_harsh($payment_gateway));
+    $payment_gateway_object = get_hook_ob('systems', 'payment_gateway', filter_naughty_harsh($payment_gateway), 'Hook_payment_gateway_');
     if ($payment_gateway_object->is_available() === false) {
         warn_exit(do_lang_tempcode('INTERNAL_ERROR', escape_html('64ccae53df1d5e60b1b5d7cc06a53a52')));
     }

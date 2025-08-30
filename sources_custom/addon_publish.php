@@ -286,8 +286,7 @@ function find_addon_category_list() : array
     $addons = find_all_hooks('systems', 'addon_registry');
     foreach ($addons as $addon_name => $place) {
         if ($place == 'sources_custom') {
-            require_code('hooks/systems/addon_registry/' . filter_naughty_harsh($addon_name));
-            $ob = object_factory('Hook_addon_registry_' . filter_naughty_harsh($addon_name));
+            $ob = get_hook_ob('systems', 'addon_registry', filter_naughty_harsh($addon_name), 'Hook_addon_registry_');
             if (method_exists($ob, 'get_category')) {
                 $category_name = $ob->get_category();
             } else {

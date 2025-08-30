@@ -174,8 +174,7 @@ class Module_search
                     warn_exit(do_lang_tempcode('MISSING_RESOURCE'));
                 }
 
-                require_code('hooks/modules/search/' . filter_naughty_harsh($id, true), true);
-                $ob = object_factory('Hook_search_' . filter_naughty_harsh($id, true));
+                $ob = get_hook_ob('modules', 'search', filter_naughty_harsh($id, true), 'Hook_search_');
                 $info = $ob->info();
 
                 if (($info !== null) && ($info !== false)) {
@@ -292,8 +291,7 @@ class Module_search
                 }
             }
 
-            require_code('hooks/modules/search/' . filter_naughty_harsh($id, true), true);
-            $ob = object_factory('Hook_search_' . filter_naughty_harsh($id, true));
+            $ob = get_hook_ob('modules', 'search', filter_naughty_harsh($id, true), 'Hook_search_');
             $info = $ob->info();
             if (($info === null) || ($info === false)) {
                 if ($info === null) {
@@ -331,8 +329,7 @@ class Module_search
                     }
                     list($ajax_hook, $ajax_options) = $ajax_tree;
 
-                    require_code('hooks/systems/ajax_tree/' . filter_naughty_harsh($ajax_hook));
-                    $tree_hook_ob = object_factory('Hook_ajax_tree_' . filter_naughty_harsh($ajax_hook));
+                    $tree_hook_ob = get_hook_ob('systems', 'ajax_tree', filter_naughty_harsh($ajax_hook), 'Hook_ajax_tree_');
                     $_under_simplified = preg_replace('#,.*$#', '', $under);
                     $simple_content = $tree_hook_ob->simple(null, $ajax_options, empty($_under_simplified) ? null : $_under_simplified);
 

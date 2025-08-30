@@ -35,8 +35,7 @@ class addon_screenshots_test_set extends cms_test_case
         $hooks = find_all_hooks('systems', 'addon_registry');
         foreach ($hooks as $hook => $place) {
             if ($place == 'sources_custom') {
-                require_code('hooks/systems/addon_registry/' . filter_naughty_harsh($hook));
-                $ob = object_factory('Hook_addon_registry_' . filter_naughty_harsh($hook));
+                $ob = get_hook_ob('systems', 'addon_registry', filter_naughty_harsh($hook), 'Hook_addon_registry_', true);
 
                 if ($ob === null) {
                     fatal_exit('Could not initiate ' . $hook);
