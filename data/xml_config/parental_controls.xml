@@ -35,6 +35,12 @@
 		<privacy_policy>This is governed by the Utah Social Media Regulation Act.</privacy_policy>
 	</control>
 
+	<!-- Mississippi (US) specific: Parental consent under 18 -->
+	<control name="parental_consent" age_threshold="18" regions="US-MS">
+		<mail>Under Mississippi law HB1126, parental consent is required for users under the age of 18.</mail>
+		<privacy_policy>This is governed by HB1126 in Mississippi.</privacy_policy>
+	</control>
+
 	<!-- Parental Consent: New Zealand (NZ) under 16 -->
 	<control name="parental_consent" age_threshold="16" regions="NZ">
 		<mail>Under New Zealand's Privacy Act 2020 principles regarding the handling of young people's data, parental consent is required for users under the age of 16.</mail>
