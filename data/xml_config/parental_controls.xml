@@ -36,9 +36,10 @@
 	</control>
 
 	<!-- Mississippi (US) specific: Parental consent under 18 -->
+	<!-- NOTE: if your site contains content not suitable for children, you must additionally verify the ages of ALL users on your site using a viable commercial service. Composr does not support this currently. -->
 	<control name="parental_consent" age_threshold="18" regions="US-MS">
-		<mail>Under Mississippi law HB1126, parental consent is required for users under the age of 18.</mail>
-		<privacy_policy>This is governed by HB1126 in Mississippi.</privacy_policy>
+		<mail>Under the Walker Montgomery Protecting Children Online Act, parental consent is required for users under the age of 18.</mail>
+		<privacy_policy>This is governed by the Walker Montgomery Protecting Children Online Act in Mississippi.</privacy_policy>
 	</control>
 
 	<!-- Parental Consent: New Zealand (NZ) under 16 -->
