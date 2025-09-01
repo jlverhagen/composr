@@ -1037,6 +1037,7 @@ function set_extra_request_metadata(array $metadata, ?array $row = null, ?string
     // Pre-validation of stuff that may not be acceptable
     foreach ($metadata as $key => $val) {
         if ($val !== null) {
+            require_code('templates');
             $val = cms_trim($val);
             if ($val == '') {
                 unset($metadata[$key]);
@@ -4831,7 +4832,7 @@ function is_control_field(string $field_name, bool $include_email_metafields = f
         'session_id',
         'csrf_token',
         'js_token',
-        'y' . md5(get_site_name() . ': antispam'),
+        'y' . md5(get_base_url() . ': antispam'),
         'captcha',
         'g-recaptcha-response',
 

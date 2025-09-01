@@ -893,3 +893,54 @@ function get_matching_closed_captions_file(string $url, string $scope_limit = 'u
     }
     return null;
 }
+
+/**
+ * Render an 'IMG_WIDTH'/'IMG_HEIGHT' symbol.
+ *
+ * @param  array $param Symbol parameters
+ * @return array A pair: Image dimensions
+ *
+ * @ignore
+ */
+function _symbol_image_dims(array $param) : array
+{
+    if (!function_exists('imagecreatefromstring')) {
+        return ['', ''];
+    }
+
+    $value = ['', ''];
+
+    if (running_script('install')) {
+        return $value;
+    }
+
+    if (!empty($param[0])) {
+        $url = $param[0];
+        if ($url == '') {
+            return $value;
+        }
+
+        $cacheable = !empty($param[1]);
+
+        if ($cacheable) {
+            $cache = persistent_cache_get('IMAGE_DIMS');
+            if (isset($cache[$url])) {
+                return $cache[$url];
+            }
+        }
+
+        $only_if_local = !empty($param[2]);
+
+        $details = cms_getimagesize_url($url);
+
+        if (($details !== false) && ($details[0] !== null) && ($details[1] !== null)) {
+            $value = [strval($details[0]), strval($details[1])];
+        }
+
+        if ($cacheable) {
+            $cache[$url] = $value;
+            persistent_cache_set('IMAGE_DIMS', $cache);
+        }
+    }
+    return $value;
+}

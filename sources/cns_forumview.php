@@ -259,6 +259,8 @@ function cns_render_forumview(?int $id, ?array $forum_info, string $current_filt
 
                     $edit_url = has_actual_page_access(get_member(), 'admin_cns_forums') ? build_url(['page' => 'admin_cns_forums', 'type' => '_edit', 'id' => $subforum['id']], get_module_zone('admin_cns_forums')) : new Tempcode();
 
+                    require_code('urls');
+
                     $forum_rules_url = '';
                     $intro_question_url = '';
                     if (!$subforum['intro_question']->is_empty()) {

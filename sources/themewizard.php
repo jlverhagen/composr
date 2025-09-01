@@ -171,6 +171,7 @@ function find_theme_image_themewizard_preview(string $id, bool $silent_fail = fa
     if (!in_array($id, $THEMEWIZARD_IMAGES_NO_WILD)) {
         foreach ($THEMEWIZARD_IMAGES as $expression) {
             if (($expression == $id) || ((substr($expression, -1) == '*') && (substr($id, 0, strlen($expression) - 1) . '*' == $expression))) {
+                require_code('urls');
                 $keep = keep_symbol([]);
                 return find_script('themewizard') . '?type=image&show=' . urlencode($id) . $keep;
             }

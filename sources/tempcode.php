@@ -1208,6 +1208,7 @@ function dependencies_are_good(string $codename, string $suffix, string $directo
  */
 function handle_symbol_preprocessing(array $seq_part, array &$children, string $template_name = '')
 {
+    // TODO: refactor into hooks
     switch ($seq_part[2]) {
         case 'PAGE_LINK':
             $param = $seq_part[3];

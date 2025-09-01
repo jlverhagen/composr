@@ -2411,35 +2411,6 @@ function ecv2_DISPLAY_CONCEPT(string $lang, array $escaped, array $param) : stri
     return $value;
 }
 
-// These directives are all static evaluated during compilation, so don't need loading on each request.
-
-/**
- * Evaluate a particular Tempcode directive.
- *
- * @ignore
- *
- * @param  string $value Value to write into
- * @param  LANGUAGE_NAME $lang The language to evaluate this symbol in (some symbols refer to language elements)
- * @param  array $escaped Array of escaping operations
- * @param  array $param Parameters to the symbol. For all but directive it is an array of strings. For directives it is an array of Tempcode objects. Actually there may be template-style parameters in here, as an influence of singular_bind and these may be Tempcode, but we ignore them.
- */
-function ecv2_RECONTEXTUALISE_IDS(string &$value, string $lang, array $escaped, array $param)
-{
-    if (isset($param[1])) {
-        $prefix = $param[0]->evaluate();
-        $str = $param[1]->evaluate();
-        $matches = [];
-        $num_matches = preg_match_all('# id="([^"]*)"#', $str, $matches);
-        for ($i = 0; $i < $num_matches; $i++) {
-            $str = str_replace(' id="' . $matches[$i][1] . '"', ' id="' . $prefix . '_' . $matches[$i][1] . '"', $str);
-            $str = str_replace(' for="' . $matches[$i][1] . '"', ' for="' . $prefix . '_' . $matches[$i][1] . '"', $str);
-            $str = str_replace(' ById(\'' . $matches[$i][1] . '\')', ' ById(\'' . $prefix . '_' . $matches[$i][1] . '\')', $str);
-            $str = str_replace(' ById("' . $matches[$i][1] . '\')', ' ById(\'' . $prefix . '_' . $matches[$i][1] . '")', $str);
-        }
-        $value = $str;
-    }
-}
-
 /**
  * Evaluate a particular Tempcode symbol.
  *
@@ -2776,30 +2747,6 @@ function ecv2_GEOCODE_ENABLED(string $lang, array $escaped, array $param) : stri
 {
     require_code('locations_geocoding');
     return (choose_geocoding_service() === null) ? '0' : '1';
-}
-
-/**
- * Evaluate a particular Tempcode directive.
- *
- * @ignore
- *
- * @param  string $value Value to write into
- * @param  LANGUAGE_NAME $lang The language to evaluate this symbol in (some symbols refer to language elements)
- * @param  array $escaped Array of escaping operations
- * @param  array $param Parameters to the symbol. For all but directive it is an array of strings. For directives it is an array of Tempcode objects. Actually there may be template-style parameters in here, as an influence of singular_bind and these may be Tempcode, but we ignore them.
- */
-function ecv2_WHILE(string &$value, string $lang, array $escaped, array $param)
-{
-    if (isset($param[1])) {
-        $_p = $param[0]->evaluate();
-        if ($_p == '1') {
-            $value = '';
-            $value .= $param[1]->evaluate();
-            $put = '';
-            ecv2_WHILE($put, $lang, $escaped, $param);
-            $value .= $put;
-        }
-    }
 }
 
 /**

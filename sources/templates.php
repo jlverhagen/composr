@@ -491,3 +491,74 @@ function generate_truncation($label, string $type, int $len = 60, bool $generate
 
     return $value;
 }
+
+/**
+ * Trim some text, supporting removing HTML white-space also.
+ *
+ * @param  string $text Input text
+ * @param  boolean $try_hard Whether to keep doing it, while it changes (if complex mixtures are on the end)
+ * @return string The result text
+ */
+function cms_trim(string $text, bool $try_hard = true) : string
+{
+    if ((preg_match('#[<&]#', $text) === 0) && (memory_get_usage() > 1024 * 1024 * 40)) {
+        return trim($text); // Don't have enough memory
+    }
+
+    if ($GLOBALS['XSS_DETECT']) {
+        $is_escaped = ocp_is_escaped($text);
+    }
+
+    // Intentionally not using regexps, as actually using substr is a lot faster and uses much less memory
+
+    do {
+        $before = $text;
+        $c = substr($text, 0, 1);
+        if ($c === '<') {
+            if (cms_strtolower_ascii(substr($text, 1, 1)) === 'b') {
+                if (cms_strtolower_ascii(substr($text, 0, 6)) === '<br />') {
+                    $text = substr($text, 6);
+                }
+                if (cms_strtolower_ascii(substr($text, 0, 5)) === '<br/>') {
+                    $text = substr($text, 5);
+                }
+                if (cms_strtolower_ascii(substr($text, 0, 4)) === '<br>') {
+                    $text = substr($text, 4);
+                }
+            }
+        } elseif ($c == '&') {
+            if (cms_strtolower_ascii(substr($text, 0, 6)) === '&nbsp;') {
+                $text = substr($text, 6);
+            }
+        }
+        $text = ltrim($text);
+    } while (($try_hard) && ($before !== $text));
+    do {
+        $before = $text;
+        $c = substr($text, -1, 1);
+        if ($c === '>') {
+            if (cms_strtolower_ascii(substr($text, -6)) === '<br />') {
+                $text = substr($text, 0, -6);
+            }
+            if (cms_strtolower_ascii(substr($text, -5)) === '<br/>') {
+                $text = substr($text, 0, -5);
+            }
+            if (cms_strtolower_ascii(substr($text, -4)) === '<br>') {
+                $text = substr($text, 0, -4);
+            }
+        } elseif ($c == ';') {
+            if (cms_strtolower_ascii(substr($text, -6)) === '&nbsp;') {
+                $text = substr($text, 0, -6);
+            }
+        }
+        $text = rtrim($text);
+    } while (($try_hard) && ($before !== $text));
+
+    if ($GLOBALS['XSS_DETECT']) {
+        if ($is_escaped) {
+            ocp_mark_as_escaped($text);
+        }
+    }
+
+    return $text;
+}

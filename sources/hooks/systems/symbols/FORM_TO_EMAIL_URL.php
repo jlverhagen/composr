@@ -46,6 +46,8 @@ class Hook_symbol_FORM_TO_EMAIL_URL
      */
     public function run(array $param, string $lang, array $escaped) : string
     {
+        require_code('urls');
+
         $url = find_script('form_to_email');
         if (isset($param[0])) {
             $redirect_url = static_evaluate_tempcode(build_url(['page' => $param[0]], '_SEARCH'));

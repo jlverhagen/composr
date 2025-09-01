@@ -1617,3 +1617,34 @@ function get_current_page_link(bool $include_keep_components = true, ?int $maxle
     }
     return $page_link;
 }
+
+/**
+ * String to tack onto URL to keep 'keep_' parameters.
+ *
+ * @param  array $param Parameters passed to the symbol (0=whether this starts off the query string, 1=force session append even if it's also available a session cookie e.g. when put into download manager)
+ * @return string The result
+ */
+function keep_symbol(array $param) : string
+{
+    $value = '';
+
+    global $HAS_NO_KEEP_CONTEXT;
+    if ($HAS_NO_KEEP_CONTEXT) {
+        return $value;
+    }
+
+    $get_vars = $_GET;
+    if ((!empty($param[1])) && (get_bot_type() === null) && (!isset($get_vars['keep_session']))) {
+        $get_vars['keep_session'] = get_session_id();
+    }
+
+    $first = !empty($param[0]);
+    foreach ($get_vars as $key => $val) {
+        if ((@$key[0] == 'k') && (substr($key, 0, 5) === 'keep_') && ((!skippable_keep($key, $val)) || (($key === 'keep_session') && (get_bot_type() === null) && (!empty($param[1])))) && (is_string($val))) {
+            $value .= ($first ? '?' : '&') . urlencode($key) . '=' . cms_urlencode($val);
+            $first = false;
+        }
+    }
+
+    return $value;
+}

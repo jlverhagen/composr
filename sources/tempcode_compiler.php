@@ -52,7 +52,7 @@ function init__tempcode_compiler()
 
     global $COMPILABLE_SYMBOLS;
     $COMPILABLE_SYMBOLS = [
-        // Random edit to keep this tab open
+        // TODO: Move into new symbol / directive hooks
         '' => SYMBOL_COMPILE_STATIC_SAFE, // A Tempcode comment
         'PAGE_LINK' => SYMBOL_COMPILE_STATIC_IF_AGGRESSIVE | SYMBOL_COMPILE_STATIC_SAFE_SIMPLE_KEEP,
         'TERNARY' => SYMBOL_COMPILE_STATIC_SAFE,

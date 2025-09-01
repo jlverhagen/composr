@@ -571,7 +571,7 @@ function init__global2()
     if (!empty(array_diff(array_keys($_POST), ['x', 'y', 'http_referer'/*added by our JS*/]))) {
         // Detect and deal with spammers that triggered the spam blackhole
         if (get_option('spam_blackhole_detection') == '1') {
-            $blackhole = post_param_string('y' . md5(get_site_name() . ': antispam'), '');
+            $blackhole = post_param_string('y' . md5(get_base_url() . ': antispam'), '');
             if ($blackhole != '') {
                 log_hack_attack_and_exit('BLACKHOLE_SPAM_HACK', '<blackhole>' . $blackhole . '</blackhole>');
                 warn_exit(do_lang_tempcode('INTERNAL_ERROR', escape_html('51377621adb8577e877ad607b6498b3b')));
@@ -2056,6 +2056,7 @@ function post_param_string(string $name, $default = false, int $filters = INPUT_
         }
 
         if ((((($filters & INPUT_FILTER_WYSIWYG_TO_COMCODE) != 0) || ($filters & INPUT_FILTER_COMCODE_CLEANUP) != 0)) && (isset($_POST[$name . '__is_wysiwyg'])) && ($_POST[$name . '__is_wysiwyg'] === '1')) {
+            require_code('templates');
             $ret = cms_trim($ret, true); // We do the trimming because CKEditor adds a trailing nbsp
         }
         comcode_page_hints_post($name, $ret);
