@@ -539,11 +539,8 @@ function compile_template(string $data, string $template_name, string $theme, st
                         if ($name === '?') {
                             $name = 'TERNARY';
                         }
-                        if (function_exists('ecv_' . $name)) {
-                            $new_line = 'ecv_' . $name . '($cl,[' . implode(',', array_map('strval', $escaped)) . '],[' . $_opener_params . '])';
-                        } else {
-                            $new_line = 'ecv($cl,[' . implode(',', array_map('strval', $escaped)) . '],' . strval(TC_SYMBOL) . ',' . $first_param . ',[' . $_opener_params . '])';
-                        }
+
+                        $new_line = 'ecv($cl,[' . implode(',', array_map('strval', $escaped)) . '],' . strval(TC_SYMBOL) . ',' . $first_param . ',[' . $_opener_params . '])';
                         if ((may_optimise_out_symbol(trim($first_param, '"'))) && (tc_is_all_static($_opener_params))) { // Can optimise out?
                             $tpl_funcs = [];
                             $eval = tempcode_compiler_eval('return ' . $new_line . ';', $tpl_funcs, [], $cl);
@@ -1129,14 +1126,6 @@ function tc_is_all_static(string $_opener_params) : bool
     }
 
     if (strpos($_opener_params, 'ecv(') !== false) {
-        return false;
-    }
-
-    if (strpos($_opener_params, 'ecv_') !== false) {
-        return false;
-    }
-
-    if (strpos($_opener_params, 'ecv2_') !== false) {
         return false;
     }
 

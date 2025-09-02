@@ -283,7 +283,7 @@ Tempcode does not have explicit data-types, everything is text. However we may i
 
 If a symbol is missing important parameters, it generally is skipped entirely.
 
-Some of the more advanced symbols are not fully laid-out, but they are all defined in [tt]sources/symbols.php[/tt] or [tt]sources/symbols2.php[/tt] in an obvious way, so advanced users can read this file.
+Some of the more advanced symbols are not fully laid-out, but they are all defined in [tt]sources[_custom]/hooks/symbols[/tt] in an obvious way, so advanced users can read them.
 
 You are very unlikely to ever want to use rows in red, as they are intended for use by core Composr code.
 

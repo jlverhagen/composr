@@ -1141,7 +1141,6 @@ class Hook_addon_registry_core
             'sources/static_cache.php',
             'sources/submit.php',
             'sources/symbols.php',
-            'sources/symbols2.php',
             'sources/syndication.php',
             'sources/tar.php',
             'sources/tar2.php',

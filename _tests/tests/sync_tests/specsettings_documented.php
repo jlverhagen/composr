@@ -45,33 +45,17 @@ class specsettings_documented_test_set extends cms_test_case
 
     public function testSymbols()
     {
-        $symbols_file = cms_file_get_contents_safe(get_file_base() . '/sources/symbols.php') . cms_file_get_contents_safe(get_file_base() . '/sources/symbols2.php', FILE_READ_LOCK);
-
         $tempcode_tutorial = cms_file_get_contents_safe(get_file_base() . '/docs/pages/comcode_custom/EN/tut_tempcode.txt', FILE_READ_LOCK | FILE_READ_UNIXIFIED_TEXT);
 
-        $matches = [];
-        $num_matches = preg_match_all('#^function ecv2?_(\w+)\(\$lang, \$escaped, \$param\)#m', $symbols_file, $matches);
-        for ($i = 0; $i < $num_matches; $i++) {
-            $symbol = $matches[1][$i];
-
-            if (in_array($symbol, ['TERNARY'])) {
-                continue;
-            }
-
-            $this->assertTrue(strpos($tempcode_tutorial, '{$' . $symbol) !== false, 'Symbol not documented, {$' . $symbol . '}');
-        }
-
-        // Also scan non-custom hooks
+        // Scan non-custom hooks
         $hooks = find_all_hooks('systems', 'symbols', false);
         foreach ($hooks as $symbol => $implementation) {
-            $this->assertTrue(strpos($tempcode_tutorial, '{$' . $symbol) !== false, 'Symbol not documented, {$' . $symbol . '}');
+            $this->assertTrue(preg_match_all('#' . preg_quote('{$' . $symbol) . '[\,\}]#', $tempcode_tutorial) > 0, 'Symbol not documented, {$' . $symbol . '}');
         }
     }
 
     public function testSymbolsReverse()
     {
-        require_code('symbols2');
-
         $tempcode_tutorial = cms_file_get_contents_safe(get_file_base() . '/docs/pages/comcode_custom/EN/tut_tempcode.txt', FILE_READ_LOCK | FILE_READ_UNIXIFIED_TEXT);
 
         $matches = [];
@@ -83,7 +67,7 @@ class specsettings_documented_test_set extends cms_test_case
                 continue;
             }
 
-            $this->assertTrue(function_exists('ecv_' . $symbol) || function_exists('ecv2_' . $symbol) || is_file(get_file_base() . '/sources/hooks/systems/symbols/' . $symbol . '.php'), 'Documented symbol does not exist, ' . $symbol);
+            $this->assertTrue(is_file(get_file_base() . '/sources/hooks/systems/symbols/' . $symbol . '.php'), 'Documented symbol does not exist, ' . $symbol);
         }
     }
 

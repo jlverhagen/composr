@@ -32,7 +32,7 @@ class Hook_symbol_RUNNING_SCRIPT
     {
         return [
             'compile' => SYMBOL_COMPILE_STATIC_NONE,
-            'public' => false,
+            'public' => true,
         ];
     }
 
