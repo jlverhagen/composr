@@ -364,12 +364,15 @@ function closure_eval(string $code, array $parameters) : string
         return do_lang('NO_PHP_IN_TEMPLATES');
     }
 
-    $code = preg_replace('#\b(ecv|ecv2)_([A-Z_]+)\(([^,]+),\s([^,]+),\s([^,]+)\)#', 'ecv($3, $4, TC_SYMBOL, \'$2\', $5)', $code); // LEGACY
+    require_code('failure');
+    set_throw_errors(true);
     try {
         $ret = eval($code);
     } catch (Error $e) {
         tempcode_error($e, $code);
     }
+    set_throw_errors(false);
+
     if (!is_string($ret)) {
         $ret = @strval($ret);
     }
@@ -1997,21 +2000,30 @@ class Tempcode
                     if (!@is_file(\'' . $_file . '\')) {
                         $GLOBALS[\'CACHE_TEMPLATES\']=false;
                     }
+
+                    require_code(\'failure\');
+                    set_throw_errors(true);
                     try {
                         eval($tmp->code_to_preexecute);
                     }
                     catch (Error $e) {
                         tempcode_error($e, $tmp->code_to_preexecute);
                     }
+                    set_throw_errors(false);
+
                     $GLOBALS[\'CACHE_TEMPLATES\']=$tmp2;
                     unset($tmp);
                 } else {
+                    require_code(\'failure\');
+                    set_throw_errors(true);
                     try {
                         eval($result[4]);
                     }
                     catch (Error $e) {
                         tempcode_error($e, $result[4]);
                     }
+                    set_throw_errors(false);
+
                     unset($result);
                 }
             ';
@@ -2075,12 +2087,15 @@ class Tempcode
             $this->metadata = create_template_tree_metadata();
         }
 
-        $raw_data = preg_replace('#\b(ecv|ecv2)_([A-Z_]+)\(([^,]+),\s([^,]+),\s([^,]+)\)#', 'ecv($3, $4, TC_SYMBOL, \'$2\', $5)', $raw_data); // LEGACY
+        require_code('failure');
+        set_throw_errors(true);
         try {
             $result = eval($raw_data);
         } catch (Error $e) {
             tempcode_error($e, $raw_data);
         }
+        set_throw_errors(false);
+
         if ($result === false) {
             if ($allow_failure) {
                 return false;
@@ -2353,24 +2368,29 @@ class Tempcode
             foreach ($seq_parts_group as $seq_part) {
                 $seq_part_0 = $seq_part[0];
                 if (!isset($tpl_funcs[$seq_part_0])) {
-                    $this->code_to_preexecute[$seq_part_0] = preg_replace('#\b(ecv|ecv2)_([A-Z_]+)\(([^,]+),\s([^,]+),\s([^,]+)\)#', 'ecv($3, $4, TC_SYMBOL, \'$2\', $5)', $this->code_to_preexecute[$seq_part_0]); // LEGACY
+                    require_code('failure');
+                    set_throw_errors(true);
                     try {
                         eval($this->code_to_preexecute[$seq_part_0]);
                     } catch (Error $e) {
                         tempcode_error($e, $this->code_to_preexecute[$seq_part_0]);
                     }
+                    set_throw_errors(false);
                 }
 
                 if (is_callable($tpl_funcs[$seq_part_0])) {
                     call_user_func($tpl_funcs[$seq_part_0], $seq_part[1], $current_lang, $seq_part[4]);
                 } else {
                     $parameters = $seq_part[1];
-                    $tpl_funcs[$seq_part_0] = preg_replace('#\b(ecv|ecv2)_([A-Z_]+)\(([^,]+),\s([^,]+),\s([^,]+)\)#', 'ecv($3, $4, TC_SYMBOL, \'$2\', $5)', $tpl_funcs[$seq_part_0]); // LEGACY
+
+                    require_code('failure');
+                    set_throw_errors(true);
                     try {
                         eval($tpl_funcs[$seq_part_0]);
                     } catch (Error $e) {
                         tempcode_error($e, $tpl_funcs[$seq_part_0]);
                     }
+                    set_throw_errors(false);
                 }
 
                 if ((($first_of_long) || ($MEMORY_OVER_SPEED)) && (ob_get_length() > 0)) { // We only quick exit on the first iteration, as we know we likely didn't spend much time getting to it- anything more and we finish so that we can cache for later use by evaluate/evaluate_echo
@@ -2465,24 +2485,28 @@ class Tempcode
             foreach ($seq_parts_group as $seq_part) {
                 $seq_part_0 = $seq_part[0];
                 if (!isset($tpl_funcs[$seq_part_0])) {
-                    $this->code_to_preexecute[$seq_part_0] = preg_replace('#\b(ecv|ecv2)_([A-Z_]+)\(([^,]+),\s([^,]+),\s([^,]+)\)#', 'ecv($3, $4, TC_SYMBOL, \'$2\', $5)', $this->code_to_preexecute[$seq_part_0]); // LEGACY
+                    require_code('failure');
+                    set_throw_errors(true);
                     try {
                         eval($this->code_to_preexecute[$seq_part_0]);
                     } catch (Error $e) {
                         tempcode_error($e, $this->code_to_preexecute[$seq_part_0]);
                     }
+                    set_throw_errors(false);
                 }
 
                 if (is_callable($tpl_funcs[$seq_part_0])) {
                     call_user_func($tpl_funcs[$seq_part_0], $seq_part[1], $current_lang, $seq_part[4]);
                 } else {
                     $parameters = $seq_part[1];
-                    $tpl_funcs[$seq_part_0] = preg_replace('#\b(ecv|ecv2)_([A-Z_]+)\(([^,]+),\s([^,]+),\s([^,]+)\)#', 'ecv($3, $4, TC_SYMBOL, \'$2\', $5)', $tpl_funcs[$seq_part_0]); // LEGACY
+                    require_code('failure');
+                    set_throw_errors(true);
                     try {
                         eval($tpl_funcs[$seq_part_0]);
                     } catch (Error $e) {
                         tempcode_error($e, $tpl_funcs[$seq_part_0]);
                     }
+                    set_throw_errors(false);
                 }
             }
         }
@@ -2562,24 +2586,28 @@ class Tempcode
 
                 $seq_part_0 = $seq_part[0];
                 if (!isset($tpl_funcs[$seq_part_0])) {
-                    $this->code_to_preexecute[$seq_part_0] = preg_replace('#\b(ecv|ecv2)_([A-Z_]+)\(([^,]+),\s([^,]+),\s([^,]+)\)#', 'ecv($3, $4, TC_SYMBOL, \'$2\', $5)', $this->code_to_preexecute[$seq_part_0]); // LEGACY
+                    require_code('failure');
+                    set_throw_errors(true);
                     try {
                         eval($this->code_to_preexecute[$seq_part_0]);
                     } catch (Error $e) {
                         tempcode_error($e, $this->code_to_preexecute[$seq_part_0]);
                     }
+                    set_throw_errors(false);
                 }
 
                 if (is_callable($tpl_funcs[$seq_part_0])) {
                     call_user_func($tpl_funcs[$seq_part_0], $seq_part[1], $current_lang, $seq_part[4]);
                 } else {
                     $parameters = $seq_part[1];
-                    $tpl_funcs[$seq_part_0] = preg_replace('#\b(ecv|ecv2)_([A-Z_]+)\(([^,]+),\s([^,]+),\s([^,]+)\)#', 'ecv($3, $4, TC_SYMBOL, \'$2\', $5)', $tpl_funcs[$seq_part_0]); // LEGACY
+                    require_code('failure');
+                    set_throw_errors(true);
                     try {
                         eval($tpl_funcs[$seq_part_0]);
                     } catch (Error $e) {
                         tempcode_error($e, $tpl_funcs[$seq_part_0]);
                     }
+                    set_throw_errors(false);
                 }
             }
         }
@@ -2605,12 +2633,14 @@ function recall_named_function(string $id, string $parameters, string $code)
     $k = 'TEMPCODE_FUNCTION__' . $id;
     if (!isset($GLOBALS[$k])) {
         $code = 'return function (' . $parameters . ') { $cl = user_lang(); ' . $code . ' };';
-        $code = preg_replace('#\b(ecv|ecv2)_([A-Z_]+)\(([^,]+),\s([^,]+),\s([^,]+)\)#', 'ecv($3, $4, TC_SYMBOL, \'$2\', $5)', $code); // LEGACY
+        require_code('failure');
+        set_throw_errors(true);
         try {
             $GLOBALS[$k] = eval($code);
         } catch (Error $e) {
             tempcode_error($e, $code);
         }
+        set_throw_errors(false);
     }
     return $GLOBALS[$k];
 }
