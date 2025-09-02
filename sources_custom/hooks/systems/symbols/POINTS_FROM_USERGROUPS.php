@@ -19,21 +19,35 @@
 class Hook_symbol_POINTS_FROM_USERGROUPS
 {
     /**
+     * Get information about this symbol.
+     *
+     * @return ?array Array of information (null: hook disabled)
+     */
+    public function info() : ?array
+    {
+        if (!addon_installed('group_points')) {
+            return null;
+        }
+        if (!addon_installed('points')) {
+            return null;
+        }
+
+        return [
+            'compile' => SYMBOL_COMPILE_STATIC_NONE,
+            'public' => false,
+        ];
+    }
+
+    /**
      * Run function for symbol hooks. Searches for tasks to perform.
      *
      * @param  array $param Symbol parameters
+     * @param  string $lang The language to evaluate this symbol in (some symbols refer to language elements)
+     * @param  array $escaped Array of escaping operations
      * @return string Result
      */
-    public function run(array $param) : string
+    public function run(array $param, string $lang, array $escaped) : string
     {
-        if (!addon_installed('group_points')) {
-            return '';
-        }
-
-        if (!addon_installed('points')) {
-            return '';
-        }
-
         require_code('points');
         $member_id = ((isset($param[0])) && (is_numeric($param[0]))) ? intval($param[0]) : get_member();
         $value = strval(points_rank($member_id) - non_overridden__points_rank($member_id));

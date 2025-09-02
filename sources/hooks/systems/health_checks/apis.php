@@ -124,8 +124,7 @@ class Hook_health_check_apis extends Hook_Health_Check
 
         // Forward geocoding
         foreach (['google', 'bing', 'mapquest'] as $service) {
-            require_code('hooks/systems/geocoding/' . $service);
-            $ob = object_factory('Hook_geocoding_' . $service);
+            $ob = get_hook_ob('systems', 'geocoding', filter_naughty_harsh($service, true), 'Hook_geocoding_');
             if ($ob->is_available()) {
                 $errormsg = new Tempcode();
                 $result = geocode('Berlin, DE', $errormsg, $service);
@@ -140,8 +139,7 @@ class Hook_health_check_apis extends Hook_Health_Check
 
         // Reverse geocoding
         foreach (['google', 'bing', 'mapquest'] as $service) {
-            require_code('hooks/systems/geocoding/' . $service);
-            $ob = object_factory('Hook_geocoding_' . $service);
+            $ob = get_hook_ob('systems', 'geocoding', filter_naughty_harsh($service, true), 'Hook_geocoding_');
             if ($ob->is_available(true)) {
                 $errormsg = new Tempcode();
                 $address = reverse_geocode(52.516667, 13.388889, $errormsg, $service);

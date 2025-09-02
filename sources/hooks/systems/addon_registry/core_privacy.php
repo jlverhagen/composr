@@ -165,6 +165,7 @@ class Hook_addon_registry_core_privacy
             'sources/hooks/systems/privacy/core.php',
             'sources/hooks/systems/privacy/index.html',
             'sources/hooks/systems/profiles_tabs_edit/data.php',
+            'sources/hooks/systems/symbols/COOKIE_DATA_JSON.php',
             'sources/hooks/systems/symbols/PRIVACY_POLICY_DATE.php',
             'sources/hooks/systems/tasks/privacy_download.php',
             'sources/hooks/systems/tasks/privacy_purge.php',

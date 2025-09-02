@@ -576,8 +576,7 @@ class Module_admin_cns_forums extends Standard_crud_module
         foreach (array_keys($hooks) as $hook) {
             $value = get_option($hook, true);
             if (($value === $f_name) || ($value === $_id)) {
-                require_code('hooks/systems/config/' . filter_naughty_harsh($hook));
-                $ob = object_factory('Hook_config_' . filter_naughty_harsh($hook));
+                $ob = get_hook_ob('systems', 'config', filter_naughty_harsh($hook), 'Hook_config_');
 
                 $details = $ob->get_details();
                 if ($details['type'] == 'forum') {

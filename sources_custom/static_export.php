@@ -101,7 +101,7 @@ function _page_link_to_static(array $node)
                 $data = preg_replace('#(\smethod="post"[^>]*)(\s)action="[^"]*"#', '${1}action="' . $new_form_action . '"${2}', $data);
 
                 // Set a JS session cookie for a very basic anti-spam system
-                $data = str_replace('</head>', '<script>document.cookie="js_on=1";</script></head>', $data);
+                $data = str_replace('</head>', '<script>document.cookie="has_js=1";</script></head>', $data);
             }
 
             // Change absolute paths to relative ones

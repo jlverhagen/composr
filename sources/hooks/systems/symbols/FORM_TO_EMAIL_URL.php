@@ -24,13 +24,30 @@
 class Hook_symbol_FORM_TO_EMAIL_URL
 {
     /**
+     * Get information about this symbol.
+     *
+     * @return ?array Array of information (null: hook disabled)
+     */
+    public function info() : ?array
+    {
+        return [
+            'compile' => SYMBOL_COMPILE_STATIC_SAFE_SIMPLE_BASE_URLS,
+            'public' => false,
+        ];
+    }
+
+    /**
      * Run function for symbol hooks. Searches for tasks to perform.
      *
      * @param  array $param Symbol parameters
+     * @param  string $lang The language to evaluate this symbol in (some symbols refer to language elements)
+     * @param  array $escaped Array of escaping operations
      * @return string Result
      */
-    public function run(array $param) : string
+    public function run(array $param, string $lang, array $escaped) : string
     {
+        require_code('urls');
+
         $url = find_script('form_to_email');
         if (isset($param[0])) {
             $redirect_url = static_evaluate_tempcode(build_url(['page' => $param[0]], '_SEARCH'));

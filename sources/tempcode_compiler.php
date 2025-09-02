@@ -41,16 +41,9 @@ function init__tempcode_compiler()
 
     // Work out what symbols may be compiled out (look at patterns at top of caches3.php if changing this)...
 
-    if (!defined('SYMBOL_COMPILE_STATIC_SAFE')) {
-        define('SYMBOL_COMPILE_STATIC_SAFE', 0);
-        define('SYMBOL_COMPILE_STATIC_IF_AGGRESSIVE', 1);
-        define('SYMBOL_COMPILE_STATIC_SAFE_SIMPLE_BASE_URLS', 2);
-        define('SYMBOL_COMPILE_STATIC_SAFE_SIMPLE_JAVASCRIPT', 4);
-        define('SYMBOL_COMPILE_STATIC_SAFE_SIMPLE_KEEP', 8);
-    }
-
     global $COMPILABLE_SYMBOLS;
     $COMPILABLE_SYMBOLS = [
+        // TODO: Move into new symbol / directive hooks
         '' => SYMBOL_COMPILE_STATIC_SAFE, // A Tempcode comment
         'PAGE_LINK' => SYMBOL_COMPILE_STATIC_IF_AGGRESSIVE | SYMBOL_COMPILE_STATIC_SAFE_SIMPLE_KEEP,
         'TERNARY' => SYMBOL_COMPILE_STATIC_SAFE,
@@ -118,6 +111,9 @@ function init__tempcode_compiler()
         'COOKIE_PATH' => SYMBOL_COMPILE_STATIC_SAFE,
         'COOKIE_DOMAIN' => SYMBOL_COMPILE_STATIC_SAFE,
         'SESSION_COOKIE_NAME' => SYMBOL_COMPILE_STATIC_SAFE,
+        'MEMBER_COOKIE_NAME' => SYMBOL_COMPILE_STATIC_SAFE,
+        'COOKIE_DATA_JSON' => SYMBOL_COMPILE_STATIC_SAFE,
+        'PASS_COOKIE_NAME' => SYMBOL_COMPILE_STATIC_SAFE,
         'MAILTO' => SYMBOL_COMPILE_STATIC_SAFE,
         'INLINE_STATS' => SYMBOL_COMPILE_STATIC_SAFE,
         'IMG_INLINE' => SYMBOL_COMPILE_STATIC_SAFE,
@@ -534,11 +530,8 @@ function compile_template(string $data, string $template_name, string $theme, st
                         if ($name === '?') {
                             $name = 'TERNARY';
                         }
-                        if (function_exists('ecv_' . $name)) {
-                            $new_line = 'ecv_' . $name . '($cl,[' . implode(',', array_map('strval', $escaped)) . '],[' . $_opener_params . '])';
-                        } else {
-                            $new_line = 'ecv($cl,[' . implode(',', array_map('strval', $escaped)) . '],' . strval(TC_SYMBOL) . ',' . $first_param . ',[' . $_opener_params . '])';
-                        }
+
+                        $new_line = 'ecv($cl,[' . implode(',', array_map('strval', $escaped)) . '],' . strval(TC_SYMBOL) . ',' . $first_param . ',[' . $_opener_params . '])';
                         if ((may_optimise_out_symbol(trim($first_param, '"'))) && (tc_is_all_static($_opener_params))) { // Can optimise out?
                             $tpl_funcs = [];
                             $eval = tempcode_compiler_eval('return ' . $new_line . ';', $tpl_funcs, [], $cl);
@@ -1124,14 +1117,6 @@ function tc_is_all_static(string $_opener_params) : bool
     }
 
     if (strpos($_opener_params, 'ecv(') !== false) {
-        return false;
-    }
-
-    if (strpos($_opener_params, 'ecv_') !== false) {
-        return false;
-    }
-
-    if (strpos($_opener_params, 'ecv2_') !== false) {
         return false;
     }
 

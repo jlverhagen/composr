@@ -55,8 +55,7 @@ function get_oauth_service_info(string $service_name) : array
         return $info_cache[$service_name];
     }
 
-    require_code('hooks/systems/oauth/' . filter_naughty_harsh($service_name));
-    $ob = object_factory('Hook_oauth_' . filter_naughty_harsh($service_name));
+    $ob = get_hook_ob('systems', 'oauth', filter_naughty_harsh($service_name), 'Hook_oauth_');
     $info_cache[$service_name] = $ob->info();
 
     return $info_cache[$service_name];

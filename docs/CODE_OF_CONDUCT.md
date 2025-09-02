@@ -122,7 +122,7 @@ increase the likelihood of more severe actions for future violations.
 **Community Impact**: A violation, or multiple violations, of community standards
 warranting temporary close supervision of the member.
 
-**Consequence**: A formal warning, and all content and communication submitted by 
+**Consequence**: A formal warning, and all content and communication submitted by
 the member will go through a manual approval process by a Board member before it
 goes public. This is for a temporary period of time as explained in the warning.
 
@@ -193,7 +193,7 @@ Composr community:
 6. We do not expect the Composr community to be a completely professional
    setting. People are allowed to be casual so long as they are not causing
    problems for others.
-7. We don't want anyone to be shamed for small mistakes. 
+7. We don't want anyone to be shamed for small mistakes.
 8. We are unlikely to ask for public apologies unless it really makes sense.
    We want people to be accountable by taking the opportunity to improve
    themselves, not to prostrate themselves.

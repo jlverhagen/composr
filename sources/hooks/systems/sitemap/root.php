@@ -136,8 +136,7 @@ class Hook_sitemap_root extends Hook_sitemap_base
             }
 
             if (($options & SITEMAP_GEN_USE_PAGE_GROUPINGS) == 0) {
-                require_code('hooks/systems/sitemap/zone');
-                $ob = object_factory('Hook_sitemap_zone');
+                $ob = get_hook_ob('systems', 'sitemap', 'zone', 'Hook_sitemap_');
                 $temp = $ob->get_node(':', $callback, $valid_node_types, $child_cutoff, $max_recurse_depth, $recurse_level, $options, $zone, $meta_gather, null, $return_anyway);
                 if ($temp !== null) {
                     $struct['children'] = isset($temp['children']) ? $temp['children'] : [];

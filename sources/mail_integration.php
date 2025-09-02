@@ -828,6 +828,7 @@ abstract class EmailIntegration
         } while ($pos !== false);
         */
 
+        require_code('templates');
         $body = cms_trim($body, true);
 
         require_code('comcode_from_html');

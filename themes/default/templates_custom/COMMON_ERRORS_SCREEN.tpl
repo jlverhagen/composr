@@ -15,6 +15,6 @@
 {ERROR_RESOLUTION}
 [/hide]
 {+END}
-	
+
 	{$COMCODE,{$GET,comcode_box}}
 {+END}

@@ -29,10 +29,32 @@
 		<privacy_policy>This is governed by Florida House Bill 3 (2024) concerning online protections for minors.</privacy_policy>
 	</control>
 
+	<!-- Arkansas (US) specific: Parental consent under 18 -->
+	<control name="parental_consent" age_threshold="18" regions="US-AR">
+		<mail>Under the Arkansas Social Media Safety Act, parental consent is required for users under the age of 18.</mail>
+		<privacy_policy>This is governed by the Arkansas Social Media Safety Act (Act 689).</privacy_policy>
+	</control>
+
+	<!-- Louisiana (US) specific: Parental consent under 18 -->
+	<control name="parental_consent" age_threshold="18" regions="US-LA">
+		<mail>Under Louisiana law (HB61), parental consent is required for users under the age of 18 to use social media.</mail>
+		<privacy_policy>This is governed by Louisiana House Bill 61 concerning online access for minors.</privacy_policy>
+	</control>
+
+	<!-- Texas (US) specific: Parental consent under 18 -->
+	<control name="parental_consent" age_threshold="18" regions="US-TX">
+		<mail>Under Texas law (HB 18), parental consent is required for users under the age of 18 to create a social media account.</mail>
+		<privacy_policy>This is governed by Texas House Bill 18 relating to the protection of minors from harmful content on digital services.</privacy_policy>
+	</control>
+
 	<!-- Utah (US) specific: Parental consent under 18 -->
-	<control name="parental_consent" age_threshold="18" regions="US-UT">
-		<mail>Under Utah's Social Media Regulation Act, parental consent is required for users under the age of 18.</mail>
-		<privacy_policy>This is governed by the Utah Social Media Regulation Act.</privacy_policy>
+	<!-- NOTE: The Utah Social Media Regulation Act's enforcement is currently blocked by a preliminary injunction as of late 2023. Its definition has been removed from this XML file for the time being. -->
+
+	<!-- Mississippi (US) specific: Parental consent under 18 -->
+	<!-- NOTE: if your site contains content not suitable for children, you must additionally verify the ages of ALL users on your site using a viable commercial service. Composr does not support this currently. -->
+	<control name="parental_consent" age_threshold="18" regions="US-MS">
+		<mail>Under the Walker Montgomery Protecting Children Online Act, parental consent is required for users under the age of 18.</mail>
+		<privacy_policy>This is governed by the Walker Montgomery Protecting Children Online Act in Mississippi.</privacy_policy>
 	</control>
 
 	<!-- Parental Consent: New Zealand (NZ) under 16 -->

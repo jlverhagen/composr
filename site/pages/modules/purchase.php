@@ -536,8 +536,7 @@ class Module_purchase
                 $this->title = get_screen_title('PURCHASING_TITLE', true, [do_lang_tempcode('ECOM_PURCHASE_STAGE_' . $type), '1', '6']);
             } else {
                 $hook = get_param_string('category', null);
-                require_code('hooks/systems/ecommerce/' . filter_naughty_harsh($hook));
-                $product_object = object_factory('Hook_ecommerce_' . filter_naughty_harsh($hook), true);
+                $product_object = get_hook_ob('systems', 'ecommerce', filter_naughty_harsh($hook), 'Hook_ecommerce_');
                 $product_category = $product_object->get_product_category();
                 breadcrumb_set_self($product_category['category_name']);
                 breadcrumb_set_parents([['_SELF:_SELF:browse', do_lang_tempcode('ECOM_PURCHASE_STAGE_browse')]]);
@@ -1175,8 +1174,7 @@ class Module_purchase
         list($details, $product_object) = find_product_details($type_code);
 
         $payment_gateway = get_option('payment_gateway');
-        require_code('hooks/systems/payment_gateway/' . filter_naughty_harsh($payment_gateway));
-        $payment_gateway_object = object_factory('Hook_payment_gateway_' . filter_naughty_harsh($payment_gateway));
+        $payment_gateway_object = get_hook_ob('systems', 'payment_gateway', filter_naughty_harsh($payment_gateway), 'Hook_payment_gateway_');
         if ($payment_gateway_object->is_available() === false) {
             warn_exit(do_lang_tempcode('INTERNAL_ERROR', escape_html('57f6d8ebe053506e86a7a91c90f78b6e')));
         }
@@ -1456,8 +1454,7 @@ class Module_purchase
     public function finish() : object
     {
         $payment_gateway = get_option('payment_gateway');
-        require_code('hooks/systems/payment_gateway/' . filter_naughty_harsh($payment_gateway));
-        $payment_gateway_object = object_factory('Hook_payment_gateway_' . filter_naughty_harsh($payment_gateway));
+        $payment_gateway_object = get_hook_ob('systems', 'payment_gateway', filter_naughty_harsh($payment_gateway), 'Hook_payment_gateway_');
         if ($payment_gateway_object->is_available() === false) {
             warn_exit(do_lang_tempcode('INTERNAL_ERROR', escape_html('34ad104e99c85855ba58e5b5103b4281')));
         }

@@ -26,6 +26,7 @@ function approve_ip_script()
     require_code('site');
     attach_to_screen_header('<meta name="robots" content="noindex" />'); // XHTMLXHTML
 
+    require_code('urls');
     $keep = keep_symbol(['1']);
 
     $code = either_param_string('code', '');

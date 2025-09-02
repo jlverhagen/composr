@@ -1061,34 +1061,77 @@
             this.initializeGoogleAnalytics();
         }
 
+        //$cms.setCookie('use_wysiwyg', '0', 'PERSONALIZATION', 90);
+
         // Cookie Consent plugin by Orestbida - https://cookieconsent.orestbida.com
         if (($cms.runningScript() === 'index') && ($dom.$('meta[http-equiv="Refresh"]') === null) && (window.parent === window)) {
             $cms.requireJavascript('cookie_consent').then(function () {
                 $cms.requireCss(['cookie_consent', 'cookie_consent_override']).then(function () {
-                    var cookieConsentOptions = {};
+                    // TODO: broken / does not seem to clear cookies like it should on denial
+                    var cookieConsentAutoClear = function cookieConsentAutoClear(cookieCategory) {
+                        cookieCategory = strVal(cookieCategory);
+
+                        if (typeof $cms.getCookieData[cookieCategory] === 'undefined') {
+                            // TODO: informational error / warning
+                            return [];
+                        }
+
+                        var returnValue = $cms.getCookieData[cookieCategory].map(function (cookieRegexStr) {
+                            cookieRegexStr = strVal(cookieRegexStr);
+
+                            return {
+                                name: new RegExp('^' + cookieRegexStr)
+                            }
+                        });
+                        return returnValue;
+                    };
+                    var cookieConsentOptions = {
+                        revision: 1
+                    };
+
                     cookieConsentOptions['categories'] = {
-                        ESSENTIAL: {
+                        'ESSENTIAL': {
                             enabled: true,
-                            readOnly: true
+                            readOnly: true,
+                            autoClear: {
+                                reloadPage: true,
+                                cookies: cookieConsentAutoClear('ESSENTIAL')
+                            }
                         },
-                        PERSONALIZATION: {
+                        'PERSONALIZATION': {
                             enabled: true,
-                            readOnly: false
+                            readOnly: false,
+                            autoClear: {
+                                reloadPage: true,
+                                cookies: cookieConsentAutoClear('PERSONALIZATION')
+                            }
                         },
-                        MARKETING: {
+                        'MARKETING': {
                             enabled: false,
                             readOnly: false,
+                            autoClear: {
+                                reloadPage: true,
+                                cookies: cookieConsentAutoClear('MARKETING')
+                            }
                         },
-                        ANALYTICS: {
+                        'ANALYTICS': {
                             enabled: true,
-                            readOnly: false
+                            readOnly: false,
+                            autoClear: {
+                                reloadPage: true,
+                                cookies: cookieConsentAutoClear('ANALYTICS')
+                            }
                         },
-                        UNCATEGORIZED: {
+                        'NON-ESSENTIAL': {
                             enabled: true,
-                            readOnly: false
+                            readOnly: false,
+                            autoClear: {
+                                reloadPage: true,
+                                cookies: cookieConsentAutoClear('NON-ESSENTIAL')
+                            }
                         }
                     };
-    
+
                     cookieConsentOptions['language'] = {
                         default: $cms.userLang().toLowerCase()
                     };
@@ -1130,14 +1173,14 @@
                                     description: '{!DESCRIPTION_COOKIE_CATEGORY_ANALYTICS;^}'
                                 },
                                 {
-                                    title: 'UNCATEGORIZED',
-                                    linkedCategory: 'UNCATEGORIZED',
-                                    description: '{!DESCRIPTION_COOKIE_CATEGORY_UNCATEGORIZED;^}'
+                                    title: 'NON-ESSENTIAL',
+                                    linkedCategory: 'NON-ESSENTIAL',
+                                    description: '{!DESCRIPTION_COOKIE_CATEGORY_NON_ESSENTIAL;^}'
                                 },
                             ]
                         }
                     };
-    
+
                     CookieConsent.run(cookieConsentOptions);
                 });
             });
@@ -1190,13 +1233,13 @@
 
         // Tell the server we have JavaScript, so do not degrade things for reasons of compatibility - plus also set other things the server would like to know
         if ($cms.configOption('detect_javascript')) {
-            $cms.setCookie('js_on', 1, 'UNCATEGORIZED', 120);
+            $cms.setCookie('has_js', 1, 'NON-ESSENTIAL', 120);
         }
 
         if ($cms.configOption('is_on_timezone_detection')) {
             if (!window.parent || (window.parent === window)) {
-                $cms.setCookie('client_time', (new Date()).toString(), 'PERSONALIZATION', 120);
-                $cms.setCookie('client_time_ref', (Date.now() / 1000), 'PERSONALIZATION', 120);
+                $cms.setCookie('client_time', (new Date()).toString(), 'NON-ESSENTIAL', 120);
+                $cms.setCookie('client_time_ref', (Date.now() / 1000), 'NON-ESSENTIAL', 120);
             }
         }
 

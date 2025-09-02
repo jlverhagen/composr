@@ -99,6 +99,7 @@ function comcode_convert_script()
 
         if (either_param_integer('is_semihtml', 0) == 1) {
             require_code('comcode_from_html');
+            require_code('templates');
             $data = trim(semihtml_to_comcode(cms_trim($data, true))); // We do the trimming because CKEditor adds a trailing nbsp
         }
 
@@ -122,6 +123,7 @@ function comcode_convert_script()
         $out .= trim(trim($evaluated));
     } elseif ($from_html == 1) { // "Convert HTML/semihtml to Comcode"
         require_code('comcode_from_html');
+        require_code('templates');
         $out = trim(semihtml_to_comcode(cms_trim($data, true), post_param_integer('force', 0) == 1)); // We do the trimming because CKEditor adds a trailing nbsp
     }
 

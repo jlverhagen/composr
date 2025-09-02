@@ -67,6 +67,7 @@ function deep_clean(string $d, string $heading = '') : string
 
     // Deep trim
     if ($is_html) {
+        require_code('templates');
         $d = cms_trim($d, true);
     } else {
         $d = trim($d);

@@ -121,7 +121,7 @@ class Hook_endpoint_cms_homesite_addon_manifest
 
                         $_id = find_guid_via_id('download', strval($result[0]['id']));
                         if ($_id === null) {
-                            return ['success' => 'false', 'error_details' => do_lang('INTERNAL_ERROR', comcode_escape('TODO'))];
+                            return ['success' => 'false', 'error_details' => do_lang('INTERNAL_ERROR', comcode_escape('b1ad9a17e9d85708b98322fffa98d6e4'))];
                         }
                         $addon_manifest[$addon_id]['download_guid'] = $_id;
                     } else {

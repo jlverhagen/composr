@@ -1955,17 +1955,15 @@ class Module_cms_galleries_cat extends Standard_crud_module
 
         // Per-gallery sort order (uses site config hooks)
         require_code('config2');
-        require_code('hooks/systems/config/galleries_sort_order');
-        $ob = object_factory('Hook_config_galleries_sort_order');
+
+        $ob = get_hook_ob('systems', 'config', 'galleries_sort_order', 'Hook_config_');
         $details = $ob->get_details();
         $details['explanation'] = 'PER_GALLERY_SORT_galleries_sort_order';
         if ($details !== null) {
             $fields->attach(build_config_inputter('galleries_sort_order', $details, $gallery_sort, true, false));
         }
 
-        require_code('config2');
-        require_code('hooks/systems/config/gallery_media_default_sort_order');
-        $ob = object_factory('Hook_config_gallery_media_default_sort_order');
+        $ob = get_hook_ob('systems', 'config', 'gallery_media_sort_order', 'Hook_config_');
         $details = $ob->get_details();
         $details['explanation'] = 'PER_GALLERY_SORT_gallery_media_default_sort_order';
         if ($details !== null) {

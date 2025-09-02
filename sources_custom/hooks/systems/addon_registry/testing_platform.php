@@ -822,7 +822,6 @@ We hope other users will appreciate your efforts and give you some points to rew
             '_tests/tests/async_tests/news_categories.php',
             '_tests/tests/async_tests/newsletters.php',
             '_tests/tests/async_tests/notifications.php',
-            '_tests/tests/async_tests/optimisations_fragile.php',
             '_tests/tests/async_tests/params.php',
             '_tests/tests/async_tests/password_censor.php',
             '_tests/tests/async_tests/password_strength.php',

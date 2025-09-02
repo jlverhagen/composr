@@ -1037,6 +1037,7 @@ function set_extra_request_metadata(array $metadata, ?array $row = null, ?string
     // Pre-validation of stuff that may not be acceptable
     foreach ($metadata as $key => $val) {
         if ($val !== null) {
+            require_code('templates');
             $val = cms_trim($val);
             if ($val == '') {
                 unset($metadata[$key]);
@@ -4091,7 +4092,7 @@ function has_js() : bool
     if (get_param_integer('keep_has_js', null) === 0) {
         return false;
     }
-    return (isset($_COOKIE['js_on'])) && ($_COOKIE['js_on'] == '1');
+    return (isset($_COOKIE['has_js'])) && ($_COOKIE['has_js'] == '1');
 }
 
 /**
@@ -4831,7 +4832,7 @@ function is_control_field(string $field_name, bool $include_email_metafields = f
         'session_id',
         'csrf_token',
         'js_token',
-        'y' . md5(get_site_name() . ': antispam'),
+        'y' . md5(get_base_url() . ': antispam'),
         'captcha',
         'g-recaptcha-response',
 
@@ -5629,7 +5630,7 @@ function statistical_update_model(string $table, int $view_count) : int
  * @param  ?float $days Days to store; not applicable for session cookies unless expiring it (null: default) (-14: expire the cookie)
  * @return boolean The result of the PHP setcookie command
  */
-function cms_setcookie(string $name, string $value, string $category = 'UNCATEGORIZED', bool $session = false, bool $httponly = true, ?float $days = null) : bool
+function cms_setcookie(string $name, string $value, string $category = 'NON-ESSENTIAL', bool $session = false, bool $httponly = true, ?float $days = null) : bool
 {
     // User rejected cookies; eat the existing cookie and bail out
     if (($value != '') && (!allowed_cookies($category))) {

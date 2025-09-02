@@ -257,12 +257,7 @@ function build_closure_tempcode(int $type, string $name, array $parameters, arra
     }
 
     if ($has_tempcode) {
-        $funcdef = "\$tpl_funcs['$myfunc']=\"foreach (\\\$parameters as \\\$i=>\\\$p) { if (is_object(\\\$p)) \\\$parameters[\\\$i]=\\\$p->evaluate(); } echo ";
-        if (($type === TC_SYMBOL) && (function_exists('ecv_' . $name))) {
-            $funcdef .= "ecv_" . $name . "(\\\$cl," . ($_escaping) . ",\\\$parameters);\";\n";
-        } else {
-            $funcdef .= "ecv(\\\$cl," . ($_escaping) . "," . ($_type) . ",\\\"" . ($_name) . "\\\",\\\$parameters);\";\n";
-        }
+        $funcdef = "\$tpl_funcs['$myfunc']=\"foreach (\\\$parameters as \\\$i=>\\\$p) { if (is_object(\\\$p)) \\\$parameters[\\\$i]=\\\$p->evaluate(); } echo ecv(\\\$cl," . ($_escaping) . "," . ($_type) . ",\\\"" . ($_name) . "\\\",\\\$parameters);\";\n";
     } else {
         $_parameters = '';
         foreach ($parameters as $parameter) {
@@ -276,12 +271,7 @@ function build_closure_tempcode(int $type, string $name, array $parameters, arra
             }
         }
 
-        $funcdef = "\$tpl_funcs['$myfunc']=\"echo ";
-        if (($type === TC_SYMBOL) && (function_exists('ecv_' . $name))) {
-            $funcdef .= "ecv_" . $name . "(\\\$cl," . ($_escaping) . ",[" . $_parameters . "]);\";\n";
-        } else {
-            $funcdef .= "ecv(\\\$cl," . ($_escaping) . "," . ($_type) . ",\\\"" . ($_name) . "\\\",[" . $_parameters . "]);\";\n";
-        }
+        $funcdef = "\$tpl_funcs['$myfunc']=\"echo ecv(\\\$cl," . ($_escaping) . "," . ($_type) . ",\\\"" . ($_name) . "\\\",[" . $_parameters . "]);\";\n";
 
         switch ($_name) {
             // Needs parameters for preprocessing, so we won't throw them out
@@ -1208,6 +1198,7 @@ function dependencies_are_good(string $codename, string $suffix, string $directo
  */
 function handle_symbol_preprocessing(array $seq_part, array &$children, string $template_name = '')
 {
+    // TODO: refactor into hooks
     switch ($seq_part[2]) {
         case 'PAGE_LINK':
             $param = $seq_part[3];
@@ -1645,7 +1636,7 @@ function handle_symbol_preprocessing(array $seq_part, array &$children, string $
                     }
                 }
 
-                ecv_METADATA(user_lang(), [], $param);
+                ecv(user_lang(), [], TC_SYMBOL, 'METADATA', $param);
             }
             return;
 
@@ -1659,7 +1650,7 @@ function handle_symbol_preprocessing(array $seq_part, array &$children, string $
                     }
                 }
 
-                ecv_METADATA_IMAGE_EXTRACT(user_lang(), [], $param);
+                ecv(user_lang(), [], TC_SYMBOL, 'METADATA_IMAGE_EXTRACT', $param);
             }
             return;
 

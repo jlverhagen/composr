@@ -761,8 +761,7 @@ function _get_specify_url(int $member_id, string $specify_name, string $upload_f
             require_code('media_renderer');
             require_code('http');
             $meta_details = get_webpage_meta_details($url[0]);
-            require_code('hooks/systems/media_rendering/oembed');
-            $oembed_ob = object_factory('Hook_media_rendering_oembed');
+            $oembed_ob = get_hook_ob('systems', 'media_rendering', 'oembed', 'Hook_media_rendering_');
             if ((addon_installed('galleries')) && (!empty($meta_details['t_mime_type'])) && ($oembed_ob->recognises_mime_type($meta_details['t_mime_type'], $meta_details)) || $oembed_ob->recognises_url($url[0])) {
                 $oembed = $oembed_ob->get_oembed_data_result($url[0], ['width' => get_option('video_width_setting'), 'height' => get_option('video_height_setting')]);
                 if (($oembed !== null) && ($oembed['type'] == 'photo')) {

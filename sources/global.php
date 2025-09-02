@@ -731,17 +731,31 @@ function tacit_https() : bool
  * @param  string $class The class name
  * @param  boolean $failure_ok Whether to return null if there is no such class
  * @param  array $parameters Array of parameters
+ * @param  boolean $cache Whether to use the cache to avoid initialising the same class repeatedly
  * @return ?object The object (null: could not create)
  */
-function object_factory(string $class, bool $failure_ok = false, array $parameters = []) : ?object
+function object_factory(string $class, bool $failure_ok = false, array $parameters = [], bool $cache = false) : ?object
 {
+    static $class_objects = [];
+
     if (!class_exists($class)) {
         if ($failure_ok) {
             return null;
         }
         fatal_exit(escape_html('Missing class: ' . $class));
     }
-    return new $class(...$parameters);
+
+    if ($cache) {
+        $hash = hash('sha256', serialize($parameters));
+        if (isset($class_objects[$class][$hash]) && is_object($class_objects[$class][$hash])) {
+            return $class_objects[$class][$hash];
+        }
+    } else {
+        return new $class(...$parameters);
+    }
+
+    $class_objects[$class][$hash] = new $class(...$parameters);
+    return $class_objects[$class][$hash];
 }
 
 /**
@@ -866,7 +880,7 @@ function filter_naughty(string $in, bool $preg = false) : string
         if (strpos($in, '..') !== false) {
             log_hack_attack_and_exit('PATH_HACK');
         }
-        
+
         warn_exit(do_lang_tempcode('INVALID_URL'));
     }
     return $in;

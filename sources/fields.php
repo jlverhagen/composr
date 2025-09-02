@@ -390,13 +390,13 @@ function get_fields_hook(string $type) : object
         }
     }
 
-    // Try creating an object factory as a last resort
+    // Try creating an object factory directly as a last resort
     require_code('failure');
     $path = 'hooks/systems/fields/' . filter_naughty($type);
     set_throw_errors(true);
     try {
         require_code($path);
-        $ob = object_factory('Hook_fields_' . filter_naughty($type));
+        $ob = object_factory('Hook_fields_' . filter_naughty($type), false, [], true);
         if (is_object($ob)) {
             $fields_hook_cache[$type] = $ob;
             return $ob;

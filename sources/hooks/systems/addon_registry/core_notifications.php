@@ -157,6 +157,8 @@ class Hook_addon_registry_core_notifications
             'sources/hooks/systems/profiles_tabs_edit/notifications.php',
             'sources/hooks/systems/rss/web_notifications.php',
             'sources/hooks/systems/startup/notification_poller_init.php',
+            'sources/hooks/systems/symbols/NOTIFICATIONS_AVAILABLE.php',
+            'sources/hooks/systems/symbols/NOTIFICATIONS_ENABLED.php',
             'sources/hooks/systems/tasks/dispatch_notification.php',
             'sources/notification_poller.php',
             'sources/notifications.php',

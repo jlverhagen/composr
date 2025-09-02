@@ -1064,8 +1064,7 @@ function enumerate_predefined_content(string $addon) : array
 {
     static $ret = [];
     if (!array_key_exists($addon, $ret)) {
-        require_code('hooks/systems/addon_registry/' . filter_naughty($addon));
-        $ob = object_factory('Hook_addon_registry_' . $addon);
+        $ob = get_hook_ob('systems', 'addon_registry', filter_naughty_harsh($addon, true), 'Hook_addon_registry_');
         $ret[$addon] = $ob->enumerate_predefined_content();
     }
 
@@ -1080,8 +1079,7 @@ function enumerate_predefined_content(string $addon) : array
  */
 function install_predefined_content(string $addon, ?array $content = null)
 {
-    require_code('hooks/systems/addon_registry/' . filter_naughty($addon));
-    $ob = object_factory('Hook_addon_registry_' . $addon);
+    $ob = get_hook_ob('systems', 'addon_registry', filter_naughty_harsh($addon, true), 'Hook_addon_registry_');
 
     if ($content === null) {
         $ob->install_predefined_content();

@@ -1710,11 +1710,24 @@ function cms_ini_set(string $var, string $value)
  * @param  string $class The class name
  * @param  boolean $failure_ok Whether to return null if there is no such class
  * @param  array $parameters Array of parameters
+ * @param  boolean $cache Whether to use the cache to avoid initialising the same class repeatedly
  * @return ?object The object (null: could not create)
  */
-function object_factory(string $class, bool $failure_ok = false, array $parameters = []) : ?object
+function object_factory(string $class, bool $failure_ok = false, array $parameters = [], bool $cache = false) : ?object
 {
-    return new $class(...$parameters);
+    static $class_objects = [];
+
+    if ($cache) {
+        $hash = hash('sha256', serialize($parameters));
+        if (isset($class_objects[$class][$hash]) && is_object($class_objects[$class][$hash])) {
+            return $class_objects[$class][$hash];
+        }
+    } else {
+        return new $class(...$parameters);
+    }
+
+    $class_objects[$class][$hash] = new $class(...$parameters);
+    return $class_objects[$class][$hash];
 }
 
 /**

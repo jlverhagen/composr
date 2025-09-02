@@ -506,8 +506,8 @@ class Hook_actionlog_core extends Hook_actionlog
                 if ((!is_file(get_file_base() . '/sources/' . $_hook . '.php')) && (!is_file(get_file_base() . '/sources_custom/' . $_hook . '.php'))) {
                     return $identifier;
                 }
-                require_code('hooks/systems/config/' . filter_naughty_harsh($identifier));
-                $ob = object_factory('Hook_config_' . filter_naughty_harsh($identifier), true);
+
+                $ob = get_hook_ob('systems', 'config', filter_naughty_harsh($identifier), 'Hook_config_', true);
                 if ($ob === null) {
                     return $identifier;
                 }
@@ -551,8 +551,8 @@ class Hook_actionlog_core extends Hook_actionlog
                     if ((!is_file(get_file_base() . '/sources/' . $_hook . '.php')) && (!is_file(get_file_base() . '/sources_custom/' . $_hook . '.php'))) {
                         return $hook;
                     }
-                    require_code($_hook);
-                    $ob = object_factory('Hook_cleanup_' . $hook, true);
+
+                    $ob = get_hook_ob('systems', 'cleanup', filter_naughty_harsh($hook, true), 'Hook_cleanup_', true);
                     if ($ob === null) {
                         return $hook;
                     }

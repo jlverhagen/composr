@@ -479,7 +479,7 @@ class Hook_ecommerce_catalogue_items
     public function actualiser(string $type_code, string $purchase_id, array $details) : bool
     {
         $entry_id = intval($type_code);
-        $product_object = object_factory('Hook_ecommerce_catalogue_items');
+        $product_object = get_hook_ob('systems', 'ecommerce', 'catalogue_items', 'Hook_ecommerce_');
         $product_object->reduce_stock($entry_id, 1);
 
         require_code('shopping');

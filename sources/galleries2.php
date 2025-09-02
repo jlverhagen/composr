@@ -298,7 +298,7 @@ function video_get_default_thumb_url(string $url = '', string $thumb_url = '', ?
         $hooks = find_media_renderers($url, [], true, null);
         if ($hooks !== null) {
             foreach ($hooks as $hook) {
-                $ve_ob = object_factory('Hook_media_rendering_' . filter_naughty_harsh($hook));
+                $ve_ob = get_hook_ob('systems', 'media_rendering', filter_naughty_harsh($hook), 'Hook_media_rendering_');
                 if (method_exists($ve_ob, 'get_video_thumbnail')) {
                     $ret = $ve_ob->get_video_thumbnail($url);
                     if ($ret !== null) {
@@ -459,8 +459,7 @@ function video_get_default_metadata(string $url = '', string $thumb_url = '', ?s
             require_code('media_renderer');
             require_code('http');
             $meta_details = get_webpage_meta_details($url);
-            require_code('hooks/systems/media_rendering/oembed');
-            $oembed_ob = object_factory('Hook_media_rendering_oembed');
+            $oembed_ob = get_hook_ob('systems', 'media_rendering', 'oembed', 'Hook_media_rendering_');
             if ((!empty($meta_details['t_mime_type'])) && ($oembed_ob->recognises_mime_type($meta_details['t_mime_type'], $meta_details)) || $oembed_ob->recognises_url($url)) {
                 $oembed = $oembed_ob->get_oembed_data_result($url, ['width' => get_option('video_width_setting'), 'height' => get_option('video_height_setting')]);
                 if (isset($oembed['width'])) {

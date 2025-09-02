@@ -53,7 +53,7 @@ class Hook_privacy_core extends Hook_privacy_base
                     'reason' => do_lang_tempcode('COOKIE_has_cookies'),
                 ],
                 'has_js' => (get_option('detect_javascript') == '0') ? null : [
-                    'category' => 'ESSENTIAL',
+                    'category' => 'NON-ESSENTIAL',
                     'reason' => do_lang_tempcode('COOKIE_has_js'),
                 ],
                 'cc_cookie' => [
@@ -65,24 +65,36 @@ class Hook_privacy_core extends Hook_privacy_base
                     'reason' => do_lang_tempcode('COOKIE_session'),
                 ],
                 'last_visit' => [
-                    'category' => 'PERSONALIZATION',
+                    'category' => 'NON-ESSENTIAL',
                     'reason' => do_lang_tempcode('COOKIE_last_visit'),
                 ],
-                get_member_cookie() . ' & ' . get_pass_cookie() => [
+                get_member_cookie() => [
                     'category' => 'PERSONALIZATION',
-                    'reason' => do_lang_tempcode('COOKIE_automatic_login'),
+                    'reason' => do_lang_tempcode('COOKIE_automatic_login_member'),
                 ],
                 get_member_cookie() . '_invisible' => [
                     'category' => 'PERSONALIZATION',
                     'reason' => do_lang_tempcode('COOKIE_invisible'),
                 ],
-                'cms_autosave_*' => [
+                get_pass_cookie() => [
                     'category' => 'PERSONALIZATION',
+                    'reason' => do_lang_tempcode('COOKIE_automatic_login_password'),
+                ],
+                'cms_autosave_*' => [
+                    'category' => 'NON-ESSENTIAL',
                     'reason' => do_lang_tempcode('COOKIE_autosave'),
                 ],
-                'tray_*, hide*, og_*' => [
+                'tray_*' => [
                     'category' => 'PERSONALIZATION',
-                    'reason' => do_lang_tempcode('COOKIE_trays'),
+                    'reason' => do_lang_tempcode('COOKIE_trays_tray'),
+                ],
+                'hide*' => [
+                    'category' => 'PERSONALIZATION',
+                    'reason' => do_lang_tempcode('COOKIE_trays_hide'),
+                ],
+                'og_*' => [
+                    'category' => 'PERSONALIZATION',
+                    'reason' => do_lang_tempcode('COOKIE_trays_og'),
                 ],
                 'use_wysiwyg' => [
                     'category' => 'PERSONALIZATION',
@@ -96,7 +108,17 @@ class Hook_privacy_core extends Hook_privacy_base
                     'category' => 'PERSONALIZATION',
                     'reason' => do_lang_tempcode('COOKIE_font_size'),
                 ],
-                '__ut*, _ga, _gid' => (get_option('google_analytics') == '') ? null : [
+
+                // TODO: replace with Google Tag Manager
+                '__ut*' => (get_option('google_analytics') == '') ? null : [
+                    'category' => 'ANALYTICS',
+                    'reason' => do_lang_tempcode('COOKIE_ga'),
+                ],
+                '_ga' => (get_option('google_analytics') == '') ? null : [
+                    'category' => 'ANALYTICS',
+                    'reason' => do_lang_tempcode('COOKIE_ga'),
+                ],
+                '_gid' => (get_option('google_analytics') == '') ? null : [
                     'category' => 'ANALYTICS',
                     'reason' => do_lang_tempcode('COOKIE_ga'),
                 ],
@@ -157,11 +179,14 @@ class Hook_privacy_core extends Hook_privacy_base
                     'action' => do_lang_tempcode('PRIVACY_ACTION_bans'),
                     'reason' => do_lang_tempcode('PRIVACY_REASON_bans'),
                 ],
-                [ // We define this here, not in newsletters hook, as webmasters are likely to use newsletters using external software
+
+                // We define this here, not in newsletters hook, as it is very plausible webmasters may use external newsletter software
+                [
                     'heading' => do_lang('GENERAL'),
                     'action' => do_lang_tempcode('PRIVACY_ACTION_newsletter', escape_html(get_site_name()), escape_html(get_option('site_scope'))),
                     'reason' => do_lang_tempcode('PRIVACY_REASON_newsletter'),
                 ],
+
                 [
                     'heading' => do_lang('INFORMATION_DISCLOSURE'),
                     'action' => do_lang_tempcode((get_option('is_on_invisibility') == '1') ? 'PRIVACY_ACTION_online_status_invisible' : 'PRIVACY_ACTION_online_status'),

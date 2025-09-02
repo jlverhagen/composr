@@ -188,6 +188,18 @@
      * @method
      * @returns {string}
      */
+    $cms.getMemberCookie = $util.constant(strVal('{$MEMBER_COOKIE_NAME;}'));
+    /**
+     * @memberof $cms
+     * @method
+     * @returns {string}
+     */
+    $cms.getPassCookie = $util.constant(strVal('{$PASS_COOKIE_NAME;}'));
+    /**
+     * @memberof $cms
+     * @method
+     * @returns {string}
+     */
     $cms.getCookiePath = $util.constant(strVal('{$COOKIE_PATH;}'));
     /**
      * @memberof $cms
@@ -195,6 +207,12 @@
      * @returns {string}
      */
     $cms.getCookieDomain = $util.constant(strVal('{$COOKIE_DOMAIN;}'));
+    /**
+     * @memberof $cms
+     * @method
+     * @returns {array}
+     */
+    $cms.getCookieData = $util.constant(JSON.parse('{$COOKIE_DATA_JSON;}'));
     /**
      * @memberof $cms
      * @method
@@ -589,7 +607,7 @@
         cookieName = strVal(cookieName);
         cookieCategory = strVal(cookieCategory);
         defaultValue = strVal(defaultValue);
-        
+
         // If cookies have not been consented, pretend no cookies are set even if there are old cookies remaining
         if ((cookieName !== 'cc_cookie') && ($cms.acceptsCookieCategory(cookieCategory))) {
             return '';

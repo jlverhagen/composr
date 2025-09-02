@@ -1385,7 +1385,7 @@ function save_static_caching($out, string $mime_type = 'text/html') : bool
     if ($bot_type === null) {
         $fast_cache_path .= '__non-bot';
     }
-    if (!array_key_exists('js_on', $_COOKIE)) {
+    if (!array_key_exists('has_js', $_COOKIE)) {
         $fast_cache_path .= '__no-js';
     }
     if (is_mobile()) {

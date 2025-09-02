@@ -1201,12 +1201,7 @@ function render_screen_preview(?string $hook, string $function, ?string $templat
         }
     }
 
-    require_code('hooks/systems/addon_registry/' . filter_naughty_harsh($hook));
-    $ob = object_factory('Hook_addon_registry_' . filter_naughty_harsh($hook));
-
-    if ((!is_file(get_file_base() . '/sources/hooks/systems/addon_registry/' . $hook . '.php')) && (!is_file(get_file_base() . '/sources_custom/hooks/systems/addon_registry/' . $hook . '.php'))) {
-        fatal_exit(do_lang_tempcode('MISSING_RESOURCE'));
-    }
+    $ob = get_hook_ob('systems', 'addon_registry', filter_naughty_harsh($hook), 'Hook_addon_registry_');
 
     // Load all .ini/.js/.css
     $files = $ob->get_file_list();

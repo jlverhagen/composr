@@ -174,11 +174,11 @@ function retrieve_sitemap_node(string $page_link = '', $callback = null, ?array 
  */
 function find_sitemap_object(string $page_link, int $options = 0) : ?array
 {
-    if ($page_link == '') {
-        $hook = 'root';
-        require_code('hooks/systems/sitemap/root');
-        $ob = object_factory('Hook_sitemap_root');
+    $ob = null;
+    $is_virtual = false;
 
+    if ($page_link == '') {
+        $ob = get_hook_ob('systems', 'sitemap', 'root', 'Hook_sitemap_');
         $is_virtual = false;
     } else {
         $page_link = preg_replace('#:keep_\w+=[^:]*#', '', $page_link);
@@ -186,9 +186,9 @@ function find_sitemap_object(string $page_link, int $options = 0) : ?array
         $hook = null;
         $matches = [];
         $hooks = find_all_hook_obs('systems', 'sitemap', 'Hook_sitemap_');
-        foreach ($hooks as $_hook => $ob) {
-            if ($ob->is_active()) {
-                $is_handled = $ob->handles_page_link($page_link, $options);
+        foreach ($hooks as $_hook => $_ob) {
+            if ($_ob->is_active()) {
+                $is_handled = $_ob->handles_page_link($page_link, $options);
                 if ($is_handled != SITEMAP_NODE_NOT_HANDLED) {
                     $sup = $_hook;
                     if ($_hook == 'entry_point') {
@@ -205,12 +205,12 @@ function find_sitemap_object(string $page_link, int $options = 0) : ?array
         if (!empty($matches)) {
             ksort($matches);
             $hook = reset($matches);
-            $ob = object_factory('Hook_sitemap_' . filter_naughty_harsh($hook));
+            $ob = get_hook_ob('systems', 'sitemap', filter_naughty_harsh($hook), 'Hook_sitemap_');
 
             $is_handled = intval(substr(key($matches), 1, 1));
             $is_virtual = ($is_handled == SITEMAP_NODE_HANDLED_VIRTUALLY);
         }
-        if ($hook === null) {
+        if (($hook === null) || ($ob === null)) {
             attach_message(do_lang_tempcode('_MISSING_RESOURCE', escape_html($page_link)), 'warn');
             return null;
         }
@@ -373,8 +373,7 @@ abstract class Hook_sitemap_base
      */
     protected function _get_sitemap_object(string $hook) : object
     {
-        require_code('hooks/systems/sitemap/' . filter_naughty_harsh($hook, true));
-        return object_factory('Hook_sitemap_' . filter_naughty_harsh($hook, true));
+        return get_hook_ob('systems', 'sitemap', filter_naughty_harsh($hook, true), 'Hook_sitemap_');
     }
 
     /**

@@ -89,8 +89,7 @@ function run_cleanup_tools(?array $cleanup_tools = null) : object
             if (array_key_exists($hook, $hooks)) {
                 send_http_output_ping();
 
-                require_code('hooks/systems/cleanup/' . filter_naughty_harsh($hook));
-                $object = object_factory('Hook_cleanup_' . filter_naughty_harsh($hook), true);
+                $object = get_hook_ob('systems', 'cleanup', filter_naughty_harsh($hook), 'Hook_cleanup_', true);
                 if ($object === null) {
                     continue;
                 }
@@ -105,8 +104,7 @@ function run_cleanup_tools(?array $cleanup_tools = null) : object
         foreach (array_keys($hooks) as $hook) {
             send_http_output_ping();
 
-            require_code('hooks/systems/cleanup/' . filter_naughty_harsh($hook));
-            $object = object_factory('Hook_cleanup_' . filter_naughty_harsh($hook), true);
+            $object = get_hook_ob('systems', 'cleanup', filter_naughty_harsh($hook), 'Hook_cleanup_', true);
             if ($object === null) {
                 continue;
             }
