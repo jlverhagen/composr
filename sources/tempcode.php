@@ -2352,11 +2352,15 @@ class Tempcode
                 $seq_part_0 = $seq_part[0];
                 if (!isset($tpl_funcs[$seq_part_0])) {
                     try {
+                        $this->code_to_preexecute[$seq_part_0] = preg_replace('#\b(ecv|ecv2)_([A-Z_]+)\(([^,]+),\s([^,]+),\s([^,]+)\)#', 'ecv($3, $4, TC_SYMBOL, \'$2\', $5)', $this->code_to_preexecute[$seq_part_0]); // LEGACY
+
                         eval($this->code_to_preexecute[$seq_part_0]);
                     } catch (Error $e) {
                         tempcode_error($e, $this->code_to_preexecute[$seq_part_0]);
                     }
                 }
+
+                $tpl_funcs[$seq_part_0] = preg_replace('#\b(ecv|ecv2)_([A-Z_]+)\(([^,]+),\s([^,]+),\s([^,]+)\)#', 'ecv($3, $4, TC_SYMBOL, \'$2\', $5)', $tpl_funcs[$seq_part_0]); // LEGACY
                 if (is_callable($tpl_funcs[$seq_part_0])) {
                     call_user_func($tpl_funcs[$seq_part_0], $seq_part[1], $current_lang, $seq_part[4]);
                 } else {
@@ -2461,11 +2465,15 @@ class Tempcode
                 $seq_part_0 = $seq_part[0];
                 if (!isset($tpl_funcs[$seq_part_0])) {
                     try {
+                        $this->code_to_preexecute[$seq_part_0] = preg_replace('#\b(ecv|ecv2)_([A-Z_]+)\(([^,]+),\s([^,]+),\s([^,]+)\)#', 'ecv($3, $4, TC_SYMBOL, \'$2\', $5)', $this->code_to_preexecute[$seq_part_0]); // LEGACY
+
                         eval($this->code_to_preexecute[$seq_part_0]);
                     } catch (Error $e) {
                         tempcode_error($e, $this->code_to_preexecute[$seq_part_0]);
                     }
                 }
+
+                $tpl_funcs[$seq_part_0] = preg_replace('#\b(ecv|ecv2)_([A-Z_]+)\(([^,]+),\s([^,]+),\s([^,]+)\)#', 'ecv($3, $4, TC_SYMBOL, \'$2\', $5)', $tpl_funcs[$seq_part_0]); // LEGACY
                 if (is_callable($tpl_funcs[$seq_part_0])) {
                     call_user_func($tpl_funcs[$seq_part_0], $seq_part[1], $current_lang, $seq_part[4]);
                 } else {
@@ -2555,11 +2563,15 @@ class Tempcode
                 $seq_part_0 = $seq_part[0];
                 if (!isset($tpl_funcs[$seq_part_0])) {
                     try {
+                        $this->code_to_preexecute[$seq_part_0] = preg_replace('#\b(ecv|ecv2)_([A-Z_]+)\(([^,]+),\s([^,]+),\s([^,]+)\)#', 'ecv($3, $4, TC_SYMBOL, \'$2\', $5)', $this->code_to_preexecute[$seq_part_0]); // LEGACY
+
                         eval($this->code_to_preexecute[$seq_part_0]);
                     } catch (Error $e) {
                         tempcode_error($e, $this->code_to_preexecute[$seq_part_0]);
                     }
                 }
+
+                $tpl_funcs[$seq_part_0] = preg_replace('#\b(ecv|ecv2)_([A-Z_]+)\(([^,]+),\s([^,]+),\s([^,]+)\)#', 'ecv($3, $4, TC_SYMBOL, \'$2\', $5)', $tpl_funcs[$seq_part_0]); // LEGACY
                 if (is_callable($tpl_funcs[$seq_part_0])) {
                     call_user_func($tpl_funcs[$seq_part_0], $seq_part[1], $current_lang, $seq_part[4]);
                 } else {
