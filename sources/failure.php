@@ -268,6 +268,22 @@ function _cms_error_handler(string $type, int $errno, string $errstr, string $er
         $php_error_label .= ' [' . $_SERVER['REQUEST_METHOD'] . ']';
     }
 
+    // LEGACY: clear cache if this was an ecv issue
+    if ((strpos($php_error_label, 'ecv_') !== false) || (strpos($php_error_label, 'ecv2_') !== false)) {
+        require_code('caches3');
+        erase_comcode_cache();
+        erase_block_cache(true);
+        erase_comcode_page_cache();
+        erase_persistent_cache();
+        erase_theme_images_cache();
+        erase_cached_templates();
+        erase_cached_language();
+
+        $php_error_label .= "\n" . 'We attempted to clear all the caches so this error does not happen again.';
+
+        $handling_method = 'LEGACY_ECV';
+    }
+
     $may_log_error = ((!running_script('cron_bridge')) || (@filemtime(get_custom_file_base() . '/data_custom/errorlog.php') < time() - 60 * 5)) && (!throwing_errors());
 
     if ($may_log_error) {
@@ -309,6 +325,12 @@ function _cms_error_handler(string $type, int $errno, string $errstr, string $er
             break;
 
         default:
+            // LEGACY
+            if ($handling_method == 'LEGACY_ECV') {
+                $errstr = 'We had to clear the site cache to fix legacy broken templates. Please refresh the page and try again.';
+                break;
+            }
+
             if ((!has_privilege(get_member(), 'see_php_errors')) && (!$GLOBALS['DEV_MODE'])) {
                 $errstr = do_lang('INTERNAL_ERROR', comcode_escape('72e6bbb313db37062b97acbe7a5e8771'));
             }

@@ -62,6 +62,11 @@ class Hook_symbol_SYMBOL_DATA_AS_JSON
                 continue;
             }
 
+            // LEGACY
+            if (!method_exists($ob, 'info')) {
+                continue;
+            }
+
             $info = $ob->info();
             if (isset($info['public']) && ($info['public'] === true)) {
                 $value[$hook] = $ob->run([], $lang, []);
