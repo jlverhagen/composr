@@ -144,6 +144,8 @@ class Hook_addon_registry_themewizard
             'sources/hooks/systems/preview/themewizard.php',
             'sources/hooks/systems/preview/themewizard_image.php',
             'sources/hooks/systems/snippets/themewizard_equation.php',
+            'sources/hooks/systems/symbols/THEME_COLOUR_IS_BRIGHT.php',
+            'sources/hooks/systems/symbols/THEME_DARK.php',
             'sources/themewizard.php',
             'sources_custom/hooks/modules/admin_themewizard/.htaccess',
             'sources_custom/hooks/modules/admin_themewizard/index.html',

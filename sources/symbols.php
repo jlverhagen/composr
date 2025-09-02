@@ -30,6 +30,16 @@ function init__symbols()
     $PAGES_CACHE = [];
     $PANELS_CACHE = [];
     $STATIC_TEMPLATE_TEST_MODE = false;
+
+    // Normally would be in tempcode_compiler.php but needed for the info() function of symbol hooks
+    if (!defined('SYMBOL_COMPILE_STATIC_NONE')) {
+        define('SYMBOL_COMPILE_STATIC_NONE', 0);
+        define('SYMBOL_COMPILE_STATIC_SAFE', 1);
+        define('SYMBOL_COMPILE_STATIC_IF_AGGRESSIVE', 2);
+        define('SYMBOL_COMPILE_STATIC_SAFE_SIMPLE_BASE_URLS', 4);
+        define('SYMBOL_COMPILE_STATIC_SAFE_SIMPLE_JAVASCRIPT', 8);
+        define('SYMBOL_COMPILE_STATIC_SAFE_SIMPLE_KEEP', 16);
+    }
 }
 
 /**
@@ -210,6 +220,6 @@ function ecv(string $lang, array $escaped, int $type, string $name, array $param
     }
 
     // We should never get here
-    trigger_error(do_lang('INTERNAL_ERROR', comcode_escape('TODO')), E_USER_NOTICE);
+    trigger_error(do_lang('INTERNAL_ERROR', comcode_escape('4356c4907b9f5ab5a4ca7e5bcd3a489b')), E_USER_NOTICE);
     return '';
 }

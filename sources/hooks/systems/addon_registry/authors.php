@@ -144,6 +144,7 @@ class Hook_addon_registry_authors
             'sources/hooks/systems/privacy/authors.php',
             'sources/hooks/systems/rss/authors.php',
             'sources/hooks/systems/sitemap/author.php',
+            'sources/hooks/systems/symbols/AUTHOR_MEMBER.php',
             'themes/default/css/authors.css',
             'themes/default/images/icons/menu/cms/author_set_own_profile.svg',
             'themes/default/images/icons/menu/rich_content/authors.svg',

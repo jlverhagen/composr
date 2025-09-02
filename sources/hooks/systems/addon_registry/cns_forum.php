@@ -268,6 +268,7 @@ class Hook_addon_registry_cns_forum
             'sources/hooks/systems/rss/cns_unread_topics.php',
             'sources/hooks/systems/sitemap/forum.php',
             'sources/hooks/systems/sitemap/topic.php',
+            'sources/hooks/systems/symbols/CNS_RANK_IMAGE.php',
             'sources/hooks/systems/tasks/cns_recache.php',
             'sources/hooks/systems/tasks/cns_topics_recache.php',
             'sources/hooks/systems/tasks/export_voting_power.php',

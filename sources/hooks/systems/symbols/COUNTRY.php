@@ -49,6 +49,9 @@ class Hook_symbol_COUNTRY
         require_code('locations');
 
         $value = get_country();
+        if ($value === null) {
+            $value = '';
+        }
 
         return $value;
     }

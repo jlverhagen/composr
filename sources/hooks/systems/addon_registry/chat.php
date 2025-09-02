@@ -216,6 +216,7 @@ class Hook_addon_registry_chat
             'sources/hooks/systems/snippets/im_friends_rejig.php',
             'sources/hooks/systems/startup/im.php',
             'sources/hooks/systems/symbols/CHAT_IM.php',
+            'sources/hooks/systems/symbols/IS_FRIEND.php',
             'sources_custom/hooks/modules/chat_bots/.htaccess',
             'sources_custom/hooks/modules/chat_bots/index.html',
             'themes/default/css/chat.css',

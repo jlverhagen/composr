@@ -234,6 +234,7 @@ This addon does not contain the homesite install code and the overall site and t
             'themes/default/templates_custom/CMS_BLOCK_MAIN_VERSION_SUPPORT.tpl',
             'themes/default/templates_custom/CMS_DOWNLOAD_BLOCK.tpl',
             'themes/default/templates_custom/CMS_DOWNLOAD_RELEASES.tpl',
+            'themes/default/templates_custom/COMMON_ERRORS_SCREEN.tpl',
             'uploads/website_specific/cms_homesite/.htaccess',
             'uploads/website_specific/cms_homesite/banners.zip',
             'uploads/website_specific/cms_homesite/errorservice.csv',

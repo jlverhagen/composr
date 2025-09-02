@@ -23,7 +23,7 @@
 /**
  * Hook class.
  */
-class Hook_symbol_
+class Hook_symbol_REFRESH
 {
     /**
      * Get information about this symbol.

@@ -181,6 +181,7 @@ class Hook_addon_registry_banners
             'sources/hooks/systems/sitemap/banner.php',
             'sources/hooks/systems/snippets/exists_banner.php',
             'sources/hooks/systems/snippets/exists_banner_type.php',
+            'sources/hooks/systems/symbols/BANNER.php',
             'themes/default/css/banners.css',
             'themes/default/images/icons/menu/cms/banners.svg',
             'themes/default/images/icons_monochrome/menu/cms/banners.svg',

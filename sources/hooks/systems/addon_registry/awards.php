@@ -144,6 +144,7 @@ class Hook_addon_registry_awards
             'sources/hooks/systems/config/awarded_items_per_page.php',
             'sources/hooks/systems/privacy/awards.php',
             'sources/hooks/systems/resource_meta_aware/award_type.php',
+            'sources/hooks/systems/symbols/AWARD_ID.php',
             'themes/default/css/awards.css',
             'themes/default/images/awarded.svg',
             'themes/default/images/icons/menu/adminzone/setup/awards.svg',
