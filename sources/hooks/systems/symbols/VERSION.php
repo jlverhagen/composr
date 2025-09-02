@@ -50,9 +50,6 @@ class Hook_symbol_VERSION
 
         $value = strval(cms_version());
 
-        if (!empty($escaped)) {
-            apply_tempcode_escaping($escaped, $value);
-        }
         return $value;
     }
 }

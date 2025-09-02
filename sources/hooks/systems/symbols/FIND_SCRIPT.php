@@ -57,9 +57,6 @@ class Hook_symbol_FIND_SCRIPT
             $value = get_base_url() . '/data/' . $param[0] . '.php';
         }
 
-        if (!empty($escaped)) {
-            apply_tempcode_escaping($escaped, $value);
-        }
         return $value;
     }
 }

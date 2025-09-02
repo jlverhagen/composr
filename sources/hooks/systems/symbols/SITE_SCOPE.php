@@ -48,9 +48,6 @@ class Hook_symbol_SITE_SCOPE
     {
         $value = get_option('site_scope');
 
-        if (!empty($escaped)) {
-            apply_tempcode_escaping($escaped, $value);
-        }
         return $value;
     }
 }

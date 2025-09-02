@@ -52,9 +52,6 @@ class Hook_symbol_JS_TEMPCODE
         $_value = javascript_tempcode();
         $value = $_value->evaluate();
 
-        if (!empty($escaped)) {
-            apply_tempcode_escaping($escaped, $value);
-        }
         return $value;
     }
 }

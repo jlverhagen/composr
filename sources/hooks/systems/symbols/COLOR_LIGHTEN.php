@@ -70,9 +70,6 @@ class Hook_symbol_COLOR_LIGHTEN
             $value = sprintf("#%02x%02x%02x", $red, $green, $blue);
         }
 
-        if (!empty($escaped)) {
-            apply_tempcode_escaping($escaped, $value);
-        }
 
         return $value;
     }

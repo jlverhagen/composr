@@ -55,9 +55,6 @@ class Hook_symbol_FLOAT_UNFORMAT
             $value = float_to_raw_string(float_unformat($param[0]), 10, true);
         }
 
-        if (!empty($escaped)) {
-            apply_tempcode_escaping($escaped, $value);
-        }
         return $value;
     }
 }

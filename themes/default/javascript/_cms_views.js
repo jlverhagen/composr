@@ -1060,7 +1060,7 @@
         if (strVal($cms.configOption('google_analytics')).trim() && !$cms.isStaff() && !$cms.isAdmin()) {
             this.initializeGoogleAnalytics();
         }
-        
+
         //$cms.setCookie('use_wysiwyg', '0', 'PERSONALIZATION', 90);
 
         // Cookie Consent plugin by Orestbida - https://cookieconsent.orestbida.com
@@ -1070,15 +1070,15 @@
                     // TODO: broken / does not seem to clear cookies like it should on denial
                     var cookieConsentAutoClear = function cookieConsentAutoClear(cookieCategory) {
                         cookieCategory = strVal(cookieCategory);
-                        
+
                         if (typeof $cms.getCookieData[cookieCategory] === 'undefined') {
                             // TODO: informational error / warning
                             return [];
                         }
-                        
+
                         var returnValue = $cms.getCookieData[cookieCategory].map(function (cookieRegexStr) {
                             cookieRegexStr = strVal(cookieRegexStr);
-                            
+
                             return {
                                 name: new RegExp('^' + cookieRegexStr)
                             }
@@ -1088,7 +1088,7 @@
                     var cookieConsentOptions = {
                         revision: 1
                     };
-                    
+
                     cookieConsentOptions['categories'] = {
                         'ESSENTIAL': {
                             enabled: true,
@@ -1131,7 +1131,7 @@
                             }
                         }
                     };
-    
+
                     cookieConsentOptions['language'] = {
                         default: $cms.userLang().toLowerCase()
                     };
@@ -1180,7 +1180,7 @@
                             ]
                         }
                     };
-    
+
                     CookieConsent.run(cookieConsentOptions);
                 });
             });

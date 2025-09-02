@@ -55,9 +55,6 @@ class Hook_symbol_TUTORIAL_URL
             $value = get_tutorial_url($param[0]);
         }
 
-        if (!empty($escaped)) {
-            apply_tempcode_escaping($escaped, $value);
-        }
         return $value;
     }
 }

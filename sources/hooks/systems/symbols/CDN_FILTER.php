@@ -55,9 +55,6 @@ class Hook_symbol_CDN_FILTER
             $value = cdn_filter($param[0]);
         }
 
-        if (!empty($escaped)) {
-            apply_tempcode_escaping($escaped, $value);
-        }
         return $value;
     }
 }

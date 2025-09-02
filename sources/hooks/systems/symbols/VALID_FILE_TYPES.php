@@ -63,9 +63,6 @@ class Hook_symbol_VALID_FILE_TYPES
         }
         $value = substr($value, 0, strlen($value) - 1);
 
-        if (!empty($escaped)) {
-            apply_tempcode_escaping($escaped, $value);
-        }
         return $value;
     }
 }

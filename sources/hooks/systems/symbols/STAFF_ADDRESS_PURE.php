@@ -48,9 +48,6 @@ class Hook_symbol_STAFF_ADDRESS_PURE
     {
         $value = get_option('staff_address');
 
-        if (!empty($escaped)) {
-            apply_tempcode_escaping($escaped, $value);
-        }
         return $value;
     }
 }

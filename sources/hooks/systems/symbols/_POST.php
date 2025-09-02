@@ -59,9 +59,6 @@ class Hook_symbol__POST
             $escaped = [ENTITY_ESCAPED];
         }
 
-        if (!empty($escaped)) {
-            apply_tempcode_escaping($escaped, $value);
-        }
         return $value;
     }
 }

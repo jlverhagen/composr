@@ -50,9 +50,6 @@ class Hook_symbol_ENSURE_PROTOCOL_SUITABILITY
 
         $value = ensure_protocol_suitability(isset($param[0]) ? $param[0] : '');
 
-        if (!empty($escaped)) {
-            apply_tempcode_escaping($escaped, $value);
-        }
         return $value;
     }
 }

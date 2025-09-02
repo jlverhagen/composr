@@ -55,9 +55,6 @@ class Hook_symbol_DISPLAYED_USERNAME
             $value = get_displayname($param[0]);
         }
 
-        if (!empty($escaped)) {
-            apply_tempcode_escaping($escaped, $value);
-        }
         return $value;
     }
 }

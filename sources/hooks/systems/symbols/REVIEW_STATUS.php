@@ -60,9 +60,6 @@ class Hook_symbol_REVIEW_STATUS
             $value = show_content_reviews($param[0], $param[1], (!empty($param[2])) ? intval($param[2]) : 0);
         }
 
-        if (!empty($escaped)) {
-            apply_tempcode_escaping($escaped, $value);
-        }
         return $value;
     }
 }

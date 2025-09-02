@@ -49,9 +49,6 @@ class Hook_symbol_USERNAME
         $member_id = ((isset($param[0])) && (is_numeric($param[0]))) ? intval($param[0]) : get_member();
         $value = $GLOBALS['FORUM_DRIVER']->get_username($member_id, !empty($param[1]));
 
-        if (!empty($escaped)) {
-            apply_tempcode_escaping($escaped, $value);
-        }
         return $value;
     }
 }

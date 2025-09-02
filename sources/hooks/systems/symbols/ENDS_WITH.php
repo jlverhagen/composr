@@ -55,7 +55,6 @@ class Hook_symbol_ENDS_WITH
         if ($GLOBALS['XSS_DETECT']) {
             ocp_mark_as_escaped($value);
         }
-
         return $value;
     }
 }

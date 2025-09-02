@@ -87,7 +87,6 @@ class Hook_symbol_GALLERY_VIDEO_FOR_URL
                 }
             }
         }
-
         return $value;
     }
 }

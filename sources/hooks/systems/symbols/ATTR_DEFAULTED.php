@@ -52,9 +52,6 @@ class Hook_symbol_ATTR_DEFAULTED
             $value = ' ' . $param[0] . '="' . $param[1] . '"';
         }
 
-        if (!empty($escaped)) {
-            apply_tempcode_escaping($escaped, $value);
-        }
         return $value;
     }
 }

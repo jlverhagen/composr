@@ -99,9 +99,6 @@ class Hook_symbol_HONEYPOT_LINK
             }
         }
 
-        if (!empty($escaped)) {
-            apply_tempcode_escaping($escaped, $value);
-        }
         return $value;
     }
 }

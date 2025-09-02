@@ -64,9 +64,6 @@ class Hook_symbol_MESSAGES_BOTTOM
 
         $value = $messages_bottom->evaluate();
 
-        if (!empty($escaped)) {
-            apply_tempcode_escaping($escaped, $value);
-        }
         return $value;
     }
 }

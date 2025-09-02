@@ -51,9 +51,6 @@ class Hook_symbol_KEEP
         // What needs preserving in the URL
         $value = keep_symbol($param);
 
-        if (!empty($escaped)) {
-            apply_tempcode_escaping($escaped, $value);
-        }
         return $value;
     }
 }

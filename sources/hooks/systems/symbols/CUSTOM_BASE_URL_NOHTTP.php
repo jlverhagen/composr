@@ -55,9 +55,6 @@ class Hook_symbol_CUSTOM_BASE_URL_NOHTTP
             $value = substr($value, 1);
         }
 
-        if (!empty($escaped)) {
-            apply_tempcode_escaping($escaped, $value);
-        }
         return $value;
     }
 }

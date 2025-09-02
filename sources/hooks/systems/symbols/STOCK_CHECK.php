@@ -65,7 +65,6 @@ class Hook_symbol_STOCK_CHECK
             }
             $value = ($available_quantity === null) ? '' : strval($available_quantity);
         }
-
         return $value;
     }
 }

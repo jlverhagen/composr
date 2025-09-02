@@ -54,9 +54,6 @@ class Hook_symbol_TIME
         $member_id = ((isset($param[3])) && (is_numeric($param[3]))) ? intval($param[3]) : null;
         $value = get_timezoned_time($time, $use_contextual_times, $utc_time, $member_id);
 
-        if (!empty($escaped)) {
-            apply_tempcode_escaping($escaped, $value);
-        }
         return $value;
     }
 }

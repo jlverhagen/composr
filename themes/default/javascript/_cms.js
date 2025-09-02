@@ -607,7 +607,7 @@
         cookieName = strVal(cookieName);
         cookieCategory = strVal(cookieCategory);
         defaultValue = strVal(defaultValue);
-        
+
         // If cookies have not been consented, pretend no cookies are set even if there are old cookies remaining
         if ((cookieName !== 'cc_cookie') && ($cms.acceptsCookieCategory(cookieCategory))) {
             return '';

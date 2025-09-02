@@ -48,9 +48,6 @@ class Hook_symbol_TAPATALK
     {
         $value = (defined('IN_MOBIQUO') ? '1' : '0');
 
-        if (!empty($escaped)) {
-            apply_tempcode_escaping($escaped, $value);
-        }
         return $value;
     }
 }

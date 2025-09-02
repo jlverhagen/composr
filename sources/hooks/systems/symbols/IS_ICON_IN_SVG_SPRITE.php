@@ -87,9 +87,6 @@ class Hook_symbol_IS_ICON_IN_SVG_SPRITE
 
         $value = isset($sprite_ids[$icon_id]) ? '1' : '0';
 
-        if (!empty($escaped)) {
-            apply_tempcode_escaping($escaped, $value);
-        }
 
         return $value;
     }

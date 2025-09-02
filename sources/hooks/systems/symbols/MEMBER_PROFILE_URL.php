@@ -55,9 +55,6 @@ class Hook_symbol_MEMBER_PROFILE_URL
             $value = '';
         }
 
-        if (!empty($escaped)) {
-            apply_tempcode_escaping($escaped, $value);
-        }
         return $value;
     }
 }

@@ -61,9 +61,6 @@ class Hook_symbol_AUTHOR_MEMBER
             $value = strval($member_id);
         }
 
-        if (!empty($escaped)) {
-            apply_tempcode_escaping($escaped, $value);
-        }
         return $value;
     }
 }

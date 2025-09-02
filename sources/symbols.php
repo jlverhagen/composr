@@ -90,6 +90,9 @@ function ecv(string $lang, array $escaped, int $type, string $name, array $param
             $info = $symbols[$name]->info();
             if ($info === null) {
                 $value = ''; // Silent fail / return blank if the symbol exists but is disabled
+                if ($GLOBALS['XSS_DETECT']) {
+                    ocp_mark_as_escaped($value);
+                }
             } else {
                 $value = $symbols[$name]->run($param, $lang, $escaped);
             }

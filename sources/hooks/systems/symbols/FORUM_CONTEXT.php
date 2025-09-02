@@ -49,9 +49,6 @@ class Hook_symbol_FORUM_CONTEXT
         global $SET_CONTEXT_FORUM;
         $value = ($SET_CONTEXT_FORUM === null) ? '' : strval($SET_CONTEXT_FORUM);
 
-        if (!empty($escaped)) {
-            apply_tempcode_escaping($escaped, $value);
-        }
         return $value;
     }
 }

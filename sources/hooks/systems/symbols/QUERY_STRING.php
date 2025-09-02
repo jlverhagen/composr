@@ -48,9 +48,6 @@ class Hook_symbol_QUERY_STRING
     {
         $value = $_SERVER['QUERY_STRING'];
 
-        if (!empty($escaped)) {
-            apply_tempcode_escaping($escaped, $value);
-        }
         return $value;
     }
 }

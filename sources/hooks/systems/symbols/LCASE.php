@@ -52,13 +52,10 @@ class Hook_symbol_LCASE
             $value = cms_mb_strtolower($param[0]);
         }
 
-        if (!empty($escaped)) {
-            apply_tempcode_escaping($escaped, $value);
-        }
+
         if ($GLOBALS['XSS_DETECT'] && ocp_is_escaped($param[0])) {
             ocp_mark_as_escaped($value);
         }
-
         return $value;
     }
 }

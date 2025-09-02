@@ -59,9 +59,6 @@ class Hook_symbol_STAFF_ACTIONS
             }
         }
 
-        if (!empty($escaped)) {
-            apply_tempcode_escaping($escaped, $value);
-        }
         return $value;
     }
 }

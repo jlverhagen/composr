@@ -122,7 +122,6 @@ class Hook_symbol_CPF_LIST
 
             $cache[$param[0]] = $value;
         }
-
         return $value;
     }
 }

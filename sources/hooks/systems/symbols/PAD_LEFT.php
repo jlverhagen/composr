@@ -55,9 +55,6 @@ class Hook_symbol_PAD_LEFT
             $value = str_pad($param[0], intval($param[1]), (isset($param[2])) ? $param[2] : ' ', STR_PAD_LEFT);
         }
 
-        if (!empty($escaped)) {
-            apply_tempcode_escaping($escaped, $value);
-        }
         return $value;
     }
 }

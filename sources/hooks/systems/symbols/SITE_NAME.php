@@ -48,9 +48,6 @@ class Hook_symbol_SITE_NAME
     {
         $value = get_site_name();
 
-        if (!empty($escaped)) {
-            apply_tempcode_escaping($escaped, $value);
-        }
         return $value;
     }
 }

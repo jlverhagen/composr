@@ -55,7 +55,6 @@ class Hook_symbol_COUNTRY_CODE_TO_NAME
                 $value = $param[0];
             }
         }
-
         return $value;
     }
 }

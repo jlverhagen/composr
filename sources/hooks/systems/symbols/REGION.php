@@ -49,7 +49,6 @@ class Hook_symbol_REGION
         require_code('locations');
 
         $value = get_region();
-
         return $value;
     }
 }

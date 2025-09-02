@@ -58,9 +58,6 @@ class Hook_symbol_CSS_MODE
             $TEMPCODE_SETGET[$param[0]] = implode(',', $param_copy);
         }
 
-        if (!empty($escaped)) {
-            apply_tempcode_escaping($escaped, $value);
-        }
         return $value;
     }
 }

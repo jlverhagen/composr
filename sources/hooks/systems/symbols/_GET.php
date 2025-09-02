@@ -55,9 +55,6 @@ class Hook_symbol__GET
             $value = get_param_string($param[0], isset($param[1]) ? $param[1] : '', INPUT_FILTER_GET_COMPLEX);
         }
 
-        if (!empty($escaped)) {
-            apply_tempcode_escaping($escaped, $value);
-        }
         return $value;
     }
 }

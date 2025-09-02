@@ -48,9 +48,6 @@ class Hook_symbol_DOMAIN
     {
         $value = get_domain();
 
-        if (!empty($escaped)) {
-            apply_tempcode_escaping($escaped, $value);
-        }
         return $value;
     }
 }

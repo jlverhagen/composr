@@ -52,9 +52,6 @@ class Hook_symbol_SELF_PAGE_LINK
             $value = get_current_page_link(false);
         }
 
-        if (!empty($escaped)) {
-            apply_tempcode_escaping($escaped, $value);
-        }
 
         return $value;
     }

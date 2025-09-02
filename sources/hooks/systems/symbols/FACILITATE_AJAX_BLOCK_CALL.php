@@ -105,9 +105,6 @@ class Hook_symbol_FACILITATE_AJAX_BLOCK_CALL
             }
         }
 
-        if (!empty($escaped)) {
-            apply_tempcode_escaping($escaped, $value);
-        }
         return $value;
     }
 }

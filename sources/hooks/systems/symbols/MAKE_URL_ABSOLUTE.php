@@ -55,9 +55,6 @@ class Hook_symbol_MAKE_URL_ABSOLUTE
             }
         }
 
-        if (!empty($escaped)) {
-            apply_tempcode_escaping($escaped, $value);
-        }
         return $value;
     }
 }

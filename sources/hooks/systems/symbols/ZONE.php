@@ -48,9 +48,6 @@ class Hook_symbol_ZONE
     {
         $value = get_zone_name();
 
-        if (!empty($escaped)) {
-            apply_tempcode_escaping($escaped, $value);
-        }
         return $value;
     }
 }

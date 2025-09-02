@@ -371,7 +371,7 @@ class Hook_profiles_tabs_edit_settings
         }
 
         // Geo-location check
-        
+
         require_code('locations');
 
         // Compare IP geolocation to set region and warn if there is a mismatch

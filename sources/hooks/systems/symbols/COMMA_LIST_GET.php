@@ -57,9 +57,6 @@ class Hook_symbol_COMMA_LIST_GET
             $value = isset($values[$param[1]]) ? $values[$param[1]] : '';
         }
 
-        if (!empty($escaped)) {
-            apply_tempcode_escaping($escaped, $value);
-        }
         return $value;
     }
 }

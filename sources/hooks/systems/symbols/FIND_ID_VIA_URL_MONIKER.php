@@ -56,9 +56,6 @@ class Hook_symbol_FIND_ID_VIA_URL_MONIKER
             $value = find_id_via_url_moniker($param[0], $param[1]);
         }
 
-        if (!empty($escaped)) {
-            apply_tempcode_escaping($escaped, $value);
-        }
         return $value;
     }
 }

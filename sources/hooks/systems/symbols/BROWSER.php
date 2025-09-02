@@ -63,9 +63,6 @@ class Hook_symbol_BROWSER
             ocp_mark_as_escaped($value);
         }
 
-        if (!empty($escaped)) {
-            apply_tempcode_escaping($escaped, $value);
-        }
         return $value;
     }
 }

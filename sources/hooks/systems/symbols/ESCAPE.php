@@ -65,9 +65,6 @@ class Hook_symbol_ESCAPE
             $value = $param[0];
         }
 
-        if (!empty($escaped)) {
-            apply_tempcode_escaping($escaped, $value);
-        }
         return $value;
     }
 }

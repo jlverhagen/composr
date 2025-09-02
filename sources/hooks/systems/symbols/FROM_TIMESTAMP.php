@@ -70,9 +70,6 @@ class Hook_symbol_FROM_TIMESTAMP
             }
         }
 
-        if (!empty($escaped)) {
-            apply_tempcode_escaping($escaped, $value);
-        }
         return $value;
     }
 }

@@ -48,9 +48,6 @@ class Hook_symbol_USER_AGENT
     {
         $value = $_SERVER['HTTP_USER_AGENT'];
 
-        if (!empty($escaped)) {
-            apply_tempcode_escaping($escaped, $value);
-        }
         return $value;
     }
 }

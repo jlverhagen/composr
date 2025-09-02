@@ -106,7 +106,6 @@ class Hook_symbol_BETA_CSS_PROPERTY
             }
             $value = rtrim($value);
         }
-
         return $value;
     }
 }

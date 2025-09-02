@@ -51,7 +51,6 @@ class Hook_symbol_CKEDITOR_PATH
         if ((get_param_integer('ckeditor_dev', 0) == 1) && (is_dir(get_file_base() . '/data_custom/ckeditor'))) {
             $value = 'data_custom/ckeditor';
         }
-
         return $value;
     }
 }

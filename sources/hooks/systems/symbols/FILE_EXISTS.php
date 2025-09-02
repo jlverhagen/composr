@@ -54,7 +54,6 @@ class Hook_symbol_FILE_EXISTS
         $path = get_custom_file_base() . '/' . $path;
 
         $value = file_exists($path) ? '1' : '0';
-
         return $value;
     }
 }

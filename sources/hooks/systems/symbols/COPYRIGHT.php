@@ -52,9 +52,6 @@ class Hook_symbol_COPYRIGHT
             $value = str_replace('$CURRENT_YEAR', date('Y'), $value); // Always updated
         }
 
-        if (!empty($escaped)) {
-            apply_tempcode_escaping($escaped, $value);
-        }
         return $value;
     }
 }

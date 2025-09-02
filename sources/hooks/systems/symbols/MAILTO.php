@@ -50,9 +50,6 @@ class Hook_symbol_MAILTO
 
         $value = mailto_obfuscated();
 
-        if (!empty($escaped)) {
-            apply_tempcode_escaping($escaped, $value);
-        }
         return $value;
     }
 }

@@ -58,9 +58,6 @@ class Hook_symbol_THEMEWIZARD_COLOR
             $TEMPCODE_SETGET[$param[1]] = $param[0];
         }
 
-        if (!empty($escaped)) {
-            apply_tempcode_escaping($escaped, $value);
-        }
         return $value;
     }
 }

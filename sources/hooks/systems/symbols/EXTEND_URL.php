@@ -52,9 +52,6 @@ class Hook_symbol_EXTEND_URL
         $append = isset($param[1]) ? $param[1] : '';
         extend_url($value, $append);
 
-        if (!empty($escaped)) {
-            apply_tempcode_escaping($escaped, $value);
-        }
         return $value;
     }
 }

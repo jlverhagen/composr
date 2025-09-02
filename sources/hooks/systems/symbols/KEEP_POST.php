@@ -51,9 +51,6 @@ class Hook_symbol_KEEP_POST
             ocp_mark_as_escaped($value);
         }
 
-        if (!empty($escaped)) {
-            apply_tempcode_escaping($escaped, $value);
-        }
         return $value;
     }
 }

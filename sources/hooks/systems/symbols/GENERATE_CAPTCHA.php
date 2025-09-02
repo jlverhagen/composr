@@ -55,9 +55,6 @@ class Hook_symbol_GENERATE_CAPTCHA
         require_code('captcha');
         generate_captcha();
 
-        if (!empty($escaped)) {
-            apply_tempcode_escaping($escaped, $value);
-        }
         return $value;
     }
 }

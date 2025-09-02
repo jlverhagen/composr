@@ -63,9 +63,6 @@ class Hook_symbol_SMART_LINK_STRIP
             }
         }
 
-        if (!empty($escaped)) {
-            apply_tempcode_escaping($escaped, $value);
-        }
         return $value;
     }
 }

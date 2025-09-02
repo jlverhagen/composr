@@ -62,9 +62,6 @@ class Hook_symbol_LOAD_PAGE
         $_value = $PAGES_CACHE[serialize($param)];
         $value = $_value->evaluate();
 
-        if (!empty($escaped)) {
-            apply_tempcode_escaping($escaped, $value);
-        }
         return $value;
     }
 }

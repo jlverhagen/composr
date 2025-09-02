@@ -55,9 +55,6 @@ class Hook_symbol_INTEGER_FORMAT
             $value = integer_format(intval($param[0]), (isset($param[1]) && is_numeric($param[1])) ? intval($param[1]) : null);
         }
 
-        if (!empty($escaped)) {
-            apply_tempcode_escaping($escaped, $value);
-        }
         return $value;
     }
 }

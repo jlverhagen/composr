@@ -63,9 +63,6 @@ class Hook_symbol_FIND_GUID_VIA_ID
             }
         }
 
-        if (!empty($escaped)) {
-            apply_tempcode_escaping($escaped, $value);
-        }
         return $value;
     }
 }

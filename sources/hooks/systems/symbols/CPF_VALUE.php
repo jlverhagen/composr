@@ -90,9 +90,6 @@ class Hook_symbol_CPF_VALUE
             }
         }
 
-        if (!empty($escaped)) {
-            apply_tempcode_escaping($escaped, $value);
-        }
         return $value;
     }
 }

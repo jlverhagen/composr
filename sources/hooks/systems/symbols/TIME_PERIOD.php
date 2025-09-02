@@ -56,9 +56,6 @@ class Hook_symbol_TIME_PERIOD
             $value = display_time_period(intval($param[0]));
         }
 
-        if (!empty($escaped)) {
-            apply_tempcode_escaping($escaped, $value);
-        }
         return $value;
     }
 }

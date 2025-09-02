@@ -55,9 +55,6 @@ class Hook_symbol_BUSINESS_ADDRESS
         require_code('ecommerce');
         $value = get_full_business_address();
 
-        if (!empty($escaped)) {
-            apply_tempcode_escaping($escaped, $value);
-        }
         return $value;
     }
 }

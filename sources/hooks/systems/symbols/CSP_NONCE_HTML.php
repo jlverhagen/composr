@@ -52,9 +52,6 @@ class Hook_symbol_CSP_NONCE_HTML
             $value = '';
         }
 
-        if (!empty($escaped)) {
-            apply_tempcode_escaping($escaped, $value);
-        }
         return $value;
     }
 }

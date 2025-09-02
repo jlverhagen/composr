@@ -48,9 +48,6 @@ class Hook_symbol_FORUM_BASE_URL
     {
         $value = get_forum_base_url();
 
-        if (!empty($escaped)) {
-            apply_tempcode_escaping($escaped, $value);
-        }
         return $value;
     }
 }

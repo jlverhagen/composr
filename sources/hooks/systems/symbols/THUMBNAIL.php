@@ -113,9 +113,6 @@ class Hook_symbol_THUMBNAIL
             $value = get_custom_base_url() . '/' . $value;
         }
 
-        if (!empty($escaped)) {
-            apply_tempcode_escaping($escaped, $value);
-        }
         return $value;
     }
 }

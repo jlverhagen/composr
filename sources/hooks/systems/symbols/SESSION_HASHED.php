@@ -48,9 +48,6 @@ class Hook_symbol_SESSION_HASHED
     {
         $value = cms_base64_encode(get_session_id(), true, true, true);
 
-        if (!empty($escaped)) {
-            apply_tempcode_escaping($escaped, $value);
-        }
         return $value;
     }
 }

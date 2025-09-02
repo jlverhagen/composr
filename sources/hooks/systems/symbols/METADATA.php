@@ -197,9 +197,6 @@ class Hook_symbol_METADATA
             }
         }
 
-        if (!empty($escaped)) {
-            apply_tempcode_escaping($escaped, $value);
-        }
         return $value;
     }
 }

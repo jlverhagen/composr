@@ -53,9 +53,6 @@ class Hook_symbol_PHOTO
 
         $value = $GLOBALS['FORUM_DRIVER']->get_member_photo_url(((isset($param[0])) && (is_numeric($param[0]))) ? intval($param[0]) : get_member());
 
-        if (!empty($escaped)) {
-            apply_tempcode_escaping($escaped, $value);
-        }
         return $value;
     }
 }

@@ -56,7 +56,6 @@ class Hook_symbol_CURRENCY_SYMBOL
             require_code('ecommerce');
             $value = ecommerce_get_currency_symbol((!empty($param[0])) ? $param[0] : null);
         }
-
         return $value;
     }
 }

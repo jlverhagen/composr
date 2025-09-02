@@ -76,7 +76,6 @@ class Hook_symbol_CONTENT_COUNT
         $count = $db->query_select_value($info['table'] . ' r' . implode('', $extra_join_filtercode), 'COUNT(*)', [], ' AND ' . $extra_where_selectcode . $extra_where_filtercode);
 
         $value = strval($count);
-
         return $value;
     }
 }

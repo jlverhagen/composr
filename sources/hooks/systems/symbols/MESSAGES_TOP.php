@@ -55,9 +55,6 @@ class Hook_symbol_MESSAGES_TOP
             $value = static_evaluate_tempcode($GLOBALS['ATTACHED_MESSAGES']);
         }
 
-        if (!empty($escaped)) {
-            apply_tempcode_escaping($escaped, $value);
-        }
         return $value;
     }
 }

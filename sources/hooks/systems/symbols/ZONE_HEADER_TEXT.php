@@ -48,9 +48,6 @@ class Hook_symbol_ZONE_HEADER_TEXT
     {
         $value = get_translated_text($GLOBALS['ZONE']['zone_header_text']);
 
-        if (!empty($escaped)) {
-            apply_tempcode_escaping($escaped, $value);
-        }
         return $value;
     }
 }

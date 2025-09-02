@@ -70,9 +70,6 @@ class Hook_symbol_SELF_URL
         $avoid_remap = (!empty($param[2]));
         $value = get_self_url(true, $root_if_posted, $extra_params, $posted_too, $avoid_remap);
 
-        if (!empty($escaped)) {
-            apply_tempcode_escaping($escaped, $value);
-        }
         return $value;
     }
 }

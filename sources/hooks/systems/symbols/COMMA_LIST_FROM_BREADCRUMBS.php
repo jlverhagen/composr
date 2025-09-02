@@ -65,9 +65,6 @@ class Hook_symbol_COMMA_LIST_FROM_BREADCRUMBS
             }
         }
 
-        if (!empty($escaped)) {
-            apply_tempcode_escaping($escaped, $value);
-        }
         return $value;
     }
 }

@@ -56,9 +56,6 @@ class Hook_symbol_PREVIEW_URL
         $keep = symbol_tempcode('KEEP');
         $value .= $keep->evaluate();
 
-        if (!empty($escaped)) {
-            apply_tempcode_escaping($escaped, $value);
-        }
         return $value;
     }
 }

@@ -55,9 +55,6 @@ class Hook_symbol_SUBSTR
             $value = cms_mb_substr($param[0], intval($param[1]), ((isset($param[2])) && (is_numeric($param[2]))) ? intval($param[2]) : strlen($param[0]));
         }
 
-        if (!empty($escaped)) {
-            apply_tempcode_escaping($escaped, $value);
-        }
         return $value;
     }
 }

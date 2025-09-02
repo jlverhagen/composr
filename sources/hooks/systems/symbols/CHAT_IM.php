@@ -144,7 +144,6 @@ class Hook_symbol_CHAT_IM
 
             $value = $_value->evaluate();
         }
-
         return $value;
     }
 }

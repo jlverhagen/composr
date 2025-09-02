@@ -81,9 +81,6 @@ class Hook_symbol_BANNER
             }
         }
 
-        if (!empty($escaped)) {
-            apply_tempcode_escaping($escaped, $value);
-        }
         return $value;
     }
 }

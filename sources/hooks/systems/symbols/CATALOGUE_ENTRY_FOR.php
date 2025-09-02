@@ -58,7 +58,6 @@ class Hook_symbol_CATALOGUE_ENTRY_FOR
             $value = ($entry_id === null) ? '' : strval($entry_id);
             $cache[$param[0]][$param[1]] = $value;
         }
-
         return $value;
     }
 }

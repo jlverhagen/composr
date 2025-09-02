@@ -61,9 +61,6 @@ class Hook_symbol_EXTRA_FOOT
             }
         }
 
-        if (!empty($escaped)) {
-            apply_tempcode_escaping($escaped, $value);
-        }
         return $value;
     }
 }

@@ -52,9 +52,6 @@ class Hook_symbol_IS_MAINTAINED
             $value = static_evaluate_tempcode(is_maintained_description($param[0], $param[1]));
         }
 
-        if (!empty($escaped)) {
-            apply_tempcode_escaping($escaped, $value);
-        }
         return $value;
     }
 }

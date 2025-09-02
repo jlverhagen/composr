@@ -48,9 +48,6 @@ class Hook_symbol_IP_ADDRESS
     {
         $value = get_ip_address();
 
-        if (!empty($escaped)) {
-            apply_tempcode_escaping($escaped, $value);
-        }
         return $value;
     }
 }

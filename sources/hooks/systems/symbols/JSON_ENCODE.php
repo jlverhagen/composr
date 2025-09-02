@@ -48,9 +48,6 @@ class Hook_symbol_JSON_ENCODE
     {
         $value = json_encode($param[0], JSON_UNESCAPED_SLASHES | JSON_NUMERIC_CHECK);
 
-        if (!empty($escaped)) {
-            apply_tempcode_escaping($escaped, $value);
-        }
         return $value;
     }
 }

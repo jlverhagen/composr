@@ -65,9 +65,6 @@ class Hook_symbol_MAKE_RELATIVE_DATE // ...although making relatives date is ill
             }
         }
 
-        if (!empty($escaped)) {
-            apply_tempcode_escaping($escaped, $value);
-        }
         return $value;
     }
 }

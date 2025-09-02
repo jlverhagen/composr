@@ -66,7 +66,6 @@ class Hook_symbol_CURRENCY
         } else {
             $value = get_option('currency');
         }
-
         return $value;
     }
 }

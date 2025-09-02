@@ -52,7 +52,6 @@ class Hook_symbol_COUNTRY
         if ($value === null) {
             $value = '';
         }
-
         return $value;
     }
 }

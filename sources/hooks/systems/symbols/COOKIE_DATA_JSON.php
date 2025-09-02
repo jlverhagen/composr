@@ -77,9 +77,6 @@ class Hook_symbol_COOKIE_DATA_JSON
             }
         }
 
-        if (!empty($escaped)) {
-            apply_tempcode_escaping($escaped, $value);
-        }
         return $value;
     }
 }

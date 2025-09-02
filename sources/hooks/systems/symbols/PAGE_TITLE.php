@@ -49,9 +49,6 @@ class Hook_symbol_PAGE_TITLE
         global $DISPLAYED_TITLE;
         $value = ($DISPLAYED_TITLE === null) ? '' : $DISPLAYED_TITLE->evaluate();
 
-        if (!empty($escaped)) {
-            apply_tempcode_escaping($escaped, $value);
-        }
         return $value;
     }
 }

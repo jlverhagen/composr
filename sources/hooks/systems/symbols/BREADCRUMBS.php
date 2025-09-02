@@ -52,9 +52,6 @@ class Hook_symbol_BREADCRUMBS
         }
         $value = static_evaluate_tempcode(breadcrumbs($show_self));
 
-        if (!empty($escaped)) {
-            apply_tempcode_escaping($escaped, $value);
-        }
         return $value;
     }
 }

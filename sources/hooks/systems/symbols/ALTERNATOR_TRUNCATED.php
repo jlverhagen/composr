@@ -61,9 +61,6 @@ class Hook_symbol_ALTERNATOR_TRUNCATED
             }
         }
 
-        if (!empty($escaped)) {
-            apply_tempcode_escaping($escaped, $value);
-        }
         return $value;
     }
 }

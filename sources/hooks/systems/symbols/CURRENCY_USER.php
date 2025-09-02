@@ -52,7 +52,6 @@ class Hook_symbol_CURRENCY_USER
     {
         require_code('currency');
         $value = get_currency();
-
         return $value;
     }
 }

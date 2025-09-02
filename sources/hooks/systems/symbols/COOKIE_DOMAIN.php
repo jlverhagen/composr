@@ -49,9 +49,6 @@ class Hook_symbol_COOKIE_DOMAIN
         $s_value = function_exists('get_cookie_domain') ? get_cookie_domain() : '';
         $value = ($s_value === null) ? '' : $s_value;
 
-        if (!empty($escaped)) {
-            apply_tempcode_escaping($escaped, $value);
-        }
         return $value;
     }
 }

@@ -66,9 +66,6 @@ class Hook_symbol_DISPLAY_CONCEPT
             $value = $temp_tpl->evaluate();
         }
 
-        if (!empty($escaped)) {
-            apply_tempcode_escaping($escaped, $value);
-        }
 
         return $value;
     }

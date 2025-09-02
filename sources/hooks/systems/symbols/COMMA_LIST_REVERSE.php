@@ -57,9 +57,6 @@ class Hook_symbol_COMMA_LIST_REVERSE
             $value = comma_list_arr_to_str($map);
         }
 
-        if (!empty($escaped)) {
-            apply_tempcode_escaping($escaped, $value);
-        }
         return $value;
     }
 }

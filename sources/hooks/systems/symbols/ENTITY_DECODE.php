@@ -59,9 +59,6 @@ class Hook_symbol_ENTITY_DECODE
             $value = @html_entity_decode($param[0], ENT_QUOTES, $charset);
         }
 
-        if (!empty($escaped)) {
-            apply_tempcode_escaping($escaped, $value);
-        }
         return $value;
     }
 }

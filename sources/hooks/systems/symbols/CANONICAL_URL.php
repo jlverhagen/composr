@@ -53,9 +53,6 @@ class Hook_symbol_CANONICAL_URL
 
         $value = get_canonical_url();
 
-        if (!empty($escaped)) {
-            apply_tempcode_escaping($escaped, $value);
-        }
         return $value;
     }
 }

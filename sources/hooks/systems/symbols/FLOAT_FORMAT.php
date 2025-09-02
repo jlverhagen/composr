@@ -55,9 +55,6 @@ class Hook_symbol_FLOAT_FORMAT
             $value = float_format(floatval($param[0]), ((isset($param[1])) && (is_numeric($param[1]))) ? intval($param[1]) : 2, !empty($param[2]));
         }
 
-        if (!empty($escaped)) {
-            apply_tempcode_escaping($escaped, $value);
-        }
         return $value;
     }
 }

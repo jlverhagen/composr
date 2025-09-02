@@ -69,9 +69,6 @@ class Hook_symbol_NUM_RATINGS
             }
         }
 
-        if (!empty($escaped)) {
-            apply_tempcode_escaping($escaped, $value);
-        }
         return $value;
     }
 }

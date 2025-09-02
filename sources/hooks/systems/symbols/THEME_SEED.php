@@ -56,9 +56,6 @@ class Hook_symbol_THEME_SEED
             }
         }
 
-        if (!empty($escaped)) {
-            apply_tempcode_escaping($escaped, $value);
-        }
 
         return $value;
     }

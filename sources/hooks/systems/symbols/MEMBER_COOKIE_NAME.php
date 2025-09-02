@@ -48,9 +48,6 @@ class Hook_symbol_MEMBER_COOKIE_NAME
     {
         $value = function_exists('get_member_cookie') ? get_member_cookie() : '';
 
-        if (!empty($escaped)) {
-            apply_tempcode_escaping($escaped, $value);
-        }
         return $value;
     }
 }

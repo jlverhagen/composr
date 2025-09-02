@@ -60,13 +60,10 @@ class Hook_symbol_STRIP_TAGS
             }
         }
 
-        if (!empty($escaped)) {
-            apply_tempcode_escaping($escaped, $value);
-        }
+
         if ($GLOBALS['XSS_DETECT']) {
             ocp_mark_as_escaped($value);
         }
-
         return $value;
     }
 }

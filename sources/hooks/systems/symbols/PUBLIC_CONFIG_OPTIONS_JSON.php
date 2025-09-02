@@ -67,9 +67,6 @@ class Hook_symbol_PUBLIC_CONFIG_OPTIONS_JSON
 
         $value = json_encode($_value, JSON_FORCE_OBJECT | JSON_UNESCAPED_SLASHES | JSON_NUMERIC_CHECK);
 
-        if (!empty($escaped)) {
-            apply_tempcode_escaping($escaped, $value);
-        }
 
         return $value;
     }

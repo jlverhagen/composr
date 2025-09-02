@@ -49,9 +49,6 @@ class Hook_symbol_TIMEZONE
         require_code('temporal2');
         $value = make_nice_timezone_name(get_site_timezone());
 
-        if (!empty($escaped)) {
-            apply_tempcode_escaping($escaped, $value);
-        }
         return $value;
     }
 }

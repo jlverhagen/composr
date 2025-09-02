@@ -55,7 +55,6 @@ class Hook_symbol_SET_TUTORIAL_LINK
             require_code('comcode_renderer');
             set_tutorial_link($param[0], $param[1]);
         }
-
         return $value;
     }
 }

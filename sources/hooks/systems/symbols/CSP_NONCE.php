@@ -48,9 +48,6 @@ class Hook_symbol_CSP_NONCE
     {
         global $CSP_NONCE;
         $value = isset($CSP_NONCE) ? $CSP_NONCE : '';
-        if (!empty($escaped)) {
-            apply_tempcode_escaping($escaped, $value);
-        }
         return $value;
     }
 }

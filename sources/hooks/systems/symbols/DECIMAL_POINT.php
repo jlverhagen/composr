@@ -48,9 +48,6 @@ class Hook_symbol_DECIMAL_POINT
     {
         $value = do_lang('locale_decimal_point');
 
-        if (!empty($escaped)) {
-            apply_tempcode_escaping($escaped, $value);
-        }
         return $value;
     }
 }

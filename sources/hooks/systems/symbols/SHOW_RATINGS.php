@@ -84,7 +84,6 @@ class Hook_symbol_SHOW_RATINGS
             ]);
             $value = static_evaluate_tempcode($_value);
         }
-
         return $value;
     }
 }

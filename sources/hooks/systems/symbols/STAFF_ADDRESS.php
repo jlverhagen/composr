@@ -49,9 +49,6 @@ class Hook_symbol_STAFF_ADDRESS
         require_code('crypt');
         $value = obfuscate_email_address(get_option('staff_address'));
 
-        if (!empty($escaped)) {
-            apply_tempcode_escaping($escaped, $value);
-        }
         return $value;
     }
 }

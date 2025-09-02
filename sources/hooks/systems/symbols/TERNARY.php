@@ -55,9 +55,6 @@ class Hook_symbol_TERNARY
             $value = ($param[0] == '1') ? $param[1] : (isset($param[2]) ? $param[2] : $value);
         }
 
-        if (!empty($escaped)) {
-            apply_tempcode_escaping($escaped, $value);
-        }
         return $value;
     }
 }

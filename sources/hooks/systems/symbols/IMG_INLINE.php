@@ -76,9 +76,6 @@ class Hook_symbol_IMG_INLINE
             }
         }
 
-        if (!empty($escaped)) {
-            apply_tempcode_escaping($escaped, $value);
-        }
         return $value;
     }
 }

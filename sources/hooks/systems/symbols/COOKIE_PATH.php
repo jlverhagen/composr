@@ -48,9 +48,6 @@ class Hook_symbol_COOKIE_PATH
     {
         $value = function_exists('get_cookie_path') ? get_cookie_path() : '/';
 
-        if (!empty($escaped)) {
-            apply_tempcode_escaping($escaped, $value);
-        }
         return $value;
     }
 }

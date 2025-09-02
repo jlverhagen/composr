@@ -66,9 +66,6 @@ class Hook_symbol_INSERT_FORM_POST_SECURITY
         if ($GLOBALS['XSS_DETECT']) {
             ocp_mark_as_escaped($value);
         }
-        if (!empty($escaped)) {
-            apply_tempcode_escaping($escaped, $value);
-        }
         return $value;
     }
 }

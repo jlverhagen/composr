@@ -78,9 +78,6 @@ class Hook_symbol_HEADER_TEXT
         }
         $value = trim($value);
 
-        if (!empty($escaped)) {
-            apply_tempcode_escaping($escaped, $value);
-        }
         return $value;
     }
 }

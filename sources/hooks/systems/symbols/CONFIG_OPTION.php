@@ -62,9 +62,6 @@ class Hook_symbol_CONFIG_OPTION
             }
         }
 
-        if (!empty($escaped)) {
-            apply_tempcode_escaping($escaped, $value);
-        }
         return $value;
     }
 }

@@ -48,9 +48,6 @@ class Hook_symbol_PAGE
     {
         $value = get_page_name();
 
-        if (!empty($escaped)) {
-            apply_tempcode_escaping($escaped, $value);
-        }
         return $value;
     }
 }

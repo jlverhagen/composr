@@ -48,9 +48,6 @@ class Hook_symbol_PASS_COOKIE_NAME
     {
         $value = function_exists('get_pass_cookie') ? get_pass_cookie() : '';
 
-        if (!empty($escaped)) {
-            apply_tempcode_escaping($escaped, $value);
-        }
         return $value;
     }
 }

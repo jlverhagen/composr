@@ -65,9 +65,6 @@ class Hook_symbol_LOAD_PANEL
         $sr = serialize($param);
         $value = array_key_exists($sr, $PANELS_CACHE) ? $PANELS_CACHE[$sr] : '';
 
-        if (!empty($escaped)) {
-            apply_tempcode_escaping($escaped, $value);
-        }
         return $value;
     }
 }

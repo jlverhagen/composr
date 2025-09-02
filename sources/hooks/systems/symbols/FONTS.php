@@ -59,9 +59,6 @@ class Hook_symbol_FONTS
             $value .= $font;
         }
 
-        if (!empty($escaped)) {
-            apply_tempcode_escaping($escaped, $value);
-        }
         return $value;
     }
 }

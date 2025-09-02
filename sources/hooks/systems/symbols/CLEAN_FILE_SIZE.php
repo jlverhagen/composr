@@ -56,9 +56,6 @@ class Hook_symbol_CLEAN_FILE_SIZE
             $value = clean_file_size(intval($param[0]));
         }
 
-        if (!empty($escaped)) {
-            apply_tempcode_escaping($escaped, $value);
-        }
         return $value;
     }
 }

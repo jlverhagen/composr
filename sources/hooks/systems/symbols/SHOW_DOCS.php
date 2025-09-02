@@ -48,9 +48,6 @@ class Hook_symbol_SHOW_DOCS
     {
         $value = (get_option('show_docs') === '0') ? '0' : '1';
 
-        if (!empty($escaped)) {
-            apply_tempcode_escaping($escaped, $value);
-        }
         return $value;
     }
 }

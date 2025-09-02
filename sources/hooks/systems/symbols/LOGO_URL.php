@@ -48,9 +48,6 @@ class Hook_symbol_LOGO_URL
     {
         $value = get_logo_url();
 
-        if (!empty($escaped)) {
-            apply_tempcode_escaping($escaped, $value);
-        }
         return $value;
     }
 }

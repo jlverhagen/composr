@@ -53,9 +53,6 @@ class Hook_symbol_VERSION_NUMBER
             $value = cms_version_pretty();
         }
 
-        if (!empty($escaped)) {
-            apply_tempcode_escaping($escaped, $value);
-        }
         return $value;
     }
 }

@@ -51,9 +51,6 @@ class Hook_symbol_FIND_SCRIPT_NOHTTP
         }
 
         $value = preg_replace('#^https?://[^/]+#', '', ecv($lang, [], TC_SYMBOL, 'FIND_SCRIPT', $param));
-        if (!empty($escaped)) {
-            apply_tempcode_escaping($escaped, $value);
-        }
         return $value;
     }
 }

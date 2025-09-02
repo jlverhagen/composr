@@ -55,9 +55,6 @@ class Hook_symbol_TAX_NUMBER_LABEL
         require_lang('ecommerce');
         $value = do_lang(get_option('tax_system') . '_NUMBER');
 
-        if (!empty($escaped)) {
-            apply_tempcode_escaping($escaped, $value);
-        }
         return $value;
     }
 }

@@ -48,9 +48,6 @@ class Hook_symbol_BRAND_NAME
     {
         $value = brand_name();
 
-        if (!empty($escaped)) {
-            apply_tempcode_escaping($escaped, $value);
-        }
         return $value;
     }
 }

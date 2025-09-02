@@ -58,9 +58,6 @@ class Hook_symbol_GROUP_NAME
             $value = $all_usergroups[$groups[$i]];
         }
 
-        if (!empty($escaped)) {
-            apply_tempcode_escaping($escaped, $value);
-        }
         return $value;
     }
 }

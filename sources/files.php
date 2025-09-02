@@ -890,7 +890,7 @@ function should_ignore_file(string $path, int $bitmask = 0) : bool
         $ignore_extensions['xml'] .= '|uploads/website_specific/xmldb/.*'; // XML database files
 
         $ignore_filename_and_dir_name_patterns = array_merge($ignore_filename_and_dir_name_patterns, [
-            ['*\.json', 'data_custom/rate_limiting'],
+            ['(\.json$)', 'data_custom/rate_limiting'],
         ]);
     }
 
