@@ -268,7 +268,7 @@ function _cms_error_handler(string $type, int $errno, string $errstr, string $er
         $php_error_label .= ' [' . $_SERVER['REQUEST_METHOD'] . ']';
     }
 
-    // LEGACY: clear cache if this was an ecv issue
+    // LEGACY: clear cache if this was an ecv issue (this seems to be the only way we can do it, not elegant but it seems to work)
     if ((strpos($php_error_label, 'ecv_') !== false) || (strpos($php_error_label, 'ecv2_') !== false)) {
         require_code('caches3');
         erase_comcode_cache();

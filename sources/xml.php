@@ -170,7 +170,6 @@ class CMS_simple_xml_reader
             $this->error = do_lang_tempcode('XML_PARSING_NOT_SUPPORTED');
             return; // PHP 5 default build on windows comes with this function disabled, so we need to be able to escape on error
         }
-        xml_set_object($xml_parser, $this);
         @xml_parser_set_option($xml_parser, XML_OPTION_TARGET_ENCODING, get_charset());
         xml_parser_set_option($xml_parser, XML_OPTION_CASE_FOLDING, 0); // Preserve element name case
         xml_set_element_handler($xml_parser, [$this, 'startElement'], [$this, 'endElement']);

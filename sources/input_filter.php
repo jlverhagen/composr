@@ -705,7 +705,6 @@ class Field_restriction_loader
         if ($xml_parser === false) {
             return []; // PHP5 default build on windows comes with this function disabled, so we need to be able to escape on error
         }
-        xml_set_object($xml_parser, $this);
         @xml_parser_set_option($xml_parser, XML_OPTION_TARGET_ENCODING, get_charset());
         xml_set_element_handler($xml_parser, [$this, 'startElement'], [$this, 'endElement']);
         xml_set_character_data_handler($xml_parser, [$this, 'startText']);
@@ -949,7 +948,6 @@ class Advanced_banning_loader
             @libxml_disable_entity_loader(); // LEGACY
         }
         $xml_parser = xml_parser_create(get_charset());
-        xml_set_object($xml_parser, $this);
         @xml_parser_set_option($xml_parser, XML_OPTION_TARGET_ENCODING, get_charset());
         xml_set_element_handler($xml_parser, [$this, 'startElement'], [$this, 'endElement']);
         xml_set_character_data_handler($xml_parser, [$this, 'startText']);

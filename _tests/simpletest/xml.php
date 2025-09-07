@@ -528,7 +528,6 @@ class SimpleTestXmlParser
     protected function createParser()
     {
         $expat = xml_parser_create();
-        xml_set_object($expat, $this);
         xml_set_element_handler($expat, [$this, 'startElement'], [$this, 'endElement']);
         xml_set_character_data_handler($expat, [$this, 'addContent']);
         xml_set_default_handler($expat, [$this, 'defaultContent']);

@@ -798,6 +798,7 @@ class Hook_health_check_email extends Hook_Health_Check
             'LANG' => get_site_default_lang(),
             'TITLE' => '',
             'CONTENT' => '',
+            'VIEW_IN_BROWSER' => '',
         ], get_site_default_lang(), false, 'MAIL', '.tpl', 'templates', $GLOBALS['FORUM_DRIVER']->get_theme(''));
         $html_version = $tpl->evaluate();
         $html_version_stripped = $this->html_to_plain_text($html_version);
@@ -814,6 +815,7 @@ class Hook_health_check_email extends Hook_Health_Check
             'LANG' => get_site_default_lang(),
             'TITLE' => '',
             'CONTENT' => '',
+            'VIEW_IN_BROWSER' => '',
         ], get_site_default_lang(), false, 'MAIL', '.txt', 'text', $GLOBALS['FORUM_DRIVER']->get_theme(''));
         $text_version = $tpl->evaluate();
         $text_version_stripped = trim(cms_preg_replace_safe('#[\s-]+#', ' ', $text_version));

@@ -171,7 +171,6 @@ class Breadcrumb_substitution_loader
         if ($xml_parser === false) {
             return []; // PHP5 default build on windows comes with this function disabled, so we need to be able to escape on error
         }
-        xml_set_object($xml_parser, $this);
         @xml_parser_set_option($xml_parser, XML_OPTION_TARGET_ENCODING, get_charset());
         @xml_parser_set_option($xml_parser, XML_OPTION_CASE_FOLDING, 0);
         xml_set_element_handler($xml_parser, [$this, 'startElement'], [$this, 'endElement']);
