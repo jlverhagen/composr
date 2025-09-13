@@ -332,6 +332,7 @@ function _cms_error_handler(string $type, int $errno, string $errstr, string $er
             }
 
             if ((!has_privilege(get_member(), 'see_php_errors')) && (!$GLOBALS['DEV_MODE'])) {
+                // Developers: this internal error code is shown to unprivileged users when a PHP error occurs. Check the error logs to see what actually happened.
                 $errstr = do_lang('INTERNAL_ERROR', comcode_escape('72e6bbb313db37062b97acbe7a5e8771'));
             }
             break;
@@ -1329,7 +1330,8 @@ function relay_error_notification(string $text, bool $developers = true, string 
         (strpos($error_message, 'File(/tmp/) is not within the allowed path') === false) &&
         (preg_match('#Could not convert -?\d+(\.\d+)?#', $error_message) == 0) && // Currency conversion; likely no API key was set up
         (strpos($error_message, 'Cannot write to ') === false) &&
-        (strpos($error_message, 'telemetry: ') === false)
+        (strpos($error_message, 'telemetry: ') === false) &&
+        (strpos($error_message, 'You entered an incorrect security code') === false) // CAPTCHA
     ) {
         // Send the error securely to the core developers (telemetry) using an encrypted raw fsock request
         require_code('telemetry');
