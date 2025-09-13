@@ -31,7 +31,7 @@ class Hook_symbol_MEMBER_COOKIE_NAME
     public function info() : ?array
     {
         return [
-            'compile' => SYMBOL_COMPILE_STATIC_NONE,
+            'compile' => SYMBOL_COMPILE_STATIC_SAFE,
             'public' => false,
         ];
     }

@@ -21,7 +21,7 @@
 /**
  * Hook class.
  */
-class Hook_symbol_COOKIE_PATH
+class Hook_symbol_DEFAULT_ZONE_PAGE_NAME
 {
     /**
      * Get information about this symbol.
@@ -46,8 +46,11 @@ class Hook_symbol_COOKIE_PATH
      */
     public function run(array $param, string $lang, array $escaped) : string
     {
-        $value = function_exists('get_cookie_path') ? get_cookie_path() : '/';
-
+        $value = DEFAULT_ZONE_PAGE_NAME;
+        
+        if ($GLOBALS['XSS_DETECT']) {
+            ocp_mark_as_escaped($value);
+        }
         return $value;
     }
 }

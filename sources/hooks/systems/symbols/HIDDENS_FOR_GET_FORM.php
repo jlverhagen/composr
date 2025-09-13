@@ -31,7 +31,7 @@ class Hook_symbol_HIDDENS_FOR_GET_FORM
     public function info() : ?array
     {
         return [
-            'compile' => SYMBOL_COMPILE_STATIC_NONE,
+            'compile' => SYMBOL_COMPILE_STATIC_SAFE,
             'public' => false,
         ];
     }
