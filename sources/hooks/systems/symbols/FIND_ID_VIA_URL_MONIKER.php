@@ -31,7 +31,7 @@ class Hook_symbol_FIND_ID_VIA_URL_MONIKER
     public function info() : ?array
     {
         return [
-            'compile' => SYMBOL_COMPILE_STATIC_NONE,
+            'compile' => SYMBOL_COMPILE_STATIC_IF_AGGRESSIVE,
             'public' => false,
         ];
     }

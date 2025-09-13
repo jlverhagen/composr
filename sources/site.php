@@ -545,6 +545,8 @@ function set_short_title(string $title)
  */
 function do_site_prep()
 {
+    erase_rejected_cookies();
+    
     load_zone_data();
 
     // SEO redirection

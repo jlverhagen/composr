@@ -274,7 +274,7 @@ function handle_active_logout()
     // Update last-visited cookie
     if (get_forum_type() == 'cns') {
         require_code('users_active_actions');
-        cms_setcookie('last_visit', strval(time()), 'NON-ESSENTIAL', true);
+        cms_setcookie('last_visit', strval(time()), 'NON-ESSENTIAL', false, true);
     }
 }
 

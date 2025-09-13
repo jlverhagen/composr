@@ -43,6 +43,8 @@ class Hook_privacy_commandr extends Hook_privacy_base
                 'commandr_*' => [
                     'category' => 'PERSONALIZATION',
                     'reason' => 'Your current Commandr system environment (if you have access)',
+                    'session' => true,
+                    'httponly' => false,
                 ],
             ],
 

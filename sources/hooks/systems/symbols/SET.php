@@ -51,6 +51,9 @@ class Hook_symbol_SET
             ocp_mark_as_escaped($value);
         }
 
+        $temp_array = [];
+        handle_symbol_preprocessing([$escaped, TC_SYMBOL, 'SET', $param], $temp_array);
+
         global $TEMPCODE_SETGET;
 
         if (isset($param[1])) {

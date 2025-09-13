@@ -31,7 +31,7 @@ class Hook_symbol_KEEP
     public function info() : ?array
     {
         return [
-            'compile' => SYMBOL_COMPILE_STATIC_NONE,
+            'compile' => SYMBOL_COMPILE_STATIC_SAFE_SIMPLE_KEEP,
             'public' => false,
         ];
     }

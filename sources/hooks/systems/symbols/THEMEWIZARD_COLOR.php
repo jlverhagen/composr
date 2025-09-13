@@ -53,6 +53,9 @@ class Hook_symbol_THEMEWIZARD_COLOR
             ocp_mark_as_escaped($value);
         }
 
+        $temp_array = [];
+        handle_symbol_preprocessing([$escaped, TC_SYMBOL, 'SET', $param], $temp_array);
+
         if (isset($param[2])) {
             global $TEMPCODE_SETGET;
             $TEMPCODE_SETGET[$param[1]] = $param[0];

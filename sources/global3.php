@@ -5699,25 +5699,148 @@ function cms_setcookie(string $name, string $value, string $category = 'NON-ESSE
 
 /**
  * Deletes a cookie (if it exists), from within the site's cookie environment.
- * This should rarely ever be used as it causes large headers and does not work on httpOnly, Secure, nor sameSite cookies. Use cms_setcookie instead.
+ * This should rarely ever be used as it causes large headers and may not work properly for some types of cookies.
  *
  * @param  string $name The name of the cookie
- * @return boolean The result of the PHP setcookie command
  */
-function cms_eatcookie(string $name) : bool
+function cms_eatcookie(string $name)
 {
     $expire = time() - 100000; // Note the negative number must be greater than 13*60*60 to account for maximum timezone difference
 
-    // Try and remove other potentials
-    @setcookie($name, '', $expire, '', preg_replace('#^www\.#', '', get_request_hostname()));
-    @setcookie($name, '', $expire, '/', preg_replace('#^www\.#', '', get_request_hostname()));
-    @setcookie($name, '', $expire, '', 'www.' . preg_replace('#^www\.#', '', get_request_hostname()));
-    @setcookie($name, '', $expire, '/', 'www.' . preg_replace('#^www\.#', '', get_request_hostname()));
-    @setcookie($name, '', $expire, '', '');
-    @setcookie($name, '', $expire, '/', '');
+    // Gather data
+    $hostname = get_request_hostname();
+    $hostname_no_www = preg_replace('#^www\.#', '', $hostname);
+    $secure = (substr(get_base_url(), 0, 8) === 'https://');
 
-    // Delete standard potential
-    return @setcookie($name, '', $expire, get_cookie_path(), get_cookie_domain());
+    require_code('privacy');
+    $hook_obs = find_all_hook_obs('systems', 'privacy', 'Hook_privacy_');
+    $cookie_properties = [];
+    foreach ($hook_obs as $hook => $hook_ob) {
+        $info = $hook_ob->info();
+        if ($info === null) {
+            continue;
+        }
+
+        foreach ($info['cookies'] as $_name => $cookie_info) {
+            // We need to escape expressions except the wildcard.
+            $cookie_properties[str_replace('\*', '.*', preg_quote($_name, '/'))] = $cookie_info;
+        }
+    }
+
+    // Paths to try
+    $paths = ['', '/', get_cookie_path()];
+    $paths = array_unique($paths);
+
+    // Domains to try
+    $domains = [
+        get_cookie_domain(),
+        '', // Let browser decide
+        $hostname_no_www,
+        'www.' . $hostname_no_www,
+    ];
+    $domains = array_unique($domains);
+
+    // Try common combinations
+    foreach ($domains as $domain) {
+        foreach ($paths as $path) {
+            foreach ($cookie_properties as $regex => $properties) {
+                if (preg_match('/' . $regex . '/', $name) == 0) {
+                    continue;
+                }
+
+                if (version_compare(PHP_VERSION, '7.3.0', '>=')) { // LEGACY
+                    $options = [
+                        'expires' => $expire,
+                        'path' => $path,
+                        'domain' => $domain,
+                        'secure' => $secure,
+                        'httponly' => $properties['httponly'],
+                    ];
+
+                    // Stops HTTP POSTs from external sites inheriting cookie value.
+                    //  Note that Lax is not necessarily the same as setting no value.
+                    //  That said for Chrome 80+ all are Lax by default.
+                    //  Tracked at https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie/SameSite
+                    $options['samesite'] = 'Lax';
+
+                    @call_user_func_array('setcookie', [$name, '', $options]);
+                } else {
+                    @setcookie($name, '', $expire, $path, $domain, $secure, $properties['httponly']);
+                }
+            }
+
+            @setcookie($name, '', $expire, $path, $domain);
+        }
+    }
+
+    unset($_COOKIE[$name]); // Remove from $_COOKIE superglobal
+}
+
+/**
+ * Go through all passed-in cookies and send a request to delete any which have been rejected or orphaned.
+ */
+function erase_rejected_cookies()
+{
+    // Get cookie consent information about the user
+    if (!isset($_COOKIE['cc_cookie'])) {
+        return;
+    }
+
+    $cookie_consent_data_parsed = urldecode($_COOKIE['cc_cookie']);
+    $cookie_consent_data = @json_decode($cookie_consent_data_parsed, true);
+    if ($cookie_consent_data === false) {
+        return;
+    }
+    if (!isset($cookie_consent_data['categories'])) {
+        return;
+    }
+
+    // Grab a map of defined software cookies to their categories
+    require_code('privacy');
+    $hook_obs = find_all_hook_obs('systems', 'privacy', 'Hook_privacy_');
+    $cookie_categories = [];
+    foreach ($hook_obs as $hook => $hook_ob) {
+        $info = $hook_ob->info();
+        if ($info === null) {
+            continue;
+        }
+
+        foreach ($info['cookies'] as $name => $cookie_info) {
+            if (!isset($cookie_info['category'])) {
+                continue;
+            }
+
+            // We need to escape expressions except the wildcard.
+            $cookie_categories[str_replace('\*', '.*', preg_quote($name, '/'))] = $cookie_info['category'];
+        }
+    }
+
+    // Iterate over every passed cookie
+    foreach ($_COOKIE as $name => $value) {
+        if ($name == 'cc_cookie') {
+            continue;
+        }
+
+        $matched_something = false;
+
+        foreach ($cookie_categories as $cookie_regex => $cookie_category) {
+            if (preg_match('/' . $cookie_regex . '/', $name) == 0) {
+                continue;
+            }
+
+            $matched_something = true;
+
+            // Delete cookies which we rejected
+            if (!allowed_cookies($cookie_category)) {
+                cms_eatcookie($name);
+            }
+        }
+
+        // Delete orphaned cookies
+        if ($matched_something === false) {
+            cms_eatcookie($name);
+        }
+    }
 }
 
 /**

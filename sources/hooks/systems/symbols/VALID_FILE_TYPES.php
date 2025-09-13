@@ -31,7 +31,7 @@ class Hook_symbol_VALID_FILE_TYPES
     public function info() : ?array
     {
         return [
-            'compile' => SYMBOL_COMPILE_STATIC_NONE,
+            'compile' => SYMBOL_COMPILE_STATIC_SAFE,
             'public' => false,
         ];
     }

@@ -35,7 +35,7 @@ class Hook_symbol_BUSINESS_ADDRESS
         }
 
         return [
-            'compile' => SYMBOL_COMPILE_STATIC_NONE,
+            'compile' => SYMBOL_COMPILE_STATIC_IF_AGGRESSIVE,
             'public' => false,
         ];
     }

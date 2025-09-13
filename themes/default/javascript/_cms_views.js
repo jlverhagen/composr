@@ -1067,24 +1067,6 @@
         if (($cms.runningScript() === 'index') && ($dom.$('meta[http-equiv="Refresh"]') === null) && (window.parent === window)) {
             $cms.requireJavascript('cookie_consent').then(function () {
                 $cms.requireCss(['cookie_consent', 'cookie_consent_override']).then(function () {
-                    // TODO: broken / does not seem to clear cookies like it should on denial
-                    var cookieConsentAutoClear = function cookieConsentAutoClear(cookieCategory) {
-                        cookieCategory = strVal(cookieCategory);
-
-                        if (typeof $cms.getCookieData[cookieCategory] === 'undefined') {
-                            // TODO: informational error / warning
-                            return [];
-                        }
-
-                        var returnValue = $cms.getCookieData[cookieCategory].map(function (cookieRegexStr) {
-                            cookieRegexStr = strVal(cookieRegexStr);
-
-                            return {
-                                name: new RegExp('^' + cookieRegexStr)
-                            }
-                        });
-                        return returnValue;
-                    };
                     var cookieConsentOptions = {
                         revision: 1
                     };
@@ -1095,7 +1077,6 @@
                             readOnly: true,
                             autoClear: {
                                 reloadPage: true,
-                                cookies: cookieConsentAutoClear('ESSENTIAL')
                             }
                         },
                         'PERSONALIZATION': {
@@ -1103,7 +1084,6 @@
                             readOnly: false,
                             autoClear: {
                                 reloadPage: true,
-                                cookies: cookieConsentAutoClear('PERSONALIZATION')
                             }
                         },
                         'MARKETING': {
@@ -1111,7 +1091,6 @@
                             readOnly: false,
                             autoClear: {
                                 reloadPage: true,
-                                cookies: cookieConsentAutoClear('MARKETING')
                             }
                         },
                         'ANALYTICS': {
@@ -1119,7 +1098,6 @@
                             readOnly: false,
                             autoClear: {
                                 reloadPage: true,
-                                cookies: cookieConsentAutoClear('ANALYTICS')
                             }
                         },
                         'NON-ESSENTIAL': {
@@ -1127,7 +1105,6 @@
                             readOnly: false,
                             autoClear: {
                                 reloadPage: true,
-                                cookies: cookieConsentAutoClear('NON-ESSENTIAL')
                             }
                         }
                     };

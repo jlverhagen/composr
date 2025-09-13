@@ -31,7 +31,7 @@ class Hook_symbol_PARENTAL_CONSENT_REQUIRED
     public function info() : ?array
     {
         return [
-            'compile' => SYMBOL_COMPILE_STATIC_NONE,
+            'compile' => SYMBOL_COMPILE_STATIC_SAFE,
             'public' => false,
         ];
     }

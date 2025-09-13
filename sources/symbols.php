@@ -64,13 +64,7 @@ function ecv(string $lang, array $escaped, int $type, string $name, array $param
     // SYMBOLS
 
     if ($type === TC_SYMBOL) {
-        // Special names
-        if ($name === '?') {
-            $name = 'TERNARY';
-        }
-        if ($name === '') {
-            $name = 'COMMENT';
-        }
+        $name = get_symbol_hook_name($name);
 
         // Prepare symbols if we have not done so already
         if ($symbols === null) {
@@ -225,4 +219,23 @@ function ecv(string $lang, array $escaped, int $type, string $name, array $param
     // We should never get here
     trigger_error(do_lang('INTERNAL_ERROR', comcode_escape('4356c4907b9f5ab5a4ca7e5bcd3a489b')), E_USER_NOTICE);
     return '';
+}
+
+/**
+ * Get the hook name for a given Tempcode symbol name.
+ *
+ * @param  ID_TEXT $name The name of the Tempcode symbol
+ * @return ID_TEXT The name of the Tempcode symbol's hook
+ */
+function get_symbol_hook_name(string $name) : string
+{
+    // Special names
+    if ($name === '?') {
+        $name = 'TERNARY';
+    }
+    if ($name === '') {
+        $name = 'COMMENT';
+    }
+
+    return $name;
 }
