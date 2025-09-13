@@ -43,6 +43,8 @@ class Hook_privacy_calendar extends Hook_privacy_base
                 'feed_*' => [
                     'category' => 'PERSONALIZATION',
                     'reason' => 'Feeds you have overlaid over your calendar',
+                    'session' => false,
+                    'httponly' => true,
                 ],
             ],
 
