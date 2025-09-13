@@ -5708,8 +5708,8 @@ function cms_eatcookie(string $name)
     $expire = time() - 100000; // Note the negative number must be greater than 13*60*60 to account for maximum timezone difference
 
     // Gather data
-    $hostname = get_request_hostname();
-    $hostname_no_www = preg_replace('#^www\.#', '', $hostname);
+    //$hostname = get_request_hostname();
+    //$hostname_no_www = preg_replace('#^www\.#', '', $hostname);
     $secure = (substr(get_base_url(), 0, 8) === 'https://');
 
     require_code('privacy');
@@ -5728,15 +5728,12 @@ function cms_eatcookie(string $name)
     }
 
     // Paths to try
-    $paths = ['', '/', get_cookie_path()];
+    $paths = [get_cookie_path()];
     $paths = array_unique($paths);
 
     // Domains to try
     $domains = [
         get_cookie_domain(),
-        '', // Let browser decide
-        $hostname_no_www,
-        'www.' . $hostname_no_www,
     ];
     $domains = array_unique($domains);
 
