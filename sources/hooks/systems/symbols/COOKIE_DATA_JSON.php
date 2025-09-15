@@ -62,7 +62,7 @@ class Hook_symbol_COOKIE_DATA_JSON
                 }
 
                 foreach ($info['cookies'] as $name => $cookie_info) {
-                    if (!isset($cookie_info['category'])) {
+                    if (($cookie_info === null) || !isset($cookie_info['category'])) {
                         continue;
                     }
 
