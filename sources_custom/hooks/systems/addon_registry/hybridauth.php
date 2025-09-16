@@ -516,6 +516,7 @@ And also Instagram...
             'sources_custom/hooks/systems/oauth_screen_sup/hybridauth_admin.php',
             'sources_custom/hooks/systems/oembed/hybridauth_admin.php',
             'sources_custom/hooks/systems/page_groupings/hybridauth.php',
+            'sources_custom/hooks/systems/privacy/hybridauth.php',
             'sources_custom/hooks/systems/symbols/HYBRIDAUTH_BUTTONS.php',
             'sources_custom/hooks/systems/symbols/HYBRIDAUTH_BUTTONS_CSS.php',
             'sources_custom/hooks/systems/syndication/hybridauth_admin.php',

@@ -1148,6 +1148,7 @@ class Hook_addon_registry_core
             'sources/hooks/systems/symbols/DEC.php',
             'sources/hooks/systems/symbols/DECIMAL_POINT.php',
             'sources/hooks/systems/symbols/DEEP_CLEAN.php',
+            'sources/hooks/systems/symbols/DEFAULT_ZONE_PAGE_NAME.php',
             'sources/hooks/systems/symbols/DESKTOP.php',
             'sources/hooks/systems/symbols/DEV_MODE.php',
             'sources/hooks/systems/symbols/DISPLAYED_USERNAME.php',
