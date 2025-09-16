@@ -34,6 +34,14 @@
 				<span>{!DAILY}</span>
 			{+END}
 		</div></div>
+		<div class="calendar-date-span-link {+START,IF_EMPTY,{DAY_URL}}current{+END}"><div class="calendar-date-span-link-inner">
+			{+START,IF_NON_EMPTY,{LISTING_URL}}
+				<a href="{LISTING_URL*}">{!LISTING}</a>
+			{+END}
+			{+START,IF_EMPTY,{LISTING_URL}}
+				<span>{!LISTING}</span>
+			{+END}
+		</div></div>
 	</div>
 </div>
 

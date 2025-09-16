@@ -223,6 +223,7 @@ class Hook_addon_registry_calendar
             'themes/default/templates/CALENDAR_EVENT_CONFLICT.tpl',
             'themes/default/templates/CALENDAR_EVENT_SCREEN.tpl',
             'themes/default/templates/CALENDAR_EVENT_TYPE.tpl',
+            'themes/default/templates/CALENDAR_LISTING.tpl',
             'themes/default/templates/CALENDAR_MAIN_SCREEN.tpl',
             'themes/default/templates/CALENDAR_MONTH.tpl',
             'themes/default/templates/CALENDAR_MONTH_DAY.tpl',
