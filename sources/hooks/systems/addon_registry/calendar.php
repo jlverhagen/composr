@@ -153,6 +153,7 @@ class Hook_addon_registry_calendar
             'sources/hooks/systems/commandr_scheduled/.htaccess',
             'sources/hooks/systems/commandr_scheduled/index.html',
             'sources/hooks/systems/config/allow_adding_commandr_events.php',
+            'sources/hooks/systems/config/calendar_display_mode.php',
             'sources/hooks/systems/config/calendar_show_stats_count_events.php',
             'sources/hooks/systems/config/calendar_show_stats_count_events_this_month.php',
             'sources/hooks/systems/config/calendar_show_stats_count_events_this_week.php',

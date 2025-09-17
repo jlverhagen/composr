@@ -571,7 +571,7 @@ class Module_calendar
         $member_id = ($_member_id === null) ? get_member() : $_member_id;
         $username = $GLOBALS['FORUM_DRIVER']->get_username($member_id, true, USERNAME_DEFAULT_ERROR);
 
-        $view = get_param_string('view', 'day');
+        $view = get_param_string('view', get_option('calendar_display_mode'));
         $filter = $this->get_filter();
         //if ($member_id!=get_member()) enforce_personal_access($member_id); has particular filtering
         $back_url = null;
