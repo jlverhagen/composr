@@ -64,7 +64,7 @@ class Hook_admin_stats_cns_members extends CMSStatsProvider
                 'category' => 'conversions',
                 'filters' => [
                     'members__month_range' => new CMSStatsDateMonthRangeFilter('members__month_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
-                    'members__country' => has_geolocation_data() ? new CMSStatsListFilter('members__country', do_lang_tempcode('VISITOR_COUNTRY'), find_countries()) : null,
+                    'members__country' => has_geolocation_data() ? new CMSStatsCountryFilter('members__country', do_lang_tempcode('VISITOR_COUNTRY')) : null,
                 ],
                 'pivot' => new CMSStatsDatePivot('members__pivot', $this->get_date_pivots(!$for_kpi)),
                 'support_kpis' => self::KPI_HIGH_IS_GOOD,

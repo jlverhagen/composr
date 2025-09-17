@@ -52,7 +52,7 @@ class Hook_admin_stats_banners extends CMSStatsProvider
                 'filters' => [
                     'banner_clicks__month_range' => new CMSStatsDateMonthRangeFilter('banner_clicks__month_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
                     'banner_clicks__banner' => new CMSStatsListFilter('banner_clicks__banner', do_lang_tempcode('BANNER'), $banners),
-                    'banner_clicks__country' => has_geolocation_data() ? new CMSStatsListFilter('banner_clicks__country', do_lang_tempcode('VISITOR_COUNTRY'), find_countries()) : null,
+                    'banner_clicks__country' => has_geolocation_data() ? new CMSStatsCountryFilter('banner_clicks__country', do_lang_tempcode('VISITOR_COUNTRY')) : null,
                 ],
                 'pivot' => new CMSStatsDatePivot('banner_clicks__pivot', $this->get_date_pivots(!$for_kpi)),
                 'support_kpis' => self::KPI_HIGH_IS_GOOD,

@@ -62,7 +62,7 @@ class Hook_admin_stats_links extends CMSStatsProvider
                 'filters' => [
                     'link_tracking__month_range' => new CMSStatsDateMonthRangeFilter('link_tracking__month_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
                     'link_tracking__url' => new CMSStatsListFilter('link_tracking__url', do_lang_tempcode('URL'), $top_urls),
-                    'link_tracking__country' => has_geolocation_data() ? new CMSStatsListFilter('link_tracking__country', do_lang_tempcode('VISITOR_COUNTRY'), find_countries()) : null,
+                    'link_tracking__country' => has_geolocation_data() ? new CMSStatsCountryFilter('link_tracking__country', do_lang_tempcode('VISITOR_COUNTRY')) : null,
                 ],
                 'pivot' => new CMSStatsDatePivot('link_tracking__pivot', $this->get_date_pivots(!$for_kpi)),
             ],

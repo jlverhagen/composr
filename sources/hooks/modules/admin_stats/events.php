@@ -92,7 +92,7 @@ class Hook_admin_stats_events extends CMSStatsProvider
                 'category' => 'conversions',
                 'filters' => [
                     'events__month_range' => new CMSStatsDateMonthRangeFilter('events__month_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
-                    'events__country' => new CMSStatsListFilter('events__country', do_lang_tempcode('VISITOR_COUNTRY'), find_countries()),
+                    'events__country' => new CMSStatsCountryFilter('events__country', do_lang_tempcode('VISITOR_COUNTRY')),
                     'events__event' => new CMSStatsListFilter('events__event', do_lang_tempcode('STATS_EVENT'), $top_events),
                 ],
                 'pivot' => new CMSStatsDatePivot('events__pivot', $this->get_date_pivots(!$for_kpi)),
@@ -103,7 +103,7 @@ class Hook_admin_stats_events extends CMSStatsProvider
                 'category' => 'conversions',
                 'filters' => [
                     'tracking_code_usage__month_range' => new CMSStatsDateMonthRangeFilter('tracking_code_usage__month_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
-                    'tracking_code_usage__country' => new CMSStatsListFilter('tracking_code_usage__country', do_lang_tempcode('VISITOR_COUNTRY'), find_countries()),
+                    'tracking_code_usage__country' => new CMSStatsCountryFilter('tracking_code_usage__country', do_lang_tempcode('VISITOR_COUNTRY')),
                     'tracking_code_usage__event' => new CMSStatsListFilter('tracking_code_usage__tracking_code', do_lang_tempcode('TRACKING_CODE'), $top_tracking_codes),
                 ],
                 'pivot' => new CMSStatsDatePivot('tracking_code_usage__pivot', $this->get_date_pivots(!$for_kpi)),
@@ -114,7 +114,7 @@ class Hook_admin_stats_events extends CMSStatsProvider
                 'category' => 'conversions',
                 'filters' => [
                     'conversion_rates__month_range' => new CMSStatsDateMonthRangeFilter('conversion_rates__month_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
-                    'conversion_rates__country' => new CMSStatsListFilter('conversion_rates__country', do_lang_tempcode('VISITOR_COUNTRY'), find_countries()),
+                    'conversion_rates__country' => new CMSStatsCountryFilter('conversion_rates__country', do_lang_tempcode('VISITOR_COUNTRY')),
                     'conversion_rates__event' => new CMSStatsListFilter('conversion_rates__event', do_lang_tempcode('STATS_EVENT'), $top_events),
                 ],
                 'pivot' => new CMSStatsDatePivot('conversion_rates__pivot', $this->get_date_pivots(!$for_kpi)),
@@ -125,7 +125,7 @@ class Hook_admin_stats_events extends CMSStatsProvider
                 'category' => 'conversions',
                 'filters' => [
                     'tracking_code_conversion_rates__month_range' => new CMSStatsDateMonthRangeFilter('tracking_code_conversion_rates__month_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
-                    'tracking_code_conversion_rates__country' => new CMSStatsListFilter('tracking_code_conversion_rates__country', do_lang_tempcode('VISITOR_COUNTRY'), find_countries()),
+                    'tracking_code_conversion_rates__country' => new CMSStatsCountryFilter('tracking_code_conversion_rates__country', do_lang_tempcode('VISITOR_COUNTRY')),
                     'tracking_code_conversion_rates__event' => new CMSStatsListFilter('tracking_code_conversion_rates__event', do_lang_tempcode('STATS_EVENT'), $top_events),
                     'tracking_code_conversion_rates_usage__event' => new CMSStatsListFilter('tracking_code_conversion_rates_usage__tracking_code', do_lang_tempcode('TRACKING_CODE'), $top_tracking_codes),
                 ],

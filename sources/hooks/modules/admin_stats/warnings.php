@@ -66,7 +66,7 @@ class Hook_admin_stats_warnings extends CMSStatsProvider
                 'category' => 'moderation',
                 'filters' => [
                     'recorded_punishments__month_range' => new CMSStatsDateMonthRangeFilter('recorded_punishments__month_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
-                    'recorded_punishments__country' => new CMSStatsListFilter('recorded_punishments__country', do_lang_tempcode('VISITOR_COUNTRY'), find_countries()),
+                    'recorded_punishments__country' => has_geolocation_data() ? new CMSStatsCountryFilter('recorded_punishments__country', do_lang_tempcode('VISITOR_COUNTRY')) : null,
                     'recorded_punishments__reason' => new CMSStatsTextFilter('recorded_punishments__reason', do_lang_tempcode('REASON'), ''),
                 ],
                 'pivot' => new CMSStatsDatePivot('recorded_punishments__pivot', $this->get_date_pivots(!$for_kpi)),
@@ -76,7 +76,7 @@ class Hook_admin_stats_warnings extends CMSStatsProvider
                 'category' => 'moderation',
                 'filters' => [
                     'recorded_punishment_reasons__month_range' => new CMSStatsDateMonthRangeFilter('recorded_punishment_reasons__month_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
-                    'recorded_punishment_reasons__country' => new CMSStatsListFilter('recorded_punishment_reasons__country', do_lang_tempcode('VISITOR_COUNTRY'), find_countries()),
+                    'recorded_punishment_reasons__country' => has_geolocation_data() ? new CMSStatsCountryFilter('recorded_punishment_reasons__country', do_lang_tempcode('VISITOR_COUNTRY')) : null,
                 ],
                 'pivot' => null,
             ],
