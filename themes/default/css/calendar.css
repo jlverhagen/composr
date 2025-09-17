@@ -17,8 +17,16 @@
 	}
 /*{+END}*/
 
+.dtstartcol {
+	min-width: 180px;
+}
+
 abbr.dtstart, abbr.dtend {
 	border-bottom: 0;
+}
+
+time.dtend::before {
+	content: ' - ';
 }
 
 /*

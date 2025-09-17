@@ -720,12 +720,10 @@ class Module_calendar
                 $month = intval($explode[1]);
                 $day = intval($explode[2]);
 
-                $happenings = [];
-
                 $period_start = cms_mktime(0, 0, 0, $month, $day, $year);
                 $period_end = cms_mktime(0, 0, 0, $month + 1, $day, $year);
 
-                $happenings = array_merge($happenings, calendar_matches(get_member(), $member_id, !has_privilege(get_member(), 'assume_any_member'), $period_start, $period_end, $filter));
+                $happenings = calendar_matches(get_member(), $member_id, !has_privilege(get_member(), 'assume_any_member'), $period_start, $period_end, $filter);
 
                 $days = process_calendar_events_for_listing($happenings, $filter, $period_start, $period_end, get_module_zone('calendar'));
 
