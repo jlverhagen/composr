@@ -65,11 +65,13 @@ function init__addons()
  */
 function get_default_addon_info() : array
 {
+    require_code('version');
+
     return [
         'name' => '',
         'author' => '',
         'organisation' => '',
-        'version' => '1.0',
+        'version' => float_to_raw_string(cms_version_number(), 1) . '.0',
         'category' => 'Uncategorised/Alpha',
         'copyright_attribution' => [],
         'licence' => '(Unstated)',

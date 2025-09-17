@@ -2522,7 +2522,7 @@ function step_7() : object
 
     $time_start = microtime(true);
 
-    // We must install these modules first (if you change these, add as an exception in step 8!)
+    // We must install these modules first (if you change these, add as an exception in step 8, and update upgrade_addons()!)
     foreach (['admin_version', 'admin_permissions', 'admin_addons'] as $module) {
         $time_before = microtime(true);
         if (reinstall_module('adminzone', $module)) {

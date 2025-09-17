@@ -786,12 +786,14 @@ function upgrade_addons(float $from_cms_version, int &$offset) : string
     require_code('zones3');
     require_code('files'); // For memory checking
 
-    // Define which modules must be upgraded first as other modules may depend on it
+    // Define which modules must be upgraded first as other modules may depend on it (must update install.php step 7 if you change this!)
     $must_upgrade_first = [
         'admin_version' => 'adminzone',
+        'admin_permissions' => 'adminzone',
+        'admin_addons' => 'adminzone',
     ];
     if ($from_cms_version < 11.0) { // LEGACY
-        $must_upgrade_first['admin_addons'] = 'adminzone'; // DB changes
+
         $must_upgrade_first['catalogues'] = 'site'; // Required for any module installing new custom profile fields (e.g. points)
     }
     foreach ($must_upgrade_first as $module => $zone) {
@@ -914,7 +916,7 @@ function upgrade_addons(float $from_cms_version, int &$offset) : string
     // Upgrade addons
     require_code('addons2');
     foreach ($addons as $addon_name => $type) {
-        if ($type == 'sources_custom') {
+        if ($type == 'sources_custom') { // No upgrade support for non-bundled addons from upgrader
             continue;
         }
 
