@@ -87,9 +87,10 @@ class Module_warnings extends Standard_crud_module
     {
         require_code('permissions3');
 
+        $legacy_upgrade_2 = false;
+
         if ($upgrade_from === null) {
             // LEGACY: Determine if we need to run code to migrate some f_warnings data to f_warnings_punitive
-            $legacy_upgrade_2 = false;
             if ($GLOBALS['FORUM_DB']->table_exists('f_warnings') && !$GLOBALS['FORUM_DB']->table_exists('f_warnings_punitive')) {
                 $legacy_upgrade_2 = true;
             }

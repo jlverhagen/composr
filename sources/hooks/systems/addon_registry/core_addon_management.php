@@ -164,6 +164,7 @@ class Hook_addon_registry_core_addon_management
             'themes/default/templates/ADDON_SCREEN.tpl',
             'themes/default/templates/ADDON_SCREEN_ADDON.tpl',
             'themes/default/templates/ADDON_UNINSTALL_CONFIRM_SCREEN.tpl',
+            'themes/default/templates/ADDON_UPGRADE_CONFIRM_SCREEN.tpl',
             'themes/default/templates/MODULE_SCREEN.tpl',
         ];
     }

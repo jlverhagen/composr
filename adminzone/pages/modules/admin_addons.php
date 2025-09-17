@@ -213,6 +213,19 @@ class Module_admin_addons
             $this->title = get_screen_title('INSTALL_ADDON');
         }
 
+        if ($type == 'addon_upgrade') {
+            breadcrumb_set_parents([['_SELF:_SELF:browse', do_lang_tempcode('ADDONS')]]);
+
+            $this->title = get_screen_title('UPGRADE_ADDON');
+        }
+
+        if ($type == '_addon_upgrade') {
+            breadcrumb_set_parents([['_SELF:_SELF:browse', do_lang_tempcode('ADDONS')]]);
+            breadcrumb_set_self(do_lang_tempcode('DONE'));
+
+            $this->title = get_screen_title('UPGRADE_ADDON');
+        }
+
         if ($type == 'addon_tar_delete') {
             breadcrumb_set_parents([['_SELF:_SELF:browse', do_lang_tempcode('ADDONS')]]);
 
@@ -346,6 +359,12 @@ class Module_admin_addons
         if ($type == '_addon_uninstall') {
             return $this->_addon_uninstall();
         }
+        if ($type == 'addon_upgrade') {
+            return $this->addon_upgrade();
+        }
+        if ($type == '_addon_upgrade') {
+            return $this->_addon_upgrade();
+        }
         if ($type == 'multi_action') {
             return $this->multi_action();
         }
@@ -410,9 +429,7 @@ class Module_admin_addons
 
         // Show installed addons
         foreach ($addons_installed as $addon_name => $row) {
-            if (substr($addon_name, 0, 5) == 'core_' || $addon_name == 'core') {
-                continue;
-            }
+            $is_core_addon = (substr($addon_name, 0, 5) == 'core_' || ($addon_name == 'core'));
 
             $colour = null;
             $addon_tpl = null;
@@ -431,19 +448,50 @@ class Module_admin_addons
                 }
 
                 $category = $row['category'];
+                $addon_version = $row['version'];
+
+                // Check for updates
+                $updated = array_key_exists($addon_name, $updated_addons_arr); // Homesite update available?
+                if (!$updated) {
+                    // Check if database (actually installed) version is less than our current one
+                    $installed_version = $GLOBALS['SITE_DB']->query_select_value_if_there('addons', 'addon_version', ['addon_name' => $addon_name]);
+                    if ($installed_version !== null) {
+                        require_code('version2');
+                        $installed_version = get_version_php__from_anything($installed_version);
+                        $available_version = get_version_php__from_anything($row['version']);
+                        if (version_compare($available_version, $installed_version, '>')) {
+                            $addon_version = $installed_version . ' -> ' . $available_version;
+                            $updated = true;
+                        }
+                    }
+                }
 
                 $actions = new Tempcode();
-                $actions->attach(do_template('COLUMNED_TABLE_ACTION', [
-                    '_GUID' => '5a65c9aa87291ecfe46f75e9b2949246',
-                    'NAME' => $addon_name,
-                    'URL' => build_url(['page' => '_SELF', 'type' => 'addon_uninstall', 'name' => $addon_name], '_SELF'),
-                    'ACTION_TITLE' => do_lang_tempcode('UNINSTALL'),
-                    'ICON' => 'admin/delete2',
-                    'GET' => true,
-                ]));
-                $updated = array_key_exists($addon_name, $updated_addons_arr);
+
+                if (!$is_core_addon) {
+                    $actions->attach(attach: do_template('COLUMNED_TABLE_ACTION', [
+                        '_GUID' => '5a65c9aa87291ecfe46f75e9b2949246',
+                        'NAME' => $addon_name,
+                        'URL' => build_url(['page' => '_SELF', 'type' => 'addon_uninstall', 'name' => $addon_name], '_SELF'),
+                        'ACTION_TITLE' => do_lang_tempcode('UNINSTALL'),
+                        'ICON' => 'admin/delete2',
+                        'GET' => true,
+                    ]));
+                } else {
+                    if ($updated) {
+                        $actions->attach(attach: do_template('COLUMNED_TABLE_ACTION', [
+                            '_GUID' => '44d1b3800b435d54b80493b69481c3e7',
+                            'NAME' => $addon_name,
+                            'URL' => build_url(['page' => '_SELF', 'type' => 'addon_upgrade', 'name' => $addon_name], '_SELF'),
+                            'ACTION_TITLE' => do_lang_tempcode('UPGRADE'),
+                            'ICON' => 'admin/upgrade',
+                            'GET' => true,
+                        ]));
+                    }
+                }
+
                 $status = do_lang_tempcode($updated ? 'STATUS_OUTOFDATE' : 'STATUS_INSTALLED');
-                $colour = $updated ? 'red' : 'green';
+                $colour = $updated ? 'orange' : 'green';
                 $description = $row['description'];
                 $file_list = $row['files'];
 
@@ -457,6 +505,7 @@ class Module_admin_addons
                 $addon_tpl = static_evaluate_tempcode(do_template('ADDON_SCREEN_ADDON', [
                     '_GUID' => '9a06f5a9c9e3085c10ab7fb17c3efcd1',
                     'UPDATED_ADDONS' => $updated,
+                    'CORE_ADDON' => $is_core_addon,
                     'DESCRIPTION' => $description,
                     'DESCRIPTION_PARSED' => static_evaluate_tempcode(comcode_to_tempcode($description)),
                     'FILE_LIST' => $_file_list,
@@ -470,11 +519,11 @@ class Module_admin_addons
                     'CATEGORY' => $row['category'],
                     'COPYRIGHT_ATTRIBUTION' => implode("\n", $row['copyright_attribution']),
                     'LICENCE' => $row['licence'],
-                    'VERSION' => $row['version'],
+                    'VERSION' => $addon_version,
                     'MIN_CMS_VERSION' => $row['min_cms_version'],
                     'MAX_CMS_VERSION' => $row['max_cms_version'],
                     'ACTIONS' => $actions,
-                    'TYPE' => 'uninstall',
+                    'TYPE' => ($updated && $is_core_addon) ? 'upgrade' : 'uninstall',
                     'PASSTHROUGH' => $addon_name,
                     'BUNDLED' => in_array('sources/hooks/systems/addon_registry/' . $addon_name . '.php', $file_list),
                 ]));
@@ -1061,7 +1110,7 @@ class Module_admin_addons
     }
 
     /**
-     * The UI to uninstall an addon.
+     * The actualiser to uninstall an addon.
      *
      * @return Tempcode The UI
      */
@@ -1778,6 +1827,60 @@ class Module_admin_addons
         }
 
         return do_template('MODULE_SCREEN', ['_GUID' => '132b23107b49a23e0b11db862de1dd56', 'TITLE' => $this->title, 'MODULES' => $tpl_modules]);
+    }
+
+    /**
+     * The UI to upgrade an addon.
+     *
+     * @return Tempcode The UI
+     */
+    public function addon_upgrade() : object
+    {
+        appengine_live_guard();
+
+        $addon_name = get_param_string('name');
+
+        attach_message(do_lang_tempcode('ADDON_UPGRADE_USE_UPGRADER'), 'notice');
+
+        list($warnings, $files) = inform_about_addon_upgrade($addon_name);
+
+        $url = build_url(['page' => '_SELF', 'type' => '_addon_upgrade'], '_SELF');
+
+        require_code('form_templates');
+        list($warning_details, $ping_url) = handle_conflict_resolution($addon_name);
+
+        return do_template('ADDON_UPGRADE_CONFIRM_SCREEN', [
+            '_GUID' => '512897c1fb895e8fa28f6948da678386',
+            'TITLE' => $this->title,
+            'TEXT' => do_lang_tempcode('DESCRIPTION_ADDON_UPGRADE_CONFIRM', escape_html($addon_name)),
+            'URL' => $url,
+            'NAME' => $addon_name,
+            'WARNINGS' => $warnings,
+            'FILES' => $files,
+            'WARNING_DETAILS' => $warning_details,
+            'PING_URL' => $ping_url,
+        ]);
+    }
+
+    /**
+     * The actualiser to upgrade an addon.
+     *
+     * @return Tempcode The UI
+     */
+    public function _addon_upgrade() : object
+    {
+        $name = filter_naughty(post_param_string('name'));
+
+        $status = upgrade_addon_soft($name);
+        if ($status < 0) {
+            warn_exit(do_lang_tempcode('INTERNAL_ERROR', escape_html('358793aced395c17a5df2ec724f4941b')));
+        }
+
+        $this->_regenerate_svg_sprites();
+
+        // Show it worked / Refresh
+        $url = build_url(['page' => '_SELF', 'type' => 'browse'], '_SELF');
+        return redirect_screen($this->title, $url, do_lang_tempcode('SUCCESS'));
     }
 
     /**

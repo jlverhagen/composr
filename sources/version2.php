@@ -117,7 +117,7 @@ function get_version_dotted(?int $main = null, ?string $minor = null) : string
 
 /**
  * Gets any random way of writing a version number (in all of the software's history) and makes it a dotted style like "3.2.beta2".
- * Note that the dotted format is not compatible with PHP's version_compare function directly but $long_dotted_number_with_qualifier from get_version_components__from_dotted() is.
+ * Note that the dotted format is not compatible with PHP's version_compare function directly but get_version_php__from_anything is.
  *
  * @param  string $any_format Any reasonable input
  * @return string Dotted version number
@@ -142,6 +142,19 @@ function get_version_dotted__from_anything(string $any_format) : string
     $dotted = preg_replace('#(\.0)+($|\.alpha|\.beta|\.dev|\.RC)#', '$2', $dotted);
 
     return $dotted;
+}
+
+/**
+ * Gets any random way of writing a version number (in all of the software's history) and makes it in a format compatible with PHP's version_compare().
+ *
+ * @param  string $any_format Any reasonable input
+ * @return string Dotted version number
+ */
+function get_version_php__from_anything(string $any_format) : string
+{
+    $version_dotted = get_version_dotted__from_anything($any_format);
+    $version_components = get_version_components__from_dotted($version_dotted);
+    return $version_components[5];
 }
 
 /**
