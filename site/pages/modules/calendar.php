@@ -703,6 +703,54 @@ class Module_calendar
                 }
 
                 break;
+
+            case 'listing': // A list view (similar to the calendar block) // TODOTODO
+                $id = get_param_string('id', date('Y-m-d', utctime_to_usertime()));
+                if (strpos($id, '-') === false) {
+                    $id = date('Y-m-d', utctime_to_usertime()); // The ID was actually a filter, will need to use default date/time
+                }
+                $self_encompassing = ($id == date('Y-m-d', utctime_to_usertime()));
+                $date = $id;
+                $explode = explode('-', $id);
+                if (count($explode) != 3) {
+                    warn_exit(do_lang_tempcode('INTERNAL_ERROR', escape_html('5d8f327d597f5307b5b5aaebc87025da')));
+                }
+
+                $year = intval($explode[0]);
+                $month = intval($explode[1]);
+                $day = intval($explode[2]);
+
+                $happenings = [];
+
+                $period_start = cms_mktime(0, 0, 0, $month, $day, $year);
+                $period_end = cms_mktime(0, 0, 0, $month + 1, $day, $year);
+
+                $happenings = array_merge($happenings, calendar_matches(get_member(), $member_id, !has_privilege(get_member(), 'assume_any_member'), $period_start, $period_end, $filter));
+
+                $days = process_calendar_events_for_listing($happenings, $filter, $period_start, $period_end, get_module_zone('calendar'));
+
+                $main = do_template('CALENDAR_LISTING', [
+                    '_GUID' => '',
+                    'DAYS' => $days,
+                ]);
+
+                $timestamp = cms_mktime(0, 0, 0, intval($explode[1]), intval($explode[2]), intval($explode[0]));
+                $month_timestamp = to_epoch_interval_index($timestamp, 'months', $timestamp);
+                $back = $id;
+                $back_view = 'daily';
+                $previous_timestamp = from_epoch_interval_index(($month_timestamp - 1), 'months', $timestamp);
+                $previous = date('Y-m-d', $previous_timestamp);
+                $next_timestamp = from_epoch_interval_index(($month_timestamp + 1), 'months', $timestamp);
+                $next = date('Y-m-d', $next_timestamp);
+
+                $title_date = do_lang('_LISTING', comcode_escape($id), comcode_escape($next));
+                if ($private !== 1) {
+                    $this->title = get_screen_title('CALENDAR_SPECIFIC', true, [escape_html($title_date)]);
+                } else {
+                    $this->title = get_screen_title('_CALENDAR_SPECIFIC', true, [escape_html($username), escape_html($title_date)]);
+                }
+
+                break;
             default:
                 warn_exit(do_lang_tempcode('INTERNAL_ERROR', escape_html('9da22e84932e5cd1aef6b2d42287f23d')));
         }
@@ -808,6 +856,8 @@ class Module_calendar
         $day = date('Y-m-d', $timestamp);
         $map = array_merge($filter, ['page' => '_SELF', 'type' => 'browse', 'view' => 'day', 'id' => $day]);
         $day_url = ($view == 'day') ? new Tempcode() : build_url($map, '_SELF');
+        $map = array_merge($filter, ['page' => '_SELF', 'type' => 'browse', 'view' => 'listing', 'id' => $day]);
+        $listing_url = ($view == 'listing') ? new Tempcode() : build_url($map, '_SELF');
         $week = get_week_number_for($timestamp);
         $map = array_merge($filter, ['page' => '_SELF', 'type' => 'browse', 'view' => 'week', 'id' => $week]);
         $week_url = ($view == 'week') ? new Tempcode() : build_url($map, '_SELF');
@@ -843,6 +893,7 @@ class Module_calendar
             'WEEK_URL' => $week_url,
             'MONTH_URL' => $month_url,
             'YEAR_URL' => $year_url,
+            'LISTING_URL' => $listing_url,
             'PREVIOUS_URL' => $previous_url,
             'NEXT_URL' => $next_url,
             'ADD_URL' => $add_url,

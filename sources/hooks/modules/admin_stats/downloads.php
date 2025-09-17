@@ -45,7 +45,7 @@ class Hook_admin_stats_downloads extends CMSStatsProvider
                 'category' => 'feedback_and_engagement',
                 'filters' => [
                     'downloads__month_range' => new CMSStatsDateMonthRangeFilter('downloads__month_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
-                    'downloads__country' => has_geolocation_data() ? new CMSStatsListFilter('downloads__country', do_lang_tempcode('VISITOR_COUNTRY'), find_countries()) : null,
+                    'downloads__country' => has_geolocation_data() ? new CMSStatsCountryFilter('downloads__country', do_lang_tempcode('VISITOR_COUNTRY')) : null,
                 ],
                 'pivot' => new CMSStatsDatePivot('downloads__pivot', $this->get_date_pivots(!$for_kpi)),
                 'support_kpis' => self::KPI_HIGH_IS_GOOD,

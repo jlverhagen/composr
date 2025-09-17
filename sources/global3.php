@@ -5632,6 +5632,51 @@ function statistical_update_model(string $table, int $view_count) : int
  */
 function cms_setcookie(string $name, string $value, string $category = 'NON-ESSENTIAL', bool $session = false, bool $httponly = true, ?float $days = null) : bool
 {
+    // In development mode, check for and warn against inconsistencies between this function call and privacy hooks
+    if ($GLOBALS['DEV_MODE'] && function_exists('find_all_hook_obs') && function_exists('attach_message')) {
+        require_code('privacy');
+        require_lang('privacy');
+
+        $matches = 0;
+
+        $hook_obs = find_all_hook_obs('systems', 'privacy', 'Hook_privacy_');
+        foreach ($hook_obs as $hook => $ob) {
+            $info = $ob->info();
+            if (($info === null) || (!isset($info['cookies'])) || (count($info['cookies']) == 0)) {
+                continue;
+            }
+
+            foreach ($info['cookies'] as $_name => $cookie_info) {
+                $regex = str_replace('\*', '.*', preg_quote($_name, '/'));
+                if (preg_match('/' . $regex . '/', $name) == 0) {
+                    continue;
+                }
+                if ($cookie_info === null) {
+                    continue;
+                }
+
+                $matches++;
+
+                if ($cookie_info['category'] != $category) {
+                    attach_message(do_lang_tempcode('COOKIE_INCONSISTENCY_CATEGORY', escape_html($name)), 'warn', false, true);
+                }
+                if ($cookie_info['session'] != $session) {
+                    attach_message(do_lang_tempcode('COOKIE_INCONSISTENCY_SESSION', escape_html($name)), 'warn', false, true);
+                }
+                if ($cookie_info['httponly'] != $httponly) {
+                    attach_message(do_lang_tempcode('COOKIE_INCONSISTENCY_HTTPONLY', escape_html($name)), 'warn', false, true);
+                }
+            }
+        }
+
+        if ($matches == 0) {
+            attach_message(do_lang_tempcode('COOKIE_INCONSISTENCY_UNDEFINED', escape_html($name)), 'warn', false, true);
+        }
+        if ($matches > 1) {
+            attach_message(do_lang_tempcode('COOKIE_INCONSISTENCY_MULTIPLE', escape_html($name), escape_html(integer_format($matches))), 'warn', false, true);
+        }
+    }
+
     // User rejected cookies; eat the existing cookie and bail out
     if (($value != '') && (!allowed_cookies($category))) {
         cms_setcookie($name, '', $category, $session, $httponly, -14.0);
@@ -5722,6 +5767,10 @@ function cms_eatcookie(string $name)
         }
 
         foreach ($info['cookies'] as $_name => $cookie_info) {
+            if ($cookie_info === null) {
+                continue;
+            }
+
             // We need to escape expressions except the wildcard.
             $cookie_properties[str_replace('\*', '.*', preg_quote($_name, '/'))] = $cookie_info;
         }

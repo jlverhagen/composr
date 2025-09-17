@@ -1386,6 +1386,41 @@ class CMSStatsListFilter extends CMSStatsFilter
 }
 
 /**
+ * Class for stat country input filters.
+ *
+ * @package stats
+ */
+class CMSStatsCountryFilter extends CMSStatsListFilter
+{
+    /**
+     * Constructor.
+     *
+     * @param  string $filter_name Filter name
+     * @param  Tempcode $label Label
+     * @param  array $list List (a map)
+     * @param  string $default Default
+     */
+    public function __construct(string $filter_name, object $label, string $default = '')
+    {
+        require_code('locations');
+        parent::__construct($filter_name, $label, []/* Hard-coded */, $default);
+    }
+
+    /**
+     * Get the inputting UI for the filter.
+     *
+     * @param  Tempcode $hidden The hidden field
+     * @return Tempcode The input field
+     */
+    public function ui_component(object &$hidden) : object
+    {
+        $filters = [];
+        $list = create_country_selection_list([$this->read_value($filters)]);
+        return form_input_list(do_lang_tempcode('_FILTER', $this->label), new Tempcode(), $this->filter_name, $list, null, false, false);
+    }
+}
+
+/**
  * Class for stat month date range input filters.
  *
  * @package stats
