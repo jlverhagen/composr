@@ -12,7 +12,7 @@
 
 <p>{TEXT}</p>
 
-<form title="{!PRIMARY_PAGE_FORM}" action="{URL*}" method="post" data-submit-modsecurity-workaround="1">
+<form title="{!PRIMARY_PAGE_FORM}" action="{URL*}" method="post">
 	{$INSERT_FORM_POST_SECURITY}
 
 	<p class="proceed-button">
