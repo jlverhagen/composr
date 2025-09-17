@@ -75,7 +75,6 @@ class Hook_admin_stats_warnings extends CMSStatsProvider
                 'label' => do_lang_tempcode('WARNINGS_BY_REASON'),
                 'category' => 'moderation',
                 'filters' => [
-                    'recorded_punishment_reasons__month_range' => new CMSStatsDateMonthRangeFilter('recorded_punishment_reasons__month_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
                     'recorded_punishment_reasons__country' => has_geolocation_data() ? new CMSStatsCountryFilter('recorded_punishment_reasons__country', do_lang_tempcode('VISITOR_COUNTRY')) : null,
                 ],
                 'pivot' => null,
@@ -86,7 +85,6 @@ class Hook_admin_stats_warnings extends CMSStatsProvider
                 'label' => do_lang_tempcode('_COUNTRIES', do_lang_tempcode('WARNINGS')),
                 'category' => 'moderation',
                 'filters' => [
-                    'recorded_punishment_countries__month_range' => new CMSStatsDateMonthRangeFilter('recorded_punishment_countries__month_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
                     'recorded_punishment_countries__reason' => new CMSStatsTextFilter('recorded_punishment_countries__reason', do_lang_tempcode('REASON'), ''),
                 ],
                 'pivot' => null,
@@ -115,7 +113,7 @@ class Hook_admin_stats_warnings extends CMSStatsProvider
 
         $date_pivots = $this->get_date_pivots();
 
-        $query = 'SELECT w_time,w_explanation,m_ip_address FROM ' . $GLOBALS['FORUM_DB']->get_table_prefix() . 'f_warnings w JOIN ' . $GLOBALS['FORUM_DB']->get_table_prefix() . 'f_members m ON m.id=w.w_member_id  WHERE ';
+        $query = 'SELECT w_time,w_explanation,m_ip_address FROM ' . $GLOBALS['FORUM_DB']->get_table_prefix() . 'f_warnings w JOIN ' . $GLOBALS['FORUM_DB']->get_table_prefix() . 'f_members m ON m.id=w.w_member_id WHERE ';
         $query .= 'w_time>=' . strval($start_time) . ' AND ';
         $query .= 'w_time<=' . strval($end_time);
         $query .= ' ORDER BY w_time';
@@ -129,7 +127,7 @@ class Hook_admin_stats_warnings extends CMSStatsProvider
 
                 $country = geolocate_ip($row['m_ip_address']);
                 if ($country === null) {
-                    $country = do_lang('UNKNOWN');
+                    $country = '';
                 }
 
                 $explanation = $row['w_explanation'];
@@ -142,18 +140,47 @@ class Hook_admin_stats_warnings extends CMSStatsProvider
                     }
                     $data_buckets['recorded_punishments'][$month][$pivot][$pivot_value][$country][$explanation]++;
                 }
+            }
 
-                if (!isset($data_buckets['recorded_punishment_reasons'][$month][''][$country][$explanation])) {
-                    $data_buckets['recorded_punishment_reasons'][$month][''][$country][$explanation] = 0;
-                }
-                $data_buckets['recorded_punishment_reasons'][$month][''][$country][$explanation]++;
+            $start += $max;
+        } while (!empty($rows));
+    }
 
-                if (has_geolocation_data()) {
-                    if (!isset($data_buckets['recorded_punishment_countries'][$month][''][$country][$explanation])) {
-                        $data_buckets['recorded_punishment_countries'][$month][''][$country][$explanation] = 0;
-                    }
-                    $data_buckets['recorded_punishment_countries'][$month][''][$country][$explanation]++;
+    /**
+     * Preprocess raw data in the database into something we can efficiently draw graphs/conclusions from.
+     * This is for flat and timeless data.
+     *
+     * @param  TIME $start_time Start timestamp
+     * @param  TIME $end_time End timestamp
+     * @param  array $data_buckets Map of data buckets; a map of bucket name to nested maps
+     */
+    public function preprocess_raw_data_flat(int $start_time, int $end_time, array &$data_buckets)
+    {
+        $max = 1000;
+        $start = 0;
+
+        $query = 'SELECT w_time,w_explanation,m_ip_address FROM ' . $GLOBALS['FORUM_DB']->get_table_prefix() . 'f_warnings w JOIN ' . $GLOBALS['FORUM_DB']->get_table_prefix() . 'f_members m ON m.id=w.w_member_id WHERE ';
+        $query .= 'w_time>=' . strval($start_time) . ' AND ';
+        $query .= 'w_time<=' . strval($end_time);
+        $query .= ' ORDER BY w_time';
+        do {
+            $rows = $GLOBALS['FORUM_DB']->query($query, $max, $start);
+            foreach ($rows as $row) {
+                $reason = $row['w_explanation'];
+                $country = geolocate_ip($row['m_ip_address']);
+                if ($country === null) {
+                    $country = '';
                 }
+
+                if (!isset($data_buckets['recorded_punishment_countries'][$country][$reason])) {
+                    $data_buckets['recorded_punishment_countries'][$country][$reason] = 0;
+                }
+                $data_buckets['recorded_punishment_countries'][$country][$reason]++;
+
+                if (!isset($data_buckets['recorded_punishment_reasons'][$reason][$country])) {
+                    $data_buckets['recorded_punishment_reasons'][$reason][$country] = 0;
+                }
+                $data_buckets['recorded_punishment_reasons'][$reason][$country]++;
             }
 
             $start += $max;
@@ -218,33 +245,25 @@ class Hook_admin_stats_warnings extends CMSStatsProvider
                 ];
 
             case 'recorded_punishment_reasons':
-                $range = $this->convert_month_range_filter_to_pair($filters[$bucket . '__month_range']);
-
                 $data = [];
+                $__data = $GLOBALS['SITE_DB']->query_select_value_if_there('stats_preprocessed_flat', 'p_data', ['p_bucket' => $bucket]);
+                if ($__data !== null) {
+                    $_data = @unserialize($__data);
+                    if ($_data === false) {
+                        $_data = [];
+                    }
+                } else {
+                    $_data = [];
+                }
 
-                $where = [
-                    'p_bucket' => $bucket,
-                    'p_pivot' => $pivot,
-                ];
-                $extra = '';
-                $extra .= ' AND p_month>=' . strval($range[0]);
-                $extra .= ' AND p_month<=' . strval($range[1]);
-                $data_rows = $GLOBALS['SITE_DB']->query_select('stats_preprocessed', ['p_data'], $where, $extra);
-
-                foreach ($data_rows as $data_row) {
-                    $_data = @unserialize($data_row['p_data']);
-                    foreach ($_data as $country => $___) {
+                foreach ($_data as $explanation => $_) {
+                    $data[$explanation] = 0;
+                    foreach ($_ as $country => $count) {
                         if ((!empty($filters[$bucket . '__country'])) && ($filters[$bucket . '__country'] != $country)) {
                             continue;
                         }
 
-                        foreach ($___ as $explanation => $total_punishments) {
-                            if (!isset($data[$explanation])) {
-                                $data[$explanation] = 0;
-                            }
-
-                            $data[$explanation] += $total_punishments;
-                        }
+                        $data[$explanation] += $count;
                     }
                 }
 
@@ -256,35 +275,25 @@ class Hook_admin_stats_warnings extends CMSStatsProvider
                 ];
 
             case 'recorded_punishment_countries':
-                require_code('locations');
-
-                $range = $this->convert_month_range_filter_to_pair($filters[$bucket . '__month_range']);
-
                 $data = [];
+                $__data = $GLOBALS['SITE_DB']->query_select_value_if_there('stats_preprocessed_flat', 'p_data', ['p_bucket' => $bucket]);
+                if ($__data !== null) {
+                    $_data = @unserialize($__data);
+                    if ($_data === false) {
+                        $_data = [];
+                    }
+                } else {
+                    $_data = [];
+                }
 
-                $where = [
-                    'p_bucket' => $bucket,
-                    'p_pivot' => $pivot,
-                ];
-                $extra = '';
-                $extra .= ' AND p_month>=' . strval($range[0]);
-                $extra .= ' AND p_month<=' . strval($range[1]);
-                $data_rows = $GLOBALS['SITE_DB']->query_select('stats_preprocessed', ['p_data'], $where, $extra);
-
-                foreach ($data_rows as $data_row) {
-                    $_data = @unserialize($data_row['p_data']);
-                    foreach ($_data as $country => $___) {
-                        foreach ($___ as $explanation => $total_punishments) {
-                            if ((!empty($filters[$bucket . '__reason'])) && ($filters[$bucket . '__reason'] != $explanation)) {
-                                continue;
-                            }
-
-                            if (!isset($data[$country])) {
-                                $data[$country] = 0;
-                            }
-
-                            $data[$country] += $total_punishments;
+                foreach ($_data as $country => $_) {
+                    $data[$country] = 0;
+                    foreach ($_ as $explanation => $count) {
+                        if ((!empty($filters[$bucket . '__reason'])) && ($filters[$bucket . '__reason'] != $explanation)) {
+                            continue;
                         }
+
+                        $data[$country] += $count;
                     }
                 }
 
