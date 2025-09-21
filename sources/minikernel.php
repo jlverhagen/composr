@@ -113,6 +113,9 @@ function init__minikernel()
 
     global $DISABLED_MEMORY_LIMIT;
     $DISABLED_MEMORY_LIMIT = false;
+
+    global $THROWING_ERRORS;
+    $THROWING_ERRORS = false;
 }
 
 /**
@@ -1738,4 +1741,75 @@ function cms_flush_safe()
     if ((ini_get('output_handler') == '') && (ini_get('brotli.output_compression') !== 'On')) {
         flush();
     }
+}
+
+/**
+ * Specify if errors from PHP and the software should all be thrown as exceptions rather than resulting in HTML exit screens.
+ *
+ * @param  boolean $_throwing_errors Whether we should throw errors
+ */
+function set_throw_errors(bool $_throwing_errors = true)
+{
+    global $THROWING_ERRORS;
+    $THROWING_ERRORS = $_throwing_errors;
+}
+
+/**
+ * Find whether we should throw errors, rather than create HTML exit screens with the error messages / correction screens.
+ *
+ * @return boolean Whether to are throwing errors
+ */
+function throwing_errors() : bool
+{
+    global $THROWING_ERRORS;
+    return $THROWING_ERRORS;
+}
+
+/**
+ * Check if a given hook exists.
+ *
+ * @param  ID_TEXT $type The type of hook
+ * @set blocks endpoints modules systems
+ * @param  ID_TEXT $subtype The hook sub-type to find hook implementations for (e.g. the name of a module)
+ * @param  ID_TEXT $hook The name of the hook
+ * @return boolean Whether or not the hook exists
+ */
+function hook_exists(string $type, string $subtype, string $hook) : bool
+{
+    if ((is_file(get_file_base() . '/sources/hooks/' . $type . '/' . $subtype . '/' . $hook . '.php')) || (is_file(get_file_base() . '/sources_custom/hooks/' . $type . '/' . $subtype . '/' . $hook . '.php'))) {
+        return true;
+    }
+
+    return false;
+}
+
+/**
+ * Get the specified hook implementation object and fail if it does not exist.
+ *
+ * @param  ID_TEXT $type The type of hook
+ * @param  ID_TEXT $subtype The hook sub-type to find hook implementations for (e.g. the name of a module)
+ * @param  ID_TEXT $hook The name of the hook
+ * @param  string $classname_prefix The hook class-name prefix, the classes are named {$classname_prefix}{$hook}
+ * @param  boolean $fail_ok Whether to return null opposed to failing if the hook or its object does not exist
+ * @return ?object The hook implementation object (null: hook was not found and $fail_ok was true)
+ */
+function get_hook_ob(string $type, string $subtype, string $hook, string $classname_prefix, bool $fail_ok = false) : ?object
+{
+    if (!hook_exists($type, $subtype, $hook)) {
+        if ($fail_ok) {
+            return null;
+        }
+        $error_message = 'Internal error: Could not find class ' . ($classname_prefix . $hook);
+        warn_exit($error_message);
+    }
+
+    require_code('hooks/' . $type . '/' . $subtype . '/' . $hook);
+
+    $ob = object_factory(($classname_prefix . $hook), true, [], true);
+    if ((!$fail_ok) && ($ob === null)) {
+        $error_message = 'Internal error: Could not construct class ' . ($classname_prefix . $hook);
+        warn_exit($error_message);
+    }
+
+    return $ob;
 }

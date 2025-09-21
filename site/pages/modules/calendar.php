@@ -1702,7 +1702,7 @@ class Module_calendar
         if (($event['e_end_year'] !== null) && ($event['e_end_month'] !== null) && ($event['e_end_day'] !== null)) {
             list($to_raw, $to) = find_event_end_timestamp($event);
 
-            $to_day_formatted = cms_date(do_lang('calendar_date'), $to);
+            $to_day_formatted = cms_date(do_lang('calendar_date_verbose'), $to);
             $human_readable_time_range = date_range($from, $to, ($event['e_start_hour'] !== null));
         } else {
             $to_raw = null;

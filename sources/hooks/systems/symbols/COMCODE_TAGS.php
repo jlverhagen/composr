@@ -46,6 +46,10 @@ class Hook_symbol_COMCODE_TAGS
      */
     public function run(array $param, string $lang, array $escaped) : string
     {
+        if (!isset($GLOBALS['SITE_DB'])) {
+            return '';
+        }
+
         require_code('comcode_renderer');
         _custom_comcode_import($GLOBALS['SITE_DB']);
 
