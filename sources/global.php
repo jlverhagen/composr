@@ -1410,9 +1410,67 @@ function list_untouchable_third_party_files() : array
     ];
 }
 
+/**
+ * Check if a given hook exists.
+ *
+ * @param  ID_TEXT $type The type of hook
+ * @set blocks endpoints modules systems
+ * @param  ID_TEXT $subtype The hook sub-type to find hook implementations for (e.g. the name of a module)
+ * @param  ID_TEXT $hook The name of the hook
+ * @return boolean Whether or not the hook exists
+ */
+function hook_exists(string $type, string $subtype, string $hook) : bool
+{
+    global $HOOKS_CACHE;
+    if (isset($HOOKS_CACHE[$type . '/' . $subtype]) && isset($HOOKS_CACHE[$type . '/' . $subtype][$hook])) {
+        return true;
+    }
+
+    if ((is_file(get_file_base() . '/sources/hooks/' . $type . '/' . $subtype . '/' . $hook . '.php')) || (is_file(get_file_base() . '/sources_custom/hooks/' . $type . '/' . $subtype . '/' . $hook . '.php'))) {
+        return true;
+    }
+
+    return false;
+}
+
+/**
+ * Get the specified hook implementation object and fail if it does not exist.
+ *
+ * @param  ID_TEXT $type The type of hook
+ * @param  ID_TEXT $subtype The hook sub-type to find hook implementations for (e.g. the name of a module)
+ * @param  ID_TEXT $hook The name of the hook
+ * @param  string $classname_prefix The hook class-name prefix, the classes are named {$classname_prefix}{$hook}
+ * @param  boolean $fail_ok Whether to return null opposed to failing if the hook or its object does not exist
+ * @return ?object The hook implementation object (null: hook was not found and $fail_ok was true)
+ */
+function get_hook_ob(string $type, string $subtype, string $hook, string $classname_prefix, bool $fail_ok = false) : ?object
+{
+    if (($fail_ok) && (!hook_exists($type, $subtype, $hook))) {
+        return null;
+    }
+
+    require_code('hooks/' . $type . '/' . $subtype . '/' . $hook, !$fail_ok);
+
+    $ob = object_factory(class_exists(str_replace('Hook_', 'Hx_', $classname_prefix) . $hook) ? (str_replace('Hook_', 'Hx_', $classname_prefix) . $hook) : ($classname_prefix . $hook), true, [], true);
+    if ((!$fail_ok) && ($ob === null)) {
+        $error_message = do_lang_tempcode('INTERNAL_ERROR', escape_html('f45146eaa359580bb0d10db80263e9c3'));
+        if (function_exists('warn_exit')) {
+            warn_exit($error_message, false, true);
+        } else {
+            require_code('critical_errors');
+            critical_error('PASSON', $error_message);
+        }
+    }
+
+    return $ob;
+}
+
 // Useful for basic profiling
 global $PAGE_START_TIME;
 $PAGE_START_TIME = microtime(true);
+
+global $HOOKS_CACHE;
+$HOOKS_CACHE = [];
 
 // Are we in a special version of PHP?
 define('GOOGLE_APPENGINE', isset($_SERVER['APPLICATION_ID']));

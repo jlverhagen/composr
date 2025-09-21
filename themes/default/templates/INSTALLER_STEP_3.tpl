@@ -79,6 +79,14 @@
 
 						<tbody>
 							<tr>
+								<th class="form-table-field-name">{!USE_INNODB}</th>
+								<td class="form-table-field-input">
+									<label for="yes3"><input type="radio" name="use_innodb" value="1" id="yes3" checked="checked" />{!YES}</label>
+									<label class="radio-horiz-spacer" for="no3"><input type="radio" name="use_innodb" value="0" id="no3" />{!NO}</label>
+								</td>
+							</tr>
+						
+							<tr>
 								<th class="form-table-field-name">{!USE_MULTI_DB} <div class="associated-details">{!REQUIRES_MORE_INFO}</div></th>
 								<td class="form-table-field-input">
 									<label for="yes"><input type="radio" name="use_multi_db" value="1" id="yes" />{!YES}</label>

@@ -874,6 +874,8 @@ function step_4() : object
 
     $forum_driver_specifics = $GLOBALS['FORUM_DRIVER']->install_specifics();
 
+    $use_innodb = post_param_integer('use_innodb', 1);
+
     $use_msn = post_param_integer('use_msn', 0);
     if ($use_msn == 0) {
         $use_msn = post_param_integer('use_multi_db', 0);
@@ -1023,6 +1025,7 @@ function step_4() : object
     // Database settings for forum (if applicable)...
 
     $forum_text = new Tempcode();
+    $hidden->attach(form_input_hidden('use_innodb', strval($use_innodb)));
     if (($forum_type == 'cns') || ($forum_type == 'none')) {
         $forum_title = do_lang_tempcode('MEMBER_SETTINGS');
     } else {
@@ -1219,6 +1222,7 @@ function step_5() : object
 
     $url = prepare_installer_url('install.php?step=6');
 
+    $use_innodb = post_param_integer('use_innodb', 1);
     $use_msn = post_param_integer('use_msn', 0);
     if ($use_msn == 0) {
         $use_msn = post_param_integer('use_multi_db', 0);
@@ -1921,6 +1925,7 @@ if (!function_exists(\'git_repos\')) {
             'max',
             'use_msn',
             'use_multi_db',
+            'use_innodb',
 
             'gae_live_db_site',
             'gae_live_db_site_host',
@@ -2162,6 +2167,10 @@ function step_5_uninstall() : object
  */
 function step_5_core() : object
 {
+    // Set a global override because we cannot rely on get_value as we haven't installed the values tables yet.
+    global $USE_INNODB;
+    $USE_INNODB = (post_param_integer('use_innodb', 1) == 1);
+
     $tables = [
         'db_meta',
         'db_meta_indices',
@@ -2220,6 +2229,8 @@ function step_5_core() : object
         'date_and_time' => 'TIME',
     ]);
     $GLOBALS['SITE_DB']->create_index('values', 'date_and_time', ['date_and_time']);
+
+    set_value('innodb', $USE_INNODB ? '1' : '0');
 
     $GLOBALS['SITE_DB']->create_table('config', [
         'c_name' => '*ID_TEXT',
