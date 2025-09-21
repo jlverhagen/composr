@@ -1942,7 +1942,7 @@ function process_calendar_events_for_listing(array $happenings, array $filter, i
             if (((intval($test) > intval($test2)) || (intval(date('m', $to)) != intval(date('m', $from))) || (intval(date('Y', $to)) != intval(date('Y', $from))))) {
                 $ntime = cms_mktime(0, 0, 0, intval(date('m', $from)), intval($test2) + 1, intval(date('Y', $from)));
                 if ($ntime < $period_end) {
-                    $happenings[] = [$e_id, $event, $ntime, $to, $real_from, $real_to, $timezone, $did_timezone_conversion];
+                    $happenings[] = [$e_id, $event, $ntime, $to, $real_from, $real_to, null, null, $timezone, $did_timezone_conversion];
                 }
             }
         }
