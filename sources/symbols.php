@@ -69,13 +69,10 @@ function ecv(string $lang, array $escaped, int $type, string $name, array $param
         // Prepare symbols if we have not done so already
         if ($symbols === null) {
             $symbols = [];
-            if (running_script('install')) {
-                $symbols = ['BETA_CSS_PROPERTY' => object_factory('Hook_symbol_BETA_CSS_PROPERTY')]; // Needed for installer to look good ('get_hook_ob' won't run in initial steps of quick installer)
-            }
         }
 
         // Find the symbol hook / object
-        if (!running_script('install') && !isset($symbols[$name])) {
+        if (!isset($symbols[$name])) {
             $symbols[$name] = get_hook_ob('systems', 'symbols', $name, 'Hook_symbol_', true);
         }
 

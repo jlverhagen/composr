@@ -113,6 +113,9 @@ function init__minikernel()
 
     global $DISABLED_MEMORY_LIMIT;
     $DISABLED_MEMORY_LIMIT = false;
+
+    global $THROWING_ERRORS;
+    $THROWING_ERRORS = false;
 }
 
 /**
@@ -1738,4 +1741,26 @@ function cms_flush_safe()
     if ((ini_get('output_handler') == '') && (ini_get('brotli.output_compression') !== 'On')) {
         flush();
     }
+}
+
+/**
+ * Specify if errors from PHP and the software should all be thrown as exceptions rather than resulting in HTML exit screens.
+ *
+ * @param  boolean $_throwing_errors Whether we should throw errors
+ */
+function set_throw_errors(bool $_throwing_errors = true)
+{
+    global $THROWING_ERRORS;
+    $THROWING_ERRORS = $_throwing_errors;
+}
+
+/**
+ * Find whether we should throw errors, rather than create HTML exit screens with the error messages / correction screens.
+ *
+ * @return boolean Whether to are throwing errors
+ */
+function throwing_errors() : bool
+{
+    global $THROWING_ERRORS;
+    return $THROWING_ERRORS;
 }

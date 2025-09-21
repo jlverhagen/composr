@@ -48,6 +48,10 @@ class Hook_symbol_COOKIE_DATA_JSON
     {
         $value = '{}';
 
+        if (running_script('install')) {
+            return $value;
+        }
+
         if (function_exists('find_all_hook_obs')) {
             $_value = [];
 
