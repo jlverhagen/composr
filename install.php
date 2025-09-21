@@ -2186,6 +2186,12 @@ function step_5_core() : object
         'i_name' => '*ID_TEXT',
         'i_fields' => 'LONG_TEXT',
     ]);
+    $GLOBALS['SITE_DB']->create_table('db_meta_foreign_keys', [
+        'from_table' => '*ID_TEXT',
+        'from_field' => '*ID_TEXT',
+        'to_table' => 'ID_TEXT',
+        'to_field' => 'ID_TEXT',
+    ]);
 
     $tables = [
         'translate',

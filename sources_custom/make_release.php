@@ -844,6 +844,7 @@ function make_database_manifest() // Builds db_meta.bin, which is used for datab
 
     $table_addons = [];
     $index_addons = [];
+    $foreign_key_addons = [];
     $privilege_addons = [];
 
     require_code('files2');
@@ -879,6 +880,19 @@ function make_database_manifest() // Builds db_meta.bin, which is used for datab
                 $index_name = $index_matches[2][$i];
                 $universal_index_key = $table_name . '__' . $index_name;
                 $index_addons[$universal_index_key] = $addon_name;
+            }
+
+            $fk_regexp = '#->create_foreign_key\(\'(\w+)\'\s*,\s*\'(\w+)\'\s*,\s*\'(\w+)\'\s*,\s*\'(\w+)\'\)#';
+            $fk_matches = [];
+            $fk_num_matches = preg_match_all($fk_regexp, $contents, $fk_matches);
+            for ($i = 0; $i < $fk_num_matches; $i++) {
+                $from_table = $fk_matches[1][$i];
+                $from_field = $fk_matches[2][$i];
+                $to_table = $fk_matches[3][$i];
+                $to_field = $fk_matches[4][$i];
+
+                $universal_fk_key = $from_table . '__' . $from_field . '||' . $to_table . '__' . $to_field;
+                $foreign_key_addons[$universal_fk_key] = $addon_name;
             }
 
             if ($path == 'sources/cns_install.php') {
@@ -923,6 +937,29 @@ function make_database_manifest() // Builds db_meta.bin, which is used for datab
                     }
                 } else {
                     $index_addons[$universal_index_key] = $table_addons[$table_name];
+                }
+            }
+        }
+
+        $all_foreign_keys = $GLOBALS['SITE_DB']->query_select('db_meta_foreign_keys', ['from_table', 'from_field', 'to_table', 'to_field']);
+        foreach ($all_foreign_keys as $fk) {
+            $from_table = $fk['from_table'];
+            $from_field = $fk['from_field'];
+            $to_table = $fk['to_table'];
+            $to_field = $fk['to_field'];
+            $universal_fk_key = $from_table . '__' . $from_field . '||' . $to_table . '__' . $to_field;
+
+            if (!isset($foreign_key_addons[$universal_fk_key])) {
+                // fall back to the owning addon of the from-table
+                if (isset($table_addons[$from_table])) {
+                    $foreign_key_addons[$universal_fk_key] = $table_addons[$from_table];
+                } else {
+                    if (!table_has_purpose_flag($from_table, TABLE_PURPOSE__NON_BUNDLED | TABLE_PURPOSE__NOT_KNOWN)) {
+                        // parallels index/table handling above
+                        if (get_param_integer('skip_errors', 0) != 1) {
+                            attach_message('Foreign key ' . $from_table . '.' . $from_field . ' in meta database could not be sourced.', 'warn', false, true);
+                        }
+                    }
                 }
             }
         }
@@ -976,6 +1013,28 @@ function make_database_manifest() // Builds db_meta.bin, which is used for datab
         ];
     }
 
+    $fk_details = $GLOBALS['SITE_DB']->query_select('db_meta_foreign_keys', ['*']);
+    $foreign_keys = [];
+    foreach ($fk_details as $fk) {
+        $from_table = $fk['from_table'];
+        $from_field = $fk['from_field'];
+        $to_table = $fk['to_table'];
+        $to_field = $fk['to_field'];
+        $universal_fk_key = $from_table . '__' . $from_field . '||' . $to_table . '__' . $to_field;
+
+        if (!isset($foreign_key_addons[$universal_fk_key])) {
+            continue; // skip ones we can’t attribute (e.g. non-bundled/unknown)
+        }
+
+        $foreign_keys[$universal_fk_key] = [
+            'addon' => $foreign_key_addons[$universal_fk_key],
+            'from_table' => $from_table,
+            'from_field' => $from_field,
+            'to_table' => $fk['to_table'],
+            'to_field' => $fk['to_field'],
+        ];
+    }
+
     $privilege_details = $GLOBALS['SITE_DB']->query_select('privilege_list', ['*']);
     $privileges = [];
     foreach ($privilege_details as $privilege) {
@@ -993,6 +1052,7 @@ function make_database_manifest() // Builds db_meta.bin, which is used for datab
     $data = [
         'tables' => $tables,
         'indices' => $indices,
+        'foreign_keys' => $foreign_keys,
         'privileges' => $privileges,
     ];
 
