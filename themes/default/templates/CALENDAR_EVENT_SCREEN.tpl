@@ -93,8 +93,6 @@
 								<time class="dtstart" datetime="{TIME_VCAL*}" itemprop="startDate">{DAY*}</time>
 
 								{+START,IF_PASSED,TO_DAY}{+START,IF,{$NEQ,{TO_DAY},{DAY}}}
-									&ndash;
-
 									<time class="dtend" datetime="{TO_TIME_VCAL*}" itemprop="endDate">{TO_DAY*}</time>
 								{+END}{+END}
 							</td>

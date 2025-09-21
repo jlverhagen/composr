@@ -23,8 +23,8 @@
 
 						<td class="dtstartcol">
 							{+START,IF_NON_EMPTY,{TZ}}<abbr title="{TZ*}">{+END}
-							<time {+START,IF,{$EQ,{TIME_WRITTEN},{!ALL_DAY_EVENT}}} style="display: none"{+END} class="dtstart" datetime="{TIME_VCAL*}" itemprop="startDate">{$?,{$EQ,{TIME_WRITTEN},{!ALL_DAY_EVENT}},{TIME_VCAL*},{TIME*}}</time>
-							{+START,IF_PASSED,TO_TIME}{+START,IF,{$NEQ,{TIME},{TO_TIME}}}{+START,IF,{$NEQ,{TIME_WRITTEN},{!ALL_DAY_EVENT}}}<time class="dtend" datetime="{TO_TIME_VCAL*}" itemprop="endDate">{TO_TIME*}</time>{+END}{+END}{+END}
+							<time class="dtstart" datetime="{TIME_VCAL*}" itemprop="startDate">{TIME*}</time>
+							{+START,IF_PASSED,TO_TIME}{+START,IF,{$NEQ,{TIME},{TO_TIME}}}<time class="dtend" datetime="{TO_TIME_VCAL*}" itemprop="endDate">{TO_TIME*}</time>{+END}{+END}
 							{+START,IF_NON_EMPTY,{TZ}}</abbr>{+END}
 						</td>
 
