@@ -35,7 +35,7 @@ class Module_admin_permissions
         $info['organisation'] = 'Composr';
         $info['hacked_by'] = null;
         $info['hack_version'] = null;
-        $info['version'] = 10;
+        $info['version'] = 11;
         $info['update_require_upgrade'] = true;
         $info['locked'] = true;
         $info['min_cms_version'] = 11.0;
@@ -215,6 +215,11 @@ class Module_admin_permissions
             add_privilege('SUBMISSION', 'bypass_spam_heuristics', false);
 
             add_privilege('SUBMISSION', 'avoid_captcha', true, false, true);
+        }
+
+        if (($upgrade_from === null) || ($upgrade_from < 11)) { // 11.beta9
+            $GLOBALS['FORUM_DB']->create_foreign_key('group_page_access', 'zone_name', 'zones', 'zone_name');
+            $GLOBALS['FORUM_DB']->create_foreign_key('group_zone_access', 'zone_name', 'zones', 'zone_name');
         }
     }
 

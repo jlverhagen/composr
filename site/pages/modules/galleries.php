@@ -35,7 +35,7 @@ class Module_galleries
         $info['organisation'] = 'Composr';
         $info['hacked_by'] = null;
         $info['hack_version'] = null;
-        $info['version'] = 12;
+        $info['version'] = 13;
         $info['update_require_upgrade'] = true;
         $info['locked'] = false;
         $info['min_cms_version'] = 11.0;
@@ -294,6 +294,12 @@ class Module_galleries
         if (($upgrade_from !== null) && ($upgrade_from < 12)) { // LEGACY: 11.beta7
             $GLOBALS['SITE_DB']->add_table_field('images', 'validation_time', '?TIME');
             $GLOBALS['SITE_DB']->add_table_field('videos', 'validation_time', '?TIME');
+        }
+
+        if (($upgrade_from === null) || ($upgrade_from < 13)) { // 11.beta9
+            $GLOBALS['FORUM_DB']->create_foreign_key('galleries', 'g_owner', 'f_members', 'id');
+            $GLOBALS['FORUM_DB']->create_foreign_key('galleries', 'parent_id', 'galleries', 'name');
+            $GLOBALS['FORUM_DB']->create_foreign_key('images', 'cat', 'galleries', 'name');
         }
     }
 

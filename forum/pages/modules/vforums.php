@@ -218,7 +218,7 @@ class Module_vforums
 
         $title = do_lang_tempcode('INVOLVED_TOPICS');
 
-        if (($GLOBALS['FORUM_DRIVER']->get_post_count(get_member()) > 5000) && (get_value('innodb') !== '1')) { // Too many posts, so make time-sensitive
+        if (($GLOBALS['FORUM_DRIVER']->get_post_count(get_member()) > 5000) && db_is_innodb()) { // Too many posts, so make time-sensitive
             $condition = 'pos.p_time>' . strval(time() - (60 * 60 * 24 * 365));
         } else {
             $condition = '1=1';

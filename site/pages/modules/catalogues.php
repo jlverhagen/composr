@@ -35,7 +35,7 @@ class Module_catalogues
         $info['organisation'] = 'Composr';
         $info['hacked_by'] = null;
         $info['hack_version'] = null;
-        $info['version'] = 13;
+        $info['version'] = 14;
         $info['update_require_upgrade'] = true;
         $info['locked'] = false;
         $info['min_cms_version'] = 11.0;
@@ -676,6 +676,31 @@ class Module_catalogues
 
         if (($upgrade_from !== null) && ($upgrade_from < 13)) { // LEGACY: 11.beta7
             $GLOBALS['SITE_DB']->add_table_field('catalogue_entries', 'ce_validation_time', '?TIME');
+        }
+
+        if (($upgrade_from === null) || ($upgrade_from < 14)) { // 11.beta9
+            $GLOBALS['SITE_DB']->create_foreign_key('catalogue_categories', 'cc_move_target_id', 'catalogue_categories', 'id');
+            $GLOBALS['SITE_DB']->create_foreign_key('catalogue_categories', 'cc_parent_id', 'catalogue_categories', 'id');
+            $GLOBALS['SITE_DB']->create_foreign_key('catalogue_categories', 'c_name', 'catalogues', 'c_name');
+            $GLOBALS['SITE_DB']->create_foreign_key('catalogue_cat_treecache', 'cc_ancestor_id', 'catalogue_categories', 'id');
+            $GLOBALS['SITE_DB']->create_foreign_key('catalogue_cat_treecache', 'cc_id', 'catalogue_categories', 'id');
+            $GLOBALS['SITE_DB']->create_foreign_key('catalogue_childcountcache', 'cc_id', 'catalogue_categories', 'id');
+            $GLOBALS['SITE_DB']->create_foreign_key('catalogue_efv_float', 'ce_id', 'catalogue_entries', 'id');
+            $GLOBALS['SITE_DB']->create_foreign_key('catalogue_efv_float', 'cf_id', 'catalogue_fields', 'id');
+            $GLOBALS['SITE_DB']->create_foreign_key('catalogue_efv_integer', 'ce_id', 'catalogue_entries', 'id');
+            $GLOBALS['SITE_DB']->create_foreign_key('catalogue_efv_integer', 'cf_id', 'catalogue_fields', 'id');
+            $GLOBALS['SITE_DB']->create_foreign_key('catalogue_efv_long', 'ce_id', 'catalogue_entries', 'id');
+            $GLOBALS['SITE_DB']->create_foreign_key('catalogue_efv_long', 'cf_id', 'catalogue_fields', 'id');
+            $GLOBALS['SITE_DB']->create_foreign_key('catalogue_efv_long_trans', 'ce_id', 'catalogue_entries', 'id');
+            $GLOBALS['SITE_DB']->create_foreign_key('catalogue_efv_long_trans', 'cf_id', 'catalogue_fields', 'id');
+            $GLOBALS['SITE_DB']->create_foreign_key('catalogue_efv_short', 'ce_id', 'catalogue_entries', 'id');
+            $GLOBALS['SITE_DB']->create_foreign_key('catalogue_efv_short', 'cf_id', 'catalogue_fields', 'id');
+            $GLOBALS['SITE_DB']->create_foreign_key('catalogue_efv_short_trans', 'ce_id', 'catalogue_entries', 'id');
+            $GLOBALS['SITE_DB']->create_foreign_key('catalogue_efv_short_trans', 'cf_id', 'catalogue_fields', 'id');
+            $GLOBALS['SITE_DB']->create_foreign_key('catalogue_entries', 'cc_id', 'catalogue_categories', 'id');
+            $GLOBALS['SITE_DB']->create_foreign_key('catalogue_entries', 'c_name', 'catalogues', 'c_name');
+            $GLOBALS['SITE_DB']->create_foreign_key('catalogue_entry_linkage', 'catalogue_entry_id', 'catalogue_entries', 'id');
+            $GLOBALS['SITE_DB']->create_foreign_key('catalogue_fields', 'c_name', 'catalogues', 'c_name');
         }
     }
 

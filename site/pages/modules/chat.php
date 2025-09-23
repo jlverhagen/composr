@@ -35,7 +35,7 @@ class Module_chat
         $info['organisation'] = 'Composr';
         $info['hacked_by'] = null;
         $info['hack_version'] = null;
-        $info['version'] = 14;
+        $info['version'] = 15;
         $info['update_require_upgrade'] = true;
         $info['locked'] = false;
         $info['min_cms_version'] = 11.0;
@@ -262,6 +262,12 @@ class Module_chat
 
         if (($upgrade_from !== null) && ($upgrade_from < 14)) { // LEGACY: 11.beta1
             $GLOBALS['SITE_DB']->alter_table_field('chat_rooms', 'room_owner', '?MEMBER');
+        }
+
+        if (($upgrade_from === null) || ($upgrade_from < 15)) { // 11.beta9
+            $GLOBALS['SITE_DB']->create_foreign_key('chat_active', 'room_id', 'chat_rooms', 'id');
+            $GLOBALS['SITE_DB']->create_foreign_key('chat_events', 'e_room_id', 'chat_rooms', 'id');
+            $GLOBALS['SITE_DB']->create_foreign_key('chat_messages', 'room_id', 'chat_rooms', 'id');
         }
     }
 

@@ -40,7 +40,7 @@ class Module_admin_version
         $info['organisation'] = 'Composr';
         $info['hacked_by'] = null;
         $info['hack_version'] = null;
-        $info['version'] = 24;
+        $info['version'] = 25;
         $info['locked'] = true;
         $info['update_require_upgrade'] = true;
         $info['min_cms_version'] = 11.0;
@@ -1378,6 +1378,11 @@ class Module_admin_version
             }
 
             $GLOBALS['SITE_DB']->alter_table_field('cache', 'identifier', 'ID_TEXT');
+        }
+
+        if (($upgrade_from === null) || ($upgrade_from < 25)) { // 11.beta9
+            $GLOBALS['SITE_DB']->create_foreign_key('cached_comcode_pages', 'the_zone', 'zones', 'zone_name');
+            $GLOBALS['SITE_DB']->create_foreign_key('comcode_pages', 'the_zone', 'zones', 'zone_name');
         }
 
         // Ensure for every install / upgrade that the entry points for custom zones are updated to match the adminzone one

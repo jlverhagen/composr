@@ -481,6 +481,15 @@ function version_specific() : bool
                 warn_exit('You have a zone named home. In v11, the default page name for zones was changed from start to home. This means you cannot have a zone named home. Please rename the home folder in your installation and then run this step again.');
             }
 
+            // New DB meta table must be added early
+            $GLOBALS['SITE_DB']->create_table('db_meta_foreign_keys', [
+                'id' => '*AUTO',
+                'from_table' => 'ID_TEXT',
+                'from_field' => 'ID_TEXT',
+                'to_table' => 'ID_TEXT',
+                'to_field' => 'ID_TEXT',
+            ]);
+
             // Even though this is technically Conversr, it absolutely has to be done first because custom fields have to be modified early
             if ($GLOBALS['FORUM_DB']->table_exists('f_custom_fields')) {
                 $GLOBALS['FORUM_DB']->add_table_field('f_custom_fields', 'cf_include_in_main_search', 'BINARY');
@@ -532,6 +541,9 @@ function version_specific() : bool
             $GLOBALS['SITE_DB']->alter_table_field('sessions', 'cache_username', 'ID_TEXT');
             $GLOBALS['SITE_DB']->alter_table_field('sessions', 'last_activity', 'TIME', 'last_activity_time');
             $GLOBALS['SITE_DB']->alter_table_field('menu_items', 'i_url', 'SHORT_TEXT', 'i_link');
+
+            // InnoDB
+            $GLOBALS['SITE_DB']->create_foreign_key('attachment_refs', 'a_id', 'attachments', 'id');
 
             echo do_lang('UPGRADER_UPGRADED_CORE_TABLES', '11');
 
@@ -702,7 +714,7 @@ function database_specific() : bool
         $done_something = true;
     }
 
-    // LEGACY: 11 beta7. Remove prior to release.
+    // LEGACY: 11 beta7. Remove prior to v11 release.
     if ((is_numeric($upgrade_from)) && (intval($upgrade_from) < 1739479687)) {
         $GLOBALS['SITE_DB']->add_table_field('comcode_pages', 'p_validation_time', '?TIME');
 
@@ -741,7 +753,7 @@ function database_specific() : bool
         $done_something = true;
     }
 
-    // LEGACY: 11 beta7. Remove prior to release.
+    // LEGACY: 11 beta7. Remove prior to v11 release.
     if ((is_numeric($upgrade_from)) && (intval($upgrade_from) < 1740769698)) {
         $GLOBALS['FORUM_DB']->add_table_field('f_members', 'm_region', 'ID_TEXT');
 
@@ -758,12 +770,46 @@ function database_specific() : bool
         $done_something = true;
     }
 
-    // LEGACY: 11 beta7. Remove prior to release.
+    // LEGACY: 11 beta7. Remove prior to v11 release.
     if ((is_numeric($upgrade_from)) && (intval($upgrade_from) < 1741632531)) {
         // Migrate _config.php multi_lang_content to a value
         global $SITE_INFO;
         $multi_lang_content = (((isset($SITE_INFO['multi_lang_content'])) && ($SITE_INFO['multi_lang_content'] == '0')) ? '0' : '1');
         set_value('multi_lang_content', $multi_lang_content);
+    }
+
+    // LEGACY: 11.beta9. Remove prior to v11 release.
+    if ((is_numeric($upgrade_from)) && (intval($upgrade_from) < 1758492212)) {
+        $GLOBALS['SITE_DB']->create_foreign_key('attachment_refs', 'a_id', 'attachments', 'id');
+        $GLOBALS['FORUM_DB']->create_foreign_key('group_privileges', 'privilege', 'privilege_list', 'the_name');
+        $GLOBALS['FORUM_DB']->create_foreign_key('group_privileges', 'the_page', 'modules', 'module_the_name');
+
+        $GLOBALS['FORUM_DB']->create_foreign_key('f_forums', 'f_cache_last_forum_id', 'f_forums', 'id');
+        $GLOBALS['FORUM_DB']->create_foreign_key('f_forums', 'f_cache_last_topic_id', 'f_topics', 'id');
+        $GLOBALS['FORUM_DB']->create_foreign_key('f_forums', 'f_forum_grouping_id', 'f_forum_groupings', 'id');
+        $GLOBALS['FORUM_DB']->create_foreign_key('f_forums', 'f_parent_forum_id', 'f_forums', 'id');
+        $GLOBALS['FORUM_DB']->create_foreign_key('f_forum_intro_ip', 'i_forum_id', 'f_forums', 'id');
+        $GLOBALS['FORUM_DB']->create_foreign_key('f_forum_intro_member', 'i_forum_id', 'f_forums', 'id');
+        $GLOBALS['FORUM_DB']->create_foreign_key('f_group_approvals', 'ga_old_group_id', 'f_groups', 'id');
+        $GLOBALS['FORUM_DB']->create_foreign_key('f_group_approvals', 'ga_new_group_id', 'f_groups', 'id');
+        $GLOBALS['FORUM_DB']->create_foreign_key('f_group_join_log', 'usergroup_id', 'f_groups', 'id');
+        $GLOBALS['FORUM_DB']->create_foreign_key('f_member_cpf_perms', 'field_id', 'f_custom_fields', 'id');
+        $GLOBALS['FORUM_DB']->create_foreign_key('f_moderator_logs', 'l_warning_id', 'f_warnings', 'id');
+        $GLOBALS['FORUM_DB']->create_foreign_key('f_poll_answers', 'pa_poll_id', 'f_polls', 'id');
+        $GLOBALS['FORUM_DB']->create_foreign_key('f_poll_votes', 'pv_answer_id', 'f_poll_answers', 'id');
+        $GLOBALS['FORUM_DB']->create_foreign_key('f_poll_votes', 'pv_poll_id', 'f_polls', 'id');
+        $GLOBALS['FORUM_DB']->create_foreign_key('f_posts', 'p_cache_forum_id', 'f_forums', 'id');
+        $GLOBALS['FORUM_DB']->create_foreign_key('f_posts', 'p_parent_id', 'f_posts', 'id');
+        $GLOBALS['FORUM_DB']->create_foreign_key('f_posts', 'p_topic_id', 'f_topics', 'id');
+        $GLOBALS['FORUM_DB']->create_foreign_key('f_read_logs', 'l_topic_id', 'f_topics', 'id');
+        $GLOBALS['FORUM_DB']->create_foreign_key('f_special_pt_access', 's_topic_id', 'f_topics', 'id');
+        $GLOBALS['FORUM_DB']->create_foreign_key('f_topics', 't_cache_first_post_id', 'f_posts', 'id');
+        $GLOBALS['FORUM_DB']->create_foreign_key('f_topics', 't_cache_last_post_id', 'f_posts', 'id');
+        $GLOBALS['FORUM_DB']->create_foreign_key('f_topics', 't_forum_id', 'f_forums', 'id');
+        $GLOBALS['FORUM_DB']->create_foreign_key('f_topics', 't_poll_id', 'f_polls', 'id');
+
+        $GLOBALS['FORUM_DB']->create_foreign_key('f_warnings', 'w_topic_id', 'f_topics', 'id');
+        $GLOBALS['FORUM_DB']->create_foreign_key('f_warnings_punitive', 'p_warning_id', 'f_warnings', 'id');
     }
 
     return $done_something;

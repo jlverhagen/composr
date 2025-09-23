@@ -527,9 +527,8 @@ abstract class Database_super_mysql extends DatabaseDriver
             $_fields .= ' ' . $perhaps_null . ',' . "\n";
         }
 
-        global $USE_INNODB;
-        $innodb = (($USE_INNODB) || (!function_exists('get_value')) || (get_value('innodb') == '1')); // As of 11.beta9, Default to InnoDB
-        $table_type = ($innodb ? 'INNODB' : 'MyISAM');
+        // As of 11.beta9, Default to InnoDB
+        $table_type = (db_is_innodb() ? 'INNODB' : 'MyISAM');
         $type_key = 'engine';
         /*if ($raw_table_name == 'sessions') {
             $table_type = 'HEAP';   Some MySQL servers are very regularly reset
@@ -605,7 +604,7 @@ abstract class Database_super_mysql extends DatabaseDriver
      */
     public function get_table_count_approx(string $table, $connection) : ?int
     {
-        if ((get_value('slow_counts') === '1') || (get_value('innodb') === '1')) {
+        if ((get_value('slow_counts') === '1') || db_is_innodb()) {
             $sql = 'SELECT TABLE_ROWS FROM information_schema.tables WHERE table_schema=DATABASE() AND TABLE_NAME=\'' . $this->escape_string($table) . '\'';
             $values = $this->query($sql, $connection, null, 0, true);
             if (!isset($values[0])) {

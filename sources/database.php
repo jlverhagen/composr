@@ -669,6 +669,30 @@ function get_db_forums_password() : string
 }
 
 /**
+ * Find out if we are using the InnoDB storage engine.
+ *
+ * @return boolean Whether we are using InnoDB
+ */
+function db_is_innodb() : bool
+{
+    if (strpos(get_db_type(), 'mysql') === false) {
+        return false;
+    }
+
+    // Used by the installer since the values table does not exist yet
+    global $USE_INNODB;
+    if ($USE_INNODB) {
+        return true;
+    }
+
+    if (function_exists('get_value') && (get_value('innodb') == '1')) {
+        return true;
+    }
+
+    return false;
+}
+
+/**
  * Base class for database drivers.
  *
  * @package core_database_drivers
@@ -3177,7 +3201,7 @@ class DatabaseConnector
         }
 
         // InnoDB tables do not have table-level locking, and non-MySQL databases also do not support it
-        if (strpos(get_db_type(), 'mysql') === false || get_value('innodb') === '1') {
+        if ((strpos(get_db_type(), 'mysql') === false) || db_is_innodb()) {
             return false;
         }
 

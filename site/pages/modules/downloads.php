@@ -35,7 +35,7 @@ class Module_downloads
         $info['organisation'] = 'Composr';
         $info['hacked_by'] = null;
         $info['hack_version'] = null;
-        $info['version'] = 11;
+        $info['version'] = 12;
         $info['update_require_upgrade'] = true;
         $info['locked'] = false;
         $info['min_cms_version'] = 11.0;
@@ -223,6 +223,14 @@ class Module_downloads
 
         if (($upgrade_from !== null) && ($upgrade_from < 11)) { // LEGACY: 11.beta7
             $GLOBALS['SITE_DB']->add_table_field('download_downloads', 'validation_time', '?TIME');
+        }
+
+        if (($upgrade_from === null) || ($upgrade_from < 12)) { // 11.beta9
+            $GLOBALS['SITE_DB']->create_foreign_key('download_categories', 'parent_id', 'download_categories', 'id');
+            $GLOBALS['SITE_DB']->create_foreign_key('download_downloads', 'category_id', 'download_categories', 'id');
+            $GLOBALS['SITE_DB']->create_foreign_key('download_downloads', 'download_licence_id', 'download_licences', 'id');
+            $GLOBALS['SITE_DB']->create_foreign_key('download_downloads', 'out_mode_id', 'download_downloads', 'id');
+            $GLOBALS['SITE_DB']->create_foreign_key('download_logging', 'id', 'download_downloads', 'id');
         }
     }
 

@@ -2274,6 +2274,9 @@ function step_5_core() : object
     ], false, false, true);
     $GLOBALS['SITE_DB']->create_index('group_privileges', 'group_id', ['group_id']);
 
+    $GLOBALS['FORUM_DB']->create_foreign_key('group_privileges', 'privilege', 'privilege_list', 'the_name');
+    $GLOBALS['FORUM_DB']->create_foreign_key('group_privileges', 'the_page', 'modules', 'module_the_name');
+
     $GLOBALS['SITE_DB']->create_table('privilege_list', [ // Why does this table exist? It could be done cleanly in hooks (which are easier to version) like config is, but when we add a privilege we do need to carefully define who gets it (as an immediate-op with potential complex code) -- it is cleaner to just handle definition in same place as that code).
         'p_section' => 'ID_TEXT',
         'the_name' => '*ID_TEXT',
@@ -2301,6 +2304,8 @@ function step_5_core() : object
         'r_referer_id' => 'ID_TEXT',
         'a_id' => 'AUTO_LINK',
     ]);
+
+    $GLOBALS['SITE_DB']->create_foreign_key('attachment_refs', 'a_id', 'attachments', 'id');
 
     return do_template('INSTALLER_DONE_SOMETHING', ['_GUID' => 'c6b6d92c670b7f1b223798ace54102f9', 'SOMETHING' => do_lang_tempcode('PRIMARY_CORE_INSTALLED')]);
 }

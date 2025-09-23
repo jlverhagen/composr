@@ -167,6 +167,11 @@ function upgrade_script()
             upgrader_db_upgrade_screen(); // Already echoed to help with error tracking
             break;
 
+        case 'innodb_upgrade':
+            require_code('upgrade_innodb_upgrade');
+            upgrader_innodb_upgrade_screen(); // Already echoed to help with error tracking
+            break;
+
         case 'theme_upgrade':
             require_code('upgrade_themes');
             appengine_live_guard();
@@ -543,6 +548,7 @@ function upgrader_menu_screen() : string
 
     // Database upgrade link
     $l_db_upgrade = upgrader_link('upgrader.php?type=db_upgrade', do_lang('UPGRADER_DATABASE_UPGRADE'), false);
+    $l_innodb_upgrade = upgrader_link('upgrader.php?type=innodb_upgrade', do_lang('UPGRADER_INNODB_UPGRADE'), false);
 
     // Theme upgrade link
     $l_theme_upgrade = upgrader_link('upgrader.php?type=theme_upgrade', do_lang('UPGRADER_THEME_UPGRADE'), false);
@@ -653,6 +659,15 @@ function upgrader_menu_screen() : string
     $out .= "
                     <tr><th>{$_step_num}</th><td>{$l_db_upgrade}<br />{$l_up_info}</td><td>" . escape_html(display_time_period(60 * 5)) . "</td></tr>
     ";
+
+    // InnoDB upgrade
+    if ((!db_is_innodb()) && ($show_mysql_buttons)) {
+        $step_num++;
+        $_step_num = strval($step_num);
+        $out .= "
+                    <tr><th>{$_step_num}</th><td>{$l_innodb_upgrade}<td>" . escape_html(display_time_period(60 * 30)) . "</td></tr>
+        ";
+    }
 
     // Theme upgrader
     if (is_maintained('theme_upgrader')) {
