@@ -25,16 +25,14 @@
 							</th>
 
 							<td>
+								{+START,IF_NON_EMPTY,{TZ}}<abbr title="{TZ*}">{+END}
 								<time {+START,IF,{$EQ,{TIME_WRITTEN},{!ALL_DAY_EVENT}}} style="display: none"{+END} class="dtstart" datetime="{TIME_VCAL*}" itemprop="startDate">{$?,{$EQ,{TIME_WRITTEN},{!ALL_DAY_EVENT}},{TIME_VCAL*},{TIME*}}</time>
+								{+START,IF_PASSED,TO_TIME}{+START,IF,{$NEQ,{TIME},{TO_TIME}}}{+START,IF,{$NEQ,{TIME_WRITTEN},{!ALL_DAY_EVENT}}}<time class="dtend" datetime="{TO_TIME_VCAL*}" itemprop="endDate">{TO_TIME*}</time>{+END}{+END}{+END}
+								{+START,IF_NON_EMPTY,{TZ}}</abbr>{+END}
 							</td>
 
 							<td {+START,IF,{$EQ,{TIME_WRITTEN},{!ALL_DAY_EVENT}}} colspan="2"{+END}>
 								<a href="{VIEW_URL*}" class="url" itemprop="name"><span class="summary">{E_TITLE*}</span></a>
-								{+START,IF_PASSED,TO_TIME}
-									<span {+START,IF,{$EQ,{TIME},{TO_TIME}}} style="display: none"{+END}>
-										<span class="associated-details">({!EVENT_ENDS_ON,<time class="dtend" datetime="{TO_TIME_VCAL*}" itemprop="endDate">{TO_TIME*}</time>})</span>
-									</span>
-								{+END}
 							</td>
 						</tr>
 					{+END}

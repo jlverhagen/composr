@@ -42,7 +42,7 @@ class Hook_addon_registry_authors
      */
     public function get_version() : string
     {
-        return '11.0.2'; // addon_version_auto_update e3369d8a5b08dc4a33ce1c56779371b7
+        return '11.0.3'; // addon_version_auto_update 9f8594d67c566cd7679a6cb980cba27b
     }
 
     /**
@@ -144,6 +144,7 @@ class Hook_addon_registry_authors
             'sources/hooks/systems/privacy/authors.php',
             'sources/hooks/systems/rss/authors.php',
             'sources/hooks/systems/sitemap/author.php',
+            'sources/hooks/systems/symbols/AUTHOR_MEMBER.php',
             'themes/default/css/authors.css',
             'themes/default/images/icons/menu/cms/author_set_own_profile.svg',
             'themes/default/images/icons/menu/rich_content/authors.svg',

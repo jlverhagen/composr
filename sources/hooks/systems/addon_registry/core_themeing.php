@@ -148,6 +148,7 @@ class Hook_addon_registry_core_themeing
             'sources/hooks/systems/snippets/exists_theme.php',
             'sources/hooks/systems/snippets/template_editor_load.php',
             'sources/hooks/systems/snippets/template_editor_save.php',
+            'sources/hooks/systems/symbols/THEME_SEED.php',
             'sources/lorem.php',
             'sources/themes2.php',
             'sources/themes3.php',

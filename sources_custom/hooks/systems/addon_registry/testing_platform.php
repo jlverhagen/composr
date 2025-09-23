@@ -37,7 +37,7 @@ class Hook_addon_registry_testing_platform
      */
     public function get_version() : string
     {
-        return '11.0.2'; // addon_version_auto_update 0f4cd22ec5dee7604ccb278418ea0b27
+        return '11.0.3'; // addon_version_auto_update 10cd6b17a732b8fc94e02bc5f80b2c08
     }
 
     /**
@@ -822,13 +822,11 @@ We hope other users will appreciate your efforts and give you some points to rew
             '_tests/tests/async_tests/news_categories.php',
             '_tests/tests/async_tests/newsletters.php',
             '_tests/tests/async_tests/notifications.php',
-            '_tests/tests/async_tests/optimisations_fragile.php',
             '_tests/tests/async_tests/params.php',
             '_tests/tests/async_tests/password_censor.php',
             '_tests/tests/async_tests/password_strength.php',
             '_tests/tests/async_tests/permission_modules.php',
             '_tests/tests/async_tests/permissions.php',
-            '_tests/tests/async_tests/persistent_cache.php',
             '_tests/tests/async_tests/php_versioning.php',
             '_tests/tests/async_tests/phpbb_post_parser.php',
             '_tests/tests/async_tests/phpstub_accuracy.php',
@@ -913,6 +911,7 @@ We hope other users will appreciate your efforts and give you some points to rew
             '_tests/tests/first_tests/modularisation.php',
             '_tests/tests/index.html',
             '_tests/tests/regression_tests/.htaccess',
+            '_tests/tests/regression_tests/exploit_regressions.php',
             '_tests/tests/regression_tests/index.html',
             '_tests/tests/regression_tests/input_filter_post_block.php',
             '_tests/tests/sync_tests/.htaccess',
@@ -979,6 +978,7 @@ We hope other users will appreciate your efforts and give you some points to rew
             '_tests/tests/sync_tests/override_notes_consistency.php',
             '_tests/tests/sync_tests/overused_globals.php',
             '_tests/tests/sync_tests/path_references.php',
+            '_tests/tests/sync_tests/persistent_cache.php',
             '_tests/tests/sync_tests/phpdoc.php',
             '_tests/tests/sync_tests/points.php',
             '_tests/tests/sync_tests/privilege_existence.php',

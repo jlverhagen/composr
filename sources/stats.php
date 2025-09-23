@@ -60,6 +60,10 @@ function find_hook_stats_page_links() : array
  */
 function tracked_redirect_script()
 {
+    if (!allowed_cookies('ANALYTICS')) { // TODO: necessary?
+        return;
+    }
+
     $url = get_param_string('url', null, INPUT_FILTER_URL_GENERAL);
 
     if (!is_our_server(cms_parse_url_safe($url, PHP_URL_HOST))) {
@@ -1382,6 +1386,41 @@ class CMSStatsListFilter extends CMSStatsFilter
 }
 
 /**
+ * Class for stat country input filters.
+ *
+ * @package stats
+ */
+class CMSStatsCountryFilter extends CMSStatsListFilter
+{
+    /**
+     * Constructor.
+     *
+     * @param  string $filter_name Filter name
+     * @param  Tempcode $label Label
+     * @param  array $list List (a map)
+     * @param  string $default Default
+     */
+    public function __construct(string $filter_name, object $label, string $default = '')
+    {
+        require_code('locations');
+        parent::__construct($filter_name, $label, []/* Hard-coded */, $default);
+    }
+
+    /**
+     * Get the inputting UI for the filter.
+     *
+     * @param  Tempcode $hidden The hidden field
+     * @return Tempcode The input field
+     */
+    public function ui_component(object &$hidden) : object
+    {
+        $filters = [];
+        $list = create_country_selection_list([$this->read_value($filters)]);
+        return form_input_list(do_lang_tempcode('_FILTER', $this->label), new Tempcode(), $this->filter_name, $list, null, false, false);
+    }
+}
+
+/**
  * Class for stat month date range input filters.
  *
  * @package stats
@@ -1635,6 +1674,10 @@ function log_stats_event(string $event)
         return;
     }
 
+    if (!allowed_cookies('ANALYTICS')) {
+        return;
+    }
+
     require_code('locations');
 
     $country_code = geolocate_ip();
@@ -1681,8 +1724,7 @@ function preprocess_raw_data_for(string $hook_name, int $start_time = 0, ?int $e
         $end_time = time() - 1;
     }
 
-    require_code('hooks/modules/admin_stats/' . filter_naughty($hook_name));
-    $hook_ob = object_factory('Hook_admin_stats_' . $hook_name, true);
+    $hook_ob = get_hook_ob('modules', 'admin_stats', filter_naughty_harsh($hook_name, true), 'Hook_admin_stats_', true);
     if ($hook_ob === null) {
         return;
     }

@@ -42,7 +42,7 @@ class Hook_addon_registry_core_rich_media
      */
     public function get_version() : string
     {
-        return '11.0.2'; // addon_version_auto_update 6b115192bfc17b76e257fe3389666dc2
+        return '11.0.3'; // addon_version_auto_update 1b2bea076d864a9036264cdbaf6e1ce1
     }
 
     /**
@@ -197,6 +197,9 @@ class Hook_addon_registry_core_rich_media
             'sources/hooks/systems/oembed/.htaccess',
             'sources/hooks/systems/oembed/index.html',
             'sources/hooks/systems/preview/comcode_tag.php',
+            'sources/hooks/systems/symbols/COMCODE.php',
+            'sources/hooks/systems/symbols/DISPLAY_CONCEPT.php',
+            'sources/hooks/systems/symbols/SET_TUTORIAL_LINK.php',
             'sources/media_renderer.php',
             'sources/member_mentions.php',
             'sources_custom/hooks/systems/attachments/.htaccess',

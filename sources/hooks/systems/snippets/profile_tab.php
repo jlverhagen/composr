@@ -50,7 +50,7 @@ class Hook_snippet_profile_tab
         $former_context = set_execution_context(['page' => 'members', 'type' => 'view', 'id' => ($member_id_of == get_member()) ? null : $member_id_of] + $keep_get, get_module_zone('members'));
 
         require_code('hooks/systems/profiles_tabs/' . filter_naughty_harsh($hook), true);
-        $ob = object_factory('Hook_profiles_tabs_' . filter_naughty_harsh($hook));
+        $ob = get_hook_ob('systems', 'profiles_tabs', filter_naughty_harsh($hook), 'Hook_profiles_tabs_');
         if ($ob->is_active($member_id_of, $member_id_viewing)) {
             // We need to minimise the dependency stuff that comes out, we don't need any default values
             push_output_state(false, true);

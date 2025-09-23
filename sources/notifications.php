@@ -243,8 +243,7 @@ function _get_notification_ob_for_code(string $notification_code, ?string $notif
 
     if ((is_file(get_file_base() . '/sources/' . $path . '.php')) || (is_file(get_file_base() . '/sources_custom/' . $path . '.php'))) {
         // Ah, we know already (file exists directly) - so quick route
-        require_code($path);
-        return object_factory('Hook_notification_' . filter_naughty(preg_replace('#__\w*$#', '', $notification_hook)));
+        return get_hook_ob('systems', 'notifications', filter_naughty(preg_replace('#__\w*$#', '', $notification_hook)), 'Hook_notification_');
     } else {
         // Full scan
         $hooks = find_all_hook_obs('systems', 'notifications', 'Hook_notification_');

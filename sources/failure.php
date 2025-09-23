@@ -268,6 +268,22 @@ function _cms_error_handler(string $type, int $errno, string $errstr, string $er
         $php_error_label .= ' [' . $_SERVER['REQUEST_METHOD'] . ']';
     }
 
+    // LEGACY: clear cache if this was an ecv issue (this seems to be the only way we can do it, not elegant but it seems to work)
+    if ((strpos($php_error_label, 'ecv_') !== false) || (strpos($php_error_label, 'ecv2_') !== false)) {
+        require_code('caches3');
+        erase_comcode_cache();
+        erase_block_cache(true);
+        erase_comcode_page_cache();
+        erase_persistent_cache();
+        erase_theme_images_cache();
+        erase_cached_templates();
+        erase_cached_language();
+
+        $php_error_label .= "\n" . 'We attempted to clear all the caches so this error does not happen again.';
+
+        $handling_method = 'LEGACY_ECV';
+    }
+
     $may_log_error = ((!running_script('cron_bridge')) || (@filemtime(get_custom_file_base() . '/data_custom/errorlog.php') < time() - 60 * 5)) && (!throwing_errors());
 
     if ($may_log_error) {
@@ -309,7 +325,14 @@ function _cms_error_handler(string $type, int $errno, string $errstr, string $er
             break;
 
         default:
+            // LEGACY
+            if ($handling_method == 'LEGACY_ECV') {
+                $errstr = 'We had to clear the site cache to fix legacy broken templates. Please refresh the page and try again.';
+                break;
+            }
+
             if ((!has_privilege(get_member(), 'see_php_errors')) && (!$GLOBALS['DEV_MODE'])) {
+                // Developers: this internal error code is shown to unprivileged users when a PHP error occurs. Check the error logs to see what actually happened.
                 $errstr = do_lang('INTERNAL_ERROR', comcode_escape('72e6bbb313db37062b97acbe7a5e8771'));
             }
             break;
@@ -1065,7 +1088,7 @@ function remove_ip_ban(string $ip)
  */
 function get_webservice_result($error_message) : ?string
 {
-    return null; // TODO: is this necessary anymore with telemetry?
+    return null; // Disabled; not necessary anymore with telemetry and causes antispam heuristics to ban other servers
 
     /*
     if (get_base_url_hostname() == parse_url(get_brand_base_url(), PHP_URL_HOST)) {
@@ -1307,7 +1330,8 @@ function relay_error_notification(string $text, bool $developers = true, string 
         (strpos($error_message, 'File(/tmp/) is not within the allowed path') === false) &&
         (preg_match('#Could not convert -?\d+(\.\d+)?#', $error_message) == 0) && // Currency conversion; likely no API key was set up
         (strpos($error_message, 'Cannot write to ') === false) &&
-        (strpos($error_message, 'telemetry: ') === false)
+        (strpos($error_message, 'telemetry: ') === false) &&
+        (strpos($error_message, 'You entered an incorrect security code') === false) // CAPTCHA
     ) {
         // Send the error securely to the core developers (telemetry) using an encrypted raw fsock request
         require_code('telemetry');

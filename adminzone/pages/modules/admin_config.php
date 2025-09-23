@@ -305,19 +305,16 @@ class Module_admin_config
 
                     switch ($option_type) {
                         case 'option':
-                            if ((is_file(get_file_base() . '/sources/hooks/systems/config/' . $option_name . '.php')) || (is_file(get_file_base() . '/sources_custom/hooks/systems/config/' . $option_name . '.php'))) {
-                                require_code('hooks/systems/config/' . filter_naughty_harsh($option_name));
-                                $ob = object_factory('Hook_config_' . filter_naughty_harsh($option_name), true);
-                                if ($ob !== null) {
-                                    $details = $ob->get_details();
+                            $ob = get_hook_ob('systems', 'config', filter_naughty_harsh($option_name), 'Hook_config_', true);
+                            if ($ob !== null) {
+                                $details = $ob->get_details();
 
-                                    $option_title = do_lang($details['group']) . ': ' . do_lang($details['human_name']) . ' [' . escape_html($option_name) . ']' . ' {' . escape_html($option_type) . '}';
+                                $option_title = do_lang($details['group']) . ': ' . do_lang($details['human_name']) . ' [' . escape_html($option_name) . ']' . ' {' . escape_html($option_type) . '}';
 
-                                    $import_map[] = $row;
-                                    $option_selected = ((get_option($option_name) == '') || (get_option($option_name) == get_default_option($option_name))) && ($option_value != '') && ($option_value != get_default_option($option_name));
+                                $import_map[] = $row;
+                                $option_selected = ((get_option($option_name) == '') || (get_option($option_name) == get_default_option($option_name))) && ($option_value != '') && ($option_value != get_default_option($option_name));
 
-                                    $list_options[$option_title] = [$option_type, $option_name, $option_selected];
-                                }
+                                $list_options[$option_title] = [$option_type, $option_name, $option_selected];
                             }
                             break;
 

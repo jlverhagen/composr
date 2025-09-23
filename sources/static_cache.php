@@ -241,7 +241,7 @@ function static_cache(int $mode)
     $param_sets = [
         [
             'non_bot' => ($mode & STATIC_CACHE__FAST_SPIDER) == 0,
-            'no_js' => !array_key_exists('js_on', $_COOKIE),
+            'no_js' => !array_key_exists('has_js', $_COOKIE),
             'mobile' => $is_mobile,
             'failover_mode' => $in_failover_mode,
         ],

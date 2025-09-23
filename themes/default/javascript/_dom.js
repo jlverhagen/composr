@@ -2788,7 +2788,10 @@
                                 (function () {
                                     // Clone to a new script element
                                     var newScript = document.createElement('script');
-                                    Array.from(el.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value));
+                                    Array.from(el.attributes).forEach(function (attr) {
+                                        newScript.setAttribute(attr.name, attr.value);
+                                    });
+                                    newScript.setAttribute('nonce', $cms.getCspNonce()); // Fix CSP nonce to our current request
                                     newScript.textContent = el.innerHTML;
 
                                     if (el.parentNode) {

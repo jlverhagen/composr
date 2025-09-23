@@ -42,7 +42,7 @@ class Hook_addon_registry_core_notifications
      */
     public function get_version() : string
     {
-        return '11.0.2'; // addon_version_auto_update 6a853fdb215e36f1bba2b799487bf6a4
+        return '11.0.3'; // addon_version_auto_update 41da72081f1fdeb57dbbe0650eed03dc
     }
 
     /**
@@ -157,6 +157,8 @@ class Hook_addon_registry_core_notifications
             'sources/hooks/systems/profiles_tabs_edit/notifications.php',
             'sources/hooks/systems/rss/web_notifications.php',
             'sources/hooks/systems/startup/notification_poller_init.php',
+            'sources/hooks/systems/symbols/NOTIFICATIONS_AVAILABLE.php',
+            'sources/hooks/systems/symbols/NOTIFICATIONS_ENABLED.php',
             'sources/hooks/systems/tasks/dispatch_notification.php',
             'sources/notification_poller.php',
             'sources/notifications.php',

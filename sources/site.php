@@ -545,6 +545,8 @@ function set_short_title(string $title)
  */
 function do_site_prep()
 {
+    erase_rejected_cookies();
+    
     load_zone_data();
 
     // SEO redirection
@@ -1385,7 +1387,7 @@ function save_static_caching($out, string $mime_type = 'text/html') : bool
     if ($bot_type === null) {
         $fast_cache_path .= '__non-bot';
     }
-    if (!array_key_exists('js_on', $_COOKIE)) {
+    if (!array_key_exists('has_js', $_COOKIE)) {
         $fast_cache_path .= '__no-js';
     }
     if (is_mobile()) {
@@ -2044,6 +2046,10 @@ function load_comcode_page(string $string, string $zone, string $codename, ?stri
         'p_include_on_sitemap' => null,
         'p_order' => 0,
     ];
+
+    if (!is_file($file_base . '/' . $string)) {
+        warn_exit(do_lang_tempcode('MISSING_PAGE', escape_html($zone . ':' . $codename)));
+    }
 
     global $KEEP_MARKERS, $SHOW_EDIT_LINKS, $INJECT_HIDDEN_TEMPLATE_NAMES;
     if ((has_caching_for('comcode_page', $codename)) && (get_param_integer('keep_print', 0) == 0) && !$KEEP_MARKERS && !$SHOW_EDIT_LINKS && !$INJECT_HIDDEN_TEMPLATE_NAMES) {

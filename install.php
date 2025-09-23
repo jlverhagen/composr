@@ -22,7 +22,7 @@ declare(strict_types=1);
  * @package    installer
  */
 
-// Requirements check
+// LEGACY: Requirements check (also needs updating in global3.php)
 if (version_compare(PHP_VERSION, '7.2', '<')) {
     exit('PHP version 7.2 or newer is required');
 }
@@ -874,6 +874,8 @@ function step_4() : object
 
     $forum_driver_specifics = $GLOBALS['FORUM_DRIVER']->install_specifics();
 
+    $use_innodb = post_param_integer('use_innodb', 1);
+
     $use_msn = post_param_integer('use_msn', 0);
     if ($use_msn == 0) {
         $use_msn = post_param_integer('use_multi_db', 0);
@@ -1023,6 +1025,7 @@ function step_4() : object
     // Database settings for forum (if applicable)...
 
     $forum_text = new Tempcode();
+    $hidden->attach(form_input_hidden('use_innodb', strval($use_innodb)));
     if (($forum_type == 'cns') || ($forum_type == 'none')) {
         $forum_title = do_lang_tempcode('MEMBER_SETTINGS');
     } else {
@@ -1219,6 +1222,7 @@ function step_5() : object
 
     $url = prepare_installer_url('install.php?step=6');
 
+    $use_innodb = post_param_integer('use_innodb', 1);
     $use_msn = post_param_integer('use_msn', 0);
     if ($use_msn == 0) {
         $use_msn = post_param_integer('use_multi_db', 0);
@@ -1921,6 +1925,7 @@ if (!function_exists(\'git_repos\')) {
             'max',
             'use_msn',
             'use_multi_db',
+            'use_innodb',
 
             'gae_live_db_site',
             'gae_live_db_site_host',
@@ -2162,6 +2167,10 @@ function step_5_uninstall() : object
  */
 function step_5_core() : object
 {
+    // Set a global override because we cannot rely on get_value as we haven't installed the values tables yet.
+    global $USE_INNODB;
+    $USE_INNODB = (post_param_integer('use_innodb', 1) == 1);
+
     $tables = [
         'db_meta',
         'db_meta_indices',
@@ -2176,6 +2185,12 @@ function step_5_core() : object
         'i_table' => '*ID_TEXT',
         'i_name' => '*ID_TEXT',
         'i_fields' => 'LONG_TEXT',
+    ]);
+    $GLOBALS['SITE_DB']->create_table('db_meta_foreign_keys', [
+        'from_table' => '*ID_TEXT',
+        'from_field' => '*ID_TEXT',
+        'to_table' => 'ID_TEXT',
+        'to_field' => 'ID_TEXT',
     ]);
 
     $tables = [
@@ -2220,6 +2235,8 @@ function step_5_core() : object
         'date_and_time' => 'TIME',
     ]);
     $GLOBALS['SITE_DB']->create_index('values', 'date_and_time', ['date_and_time']);
+
+    set_value('innodb', $USE_INNODB ? '1' : '0');
 
     $GLOBALS['SITE_DB']->create_table('config', [
         'c_name' => '*ID_TEXT',
@@ -2522,7 +2539,7 @@ function step_7() : object
 
     $time_start = microtime(true);
 
-    // We must install these modules first (if you change these, add as an exception in step 8!)
+    // We must install these modules first (if you change these, add as an exception in step 8, and update upgrade_addons()!)
     foreach (['admin_version', 'admin_permissions', 'admin_addons'] as $module) {
         $time_before = microtime(true);
         if (reinstall_module('adminzone', $module)) {
@@ -3359,7 +3376,7 @@ END;
 LimitRequestBody 524288000
 
 # Set Composr to handle 404 errors. Assume Composr is in the root
-<FilesMatch "(?<!\.jpg|\.jpeg|\.jpe|\.bmp|\.gif|\.png|\.ico|\.cur|\.svg|\.css|\.js|\.html)$">
+<FilesMatch "(?<!\.jpg|\.jpeg|\.jpe|\.bmp|\.gif|\.png|\.ico|\.cur|\.svg|\.webp|\.css|\.js|\.html)$">
 ErrorDocument 404 {$base}/index.php?page=404
 </FilesMatch>
 END;
@@ -3578,12 +3595,11 @@ function confirm_db_credentials(bool $return_connection = false)
 
     // Check max allowed packet if mySQLi
     if (strpos($post_db_type, 'mysql') !== false) {
-        $min = 1024 * 1024 * 16; // 16MB; if you change this value, also change it in the health_check install_env hook.
         $vars = $tmp->query('SHOW VARIABLES LIKE \'max_allowed_packet\'');
         foreach ($vars as $var) {
             $current = intval($var['Value']);
-            if ($current < $min) {
-                warn_exit(do_lang_tempcode('MAX_ALLOWED_PACKET_TOO_LOW', integer_format($min), integer_format($current)));
+            if ($current < CMS_MYSQL_MIN_MAX_ALLOWED_PACKET) {
+                warn_exit(do_lang_tempcode('MAX_ALLOWED_PACKET_TOO_LOW', integer_format(CMS_MYSQL_MIN_MAX_ALLOWED_PACKET), integer_format($current)));
             }
         }
     }

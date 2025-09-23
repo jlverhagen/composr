@@ -24,12 +24,27 @@
 class Hook_symbol_CONTENT_COUNT
 {
     /**
+     * Get information about this symbol.
+     *
+     * @return ?array Array of information (null: hook disabled)
+     */
+    public function info() : ?array
+    {
+        return [
+            'compile' => SYMBOL_COMPILE_STATIC_IF_AGGRESSIVE,
+            'public' => false,
+        ];
+    }
+
+    /**
      * Run function for symbol hooks. Searches for tasks to perform.
      *
      * @param  array $param Symbol parameters
+     * @param  string $lang The language to evaluate this symbol in (some symbols refer to language elements)
+     * @param  array $escaped Array of escaping operations
      * @return string Result
      */
-    public function run(array $param) : string
+    public function run(array $param, string $lang, array $escaped) : string
     {
         if (empty($param[0])) {
             return '';
@@ -61,7 +76,6 @@ class Hook_symbol_CONTENT_COUNT
         $count = $db->query_select_value($info['table'] . ' r' . implode('', $extra_join_filtercode), 'COUNT(*)', [], ' AND ' . $extra_where_selectcode . $extra_where_filtercode);
 
         $value = strval($count);
-
         return $value;
     }
 }

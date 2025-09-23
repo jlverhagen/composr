@@ -770,9 +770,9 @@ function load_module_page(string $string, string $codename) : object
 
     require_code(filter_naughty($string));
     if (class_exists('Mx_' . filter_naughty_harsh($codename))) {
-        $object = object_factory('Mx_' . filter_naughty_harsh($codename));
+        $object = object_factory('Mx_' . filter_naughty_harsh($codename), false, [], true);
     } else {
-        $object = object_factory('Module_' . filter_naughty_harsh($codename));
+        $object = object_factory('Module_' . filter_naughty_harsh($codename), false, [], true);
     }
 
     _check_module_installation_status($object, $codename);
@@ -978,7 +978,7 @@ function find_all_hook_obs(string $type, string $subtype, string $classname_pref
     foreach ($hooks as $hook => $hook_dir) {
         require_code('hooks/' . $type . '/' . $subtype . '/' . $hook, false, $hook_dir == 'sources_custom');
 
-        $ob = object_factory(class_exists(str_replace('Hook_', 'Hx_', $classname_prefix) . $hook) ? (str_replace('Hook_', 'Hx_', $classname_prefix) . $hook) : ($classname_prefix . $hook), true);
+        $ob = object_factory(class_exists(str_replace('Hook_', 'Hx_', $classname_prefix) . $hook) ? (str_replace('Hook_', 'Hx_', $classname_prefix) . $hook) : ($classname_prefix . $hook), true, [], true);
         if ($ob !== null) {
             $hooks[$hook] = $ob;
         } else {
@@ -986,32 +986,6 @@ function find_all_hook_obs(string $type, string $subtype, string $classname_pref
         }
     }
     return $hooks;
-}
-
-/**
- * Get the specified hook implementation object and fail if it does not exist.
- *
- * @param  ID_TEXT $type The type of hook
- * @param  ID_TEXT $subtype The hook sub-type to find hook implementations for (e.g. the name of a module)
- * @param  ID_TEXT $hook The name of the hook
- * @param  string $classname_prefix The hook class-name prefix, the classes are named {$classname_prefix}{$hook}
- * @param  boolean $fail_ok Whether to return null opposed to failing if the hook or its object does not exist
- * @return ?object The hook implementation object (null: hook was not found and $fail_ok was true)
- */
-function get_hook_ob(string $type, string $subtype, string $hook, string $classname_prefix, bool $fail_ok = false) : ?object
-{
-    if (($fail_ok) && (!hook_exists($type, $subtype, $hook))) {
-        return null;
-    }
-
-    require_code('hooks/' . $type . '/' . $subtype . '/' . $hook, !$fail_ok);
-
-    $ob = object_factory(class_exists(str_replace('Hook_', 'Hx_', $classname_prefix) . $hook) ? (str_replace('Hook_', 'Hx_', $classname_prefix) . $hook) : ($classname_prefix . $hook), true);
-    if ((!$fail_ok) && ($ob === null)) {
-        warn_exit(do_lang_tempcode('INTERNAL_ERROR', escape_html('f45146eaa359580bb0d10db80263e9c3')));
-    }
-
-    return $ob;
 }
 
 /**
@@ -1105,29 +1079,6 @@ function find_all_hooks(string $type, string $subtype, bool $check_custom = true
     }
 
     return $out;
-}
-
-/**
- * Check if a given hook exists.
- *
- * @param  ID_TEXT $type The type of hook
- * @set blocks endpoints modules systems
- * @param  ID_TEXT $subtype The hook sub-type to find hook implementations for (e.g. the name of a module)
- * @param  ID_TEXT $hook The name of the hook
- * @return boolean Whether or not the hook exists
- */
-function hook_exists(string $type, string $subtype, string $hook) : bool
-{
-    global $HOOKS_CACHE;
-    if (isset($HOOKS_CACHE[$type . '/' . $subtype]) && isset($HOOKS_CACHE[$type . '/' . $subtype][$hook])) {
-        return true;
-    }
-
-    if ((is_file(get_file_base() . '/sources/hooks/' . $type . '/' . $subtype . '/' . $hook . '.php')) || (is_file(get_file_base() . '/sources_custom/hooks/' . $type . '/' . $subtype . '/' . $hook . '.php'))) {
-        return true;
-    }
-
-    return false;
 }
 
 /**
@@ -1523,7 +1474,7 @@ function do_block_hunt_file(string $codename, array $map = []) : array
         return [$object, $new_security_scope];
     }
 
-    $_object = object_factory('Block_' . $codename);
+    $_object = object_factory('Block_' . filter_naughty_harsh($codename, true), false, [], true);
     return [$_object, $new_security_scope];
 }
 

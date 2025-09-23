@@ -274,6 +274,7 @@ class Hook_snippet_template_editor_load
         }
 
         $_directives = [
+            // TODO: Move into new symbol / directive hooks
             ['BOX', '1'],
             ['IF_NON_EMPTY', '1'],
             ['IF_EMPTY', '1'],
@@ -286,6 +287,7 @@ class Hook_snippet_template_editor_load
         $directives = $this->generate_dropdown_from($_directives, 'DIRECTIVE', $file_id);
 
         $_misc_symbols = [
+            // TODO: Move into new symbol / directive hooks
             ['THEME', '0'],
             ['LANG', '0'],
             ['BASE_URL', '0'],
@@ -315,6 +317,7 @@ class Hook_snippet_template_editor_load
         $misc_symbols = $this->generate_dropdown_from($_misc_symbols, 'MISC_SYMBOL', $file_id);
 
         $_programmatic_symbols = [
+            // TODO: Move into new symbol / directive hooks
             ['RAND', '0'],
             ['SET_RAND', '0+'],
             ['CYCLE', '1+'],
@@ -327,6 +330,7 @@ class Hook_snippet_template_editor_load
         $programmatic_symbols = $this->generate_dropdown_from($_programmatic_symbols, 'PROGRAMMATIC_SYMBOL', $file_id);
 
         $_abstraction_symbols = [
+            // TODO: Move into new symbol / directive hooks
             ['IMG', '1'],
             ['PAGE_LINK', '1'],
             ['SELF_URL', '0'],
@@ -348,6 +352,7 @@ class Hook_snippet_template_editor_load
         $abstraction_symbols = $this->generate_dropdown_from($_abstraction_symbols, 'ABSTRACTION_SYMBOL', $file_id);
 
         $_arithmetical_symbols = [
+            // TODO: Move into new symbol / directive hooks
             ['MAX', '2'],
             ['MIN', '2'],
             ['REM', '2'],
@@ -360,6 +365,7 @@ class Hook_snippet_template_editor_load
         $arithmetical_symbols = $this->generate_dropdown_from($_arithmetical_symbols, 'ARITHMETICAL_SYMBOL', $file_id);
 
         $_formatting_symbols = [
+            // TODO: Move into new symbol / directive hooks
             ['WCASE', '1'],
             ['LCASE', '1'],
             ['UCASE', '1'],
@@ -376,6 +382,7 @@ class Hook_snippet_template_editor_load
         $formatting_symbols = $this->generate_dropdown_from($_formatting_symbols, 'FORMATTING_SYMBOL', $file_id);
 
         $_logical_symbols = [
+            // TODO: Move into new symbol / directive hooks
             ['NOT', '1'],
             ['OR', '2'],
             ['AND', '2'],

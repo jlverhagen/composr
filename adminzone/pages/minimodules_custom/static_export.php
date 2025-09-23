@@ -443,7 +443,7 @@ function titleify($boring)
     return cms_ucwords_ascii(str_replace("_", " ", $boring));
 }
 
-if (!isset($_COOKIE["js_on"])) {
+if (!isset($_COOKIE["has_js"])) {
     exit("Error: cookies must be enabled, for anti-spam reasons.");
 }
 

@@ -760,7 +760,7 @@ function calendar_matches(int $auth_member_id, int $member_id, bool $restrict, ?
             }
         }
     }
-    if (!has_privilege($auth_member_id, 'see_not_validated')) {
+    if ((addon_installed('validation')) && (!has_privilege($auth_member_id, 'see_not_validated'))) {
         if ($where != '') {
             $where .= ' AND ';
         }
@@ -772,7 +772,7 @@ function calendar_matches(int $auth_member_id, int $member_id, bool $restrict, ?
         $feed_urls_todo = [];
         for ($i = 0; $i < 10; $i++) {
             $feed_url = post_param_string('feed_' . strval($i), cms_admirecookie('feed_' . strval($i), ''));
-            cms_setcookie('feed_' . strval($i), $feed_url);
+            cms_setcookie('feed_' . strval($i), $feed_url, 'PERSONALIZATION');
             if (($feed_url != '') && (preg_match('#^[\w\-]*$#', $feed_url) == 0)) {
                 $feed_urls_todo[$feed_url] = null;
             }
@@ -857,7 +857,7 @@ function calendar_matches(int $auth_member_id, int $member_id, bool $restrict, ?
 
                         // Now search every combination to see if we can get a hit
                         foreach ($their_times as $their) {
-                            $matches[] = [$full_url, $event, $their[0], $their[1], $their[2], $their[3], $their[4], $their[5]];
+                            $matches[] = [$full_url, $event, $their[0], $their[1], $their[2], $their[3], $their[4], $their[5], $timezone, 0];
                         }
                     }
                 }
@@ -895,7 +895,7 @@ function calendar_matches(int $auth_member_id, int $member_id, bool $restrict, ?
                         $from = utctime_to_usertime($item['clean_add_date']);
                         if (($from >= $period_start) && ($from < $period_end)) {
                             $event += ['e_start_year' => intval(date('Y', $from)), 'e_start_month' => intval(date('m', $from)), 'e_start_day' => intval(date('D', $from)), 'e_start_hour' => intval(date('H', $from)), 'e_start_minute' => intval(date('i', $from)), 'e_end_year' => null, 'e_end_month' => null, 'e_end_day' => null, 'e_end_hour' => null, 'e_end_minute' => null, 'e_start_monthly_spec_type' => 'day_of_month', 'e_end_monthly_spec_type' => 'day_of_month'];
-                            $matches[] = [$full_url, $event, $from, null, $from, null, $from, null];
+                            $matches[] = [$full_url, $event, $from, null, $from, null, $from, null, '', 1];
                         }
                     }
                 }
@@ -931,7 +931,7 @@ function calendar_matches(int $auth_member_id, int $member_id, bool $restrict, ?
 
         // Now search every combination to see if we can get a hit
         foreach ($their_times as $their) {
-            $matches[] = [$event['e_id'], $event, $their[0], $their[1], $their[2], $their[3], $their[4], $their[5]];
+            $matches[] = [$event['e_id'], $event, $their[0], $their[1], $their[2], $their[3], $their[4], $their[5], $event['e_timezone'], $event['e_do_timezone_conv']];
         }
     }
 
@@ -1846,4 +1846,107 @@ function get_calendar_event_first_date(?string $timezone, int $do_timezone_conv,
     }
 
     return [$written_date, $from, $to];
+}
+
+/**
+ * Process an array of matched calendar events for use in a listing view.
+ *
+ * @param  array $happenings Array of matched calendar events from calendar_matches()
+ * @param  array $filter Array of filters (e.g. calendar types) used for the calendar events
+ * @param  TIME $period_start Timestamp for the starting time we are viewing events
+ * @param  TIME $period_end Timestamp for the end time we are viewing events
+ * @param  ID_TEXT $zone The zone in which we are viewing events
+ * @return array Pre-processed events for use in templates
+ */
+function process_calendar_events_for_listing(array $happenings, array $filter, int $period_start, int $period_end, string $zone) : array
+{
+    $days = [];
+    for ($hap_i = 0; $hap_i < count($happenings); $hap_i++) {
+        $happening = $happenings[$hap_i];
+
+        list($e_id, $event, $from, $to, $real_from, $real_to, , , $timezone, $did_timezone_conversion) = $happening;
+
+        if (($to !== null) && ($to < $period_start)) {
+            continue;
+        }
+        if ($real_from != $from) {
+            continue; // We won't render continuations
+        }
+
+        // Because we looked 100 days before (to find stuff that might be doing a span), we need to do an extra check to see if stuff is actually in our true window
+        $starts_within = (($real_from >= $period_start) && ($real_from < $period_end));
+        $ends_within = (($to !== null) && ($real_to > $period_start) && ($real_to <= $period_end));
+        $spans = (($to !== null) && ($real_from < $period_start) && ($real_to > $period_end));
+        if (!$starts_within && !$ends_within && !$spans) {
+            continue;
+        }
+
+        $__day = date('Y-m-d', $from);
+        $bits = explode('-', $__day);
+        $day_start = cms_mktime(12, 0, 0, intval($bits[1]), intval($bits[2]), intval($bits[0]));
+        if (!array_key_exists($day_start, $days)) {
+            $date_section = get_timezoned_date($day_start); // Must be rendered in user's timezone not GMT, as GMT day may be ahead of the user's timezoned day and hence render the wrong contextual date.
+            if (($from < $period_start) && ($date_section != do_lang('YESTERDAY'))) {
+                $date_section = do_lang('DATE_IN_PAST', $date_section);
+            }
+            $days[$day_start] = ['TIMESTAMP' => strval($day_start), 'DATE' => $date_section, 'EVENTS' => []];
+        }
+
+        $view_id = date('Y-m-d', $real_from);
+
+        $icon = $event['t_logo'];
+        $title = is_integer($event['e_title']) ? get_translated_text($event['e_title']) : $event['e_title'];
+        if (is_numeric($e_id)) {
+            $map2 = $filter + ['page' => 'calendar', 'type' => 'view', 'id' => $event['e_id'], 'day' => $__day, 'date' => $view_id, 'back' => 'listing'];
+            $view_url = build_url($map2, $zone);
+        } else {
+            $view_url = $e_id;
+        }
+
+        $just_event_row = db_map_restrict($event, ['e_id', 'e_content']);
+
+        if (is_string($event['e_content'])) {
+            $content = protect_from_escaping($event['e_content']);
+        } else {
+            if ($event['e_type'] == db_get_first_id()) {
+                $content = protect_from_escaping(escape_html(get_translated_text($event['e_content'])));
+            } else {
+                $content = get_translated_tempcode('calendar_events', $just_event_row, 'e_content');
+            }
+        }
+
+        // NB: We have to specify UTC time on time-zoned functions because we already did time zone conversions in $happenings prior to running this function.
+        $days[$day_start]['EVENTS'][] = [
+            'T_TITLE' => array_key_exists('t_title', $event) ? (is_string($event['t_title']) ? $event['t_title'] : get_translated_text($event['t_title'])) : 'RSS',
+            'E_TITLE' => is_string($event['e_title']) ? protect_from_escaping($title) : make_string_tempcode($title),
+            'VIEW_URL' => $view_url,
+            'ICON' => $icon,
+            'DESCRIPTION' => $content,
+
+            'TIME_WRITTEN' => ($real_from != $from) ? do_lang('EVENT_CONTINUES') : (($event['e_start_hour'] === null) ? do_lang_tempcode('ALL_DAY_EVENT') : make_string_tempcode(get_timezoned_time($real_from, true, true))),
+
+            'TIME' => ($event['e_start_hour'] !== null) ? get_timezoned_date_time($real_from, true, true) : get_timezoned_date($real_from, true, true),
+            'TIME_RAW' => strval($real_from),
+            'TIME_VCAL' => date('Y-m-d', $real_from) . ' ' . date('H:i:s', $real_from),
+
+            'TO_TIME' => ($real_to === null) ? null : (($event['e_end_hour'] !== null) ? get_timezoned_date_time($real_to, true, true) : get_timezoned_date($real_to, true, true)),
+            'TO_TIME_RAW' => ($real_to === null) ? '' : strval($real_to),
+            'TO_TIME_VCAL' => ($real_to === null) ? null : (date('Y-m-d', $real_to) . ' ' . date('H:i:s', $real_to)),
+
+            'TZ' => ($did_timezone_conversion == 1) ? '' : $timezone,
+        ];
+
+        if ($to !== null) {
+            $test = date('d', $to);
+            $test2 = date('d', $from);
+            if (((intval($test) > intval($test2)) || (intval(date('m', $to)) != intval(date('m', $from))) || (intval(date('Y', $to)) != intval(date('Y', $from))))) {
+                $ntime = cms_mktime(0, 0, 0, intval(date('m', $from)), intval($test2) + 1, intval(date('Y', $from)));
+                if ($ntime < $period_end) {
+                    $happenings[] = [$e_id, $event, $ntime, $to, $real_from, $real_to, null, null, $timezone, $did_timezone_conversion];
+                }
+            }
+        }
+    }
+
+    return $days;
 }

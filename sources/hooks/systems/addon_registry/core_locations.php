@@ -42,7 +42,7 @@ class Hook_addon_registry_core_locations
      */
     public function get_version() : string
     {
-        return '11'; // addon_version_auto_update 506dee8dde230f60af3606afbc6ab762
+        return '11.0.2'; // addon_version_auto_update a57f8db721d8adb2e8b5167f40c3446c
     }
 
     /**
@@ -173,6 +173,12 @@ class Hook_addon_registry_core_locations
             'sources/hooks/systems/geocoding/index.html',
             'sources/hooks/systems/geocoding/mapquest.php',
             'sources/hooks/systems/snippets/regions.php',
+            'sources/hooks/systems/symbols/COUNTRY.php',
+            'sources/hooks/systems/symbols/COUNTRY_CODE_TO_NAME.php',
+            'sources/hooks/systems/symbols/COUNTRY_NAME_TO_CODE.php',
+            'sources/hooks/systems/symbols/GEOCODE_ENABLED.php',
+            'sources/hooks/systems/symbols/GEOLOCATE.php',
+            'sources/hooks/systems/symbols/REGION.php',
             'sources/hooks/systems/tasks/install_geolocation_data.php',
             'sources/isocodes/.htaccess',
             'sources/isocodes/composer.json',

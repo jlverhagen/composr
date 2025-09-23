@@ -13,6 +13,18 @@
 
     $util.inherits(AddonInstallConfirmScreen, $cms.View);
 
+    $cms.views.AddonUpgradeConfirmScreen = AddonUpgradeConfirmScreen;
+    /**
+     * @memberof $cms.views
+     * @class
+     * @extends $cms.View
+     */
+    function AddonUpgradeConfirmScreen() {
+        AddonUpgradeConfirmScreen.base(this, 'constructor', arguments);
+    }
+
+    $util.inherits(AddonUpgradeConfirmScreen, $cms.View);
+
     // Templates:
     // ADDON_SCREEN.tpl
     // - ADDON_SCREEN_ADDON.tpl

@@ -24,12 +24,27 @@
 class Hook_symbol_SYMBOL_DATA_AS_JSON
 {
     /**
+     * Get information about this symbol.
+     *
+     * @return ?array Array of information (null: hook disabled)
+     */
+    public function info() : ?array
+    {
+        return [
+            'compile' => SYMBOL_COMPILE_STATIC_NONE,
+            'public' => false,
+        ];
+    }
+
+    /**
      * Run function for symbol hooks. Searches for tasks to perform.
      *
      * @param  array $param Symbol parameters
+     * @param  string $lang The language to evaluate this symbol in (some symbols refer to language elements)
+     * @param  array $escaped Array of escaping operations
      * @return string Result
      */
-    public function run(array $param) : string
+    public function run(array $param, string $lang, array $escaped) : string
     {
         global $ZONE;
 
@@ -38,43 +53,33 @@ class Hook_symbol_SYMBOL_DATA_AS_JSON
 
         $lang = user_lang();
 
-        $value = [
-            'PAGE'              => ecv_PAGE($lang, [], []),
-            'ZONE'              => ecv_ZONE($lang, [], []),
-            'MEMBER'            => ecv_MEMBER($lang, [], []),
-            'IS_GUEST'          => ecv_IS_GUEST($lang, [], []),
-            'USERNAME'          => ecv_USERNAME($lang, [], []),
-            'HIDE_HELP_PANEL'   => ecv_HIDE_HELP_PANEL($lang, [], []),
-            'MOBILE'            => ecv_MOBILE($lang, [], []),
-            'THEME'             => ecv_THEME($lang, [], []),
-            'JS_ON'             => ecv_JS_ON($lang, [], []),
-            'LANG'              => ecv_LANG($lang, [], []),
-            'DEV_MODE'          => ecv_DEV_MODE($lang, [], []),
-            'HTTP_STATUS_CODE'  => ecv_HTTP_STATUS_CODE($lang, [], []),
-            'FORCE_PREVIEWS'    => ecv_FORCE_PREVIEWS($lang, [], []),
-            'SITE_NAME'         => ecv_SITE_NAME($lang, [], []),
-            'BRAND_NAME'        => ecv_BRAND_NAME($lang, [], []),
-            'IS_STAFF'          => ecv_IS_STAFF($lang, [], []),
-            'IS_ADMIN'          => ecv_IS_ADMIN($lang, [], []),
-            'IS_HTTPAUTH_LOGIN' => ecv_IS_HTTPAUTH_LOGIN($lang, [], []),
-            'IS_A_COOKIE_LOGIN' => ecv_IS_A_COOKIE_LOGIN($lang, [], []),
-            'CSP_NONCE'         => ecv_CSP_NONCE($lang, [], []),
-            'RUNNING_SCRIPT'    => current_script(),
-        ];
+        // Inject symbols set as public into the JSON
+        $value = [];
+        $hook_obs = find_all_hook_obs('systems', 'symbols', 'Hook_symbol_');
+        foreach ($hook_obs as $hook => $ob) {
+            // Prevent recursion
+            if ($hook == 'SYMBOL_DATA_AS_JSON') {
+                continue;
+            }
+
+            // LEGACY
+            if (!method_exists($ob, 'info')) {
+                continue;
+            }
+
+            $info = $ob->info();
+            if (isset($info['public']) && ($info['public'] === true)) {
+                $value[$hook] = $ob->run([], $lang, []);
+            }
+        }
 
         require_code('urls');
 
+        // TODO: make symbols out of these
         $value['page_type'] = get_param_string('type', '', INPUT_FILTER_GET_COMPLEX);
         $value['zone_default_page'] = ($ZONE !== null) ? $ZONE['zone_default_page'] : '';
         $value['sees_javascript_error_alerts'] = (has_privilege(get_member(), 'sees_javascript_error_alerts')) && (get_option('javascript_error_alerts') == '1');
         $value['can_try_url_schemes'] = can_try_url_schemes();
-
-        require_code('locations');
-        $country = get_country();
-
-        if (!empty($country)) {
-            $value['COUNTRY'] = $country;
-        }
 
         return json_encode($value, JSON_UNESCAPED_SLASHES | JSON_NUMERIC_CHECK);
     }

@@ -36,9 +36,9 @@ if (post_param_integer('confirm', 0) == 0) {
 
 // Prepare for synonyms
 require_code('lang_stemmer_' . user_lang());
-$stemmer = object_factory('Stemmer_' . user_lang());
+$stemmer = object_factory('Stemmer_' . user_lang(), false, [], true);
 require_code('adminzone/pages/modules/admin.php');
-$admin = object_factory('Module_admin');
+$admin = object_factory('Module_admin', false, [], true);
 $synonyms = $admin->_synonyms();
 
 // Find details about addons
@@ -49,8 +49,7 @@ $_addons = find_all_hooks('systems', 'addon_registry');
 ksort($_addons);
 foreach ($_addons as $addon_name => $place) {
     if ($place == 'sources') {
-        require_code('hooks/systems/addon_registry/' . filter_naughty_harsh($addon_name));
-        $ob = object_factory('Hook_addon_registry_' . filter_naughty_harsh($addon_name));
+        $ob = get_hook_ob('systems', 'addon_registry', filter_naughty_harsh($addon_name), 'Hook_addon_registry_');
 
         $tutorials = $ob->get_applicable_tutorials();
         $all_tutorials_referenced = array_merge($all_tutorials_referenced, $tutorials);

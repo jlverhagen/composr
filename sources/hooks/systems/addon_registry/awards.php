@@ -42,7 +42,7 @@ class Hook_addon_registry_awards
      */
     public function get_version() : string
     {
-        return '11.0.1'; // addon_version_auto_update de32802c2c68f66f899dc1166a007948
+        return '11.0.2'; // addon_version_auto_update 3c5807d486356935986c0111869b35b8
     }
 
     /**
@@ -144,6 +144,7 @@ class Hook_addon_registry_awards
             'sources/hooks/systems/config/awarded_items_per_page.php',
             'sources/hooks/systems/privacy/awards.php',
             'sources/hooks/systems/resource_meta_aware/award_type.php',
+            'sources/hooks/systems/symbols/AWARD_ID.php',
             'themes/default/css/awards.css',
             'themes/default/images/awarded.svg',
             'themes/default/images/icons/menu/adminzone/setup/awards.svg',

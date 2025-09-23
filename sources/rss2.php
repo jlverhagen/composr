@@ -213,8 +213,7 @@ function rss_backend_script()
     // Firefox (and probably other browsers, but I didn't test) doesn't want to display Atom feeds inline if they're sent as text/xml+atom, even if the Content-Disposition is sent to inline :(
     header('Content-Type: text/xml'); // application/rss+xml ?
 
-    require_code('hooks/systems/rss/' . $mode, true);
-    $object = object_factory('Hook_rss_' . $mode);
+    $object = get_hook_ob('systems', 'rss', $mode, 'Hook_rss_');
     require_code('selectcode');
     $_content = $object->run($select, $cutoff, $prefix, $date_string, $max);
     $mode_nice = $mode;

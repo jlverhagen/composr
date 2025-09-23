@@ -59,7 +59,7 @@ class Hook_addon_registry_cns_forum
      */
     public function get_version() : string
     {
-        return '11.0.2'; // addon_version_auto_update 8e85d7b29d77a730a48091784a542e64
+        return '11.0.3'; // addon_version_auto_update 13e91f99f4c8aa0eea19fe49118d0941
     }
 
     /**
@@ -268,6 +268,7 @@ class Hook_addon_registry_cns_forum
             'sources/hooks/systems/rss/cns_unread_topics.php',
             'sources/hooks/systems/sitemap/forum.php',
             'sources/hooks/systems/sitemap/topic.php',
+            'sources/hooks/systems/symbols/CNS_RANK_IMAGE.php',
             'sources/hooks/systems/tasks/cns_recache.php',
             'sources/hooks/systems/tasks/cns_topics_recache.php',
             'sources/hooks/systems/tasks/export_voting_power.php',

@@ -188,6 +188,18 @@
      * @method
      * @returns {string}
      */
+    $cms.getMemberCookie = $util.constant(strVal('{$MEMBER_COOKIE_NAME;}'));
+    /**
+     * @memberof $cms
+     * @method
+     * @returns {string}
+     */
+    $cms.getPassCookie = $util.constant(strVal('{$PASS_COOKIE_NAME;}'));
+    /**
+     * @memberof $cms
+     * @method
+     * @returns {string}
+     */
     $cms.getCookiePath = $util.constant(strVal('{$COOKIE_PATH;}'));
     /**
      * @memberof $cms
@@ -195,6 +207,12 @@
      * @returns {string}
      */
     $cms.getCookieDomain = $util.constant(strVal('{$COOKIE_DOMAIN;}'));
+    /**
+     * @memberof $cms
+     * @method
+     * @returns {array}
+     */
+    $cms.getCookieData = $util.constant(JSON.parse('{$COOKIE_DATA_JSON;}'));
     /**
      * @memberof $cms
      * @method
@@ -539,19 +557,21 @@
      * @memberof $cms
      * @param cookieName
      * @param cookieValue
+     * @param cookieCategory
      * @param numDays
      */
-    $cms.setCookie = function setCookie(cookieName, cookieValue, numDays) {
-        var cookieConsent = $cms.readCookie('cookieconsent_ESSENTIAL');
-        if ((!cookieConsent || (cookieConsent !== 'ALLOW')) && (cookieValue !== '')) {
+    $cms.setCookie = function setCookie(cookieName, cookieValue, cookieCategory, numDays) {
+        cookieName = strVal(cookieName);
+        cookieValue = strVal(cookieValue);
+        cookieCategory = strVal(cookieCategory);
+
+        if (!$cms.acceptsCookieCategory(cookieCategory)) {
             return;
         }
 
         var expires = new Date(),
             output;
 
-        cookieName = strVal(cookieName);
-        cookieValue = strVal(cookieValue);
         numDays = Number(numDays) || 1;
 
         expires.setDate(expires.getDate() + numDays); // Add days to date
@@ -568,7 +588,7 @@
 
         document.cookie = output;
 
-        var read = $cms.readCookie(cookieName);
+        var read = $cms.readCookie(cookieName, cookieCategory);
 
         if (read && (read !== cookieValue) && $cms.isDevMode() && !alertedCookieConflict) {
             $cms.ui.alert('{!COOKIE_CONFLICT_DELETE_COOKIES;^}' + '... ' + document.cookie + ' (' + output + ')', '{!ERROR_OCCURRED;^}');
@@ -579,20 +599,19 @@
     /**
      * @memberof $cms
      * @param cookieName
+     * @param cookieCategory
      * @param defaultValue
      * @returns {string}
      */
-    $cms.readCookie = function readCookie(cookieName, defaultValue) {
-        // If cookies have not been consented, pretend no cookies are set even if there are old cookies remaining
-        if (cookieName !== 'cookieconsent_ESSENTIAL') {
-            var cookieConsent = $cms.readCookie('cookieconsent_ESSENTIAL');
-            if (!cookieConsent || (cookieConsent !== 'ALLOW')) {
-                return '';
-            }
-        }
-
+    $cms.readCookie = function readCookie(cookieName, cookieCategory, defaultValue) {
         cookieName = strVal(cookieName);
+        cookieCategory = strVal(cookieCategory);
         defaultValue = strVal(defaultValue);
+
+        // If cookies have not been consented, pretend no cookies are set even if there are old cookies remaining
+        if ((cookieName !== 'cc_cookie') && ($cms.acceptsCookieCategory(cookieCategory))) {
+            return '';
+        }
 
         var cookies = String(document.cookie),
             startIdx = cookies.startsWith(cookieName + '=') ? 0 : cookies.indexOf(' ' + cookieName + '=');
@@ -611,6 +630,33 @@
         }
 
         return decodeURIComponent(cookies.substring(startIdx + cookieName.length + 1, endIdx));
+    };
+
+    /**
+     * @memberof $cms
+     * @param cookieCategory
+     * @returns {boolean}
+     */
+    $cms.acceptsCookieCategory = function acceptsCookieCategory(cookieCategory) {
+        cookieCategory = strVal(cookieCategory);
+
+        var cookieConsent = $cms.readCookie('cc_cookie');
+        if (cookieConsent === '') {
+            return false;
+        }
+
+        var cookieConsentData = JSON.parse(decodeURIComponent(cookieConsent));
+        if (typeof cookieConsentData !== 'object') {
+            return false;
+        }
+        if (typeof cookieConsentData['categories'] === 'undefined') {
+            return false;
+        }
+        if (cookieConsentData['categories'].indexOf(cookieCategory) < 0) {
+            return false;
+        }
+
+        return true;
     };
 
     /**

@@ -509,6 +509,8 @@ function semihtml_to_comcode(string $semihtml, bool $force = false, bool $quick 
 
     $semihtml = trim($semihtml);
 
+    require_code('templates');
+
     // Optimisation, not long enough to clean up
     if (cms_trim($semihtml, strlen($semihtml) < 30) === '') {
         return '';
@@ -1128,6 +1130,8 @@ function semihtml_to_comcode(string $semihtml, bool $force = false, bool $quick 
     $semihtml = str_replace('<br />', '<br />' . "\n", $semihtml);
     $semihtml = str_replace('</p>', '</p>' . "\n", $semihtml);
     $semihtml = str_replace('[/align]', '[/align]' . "\n", $semihtml);
+
+    require_code('templates');
 
     if (cms_trim($semihtml) == '') {
         return '';

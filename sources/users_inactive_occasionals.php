@@ -136,7 +136,7 @@ function create_session(int $member_id, int $session_confirmed = 0, bool $invisi
 
         // Generate random session
         require_code('crypt');
-        $new_session = get_secure_random_string(16, CRYPT_BASE32);
+        $new_session = get_secure_random_string(32, CRYPT_BASE32);
 
         $shy_session = (($allow_shy_session) && (isset($SITE_INFO['any_guest_cached_too'])) && ($SITE_INFO['any_guest_cached_too'] == '1') && (is_guest($member_id)));
         if ($shy_session) {
@@ -183,7 +183,7 @@ function create_session(int $member_id, int $session_confirmed = 0, bool $invisi
             $geo = geolocate_ip($ip_address);
             if ($geo !== null) {
                 $region = get_region();
-                if (!cms_empty_safe($region) && (!is_location_within($region, [$geo]))) {
+                if (!cms_empty_safe($region) && (!is_location_within($region, [$geo])) && function_exists('attach_message')) {
                     require_lang('locations');
                     attach_message(do_lang_tempcode('GEOLOCATION_REGION_MISMATCH', escape_html($geo)), 'warn');
                 }
@@ -311,7 +311,7 @@ function set_session_id(string $id, bool $guest_session = false)
 
     // Save cookie
     if ($id != '') {
-        $success = cms_setcookie(get_session_cookie(), $id, !$guest_session, true, max(1.0 / 24.0 / 60.0 / 60.0, floatval(get_option('session_expiry_time')) / 24.0));
+        $success = cms_setcookie(get_session_cookie(), $id, 'ESSENTIAL', !$guest_session, true, max(1.0 / 24.0 / 60.0 / 60.0, floatval(get_option('session_expiry_time')) / 24.0));
     } else {
         $success = true;
     }
@@ -394,7 +394,7 @@ function try_su_login(int $member_id) : int
         if ((get_forum_type() == 'cns') && (get_param_integer('keep_su_online', 0) == 1)) {
             require_code('crypt');
             $new_session_row = [
-                'the_session' => get_secure_random_string(16, CRYPT_BASE32),
+                'the_session' => get_secure_random_string(32, CRYPT_BASE32),
                 'last_activity_time' => time(),
                 'member_id' => $member_id,
                 'ip' => get_ip_address(3),

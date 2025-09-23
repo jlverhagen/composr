@@ -942,6 +942,27 @@ abstract class DatabaseDriver
     abstract public function drop_index__sql(string $table_name, string $index_name) : ?string;
 
     /**
+     * Get SQL for creating a foreign key.
+     *
+     * @param  ID_TEXT $from_table The table on which we are creating a foreign key
+     * @param  ID_TEXT $from_field The table's field on which we are creating a foreign key
+     * @param  ID_TEXT $to_table The table which is being referenced
+     * @param  ID_TEXT $to_field The table's field which is being referenced
+     * @return string The SQL
+     */
+    public function create_foreign_key__sql(string $from_table, string $from_field, string $to_table, string $to_field) : ?string
+    {
+        // Not supported by default; only MySQL uses this.
+        return null;
+    }
+
+    public function delete_foreign_key__sql(string $from_table, string $from_field) : ?string
+    {
+        // Not supported by default; only MySQL uses this.
+        return null;
+    }
+
+    /**
      * Get SQL for changing the primary key of a table.
      *
      * @param  string $table_prefix The table prefix
@@ -3094,6 +3115,32 @@ class DatabaseConnector
     {
         require_code('database_helper');
         _helper_delete_index_if_exists($this, $table_name, $index_name);
+    }
+
+    /**
+     * Create a foreign key constraint.
+     *
+     * @param  ID_TEXT $from_table The table on which to create the foreign key
+     * @param  ID_TEXT $from_field The field on which to create the foreign key
+     * @param  ID_TEXT $to_table The table which is referenced
+     * @param  ID_TEXT $to_field The field which is referenced
+     */
+    public function create_foreign_key(string $from_table, string $from_field, string $to_table, string $to_field)
+    {
+        require_code('database_helper');
+        _helper_create_foreign_key($this, $from_table, $from_field, $to_table, $to_field);
+    }
+
+    /**
+     * Delete a foreign key constraint.
+     *
+     * @param  ID_TEXT $from_table The table from which to delete the foreign key
+     * @param  ID_TEXT $from_field The field from which to delete the foreign key
+     */
+    public function delete_foreign_key_if_exists(string $from_table, string $from_field)
+    {
+        require_code('database_helper');
+        _helper_delete_foreign_key_if_exists($this, $from_table, $from_field);
     }
 
     /**

@@ -321,7 +321,7 @@
                     return; // No-op if comments wrapper element changed during AJAX request, e.g., slideshow loaded comments for another slide.
                 }
 
-                if ((xhr.responseText !== '') && (xhr.status !== 500)) {
+                if ((xhr.responseText !== '') && (xhr.status < 400)) {
                     $util.inform('Commenting: AJAX submission succeeded');
 
                     // Display
@@ -351,9 +351,11 @@
                             $dom.fadeTo(boxEl, null, 1);
                         }
                     });
-                } else { // Error: do a normal post so error can be seen
+                } else {
                     $util.inform('Commenting: AJAX submission failed');
 
+                    // Disabled; by-design this is bad because re-submitting can re-trigger hack attacks or errors which cause server instability.
+                    /*
                     var tokenField = commentsForm.elements['csrf_token'];
                     if (tokenField) {
                         return $cms.getCsrfToken().then(function (text) {
@@ -366,6 +368,7 @@
                     } else {
                         commentsForm.submit();
                     }
+                    */
                 }
             });
 

@@ -77,12 +77,13 @@ class Hook_task_install_geolocation_data
         flock($file, LOCK_UN);
         fclose($file);
 
-        if (!empty($to_insert['begin_num'])) { // Final batch, if there is one
-            $GLOBALS['SITE_DB']->query_insert('ip_country', $to_insert);
-        }
-
         // This is to indicate the data has been fully installed
-        $GLOBALS['SITE_DB']->query_insert('ip_country', ['begin_num' => 0, 'end_num' => 0, 'country' => '00']);
+        $to_insert['begin_num'][] = 0;
+        $to_insert['end_num'][] = 0;
+        $to_insert['country'][] = '00';
+
+        // Final batch
+        $GLOBALS['SITE_DB']->query_insert('ip_country', $to_insert);
 
         return null;
     }

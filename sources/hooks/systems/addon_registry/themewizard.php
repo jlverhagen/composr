@@ -42,7 +42,7 @@ class Hook_addon_registry_themewizard
      */
     public function get_version() : string
     {
-        return '11.0.1'; // addon_version_auto_update 10c6f01f40195320764946d939858f82
+        return '11.0.2'; // addon_version_auto_update 2d3dd6fcb025b4c6f1c3268e6b956645
     }
 
     /**
@@ -144,6 +144,8 @@ class Hook_addon_registry_themewizard
             'sources/hooks/systems/preview/themewizard.php',
             'sources/hooks/systems/preview/themewizard_image.php',
             'sources/hooks/systems/snippets/themewizard_equation.php',
+            'sources/hooks/systems/symbols/THEME_COLOUR_IS_BRIGHT.php',
+            'sources/hooks/systems/symbols/THEME_DARK.php',
             'sources/themewizard.php',
             'sources_custom/hooks/modules/admin_themewizard/.htaccess',
             'sources_custom/hooks/modules/admin_themewizard/index.html',

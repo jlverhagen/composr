@@ -768,35 +768,55 @@ function inform_about_addon_install(string $file, array $also_uninstalling = [],
 function has_feature(string $dependency) : bool
 {
     // Normalise
-    $dependency = str_replace(' ', '', cms_strtolower_ascii(preg_replace('# (enabled|needed|required)$#', '', $dependency)));
+    $dependency = cms_strtolower_ascii(preg_replace('# (enabled|needed|required)$#', '', $dependency));
 
-    $remapping = [ // LEGACY: Useful for carrying legacy remappings
-        'unvalidated' => 'validation',
-        'imap' => 'core_imap',
-    ];
-    if (array_key_exists($dependency, $remapping)) {
-        $dependency = $remapping[$dependency];
+    $bits = explode(' ', $dependency, 2);
+
+    if (array_key_exists($bits[0], CMS_ADDON_REMAPPING)) {
+        $bits[0] = CMS_ADDON_REMAPPING[$bits[0]];
     }
 
-    // Non-bundled addon
-    $test = $GLOBALS['SITE_DB']->query_select_value_if_there('addons', 'addon_name', ['addon_name' => $dependency]);
-    if ($test !== null) {
-        return true;
+    // Installed addon
+    $_test = $GLOBALS['SITE_DB']->query_select_value_if_there('addons', 'addon_name', ['addon_name' => $bits[0]]);
+    $test = false;
+    if ($_test !== null) {
+        $test = true;
+    } else {
+        // Bundled addon
+        if (file_exists(get_file_base() . '/sources/hooks/systems/addon_registry/' . $bits[0] . '.php')) {
+            $test = true;
+        }
     }
 
-    // Bundled addon
-    if (file_exists(get_file_base() . '/sources/hooks/systems/addon_registry/' . $dependency . '.php')) {
-        return true;
+    // A version may have been specified for an addon
+    if ($test === true) {
+        if (!isset($bits[1])) { // No version requirement
+            return true;
+        }
+
+        require_code('version2');
+        $required_version = get_version_php__from_anything($bits[1]);
+
+        $addon_version = $GLOBALS['SITE_DB']->query_select_value_if_there('addons', 'addon_version', ['addon_name' => $bits[0]]);
+        if ($addon_version === null) {
+            $addon_info = read_addon_info($bits[0]);
+            $addon_version = $addon_info['version'];
+        }
+        $addon_version = get_version_php__from_anything($addon_version);
+
+        if (version_compare($addon_version, $required_version, '>=')) {
+            return true;
+        }
     }
 
     // Some other features (referenced in automated test, addon_dependency_naming.php; note these are lower-case and you must use the casing specified in the tests)
-    if (($dependency == 'mysql') && (strpos(get_db_type(), 'mysql') !== false)) {
+    if ((cms_strtolower_ascii($dependency) == 'mysql') && (strpos(get_db_type(), 'mysql') !== false)) {
         return true;
     }
-    if (($dependency == 'system scheduler') && (cron_installed())) {
+    if ((cms_strtolower_ascii($dependency) == 'system scheduler') && (cron_installed())) {
         return true;
     }
-    if ((($dependency == 'cns') || ($dependency == 'conversr')) && (get_forum_type() == 'cns')) {
+    if (((cms_strtolower_ascii($dependency) == 'cns') || (cms_strtolower_ascii($dependency) == 'conversr')) && (get_forum_type() == 'cns')) {
         return true;
     }
     if ((cms_strtolower_ascii($dependency) == 'utf-8') && (get_charset() == 'utf-8')) {
@@ -821,6 +841,15 @@ function has_feature(string $dependency) : bool
         return true;
     }
     if ((cms_strtolower_ascii($dependency) == 'php pdo_mysql extension') && (defined('PDO::ATTR_DRIVER_NAME'))) {
+        return true;
+    }
+    if ((cms_strtolower_ascii($dependency) == 'php gettext extension') && (function_exists('gettext'))) {
+        return true;
+    }
+    if ((cms_strtolower_ascii($dependency) == 'php mbstring extension') && (function_exists('mb_convert_encoding'))) {
+        return true;
+    }
+    if ((cms_strtolower_ascii($dependency) == 'php fileinfo extension') && (function_exists('finfo_open'))) {
         return true;
     }
     if (substr($dependency, 0, 4) == 'php ') {
@@ -903,8 +932,10 @@ function install_addon(string $file, ?array $files = null, bool $do_files = true
 
     // Stop! Don't install an addon if it is not compatible with this version of the website software
     require_code('version');
-    if (($info['min_cms_version'] == '') || (floatval($info['min_cms_version']) > cms_version_number()) || ((!empty($info['max_cms_version']) && (floatval($info['max_cms_version']) < cms_version_number())))) {
-        warn_exit(do_lang_tempcode('ADDON_WARNING_INCOMPATIBILITIES_VERSION', escape_html(float_to_raw_string(cms_version_number())), escape_html($addon_name)));
+    if (!$was_already_installed) {
+        if (($info['min_cms_version'] == '') || (floatval($info['min_cms_version']) > cms_version_number()) || ((!empty($info['max_cms_version']) && (floatval($info['max_cms_version']) < cms_version_number())))) {
+            warn_exit(do_lang_tempcode('ADDON_WARNING_INCOMPATIBILITIES_VERSION', escape_html(float_to_raw_string(cms_version_number())), escape_html($addon_name)));
+        }
     }
 
     require_code('developer_tools');
@@ -1087,11 +1118,8 @@ function reinstall_addon_soft(string $addon_name, ?array $ini_info = null)
         warn_exit(do_lang_tempcode('ADDON_WARNING_INCOMPATIBILITIES_VERSION', escape_html(float_to_raw_string(cms_version_number())), escape_html($addon_name)));
     }
 
-    $hook_path = 'hooks/systems/addon_registry/' . filter_naughty($addon_name);
-    if (is_file(get_file_base() . '/sources/' . $hook_path . '.php') || is_file(get_file_base() . '/sources_custom/' . $hook_path . '.php')) {
-        require_code($hook_path);
-        $ob = object_factory('Hook_addon_registry_' . filter_naughty_harsh($addon_name));
-
+    $ob = get_hook_ob('systems', 'addon_registry', filter_naughty_harsh($addon_name), 'Hook_addon_registry_', true);
+    if ($ob !== null) {
         if (method_exists($ob, 'uninstall')) {
             $old = cms_extend_time_limit(15);
             $ob->uninstall();
@@ -1149,7 +1177,7 @@ UPGRADING ADDONS
 /**
  * Find updated addons via checking the homesite web service.
  *
- * @return array Map of addons needing updated, name to download ID on the homesite
+ * @return array Map of addons needing updated, name to duple of download ID, download GUID
  */
 function find_updated_addons() : array
 {
@@ -1201,7 +1229,7 @@ function find_updated_addons() : array
             // Can we check if it is updated by version?
             if ($addon_manifest['version'] !== null) {
                 if (version_compare($addon_manifest['version'], $info['version']) > 0) {
-                    $updated_addons[$addon_manifest['name']] = $addon_manifest['download_id'];
+                    $updated_addons[$addon_manifest['name']] = [$addon_manifest['download_id'], $addon_manifest['download_guid']];
                 }
                 continue;
             }
@@ -1209,7 +1237,7 @@ function find_updated_addons() : array
             // Can we check by update time? (NB: install time is usually the mtime of the addon registry hook; and this file would normally change for get_version())
             if ($addon_manifest['updated'] !== null) {
                 if ($addon_manifest['updated'] > $info['install_time']) {
-                    $updated_addons[$addon_manifest['name']] = $addon_manifest['download_id'];
+                    $updated_addons[$addon_manifest['name']] = [$addon_manifest['download_id'], $addon_manifest['download_guid']];
                 }
                 continue;
             }
@@ -1222,7 +1250,7 @@ function find_updated_addons() : array
                 // Can we check if it is updated by version?
                 if ($addon_manifest['version'] !== null) {
                     if (version_compare($addon_manifest['version'], $available_addon['version']) > 0) {
-                        $updated_addons[$addon_manifest['name']] = $addon_manifest['download_id'];
+                        $updated_addons[$addon_manifest['name']] = [$addon_manifest['download_id'], $addon_manifest['download_guid']];
                     }
                     break;
                 }
@@ -1230,7 +1258,7 @@ function find_updated_addons() : array
                 // Can we check by update time?
                 if ($addon_manifest['updated'] !== null) {
                     if ($addon_manifest['updated'] > $available_addon['mtime']) {
-                        $updated_addons[$addon_manifest['name']] = $addon_manifest['download_id'];
+                        $updated_addons[$addon_manifest['name']] = [$addon_manifest['download_id'], $addon_manifest['download_guid']];
                     }
                     break;
                 }
@@ -1238,7 +1266,7 @@ function find_updated_addons() : array
                 // Can we check by TAR hash?
                 if ($addon_manifest['hash'] !== null) {
                     if ($addon_manifest['hash'] != $available_addon['hash']) {
-                        $updated_addons[$addon_manifest['name']] = $addon_manifest['download_id'];
+                        $updated_addons[$addon_manifest['name']] = [$addon_manifest['download_id'], $addon_manifest['download_guid']];
                     }
                     break;
                 }
@@ -1247,6 +1275,112 @@ function find_updated_addons() : array
         }
     }
     return $updated_addons;
+}
+
+/**
+ * Get information for the user relating to an addon that they are intending to soft-upgrade.
+ * This is intended only for upgrading bundled addons; this does not fetch updated non-bundled addons from the homesite.
+ *
+ * @param  ID_TEXT $addon_name The name of the addon being upgraded
+ * @param  array $also_uninstalling Array of addons also being uninstalled by this action
+ * @param  array $also_installing Array of addons also being installed or upgraded by this action
+ * @param  ?array $addon_info Map of addon information (null: look it up)
+ * @param  boolean $always_return Whether to make sure we always return, rather than possibly bombing out with a dependency management UI
+ * @return array Triple: warnings, files, addon info array
+ */
+function inform_about_addon_upgrade(string $addon_name, array $also_uninstalling = [], array $also_installing = [], ?array $addon_info = null, bool $always_return = false) : array
+{
+    // Read/show info
+    if ($addon_info === null) {
+        $addon_info = read_addon_info($addon_name, true);
+    }
+
+    $files = new Tempcode();
+    // The files can come in as either a newline-separated string or an array.
+    // If its an array then we use it as-is, if it's a string then we explode it first.
+    if (is_array($addon_info['files'])) {
+        $loopable = $addon_info['files'];
+    } else {
+        $loopable = explode("\n", $addon_info['files']);
+    }
+    foreach ($loopable as $i => $filepath) {
+        $files->attach(do_template('ADDON_INSTALL_FILES', ['_GUID' => '86ab50e4571454e592dc4261caa81cc3', 'I' => strval($i), 'DISABLED' => true, 'PATH' => $filepath]));
+    }
+
+    $warnings = new Tempcode();
+    require_code('version');
+
+    // Website software version incompatibilities
+    if (($addon_info['min_cms_version'] == '') || (floatval($addon_info['min_cms_version']) > cms_version_number()) || ((!empty($addon_info['max_cms_version']) && (floatval($addon_info['max_cms_version']) < cms_version_number())))) {
+        if (!$always_return) {
+            warn_exit(do_lang_tempcode('ADDON_WARNING_INCOMPATIBILITIES_VERSION', escape_html(float_to_raw_string(cms_version_number())), escape_html($addon_name)));
+        }
+        $warnings->attach(do_lang_tempcode('ADDON_WARNING_INCOMPATIBILITIES_VERSION', escape_html(float_to_raw_string(cms_version_number())), escape_html($addon_name)));
+    }
+
+    // Addon incompatibilities
+    $incompatibilities = collapse_1d_complexity('addon_name', $GLOBALS['SITE_DB']->query_select('addons_dependencies', ['addon_name'], ['addon_name_dependant_upon' => $addon_name, 'addon_name_incompatibility' => 1], 'ORDER BY addon_name'));
+    $_incompatibilities = new Tempcode();
+    foreach ($incompatibilities as $in) {
+        if (!$_incompatibilities->is_empty()) {
+            $_incompatibilities->attach(do_lang_tempcode('LIST_SEP'));
+        }
+        $_incompatibilities->attach(escape_html($in));
+    }
+    if (!empty($incompatibilities)) {
+        $warnings->attach(do_template('ADDON_INSTALL_WARNING', ['_GUID' => 'eb10c443189e50018c067de5f10913da', 'WARNING' => do_lang_tempcode('ADDON_WARNING_INCOMPATIBILITIES', $_incompatibilities, escape_html($addon_name))]));
+    }
+
+    // Check dependencies
+    $_dependencies = array_key_exists('dependencies', $addon_info) ? $addon_info['dependencies'] : [];
+    $dependencies = [];
+    foreach ($_dependencies as $dependency) {
+        if ($dependency == '') {
+            continue;
+        }
+        if (in_array($dependency, $also_uninstalling)) {
+            continue;
+        }
+        if (in_array($dependency, $also_installing)) {
+            continue;
+        }
+        if (!has_feature($dependency)) {
+            $dependencies[] = $dependency;
+        }
+    }
+    $_dependencies_str = new Tempcode();
+    foreach ($dependencies as $in) {
+        if (!$_dependencies_str->is_empty()) {
+            $_dependencies_str->attach(do_lang_tempcode('LIST_SEP'));
+        }
+        if (file_exists(get_custom_file_base() . '/imports/addons/' . $in . '.tar')) {
+            $in_tpl = hyperlink(build_url(['page' => 'admin_addons', 'type' => 'addon_install', 'file' => $in . '.tar'], get_module_zone('admin_addons')), $in, true, true);
+        } else {
+            $in_tpl = make_string_tempcode(escape_html($in));
+        }
+        $_dependencies_str->attach($in_tpl);
+    }
+    if (!empty($dependencies)) {
+        if (($addon_info['author'] == 'Core Development Team') && (!$always_return)) {
+            $post_fields = build_keep_post_fields();
+            foreach ($dependencies as $in) {
+                $post_fields->attach(form_input_hidden('install_' . $in . '.tar', $in . '.tar'));
+            }
+            $post_fields->attach(symbol_tempcode('INSERT_FORM_POST_SECURITY'));
+
+            if (get_param_string('type', 'browse') == 'addon_install') {
+                $post_fields->attach(form_input_hidden('install_' . $addon_name, $addon_name));
+                $url = static_evaluate_tempcode(build_url(['page' => 'admin_addons', 'type' => 'multi_action'], get_module_zone('admin_addons')));
+            } else {
+                $url = get_self_url(true);
+            }
+            warn_exit(do_lang_tempcode('_ADDON_WARNING_MISSING_DEPENDENCIES', $_dependencies_str->evaluate(), escape_html($addon_name), [escape_html($url), $post_fields]));
+        } else {
+            $warnings->attach(do_template('ADDON_INSTALL_WARNING', ['_GUID' => '5457bc7de790573096ed59dcd2aae81e', 'WARNING' => do_lang_tempcode('ADDON_WARNING_MISSING_DEPENDENCIES', $_dependencies_str, escape_html($addon_name))]));
+        }
+    }
+
+    return [$warnings, $files, $addon_info];
 }
 
 /**
@@ -1323,8 +1457,8 @@ function upgrade_addon_soft(string $addon_name) : int
         return (-2); // Not installed, so can't upgrade
     }
 
-    $upgrade_from = $rows[0]['addon_version'];
-    $upgrade_from_bits = explode('.', get_version_dotted__from_anything($upgrade_from), 3);
+    $upgrade_from = get_version_php__from_anything($rows[0]['addon_version']);
+    $upgrade_from_bits = explode('.', $upgrade_from);
     $upgrade_minor = 0;
     $upgrade_patch = 0;
     if (isset($upgrade_from_bits[1]) && is_numeric($upgrade_from_bits[1])) {
@@ -1338,9 +1472,7 @@ function upgrade_addon_soft(string $addon_name) : int
     if (!hook_exists('systems', 'addon_registry', $addon_name)) {
         return 0;
     }
-    $code_file = 'hooks/systems/addon_registry/' . filter_naughty($addon_name);
-    require_code($code_file);
-    $ob = object_factory('Hook_addon_registry_' . filter_naughty_harsh($addon_name));
+    $ob = get_hook_ob('systems', 'addon_registry', filter_naughty_harsh($addon_name), 'Hook_addon_registry_');
 
     require_code('version');
 
@@ -1354,14 +1486,15 @@ function upgrade_addon_soft(string $addon_name) : int
         return (-1);
     }
 
-    $disk_version = $ob->get_version();
+    $disk_version = get_version_php__from_anything($ob->get_version());
 
     $ret = 0;
-    if (floatval($upgrade_from) < floatval($disk_version)) {
+    if (version_compare($disk_version, $upgrade_from, '>')) {
+        $ret = 1;
+
         if (method_exists($ob, 'install')) {
             $old = cms_extend_time_limit(TIME_LIMIT_EXTEND__SLUGGISH);
             $ob->install($upgrade_major_minor, $upgrade_patch);
-            $ret = 1;
             cms_set_time_limit($old);
         }
     }
@@ -1579,6 +1712,12 @@ function get_addon_uninstall_writable_paths(string $addon_name) : array
  */
 function uninstall_addon(string $addon_name, bool $clear_caches = true)
 {
+    // Careful! Do not accidentally uninstall core addons.
+    if (substr($addon_name, 0, 5) == 'core_' || ($addon_name == 'core')) {
+        require_lang('addons');
+        warn_exit(do_lang_tempcode('ADDON_WARNING_UNINSTALL_CORE', escape_html($addon_name)));
+    }
+
     $addon_info = read_addon_info($addon_name);
 
     site_maintenance_lock_engage();
@@ -1726,9 +1865,7 @@ function uninstall_addon_soft(string $addon_name)
         if (!hook_exists('systems', 'addon_registry', $addon_name)) {
             return;
         }
-        $code_file = 'hooks/systems/addon_registry/' . filter_naughty($addon_name);
-        require_code($code_file);
-        $ob = object_factory('Hook_addon_registry_' . filter_naughty_harsh($addon_name));
+        $ob = get_hook_ob('systems', 'addon_registry', filter_naughty_harsh($addon_name), 'Hook_addon_registry_');
 
         if (method_exists($ob, 'uninstall')) {
             $ob->uninstall();

@@ -257,12 +257,7 @@ function build_closure_tempcode(int $type, string $name, array $parameters, arra
     }
 
     if ($has_tempcode) {
-        $funcdef = "\$tpl_funcs['$myfunc']=\"foreach (\\\$parameters as \\\$i=>\\\$p) { if (is_object(\\\$p)) \\\$parameters[\\\$i]=\\\$p->evaluate(); } echo ";
-        if (($type === TC_SYMBOL) && (function_exists('ecv_' . $name))) {
-            $funcdef .= "ecv_" . $name . "(\\\$cl," . ($_escaping) . ",\\\$parameters);\";\n";
-        } else {
-            $funcdef .= "ecv(\\\$cl," . ($_escaping) . "," . ($_type) . ",\\\"" . ($_name) . "\\\",\\\$parameters);\";\n";
-        }
+        $funcdef = "\$tpl_funcs['$myfunc']=\"foreach (\\\$parameters as \\\$i=>\\\$p) { if (is_object(\\\$p)) \\\$parameters[\\\$i]=\\\$p->evaluate(); } echo ecv(\\\$cl," . ($_escaping) . "," . ($_type) . ",\\\"" . ($_name) . "\\\",\\\$parameters);\";\n";
     } else {
         $_parameters = '';
         foreach ($parameters as $parameter) {
@@ -276,12 +271,7 @@ function build_closure_tempcode(int $type, string $name, array $parameters, arra
             }
         }
 
-        $funcdef = "\$tpl_funcs['$myfunc']=\"echo ";
-        if (($type === TC_SYMBOL) && (function_exists('ecv_' . $name))) {
-            $funcdef .= "ecv_" . $name . "(\\\$cl," . ($_escaping) . ",[" . $_parameters . "]);\";\n";
-        } else {
-            $funcdef .= "ecv(\\\$cl," . ($_escaping) . "," . ($_type) . ",\\\"" . ($_name) . "\\\",[" . $_parameters . "]);\";\n";
-        }
+        $funcdef = "\$tpl_funcs['$myfunc']=\"echo ecv(\\\$cl," . ($_escaping) . "," . ($_type) . ",\\\"" . ($_name) . "\\\",[" . $_parameters . "]);\";\n";
 
         switch ($_name) {
             // Needs parameters for preprocessing, so we won't throw them out
@@ -374,11 +364,15 @@ function closure_eval(string $code, array $parameters) : string
         return do_lang('NO_PHP_IN_TEMPLATES');
     }
 
+    require_code('failure');
+    set_throw_errors(true);
     try {
         $ret = eval($code);
     } catch (Error $e) {
         tempcode_error($e, $code);
     }
+    set_throw_errors(false);
+
     if (!is_string($ret)) {
         $ret = @strval($ret);
     }
@@ -1208,6 +1202,7 @@ function dependencies_are_good(string $codename, string $suffix, string $directo
  */
 function handle_symbol_preprocessing(array $seq_part, array &$children, string $template_name = '')
 {
+    // TODO: refactor into hooks
     switch ($seq_part[2]) {
         case 'PAGE_LINK':
             $param = $seq_part[3];
@@ -1645,7 +1640,7 @@ function handle_symbol_preprocessing(array $seq_part, array &$children, string $
                     }
                 }
 
-                ecv_METADATA(user_lang(), [], $param);
+                ecv(user_lang(), [], TC_SYMBOL, 'METADATA', $param);
             }
             return;
 
@@ -1659,7 +1654,7 @@ function handle_symbol_preprocessing(array $seq_part, array &$children, string $
                     }
                 }
 
-                ecv_METADATA_IMAGE_EXTRACT(user_lang(), [], $param);
+                ecv(user_lang(), [], TC_SYMBOL, 'METADATA_IMAGE_EXTRACT', $param);
             }
             return;
 
@@ -2005,21 +2000,30 @@ class Tempcode
                     if (!@is_file(\'' . $_file . '\')) {
                         $GLOBALS[\'CACHE_TEMPLATES\']=false;
                     }
+
+                    require_code(\'failure\');
+                    set_throw_errors(true);
                     try {
                         eval($tmp->code_to_preexecute);
                     }
                     catch (Error $e) {
                         tempcode_error($e, $tmp->code_to_preexecute);
                     }
+                    set_throw_errors(false);
+
                     $GLOBALS[\'CACHE_TEMPLATES\']=$tmp2;
                     unset($tmp);
                 } else {
+                    require_code(\'failure\');
+                    set_throw_errors(true);
                     try {
                         eval($result[4]);
                     }
                     catch (Error $e) {
                         tempcode_error($e, $result[4]);
                     }
+                    set_throw_errors(false);
+
                     unset($result);
                 }
             ';
@@ -2083,11 +2087,15 @@ class Tempcode
             $this->metadata = create_template_tree_metadata();
         }
 
+        require_code('failure');
+        set_throw_errors(true);
         try {
             $result = eval($raw_data);
         } catch (Error $e) {
             tempcode_error($e, $raw_data);
         }
+        set_throw_errors(false);
+
         if ($result === false) {
             if ($allow_failure) {
                 return false;
@@ -2360,21 +2368,29 @@ class Tempcode
             foreach ($seq_parts_group as $seq_part) {
                 $seq_part_0 = $seq_part[0];
                 if (!isset($tpl_funcs[$seq_part_0])) {
+                    require_code('failure');
+                    set_throw_errors(true);
                     try {
                         eval($this->code_to_preexecute[$seq_part_0]);
                     } catch (Error $e) {
                         tempcode_error($e, $this->code_to_preexecute[$seq_part_0]);
                     }
+                    set_throw_errors(false);
                 }
+
                 if (is_callable($tpl_funcs[$seq_part_0])) {
                     call_user_func($tpl_funcs[$seq_part_0], $seq_part[1], $current_lang, $seq_part[4]);
                 } else {
                     $parameters = $seq_part[1];
+
+                    require_code('failure');
+                    set_throw_errors(true);
                     try {
                         eval($tpl_funcs[$seq_part_0]);
                     } catch (Error $e) {
                         tempcode_error($e, $tpl_funcs[$seq_part_0]);
                     }
+                    set_throw_errors(false);
                 }
 
                 if ((($first_of_long) || ($MEMORY_OVER_SPEED)) && (ob_get_length() > 0)) { // We only quick exit on the first iteration, as we know we likely didn't spend much time getting to it- anything more and we finish so that we can cache for later use by evaluate/evaluate_echo
@@ -2469,21 +2485,28 @@ class Tempcode
             foreach ($seq_parts_group as $seq_part) {
                 $seq_part_0 = $seq_part[0];
                 if (!isset($tpl_funcs[$seq_part_0])) {
+                    require_code('failure');
+                    set_throw_errors(true);
                     try {
                         eval($this->code_to_preexecute[$seq_part_0]);
                     } catch (Error $e) {
                         tempcode_error($e, $this->code_to_preexecute[$seq_part_0]);
                     }
+                    set_throw_errors(false);
                 }
+
                 if (is_callable($tpl_funcs[$seq_part_0])) {
                     call_user_func($tpl_funcs[$seq_part_0], $seq_part[1], $current_lang, $seq_part[4]);
                 } else {
                     $parameters = $seq_part[1];
+                    require_code('failure');
+                    set_throw_errors(true);
                     try {
                         eval($tpl_funcs[$seq_part_0]);
                     } catch (Error $e) {
                         tempcode_error($e, $tpl_funcs[$seq_part_0]);
                     }
+                    set_throw_errors(false);
                 }
             }
         }
@@ -2563,21 +2586,28 @@ class Tempcode
 
                 $seq_part_0 = $seq_part[0];
                 if (!isset($tpl_funcs[$seq_part_0])) {
+                    require_code('failure');
+                    set_throw_errors(true);
                     try {
                         eval($this->code_to_preexecute[$seq_part_0]);
                     } catch (Error $e) {
                         tempcode_error($e, $this->code_to_preexecute[$seq_part_0]);
                     }
+                    set_throw_errors(false);
                 }
+
                 if (is_callable($tpl_funcs[$seq_part_0])) {
                     call_user_func($tpl_funcs[$seq_part_0], $seq_part[1], $current_lang, $seq_part[4]);
                 } else {
                     $parameters = $seq_part[1];
+                    require_code('failure');
+                    set_throw_errors(true);
                     try {
                         eval($tpl_funcs[$seq_part_0]);
                     } catch (Error $e) {
                         tempcode_error($e, $tpl_funcs[$seq_part_0]);
                     }
+                    set_throw_errors(false);
                 }
             }
         }
@@ -2603,11 +2633,14 @@ function recall_named_function(string $id, string $parameters, string $code)
     $k = 'TEMPCODE_FUNCTION__' . $id;
     if (!isset($GLOBALS[$k])) {
         $code = 'return function (' . $parameters . ') { $cl = user_lang(); ' . $code . ' };';
+        require_code('failure');
+        set_throw_errors(true);
         try {
             $GLOBALS[$k] = eval($code);
         } catch (Error $e) {
             tempcode_error($e, $code);
         }
+        set_throw_errors(false);
     }
     return $GLOBALS[$k];
 }

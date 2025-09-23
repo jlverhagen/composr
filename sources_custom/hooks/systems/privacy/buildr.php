@@ -35,6 +35,24 @@ class Hook_privacy_buildr extends Hook_privacy_base
             'description' => 'buildr:DESCRIPTION_PRIVACY_BUILDR',
 
             'cookies' => [
+                'buildr_hide_actions' => [
+                    'category' => 'PERSONALIZATION',
+                    'reason' => do_lang_tempcode('buildr:COOKIE_buildr_hide_actions'),
+                    'session' => false,
+                    'httponly' => false,
+                ],
+                'buildr_hide_additions' => [
+                    'category' => 'PERSONALIZATION',
+                    'reason' => do_lang_tempcode('buildr:COOKIE_buildr_hide_additions'),
+                    'session' => false,
+                    'httponly' => false,
+                ],
+                'buildr_hide_mods' => [
+                    'category' => 'PERSONALIZATION',
+                    'reason' => do_lang_tempcode('buildr:COOKIE_buildr_hide_mods'),
+                    'session' => false,
+                    'httponly' => false,
+                ],
             ],
 
             'positive' => [

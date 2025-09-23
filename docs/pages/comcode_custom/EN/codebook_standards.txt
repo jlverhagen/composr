@@ -325,7 +325,7 @@ Do not use braces around the file path for [tt]require[/tt] / [tt]require_once[/
 | Stability
 | Product development only
 | Manually
-| The contents of [tt]_config.php[/tt], [tt]data_custom/rate_limiter.php[/tt], and [tt]data_custom/errorlog.php[/tt] might change dynamically. When reading any of these or other dynamic PHP files, you should use [tt]include[/tt] or [tt]require[/tt], not their [tt]*_once[/tt] versions, to ensure you have the most up-to-date version loaded in.
+| The contents of [tt]_config.php[/tt], and [tt]data_custom/errorlog.php[/tt] might change dynamically. When reading any of these or other dynamic PHP files, you should use [tt]include[/tt] or [tt]require[/tt], not their [tt]*_once[/tt] versions, to ensure you have the most up-to-date version loaded in.
 |-
 | [size="0.8"]{$INC,cs_count,1})[/size]
 [color="red"]Do not use [tt]<?php[/tt] in a string; break it up as [tt]'<' . '?php'[/tt][/color]
@@ -525,17 +525,24 @@ Use only safelisted functions
 |-
 | [size="0.8"]{$INC,cs_count,1})[/size]
 If you use cookies, use the Composr cookie API
-| Portability
+| Portability, GDPR
 | Composr development +
 | Code Quality Checker, pedantic mode
-| If you do use cookies, use the Composr cookie functions to read/set/delete them, as these are written to respect the webmaster's defined cookie settings (cookie domain, cookie path).
+| If you do use cookies, use the Composr cookie functions ([tt]cms_admirecookie[/tt], [tt]cms_setcookie[/tt], [tt]cms_eatcookie[/tt], [tt]$cms.setCookie[/tt], and [tt]$cms.readCookie[/tt]) to read/set/delete them, as these are written to respect the webmaster's defined cookie settings (cookie domain, cookie path) and the user's cookie consent settings.
 |-
 | [size="0.8"]{$INC,cs_count,1})[/size]
-[color="red"]Document cookies[/color]
+Document cookies
 | GDPR
 | Composr development +
-| 
-| Document any cookies in a privacy hook, so that the privacy policy may be generated correctly.
+| Development mode
+| Document all cookies in a privacy hook, so that the privacy policy may be generated correctly and that Composr's cookie API properly enforces users' cookie consent settings. There should only ever be one match/definition for each cookie name used. You may use * as a wildcard in the name when defining cookies in the hook, but be sure all cookies matching the pattern serve the same purpose and have the same properties.
+|-
+| [size="0.8"]{$INC,cs_count,1})[/size]
+Ensure consistency between calls to the Composr cookie API and cookie definitions in privacy hooks
+| Stability, GDPR
+| Composr development +
+| Development mode
+| Ensure that the parameters you pass into [tt]cms_setcookie[/tt] and [tt]$cms.setCookie[/tt] are consistent with the definitions supplied in the respective privacy hook (e.g. do not pass in a category that is different from what is defined in the privacy hook for that cookie). When running in development mode, inconsistencies will be warned / logged when detected.
 |-
 | [size="0.8"]{$INC,cs_count,1})[/size]
 Template GUIDs must be unique and valid

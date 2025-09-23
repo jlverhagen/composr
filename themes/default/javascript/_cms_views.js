@@ -270,7 +270,7 @@
             this.el.classList.toggle('is-collapsed', !expanded);
 
             if (this.cookie) {
-                $cms.setCookie(this.cookie, expanded ? 'open' : 'closed');
+                $cms.setCookie(this.cookie, expanded ? 'open' : 'closed', 'PERSONALIZATION');
             }
         },
 
@@ -301,7 +301,7 @@
 
         /**@method*/
         handleTrayCookie: function () {
-            var cookieValue = $cms.readCookie(this.cookie), expanded;
+            var cookieValue = $cms.readCookie(this.cookie, 'PERSONALIZATION'), expanded;
 
             if ((!$dom.isDisplayed(this.contentEl) && (cookieValue === 'open')) || ($dom.isDisplayed(this.contentEl) && (cookieValue === 'closed'))) {
                 expanded = $cms.ui.toggleableTray(this.contentEl, false);
@@ -1061,43 +1061,105 @@
             this.initializeGoogleAnalytics();
         }
 
-        // Cookie Consent plugin by Osano - https://www.osano.com/cookieconsent
+        //$cms.setCookie('use_wysiwyg', '0', 'PERSONALIZATION', 90);
+
+        // Cookie Consent plugin by Orestbida - https://cookieconsent.orestbida.com
         if (($cms.runningScript() === 'index') && ($dom.$('meta[http-equiv="Refresh"]') === null) && (window.parent === window)) {
             $cms.requireJavascript('cookie_consent').then(function () {
-                var cookieConsentOptions = {
-                    cookie: {
-                        name: 'cookieconsent',
-                        path: $cms.getCookiePath(),
-                        domain: $cms.getCookieDomain(),
-                    },
-                    palette: {
-                        popup: {'background': '#000', 'text': '#FFF', 'link': '#FFF'},
-                        button: {'background': '#FFF', 'text': '#000'},
-                    },
-                    theme: 'block',
-                    content: {
-                        message: $util.format('{!COOKIE_NOTICE;}', [$cms.getSiteName()]),
-                        link: '{!READ_MORE;}',
-                        href: pageLinkPrivacy,
-                        allow: '{!ALLOW_COOKIES;}',
-                        dismiss: '{!DENY_COOKIES;}', // e.g. deny cookies
-                    },
-                    revokable: true,
-                    type: 'opt-in', // Required by GDPR
-                    onStatusChange: function onStatusChange(status, chosenBefore) {
-                        if (!this.hasConsented()) {
-
-                        }
-                    }
-                };
-
-                if ($cms.getCountry()) {
-                    cookieConsentOptions['law'] = {
-                        countryCode: $cms.getCountry(),
+                $cms.requireCss(['cookie_consent', 'cookie_consent_override']).then(function () {
+                    var cookieConsentOptions = {
+                        revision: 1
                     };
-                }
 
-                new window.CookieConsent(cookieConsentOptions);
+                    cookieConsentOptions['categories'] = {
+                        'ESSENTIAL': {
+                            enabled: true,
+                            readOnly: true,
+                            autoClear: {
+                                reloadPage: true,
+                            }
+                        },
+                        'PERSONALIZATION': {
+                            enabled: true,
+                            readOnly: false,
+                            autoClear: {
+                                reloadPage: true,
+                            }
+                        },
+                        'MARKETING': {
+                            enabled: false,
+                            readOnly: false,
+                            autoClear: {
+                                reloadPage: true,
+                            }
+                        },
+                        'ANALYTICS': {
+                            enabled: true,
+                            readOnly: false,
+                            autoClear: {
+                                reloadPage: true,
+                            }
+                        },
+                        'NON-ESSENTIAL': {
+                            enabled: true,
+                            readOnly: false,
+                            autoClear: {
+                                reloadPage: true,
+                            }
+                        }
+                    };
+
+                    cookieConsentOptions['language'] = {
+                        default: $cms.userLang().toLowerCase()
+                    };
+                    cookieConsentOptions['language']['translations'] = {};
+                    cookieConsentOptions['language']['translations'][$cms.userLang().toLowerCase()] = {
+                        consentModal: {
+                            title: '{!COOKIE_CONSENT_TITLE;^}',
+                            description: $util.format('{!DESCRIPTION_COOKIE_CONSENT;^}', [$cms.getSiteName()]),
+                            acceptAllBtn: '{!COOKIE_CONSENT_ACCEPT_ALL;^}',
+                            acceptNecessaryBtn: '{!COOKIE_CONSENT_ACCEPT_ESSENTIAL;^}',
+                            showPreferencesBtn: '{!COOKIE_CONSENT_MANAGE_SETTINGS;^}',
+                            footer: '<a href="{$BASE_URL;,0}/index.php?page=privacy" title="{!PRIVACY;^}">{!PRIVACY;^}</a> <small><em>{!COOKIE_CONSENT_PRIVACY_EM;^}</em></small>'
+                        },
+                        preferencesModal: {
+                            title: '{!COOKIE_CONSENT_MANAGE_SETTINGS_TITLE;^}',
+                            acceptAllBtn: '{!COOKIE_CONSENT_ACCEPT_ALL;^}',
+                            acceptNecessaryBtn: '{!COOKIE_CONSENT_ACCEPT_ESSENTIAL;^}',
+                            savePreferencesBtn: '{!COOKIE_CONSENT_SAVE_SETTINGS;^}',
+                            closeIconLabel: '{!COOKIE_CONSENT_CANCEL;^}',
+                            sections: [
+                                {
+                                    title: 'ESSENTIAL',
+                                    linkedCategory: 'ESSENTIAL',
+                                    description: '{!DESCRIPTION_COOKIE_CATEGORY_ESSENTIAL;^}'
+                                },
+                                {
+                                    title: 'PERSONALIZATION',
+                                    linkedCategory: 'PERSONALIZATION',
+                                    description: '{!DESCRIPTION_COOKIE_CATEGORY_PERSONALIZATION;^}'
+                                },
+                                {
+                                    title: 'MARKETING',
+                                    linkedCategory: 'MARKETING',
+                                    description: '{!DESCRIPTION_COOKIE_CATEGORY_MARKETING;^}'
+                                },
+                                {
+                                    title: 'ANALYTICS',
+                                    linkedCategory: 'ANALYTICS',
+                                    description: '{!DESCRIPTION_COOKIE_CATEGORY_ANALYTICS;^}'
+                                },
+                                {
+                                    title: 'NON-ESSENTIAL',
+                                    linkedCategory: 'NON-ESSENTIAL',
+                                    description: '{!DESCRIPTION_COOKIE_CATEGORY_NON_ESSENTIAL;^}'
+                                },
+                            ]
+                        }
+                    };
+
+                    CookieConsent.run(cookieConsentOptions);
+                });
             });
         }
 
@@ -1148,13 +1210,13 @@
 
         // Tell the server we have JavaScript, so do not degrade things for reasons of compatibility - plus also set other things the server would like to know
         if ($cms.configOption('detect_javascript')) {
-            $cms.setCookie('js_on', 1, 120);
+            $cms.setCookie('has_js', 1, 'NON-ESSENTIAL', 120);
         }
 
         if ($cms.configOption('is_on_timezone_detection')) {
             if (!window.parent || (window.parent === window)) {
-                $cms.setCookie('client_time', (new Date()).toString(), 120);
-                $cms.setCookie('client_time_ref', (Date.now() / 1000), 120);
+                $cms.setCookie('client_time', (new Date()).toString(), 'NON-ESSENTIAL', 120);
+                $cms.setCookie('client_time_ref', (Date.now() / 1000), 'NON-ESSENTIAL', 120);
             }
         }
 
@@ -1283,7 +1345,7 @@
         /* Software Chat */
         loadSoftwareChat: function () {
             $cms.ui.encryptData('Grant me le accezz 2 de chat!').then(function (encryptedData) {
-                if (encryptedData == '') {
+                if (encryptedData === '') {
                     return;
                 }
 
@@ -1634,14 +1696,14 @@
                 panelRight.classList.add('helper-panel-visible');
                 $dom.fadeIn(helperPanelContents);
 
-                if ($cms.readCookie('hide_helper_panel') === '1') {
-                    $cms.setCookie('hide_helper_panel', '0', 100);
+                if ($cms.readCookie('hide_helper_panel', 'PERSONALIZATION') === '1') {
+                    $cms.setCookie('hide_helper_panel', '0', 'PERSONALIZATION', 100);
                 }
 
                 helperPanelToggle.title = '{!HELP_OR_ADVICE}: {!HIDE}';
                 $cms.ui.setIcon(helperPanelToggleIcon, 'helper_panel/hide', '{$IMG;,{$?,{$THEME_OPTION,use_monochrome_icons},icons_monochrome,icons}/helper_panel/hide}');
             } else {
-                if ($cms.readCookie('hide_helper_panel') === '') {
+                if ($cms.readCookie('hide_helper_panel', 'PERSONALIZATION') === '') {
                     $cms.ui.confirm('{!CLOSING_HELP_PANEL_CONFIRM;^}').then(function (answer) {
                         if (answer) {
                             _hideHelperPanel(panelRight, helperPanelContents, helperPanelToggle);
@@ -1656,7 +1718,7 @@
                 panelRight.classList.remove('helper-panel-visible');
                 panelRight.classList.add('helper-panel-hidden');
                 helperPanelContents.style.display = 'none';
-                $cms.setCookie('hide_helper_panel', '1', 100);
+                $cms.setCookie('hide_helper_panel', '1', 'PERSONALIZATION', 100);
                 helperPanelToggle.title = '{!HELP_OR_ADVICE}: {!SHOW}';
                 $cms.ui.setIcon(helperPanelToggleIcon, 'helper_panel/show', '{$IMG;,{$?,{$THEME_OPTION,use_monochrome_icons},icons_monochrome,icons}/helper_panel/show}');
             }

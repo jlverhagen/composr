@@ -37,7 +37,7 @@ class Hook_addon_registry_cms_homesite
      */
     public function get_version() : string
     {
-        return '11.0.2'; // addon_version_auto_update c278ecd3eea5422aa73198f2db2d4453
+        return '11.0.4'; // addon_version_auto_update d6c6451c130a8b49138440b0f4d37fea
     }
 
     /**
@@ -224,7 +224,6 @@ This addon does not contain the homesite install code and the overall site and t
             'sources_custom/miniblocks/cms_homesite_make_upgrader.php',
             'sources_custom/miniblocks/cms_maintenance_status.php',
             'sources_custom/miniblocks/main_version_support.php',
-            'sources_custom/points_escrow__sponsorship.php',
             'themes/default/images_custom/icons/cms_homesite/index.html',
             'themes/default/images_custom/icons/cms_homesite/theme_upgrade.svg',
             'themes/default/images_custom/icons/cms_homesite/translations_rough.svg',
@@ -235,6 +234,7 @@ This addon does not contain the homesite install code and the overall site and t
             'themes/default/templates_custom/CMS_BLOCK_MAIN_VERSION_SUPPORT.tpl',
             'themes/default/templates_custom/CMS_DOWNLOAD_BLOCK.tpl',
             'themes/default/templates_custom/CMS_DOWNLOAD_RELEASES.tpl',
+            'themes/default/templates_custom/COMMON_ERRORS_SCREEN.tpl',
             'uploads/website_specific/cms_homesite/.htaccess',
             'uploads/website_specific/cms_homesite/banners.zip',
             'uploads/website_specific/cms_homesite/errorservice.csv',

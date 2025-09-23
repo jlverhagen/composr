@@ -53,9 +53,9 @@ class Hook_commandr_command_find_entry_points
                         require_code(zone_black_magic_filterer(filter_naughty_harsh($zone) . '/pages/' . filter_naughty_harsh($type) . '/' . filter_naughty_harsh($page) . '.php'));
 
                         if (class_exists('Mx_' . filter_naughty_harsh($page))) {
-                            $object = object_factory('Mx_' . filter_naughty_harsh($page), true);
+                            $object = object_factory('Mx_' . filter_naughty_harsh($page), true, [], true);
                         } else {
-                            $object = object_factory('Module_' . filter_naughty_harsh($page), true);
+                            $object = object_factory('Module_' . filter_naughty_harsh($page), true, [], true);
                         }
                         if (($object !== null) && (method_exists($object, 'get_entry_points'))) {
                             $_entry_points = $object->get_entry_points();

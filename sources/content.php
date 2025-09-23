@@ -169,14 +169,12 @@ function get_content_object(string $content_type) : ?object
 
     $path = 'hooks/systems/content_meta_aware/' . filter_naughty_harsh($content_type, true);
     if ((file_exists(get_file_base() . '/sources/' . $path . '.php')) || (file_exists(get_file_base() . '/sources_custom/' . $path . '.php'))) {
-        require_code($path);
-        $ob = object_factory('Hook_content_meta_aware_' . filter_naughty_harsh($content_type, true), true);
+        $ob = get_hook_ob('systems', 'content_meta_aware', filter_naughty_harsh($content_type, true), 'Hook_content_meta_aware_', true);
     } else {
         // Okay, maybe it's a resource type (more limited functionality).
         $path = 'hooks/systems/resource_meta_aware/' . filter_naughty_harsh($content_type, true);
         if ((file_exists(get_file_base() . '/sources/' . $path . '.php')) || (file_exists(get_file_base() . '/sources_custom/' . $path . '.php'))) {
-            require_code('hooks/systems/resource_meta_aware/' . filter_naughty_harsh($content_type, true));
-            $ob = object_factory('Hook_resource_meta_aware_' . filter_naughty_harsh($content_type, true), true);
+            $ob = get_hook_ob('systems', 'resource_meta_aware', filter_naughty_harsh($content_type, true), 'Hook_resource_meta_aware_', true);
         } else {
             $ob = null;
         }

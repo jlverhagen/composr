@@ -42,7 +42,7 @@ class Hook_addon_registry_calendar
      */
     public function get_version() : string
     {
-        return '11.0.2'; // addon_version_auto_update 690233c568b5c8cc15fa3391fb3f9259
+        return '11.0.3'; // addon_version_auto_update d621ed7bb8b82f8b018e901365f59d03
     }
 
     /**
@@ -153,6 +153,7 @@ class Hook_addon_registry_calendar
             'sources/hooks/systems/commandr_scheduled/.htaccess',
             'sources/hooks/systems/commandr_scheduled/index.html',
             'sources/hooks/systems/config/allow_adding_commandr_events.php',
+            'sources/hooks/systems/config/calendar_display_mode.php',
             'sources/hooks/systems/config/calendar_show_stats_count_events.php',
             'sources/hooks/systems/config/calendar_show_stats_count_events_this_month.php',
             'sources/hooks/systems/config/calendar_show_stats_count_events_this_week.php',
@@ -223,6 +224,7 @@ class Hook_addon_registry_calendar
             'themes/default/templates/CALENDAR_EVENT_CONFLICT.tpl',
             'themes/default/templates/CALENDAR_EVENT_SCREEN.tpl',
             'themes/default/templates/CALENDAR_EVENT_TYPE.tpl',
+            'themes/default/templates/CALENDAR_LISTING.tpl',
             'themes/default/templates/CALENDAR_MAIN_SCREEN.tpl',
             'themes/default/templates/CALENDAR_MONTH.tpl',
             'themes/default/templates/CALENDAR_MONTH_DAY.tpl',

@@ -57,7 +57,7 @@ class Hook_addon_registry_banners
      */
     public function get_version() : string
     {
-        return '11.0.2'; // addon_version_auto_update 5baea5e47abb305739349be61f69a006
+        return '11.0.3'; // addon_version_auto_update ca197e1f1ce67a4a578c18c32b8cacd5
     }
 
     /**
@@ -181,6 +181,7 @@ class Hook_addon_registry_banners
             'sources/hooks/systems/sitemap/banner.php',
             'sources/hooks/systems/snippets/exists_banner.php',
             'sources/hooks/systems/snippets/exists_banner_type.php',
+            'sources/hooks/systems/symbols/BANNER.php',
             'themes/default/css/banners.css',
             'themes/default/images/icons/menu/cms/banners.svg',
             'themes/default/images/icons_monochrome/menu/cms/banners.svg',

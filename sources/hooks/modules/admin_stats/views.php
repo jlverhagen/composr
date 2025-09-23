@@ -146,7 +146,7 @@ class Hook_admin_stats_views extends CMSStatsProvider
                 'filters' => [
                     'total_views__month_range' => new CMSStatsDateMonthRangeFilter('total_views__month_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
                     'total_views__page_link' => new CMSStatsTextFilter('total_views__page_link', do_lang_tempcode('PAGE_LINK')),
-                    'total_views__country' => has_geolocation_data() ? new CMSStatsListFilter('total_views__country', do_lang_tempcode('VISITOR_COUNTRY'), find_countries()) : null,
+                    'total_views__country' => has_geolocation_data() ? new CMSStatsCountryFilter('total_views__country', do_lang_tempcode('VISITOR_COUNTRY')) : null,
                 ],
                 'pivot' => new CMSStatsDatePivot('total_views__pivot', $this->get_date_pivots(!$for_kpi)),
                 'support_kpis' => self::KPI_HIGH_IS_GOOD,
@@ -156,7 +156,7 @@ class Hook_admin_stats_views extends CMSStatsProvider
                 'category' => 'hits',
                 'filters' => [
                     'total_unique_views__month_range' => new CMSStatsDateMonthRangeFilter('total_unique_views__month_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
-                    'total_unique_views__country' => has_geolocation_data() ? new CMSStatsListFilter('total_unique_views__country', do_lang_tempcode('VISITOR_COUNTRY'), find_countries()) : null,
+                    'total_unique_views__country' => has_geolocation_data() ? new CMSStatsCountryFilter('total_unique_views__country', do_lang_tempcode('VISITOR_COUNTRY')) : null,
                 ],
                 'pivot' => new CMSStatsDatePivot('total_unique_views__pivot', $this->get_date_pivots(!$for_kpi)),
                 'support_kpis' => self::KPI_HIGH_IS_GOOD,
@@ -166,7 +166,7 @@ class Hook_admin_stats_views extends CMSStatsProvider
                 'category' => 'hits',
                 'filters' => [
                     'popular_pages__month_range' => new CMSStatsDateMonthRangeFilter('popular_pages__month_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
-                    'popular_pages__country' => has_geolocation_data() ? new CMSStatsListFilter('popular_pages__country', do_lang_tempcode('VISITOR_COUNTRY'), find_countries()) : null,
+                    'popular_pages__country' => has_geolocation_data() ? new CMSStatsCountryFilter('popular_pages__country', do_lang_tempcode('VISITOR_COUNTRY')) : null,
                 ],
                 'pivot' => null,
             ],
@@ -175,7 +175,7 @@ class Hook_admin_stats_views extends CMSStatsProvider
                 'category' => 'audience_technical',
                 'filters' => [
                     'operating_systems__month_range' => new CMSStatsDateMonthRangeFilter('operating_systems__month_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
-                    'operating_systems__country' => has_geolocation_data() ? new CMSStatsListFilter('operating_systems__country', do_lang_tempcode('VISITOR_COUNTRY'), find_countries()) : null,
+                    'operating_systems__country' => has_geolocation_data() ? new CMSStatsCountryFilter('operating_systems__country', do_lang_tempcode('VISITOR_COUNTRY')) : null,
                 ],
                 'pivot' => null,
             ],
@@ -184,7 +184,7 @@ class Hook_admin_stats_views extends CMSStatsProvider
                 'category' => 'audience_technical',
                 'filters' => [
                     'operating_systems__stripped__month_range' => new CMSStatsDateMonthRangeFilter('operating_systems__stripped__month_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
-                    'operating_systems__stripped__country' => has_geolocation_data() ? new CMSStatsListFilter('operating_systems__stripped__country', do_lang_tempcode('VISITOR_COUNTRY'), find_countries()) : null,
+                    'operating_systems__stripped__country' => has_geolocation_data() ? new CMSStatsCountryFilter('operating_systems__stripped__country', do_lang_tempcode('VISITOR_COUNTRY')) : null,
                 ],
                 'pivot' => null,
             ],
@@ -193,7 +193,7 @@ class Hook_admin_stats_views extends CMSStatsProvider
                 'category' => 'audience_technical',
                 'filters' => [
                     'web_browsers__month_range' => new CMSStatsDateMonthRangeFilter('web_browsers__month_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
-                    'web_browsers__country' => has_geolocation_data() ? new CMSStatsListFilter('web_browsers__country', do_lang_tempcode('VISITOR_COUNTRY'), find_countries()) : null,
+                    'web_browsers__country' => has_geolocation_data() ? new CMSStatsCountryFilter('web_browsers__country', do_lang_tempcode('VISITOR_COUNTRY')) : null,
                 ],
                 'pivot' => null,
             ],
@@ -202,7 +202,7 @@ class Hook_admin_stats_views extends CMSStatsProvider
                 'category' => 'audience_technical',
                 'filters' => [
                     'web_browsers__stripped__month_range' => new CMSStatsDateMonthRangeFilter('web_browsers__stripped__month_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
-                    'web_browsers__stripped__country' => has_geolocation_data() ? new CMSStatsListFilter('web_browsers__stripped__country', do_lang_tempcode('VISITOR_COUNTRY'), find_countries()) : null,
+                    'web_browsers__stripped__country' => has_geolocation_data() ? new CMSStatsCountryFilter('web_browsers__stripped__country', do_lang_tempcode('VISITOR_COUNTRY')) : null,
                 ],
                 'pivot' => null,
             ],
@@ -211,7 +211,7 @@ class Hook_admin_stats_views extends CMSStatsProvider
                 'category' => 'audience_technical',
                 'filters' => [
                     'user_agent_types__month_range' => new CMSStatsDateMonthRangeFilter('user_agent_types__month_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
-                    'user_agent_types__country' => has_geolocation_data() ? new CMSStatsListFilter('user_agent_types__country', do_lang_tempcode('VISITOR_COUNTRY'), find_countries()) : null,
+                    'user_agent_types__country' => has_geolocation_data() ? new CMSStatsCountryFilter('user_agent_types__country', do_lang_tempcode('VISITOR_COUNTRY')) : null,
                 ],
                 'pivot' => null,
             ],
@@ -220,7 +220,7 @@ class Hook_admin_stats_views extends CMSStatsProvider
                 'category' => 'referrers_and_referrals',
                 'filters' => [
                     'referrer_urls__month_range' => new CMSStatsDateMonthRangeFilter('referrer_urls__month_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
-                    'referrer_urls__country' => has_geolocation_data() ? new CMSStatsListFilter('referrer_urls__country', do_lang_tempcode('VISITOR_COUNTRY'), find_countries()) : null,
+                    'referrer_urls__country' => has_geolocation_data() ? new CMSStatsCountryFilter('referrer_urls__country', do_lang_tempcode('VISITOR_COUNTRY')) : null,
                 ],
                 'pivot' => null,
             ],
@@ -229,7 +229,7 @@ class Hook_admin_stats_views extends CMSStatsProvider
                 'category' => 'referrers_and_referrals',
                 'filters' => [
                     'referrer_domains__month_range' => new CMSStatsDateMonthRangeFilter('referrer_domains__month_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
-                    'referrer_domains__country' => has_geolocation_data() ? new CMSStatsListFilter('referrer_domains__country', do_lang_tempcode('VISITOR_COUNTRY'), find_countries()) : null,
+                    'referrer_domains__country' => has_geolocation_data() ? new CMSStatsCountryFilter('referrer_domains__country', do_lang_tempcode('VISITOR_COUNTRY')) : null,
                 ],
                 'pivot' => null,
             ],
@@ -238,7 +238,7 @@ class Hook_admin_stats_views extends CMSStatsProvider
                 'category' => 'referrers_and_referrals',
                 'filters' => [
                     'total_referrals__month_range' => new CMSStatsDateMonthRangeFilter('total_referrals__month_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
-                    'total_referrals__country' => has_geolocation_data() ? new CMSStatsListFilter('total_referrals__country', do_lang_tempcode('VISITOR_COUNTRY'), find_countries()) : null,
+                    'total_referrals__country' => has_geolocation_data() ? new CMSStatsCountryFilter('total_referrals__country', do_lang_tempcode('VISITOR_COUNTRY')) : null,
                 ],
                 'pivot' => new CMSStatsDatePivot('total_referrals__pivot', $this->get_date_pivots(!$for_kpi)),
                 'support_kpis' => self::KPI_HIGH_IS_GOOD,
@@ -248,7 +248,7 @@ class Hook_admin_stats_views extends CMSStatsProvider
                 'category' => 'referrers_and_referrals',
                 'filters' => [
                     'referrer_type__month_range' => new CMSStatsDateMonthRangeFilter('referrer_type__month_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
-                    'referrer_type__country' => has_geolocation_data() ? new CMSStatsListFilter('referrer_type__country', do_lang_tempcode('VISITOR_COUNTRY'), find_countries()) : null,
+                    'referrer_type__country' => has_geolocation_data() ? new CMSStatsCountryFilter('referrer_type__country', do_lang_tempcode('VISITOR_COUNTRY')) : null,
                 ],
                 'pivot' => null,
             ],
@@ -293,7 +293,7 @@ class Hook_admin_stats_views extends CMSStatsProvider
                 'filters' => [
                     'session_bounce_rates__month_range' => new CMSStatsDateMonthRangeFilter('session_bounce_rates__month_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
                     'session_bounce_rates__page_link' => new CMSStatsTextFilter('session_bounce_rates__page_link', do_lang_tempcode('PAGE_LINK')),
-                    'session_bounce_rates__country' => has_geolocation_data() ? new CMSStatsListFilter('session_bounce_rates__country', do_lang_tempcode('VISITOR_COUNTRY'), find_countries()) : null,
+                    'session_bounce_rates__country' => has_geolocation_data() ? new CMSStatsCountryFilter('session_bounce_rates__country', do_lang_tempcode('VISITOR_COUNTRY')) : null,
                 ],
                 'pivot' => new CMSStatsDatePivot('session_bounce_rates__pivot', $this->get_date_pivots(!$for_kpi)),
                 'support_kpis' => self::KPI_LOW_IS_GOOD,
@@ -303,7 +303,7 @@ class Hook_admin_stats_views extends CMSStatsProvider
                 'category' => 'session_behaviours',
                 'filters' => [
                     'session_entry_pages__month_range' => new CMSStatsDateMonthRangeFilter('session_entry_pages__month_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
-                    'session_entry_pages__country' => has_geolocation_data() ? new CMSStatsListFilter('session_entry_pages__country', do_lang_tempcode('VISITOR_COUNTRY'), find_countries()) : null,
+                    'session_entry_pages__country' => has_geolocation_data() ? new CMSStatsCountryFilter('session_entry_pages__country', do_lang_tempcode('VISITOR_COUNTRY')) : null,
                 ],
                 'pivot' => null,
             ],
@@ -312,7 +312,7 @@ class Hook_admin_stats_views extends CMSStatsProvider
                 'category' => 'session_behaviours',
                 'filters' => [
                     'session_exit_pages__month_range' => new CMSStatsDateMonthRangeFilter('session_exit_pages__month_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
-                    'session_exit_pages__country' => has_geolocation_data() ? new CMSStatsListFilter('session_exit_pages__country', do_lang_tempcode('VISITOR_COUNTRY'), find_countries()) : null,
+                    'session_exit_pages__country' => has_geolocation_data() ? new CMSStatsCountryFilter('session_exit_pages__country', do_lang_tempcode('VISITOR_COUNTRY')) : null,
                 ],
                 'pivot' => null,
             ],
@@ -321,7 +321,7 @@ class Hook_admin_stats_views extends CMSStatsProvider
                 'category' => 'session_behaviours',
                 'filters' => [
                     'session_durations__month_range' => new CMSStatsDateMonthRangeFilter('session_durations__month_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
-                    'session_durations__country' => has_geolocation_data() ? new CMSStatsListFilter('session_durations__country', do_lang_tempcode('VISITOR_COUNTRY'), find_countries()) : null,
+                    'session_durations__country' => has_geolocation_data() ? new CMSStatsCountryFilter('session_durations__country', do_lang_tempcode('VISITOR_COUNTRY')) : null,
                 ],
                 'pivot' => null,
             ],
@@ -330,7 +330,7 @@ class Hook_admin_stats_views extends CMSStatsProvider
                 'category' => 'session_behaviours',
                 'filters' => [
                     'average_session_duration__month_range' => new CMSStatsDateMonthRangeFilter('average_session_duration__month_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
-                    'average_session_duration__country' => has_geolocation_data() ? new CMSStatsListFilter('average_session_duration__country', do_lang_tempcode('VISITOR_COUNTRY'), find_countries()) : null,
+                    'average_session_duration__country' => has_geolocation_data() ? new CMSStatsCountryFilter('average_session_duration__country', do_lang_tempcode('VISITOR_COUNTRY')) : null,
                 ],
                 'pivot' => new CMSStatsDatePivot('average_session_duration__pivot', $this->get_date_pivots(!$for_kpi)),
                 'support_kpis' => self::KPI_HIGH_IS_GOOD,
@@ -340,7 +340,7 @@ class Hook_admin_stats_views extends CMSStatsProvider
                 'category' => 'session_behaviours',
                 'filters' => [
                     'session_total_views__month_range' => new CMSStatsDateMonthRangeFilter('session_total_views__month_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
-                    'session_total_views__country' => has_geolocation_data() ? new CMSStatsListFilter('session_total_views__country', do_lang_tempcode('VISITOR_COUNTRY'), find_countries()) : null,
+                    'session_total_views__country' => has_geolocation_data() ? new CMSStatsCountryFilter('session_total_views__country', do_lang_tempcode('VISITOR_COUNTRY')) : null,
                 ],
                 'pivot' => null,
             ],
@@ -349,7 +349,7 @@ class Hook_admin_stats_views extends CMSStatsProvider
                 'category' => 'session_behaviours',
                 'filters' => [
                     'average_session_total_views__month_range' => new CMSStatsDateMonthRangeFilter('average_session_total_views__month_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
-                    'average_session_total_views__country' => has_geolocation_data() ? new CMSStatsListFilter('average_session_total_views__country', do_lang_tempcode('VISITOR_COUNTRY'), find_countries()) : null,
+                    'average_session_total_views__country' => has_geolocation_data() ? new CMSStatsCountryFilter('average_session_total_views__country', do_lang_tempcode('VISITOR_COUNTRY')) : null,
                 ],
                 'pivot' => new CMSStatsDatePivot('average_session_total_views__pivot', $this->get_date_pivots(!$for_kpi)),
                 'support_kpis' => self::KPI_HIGH_IS_GOOD,

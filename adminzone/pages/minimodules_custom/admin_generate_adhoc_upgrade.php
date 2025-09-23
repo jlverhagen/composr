@@ -340,8 +340,7 @@ function get_addon_structure()
 
     $hooks = find_all_hooks('systems', 'addon_registry');
     foreach ($hooks as $hook => $place) {
-        require_code('hooks/systems/addon_registry/' . filter_naughty_harsh($hook));
-        $hook_ob = object_factory('Hook_addon_registry_' . filter_naughty_harsh($hook));
+        $hook_ob = get_hook_ob('systems', 'addon_registry', filter_naughty_harsh($hook), 'Hook_addon_registry_');
 
         $file_list = $hook_ob->get_file_list();
 

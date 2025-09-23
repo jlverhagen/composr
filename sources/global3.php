@@ -18,7 +18,7 @@
  * @package    core
  */
 
-/*EXTRA FUNCTIONS: fsockopen|fileowner|filegroup|collator_.*|dns_get_record*/
+/*EXTRA FUNCTIONS: fsockopen|fileowner|filegroup|collator_.*|dns_get_record|setcookie*/
 
 /*
     global3.php contains further support functions, which are shared between the installer and the main installation (i.e. global.php and global2.php are not used by the installer, and the installer emulates these functions functionality via minikernel.php).
@@ -180,13 +180,24 @@ function init__global3()
         define('FILE_READ_UNIXIFIED_TEXT', 4);
     }
 
-    // Time limits...
-
     if (!defined('TIME_LIMIT_EXTEND__MODEST')) {
+        // Time limits...
         define('TIME_LIMIT_EXTEND__MODEST', 30);
         define('TIME_LIMIT_EXTEND__SLUGGISH', 100);
         define('TIME_LIMIT_EXTEND__SLOW', 300);
         define('TIME_LIMIT_EXTEND__CRAWL', 1000);
+    }
+
+    // LEGACY: Common values used in multiple areas across the software that need maintaining
+    if (!defined('CMS_MIN_SUPPORTED_PHP')) {
+        // System requirements
+        define('CMS_MIN_SUPPORTED_PHP', '7.2'); // LEGACY: Also needs editing in install.php, tut_webhosting.txt, restore.php.pre
+        define('CMS_MAX_SUPPORTED_PHP', '8.3'); // LEGACY: Also needs editing in tut_webhosting.txt
+        define('CMS_MIN_SUPPORTED_MYSQL_MARIADB', '5.5.3'); // LEGACY: also maintain in tut_webhosting.txt
+        define('CMS_MAX_SUPPORTED_MARIADB', '10.11');
+        define('CMS_MAX_SUPPORTED_MYSQL', '8.2');
+        define('CMS_MYSQL_MIN_MAX_ALLOWED_PACKET', (1024 * 1024 * 16));
+        define('CMS_MIN_DISK_SPACE', (250 * 1024 * 1024));
     }
 
     global $ASCII_LCASE_MAP, $ASCII_UCASE_MAP;
@@ -1026,6 +1037,7 @@ function set_extra_request_metadata(array $metadata, ?array $row = null, ?string
     // Pre-validation of stuff that may not be acceptable
     foreach ($metadata as $key => $val) {
         if ($val !== null) {
+            require_code('templates');
             $val = cms_trim($val);
             if ($val == '') {
                 unset($metadata[$key]);
@@ -4002,8 +4014,7 @@ function get_bot_type(?string $agent = null) : ?string
 }
 
 /**
- * Determine whether the user's browser supports cookies or not, and they accepted cookies through cookie consent.
- * Unfortunately this will not return true until the next page hit after they accept cookies.
+ * Determine whether the user's browser supports cookies or not.
  *
  * @return boolean Whether the user has definitely got cookies
  */
@@ -4020,17 +4031,12 @@ function has_cookies() : bool // Will fail on users first visit, but then will c
         return false;
     }*/
 
-    if (!allowed_cookies()) {
-        $has_cookies_cache = false;
-        return false;
-    }
-
     if (isset($_COOKIE['has_cookies'])) {
         $has_cookies_cache = true;
         return true;
     }
     if (running_script('index')) {
-        $result = cms_setcookie('has_cookies', '1', false, false);
+        $result = cms_setcookie('has_cookies', '1', 'ESSENTIAL', false, false);
         $has_cookies_cache = $result;
         return $result;
     }
@@ -4040,13 +4046,26 @@ function has_cookies() : bool // Will fail on users first visit, but then will c
 }
 
 /**
- * Whether the current user explicitly allowed cookies in the cookie consent notice.
+ * Get whether the current user explicitly allowed cookies in the cookie consent notice.
  *
+ * @param  ID_TEXT $category The cookie category to check
  * @return boolean Whether cookies were allowed
  */
-function allowed_cookies() : bool
+function allowed_cookies(string $category = 'ESSENTIAL') : bool
 {
-    if (!isset($_COOKIE['cookieconsent_ESSENTIAL']) || ($_COOKIE['cookieconsent_ESSENTIAL'] != 'ALLOW')) {
+    if (!isset($_COOKIE['cc_cookie'])) {
+        return false;
+    }
+
+    $cookie_consent_data_parsed = urldecode($_COOKIE['cc_cookie']);
+    $cookie_consent_data = @json_decode($cookie_consent_data_parsed, true);
+    if ($cookie_consent_data === false) {
+        return false;
+    }
+    if (!isset($cookie_consent_data['categories'])) {
+        return false;
+    }
+    if (!in_array($category, $cookie_consent_data['categories'])) {
         return false;
     }
 
@@ -4073,7 +4092,7 @@ function has_js() : bool
     if (get_param_integer('keep_has_js', null) === 0) {
         return false;
     }
-    return (isset($_COOKIE['js_on'])) && ($_COOKIE['js_on'] == '1');
+    return (isset($_COOKIE['has_js'])) && ($_COOKIE['has_js'] == '1');
 }
 
 /**
@@ -4813,7 +4832,7 @@ function is_control_field(string $field_name, bool $include_email_metafields = f
         'session_id',
         'csrf_token',
         'js_token',
-        'y' . md5(get_site_name() . ': antispam'),
+        'y' . md5(get_base_url() . ': antispam'),
         'captcha',
         'g-recaptcha-response',
 
@@ -5605,16 +5624,62 @@ function statistical_update_model(string $table, int $view_count) : int
  *
  * @param  string $name The name of the cookie
  * @param  string $value The value to store in the cookie (blank: delete the cookie)
+ * @param  ID_TEXT $category The cookie consent category of this cookie
  * @param  boolean $session Whether it is a session cookie (gets removed once the browser window closes)
  * @param  boolean $httponly Whether the cookie should not be readable by JavaScript
  * @param  ?float $days Days to store; not applicable for session cookies unless expiring it (null: default) (-14: expire the cookie)
  * @return boolean The result of the PHP setcookie command
  */
-function cms_setcookie(string $name, string $value, bool $session = false, bool $httponly = true, ?float $days = null) : bool
+function cms_setcookie(string $name, string $value, string $category = 'NON-ESSENTIAL', bool $session = false, bool $httponly = true, ?float $days = null) : bool
 {
+    // In development mode, check for and warn against inconsistencies between this function call and privacy hooks
+    if ($GLOBALS['DEV_MODE'] && function_exists('find_all_hook_obs') && function_exists('attach_message')) {
+        require_code('privacy');
+        require_lang('privacy');
+
+        $matches = 0;
+
+        $hook_obs = find_all_hook_obs('systems', 'privacy', 'Hook_privacy_');
+        foreach ($hook_obs as $hook => $ob) {
+            $info = $ob->info();
+            if (($info === null) || (!isset($info['cookies'])) || (count($info['cookies']) == 0)) {
+                continue;
+            }
+
+            foreach ($info['cookies'] as $_name => $cookie_info) {
+                $regex = str_replace('\*', '.*', preg_quote($_name, '/'));
+                if (preg_match('/' . $regex . '/', $name) == 0) {
+                    continue;
+                }
+                if ($cookie_info === null) {
+                    continue;
+                }
+
+                $matches++;
+
+                if ($cookie_info['category'] != $category) {
+                    attach_message(do_lang_tempcode('COOKIE_INCONSISTENCY_CATEGORY', escape_html($name)), 'warn', false, true);
+                }
+                if ($cookie_info['session'] != $session) {
+                    attach_message(do_lang_tempcode('COOKIE_INCONSISTENCY_SESSION', escape_html($name)), 'warn', false, true);
+                }
+                if ($cookie_info['httponly'] != $httponly) {
+                    attach_message(do_lang_tempcode('COOKIE_INCONSISTENCY_HTTPONLY', escape_html($name)), 'warn', false, true);
+                }
+            }
+        }
+
+        if ($matches == 0) {
+            attach_message(do_lang_tempcode('COOKIE_INCONSISTENCY_UNDEFINED', escape_html($name)), 'warn', false, true);
+        }
+        if ($matches > 1) {
+            attach_message(do_lang_tempcode('COOKIE_INCONSISTENCY_MULTIPLE', escape_html($name), escape_html(integer_format($matches))), 'warn', false, true);
+        }
+    }
+
     // User rejected cookies; eat the existing cookie and bail out
-    if (!allowed_cookies() && (strpos($name, 'cookieconsent_') === false) && ($value != '')) {
-        cms_setcookie($name, '', $session, $httponly, -14.0);
+    if (($value != '') && (!allowed_cookies($category))) {
+        cms_setcookie($name, '', $category, $session, $httponly, -14.0);
         return false;
     }
 
@@ -5679,25 +5744,149 @@ function cms_setcookie(string $name, string $value, bool $session = false, bool 
 
 /**
  * Deletes a cookie (if it exists), from within the site's cookie environment.
- * This should rarely ever be used as it causes large headers and does not work on httpOnly, Secure, nor sameSite cookies. Use cms_setcookie instead.
+ * This should rarely ever be used as it causes large headers and may not work properly for some types of cookies.
  *
  * @param  string $name The name of the cookie
- * @return boolean The result of the PHP setcookie command
  */
-function cms_eatcookie(string $name) : bool
+function cms_eatcookie(string $name)
 {
     $expire = time() - 100000; // Note the negative number must be greater than 13*60*60 to account for maximum timezone difference
 
-    // Try and remove other potentials
-    @setcookie($name, '', $expire, '', preg_replace('#^www\.#', '', get_request_hostname()));
-    @setcookie($name, '', $expire, '/', preg_replace('#^www\.#', '', get_request_hostname()));
-    @setcookie($name, '', $expire, '', 'www.' . preg_replace('#^www\.#', '', get_request_hostname()));
-    @setcookie($name, '', $expire, '/', 'www.' . preg_replace('#^www\.#', '', get_request_hostname()));
-    @setcookie($name, '', $expire, '', '');
-    @setcookie($name, '', $expire, '/', '');
+    // Gather data
+    //$hostname = get_request_hostname();
+    //$hostname_no_www = preg_replace('#^www\.#', '', $hostname);
+    $secure = (substr(get_base_url(), 0, 8) === 'https://');
 
-    // Delete standard potential
-    return @setcookie($name, '', $expire, get_cookie_path(), get_cookie_domain());
+    require_code('privacy');
+    $hook_obs = find_all_hook_obs('systems', 'privacy', 'Hook_privacy_');
+    $cookie_properties = [];
+    foreach ($hook_obs as $hook => $hook_ob) {
+        $info = $hook_ob->info();
+        if ($info === null) {
+            continue;
+        }
+
+        foreach ($info['cookies'] as $_name => $cookie_info) {
+            if ($cookie_info === null) {
+                continue;
+            }
+
+            // We need to escape expressions except the wildcard.
+            $cookie_properties[str_replace('\*', '.*', preg_quote($_name, '/'))] = $cookie_info;
+        }
+    }
+
+    // Paths to try
+    $paths = [get_cookie_path()];
+    $paths = array_unique($paths);
+
+    // Domains to try
+    $domains = [
+        get_cookie_domain(),
+    ];
+    $domains = array_unique($domains);
+
+    // Try common combinations
+    foreach ($domains as $domain) {
+        foreach ($paths as $path) {
+            foreach ($cookie_properties as $regex => $properties) {
+                if (preg_match('/' . $regex . '/', $name) == 0) {
+                    continue;
+                }
+
+                if (version_compare(PHP_VERSION, '7.3.0', '>=')) { // LEGACY
+                    $options = [
+                        'expires' => $expire,
+                        'path' => $path,
+                        'domain' => $domain,
+                        'secure' => $secure,
+                        'httponly' => $properties['httponly'],
+                    ];
+
+                    // Stops HTTP POSTs from external sites inheriting cookie value.
+                    //  Note that Lax is not necessarily the same as setting no value.
+                    //  That said for Chrome 80+ all are Lax by default.
+                    //  Tracked at https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie/SameSite
+                    $options['samesite'] = 'Lax';
+
+                    @call_user_func_array('setcookie', [$name, '', $options]);
+                } else {
+                    @setcookie($name, '', $expire, $path, $domain, $secure, $properties['httponly']);
+                }
+            }
+
+            @setcookie($name, '', $expire, $path, $domain);
+        }
+    }
+
+    unset($_COOKIE[$name]); // Remove from $_COOKIE superglobal
+}
+
+/**
+ * Go through all passed-in cookies and send a request to delete any which have been rejected or orphaned.
+ */
+function erase_rejected_cookies()
+{
+    // Get cookie consent information about the user
+    if (!isset($_COOKIE['cc_cookie'])) {
+        return;
+    }
+
+    $cookie_consent_data_parsed = urldecode($_COOKIE['cc_cookie']);
+    $cookie_consent_data = @json_decode($cookie_consent_data_parsed, true);
+    if ($cookie_consent_data === false) {
+        return;
+    }
+    if (!isset($cookie_consent_data['categories'])) {
+        return;
+    }
+
+    // Grab a map of defined software cookies to their categories
+    require_code('privacy');
+    $hook_obs = find_all_hook_obs('systems', 'privacy', 'Hook_privacy_');
+    $cookie_categories = [];
+    foreach ($hook_obs as $hook => $hook_ob) {
+        $info = $hook_ob->info();
+        if ($info === null) {
+            continue;
+        }
+
+        foreach ($info['cookies'] as $name => $cookie_info) {
+            if (!isset($cookie_info['category'])) {
+                continue;
+            }
+
+            // We need to escape expressions except the wildcard.
+            $cookie_categories[str_replace('\*', '.*', preg_quote($name, '/'))] = $cookie_info['category'];
+        }
+    }
+
+    // Iterate over every passed cookie
+    foreach ($_COOKIE as $name => $value) {
+        if ($name == 'cc_cookie') {
+            continue;
+        }
+
+        $matched_something = false;
+
+        foreach ($cookie_categories as $cookie_regex => $cookie_category) {
+            if (preg_match('/' . $cookie_regex . '/', $name) == 0) {
+                continue;
+            }
+
+            $matched_something = true;
+
+            // Delete cookies which we rejected
+            if (!allowed_cookies($cookie_category)) {
+                cms_eatcookie($name);
+            }
+        }
+
+        // Delete orphaned cookies
+        if ($matched_something === false) {
+            cms_eatcookie($name);
+        }
+    }
 }
 
 /**

@@ -486,7 +486,7 @@ function ajax_tree_script()
 
     $hook = filter_naughty_harsh(get_param_string('hook'));
     require_code('hooks/systems/ajax_tree/' . $hook, true);
-    $object = object_factory('Hook_ajax_tree_' . $hook, true);
+    $object = get_hook_ob('systems', 'ajax_tree', $hook, 'Hook_ajax_tree_', true);
     if ($object === null) {
         warn_exit(do_lang_tempcode('INTERNAL_ERROR', escape_html('224f4f451e8f578998ac0af021e41c96')));
     }
@@ -654,8 +654,7 @@ function snippet_script()
     if ((!is_file(get_file_base() . '/sources/hooks/systems/snippets/' . $hook . '.php')) && (!is_file(get_file_base() . '/sources_custom/hooks/systems/snippets/' . $hook . '.php'))) {
         warn_exit(do_lang_tempcode('MISSING_RESOURCE'));
     }
-    require_code('hooks/systems/snippets/' . $hook, true);
-    $object = object_factory('Hook_snippet_' . $hook);
+    $object = get_hook_ob('systems', 'snippets', $hook, 'Hook_snippet_');
     $tempcode = $object->run();
     $tempcode->handle_symbol_preprocessing();
     $out = $tempcode->evaluate();

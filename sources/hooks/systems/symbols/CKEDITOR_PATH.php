@@ -24,19 +24,33 @@
 class Hook_symbol_CKEDITOR_PATH
 {
     /**
+     * Get information about this symbol.
+     *
+     * @return ?array Array of information (null: hook disabled)
+     */
+    public function info() : ?array
+    {
+        return [
+            'compile' => SYMBOL_COMPILE_STATIC_SAFE_SIMPLE_BASE_URLS,
+            'public' => false,
+        ];
+    }
+
+    /**
      * Run function for symbol hooks. Searches for tasks to perform.
      *
      * @param  array $param Symbol parameters
+     * @param  string $lang The language to evaluate this symbol in (some symbols refer to language elements)
+     * @param  array $escaped Array of escaping operations
      * @return string Result
      */
-    public function run(array $param) : string
+    public function run(array $param, string $lang, array $escaped) : string
     {
         $value = 'data/ckeditor';
 
         if ((get_param_integer('ckeditor_dev', 0) == 1) && (is_dir(get_file_base() . '/data_custom/ckeditor'))) {
             $value = 'data_custom/ckeditor';
         }
-
         return $value;
     }
 }

@@ -57,7 +57,7 @@ class Hook_addon_registry_captcha
      */
     public function get_version() : string
     {
-        return '11.0.2'; // addon_version_auto_update 8628f51e78f9c1328cd34525903b5356
+        return '11.0.3'; // addon_version_auto_update 9e2101259eae0a04ef8e38df9bbc9941
     }
 
     /**
@@ -165,6 +165,7 @@ class Hook_addon_registry_captcha
             'data/sounds/captcha/g.wav',
             'data/sounds/captcha/h.wav',
             'data/sounds/captcha/i.wav',
+            'data/sounds/captcha/index.html',
             'data/sounds/captcha/j.wav',
             'data/sounds/captcha/k.wav',
             'data/sounds/captcha/l.wav',
@@ -182,7 +183,6 @@ class Hook_addon_registry_captcha
             'data/sounds/captcha/x.wav',
             'data/sounds/captcha/y.wav',
             'data/sounds/captcha/z.wav',
-            'data/sounds/captcha/index.html',
             'lang/EN/captcha.ini',
             'sources/captcha.php',
             'sources/hooks/systems/addon_registry/captcha.php',
@@ -202,6 +202,7 @@ class Hook_addon_registry_captcha
             'sources/hooks/systems/config/use_captchas.php',
             'sources/hooks/systems/privacy/captcha.php',
             'sources/hooks/systems/snippets/captcha_wrong.php',
+            'sources/hooks/systems/symbols/GENERATE_CAPTCHA.php',
             'themes/default/javascript/captcha.js',
             'themes/default/templates/CAPTCHA_LOOSE.tpl',
             'themes/default/templates/FORM_SCREEN_INPUT_CAPTCHA.tpl',

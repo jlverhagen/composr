@@ -42,7 +42,7 @@ class Hook_addon_registry_points
      */
     public function get_version() : string
     {
-        return '11.0.2'; // addon_version_auto_update 9efc270c38f638dbb885cc00735f4332
+        return '11.0.3'; // addon_version_auto_update 62b1ad2c7831c2cf08ed2f82b190b6e0
     }
 
     /**
@@ -186,6 +186,9 @@ class Hook_addon_registry_points
             'sources/hooks/systems/profiles_tabs/points.php',
             'sources/hooks/systems/realtime_rain/points.php',
             'sources/hooks/systems/rss/points.php',
+            'sources/hooks/systems/symbols/POINTS_BALANCE.php',
+            'sources/hooks/systems/symbols/POINTS_SPENT.php',
+            'sources/hooks/systems/symbols/RANK_POINTS.php',
             'sources/hooks/systems/tasks/export_points_ledger.php',
             'sources/hooks/systems/tasks/export_points_overview.php',
             'sources/hooks/systems/tasks/points_recalculate_cpf.php',

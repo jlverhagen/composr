@@ -510,6 +510,78 @@ function _helper_delete_index_if_exists(object $this_ref, string $table_name, st
 }
 
 /**
+ * Create a foreign key constraint.
+ *
+ * @param  object $this_ref A reference to the database calling this helper
+ * @param  ID_TEXT $from_table The table on which we are creating a foreign key
+ * @param  ID_TEXT $from_field The table's field on which we are creating a foreign key
+ * @param  ID_TEXT $to_table The table which is being referenced
+ * @param  ID_TEXT $to_field The table's field which is being referenced
+ */
+function _helper_create_foreign_key(object $this_ref, string $from_table, string $from_field, string $to_table, string $to_field)
+{
+    $test = $this_ref->query_select_value_if_there('db_meta_foreign_keys', 'to_table', ['from_table' => $from_table, 'from_field' => $from_field]);
+    if ($test !== null) {
+        fatal_exit('Tried to add a foreign key on ' . $from_table . '.' . $from_field . ' but there is already a foreign key in place.');
+    }
+
+    $this_ref->query_insert('db_meta_foreign_keys', ['from_table' => $from_table, 'from_field' => $from_field, 'to_table' => $to_table, 'to_field' => $to_field]);
+
+    // Respect InnoDB toggle
+    $innodb = false;
+    global $USE_INNODB;
+    if ($USE_INNODB) {
+        $innodb = true;
+    }
+    if (function_exists('get_value') && (get_value('innodb') == '1')) {
+        $innodb = true;
+    }
+    if (!$innodb) {
+        return;
+    }
+
+    $from_table_full = $this_ref->table_prefix . $from_table;
+    $to_table_full = $this_ref->table_prefix . $to_table;
+
+    $sql = $this_ref->driver->create_foreign_key__sql($from_table_full, $from_field, $to_table_full, $to_field);
+    if ($sql !== null) {
+        $this_ref->query($sql);
+    }
+}
+
+/**
+ * Delete a foreign key constraint.
+ *
+ * @param  object $this_ref A reference to the database calling this helper
+ * @param  ID_TEXT $from_table The table on which we want to delete the foreign key
+ * @param  ID_TEXT $from_field The field on which we want to delete a foreign key
+ */
+function _helper_delete_foreign_key_if_exists(object $this_ref, string $from_table, string $from_field)
+{
+    $this_ref->query_delete('db_meta_foreign_keys', ['from_table' => $from_table, 'from_field' => $from_field]);
+
+    // Respect InnoDB toggle
+    $innodb = false;
+    global $USE_INNODB;
+    if ($USE_INNODB) {
+        $innodb = true;
+    }
+    if (function_exists('get_value') && (get_value('innodb') == '1')) {
+        $innodb = true;
+    }
+    if (!$innodb) {
+        return;
+    }
+
+    $from_table_full = $this_ref->table_prefix . $from_table;
+
+    $sql = $this_ref->driver->delete_foreign_key__sql($from_table_full, $from_field);
+    if ($sql !== null) {
+        $this_ref->query($sql, null, 0, true); // suppress errors if FK didn’t exist physically
+    }
+}
+
+/**
  * Drop the given table, or if it doesn't exist, silently return.
  *
  * @param  object $this_ref Link to the real database object

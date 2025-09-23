@@ -533,7 +533,7 @@ function call_compiled_code(string $path, string $codename, bool $light_exit, ?b
 
             // Try locking the file in a shared way; allow up to 3 seconds for it to be released if a previous lock exists
             $time = microtime(true);
-            while (flock($file, LOCK_SH | LOCK_NB) === false) {
+            while (!is_file($calling_path) || (flock($file, LOCK_SH | LOCK_NB) === false)) {
                 if ((microtime(true) - $time) > 3.0) {
                     throw new \Exception('Cannot read file ' . $calling_relative_path . '; a lock was not released on the file in a timely manner.');
                 }
@@ -731,17 +731,31 @@ function tacit_https() : bool
  * @param  string $class The class name
  * @param  boolean $failure_ok Whether to return null if there is no such class
  * @param  array $parameters Array of parameters
+ * @param  boolean $cache Whether to use the cache to avoid initialising the same class repeatedly
  * @return ?object The object (null: could not create)
  */
-function object_factory(string $class, bool $failure_ok = false, array $parameters = []) : ?object
+function object_factory(string $class, bool $failure_ok = false, array $parameters = [], bool $cache = false) : ?object
 {
+    static $class_objects = [];
+
     if (!class_exists($class)) {
         if ($failure_ok) {
             return null;
         }
         fatal_exit(escape_html('Missing class: ' . $class));
     }
-    return new $class(...$parameters);
+
+    if ($cache) {
+        $hash = hash('sha256', serialize($parameters));
+        if (isset($class_objects[$class][$hash]) && is_object($class_objects[$class][$hash])) {
+            return $class_objects[$class][$hash];
+        }
+    } else {
+        return new $class(...$parameters);
+    }
+
+    $class_objects[$class][$hash] = new $class(...$parameters);
+    return $class_objects[$class][$hash];
 }
 
 /**
@@ -854,6 +868,7 @@ function filter_naughty(string $in, bool $preg = false) : string
 {
     if (strpos($in, "\0") !== false) {
         log_hack_attack_and_exit('PATH_HACK');
+        warn_exit(do_lang_tempcode('INVALID_URL'));
     }
 
     if (strpos($in, '..') !== false) {
@@ -865,6 +880,7 @@ function filter_naughty(string $in, bool $preg = false) : string
         if (strpos($in, '..') !== false) {
             log_hack_attack_and_exit('PATH_HACK');
         }
+
         warn_exit(do_lang_tempcode('INVALID_URL'));
     }
     return $in;
@@ -1394,9 +1410,67 @@ function list_untouchable_third_party_files() : array
     ];
 }
 
+/**
+ * Check if a given hook exists.
+ *
+ * @param  ID_TEXT $type The type of hook
+ * @set blocks endpoints modules systems
+ * @param  ID_TEXT $subtype The hook sub-type to find hook implementations for (e.g. the name of a module)
+ * @param  ID_TEXT $hook The name of the hook
+ * @return boolean Whether or not the hook exists
+ */
+function hook_exists(string $type, string $subtype, string $hook) : bool
+{
+    global $HOOKS_CACHE;
+    if (isset($HOOKS_CACHE[$type . '/' . $subtype]) && isset($HOOKS_CACHE[$type . '/' . $subtype][$hook])) {
+        return true;
+    }
+
+    if ((is_file(get_file_base() . '/sources/hooks/' . $type . '/' . $subtype . '/' . $hook . '.php')) || (is_file(get_file_base() . '/sources_custom/hooks/' . $type . '/' . $subtype . '/' . $hook . '.php'))) {
+        return true;
+    }
+
+    return false;
+}
+
+/**
+ * Get the specified hook implementation object and fail if it does not exist.
+ *
+ * @param  ID_TEXT $type The type of hook
+ * @param  ID_TEXT $subtype The hook sub-type to find hook implementations for (e.g. the name of a module)
+ * @param  ID_TEXT $hook The name of the hook
+ * @param  string $classname_prefix The hook class-name prefix, the classes are named {$classname_prefix}{$hook}
+ * @param  boolean $fail_ok Whether to return null opposed to failing if the hook or its object does not exist
+ * @return ?object The hook implementation object (null: hook was not found and $fail_ok was true)
+ */
+function get_hook_ob(string $type, string $subtype, string $hook, string $classname_prefix, bool $fail_ok = false) : ?object
+{
+    if (($fail_ok) && (!hook_exists($type, $subtype, $hook))) {
+        return null;
+    }
+
+    require_code('hooks/' . $type . '/' . $subtype . '/' . $hook, !$fail_ok);
+
+    $ob = object_factory(class_exists(str_replace('Hook_', 'Hx_', $classname_prefix) . $hook) ? (str_replace('Hook_', 'Hx_', $classname_prefix) . $hook) : ($classname_prefix . $hook), true, [], true);
+    if ((!$fail_ok) && ($ob === null)) {
+        $error_message = do_lang_tempcode('INTERNAL_ERROR', escape_html('f45146eaa359580bb0d10db80263e9c3'));
+        if (function_exists('warn_exit')) {
+            warn_exit($error_message, false, true);
+        } else {
+            require_code('critical_errors');
+            critical_error('PASSON', $error_message);
+        }
+    }
+
+    return $ob;
+}
+
 // Useful for basic profiling
 global $PAGE_START_TIME;
 $PAGE_START_TIME = microtime(true);
+
+global $HOOKS_CACHE;
+$HOOKS_CACHE = [];
 
 // Are we in a special version of PHP?
 define('GOOGLE_APPENGINE', isset($_SERVER['APPLICATION_ID']));
@@ -1523,28 +1597,32 @@ if ($rate_limiting) {
         $ip = $_SERVER['REMOTE_ADDR'];
         $time = time();
 
-        if (!(((!empty($_SERVER['SERVER_ADDR'])) && ($ip == $_SERVER['SERVER_ADDR'])) || ((!empty($_SERVER['LOCAL_ADDR'])) && ($ip == $_SERVER['LOCAL_ADDR'])))) {
-            global $RATE_LIMITING_DATA;
-            $RATE_LIMITING_DATA = [];
+        $fixed_ip = str_replace(['.', ':'], ['_', '-'], $ip);
 
-            // Read in state
-            $rate_limiter_path = dirname(__DIR__) . '/data_custom/rate_limiter.php';
+        //if (!(((!empty($_SERVER['SERVER_ADDR'])) && ($ip == $_SERVER['SERVER_ADDR'])) || ((!empty($_SERVER['LOCAL_ADDR'])) && ($ip == $_SERVER['LOCAL_ADDR'])))) {
+            $rate_limiting_data = [];
+
+            // Read in rate limiter data for this IP
+            $rate_limiter_path = dirname(__DIR__) . '/data_custom/rate_limiting/' . $fixed_ip . '.json';
+
             if (is_file($rate_limiter_path)) {
-                $fp = fopen($rate_limiter_path, 'rb');
-                flock($fp, LOCK_SH);
-                include $rate_limiter_path;
-                flock($fp, LOCK_UN);
-                fclose($fp);
+                $_rate_limiting_data = file_get_contents($rate_limiter_path);
+                if (!$_rate_limiting_data) {
+                    $rate_limiting_data = [];
+                } else {
+                    $rate_limiting_data = @json_decode($_rate_limiting_data, true);
+                    if (!$rate_limiting_data) {
+                        $rate_limiting_data = [];
+                    }
+                }
             }
 
             // Filter to just times within our window
             $pertinent = [];
             $rate_limit_time_window = empty($SITE_INFO['rate_limit_time_window']) ? 10 : intval($SITE_INFO['rate_limit_time_window']);
-            if (isset($RATE_LIMITING_DATA[$ip])) {
-                foreach ($RATE_LIMITING_DATA[$ip] as $i => $old_time) {
-                    if ($old_time >= $time - $rate_limit_time_window) {
-                        $pertinent[] = $old_time;
-                    }
+            foreach ($rate_limiting_data as $i => $old_time) {
+                if ($old_time >= $time - $rate_limit_time_window) {
+                    $pertinent[] = $old_time;
                 }
             }
 
@@ -1556,29 +1634,15 @@ if ($rate_limiting) {
                 exit('We only allow ' . strval($rate_limit_hits_per_window - 1) . ' page hits every ' . strval($rate_limit_time_window) . ' seconds. You\'re at ' . strval(count($pertinent)) . '.');
             }
 
-            // Remove any old hits from other IPs
-            foreach ($RATE_LIMITING_DATA as $_ip => $times) {
-                if ($_ip != $ip) {
-                    foreach ($times as $i => $old_time) {
-                        if ($old_time < $time - $rate_limit_time_window) {
-                            unset($RATE_LIMITING_DATA[$_ip][$i]);
-                        }
-                    }
-                    if (empty($RATE_LIMITING_DATA[$_ip])) {
-                        unset($RATE_LIMITING_DATA[$_ip]);
-                    }
-                }
-            }
-
             // Write out new state
-            $RATE_LIMITING_DATA[$ip] = $pertinent;
-            $RATE_LIMITING_DATA[$ip][] = $time;
-            file_put_contents($rate_limiter_path, '<' . '?php' . "\n\n" . '$RATE_LIMITING_DATA=' . var_export($RATE_LIMITING_DATA, true) . ';' . "\n", LOCK_EX);
+            $rate_limiting_data = $pertinent;
+            $rate_limiting_data[] = $time;
+            file_put_contents($rate_limiter_path, json_encode($rate_limiting_data), LOCK_EX);
             //sync_file($rate_limiter_path); Not done. Each server should rate limit separately. Synching this data across servers would be too slow and not scalable
 
             // Save some memory
-            unset($RATE_LIMITING_DATA);
-        }
+            unset($rate_limiting_data);
+        //}
     }
 }
 

@@ -101,7 +101,7 @@ function _page_link_to_static(array $node)
                 $data = preg_replace('#(\smethod="post"[^>]*)(\s)action="[^"]*"#', '${1}action="' . $new_form_action . '"${2}', $data);
 
                 // Set a JS session cookie for a very basic anti-spam system
-                $data = str_replace('</head>', '<script>document.cookie="js_on=1";</script></head>', $data);
+                $data = str_replace('</head>', '<script>document.cookie="has_js=1";</script></head>', $data);
             }
 
             // Change absolute paths to relative ones
@@ -210,9 +210,8 @@ function _static_export_scriptrep_callback(array $matches) : string
             $id = $matches[3];
 
             // Security: We use resource GUID if Commandr is installed to prevent content scraping
-            // LEGACY: The cms_version_time is to ensure we do not do this until 11 beta8
             require_code('version');
-            if (addon_installed('commandr') && ((cms_version_time() > 1741833435) || $GLOBALS['DEV_MODE'])) {
+            if (addon_installed('commandr')) {
                 require_code('resource_fs');
 
                 $_id = find_id_via_guid(strval($id));

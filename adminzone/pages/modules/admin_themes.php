@@ -563,8 +563,7 @@ class Module_admin_themes
         require_code('config2');
         $config_groups = [];
         foreach (array_keys($hooks) as $hook) {
-            require_code('hooks/systems/config/' . filter_naughty_harsh($hook));
-            $ob = object_factory('Hook_config_' . filter_naughty_harsh($hook));
+            $ob = get_hook_ob('systems', 'config', filter_naughty_harsh($hook), 'Hook_config_');
             $details = $ob->get_details();
             if (!empty($details['theme_override'])) {
                 $group_title = do_lang($details['group']);

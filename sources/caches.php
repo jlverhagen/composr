@@ -569,8 +569,10 @@ function erase_persistent_cache()
         closedir($d);
     }
 
+    // Also flush static cache
     erase_static_cache();
 
+    // Also flush failover cache
     require_code('files');
     if (cms_is_writable(get_custom_file_base() . '/data_custom/failover_rewritemap.txt')) {
         cms_file_put_contents_safe(get_custom_file_base() . '/data_custom/failover_rewritemap.txt', '', FILE_WRITE_FAILURE_SOFT | FILE_WRITE_FIX_PERMISSIONS);
@@ -579,6 +581,10 @@ function erase_persistent_cache()
         cms_file_put_contents_safe(get_custom_file_base() . '/data_custom/failover_rewritemap__mobile.txt', '', FILE_WRITE_FAILURE_SOFT | FILE_WRITE_FIX_PERMISSIONS);
     }
 
+    // Flush database cache
+    $GLOBALS['SITE_DB']->query_delete('cache');
+
+    // Do not continue if we do not have a persistent cache
     global $PERSISTENT_CACHE;
     if ($PERSISTENT_CACHE === null) {
         return;
@@ -829,91 +835,34 @@ function _get_cache_entries(array $dets) : array
     }
 
     $rets = [];
+    $cache_rows = [];
 
-    // Bulk load from database, if persistent cache not enabled
-    if ($GLOBALS['PERSISTENT_CACHE'] === null) {
-        $do_query = false;
+    // Get our cache rows
+    foreach ($dets as $i => $det) {
+        list($codename, $cache_identifier, $cache_identifier_hash, $special_cache_flags, $ttl, $tempcode, $caching_via_cron, $map) = $det;
+        $sz = serialize([$codename, $cache_identifier_hash, $special_cache_flags]);
 
-        $sql = 'SELECT cached_for,identifier,the_value,date_and_time,dependencies FROM ' . get_table_prefix() . 'cache WHERE 1=1';
-
-        $sql .= ' AND (1=0';
-        foreach ($dets as $det) {
-            list($codename, $cache_identifier, $cache_identifier_hash, $special_cache_flags, $ttl, $tempcode, $caching_via_cron, $map) = $det;
-
-            $sz = serialize([$codename, $cache_identifier_hash, $special_cache_flags]);
-            if (isset($cache[$sz])) { // Already cached
-                $rets[] = $cache[$sz];
+        if (isset($cache[$sz]) && ($cache[$sz][0] !== null)) { // Already loaded previously
+            // We still need to check if this is stale
+            $stale = (($ttl !== null) && (time() > ($cache[$sz][1] + $ttl * 60)));
+            if (!$stale) {
+                $rets[$i] = $cache[$sz][0];
                 continue;
             }
 
-            $sql .= ' OR ';
-
-            $sql .= db_string_equal_to('cached_for', $codename) . ' AND ' . db_string_equal_to('identifier', cms_base64_encode($cache_identifier, false, true, true));
-
-            $staff_status = null;
-            $member_id = null;
-            $groups = null;
-            $is_bot = null;
-            $timezone = null;
-            $theme = null;
-            $lang = null;
-            get_cache_signature_details($special_cache_flags, $staff_status, $member_id, $groups, $is_bot, $timezone, $theme, $lang);
-
-            if ($staff_status === null) {
-                $sql .= ' AND staff_status IS NULL';
-            } else {
-                $sql .= ' AND staff_status=' . strval($staff_status);
-            }
-            if ($member_id === null) {
-                $sql .= ' AND the_member IS NULL';
-            } else {
-                $sql .= ' AND the_member=' . strval($member_id);
-            }
-            if ($groups === null) {
-                $sql .= ' AND ' . db_string_equal_to('the_groups', '');
-            } else {
-                $sql .= ' AND ' . db_string_equal_to('the_groups', $groups);
-            }
-            if ($is_bot === null) {
-                $sql .= ' AND is_bot IS NULL';
-            } else {
-                $sql .= ' AND is_bot=' . strval($is_bot);
-            }
-            if ($timezone === null) {
-                $sql .= ' AND ' . db_string_equal_to('timezone', '');
-            } else {
-                $sql .= ' AND ' . db_string_equal_to('timezone', $timezone);
-            }
-            $sql .= ' AND ' . db_string_equal_to('the_theme', $theme);
-            $sql .= ' AND ' . db_string_equal_to('lang', $lang);
-
-            $do_query = true;
+            unset($cache[$sz]);
         }
-        $sql .= ')';
 
-        $cache_rows = $do_query ? $GLOBALS['SITE_DB']->query($sql) : [];
-    }
-
-    // Iterate over each requested entry to get it
-    foreach ($dets as $det) {
-        list($codename, $cache_identifier, $cache_identifier_hash, $special_cache_flags, $ttl, $tempcode, $caching_via_cron, $map) = $det;
-
-        $sz = serialize([$codename, $cache_identifier_hash, $special_cache_flags]);
-        if (isset($cache[$sz])) { // Already cached
-            $rets[] = $cache[$sz];
-            continue;
-        }
+        $staff_status = null;
+        $member_id = null;
+        $groups = null;
+        $is_bot = null;
+        $timezone = null;
+        $theme = null;
+        $lang = null;
+        get_cache_signature_details($special_cache_flags, $staff_status, $member_id, $groups, $is_bot, $timezone, $theme, $lang);
 
         if ($GLOBALS['PERSISTENT_CACHE'] !== null) {
-            $staff_status = null;
-            $member_id = null;
-            $groups = null;
-            $is_bot = null;
-            $timezone = null;
-            $theme = null;
-            $lang = null;
-            get_cache_signature_details($special_cache_flags, $staff_status, $member_id, $groups, $is_bot, $timezone, $theme, $lang);
-
             $cache_row = persistent_cache_get(['CACHE', $codename, $cache_identifier_hash, $lang, $theme, $staff_status, $member_id, $groups, $is_bot, $timezone]);
 
             if ($cache_row === null) { // No
@@ -925,20 +874,28 @@ function _get_cache_entries(array $dets) : array
                     $ret = null;
                 }
 
-                $cache[$sz] = $ret;
-                $rets[] = $ret;
+                $cache[$sz] = [$ret, time()];
+                $rets[$i] = $ret;
                 continue;
             }
-        } else {
-            $cache_row = null;
-            foreach ($cache_rows as $_cache_row) {
-                if ($_cache_row['cached_for'] == $codename && $_cache_row['identifier'] == $cache_identifier_hash) {
-                    $cache_row = $_cache_row;
-                    break;
-                }
-            }
 
-            if ($cache_row === null) { // No
+            $cache_rows[$i] = $cache_row;
+        } else {
+            // We cannot bulk-process SQL because then we cannot accurately determine which $det cache rows we received from the database
+            $where = [
+                'cached_for' => $codename,
+                'identifier' => cms_base64_encode($cache_identifier, false, true, true),
+                'staff_status' => $staff_status,
+                'the_member' => $member_id,
+                'the_groups' => ($groups === null) ? '' : $groups,
+                'is_bot' => $is_bot,
+                'timezone' => ($timezone === null) ? '' : $timezone,
+                'the_theme' => $theme,
+                'lang' => $lang,
+            ];
+            $cache_row = $GLOBALS['SITE_DB']->query_select('cache', ['cached_for','identifier','the_value','date_and_time','dependencies'], $where, '', 1);
+
+            if (!array_key_exists(0, $cache_row)) {
                 if ($caching_via_cron) {
                     require_code('caches2');
                     request_via_cron($codename, $map, $special_cache_flags, $tempcode);
@@ -947,39 +904,27 @@ function _get_cache_entries(array $dets) : array
                     $ret = null;
                 }
 
-                $cache[$sz] = $ret;
-                $rets[] = $ret;
+                $cache[$sz] = [$ret, time()];
+                $rets[$i] = $ret;
                 continue;
             }
 
-            if ($tempcode) {
-                $ob = new Tempcode();
-                if (!$ob->from_assembly($cache_row['the_value'], true)) { // Error
-                    $ret = null;
-                    $cache[$sz] = $ret;
-                    $rets[] = $ret;
-                    continue;
-                }
-
-                $cache_row['the_value'] = $ob;
-            } else {
-                $cache_row['the_value'] = @unserialize($cache_row['the_value']);
-
-                if ($cache_row['the_value'] === false) { // Corrupt data
-                    $cache[$sz] = null;
-                    $rets[] = null;
-                    continue;
-                }
-            }
+            $cache_rows[$i] = $cache_row[0];
         }
+    }
+
+    // Now process each cache row we received
+    foreach ($cache_rows as $i => $cache_row) {
+        list($codename, $cache_identifier, $cache_identifier_hash, $special_cache_flags, $ttl, $tempcode, $caching_via_cron, $map) = $dets[$i];
+        $sz = serialize([$codename, $cache_identifier_hash, $special_cache_flags]);
 
         $stale = (($ttl !== null) && (time() > ($cache_row['date_and_time'] + $ttl * 60)));
 
         if ($stale) { // Stale
             if (!$caching_via_cron) {
                 $ret = null;
-                $cache[$sz] = $ret;
-                $rets[] = $ret;
+                $cache[$sz] = [$ret, time()];
+                $rets[$i] = $ret;
                 continue;
             }
 
@@ -987,8 +932,28 @@ function _get_cache_entries(array $dets) : array
             request_via_cron($codename, $map, $special_cache_flags, $tempcode);
         }
 
-        // We can use directly...
+        // Process the cache data
+        if ($tempcode) {
+            $ob = new Tempcode();
+            if (!$ob->from_assembly($cache_row['the_value'], true)) { // Error
+                $ret = null;
+                $cache[$sz] = [$ret, time()];
+                $rets[$i] = $ret;
+                continue;
+            }
 
+            $cache_row['the_value'] = $ob;
+        } else {
+            $cache_row['the_value'] = @unserialize($cache_row['the_value']);
+
+            if ($cache_row['the_value'] === false) { // Corrupt data
+                $cache[$sz] = null;
+                $rets[$i] = null;
+                continue;
+            }
+        }
+
+        // Load in any dependencies defined
         $ret = $cache_row['the_value'];
         if ($cache_row['dependencies'] != '') {
             $bits = explode('!', $cache_row['dependencies']);
@@ -1012,8 +977,9 @@ function _get_cache_entries(array $dets) : array
             }
         }
 
-        $cache[$sz] = $ret;
-        $rets[] = $ret;
+        $cache[$sz] = [$ret, $cache_row['date_and_time']];
+        $rets[$i] = $ret;
     }
+
     return $rets;
 }

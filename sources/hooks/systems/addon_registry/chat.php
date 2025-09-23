@@ -59,7 +59,7 @@ class Hook_addon_registry_chat
      */
     public function get_version() : string
     {
-        return '11.0.2'; // addon_version_auto_update 272acf253a0708498344e774eeecafee
+        return '11.0.3'; // addon_version_auto_update bc61b7a2d0e048b2429ad2c1413c902e
     }
 
     /**
@@ -216,6 +216,7 @@ class Hook_addon_registry_chat
             'sources/hooks/systems/snippets/im_friends_rejig.php',
             'sources/hooks/systems/startup/im.php',
             'sources/hooks/systems/symbols/CHAT_IM.php',
+            'sources/hooks/systems/symbols/IS_FRIEND.php',
             'sources_custom/hooks/modules/chat_bots/.htaccess',
             'sources_custom/hooks/modules/chat_bots/index.html',
             'themes/default/css/chat.css',

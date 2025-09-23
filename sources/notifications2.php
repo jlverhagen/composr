@@ -90,8 +90,8 @@ function notifications_ui(int $member_id_of) : object
         if ((substr($hook, 0, 4) == 'cns_') && (get_forum_type() != 'cns')) {
             continue;
         }
-        require_code('hooks/systems/notifications/' . filter_naughty_harsh($hook));
-        $ob = object_factory('Hook_notification_' . filter_naughty_harsh($hook));
+
+        $ob = get_hook_ob('systems', 'notifications', filter_naughty_harsh($hook), 'Hook_notification_');
         $_notification_codes = $ob->list_handled_codes();
         foreach ($_notification_codes as $notification_code => $notification_details) {
             $notification_code_lockdown = array_key_exists($notification_code, $lockdown) ? $lockdown[$notification_code] : null;

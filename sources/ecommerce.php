@@ -581,8 +581,7 @@ function make_transaction_button(string $type_code, string $item_name, string $p
         $payment_gateway = get_option('payment_gateway');
     }
 
-    require_code('hooks/systems/payment_gateway/' . filter_naughty_harsh($payment_gateway));
-    $payment_gateway_object = object_factory('Hook_payment_gateway_' . filter_naughty_harsh($payment_gateway));
+    $payment_gateway_object = get_hook_ob('systems', 'payment_gateway', filter_naughty_harsh($payment_gateway), 'Hook_payment_gateway_');
     if ($payment_gateway_object->is_available() === false) {
         warn_exit(do_lang_tempcode('INTERNAL_ERROR', escape_html('32468791408d539abeac4a8330d0f8de')));
     }
@@ -640,8 +639,8 @@ function make_subscription_button(string $type_code, string $item_name, string $
     if ($payment_gateway === null) {
         $payment_gateway = get_option('payment_gateway');
     }
-    require_code('hooks/systems/payment_gateway/' . filter_naughty_harsh($payment_gateway));
-    $payment_gateway_object = object_factory('Hook_payment_gateway_' . filter_naughty_harsh($payment_gateway));
+
+    $payment_gateway_object = get_hook_ob('systems', 'payment_gateway', filter_naughty_harsh($payment_gateway), 'Hook_payment_gateway_');
     if ($payment_gateway_object->is_available() === false) {
         warn_exit(do_lang_tempcode('INTERNAL_ERROR', escape_html('e101e0b2b11956bc952b8b3eafb785b7')));
     }
@@ -688,8 +687,8 @@ function make_cancel_button(string $purchase_id, string $payment_gateway) : ?obj
     if (in_array($payment_gateway, ['', 'manual', 'points'])) {
         return null;
     }
-    require_code('hooks/systems/payment_gateway/' . filter_naughty_harsh($payment_gateway));
-    $payment_gateway_object = object_factory('Hook_payment_gateway_' . filter_naughty_harsh($payment_gateway));
+
+    $payment_gateway_object = get_hook_ob('systems', 'payment_gateway', filter_naughty_harsh($payment_gateway), 'Hook_payment_gateway_');
     if ($payment_gateway_object->is_available() === false) {
         return null;
     }
@@ -792,8 +791,8 @@ function perform_local_payment() : bool
     }
 
     $payment_gateway = get_option('payment_gateway');
-    require_code('hooks/systems/payment_gateway/' . filter_naughty_harsh($payment_gateway));
-    $payment_gateway_object = object_factory('Hook_payment_gateway_' . filter_naughty_harsh($payment_gateway));
+
+    $payment_gateway_object = get_hook_ob('systems', 'payment_gateway', filter_naughty_harsh($payment_gateway), 'Hook_payment_gateway_');
     if ($payment_gateway_object->is_available() === false) {
         return false;
     }
@@ -831,8 +830,7 @@ function get_transaction_form_fields(string $type_code, string $item_name, strin
         $payment_gateway = get_option('payment_gateway');
     }
 
-    require_code('hooks/systems/payment_gateway/' . filter_naughty_harsh($payment_gateway));
-    $payment_gateway_object = object_factory('Hook_payment_gateway_' . filter_naughty_harsh($payment_gateway));
+    $payment_gateway_object = get_hook_ob('systems', 'payment_gateway', filter_naughty_harsh($payment_gateway), 'Hook_payment_gateway_');
     if ($payment_gateway_object->is_available() === false) {
         warn_exit(do_lang_tempcode('INTERNAL_ERROR', escape_html('ba25dcccf8885d02af56a80e6898fb2e')));
     }
@@ -1263,8 +1261,7 @@ function ecommerce_attach_memo_field_if_needed(?object &$fields)
             $get_memo = true;
         } else {
             $payment_gateway = get_option('payment_gateway');
-            require_code('hooks/systems/payment_gateway/' . filter_naughty_harsh($payment_gateway));
-            $payment_gateway_object = object_factory('Hook_payment_gateway_' . filter_naughty_harsh($payment_gateway));
+            $payment_gateway_object = get_hook_ob('systems', 'payment_gateway', filter_naughty_harsh($payment_gateway), 'Hook_payment_gateway_');
             if ($payment_gateway_object->is_available() === false) {
                 warn_exit(do_lang_tempcode('INTERNAL_ERROR', escape_html('22b8ff7bbb1250cfb8f90d1d01876bc2')));
             }
@@ -1462,8 +1459,7 @@ function handle_pdt_ipn_transaction_script(bool $silent_fail = false, bool $send
     }
 
     $payment_gateway = get_param_string('from', get_option('payment_gateway'));
-    require_code('hooks/systems/payment_gateway/' . filter_naughty_harsh($payment_gateway));
-    $payment_gateway_object = object_factory('Hook_payment_gateway_' . filter_naughty_harsh($payment_gateway));
+    $payment_gateway_object = get_hook_ob('systems', 'payment_gateway', filter_naughty_harsh($payment_gateway), 'Hook_payment_gateway_');
     if ($payment_gateway_object->is_available() === false) {
         warn_exit(do_lang_tempcode('INTERNAL_ERROR', escape_html('96a7078f18e85f72b79512936102b80d')));
     }

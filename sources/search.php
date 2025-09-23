@@ -322,8 +322,7 @@ function do_search_block(array $map) : array
         $id = preg_replace('#^search_#', '', $limit_to[0]);
 
         require_code('database_search');
-        require_code('hooks/modules/search/' . filter_naughty_harsh($id, true));
-        $object = object_factory('Hook_search_' . filter_naughty_harsh($id, true));
+        $object = get_hook_ob('modules', 'search', filter_naughty_harsh($id, true), 'Hook_search_');
         $info = $object->info();
         if (($info !== null) && ($info !== false)) {
             if (array_key_exists('special_on', $info)) {

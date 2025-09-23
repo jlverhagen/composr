@@ -42,7 +42,7 @@ class Hook_addon_registry_core_privacy
      */
     public function get_version() : string
     {
-        return '11.0.2'; // addon_version_auto_update a421d780c7f23dd9db257d7f0bfee484
+        return '11.0.3'; // addon_version_auto_update 18899e4646be199fa39c6fc8333cfa94
     }
 
     /**
@@ -165,6 +165,7 @@ class Hook_addon_registry_core_privacy
             'sources/hooks/systems/privacy/core.php',
             'sources/hooks/systems/privacy/index.html',
             'sources/hooks/systems/profiles_tabs_edit/data.php',
+            'sources/hooks/systems/symbols/COOKIE_DATA_JSON.php',
             'sources/hooks/systems/symbols/PRIVACY_POLICY_DATE.php',
             'sources/hooks/systems/tasks/privacy_download.php',
             'sources/hooks/systems/tasks/privacy_purge.php',
@@ -204,6 +205,7 @@ class Hook_addon_registry_core_privacy
         $cookies = [];
         $cookies[] = [
             'NAME' => lorem_word(),
+            'CATEGORY' => lorem_word(),
             'REASON' => lorem_phrase(),
         ];
 

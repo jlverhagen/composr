@@ -125,6 +125,7 @@ class DatabaseRepair
         $_existent_tables = collapse_1d_complexity(null, $GLOBALS['SITE_DB']->query('SHOW TABLES'));
         $existent_tables = [];
         $existent_indices = [];
+        $existent_foreign_keys = [];
         foreach ($_existent_tables as $table_name) {
             if (substr($table_name, 0, strlen(get_table_prefix())) != get_table_prefix()) {
                 continue;
@@ -205,6 +206,40 @@ class DatabaseRepair
             ];
         }
 
+        $meta_foreign_keys = [];
+        $fk_details = $GLOBALS['SITE_DB']->query_select('db_meta_foreign_keys', ['*']);
+        foreach ($fk_details as $fk) {
+            $universal_fk_key = $fk['from_table'] . '__' . $fk['from_field'] . '||' . $fk['to_table'] . '__' . $fk['to_field'];
+            $meta_foreign_keys[$universal_fk_key] = ['from_table' => $fk['from_table'], 'from_field' => $fk['from_field'], 'to_table' => $fk['to_table'], 'to_field' => $fk['to_field']];
+        }
+
+        $existent_foreign_keys = [];
+        if (strpos(get_db_type(), 'mysql') !== false) {
+            $schema_rows = $GLOBALS['SITE_DB']->query('SELECT TABLE_NAME, COLUMN_NAME, REFERENCED_TABLE_NAME, REFERENCED_COLUMN_NAME FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE WHERE REFERENCED_TABLE_NAME IS NOT NULL AND TABLE_SCHEMA = DATABASE()');
+            $prefix = get_table_prefix();
+            foreach ($schema_rows as $row) {
+                $from_table_full = $row['TABLE_NAME'];
+
+                // ignore other apps’ tables
+                if (substr($from_table_full, 0, strlen($prefix)) !== $prefix) {
+                    continue;
+                }
+
+                $from_table = substr($from_table_full, strlen($prefix));
+                $to_table_full = $row['REFERENCED_TABLE_NAME'];
+                if (substr($to_table_full, 0, strlen($prefix)) === $prefix) {
+                    $to_table = substr($to_table_full, strlen($prefix));
+                } else {
+                    $to_table = $to_table_full;
+                }
+
+                $from_field = $row['COLUMN_NAME'];
+                $to_field   = $row['REFERENCED_COLUMN_NAME'];
+                $universal_fk_key = $from_table . '__' . $from_field . '||' . $to_table . '__' . $to_field;
+                $existent_foreign_keys[$universal_fk_key] = ['from_table' => $from_table, 'from_field' => $from_field, 'to_table' => $to_table, 'to_field' => $to_field];
+            }
+        }
+
         $existent_privileges = [];
         $privilege_details = $GLOBALS['SITE_DB']->query_select('privilege_list', ['*']);
         foreach ($privilege_details as $privilege) {
@@ -237,6 +272,15 @@ class DatabaseRepair
             }
         }
 
+        $expected_foreign_keys = [];
+        if (array_key_exists('foreign_keys', $data)) {
+            foreach ($data['foreign_keys'] as $universal_fk_key => $fk) {
+                if (addon_installed($fk['addon'], false, false, true, true)) {
+                    $expected_foreign_keys[$universal_fk_key] = ['from_table' => $fk['from_table'], 'from_field' => $fk['from_field'], 'to_table' => $fk['to_table'], 'to_field' => $fk['to_field']];
+                }
+            }
+        }
+
         $expected_privileges = [];
         foreach ($data['privileges'] as $privilege_name => $privilege) {
             if (addon_installed($privilege['addon'], false, false, true, true)) {
@@ -248,10 +292,12 @@ class DatabaseRepair
         $needs_changes = false;
         $needs_changes = $this->search_for_meta_table_issues($existent_tables, $meta_tables, $expected_tables) || $needs_changes;
         $needs_changes = $this->search_for_meta_index_issues($existent_indices, $meta_indices, $meta_tables) || $needs_changes;
+        $needs_changes = $this->search_for_meta_foreign_key_issues($existent_foreign_keys, $meta_foreign_keys) || $needs_changes;
         $phase = $needs_changes ? 1 : 2;
         if (!$needs_changes) {
             $needs_changes = $this->search_for_table_issues($existent_tables, $expected_tables, $meta_tables) || $needs_changes;
             $needs_changes = $this->search_for_index_issues($existent_indices, $expected_indices, $meta_indices, $meta_tables) || $needs_changes;
+            $needs_changes = $this->search_for_foreign_key_issues($existent_foreign_keys, $expected_foreign_keys, $meta_foreign_keys) || $needs_changes;
             $needs_changes = $this->search_for_privilege_issues($existent_privileges, $expected_privileges) || $needs_changes;
         }
 
@@ -710,6 +756,113 @@ class DatabaseRepair
     }
 
     /**
+     * Phase 1: Keep meta foreign-keys in sync with what exists physically.
+     * Considers real DB canonical over meta.
+     *
+     * @param array $existent_foreign_keys Physical foreign keys keyed by universal FK key
+     * @param array $meta_foreign_keys     Meta foreign keys keyed by universal FK key
+     * @return bool Whether issues were found
+     */
+    private function search_for_meta_foreign_key_issues(array $existent_foreign_keys, array $meta_foreign_keys) : bool
+    {
+        $needs_changes = false;
+
+        // Meta foreign-keys missing from DB or inconsistent in DB
+        foreach ($meta_foreign_keys as $universal_fk_key => $meta_fk) {
+            if (isset($existent_foreign_keys[$universal_fk_key])) {
+                continue;
+            }
+
+            // Does a foreign key exist from the same from_table/from_field pointing elsewhere? If so, fix meta to match DB
+            $found_in_db_from = null;
+            foreach ($existent_foreign_keys as $ex_key => $ex_fk) {
+                if (($ex_fk['from_table'] == $meta_fk['from_table']) && ($ex_fk['from_field'] == $meta_fk['from_field'])) {
+                    $found_in_db_from = $ex_fk;
+                    break;
+                }
+            }
+            if ($found_in_db_from !== null) {
+                // Update meta to reflect physical FK
+                $this->fix_foreign_key_inconsistent_in_meta($meta_fk['from_table'], $meta_fk['from_field'], $found_in_db_from['to_table'], $found_in_db_from['to_field']);
+                $needs_changes = true;
+            } else {
+                // Meta says there should be an FK but physically none exists; create physically (meta already has it)
+                $this->create_foreign_key_missing_from_db($meta_fk['from_table'], $meta_fk['from_field'], $meta_fk['to_table'], $meta_fk['to_field'], false);
+                $needs_changes = true;
+            }
+        }
+
+        // Foreign-keys alien in DB (exist physically but not in meta)
+        foreach ($existent_foreign_keys as $universal_fk_key => $ex_fk) {
+            $table_name = $ex_fk['from_table'];
+            if (($table_name == 'db_meta') || ($table_name == 'db_meta_indices') || table_has_purpose_flag($table_name, TABLE_PURPOSE__NON_BUNDLED)) {
+                continue;
+            }
+            if (!isset($meta_foreign_keys[$universal_fk_key])) {
+                $this->create_foreign_key_missing_in_meta($ex_fk['from_table'], $ex_fk['from_field'], $ex_fk['to_table'], $ex_fk['to_field']);
+                $needs_changes = true;
+            }
+        }
+
+        return $needs_changes;
+    }
+
+    /**
+     * Phase 2: Bring DB into line with expected foreign-keys from db_meta.bin
+     * and sync meta accordingly.
+     *
+     * @param array $existent_foreign_keys Physical foreign keys keyed by universal FK key
+     * @param array $expected_foreign_keys Expected foreign keys keyed by universal FK key
+     * @param array $meta_foreign_keys     Meta foreign keys keyed by universal FK key
+     * @return bool Whether issues were found
+     */
+    private function search_for_foreign_key_issues(array $existent_foreign_keys, array $expected_foreign_keys, array $meta_foreign_keys) : bool
+    {
+        $needs_changes = false;
+
+        // Expected missing or inconsistent in DB
+        foreach ($expected_foreign_keys as $universal_fk_key => $exp_fk) {
+            $from_table = $exp_fk['from_table'];
+            if ($from_table == 'f_member_custom_fields') {
+                continue; // dynamic table, skip
+            }
+            if (isset($existent_foreign_keys[$universal_fk_key])) {
+                continue; // exact match
+            }
+
+            // Check if there is an FK from same from_table/from_field pointing elsewhere; if so, fix
+            $found_in_db_from = null;
+            foreach ($existent_foreign_keys as $ex_fk) {
+                if (($ex_fk['from_table'] == $exp_fk['from_table']) && ($ex_fk['from_field'] == $exp_fk['from_field'])) {
+                    $found_in_db_from = $ex_fk;
+                    break;
+                }
+            }
+            if ($found_in_db_from !== null) {
+                $this->fix_foreign_key_inconsistent_in_db($exp_fk['from_table'], $exp_fk['from_field'], $exp_fk['to_table'], $exp_fk['to_field'], isset($meta_foreign_keys[$universal_fk_key]));
+                $needs_changes = true;
+            } else {
+                $this->create_foreign_key_missing_from_db($exp_fk['from_table'], $exp_fk['from_field'], $exp_fk['to_table'], $exp_fk['to_field'], true);
+                $needs_changes = true;
+            }
+        }
+
+        // Alien foreign-keys in DB
+        foreach ($existent_foreign_keys as $universal_fk_key => $ex_fk) {
+            $table_name = $ex_fk['from_table'];
+            if (($table_name == 'db_meta') || ($table_name == 'db_meta_indices') || table_has_purpose_flag($table_name, TABLE_PURPOSE__NON_BUNDLED)) {
+                continue;
+            }
+            if (!isset($expected_foreign_keys[$universal_fk_key])) {
+                $this->delete_foreign_key_alien_in_db($ex_fk['from_table'], $ex_fk['from_field'], isset($meta_foreign_keys[$universal_fk_key]));
+                $needs_changes = true;
+            }
+        }
+
+        return $needs_changes;
+    }
+
+    /**
      * Table field is existent but meta details missing.
      *
      * @param  string $table_name Table name
@@ -1035,6 +1188,106 @@ class DatabaseRepair
 
             $query = 'DELETE FROM ' . get_table_prefix() . 'db_meta_indices WHERE ' . db_string_equal_to('i_table', $index['table']);
             $this->add_fixup_query($query);
+        }
+    }
+
+    /**
+     * Update inconsistent meta to match foreign key in the database.
+     *
+     * @param  ID_TEXT $from_table The table on which the foreign key exists
+     * @param  ID_TEXT $from_field The table's field on which the foreign key exists
+     * @param  ID_TEXT $to_table The table referenced
+     * @param  ID_TEXT $to_field The field referenced
+     */
+    private function fix_foreign_key_inconsistent_in_meta(string $from_table, string $from_field, string $to_table, string $to_field)
+    {
+        $query = 'UPDATE ' . get_table_prefix() . 'db_meta_foreign_keys SET to_table=\'' . db_escape_string($to_table) . '\', to_field=\'' . db_escape_string($to_field) . '\' WHERE from_table=\'' . db_escape_string($from_table) . '\' AND from_field=\'' . db_escape_string($from_field) . '\'';
+        $this->add_fixup_query($query);
+    }
+
+    /**
+     * Add missing foreign key meta from a foreign key that exists.
+     *
+     * @param  ID_TEXT $from_table The table on which the foreign key exists
+     * @param  ID_TEXT $from_field The table's field on which the foreign key exists
+     * @param  ID_TEXT $to_table The table referenced
+     * @param  ID_TEXT $to_field The field referenced
+     */
+    private function create_foreign_key_missing_in_meta(string $from_table, string $from_field, string $to_table, string $to_field)
+    {
+        $query = 'INSERT INTO ' . get_table_prefix() . 'db_meta_foreign_keys (from_table,from_field,to_table,to_field) VALUES (\'' . db_escape_string($from_table) . '\',\'' . db_escape_string($from_field) . '\',\'' . db_escape_string($to_table) . '\',\'' . db_escape_string($to_field) . '\')';
+        $this->add_fixup_query($query);
+    }
+
+    /**
+     * Create a missing foreign key.
+     *
+     * @param  ID_TEXT $from_table The table on which the foreign key should be created
+     * @param  ID_TEXT $from_field The table's field on which the foreign key should be created
+     * @param  ID_TEXT $to_table The table to be referenced
+     * @param  ID_TEXT $to_field The field to be referenced
+     * @param  boolean $include_meta Whether to also put this in the metadata
+     */
+    private function create_foreign_key_missing_from_db(string $from_table, string $from_field, string $to_table, string $to_field, bool $include_meta)
+    {
+        if ($include_meta) {
+            // Ensure meta row exists (idempotent-ish: rely on repair sequencing avoiding duplicates)
+            $this->create_foreign_key_missing_in_meta($from_table, $from_field, $to_table, $to_field);
+        }
+
+        $from_table_full = get_table_prefix() . $from_table;
+        $to_table_full = get_table_prefix() . $to_table;
+
+        $sql = $GLOBALS['SITE_DB']->driver->create_foreign_key__sql($from_table_full, $from_field, $to_table_full, $to_field);
+        if ($sql !== null) {
+            $this->add_fixup_query($sql);
+        }
+    }
+
+    /**
+     * Fix a foreign key which is wrong in the database.
+     *
+     * @param  ID_TEXT $from_table The table on which the foreign key exists
+     * @param  ID_TEXT $from_field The table's field on which the foreign key exists
+     * @param  ID_TEXT $to_table The correct table to reference
+     * @param  ID_TEXT $to_field The correct field to reference
+     * @param  boolean $include_meta Whether to also update this in the metadata
+     */
+    private function fix_foreign_key_inconsistent_in_db(string $from_table, string $from_field, string $to_table, string $to_field, bool $include_meta)
+    {
+        if ($include_meta) {
+            $this->fix_foreign_key_inconsistent_in_meta($from_table, $from_field, $to_table, $to_field);
+        }
+
+        $from_table_full = get_table_prefix() . $from_table;
+
+        $drop_sql = $GLOBALS['SITE_DB']->driver->delete_foreign_key__sql($from_table_full, $from_field);
+        if ($drop_sql !== null) {
+            $this->add_fixup_query($drop_sql);
+        }
+
+        $this->create_foreign_key_missing_from_db($from_table, $from_field, $to_table, $to_field, false);
+    }
+
+    /**
+     * Delete a foreign key which should not exist.
+     *
+     * @param  ID_TEXT $from_table The table on which the foreign key should be deleted
+     * @param  ID_TEXT $from_field The table's field on which the foreign key should be deleted
+     * @param  boolean $include_meta Whether to also delete this in the metadata
+     */
+    private function delete_foreign_key_alien_in_db(string $from_table, string $from_field, bool $include_meta)
+    {
+        if ($include_meta) {
+            $query = 'DELETE FROM ' . get_table_prefix() . 'db_meta_foreign_keys WHERE from_table=\'' . db_escape_string($from_table) . '\' AND from_field=\'' . db_escape_string($from_field) . '\'';
+            $this->add_fixup_query($query);
+        }
+
+        $from_table_full = get_table_prefix() . $from_table;
+
+        $drop_sql = $GLOBALS['SITE_DB']->driver->delete_foreign_key__sql($from_table_full, $from_field);
+        if ($drop_sql !== null) {
+            $this->add_fixup_query($drop_sql);
         }
     }
 

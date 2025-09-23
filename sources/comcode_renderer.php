@@ -836,6 +836,8 @@ function _do_tags_comcode(string $tag, array $attributes, $embed, bool $comcode_
 
             $type = $attributes['param'];
 
+            require_code('templates');
+
             if ($type != '') {
                 if ($type == '1') {
                     $type = 'decimal';

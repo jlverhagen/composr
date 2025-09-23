@@ -76,8 +76,7 @@ function has_translation(?string $from = null, ?string $to = null, ?object &$tra
  */
 function get_translation_object_for_hook(string $hook) : object
 {
-    require_code('hooks/systems/translation/' . $hook);
-    return object_factory('Hook_translation_' . $hook);
+    return get_hook_ob('systems', 'translation', filter_naughty_harsh($hook, true), 'Hook_translation_');
 }
 
 /**

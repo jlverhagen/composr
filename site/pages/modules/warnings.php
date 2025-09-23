@@ -45,7 +45,7 @@ class Module_warnings extends Standard_crud_module
         $info['organisation'] = 'Composr';
         $info['hacked_by'] = null;
         $info['hack_version'] = null;
-        $info['version'] = 2;
+        $info['version'] = 3;
         $info['update_require_upgrade'] = true;
         $info['locked'] = false;
         $info['min_cms_version'] = 11.0;
@@ -87,9 +87,10 @@ class Module_warnings extends Standard_crud_module
     {
         require_code('permissions3');
 
+        $legacy_upgrade_2 = false;
+
         if ($upgrade_from === null) {
             // LEGACY: Determine if we need to run code to migrate some f_warnings data to f_warnings_punitive
-            $legacy_upgrade_2 = false;
             if ($GLOBALS['FORUM_DB']->table_exists('f_warnings') && !$GLOBALS['FORUM_DB']->table_exists('f_warnings_punitive')) {
                 $legacy_upgrade_2 = true;
             }
@@ -248,6 +249,27 @@ class Module_warnings extends Standard_crud_module
                 $GLOBALS['FORUM_DB']->delete_table_field('f_warnings', 'p_charged_points');
                 $GLOBALS['FORUM_DB']->delete_table_field('f_warnings', 'p_banned_member');
                 $GLOBALS['FORUM_DB']->delete_table_field('f_warnings', 'p_changed_usergroup_from');
+            }
+        }
+
+        if (($upgrade_from !== null) && ($upgrade_from < 3)) { // LEGACY: 11.beta9
+            // Fix corrupt stats records for warnings
+            if (addon_installed('stats')) {
+                $GLOBALS['SITE_DB']->query_delete('stats_preprocessed', ['p_bucket' => 'recorded_punishments']);
+                $GLOBALS['SITE_DB']->query_delete('stats_preprocessed', ['p_bucket' => 'recorded_punishment_reasons']);
+                $GLOBALS['SITE_DB']->query_delete('stats_preprocessed', ['p_bucket' => 'recorded_punishment_countries']);
+
+                require_code('stats');
+                require_code('global4');
+                require_lang('stats');
+
+                push_query_limiting(false);
+                disable_php_memory_limit();
+                cms_extend_time_limit(60);
+                $end_time = time();
+                $start_time = get_site_start_time(); // Should be safe because generally, we don't expect sites to create more than a few warnings per day
+                preprocess_raw_data_for('warnings', $start_time, $end_time);
+                pop_query_limiting();
             }
         }
     }

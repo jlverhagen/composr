@@ -38,149 +38,6 @@ function init__tempcode_compiler()
 
     global $DIRECTIVES_NEEDING_VARS;
     $DIRECTIVES_NEEDING_VARS = ['IF_PASSED' => true, 'IF_NON_PASSED' => true, 'IF_PASSED_AND_TRUE' => true, 'IF_NON_PASSED_OR_FALSE' => true, 'PARAM_INFO' => true, 'IF_NOT_IN_ARRAY' => true, 'IF_IN_ARRAY' => true, 'IMPLODE' => true, 'COUNT' => true, 'IF_ARRAY_EMPTY' => true, 'IF_ARRAY_NON_EMPTY' => true, 'OF' => true, 'INCLUDE' => true, 'LOOP' => true, 'SET_NOPREEVAL' => true, 'PARAMS_JSON' => true];
-
-    // Work out what symbols may be compiled out (look at patterns at top of caches3.php if changing this)...
-
-    if (!defined('SYMBOL_COMPILE_STATIC_SAFE')) {
-        define('SYMBOL_COMPILE_STATIC_SAFE', 0);
-        define('SYMBOL_COMPILE_STATIC_IF_AGGRESSIVE', 1);
-        define('SYMBOL_COMPILE_STATIC_SAFE_SIMPLE_BASE_URLS', 2);
-        define('SYMBOL_COMPILE_STATIC_SAFE_SIMPLE_JAVASCRIPT', 4);
-        define('SYMBOL_COMPILE_STATIC_SAFE_SIMPLE_KEEP', 8);
-    }
-
-    global $COMPILABLE_SYMBOLS;
-    $COMPILABLE_SYMBOLS = [
-        '' => SYMBOL_COMPILE_STATIC_SAFE, // A Tempcode comment
-        'PAGE_LINK' => SYMBOL_COMPILE_STATIC_IF_AGGRESSIVE | SYMBOL_COMPILE_STATIC_SAFE_SIMPLE_KEEP,
-        'TERNARY' => SYMBOL_COMPILE_STATIC_SAFE,
-        'IMG' => SYMBOL_COMPILE_STATIC_SAFE_SIMPLE_BASE_URLS,
-        'IMG_MTIME' => SYMBOL_COMPILE_STATIC_SAFE,
-        'IMG_WIDTH' => SYMBOL_COMPILE_STATIC_SAFE,
-        'IMG_HEIGHT' => SYMBOL_COMPILE_STATIC_SAFE,
-        'STRIP_TAGS' => SYMBOL_COMPILE_STATIC_SAFE,
-        'TRUNCATE_LEFT' => SYMBOL_COMPILE_STATIC_SAFE,
-        'TRUNCATE_SPREAD' => SYMBOL_COMPILE_STATIC_SAFE,
-        'PARAGRAPH' => SYMBOL_COMPILE_STATIC_SAFE,
-        'IS_EMPTY' => SYMBOL_COMPILE_STATIC_SAFE,
-        'IS_NON_EMPTY' => SYMBOL_COMPILE_STATIC_SAFE,
-        'CDN_FILTER' => SYMBOL_COMPILE_STATIC_SAFE,
-        'LOGO_URL' => SYMBOL_COMPILE_STATIC_SAFE_SIMPLE_BASE_URLS,
-        'TRIM' => SYMBOL_COMPILE_STATIC_SAFE,
-        'MEMBER_PROFILE_URL' => SYMBOL_COMPILE_STATIC_IF_AGGRESSIVE,
-        'PHOTO' => SYMBOL_COMPILE_STATIC_IF_AGGRESSIVE,
-        'AVATAR' => SYMBOL_COMPILE_STATIC_IF_AGGRESSIVE,
-        'USERNAME' => SYMBOL_COMPILE_STATIC_IF_AGGRESSIVE,
-        'DISPLAYED_USERNAME' => SYMBOL_COMPILE_STATIC_IF_AGGRESSIVE,
-        'THUMBNAIL' => SYMBOL_COMPILE_STATIC_SAFE,
-        'URL_FOR_GET_FORM' => SYMBOL_COMPILE_STATIC_SAFE,
-        'HIDDENS_FOR_GET_FORM' => SYMBOL_COMPILE_STATIC_SAFE,
-        'FIND_SCRIPT_NOHTTP' => SYMBOL_COMPILE_STATIC_SAFE,
-        'FIND_SCRIPT' => SYMBOL_COMPILE_STATIC_SAFE_SIMPLE_BASE_URLS | SYMBOL_COMPILE_STATIC_SAFE_SIMPLE_KEEP,
-        'PREG_REPLACE' => SYMBOL_COMPILE_STATIC_SAFE,
-        'MAX' => SYMBOL_COMPILE_STATIC_SAFE,
-        'MIN' => SYMBOL_COMPILE_STATIC_SAFE,
-        'DIV_FLOAT' => SYMBOL_COMPILE_STATIC_SAFE,
-        'DIV' => SYMBOL_COMPILE_STATIC_SAFE,
-        'LCASE' => SYMBOL_COMPILE_STATIC_SAFE,
-        'REPLACE' => SYMBOL_COMPILE_STATIC_SAFE,
-        'IN_STR' => SYMBOL_COMPILE_STATIC_SAFE,
-        'SUBSTR_COUNT' => SYMBOL_COMPILE_STATIC_SAFE,
-        'SUBSTR' => SYMBOL_COMPILE_STATIC_SAFE,
-        'ALTERNATOR_TRUNCATED' => SYMBOL_COMPILE_STATIC_SAFE,
-        'EQ' => SYMBOL_COMPILE_STATIC_SAFE,
-        'NEQ' => SYMBOL_COMPILE_STATIC_SAFE,
-        'NOT' => SYMBOL_COMPILE_STATIC_SAFE,
-        'OR' => SYMBOL_COMPILE_STATIC_SAFE,
-        'AND' => SYMBOL_COMPILE_STATIC_SAFE,
-        'NOR' => SYMBOL_COMPILE_STATIC_SAFE,
-        'NAND' => SYMBOL_COMPILE_STATIC_SAFE,
-        'GT' => SYMBOL_COMPILE_STATIC_SAFE,
-        'EXTEND_URL' => SYMBOL_COMPILE_STATIC_SAFE,
-        'MAKE_URL_ABSOLUTE' => SYMBOL_COMPILE_STATIC_SAFE,
-        'LANG' => SYMBOL_COMPILE_STATIC_SAFE,
-        'THEME' => SYMBOL_COMPILE_STATIC_SAFE,
-        'VERSION_NUMBER' => SYMBOL_COMPILE_STATIC_SAFE,
-        'SITE_NAME' => SYMBOL_COMPILE_STATIC_SAFE,
-        'CHARSET' => SYMBOL_COMPILE_STATIC_SAFE,
-        'ADDON_INSTALLED' => SYMBOL_COMPILE_STATIC_SAFE,
-        'CONFIG_OPTION' => SYMBOL_COMPILE_STATIC_SAFE,
-        'VALUE_OPTION' => SYMBOL_COMPILE_STATIC_IF_AGGRESSIVE,
-        'COPYRIGHT' => SYMBOL_COMPILE_STATIC_SAFE,
-        'BRAND_NAME' => SYMBOL_COMPILE_STATIC_SAFE,
-        'BRAND_BASE_URL' => SYMBOL_COMPILE_STATIC_SAFE,
-        'CUSTOM_BASE_URL' => SYMBOL_COMPILE_STATIC_SAFE_SIMPLE_BASE_URLS,
-        'BASE_URL_NOHTTP' => SYMBOL_COMPILE_STATIC_SAFE,
-        'CUSTOM_BASE_URL_NOHTTP' => SYMBOL_COMPILE_STATIC_SAFE,
-        'BASE_URL' => SYMBOL_COMPILE_STATIC_SAFE_SIMPLE_BASE_URLS,
-        'CNS' => SYMBOL_COMPILE_STATIC_SAFE,
-        'VALID_FILE_TYPES' => SYMBOL_COMPILE_STATIC_SAFE,
-        'COOKIE_PATH' => SYMBOL_COMPILE_STATIC_SAFE,
-        'COOKIE_DOMAIN' => SYMBOL_COMPILE_STATIC_SAFE,
-        'SESSION_COOKIE_NAME' => SYMBOL_COMPILE_STATIC_SAFE,
-        'MAILTO' => SYMBOL_COMPILE_STATIC_SAFE,
-        'INLINE_STATS' => SYMBOL_COMPILE_STATIC_SAFE,
-        'IMG_INLINE' => SYMBOL_COMPILE_STATIC_SAFE,
-        'ADD' => SYMBOL_COMPILE_STATIC_SAFE,
-        'ANCHOR' => SYMBOL_COMPILE_STATIC_SAFE,
-        'AT' => SYMBOL_COMPILE_STATIC_SAFE,
-        'URLDECODE' => SYMBOL_COMPILE_STATIC_SAFE,
-        'CLEAN_FILE_SIZE' => SYMBOL_COMPILE_STATIC_SAFE,
-        'PARENTAL_CONSENT_REQUIRED' => SYMBOL_COMPILE_STATIC_SAFE,
-        'CSS_DIMENSION_REDUCE' => SYMBOL_COMPILE_STATIC_SAFE,
-        'DIV_CEIL' => SYMBOL_COMPILE_STATIC_SAFE,
-        'DOMAIN' => SYMBOL_COMPILE_STATIC_SAFE,
-        'ENTITY_DECODE' => SYMBOL_COMPILE_STATIC_SAFE,
-        'ESCAPE' => SYMBOL_COMPILE_STATIC_SAFE,
-        'FIND_GUID_VIA_ID' => SYMBOL_COMPILE_STATIC_IF_AGGRESSIVE,
-        'FIND_ID_VIA_GUID' => SYMBOL_COMPILE_STATIC_IF_AGGRESSIVE,
-        'FIND_ID_VIA_LABEL' => SYMBOL_COMPILE_STATIC_IF_AGGRESSIVE,
-        'FIND_ID_VIA_COMMANDR_FS_FILENAME' => SYMBOL_COMPILE_STATIC_IF_AGGRESSIVE,
-        'FIND_ID_VIA_URL_MONIKER' => SYMBOL_COMPILE_STATIC_IF_AGGRESSIVE,
-        'FIND_LABEL_VIA_ID' => SYMBOL_COMPILE_STATIC_IF_AGGRESSIVE,
-        'FIND_COMMANDR_FS_FILENAME_VIA_ID' => SYMBOL_COMPILE_STATIC_IF_AGGRESSIVE,
-        'FIND_URL_MONIKER_VIA_ID' => SYMBOL_COMPILE_STATIC_IF_AGGRESSIVE,
-        'FLOAT_FORMAT' => SYMBOL_COMPILE_STATIC_SAFE,
-        'FORUM_BASE_URL' => SYMBOL_COMPILE_STATIC_SAFE,
-        'HAS_FORUM' => SYMBOL_COMPILE_STATIC_SAFE,
-        'LENGTH' => SYMBOL_COMPILE_STATIC_SAFE,
-        'LT' => SYMBOL_COMPILE_STATIC_SAFE,
-        'MOD' => SYMBOL_COMPILE_STATIC_SAFE,
-        'MULT' => SYMBOL_COMPILE_STATIC_SAFE,
-        'NEGATE' => SYMBOL_COMPILE_STATIC_SAFE,
-        'STRIP_HTML' => SYMBOL_COMPILE_STATIC_SAFE,
-        'INTEGER_FORMAT' => SYMBOL_COMPILE_STATIC_SAFE,
-        'OBFUSCATE' => SYMBOL_COMPILE_STATIC_SAFE,
-        'CNS_MEMBER_HTML' => SYMBOL_COMPILE_STATIC_IF_AGGRESSIVE,
-        'PAD_LEFT' => SYMBOL_COMPILE_STATIC_SAFE,
-        'PAD_RIGHT' => SYMBOL_COMPILE_STATIC_SAFE,
-        'PREG_MATCH' => SYMBOL_COMPILE_STATIC_SAFE,
-        'REM' => SYMBOL_COMPILE_STATIC_SAFE,
-        'ROUND' => SYMBOL_COMPILE_STATIC_SAFE,
-        'SECONDS_PERIOD' => SYMBOL_COMPILE_STATIC_SAFE,
-        'SHOW_DOCS' => SYMBOL_COMPILE_STATIC_SAFE,
-        'SITE_SCOPE' => SYMBOL_COMPILE_STATIC_SAFE,
-        'SSW' => SYMBOL_COMPILE_STATIC_SAFE,
-        'STAFF_ADDRESS' => SYMBOL_COMPILE_STATIC_SAFE,
-        'STAFF_ADDRESS_PURE' => SYMBOL_COMPILE_STATIC_SAFE,
-        'STRPOS' => SYMBOL_COMPILE_STATIC_SAFE,
-        'STARTS_WITH' => SYMBOL_COMPILE_STATIC_SAFE,
-        'ENDS_WITH' => SYMBOL_COMPILE_STATIC_SAFE,
-        'SUBTRACT' => SYMBOL_COMPILE_STATIC_SAFE,
-        'TIME_PERIOD' => SYMBOL_COMPILE_STATIC_SAFE,
-        'TO_TIMESTAMP' => SYMBOL_COMPILE_STATIC_SAFE,
-        'TRUNCATE_EXPAND' => SYMBOL_COMPILE_STATIC_SAFE,
-        'TRUNCATE_RIGHT' => SYMBOL_COMPILE_STATIC_SAFE,
-        'TUTORIAL_URL' => SYMBOL_COMPILE_STATIC_SAFE,
-        'UCASE' => SYMBOL_COMPILE_STATIC_SAFE,
-        'VERSION' => SYMBOL_COMPILE_STATIC_SAFE,
-        'WCASE' => SYMBOL_COMPILE_STATIC_SAFE,
-        'WORDWRAP' => SYMBOL_COMPILE_STATIC_SAFE,
-        'XOR' => SYMBOL_COMPILE_STATIC_SAFE,
-        'ZONE_HEADER_TEXT' => SYMBOL_COMPILE_STATIC_SAFE,
-        'KEEP' => SYMBOL_COMPILE_STATIC_SAFE_SIMPLE_KEEP,
-        'JS_ON' => SYMBOL_COMPILE_STATIC_SAFE_SIMPLE_JAVASCRIPT,
-    ];
 }
 
 /**
@@ -534,11 +391,8 @@ function compile_template(string $data, string $template_name, string $theme, st
                         if ($name === '?') {
                             $name = 'TERNARY';
                         }
-                        if (function_exists('ecv_' . $name)) {
-                            $new_line = 'ecv_' . $name . '($cl,[' . implode(',', array_map('strval', $escaped)) . '],[' . $_opener_params . '])';
-                        } else {
-                            $new_line = 'ecv($cl,[' . implode(',', array_map('strval', $escaped)) . '],' . strval(TC_SYMBOL) . ',' . $first_param . ',[' . $_opener_params . '])';
-                        }
+
+                        $new_line = 'ecv($cl,[' . implode(',', array_map('strval', $escaped)) . '],' . strval(TC_SYMBOL) . ',' . $first_param . ',[' . $_opener_params . '])';
                         if ((may_optimise_out_symbol(trim($first_param, '"'))) && (tc_is_all_static($_opener_params))) { // Can optimise out?
                             $tpl_funcs = [];
                             $eval = tempcode_compiler_eval('return ' . $new_line . ';', $tpl_funcs, [], $cl);
@@ -1127,14 +981,6 @@ function tc_is_all_static(string $_opener_params) : bool
         return false;
     }
 
-    if (strpos($_opener_params, 'ecv_') !== false) {
-        return false;
-    }
-
-    if (strpos($_opener_params, 'ecv2_') !== false) {
-        return false;
-    }
-
     return true;
 }
 
@@ -1146,27 +992,42 @@ function tc_is_all_static(string $_opener_params) : bool
  */
 function may_optimise_out_symbol(string $symbol) : bool
 {
-    global $COMPILABLE_SYMBOLS, $SITE_INFO;
+    global $SITE_INFO;
 
-    if (!isset($COMPILABLE_SYMBOLS[$symbol])) {
+    $symbol = get_symbol_hook_name($symbol);
+
+    $hook_ob = get_hook_ob('systems', 'symbols', filter_naughty_harsh($symbol), 'Hook_symbol_', true);
+    if ($hook_ob === null) {
         return false;
     }
 
-    $v = $COMPILABLE_SYMBOLS[$symbol];
+    $info = $hook_ob->info();
+    if (($info === null) || (!isset($info['compile']))) {
+        return false;
+    }
+
+    $v = $info['compile'];
+    $end_ret = false;
 
     if (($v & SYMBOL_COMPILE_STATIC_IF_AGGRESSIVE) !== 0) {
+        $end_ret = true;
+
         if ((!function_exists('get_value')) || (get_value('aggressive_tempcode_compilation') !== '1')) {
             return false;
         }
     }
 
     if (($v & SYMBOL_COMPILE_STATIC_SAFE_SIMPLE_KEEP) !== 0) {
+        $end_ret = true;
+
         if ((!isset($SITE_INFO['no_keep_params'])) || ($SITE_INFO['no_keep_params'] === '0')) {
             return false;
         }
     }
 
     if (($v & SYMBOL_COMPILE_STATIC_SAFE_SIMPLE_BASE_URLS) !== 0) {
+        $end_ret = true;
+
         if ($GLOBALS['DEV_MODE']) {
             return false; // May be experimenting with different base URLs, e.g. both http and https
         }
@@ -1183,12 +1044,14 @@ function may_optimise_out_symbol(string $symbol) : bool
     }
 
     if (($v & SYMBOL_COMPILE_STATIC_SAFE_SIMPLE_JAVASCRIPT) !== 0) {
+        $end_ret = true;
+
         if ((!function_exists('get_option')) || (get_option('detect_javascript') === '1')) {
             return false;
         }
     }
 
-    return true;
+    return $end_ret;
 }
 
 /**

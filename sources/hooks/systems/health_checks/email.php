@@ -225,10 +225,11 @@ class Hook_health_check_email extends Hook_Health_Check
                 $this->assertTrue($result, 'No valid MX records were found for the [tt]' . $email . '[/tt] e-mail address. You might not receive incoming e-mail. Please check your DNS records and fix accordingly.');
 
                 foreach (array_unique($mail_hosts) as $host) {
-                    $has_dns = @checkdnsrr($host, 'A');
-                    $this->assertTrue($has_dns, 'Every MX record must have a matching A record, but ' . $host . ' (from e-mail address [tt]' . $email . '[/tt]) does not have one. You might not receive incoming e-mail. Please fix accordingly in your DNS records.');
+                    $has_dns_a = @checkdnsrr($host, 'A');
+                    $has_dns_aaaa = @checkdnsrr($host, 'AAAA');
+                    $this->assertTrue(($has_dns_a || $has_dns_aaaa), 'Every MX record must have a matching A or AAAA record, but ' . $host . ' (from e-mail address [tt]' . $email . '[/tt]) does not have one. You might not receive incoming e-mail. Please fix accordingly in your DNS records.');
 
-                    if (!$has_dns) {
+                    if (!$has_dns_a && !$has_dns_aaaa) {
                         continue;
                     }
 
@@ -247,8 +248,14 @@ class Hook_health_check_email extends Hook_Health_Check
                         $errno = 0;
                         $errstr = '';
                         $socket = @fsockopen($host, 25, $errno, $errstr, 4.0);
+                        if (!$socket) {
+                            $socket = @fsockopen($host, 587, $errno, $errstr, 4.0);
+                        }
+                        if (!$socket) {
+                            $socket = @fsockopen('ssl://' . $host, 465, $errno, $errstr, 4.0);
+                        }
                         $can_connect = ($socket !== false);
-                        $this->assertTrue($can_connect, 'Could not connect to SMTP server (port 25) for [tt]' . $email . '[/tt] address (host=[tt]' . $host . '[/tt]); possibly server network is firewalled on this port. You might not be able to send outgoing e-mails.');
+                        $this->assertTrue($can_connect, 'Could not connect to SMTP server (ports 25, 587, and 465 attempted) for [tt]' . $email . '[/tt] address (host=[tt]' . $host . '[/tt]); possibly server network is firewalled on this port. You might not be able to send outgoing e-mails.');
                         if ($can_connect) {
                             fread($socket, 1024);
                             fwrite($socket, 'HELO ' . $domain . "\n");
@@ -665,8 +672,8 @@ class Hook_health_check_email extends Hook_Health_Check
             $server_spec = _imap_server_spec($host, $port, $type);
             $i = 0;
             do {
-                if (php_function_allowed('usleep')) {
-                    usleep(3000000);
+                if (php_function_allowed('sleep')) {
+                    sleep(3);
                 }
 
                 $mbox = @imap_open($server_spec . $folder, $username, $password, CL_EXPUNGE);
@@ -791,6 +798,7 @@ class Hook_health_check_email extends Hook_Health_Check
             'LANG' => get_site_default_lang(),
             'TITLE' => '',
             'CONTENT' => '',
+            'VIEW_IN_BROWSER' => '',
         ], get_site_default_lang(), false, 'MAIL', '.tpl', 'templates', $GLOBALS['FORUM_DRIVER']->get_theme(''));
         $html_version = $tpl->evaluate();
         $html_version_stripped = $this->html_to_plain_text($html_version);
@@ -807,6 +815,7 @@ class Hook_health_check_email extends Hook_Health_Check
             'LANG' => get_site_default_lang(),
             'TITLE' => '',
             'CONTENT' => '',
+            'VIEW_IN_BROWSER' => '',
         ], get_site_default_lang(), false, 'MAIL', '.txt', 'text', $GLOBALS['FORUM_DRIVER']->get_theme(''));
         $text_version = $tpl->evaluate();
         $text_version_stripped = trim(cms_preg_replace_safe('#[\s-]+#', ' ', $text_version));

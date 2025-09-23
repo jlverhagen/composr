@@ -66,9 +66,21 @@ function cms_preg_match_all_safe($in1, $in2, &$in3)
     return preg_match_all($in1, $in2, $in3);
 }
 
-function object_factory($class, $failure_ok = false, $parameters = [])
+function object_factory($class, $failure_ok = false, $parameters = [], $cache = false)
 {
-    return new $class(...$parameters);
+    static $class_objects = [];
+
+    if ($cache) {
+        $hash = hash('sha256', serialize($parameters));
+        if (isset($class_objects[$class][$hash]) && is_object($class_objects[$class][$hash])) {
+            return $class_objects[$class][$hash];
+        }
+    } else {
+        return new $class(...$parameters);
+    }
+
+    $class_objects[$class][$hash] = new $class(...$parameters);
+    return $class_objects[$class][$hash];
 }
 
 function find_all_hook_obs($type, $subtype, $classname_prefix)
@@ -78,7 +90,7 @@ function find_all_hook_obs($type, $subtype, $classname_prefix)
     foreach ($hooks as $hook => $hook_dir) {
         require_code('hooks/' . $type . '/' . $subtype . '/' . $hook, false, $hook_dir == 'sources_custom');
 
-        $ob = object_factory(class_exists(str_replace('Hook_', 'Hx_', $classname_prefix) . $hook) ? (str_replace('Hook_', 'Hx_', $classname_prefix) . $hook) : ($classname_prefix . $hook), true);
+        $ob = object_factory(class_exists(str_replace('Hook_', 'Hx_', $classname_prefix) . $hook) ? (str_replace('Hook_', 'Hx_', $classname_prefix) . $hook) : ($classname_prefix . $hook), true, [], true);
         if ($ob !== null) {
             $hooks[$hook] = $ob;
         } else {

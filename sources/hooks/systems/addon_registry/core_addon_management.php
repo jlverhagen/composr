@@ -42,7 +42,7 @@ class Hook_addon_registry_core_addon_management
      */
     public function get_version() : string
     {
-        return '11.0.2'; // addon_version_auto_update 03b750b438e1f23fd39902b31d22c35f
+        return '11.0.3'; // addon_version_auto_update c3e181873cab1814b74b460eabfe5805
     }
 
     /**
@@ -164,6 +164,7 @@ class Hook_addon_registry_core_addon_management
             'themes/default/templates/ADDON_SCREEN.tpl',
             'themes/default/templates/ADDON_SCREEN_ADDON.tpl',
             'themes/default/templates/ADDON_UNINSTALL_CONFIRM_SCREEN.tpl',
+            'themes/default/templates/ADDON_UPGRADE_CONFIRM_SCREEN.tpl',
             'themes/default/templates/MODULE_SCREEN.tpl',
         ];
     }

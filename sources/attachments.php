@@ -144,13 +144,10 @@ function has_attachment_access(int $member_id, int $id, ?object $db = null) : bo
     foreach ($refs as $ref) {
         $type = $ref['r_referer_type'];
         $ref_id = $ref['r_referer_id'];
-        if ((file_exists(get_file_base() . '/sources/hooks/systems/attachments/' . filter_naughty_harsh($type) . '.php')) || (file_exists(get_file_base() . '/sources_custom/hooks/systems/attachments/' . filter_naughty_harsh($type) . '.php'))) {
-            require_code('hooks/systems/attachments/' . filter_naughty_harsh($type));
-            $object = object_factory('Hook_attachments_' . filter_naughty_harsh($type));
+        $object = get_hook_ob('systems', 'attachments', filter_naughty_harsh($type), 'Hook_attachments_', true);
 
-            if ($object->run($ref_id, $db, $member_id)) {
-                return true;
-            }
+        if (($object !== null) && ($object->run($ref_id, $db, $member_id))) {
+            return true;
         }
     }
 

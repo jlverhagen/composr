@@ -42,7 +42,7 @@ class Hook_addon_registry_core_cns
      */
     public function get_version() : string
     {
-        return '11.0.2'; // addon_version_auto_update 80800e1a24c20e99cec638ceb5b10066
+        return '11.0.3'; // addon_version_auto_update 976982fcf601f0180e6483836c2bfb2a
     }
 
     /**
@@ -326,7 +326,11 @@ class Hook_addon_registry_core_cns
             'sources/hooks/systems/snippets/password_strength.php',
             'sources/hooks/systems/snippets/profile_tab.php',
             'sources/hooks/systems/snippets/pt_rules.php',
+            'sources/hooks/systems/symbols/CNS_MEMBER_HTML.php',
             'sources/hooks/systems/symbols/CPF_LIST.php',
+            'sources/hooks/systems/symbols/CPF_VALUE.php',
+            'sources/hooks/systems/symbols/MEMBER_DATA.php',
+            'sources/hooks/systems/symbols/PARENTAL_CONSENT_REQUIRED.php',
             'sources/hooks/systems/tasks/cns_delete_member.php',
             'sources/hooks/systems/tasks/cns_members_dedup.php',
             'sources/hooks/systems/tasks/cns_members_recache.php',

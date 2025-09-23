@@ -49,7 +49,7 @@ function init__lang()
     global $LANGUAGE_STRINGS_CACHE;
     $LANGUAGE_STRINGS_CACHE = [];
 
-    global $USER_LANG_CACHED, $USER_LANG_EARLY_CACHED, $USER_LANG_LOOP, $REQUIRE_LANG_LOOP;
+    global $USER_LANG_CACHED, $USER_LANG_EARLY_CACHED, $USER_LANG_LOOP;
     global $RECORD_LANG_STRINGS, $RECORDED_LANG_STRINGS, $RECORD_CONTENT_LANG_STRINGS, $RECORDED_CONTENT_LANG_STRINGS;
     $RECORD_LANG_STRINGS = false;
     $RECORDED_LANG_STRINGS = [];
@@ -58,7 +58,6 @@ function init__lang()
     $USER_LANG_LOOP = false;
     $USER_LANG_CACHED = null;
     $USER_LANG_EARLY_CACHED = null;
-    $REQUIRE_LANG_LOOP = 0;
     global $REQUIRED_ALL_LANG;
     $REQUIRED_ALL_LANG = [];
 
@@ -504,7 +503,7 @@ function get_lang(?int $member_id) : string
 function require_lang(string $codename, ?string $lang = null, ?string $type = null, bool $ignore_errors = false) // ?string $type is for efficiency only - to avoid needing to doubly-search when requiring all
 {
     // So we can keep track of what code loads what langs
-    global $LANGS_REQUESTED, $LANG_REQUESTED_LANG, $REQUIRE_LANG_LOOP, $PAGE_CACHE_LAZY_LOAD, $PAGE_CACHE_LANGS_REQUESTED, $LANG_LOADED_LANG, $LANGUAGE_STRINGS_CACHE;
+    global $LANGS_REQUESTED, $LANG_REQUESTED_LANG, $PAGE_CACHE_LAZY_LOAD, $PAGE_CACHE_LANGS_REQUESTED, $LANG_LOADED_LANG, $LANGUAGE_STRINGS_CACHE;
     $LANGS_REQUESTED[$codename] = true;
 
     if ($lang === null) {
@@ -557,6 +556,7 @@ function require_lang(string $codename, ?string $lang = null, ?string $type = nu
 
             foreach ($PAGE_CACHE_LANGS_REQUESTED as $request) {
                 list($that_codename, $that_lang) = $request;
+                @unlink($cfb . '/caches/lang/' . $that_lang . '/' . $that_codename . '.lcd');
                 unset($LANG_REQUESTED_LANG[$that_lang][$that_codename]);
                 require_lang($that_codename, $that_lang, null, $ignore_errors);
             }
@@ -567,7 +567,10 @@ function require_lang(string $codename, ?string $lang = null, ?string $type = nu
         return;
     }
 
-    $REQUIRE_LANG_LOOP++;
+    $lang_loop = check_for_infinite_loop('require_lang', [$codename, $lang, $type], 3, false);
+    if ($lang_loop) {
+        return; // Probably failing to load global.ini
+    }
 
     if ((isset($_GET['keep_show_loading'])) && ($_GET['keep_show_loading'] == '1')) {
         $before = memory_get_usage();
@@ -631,7 +634,7 @@ function require_lang(string $codename, ?string $lang = null, ?string $type = nu
     }
     $LANG_LOADED_LANG[$lang][$codename] = true;
 
-    $REQUIRE_LANG_LOOP--;
+    clear_infinite_loop_iterations('require_lang', [$codename, $lang, $type]);
 
     if ((isset($_GET['keep_show_loading'])) && ($_GET['keep_show_loading'] == '1') && ((!function_exists('running_script')) || (!running_script('gd_text')))) {
         $msg = function_exists('clean_file_size') ? clean_file_size(memory_get_usage() - $before) : integer_format(memory_get_usage() - $before);
@@ -810,17 +813,15 @@ function _do_lang(string $codename, $parameter1 = null, $parameter2 = null, $par
             return $ret;
         } else {
             if ($require_result) {
-                global $USER_LANG_LOOP, $REQUIRE_LANG_LOOP;
+                global $USER_LANG_LOOP;
                 //print_r(debug_backtrace());
                 if ($USER_LANG_LOOP) {
                     critical_error('RELAY', 'Missing language string codename: ' . escape_html($codename) . '. This language string codename is required to produce error messages, and thus an English critical error was prompted by the non-ability to show less-critical error messages. It is likely the source language files (lang/' . fallback_lang() . '/*.ini) on this website have been corrupted.');
                 }
-                if ($REQUIRE_LANG_LOOP >= 2) {
-                    return ''; // Probably failing to load global.ini, so just output with some text missing
-                }
 
                 // Cannot trigger error using MISSING_LANG_STRING if MISSING_LANG_STRING is what is missing!
                 if ($codename != 'MISSING_LANG_STRING') {
+                    require_lang('critical_error'); // Might not be compiled yet
                     trigger_error(do_lang('MISSING_LANG_STRING', escape_html($codename)), E_USER_NOTICE);
                 } else {
                     critical_error('CRIT_LANG');

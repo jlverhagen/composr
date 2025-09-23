@@ -48,41 +48,115 @@ class Hook_privacy_core extends Hook_privacy_base
             'description' => 'privacy:DESCRIPTION_PRIVACY_WEBSITE_SOFTWARE',
 
             'cookies' => [
-                'cms_autosave_*' => [
-                    'reason' => do_lang_tempcode('COOKIE_autosave'),
-                ],
                 'has_cookies' => [
+                    'category' => 'ESSENTIAL',
                     'reason' => do_lang_tempcode('COOKIE_has_cookies'),
+                    'session' => false,
+                    'httponly' => false,
                 ],
                 'has_js' => (get_option('detect_javascript') == '0') ? null : [
+                    'category' => 'NON-ESSENTIAL',
                     'reason' => do_lang_tempcode('COOKIE_has_js'),
+                    'session' => false,
+                    'httponly' => false,
                 ],
-                'last_visit' => [
-                    'reason' => do_lang_tempcode('COOKIE_last_visit'),
-                ],
-                get_member_cookie() . ' & ' . get_pass_cookie() => [
-                    'reason' => do_lang_tempcode('COOKIE_automatic_login'),
-                ],
-                get_member_cookie() . '_invisible' => [
-                    'reason' => do_lang_tempcode('COOKIE_invisible'),
+                'cc_cookie' => [
+                    'category' => 'ESSENTIAL',
+                    'reason' => do_lang_tempcode('COOKIE_cc_cookie'),
+                    'session' => false,
+                    'httponly' => false,
                 ],
                 get_session_cookie() => [
+                    'category' => 'ESSENTIAL',
                     'reason' => do_lang_tempcode('COOKIE_session'),
+                    'session' => true,
+                    'httponly' => true,
                 ],
-                'tray_*, hide*, og_*' => [
-                    'reason' => do_lang_tempcode('COOKIE_trays'),
+                'last_visit' => [
+                    'category' => 'NON-ESSENTIAL',
+                    'reason' => do_lang_tempcode('COOKIE_last_visit'),
+                    'session' => false,
+                    'httponly' => true,
+                ],
+                get_member_cookie() => [
+                    'category' => 'PERSONALIZATION',
+                    'reason' => do_lang_tempcode('COOKIE_automatic_login_member'),
+                    'session' => false,
+                    'httponly' => true,
+                ],
+                get_member_cookie() . '_invisible' => [
+                    'category' => 'PERSONALIZATION',
+                    'reason' => do_lang_tempcode('COOKIE_invisible'),
+                    'session' => false,
+                    'httponly' => true,
+                ],
+                get_pass_cookie() => [
+                    'category' => 'PERSONALIZATION',
+                    'reason' => do_lang_tempcode('COOKIE_automatic_login_password'),
+                    'session' => false,
+                    'httponly' => true,
+                ],
+                'cms_autosave_*' => [
+                    'category' => 'NON-ESSENTIAL',
+                    'reason' => do_lang_tempcode('COOKIE_autosave'),
+                    'session' => false,
+                    'httponly' => false,
+                ],
+                'tray_*' => [ // TODO: deprecated?
+                    'category' => 'PERSONALIZATION',
+                    'reason' => do_lang_tempcode('COOKIE_trays_tray'),
+                    'session' => false,
+                    'httponly' => false,
+                ],
+                'hide*' => [ // TODO: Deprecated?
+                    'category' => 'PERSONALIZATION',
+                    'reason' => do_lang_tempcode('COOKIE_trays_hide'),
+                    'session' => false,
+                    'httponly' => false,
+                ],
+                'og_*' => [
+                    'category' => 'PERSONALIZATION',
+                    'reason' => do_lang_tempcode('COOKIE_trays_og'),
+                    'session' => false,
+                    'httponly' => false,
                 ],
                 'use_wysiwyg' => [
+                    'category' => 'PERSONALIZATION',
                     'reason' => do_lang_tempcode('COOKIE_use_wysiwyg'),
+                    'session' => false,
+                    'httponly' => false,
                 ],
                 'client_time*' => (get_option('is_on_timezone_detection') == '0') ? null : [
+                    'category' => 'PERSONALIZATION',
                     'reason' => do_lang_tempcode('COOKIE_client_time'),
+                    'session' => false,
+                    'httponly' => false,
                 ],
-                'font_size' => [
+                'font_size' => [ // TODO: Deprecated?
+                    'category' => 'PERSONALIZATION',
                     'reason' => do_lang_tempcode('COOKIE_font_size'),
+                    'session' => false,
+                    'httponly' => false,
                 ],
-                '__ut*, _ga, _gid' => (get_option('google_analytics') == '') ? null : [
+
+                // TODO: replace with Google Tag Manager
+                '__ut*' => (get_option('google_analytics') == '') ? null : [
+                    'category' => 'ANALYTICS',
                     'reason' => do_lang_tempcode('COOKIE_ga'),
+                    'session' => false,
+                    'httponly' => false,
+                ],
+                '_ga' => (get_option('google_analytics') == '') ? null : [
+                    'category' => 'ANALYTICS',
+                    'reason' => do_lang_tempcode('COOKIE_ga'),
+                    'session' => false,
+                    'httponly' => false,
+                ],
+                '_gid' => (get_option('google_analytics') == '') ? null : [
+                    'category' => 'ANALYTICS',
+                    'reason' => do_lang_tempcode('COOKIE_ga'),
+                    'session' => false,
+                    'httponly' => false,
                 ],
             ],
 
@@ -128,7 +202,7 @@ class Hook_privacy_core extends Hook_privacy_base
                 ],
                 [
                     'heading' => do_lang('INFORMATION_STORAGE'),
-                    'action' => do_lang_tempcode('PRIVACY_ACTION_metadata'),
+                    'action' => do_lang_tempcode('PRIVACY_ACTION_metadata', escape_html(get_option('stats_store_time'))),
                     'reason' => do_lang_tempcode('PRIVACY_REASON_metadata'),
                 ],
                 [
@@ -141,11 +215,14 @@ class Hook_privacy_core extends Hook_privacy_base
                     'action' => do_lang_tempcode('PRIVACY_ACTION_bans'),
                     'reason' => do_lang_tempcode('PRIVACY_REASON_bans'),
                 ],
-                [ // We define this here, not in newsletters hook, as webmasters are likely to use newsletters using external software
+
+                // We define this here, not in newsletters hook, as it is very plausible webmasters may use external newsletter software
+                [
                     'heading' => do_lang('GENERAL'),
                     'action' => do_lang_tempcode('PRIVACY_ACTION_newsletter', escape_html(get_site_name()), escape_html(get_option('site_scope'))),
                     'reason' => do_lang_tempcode('PRIVACY_REASON_newsletter'),
                 ],
+
                 [
                     'heading' => do_lang('INFORMATION_DISCLOSURE'),
                     'action' => do_lang_tempcode((get_option('is_on_invisibility') == '1') ? 'PRIVACY_ACTION_online_status_invisible' : 'PRIVACY_ACTION_online_status'),

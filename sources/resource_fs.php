@@ -196,8 +196,7 @@ function get_resource_commandr_fs_object(string $resource_type) : ?object
         return null;
     }
 
-    require_code('hooks/systems/commandr_fs/' . filter_naughty_harsh($fs_hook));
-    $fs_object = object_factory('Hook_commandr_fs_' . filter_naughty_harsh($fs_hook), true);
+    $fs_object = get_hook_ob('systems', 'commandr_fs', filter_naughty_harsh($fs_hook), 'Hook_commandr_fs_', true);
     if ($fs_object === null) {
         return null;
     }
