@@ -1527,7 +1527,7 @@ function get_text_trace() : string
     $ret = '';
     foreach ($_trace as $i => $stage) {
         //if (in_array($stage['function'], ['get_html_trace', 'cms_error_handler', 'fatal_exit'])) continue;  Hinders more than helps
-        $ret = '#' . strval($i) . ' ';
+        $ret .= '#' . strval($i) . ' ';
 
         if (isset($stage['class'])) {
             $ret .= $stage['class'];
@@ -1554,6 +1554,8 @@ function get_text_trace() : string
 
         $ret .= "\n";
     }
+
+    $already_traced = true;
 
     return trim($ret);
 }
@@ -1621,6 +1623,8 @@ function get_html_trace() : object
             $post[$key] = put_value_in_stack_trace($val);
         }
     }
+
+    $already_traced = true;
 
     return do_template('STACK_TRACE', ['_GUID' => '9620695fb8c3e411a6a4926432cea64f', 'POST' => $post, 'TRACE' => $trace]);
 }
