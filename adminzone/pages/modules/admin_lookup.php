@@ -118,8 +118,6 @@ class Module_admin_lookup
         }
 
         if ($type == 'view') {
-            warn_exit('Temporarily disabled due to a bug; see tracker issue https://compo.sr/tracker/view.php?id=6149'); // TODO
-
             $param = get_param_string('param', null);
 
             $this->title = get_screen_title('VIEW_REQUEST');
