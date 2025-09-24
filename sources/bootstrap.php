@@ -274,6 +274,8 @@ function require_code__bootstrap(string $codename)
  */
 function clean_php_file_for_eval(string $c, ?string $path = null) : string
 {
+    // Remove UTF-8 BOM or stray U+FEFF
+    $c = preg_replace('/^\xEF\xBB\xBF|^\x{FEFF}/u', '', $c);
     $reps = [];
     $reps['?' . '>'] = '';
     $reps['<' . '?php'] = '';
@@ -281,7 +283,6 @@ function clean_php_file_for_eval(string $c, ?string $path = null) : string
         $reps['__FILE__'] = "'" . addslashes($path) . "'";
         $reps['__DIR__'] = "'" . addslashes(dirname($path)) . "'";
     }
-
     return str_replace(array_keys($reps), array_values($reps), $c);
 }
 

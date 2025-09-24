@@ -1,4 +1,4 @@
-<?php /*
+﻿<?php /*
 
  Composr
  Copyright (c) Christopher Graham, 2004-2024
@@ -32,7 +32,6 @@ class Hook_symbol_MEMBER
     {
         return [
             'compile' => SYMBOL_COMPILE_STATIC_NONE,
-            'public' => true,
         ];
     }
 
@@ -46,6 +45,11 @@ class Hook_symbol_MEMBER
      */
     public function run(array $param, string $lang, array $escaped) : string
     {
+        global $IN_MINIKERNEL_VERSION;
+        if ($IN_MINIKERNEL_VERSION) {
+            return '';
+        }
+
         if (empty($param[0])) {
             $value = strval(get_member());
         } else {
@@ -59,3 +63,4 @@ class Hook_symbol_MEMBER
         return $value;
     }
 }
+

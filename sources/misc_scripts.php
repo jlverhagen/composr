@@ -732,7 +732,6 @@ function unsubscribe_script()
     <html lang="{$lang}" dir="{$dir}">
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset={$charset}" />
-        <meta id="cms-symbol-data" name="cms-symbol-data" content="{}" />
 
         <title>{$_title}</title>
         <link rel="icon" href="/favicon.ico" type="image/x-icon" />

@@ -1,4 +1,4 @@
-<?php /*
+﻿<?php /*
 
  Composr
  Copyright (c) Christopher Graham, 2004-2024
@@ -32,7 +32,6 @@ class Hook_symbol_CSS_DIMENSION_REDUCE
     {
         return [
             'compile' => SYMBOL_COMPILE_STATIC_SAFE,
-            'public' => false,
         ];
     }
 
@@ -65,3 +64,4 @@ class Hook_symbol_CSS_DIMENSION_REDUCE
         return $value;
     }
 }
+

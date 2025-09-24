@@ -1,4 +1,4 @@
-<?php /*
+﻿<?php /*
 
  Composr
  Copyright (c) Christopher Graham, 2004-2024
@@ -32,7 +32,6 @@ class Hook_symbol_CPF_LIST
     {
         return [
             'compile' => SYMBOL_COMPILE_STATIC_NONE,
-            'public' => false,
         ];
     }
 
@@ -125,3 +124,4 @@ class Hook_symbol_CPF_LIST
         return $value;
     }
 }
+

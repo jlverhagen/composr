@@ -1,4 +1,4 @@
-<?php /*
+﻿<?php /*
 
  Composr
  Copyright (c) Christopher Graham, 2004-2024
@@ -32,7 +32,6 @@ class Hook_symbol_PROTECT_URL_PARAMETER
     {
         return [
             'compile' => SYMBOL_COMPILE_STATIC_SAFE,
-            'public' => false,
         ];
     }
 
@@ -62,3 +61,4 @@ class Hook_symbol_PROTECT_URL_PARAMETER
         return $value;
     }
 }
+

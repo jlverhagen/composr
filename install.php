@@ -244,8 +244,10 @@ require_code('tempcode_compiler');
 $css_nocache = _do_template('default', '/css/', 'no_cache', 'no_cache', 'EN', '.css');
 
 $installer_js = new Tempcode();
-$installer_js->attach(do_template('global', [], null, false, null, '.js', 'javascript'));
-$installer_js->attach(do_template('installer', [], null, false, null, '.js', 'javascript'));
+$installer_js->attach(_do_template('default', '/javascript/', 'global', 'global', 'EN', '.js'));
+$installer_js->attach(_do_template('default', '/javascript/', 'installer', 'installer', 'EN', '.js'));
+//$installer_js->attach(do_template('global', [], null, false, null, '.js', 'javascript'));
+//$installer_js->attach(do_template('installer', [], null, false, null, '.js', 'javascript'));
 
 $out_final = do_template('INSTALLER_HTML_WRAP', [
     '_GUID' => '29aa056c05fa360b72dbb01c46608c4b',

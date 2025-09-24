@@ -213,16 +213,29 @@ class basic_code_formatting_test_set extends cms_test_case
                     continue;
                 }
 
-                $regexp = '[^\x00-\x7f]';
-                foreach (explode("\n", $c) as $line_num => $line) {
+                $modified_file = false;
+                foreach (explode("\n", $c) as $line_num => &$line) {
+                    $regexp = '[^\x00-\x7f]';
                     $matches = [];
                     $ok = (preg_match('#' . $regexp . '#', $line, $matches) == 0);
                     $this->assertTrue($ok, 'Has non-ASCII data in ' . $path . ':' . strval($line_num + 1) . '; find in your editor with this regexp: ' . $regexp . ' (' . serialize($matches) . ')');
+                    if ($this->debug && !$ok) {
+                        $c = preg_replace('#' . $regexp . '#', '', $line);
+                        $modified_file = true;
+                    }
 
                     $regexp = '[\x00\x01\x02\x03\x04\x05\x06\x07\x08\x0B\x0C\x0E\x0F\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F\x7F]';
                     $matches = [];
                     $ok = (preg_match('#' . $regexp . '#', $line, $matches) == 0);
                     $this->assertTrue($ok, 'Has unexpected control characters in ' . $path . ':' . strval($line_num + 1) . '; find in your editor with this regexp: ' . $regexp . ' (' . serialize($matches) . ')');
+                    if ($this->debug && !$ok) {
+                        $c = preg_replace('#' . $regexp . '#', '', $line);
+                        $modified_file = true;
+                    }
+                }
+
+                if ($modified_file) {
+                    cms_file_put_contents_safe($path, $c, FILE_WRITE_SYNC_FILE | FILE_WRITE_FIX_PERMISSIONS);
                 }
             }
         }

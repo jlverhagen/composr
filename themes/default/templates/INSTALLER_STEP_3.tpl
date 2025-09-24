@@ -85,7 +85,7 @@
 									<label class="radio-horiz-spacer" for="no3"><input type="radio" name="use_innodb" value="0" id="no3" />{!NO}</label>
 								</td>
 							</tr>
-						
+
 							<tr>
 								<th class="form-table-field-name">{!USE_MULTI_DB} <div class="associated-details">{!REQUIRES_MORE_INFO}</div></th>
 								<td class="form-table-field-input">

@@ -1,4 +1,4 @@
-<?php /*
+﻿<?php /*
 
  Composr
  Copyright (c) Christopher Graham, 2004-2024
@@ -32,7 +32,6 @@ class Hook_symbol_IS_HTTPAUTH_LOGIN
     {
         return [
             'compile' => SYMBOL_COMPILE_STATIC_NONE,
-            'public' => true,
         ];
     }
 
@@ -46,11 +45,15 @@ class Hook_symbol_IS_HTTPAUTH_LOGIN
      */
     public function run(array $param, string $lang, array $escaped) : string
     {
+        global $IN_MINIKERNEL_VERSION;
+        if ($IN_MINIKERNEL_VERSION) {
+            return '0';
+        }
+
+        require_code('users');
         $value = is_httpauth_login() ? '1' : '0';
 
-        if ($GLOBALS['XSS_DETECT']) {
-            ocp_mark_as_escaped($value);
-        }
         return $value;
     }
 }
+

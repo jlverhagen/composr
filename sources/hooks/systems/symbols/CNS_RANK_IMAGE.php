@@ -1,4 +1,4 @@
-<?php /*
+﻿<?php /*
 
  Composr
  Copyright (c) Christopher Graham, 2004-2024
@@ -40,7 +40,6 @@ class Hook_symbol_CNS_RANK_IMAGE
 
         return [
             'compile' => SYMBOL_COMPILE_STATIC_NONE,
-            'public' => false,
         ];
     }
 
@@ -77,3 +76,4 @@ class Hook_symbol_CNS_RANK_IMAGE
         return $value;
     }
 }
+

@@ -1,4 +1,4 @@
-<?php /*
+﻿<?php /*
 
  Composr
  Copyright (c) Christopher Graham, 2004-2024
@@ -32,7 +32,6 @@ class Hook_symbol_INSERT_FORM_POST_SECURITY
     {
         return [
             'compile' => SYMBOL_COMPILE_STATIC_NONE,
-            'public' => false,
         ];
     }
 
@@ -69,3 +68,4 @@ class Hook_symbol_INSERT_FORM_POST_SECURITY
         return $value;
     }
 }
+

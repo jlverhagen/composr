@@ -1,4 +1,4 @@
-<?php /*
+﻿<?php /*
 
  Composr
  Copyright (c) Christopher Graham, 2004-2024
@@ -32,7 +32,6 @@ class Hook_symbol_USERNAME
     {
         return [
             'compile' => SYMBOL_COMPILE_STATIC_IF_AGGRESSIVE,
-            'public' => true,
         ];
     }
 
@@ -46,9 +45,15 @@ class Hook_symbol_USERNAME
      */
     public function run(array $param, string $lang, array $escaped) : string
     {
+        global $IN_MINIKERNEL_VERSION;
+        if ($IN_MINIKERNEL_VERSION) {
+            return '';
+        }
+
         $member_id = ((isset($param[0])) && (is_numeric($param[0]))) ? intval($param[0]) : get_member();
         $value = $GLOBALS['FORUM_DRIVER']->get_username($member_id, !empty($param[1]));
 
         return $value;
     }
 }
+

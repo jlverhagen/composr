@@ -1,4 +1,4 @@
-<?php /*
+﻿<?php /*
 
  Composr
  Copyright (c) Christopher Graham, 2004-2024
@@ -32,7 +32,6 @@ class Hook_symbol_SELF_URL
     {
         return [
             'compile' => SYMBOL_COMPILE_STATIC_SAFE_SIMPLE_BASE_URLS,
-            'public' => false,
         ];
     }
 
@@ -73,3 +72,4 @@ class Hook_symbol_SELF_URL
         return $value;
     }
 }
+

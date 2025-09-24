@@ -10,111 +10,115 @@
      * @returns {boolean}
      */
     $cms.inMinikernelVersion = $util.constant(document.documentElement.classList.contains('in-minikernel-version'));
-
-    var symbols = (!$cms.inMinikernelVersion() ? JSON.parse(document.getElementById('cms-symbol-data').content) : {});
     /**
      * @memberof $cms
      * @method
      * @returns {boolean}
      */
-    $cms.isGuest = $util.constant(boolVal(symbols.IS_GUEST));
+    $cms.isGuest = $util.constant(boolVal('{$IS_GUEST;}'));
     /**
      * @memberof $cms
      * @method
      * @returns {boolean}
      */
-    $cms.isStaff = $util.constant(boolVal(symbols.IS_STAFF));
+    $cms.isStaff = $util.constant(boolVal('{$IS_STAFF;}'));
     /**
      * @memberof $cms
      * @method
      * @returns {boolean}
      */
-    $cms.isAdmin = $util.constant(boolVal(symbols.IS_ADMIN));
+    $cms.isAdmin = $util.constant(boolVal('{$IS_ADMIN;}'));
     /**
      * @memberof $cms
      * @method
      * @returns {boolean}
      */
-    $cms.isHttpauthLogin = $util.constant(boolVal(symbols.IS_HTTPAUTH_LOGIN));
+    $cms.isHttpauthLogin = $util.constant(boolVal('{$IS_HTTPAUTH_LOGIN;}'));
     /**
      * @memberof $cms
      * @method
      * @returns {boolean}
      */
-    $cms.isACookieLogin = $util.constant(boolVal(symbols.IS_A_COOKIE_LOGIN));
+    $cms.isACookieLogin = $util.constant(boolVal('{$IS_A_COOKIE_LOGIN;}'));
     /**
      * @memberof $cms
      * @method
      * @returns {boolean}
      */
-    $cms.isDevMode = $util.constant($cms.inMinikernelVersion() || boolVal(symbols.DEV_MODE));
+    $cms.isDevMode = $util.constant($cms.inMinikernelVersion() || boolVal('{$DEV_MODE;}'));
     /**
      * @memberof $cms
      * @method
      * @returns {boolean}
      */
-    $cms.isJsOn = $util.constant(boolVal(symbols.JS_ON));
+    $cms.isJsOn = $util.constant(boolVal('{$JS_ON;}'));
     /**
      * @memberof $cms
      * @method
      * @returns {boolean}
      */
-    $cms.isMobile = $util.constant(boolVal(symbols.MOBILE));
+    $cms.isMobile = $util.constant(boolVal('{$MOBILE;}'));
     /**
      * @memberof $cms
      * @method
      * @returns {boolean}
      */
-    $cms.isForcePreviews = $util.constant(boolVal(symbols.FORCE_PREVIEWS));
+    $cms.isForcePreviews = $util.constant(boolVal('{$FORCE_PREVIEWS;}'));
     /**
      * @memberof $cms
      * @method
      * @returns {number}
      */
-    $cms.httpStatusCode = $util.constant(Number(symbols.HTTP_STATUS_CODE));
+    $cms.httpStatusCode = $util.constant(Number('{$HTTP_STATUS_CODE;}'));
     /**
      * @memberof $cms
      * @method
      * @returns {string}
      */
-    $cms.getPageName = $util.constant(strVal(symbols.PAGE));
+    $cms.getPageName = $util.constant(strVal('{$PAGE;}'));
     /**
      * @memberof $cms
      * @method
      * @returns {string}
      */
-    $cms.getZoneName = $util.constant(strVal(symbols.ZONE));
+    $cms.getPageType = $util.constant(strVal('{$PAGE_TYPE;}'));
     /**
      * @memberof $cms
      * @method
      * @returns {string}
      */
-    $cms.getMember = $util.constant(strVal(symbols.MEMBER));
+    $cms.getZoneName = $util.constant(strVal('{$ZONE;}'));
     /**
      * @memberof $cms
      * @method
      * @returns {string}
      */
-    $cms.getUsername = $util.constant(strVal(symbols.USERNAME));
+    $cms.getMember = $util.constant(strVal('{$MEMBER;}'));
     /**
      * @memberof $cms
      * @method
      * @returns {string}
      */
-    $cms.getTheme = $util.constant(strVal(symbols.THEME));
+    $cms.getUsername = $util.constant(strVal('{$USERNAME;}'));
     /**
      * @memberof $cms
      * @method
      * @returns {string}
      */
-    $cms.userLang = $util.constant(strVal(symbols.LANG));
+    $cms.getTheme = $util.constant(strVal('{$THEME;}'));
+    /**
+     * @memberof $cms
+     * @method
+     * @returns {string}
+     */
+    $cms.userLang = $util.constant(strVal('{$LANG;}'));
     /**
      * Find the active ISO country for the current user.
      * @memberof $cms
      * @method
      * @returns {string|null} The active region (null: none found, unfiltered)
      */
-    $cms.getCountry = $util.constant((symbols['COUNTRY'] != null) ? strVal(symbols['COUNTRY']) : null);
+    $cms.getCountry = $util.constant(('{$COUNTRY;}' !== '') ? strVal('{$COUNTRY;}') : null);
     /**
      * Get URL stub to propagate keep_* parameters
      * @memberof $cms
@@ -138,7 +142,7 @@
     $cms.getPreviewUrl = function getPreviewUrl() {
         var value = '{$FIND_SCRIPT_NOHTTP;,preview}';
         value += '?page=' + urlencode($cms.getPageName());
-        value += '&type=' + urlencode(symbols['page_type']);
+        value += '&type=' + urlencode($cms.getPageType());
         return value;
     };
     /**
@@ -212,19 +216,19 @@
      * @method
      * @returns {array}
      */
-    $cms.getCookieData = $util.constant(JSON.parse('{$COOKIE_DATA_JSON;}'));
+    $cms.getCookieData = $util.constant($cms.inMinikernelVersion() ? [] : JSON.parse('{$COOKIE_DATA_JSON;}'));
     /**
      * @memberof $cms
      * @method
      * @returns {string}
      */
-    $cms.runningScript = $util.constant(strVal(symbols.RUNNING_SCRIPT));
+    $cms.runningScript = $util.constant(strVal('{$RUNNING_SCRIPT;}'));
     /**
      * @memberof $cms
      * @method
      * @returns {string}
      */
-    $cms.getCspNonce = $util.constant(strVal(symbols.CSP_NONCE));
+    $cms.getCspNonce = $util.constant(strVal('{$CSP_NONCE;}'));
 
     var configOptionsJson = JSON.parse('{$PUBLIC_CONFIG_OPTIONS_JSON;}');
     /**
@@ -251,19 +255,19 @@
      * @method
      * @returns {boolean}
      */
-    $cms.seesJavascriptErrorAlerts = $util.constant(boolVal(symbols['sees_javascript_error_alerts']));
+    $cms.seesJavascriptErrorAlerts = $util.constant(boolVal('{$SEES_JAVASCRIPT_ERROR_ALERTS;}'));
     /**
      * @memberof $cms
      * @method
      * @returns {boolean}
      */
-    $cms.canTryUrlSchemes = $util.constant(boolVal(symbols['can_try_url_schemes']));
+    $cms.canTryUrlSchemes = $util.constant(boolVal('{$CAN_TRY_URL_SCHEMES;}'));
     /**
      * @memberof $cms
      * @method
      * @returns {string}
      */
-    $cms.zoneDefaultPage = $util.constant(strVal(symbols['zone_default_page']));
+    $cms.zoneDefaultPage = $util.constant(strVal('{$ZONE_DEFAULT_PAGE;}'));
     /**
      * @memberof $cms
      * @method

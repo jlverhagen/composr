@@ -1,4 +1,4 @@
-<?php /*
+﻿<?php /*
 
  Composr
  Copyright (c) Christopher Graham, 2004-2024
@@ -32,7 +32,6 @@ class Hook_symbol_PAGE_LINK
     {
         return [
             'compile' => SYMBOL_COMPILE_STATIC_IF_AGGRESSIVE | SYMBOL_COMPILE_STATIC_SAFE_SIMPLE_KEEP,
-            'public' => false,
         ];
     }
 

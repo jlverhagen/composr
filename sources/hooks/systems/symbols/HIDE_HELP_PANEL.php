@@ -1,4 +1,4 @@
-<?php /*
+﻿<?php /*
 
  Composr
  Copyright (c) Christopher Graham, 2004-2024
@@ -32,7 +32,6 @@ class Hook_symbol_HIDE_HELP_PANEL
     {
         return [
             'compile' => SYMBOL_COMPILE_STATIC_NONE,
-            'public' => true,
         ];
     }
 
@@ -54,3 +53,4 @@ class Hook_symbol_HIDE_HELP_PANEL
         return $value;
     }
 }
+

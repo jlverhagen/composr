@@ -1,4 +1,4 @@
-<?php /*
+﻿<?php /*
 
  Composr
  Copyright (c) Christopher Graham, 2004-2024
@@ -32,7 +32,6 @@ class Hook_symbol_JS_ON
     {
         return [
             'compile' => SYMBOL_COMPILE_STATIC_SAFE_SIMPLE_JAVASCRIPT,
-            'public' => true,
         ];
     }
 
@@ -60,3 +59,4 @@ class Hook_symbol_JS_ON
         return $value;
     }
 }
+

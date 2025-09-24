@@ -1,4 +1,4 @@
-<?php /*
+﻿<?php /*
 
  Composr
  Copyright (c) Christopher Graham, 2004-2024
@@ -32,7 +32,6 @@ class Hook_symbol_GEOCODE_ENABLED
     {
         return [
             'compile' => SYMBOL_COMPILE_STATIC_NONE,
-            'public' => false,
         ];
     }
 
@@ -50,3 +49,4 @@ class Hook_symbol_GEOCODE_ENABLED
         return (choose_geocoding_service() === null) ? '0' : '1';
     }
 }
+

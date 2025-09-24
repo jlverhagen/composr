@@ -51,7 +51,7 @@
                 }
             });
         }
-        
+
         // Initialise session expiration checking if we are not a guest
         if (!$cms.isGuest() && !$cms.inMinikernelVersion()) {
             var pendingConfirm = false;
@@ -59,7 +59,7 @@
                 if (pendingConfirm) {
                     return;
                 }
-                
+
                 $cms.doAjaxRequest('{$FIND_SCRIPT_NOHTTP;,session_poller}' + $cms.keep(true)).then(function (xhr) {
                     var response = xhr.responseText;
                     if (response !== '') {
@@ -71,7 +71,7 @@
                     }
                 });
             };
-            
+
             setInterval(sessionCheck, 30000); // TODO: make a config option
         }
     });

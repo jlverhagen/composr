@@ -1,4 +1,4 @@
-<?php /*
+﻿<?php /*
 
  Composr
  Copyright (c) Christopher Graham, 2004-2024
@@ -32,7 +32,6 @@ class Hook_symbol_FIND_SCRIPT
     {
         return [
             'compile' => SYMBOL_COMPILE_STATIC_SAFE_SIMPLE_BASE_URLS | SYMBOL_COMPILE_STATIC_SAFE_SIMPLE_KEEP,
-            'public' => false,
         ];
     }
 
@@ -60,3 +59,4 @@ class Hook_symbol_FIND_SCRIPT
         return $value;
     }
 }
+

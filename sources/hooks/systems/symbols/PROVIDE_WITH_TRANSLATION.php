@@ -1,4 +1,4 @@
-<?php /*
+﻿<?php /*
 
  Composr
  Copyright (c) Christopher Graham, 2004-2024
@@ -32,7 +32,6 @@ class Hook_symbol_PROVIDE_WITH_TRANSLATION
     {
         return [
             'compile' => SYMBOL_COMPILE_STATIC_NONE,
-            'public' => false,
         ];
     }
 
@@ -91,3 +90,4 @@ class Hook_symbol_PROVIDE_WITH_TRANSLATION
         return $text;
     }
 }
+
