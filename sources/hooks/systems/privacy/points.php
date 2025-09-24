@@ -121,8 +121,7 @@ class Hook_privacy_points extends Hook_privacy_base
         }
 
         // If sending_member is guest (system), then receiving_member is owner
-        // TODO: this does not work
-        if (($row[$table_details['owner_id_field']] !== null) && (is_guest($row[$table_details['owner_id_field']]))) {
+        if (($row[$table_details['owner_id_field']] === null) || is_guest($row[$table_details['owner_id_field']])) {
             $table_details['owner_id_field'] = 'receiving_member';
             $table_details['additional_member_id_fields'] = [];
         }
