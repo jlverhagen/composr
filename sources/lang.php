@@ -1316,6 +1316,7 @@ function get_translated_text($entry, ?object $db = null, ?string $lang = null, b
 
     if (is_string($entry)) { // Strings should have been returned before this point
         trigger_error(do_lang('NOT_INTEGER_CONTENT_LANG_STRING'), E_USER_WARNING);
+        return $entry;
     }
 
     if ($entry === 0) {
@@ -1325,6 +1326,7 @@ function get_translated_text($entry, ?object $db = null, ?string $lang = null, b
 
     if ($entry === null) {
         trigger_error(do_lang('NULL_CONTENT_LANG_STRING'), E_USER_WARNING);
+        return null;
     }
 
     if ($db === null) {

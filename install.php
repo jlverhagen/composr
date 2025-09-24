@@ -867,8 +867,7 @@ function step_4() : object
     $pass_cookie = $PROBED_FORUM_CONFIG['cookie_member_hash'];
 
     global $HAS_MULTI_LANG_CONTENT;
-    $HAS_MULTI_LANG_CONTENT = ((file_exists(get_file_base() . '/.git')/*randomise in dev mode*/) && ($db_type != 'xml')) ? (mt_rand(0, 1) == 1) : false;
-    $HAS_MULTI_LANG_CONTENT = false; // TODO: content translations are broken; see #6063
+    $HAS_MULTI_LANG_CONTENT = null;
 
     $domain = preg_replace('#:.*#', '', get_request_hostname());
 
@@ -1159,10 +1158,7 @@ function step_4() : object
         }
     }
 
-    // TODO: #6063
-    $options->attach('<p>Content translations are currently not available in v11; see <a href="https://compo.sr/tracker/view.php?id=6063" target="_blank">tracker issue 6063</a></p>');
-    global $HAS_MULTI_LANG_CONTENT;
-    //$options->attach(make_tick(do_lang_tempcode('MULTI_LANG_CONTENT'), is_maintained_description('multi_lang_content', example('', 'MULTI_LANG_CONTENT_TEXT')), 'value__multi_lang_content', $HAS_MULTI_LANG_CONTENT ? 1 : 0));
+    $options->attach(make_tick(do_lang_tempcode('MULTI_LANG_CONTENT'), is_maintained_description('multi_lang_content', example('', 'MULTI_LANG_CONTENT_TEXT')), 'value__multi_lang_content', $HAS_MULTI_LANG_CONTENT ? 1 : 0));
 
     $general_advanced_options = do_template('INSTALLER_STEP_4_SECTION', ['_GUID' => '86df54c51d135e258b577aec4176aa99', 'HIDDEN' => $hidden, 'TITLE' => $title, 'TEXT' => $text, 'OPTIONS' => $options]);
 
@@ -1235,15 +1231,12 @@ function step_5() : object
         $_POST['cns_table_prefix'] = array_key_exists('table_prefix', $_POST) ? $_POST['table_prefix'] : get_default_table_prefix();
     }
 
-    /* TODO: See #6063
     // Checkbox fields that need to be explicitly saved, as the default is not 0
     global $HAS_MULTI_LANG_CONTENT;
-    $HAS_MULTI_LANG_CONTENT = (post_param_integer('value__multi_lang_content', 0) == 1);
+    $HAS_MULTI_LANG_CONTENT = (post_param_string('value__multi_lang_content', '0') == '1');
     if (!$HAS_MULTI_LANG_CONTENT) {
         $_POST['value__multi_lang_content'] = '0';
     }
-    */
-    $_POST['value__multi_lang_content'] = '0';
 
     // Cleanup base URL
     $_POST['base_url'] = normalise_idn_url($_POST['base_url']);
