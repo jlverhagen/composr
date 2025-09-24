@@ -250,50 +250,7 @@ function _cms_error_handler(string $type, int $errno, string $errstr, string $er
     }
 
     // Generate stack trace
-    $full_trace = '';
-    if (strpos($errstr, ' -> ') === false) {
-        $_trace = debug_backtrace();
-        foreach ($_trace as $stage) {
-            $traces = '';
-            foreach ($stage as $key => $value) {
-                try {
-                    if ((is_object($value) && (is_a($value, 'Tempcode'))) || (is_array($value) && (strlen(serialize($value)) > 500))) {
-                        $_value = gettype($value);
-                    } else {
-                        $_value = gettype($value);
-                        switch ($_value) {
-                            case 'integer':
-                                $_value = strval($value);
-                                break;
-                            case 'string':
-                                $_value = $value;
-                                break;
-                            default:
-                                if (strpos($errstr, 'Allowed memory') === false) { // Actually we don't call this code path for memory limit issues any more, as stack trace is useless (comes from the catch_fatal_errors function)
-                                    $_value = serialize($value);
-                                }
-                                break;
-                        }
-                    }
-                } catch (Exception $e) { // Can happen for SimpleXMLElement
-                    $_value = '...';
-                }
-
-                // Sanitise stack trace values
-                global $SITE_INFO;
-                if ((isset($SITE_INFO['db_site_password'])) && (strlen($SITE_INFO['db_site_password']) > 4)) {
-                    $_value = str_replace($SITE_INFO['db_site_password'], '(password removed)', $_value);
-                }
-                if ((isset($SITE_INFO['db_forums_password'])) && (strlen($SITE_INFO['db_forums_password']) > 4)) {
-                    $_value = str_replace($SITE_INFO['db_forums_password'], '(password removed)', $_value);
-                }
-                $_value = str_replace([get_custom_file_base() . '/', get_custom_file_base() . '\\', get_file_base() . '/', get_file_base() . '\\'], ['', '', '', ''], $_value);
-
-                $traces .= (function_exists('cms_ucfirst_ascii') ? cms_ucfirst_ascii($key) : ucfirst($key)) . ' -> ' . htmlentities($_value) . '<br />' . "\n";
-            }
-            $full_trace .= "\n" . $traces;
-        }
-    }
+    $full_trace = get_text_trace();
 
     // Generate error message
     $outx = '<strong>' . cms_strtoupper_ascii($type) . '</strong> [' . strval($errno) . '] ' . $errstr . ' in ' . $errfile . ' on line ' . strval($errline) . '<br />' . "\n";
@@ -539,50 +496,7 @@ function _generic_exit($text, string $template, ?bool $support_match_key_message
 
         if ($may_log_error) {
             // Generate stack trace
-            $full_trace = '';
-            if (strpos($php_error_label, ' -> ') === false) {
-                $_trace = debug_backtrace();
-                foreach ($_trace as $stage) {
-                    $traces = '';
-                    foreach ($stage as $key => $value) {
-                        try {
-                            if ((is_object($value) && (is_a($value, 'Tempcode'))) || (is_array($value) && (strlen(serialize($value)) > 500))) {
-                                $_value = gettype($value);
-                            } else {
-                                $_value = gettype($value);
-                                switch ($_value) {
-                                    case 'integer':
-                                        $_value = strval($value);
-                                        break;
-                                    case 'string':
-                                        $_value = $value;
-                                        break;
-                                    default:
-                                        if (strpos($php_error_label, 'Allowed memory') === false) { // Actually we don't call this code path for memory limit issues any more, as stack trace is useless (comes from the catch_fatal_errors function)
-                                            $_value = serialize($value);
-                                        }
-                                        break;
-                                }
-                            }
-                        } catch (Exception $e) { // Can happen for SimpleXMLElement
-                            $_value = '...';
-                        }
-
-                        // Sanitise stack trace values
-                        global $SITE_INFO;
-                        if ((isset($SITE_INFO['db_site_password'])) && (strlen($SITE_INFO['db_site_password']) > 4)) {
-                            $_value = str_replace($SITE_INFO['db_site_password'], '(password removed)', $_value);
-                        }
-                        if ((isset($SITE_INFO['db_forums_password'])) && (strlen($SITE_INFO['db_forums_password']) > 4)) {
-                            $_value = str_replace($SITE_INFO['db_forums_password'], '(password removed)', $_value);
-                        }
-                        $_value = str_replace([get_custom_file_base() . '/', get_custom_file_base() . '\\', get_file_base() . '/', get_file_base() . '\\'], ['', '', '', ''], $_value);
-
-                        $traces .= (function_exists('cms_ucfirst_ascii') ? cms_ucfirst_ascii($key) : ucfirst($key)) . ' -> ' . htmlentities($_value) . '<br />' . "\n";
-                    }
-                    $full_trace .= "\n" . $traces;
-                }
-            }
+            $full_trace = get_text_trace();
 
             if ((function_exists('syslog')) && (GOOGLE_APPENGINE)) {
                 syslog(LOG_ERR, $php_error_label);
@@ -1597,7 +1511,55 @@ function put_value_in_stack_trace($value) : string
 }
 
 /**
- * Return a debugging back-trace of the current execution stack. Use this for debugging purposes.
+ * Return a debugging back-trace of the current execution stack as plain text. Use this for debugging purposes in error logs.
+ *
+ * @return void
+ */
+function get_text_trace() : string
+{
+    static $already_traced = false;
+    if ($already_traced) {
+        return '';
+    }
+
+    push_suppress_error_death(true);
+    $_trace = debug_backtrace();
+    $ret = '';
+    foreach ($_trace as $i => $stage) {
+        //if (in_array($stage['function'], ['get_html_trace', 'cms_error_handler', 'fatal_exit'])) continue;  Hinders more than helps
+        $ret = '#' . strval($i) . ' ';
+
+        if (isset($stage['class'])) {
+            $ret .= $stage['class'];
+        }
+        if (isset($stage['type'])) {
+            $ret .= $stage['type'];
+        }
+        if (isset($stage['function'])) {
+            $ret .= $stage['function'];
+        }
+        if (isset($stage['file'])) {
+            $ret .= ' called at [' . $stage['file'];
+            if (isset($stage['line'])) {
+                $ret .= strval($stage['line']);
+            }
+            $ret .= ']';
+        }
+
+        if (isset($stage['args'])) {
+            foreach ($stage['args'] as $arg) {
+                $ret .= "\n" . ' => ' . put_value_in_stack_trace($arg);
+            }
+        }
+
+        $ret .= "\n";
+    }
+
+    return trim($ret);
+}
+
+/**
+ * Return a debugging back-trace of the current execution stack as Tempcode. Use this for debugging purposes.
  *
  * @return Tempcode Debugging backtrace
  */
