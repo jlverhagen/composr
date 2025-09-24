@@ -101,4 +101,3 @@ class Hook_symbol_STAFF_TOOLTIPS_URL_PATTERNS_JSON
         return $pattern;
     }
 }
-

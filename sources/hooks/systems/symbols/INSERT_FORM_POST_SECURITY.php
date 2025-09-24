@@ -68,4 +68,3 @@ class Hook_symbol_INSERT_FORM_POST_SECURITY
         return $value;
     }
 }
-

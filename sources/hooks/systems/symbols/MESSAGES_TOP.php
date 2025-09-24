@@ -57,4 +57,3 @@ class Hook_symbol_MESSAGES_TOP
         return $value;
     }
 }
-

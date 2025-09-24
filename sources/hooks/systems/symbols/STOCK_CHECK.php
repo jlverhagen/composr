@@ -67,4 +67,3 @@ class Hook_symbol_STOCK_CHECK
         return $value;
     }
 }
-

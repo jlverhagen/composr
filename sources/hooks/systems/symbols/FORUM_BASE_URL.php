@@ -50,4 +50,3 @@ class Hook_symbol_FORUM_BASE_URL
         return $value;
     }
 }
-

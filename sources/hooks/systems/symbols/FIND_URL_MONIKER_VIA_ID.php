@@ -61,4 +61,3 @@ class Hook_symbol_FIND_URL_MONIKER_VIA_ID
         return $value;
     }
 }
-

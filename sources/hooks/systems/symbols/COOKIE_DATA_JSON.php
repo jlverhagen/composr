@@ -83,4 +83,3 @@ class Hook_symbol_COOKIE_DATA_JSON
         return $value;
     }
 }
-

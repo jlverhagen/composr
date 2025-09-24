@@ -61,4 +61,3 @@ class Hook_symbol_ENTITY_DECODE
         return $value;
     }
 }
-

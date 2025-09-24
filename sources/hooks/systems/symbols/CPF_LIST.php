@@ -124,4 +124,3 @@ class Hook_symbol_CPF_LIST
         return $value;
     }
 }
-

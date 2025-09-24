@@ -62,4 +62,3 @@ class Hook_symbol_COMMA_LIST_POP
         return $value;
     }
 }
-

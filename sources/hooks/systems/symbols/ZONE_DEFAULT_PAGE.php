@@ -49,4 +49,3 @@ class Hook_symbol_ZONE_DEFAULT_PAGE
         return ($ZONE !== null) ? $ZONE['zone_default_page'] : '';
     }
 }
-

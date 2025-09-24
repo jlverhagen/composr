@@ -53,4 +53,3 @@ class Hook_symbol_MOBILE
         return $value;
     }
 }
-

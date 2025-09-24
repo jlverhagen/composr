@@ -54,4 +54,3 @@ class Hook_symbol_CUSTOM_BASE_URL
         return $value;
     }
 }
-

@@ -60,8 +60,6 @@ class Hook_symbol_COLOR_RGBA
             $value = 'rgba(' . strval($red) . ', ' . strval($green) . ', ' . strval($blue) . ', ' . float_to_raw_string($alpha) . ')';
         }
 
-
         return $value;
     }
 }
-

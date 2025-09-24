@@ -82,4 +82,3 @@ class Hook_symbol_GET
         return $value;
     }
 }
-

@@ -64,4 +64,3 @@ class Hook_symbol_CONFIG_OPTION
         return $value;
     }
 }
-

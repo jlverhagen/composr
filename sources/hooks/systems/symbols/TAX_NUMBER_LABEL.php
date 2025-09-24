@@ -57,4 +57,3 @@ class Hook_symbol_TAX_NUMBER_LABEL
         return $value;
     }
 }
-

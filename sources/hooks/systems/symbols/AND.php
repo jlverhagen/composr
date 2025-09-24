@@ -64,4 +64,3 @@ class Hook_symbol_AND
 
     }
 }
-

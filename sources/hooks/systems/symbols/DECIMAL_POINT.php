@@ -50,4 +50,3 @@ class Hook_symbol_DECIMAL_POINT
         return $value;
     }
 }
-

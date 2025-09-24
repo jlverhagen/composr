@@ -58,4 +58,3 @@ class Hook_symbol_SET_TITLE
         return $value;
     }
 }
-

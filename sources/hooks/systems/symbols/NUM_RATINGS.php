@@ -71,4 +71,3 @@ class Hook_symbol_NUM_RATINGS
         return $value;
     }
 }
-

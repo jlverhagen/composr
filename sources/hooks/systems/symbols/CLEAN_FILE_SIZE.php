@@ -58,4 +58,3 @@ class Hook_symbol_CLEAN_FILE_SIZE
         return $value;
     }
 }
-

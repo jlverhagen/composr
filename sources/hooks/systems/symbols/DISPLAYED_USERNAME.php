@@ -57,4 +57,3 @@ class Hook_symbol_DISPLAYED_USERNAME
         return $value;
     }
 }
-

@@ -87,4 +87,3 @@ class Hook_symbol_RAND
         return $value;
     }
 }
-

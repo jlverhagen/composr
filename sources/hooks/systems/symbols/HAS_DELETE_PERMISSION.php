@@ -65,4 +65,3 @@ class Hook_symbol_HAS_DELETE_PERMISSION
         return $value;
     }
 }
-

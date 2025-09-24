@@ -57,4 +57,3 @@ class Hook_symbol_DIV_FLOAT
         return $value;
     }
 }
-

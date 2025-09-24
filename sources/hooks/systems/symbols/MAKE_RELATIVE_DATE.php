@@ -67,4 +67,3 @@ class Hook_symbol_MAKE_RELATIVE_DATE // ...although making relatives date is ill
         return $value;
     }
 }
-

@@ -69,4 +69,3 @@ class Hook_symbol_URL_FOR_GET_FORM
         return $value;
     }
 }
-

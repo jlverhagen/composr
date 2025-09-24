@@ -67,4 +67,3 @@ class Hook_symbol_LOAD_PANEL
         return $value;
     }
 }
-

@@ -51,4 +51,3 @@ class Hook_symbol_FORUM_CONTEXT
         return $value;
     }
 }
-

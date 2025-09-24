@@ -59,4 +59,3 @@ class Hook_symbol_HAS_TRACKING_CODE
         return $value;
     }
 }
-

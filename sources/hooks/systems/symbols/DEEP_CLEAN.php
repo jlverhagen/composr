@@ -56,4 +56,3 @@ class Hook_symbol_DEEP_CLEAN
         return $value;
     }
 }
-

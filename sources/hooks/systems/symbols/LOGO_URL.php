@@ -50,4 +50,3 @@ class Hook_symbol_LOGO_URL
         return $value;
     }
 }
-

@@ -57,4 +57,3 @@ class Hook_symbol_CDN_FILTER
         return $value;
     }
 }
-

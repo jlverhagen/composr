@@ -58,4 +58,3 @@ class Hook_symbol_GROUP_ID
         return $value;
     }
 }
-

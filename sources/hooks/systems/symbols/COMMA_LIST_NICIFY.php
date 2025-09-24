@@ -64,4 +64,3 @@ class Hook_symbol_COMMA_LIST_NICIFY
         return $value;
     }
 }
-

@@ -60,4 +60,3 @@ class Hook_symbol_CSS_MODE
         return $value;
     }
 }
-

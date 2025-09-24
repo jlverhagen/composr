@@ -48,4 +48,3 @@ class Hook_symbol_PAGE_TYPE
         return get_param_string('type', '', INPUT_FILTER_GET_COMPLEX);
     }
 }
-

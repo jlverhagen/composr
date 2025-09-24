@@ -61,4 +61,3 @@ class Hook_symbol_DEC
         return $value;
     }
 }
-

@@ -51,8 +51,6 @@ class Hook_symbol_SELF_PAGE_LINK
             $value = get_current_page_link(false);
         }
 
-
         return $value;
     }
 }
-

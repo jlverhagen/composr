@@ -90,4 +90,3 @@ class Hook_symbol_PROVIDE_WITH_TRANSLATION
         return $text;
     }
 }
-

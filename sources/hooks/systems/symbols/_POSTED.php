@@ -48,4 +48,3 @@ class Hook_symbol__POSTED
         return ($_SERVER['REQUEST_METHOD'] == 'POST') ? '1' : '0';
     }
 }
-

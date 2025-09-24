@@ -50,4 +50,3 @@ class Hook_symbol_QUERY_STRING
         return $value;
     }
 }
-

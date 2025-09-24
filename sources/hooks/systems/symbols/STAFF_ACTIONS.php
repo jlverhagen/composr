@@ -61,4 +61,3 @@ class Hook_symbol_STAFF_ACTIONS
         return $value;
     }
 }
-

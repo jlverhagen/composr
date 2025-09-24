@@ -57,4 +57,3 @@ class Hook_symbol_IS_ADMIN
         return $value;
     }
 }
-

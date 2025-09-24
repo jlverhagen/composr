@@ -56,4 +56,3 @@ class Hook_symbol_TIME
         return $value;
     }
 }
-

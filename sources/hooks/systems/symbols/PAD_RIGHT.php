@@ -57,4 +57,3 @@ class Hook_symbol_PAD_RIGHT
         return $value;
     }
 }
-

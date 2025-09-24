@@ -60,4 +60,3 @@ class Hook_symbol_COMMA_LIST_SET
         return $value;
     }
 }
-

@@ -55,4 +55,3 @@ class Hook_symbol_VERSION_NUMBER
         return $value;
     }
 }
-

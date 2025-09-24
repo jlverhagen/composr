@@ -57,4 +57,3 @@ class Hook_symbol_HELPER_PANEL_TEXT
         return $value;
     }
 }
-

@@ -53,4 +53,3 @@ class Hook_symbol_DEFAULT_ZONE_PAGE_NAME
         return $value;
     }
 }
-

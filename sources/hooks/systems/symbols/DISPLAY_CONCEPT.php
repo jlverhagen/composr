@@ -65,8 +65,6 @@ class Hook_symbol_DISPLAY_CONCEPT
             $value = $temp_tpl->evaluate();
         }
 
-
         return $value;
     }
 }
-

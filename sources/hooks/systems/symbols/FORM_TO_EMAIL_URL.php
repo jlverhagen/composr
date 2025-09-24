@@ -58,4 +58,3 @@ class Hook_symbol_FORM_TO_EMAIL_URL
         return $url;
     }
 }
-

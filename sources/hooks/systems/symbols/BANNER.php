@@ -83,4 +83,3 @@ class Hook_symbol_BANNER
         return $value;
     }
 }
-

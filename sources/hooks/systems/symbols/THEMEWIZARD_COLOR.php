@@ -63,4 +63,3 @@ class Hook_symbol_THEMEWIZARD_COLOR
         return $value;
     }
 }
-

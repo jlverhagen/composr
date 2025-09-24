@@ -57,4 +57,3 @@ class Hook_symbol_LOG_STATS_EVENT
         return $value;
     }
 }
-

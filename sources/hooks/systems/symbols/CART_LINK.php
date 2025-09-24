@@ -75,4 +75,3 @@ class Hook_symbol_CART_LINK
         return $value;
     }
 }
-

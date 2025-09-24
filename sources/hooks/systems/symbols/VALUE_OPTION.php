@@ -66,4 +66,3 @@ class Hook_symbol_VALUE_OPTION
         return $value;
     }
 }
-

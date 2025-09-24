@@ -57,4 +57,3 @@ class Hook_symbol_ADDON_INSTALLED
         return $value;
     }
 }
-

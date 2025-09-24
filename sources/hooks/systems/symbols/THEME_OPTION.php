@@ -74,4 +74,3 @@ class Hook_symbol_THEME_OPTION
         return $value;
     }
 }
-

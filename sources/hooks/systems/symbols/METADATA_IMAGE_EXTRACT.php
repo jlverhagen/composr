@@ -71,4 +71,3 @@ class Hook_symbol_METADATA_IMAGE_EXTRACT
         return $value;
     }
 }
-

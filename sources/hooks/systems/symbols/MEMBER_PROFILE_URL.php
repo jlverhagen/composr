@@ -57,4 +57,3 @@ class Hook_symbol_MEMBER_PROFILE_URL
         return $value;
     }
 }
-

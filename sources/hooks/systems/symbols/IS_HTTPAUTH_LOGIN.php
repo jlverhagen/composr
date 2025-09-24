@@ -56,4 +56,3 @@ class Hook_symbol_IS_HTTPAUTH_LOGIN
         return $value;
     }
 }
-

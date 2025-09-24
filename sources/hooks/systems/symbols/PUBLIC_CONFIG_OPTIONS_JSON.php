@@ -70,4 +70,3 @@ class Hook_symbol_PUBLIC_CONFIG_OPTIONS_JSON
         return $value;
     }
 }
-

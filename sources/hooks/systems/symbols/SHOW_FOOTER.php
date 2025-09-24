@@ -53,4 +53,3 @@ class Hook_symbol_SHOW_FOOTER
         return $value;
     }
 }
-

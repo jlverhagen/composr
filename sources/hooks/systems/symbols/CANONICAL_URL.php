@@ -55,4 +55,3 @@ class Hook_symbol_CANONICAL_URL
         return $value;
     }
 }
-

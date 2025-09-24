@@ -76,4 +76,3 @@ class Hook_symbol_CNS_RANK_IMAGE
         return $value;
     }
 }
-

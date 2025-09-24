@@ -78,4 +78,3 @@ class Hook_symbol_IMG_INLINE
         return $value;
     }
 }
-

@@ -60,4 +60,3 @@ class Hook_symbol_LENGTH
         return $value;
     }
 }
-

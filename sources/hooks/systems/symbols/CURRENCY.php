@@ -68,4 +68,3 @@ class Hook_symbol_CURRENCY
         return $value;
     }
 }
-

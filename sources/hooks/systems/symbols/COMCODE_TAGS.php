@@ -71,4 +71,3 @@ class Hook_symbol_COMCODE_TAGS
         return $out;
     }
 }
-

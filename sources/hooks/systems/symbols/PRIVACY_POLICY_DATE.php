@@ -87,4 +87,3 @@ class Hook_symbol_PRIVACY_POLICY_DATE
         return $value;
     }
 }
-

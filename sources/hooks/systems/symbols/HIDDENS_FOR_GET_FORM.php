@@ -62,4 +62,3 @@ class Hook_symbol_HIDDENS_FOR_GET_FORM
         return $value;
     }
 }
-

@@ -57,4 +57,3 @@ class Hook_symbol_TERNARY
         return $value;
     }
 }
-

@@ -50,4 +50,3 @@ class Hook_symbol_LANG
         return $value;
     }
 }
-

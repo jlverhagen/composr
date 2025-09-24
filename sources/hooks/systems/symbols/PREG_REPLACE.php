@@ -65,4 +65,3 @@ class Hook_symbol_PREG_REPLACE
         return $value;
     }
 }
-

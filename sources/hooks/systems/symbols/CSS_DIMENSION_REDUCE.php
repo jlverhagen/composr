@@ -64,4 +64,3 @@ class Hook_symbol_CSS_DIMENSION_REDUCE
         return $value;
     }
 }
-

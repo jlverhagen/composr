@@ -56,4 +56,3 @@ class Hook_symbol_FILE_EXISTS
         return $value;
     }
 }
-

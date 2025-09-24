@@ -48,4 +48,3 @@ class Hook_symbol_CURRENT_FATALISTIC
         return strval(current_fatalistic());
     }
 }
-

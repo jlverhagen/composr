@@ -69,4 +69,3 @@ class Hook_symbol_FORCE_PREVIEWS
         return $value;
     }
 }
-

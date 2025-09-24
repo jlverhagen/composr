@@ -61,4 +61,3 @@ class Hook_symbol_PROTECT_URL_PARAMETER
         return $value;
     }
 }
-

@@ -79,4 +79,3 @@ class Hook_symbol_TRIM
         return $value;
     }
 }
-

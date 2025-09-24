@@ -61,4 +61,3 @@ class Hook_symbol_MATCH_KEY_MATCH
         return $value;
     }
 }
-

@@ -50,4 +50,3 @@ class Hook_symbol_BRAND_BASE_URL
         return $value;
     }
 }
-

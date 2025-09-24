@@ -62,4 +62,3 @@ class Hook_symbol_PREG_MATCH
         return $value;
     }
 }
-

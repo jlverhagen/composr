@@ -52,4 +52,3 @@ class Hook_symbol_ENSURE_PROTOCOL_SUITABILITY
         return $value;
     }
 }
-

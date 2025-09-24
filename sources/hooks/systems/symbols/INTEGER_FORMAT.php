@@ -57,4 +57,3 @@ class Hook_symbol_INTEGER_FORMAT
         return $value;
     }
 }
-

@@ -62,4 +62,3 @@ class Hook_symbol_ATTACHMENT_DOWNLOADS
         return $value;
     }
 }
-

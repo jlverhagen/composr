@@ -90,4 +90,3 @@ class Hook_symbol_IS_ICON_IN_SVG_SPRITE
         return $value;
     }
 }
-

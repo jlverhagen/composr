@@ -54,4 +54,3 @@ class Hook_symbol_VERSION_BRANCH_NAME
         return $value;
     }
 }
-

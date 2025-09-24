@@ -65,4 +65,3 @@ class Hook_symbol_FIND_LABEL_VIA_ID
         return $value;
     }
 }
-

@@ -85,4 +85,3 @@ class Hook_symbol_SPLIT_TEST
         return $value;
     }
 }
-

@@ -60,4 +60,3 @@ class Hook_symbol_FROM_EPOCH_INTERVAL_INDEX
         return $value;
     }
 }
-

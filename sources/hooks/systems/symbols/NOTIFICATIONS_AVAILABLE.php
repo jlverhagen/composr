@@ -62,4 +62,3 @@ class Hook_symbol_NOTIFICATIONS_AVAILABLE
         return $value;
     }
 }
-

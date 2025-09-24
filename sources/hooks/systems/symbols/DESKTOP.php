@@ -53,4 +53,3 @@ class Hook_symbol_DESKTOP
         return $value;
     }
 }
-

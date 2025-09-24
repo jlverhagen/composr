@@ -73,4 +73,3 @@ class Hook_symbol_CYCLE
         return $value;
     }
 }
-

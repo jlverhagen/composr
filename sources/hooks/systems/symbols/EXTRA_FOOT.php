@@ -63,4 +63,3 @@ class Hook_symbol_EXTRA_FOOT
         return $value;
     }
 }
-

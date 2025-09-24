@@ -53,4 +53,3 @@ class Hook_symbol_CURRENTLY_INVISIBLE
         return $value;
     }
 }
-

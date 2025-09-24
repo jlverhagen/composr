@@ -50,4 +50,3 @@ class Hook_symbol_MEMBER_COOKIE_NAME
         return $value;
     }
 }
-

@@ -69,8 +69,6 @@ class Hook_symbol_COLOR_DARKEN
             $value = sprintf("#%02x%02x%02x", $red, $green, $blue);
         }
 
-
         return $value;
     }
 }
-

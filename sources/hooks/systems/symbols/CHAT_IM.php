@@ -146,4 +146,3 @@ class Hook_symbol_CHAT_IM
         return $value;
     }
 }
-

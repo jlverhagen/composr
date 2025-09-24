@@ -57,4 +57,3 @@ class Hook_symbol_STARTS_WITH
         return $value;
     }
 }
-

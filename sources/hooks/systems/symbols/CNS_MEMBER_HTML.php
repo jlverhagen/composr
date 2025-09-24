@@ -60,4 +60,3 @@ class Hook_symbol_CNS_MEMBER_HTML
         return $value;
     }
 }
-

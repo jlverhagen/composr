@@ -68,4 +68,3 @@ class Hook_symbol_SUBTRACT
         return $value;
     }
 }
-

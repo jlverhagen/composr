@@ -199,4 +199,3 @@ class Hook_symbol_METADATA
         return $value;
     }
 }
-

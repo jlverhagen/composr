@@ -72,4 +72,3 @@ class Hook_symbol_SELF_URL
         return $value;
     }
 }
-

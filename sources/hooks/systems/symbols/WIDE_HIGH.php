@@ -53,4 +53,3 @@ class Hook_symbol_WIDE_HIGH
         return $value;
     }
 }
-

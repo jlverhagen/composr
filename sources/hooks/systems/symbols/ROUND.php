@@ -62,4 +62,3 @@ class Hook_symbol_ROUND
         return $value;
     }
 }
-

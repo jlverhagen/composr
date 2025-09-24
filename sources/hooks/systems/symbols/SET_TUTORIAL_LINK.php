@@ -57,4 +57,3 @@ class Hook_symbol_SET_TUTORIAL_LINK
         return $value;
     }
 }
-

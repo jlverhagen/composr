@@ -78,4 +78,3 @@ class Hook_symbol_CONTENT_COUNT
         return $value;
     }
 }
-

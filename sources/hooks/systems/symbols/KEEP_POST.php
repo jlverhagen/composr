@@ -53,4 +53,3 @@ class Hook_symbol_KEEP_POST
         return $value;
     }
 }
-

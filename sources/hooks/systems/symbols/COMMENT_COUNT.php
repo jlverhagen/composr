@@ -87,4 +87,3 @@ class Hook_symbol_COMMENT_COUNT
         return $value;
     }
 }
-

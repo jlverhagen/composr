@@ -115,4 +115,3 @@ class Hook_symbol_THUMBNAIL
         return $value;
     }
 }
-

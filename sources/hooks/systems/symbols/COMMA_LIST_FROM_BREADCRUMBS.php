@@ -67,4 +67,3 @@ class Hook_symbol_COMMA_LIST_FROM_BREADCRUMBS
         return $value;
     }
 }
-

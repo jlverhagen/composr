@@ -69,8 +69,6 @@ class Hook_symbol_THEME_DARK
             }
         }
 
-
         return $value;
     }
 }
-

@@ -53,4 +53,3 @@ class Hook_symbol_SHOW_HEADER
         return $value;
     }
 }
-

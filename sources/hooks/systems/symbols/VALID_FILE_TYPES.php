@@ -65,4 +65,3 @@ class Hook_symbol_VALID_FILE_TYPES
         return $value;
     }
 }
-

@@ -53,4 +53,3 @@ class Hook_symbol_CKEDITOR_PATH
         return $value;
     }
 }
-

@@ -92,4 +92,3 @@ class Hook_symbol_BLOCK
         return $value;
     }
 }
-

@@ -50,4 +50,3 @@ class Hook_symbol_JSON_ENCODE
         return $value;
     }
 }
-

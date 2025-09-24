@@ -56,4 +56,3 @@ class Hook_symbol_REQUIRE_CSS
         return $value;
     }
 }
-

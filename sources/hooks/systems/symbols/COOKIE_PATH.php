@@ -50,4 +50,3 @@ class Hook_symbol_COOKIE_PATH
         return $value;
     }
 }
-

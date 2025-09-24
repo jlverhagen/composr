@@ -65,4 +65,3 @@ class Hook_symbol_FIND_COMMANDR_FS_FILENAME_VIA_ID
         return $value;
     }
 }
-

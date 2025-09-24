@@ -60,4 +60,3 @@ class Hook_symbol_FAVICON
         return $value;
     }
 }
-

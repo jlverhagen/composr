@@ -54,4 +54,3 @@ class Hook_symbol_BREADCRUMBS
         return $value;
     }
 }
-

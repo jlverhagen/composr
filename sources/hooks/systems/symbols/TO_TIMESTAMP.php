@@ -61,4 +61,3 @@ class Hook_symbol_TO_TIMESTAMP
         return $value;
     }
 }
-

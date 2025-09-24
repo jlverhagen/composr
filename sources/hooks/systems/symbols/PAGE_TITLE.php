@@ -51,4 +51,3 @@ class Hook_symbol_PAGE_TITLE
         return $value;
     }
 }
-

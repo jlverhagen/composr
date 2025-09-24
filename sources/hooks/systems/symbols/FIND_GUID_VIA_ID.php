@@ -65,4 +65,3 @@ class Hook_symbol_FIND_GUID_VIA_ID
         return $value;
     }
 }
-

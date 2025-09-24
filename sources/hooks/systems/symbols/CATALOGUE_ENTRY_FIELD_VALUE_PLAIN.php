@@ -93,4 +93,3 @@ class Hook_symbol_CATALOGUE_ENTRY_FIELD_VALUE_PLAIN
         return $value;
     }
 }
-

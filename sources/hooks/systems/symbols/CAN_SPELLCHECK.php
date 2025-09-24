@@ -53,4 +53,3 @@ class Hook_symbol_CAN_SPELLCHECK
         return $value;
     }
 }
-

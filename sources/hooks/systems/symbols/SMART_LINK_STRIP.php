@@ -65,4 +65,3 @@ class Hook_symbol_SMART_LINK_STRIP
         return $value;
     }
 }
-

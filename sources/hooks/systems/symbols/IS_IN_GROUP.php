@@ -95,4 +95,3 @@ class Hook_symbol_IS_IN_GROUP
         return $value;
     }
 }
-

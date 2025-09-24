@@ -51,4 +51,3 @@ class Hook_symbol_COOKIE_DOMAIN
         return $value;
     }
 }
-

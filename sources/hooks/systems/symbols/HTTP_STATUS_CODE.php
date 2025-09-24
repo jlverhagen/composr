@@ -54,4 +54,3 @@ class Hook_symbol_HTTP_STATUS_CODE
         return $value;
     }
 }
-

@@ -57,4 +57,3 @@ class Hook_symbol_HAS_ACTUAL_PAGE_ACCESS
         return $value;
     }
 }
-

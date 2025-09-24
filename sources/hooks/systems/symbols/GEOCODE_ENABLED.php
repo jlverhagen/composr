@@ -49,4 +49,3 @@ class Hook_symbol_GEOCODE_ENABLED
         return (choose_geocoding_service() === null) ? '0' : '1';
     }
 }
-

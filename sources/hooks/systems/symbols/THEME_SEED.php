@@ -55,8 +55,6 @@ class Hook_symbol_THEME_SEED
             }
         }
 
-
         return $value;
     }
 }
-

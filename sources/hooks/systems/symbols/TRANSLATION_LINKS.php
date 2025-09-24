@@ -69,4 +69,3 @@ class Hook_symbol_TRANSLATION_LINKS
         return $value;
     }
 }
-

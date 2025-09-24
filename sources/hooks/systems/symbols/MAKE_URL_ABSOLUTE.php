@@ -57,4 +57,3 @@ class Hook_symbol_MAKE_URL_ABSOLUTE
         return $value;
     }
 }
-

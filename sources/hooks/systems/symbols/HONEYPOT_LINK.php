@@ -101,4 +101,3 @@ class Hook_symbol_HONEYPOT_LINK
         return $value;
     }
 }
-

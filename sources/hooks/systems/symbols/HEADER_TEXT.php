@@ -80,4 +80,3 @@ class Hook_symbol_HEADER_TEXT
         return $value;
     }
 }
-

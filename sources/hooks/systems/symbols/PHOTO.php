@@ -55,4 +55,3 @@ class Hook_symbol_PHOTO
         return $value;
     }
 }
-

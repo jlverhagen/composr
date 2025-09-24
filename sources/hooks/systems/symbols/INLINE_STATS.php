@@ -53,4 +53,3 @@ class Hook_symbol_INLINE_STATS
         return $value;
     }
 }
-

@@ -75,4 +75,3 @@ class Hook_symbol_MEMBER_DATA
         return $value;
     }
 }
-

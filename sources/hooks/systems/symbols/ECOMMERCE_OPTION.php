@@ -70,4 +70,3 @@ class Hook_symbol_ECOMMERCE_OPTION
         return $value;
     }
 }
-

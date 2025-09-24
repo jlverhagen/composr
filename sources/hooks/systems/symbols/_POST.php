@@ -61,4 +61,3 @@ class Hook_symbol__POST
         return $value;
     }
 }
-

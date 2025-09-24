@@ -59,4 +59,3 @@ class Hook_symbol_TEMPCODE
         return $value;
     }
 }
-

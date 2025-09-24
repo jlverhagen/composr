@@ -111,4 +111,3 @@ class Hook_symbol_CATALOGUE_ENTRY_BACKREFS
         return $value;
     }
 }
-

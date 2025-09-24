@@ -70,4 +70,3 @@ class Hook_symbol_SET
         return $value;
     }
 }
-

@@ -61,4 +61,3 @@ class Hook_symbol_SUBSTR_COUNT
         return $value;
     }
 }
-

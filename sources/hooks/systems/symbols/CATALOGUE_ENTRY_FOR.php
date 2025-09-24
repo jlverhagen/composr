@@ -60,4 +60,3 @@ class Hook_symbol_CATALOGUE_ENTRY_FOR
         return $value;
     }
 }
-

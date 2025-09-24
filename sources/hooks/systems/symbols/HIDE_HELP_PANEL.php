@@ -53,4 +53,3 @@ class Hook_symbol_HIDE_HELP_PANEL
         return $value;
     }
 }
-

@@ -92,4 +92,3 @@ class Hook_symbol_CPF_VALUE
         return $value;
     }
 }
-

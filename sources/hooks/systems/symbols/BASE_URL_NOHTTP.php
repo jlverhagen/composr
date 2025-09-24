@@ -57,4 +57,3 @@ class Hook_symbol_BASE_URL_NOHTTP
         return $value;
     }
 }
-

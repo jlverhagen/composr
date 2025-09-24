@@ -50,4 +50,3 @@ class Hook_symbol_IP_ADDRESS
         return $value;
     }
 }
-

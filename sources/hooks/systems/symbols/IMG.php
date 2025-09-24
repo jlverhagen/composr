@@ -72,4 +72,3 @@ class Hook_symbol_IMG
         return $value;
     }
 }
-

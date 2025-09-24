@@ -58,4 +58,3 @@ class Hook_symbol_EXTRA_HEAD
         return $value;
     }
 }
-

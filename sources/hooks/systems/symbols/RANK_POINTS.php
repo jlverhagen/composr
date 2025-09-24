@@ -60,4 +60,3 @@ class Hook_symbol_RANK_POINTS
         return $value;
     }
 }
-

@@ -60,4 +60,3 @@ class Hook_symbol_POINTS_BALANCE
         return $value;
     }
 }
-

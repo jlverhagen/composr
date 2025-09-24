@@ -59,4 +59,3 @@ class Hook_symbol_RUNNING_SCRIPT
         return $value;
     }
 }
-

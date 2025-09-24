@@ -50,4 +50,3 @@ class Hook_symbol_STAFF_ADDRESS_PURE
         return $value;
     }
 }
-

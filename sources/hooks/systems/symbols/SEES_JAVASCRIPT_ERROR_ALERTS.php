@@ -53,4 +53,3 @@ class Hook_symbol_SEES_JAVASCRIPT_ERROR_ALERTS
         return (has_privilege(get_member(), 'sees_javascript_error_alerts')) && (get_option('javascript_error_alerts') == '1') ? '1' : '0';
     }
 }
-

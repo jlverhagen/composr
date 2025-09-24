@@ -63,4 +63,3 @@ class Hook_symbol_LOGIN_LABEL
         return $value;
     }
 }
-

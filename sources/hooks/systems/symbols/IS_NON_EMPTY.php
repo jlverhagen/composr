@@ -57,4 +57,3 @@ class Hook_symbol_IS_NON_EMPTY
         return $value;
     }
 }
-

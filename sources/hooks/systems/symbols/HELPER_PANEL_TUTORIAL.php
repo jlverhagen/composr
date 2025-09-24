@@ -60,4 +60,3 @@ class Hook_symbol_HELPER_PANEL_TUTORIAL
         return $value;
     }
 }
-

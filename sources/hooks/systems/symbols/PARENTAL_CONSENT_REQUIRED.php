@@ -56,4 +56,3 @@ class Hook_symbol_PARENTAL_CONSENT_REQUIRED
         return $value;
     }
 }
-

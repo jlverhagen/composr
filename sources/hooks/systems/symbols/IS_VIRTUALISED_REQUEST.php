@@ -53,4 +53,3 @@ class Hook_symbol_IS_VIRTUALISED_REQUEST
         return $value;
     }
 }
-

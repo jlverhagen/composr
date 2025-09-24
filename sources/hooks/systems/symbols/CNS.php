@@ -53,4 +53,3 @@ class Hook_symbol_CNS
         return $value;
     }
 }
-

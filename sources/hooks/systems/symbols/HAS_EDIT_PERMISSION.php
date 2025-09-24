@@ -65,4 +65,3 @@ class Hook_symbol_HAS_EDIT_PERMISSION
         return $value;
     }
 }
-

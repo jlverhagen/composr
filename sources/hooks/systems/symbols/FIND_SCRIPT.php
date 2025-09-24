@@ -59,4 +59,3 @@ class Hook_symbol_FIND_SCRIPT
         return $value;
     }
 }
-

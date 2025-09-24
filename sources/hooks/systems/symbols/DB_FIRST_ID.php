@@ -53,4 +53,3 @@ class Hook_symbol_DB_FIRST_ID
         return $value;
     }
 }
-

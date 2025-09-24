@@ -51,4 +51,3 @@ class Hook_symbol_BROWSER_UA
         return $value;
     }
 }
-

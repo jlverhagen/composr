@@ -57,4 +57,3 @@ class Hook_symbol_DO_NOT_TRACK_REQUESTED
         return $dnt;
     }
 }
-

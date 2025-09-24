@@ -54,4 +54,3 @@ class Hook_symbol_CAN_TRY_URL_SCHEMES
         return (can_try_url_schemes()) ? '1' : '0';
     }
 }
-

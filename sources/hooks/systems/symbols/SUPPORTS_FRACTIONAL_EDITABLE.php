@@ -65,4 +65,3 @@ class Hook_symbol_SUPPORTS_FRACTIONAL_EDITABLE
         return $value;
     }
 }
-

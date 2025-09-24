@@ -60,4 +60,3 @@ class Hook_symbol_MATURITY_FILTER_REQUESTED
         return '0';
     }
 }
-

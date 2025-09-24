@@ -82,8 +82,6 @@ class Hook_symbol_THEME_COLOUR_IS_BRIGHT
             }
         }
 
-
         return $value;
     }
 }
-

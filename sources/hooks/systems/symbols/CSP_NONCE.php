@@ -50,4 +50,3 @@ class Hook_symbol_CSP_NONCE
         return $value;
     }
 }
-

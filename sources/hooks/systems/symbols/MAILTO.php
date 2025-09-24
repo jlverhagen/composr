@@ -52,4 +52,3 @@ class Hook_symbol_MAILTO
         return $value;
     }
 }
-

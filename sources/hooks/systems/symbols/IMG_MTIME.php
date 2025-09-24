@@ -64,4 +64,3 @@ class Hook_symbol_IMG_MTIME
         return $value;
     }
 }
-

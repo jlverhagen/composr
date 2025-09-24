@@ -63,4 +63,3 @@ class Hook_symbol_AUTHOR_MEMBER
         return $value;
     }
 }
-

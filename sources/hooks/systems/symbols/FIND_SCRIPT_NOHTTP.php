@@ -53,4 +53,3 @@ class Hook_symbol_FIND_SCRIPT_NOHTTP
         return $value;
     }
 }
-

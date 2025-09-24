@@ -50,4 +50,3 @@ class Hook_symbol_MEMBER_EMAIL
         return $value;
     }
 }
-

@@ -50,4 +50,3 @@ class Hook_symbol_CHARSET
         return $value;
     }
 }
-

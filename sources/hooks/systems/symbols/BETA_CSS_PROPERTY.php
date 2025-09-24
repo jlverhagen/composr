@@ -108,4 +108,3 @@ class Hook_symbol_BETA_CSS_PROPERTY
         return $value;
     }
 }
-

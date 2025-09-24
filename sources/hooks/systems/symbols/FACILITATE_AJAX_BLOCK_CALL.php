@@ -107,4 +107,3 @@ class Hook_symbol_FACILITATE_AJAX_BLOCK_CALL
         return $value;
     }
 }
-

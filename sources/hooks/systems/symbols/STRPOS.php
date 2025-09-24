@@ -58,4 +58,3 @@ class Hook_symbol_STRPOS
         return $value;
     }
 }
-

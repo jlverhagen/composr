@@ -59,4 +59,3 @@ class Hook_symbol_COMMA_LIST_REVERSE
         return $value;
     }
 }
-

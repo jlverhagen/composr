@@ -62,4 +62,3 @@ class Hook_symbol_WORDWRAP
         return $value;
     }
 }
-

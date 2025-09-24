@@ -50,4 +50,3 @@ class Hook_symbol_ZONE_HEADER_TEXT
         return $value;
     }
 }
-
