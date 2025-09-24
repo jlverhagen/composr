@@ -53,7 +53,7 @@
         }
         
         // Initialise session expiration checking if we are not a guest
-        if (!$cms.isGuest()) {
+        if (!$cms.isGuest() && !$cms.inMinikernelVersion()) {
             var pendingConfirm = false;
             var sessionCheck = function () {
                 if (pendingConfirm) {
