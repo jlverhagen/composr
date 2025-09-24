@@ -345,7 +345,7 @@ END;
 
         // Standard error logging
         if ((php_function_allowed('error_log')) && ($error_log == 'errorlog.php')) {
-            @error_log('Composr: CRITICAL ' . str_replace("\n", '', $error . $full_trace), 0);
+            @error_log('Composr: CRITICAL ' . str_replace("\n", '', $error . "\n" . $full_trace), 0);
         }
 
         // Custom error logging
@@ -355,7 +355,8 @@ END;
                 $myfile = cms_fopen_text_write(get_custom_file_base() . '/data_custom/' . $error_log, true, 'ab');
                 fwrite($myfile, loggable_date() . "\n");
                 fwrite($myfile, 'Composr: CRITICAL ' . "\n");
-                fwrite($myfile, $error . $full_trace);
+                fwrite($myfile, $error);
+                fwrite($myfile, $full_trace);
                 fwrite($myfile, "\n\n");
                 flock($myfile, LOCK_UN);
                 fclose($myfile);

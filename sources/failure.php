@@ -299,16 +299,16 @@ function _cms_error_handler(string $type, int $errno, string $errstr, string $er
             switch (cms_strtoupper_ascii($type)) {
                 case 'ERROR':
                 case 'FATAL ERROR':
-                    @error_log('PHP: CRITICAL ' . $php_error_label . $full_trace, 0);
+                    @error_log('PHP: CRITICAL ' . $php_error_label . "\n" . $full_trace, 0);
                     break;
                 case 'WARNING':
-                    @error_log('PHP: ERROR ' . $php_error_label . $full_trace, 0);
+                    @error_log('PHP: ERROR ' . $php_error_label . "\n" . $full_trace, 0);
                     break;
                 case 'NOTICE':
-                    @error_log('PHP: WARNING ' . $php_error_label . $full_trace, 0);
+                    @error_log('PHP: WARNING ' . $php_error_label . "\n" . $full_trace, 0);
                     break;
                 case 'DEPRECATED':
-                    @error_log('PHP: INFO ' . $php_error_label . $full_trace, 0);
+                    @error_log('PHP: INFO ' . $php_error_label . "\n" . $full_trace, 0);
                     break;
             }
         }
@@ -504,13 +504,13 @@ function _generic_exit($text, string $template, ?bool $support_match_key_message
             if (php_function_allowed('error_log')) {
                 switch ($template) {
                     case 'INFORM_SCREEN':
-                        @error_log(brand_name() . ': INFO ' . $php_error_label . $full_trace, 0);
+                        @error_log(brand_name() . ': INFO ' . $php_error_label . "\n" . $full_trace, 0);
                         break;
                     case 'WARN_SCREEN':
-                        @error_log(brand_name() . ': WARNING ' . $php_error_label . $full_trace, 0);
+                        @error_log(brand_name() . ': WARNING ' . $php_error_label . "\n" . $full_trace, 0);
                         break;
                     case 'FATAL_SCREEN':
-                        @error_log(brand_name() . ': ERROR ' . $php_error_label . $full_trace, 0);
+                        @error_log(brand_name() . ': ERROR ' . $php_error_label . "\n" . $full_trace, 0);
                         break;
                 }
             }
@@ -1555,7 +1555,7 @@ function get_text_trace() : string
         $ret .= "\n";
     }
 
-    $already_traced = true;
+    //$already_traced = true;
 
     return trim($ret);
 }
@@ -1624,7 +1624,7 @@ function get_html_trace() : object
         }
     }
 
-    $already_traced = true;
+    //$already_traced = true;
 
     return do_template('STACK_TRACE', ['_GUID' => '9620695fb8c3e411a6a4926432cea64f', 'POST' => $post, 'TRACE' => $trace]);
 }
