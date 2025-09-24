@@ -213,7 +213,9 @@ if (!function_exists('critical_error')) {
             $display_trace = true;
         }
 
+        require_code('failure');
         $full_trace = get_text_trace();
+
         if ($display_trace) {
             $_trace = debug_backtrace();
             $extra = '<div class="box guid-{_GUID}"><div class="box-inner"><h2>Stack trace&hellip;</h2>';
