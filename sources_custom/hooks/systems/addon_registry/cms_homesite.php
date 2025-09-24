@@ -187,7 +187,6 @@ This addon does not contain the homesite install code and the overall site and t
             'site/pages/minimodules_custom/themeing_changes.php',
             'sources_custom/cms_homesite.php',
             'sources_custom/cms_homesite_make_upgrader.php',
-            'sources_custom/cns_forumview.php',
             'sources_custom/errorservice.php',
             'sources_custom/hooks/blocks/main_staff_checklist/cms_homesite.php',
             'sources_custom/hooks/endpoints/cms_homesite/.htaccess',
