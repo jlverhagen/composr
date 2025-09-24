@@ -538,19 +538,65 @@ function _generic_exit($text, string $template, ?bool $support_match_key_message
         $may_log_error = ((!running_script('cron_bridge')) || (@filemtime(get_custom_file_base() . '/data_custom/errorlog.php') < time() - (60 * 5)));
 
         if ($may_log_error) {
+            // Generate stack trace
+            $full_trace = '';
+            if (strpos($php_error_label, ' -> ') === false) {
+                $_trace = debug_backtrace();
+                foreach ($_trace as $stage) {
+                    $traces = '';
+                    foreach ($stage as $key => $value) {
+                        try {
+                            if ((is_object($value) && (is_a($value, 'Tempcode'))) || (is_array($value) && (strlen(serialize($value)) > 500))) {
+                                $_value = gettype($value);
+                            } else {
+                                $_value = gettype($value);
+                                switch ($_value) {
+                                    case 'integer':
+                                        $_value = strval($value);
+                                        break;
+                                    case 'string':
+                                        $_value = $value;
+                                        break;
+                                    default:
+                                        if (strpos($php_error_label, 'Allowed memory') === false) { // Actually we don't call this code path for memory limit issues any more, as stack trace is useless (comes from the catch_fatal_errors function)
+                                            $_value = serialize($value);
+                                        }
+                                        break;
+                                }
+                            }
+                        } catch (Exception $e) { // Can happen for SimpleXMLElement
+                            $_value = '...';
+                        }
+
+                        // Sanitise stack trace values
+                        global $SITE_INFO;
+                        if ((isset($SITE_INFO['db_site_password'])) && (strlen($SITE_INFO['db_site_password']) > 4)) {
+                            $_value = str_replace($SITE_INFO['db_site_password'], '(password removed)', $_value);
+                        }
+                        if ((isset($SITE_INFO['db_forums_password'])) && (strlen($SITE_INFO['db_forums_password']) > 4)) {
+                            $_value = str_replace($SITE_INFO['db_forums_password'], '(password removed)', $_value);
+                        }
+                        $_value = str_replace([get_custom_file_base() . '/', get_custom_file_base() . '\\', get_file_base() . '/', get_file_base() . '\\'], ['', '', '', ''], $_value);
+
+                        $traces .= (function_exists('cms_ucfirst_ascii') ? cms_ucfirst_ascii($key) : ucfirst($key)) . ' -> ' . htmlentities($_value) . '<br />' . "\n";
+                    }
+                    $full_trace .= "\n" . $traces;
+                }
+            }
+
             if ((function_exists('syslog')) && (GOOGLE_APPENGINE)) {
                 syslog(LOG_ERR, $php_error_label);
             }
             if (php_function_allowed('error_log')) {
                 switch ($template) {
                     case 'INFORM_SCREEN':
-                        @error_log(brand_name() . ': INFO ' . $php_error_label, 0);
+                        @error_log(brand_name() . ': INFO ' . $php_error_label . $full_trace, 0);
                         break;
                     case 'WARN_SCREEN':
-                        @error_log(brand_name() . ': WARNING ' . $php_error_label, 0);
+                        @error_log(brand_name() . ': WARNING ' . $php_error_label . $full_trace, 0);
                         break;
                     case 'FATAL_SCREEN':
-                        @error_log(brand_name() . ': ERROR ' . $php_error_label, 0);
+                        @error_log(brand_name() . ': ERROR ' . $php_error_label . $full_trace, 0);
                         break;
                 }
             }
