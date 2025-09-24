@@ -229,8 +229,8 @@ function improperly_filled_in_post(string $name)
  * @param  ID_TEXT $type Error type indicator (tiny human-readable text string)
  * @set error warning notice deprecated
  * @param  integer $errno The error code-number
- * @param  PATH $errstr The error message
- * @param  string $errfile The file the error occurred in
+ * @param  string $errstr The error message
+ * @param  PATH $errfile The file the error occurred in
  * @param  integer $errline The line the error occurred on
  * @param  integer $syslog_type The syslog type (used by GAE logging)
  * @param  string $handling_method How to handle the error
@@ -249,6 +249,52 @@ function _cms_error_handler(string $type, int $errno, string $errstr, string $er
         }
     }
 
+    // Generate stack trace
+    $full_trace = '';
+    if (strpos($errstr, ' -> ') === false) {
+        $_trace = debug_backtrace();
+        foreach ($_trace as $stage) {
+            $traces = '';
+            foreach ($stage as $key => $value) {
+                try {
+                    if ((is_object($value) && (is_a($value, 'Tempcode'))) || (is_array($value) && (strlen(serialize($value)) > 500))) {
+                        $_value = gettype($value);
+                    } else {
+                        $_value = gettype($value);
+                        switch ($_value) {
+                            case 'integer':
+                                $_value = strval($value);
+                                break;
+                            case 'string':
+                                $_value = $value;
+                                break;
+                            default:
+                                if (strpos($errstr, 'Allowed memory') === false) { // Actually we don't call this code path for memory limit issues any more, as stack trace is useless (comes from the catch_fatal_errors function)
+                                    $_value = serialize($value);
+                                }
+                                break;
+                        }
+                    }
+                } catch (Exception $e) { // Can happen for SimpleXMLElement
+                    $_value = '...';
+                }
+
+                // Sanitise stack trace values
+                global $SITE_INFO;
+                if ((isset($SITE_INFO['db_site_password'])) && (strlen($SITE_INFO['db_site_password']) > 4)) {
+                    $_value = str_replace($SITE_INFO['db_site_password'], '(password removed)', $_value);
+                }
+                if ((isset($SITE_INFO['db_forums_password'])) && (strlen($SITE_INFO['db_forums_password']) > 4)) {
+                    $_value = str_replace($SITE_INFO['db_forums_password'], '(password removed)', $_value);
+                }
+                $_value = str_replace([get_custom_file_base() . '/', get_custom_file_base() . '\\', get_file_base() . '/', get_file_base() . '\\'], ['', '', '', ''], $_value);
+
+                $traces .= (function_exists('cms_ucfirst_ascii') ? cms_ucfirst_ascii($key) : ucfirst($key)) . ' -> ' . htmlentities($_value) . '<br />' . "\n";
+            }
+            $full_trace .= "\n" . $traces;
+        }
+    }
+
     // Generate error message
     $outx = '<strong>' . cms_strtoupper_ascii($type) . '</strong> [' . strval($errno) . '] ' . $errstr . ' in ' . $errfile . ' on line ' . strval($errline) . '<br />' . "\n";
     if (class_exists('Tempcode')) {
@@ -260,6 +306,7 @@ function _cms_error_handler(string $type, int $errno, string $errstr, string $er
         $out = $outx . $trace->evaluate();
     } else {
         $out = $outx;
+        $out .= $full_trace;
     }
 
     require_code('urls');
@@ -295,16 +342,16 @@ function _cms_error_handler(string $type, int $errno, string $errstr, string $er
             switch (cms_strtoupper_ascii($type)) {
                 case 'ERROR':
                 case 'FATAL ERROR':
-                    @error_log('PHP: CRITICAL ' . $php_error_label, 0);
+                    @error_log('PHP: CRITICAL ' . $php_error_label . $full_trace, 0);
                     break;
                 case 'WARNING':
-                    @error_log('PHP: ERROR ' . $php_error_label, 0);
+                    @error_log('PHP: ERROR ' . $php_error_label . $full_trace, 0);
                     break;
                 case 'NOTICE':
-                    @error_log('PHP: WARNING ' . $php_error_label, 0);
+                    @error_log('PHP: WARNING ' . $php_error_label . $full_trace, 0);
                     break;
                 case 'DEPRECATED':
-                    @error_log('PHP: INFO ' . $php_error_label, 0);
+                    @error_log('PHP: INFO ' . $php_error_label . $full_trace, 0);
                     break;
             }
         }

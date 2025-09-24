@@ -199,6 +199,7 @@ if (!function_exists('critical_error')) {
         $script_name = isset($_SERVER['SCRIPT_NAME']) ? $_SERVER['SCRIPT_NAME'] : '';
         $in_upgrader = (basename($script_name) == 'upgrader.php');
 
+        $display_trace = false;
         if (
             (strpos($error, 'Allowed memory') === false) &&
             ((($relay === null)) || (strpos($relay, 'Stack trace') === false)) &&
@@ -209,48 +210,58 @@ if (!function_exists('critical_error')) {
                 ($in_upgrader)
             )
         ) {
-            $_trace = debug_backtrace();
+            $display_trace = true;
+        }
+
+        $_trace = debug_backtrace();
+        $full_trace = '';
+        if ($display_trace) {
             $extra = '<div class="box guid-{_GUID}"><div class="box-inner"><h2>Stack trace&hellip;</h2>';
-            foreach ($_trace as $stage) {
-                $traces = '';
-                foreach ($stage as $key => $value) {
-                    try {
-                        if ((is_object($value) && (is_a($value, 'Tempcode'))) || (is_array($value) && (strlen(serialize($value)) > 500))) {
-                            $_value = gettype($value);
-                        } else {
-                            $_value = gettype($value);
-                            switch ($_value) {
-                                case 'integer':
-                                    $_value = strval($value);
-                                    break;
-                                case 'string':
-                                    $_value = $value;
-                                    break;
-                                default:
-                                    if (strpos($error, 'Allowed memory') === false) { // Actually we don't call this code path for memory limit issues any more, as stack trace is useless (comes from the catch_fatal_errors function)
-                                        $_value = serialize($value);
-                                    }
-                                    break;
-                            }
+        }
+        foreach ($_trace as $stage) {
+            $traces = '';
+            foreach ($stage as $key => $value) {
+                try {
+                    if ((is_object($value) && (is_a($value, 'Tempcode'))) || (is_array($value) && (strlen(serialize($value)) > 500))) {
+                        $_value = gettype($value);
+                    } else {
+                        $_value = gettype($value);
+                        switch ($_value) {
+                            case 'integer':
+                                $_value = strval($value);
+                                break;
+                            case 'string':
+                                $_value = $value;
+                                break;
+                            default:
+                                if (strpos($error, 'Allowed memory') === false) { // Actually we don't call this code path for memory limit issues any more, as stack trace is useless (comes from the catch_fatal_errors function)
+                                    $_value = serialize($value);
+                                }
+                                break;
                         }
-                    } catch (Exception $e) { // Can happen for SimpleXMLElement
-                        $_value = '...';
                     }
-
-                    // Sanitise stack trace values
-                    global $SITE_INFO;
-                    if ((isset($SITE_INFO['db_site_password'])) && (strlen($SITE_INFO['db_site_password']) > 4)) {
-                        $_value = str_replace($SITE_INFO['db_site_password'], '(password removed)', $_value);
-                    }
-                    if ((isset($SITE_INFO['db_forums_password'])) && (strlen($SITE_INFO['db_forums_password']) > 4)) {
-                        $_value = str_replace($SITE_INFO['db_forums_password'], '(password removed)', $_value);
-                    }
-                    $_value = str_replace([get_custom_file_base() . '/', get_custom_file_base() . '\\', get_file_base() . '/', get_file_base() . '\\'], ['', '', '', ''], $_value);
-
-                    $traces .= (function_exists('cms_ucfirst_ascii') ? cms_ucfirst_ascii($key) : ucfirst($key)) . ' -> ' . htmlentities($_value) . '<br />' . "\n";
+                } catch (Exception $e) { // Can happen for SimpleXMLElement
+                    $_value = '...';
                 }
+
+                // Sanitise stack trace values
+                global $SITE_INFO;
+                if ((isset($SITE_INFO['db_site_password'])) && (strlen($SITE_INFO['db_site_password']) > 4)) {
+                    $_value = str_replace($SITE_INFO['db_site_password'], '(password removed)', $_value);
+                }
+                if ((isset($SITE_INFO['db_forums_password'])) && (strlen($SITE_INFO['db_forums_password']) > 4)) {
+                    $_value = str_replace($SITE_INFO['db_forums_password'], '(password removed)', $_value);
+                }
+                $_value = str_replace([get_custom_file_base() . '/', get_custom_file_base() . '\\', get_file_base() . '/', get_file_base() . '\\'], ['', '', '', ''], $_value);
+
+                $traces .= (function_exists('cms_ucfirst_ascii') ? cms_ucfirst_ascii($key) : ucfirst($key)) . ' -> ' . htmlentities($_value) . '<br />' . "\n";
+            }
+            if ($display_trace) {
                 $extra .= '<p>' . $traces . '</p>' . "\n";
             }
+            $full_trace .= "\n" . $traces;
+        }
+        if ($display_trace) {
             $extra .= '</div></div>';
         }
 
@@ -339,7 +350,7 @@ END;
 
         // Standard error logging
         if ((php_function_allowed('error_log')) && ($error_log == 'errorlog.php')) {
-            @error_log('Composr: CRITICAL ' . str_replace("\n", '', $error), 0);
+            @error_log('Composr: CRITICAL ' . str_replace("\n", '', $error . $full_trace), 0);
         }
 
         // Custom error logging
@@ -349,7 +360,7 @@ END;
                 $myfile = cms_fopen_text_write(get_custom_file_base() . '/data_custom/' . $error_log, true, 'ab');
                 fwrite($myfile, loggable_date() . "\n");
                 fwrite($myfile, 'Composr: CRITICAL ' . "\n");
-                fwrite($myfile, $error);
+                fwrite($myfile, $error . $full_trace);
                 fwrite($myfile, "\n\n");
                 flock($myfile, LOCK_UN);
                 fclose($myfile);

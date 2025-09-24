@@ -329,7 +329,7 @@ function insert_lang_comcode_attachments(string $field_name, int $level, string 
         $source_user = $for_member;
     }
 
-    if (!multi_lang_content()) {
+    if (multi_lang_content() === false) {
         final_attachments_from_preview($id, $db);
 
         $ret = [];

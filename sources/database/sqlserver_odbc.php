@@ -115,7 +115,7 @@ class Database_Static_sqlserver_odbc extends Database_super_sqlserver
             // FUDGE: Horrible, but we need to switch the active identity column somehow
             $pos = strpos($query, '(');
             $table_name = substr($query, 12, $pos - 13);
-            if ((!multi_lang_content()) || (substr($table_name, -strlen('translate')) != 'translate')) {
+            if ((multi_lang_content() === false) || (substr($table_name, -strlen('translate')) != 'translate')) {
                 $results = @odbc_exec($connection, 'SET IDENTITY_INSERT ' . $table_name . ' ON; ' . $query);
             }
         }
