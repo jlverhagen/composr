@@ -32,7 +32,6 @@ class Hook_symbol_JS_ON
     {
         return [
             'compile' => SYMBOL_COMPILE_STATIC_SAFE_SIMPLE_JAVASCRIPT,
-            'public' => true,
         ];
     }
 

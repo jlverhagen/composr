@@ -32,7 +32,6 @@ class Hook_symbol_CURRENTLY_INVISIBLE
     {
         return [
             'compile' => SYMBOL_COMPILE_STATIC_NONE,
-            'public' => false,
         ];
     }
 

@@ -32,7 +32,6 @@ class Hook_symbol_METADATA_IMAGE_EXTRACT
     {
         return [
             'compile' => SYMBOL_COMPILE_STATIC_NONE,
-            'public' => false,
         ];
     }
 

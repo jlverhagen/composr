@@ -32,7 +32,6 @@ class Hook_symbol_INLINE_STATS
     {
         return [
             'compile' => SYMBOL_COMPILE_STATIC_SAFE,
-            'public' => false,
         ];
     }
 

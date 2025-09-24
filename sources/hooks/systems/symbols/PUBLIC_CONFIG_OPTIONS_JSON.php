@@ -32,7 +32,6 @@ class Hook_symbol_PUBLIC_CONFIG_OPTIONS_JSON
     {
         return [
             'compile' => SYMBOL_COMPILE_STATIC_NONE,
-            'public' => false,
         ];
     }
 

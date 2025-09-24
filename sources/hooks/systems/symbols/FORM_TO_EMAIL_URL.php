@@ -32,7 +32,6 @@ class Hook_symbol_FORM_TO_EMAIL_URL
     {
         return [
             'compile' => SYMBOL_COMPILE_STATIC_SAFE_SIMPLE_BASE_URLS,
-            'public' => false,
         ];
     }
 

@@ -32,7 +32,6 @@ class Hook_symbol_MESSAGES_BOTTOM
     {
         return [
             'compile' => SYMBOL_COMPILE_STATIC_NONE,
-            'public' => false,
         ];
     }
 

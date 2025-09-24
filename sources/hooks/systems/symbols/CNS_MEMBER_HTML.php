@@ -32,7 +32,6 @@ class Hook_symbol_CNS_MEMBER_HTML
     {
         return [
             'compile' => SYMBOL_COMPILE_STATIC_IF_AGGRESSIVE,
-            'public' => false,
         ];
     }
 

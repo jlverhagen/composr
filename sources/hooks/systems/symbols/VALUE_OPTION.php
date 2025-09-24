@@ -32,7 +32,6 @@ class Hook_symbol_VALUE_OPTION
     {
         return [
             'compile' => SYMBOL_COMPILE_STATIC_IF_AGGRESSIVE,
-            'public' => false,
         ];
     }
 

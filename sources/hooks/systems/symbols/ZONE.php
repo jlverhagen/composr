@@ -32,7 +32,6 @@ class Hook_symbol_ZONE
     {
         return [
             'compile' => SYMBOL_COMPILE_STATIC_NONE,
-            'public' => true,
         ];
     }
 

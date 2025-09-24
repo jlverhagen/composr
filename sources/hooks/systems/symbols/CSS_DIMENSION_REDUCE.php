@@ -32,7 +32,6 @@ class Hook_symbol_CSS_DIMENSION_REDUCE
     {
         return [
             'compile' => SYMBOL_COMPILE_STATIC_SAFE,
-            'public' => false,
         ];
     }
 

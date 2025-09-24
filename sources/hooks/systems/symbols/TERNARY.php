@@ -32,7 +32,6 @@ class Hook_symbol_TERNARY
     {
         return [
             'compile' => SYMBOL_COMPILE_STATIC_SAFE,
-            'public' => false,
         ];
     }
 

@@ -32,7 +32,6 @@ class Hook_symbol_HAS_ZONE_ACCESS
     {
         return [
             'compile' => SYMBOL_COMPILE_STATIC_NONE,
-            'public' => false,
         ];
     }
 

@@ -32,7 +32,6 @@ class Hook_symbol_MAKE_URL_ABSOLUTE
     {
         return [
             'compile' => SYMBOL_COMPILE_STATIC_SAFE,
-            'public' => false,
         ];
     }
 

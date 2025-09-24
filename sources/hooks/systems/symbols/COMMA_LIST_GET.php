@@ -32,7 +32,6 @@ class Hook_symbol_COMMA_LIST_GET
     {
         return [
             'compile' => SYMBOL_COMPILE_STATIC_SAFE,
-            'public' => false,
         ];
     }
 

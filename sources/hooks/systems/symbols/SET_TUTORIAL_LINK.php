@@ -32,7 +32,6 @@ class Hook_symbol_SET_TUTORIAL_LINK
     {
         return [
             'compile' => SYMBOL_COMPILE_STATIC_NONE,
-            'public' => false,
         ];
     }
 

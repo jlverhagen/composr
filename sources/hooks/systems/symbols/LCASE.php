@@ -32,7 +32,6 @@ class Hook_symbol_LCASE
     {
         return [
             'compile' => SYMBOL_COMPILE_STATIC_SAFE,
-            'public' => false,
         ];
     }
 
@@ -51,7 +50,6 @@ class Hook_symbol_LCASE
         if (isset($param[0])) {
             $value = cms_mb_strtolower($param[0]);
         }
-
 
         if ($GLOBALS['XSS_DETECT'] && ocp_is_escaped($param[0])) {
             ocp_mark_as_escaped($value);

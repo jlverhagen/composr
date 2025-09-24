@@ -32,7 +32,6 @@ class Hook_symbol_CKEDITOR_PATH
     {
         return [
             'compile' => SYMBOL_COMPILE_STATIC_SAFE_SIMPLE_BASE_URLS,
-            'public' => false,
         ];
     }
 

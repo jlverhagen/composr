@@ -32,7 +32,6 @@ class Hook_symbol_LOGIN_LABEL
     {
         return [
             'compile' => SYMBOL_COMPILE_STATIC_NONE,
-            'public' => false,
         ];
     }
 

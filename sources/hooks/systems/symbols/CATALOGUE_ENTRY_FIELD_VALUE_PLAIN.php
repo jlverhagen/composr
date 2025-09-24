@@ -36,7 +36,6 @@ class Hook_symbol_CATALOGUE_ENTRY_FIELD_VALUE_PLAIN
 
         return [
             'compile' => SYMBOL_COMPILE_STATIC_NONE,
-            'public' => false,
         ];
     }
 

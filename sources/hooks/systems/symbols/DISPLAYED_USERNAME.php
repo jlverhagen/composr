@@ -32,7 +32,6 @@ class Hook_symbol_DISPLAYED_USERNAME
     {
         return [
             'compile' => SYMBOL_COMPILE_STATIC_IF_AGGRESSIVE,
-            'public' => false,
         ];
     }
 

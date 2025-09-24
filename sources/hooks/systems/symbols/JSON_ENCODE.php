@@ -32,7 +32,6 @@ class Hook_symbol_JSON_ENCODE
     {
         return [
             'compile' => SYMBOL_COMPILE_STATIC_SAFE,
-            'public' => false,
         ];
     }
 

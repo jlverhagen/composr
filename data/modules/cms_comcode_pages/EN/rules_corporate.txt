@@ -6,7 +6,7 @@ By using corporate, the language for "rules" will also be changed to "Terms of S
 
 Effective Date: [tt]Insert Date[/tt]
 
-Welcome to {$SITE_NAME} (“we,” “our,” “us”). By accessing or using {$SITE_NAME} (the “Website”), you agree to comply with and be bound by these Terms of Service. If you do not agree, please do not use this Website.
+Welcome to {$SITE_NAME} ('we', 'our', 'us'). By accessing or using {$SITE_NAME} (the 'Website'), you agree to comply with and be bound by these Terms of Service. If you do not agree, please do not use this Website.
 
 [contents][/contents]
 
@@ -42,7 +42,7 @@ Welcome to {$SITE_NAME} (“we,” “our,” “us”). By accessing or using {
  - download pages from our Website for caching in a web browser;
  - stream audio and video files from our Website;
  - use our Website services by means of a web browser;
- - download content from our Website where an explicit “download” link or button is made available and your account has the privilege to download the content;
+ - download content from our Website where an explicit 'download' link or button is made available and your account has the privilege to download the content;
  - submit useful content to our Website where tools are made available to submit content
 [*]You may only use our website for your own personal use, and you must not use our website for any other purposes.
 [*]Unless you own or control the relevant rights in the material, you must not:
@@ -106,7 +106,7 @@ Welcome to {$SITE_NAME} (“we,” “our,” “us”). By accessing or using {
 [*]Members are entitled to a refund period of [refund days] days. Should a product or service blatantly violate the Terms of Service or is otherwise defective beyond your ability to use as advertised, you may contact us within [refund days] of purchase for a full refund.
 [*]When purchasing something, if presented with additional Terms specific to that item, by proceeding with the transaction, you agree to the Terms of purchasing that item in full, excluding any provisions that directly violate this Terms of Service.
 [*]Some downloads may require agreement to a licence. When downloading a file, you agree to the licence except for provisions that violate this Terms of Service.
-[*]Our Website has a virtual currency system called “points”. Points have no monetary value outside of the Website and cannot be traded in for legal tender. However, they can be used for acquiring certain features, obtaining discounts, rewarding others, and “escrowing” others for their personal services on or outside our Website.
+[*]Our Website has a virtual currency system called 'points'. Points have no monetary value outside of the Website and cannot be traded in for legal tender. However, they can be used for acquiring certain features, obtaining discounts, rewarding others, and 'escrowing' others for their personal services on or outside our Website.
 [/list]
 
 [title="2"]VII. Your Rights[/title]
@@ -124,7 +124,7 @@ Welcome to {$SITE_NAME} (“we,” “our,” “us”). By accessing or using {
 [*]We may, at any time in our sole discretion, when we reasonably believe such action will serve the best interests of our Website or company as a whole, with or without notice:
  - ban your account and/or IP address;
  - delete your account;
- - restrict your account’s privileges;
+ - restrict your account's privileges;
  - edit your account details;
  - purge or anonymize your data.
 [*]Without prejudice to our other rights under the Terms of Service, if you breach the Terms of Service in any way, or if we reasonably suspect with clear and convincing evidence that you have breached the Terms of Service in any way, we may, at our sole discretion, with or without notice:
@@ -161,7 +161,7 @@ Welcome to {$SITE_NAME} (“we,” “our,” “us”). By accessing or using {
 [*]We will not be liable to you in respect of any business losses, including (without limitation) loss of or damage to profits, income, revenue, use, production, anticipated savings, business, contracts, commercial opportunities or goodwill.
 [*]We will not be liable to you in respect of any loss or corruption of any data, database or software.
 [*]We will not be liable to you in respect of any special, indirect or consequential loss or damage.
-[*]We will not be liable to you in respect of any loss or damage resulting from others’ knowledge of your use of our Website or services.
+[*]We will not be liable to you in respect of any loss or damage resulting from others' knowledge of your use of our Website or services.
 [*]We will not be liable to you in respect of any loss or damage resulting from using any third-party website which may be linked on our Website.
 [*]We will not be liable to you in respect of any loss or damage which took place outside of our Website.
 [/list]

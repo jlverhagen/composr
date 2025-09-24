@@ -32,7 +32,6 @@ class Hook_symbol_FIND_ID_VIA_URL_MONIKER
     {
         return [
             'compile' => SYMBOL_COMPILE_STATIC_IF_AGGRESSIVE,
-            'public' => false,
         ];
     }
 

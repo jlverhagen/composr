@@ -279,6 +279,11 @@ function geolocate_ip(?string $ip = null) : ?string
         return $result[$ip];
     }
 
+    if (running_script('install')) {
+        $result[$ip] = null;
+        return null;
+    }
+
     if (get_db_type() == 'xml') { // Too much data
         return null;
     }
@@ -287,11 +292,6 @@ function geolocate_ip(?string $ip = null) : ?string
     if ($long_ip === false) {
         $result[$ip] = null;
         return null; // No IP6 support
-    }
-
-    if (running_script('install')) {
-        $result[$ip] = null;
-        return null;
     }
 
     $query = 'SELECT * FROM ' . get_table_prefix() . 'ip_country WHERE begin_num<=' . sprintf('%u', $long_ip) . ' AND end_num>=' . sprintf('%u', $long_ip);

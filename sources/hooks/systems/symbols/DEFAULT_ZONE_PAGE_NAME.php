@@ -32,7 +32,6 @@ class Hook_symbol_DEFAULT_ZONE_PAGE_NAME
     {
         return [
             'compile' => SYMBOL_COMPILE_STATIC_SAFE,
-            'public' => false,
         ];
     }
 
@@ -47,7 +46,7 @@ class Hook_symbol_DEFAULT_ZONE_PAGE_NAME
     public function run(array $param, string $lang, array $escaped) : string
     {
         $value = DEFAULT_ZONE_PAGE_NAME;
-        
+
         if ($GLOBALS['XSS_DETECT']) {
             ocp_mark_as_escaped($value);
         }

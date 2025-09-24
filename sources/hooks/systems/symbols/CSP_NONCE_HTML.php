@@ -32,7 +32,6 @@ class Hook_symbol_CSP_NONCE_HTML
     {
         return [
             'compile' => SYMBOL_COMPILE_STATIC_NONE,
-            'public' => false,
         ];
     }
 

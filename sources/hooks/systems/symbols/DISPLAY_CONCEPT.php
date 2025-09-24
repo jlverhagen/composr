@@ -32,7 +32,6 @@ class Hook_symbol_DISPLAY_CONCEPT
     {
         return [
             'compile' => SYMBOL_COMPILE_STATIC_NONE,
-            'public' => false,
         ];
     }
 
@@ -65,7 +64,6 @@ class Hook_symbol_DISPLAY_CONCEPT
             }
             $value = $temp_tpl->evaluate();
         }
-
 
         return $value;
     }

@@ -36,7 +36,6 @@ class Hook_symbol_AUTHOR_MEMBER
 
         return [
             'compile' => SYMBOL_COMPILE_STATIC_IF_AGGRESSIVE,
-            'public' => false,
         ];
     }
 

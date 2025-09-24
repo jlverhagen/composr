@@ -32,7 +32,6 @@ class Hook_symbol_PROTECT_URL_PARAMETER
     {
         return [
             'compile' => SYMBOL_COMPILE_STATIC_SAFE,
-            'public' => false,
         ];
     }
 

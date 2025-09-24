@@ -40,7 +40,6 @@ class Hook_symbol_CNS_RANK_IMAGE
 
         return [
             'compile' => SYMBOL_COMPILE_STATIC_NONE,
-            'public' => false,
         ];
     }
 

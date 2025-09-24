@@ -81,6 +81,7 @@ class Module_admin_actionlog
         require_code('actionlog');
 
         if ($type == 'browse') {
+            set_helper_panel_text(do_lang_tempcode('DOC_ACTIONLOG'));
             set_helper_panel_tutorial('tut_trace');
 
             breadcrumb_set_self(do_lang_tempcode('VIEW_ACTIONLOGS'));

@@ -32,7 +32,6 @@ class Hook_symbol_MOBILE
     {
         return [
             'compile' => SYMBOL_COMPILE_STATIC_NONE,
-            'public' => true,
         ];
     }
 

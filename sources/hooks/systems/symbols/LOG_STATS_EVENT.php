@@ -36,7 +36,6 @@ class Hook_symbol_LOG_STATS_EVENT
 
         return [
             'compile' => SYMBOL_COMPILE_STATIC_NONE,
-            'public' => false,
         ];
     }
 

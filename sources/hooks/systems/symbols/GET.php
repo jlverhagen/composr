@@ -32,7 +32,6 @@ class Hook_symbol_GET
     {
         return [
             'compile' => SYMBOL_COMPILE_STATIC_NONE,
-            'public' => false,
         ];
     }
 

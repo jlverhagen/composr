@@ -32,7 +32,6 @@ class Hook_symbol_STAFF_ADDRESS_PURE
     {
         return [
             'compile' => SYMBOL_COMPILE_STATIC_SAFE,
-            'public' => false,
         ];
     }
 

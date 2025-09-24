@@ -32,7 +32,6 @@ class Hook_symbol_PAD_LEFT
     {
         return [
             'compile' => SYMBOL_COMPILE_STATIC_SAFE,
-            'public' => false,
         ];
     }
 

@@ -32,7 +32,6 @@ class Hook_symbol_IS_STAFF
     {
         return [
             'compile' => SYMBOL_COMPILE_STATIC_NONE,
-            'public' => true,
         ];
     }
 

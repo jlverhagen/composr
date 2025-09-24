@@ -32,7 +32,6 @@ class Hook_symbol_VALID_FILE_TYPES
     {
         return [
             'compile' => SYMBOL_COMPILE_STATIC_SAFE,
-            'public' => false,
         ];
     }
 

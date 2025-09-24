@@ -32,7 +32,6 @@ class Hook_symbol_SUBSTR
     {
         return [
             'compile' => SYMBOL_COMPILE_STATIC_SAFE,
-            'public' => false,
         ];
     }
 

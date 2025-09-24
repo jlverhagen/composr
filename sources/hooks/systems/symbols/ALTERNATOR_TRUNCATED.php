@@ -32,7 +32,6 @@ class Hook_symbol_ALTERNATOR_TRUNCATED
     {
         return [
             'compile' => SYMBOL_COMPILE_STATIC_SAFE,
-            'public' => false,
         ];
     }
 

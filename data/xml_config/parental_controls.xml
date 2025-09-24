@@ -1,8 +1,8 @@
 <parental_controls require_dob="1" require_timezone="1" require_region="1">
 	<!-- Lockout: France (FR), under 15 -->
 	<control name="lockout" age_threshold="15" regions="FR" no_join="1">
-		<message>Under French law (Loi n° 2023-566 du 7 juillet 2023), the digital majority is 15. You are not yet of age to create or use an account.</message>
-		<privacy_policy>This is governed by French law, including Loi n° 2023-566, regarding digital majority and online safety.</privacy_policy>
+		<message>Under French law (Loi n 2023-566 du 7 juillet 2023), the digital majority is 15. You are not yet of age to create or use an account.</message>
+		<privacy_policy>This is governed by French law, including Loi n 2023-566, regarding digital majority and online safety.</privacy_policy>
 	</control>
 
 	<!-- Lockout: Ireland (IE), under 16 -->

@@ -36,7 +36,6 @@ class Hook_symbol_FIND_ID_VIA_COMMANDR_FS_FILENAME
 
         return [
             'compile' => SYMBOL_COMPILE_STATIC_IF_AGGRESSIVE,
-            'public' => false,
         ];
     }
 

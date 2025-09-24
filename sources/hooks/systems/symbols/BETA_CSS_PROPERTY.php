@@ -32,7 +32,6 @@ class Hook_symbol_BETA_CSS_PROPERTY
     {
         return [
             'compile' => SYMBOL_COMPILE_STATIC_SAFE,
-            'public' => false,
         ];
     }
 

@@ -32,7 +32,6 @@ class Hook_symbol_CLEAN_FILE_SIZE
     {
         return [
             'compile' => SYMBOL_COMPILE_STATIC_SAFE,
-            'public' => false,
         ];
     }
 

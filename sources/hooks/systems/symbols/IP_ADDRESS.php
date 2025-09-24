@@ -32,7 +32,6 @@ class Hook_symbol_IP_ADDRESS
     {
         return [
             'compile' => SYMBOL_COMPILE_STATIC_NONE,
-            'public' => false,
         ];
     }
 

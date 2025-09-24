@@ -32,7 +32,6 @@ class Hook_symbol_HEADER_TEXT
     {
         return [
             'compile' => SYMBOL_COMPILE_STATIC_NONE,
-            'public' => false,
         ];
     }
 

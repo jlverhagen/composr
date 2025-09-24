@@ -32,7 +32,6 @@ class Hook_symbol_SHOW_FOOTER
     {
         return [
             'compile' => SYMBOL_COMPILE_STATIC_NONE,
-            'public' => false,
         ];
     }
 

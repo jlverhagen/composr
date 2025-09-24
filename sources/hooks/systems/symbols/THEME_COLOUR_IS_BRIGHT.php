@@ -36,7 +36,6 @@ class Hook_symbol_THEME_COLOUR_IS_BRIGHT
 
         return [
             'compile' => SYMBOL_COMPILE_STATIC_SAFE,
-            'public' => false,
         ];
     }
 
@@ -82,7 +81,6 @@ class Hook_symbol_THEME_COLOUR_IS_BRIGHT
                 }
             }
         }
-
 
         return $value;
     }

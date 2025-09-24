@@ -32,7 +32,6 @@ class Hook_symbol_DEV_MODE
     {
         return [
             'compile' => SYMBOL_COMPILE_STATIC_NONE,
-            'public' => true,
         ];
     }
 

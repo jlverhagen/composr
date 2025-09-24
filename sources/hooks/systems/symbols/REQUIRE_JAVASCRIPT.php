@@ -32,7 +32,6 @@ class Hook_symbol_REQUIRE_JAVASCRIPT
     {
         return [
             'compile' => SYMBOL_COMPILE_STATIC_NONE,
-            'public' => false,
         ];
     }
 

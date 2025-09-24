@@ -32,7 +32,6 @@ class Hook_symbol_PROVIDE_WITH_TRANSLATION
     {
         return [
             'compile' => SYMBOL_COMPILE_STATIC_NONE,
-            'public' => false,
         ];
     }
 

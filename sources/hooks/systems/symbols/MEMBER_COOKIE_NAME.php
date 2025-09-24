@@ -32,7 +32,6 @@ class Hook_symbol_MEMBER_COOKIE_NAME
     {
         return [
             'compile' => SYMBOL_COMPILE_STATIC_SAFE,
-            'public' => false,
         ];
     }
 

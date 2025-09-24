@@ -32,7 +32,6 @@ class Hook_symbol_FACILITATE_AJAX_BLOCK_CALL
     {
         return [
             'compile' => SYMBOL_COMPILE_STATIC_NONE,
-            'public' => false,
         ];
     }
 
