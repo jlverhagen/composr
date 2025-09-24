@@ -59,7 +59,7 @@ class Hook_task_privacy_download
 
         // Create temporary file to use as archive
         $filename = preg_replace('#[^\w]#', '_', (($username != '') ? $username : do_lang('UNKNOWN'))) . '.tar.gz';
-        $file_path = cms_tempnam();
+        $file_path = cms_tempnam('pdload', true);
         $data_file = tar_open($file_path, 'wb');
 
         push_db_scope_check(false);
@@ -142,24 +142,24 @@ class Hook_task_privacy_download
                         } while (!empty($rows));
                     }
 
-                    // Now add files to the archive
+                    // Now add files to the archive (stream from disk to avoid loading into memory)
                     foreach ($data['files_included'] as $file => $exists) {
                         if ($exists === false) {
                             continue;
                         }
 
                         $actual_path = (get_custom_file_base() . '/' . rawurldecode($file));
-                        $size = filesize($actual_path);
 
-                        // Skip files which would be too big to load in for adding
-                        // TODO: Not acceptable; GDPR needs to allow the ability to download all member data. So this loop needs optimised.
-                        if (($size === false) || ($size > (1024 * 1024 * 32))) { // FUDGE
-                            $data['files_included'][$file] = false;
-                            continue;
+                        $mode = @fileperms($actual_path);
+                        if ($mode === false) {
+                            $mode = 0644;
+                        }
+                        $mtime = @filemtime($actual_path);
+                        if ($mtime === false) {
+                            $mtime = time();
                         }
 
-                        $_data = cms_file_get_contents_safe($actual_path, FILE_READ_LOCK);
-                        tar_add_file($data_file, rawurldecode($file), $_data);
+                        tar_add_file($data_file, rawurldecode($file), $actual_path, $mode, $mtime, true);
                     }
 
                     // Finally, create JSON file
