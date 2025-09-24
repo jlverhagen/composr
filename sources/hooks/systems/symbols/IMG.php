@@ -31,7 +31,7 @@ class Hook_symbol_IMG
     public function info() : ?array
     {
         return [
-            'compile' => SYMBOL_COMPILE_STATIC_SAFE_SIMPLE_BASE_URLS,
+            'compile' => SYMBOL_COMPILE_STATIC_IF_AGGRESSIVE,
         ];
     }
 
