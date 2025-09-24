@@ -147,15 +147,16 @@ function cms_get_temp_dir() : array
  * Create file with unique file name, but works around compatibility issues between servers. Note that the file is NOT automatically deleted. You should also delete it using "@unlink", as some servers have problems with permissions.
  *
  * @param  string $prefix The prefix of the temporary file name
+ * @param  boolean $software_temp_only Whether to always save to the software temp directory and not PHP's
  * @return ~string The name of the temporary file (false: error)
  *
  * @ignore
  */
-function _cms_tempnam(string $prefix = '')
+function _cms_tempnam(string $prefix = '', bool $software_temp_only = false)
 {
     list($tmp_path, $identified_problem_saving, $server_path, $local_path) = cms_get_temp_dir();
     $can_write_to_tmp_path = (php_function_allowed('tempnam') && (cms_is_writable($tmp_path)));
-    if ($can_write_to_tmp_path) {
+    if ((!$software_temp_only) && ($can_write_to_tmp_path)) {
         // Create a real temporary file
         //  We have to use "@" in case of "file created in the system's temporary directory" notice
         $tempnam = @tempnam($tmp_path, 'tmpfile__' . $prefix);
@@ -171,9 +172,9 @@ function _cms_tempnam(string $prefix = '')
             $tempnam = @tempnam($local_path, 'tmpfile__' . $prefix); // Try saving in local path even if we didn't think there'd be a problem saving into the system path
         }
     } else {
-        // A fake temporary file, as true ones have been disabled on PHP
+        // A fake temporary file, as true ones have been disabled on PHP (or we requested a fake one)
         require_code('crypt');
-        $tempnam = $local_path . '/' . 'tmpfile__' . $prefix . get_secure_random_string();
+        $tempnam = $local_path . '/' . 'tmpfile__' . $prefix . get_secure_random_string(13, CRYPT_BASE64);
         $myfile = fopen($tempnam, 'wb');
         fclose($myfile);
         fix_permissions($tempnam);

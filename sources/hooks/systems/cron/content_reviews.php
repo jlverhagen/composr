@@ -59,7 +59,7 @@ class Hook_cron_content_reviews
         }
 
         return [
-            'label' => 'Send content review notifications',
+            'label' => 'Periodic content reviews',
             'num_queued' => $num_queued,
             'minutes_between_runs' => 60 * 24,
             'enabled_by_default' => true,
@@ -139,7 +139,7 @@ class Hook_cron_content_reviews
                             $subpath = $object_fs->search($content_type, $content_id, true);
 
                             // TODO: We need some sort of privilege checking in case the owner or privileges changed
-                            // $privileges = $object_fs->get_resource_privileges(null, $content_type, $content_id);
+                            //$privileges = $object_fs->get_resource_privileges(null, $content_type, $content_id);
                             $object_fs->resource_delete($content_type, $filename, dirname($subpath));
                         }
                     }

@@ -53,20 +53,20 @@
         }
         
         // Initialise session expiration checking if we are not a guest
-        if (!$cms.isGuest()) {
+        if (!$cms.isGuest() && !$cms.inMinikernelVersion()) {
             var pendingConfirm = false;
             var sessionCheck = function () {
                 if (pendingConfirm) {
                     return;
                 }
                 
-                $cms.doAjaxRequest('{$FIND_SCRIPT_NOHTTP;,session_poller}').then(function (xhr) {
+                $cms.doAjaxRequest('{$FIND_SCRIPT_NOHTTP;,session_poller}' + $cms.keep(true)).then(function (xhr) {
                     var response = xhr.responseText;
                     if (response !== '') {
                         pendingConfirm = true;
                         $cms.ui.alert(response, undefined, true).then(function () {
                             pendingConfirm = false;
-                            $cms.doAjaxRequest('{$FIND_SCRIPT_NOHTTP;,session_poller}?update_session=1');
+                            $cms.doAjaxRequest('{$FIND_SCRIPT_NOHTTP;,session_poller}?update_session=1' + $cms.keep());
                         });
                     }
                 });

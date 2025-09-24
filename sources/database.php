@@ -35,7 +35,7 @@ find_lang_fields - for manually specifying the fields needed to dereference when
 function init__database()
 {
     global $HAS_MULTI_LANG_CONTENT;
-    $HAS_MULTI_LANG_CONTENT = null;
+    $HAS_MULTI_LANG_CONTENT = multi_lang_content();
 
     global $QUERY_LIST, $QUERY_COUNT, $QUERY_LIMITING, $DB_SCOPE_CHECK, $QUERY_FILE_LOG, $SITE_INFO, $DB_DRIVER;
     $QUERY_LIST = [];
@@ -169,9 +169,9 @@ function multi_lang_content() : bool
     global $HAS_MULTI_LANG_CONTENT;
 
     if ($HAS_MULTI_LANG_CONTENT === null) {
-        // Running installer: prioritise POST
-        if (running_script('install')) {
-            $HAS_MULTI_LANG_CONTENT = (post_param_string('value__multi_lang_content', '0') == '1'); // We default to disabled in the installer
+        // Running installer: prefer POST if provided; otherwise fall back to stored config/value
+        if (running_script('install') && isset($_POST['value__multi_lang_content'])) {
+            $HAS_MULTI_LANG_CONTENT = (post_param_string('value__multi_lang_content', '0') == '1'); // We default to disabled in the installer UI
             return $HAS_MULTI_LANG_CONTENT;
         }
 
