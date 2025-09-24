@@ -1541,7 +1541,7 @@ function get_text_trace() : string
         if (isset($stage['file'])) {
             $ret .= ' called at [' . $stage['file'];
             if (isset($stage['line'])) {
-                $ret .= strval($stage['line']);
+                $ret .= ':' . strval($stage['line']);
             }
             $ret .= ']';
         }
