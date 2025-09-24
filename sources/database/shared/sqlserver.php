@@ -377,7 +377,7 @@ abstract class Database_super_sqlserver extends DatabaseDriver
             $first = $values[0];
             $field_type = current($first); // Result found
 
-            if ((strpos($field_type, 'LONG') !== false) || ((!multi_lang_content()) && (strpos($field_type, 'SHORT_TRANS') !== false))) {
+            if ((strpos($field_type, 'LONG') !== false) || ((multi_lang_content() === false) && (strpos($field_type, 'SHORT_TRANS') !== false))) {
                 // We can't support this in SQL Server https://blogs.msdn.microsoft.com/bartd/2011/01/06/living-with-sqls-900-byte-index-key-length-limit/.
                 // We assume shorter numbers than 250 are only being used on short columns anyway, which will index perfectly fine without any constraint.
                 return [];

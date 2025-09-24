@@ -1127,7 +1127,7 @@ function lang_remap(string $field_name, $lang_id, string $text, ?object $db = nu
  */
 function delete_lang($lang_id, ?object $db = null)
 {
-    if (!multi_lang_content()) {
+    if (multi_lang_content() === false) {
         return;
     }
 
@@ -1306,7 +1306,7 @@ function get_translated_tempcode(string $table, array $row, string $field_name, 
  */
 function get_translated_text($entry, ?object $db = null, ?string $lang = null, bool $force = false) : ?string
 {
-    if (!multi_lang_content()) {
+    if (multi_lang_content() === false) {
         if (!is_string($entry)) { // Should have been a string when content translations are off
             trigger_error(do_lang('NOT_STRING_CONTENT_LANG_STRING'), E_USER_WARNING);
         }

@@ -89,7 +89,7 @@ function disable_content_translation()
     if (get_file_base() != get_custom_file_base()) {
         warn_exit(do_lang_tempcode('SHARED_INSTALL_PROHIBIT'));
     }
-    if (!multi_lang_content()) {
+    if (multi_lang_content() === false) {
         warn_exit(do_lang_tempcode('INTERNAL_ERROR', escape_html('1a3df0b21b3557b09cad74758c55b733')));
     }
 

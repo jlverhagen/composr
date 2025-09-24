@@ -1822,7 +1822,7 @@ class Forum_driver_cns extends Forum_driver_base
             $this->MEMBER_ROWS_CACHED[$member_id] = null;
             return null;
         }
-        if ($this->db == $GLOBALS['FORUM_DB'] && !multi_lang_content()) {
+        if (($this->db == $GLOBALS['FORUM_DB']) && (multi_lang_content() === false)) {
             // Optimisation
             require_code('cns_members');
             global $MEMBER_CACHE_FIELD_MAPPINGS;

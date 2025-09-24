@@ -160,9 +160,9 @@ function _general_db_init()
 /**
  * Find whether to run in multi-lang mode for content translations.
  *
- * @return boolean Whether to run in multi-lang mode for content translations
+ * @return ?boolean Whether to run in multi-lang mode for content translations (null: we don't know)
  */
-function multi_lang_content() : bool
+function multi_lang_content() : ?bool
 {
     static $getting_multi_lang_content = false;
 
@@ -175,7 +175,7 @@ function multi_lang_content() : bool
             return $HAS_MULTI_LANG_CONTENT;
         }
 
-        // Too early; default to SITE_INFO or true
+        // Too early
         if (!function_exists('get_value')) {
             // LEGACY: removed in 11 beta7 but we still need to support it (for the upgrader) if a value has not been set
             global $SITE_INFO;
@@ -183,12 +183,12 @@ function multi_lang_content() : bool
                 return ($SITE_INFO['multi_lang_content'] != '0');
             }
 
-            return true;
+            return null;
         }
 
-        // We are already trying to get the value; default to true
+        // We are already trying to get the value
         if ($getting_multi_lang_content) {
-            return true;
+            return null;
         }
 
         $getting_multi_lang_content = true;
@@ -202,7 +202,7 @@ function multi_lang_content() : bool
                 return ($SITE_INFO['multi_lang_content'] != '0');
             }
 
-            return true; // Default to true, but since we did not actually get a value, do not consider this final / put into the cache
+            return null;
         }
 
         $ret = ($value !== '0');
@@ -2273,7 +2273,7 @@ class DatabaseConnector
 
         if ($DEV_MODE) {
             if (peek_db_scope_check()) {
-                if ((!multi_lang_content()) && (strpos($query, $this->table_prefix . 'translate') !== false) && (strpos($query, 'CHECK TABLE') === false) && (strpos($query, 'DROP TABLE') === false) && (strpos($query, 'DROP INDEX') === false) && (strpos($query, 'ALTER TABLE') === false) && (strpos($query, 'CREATE TABLE') === false) && (trim($query) != 'SELECT * FROM cms_translate WHERE 1=1')) {
+                if ((multi_lang_content() === false) && (strpos($query, $this->table_prefix . 'translate') !== false) && (strpos($query, 'CHECK TABLE') === false) && (strpos($query, 'DROP TABLE') === false) && (strpos($query, 'DROP INDEX') === false) && (strpos($query, 'ALTER TABLE') === false) && (strpos($query, 'CREATE TABLE') === false) && (trim($query) != 'SELECT * FROM cms_translate WHERE 1=1')) {
                     fatal_exit('Assumption of multi-lang-content being on, and it\'s not');
                 }
 
