@@ -712,6 +712,48 @@ abstract class Database_super_mysql extends DatabaseDriver
     }
 
     /**
+     * Get SQL for creating an InnoDB foreign key.
+     * Note that this does not check if we are using InnoDB; it simply generates SQL.
+     *
+     * @param  ID_TEXT $from_table The table on which we are creating a foreign key
+     * @param  ID_TEXT $from_field The table's field on which we are creating a foreign key
+     * @param  ID_TEXT $to_table The table which is being referenced
+     * @param  ID_TEXT $to_field The table's field which is being referenced
+     * @return string The SQL
+     */
+    public function create_foreign_key__sql(string $from_table, string $from_field, string $to_table, string $to_field) : string
+    {
+        // Compose deterministic, schema-unique constraint name
+        $constraint_name = 'fk_' . md5(preg_replace('#[^\w]#', '_', $from_table . '__' . $from_field));
+
+        $delimiter = $this->get_delimited_identifier(false);
+
+        $sql = 'ALTER TABLE ' . $from_table;
+        $sql .= ' ADD CONSTRAINT ' . $constraint_name;
+        $sql .= ' FOREIGN KEY (' . $delimiter . $from_field . $delimiter . ')';
+        $sql .= ' REFERENCES ' . $to_table . ' (' . $delimiter . $to_field . $delimiter . ')';
+
+        return $this->fix_mysql8_query($sql);
+    }
+
+    /**
+     * Get SQL for deleting a foreign key.
+     * Note that this does not check if we are using InnoDB; it simply generates SQL.
+     *
+     * @param  ID_TEXT $from_table The table on which we want to delete the foreign key
+     * @param  ID_TEXT $from_field The field on which we want to delete a foreign key
+     * @return string The SQL
+     */
+    public function delete_foreign_key__sql(string $from_table, string $from_field) : string
+    {
+        $constraint_name = 'fk_' . md5(preg_replace('#[^\w]#', '_', $from_table . '__' . $from_field));
+
+        $sql = 'ALTER TABLE ' . $from_table . ' DROP FOREIGN KEY ' . $constraint_name;
+
+        return $this->fix_mysql8_query($sql);
+    }
+
+    /**
      * Get SQL for deleting a table.
      * When running this SQL you must suppress errors.
      *

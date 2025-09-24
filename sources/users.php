@@ -973,3 +973,34 @@ function get_default_theme_name() : string
 {
     return substr(preg_replace('#[^A-Za-z\d]#', '_', get_site_name()), 0, 80);
 }
+
+function session_expiration_script()
+{
+    prepare_backend_response('text/plain');
+
+    global $SESSION_CACHE;
+
+    $old_session = get_session_id();
+    if (($old_session == '') || !isset($SESSION_CACHE[$old_session])) {
+        require_lang('critical_error');
+        do_lang_tempcode('AJAX_SESSION_EXPIRED')->evaluate_echo();
+        return;
+    }
+
+    // Check if we are requesting to update the session time
+    $update_session = get_param_integer('update_session', 0);
+    if ($update_session == 1) {
+        require_code('users_inactive_occasionals');
+        create_session(get_member());
+        echo '';
+        return;
+    }
+
+    $session_expiry_time = intval(get_option('session_expiry_time') * 60 * 60);
+    $actual_session_expiry = $SESSION_CACHE[$old_session]['last_activity_time'] + $session_expiry_time;
+    if ($actual_session_expiry < (time() + (60 * 5))) { // TODO: config option
+        require_lang('critical_error');
+        require_code('temporal');
+        do_lang_tempcode('AJAX_SESSION_ABOUT_TO_EXPIRE', escape_html(get_timezoned_date_time($actual_session_expiry, false)))->evaluate_echo();
+    }
+}
