@@ -222,12 +222,6 @@
      * @method
      * @returns {string}
      */
-    $cms.runningScript = $util.constant(strVal('{$RUNNING_SCRIPT;}'));
-    /**
-     * @memberof $cms
-     * @method
-     * @returns {string}
-     */
     $cms.getCspNonce = $util.constant(strVal('{$CSP_NONCE;}'));
 
     var configOptionsJson = JSON.parse('{$PUBLIC_CONFIG_OPTIONS_JSON;}');

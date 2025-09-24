@@ -4,9 +4,10 @@
 {$REQUIRE_CSS,helper_panel}
 
 {$SET,page_link_privacy,{$PAGE_LINK,:privacy}}
+{$SET,running_script,{$RUNNING_SCRIPT}}
 
 {$,We deploy as HTML5 but code and conform strictly to XHTML5}
-<html lang="{$LCASE*,{$METADATA,lang}}"{$ATTR_DEFAULTED,dir,{!dir},ltr} data-view="Global" data-view-params="{+START,PARAMS_JSON,page_link_privacy}{_*}{+END}">
+<html lang="{$LCASE*,{$METADATA,lang}}"{$ATTR_DEFAULTED,dir,{!dir},ltr} data-view="Global" data-view-params="{+START,PARAMS_JSON,page_link_privacy,running_script}{_*}{+END}">
 <head>
 	{+START,INCLUDE,HTML_HEAD}{+END}
 </head>
