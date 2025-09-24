@@ -2303,7 +2303,8 @@ class DatabaseConnector
 
             if (php_function_allowed('error_log')) {
                 require_code('urls');
-                @error_log(brand_name() . ' profiling: INFO Over ' . integer_format(DEV_MODE_QUERY_LIMIT) . ' queries @ ' . get_self_url_easy(true), 0);
+                require_code('failure');
+                @error_log(brand_name() . ' profiling: INFO Over ' . integer_format(DEV_MODE_QUERY_LIMIT) . ' queries @ ' . get_self_url_easy(true) . "\n" . get_text_trace(), 0);
             }
 
             if ($DEV_MODE) {
