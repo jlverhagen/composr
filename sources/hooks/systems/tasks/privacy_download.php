@@ -63,6 +63,7 @@ class Hook_task_privacy_download
         $data_file = tar_open($file_path, 'wb');
 
         push_db_scope_check(false);
+        push_query_limiting(false);
 
         // Loop through every privacy hook
         $hook_obs = find_all_hook_obs('systems', 'privacy', 'Hook_privacy_');
@@ -159,7 +160,7 @@ class Hook_task_privacy_download
                             $mtime = time();
                         }
 
-                        tar_add_file($data_file, rawurldecode($file), $actual_path, $mode, $mtime, true);
+                        tar_add_file($data_file, rawurldecode($file), $actual_path, $mode, $mtime, true); // TODO: still causing out of memory errors...
                     }
 
                     // Finally, create JSON file
@@ -169,6 +170,7 @@ class Hook_task_privacy_download
         }
 
         pop_db_scope_check();
+        pop_query_limiting();
 
         tar_close($data_file);
 
