@@ -768,6 +768,8 @@ function inform_about_addon_install(string $file, array $also_uninstalling = [],
  */
 function has_feature(string $dependency) : bool
 {
+    require_code('addons');
+
     // Normalise
     $dependency = cms_strtolower_ascii(preg_replace('# (enabled|needed|required)$#', '', $dependency));
 
