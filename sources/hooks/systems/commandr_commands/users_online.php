@@ -44,13 +44,12 @@ class Hook_commandr_command_users_online
             return ['', '', do_lang('TOO_MANY_USERS_ONLINE'), ''];
         }
         $out = new Tempcode();
-        $guests = 0;
+        $guests = $count;
 
         $valid_members = [];
         foreach ($members as $member) {
-            if ((is_guest($member['member_id'])) || ($member['cache_username'] === null)) {
-                $guests++;
-            } else {
+            if ((!is_guest($member['member_id'])) && ($member['cache_username'] !== null)) {
+                $guests--;
                 $valid_members[$member['cache_username']] = $member['member_id'];
             }
         }

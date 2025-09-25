@@ -69,7 +69,7 @@ function member_is_online(int $member_id) : bool
  *
  * @param  boolean $longer_time Whether to use a longer online-time -- the session expiry-time
  * @param  ?MEMBER $filter We really only need to make sure we get the status for this user, although at this functions discretion more may be returned and the row won't be there if the user is not online (null: no filter). May not be the guest ID
- * @param  integer $count The total online members, returned by reference
+ * @param  integer $count The total online members and guests, returned by reference
  * @return ?array Database rows (null: too many)
  */
 function get_users_online(bool $longer_time, ?int $filter, int &$count) : ?array
@@ -82,6 +82,7 @@ function get_users_online(bool $longer_time, ?int $filter, int &$count) : ?array
         return [];
     }
 
+    $count = 0;
     $max_to_show = 200; // FUDGE - Hard-coded value
 
     $users_online_time_seconds = intval($longer_time ? (60.0 * 60.0 * floatval(get_option('session_expiry_time'))) : (60.0 * floatval(get_option('users_online_time'))));
@@ -107,6 +108,7 @@ function get_users_online(bool $longer_time, ?int $filter, int &$count) : ?array
     $guest_id = $GLOBALS['FORUM_DRIVER']->get_guest_id();
     $guests_online = 0;
     $members_online = 0;
+    $count = 0; // Must be reset as we are re-calculating below
     foreach ($sessions as $row) {
         if (($row['last_activity_time'] > $cutoff) && ($row['session_invisible'] == 0)) {
             if ($row['member_id'] == $guest_id) {
