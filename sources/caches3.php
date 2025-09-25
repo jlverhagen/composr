@@ -226,6 +226,11 @@ function erase_cached_language()
 
     cms_profile_start_for('erase_cached_language');
 
+    // Clear global cache first
+    global $LANGUAGE_STRINGS_CACHE;
+    $LANGUAGE_STRINGS_CACHE = [];
+
+    // Now delete physical cache
     $langs = find_all_langs(true);
     foreach (array_merge(array_keys($langs), ['']) as $lang) {
         $path = get_custom_file_base() . '/caches/lang' . (($lang == '') ? '' : '/') . $lang;
