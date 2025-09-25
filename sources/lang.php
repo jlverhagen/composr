@@ -549,7 +549,6 @@ function require_lang(string $codename, ?string $lang = null, ?string $type = nu
             if ($SMART_CACHE !== null) {
                 $SMART_CACHE->invalidate();
             }
-            $LANGUAGE_STRINGS_CACHE = [];
             $PAGE_CACHE_LAZY_LOAD = false;
             $LANG_LOADED_LANG = [];
             $PAGE_CACHE_LANGS_REQUESTED[] = [$codename, $lang];
