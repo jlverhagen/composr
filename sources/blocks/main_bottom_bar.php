@@ -78,16 +78,18 @@ class Block_main_bottom_bar
         $members = get_users_online(false, null, $count);
         $groups_seen = [];
         $num_members = 0;
-        $num_guests = 0;
+        $num_guests = $count;
         if ($members !== null) {
             foreach ($members as $bits) {
                 $member_id = $bits['member_id'];
                 $username = $bits['cache_username'];
 
-                if ($member_id == $GLOBALS['CNS_DRIVER']->get_guest_id()) {
-                    $num_guests++;
+                if ($member_id != $GLOBALS['CNS_DRIVER']->get_guest_id()) {
+                    $num_guests--;
+                } else {
                     continue;
                 }
+
                 if ($username === null) {
                     continue;
                 }
