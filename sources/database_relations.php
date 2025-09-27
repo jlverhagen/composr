@@ -53,6 +53,7 @@ function init__database_relations()
  */
 function get_table_purpose_flags() : array
 {
+    // TODO: Migrate to hooks
     return [ // If you change TABLE_PURPOSE__NO_BACKUPS on any of these, you should probably also edit the performance_bloat testTableSize health check
         'addons' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__AUTOGEN_STATIC,
         'addons_dependencies' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__AUTOGEN_STATIC | TABLE_PURPOSE__SUBDATA/*under addons*/,
@@ -313,6 +314,7 @@ function table_has_purpose_flag(string $table, int $flag) : bool
  */
 function get_table_descriptions() : array
 {
+    // TODO: Migrate to hooks
     return [
         'actionlogs' => 'stores logs of actions performed on the website',
         'addons' => 'registry of installed addons, including the version that was installed (used for auto-upgrading)',
@@ -483,18 +485,14 @@ function get_table_descriptions() : array
  */
 function get_relation_map_for_table(string $table) : array
 {
-    $relation_map = get_relation_map();
-    $new_relation_map = [];
-    foreach ($relation_map as $from => $to) {
-        if ($to !== null) {
-            list($from_table, $from_field) = explode('.', $from, 2);
-            if ($table == $from_table) {
-                list($to_table, $to_field) = explode('.', $to, 2);
-                $new_relation_map[$from_field] = [$to_table, $to_field];
-            }
-        }
+    $ret = [];
+
+    $rows = $GLOBALS['SITE_DB']->query_select('db_meta_foreign_keys', ['*'], ['from_table' => $table]);
+    foreach ($rows as $row) {
+        $ret[$row['from_field']] = [$row['to_table'], $row['to_field']];
     }
-    return $new_relation_map;
+
+    return $ret;
 }
 
 /**
@@ -504,168 +502,32 @@ function get_relation_map_for_table(string $table) : array
  */
 function get_relation_map() : array
 {
+    $ret = [];
+
+    $rows = $GLOBALS['SITE_DB']->query_select('db_meta_foreign_keys');
+    foreach ($rows as $row) {
+        $ret[$row['from_table'] . '.' . $row['from_field']] = $row['to_table'] . '.' . $row['to_field'];
+    }
+
+    return $ret;
+
+    // TODO: implement in create_foreign_key
+    /*
     return [
-        'actionlogs.warning_id' => 'f_warnings.id', // DONE
-        'attachment_refs.a_id' => 'attachments.id', // DONE
         'attachment_refs.r_referer_id' => null,
-        'award_archive.a_type_id' => 'award_types.id', // DONE
-        'banners.b_type' => 'banner_types.id', // DONE
-        'banners_types.name' => 'banners.name', // DONE
-        'banners_types.b_type' => 'banner_types.id', // DONE
-        'cached_comcode_pages.the_zone' => 'zones.zone_name', // DONE
-        'calendar_events.e_type' => 'calendar_types.id', // DONE
-        'calendar_interests.t_type' => 'calendar_types.id', // DONE
-        'calendar_jobs.j_event_id' => 'calendar_events.id', // DONE
-        'calendar_jobs.j_reminder_id' => 'calendar_reminders.id', // DONE
-        'calendar_reminders.e_id' => 'calendar_events.id', // DONE
-        'catalogue_categories.cc_move_target_id' => 'catalogue_categories.id', // DONE
-        'catalogue_categories.cc_parent_id' => 'catalogue_categories.id', // DONE
-        'catalogue_categories.c_name' => 'catalogues.c_name', // DONE
-        'catalogue_cat_treecache.cc_ancestor_id' => 'catalogue_categories.id', // DONE
-        'catalogue_cat_treecache.cc_id' => 'catalogue_categories.id', // DONE
-        'catalogue_childcountcache.cc_id' => 'catalogue_categories.id', // DONE
-        'catalogue_efv_float.ce_id' => 'catalogue_entries.id', // DONE
-        'catalogue_efv_float.cf_id' => 'catalogue_fields.id', // DONE
-        'catalogue_efv_integer.ce_id' => 'catalogue_entries.id', // DONE
-        'catalogue_efv_integer.cf_id' => 'catalogue_fields.id', // DONE
-        'catalogue_efv_long.ce_id' => 'catalogue_entries.id', // DONE
-        'catalogue_efv_long.cf_id' => 'catalogue_fields.id', // DONE
-        'catalogue_efv_long_trans.ce_id' => 'catalogue_entries.id', // DONE
-        'catalogue_efv_long_trans.cf_id' => 'catalogue_fields.id', // DONE
-        'catalogue_efv_short.ce_id' => 'catalogue_entries.id', // DONE
-        'catalogue_efv_short.cf_id' => 'catalogue_fields.id', // DONE
-        'catalogue_efv_short_trans.ce_id' => 'catalogue_entries.id', // DONE
-        'catalogue_efv_short_trans.cf_id' => 'catalogue_fields.id', // DONE
-        'catalogue_entries.cc_id' => 'catalogue_categories.id', // DONE
-        'catalogue_entries.c_name' => 'catalogues.c_name', // DONE
-        'catalogue_entry_linkage.catalogue_entry_id' => 'catalogue_entries.id', // DONE
-        'catalogue_fields.c_name' => 'catalogues.c_name', // DONE
-        'chat_active.room_id' => 'chat_rooms.id', // DONE
-        'chat_events.e_room_id' => 'chat_rooms.id', // DONE
-        'chat_messages.room_id' => 'chat_rooms.id', // DONE
-        'comcode_pages.the_zone' => 'zones.zone_name', // DONE
-        'download_categories.parent_id' => 'download_categories.id', // DONE
-        'download_downloads.category_id' => 'download_categories.id', // DONE
-        'download_downloads.download_licence_id' => 'download_licences.id', // DONE
-        'download_downloads.out_mode_id' => 'download_downloads.id', // DONE
-        'download_logging.id' => 'download_downloads.id', // DONE
-        'escrow.original_points_ledger_id' => 'points_ledger.id', // DONE
-        'escrow_logs.escrow_id' => 'escrow.id', // DONE
-        'f_forums.f_cache_last_forum_id' => 'f_forums.id', // DONE
-        'f_forums.f_cache_last_topic_id' => 'f_topics.id', // DONE
-        'f_forums.f_forum_grouping_id' => 'f_forum_groupings.id', // DONE
-        'f_forums.f_parent_forum_id' => 'f_forums.id', // DONE
-        'f_forum_intro_ip.i_forum_id' => 'f_forums.id', // DONE
-        'f_forum_intro_member.i_forum_id' => 'f_forums.id', // DONE
-        'f_group_approvals.ga_old_group_id' => 'f_groups.id', // DONE
-        'f_group_approvals.ga_new_group_id' => 'f_groups.id', // DONE
-        'f_group_join_log.usergroup_id' => 'f_groups.id', // DONE
-        'f_member_cpf_perms.field_id' => 'f_custom_fields.id', // DONE
-        'f_moderator_logs.l_warning_id' => 'f_warnings.id', // DONE
-        'f_multi_moderations.mm_move_to_forum_id' => 'f_forums.id', // DONE
-        'f_poll_answers.pa_poll_id' => 'f_polls.id', // DONE
-        'f_poll_votes.pv_answer_id' => 'f_poll_answers.id', // DONE
-        'f_poll_votes.pv_poll_id' => 'f_polls.id', // DONE
-        'f_posts.p_cache_forum_id' => 'f_forums.id', // DONE
-        'f_posts.p_parent_id' => 'f_posts.id', // DONE
-        'f_posts.p_topic_id' => 'f_topics.id', // DONE
-        'f_read_logs.l_topic_id' => 'f_topics.id', // DONE
-        'f_special_pt_access.s_topic_id' => 'f_topics.id', // DONE
-        'f_topics.t_cache_first_post_id' => 'f_posts.id', // DONE
-        'f_topics.t_cache_last_post_id' => 'f_posts.id', // DONE
-        'f_topics.t_forum_id' => 'f_forums.id', // DONE
-        'f_topics.t_poll_id' => 'f_polls.id', // DONE
-        'f_usergroup_sub_mails.m_usergroup_sub_id' => 'f_usergroup_subs.id', // DONE
-        'f_warnings.w_topic_id' => 'f_topics.id', // DONE
-        'f_warnings_punitive.p_warning_id' => 'f_warnings.id', // DONE
-        'f_welcome_emails.w_newsletter_id' => 'newsletters.id', // DONE
-        'f_welcome_emails.w_usergroup' => 'f_groups.id', // DONE
-        'galleries.g_owner' => 'f_members.id', // DONE
-        'galleries.parent_id' => 'galleries.name', // DONE
         'group_category_access.category_name' => null,
-        'group_page_access.zone_name' => 'zones.zone_name', // DONE
         'group_privileges.category_name' => null,
-        'group_privileges.privilege' => 'privilege_list.the_name', // DONE
-        'group_privileges.the_page' => 'modules.module_the_name', // DONE
-        'group_zone_access.zone_name' => 'zones.zone_name', // DONE
-        'images.cat' => 'galleries.name', // DONE
         'import_id_remap.id_new' => null,
         'import_id_remap.id_old' => null,
-        'import_id_remap.id_session' => 'import_session.imp_session', // DONE
-        'import_parts_done.imp_session' => 'import_session.imp_session', // DONE
-        'leader_board.lb_leader_board_id' => 'leader_boards.id', // DONE
-        'leader_boards_groups.lb_leader_board_id' => 'leader_boards.id', // DONE
-        'leader_boards_groups.lb_group' => 'f_groups.id', // DONE
         'member_category_access.category_name' => null,
-        'member_page_access.page_name' => 'modules.module_the_name', // DONE
-        'member_page_access.zone_name' => 'zones.zone_name', // DONE
         'member_privileges.category_name' => null,
-        'member_privileges.privilege' => 'privilege_list.the_name', // DONE
-        'member_privileges.the_page' => 'modules.module_the_name', // DONE
-        'member_zone_access.zone_name' => 'zones.zone_name', // DONE
-        'menu_items.i_parent_id' => 'menu_items.id', // DONE
-        'messages_to_render.r_session_id' => 'sessions.the_session', // DONE
-        'news.news_category' => 'news_categories.id', // DONE
-        'newsletter_subscribe.newsletter_id' => 'newsletters.id', // DONE
-        'news_category_entries.news_entry' => 'news.id', // DONE
-        'news_category_entries.news_entry_category' => 'news_categories.id', // DONE
         'notifications_enabled.l_code_category' => null,
-        'points_ledger.linked_ledger_id' => 'points_ledger.id', // DONE
-        'poll_votes.v_poll_id' => 'poll.id', // DONE
         'ecom_prods_permissions.p_category' => null,
-        'ecom_prods_permissions.p_page' => 'modules.module_the_name', // DONE
-        'ecom_prods_permissions.p_privilege' => 'privilege_list.the_name', // DONE
-        'ecom_prods_permissions.p_zone' => 'zones.zone_name', // DONE
-        'quizzes.q_newsletter_id' => 'newsletters.id', // DONE
-        'quiz_entries.q_quiz_id' => 'quizzes.id', // DONE
-        'quiz_entry_answer.q_entry_id' => 'quiz_entries.id', // DONE
-        'quiz_entry_answer.q_question_id' => 'quiz_questions.id', // DONE
-        'quiz_member_last_visit.v_quiz_id' => 'quizzes.id', // DONE
-        'quiz_questions.q_quiz_id' => 'quizzes.id', // DONE
-        'quiz_question_answers.q_question_id' => 'quiz_questions.id', // DONE
-        'quiz_winner.q_entry_id' => 'quiz_entries.id', // DONE
-        'quiz_winner.q_quiz_id' => 'quizzes.id', // DONE
-        'rating.rating_for_id' => 'modules.module_the_name', // DONE
-        'redirects.r_from_zone' => 'zones.zone_name', // DONE
-        'redirects.r_to_zone' => 'zones.zone_name', // DONE
-        'review_supplement.r_post_id' => 'f_posts.id', // DONE
-        'review_supplement.r_rating_for_id' => 'modules.module_the_name', // DONE
-        'review_supplement.r_topic_id' => 'f_topics.id', // DONE
-        'revisions.r_actionlog_id' => 'actionlogs.id', // DONE
-        'revisions.r_moderatorlog_id' => 'f_moderator_logs.id', // DONE
         'seo_meta.meta_for_id' => null,
-        'sessions.the_zone' => 'zones.zone_name', // DONE
-        'shopping_cart.ordering_member' => 'f_members.id', // DONE
-        'site_messages_groups.message_id' => 'site_messages.id', // DONE
-        'site_messages_groups.group_id' => 'f_groups.id', // DONE
-        'site_messages_pages.message_id' => 'site_messages.id', // DONE
-        'temp_block_permissions.p_session_id' => 'sessions.the_session', // DONE
-        'tickets.forum_id' => 'f_forums.id', // DONE
-        'tickets.ticket_type' => 'ticket_types.id', // DONE
-        'tickets.topic_id' => 'f_topics.id', // DONE
         'trackbacks.trackback_for_id' => null,
         'url_id_monikers.m_resource_id' => null,
-        'url_id_monikers.m_resource_page' => 'modules.module_the_name', // DONE
-        'videos.cat' => 'galleries.name', // DONE
-        'video_transcoding.t_local_id' => 'videos.id', // DONE
-        'wiki_children.child_id' => 'wiki_pages.id', // DONE
-        'wiki_children.parent_id' => 'wiki_pages.id', // DONE
-        'wiki_posts.page_id' => 'wiki_pages.id', // DONE
-        'newsletter_drip_send.d_message_id' => 'newsletter_archive.id', // DONE
-        'shopping_cart.type_code' => 'catalogue_entries.id', // DONE
-        'ecom_trans_expecting.e_session_id' => 'sessions.the_session', // DONE
-        'ecom_trans_addresses.a_trans_expecting_id' => 'ecom_trans_expecting.id', // DONE
-        'ecom_trans_addresses.a_txn_id' => 'ecom_transactions.id', // DONE
-        'shopping_order_details.p_order_id' => 'shopping_orders.id', // DONE
-        'shopping_order_details.p_type_code' => 'catalogue_entries.id', // DONE
-        'ecom_transactions.t_parent_txn_id' => 'ecom_transactions.id', // DONE
-        'ecom_transactions.t_session_id' => 'sessions.the_session', // DONE
-        'ce_fulltext_index.i_category_id' => 'catalogue_categories.id', // DONE
-        'ce_fulltext_index.i_catalogue_entry_id' => 'catalogue_entries.id', // DONE
-        'f_posts_fulltext_index.i_forum_id' => 'f_forums.id', // DONE
-        'f_posts_fulltext_index.i_post_id' => 'f_posts.id', // DONE
-        'f_pposts_fulltext_index.i_post_id' => 'f_posts.id', // DONE
     ];
+    */
 }
 
 /**

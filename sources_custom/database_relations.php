@@ -181,53 +181,8 @@ function get_table_descriptions() : array
     return $ret + $more;
 }
 
-/**
- * Get a map of foreign key relations.
- *
- * @return array Map of foreign key relations
- */
-function get_relation_map() : array
-{
-    $ret = non_overridden__get_relation_map();
-
-    if (!addon_installed('meta_toolkit', false, true, true, true)) {
-        return $ret;
-    }
-
-    $more = [
-        'api_function_params.function_id' => 'api_functions.id', // DONE
-        'api_functions.class_id' => 'api_classes.id', // DONE
-        'api_functions_fulltext_index.i_c_id' => 'api_classes.id', // DONE
-        'api_functions_fulltext_index.i_f_id' => 'api_functions.id', // DONE
-        'bookable_blacked_for.bookable_id' => 'bookable.id', // DONE
-        'bookable_blacked_for.blacked_id' => 'bookable_blacked.id', // DONE
-        'bookable_codes.bookable_id' => 'bookable.id', // DONE
-        'bookable_supplement_for.supplement_id' => 'bookable_supplement.id', // DONE
-        'bookable_supplement_for.bookable_id' => 'bookable.id', // DONE
-        'booking.bookable_id' => 'bookable.id', // DONE
-        'bookable.calendar_type' => 'calendar_types.id', // DONE
-        'booking.paid_trans_id' => null, // TODO: not implemented
-        'booking_supplement.booking_id' => 'booking.id', // DONE
-        'booking_supplement.supplement_id' => 'bookable_supplement.id', // DONE
-        'early_access_code_content.a_access_code' => 'early_access_codes.c_access_code', // DONE
-        'ecom_classifieds_prices.c_catalogue_name' => 'catalogues.c_name', // DONE
-        'members_diseases.disease_id' => 'diseases.id', // DONE
-        'members_gifts.gift_id' => 'giftr.id', // DONE
-        'telemetry_stats.s_site' => 'telemetry_sites.id', // DONE
-        'telemetry_errors.e_site' => 'telemetry_sites.id', // DONE
-        'tutorials_external_tags.t_id' => 'tutorials_external.id', // DONE
-        'workflow_approval_points.workflow_id' => 'workflows.id', // DONE
-        'workflow_permissions.workflow_approval_point_id' => 'workflow_approval_points.id', // DONE
-        'workflow_content.workflow_id' => 'workflows.id', // DONE
-        'workflow_content_status.workflow_content_id' => 'workflow_content.id', // DONE
-        'workflow_content_status.workflow_approval_point_id' => 'workflow_approval_points.id', // DONE
-        // TODO: Buildr
-    ];
-    return $ret + $more;
-}
-
 /*
-The following code is strictly intended for building up a *FAKE* InnoDB schema for the
+DEPRECATED: The following code is strictly intended for building up a *FAKE* InnoDB schema for the
 database.
 
 It is not intended for real-world backups.
