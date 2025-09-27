@@ -2139,7 +2139,7 @@ function step_5_uninstall() : object
     if ($tables !== null) {
         foreach ($tables as $i => $table) {
             // These tables must be dropped last
-            if (($table['m_table'] == 'db_meta') || ($table['m_table'] == 'db_meta_indices')) {
+            if (($table['m_table'] == 'db_meta') || ($table['m_table'] == 'db_meta_indices') || ($table['m_table'] == 'db_meta_foreign_keys')) {
                 continue;
             }
 
@@ -2151,6 +2151,7 @@ function step_5_uninstall() : object
         }
         $sitedb->drop_table_if_exists('db_meta');
         $sitedb->drop_table_if_exists('db_meta_indices');
+        $sitedb->drop_table_if_exists('db_meta_foreign_keys');
         $log->attach(do_template('INSTALLER_DONE_SOMETHING', ['_GUID' => '8dc89b69c6f851f6a5aa69f3c532a2ae', 'SOMETHING' => do_lang_tempcode('DROPPED_TABLES')]));
     }
 

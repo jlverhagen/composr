@@ -192,6 +192,17 @@ function version_specific() : bool
     if ($version_database < $version_files) {
         // LEGACY
 
+        // New DB meta table must be added really early in the process
+        if ($version_database < 11.0) {
+            $GLOBALS['SITE_DB']->create_table('db_meta_foreign_keys', [
+                'id' => '*AUTO',
+                'from_table' => 'ID_TEXT',
+                'from_field' => 'ID_TEXT',
+                'to_table' => 'ID_TEXT',
+                'to_field' => 'ID_TEXT',
+            ]);
+        }
+
         if ($version_database < 9.0) {
             $dh = @opendir(get_custom_file_base() . '/imports/mods');
             if ($dh !== false) {
@@ -205,6 +216,7 @@ function version_specific() : bool
             }
             echo do_lang('UPGRADER_UPGRADED_CUSTOM', '9', 'Migrated imports/mods to imports/addons');
         }
+
         if ($version_database < 10.0) {
             $GLOBALS['SITE_DB']->add_table_field('config', 'c_value_trans', '?LONG_TRANS');
             $GLOBALS['SITE_DB']->query('UPDATE ' . $GLOBALS['SITE_DB']->get_table_prefix() . 'config SET c_value_trans=config_value,config_value=\'\' WHERE ' . db_string_not_equal_to('config_value', '') . ' AND (' . db_string_equal_to('the_type', 'transtext') . ' OR ' . db_string_equal_to('the_type', 'transline') . ')');
@@ -480,15 +492,6 @@ function version_specific() : bool
             if (is_dir(get_custom_file_base() . '/home')) {
                 warn_exit('You have a zone named home. In v11, the default page name for zones was changed from start to home. This means you cannot have a zone named home. Please rename the home folder in your installation and then run this step again.');
             }
-
-            // New DB meta table must be added early
-            $GLOBALS['SITE_DB']->create_table('db_meta_foreign_keys', [
-                'id' => '*AUTO',
-                'from_table' => 'ID_TEXT',
-                'from_field' => 'ID_TEXT',
-                'to_table' => 'ID_TEXT',
-                'to_field' => 'ID_TEXT',
-            ]);
 
             // Even though this is technically Conversr, it absolutely has to be done first because custom fields have to be modified early
             if ($GLOBALS['FORUM_DB']->table_exists('f_custom_fields')) {
