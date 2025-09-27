@@ -30,7 +30,7 @@ class Module_tutorials
         $info['organisation'] = 'Composr';
         $info['hacked_by'] = null;
         $info['hack_version'] = null;
-        $info['version'] = 1;
+        $info['version'] = 2;
         $info['locked'] = false;
         $info['min_cms_version'] = 11.0;
         $info['addon'] = 'composr_tutorials';
@@ -59,60 +59,66 @@ class Module_tutorials
      */
     public function install(?int $upgrade_from = null, ?int $upgrade_from_hack = null)
     {
-        $GLOBALS['SITE_DB']->create_table('tutorials_external', [
-            'id' => '*AUTO',
-            't_url' => 'URLPATH',
-            't_title' => 'SHORT_TEXT',
-            't_summary' => 'LONG_TEXT',
-            't_icon' => 'ID_TEXT',
-            't_media_type' => 'ID_TEXT', // document|video|audio|slideshow|book
-            't_difficulty_level' => 'ID_TEXT', // novice|regular|expert
-            't_pinned' => 'BINARY',
-            't_author' => 'ID_TEXT',
-            't_submitter' => 'MEMBER',
-            't_views' => 'INTEGER',
-            't_add_date' => 'TIME',
-            't_edit_date' => 'TIME',
-        ]);
+        if ($upgrade_from === null) {
+            $GLOBALS['SITE_DB']->create_table('tutorials_external', [
+                'id' => '*AUTO',
+                't_url' => 'URLPATH',
+                't_title' => 'SHORT_TEXT',
+                't_summary' => 'LONG_TEXT',
+                't_icon' => 'ID_TEXT',
+                't_media_type' => 'ID_TEXT', // document|video|audio|slideshow|book
+                't_difficulty_level' => 'ID_TEXT', // novice|regular|expert
+                't_pinned' => 'BINARY',
+                't_author' => 'ID_TEXT',
+                't_submitter' => 'MEMBER',
+                't_views' => 'INTEGER',
+                't_add_date' => 'TIME',
+                't_edit_date' => 'TIME',
+            ]);
 
-        $GLOBALS['SITE_DB']->create_index('tutorials_external', '#t_title', ['t_title']);
-        $GLOBALS['SITE_DB']->create_index('tutorials_external', '#t_summary', ['t_summary']);
+            $GLOBALS['SITE_DB']->create_index('tutorials_external', '#t_title', ['t_title']);
+            $GLOBALS['SITE_DB']->create_index('tutorials_external', '#t_summary', ['t_summary']);
 
-        $GLOBALS['SITE_DB']->create_table('tutorials_external_tags', [
-            't_id' => '*AUTO_LINK',
-            't_tag' => '*ID_TEXT',
-        ]);
+            $GLOBALS['SITE_DB']->create_table('tutorials_external_tags', [
+                't_id' => '*AUTO_LINK',
+                't_tag' => '*ID_TEXT',
+            ]);
 
-        $GLOBALS['SITE_DB']->create_table('tutorials_internal', [
-            't_page_name' => '*ID_TEXT',
-            't_views' => 'INTEGER',
-        ]);
+            $GLOBALS['SITE_DB']->create_table('tutorials_internal', [
+                't_page_name' => '*ID_TEXT',
+                't_views' => 'INTEGER',
+            ]);
 
-        // TODO: Insert default external tutorials
-        $external_tutorials = [];
+            // TODO: Insert default external tutorials
+            $external_tutorials = [];
 
-        foreach ($external_tutorials as $external_tutorial) {
-            $id = $GLOBALS['SITE_DB']->query_insert('tutorials_external', [
-                't_url' => $external_tutorial['url'],
-                't_title' => $external_tutorial['title'],
-                't_summary' => $external_tutorial['summary'],
-                't_icon' => $external_tutorial['icon'],
-                't_media_type' => $external_tutorial['media_type'],
-                't_difficulty_level' => $external_tutorial['difficulty_level'],
-                't_pinned' => 0,
-                't_author' => $external_tutorial['author'],
-                't_submitter' => $GLOBALS['FORUM_DRIVER']->get_guest_id(),
-                't_views' => 0,
-                't_add_date' => time() - 60 * 60 * 24 * 365,
-                't_edit_date' => time() - 60 * 60 * 24 * 365,
-            ], true);
+            foreach ($external_tutorials as $external_tutorial) {
+                $id = $GLOBALS['SITE_DB']->query_insert('tutorials_external', [
+                    't_url' => $external_tutorial['url'],
+                    't_title' => $external_tutorial['title'],
+                    't_summary' => $external_tutorial['summary'],
+                    't_icon' => $external_tutorial['icon'],
+                    't_media_type' => $external_tutorial['media_type'],
+                    't_difficulty_level' => $external_tutorial['difficulty_level'],
+                    't_pinned' => 0,
+                    't_author' => $external_tutorial['author'],
+                    't_submitter' => $GLOBALS['FORUM_DRIVER']->get_guest_id(),
+                    't_views' => 0,
+                    't_add_date' => time() - 60 * 60 * 24 * 365,
+                    't_edit_date' => time() - 60 * 60 * 24 * 365,
+                ], true);
 
-            foreach ($external_tutorial['tags'] as $tag) {
-                $GLOBALS['SITE_DB']->query_insert('tutorials_external_tags', [
-                    't_id' => $id,
-                    't_tag' => $tag,
-                ]);
+                foreach ($external_tutorial['tags'] as $tag) {
+                    $GLOBALS['SITE_DB']->query_insert('tutorials_external_tags', [
+                        't_id' => $id,
+                        't_tag' => $tag,
+                    ]);
+                }
             }
+        }
+
+        if (($upgrade_from === null) || ($upgrade_from < 2)) { // 11.beta9
+            $GLOBALS['SITE_DB']->create_foreign_key('tutorials_external_tags', 't_id', 'tutorials_external', 'id');
         }
     }
 

@@ -2401,6 +2401,7 @@ function step_5_core_2() : object
     $GLOBALS['SITE_DB']->create_index('sessions', 'delete_old', ['last_activity_time']);
     $GLOBALS['SITE_DB']->create_index('sessions', 'member_id', ['member_id']);
     $GLOBALS['SITE_DB']->create_index('sessions', 'userat', ['the_zone', 'the_page', 'the_id']);
+    $GLOBALS['SITE_DB']->create_foreign_key('sessions', 'the_zone', 'zones', 'zone_name');
 
     // What usergroups may view this category
     $GLOBALS['SITE_DB']->drop_table_if_exists('group_category_access');

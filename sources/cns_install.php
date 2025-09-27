@@ -1676,5 +1676,9 @@ function install_cns(?float $upgrade_from = null)
         $GLOBALS['FORUM_DB']->create_foreign_key('f_topics', 't_cache_last_post_id', 'f_posts', 'id');
         $GLOBALS['FORUM_DB']->create_foreign_key('f_topics', 't_forum_id', 'f_forums', 'id');
         $GLOBALS['FORUM_DB']->create_foreign_key('f_topics', 't_poll_id', 'f_polls', 'id');
+
+        $GLOBALS['FORUM_DB']->create_foreign_key('f_posts_fulltext_index', 'i_forum_id', 'f_forums', 'id');
+        $GLOBALS['FORUM_DB']->create_foreign_key('f_posts_fulltext_index', 'i_post_id', 'f_posts', 'id');
+        $GLOBALS['FORUM_DB']->create_foreign_key('f_pposts_fulltext_index', 'i_post_id', 'f_posts', 'id');
     }
 }

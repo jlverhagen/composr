@@ -810,6 +810,12 @@ function database_specific() : bool
 
         $GLOBALS['FORUM_DB']->create_foreign_key('f_warnings', 'w_topic_id', 'f_topics', 'id');
         $GLOBALS['FORUM_DB']->create_foreign_key('f_warnings_punitive', 'p_warning_id', 'f_warnings', 'id');
+
+        $GLOBALS['SITE_DB']->create_foreign_key('sessions', 'the_zone', 'zones', 'zone_name');
+
+        $GLOBALS['FORUM_DB']->create_foreign_key('f_posts_fulltext_index', 'i_forum_id', 'f_forums', 'id');
+        $GLOBALS['FORUM_DB']->create_foreign_key('f_posts_fulltext_index', 'i_post_id', 'f_posts', 'id');
+        $GLOBALS['FORUM_DB']->create_foreign_key('f_pposts_fulltext_index', 'i_post_id', 'f_posts', 'id');
     }
 
     return $done_something;

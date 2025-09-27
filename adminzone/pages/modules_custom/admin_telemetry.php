@@ -30,7 +30,7 @@ class Module_admin_telemetry
         $info['organisation'] = 'Composr';
         $info['hacked_by'] = null;
         $info['hack_version'] = null;
-        $info['version'] = 1;
+        $info['version'] = 2;
         $info['update_require_upgrade'] = true;
         $info['locked'] = false;
         $info['min_cms_version'] = 11.0;
@@ -104,6 +104,11 @@ class Module_admin_telemetry
                 'ignore_string' => 'SHORT_TEXT',
                 'resolve_message' => 'LONG_TRANS__COMCODE',
             ]);
+        }
+
+        if (($upgrade_from === null) || ($upgrade_from < 2)) { // 11.beta9
+            $GLOBALS['SITE_DB']->create_foreign_key('telemetry_stats', 's_site', 'telemetry_sites', 'id');
+            $GLOBALS['SITE_DB']->create_foreign_key('telemetry_errors', 'e_site', 'telemetry_sites', 'id');
         }
     }
 

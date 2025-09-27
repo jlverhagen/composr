@@ -35,7 +35,7 @@ class Module_newsletter
         $info['organisation'] = 'Composr';
         $info['hacked_by'] = null;
         $info['hack_version'] = null;
-        $info['version'] = 15;
+        $info['version'] = 16;
         $info['update_require_upgrade'] = true;
         $info['locked'] = false;
         $info['min_cms_version'] = 11.0;
@@ -215,6 +215,11 @@ class Module_newsletter
 
         if (($upgrade_from !== null) && ($upgrade_from < 15)) { // LEGACY: 11.beta6
             $GLOBALS['SITE_DB']->alter_table_field('newsletter_periodic', 'np_send_details', 'SERIAL');
+        }
+
+        if (($upgrade_from === null) || ($upgrade_from < 16)) { // 11.beta9
+            $GLOBALS['SITE_DB']->create_foreign_key('newsletter_subscribe', 'newsletter_id', 'newsletters', 'id');
+            $GLOBALS['SITE_DB']->create_foreign_key('newsletter_drip_send', 'd_message_id', 'newsletter_archive', 'id');
         }
     }
 

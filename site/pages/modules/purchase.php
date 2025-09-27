@@ -62,7 +62,7 @@ class Module_purchase
         $info['organisation'] = 'Composr';
         $info['hacked_by'] = null;
         $info['hack_version'] = null;
-        $info['version'] = 8;
+        $info['version'] = 9;
         $info['update_require_upgrade'] = true;
         $info['locked'] = false;
         $info['min_cms_version'] = 11.0;
@@ -488,6 +488,17 @@ class Module_purchase
             $GLOBALS['SITE_DB']->create_index('ecom_transactions', 't_time', ['t_time']);
             $GLOBALS['SITE_DB']->create_index('ecom_transactions', 't_type_code', ['t_type_code']);
             $GLOBALS['SITE_DB']->create_index('ecom_sales', 'member_id', ['member_id']);
+        }
+
+        if (($upgrade_from === null) || ($upgrade_from < 9)) { // 11.beta9
+            $GLOBALS['SITE_DB']->create_foreign_key('ecom_prods_permissions', 'p_page', 'modules', 'module_the_name');
+            $GLOBALS['SITE_DB']->create_foreign_key('ecom_prods_permissions', 'p_privilege', 'privilege_list', 'the_name');
+            $GLOBALS['SITE_DB']->create_foreign_key('ecom_prods_permissions', 'p_zone', 'zones', 'zone_name');
+            $GLOBALS['SITE_DB']->create_foreign_key('ecom_trans_expecting', 'e_session_id', 'sessions', 'the_session');
+            $GLOBALS['SITE_DB']->create_foreign_key('ecom_trans_addresses', 'a_trans_expecting_id', 'ecom_trans_expecting', 'id');
+            $GLOBALS['SITE_DB']->create_foreign_key('ecom_trans_addresses', 'a_txn_id', 'ecom_transactions', 'id');
+            $GLOBALS['SITE_DB']->create_foreign_key('ecom_transactions', 't_parent_txn_id', 'ecom_transactions', 'id');
+            $GLOBALS['SITE_DB']->create_foreign_key('ecom_transactions', 't_session_id', 'sessions', 'the_session');
         }
     }
 

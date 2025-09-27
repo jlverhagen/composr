@@ -494,6 +494,7 @@ class Module_points
         if (($upgrade_from === null) || ($upgrade_from < 14)) { // 11.beta9
             $GLOBALS['SITE_DB']->create_foreign_key('escrow', 'original_points_ledger_id', 'points_ledger', 'id');
             $GLOBALS['SITE_DB']->create_foreign_key('escrow_logs', 'escrow_id', 'escrow', 'id');
+            $GLOBALS['SITE_DB']->create_foreign_key('points_ledger', 'linked_ledger_id', 'points_ledger', 'id');
         }
     }
 

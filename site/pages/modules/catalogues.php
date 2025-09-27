@@ -701,6 +701,8 @@ class Module_catalogues
             $GLOBALS['SITE_DB']->create_foreign_key('catalogue_entries', 'c_name', 'catalogues', 'c_name');
             $GLOBALS['SITE_DB']->create_foreign_key('catalogue_entry_linkage', 'catalogue_entry_id', 'catalogue_entries', 'id');
             $GLOBALS['SITE_DB']->create_foreign_key('catalogue_fields', 'c_name', 'catalogues', 'c_name');
+            $GLOBALS['SITE_DB']->create_foreign_key('ce_fulltext_index', 'i_category_id', 'catalogue_categories', 'id');
+            $GLOBALS['SITE_DB']->create_foreign_key('ce_fulltext_index', 'i_catalogue_entry_id', 'catalogue_entries', 'id');
         }
     }
 

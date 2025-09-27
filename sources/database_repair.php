@@ -488,7 +488,7 @@ class DatabaseRepair
         foreach ($existent_indices as $universal_index_key => $index) {
             $table_name = $index['table'];
 
-            if ($table_name == 'db_meta' || $table_name == 'db_meta_indices' || table_has_purpose_flag($table_name, TABLE_PURPOSE__NON_BUNDLED)) {
+            if (($table_name == 'db_meta') || ($table_name == 'db_meta_indices') || table_has_purpose_flag($table_name, TABLE_PURPOSE__NON_BUNDLED)) {
                 continue;
             }
 

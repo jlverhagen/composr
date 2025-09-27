@@ -300,6 +300,8 @@ class Module_galleries
             $GLOBALS['FORUM_DB']->create_foreign_key('galleries', 'g_owner', 'f_members', 'id');
             $GLOBALS['FORUM_DB']->create_foreign_key('galleries', 'parent_id', 'galleries', 'name');
             $GLOBALS['FORUM_DB']->create_foreign_key('images', 'cat', 'galleries', 'name');
+            $GLOBALS['FORUM_DB']->create_foreign_key('videos', 'cat', 'galleries', 'name');
+            $GLOBALS['FORUM_DB']->create_foreign_key('video_transcoding', 't_local_id', 'videos', 'id');
         }
     }
 
