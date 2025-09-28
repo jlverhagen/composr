@@ -130,6 +130,7 @@ class Hook_cron_tasks
         require_code('tasks');
         require_code('notifications'); // Needed as a task may require the notification object, and any class that has a deserialised reference needs to be loaded first to avoid being an 'incomplete object'
         require_code('files');
+        require_code('failure');
 
         $_task_rows = [];
         do {
@@ -158,9 +159,13 @@ class Hook_cron_tasks
                 1
             );
 
-            //$url = find_script('tasks') . '?id=' . strval($task_row['id']) . '&secure_ref=' . urlencode($task_row['t_secure_ref']);
-            //http_get_contents($url);
-            execute_task_background($task_row);
+            throwing_errors(true);
+            try {
+                execute_task_background($task_row);
+            } catch (Exception $e) {
+                // Do nothing; we do not want the scheduler hook locking because of an issue with a specific task (tasks have their own locks and error logging)
+            }
+            throwing_errors(false);
 
             $elapsed_time = microtime(true) - $start_time;
         } while (($elapsed_time < $max_time) && (($QUERY_COUNT - $starting_queries) < $max_queries));
