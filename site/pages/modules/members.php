@@ -263,6 +263,32 @@ class Module_members
             attach_message(do_lang_tempcode('ALREADY_VALIDATED', escape_html($action_log->evaluate())), 'warn');
         }
 
+        // E-mail issues check
+        if (($this->member_id_of == get_member()) || (has_privilege(get_member(), 'assume_any_member'))) {
+            require_code('mail');
+            require_code('mail2');
+            if (!can_email_member($this->member_id_of)) {
+                if ($this->member_id_of == get_member()) {
+                    attach_message(do_lang_tempcode('CANNOT_RECEIVE_MAIL_MEMBER'), 'warn');
+                } else {
+                    attach_message(do_lang_tempcode('CANNOT_RECEIVE_MAIL_STAFF'), 'warn');
+                }
+            }
+        }
+
+        // Geo-location mismatch check
+        require_code('locations');
+        if ($this->member_id_of == get_member()) {
+            $geo = geolocate_ip();
+            if ($geo !== null) {
+                $region = get_region();
+                if (!cms_empty_safe($region) && (!is_location_within($region, [$geo]))) {
+                    require_lang('locations');
+                    attach_message(do_lang_tempcode('GEOLOCATION_REGION_MISMATCH', escape_html($geo)), 'notice');
+                }
+            }
+        }
+
         require_code('cns_profiles');
         return render_profile_tabset($this->title, $this->member_id_of, get_member(), $this->username);
     }
