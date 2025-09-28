@@ -176,16 +176,25 @@ function create_session(int $member_id, int $session_confirmed = 0, bool $invisi
 
         $big_change = true;
 
-        if (!is_guest($member_id)) {
+        // Checks to run and warn on a new session; these checks also run when a member views their own profile (in the members module)
+        if (!is_guest($member_id) && function_exists('attach_message')) {
             require_code('locations');
+            require_code('mail');
+            require_code('mail2');
 
-            // Compare IP geolocation to set region and warn if there is a mismatch (we do not want to nag users so we only do this on new sessions)
+            // Warn on e-mail problems
+            if (!can_email_member($member_id)) {
+                require_lang('cns');
+                attach_message(do_lang_tempcode('CANNOT_RECEIVE_MAIL_MEMBER'), 'warn');
+            }
+
+            // Compare IP geolocation to set region and give a notice if there is a mismatch (we do not want to nag users so we only do this on new sessions)
             $geo = geolocate_ip($ip_address);
             if ($geo !== null) {
                 $region = get_region();
-                if (!cms_empty_safe($region) && (!is_location_within($region, [$geo])) && function_exists('attach_message')) {
+                if (!cms_empty_safe($region) && (!is_location_within($region, [$geo]))) {
                     require_lang('locations');
-                    attach_message(do_lang_tempcode('GEOLOCATION_REGION_MISMATCH', escape_html($geo)), 'warn');
+                    attach_message(do_lang_tempcode('GEOLOCATION_REGION_MISMATCH', escape_html($geo)), 'notice');
                 }
             }
         }

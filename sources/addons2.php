@@ -709,7 +709,8 @@ function inform_about_addon_install(string $file, array $also_uninstalling = [],
             continue;
         }
         if (!has_feature($dependency)) {
-            $dependencies[] = $dependency;
+            //$dependencies[] = $dependency; // Cannot be installed because it's a feature, not an addon. So treat as a warning instead.
+            $warnings->attach(do_template('ADDON_INSTALL_WARNING', ['_GUID' => 'TODO', 'WARNING' => do_lang_tempcode('ADDON_WARNING_MISSING_DEPENDENCIES', $dependency, escape_html($file))]));
         }
     }
     $_dependencies_str = new Tempcode();
@@ -767,6 +768,8 @@ function inform_about_addon_install(string $file, array $also_uninstalling = [],
  */
 function has_feature(string $dependency) : bool
 {
+    require_code('addons');
+
     // Normalise
     $dependency = cms_strtolower_ascii(preg_replace('# (enabled|needed|required)$#', '', $dependency));
 
@@ -1345,7 +1348,8 @@ function inform_about_addon_upgrade(string $addon_name, array $also_uninstalling
             continue;
         }
         if (!has_feature($dependency)) {
-            $dependencies[] = $dependency;
+            //$dependencies[] = $dependency; // Cannot be installed because it's a feature, not an addon. So treat as a warning instead.
+            $warnings->attach(do_template('ADDON_INSTALL_WARNING', ['_GUID' => 'TODO', 'WARNING' => do_lang_tempcode('ADDON_WARNING_MISSING_DEPENDENCIES', $dependency, escape_html($addon_name))]));
         }
     }
     $_dependencies_str = new Tempcode();
