@@ -832,7 +832,7 @@ class Forum_driver_smf2 extends Forum_driver_base
     }
 
     /**
-     * Find if this member may have e-mails sent to them.
+     * Find if this member may have e-mails sent to them from other members.
      *
      * @param  MEMBER $member_id The member ID
      * @return boolean Whether the member may have e-mails sent to them

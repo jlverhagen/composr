@@ -1122,16 +1122,13 @@ class Forum_driver_cns extends Forum_driver_base
     }
 
     /**
-     * Find if this member may have e-mails sent to them.
+     * Find if this member may have e-mails sent to them from other members.
      *
      * @param  MEMBER $member_id The member ID
      * @return boolean Whether the member may have e-mails sent to them
      */
     public function get_member_email_allowed(int $member_id) : bool
     {
-        if (get_option('member_email_receipt_configurability') == '0') {
-            return true;
-        }
         $ret = $this->get_member_row_field($member_id, 'm_allow_emails');
         if ($ret === null) {
             $ret = false;
