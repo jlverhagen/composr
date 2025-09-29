@@ -605,7 +605,7 @@ function newsletter_who_send_to(?array $send_details = null, ?string $lang = nul
             $where .= ' AND ' . db_string_equal_to('m_validated_email_confirm_code', '');
         }
         if (get_option('staff_email_receipt_configurability') != '0') {
-            $where .= ' AND m_allow_emails=1';
+            $where .= ' AND m_allow_emails_from_staff=1';
         }
 
         // Usergroups
@@ -844,10 +844,10 @@ function newsletter_domain_subscriber_stats(string $key) : array
 
     if (substr($key, 0, 1) == 'g') {
         $sql_expr = db_function('SUBSTR', ['m_email_address', db_function('INSTR', ['m_email_address', '\'@\''])]);
-        $rows = $GLOBALS['FORUM_DB']->query_select('f_members', [$sql_expr . ' AS email_address', 'COUNT(*) as cnt'], ['m_allow_emails' => 1, 'm_primary_group' => intval(substr($key, 1))], 'GROUP BY ' . $sql_expr . ', m_email_address');
+        $rows = $GLOBALS['FORUM_DB']->query_select('f_members', [$sql_expr . ' AS email_address', 'COUNT(*) as cnt'], ['m_allow_emails_from_staff' => 1, 'm_primary_group' => intval(substr($key, 1))], 'GROUP BY ' . $sql_expr . ', m_email_address');
     } elseif ($key == '-1') {
         $sql_expr = db_function('SUBSTR', ['m_email_address', db_function('INSTR', ['m_email_address', '\'@\''])]);
-        $rows = $GLOBALS['FORUM_DB']->query_select('f_members', [$sql_expr . ' AS email_address', 'COUNT(*) as cnt'], ['m_allow_emails' => 1], 'GROUP BY ' . $sql_expr . ', m_email_address');
+        $rows = $GLOBALS['FORUM_DB']->query_select('f_members', [$sql_expr . ' AS email_address', 'COUNT(*) as cnt'], ['m_allow_emails_from_staff' => 1], 'GROUP BY ' . $sql_expr . ', m_email_address');
     } else {
         $sql_expr = db_function('SUBSTR', ['email', db_function('INSTR', ['email', '\'@\''])]);
         $rows = $GLOBALS['SITE_DB']->query_select('newsletter_subscribe', [$sql_expr . ' AS email_address', 'COUNT(*) as cnt'], [], 'GROUP BY ' . $sql_expr . ', email');

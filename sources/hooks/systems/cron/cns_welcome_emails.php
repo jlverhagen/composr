@@ -105,7 +105,7 @@ class Hook_cron_cns_welcome_emails
                     $where .= ' AND m_join_time<=' . strval($this->time_now - $send_seconds_after_joining);
                     $where .= ' AND ' . db_string_not_equal_to('m_email_address', '');
                     if (get_option('staff_email_receipt_configurability') != '0') {
-                        $where .= ' AND m_allow_emails=1';
+                        $where .= ' AND m_allow_emails_from_staff=1';
                     }
                     if ($send_seconds_after_joining != 0) {
                         $where .= ' AND ' . db_string_equal_to('m_validated_email_confirm_code', '');
