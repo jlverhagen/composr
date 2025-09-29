@@ -47,7 +47,7 @@ class Module_admin_stats extends Standard_crud_module
         $info['organisation'] = 'Composr';
         $info['hacked_by'] = null;
         $info['hack_version'] = null;
-        $info['version'] = 11;
+        $info['version'] = 12;
         $info['locked'] = true;
         $info['update_require_upgrade'] = true;
         $info['min_cms_version'] = 11.0;
@@ -245,6 +245,26 @@ class Module_admin_stats extends Standard_crud_module
             $GLOBALS['SITE_DB']->create_index('stats_known_events', 'e_count_logged', ['e_count_logged']);
             $GLOBALS['SITE_DB']->create_index('stats_known_tracking', 't_count_logged', ['t_count_logged']);
             $GLOBALS['SITE_DB']->create_index('stats_known_links', 'l_count_logged', ['l_count_logged']);
+        }
+
+        if (($upgrade_from !== null) && ($upgrade_from < 12)) { // LEGACY: 11.beta9
+            $old = cms_extend_time_limit(TIME_LIMIT_EXTEND__SLOW);
+
+            // Migrate from monthly buckets to daily ones to save on memory use during pre-processing
+            require_code('temporal');
+
+            // Must be very careful; some monthly buckets can be huge, so only process one at a time.
+            $start = 0;
+            $rows = [];
+            do {
+                $rows = $GLOBALS['SITE_DB']->query_select('stats_preprocessed', ['*'], [], '', 1, $start);
+
+                // TODO
+
+                $start++;
+            } while (count($rows) > 0);
+
+            cms_set_time_limit($old);
         }
     }
 
