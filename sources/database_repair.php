@@ -210,7 +210,7 @@ class DatabaseRepair
         $fk_details = $GLOBALS['SITE_DB']->query_select('db_meta_foreign_keys', ['*']);
         foreach ($fk_details as $fk) {
             $universal_fk_key = $fk['from_table'] . '__' . $fk['from_field'] . '||' . $fk['to_table'] . '__' . $fk['to_field'];
-            $meta_foreign_keys[$universal_fk_key] = ['from_table' => $fk['from_table'], 'from_field' => $fk['from_field'], 'to_table' => $fk['to_table'], 'to_field' => $fk['to_field']];
+            $meta_foreign_keys[$universal_fk_key] = ['from_table' => $fk['from_table'], 'from_field' => $fk['from_field'], 'to_table' => $fk['to_table'], 'to_field' => $fk['to_field'], 'special_values' => unserialize($fk['special_values'])];
         }
 
         $existent_foreign_keys = [];
@@ -236,7 +236,7 @@ class DatabaseRepair
                 $from_field = $row['COLUMN_NAME'];
                 $to_field   = $row['REFERENCED_COLUMN_NAME'];
                 $universal_fk_key = $from_table . '__' . $from_field . '||' . $to_table . '__' . $to_field;
-                $existent_foreign_keys[$universal_fk_key] = ['from_table' => $from_table, 'from_field' => $from_field, 'to_table' => $to_table, 'to_field' => $to_field];
+                $existent_foreign_keys[$universal_fk_key] = ['from_table' => $from_table, 'from_field' => $from_field, 'to_table' => $to_table, 'to_field' => $to_field, 'special_values' => []];
             }
         }
 
@@ -276,7 +276,13 @@ class DatabaseRepair
         if (array_key_exists('foreign_keys', $data)) {
             foreach ($data['foreign_keys'] as $universal_fk_key => $fk) {
                 if (addon_installed($fk['addon'], false, false, true, true)) {
-                    $expected_foreign_keys[$universal_fk_key] = ['from_table' => $fk['from_table'], 'from_field' => $fk['from_field'], 'to_table' => $fk['to_table'], 'to_field' => $fk['to_field']];
+                    $expected_foreign_keys[$universal_fk_key] = [
+                        'from_table' => $fk['from_table'],
+                        'from_field' => $fk['from_field'],
+                        'to_table' => $fk['to_table'],
+                        'to_field' => $fk['to_field'],
+                        'special_values' => $fk['special_values'],
+                    ];
                 }
             }
         }
@@ -842,7 +848,7 @@ class DatabaseRepair
                 $this->fix_foreign_key_inconsistent_in_db($exp_fk['from_table'], $exp_fk['from_field'], $exp_fk['to_table'], $exp_fk['to_field'], isset($meta_foreign_keys[$universal_fk_key]));
                 $needs_changes = true;
             } else {
-                $this->create_foreign_key_missing_from_db($exp_fk['from_table'], $exp_fk['from_field'], $exp_fk['to_table'], $exp_fk['to_field'], true);
+                $this->create_foreign_key_missing_from_db($exp_fk['from_table'], $exp_fk['from_field'], $exp_fk['to_table'], $exp_fk['to_field'], true, $exp_fk['special_values']);
                 $needs_changes = true;
             }
         }
@@ -1212,10 +1218,11 @@ class DatabaseRepair
      * @param  ID_TEXT $from_field The table's field on which the foreign key exists
      * @param  ID_TEXT $to_table The table referenced
      * @param  ID_TEXT $to_field The field referenced
+     * @param  array $special_values List of special values which $from_field can be which do not reference anything in $to_field
      */
-    private function create_foreign_key_missing_in_meta(string $from_table, string $from_field, string $to_table, string $to_field)
+    private function create_foreign_key_missing_in_meta(string $from_table, string $from_field, string $to_table, string $to_field, array $special_values = [])
     {
-        $query = 'INSERT INTO ' . get_table_prefix() . 'db_meta_foreign_keys (from_table,from_field,to_table,to_field) VALUES (\'' . db_escape_string($from_table) . '\',\'' . db_escape_string($from_field) . '\',\'' . db_escape_string($to_table) . '\',\'' . db_escape_string($to_field) . '\')';
+        $query = 'INSERT INTO ' . get_table_prefix() . 'db_meta_foreign_keys (from_table,from_field,to_table,to_field,special_values) VALUES (\'' . db_escape_string($from_table) . '\',\'' . db_escape_string($from_field) . '\',\'' . db_escape_string($to_table) . '\',\'' . db_escape_string($to_field) . '\',\'' . db_escape_string(serialize($special_values)) . '\')';
         $this->add_fixup_query($query);
     }
 
@@ -1227,12 +1234,13 @@ class DatabaseRepair
      * @param  ID_TEXT $to_table The table to be referenced
      * @param  ID_TEXT $to_field The field to be referenced
      * @param  boolean $include_meta Whether to also put this in the metadata
+     * @param  array $special_values List of special values which $from_field can be which do not reference anything in $to_field
      */
-    private function create_foreign_key_missing_from_db(string $from_table, string $from_field, string $to_table, string $to_field, bool $include_meta)
+    private function create_foreign_key_missing_from_db(string $from_table, string $from_field, string $to_table, string $to_field, bool $include_meta, array $special_values = [])
     {
         if ($include_meta) {
             // Ensure meta row exists (idempotent-ish: rely on repair sequencing avoiding duplicates)
-            $this->create_foreign_key_missing_in_meta($from_table, $from_field, $to_table, $to_field);
+            $this->create_foreign_key_missing_in_meta($from_table, $from_field, $to_table, $to_field, $special_values);
         }
 
         $from_table_full = get_table_prefix() . $from_table;

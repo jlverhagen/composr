@@ -327,7 +327,7 @@ function _helper_create_table(object $this_ref, string $table_name, array $field
             $fk = $GLOBALS['SITE_DB']->query_select('db_meta_foreign_keys', ['*'], ['to_table' => $table_name]);
             foreach ($fk as $row) {
                 $db = get_db_for($row['from_table']);
-                _helper_create_foreign_key($db, $row['from_table'], $row['from_field'], $row['to_table'], $row['to_field'], false);
+                _helper_create_foreign_key($db, $row['from_table'], $row['from_field'], $row['to_table'], $row['to_field'], unserialize($row['special_values']), false);
             }
         }
     }
@@ -529,9 +529,10 @@ function _helper_delete_index_if_exists(object $this_ref, string $table_name, st
  * @param  ID_TEXT $from_field The table's field on which we are creating a foreign key
  * @param  ID_TEXT $to_table The table which is being referenced
  * @param  ID_TEXT $to_field The table's field which is being referenced
+ * @param  array $special_values Array of special values which $from_field is allowed to have which do not reference anything in $to_field
  * @param  boolean $also_meta Whether to also add this foreign key to the database meta (false: also bypasses duplicate key sanity check)
  */
-function _helper_create_foreign_key(object $this_ref, string $from_table, string $from_field, string $to_table, string $to_field, bool $also_meta = true)
+function _helper_create_foreign_key(object $this_ref, string $from_table, string $from_field, string $to_table, string $to_field, array $special_values = [], bool $also_meta = true)
 {
     // Restricted tables which cannot have constraints
     if (in_array($from_table, ['db_meta', 'db_meta_indices', 'db_meta_foreign_keys'])) {
@@ -558,7 +559,7 @@ function _helper_create_foreign_key(object $this_ref, string $from_table, string
             }
         }
 
-        $this_ref->query_insert('db_meta_foreign_keys', ['from_table' => $from_table, 'from_field' => $from_field, 'to_table' => $to_table, 'to_field' => $to_field]);
+        $this_ref->query_insert('db_meta_foreign_keys', ['from_table' => $from_table, 'from_field' => $from_field, 'to_table' => $to_table, 'to_field' => $to_field, 'special_values' => serialize($special_values)]);
     }
 
     // If the table/field we are referencing does not yet exist, skip making the foreign key. When the table is created, the foreign key will be created via the entry we made in db_meta_foreign_keys.
@@ -745,9 +746,9 @@ function _helper_rename_table(object $this_ref, string $old, string $new)
     // Add updated foreign keys
     foreach ($foreign_key_rows as $row) {
         if ($row['from_table'] == $old) {
-            _helper_create_foreign_key($this_ref, $new, $row['from_field'], $row['to_table'], $row['to_field']);
+            _helper_create_foreign_key($this_ref, $new, $row['from_field'], $row['to_table'], $row['to_field'], unserialize($row['special_values']));
         } elseif ($row['to_table'] == $old) {
-            _helper_create_foreign_key($this_ref, $row['from_table'], $row['from_field'], $new, $row['to_field']);
+            _helper_create_foreign_key($this_ref, $row['from_table'], $row['from_field'], $new, $row['to_field'], unserialize($row['special_values']));
         }
     }
 
@@ -845,7 +846,7 @@ function _helper_add_table_field(object $this_ref, string $table_name, string $n
     $fk = $GLOBALS['SITE_DB']->query_select('db_meta_foreign_keys', ['*'], ['to_table' => $table_name, 'to_field' => $name]);
     foreach ($fk as $row) {
         $db = get_db_for($row['from_table']);
-        _helper_create_foreign_key($db, $row['from_table'], $row['from_field'], $row['to_table'], $row['to_field'], false);
+        _helper_create_foreign_key($db, $row['from_table'], $row['from_field'], $row['to_table'], $row['to_field'], unserialize($row['special_values']), false);
     }
 
     if (function_exists('persistent_cache_delete')) {
@@ -974,9 +975,9 @@ function _helper_alter_table_field(object $this_ref, string $table_name, string 
     if ($new_name !== null) {
         foreach ($foreign_key_rows as $row) {
             if (($row['from_table'] == $table_name) && ($row['from_field'] == $name)) {
-                _helper_create_foreign_key($this_ref, $table_name, $new_name, $row['to_table'], $row['to_field']);
+                _helper_create_foreign_key($this_ref, $table_name, $new_name, $row['to_table'], $row['to_field'], unserialize($row['special_values']));
             } elseif (($row['to_table'] == $table_name) && ($row['to_field'] == $name)) {
-                _helper_create_foreign_key($this_ref, $row['from_table'], $row['from_field'], $table_name, $new_name);
+                _helper_create_foreign_key($this_ref, $row['from_table'], $row['from_field'], $table_name, $new_name, unserialize($row['special_values']));
             }
         }
     }
@@ -1117,7 +1118,7 @@ function rebuild_table_from_meta_database(object $db, string $table_name)
 
     // Re-create foreign keys
     foreach ($foreign_keys as $foreign_key) {
-        _helper_create_foreign_key($db, $foreign_key['from_table'], $foreign_key['from_field'], $foreign_key['to_table'], $foreign_key['to_field']);
+        _helper_create_foreign_key($db, $foreign_key['from_table'], $foreign_key['from_field'], $foreign_key['to_table'], $foreign_key['to_field'], unserialize($foreign_key['special_values']));
     }
 
     // Re-create indexes

@@ -785,7 +785,7 @@ function database_specific() : bool
     if ((is_numeric($upgrade_from)) && (intval($upgrade_from) < 1758492212)) {
         $GLOBALS['SITE_DB']->create_foreign_key('attachment_refs', 'a_id', 'attachments', 'id');
         $GLOBALS['FORUM_DB']->create_foreign_key('group_privileges', 'privilege', 'privilege_list', 'the_name');
-        $GLOBALS['FORUM_DB']->create_foreign_key('group_privileges', 'the_page', 'modules', 'module_the_name');
+        $GLOBALS['FORUM_DB']->create_foreign_key('group_privileges', 'the_page', 'modules', 'module_the_name', ['']);
 
         $GLOBALS['FORUM_DB']->create_foreign_key('f_forums', 'f_cache_last_forum_id', 'f_forums', 'id');
         $GLOBALS['FORUM_DB']->create_foreign_key('f_forums', 'f_cache_last_topic_id', 'f_topics', 'id');

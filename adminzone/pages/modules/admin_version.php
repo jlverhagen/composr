@@ -1381,21 +1381,19 @@ class Module_admin_version
         }
 
         if (($upgrade_from === null) || ($upgrade_from < 25)) { // 11.beta9
-            $GLOBALS['SITE_DB']->create_foreign_key('cached_comcode_pages', 'the_zone', 'zones', 'zone_name');
+            $GLOBALS['SITE_DB']->create_foreign_key('cached_comcode_pages', 'the_zone', 'zones', 'zone_name', ['!']);
             $GLOBALS['SITE_DB']->create_foreign_key('comcode_pages', 'the_zone', 'zones', 'zone_name');
             $GLOBALS['SITE_DB']->create_foreign_key('member_page_access', 'page_name', 'modules', 'module_the_name');
             $GLOBALS['SITE_DB']->create_foreign_key('member_page_access', 'zone_name', 'zones', 'zone_name');
             $GLOBALS['SITE_DB']->create_foreign_key('member_privileges', 'privilege', 'privilege_list', 'the_name');
-            $GLOBALS['SITE_DB']->create_foreign_key('member_privileges', 'the_page', 'modules', 'module_the_name');
+            //$GLOBALS['SITE_DB']->create_foreign_key('member_privileges', 'the_page', 'modules', 'module_the_name'); // Could be a Comcode page
             $GLOBALS['SITE_DB']->create_foreign_key('member_zone_access', 'zone_name', 'zones', 'zone_name');
             $GLOBALS['SITE_DB']->create_foreign_key('menu_items', 'i_parent_id', 'menu_items', 'id');
             $GLOBALS['SITE_DB']->create_foreign_key('messages_to_render', 'r_session_id', 'sessions', 'the_session');
-            $GLOBALS['SITE_DB']->create_foreign_key('rating', 'rating_for_id', 'modules', 'module_the_name');
             $GLOBALS['SITE_DB']->create_foreign_key('review_supplement', 'r_post_id', 'f_posts', 'id');
-            $GLOBALS['SITE_DB']->create_foreign_key('review_supplement', 'r_rating_for_id', 'modules', 'module_the_name');
             $GLOBALS['SITE_DB']->create_foreign_key('review_supplement', 'r_topic_id', 'f_topics', 'id');
             $GLOBALS['SITE_DB']->create_foreign_key('temp_block_permissions', 'p_session_id', 'sessions', 'the_session');
-            $GLOBALS['SITE_DB']->create_foreign_key('url_id_monikers', 'm_resource_page', 'modules', 'module_the_name');
+            //$GLOBALS['SITE_DB']->create_foreign_key('url_id_monikers', 'm_resource_page', 'modules', 'module_the_name'); // Could be a Comcode page
         }
 
         // Ensure for every install / upgrade that the entry points for custom zones are updated to match the adminzone one

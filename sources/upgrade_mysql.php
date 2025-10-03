@@ -134,6 +134,7 @@ function _upgrader_data_integrity_screen() : string
             foreach ($rows as $row) {
                 $db = get_db_for($row['from_table']);
                 $db_to = get_db_for($row['to_table']);
+                $special_values = @unserialize($row['special_values']);
 
                 $can_be_null = (@strpos($meta[$row['from_table'] . '.' . $row['from_field']], '?') === 0);
 
@@ -143,16 +144,29 @@ function _upgrader_data_integrity_screen() : string
                     $query .= ' LEFT JOIN `' . $db_to->table_prefix . $row['to_table'] . '` AS `tt` ON `ft`.`' . $row['from_field'] . '` = `tt`.`' . $row['to_field'] . '`';
                     $query .= ' SET `ft`.`' . $row['from_field'] . '` = NULL';
                     $query .= ' WHERE `tt`.`' . $row['to_field'] . '` IS NULL';
-
-                    $db->query($query);
+                    $query .= ' AND `ft`.`' . $row['from_field'] . '` IS NOT NULL';
                 } else {
                     $query = 'DELETE `ft`';
                     $query .= ' FROM `' . $db->table_prefix . $row['from_table'] . '` AS `ft`';
                     $query .= ' LEFT JOIN `' . $db_to->table_prefix . $row['to_table'] . '` AS `tt` ON `ft`.`' . $row['from_field'] . '` = `tt`.`' . $row['to_field'] . '`';
                     $query .= ' WHERE `tt`.`' . $row['to_field'] . '` IS NULL';
-
-                    $db->query($query);
+                    $query .= ' AND `ft`.`' . $row['from_field'] . '` IS NOT NULL';
                 }
+                if (is_array($special_values) && (count($special_values) > 0)) {
+                    $escaped_values = '';
+                    foreach ($special_values as $i => $val) {
+                        if ($i > 0) {
+                            $escaped_values .= ',';
+                        }
+                        if (is_string($val)) {
+                            $escaped_values .= '\'' . db_escape_string($val) . '\'';
+                        } else {
+                            $escaped_values .= strval($val);
+                        }
+                    }
+                    $query .= ' AND `ft`.`' . $row['from_field'] . '` NOT IN (' . $escaped_values . ')';
+                }
+                $db->query($query);
             }
 
             $start += $max;
