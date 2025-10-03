@@ -96,7 +96,7 @@ class Module_admin_cns_welcome_emails extends Standard_crud_module
         }
 
         if (($upgrade_from === null) || ($upgrade_from < 6)) { // 11.beta9
-            $GLOBALS['FORUM_DB']->create_foreign_key('f_welcome_emails', 'w_newsletter_id', 'newsletter', 'id');
+            $GLOBALS['FORUM_DB']->create_foreign_key('f_welcome_emails', 'w_newsletter_id', 'newsletters', 'id');
             $GLOBALS['FORUM_DB']->create_foreign_key('f_welcome_emails', 'w_usergroup', 'f_groups', 'id');
         }
     }
