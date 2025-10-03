@@ -66,11 +66,11 @@ class Hook_health_check_performance extends Hook_Health_Check
     public function testManualPerformance(int $check_context, bool $manual_checks = false, bool $automatic_repair = false, ?bool $use_test_data_for_pass = null, ?array $urls_or_page_links = null, ?array $comcode_segments = null)
     {
         if ($check_context == CHECK_CONTEXT__INSTALL) {
-            $this->log('Skipped; we are running from installer.');
+            $this->stateCheckSkipped('Skipped; we are running from installer.');
             return;
         }
         if ($check_context == CHECK_CONTEXT__SPECIFIC_PAGE_LINKS) {
-            $this->log('Skipped; running on specific page links.');
+            $this->stateCheckSkipped('Skipped; running on specific page links.');
             return;
         }
 
@@ -144,11 +144,11 @@ class Hook_health_check_performance extends Hook_Health_Check
     public function testCookies(int $check_context, bool $manual_checks = false, bool $automatic_repair = false, ?bool $use_test_data_for_pass = null, ?array $urls_or_page_links = null, ?array $comcode_segments = null)
     {
         if ($check_context == CHECK_CONTEXT__INSTALL) {
-            $this->log('Skipped; we are running from installer.');
+            $this->stateCheckSkipped('Skipped; we are running from installer.');
             return;
         }
         if ($check_context == CHECK_CONTEXT__SPECIFIC_PAGE_LINKS) {
-            $this->log('Skipped; running on specific page links.');
+            $this->stateCheckSkipped('Skipped; running on specific page links.');
             return;
         }
 
@@ -212,11 +212,11 @@ class Hook_health_check_performance extends Hook_Health_Check
     public function testHTTPOptimisation(int $check_context, bool $manual_checks = false, bool $automatic_repair = false, ?bool $use_test_data_for_pass = null, ?array $urls_or_page_links = null, ?array $comcode_segments = null)
     {
         if ($check_context == CHECK_CONTEXT__INSTALL) {
-            $this->log('Skipped; we are running from installer.');
+            $this->stateCheckSkipped('Skipped; we are running from installer.');
             return;
         }
         if ($check_context == CHECK_CONTEXT__SPECIFIC_PAGE_LINKS) {
-            $this->log('Skipped; running on specific page links.');
+            $this->stateCheckSkipped('Skipped; running on specific page links.');
             return;
         }
 
@@ -321,11 +321,11 @@ class Hook_health_check_performance extends Hook_Health_Check
     public function testPageSpeed(int $check_context, bool $manual_checks = false, bool $automatic_repair = false, ?bool $use_test_data_for_pass = null, ?array $urls_or_page_links = null, ?array $comcode_segments = null)
     {
         if ($check_context == CHECK_CONTEXT__INSTALL) {
-            $this->log('Skipped; we are running from installer.');
+            $this->stateCheckSkipped('Skipped; we are running from installer.');
             return;
         }
         if ($check_context == CHECK_CONTEXT__SPECIFIC_PAGE_LINKS) {
-            $this->log('Skipped; running on specific page links.');
+            $this->stateCheckSkipped('Skipped; running on specific page links.');
             return;
         }
 
@@ -367,11 +367,11 @@ class Hook_health_check_performance extends Hook_Health_Check
     public function testSetup(int $check_context, bool $manual_checks = false, bool $automatic_repair = false, ?bool $use_test_data_for_pass = null, ?array $urls_or_page_links = null, ?array $comcode_segments = null)
     {
         if ($check_context == CHECK_CONTEXT__INSTALL) {
-            $this->log('Skipped; we are running from installer.');
+            $this->stateCheckSkipped('Skipped; we are running from installer.');
             return;
         }
         if ($check_context == CHECK_CONTEXT__SPECIFIC_PAGE_LINKS) {
-            $this->log('Skipped; running on specific page links.');
+            $this->stateCheckSkipped('Skipped; running on specific page links.');
             return;
         }
 
@@ -419,11 +419,11 @@ class Hook_health_check_performance extends Hook_Health_Check
     public function testBotFlood(int $check_context, bool $manual_checks = false, bool $automatic_repair = false, ?bool $use_test_data_for_pass = null, ?array $urls_or_page_links = null, ?array $comcode_segments = null)
     {
         if ($check_context == CHECK_CONTEXT__INSTALL) {
-            $this->log('Skipped; we are running from installer.');
+            $this->stateCheckSkipped('Skipped; we are running from installer.');
             return;
         }
         if ($check_context == CHECK_CONTEXT__SPECIFIC_PAGE_LINKS) {
-            $this->log('Skipped; running on specific page links.');
+            $this->stateCheckSkipped('Skipped; running on specific page links.');
             return;
         }
 
@@ -481,7 +481,7 @@ class Hook_health_check_performance extends Hook_Health_Check
     public function testXdebug(int $check_context, bool $manual_checks = false, bool $automatic_repair = false, ?bool $use_test_data_for_pass = null, ?array $urls_or_page_links = null, ?array $comcode_segments = null)
     {
         if ($check_context == CHECK_CONTEXT__SPECIFIC_PAGE_LINKS) {
-            $this->log('Skipped; running on specific page links.');
+            $this->stateCheckSkipped('Skipped; running on specific page links.');
             return;
         }
 

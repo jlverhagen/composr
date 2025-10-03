@@ -32,7 +32,7 @@ class Module_points
         $info['organisation'] = 'Composr';
         $info['hacked_by'] = null;
         $info['hack_version'] = null;
-        $info['version'] = 13;
+        $info['version'] = 14;
         $info['locked'] = true;
         $info['update_require_upgrade'] = true;
         $info['min_cms_version'] = 11.0;
@@ -489,6 +489,12 @@ class Module_points
         if (($upgrade_from !== null) && ($upgrade_from < 13)) { // LEGACY: 11.rc1
             // original_points_ledger_id can now be null (when an escrow is created by the system)
             $GLOBALS['SITE_DB']->alter_table_field('escrow', 'original_points_ledger_id', '?AUTO_LINK');
+        }
+
+        if (($upgrade_from === null) || ($upgrade_from < 14)) { // 11.beta9
+            $GLOBALS['SITE_DB']->create_foreign_key('escrow', 'original_points_ledger_id', 'points_ledger', 'id');
+            $GLOBALS['SITE_DB']->create_foreign_key('escrow_logs', 'escrow_id', 'escrow', 'id');
+            $GLOBALS['SITE_DB']->create_foreign_key('points_ledger', 'linked_ledger_id', 'points_ledger', 'id');
         }
     }
 

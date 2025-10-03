@@ -30,7 +30,7 @@ class Module_api
         $info['organisation'] = 'Composr';
         $info['hacked_by'] = null;
         $info['hack_version'] = null;
-        $info['version'] = 1;
+        $info['version'] = 2;
         $info['locked'] = false;
         $info['min_cms_version'] = 11.0;
         $info['addon'] = 'composr_tutorials';
@@ -414,6 +414,11 @@ class Module_api
             'i_ngram',
             'i_occurrence_rate', // For sorting
         ]);
+
+        $GLOBALS['SITE_DB']->create_foreign_key('api_function_params', 'function_id', 'api_functions', 'id');
+        $GLOBALS['SITE_DB']->create_foreign_key('api_functions', 'class_id', 'api_classes', 'id');
+        $GLOBALS['SITE_DB']->create_foreign_key('api_functions_fulltext_index', 'i_c_id', 'api_classes', 'id');
+        $GLOBALS['SITE_DB']->create_foreign_key('api_functions_fulltext_index', 'i_f_id', 'api_functions', 'id');
     }
 
     /**

@@ -35,7 +35,7 @@ class Module_banners
         $info['organisation'] = 'Composr';
         $info['hacked_by'] = null;
         $info['hack_version'] = null;
-        $info['version'] = 9;
+        $info['version'] = 10;
         $info['locked'] = true;
         $info['update_require_upgrade'] = true;
         $info['min_cms_version'] = 11.0;
@@ -190,6 +190,12 @@ class Module_banners
 
         if (($upgrade_from !== null) && ($upgrade_from < 9)) { // LEGACY: 11 beta7
             $GLOBALS['SITE_DB']->add_table_field('banners', 'validation_time', '?TIME');
+        }
+
+        if (($upgrade_from === null) || ($upgrade_from < 10)) { // 11.beta9
+            $GLOBALS['SITE_DB']->create_foreign_key('banners', 'b_type', 'banner_types', 'id');
+            $GLOBALS['SITE_DB']->create_foreign_key('banners_types', 'name', 'banners', 'name');
+            $GLOBALS['SITE_DB']->create_foreign_key('banners_types', 'b_type', 'banner_types', 'id');
         }
     }
 

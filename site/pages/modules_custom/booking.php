@@ -30,7 +30,7 @@ class Module_booking
         $info['organisation'] = 'Composr';
         $info['hacked_by'] = null;
         $info['hack_version'] = null;
-        $info['version'] = 3;
+        $info['version'] = 4;
         $info['update_require_upgrade'] = true;
         $info['locked'] = false;
         $info['min_cms_version'] = 11.0;
@@ -170,6 +170,18 @@ class Module_booking
 
         if (($upgrade_from !== null) && ($upgrade_from < 3)) { // LEGACY
             $GLOBALS['SITE_DB']->alter_table_field('bookable', 'description', 'LONG_TRANS__COMCODE', 'the_description');
+        }
+
+        if (($upgrade_from === null) || ($upgrade_from < 4)) { // 11.beta9
+            $GLOBALS['SITE_DB']->create_foreign_key('bookable_blacked_for', 'bookable_id', 'bookable', 'id');
+            $GLOBALS['SITE_DB']->create_foreign_key('bookable_blacked_for', 'blacked_id', 'bookable_blacked', 'id');
+            $GLOBALS['SITE_DB']->create_foreign_key('bookable_codes', 'bookable_id', 'bookable', 'id');
+            $GLOBALS['SITE_DB']->create_foreign_key('bookable_supplement_for', 'supplement_id', 'bookable_supplement', 'id');
+            $GLOBALS['SITE_DB']->create_foreign_key('bookable_supplement_for', 'bookable_id', 'bookable', 'id');
+            $GLOBALS['SITE_DB']->create_foreign_key('booking', 'bookable_id', 'bookable', 'id');
+            $GLOBALS['SITE_DB']->create_foreign_key('bookable', 'calendar_type', 'calendar_types', 'id');
+            $GLOBALS['SITE_DB']->create_foreign_key('booking_supplement', 'booking_id', 'booking', 'id');
+            $GLOBALS['SITE_DB']->create_foreign_key('booking_supplement', 'supplement_id', 'bookable_supplement', 'id');
         }
     }
 

@@ -38,7 +38,7 @@ class Module_admin_workflow extends Standard_crud_module
         $info['organisation'] = 'Composr';
         $info['hacked_by'] = null;
         $info['hack_version'] = null;
-        $info['version'] = 2;
+        $info['version'] = 3;
         $info['locked'] = false;
         $info['min_cms_version'] = 11.0;
         $info['addon'] = 'workflows';
@@ -117,6 +117,14 @@ class Module_admin_workflow extends Standard_crud_module
         if (($upgrade_from !== null) && ($upgrade_from < 2)) { // LEGACY: 11.beta1
             // Database integrity fixes
             $GLOBALS['SITE_DB']->alter_table_field('workflow_content_status', 'approved_by', 'MEMBER', 'approved_by_member');
+        }
+
+        if (($upgrade_from === null) || ($upgrade_from < 3)) { // 11.beta9
+            $GLOBALS['SITE_DB']->create_foreign_key('workflow_approval_points', 'workflow_id', 'workflows', 'id');
+            $GLOBALS['SITE_DB']->create_foreign_key('workflow_permissions', 'workflow_approval_point_id', 'workflow_approval_points', 'id');
+            $GLOBALS['SITE_DB']->create_foreign_key('workflow_content', 'workflow_id', 'workflows', 'id');
+            $GLOBALS['SITE_DB']->create_foreign_key('workflow_content_status', 'workflow_content_id', 'workflow_content', 'id');
+            $GLOBALS['SITE_DB']->create_foreign_key('workflow_content_status', 'workflow_approval_point_id', 'workflow_approval_points', 'id');
         }
     }
 

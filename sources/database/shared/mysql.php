@@ -452,19 +452,19 @@ abstract class Database_super_mysql extends DatabaseDriver
     {
         $type_remap = [
             'AUTO' => $for_alter ? 'integer unsigned' : 'integer unsigned auto_increment',
-            'AUTO_LINK' => 'integer', // not unsigned because it's useful to have -ve for temporary usage while importing (NB: *_TRANS is signed, so trans fields are not perfectly AUTO_LINK compatible and can have double the positive range -- in the real world it will not matter though)
+            'AUTO_LINK' => 'integer', // TODO: must be unsigned when implementing foreign keys
             'INTEGER' => 'integer',
             'UINTEGER' => 'integer unsigned',
             'SHORT_INTEGER' => 'tinyint',
             'REAL' => 'real',
             'BINARY' => 'tinyint(1)',
-            'MEMBER' => 'integer', // not unsigned because it's useful to have -ve for temporary usage while importing
-            'GROUP' => 'integer', // not unsigned because it's useful to have -ve for temporary usage while importing
+            'MEMBER' => 'integer', // TODO: must be unsigned when implementing foreign keys
+            'GROUP' => 'integer', // TODO: must be unsigned when implementing foreign keys
             'TIME' => 'integer unsigned',
             'LONG_TRANS' => 'integer unsigned',
             'SHORT_TRANS' => 'integer unsigned',
-            'LONG_TRANS__COMCODE' => 'integer',
-            'SHORT_TRANS__COMCODE' => 'integer',
+            'LONG_TRANS__COMCODE' => 'integer', // TODO: must be unsigned when implementing foreign keys
+            'SHORT_TRANS__COMCODE' => 'integer', // TODO: must be unsigned when implementing foreign keys
             'SHORT_TEXT' => 'varchar(255)',
             'TEXT' => 'varchar(4000)', // Set consistently as 4000 across all drivers due to SQL Server having the lowest limit ; this field type should only be used as an alternative to LONG_TEXT that can be defaulted to '' if not specified, necessary for adding fields to the table's of external systems
             'LONG_TEXT' => 'longtext',
@@ -527,9 +527,8 @@ abstract class Database_super_mysql extends DatabaseDriver
             $_fields .= ' ' . $perhaps_null . ',' . "\n";
         }
 
-        global $USE_INNODB;
-        $innodb = (($USE_INNODB) || (!function_exists('get_value')) || (get_value('innodb') == '1')); // As of 11.beta9, Default to InnoDB
-        $table_type = ($innodb ? 'INNODB' : 'MyISAM');
+        // As of 11.beta9, Default to InnoDB
+        $table_type = (db_is_innodb() ? 'INNODB' : 'MyISAM');
         $type_key = 'engine';
         /*if ($raw_table_name == 'sessions') {
             $table_type = 'HEAP';   Some MySQL servers are very regularly reset
@@ -537,6 +536,7 @@ abstract class Database_super_mysql extends DatabaseDriver
 
         $query = 'CREATE TABLE ' . $table_name . ' (' . "\n" . $_fields . '    PRIMARY KEY (' . $keys . ")\n)";
 
+        // TODO: this block of code will not work when we implement foreign keys; fields must have matching collations
         global $SITE_INFO;
         if (empty($SITE_INFO['database_charset'])) {
             $SITE_INFO['database_charset'] = (get_charset() == 'utf-8') ? 'utf8mb4' : 'latin1';
@@ -605,7 +605,7 @@ abstract class Database_super_mysql extends DatabaseDriver
      */
     public function get_table_count_approx(string $table, $connection) : ?int
     {
-        if ((get_value('slow_counts') === '1') || (get_value('innodb') === '1')) {
+        if ((get_value('slow_counts') === '1') || db_is_innodb()) {
             $sql = 'SELECT TABLE_ROWS FROM information_schema.tables WHERE table_schema=DATABASE() AND TABLE_NAME=\'' . $this->escape_string($table) . '\'';
             $values = $this->query($sql, $connection, null, 0, true);
             if (!isset($values[0])) {
@@ -719,10 +719,19 @@ abstract class Database_super_mysql extends DatabaseDriver
      * @param  ID_TEXT $from_field The table's field on which we are creating a foreign key
      * @param  ID_TEXT $to_table The table which is being referenced
      * @param  ID_TEXT $to_field The table's field which is being referenced
-     * @return string The SQL
+     * @return ?string The SQL (null: not supported)
      */
-    public function create_foreign_key__sql(string $from_table, string $from_field, string $to_table, string $to_field) : string
+    public function create_foreign_key__sql(string $from_table, string $from_field, string $to_table, string $to_field) : ?string
     {
+        // TODO: Not implemented yet as it would require a major re-structuring of the software
+        return null;
+
+        /*
+        // InnoDB support only
+        if (!db_is_innodb()) {
+            return null;
+        }
+
         // Compose deterministic, schema-unique constraint name
         $constraint_name = 'fk_' . md5(preg_replace('#[^\w]#', '_', $from_table . '__' . $from_field));
 
@@ -734,6 +743,7 @@ abstract class Database_super_mysql extends DatabaseDriver
         $sql .= ' REFERENCES ' . $to_table . ' (' . $delimiter . $to_field . $delimiter . ')';
 
         return $this->fix_mysql8_query($sql);
+        */
     }
 
     /**
@@ -742,15 +752,25 @@ abstract class Database_super_mysql extends DatabaseDriver
      *
      * @param  ID_TEXT $from_table The table on which we want to delete the foreign key
      * @param  ID_TEXT $from_field The field on which we want to delete a foreign key
-     * @return string The SQL
+     * @return ?string The SQL (null: not supported)
      */
-    public function delete_foreign_key__sql(string $from_table, string $from_field) : string
+    public function delete_foreign_key__sql(string $from_table, string $from_field) : ?string
     {
+        // TODO: Not implemented yet as it would require a major re-structuring of the software
+        return null;
+
+        /*
+        // InnoDB support only
+        if (!db_is_innodb()) {
+            return null;
+        }
+
         $constraint_name = 'fk_' . md5(preg_replace('#[^\w]#', '_', $from_table . '__' . $from_field));
 
         $sql = 'ALTER TABLE ' . $from_table . ' DROP FOREIGN KEY ' . $constraint_name;
 
         return $this->fix_mysql8_query($sql);
+        */
     }
 
     /**

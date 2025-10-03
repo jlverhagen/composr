@@ -45,7 +45,7 @@ class Module_admin_cns_welcome_emails extends Standard_crud_module
         $info['organisation'] = 'Composr';
         $info['hacked_by'] = null;
         $info['hack_version'] = null;
-        $info['version'] = 5;
+        $info['version'] = 6;
         $info['update_require_upgrade'] = true;
         $info['locked'] = false;
         $info['min_cms_version'] = 11.0;
@@ -93,6 +93,11 @@ class Module_admin_cns_welcome_emails extends Standard_crud_module
             $GLOBALS['SITE_DB']->alter_table_field('f_welcome_emails', 'w_send_time', 'INTEGER', 'w_send_after_hours');
             $GLOBALS['SITE_DB']->alter_table_field('f_welcome_emails', 'w_newsletter', '?AUTO_LINK', 'w_newsletter_id');
             $GLOBALS['SITE_DB']->alter_table_field('f_welcome_emails', 'w_usergroup', '?GROUP');
+        }
+
+        if (($upgrade_from === null) || ($upgrade_from < 6)) { // 11.beta9
+            $GLOBALS['FORUM_DB']->create_foreign_key('f_welcome_emails', 'w_newsletter_id', 'newsletters', 'id');
+            $GLOBALS['FORUM_DB']->create_foreign_key('f_welcome_emails', 'w_usergroup', 'f_groups', 'id');
         }
     }
 

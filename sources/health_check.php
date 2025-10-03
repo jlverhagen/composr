@@ -205,6 +205,9 @@ function run_health_check(bool &$has_fails, ?array $sections_to_run = null, bool
             $num_skipped = 0;
             $num_manual = 0;
             $_results = [];
+            if ($results === null) {
+                continue;
+            }
             foreach ($results as $_result) {
                 $__result = $_result[0];
 

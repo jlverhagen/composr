@@ -35,7 +35,7 @@ class Module_report_content
         $info['organisation'] = 'Composr';
         $info['hacked_by'] = null;
         $info['hack_version'] = null;
-        $info['version'] = 4;
+        $info['version'] = 5;
         $info['update_require_upgrade'] = true;
         $info['locked'] = false;
         $info['min_cms_version'] = 11.0;
@@ -77,6 +77,10 @@ class Module_report_content
 
         if (($upgrade_from === null) || ($upgrade_from < 4)) {
             add_privilege('GENERAL_SETTINGS', 'may_report_content', true);
+        }
+
+        if (($upgrade_from === null) || ($upgrade_from < 5)) { // 11.beta9
+            $GLOBALS['SITE_DB']->create_foreign_key('reported_content', 'r_session_id', 'sessions', 'the_session');
         }
     }
 

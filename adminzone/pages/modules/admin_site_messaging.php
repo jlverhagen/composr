@@ -37,7 +37,7 @@ class Module_admin_site_messaging
         $info['organisation'] = 'PDStig, LLC';
         $info['hacked_by'] = null;
         $info['hack_version'] = null;
-        $info['version'] = 1;
+        $info['version'] = 2;
         $info['locked'] = false;
         $info['min_cms_version'] = 11.0;
         $info['addon'] = 'site_messaging';
@@ -87,6 +87,12 @@ class Module_admin_site_messaging
                 'message_id' => 'AUTO_LINK',
                 'page_link' => 'SHORT_TEXT', // Match-keys
             ]);
+        }
+
+        if (($upgrade_from === null) || ($upgrade_from < 2)) { // 11.beta9
+            $GLOBALS['SITE_DB']->create_foreign_key('site_messages_groups', 'message_id', 'site_messages', 'id');
+            $GLOBALS['SITE_DB']->create_foreign_key('site_messages_groups', 'group_id', 'f_groups', 'id');
+            $GLOBALS['SITE_DB']->create_foreign_key('site_messages_pages', 'message_id', 'site_messages', 'id');
         }
     }
 

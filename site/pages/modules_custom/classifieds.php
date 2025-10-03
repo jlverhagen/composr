@@ -30,7 +30,7 @@ class Module_classifieds
         $info['organisation'] = 'Composr';
         $info['hacked_by'] = null;
         $info['hack_version'] = null;
-        $info['version'] = 3;
+        $info['version'] = 4;
         $info['update_require_upgrade'] = true;
         $info['locked'] = false;
         $info['min_cms_version'] = 11.0;
@@ -67,6 +67,7 @@ class Module_classifieds
 
             require_lang('classifieds');
 
+            /*
             $prices = [
                 'ONE_WEEK' => [0.0, 7],
                 'ONE_MONTH' => [5.0, 30],
@@ -84,10 +85,15 @@ class Module_classifieds
                 $map += insert_lang('c_label', do_lang('CLASSIFIEDS_DEFAULT_PRICE_LEVEL_' . $level), 2);
                 $GLOBALS['SITE_DB']->query_insert('ecom_classifieds_prices', $map);
             }
+            */
         }
 
         if (($upgrade_from !== null) && ($upgrade_from < 3)) {
             $GLOBALS['SITE_DB']->rename_table('classifieds_prices', 'ecom_classifieds_prices');
+        }
+
+        if (($upgrade_from === null) || ($upgrade_from < 4)) { // 11.beta9
+            $GLOBALS['SITE_DB']->create_foreign_key('ecom_classifieds_prices', 'c_catalogue_name', 'catalogues', 'c_name');
         }
     }
 

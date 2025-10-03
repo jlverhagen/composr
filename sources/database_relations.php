@@ -53,6 +53,7 @@ function init__database_relations()
  */
 function get_table_purpose_flags() : array
 {
+    // TODO: Migrate to hooks
     return [ // If you change TABLE_PURPOSE__NO_BACKUPS on any of these, you should probably also edit the performance_bloat testTableSize health check
         'addons' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__AUTOGEN_STATIC,
         'addons_dependencies' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__AUTOGEN_STATIC | TABLE_PURPOSE__SUBDATA/*under addons*/,
@@ -313,6 +314,7 @@ function table_has_purpose_flag(string $table, int $flag) : bool
  */
 function get_table_descriptions() : array
 {
+    // TODO: Migrate to hooks
     return [
         'actionlogs' => 'stores logs of actions performed on the website',
         'addons' => 'registry of installed addons, including the version that was installed (used for auto-upgrading)',
@@ -483,18 +485,14 @@ function get_table_descriptions() : array
  */
 function get_relation_map_for_table(string $table) : array
 {
-    $relation_map = get_relation_map();
-    $new_relation_map = [];
-    foreach ($relation_map as $from => $to) {
-        if ($to !== null) {
-            list($from_table, $from_field) = explode('.', $from, 2);
-            if ($table == $from_table) {
-                list($to_table, $to_field) = explode('.', $to, 2);
-                $new_relation_map[$from_field] = [$to_table, $to_field];
-            }
-        }
+    $ret = [];
+
+    $rows = $GLOBALS['SITE_DB']->query_select('db_meta_foreign_keys', ['*'], ['from_table' => $table]);
+    foreach ($rows as $row) {
+        $ret[$row['from_field']] = [$row['to_table'], $row['to_field']];
     }
-    return $new_relation_map;
+
+    return $ret;
 }
 
 /**
@@ -504,168 +502,32 @@ function get_relation_map_for_table(string $table) : array
  */
 function get_relation_map() : array
 {
+    $ret = [];
+
+    $rows = $GLOBALS['SITE_DB']->query_select('db_meta_foreign_keys');
+    foreach ($rows as $row) {
+        $ret[$row['from_table'] . '.' . $row['from_field']] = $row['to_table'] . '.' . $row['to_field'];
+    }
+
+    return $ret;
+
+    // TODO: implement in create_foreign_key
+    /*
     return [
-        'actionlogs.warning_id' => 'f_warnings.id',
-        'attachment_refs.a_id' => 'attachments.id',
         'attachment_refs.r_referer_id' => null,
-        'award_archive.a_type_id' => 'award_types.id',
-        'banners.b_type' => 'banner_types.id',
-        'banners_types.name' => 'banners.name',
-        'banners_types.b_type' => 'banner_types.id',
-        'cached_comcode_pages.the_zone' => 'zones.zone_name',
-        'calendar_events.e_type' => 'calendar_types.id',
-        'calendar_interests.t_type' => 'calendar_types.id',
-        'calendar_jobs.j_event_id' => 'calendar_events.id',
-        'calendar_jobs.j_reminder_id' => 'calendar_reminders.id',
-        'calendar_reminders.e_id' => 'calendar_events.id',
-        'catalogue_categories.cc_move_target_id' => 'catalogue_categories.id',
-        'catalogue_categories.cc_parent_id' => 'catalogue_categories.id',
-        'catalogue_categories.c_name' => 'catalogues.c_name',
-        'catalogue_cat_treecache.cc_ancestor_id' => 'catalogue_categories.id',
-        'catalogue_cat_treecache.cc_id' => 'catalogue_categories.id',
-        'catalogue_childcountcache.cc_id' => 'catalogue_categories.id',
-        'catalogue_efv_float.ce_id' => 'catalogue_entries.id',
-        'catalogue_efv_float.cf_id' => 'catalogue_fields.id',
-        'catalogue_efv_integer.ce_id' => 'catalogue_entries.id',
-        'catalogue_efv_integer.cf_id' => 'catalogue_fields.id',
-        'catalogue_efv_long.ce_id' => 'catalogue_entries.id',
-        'catalogue_efv_long.cf_id' => 'catalogue_fields.id',
-        'catalogue_efv_long_trans.ce_id' => 'catalogue_entries.id',
-        'catalogue_efv_long_trans.cf_id' => 'catalogue_fields.id',
-        'catalogue_efv_short.ce_id' => 'catalogue_entries.id',
-        'catalogue_efv_short.cf_id' => 'catalogue_fields.id',
-        'catalogue_efv_short_trans.ce_id' => 'catalogue_entries.id',
-        'catalogue_efv_short_trans.cf_id' => 'catalogue_fields.id',
-        'catalogue_entries.cc_id' => 'catalogue_categories.id',
-        'catalogue_entries.c_name' => 'catalogues.c_name',
-        'catalogue_entry_linkage.catalogue_entry_id' => 'catalogue_entries.id',
-        'catalogue_fields.c_name' => 'catalogues.c_name',
-        'chat_active.room_id' => 'chat_rooms.id',
-        'chat_events.e_room_id' => 'chat_rooms.id',
-        'chat_messages.room_id' => 'chat_rooms.id',
-        'comcode_pages.the_zone' => 'zones.zone_name',
-        'download_categories.parent_id' => 'download_categories.id',
-        'download_downloads.category_id' => 'download_categories.id',
-        'download_downloads.download_licence_id' => 'download_licences.id',
-        'download_downloads.out_mode_id' => 'download_downloads.id',
-        'download_logging.id' => 'download_downloads.id',
-        'escrow.original_points_ledger_id' => 'points_ledger.id',
-        'escrow_logs.escrow_id' => 'escrow.id',
-        'f_forums.f_cache_last_forum_id' => 'f_forums.id',
-        'f_forums.f_cache_last_topic_id' => 'f_topics.id',
-        'f_forums.f_forum_grouping_id' => 'f_forum_groupings.id',
-        'f_forums.f_parent_forum_id' => 'f_forums.id',
-        'f_forum_intro_ip.i_forum_id' => 'f_forums.id',
-        'f_forum_intro_member.i_forum_id' => 'f_forums.id',
-        'f_group_approvals.ga_old_group_id' => 'f_groups.id',
-        'f_group_approvals.ga_new_group_id' => 'f_groups.id',
-        'f_group_join_log.usergroup_id' => 'f_groups.id',
-        'f_member_cpf_perms.field_id' => 'f_custom_fields.id',
-        'f_moderator_logs.l_warning_id' => 'f_warnings.id',
-        'f_multi_moderations.mm_move_to_forum_id' => 'f_forums.id',
-        'f_poll_answers.pa_poll_id' => 'f_polls.id',
-        'f_poll_votes.pv_answer_id' => 'f_poll_answers.id',
-        'f_poll_votes.pv_poll_id' => 'f_polls.id',
-        'f_posts.p_cache_forum_id' => 'f_forums.id',
-        'f_posts.p_parent_id' => 'f_posts.id',
-        'f_posts.p_topic_id' => 'f_topics.id',
-        'f_read_logs.l_topic_id' => 'f_topics.id',
-        'f_special_pt_access.s_topic_id' => 'f_topics.id',
-        'f_topics.t_cache_first_post_id' => 'f_posts.id',
-        'f_topics.t_cache_last_post_id' => 'f_posts.id',
-        'f_topics.t_forum_id' => 'f_forums.id',
-        'f_topics.t_poll_id' => 'f_polls.id',
-        'f_usergroup_sub_mails.m_usergroup_sub_id' => 'f_usergroup_subs.id',
-        'f_warnings.w_topic_id' => 'f_topics.id',
-        'f_warnings_punitive.p_warning_id' => 'f_warnings.id',
-        'f_welcome_emails.w_newsletter_id' => 'newsletters.id',
-        'f_welcome_emails.w_usergroup' => 'f_groups.id',
-        'galleries.g_owner' => 'f_members.id',
-        'galleries.parent_id' => 'galleries.name',
         'group_category_access.category_name' => null,
-        'group_page_access.zone_name' => 'zones.zone_name',
         'group_privileges.category_name' => null,
-        'group_privileges.privilege' => 'privilege_list.the_name',
-        'group_privileges.the_page' => 'modules.module_the_name',
-        'group_zone_access.zone_name' => 'zones.zone_name',
-        'images.cat' => 'galleries.name',
         'import_id_remap.id_new' => null,
         'import_id_remap.id_old' => null,
-        'import_id_remap.id_session' => 'import_session.imp_session',
-        'import_parts_done.imp_session' => 'import_session.imp_session',
-        'leader_board.lb_leader_board_id' => 'leader_boards.id',
-        'leader_boards_groups.lb_leader_board_id' => 'leader_boards.id',
-        'leader_boards_groups.lb_group' => 'f_groups.id',
         'member_category_access.category_name' => null,
-        'member_page_access.page_name' => 'modules.module_the_name',
-        'member_page_access.zone_name' => 'zones.zone_name',
         'member_privileges.category_name' => null,
-        'member_privileges.privilege' => 'privilege_list.the_name',
-        'member_privileges.the_page' => 'modules.module_the_name',
-        'member_zone_access.zone_name' => 'zones.zone_name',
-        'menu_items.i_parent_id' => 'menu_items.id',
-        'messages_to_render.r_session_id' => 'sessions.the_session',
-        'news.news_category' => 'news_categories.id',
-        'newsletter_subscribe.newsletter_id' => 'newsletters.id',
-        'news_category_entries.news_entry' => 'news.id',
-        'news_category_entries.news_entry_category' => 'news_categories.id',
         'notifications_enabled.l_code_category' => null,
-        'points_ledger.linked_ledger_id' => 'points_ledger.id',
-        'poll_votes.v_poll_id' => 'poll.id',
         'ecom_prods_permissions.p_category' => null,
-        'ecom_prods_permissions.p_page' => 'modules.module_the_name',
-        'ecom_prods_permissions.p_privilege' => 'privilege_list.the_name',
-        'ecom_prods_permissions.p_zone' => 'zones.zone_name',
-        'quizzes.q_newsletter_id' => 'newsletters.id',
-        'quiz_entries.q_quiz_id' => 'quizzes.id',
-        'quiz_entry_answer.q_entry_id' => 'quiz_entries.id',
-        'quiz_entry_answer.q_question_id' => 'quiz_questions.id',
-        'quiz_member_last_visit.v_quiz_id' => 'quizzes.id',
-        'quiz_questions.q_quiz_id' => 'quizzes.id',
-        'quiz_question_answers.q_question_id' => 'quiz_questions.id',
-        'quiz_winner.q_entry_id' => 'quiz_entries.id',
-        'quiz_winner.q_quiz_id' => 'quizzes.id',
-        'rating.rating_for_id' => 'modules.module_the_name',
-        'redirects.r_from_zone' => 'zones.zone_name',
-        'redirects.r_to_zone' => 'zones.zone_name',
-        'review_supplement.r_post_id' => 'f_posts.id',
-        'review_supplement.r_rating_for_id' => 'modules.module_the_name',
-        'review_supplement.r_topic_id' => 'f_topics.id',
-        'revisions.r_actionlog_id' => 'actionlogs.id',
-        'revisions.r_moderatorlog_id' => 'f_moderator_logs.id',
         'seo_meta.meta_for_id' => null,
-        'sessions.the_zone' => 'zones.zone_name',
-        'shopping_cart.ordering_member' => 'f_members.id',
-        'site_messages_groups.message_id' => 'site_messages.id',
-        'site_messages_groups.group_id' => 'f_groups.id',
-        'site_messages_pages.message_id' => 'site_messages.id',
-        'temp_block_permissions.p_session_id' => 'sessions.the_session',
-        'tickets.forum_id' => 'f_forums.id',
-        'tickets.ticket_type' => 'ticket_types.id',
-        'tickets.topic_id' => 'f_topics.id',
         'trackbacks.trackback_for_id' => null,
         'url_id_monikers.m_resource_id' => null,
-        'url_id_monikers.m_resource_page' => 'modules.module_the_name',
-        'videos.cat' => 'galleries.name',
-        'video_transcoding.t_local_id' => 'videos.id',
-        'wiki_children.child_id' => 'wiki_pages.id',
-        'wiki_children.parent_id' => 'wiki_pages.id',
-        'wiki_posts.page_id' => 'wiki_pages.id',
-        'newsletter_drip_send.d_message_id' => 'newsletter_archive.id',
-        'shopping_cart.type_code' => 'catalogue_entries.id',
-        'ecom_trans_expecting.e_session_id' => 'sessions.the_session',
-        'ecom_trans_addresses.a_trans_expecting_id' => 'ecom_trans_expecting.id',
-        'ecom_trans_addresses.a_txn_id' => 'ecom_transactions.id',
-        'shopping_order_details.p_order_id' => 'shopping_orders.id',
-        'shopping_order_details.p_type_code' => 'catalogue_entries.id',
-        'ecom_transactions.t_parent_txn_id' => 'ecom_transactions.id',
-        'ecom_transactions.t_session_id' => 'sessions.the_session',
-        'ce_fulltext_index.i_category_id' => 'catalogue_categories.id',
-        'ce_fulltext_index.i_catalogue_entry_id' => 'catalogue_entries.id',
-        'f_posts_fulltext_index.i_forum_id' => 'f_forums.id',
-        'f_posts_fulltext_index.i_post_id' => 'f_posts.id',
-        'f_pposts_fulltext_index.i_post_id' => 'f_posts.id',
     ];
+    */
 }
 
 /**

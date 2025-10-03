@@ -49,7 +49,7 @@ class Module_admin_awards extends Standard_crud_module
         $info['hacked_by'] = null;
         $info['hack_version'] = null;
         $info['update_require_upgrade'] = true;
-        $info['version'] = 6;
+        $info['version'] = 7;
         $info['locked'] = true;
         $info['min_cms_version'] = 11.0;
         $info['addon'] = 'awards';
@@ -108,6 +108,10 @@ class Module_admin_awards extends Standard_crud_module
         if (($upgrade_from !== null) && ($upgrade_from < 6)) { // LEGACY: 11.beta1
             // Database consistency fixes
             $GLOBALS['SITE_DB']->alter_table_field('award_types', 'a_update_time_hours', 'INTEGER', 'a_update_interval_hours');
+        }
+
+        if (($upgrade_from === null) || ($upgrade_from < 7)) { // 11.beta9
+            $GLOBALS['SITE_DB']->create_foreign_key('award_archive', 'a_type_id', 'award_types', 'id');
         }
     }
 

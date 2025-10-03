@@ -35,7 +35,7 @@ class Block_main_staff_actions
         $info['organisation'] = 'Composr';
         $info['hacked_by'] = null;
         $info['hack_version'] = null;
-        $info['version'] = 3;
+        $info['version'] = 4;
         $info['locked'] = true;
         $info['min_cms_version'] = 11.0;
         $info['addon'] = 'core_adminzone_dashboard';
@@ -104,6 +104,10 @@ PHP;
             $GLOBALS['SITE_DB']->create_index('actionlogs', 'wid', ['warning_id']);
 
             $GLOBALS['SITE_DB']->query_update('actionlogs', ['the_type' => 'INVALIDATE_POST'], ['the_type' => 'UNVALIDATE_POST']);
+        }
+
+        if (($upgrade_from === null) || ($upgrade_from < 4)) { // 11.beta9
+            $GLOBALS['SITE_DB']->create_foreign_key('actionlogs', 'warning_id', 'f_warnings', 'id');
         }
     }
 
