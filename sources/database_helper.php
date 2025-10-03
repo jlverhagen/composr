@@ -321,7 +321,7 @@ function _helper_create_table(object $this_ref, string $table_name, array $field
     reload_lang_fields(false, $table_name, $fields);
 
     // Add foreign key constraints which reference this new table
-    if (db_is_innodb() && (!in_array($table_name, ['db_meta', 'db_meta_indices', 'db_meta_foreign_keys']))) {
+    if (!in_array($table_name, ['db_meta', 'db_meta_indices', 'db_meta_foreign_keys'])) {
         if ((!running_script('install') && (!running_script('upgrader'))) || $this_ref->table_exists('db_meta_foreign_keys')) {
             require_code('database');
             $fk = $GLOBALS['SITE_DB']->query_select('db_meta_foreign_keys', ['*'], ['to_table' => $table_name]);
@@ -841,13 +841,11 @@ function _helper_add_table_field(object $this_ref, string $table_name, string $n
     }
 
     // Add foreign key references to this field
-    if (db_is_innodb()) {
-        require_code('database');
-        $fk = $GLOBALS['SITE_DB']->query_select('db_meta_foreign_keys', ['*'], ['to_table' => $table_name, 'to_field' => $name]);
-        foreach ($fk as $row) {
-            $db = get_db_for($row['from_table']);
-            _helper_create_foreign_key($db, $row['from_table'], $row['from_field'], $row['to_table'], $row['to_field'], false);
-        }
+    require_code('database');
+    $fk = $GLOBALS['SITE_DB']->query_select('db_meta_foreign_keys', ['*'], ['to_table' => $table_name, 'to_field' => $name]);
+    foreach ($fk as $row) {
+        $db = get_db_for($row['from_table']);
+        _helper_create_foreign_key($db, $row['from_table'], $row['from_field'], $row['to_table'], $row['to_field'], false);
     }
 
     if (function_exists('persistent_cache_delete')) {

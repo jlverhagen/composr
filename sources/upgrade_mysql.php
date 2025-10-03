@@ -77,10 +77,6 @@ function upgrader_data_integrity_screen() : string
         warn_exit(do_lang_tempcode('INTERNAL_ERROR', escape_html('TODO')));
     }
 
-    if (get_value('innodb', '0') != '1') {
-        warn_exit(do_lang_tempcode('INTERNAL_ERROR', escape_html('TODO')));
-    }
-
     $out = '<h2>' . do_lang('UPGRADER_DATA_INTEGRITY') . '</h2>';
     $out .= '<p>' . do_lang('DESCRIPTION_UPGRADER_DATA_INTEGRITY') . '</p>';
 
@@ -112,10 +108,6 @@ END;
 function _upgrader_data_integrity_screen() : string
 {
     if (strpos(get_db_type(), 'mysql') === false) {
-        warn_exit(do_lang_tempcode('INTERNAL_ERROR', escape_html('TODO')));
-    }
-
-    if (get_value('innodb', '0') != '1') {
         warn_exit(do_lang_tempcode('INTERNAL_ERROR', escape_html('TODO')));
     }
 

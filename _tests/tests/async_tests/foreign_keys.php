@@ -26,10 +26,6 @@ class foreign_keys_test_set extends cms_test_case
             $this->assertTrue(false, 'MySQL required for this test.');
             return;
         }
-        if (get_value('innodb', '0') != '1') {
-            $this->assertTrue(false, 'InnoDB required for this test.');
-            return;
-        }
         if ($GLOBALS['SITE_DB']->query_select_value_if_there('group_zone_access', 'group_id', ['zone_name' => '', 'group_id' => 1]) === null) {
             $this->assertTrue(false, 'This test will not work correctly unless Guests have access to the welcome zone. Please fix that.');
             return;

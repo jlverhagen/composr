@@ -727,6 +727,11 @@ abstract class Database_super_mysql extends DatabaseDriver
         return null;
 
         /*
+        // InnoDB support only
+        if (!db_is_innodb()) {
+            return null;
+        }
+
         // Compose deterministic, schema-unique constraint name
         $constraint_name = 'fk_' . md5(preg_replace('#[^\w]#', '_', $from_table . '__' . $from_field));
 
@@ -755,6 +760,11 @@ abstract class Database_super_mysql extends DatabaseDriver
         return null;
 
         /*
+        // InnoDB support only
+        if (!db_is_innodb()) {
+            return null;
+        }
+
         $constraint_name = 'fk_' . md5(preg_replace('#[^\w]#', '_', $from_table . '__' . $from_field));
 
         $sql = 'ALTER TABLE ' . $from_table . ' DROP FOREIGN KEY ' . $constraint_name;
