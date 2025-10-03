@@ -195,11 +195,11 @@ function version_specific() : bool
         // New DB meta table must be added really early in the process
         if ($version_database < 11.0) {
             $GLOBALS['SITE_DB']->create_table('db_meta_foreign_keys', [
-                'id' => '*AUTO',
-                'from_table' => 'ID_TEXT',
-                'from_field' => 'ID_TEXT',
+                'from_table' => '*ID_TEXT',
+                'from_field' => '*ID_TEXT',
                 'to_table' => 'ID_TEXT',
                 'to_field' => 'ID_TEXT',
+                'special_values' => 'SERIAL',
             ]);
         }
 
@@ -783,6 +783,16 @@ function database_specific() : bool
 
     // LEGACY: 11.beta9. Remove prior to v11 release.
     if ((is_numeric($upgrade_from)) && (intval($upgrade_from) < 1758492212)) {
+        if (!$GLOBALS['SITE_DB']->table_exists('db_meta_foreign_keys', true)) {
+            $GLOBALS['SITE_DB']->create_table('db_meta_foreign_keys', [
+                'from_table' => '*ID_TEXT',
+                'from_field' => '*ID_TEXT',
+                'to_table' => 'ID_TEXT',
+                'to_field' => 'ID_TEXT',
+                'special_values' => 'SERIAL',
+            ]);
+        }
+
         $GLOBALS['SITE_DB']->create_foreign_key('attachment_refs', 'a_id', 'attachments', 'id');
         $GLOBALS['FORUM_DB']->create_foreign_key('group_privileges', 'privilege', 'privilege_list', 'the_name');
         $GLOBALS['FORUM_DB']->create_foreign_key('group_privileges', 'the_page', 'modules', 'module_the_name', ['']);
