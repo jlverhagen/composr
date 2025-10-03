@@ -60,11 +60,11 @@ class Hook_health_check_mistakes_user_ux extends Hook_Health_Check
     public function test404Pages(int $check_context, bool $manual_checks = false, bool $automatic_repair = false, ?bool $use_test_data_for_pass = null, ?array $urls_or_page_links = null, ?array $comcode_segments = null)
     {
         if ($check_context == CHECK_CONTEXT__INSTALL) {
-            $this->log('Skipped; we are running from installer.');
+            $this->stateCheckSkipped('Skipped; we are running from installer.');
             return;
         }
         if ($check_context == CHECK_CONTEXT__SPECIFIC_PAGE_LINKS) {
-            $this->log('Skipped; running on specific page links.');
+            $this->stateCheckSkipped('Skipped; running on specific page links.');
             return;
         }
 
@@ -86,7 +86,7 @@ class Hook_health_check_mistakes_user_ux extends Hook_Health_Check
     public function testWWWRedirection(int $check_context, bool $manual_checks = false, bool $automatic_repair = false, ?bool $use_test_data_for_pass = null, ?array $urls_or_page_links = null, ?array $comcode_segments = null)
     {
         if ($check_context != CHECK_CONTEXT__LIVE_SITE) {
-            $this->log('Skipped; we are not running from a live site.');
+            $this->stateCheckSkipped('Skipped; we are not running from a live site.');
             return;
         }
 
@@ -158,7 +158,7 @@ class Hook_health_check_mistakes_user_ux extends Hook_Health_Check
     public function testHTTPSRedirection(int $check_context, bool $manual_checks = false, bool $automatic_repair = false, ?bool $use_test_data_for_pass = null, ?array $urls_or_page_links = null, ?array $comcode_segments = null)
     {
         if ($check_context != CHECK_CONTEXT__LIVE_SITE) {
-            $this->log('Skipped; we are not running from a live site.');
+            $this->stateCheckSkipped('Skipped; we are not running from a live site.');
             return;
         }
 

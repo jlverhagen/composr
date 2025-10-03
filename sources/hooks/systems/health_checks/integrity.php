@@ -43,6 +43,7 @@ class Hook_health_check_integrity extends Hook_Health_Check
         $this->process_checks_section('testFileIntegrity', 'Files (slow)', $sections_to_run, $check_context, $manual_checks, $automatic_repair, $use_test_data_for_pass, $urls_or_page_links, $comcode_segments);
         $this->process_checks_section('testDatabaseIntegrity', 'Database', $sections_to_run, $check_context, $manual_checks, $automatic_repair, $use_test_data_for_pass, $urls_or_page_links, $comcode_segments);
         $this->process_checks_section('testDatabaseCorruption', 'Database corruption (slow)', $sections_to_run, $check_context, $manual_checks, $automatic_repair, $use_test_data_for_pass, $urls_or_page_links, $comcode_segments);
+        $this->process_checks_section('testDatabaseDataIntegrity', 'Database data integrity', $sections_to_run, $check_context, $manual_checks, $automatic_repair, $use_test_data_for_pass, $urls_or_page_links, $comcode_segments);
         $this->process_checks_section('testUpgradeCompletion', 'Upgrade completion', $sections_to_run, $check_context, $manual_checks, $automatic_repair, $use_test_data_for_pass, $urls_or_page_links, $comcode_segments);
         $this->process_checks_section('testAddonUpgradeCompletion', 'Addon upgrade completion', $sections_to_run, $check_context, $manual_checks, $automatic_repair, $use_test_data_for_pass, $urls_or_page_links, $comcode_segments);
         $this->process_checks_section('testChmod', 'File permissions (slow)', $sections_to_run, $check_context, $manual_checks, $automatic_repair, $use_test_data_for_pass, $urls_or_page_links, $comcode_segments);
@@ -63,11 +64,11 @@ class Hook_health_check_integrity extends Hook_Health_Check
     public function testFileIntegrity(int $check_context, bool $manual_checks = false, bool $automatic_repair = false, ?bool $use_test_data_for_pass = null, ?array $urls_or_page_links = null, ?array $comcode_segments = null)
     {
         if ($check_context == CHECK_CONTEXT__INSTALL) {
-            $this->log('Skipped; we are running from installer.');
+            $this->stateCheckSkipped('Skipped; we are running from installer.');
             return;
         }
         if ($check_context == CHECK_CONTEXT__SPECIFIC_PAGE_LINKS) {
-            $this->log('Skipped; running on specific page links.');
+            $this->stateCheckSkipped('Skipped; running on specific page links.');
             return;
         }
 
@@ -94,11 +95,11 @@ class Hook_health_check_integrity extends Hook_Health_Check
     public function testDatabaseIntegrity(int $check_context, bool $manual_checks = false, bool $automatic_repair = false, ?bool $use_test_data_for_pass = null, ?array $urls_or_page_links = null, ?array $comcode_segments = null)
     {
         if ($check_context == CHECK_CONTEXT__INSTALL) {
-            $this->log('Skipped; we are running from installer.');
+            $this->stateCheckSkipped('Skipped; we are running from installer.');
             return;
         }
         if ($check_context == CHECK_CONTEXT__SPECIFIC_PAGE_LINKS) {
-            $this->log('Skipped; running on specific page links.');
+            $this->stateCheckSkipped('Skipped; running on specific page links.');
             return;
         }
 
@@ -131,11 +132,11 @@ class Hook_health_check_integrity extends Hook_Health_Check
     public function testDatabaseCorruption(int $check_context, bool $manual_checks = false, bool $automatic_repair = false, ?bool $use_test_data_for_pass = null, ?array $urls_or_page_links = null, ?array $comcode_segments = null)
     {
         if ($check_context == CHECK_CONTEXT__INSTALL) {
-            $this->log('Skipped; we are running from installer.');
+            $this->stateCheckSkipped('Skipped; we are running from installer.');
             return;
         }
         if ($check_context == CHECK_CONTEXT__SPECIFIC_PAGE_LINKS) {
-            $this->log('Skipped; running on specific page links.');
+            $this->stateCheckSkipped('Skipped; running on specific page links.');
             return;
         }
 
@@ -177,14 +178,71 @@ class Hook_health_check_integrity extends Hook_Health_Check
      * @param  ?array $urls_or_page_links List of URLs and/or page-links to operate on, if applicable (null: those configured)
      * @param  ?array $comcode_segments Map of field names to Comcode segments to operate on, if applicable (null: N/A)
      */
-    public function testUpgradeCompletion(int $check_context, bool $manual_checks = false, bool $automatic_repair = false, ?bool $use_test_data_for_pass = null, ?array $urls_or_page_links = null, ?array $comcode_segments = null)
+    public function testDatabaseDataIntegrity(int $check_context, bool $manual_checks = false, bool $automatic_repair = false, ?bool $use_test_data_for_pass = null, ?array $urls_or_page_links = null, ?array $comcode_segments = null)
     {
         if ($check_context == CHECK_CONTEXT__INSTALL) {
-            $this->log('Skipped; we are running from installer.');
+            $this->stateCheckSkipped('Skipped; we are running from the installer.');
             return;
         }
         if ($check_context == CHECK_CONTEXT__SPECIFIC_PAGE_LINKS) {
-            $this->log('Skipped; running on specific page links.');
+            $this->stateCheckSkipped('Skipped; running on specific page links.');
+            return;
+        }
+
+        if (strpos(get_db_type(), 'mysql') === false) {
+            $this->stateCheckSkipped('Can only check when running MySQL (or MariaDB)');
+            return;
+        }
+
+        require_code('database');
+        $old = cms_extend_time_limit(TIME_LIMIT_EXTEND__MODEST);
+
+        $count_bad_rows = 0;
+
+        $max = 10;
+        $start = 0;
+        do {
+            $rows = $GLOBALS['SITE_DB']->query_select('db_meta_foreign_keys', ['*'], [], '', $max, $start);
+
+            foreach ($rows as $row) {
+                $db = get_db_for($row['from_table']);
+                $db_to = get_db_for($row['to_table']);
+
+                $query = 'SELECT COUNT(*) FROM `' . $db->table_prefix . $row['from_table'] . '` AS `ft`';
+                $query .= ' LEFT JOIN `' . $db_to->table_prefix . $row['to_table'] . '` AS `tt` ON `ft`.`' . $row['from_field'] . '` = `tt`.`' . $row['to_field'] . '`';
+                $query .= ' WHERE `tt`.`' . $row['to_field'] . '` IS NULL';
+
+                $result = $db->query_value_if_there($query);
+
+                $count_bad_rows += $result;
+            }
+
+            $start += $max;
+        } while (isset($rows) && count($rows) > 0);
+
+        cms_set_time_limit($old);
+
+        $this->assertTrue(($count_bad_rows == 0), 'Detected orphaned database rows @ ' . integer_format($count_bad_rows) . ' (you may wish to take a database backup and then run the data integrity tool in the upgrader).');
+    }
+
+    /**
+     * Run a section of health checks.
+     *
+     * @param  integer $check_context The current state of the website (a CHECK_CONTEXT__* constant)
+     * @param  boolean $manual_checks Mention manual checks
+     * @param  boolean $automatic_repair Do automatic repairs where possible
+     * @param  ?boolean $use_test_data_for_pass Should test data be for a pass [if test data supported] (null: no test data)
+     * @param  ?array $urls_or_page_links List of URLs and/or page-links to operate on, if applicable (null: those configured)
+     * @param  ?array $comcode_segments Map of field names to Comcode segments to operate on, if applicable (null: N/A)
+     */
+    public function testUpgradeCompletion(int $check_context, bool $manual_checks = false, bool $automatic_repair = false, ?bool $use_test_data_for_pass = null, ?array $urls_or_page_links = null, ?array $comcode_segments = null)
+    {
+        if ($check_context == CHECK_CONTEXT__INSTALL) {
+            $this->stateCheckSkipped('Skipped; we are running from installer.');
+            return;
+        }
+        if ($check_context == CHECK_CONTEXT__SPECIFIC_PAGE_LINKS) {
+            $this->stateCheckSkipped('Skipped; running on specific page links.');
             return;
         }
 
@@ -215,11 +273,11 @@ class Hook_health_check_integrity extends Hook_Health_Check
     public function testAddonUpgradeCompletion(int $check_context, bool $manual_checks = false, bool $automatic_repair = false, ?bool $use_test_data_for_pass = null, ?array $urls_or_page_links = null, ?array $comcode_segments = null)
     {
         if ($check_context == CHECK_CONTEXT__INSTALL) {
-            $this->log('Skipped; we are running from installer.');
+            $this->stateCheckSkipped('Skipped; we are running from installer.');
             return;
         }
         if ($check_context == CHECK_CONTEXT__SPECIFIC_PAGE_LINKS) {
-            $this->log('Skipped; running on specific page links.');
+            $this->stateCheckSkipped('Skipped; running on specific page links.');
             return;
         }
 
@@ -240,7 +298,7 @@ class Hook_health_check_integrity extends Hook_Health_Check
     public function testChmod(int $check_context, bool $manual_checks = false, bool $automatic_repair = false, ?bool $use_test_data_for_pass = null, ?array $urls_or_page_links = null, ?array $comcode_segments = null)
     {
         if ($check_context == CHECK_CONTEXT__SPECIFIC_PAGE_LINKS) {
-            $this->log('Skipped; running on specific page links.');
+            $this->stateCheckSkipped('Skipped; running on specific page links.');
             return;
         }
 
@@ -252,7 +310,7 @@ class Hook_health_check_integrity extends Hook_Health_Check
 
             global $FILE_ARRAY;
             if (@is_array($FILE_ARRAY)) {
-                $this->log('Skipped; not necessary in quick installer.');
+                $this->stateCheckSkipped('Skipped; not necessary in quick installer.');
                 return;
             }
 

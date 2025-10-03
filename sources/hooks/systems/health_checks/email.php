@@ -73,16 +73,16 @@ class Hook_health_check_email extends Hook_Health_Check
     public function testEmailQueue(int $check_context, bool $manual_checks = false, bool $automatic_repair = false, ?bool $use_test_data_for_pass = null, ?array $urls_or_page_links = null, ?array $comcode_segments = null)
     {
         if ($check_context == CHECK_CONTEXT__INSTALL) {
-            $this->log('Skipped; we are running from installer.');
+            $this->stateCheckSkipped('Skipped; we are running from installer.');
             return;
         }
         if ($check_context == CHECK_CONTEXT__SPECIFIC_PAGE_LINKS) {
-            $this->log('Skipped; running on specific page links.');
+            $this->stateCheckSkipped('Skipped; running on specific page links.');
             return;
         }
 
         if (get_option('mail_queue_debug') == '1') {
-            $this->log('Skipped; mail queue debugging is enabled.');
+            $this->stateCheckSkipped('Skipped; mail queue debugging is enabled.');
             return;
         }
 
@@ -106,11 +106,11 @@ class Hook_health_check_email extends Hook_Health_Check
     public function testEmailPHPConfiguration(int $check_context, bool $manual_checks = false, bool $automatic_repair = false, ?bool $use_test_data_for_pass = null, ?array $urls_or_page_links = null, ?array $comcode_segments = null)
     {
         if ($check_context == CHECK_CONTEXT__INSTALL) {
-            $this->log('Skipped; we are running from installer.');
+            $this->stateCheckSkipped('Skipped; we are running from installer.');
             return;
         }
         if ($check_context == CHECK_CONTEXT__SPECIFIC_PAGE_LINKS) {
-            $this->log('Skipped; running on specific page links.');
+            $this->stateCheckSkipped('Skipped; running on specific page links.');
             return;
         }
 
@@ -130,11 +130,11 @@ class Hook_health_check_email extends Hook_Health_Check
     public function testDKIMConfiguration(int $check_context, bool $manual_checks = false, bool $automatic_repair = false, ?bool $use_test_data_for_pass = null, ?array $urls_or_page_links = null, ?array $comcode_segments = null)
     {
         if ($check_context == CHECK_CONTEXT__INSTALL) {
-            $this->log('Skipped; we are running from installer.');
+            $this->stateCheckSkipped('Skipped; we are running from installer.');
             return;
         }
         if ($check_context == CHECK_CONTEXT__SPECIFIC_PAGE_LINKS) {
-            $this->log('Skipped; running on specific page links.');
+            $this->stateCheckSkipped('Skipped; running on specific page links.');
             return;
         }
 
@@ -170,11 +170,11 @@ class Hook_health_check_email extends Hook_Health_Check
     public function testDMARCConfiguration(int $check_context, bool $manual_checks = false, bool $automatic_repair = false, ?bool $use_test_data_for_pass = null, ?array $urls_or_page_links = null, ?array $comcode_segments = null)
     {
         if ($check_context == CHECK_CONTEXT__INSTALL) {
-            $this->log('Skipped; we are running from installer.');
+            $this->stateCheckSkipped('Skipped; we are running from installer.');
             return;
         }
         if ($check_context == CHECK_CONTEXT__SPECIFIC_PAGE_LINKS) {
-            $this->log('Skipped; running on specific page links.');
+            $this->stateCheckSkipped('Skipped; running on specific page links.');
             return;
         }
 
@@ -208,11 +208,11 @@ class Hook_health_check_email extends Hook_Health_Check
     public function testEmailServerConfiguration(int $check_context, bool $manual_checks = false, bool $automatic_repair = false, ?bool $use_test_data_for_pass = null, ?array $urls_or_page_links = null, ?array $comcode_segments = null)
     {
         if ($check_context == CHECK_CONTEXT__INSTALL) {
-            $this->log('Skipped; we are running from installer.');
+            $this->stateCheckSkipped('Skipped; we are running from installer.');
             return;
         }
         if ($check_context == CHECK_CONTEXT__SPECIFIC_PAGE_LINKS) {
-            $this->log('Skipped; running on specific page links.');
+            $this->stateCheckSkipped('Skipped; running on specific page links.');
             return;
         }
 
@@ -303,11 +303,11 @@ class Hook_health_check_email extends Hook_Health_Check
     public function testSPF(int $check_context, bool $manual_checks = false, bool $automatic_repair = false, ?bool $use_test_data_for_pass = null, ?array $urls_or_page_links = null, ?array $comcode_segments = null)
     {
         if ($check_context == CHECK_CONTEXT__INSTALL) {
-            $this->log('Skipped; we are running from installer.');
+            $this->stateCheckSkipped('Skipped; we are running from installer.');
             return;
         }
         if ($check_context == CHECK_CONTEXT__SPECIFIC_PAGE_LINKS) {
-            $this->log('Skipped; running on specific page links.');
+            $this->stateCheckSkipped('Skipped; running on specific page links.');
             return;
         }
 
@@ -481,11 +481,11 @@ class Hook_health_check_email extends Hook_Health_Check
     public function testSMTPLogin(int $check_context, bool $manual_checks = false, bool $automatic_repair = false, ?bool $use_test_data_for_pass = null, ?array $urls_or_page_links = null, ?array $comcode_segments = null)
     {
         if ($check_context == CHECK_CONTEXT__INSTALL) {
-            $this->log('Skipped; we are running from installer.');
+            $this->stateCheckSkipped('Skipped; we are running from installer.');
             return;
         }
         if ($check_context == CHECK_CONTEXT__SPECIFIC_PAGE_LINKS) {
-            $this->log('Skipped; running on specific page links.');
+            $this->stateCheckSkipped('Skipped; running on specific page links.');
             return;
         }
 
@@ -572,11 +572,11 @@ class Hook_health_check_email extends Hook_Health_Check
     public function testIMAPLogin(int $check_context, bool $manual_checks = false, bool $automatic_repair = false, ?bool $use_test_data_for_pass = null, ?array $urls_or_page_links = null, ?array $comcode_segments = null)
     {
         if ($check_context == CHECK_CONTEXT__INSTALL) {
-            $this->log('Skipped; we are running from installer.');
+            $this->stateCheckSkipped('Skipped; we are running from installer.');
             return;
         }
         if ($check_context == CHECK_CONTEXT__SPECIFIC_PAGE_LINKS) {
-            $this->log('Skipped; running on specific page links.');
+            $this->stateCheckSkipped('Skipped; running on specific page links.');
             return;
         }
 
@@ -622,11 +622,11 @@ class Hook_health_check_email extends Hook_Health_Check
     public function testEmailOperation(int $check_context, bool $manual_checks = false, bool $automatic_repair = false, ?bool $use_test_data_for_pass = null, ?array $urls_or_page_links = null, ?array $comcode_segments = null)
     {
         if ($check_context == CHECK_CONTEXT__INSTALL) {
-            $this->log('Skipped; we are running from installer.');
+            $this->stateCheckSkipped('Skipped; we are running from installer.');
             return;
         }
         if ($check_context == CHECK_CONTEXT__SPECIFIC_PAGE_LINKS) {
-            $this->log('Skipped; running on specific page links.');
+            $this->stateCheckSkipped('Skipped; running on specific page links.');
             return;
         }
 
@@ -730,11 +730,11 @@ class Hook_health_check_email extends Hook_Health_Check
     public function testSMTPBlocklisting(int $check_context, bool $manual_checks = false, bool $automatic_repair = false, ?bool $use_test_data_for_pass = null, ?array $urls_or_page_links = null, ?array $comcode_segments = null)
     {
         if ($check_context == CHECK_CONTEXT__INSTALL) {
-            $this->log('Skipped; we are running from installer.');
+            $this->stateCheckSkipped('Skipped; we are running from installer.');
             return;
         }
         if ($check_context == CHECK_CONTEXT__SPECIFIC_PAGE_LINKS) {
-            $this->log('Skipped; running on specific page links.');
+            $this->stateCheckSkipped('Skipped; running on specific page links.');
             return;
         }
 
@@ -783,11 +783,11 @@ class Hook_health_check_email extends Hook_Health_Check
     public function testEmailTemplates(int $check_context, bool $manual_checks = false, bool $automatic_repair = false, ?bool $use_test_data_for_pass = null, ?array $urls_or_page_links = null, ?array $comcode_segments = null)
     {
         if ($check_context == CHECK_CONTEXT__INSTALL) {
-            $this->log('Skipped; we are running from installer.');
+            $this->stateCheckSkipped('Skipped; we are running from installer.');
             return;
         }
         if ($check_context == CHECK_CONTEXT__SPECIFIC_PAGE_LINKS) {
-            $this->log('Skipped; running on specific page links.');
+            $this->stateCheckSkipped('Skipped; running on specific page links.');
             return;
         }
 
@@ -804,7 +804,7 @@ class Hook_health_check_email extends Hook_Health_Check
         $html_version_stripped = $this->html_to_plain_text($html_version);
 
         if ($html_version_stripped === null) {
-            $this->log('Skipped; PHP DOMDocument / DOMXPath not supported.');
+            $this->stateCheckSkipped('Skipped; PHP DOMDocument / DOMXPath not supported.');
             return;
         }
 
@@ -839,11 +839,11 @@ class Hook_health_check_email extends Hook_Health_Check
     public function testSpamStatus(int $check_context, bool $manual_checks = false, bool $automatic_repair = false, ?bool $use_test_data_for_pass = null, ?array $urls_or_page_links = null, ?array $comcode_segments = null)
     {
         if ($check_context == CHECK_CONTEXT__INSTALL) {
-            $this->log('Skipped; we are running from installer.');
+            $this->stateCheckSkipped('Skipped; we are running from installer.');
             return;
         }
         if ($check_context == CHECK_CONTEXT__SPECIFIC_PAGE_LINKS) {
-            $this->log('Skipped; running on specific page links.');
+            $this->stateCheckSkipped('Skipped; running on specific page links.');
             return;
         }
 
@@ -863,11 +863,11 @@ class Hook_health_check_email extends Hook_Health_Check
     public function testListUnsubscribe(int $check_context, bool $manual_checks = false, bool $automatic_repair = false, ?bool $use_test_data_for_pass = null, ?array $urls_or_page_links = null, ?array $comcode_segments = null)
     {
         if ($check_context == CHECK_CONTEXT__INSTALL) {
-            $this->log('Skipped; we are running from installer.');
+            $this->stateCheckSkipped('Skipped; we are running from installer.');
             return;
         }
         if ($check_context == CHECK_CONTEXT__SPECIFIC_PAGE_LINKS) {
-            $this->log('Skipped; running on specific page links.');
+            $this->stateCheckSkipped('Skipped; running on specific page links.');
             return;
         }
 
@@ -887,11 +887,11 @@ class Hook_health_check_email extends Hook_Health_Check
     public function testFailedMail(int $check_context, bool $manual_checks = false, bool $automatic_repair = false, ?bool $use_test_data_for_pass = null, ?array $urls_or_page_links = null, ?array $comcode_segments = null)
     {
         if ($check_context == CHECK_CONTEXT__INSTALL) {
-            $this->log('Skipped; we are running from installer.');
+            $this->stateCheckSkipped('Skipped; we are running from installer.');
             return;
         }
         if ($check_context == CHECK_CONTEXT__SPECIFIC_PAGE_LINKS) {
-            $this->log('Skipped; running on specific page links.');
+            $this->stateCheckSkipped('Skipped; running on specific page links.');
             return;
         }
 
