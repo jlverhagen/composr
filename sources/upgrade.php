@@ -211,6 +211,16 @@ function upgrade_script()
                 echo upgrader_link($redirect, do_lang('PROCEED'), true);
             }
             break;
+
+        case 'data_integrity':
+            require_code('upgrade_mysql');
+            echo upgrader_data_integrity_screen();
+            break;
+
+        case '_data_integrity':
+            require_code('upgrade_mysql');
+            echo _upgrader_data_integrity_screen();
+            break;
     }
 
     if ($show_more_link) {
@@ -579,8 +589,10 @@ function upgrader_menu_screen() : string
     $l_fix_perms = upgrader_link('upgrader.php?type=fix_perms', do_lang('UPGRADER_FIX_PERMISSIONS'), false);
     $l_addon_remove = upgrader_link('upgrader.php?type=addon_remove', do_lang('UPGRADER_REMOVE_ADDON_FILES'), false);
     $show_mysql_buttons = (strpos(get_db_type(), 'mysql') !== false);
+    $innodb_used = (get_value('innodb', '0') == '1');
     $l_mysql_repair = upgrader_link('upgrader.php?type=mysql_repair', do_lang('MYSQL_REPAIR'), false);
     $l_criticise_mysql_fields = upgrader_link('upgrader.php?type=criticise_mysql_fields', do_lang('CORRECT_MYSQL_SCHEMA_ISSUES'), false);
+    $l_data_integrity = upgrader_link('upgrader.php?type=data_integrity', do_lang('UPGRADER_DATA_INTEGRITY'), false);
 
     $out = '';
 
@@ -731,6 +743,9 @@ function upgrader_menu_screen() : string
         $out .= "
                 <li>{$l_mysql_repair}</li>
                 <li>{$l_criticise_mysql_fields}</li>";
+        if ($innodb_used) {
+            $out .= "<li>{$l_data_integrity}</li>";
+        }
     }
     $out .= "
             </ul>

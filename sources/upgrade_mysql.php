@@ -64,3 +64,111 @@ function upgrader_criticise_mysql_fields_screen() : string
 
     return $out;
 }
+
+/**
+ * Confirmation screen for running the data integrity tool.
+ *
+ * @ignore
+ * @return string The HTML
+ */
+function upgrader_data_integrity_screen() : string
+{
+    if (strpos(get_db_type(), 'mysql') === false) {
+        warn_exit(do_lang_tempcode('INTERNAL_ERROR', escape_html('TODO')));
+    }
+
+    if (get_value('innodb', '0') != '1') {
+        warn_exit(do_lang_tempcode('INTERNAL_ERROR', escape_html('TODO')));
+    }
+
+    $out = '<h2>' . do_lang('UPGRADER_DATA_INTEGRITY') . '</h2>';
+    $out .= '<p>' . do_lang('DESCRIPTION_UPGRADER_DATA_INTEGRITY') . '</p>';
+
+    $url = get_base_url() . '/upgrader.php?type=_data_integrity';
+    $l_proceed = do_lang('PROCEED');
+    $given_password = escape_html(post_param_string('given_password', false, INPUT_FILTER_PASSWORD));
+
+    $out .= <<<END
+    <form action="{$url}" method="post">
+            <div>
+                <input type="hidden" name="given_password" value="{$given_password}"></input>
+
+                <p class="proceed-button">
+                    <button id="proceed-button" class="btn btn-primary btn-scr buttons--proceed" type="submit"><span class="js-button-label">{$l_proceed}</span></button>
+                </p>
+            </div>
+        </form>
+END;
+
+    return $out;
+}
+
+/**
+ * The actualiser for running data integrity scans.
+ *
+ * @ignore
+ * @return string The HTML results
+ */
+function _upgrader_data_integrity_screen() : string
+{
+    if (strpos(get_db_type(), 'mysql') === false) {
+        warn_exit(do_lang_tempcode('INTERNAL_ERROR', escape_html('TODO')));
+    }
+
+    if (get_value('innodb', '0') != '1') {
+        warn_exit(do_lang_tempcode('INTERNAL_ERROR', escape_html('TODO')));
+    }
+
+    require_code('database');
+
+    cms_extend_time_limit(TIME_LIMIT_EXTEND__SLOW);
+
+    // Load database meta into memory
+    $_meta = $GLOBALS['SITE_DB']->query_select('db_meta');
+    $meta = [];
+    foreach ($_meta as $row) {
+        $meta[$row['m_table'] . '.' . $row['m_name']] = $row['m_type'];
+    }
+
+    unset($_meta);
+
+    // Run the data integrity three times in case deleting an orphaned record results in creating another orphaned record due to multiple foreign key mappings
+    for ($i = 0; $i < 2; $i++) {
+        $max = 10;
+        $start = 0;
+        do {
+            $rows = $GLOBALS['SITE_DB']->query_select('db_meta_foreign_keys', ['*'], [], '', $max, $start);
+
+            foreach ($rows as $row) {
+                $db = get_db_for($row['from_table']);
+                $db_to = get_db_for($row['to_table']);
+
+                $can_be_null = (@strpos($meta[$row['from_table'] . '.' . $row['from_field']], '?') === 0);
+
+                // Nullify or remove child records whose parent records no-longer exist
+                if ($can_be_null) {
+                    $query = 'UPDATE `' . $db->table_prefix . $row['from_table'] . '` AS `ft`';
+                    $query .= ' LEFT JOIN `' . $db_to->table_prefix . $row['to_table'] . '` AS `tt` ON `ft`.`' . $row['from_field'] . '` = `tt`.`' . $row['to_field'] . '`';
+                    $query .= ' SET `ft`.`' . $row['from_field'] . '` = NULL';
+                    $query .= ' WHERE `tt`.`' . $row['to_field'] . '` IS NULL';
+
+                    $db->query($query);
+                } else {
+                    $query = 'DELETE `ft`';
+                    $query .= ' FROM `' . $db->table_prefix . $row['from_table'] . '` AS `ft`';
+                    $query .= ' LEFT JOIN `' . $db_to->table_prefix . $row['to_table'] . '` AS `tt` ON `ft`.`' . $row['from_field'] . '` = `tt`.`' . $row['to_field'] . '`';
+                    $query .= ' WHERE `tt`.`' . $row['to_field'] . '` IS NULL';
+
+                    $db->query($query);
+                }
+            }
+
+            $start += $max;
+        } while (isset($rows) && count($rows) > 0);
+    }
+
+    $out = '<h2>' . do_lang('UPGRADER_DATA_INTEGRITY') . '</h2>';
+    $out .= '<p>' . do_lang('SUCCESS') . '</p>';
+
+    return $out;
+}
