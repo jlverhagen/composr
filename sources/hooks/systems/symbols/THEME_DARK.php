@@ -36,7 +36,6 @@ class Hook_symbol_THEME_DARK
 
         return [
             'compile' => SYMBOL_COMPILE_STATIC_NONE,
-            'public' => false,
         ];
     }
 
@@ -69,7 +68,6 @@ class Hook_symbol_THEME_DARK
                 }
             }
         }
-
 
         return $value;
     }

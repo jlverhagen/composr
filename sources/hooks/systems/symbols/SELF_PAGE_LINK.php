@@ -32,7 +32,6 @@ class Hook_symbol_SELF_PAGE_LINK
     {
         return [
             'compile' => SYMBOL_COMPILE_STATIC_NONE,
-            'public' => false,
         ];
     }
 
@@ -51,7 +50,6 @@ class Hook_symbol_SELF_PAGE_LINK
         if ($IN_SELF_ROUTING_SCRIPT) {
             $value = get_current_page_link(false);
         }
-
 
         return $value;
     }

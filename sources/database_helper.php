@@ -276,7 +276,7 @@ function _helper_create_table(object $this_ref, string $table_name, array $field
             $ins_m_type[] = $type;
         }
 
-        if (!multi_lang_content()) {
+        if (multi_lang_content() === false) {
             if (strpos($type, '_TRANS') !== false) {
                 if (strpos($type, '__COMCODE') !== false) {
                     $fields[$name . '__text_parsed'] = 'LONG_TEXT';
@@ -310,7 +310,7 @@ function _helper_create_table(object $this_ref, string $table_name, array $field
     $this_ref->table_exists_cache[$table_name] = true;
     $this_ref->table_exists_real_cache[$table_name] = true;
 
-    if (!multi_lang_content()) {
+    if (multi_lang_content() === false) {
         foreach ($fields_copy as $name => $type) {
             if (strpos($type, '_TRANS') !== false) {
                 $GLOBALS['SITE_DB']->create_index($table_name, '#' . $name, [$name], null, $skip_fulltext_key_check);
@@ -474,7 +474,7 @@ function _helper_generate_index_fields(string $table_name, array $fields, bool $
                 return null; // We don't create a full-text index on *_TRANS fields if we are directing through the translate table
             }
 
-            if ((strpos($field_name, '(') === false) && (!$is_full_text) && ((!multi_lang_content()) || (strpos($db_type, '_TRANS') === false))) {
+            if ((strpos($field_name, '(') === false) && (!$is_full_text) && ((multi_lang_content() === false) || (strpos($db_type, '_TRANS') === false))) {
                 if (strpos($field_name, '(') === false) {
                     if ((strpos($db_type, 'TEXT') === 0) || (strpos($db_type, 'SHORT_TEXT') !== false) || (strpos($db_type, 'SHORT_TRANS') !== false) || (strpos($db_type, 'LONG_TEXT') !== false) || (strpos($db_type, 'SERIAL') !== false) || (strpos($db_type, 'LONG_TRANS') !== false) || (strpos($db_type, 'URLPATH') !== false)) {
                         $_fields .= '(250)'; // 255 would be too much with MySQL's UTF. Only MySQL supports index lengths, but the other drivers will strip them back out again.
@@ -824,7 +824,7 @@ function _helper_add_table_field(object $this_ref, string $table_name, string $n
     }
 
     // For Comcode fields on non-multi-lang-content sites we need to add some additional fields
-    if ((!multi_lang_content()) && (strpos($type, '__COMCODE') !== false)) {
+    if ((multi_lang_content() === false) && (strpos($type, '__COMCODE') !== false)) {
         foreach (['text_parsed' => 'LONG_TEXT', 'source_user' => 'MEMBER'] as $_sub_name => $sub_type) {
             $sub_name = $name . '__' . $_sub_name;
 
@@ -889,7 +889,7 @@ function _helper_alter_table_field(object $this_ref, string $table_name, string 
     $type_remap = $this_ref->driver->get_type_remap(true);
 
     // Handle renaming of special Comcode fields on non-multi-lang-content sites
-    if ((strpos($type, '__COMCODE') !== false) && ($new_name !== null) && ($new_name != $name) && (!multi_lang_content())) {
+    if ((strpos($type, '__COMCODE') !== false) && ($new_name !== null) && ($new_name != $name) && (multi_lang_content() === false)) {
         foreach (['text_parsed' => 'LONG_TEXT', 'source_user' => 'MEMBER'] as $sub_name => $sub_type) {
             $sub_old_name = $name . '__' . $sub_name;
             $sub_new_name = $new_name . '__' . $sub_name;
@@ -916,7 +916,7 @@ function _helper_alter_table_field(object $this_ref, string $table_name, string 
 
     // Work out field type
     $_type = $type;
-    if ((strpos($type, '_TRANS') !== false) && (!multi_lang_content())) {
+    if ((strpos($type, '_TRANS') !== false) && (multi_lang_content() === false)) {
         $_type = 'LONG_TEXT'; // In the DB layer, it must now save as such
     }
     $__type = str_replace(['*', '?'], ['', ''], $_type);
@@ -938,7 +938,7 @@ function _helper_alter_table_field(object $this_ref, string $table_name, string 
             $GLOBALS['SITE_DB']->delete_index_if_exists($table_name, '#' . $name);
         }
     }
-    if ((strpos($type, '_TRANS') !== false) && (!multi_lang_content())) {
+    if ((strpos($type, '_TRANS') !== false) && (multi_lang_content() === false)) {
         // If multi-lang-content is off, we automatically create a full-text index on trans fields, as they are expected to be searchable
         //  The field may already exist, but create_index silently exits in such a case
         $indices_test = $this_ref->query_select_value_if_there('db_meta_indices', 'i_name', ['i_table' => $table_name, 'i_name' => '#' . (($new_name !== null) ? $new_name : $name)]);
@@ -1208,7 +1208,7 @@ function _helper_delete_table_field(object $this_ref, string $table_name, string
 
     $fields_to_delete = [$name];
     if (strpos($type, '_TRANS__COMCODE') !== false) {
-        if (!multi_lang_content()) {
+        if (multi_lang_content() === false) {
             $fields_to_delete[] = $name . '__text_parsed';
             $fields_to_delete[] = $name . '__source_user';
         }

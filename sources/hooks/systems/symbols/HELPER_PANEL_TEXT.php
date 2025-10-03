@@ -32,7 +32,6 @@ class Hook_symbol_HELPER_PANEL_TEXT
     {
         return [
             'compile' => SYMBOL_COMPILE_STATIC_NONE,
-            'public' => false,
         ];
     }
 

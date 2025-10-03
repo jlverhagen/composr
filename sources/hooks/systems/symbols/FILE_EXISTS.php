@@ -32,7 +32,6 @@ class Hook_symbol_FILE_EXISTS
     {
         return [
             'compile' => SYMBOL_COMPILE_STATIC_IF_AGGRESSIVE, // TODO: should this be none?
-            'public' => false,
         ];
     }
 

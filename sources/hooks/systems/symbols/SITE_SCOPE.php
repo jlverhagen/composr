@@ -32,7 +32,6 @@ class Hook_symbol_SITE_SCOPE
     {
         return [
             'compile' => SYMBOL_COMPILE_STATIC_SAFE,
-            'public' => false,
         ];
     }
 

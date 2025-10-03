@@ -32,7 +32,6 @@ class Hook_symbol_COMMENT_COUNT
     {
         return [
             'compile' => SYMBOL_COMPILE_STATIC_NONE,
-            'public' => false,
         ];
     }
 

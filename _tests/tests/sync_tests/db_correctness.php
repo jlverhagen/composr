@@ -404,6 +404,7 @@ class db_correctness_test_set extends cms_test_case
             'get_username',
             'install_create_custom_field',
             'install_delete_custom_field',
+            'install_edit_custom_field',
             'install_get_path_search_list',
             'install_specifics',
             'install_test_load_from',

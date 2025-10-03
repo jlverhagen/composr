@@ -32,7 +32,6 @@ class Hook_symbol_STAFF_TOOLTIPS_URL_PATTERNS_JSON
     {
         return [
             'compile' => SYMBOL_COMPILE_STATIC_NONE,
-            'public' => false,
         ];
     }
 

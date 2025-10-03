@@ -229,8 +229,8 @@ function improperly_filled_in_post(string $name)
  * @param  ID_TEXT $type Error type indicator (tiny human-readable text string)
  * @set error warning notice deprecated
  * @param  integer $errno The error code-number
- * @param  PATH $errstr The error message
- * @param  string $errfile The file the error occurred in
+ * @param  string $errstr The error message
+ * @param  PATH $errfile The file the error occurred in
  * @param  integer $errline The line the error occurred on
  * @param  integer $syslog_type The syslog type (used by GAE logging)
  * @param  string $handling_method How to handle the error
@@ -249,6 +249,9 @@ function _cms_error_handler(string $type, int $errno, string $errstr, string $er
         }
     }
 
+    // Generate stack trace
+    $full_trace = get_text_trace();
+
     // Generate error message
     $outx = '<strong>' . cms_strtoupper_ascii($type) . '</strong> [' . strval($errno) . '] ' . $errstr . ' in ' . $errfile . ' on line ' . strval($errline) . '<br />' . "\n";
     if (class_exists('Tempcode')) {
@@ -260,6 +263,7 @@ function _cms_error_handler(string $type, int $errno, string $errstr, string $er
         $out = $outx . $trace->evaluate();
     } else {
         $out = $outx;
+        $out .= $full_trace;
     }
 
     require_code('urls');
@@ -295,16 +299,16 @@ function _cms_error_handler(string $type, int $errno, string $errstr, string $er
             switch (cms_strtoupper_ascii($type)) {
                 case 'ERROR':
                 case 'FATAL ERROR':
-                    @error_log('PHP: CRITICAL ' . $php_error_label, 0);
+                    @error_log('PHP: CRITICAL ' . $php_error_label . "\n" . $full_trace, 0);
                     break;
                 case 'WARNING':
-                    @error_log('PHP: ERROR ' . $php_error_label, 0);
+                    @error_log('PHP: ERROR ' . $php_error_label . "\n" . $full_trace, 0);
                     break;
                 case 'NOTICE':
-                    @error_log('PHP: WARNING ' . $php_error_label, 0);
+                    @error_log('PHP: WARNING ' . $php_error_label . "\n" . $full_trace, 0);
                     break;
                 case 'DEPRECATED':
-                    @error_log('PHP: INFO ' . $php_error_label, 0);
+                    @error_log('PHP: INFO ' . $php_error_label . "\n" . $full_trace, 0);
                     break;
             }
         }
@@ -491,19 +495,22 @@ function _generic_exit($text, string $template, ?bool $support_match_key_message
         $may_log_error = ((!running_script('cron_bridge')) || (@filemtime(get_custom_file_base() . '/data_custom/errorlog.php') < time() - (60 * 5)));
 
         if ($may_log_error) {
+            // Generate stack trace
+            $full_trace = get_text_trace();
+
             if ((function_exists('syslog')) && (GOOGLE_APPENGINE)) {
                 syslog(LOG_ERR, $php_error_label);
             }
             if (php_function_allowed('error_log')) {
                 switch ($template) {
                     case 'INFORM_SCREEN':
-                        @error_log(brand_name() . ': INFO ' . $php_error_label, 0);
+                        @error_log(brand_name() . ': INFO ' . $php_error_label . "\n" . $full_trace, 0);
                         break;
                     case 'WARN_SCREEN':
-                        @error_log(brand_name() . ': WARNING ' . $php_error_label, 0);
+                        @error_log(brand_name() . ': WARNING ' . $php_error_label . "\n" . $full_trace, 0);
                         break;
                     case 'FATAL_SCREEN':
-                        @error_log(brand_name() . ': ERROR ' . $php_error_label, 0);
+                        @error_log(brand_name() . ': ERROR ' . $php_error_label . "\n" . $full_trace, 0);
                         break;
                 }
             }
@@ -1504,7 +1511,57 @@ function put_value_in_stack_trace($value) : string
 }
 
 /**
- * Return a debugging back-trace of the current execution stack. Use this for debugging purposes.
+ * Return a debugging back-trace of the current execution stack as plain text. Use this for debugging purposes in error logs.
+ *
+ * @return void
+ */
+function get_text_trace() : string
+{
+    static $already_traced = false;
+    if ($already_traced) {
+        return '';
+    }
+
+    push_suppress_error_death(true);
+    $_trace = debug_backtrace();
+    $ret = '';
+    foreach ($_trace as $i => $stage) {
+        //if (in_array($stage['function'], ['get_html_trace', 'cms_error_handler', 'fatal_exit'])) continue;  Hinders more than helps
+        $ret .= '#' . strval($i) . ' ';
+
+        if (isset($stage['class'])) {
+            $ret .= $stage['class'];
+        }
+        if (isset($stage['type'])) {
+            $ret .= $stage['type'];
+        }
+        if (isset($stage['function'])) {
+            $ret .= $stage['function'];
+        }
+        if (isset($stage['file'])) {
+            $ret .= ' called at [' . $stage['file'];
+            if (isset($stage['line'])) {
+                $ret .= ':' . strval($stage['line']);
+            }
+            $ret .= ']';
+        }
+
+        if (isset($stage['args'])) {
+            foreach ($stage['args'] as $arg) {
+                $ret .= "\n" . ' => ' . put_value_in_stack_trace($arg);
+            }
+        }
+
+        $ret .= "\n";
+    }
+
+    //$already_traced = true;
+
+    return trim($ret);
+}
+
+/**
+ * Return a debugging back-trace of the current execution stack as Tempcode. Use this for debugging purposes.
  *
  * @return Tempcode Debugging backtrace
  */
@@ -1566,6 +1623,8 @@ function get_html_trace() : object
             $post[$key] = put_value_in_stack_trace($val);
         }
     }
+
+    //$already_traced = true;
 
     return do_template('STACK_TRACE', ['_GUID' => '9620695fb8c3e411a6a4926432cea64f', 'POST' => $post, 'TRACE' => $trace]);
 }

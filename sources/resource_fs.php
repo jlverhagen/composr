@@ -1133,7 +1133,7 @@ function remap_portable_as_resource_id(string $resource_type, $portable_data)
  */
 function remap_trans_as_portable(array $db_row, string $field, object $db)
 {
-    if (!multi_lang_content()) {
+    if (multi_lang_content() === false) {
         if (isset($db_row[$field . '__source_user'])) {
             return [$db_row[$field], $db_row[$field . '__source_user']];
         } else {
@@ -1154,7 +1154,7 @@ function remap_trans_as_portable(array $db_row, string $field, object $db)
  */
 function remap_portable_as_trans($portable_data, string $field, object $db) : array
 {
-    if (!multi_lang_content()) {
+    if (multi_lang_content() === false) {
         if (is_array($portable_data)) {
             return [$field => $portable_data[0], $field . '__source_user' => $portable_data[1]];
         } else {

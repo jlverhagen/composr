@@ -208,7 +208,7 @@ class Module_admin_errorlog
 
                 if (($_line != '') && (strpos($_line, '<' . '?php') === false)) {
                     $matches = [];
-                    if (preg_match('#^\[([^\]]*)\] PHP (Fatal error|Warning|Notice|Deprecated): [\s]?(.*)#', $_line, $matches) != 0) { // Non-formatted PHP errors
+                    if (preg_match('#^\[([^\]]*)\] PHP (Fatal error|Warning|Notice|Deprecated): [\s]?([^\\n]*)#', $_line, $matches) != 0) { // Non-formatted PHP errors
                         $error_level = 'UNKNOWN';
                         if ($matches[2] == 'Fatal error') {
                             $error_level = 'CRITICAL';
@@ -223,9 +223,9 @@ class Module_admin_errorlog
                             $error_level = 'INFO';
                         }
                         $stuff[] = [$matches[1], 'PHP', $error_level, $matches[3], ''];
-                    } elseif (preg_match('#^\[([^\]]*)\] ([^:]*): (CRITICAL|ERROR|WARNING|INFO|DEBUG|)[\s]?(.*)#', $_line, $matches) != 0) {
+                    } elseif (preg_match('#^\[([^\]]*)\] ([^:]*): (CRITICAL|ERROR|WARNING|INFO|DEBUG|)[\s]?([^\\n]*)#', $_line, $matches) != 0) {
                         $stuff[] = [$matches[1], $matches[2], $matches[3], $matches[4], ''];
-                    } elseif (preg_match('#^\[([^\]]*)\] (CRITICAL|ERROR|WARNING|INFO|DEBUG|)[\s]?(.*)#', $_line, $matches) != 0) {
+                    } elseif (preg_match('#^\[([^\]]*)\] (CRITICAL|ERROR|WARNING|INFO|DEBUG|)[\s]?([^\\n]*)#', $_line, $matches) != 0) {
                         $stuff[] = [$matches[1], do_lang('NA'), $matches[2], $matches[3], ''];
                     } elseif ((preg_match('#^TELEMETRY ([0-9a-fA-F\-]*)#', $_line, $matches) != 0) && (count($stuff) > 0)) { // We have a telemetry GUID
                         $stuff[count($stuff) - 1][4] = $matches[1];

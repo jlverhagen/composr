@@ -35,7 +35,7 @@ find_lang_fields - for manually specifying the fields needed to dereference when
 function init__database()
 {
     global $HAS_MULTI_LANG_CONTENT;
-    $HAS_MULTI_LANG_CONTENT = null;
+    $HAS_MULTI_LANG_CONTENT = multi_lang_content();
 
     global $QUERY_LIST, $QUERY_COUNT, $QUERY_LIMITING, $DB_SCOPE_CHECK, $QUERY_FILE_LOG, $SITE_INFO, $DB_DRIVER;
     $QUERY_LIST = [];
@@ -160,22 +160,22 @@ function _general_db_init()
 /**
  * Find whether to run in multi-lang mode for content translations.
  *
- * @return boolean Whether to run in multi-lang mode for content translations
+ * @return ?boolean Whether to run in multi-lang mode for content translations (null: we don't know)
  */
-function multi_lang_content() : bool
+function multi_lang_content() : ?bool
 {
     static $getting_multi_lang_content = false;
 
     global $HAS_MULTI_LANG_CONTENT;
 
     if ($HAS_MULTI_LANG_CONTENT === null) {
-        // Running installer: prioritise POST
-        if (running_script('install')) {
-            $HAS_MULTI_LANG_CONTENT = (post_param_string('value__multi_lang_content', '0') == '1'); // We default to disabled in the installer
+        // Running installer: prefer POST if provided; otherwise fall back to stored config/value
+        if (running_script('install') && isset($_POST['value__multi_lang_content'])) {
+            $HAS_MULTI_LANG_CONTENT = (post_param_string('value__multi_lang_content', '0') == '1'); // We default to disabled in the installer UI
             return $HAS_MULTI_LANG_CONTENT;
         }
 
-        // Too early; default to SITE_INFO or true
+        // Too early
         if (!function_exists('get_value')) {
             // LEGACY: removed in 11 beta7 but we still need to support it (for the upgrader) if a value has not been set
             global $SITE_INFO;
@@ -183,12 +183,12 @@ function multi_lang_content() : bool
                 return ($SITE_INFO['multi_lang_content'] != '0');
             }
 
-            return true;
+            return null;
         }
 
-        // We are already trying to get the value; default to true
+        // We are already trying to get the value
         if ($getting_multi_lang_content) {
-            return true;
+            return null;
         }
 
         $getting_multi_lang_content = true;
@@ -202,7 +202,7 @@ function multi_lang_content() : bool
                 return ($SITE_INFO['multi_lang_content'] != '0');
             }
 
-            return true; // Default to true, but since we did not actually get a value, do not consider this final / put into the cache
+            return null;
         }
 
         $ret = ($value !== '0');
@@ -2297,7 +2297,7 @@ class DatabaseConnector
 
         if ($DEV_MODE) {
             if (peek_db_scope_check()) {
-                if ((!multi_lang_content()) && (strpos($query, $this->table_prefix . 'translate') !== false) && (strpos($query, 'CHECK TABLE') === false) && (strpos($query, 'DROP TABLE') === false) && (strpos($query, 'DROP INDEX') === false) && (strpos($query, 'ALTER TABLE') === false) && (strpos($query, 'CREATE TABLE') === false) && (trim($query) != 'SELECT * FROM cms_translate WHERE 1=1')) {
+                if ((multi_lang_content() === false) && (strpos($query, $this->table_prefix . 'translate') !== false) && (strpos($query, 'CHECK TABLE') === false) && (strpos($query, 'DROP TABLE') === false) && (strpos($query, 'DROP INDEX') === false) && (strpos($query, 'ALTER TABLE') === false) && (strpos($query, 'CREATE TABLE') === false) && (trim($query) != 'SELECT * FROM cms_translate WHERE 1=1')) {
                     fatal_exit('Assumption of multi-lang-content being on, and it\'s not');
                 }
 
@@ -2327,7 +2327,8 @@ class DatabaseConnector
 
             if (php_function_allowed('error_log')) {
                 require_code('urls');
-                @error_log(brand_name() . ' profiling: INFO Over ' . integer_format(DEV_MODE_QUERY_LIMIT) . ' queries @ ' . get_self_url_easy(true), 0);
+                require_code('failure');
+                @error_log(brand_name() . ' profiling: INFO Over ' . integer_format(DEV_MODE_QUERY_LIMIT) . ' queries @ ' . get_self_url_easy(true) . "\n" . get_text_trace(), 0);
             }
 
             if ($DEV_MODE) {

@@ -32,7 +32,6 @@ class Hook_symbol_FORCE_PREVIEWS
     {
         return [
             'compile' => SYMBOL_COMPILE_STATIC_NONE,
-            'public' => true,
         ];
     }
 
@@ -46,6 +45,10 @@ class Hook_symbol_FORCE_PREVIEWS
      */
     public function run(array $param, string $lang, array $escaped) : string
     {
+        if (!function_exists('get_option')) {
+            return '0';
+        }
+
         if (get_option('forced_preview_option') == '1') {
             if (get_forum_type() == 'cns') {
                 if ((is_guest()) && (get_option('default_preview_guests') == '0')) {

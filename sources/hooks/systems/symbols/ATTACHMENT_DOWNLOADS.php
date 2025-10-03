@@ -32,7 +32,6 @@ class Hook_symbol_ATTACHMENT_DOWNLOADS
     {
         return [
             'compile' => SYMBOL_COMPILE_STATIC_NONE,
-            'public' => false,
         ];
     }
 

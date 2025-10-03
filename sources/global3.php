@@ -2075,12 +2075,13 @@ function require_all_core_cms_code()
  * Create file with unique file name, but works around compatibility issues between servers. Note that the file is NOT automatically deleted. You should also delete it using "@unlink", as some servers have problems with permissions.
  *
  * @param  string $prefix The prefix of the temporary file name
+ * @param  boolean $software_temp_only Whether to always save to the software temp directory and not PHP's
  * @return ~string The name of the temporary file (false: error)
  */
-function cms_tempnam(string $prefix = 'cms')
+function cms_tempnam(string $prefix = 'cms', bool $software_temp_only = false)
 {
     require_code('files2');
-    return _cms_tempnam($prefix);
+    return _cms_tempnam($prefix, $software_temp_only);
 }
 
 /**

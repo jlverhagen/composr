@@ -32,7 +32,6 @@ class Hook_symbol_IMG_WIDTH
     {
         return [
             'compile' => SYMBOL_COMPILE_STATIC_SAFE,
-            'public' => false,
         ];
     }
 

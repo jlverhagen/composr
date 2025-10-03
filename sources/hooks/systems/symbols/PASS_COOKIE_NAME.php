@@ -32,7 +32,6 @@ class Hook_symbol_PASS_COOKIE_NAME
     {
         return [
             'compile' => SYMBOL_COMPILE_STATIC_SAFE,
-            'public' => false,
         ];
     }
 

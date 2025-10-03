@@ -32,7 +32,6 @@ class Hook_symbol_BRAND_BASE_URL
     {
         return [
             'compile' => SYMBOL_COMPILE_STATIC_SAFE,
-            'public' => false,
         ];
     }
 

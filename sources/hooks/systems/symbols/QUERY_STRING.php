@@ -32,7 +32,6 @@ class Hook_symbol_QUERY_STRING
     {
         return [
             'compile' => SYMBOL_COMPILE_STATIC_NONE,
-            'public' => false,
         ];
     }
 

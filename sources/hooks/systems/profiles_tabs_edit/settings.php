@@ -370,20 +370,6 @@ class Hook_profiles_tabs_edit_settings
             return null;
         }
 
-        // Geo-location check
-
-        require_code('locations');
-
-        // Compare IP geolocation to set region and warn if there is a mismatch
-        $geo = geolocate_ip();
-        if ($geo !== null) {
-            $region = get_region();
-            if (!cms_empty_safe($region) && (!is_location_within($region, [$geo]))) {
-                require_lang('locations');
-                attach_message(do_lang_tempcode('GEOLOCATION_REGION_MISMATCH', escape_html($geo)), 'warn');
-            }
-        }
-
         // UI
 
         $title = do_lang_tempcode('SETTINGS');
@@ -444,16 +430,6 @@ class Hook_profiles_tabs_edit_settings
         require_javascript('core_cns');
         $js_function_calls = ['hookProfilesTabsEditSettingsRenderTab'];
         $text = new Tempcode();
-
-        // E-mail issues check
-        if ($member_id_of == $member_id_viewing) {
-            require_code('mail');
-            require_code('mail2');
-            if (!can_email_member($member_id_of)) {
-                $tpl = do_template('RED_ALERT', ['_GUID' => '2911f8aaae7fd4412fb393a63cf8606b', 'TEXT' => do_lang_tempcode('CANNOT_RECEIVE_MAIL_MEMBER')]);
-                $text->attach($tpl);
-            }
-        }
 
         if ($memory_debugging) {
             require_code('files');

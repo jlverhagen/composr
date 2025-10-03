@@ -32,7 +32,6 @@ class Hook_symbol_FLOAT_UNFORMAT
     {
         return [
             'compile' => SYMBOL_COMPILE_STATIC_SAFE,
-            'public' => false,
         ];
     }
 

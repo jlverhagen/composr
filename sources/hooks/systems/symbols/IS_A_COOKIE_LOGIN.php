@@ -32,7 +32,6 @@ class Hook_symbol_IS_A_COOKIE_LOGIN
     {
         return [
             'compile' => SYMBOL_COMPILE_STATIC_NONE,
-            'public' => true,
         ];
     }
 

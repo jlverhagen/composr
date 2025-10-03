@@ -31,8 +31,7 @@ class Hook_symbol_PREVIEW_URL
     public function info() : ?array
     {
         return [
-            'compile' => SYMBOL_COMPILE_STATIC_SAFE_SIMPLE_BASE_URLS,
-            'public' => false,
+            'compile' => SYMBOL_COMPILE_STATIC_NONE,
         ];
     }
 

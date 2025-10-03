@@ -105,7 +105,7 @@ function init__database__xml()
         'TOKEN' => 15,
         'SERIAL' => null,
     ];
-    if (!multi_lang_content()) {
+    if (multi_lang_content() === false) {
         $STRING_TYPES['SHORT_TRANS'] = 255;
         $STRING_TYPES['LONG_TRANS'] = null;
         $STRING_TYPES['SHORT_TRANS__COMCODE'] = 255;
@@ -803,7 +803,7 @@ class Database_Static_xml extends DatabaseDriver
             $schema[$f['m_name']] = $f['m_type'];
 
             if (substr($f['m_type'], -9) == '__COMCODE') {
-                if (!multi_lang_content()) {
+                if (multi_lang_content() === false) {
                     $schema[$f['m_name'] . '__text_parsed'] = 'LONG_TEXT';
                     $schema[$f['m_name'] . '__source_user'] = 'MEMBER';
                 }

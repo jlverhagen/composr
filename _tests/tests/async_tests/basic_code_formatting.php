@@ -213,8 +213,8 @@ class basic_code_formatting_test_set extends cms_test_case
                     continue;
                 }
 
-                $regexp = '[^\x00-\x7f]';
-                foreach (explode("\n", $c) as $line_num => $line) {
+                foreach (explode("\n", $c) as $line_num => &$line) {
+                    $regexp = '[^\x00-\x7f]';
                     $matches = [];
                     $ok = (preg_match('#' . $regexp . '#', $line, $matches) == 0);
                     $this->assertTrue($ok, 'Has non-ASCII data in ' . $path . ':' . strval($line_num + 1) . '; find in your editor with this regexp: ' . $regexp . ' (' . serialize($matches) . ')');

@@ -199,6 +199,7 @@ if (!function_exists('critical_error')) {
         $script_name = isset($_SERVER['SCRIPT_NAME']) ? $_SERVER['SCRIPT_NAME'] : '';
         $in_upgrader = (basename($script_name) == 'upgrader.php');
 
+        $display_trace = false;
         if (
             (strpos($error, 'Allowed memory') === false) &&
             ((($relay === null)) || (strpos($relay, 'Stack trace') === false)) &&
@@ -209,6 +210,13 @@ if (!function_exists('critical_error')) {
                 ($in_upgrader)
             )
         ) {
+            $display_trace = true;
+        }
+
+        require_code('failure');
+        $full_trace = get_text_trace();
+
+        if ($display_trace) {
             $_trace = debug_backtrace();
             $extra = '<div class="box guid-{_GUID}"><div class="box-inner"><h2>Stack trace&hellip;</h2>';
             foreach ($_trace as $stage) {
@@ -339,7 +347,7 @@ END;
 
         // Standard error logging
         if ((php_function_allowed('error_log')) && ($error_log == 'errorlog.php')) {
-            @error_log('Composr: CRITICAL ' . str_replace("\n", '', $error), 0);
+            @error_log('Composr: CRITICAL ' . str_replace("\n", '', $error . "\n" . $full_trace), 0);
         }
 
         // Custom error logging
@@ -350,6 +358,7 @@ END;
                 fwrite($myfile, loggable_date() . "\n");
                 fwrite($myfile, 'Composr: CRITICAL ' . "\n");
                 fwrite($myfile, $error);
+                fwrite($myfile, $full_trace);
                 fwrite($myfile, "\n\n");
                 flock($myfile, LOCK_UN);
                 fclose($myfile);

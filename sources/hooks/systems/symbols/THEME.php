@@ -32,7 +32,6 @@ class Hook_symbol_THEME
     {
         return [
             'compile' => SYMBOL_COMPILE_STATIC_SAFE,
-            'public' => true,
         ];
     }
 

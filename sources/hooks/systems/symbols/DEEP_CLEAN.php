@@ -32,7 +32,6 @@ class Hook_symbol_DEEP_CLEAN
     {
         return [
             'compile' => SYMBOL_COMPILE_STATIC_IF_AGGRESSIVE,
-            'public' => false,
         ];
     }
 

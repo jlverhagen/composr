@@ -32,7 +32,6 @@ class Hook_symbol_DB_FIRST_ID
     {
         return [
             'compile' => SYMBOL_COMPILE_STATIC_IF_AGGRESSIVE,
-            'public' => false,
         ];
     }
 

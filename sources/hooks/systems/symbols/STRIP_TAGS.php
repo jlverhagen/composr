@@ -32,7 +32,6 @@ class Hook_symbol_STRIP_TAGS
     {
         return [
             'compile' => SYMBOL_COMPILE_STATIC_SAFE,
-            'public' => false,
         ];
     }
 
@@ -59,7 +58,6 @@ class Hook_symbol_STRIP_TAGS
                 }
             }
         }
-
 
         if ($GLOBALS['XSS_DETECT']) {
             ocp_mark_as_escaped($value);

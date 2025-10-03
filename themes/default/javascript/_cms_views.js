@@ -1054,6 +1054,7 @@
         Global.base(this, 'constructor', arguments);
 
         var pageLinkPrivacy = strVal(params.pageLinkPrivacy);
+        var runningScript = strVal(params.runningScript);
 
         /*START JS from HTML_HEAD.tpl*/
         // Google Analytics account, if one set up
@@ -1064,7 +1065,7 @@
         //$cms.setCookie('use_wysiwyg', '0', 'PERSONALIZATION', 90);
 
         // Cookie Consent plugin by Orestbida - https://cookieconsent.orestbida.com
-        if (($cms.runningScript() === 'index') && ($dom.$('meta[http-equiv="Refresh"]') === null) && (window.parent === window)) {
+        if ((runningScript === 'index') && ($dom.$('meta[http-equiv="Refresh"]') === null) && (window.parent === window)) {
             $cms.requireJavascript('cookie_consent').then(function () {
                 $cms.requireCss(['cookie_consent', 'cookie_consent_override']).then(function () {
                     var cookieConsentOptions = {
@@ -1159,6 +1160,7 @@
                     };
 
                     CookieConsent.run(cookieConsentOptions);
+                    $util.inform('Cookie consent loaded');
                 });
             });
         }

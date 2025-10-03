@@ -32,7 +32,6 @@ class Hook_symbol_IS_GUEST
     {
         return [
             'compile' => SYMBOL_COMPILE_STATIC_NONE,
-            'public' => true,
         ];
     }
 

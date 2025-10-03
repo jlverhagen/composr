@@ -32,7 +32,6 @@ class Hook_symbol_GEOCODE_ENABLED
     {
         return [
             'compile' => SYMBOL_COMPILE_STATIC_NONE,
-            'public' => false,
         ];
     }
 

@@ -32,7 +32,6 @@ class Hook_symbol_TIME_PERIOD
     {
         return [
             'compile' => SYMBOL_COMPILE_STATIC_SAFE,
-            'public' => false,
         ];
     }
 

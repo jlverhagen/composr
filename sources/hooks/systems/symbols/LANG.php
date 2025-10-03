@@ -32,7 +32,6 @@ class Hook_symbol_LANG
     {
         return [
             'compile' => SYMBOL_COMPILE_STATIC_SAFE,
-            'public' => true,
         ];
     }
 

@@ -36,7 +36,6 @@ class Hook_symbol_GENERATE_CAPTCHA
 
         return [
             'compile' => SYMBOL_COMPILE_STATIC_NONE,
-            'public' => false,
         ];
     }
 

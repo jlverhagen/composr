@@ -32,7 +32,6 @@ class Hook_symbol_PAGE_TITLE
     {
         return [
             'compile' => SYMBOL_COMPILE_STATIC_NONE,
-            'public' => false,
         ];
     }
 

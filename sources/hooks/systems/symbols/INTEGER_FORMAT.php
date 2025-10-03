@@ -32,7 +32,6 @@ class Hook_symbol_INTEGER_FORMAT
     {
         return [
             'compile' => SYMBOL_COMPILE_STATIC_SAFE,
-            'public' => false,
         ];
     }
 

@@ -32,7 +32,6 @@ class Hook_symbol_PRIVACY_POLICY_DATE
     {
         return [
             'compile' => SYMBOL_COMPILE_STATIC_NONE,
-            'public' => false,
         ];
     }
 

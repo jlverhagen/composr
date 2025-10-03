@@ -32,7 +32,6 @@ class Hook_symbol_HIDE_HELP_PANEL
     {
         return [
             'compile' => SYMBOL_COMPILE_STATIC_NONE,
-            'public' => true,
         ];
     }
 

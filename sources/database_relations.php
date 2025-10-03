@@ -617,7 +617,7 @@ function get_sql_dump($out_file, bool $include_drops = false, bool $include_data
 
         $fields_copy = $fields;
         foreach ($fields_copy as $name => $type) {
-            if (!multi_lang_content()) {
+            if (multi_lang_content() === false) {
                 if (strpos($type, '_TRANS') !== false) {
                     if (strpos($type, '__COMCODE') !== false) {
                         $fields[$name . '__text_parsed'] = 'LONG_TEXT';

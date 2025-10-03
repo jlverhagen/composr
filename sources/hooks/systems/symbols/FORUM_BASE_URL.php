@@ -32,7 +32,6 @@ class Hook_symbol_FORUM_BASE_URL
     {
         return [
             'compile' => SYMBOL_COMPILE_STATIC_SAFE,
-            'public' => false,
         ];
     }
 

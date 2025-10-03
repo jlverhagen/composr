@@ -32,7 +32,6 @@ class Hook_symbol_FIND_SCRIPT_NOHTTP
     {
         return [
             'compile' => SYMBOL_COMPILE_STATIC_SAFE,
-            'public' => false,
         ];
     }
 

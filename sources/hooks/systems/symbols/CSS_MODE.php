@@ -32,7 +32,6 @@ class Hook_symbol_CSS_MODE
     {
         return [
             'compile' => SYMBOL_COMPILE_STATIC_NONE,
-            'public' => false,
         ];
     }
 

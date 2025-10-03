@@ -1122,16 +1122,13 @@ class Forum_driver_cns extends Forum_driver_base
     }
 
     /**
-     * Find if this member may have e-mails sent to them.
+     * Find if this member may have e-mails sent to them from other members.
      *
      * @param  MEMBER $member_id The member ID
      * @return boolean Whether the member may have e-mails sent to them
      */
     public function get_member_email_allowed(int $member_id) : bool
     {
-        if (get_option('member_email_receipt_configurability') == '0') {
-            return true;
-        }
         $ret = $this->get_member_row_field($member_id, 'm_allow_emails');
         if ($ret === null) {
             $ret = false;
@@ -1822,7 +1819,7 @@ class Forum_driver_cns extends Forum_driver_base
             $this->MEMBER_ROWS_CACHED[$member_id] = null;
             return null;
         }
-        if ($this->db == $GLOBALS['FORUM_DB'] && !multi_lang_content()) {
+        if (($this->db == $GLOBALS['FORUM_DB']) && (multi_lang_content() === false)) {
             // Optimisation
             require_code('cns_members');
             global $MEMBER_CACHE_FIELD_MAPPINGS;

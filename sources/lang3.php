@@ -78,7 +78,7 @@ function _choose_language(object $title, bool $tip = false, bool $allow_all_sele
  */
 function attach_translation_notice()
 {
-    if (!multi_lang_content()) {
+    if (multi_lang_content() === false) {
         return;
     }
 
@@ -358,7 +358,7 @@ function _insert_lang(string $field_name, string $text, int $level, ?object $db 
         $text_parsed = '';
     }
 
-    if (!multi_lang_content()) {
+    if (multi_lang_content() === false) {
         $ret = [];
         $ret[$field_name] = $text;
         if ($comcode) {
@@ -472,7 +472,7 @@ function _lang_remap(string $field_name, $lang_id, string $text, ?object $db = n
         $text_parsed = '';
     }
 
-    if (!multi_lang_content()) {
+    if (multi_lang_content() === false) {
         $ret = [];
         $ret[$field_name] = $text;
         if ($comcode) {

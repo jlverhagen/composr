@@ -32,7 +32,6 @@ class Hook_symbol_LATE_MESSAGES
     {
         return [
             'compile' => SYMBOL_COMPILE_STATIC_NONE,
-            'public' => false,
         ];
     }
 

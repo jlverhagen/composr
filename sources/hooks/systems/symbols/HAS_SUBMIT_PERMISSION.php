@@ -32,7 +32,6 @@ class Hook_symbol_HAS_SUBMIT_PERMISSION
     {
         return [
             'compile' => SYMBOL_COMPILE_STATIC_NONE,
-            'public' => false,
         ];
     }
 

@@ -549,7 +549,6 @@ function require_lang(string $codename, ?string $lang = null, ?string $type = nu
             if ($SMART_CACHE !== null) {
                 $SMART_CACHE->invalidate();
             }
-            $LANGUAGE_STRINGS_CACHE = [];
             $PAGE_CACHE_LAZY_LOAD = false;
             $LANG_LOADED_LANG = [];
             $PAGE_CACHE_LANGS_REQUESTED[] = [$codename, $lang];
@@ -1127,7 +1126,7 @@ function lang_remap(string $field_name, $lang_id, string $text, ?object $db = nu
  */
 function delete_lang($lang_id, ?object $db = null)
 {
-    if (!multi_lang_content()) {
+    if (multi_lang_content() === false) {
         return;
     }
 
@@ -1306,7 +1305,7 @@ function get_translated_tempcode(string $table, array $row, string $field_name, 
  */
 function get_translated_text($entry, ?object $db = null, ?string $lang = null, bool $force = false) : ?string
 {
-    if (!multi_lang_content()) {
+    if (multi_lang_content() === false) {
         if (!is_string($entry)) { // Should have been a string when content translations are off
             trigger_error(do_lang('NOT_STRING_CONTENT_LANG_STRING'), E_USER_WARNING);
         }
@@ -1316,6 +1315,7 @@ function get_translated_text($entry, ?object $db = null, ?string $lang = null, b
 
     if (is_string($entry)) { // Strings should have been returned before this point
         trigger_error(do_lang('NOT_INTEGER_CONTENT_LANG_STRING'), E_USER_WARNING);
+        return $entry;
     }
 
     if ($entry === 0) {
@@ -1325,6 +1325,7 @@ function get_translated_text($entry, ?object $db = null, ?string $lang = null, b
 
     if ($entry === null) {
         trigger_error(do_lang('NULL_CONTENT_LANG_STRING'), E_USER_WARNING);
+        return null;
     }
 
     if ($db === null) {

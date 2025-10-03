@@ -36,7 +36,6 @@ class Hook_symbol_SPLIT_TEST
 
         return [
             'compile' => SYMBOL_COMPILE_STATIC_NONE,
-            'public' => false,
         ];
     }
 

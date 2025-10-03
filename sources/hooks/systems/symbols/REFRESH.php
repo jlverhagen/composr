@@ -34,7 +34,6 @@ class Hook_symbol_REFRESH
     {
         return [
             'compile' => SYMBOL_COMPILE_STATIC_NONE,
-            'public' => false,
         ];
     }
 

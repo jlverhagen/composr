@@ -34,7 +34,6 @@ class Hook_symbol_THEMEWIZARD_COLOR
     {
         return [
             'compile' => SYMBOL_COMPILE_STATIC_NONE,
-            'public' => false,
         ];
     }
 

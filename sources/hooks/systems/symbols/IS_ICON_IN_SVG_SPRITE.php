@@ -32,7 +32,6 @@ class Hook_symbol_IS_ICON_IN_SVG_SPRITE
     {
         return [
             'compile' => SYMBOL_COMPILE_STATIC_NONE,
-            'public' => false,
         ];
     }
 

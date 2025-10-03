@@ -36,7 +36,6 @@ class Hook_symbol_CURRENCY_SYMBOL
 
         return [
             'compile' => SYMBOL_COMPILE_STATIC_NONE,
-            'public' => false,
         ];
     }
 

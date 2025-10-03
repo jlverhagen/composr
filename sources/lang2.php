@@ -33,7 +33,7 @@
  */
 function content_lang_string_translation(string $lang_from, string $lang_to, array $content_lang_string_changes, bool $test_run = false, bool $allow_multiple_matches = true) : array
 {
-    if (!multi_lang_content()) {
+    if (multi_lang_content() === false) {
         warn_exit('multi_lang_content must be enabled');
     }
 

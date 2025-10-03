@@ -328,7 +328,7 @@ class DatabaseRepair
                 $meta_key_fields = [];
                 $existent_key_fields = [];
                 $needed = $meta_tables[$table_name];
-                if (!multi_lang_content()) {
+                if (multi_lang_content() === false) {
                     foreach ($needed as $field_name => $field_type) {
                         if (strpos($field_type, '_TRANS__COMCODE') !== false) {
                             $needed[$field_name . '__text_parsed'] = 'LONG_TEXT';
@@ -528,7 +528,7 @@ class DatabaseRepair
                 $expected_key_fields = [];
                 $existent_key_fields = [];
                 $needed = $expected_tables[$table_name];
-                if (!multi_lang_content()) {
+                if (multi_lang_content() === false) {
                     foreach ($needed as $field_name => $field_type) {
                         if (strpos($field_type, '_TRANS__COMCODE') !== false) {
                             $needed[$field_name . '__text_parsed'] = 'LONG_TEXT';
@@ -708,7 +708,7 @@ class DatabaseRepair
             if (!isset($expected_indices[$universal_index_key])) {
                 $index_name = $index['name'];
 
-                if ((!multi_lang_content()) && (count($index['fields']) == 1) && (strpos($meta_tables[$table_name][$index['fields'][0]], '_TRANS') !== false) && ($index_name == $index['fields'][0])) {
+                if ((multi_lang_content() === false) && (count($index['fields']) == 1) && (strpos($meta_tables[$table_name][$index['fields'][0]], '_TRANS') !== false) && ($index_name == $index['fields'][0])) {
                     continue;
                 }
 
@@ -905,7 +905,7 @@ class DatabaseRepair
 
         $table_copy = $table;
         foreach ($table_copy as $name => $type) {
-            if (!multi_lang_content()) {
+            if (multi_lang_content() === false) {
                 if (strpos($type, '_TRANS') !== false) {
                     if (strpos($type, '__COMCODE') !== false) {
                         $table[$name . '__text_parsed'] = 'LONG_TEXT';
@@ -943,7 +943,7 @@ class DatabaseRepair
         $query = $GLOBALS['SITE_DB']->driver->add_table_field__sql(get_table_prefix() . $table_name, $field_name, $field_type, $default);
         $this->add_fixup_query($query);
 
-        if ((!multi_lang_content()) && (strpos($field_type, '__COMCODE') !== false)) {
+        if ((multi_lang_content() === false) && (strpos($field_type, '__COMCODE') !== false)) {
             $type_remap = $GLOBALS['DB_DRIVER']->get_type_remap(true);
 
             foreach (['text_parsed' => 'LONG_TEXT', 'source_user' => 'MEMBER'] as $sub_name => $sub_type) {
@@ -980,7 +980,7 @@ class DatabaseRepair
         $fields_to_delete = [$field_name];
 
         if (strpos($field_type, '_TRANS__COMCODE') !== false) {
-            if (!multi_lang_content()) {
+            if (multi_lang_content() === false) {
                 $fields_to_delete[] = $field_name . '__text_parsed';
                 $fields_to_delete[] = $field_name . '__source_user';
             }

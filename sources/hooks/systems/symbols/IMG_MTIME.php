@@ -32,7 +32,6 @@ class Hook_symbol_IMG_MTIME
     {
         return [
             'compile' => SYMBOL_COMPILE_STATIC_SAFE,
-            'public' => false,
         ];
     }
 

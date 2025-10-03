@@ -32,7 +32,6 @@ class Hook_symbol_COMMA_LIST_UNSHIFT
     {
         return [
             'compile' => SYMBOL_COMPILE_STATIC_NONE,
-            'public' => false,
         ];
     }
 

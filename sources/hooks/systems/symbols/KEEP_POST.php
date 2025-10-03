@@ -32,7 +32,6 @@ class Hook_symbol_KEEP_POST
     {
         return [
             'compile' => SYMBOL_COMPILE_STATIC_NONE,
-            'public' => false,
         ];
     }
 

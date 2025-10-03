@@ -32,7 +32,6 @@ class Hook_symbol_HONEYPOT_LINK
     {
         return [
             'compile' => SYMBOL_COMPILE_STATIC_NONE,
-            'public' => false,
         ];
     }
 

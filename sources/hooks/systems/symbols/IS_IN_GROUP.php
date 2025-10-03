@@ -32,7 +32,6 @@ class Hook_symbol_IS_IN_GROUP
     {
         return [
             'compile' => SYMBOL_COMPILE_STATIC_NONE,
-            'public' => false,
         ];
     }
 

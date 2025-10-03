@@ -32,7 +32,6 @@ class Hook_symbol_DIV_CEIL
     {
         return [
             'compile' => SYMBOL_COMPILE_STATIC_SAFE,
-            'public' => false,
         ];
     }
 

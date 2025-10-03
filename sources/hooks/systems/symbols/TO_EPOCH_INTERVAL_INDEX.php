@@ -32,7 +32,6 @@ class Hook_symbol_TO_EPOCH_INTERVAL_INDEX
     {
         return [
             'compile' => SYMBOL_COMPILE_STATIC_NONE,
-            'public' => false,
         ];
     }
 

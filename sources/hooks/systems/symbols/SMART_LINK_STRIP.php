@@ -32,7 +32,6 @@ class Hook_symbol_SMART_LINK_STRIP
     {
         return [
             'compile' => SYMBOL_COMPILE_STATIC_NONE,
-            'public' => false,
         ];
     }
 

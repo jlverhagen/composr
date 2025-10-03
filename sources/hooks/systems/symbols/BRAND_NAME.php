@@ -32,7 +32,6 @@ class Hook_symbol_BRAND_NAME
     {
         return [
             'compile' => SYMBOL_COMPILE_STATIC_SAFE,
-            'public' => true,
         ];
     }
 

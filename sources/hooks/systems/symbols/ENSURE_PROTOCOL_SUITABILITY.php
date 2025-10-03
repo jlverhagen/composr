@@ -32,7 +32,6 @@ class Hook_symbol_ENSURE_PROTOCOL_SUITABILITY
     {
         return [
             'compile' => SYMBOL_COMPILE_STATIC_NONE,
-            'public' => false,
         ];
     }
 

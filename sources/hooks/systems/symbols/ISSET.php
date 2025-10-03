@@ -32,7 +32,6 @@ class Hook_symbol_ISSET
     {
         return [
             'compile' => SYMBOL_COMPILE_STATIC_NONE,
-            'public' => false,
         ];
     }
 

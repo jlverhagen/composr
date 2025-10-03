@@ -32,7 +32,6 @@ class Hook_symbol_MATCH_KEY_MATCH
     {
         return [
             'compile' => SYMBOL_COMPILE_STATIC_NONE,
-            'public' => false,
         ];
     }
 

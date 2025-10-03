@@ -32,7 +32,6 @@ class Hook_symbol_THEME_SEED
     {
         return [
             'compile' => SYMBOL_COMPILE_STATIC_NONE,
-            'public' => false,
         ];
     }
 
@@ -55,7 +54,6 @@ class Hook_symbol_THEME_SEED
                 $value = $keep_theme_seed;
             }
         }
-
 
         return $value;
     }

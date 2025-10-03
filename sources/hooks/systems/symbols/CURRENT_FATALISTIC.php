@@ -32,7 +32,6 @@ class Hook_symbol_CURRENT_FATALISTIC
     {
         return [
             'compile' => SYMBOL_COMPILE_STATIC_NONE,
-            'public' => false,
         ];
     }
 

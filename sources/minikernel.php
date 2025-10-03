@@ -1813,3 +1813,16 @@ function get_hook_ob(string $type, string $subtype, string $hook, string $classn
 
     return $ob;
 }
+
+/**
+ * Find out what script is running.
+ *
+ * @return ID_TEXT The script running
+ */
+function current_script() : string
+{
+    // Strip down current URL so we can do a simple compare
+    $script_name = $_SERVER['SCRIPT_NAME'];
+    $stripped_current_url = basename($script_name);
+    return substr($stripped_current_url, 0, strpos($stripped_current_url, '.'));
+}
