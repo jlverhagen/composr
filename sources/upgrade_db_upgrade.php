@@ -189,19 +189,22 @@ function version_specific() : bool
     if ($_version_database === null) {
         $version_database = $version_files;
     }
+
+    // LEGACY: 11.beta9; we have to do this extremely early on for previous v11 versions
+    if (!$GLOBALS['SITE_DB']->table_exists('db_meta_foreign_keys', true)) {
+        $GLOBALS['SITE_DB']->create_table('db_meta_foreign_keys', [
+            'from_table' => '*ID_TEXT',
+            'from_field' => '*ID_TEXT',
+            'to_table' => 'ID_TEXT',
+            'to_field' => 'ID_TEXT',
+            'special_values' => 'SERIAL',
+        ]);
+
+        echo do_lang('UPGRADER_UPGRADED_CUSTOM', '11', 'Added foreign key meta table');
+    }
+
     if ($version_database < $version_files) {
         // LEGACY
-
-        // New DB meta table must be added really early in the process
-        if ($version_database < 11.0) {
-            $GLOBALS['SITE_DB']->create_table('db_meta_foreign_keys', [
-                'from_table' => '*ID_TEXT',
-                'from_field' => '*ID_TEXT',
-                'to_table' => 'ID_TEXT',
-                'to_field' => 'ID_TEXT',
-                'special_values' => 'SERIAL',
-            ]);
-        }
 
         if ($version_database < 9.0) {
             $dh = @opendir(get_custom_file_base() . '/imports/mods');
@@ -783,16 +786,6 @@ function database_specific() : bool
 
     // LEGACY: 11.beta9. Remove prior to v11 release.
     if ((is_numeric($upgrade_from)) && (intval($upgrade_from) < 1758492212)) {
-        if (!$GLOBALS['SITE_DB']->table_exists('db_meta_foreign_keys', true)) {
-            $GLOBALS['SITE_DB']->create_table('db_meta_foreign_keys', [
-                'from_table' => '*ID_TEXT',
-                'from_field' => '*ID_TEXT',
-                'to_table' => 'ID_TEXT',
-                'to_field' => 'ID_TEXT',
-                'special_values' => 'SERIAL',
-            ]);
-        }
-
         $GLOBALS['SITE_DB']->create_foreign_key('attachment_refs', 'a_id', 'attachments', 'id');
         $GLOBALS['FORUM_DB']->create_foreign_key('group_privileges', 'privilege', 'privilege_list', 'the_name');
         $GLOBALS['FORUM_DB']->create_foreign_key('group_privileges', 'the_page', 'modules', 'module_the_name', ['']);
