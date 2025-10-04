@@ -110,8 +110,8 @@ class Module_admin_redirects
         }
 
         if (($upgrade_from === null) || ($upgrade_from < 5)) { // 11.beta9
-            $GLOBALS['SITE_DB']->create_foreign_key('redirects', 'r_from_zone', 'zones', 'zone_name');
-            $GLOBALS['SITE_DB']->create_foreign_key('redirects', 'r_to_zone', 'zones', 'zone_name');
+            $GLOBALS['SITE_DB']->create_foreign_key('redirects', 'r_from_zone', 'zones', 'zone_name', ['*']);
+            $GLOBALS['SITE_DB']->create_foreign_key('redirects', 'r_to_zone', 'zones', 'zone_name', ['*']);
         }
     }
 

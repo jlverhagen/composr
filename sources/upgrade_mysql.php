@@ -113,7 +113,7 @@ function _upgrader_data_integrity_screen() : string
 
     require_code('database');
 
-    cms_extend_time_limit(TIME_LIMIT_EXTEND__SLOW);
+    cms_extend_time_limit(TIME_LIMIT_EXTEND__CRAWL);
 
     // Load database meta into memory
     $_meta = $GLOBALS['SITE_DB']->query_select('db_meta');
