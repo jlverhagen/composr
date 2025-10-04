@@ -113,7 +113,7 @@ function _upgrader_data_integrity_screen() : string
 
     require_code('database');
 
-    cms_extend_time_limit(TIME_LIMIT_EXTEND__SLOW);
+    cms_extend_time_limit(TIME_LIMIT_EXTEND__CRAWL);
 
     // Load database meta into memory
     $_meta = $GLOBALS['SITE_DB']->query_select('db_meta');
@@ -154,8 +154,8 @@ function _upgrader_data_integrity_screen() : string
                 }
                 if (is_array($special_values) && (count($special_values) > 0)) {
                     $escaped_values = '';
-                    foreach ($special_values as $i => $val) {
-                        if ($i > 0) {
+                    foreach ($special_values as $j => $val) {
+                        if ($j > 0) {
                             $escaped_values .= ',';
                         }
                         if (is_string($val)) {
