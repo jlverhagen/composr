@@ -154,8 +154,8 @@ function _upgrader_data_integrity_screen() : string
                 }
                 if (is_array($special_values) && (count($special_values) > 0)) {
                     $escaped_values = '';
-                    foreach ($special_values as $i => $val) {
-                        if ($i > 0) {
+                    foreach ($special_values as $j => $val) {
+                        if ($j > 0) {
                             $escaped_values .= ',';
                         }
                         if (is_string($val)) {
