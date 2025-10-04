@@ -209,7 +209,7 @@ class Hook_health_check_integrity extends Hook_Health_Check
                 $db_to = get_db_for($row['to_table']);
                 $special_values = @unserialize($row['special_values']);
 
-                $query = 'SELECT * FROM `' . $db->table_prefix . $row['from_table'] . '` AS `ft`';
+                $query = 'SELECT COUNT(*) FROM `' . $db->table_prefix . $row['from_table'] . '` AS `ft`';
                 $query .= ' LEFT JOIN `' . $db_to->table_prefix . $row['to_table'] . '` AS `tt` ON `ft`.`' . $row['from_field'] . '` = `tt`.`' . $row['to_field'] . '`';
                 $query .= ' WHERE `tt`.`' . $row['to_field'] . '` IS NULL';
                 $query .= ' AND `ft`.`' . $row['from_field'] . '` IS NOT NULL';
@@ -228,9 +228,9 @@ class Hook_health_check_integrity extends Hook_Health_Check
                     $query .= ' AND `ft`.`' . $row['from_field'] . '` NOT IN (' . $escaped_values . ')';
                 }
 
-                $result = $db->query($query);
+                $result = $db->query_value_if_there($query);
 
-                $count_bad_rows += count($result);
+                $count_bad_rows += $result;
             }
 
             $start += $max;
