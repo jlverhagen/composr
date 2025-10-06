@@ -5,25 +5,25 @@
 Here is a whimsical comparison of Composr to other CMS':
 [list]
 [*][url="WordPress"]https://wordpress.org[/url]
-WordPress is great if you want a blog / online voice or a WISIWYG page builder. With the right plugins (and there are many of them), you can contort it to do more. But why rely on a huge plugin ecosystem where plugins are often freemium, fall out of maintenance, and/or are not maintained to the same standards as WordPress itself?
+WordPress is great if you want a blog / online voice or a drag-and-drop WYSIWYG page builder. But its big flaw is the reliance on plugins if you want it to do anything else. From freemium plugins to out-of-date ones to ones that may even crash your site, they're like a box of chocolates because you never know what you're gonna get. Composr bundles core features out-of-the-box; plugins (addons) are only 'as needed' if you want more niche functionality.
 [*][url="Joomla"]https://www.joomla.org[/url]
-Joomla is great for news and Press sites. But everything in the core of Joomla is an 'article' whether you want it to be or not.
+Joomla is great for news and Press sites. But everything in the core of Joomla is an 'article' whether you want it to be or not. Composr separates content types and their structures out for elevated customisation and consistency.
 [*][url="Drupal"]https://www.drupal.org[/url]
-Drupal is great for Enterprise and highly-sophisticated sites. But largely, you have to gather what pieces you need and put them together yourself which could take a lot of time and money.
+Drupal is great for Enterprise and highly-sophisticated sites. But it's a complicated do-it-yourself system where you have to piece together the functionality you want. Composr has all the pieces put together right out of the box; bundled addons work harmoniously with each other from the start.
 [*][url="Piwigo"]https://piwigo.org/[/url]
-Piwigo is great for hosting basic galleries. But it cannot do much more than that; you often need to pair it with another CMS software and use Piwigo on a sub-domain or sub-directory.
+Piwigo is great for hosting basic galleries. But it cannot do much more than that; you often need to pair it with another CMS software and use Piwigo on a sub-domain or sub-directory. Composr has galleries as well, but it also has many other features, allowing you to consolidate to one software.
 [*][url="MediaCMS"]https://www.mediacms.io/[/url]
-MediaCMS is great for sharing videos. But like Piwigo, it cannot do much more than that and often needs to be paired with other CMS' or page builders if you want more.
+MediaCMS is great for sharing videos. But like Piwigo, it cannot do much more than that and often needs to be paired with other CMS' or page builders if you want more. MediaCMS may be good if you want advanced video sharing functionality. But for the basics, Composr supports videos within its bundled galleries addon which you can then integrate / embed with its other features.
 [*][url="Prestashop"]https://prestashop.com/open-source/[/url]
-Prestashop is great for building a complex eCommerce site. But it might as well be called freemium because you will likely have to buy additional plugins / themes to make it do what you want it to do.
+Prestashop is great for building a complex eCommerce site. But it might as well be called freemium because you will likely have to buy additional plugins / themes to make it do what you want it to do. While Prestashop may be good for complex eCommerce needs, Composr has simple eCommerce functionality as well, all for free. You can even sell downloads or access to different parts of your Composr site.
 [*][url="LimeSurvey"]https://community.limesurvey.org/[/url]
-LimeSurvey is great at managing very sophisticated surveys and questionnaires. But it is complicated to set up and not really useful for anything else (often has to be paired with another CMS or page builder). Some features are also not available in the community edition.
+LimeSurvey is great at managing very sophisticated surveys and questionnaires. But it is complicated to set up and not really useful for anything else (often has to be paired with another CMS or page builder). Some features are also not available in the community edition. LimeSurvey may be great for very complex logic and analytics, but Composr has very simple and easy-to-use survey functionality through its bundled quizzes addon.
 [*][url="Moodle"]https://moodle.org/[/url]
-Moodle is great for managing educational courses, exams, grades, and materials. But some plugins are freemium. And its features are tailored for educational use rather than general public use.
+Moodle is great for managing educational courses, exams, grades, and materials. But some plugins are freemium. And its features are tailored for educational use rather than general public use. If you just want simple quizzes or tests and not full-blown course management, Composr has that functionality in its bundled quizzes addon.
 [*][url="MediaWiki"]https://www.mediawiki.org/wiki/MediaWiki[/url]
-MediaWiki is great for building traditional Wikis (encyclopedias). But if your site content is not meant to be collaborative, a Wiki might not be right for you.
+MediaWiki is great for building traditional Wikis (encyclopedias). But if your site content is not meant to be collaborative, a Wiki might not be right for you. Composr also has bundled collaborative and hierarchal Wiki functionality which works with its other features.
 [*][url="Tiki"]https://tiki.org/HomePage[/url]
-Tiki (formerly Tiki Wiki) operates similarly to Composr in a lot of ways; it has many modules and features available out of the box which work harmoniously with each other. And it can be used to build a wide variety of websites. But Tiki relies on (and bundles) many third-party PHP libraries to operate, whereas Composr mostly utilises its own slim APIs. This means the Tiki ZIP archive is over 150 MB compared to Composr's under 30 MB. And Tiki can run much slower than Composr because of all the third-party code being loaded up.
+Tiki (formerly Tiki Wiki) operates similarly to Composr in a lot of ways; it has many modules and features available out of the box which work harmoniously with each other. And it can be used to build a wide variety of websites. But Tiki relies on (and bundles) many third-party PHP libraries to operate, whereas Composr mostly utilises its own slim APIs. This means the Tiki ZIP archive is over 150 MB compared to Composr's under 30 MB. And Tiki can run slower than Composr because of all the third-party code being loaded up.
 [/list]
 
 [title="2"]Calling all...[/title]
