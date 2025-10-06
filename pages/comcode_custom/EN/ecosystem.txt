@@ -11,7 +11,7 @@ It is essential for the Composr community and its members to participate in the 
 
 [title="2"]Code Contributions / Reporting Issues[/title]
 
-Composr CMS is Free and Open Source (FOSS). This means that the software itself is free to download and use as-is, without warranty, subject to its licence terms. Furthermore, anyone can view the full source code of the software at any time both when they download it and [url="through our GitLab repository"]https://gitlab.com/composr-foundation/composr[/url]. By opening the source code up to the public, anyone can inspect it and offer bug fixes, feature implementations, and security patches. These are done through our [url="issue tracker"]https://composr.app/tracker/[/url] and through making merge requests to the repository.
+Composr CMS is Free and Open Source (FOSS). This means that the software itself is free to download and use as-is, without warranty, subject to its licence terms. Furthermore, anyone can view the full source code of the software at any time both when they download it and through [url="our GitLab repository"]{$CMS_REPOS_URL@}[/url] or [url="our GitHub repository"]{$CMS_REPOS_URL_MIRROR@}[/url]. By opening the source code up to the public, anyone can inspect it and offer bug fixes, feature implementations, and security patches. These are done through our [url="issue tracker"]https://composr.app/tracker/[/url] and through making merge requests to the repository.
 
 Members can make code-based contributions in the following ways:
 

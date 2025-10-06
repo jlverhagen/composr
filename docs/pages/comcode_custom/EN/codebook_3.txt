@@ -1329,14 +1329,25 @@ The following are examples of valid "pretty" names:
  - 4.3 dev1734368937
 
 The following are examples of invalid "pretty" names:
- - 3.0 [reason: leading ".0" components]
- - 3.0.0 or 3.1.0 [reason: leading ".0" components]
- - 4alpha1 [reason: missing space]
- - 4 alpha 1 [reason: extra space before "1"]
- - 4Alpha1 [reason: alpha/beta must always be lower case]
- - 4 RC 1 [reason: extra space before "1"]
+ - 3.0 or "3." [reason: leading unnecessary ".0" components]
+ - 3.0.0 or 3.1.0 or "3.1." [reason: leading unnecessary ".0" components]
+ - 4alpha1 [reason: missing space to separate major version from patch version]
+ - 4 alpha 1 [reason: extra space before "1" when the "1" is actually a part of the patch version]
+ - 4Alpha1 [reason: patch codenames, except "RC", are lower-case]
+ - 4 rc1 [reason: The Release Candidate codename "RC" is capitalised as it is an acronym]
+ - 4 RC 1 [reason: extra space before "1" when the "1" is actually a part of the patch version]
+ - 5.3 8alpha3 [reason: patch versions may only contain one number, and it must be after the codename if one is used]
+ - 6.5.alpha3 [reason: this is dotted notation and not pretty notation; pretty notation expects all decimals to be proceeded by a number, otherwise use a space]
+ - 11 alpha3.1 [reason: version inception; you cannot have a major/minor version of a patch version as this conflicts with our dotted version scheme]
  - (anything with dashes in)
- - (anything with 'final' or 'gold' in)
+ - (anything with 'final' or 'gold' in it; this is unnecessary as anything without a codename [alpha/beta/RC/dev] is considered final / gold by default)
+
+Be very careful of the use of patch version codenames. For example:
+ - "11.5 beta6" means that this is version "11.5[.0]", and the sixth beta of it. E.g. a 'final' 11.5 has not yet been released.
+ - "11.5.6 beta" means that this is version "11.5.6", but because it has not been thoroughly tested to the standards of most releases, it received the beta tag.
+  - "alpha" and "RC" cannot be used in this manner; only "beta" and "dev" can be.
+ - "11.5.6 beta6" would be an invalid version number; after the final release of the major/minor version, there cannot be multiple releases of the same patch number even if we attached another number to the codename.
+  - Exception: "dev"; it is allowed to have a version such as "11.5.6 dev1734368937" for testing.
 
 Rules:
  - Versions should never be skipped (except for dev build numbers). E.g. There can't be a 3.2 if there is no 3.1.
@@ -1345,16 +1356,17 @@ Rules:
   - Exception: Pulling alpha versions and re-releasing them is allowed (but not recommended) because we do not support alpha versions in the release/upgrade cycle.
  - All versions have to have formally named news posts, in the 'New releases' news category. Our upgrade scripts do this automatically.
  - Dots are not decimal points. They split major/minor/patch levels. You can have numbers in any dot section exceeding 9 and going to 10.
- - The term "alpha" means not all planned features have been implemented. Bugs are highly likely. Should solely be used for testing. And those using alpha versions should expect to make clean installs each release.
+ - The term "alpha" means not all planned features have been implemented. Bugs are highly likely. Should solely be used for testing. And those using alpha versions should expect to make clean installs each release (and not be able to upgrade from previous versions, including alpha ones of the same branch).
  - The term "dev" means an alpha build that is not to be publicly released or put into the release cycle. These builds are for testing only (as a fresh install) and cannot be used in the upgrader. Unlike alpha/beta/RC builds, dev builds should have an epoch timestamp as the build number (e.g. dev1734368937).
  - The term "beta" means bugs are anticipated / the release did not meet Composr's standards of testing. Not recommended for live / production sites.
  - The term "RC" (release candidate) means significant bugs are not anticipated, but we are not yet satisfied with the level of testing done on the release. Live / production sites may use these versions with caution.
  - dev/alpha/beta/RC is technically attached to a patch-level release, not a major/minor version. i.e. any patch release can have dev/alpha/beta/RC.
- - The "minor" version should be bumped whenever implementing new / significant features, but are unlikely to break sites from previous minor versions.
- - The "major" version should be bumped whenever significantly changing the core Composr APIs to the point sites on previous versions need to use extra care / testing / planning when upgrading.
- - Otherwise, the "patch" version should be bumped, or if an alpha/beta/RC tag has a number on it, bump that.
+ - The "minor" version should be bumped, and the patch version reset, for new features or deprecations which do not break compatibility with previous versions in the same major branch.
+ - The "major" version should be bumped, and the minor and patch versions reset, whenever making changes which could break compatibility with previous versions.
+ - Otherwise, for bug fixes and security updates, the "patch" version should be bumped, or if an alpha/beta/RC tag has a number on it, bump that.
+ - Do not release a 'final' version after an RC version if you changed anything outside what the build tools changes; instead, make another RC release and wait at least a week to see if any further changes or fixes need made.
 
-Inside our code we always use the "dotted" scheme, which is the same except that the space is replaced by a dot.
+Inside our code we always use the "dotted" scheme, which is the same except that the space is replaced by a dot (e.g. "11.1 alpha5" becomes "11.1.alpha5").
 
 See the notes at the top of [tt]sources/version2.php[/tt] for a full run-down of our ways of expressing versions.
 

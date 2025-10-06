@@ -686,6 +686,8 @@ Our custom version of PHP (linked to under "Programming/programmatic-interface s
 
 It also enforces some other coding standards, such as not allowing relative paths to files.
 
+Note that we no-longer maintain this.
+
 [title="3"]Importers[/title]
 
 [title="4"]Import or forum driver?[/title]
