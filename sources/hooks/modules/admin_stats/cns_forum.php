@@ -64,7 +64,7 @@ class Hook_admin_stats_cns_forum extends CMSStatsProvider
                 'label' => do_lang_tempcode('FORUM_TOPICS'),
                 'category' => 'forum',
                 'filters' => [
-                    'public_topics__month_range' => new CMSStatsDateMonthRangeFilter('public_topics__month_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
+                    'public_topics__day_range' => new CMSStatsDayRangeFilter('public_topics__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
                 ],
                 'pivot' => new CMSStatsDatePivot('public_topics__pivot', $this->get_date_pivots(!$for_kpi)),
                 'support_kpis' => self::KPI_HIGH_IS_GOOD,
@@ -73,7 +73,7 @@ class Hook_admin_stats_cns_forum extends CMSStatsProvider
                 'label' => do_lang_tempcode('FORUM_POSTS'),
                 'category' => 'forum',
                 'filters' => [
-                    'public_posts__month_range' => new CMSStatsDateMonthRangeFilter('public_posts__month_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
+                    'public_posts__day_range' => new CMSStatsDayRangeFilter('public_posts__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
                 ],
                 'pivot' => new CMSStatsDatePivot('public_posts__pivot', $this->get_date_pivots(!$for_kpi)),
                 'support_kpis' => self::KPI_HIGH_IS_GOOD,
@@ -82,7 +82,7 @@ class Hook_admin_stats_cns_forum extends CMSStatsProvider
                 'label' => do_lang_tempcode('TOPIC_POLL_VOTES'),
                 'category' => 'forum',
                 'filters' => [
-                    'topic_poll_votes__month_range' => new CMSStatsDateMonthRangeFilter('topic_poll_votes__month_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
+                    'topic_poll_votes__day_range' => new CMSStatsDayRangeFilter('topic_poll_votes__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
                 ],
                 'pivot' => new CMSStatsDatePivot('topic_poll_votes__pivot', $this->get_date_pivots(!$for_kpi)),
                 'support_kpis' => self::KPI_HIGH_IS_GOOD,
@@ -91,7 +91,7 @@ class Hook_admin_stats_cns_forum extends CMSStatsProvider
                 'label' => do_lang_tempcode('PRIVATE_TOPICS'),
                 'category' => 'inter_member_engagement',
                 'filters' => [
-                    'private_topics__month_range' => new CMSStatsDateMonthRangeFilter('private_topics__month_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
+                    'private_topics__day_range' => new CMSStatsDayRangeFilter('private_topics__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
                 ],
                 'pivot' => new CMSStatsDatePivot('private_topics__pivot', $this->get_date_pivots(!$for_kpi)),
                 'support_kpis' => self::KPI_HIGH_IS_GOOD,
@@ -100,7 +100,7 @@ class Hook_admin_stats_cns_forum extends CMSStatsProvider
                 'label' => do_lang_tempcode('PRIVATE_POSTS'),
                 'category' => 'inter_member_engagement',
                 'filters' => [
-                    'private_posts__month_range' => new CMSStatsDateMonthRangeFilter('private_posts__month_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
+                    'private_posts__day_range' => new CMSStatsDayRangeFilter('private_posts__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
                 ],
                 'pivot' => new CMSStatsDatePivot('private_posts__pivot', $this->get_date_pivots(!$for_kpi)),
                 'support_kpis' => self::KPI_HIGH_IS_GOOD,
@@ -139,21 +139,20 @@ class Hook_admin_stats_cns_forum extends CMSStatsProvider
                 }
                 $timestamp = tz_time($timestamp, $server_timezone);
 
-                $month = to_epoch_interval_index($timestamp, 'months');
-
                 foreach (array_keys($date_pivots) as $pivot) {
+                    $pivot_interval = $this->calculate_date_pivot_interval($pivot, $timestamp);
                     $pivot_value = $this->calculate_date_pivot_value($pivot, $timestamp);
 
                     if ($row['t_forum_id'] === null) {
-                        if (!isset($data_buckets['private_topics'][$month][$pivot][$pivot_value])) {
-                            $data_buckets['private_topics'][$month][$pivot][$pivot_value] = 0;
+                        if (!isset($data_buckets['private_topics'][$pivot][$pivot_interval][$pivot_value])) {
+                            $data_buckets['private_topics'][$pivot][$pivot_interval][$pivot_value] = 0;
                         }
-                        $data_buckets['private_topics'][$month][$pivot][$pivot_value]++;
+                        $data_buckets['private_topics'][$pivot][$pivot_interval][$pivot_value]++;
                     } else {
-                        if (!isset($data_buckets['public_topics'][$month][$pivot][$pivot_value])) {
-                            $data_buckets['public_topics'][$month][$pivot][$pivot_value] = 0;
+                        if (!isset($data_buckets['public_topics'][$pivot][$pivot_interval][$pivot_value])) {
+                            $data_buckets['public_topics'][$pivot][$pivot_interval][$pivot_value] = 0;
                         }
-                        $data_buckets['public_topics'][$month][$pivot][$pivot_value]++;
+                        $data_buckets['public_topics'][$pivot][$pivot_interval][$pivot_value]++;
                     }
                 }
             }
@@ -173,21 +172,20 @@ class Hook_admin_stats_cns_forum extends CMSStatsProvider
                 $timestamp = $row['p_time'];
                 $timestamp = tz_time($timestamp, $server_timezone);
 
-                $month = to_epoch_interval_index($timestamp, 'months');
-
                 foreach (array_keys($date_pivots) as $pivot) {
+                    $pivot_interval = $this->calculate_date_pivot_interval($pivot, $timestamp);
                     $pivot_value = $this->calculate_date_pivot_value($pivot, $timestamp);
 
                     if (($row['p_cache_forum_id'] === null) || ($row['p_whisper_to_member'] !== null)) {
-                        if (!isset($data_buckets['private_posts'][$month][$pivot][$pivot_value])) {
-                            $data_buckets['private_posts'][$month][$pivot][$pivot_value] = 0;
+                        if (!isset($data_buckets['private_posts'][$pivot][$pivot_interval][$pivot_value])) {
+                            $data_buckets['private_posts'][$pivot][$pivot_interval][$pivot_value] = 0;
                         }
-                        $data_buckets['private_posts'][$month][$pivot][$pivot_value]++;
+                        $data_buckets['private_posts'][$pivot][$pivot_interval][$pivot_value]++;
                     } else {
-                        if (!isset($data_buckets['public_posts'][$month][$pivot][$pivot_value])) {
-                            $data_buckets['public_posts'][$month][$pivot][$pivot_value] = 0;
+                        if (!isset($data_buckets['public_posts'][$pivot][$pivot_interval][$pivot_value])) {
+                            $data_buckets['public_posts'][$pivot][$pivot_interval][$pivot_value] = 0;
                         }
-                        $data_buckets['public_posts'][$month][$pivot][$pivot_value]++;
+                        $data_buckets['public_posts'][$pivot][$pivot_interval][$pivot_value]++;
                     }
                 }
             }
@@ -208,15 +206,14 @@ class Hook_admin_stats_cns_forum extends CMSStatsProvider
                 $timestamp = $row['pv_date_time'];
                 $timestamp = tz_time($timestamp, $server_timezone);
 
-                $month = to_epoch_interval_index($timestamp, 'months');
-
                 foreach (array_keys($date_pivots) as $pivot) {
+                    $pivot_interval = $this->calculate_date_pivot_interval($pivot, $timestamp);
                     $pivot_value = $this->calculate_date_pivot_value($pivot, $timestamp);
 
-                    if (!isset($data_buckets['topic_poll_votes'][$month][$pivot][$pivot_value])) {
-                        $data_buckets['topic_poll_votes'][$month][$pivot][$pivot_value] = 0;
+                    if (!isset($data_buckets['topic_poll_votes'][$pivot][$pivot_interval][$pivot_value])) {
+                        $data_buckets['topic_poll_votes'][$pivot][$pivot_interval][$pivot_value] = 0;
                     }
-                    $data_buckets['topic_poll_votes'][$month][$pivot][$pivot_value]++;
+                    $data_buckets['topic_poll_votes'][$pivot][$pivot_interval][$pivot_value]++;
                 }
             }
 
@@ -234,7 +231,7 @@ class Hook_admin_stats_cns_forum extends CMSStatsProvider
      */
     public function generate_final_data(string $bucket, string $pivot, array $filters) : ?array
     {
-        $range = $this->convert_month_range_filter_to_pair($filters[$bucket . '__month_range']);
+        $range = $this->convert_day_range_filter_to_pair($pivot, $filters[$bucket . '__day_range']);
 
         $data = $this->fill_data_by_date_pivots($pivot, $range[0], $range[1]);
 

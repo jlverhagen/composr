@@ -60,7 +60,7 @@ class Hook_admin_stats_links extends CMSStatsProvider
                 'label' => do_lang_tempcode('LINK_TRACKING'),
                 'category' => 'conversions',
                 'filters' => [
-                    'link_tracking__month_range' => new CMSStatsDateMonthRangeFilter('link_tracking__month_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
+                    'link_tracking__day_range' => new CMSStatsDayRangeFilter('link_tracking__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
                     'link_tracking__url' => new CMSStatsListFilter('link_tracking__url', do_lang_tempcode('URL'), $top_urls),
                     'link_tracking__country' => has_geolocation_data() ? new CMSStatsCountryFilter('link_tracking__country', do_lang_tempcode('VISITOR_COUNTRY')) : null,
                 ],
@@ -103,8 +103,6 @@ class Hook_admin_stats_links extends CMSStatsProvider
                 $timestamp = $link_row['c_date_and_time'];
                 $timestamp = tz_time($timestamp, $server_timezone);
 
-                $month = to_epoch_interval_index($timestamp, 'months');
-
                 $country_code = geolocate_ip($link_row['c_ip_address']);
                 if ($country_code === null) {
                     $country_code = '';
@@ -118,12 +116,13 @@ class Hook_admin_stats_links extends CMSStatsProvider
                 $urls_seen[$url]++;
 
                 foreach (array_keys($date_pivots) as $pivot) {
+                    $pivot_interval = $this->calculate_date_pivot_interval($pivot, $timestamp);
                     $pivot_value = $this->calculate_date_pivot_value($pivot, $timestamp);
 
-                    if (!isset($data_buckets['link_tracking'][$month][$pivot][$pivot_value][$country_code][$url])) {
-                        $data_buckets['link_tracking'][$month][$pivot][$pivot_value][$country_code][$url] = 0;
+                    if (!isset($data_buckets['link_tracking'][$pivot][$pivot_interval][$pivot_value][$country_code][$url])) {
+                        $data_buckets['link_tracking'][$pivot][$pivot_interval][$pivot_value][$country_code][$url] = 0;
                     }
-                    $data_buckets['link_tracking'][$month][$pivot][$pivot_value][$country_code][$url]++;
+                    $data_buckets['link_tracking'][$pivot][$pivot_interval][$pivot_value][$country_code][$url]++;
                 }
             }
 
@@ -157,7 +156,7 @@ class Hook_admin_stats_links extends CMSStatsProvider
      */
     public function generate_final_data(string $bucket, string $pivot, array $filters) : ?array
     {
-        $range = $this->convert_month_range_filter_to_pair($filters[$bucket . '__month_range']);
+        $range = $this->convert_day_range_filter_to_pair($pivot, $filters[$bucket . '__day_range']);
 
         $data = $this->fill_data_by_date_pivots($pivot, $range[0], $range[1]);
 

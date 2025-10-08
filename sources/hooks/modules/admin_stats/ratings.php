@@ -40,7 +40,7 @@ class Hook_admin_stats_ratings extends CMSStatsProvider
                 'label' => do_lang_tempcode('RATINGS'),
                 'category' => 'feedback_and_engagement',
                 'filters' => [
-                    'ratings__month_range' => new CMSStatsDateMonthRangeFilter('ratings__month_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
+                    'ratings__day_range' => new CMSStatsDayRangeFilter('ratings__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
                     'ratings__rating_for_type' => new CMSStatsListFilter('ratings__rating_for_type', do_lang_tempcode('CONTENT_TYPE'), $this->find_all_feedback_type_codes()),
                 ],
                 'pivot' => null,
@@ -49,7 +49,7 @@ class Hook_admin_stats_ratings extends CMSStatsProvider
                 'label' => do_lang_tempcode('AVERAGE_RATING'),
                 'category' => 'feedback_and_engagement',
                 'filters' => [
-                    'average_rating__month_range' => new CMSStatsDateMonthRangeFilter('average_rating__month_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
+                    'average_rating__day_range' => new CMSStatsDayRangeFilter('average_rating__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
                     'average_rating__rating_for_type' => new CMSStatsListFilter('average_rating__rating_for_type', do_lang_tempcode('CONTENT_TYPE'), $this->find_all_feedback_type_codes()),
                 ],
                 'pivot' => new CMSStatsDatePivot('average_rating__pivot', $this->get_date_pivots(!$for_kpi)),
@@ -86,24 +86,23 @@ class Hook_admin_stats_ratings extends CMSStatsProvider
                 $timestamp = $row['rating_time'];
                 $timestamp = tz_time($timestamp, $server_timezone);
 
-                $month = to_epoch_interval_index($timestamp, 'months');
-
                 $rating_for_type = $row['rating_for_type'];
                 $rating = $row['rating'];
 
-                if (!isset($data_buckets['ratings'][$month][''][$rating_for_type][$rating])) {
-                    $data_buckets['ratings'][$month][''][$rating_for_type][$rating] = 0;
-                }
-                $data_buckets['ratings'][$month][''][$rating_for_type][$rating]++;
-
                 foreach (array_keys($date_pivots) as $pivot) {
+                    $pivot_interval = $this->calculate_date_pivot_interval($pivot, $timestamp);
                     $pivot_value = $this->calculate_date_pivot_value($pivot, $timestamp);
 
-                    if (!isset($data_buckets['average_rating'][$month][$pivot][$pivot_value][$rating_for_type])) {
-                        $data_buckets['average_rating'][$month][$pivot][$pivot_value][$rating_for_type] = [0, 0];
+                    if (!isset($data_buckets['average_rating'][$pivot][$pivot_interval][$pivot_value][$rating_for_type])) {
+                        $data_buckets['average_rating'][$pivot][$pivot_interval][$pivot_value][$rating_for_type] = [0, 0];
                     }
-                    $data_buckets['average_rating'][$month][$pivot][$pivot_value][$rating_for_type][0] += $rating;
-                    $data_buckets['average_rating'][$month][$pivot][$pivot_value][$rating_for_type][1]++;
+                    $data_buckets['average_rating'][$pivot][$pivot_interval][$pivot_value][$rating_for_type][0] += $rating;
+                    $data_buckets['average_rating'][$pivot][$pivot_interval][$pivot_value][$rating_for_type][1]++;
+
+                    if (!isset($data_buckets['ratings'][$pivot][$pivot_interval][$pivot_value][$rating_for_type][$rating])) {
+                        $data_buckets['ratings'][$pivot][$pivot_interval][$pivot_value][$rating_for_type][$rating] = 0;
+                    }
+                    $data_buckets['ratings'][$pivot][$pivot_interval][$pivot_value][$rating_for_type][$rating]++;
                 }
             }
 
@@ -123,7 +122,7 @@ class Hook_admin_stats_ratings extends CMSStatsProvider
     {
         switch ($bucket) {
             case 'ratings':
-                $range = $this->convert_month_range_filter_to_pair($filters[$bucket . '__month_range']);
+                $range = $this->convert_day_range_filter_to_pair($pivot, $filters[$bucket . '__day_range']);
 
                 $data = [
                     1 => 0,
@@ -163,7 +162,7 @@ class Hook_admin_stats_ratings extends CMSStatsProvider
                 ];
 
             case 'average_rating':
-                $range = $this->convert_month_range_filter_to_pair($filters[$bucket . '__month_range']);
+                $range = $this->convert_day_range_filter_to_pair($pivot, $filters[$bucket . '__day_range']);
 
                 $data = $this->fill_data_by_date_pivots($pivot, $range[0], $range[1]);
 

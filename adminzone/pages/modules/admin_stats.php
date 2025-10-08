@@ -156,8 +156,9 @@ class Module_admin_stats extends Standard_crud_module
         if (($upgrade_from === null) || ($upgrade_from < 10)) { // LEGACY
             $GLOBALS['SITE_DB']->create_table('stats_preprocessed', [
                 'p_bucket' => '*ID_TEXT',
-                'p_month' => '*INTEGER',
                 'p_pivot' => '*ID_TEXT',
+                'p_pivot_interval' => '*INTEGER',
+                'p_pivot_value' => '*INTEGER',
                 'p_data' => 'LONG_TEXT',
             ]);
 
@@ -248,23 +249,13 @@ class Module_admin_stats extends Standard_crud_module
         }
 
         if (($upgrade_from !== null) && ($upgrade_from < 12)) { // LEGACY: 11.beta9
-            $old = cms_extend_time_limit(TIME_LIMIT_EXTEND__SLOW);
+            // Must delete everything in stats; cannot safely migrate old data without PHP memory errors
+            $GLOBALS['SITE_DB']->query_delete('stats_preprocessed');
 
-            // Migrate from monthly buckets to daily ones to save on memory use during pre-processing
-            require_code('temporal');
-
-            // Must be very careful; some monthly buckets can be huge, so only process one at a time.
-            $start = 0;
-            $rows = [];
-            do {
-                $rows = $GLOBALS['SITE_DB']->query_select('stats_preprocessed', ['*'], [], '', 1, $start);
-
-                // TODO
-
-                $start++;
-            } while (count($rows) > 0);
-
-            cms_set_time_limit($old);
+            // Optimisation for stats addon to avoid PHP out-of-memory errors
+            $GLOBALS['SITE_DB']->delete_table_field('stats_preprocessed', 'p_month');
+            $GLOBALS['SITE_DB']->add_table_field('stats_preprocessed', 'p_pivot_interval', '*INTEGER');
+            $GLOBALS['SITE_DB']->add_table_field('stats_preprocessed', 'p_pivot_value', '*INTEGER');
         }
     }
 

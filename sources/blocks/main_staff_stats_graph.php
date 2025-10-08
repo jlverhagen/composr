@@ -79,7 +79,7 @@ PHP;
         $standard = get_standard_block_parameters();
 
         $filters = [];
-        $filters[$graph_name . '__month_range'] = [-12, 0]; // Default to showing one year
+        $filters[$graph_name . '__day_range'] = [-12, 0]; // Default to showing one year
         foreach ($map as $key => $val) {
             if (($key != 'block') && ($key != 'param') && ($key != 'month_range') && (!in_array($key, $standard))) {
                 $filters[$graph_name . '__' . $key] = $val;
@@ -87,10 +87,10 @@ PHP;
 
             // Special handling for month range
             if ($key == 'month_range__start') {
-                $filters[$graph_name . '__month_range'][0] = intval($val);
+                $filters[$graph_name . '__day_range'][0] = intval($val);
             }
             if ($key == 'month_range__end') {
-                $filters[$graph_name . '__month_range'][1] = intval($val);
+                $filters[$graph_name . '__day_range'][1] = intval($val);
             }
         }
 

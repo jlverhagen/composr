@@ -38,7 +38,7 @@ class Hook_admin_stats_sitemap extends CMSStatsProvider
                 'label' => do_lang_tempcode('SITEMAP'),
                 'category' => 'content_growth',
                 'filters' => [
-                    'sitemap_growth__month_range' => new CMSStatsDateMonthRangeFilter('sitemap_growth__month_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
+                    'sitemap_growth__day_range' => new CMSStatsDayRangeFilter('sitemap_growth__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
                     'sitemap_growth__page_link' => new CMSStatsTextFilter('sitemap_growth__page_link', do_lang_tempcode('PAGE_LINK')),
                 ],
                 'pivot' => new CMSStatsDatePivot('sitemap_growth__pivot', $this->get_date_pivots(!$for_kpi)),
@@ -74,19 +74,18 @@ class Hook_admin_stats_sitemap extends CMSStatsProvider
                 $timestamp = $row['add_date'];
                 $timestamp = tz_time($timestamp, $server_timezone);
 
-                $month = to_epoch_interval_index($timestamp, 'months');
-
                 list($zone, $attributes) = page_link_decode($row['page_link']);
                 $page = isset($attributes['page']) ? $attributes['page'] : DEFAULT_ZONE_PAGE_NAME;
                 $page_link = $zone . ':' . $page;
 
                 foreach (array_keys($date_pivots) as $pivot) {
+                    $pivot_interval = $this->calculate_date_pivot_interval($pivot, $timestamp);
                     $pivot_value = $this->calculate_date_pivot_value($pivot, $timestamp);
 
-                    if (!isset($data_buckets['sitemap_growth'][$month][$pivot][$pivot_value][$page_link])) {
-                        $data_buckets['sitemap_growth'][$month][$pivot][$pivot_value][$page_link] = 0;
+                    if (!isset($data_buckets['sitemap_growth'][$pivot][$pivot_interval][$pivot_value][$page_link])) {
+                        $data_buckets['sitemap_growth'][$pivot][$pivot_interval][$pivot_value][$page_link] = 0;
                     }
-                    $data_buckets['sitemap_growth'][$month][$pivot][$pivot_value][$page_link]++;
+                    $data_buckets['sitemap_growth'][$pivot][$pivot_interval][$pivot_value][$page_link]++;
                 }
             }
 
@@ -104,7 +103,7 @@ class Hook_admin_stats_sitemap extends CMSStatsProvider
      */
     public function generate_final_data(string $bucket, string $pivot, array $filters) : ?array
     {
-        $range = $this->convert_month_range_filter_to_pair($filters[$bucket . '__month_range']);
+        $range = $this->convert_day_range_filter_to_pair($pivot, $filters[$bucket . '__day_range']);
 
         $data = $this->fill_data_by_date_pivots($pivot, $range[0], $range[1]);
 

@@ -248,7 +248,7 @@ class stats_test_set extends cms_test_case
         // Test that the filters do not cause crashes (TODO: does not yet actually test the filters filter as they should)
         foreach ($filters as $filter_name => $filter_class) {
             // Test month range filters
-            if ($filter_class instanceof CMSStatsDateMonthRangeFilter) {
+            if ($filter_class instanceof CMSStatsDayRangeFilter) {
                 // Test integer filter
                 $data = $hook->generate_final_data($bucket, $pivot, [
                     $filter_name => $p_month

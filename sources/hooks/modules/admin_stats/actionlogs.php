@@ -79,7 +79,7 @@ class Hook_admin_stats_actionlogs extends CMSStatsProvider
                 'label' => do_lang_tempcode('STATS_ACTIONLOG_GROWTH'),
                 'category' => 'content_growth',
                 'filters' => [
-                    'actionlog_growth__month_range' => new CMSStatsDateMonthRangeFilter('actionlog_growth__month_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
+                    'actionlog_growth__day_range' => new CMSStatsDayRangeFilter('actionlog_growth__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
                     'actionlog_growth__the_type' => new CMSStatsListFilter('actionlog_growth__the_type', do_lang_tempcode('ACTION'), $_action_type_list_growth),
                 ],
                 'pivot' => new CMSStatsDatePivot('actionlog_growth__pivot', $this->get_date_pivots(!$for_kpi)),
@@ -89,7 +89,7 @@ class Hook_admin_stats_actionlogs extends CMSStatsProvider
                 'label' => do_lang_tempcode('STATS_ACTIONLOG_ACTIVITY'),
                 'category' => 'feedback_and_engagement',
                 'filters' => [
-                    'actionlog_activity__month_range' => new CMSStatsDateMonthRangeFilter('actionlog_activity__month_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
+                    'actionlog_activity__day_range' => new CMSStatsDayRangeFilter('actionlog_activity__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
                     'actionlog_activity__the_type' => new CMSStatsListFilter('actionlog_activity__the_type', do_lang_tempcode('ACTION'), $_action_type_list_activity),
                 ],
                 'pivot' => new CMSStatsDatePivot('actionlog_activity__pivot', $this->get_date_pivots(!$for_kpi)),
@@ -99,7 +99,7 @@ class Hook_admin_stats_actionlogs extends CMSStatsProvider
                 'label' => do_lang_tempcode('STATS_ACTIONLOG_ADMINZONE'),
                 'category' => 'security',
                 'filters' => [
-                    'actionlog_adminzone__month_range' => new CMSStatsDateMonthRangeFilter('actionlog_adminzone__month_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
+                    'actionlog_adminzone__day_range' => new CMSStatsDayRangeFilter('actionlog_adminzone__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
                 ],
                 'pivot' => new CMSStatsDatePivot('actionlog_adminzone__pivot', $this->get_date_pivots(!$for_kpi)),
                 'support_kpis' => self::KPI_LOW_IS_GOOD,
@@ -135,17 +135,17 @@ class Hook_admin_stats_actionlogs extends CMSStatsProvider
                 $timestamp = $row['date_and_time'];
                 $timestamp = tz_time($timestamp, $server_timezone);
 
-                $month = to_epoch_interval_index($timestamp, 'months');
-
                 $type = $row['the_type'];
 
                 if ($type == 'ACCESSED_ADMIN_ZONE') { // NB: special handling
                     foreach (array_keys($date_pivots) as $pivot) {
+                        $pivot_interval = $this->calculate_date_pivot_interval($pivot, $timestamp);
                         $pivot_value = $this->calculate_date_pivot_value($pivot, $timestamp);
-                        if (!isset($data_buckets['actionlog_adminzone'][$month][$pivot][$pivot_value])) {
-                            $data_buckets['actionlog_adminzone'][$month][$pivot][$pivot_value][$type] = 0;
+
+                        if (!isset($data_buckets['actionlog_adminzone'][$pivot][$pivot_interval][$pivot_value])) {
+                            $data_buckets['actionlog_adminzone'][$pivot][$pivot_interval][$pivot_value][$type] = 0;
                         }
-                        $data_buckets['actionlog_adminzone'][$month][$pivot][$pivot_value][$type]++;
+                        $data_buckets['actionlog_adminzone'][$pivot][$pivot_interval][$pivot_value][$type]++;
                     }
                     continue;
                 }
@@ -155,19 +155,20 @@ class Hook_admin_stats_actionlogs extends CMSStatsProvider
                 }
 
                 foreach (array_keys($date_pivots) as $pivot) {
+                    $pivot_interval = $this->calculate_date_pivot_interval($pivot, $timestamp);
                     $pivot_value = $this->calculate_date_pivot_value($pivot, $timestamp);
 
                     if (!$this->should_skip_type($row['the_type'], 'actionlog_activity')) {
-                        if (!isset($data_buckets['actionlog_activity'][$month][$pivot][$pivot_value][$type])) {
-                            $data_buckets['actionlog_activity'][$month][$pivot][$pivot_value][$type] = 0;
+                        if (!isset($data_buckets['actionlog_activity'][$pivot][$pivot_interval][$pivot_value][$type])) {
+                            $data_buckets['actionlog_activity'][$pivot][$pivot_interval][$pivot_value][$type] = 0;
                         }
-                        $data_buckets['actionlog_activity'][$month][$pivot][$pivot_value][$type]++;
+                        $data_buckets['actionlog_activity'][$pivot][$pivot_interval][$pivot_value][$type]++;
                     }
                     if (!$this->should_skip_type($row['the_type'], 'actionlog_growth')) {
-                        if (!isset($data_buckets['actionlog_growth'][$month][$pivot][$pivot_value][$type])) {
-                            $data_buckets['actionlog_growth'][$month][$pivot][$pivot_value][$type] = 0;
+                        if (!isset($data_buckets['actionlog_growth'][$pivot][$pivot_interval][$pivot_value][$type])) {
+                            $data_buckets['actionlog_growth'][$pivot][$pivot_interval][$pivot_value][$type] = 0;
                         }
-                        $data_buckets['actionlog_growth'][$month][$pivot][$pivot_value][$type]++;
+                        $data_buckets['actionlog_growth'][$pivot][$pivot_interval][$pivot_value][$type]++;
                     }
                 }
             }
@@ -185,27 +186,26 @@ class Hook_admin_stats_actionlogs extends CMSStatsProvider
                 $timestamp = $row['l_date_and_time'];
                 $timestamp = tz_time($timestamp, $server_timezone);
 
-                $month = to_epoch_interval_index($timestamp, 'months');
-
                 $type = $row['l_the_type'];
                 if ($this->should_skip_type($type, '')) {
                     continue;
                 }
 
                 foreach (array_keys($date_pivots) as $pivot) {
+                    $pivot_interval = $this->calculate_date_pivot_interval($pivot, $timestamp);
                     $pivot_value = $this->calculate_date_pivot_value($pivot, $timestamp);
 
                     if (!$this->should_skip_type($row['l_the_type'], 'actionlog_activity')) {
-                        if (!isset($data_buckets['actionlog_activity'][$month][$pivot][$pivot_value][$type])) {
-                            $data_buckets['actionlog_activity'][$month][$pivot][$pivot_value][$type] = 0;
+                        if (!isset($data_buckets['actionlog_activity'][$pivot][$pivot_interval][$pivot_value][$type])) {
+                            $data_buckets['actionlog_activity'][$pivot][$pivot_interval][$pivot_value][$type] = 0;
                         }
-                        $data_buckets['actionlog_activity'][$month][$pivot][$pivot_value][$type]++;
+                        $data_buckets['actionlog_activity'][$pivot][$pivot_interval][$pivot_value][$type]++;
                     }
                     if (!$this->should_skip_type($row['l_the_type'], 'actionlog_growth')) {
-                        if (!isset($data_buckets['actionlog_growth'][$month][$pivot][$pivot_value][$type])) {
-                            $data_buckets['actionlog_growth'][$month][$pivot][$pivot_value][$type] = 0;
+                        if (!isset($data_buckets['actionlog_growth'][$pivot][$pivot_interval][$pivot_value][$type])) {
+                            $data_buckets['actionlog_growth'][$pivot][$pivot_interval][$pivot_value][$type] = 0;
                         }
-                        $data_buckets['actionlog_growth'][$month][$pivot][$pivot_value][$type]++;
+                        $data_buckets['actionlog_growth'][$pivot][$pivot_interval][$pivot_value][$type]++;
                     }
                 }
             }
@@ -224,7 +224,7 @@ class Hook_admin_stats_actionlogs extends CMSStatsProvider
      */
     public function generate_final_data(string $bucket, string $pivot, array $filters) : ?array
     {
-        $range = $this->convert_month_range_filter_to_pair($filters[$bucket . '__month_range']);
+        $range = $this->convert_day_range_filter_to_pair($pivot, $filters[$bucket . '__day_range']);
 
         $data = $this->fill_data_by_date_pivots($pivot, $range[0], $range[1]);
 

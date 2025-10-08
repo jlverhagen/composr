@@ -56,7 +56,7 @@ class Hook_admin_stats_cms_homesite extends CMSStatsProvider
             'label' => do_lang_tempcode('CMS_SITE_ERRORS'),
             'category' => 'cms_homesite',
             'filters' => [
-                'relayed_errors__month_range' => new CMSStatsDateMonthRangeFilter('relayed_errors__month_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
+                'relayed_errors__day_range' => new CMSStatsDayRangeFilter('relayed_errors__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
                 'relayed_errors__resolved' => new CMSStatsTickFilter('relayed_errors__resolved', do_lang_tempcode('RESOLVED'), true),
             ],
             'pivot' => new CMSStatsDatePivot('relayed_errors__pivot', $this->get_date_pivots(!$for_kpi)),
@@ -75,7 +75,7 @@ class Hook_admin_stats_cms_homesite extends CMSStatsProvider
                 'label' => do_lang_tempcode('TRACKER_ISSUE_ACTIVITY'),
                 'category' => 'cms_homesite',
                 'filters' => [
-                    'tracker_issue_activity__month_range' => new CMSStatsDateMonthRangeFilter('tracker_issue_activity__month_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
+                    'tracker_issue_activity__day_range' => new CMSStatsDayRangeFilter('tracker_issue_activity__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
                     'tracker_issue_activity__type' => new CMSStatsListFilter('tracker_issue_activity__type', do_lang_tempcode('TRACKER_ISSUE_STATUS'), $tracker_issue_types),
                 ],
                 'pivot' => new CMSStatsDatePivot('tracker_issue_activity__pivot', $this->get_date_pivots(!$for_kpi)),
@@ -95,7 +95,7 @@ class Hook_admin_stats_cms_homesite extends CMSStatsProvider
                 'label' => do_lang_tempcode('TRACKER_ISSUES'),
                 'category' => 'cms_homesite',
                 'filters' => [
-                    'tracker_issues__month_range' => new CMSStatsDateMonthRangeFilter('tracker_issues__month_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
+                    'tracker_issues__day_range' => new CMSStatsDayRangeFilter('tracker_issues__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
                     'tracker_issues__type' => new CMSStatsListFilter('tracker_issues__type', do_lang_tempcode('TRACKER_ISSUE_CATEGORY'), $categories),
                 ],
                 'pivot' => new CMSStatsDatePivot('tracker_issues__pivot', $this->get_date_pivots(!$for_kpi)),
@@ -138,21 +138,20 @@ class Hook_admin_stats_cms_homesite extends CMSStatsProvider
 
                 $resolved = strval($row['e_resolved']);
 
-                $month = to_epoch_interval_index($timestamp, 'months');
-
                 foreach (array_keys($date_pivots) as $pivot) {
+                    $pivot_interval = $this->calculate_date_pivot_interval($pivot, $timestamp);
                     $pivot_value = $this->calculate_date_pivot_value($pivot, $timestamp);
 
-                    if (!isset($data_buckets['relayed_errors'][$month][$pivot][$pivot_value][$resolved])) {
-                        $data_buckets['relayed_errors'][$month][$pivot][$pivot_value][$resolved] = 0;
+                    if (!isset($data_buckets['relayed_errors'][$pivot][$pivot_interval][$pivot_value][$resolved])) {
+                        $data_buckets['relayed_errors'][$pivot][$pivot_interval][$pivot_value][$resolved] = 0;
                     }
-                    $data_buckets['relayed_errors'][$month][$pivot][$pivot_value][$resolved]++;
+                    $data_buckets['relayed_errors'][$pivot][$pivot_interval][$pivot_value][$resolved]++;
 
                     // For all
-                    if (!isset($data_buckets['relayed_errors'][$month][$pivot][$pivot_value][''])) {
-                        $data_buckets['relayed_errors'][$month][$pivot][$pivot_value][''] = 0;
+                    if (!isset($data_buckets['relayed_errors'][$pivot][$pivot_interval][$pivot_value][''])) {
+                        $data_buckets['relayed_errors'][$pivot][$pivot_interval][$pivot_value][''] = 0;
                     }
-                    $data_buckets['relayed_errors'][$month][$pivot][$pivot_value]['']++;
+                    $data_buckets['relayed_errors'][$pivot][$pivot_interval][$pivot_value]['']++;
                 }
             }
 
@@ -177,21 +176,20 @@ class Hook_admin_stats_cms_homesite extends CMSStatsProvider
 
                     $status = strval($row['status']);
 
-                    $month = to_epoch_interval_index($timestamp, 'months');
-
                     foreach (array_keys($date_pivots) as $pivot) {
+                        $pivot_interval = $this->calculate_date_pivot_interval($pivot, $timestamp);
                         $pivot_value = $this->calculate_date_pivot_value($pivot, $timestamp);
 
-                        if (!isset($data_buckets['tracker_issue_activity'][$month][$pivot][$pivot_value]['s_' . strval($status)])) {
-                            $data_buckets['tracker_issue_activity'][$month][$pivot][$pivot_value]['s_' . strval($status)] = 0;
+                        if (!isset($data_buckets['tracker_issue_activity'][$pivot][$pivot_interval][$pivot_value]['s_' . strval($status)])) {
+                            $data_buckets['tracker_issue_activity'][$pivot][$pivot_interval][$pivot_value]['s_' . strval($status)] = 0;
                         }
-                        $data_buckets['tracker_issue_activity'][$month][$pivot][$pivot_value]['s_' . strval($status)]++;
+                        $data_buckets['tracker_issue_activity'][$pivot][$pivot_interval][$pivot_value]['s_' . strval($status)]++;
 
                         // For all
-                        if (!isset($data_buckets['tracker_issue_activity'][$month][$pivot][$pivot_value]['s_all'])) {
-                            $data_buckets['tracker_issue_activity'][$month][$pivot][$pivot_value]['s_all'] = 0;
+                        if (!isset($data_buckets['tracker_issue_activity'][$pivot][$pivot_interval][$pivot_value]['s_all'])) {
+                            $data_buckets['tracker_issue_activity'][$pivot][$pivot_interval][$pivot_value]['s_all'] = 0;
                         }
-                        $data_buckets['tracker_issue_activity'][$month][$pivot][$pivot_value]['s_all']++;
+                        $data_buckets['tracker_issue_activity'][$pivot][$pivot_interval][$pivot_value]['s_all']++;
                     }
                 }
 
@@ -217,21 +215,20 @@ class Hook_admin_stats_cms_homesite extends CMSStatsProvider
 
                     $category = strval($row['category_id']);
 
-                    $month = to_epoch_interval_index($timestamp, 'months');
-
                     foreach (array_keys($date_pivots) as $pivot) {
+                        $pivot_interval = $this->calculate_date_pivot_interval($pivot, $timestamp);
                         $pivot_value = $this->calculate_date_pivot_value($pivot, $timestamp);
 
-                        if (!isset($data_buckets['tracker_issues'][$month][$pivot][$pivot_value]['c_' . strval($category)])) {
-                            $data_buckets['tracker_issues'][$month][$pivot][$pivot_value]['c_' . strval($category)] = 0;
+                        if (!isset($data_buckets['tracker_issues'][$pivot][$pivot_interval][$pivot_value]['c_' . strval($category)])) {
+                            $data_buckets['tracker_issues'][$pivot][$pivot_interval][$pivot_value]['c_' . strval($category)] = 0;
                         }
-                        $data_buckets['tracker_issues'][$month][$pivot][$pivot_value]['c_' . strval($category)]++;
+                        $data_buckets['tracker_issues'][$pivot][$pivot_interval][$pivot_value]['c_' . strval($category)]++;
 
                         // For all
-                        if (!isset($data_buckets['tracker_issues'][$month][$pivot][$pivot_value]['c_all'])) {
-                            $data_buckets['tracker_issues'][$month][$pivot][$pivot_value]['c_all'] = 0;
+                        if (!isset($data_buckets['tracker_issues'][$pivot][$pivot_interval][$pivot_value]['c_all'])) {
+                            $data_buckets['tracker_issues'][$pivot][$pivot_interval][$pivot_value]['c_all'] = 0;
                         }
-                        $data_buckets['tracker_issues'][$month][$pivot][$pivot_value]['c_all']++;
+                        $data_buckets['tracker_issues'][$pivot][$pivot_interval][$pivot_value]['c_all']++;
                     }
                 }
 
@@ -252,7 +249,7 @@ class Hook_admin_stats_cms_homesite extends CMSStatsProvider
     {
         switch ($bucket) {
             case 'relayed_errors':
-                $range = $this->convert_month_range_filter_to_pair($filters[$bucket . '__month_range']);
+                $range = $this->convert_day_range_filter_to_pair($pivot, $filters[$bucket . '__day_range']);
 
                 $data = $this->fill_data_by_date_pivots($pivot, $range[0], $range[1]);
 
@@ -292,7 +289,7 @@ class Hook_admin_stats_cms_homesite extends CMSStatsProvider
                 ];
 
             case 'tracker_issue_activity':
-                $range = $this->convert_month_range_filter_to_pair($filters[$bucket . '__month_range']);
+                $range = $this->convert_day_range_filter_to_pair($pivot, $filters[$bucket . '__day_range']);
 
                 $data = $this->fill_data_by_date_pivots($pivot, $range[0], $range[1]);
 
@@ -332,7 +329,7 @@ class Hook_admin_stats_cms_homesite extends CMSStatsProvider
                 ];
 
             case 'tracker_issues':
-                $range = $this->convert_month_range_filter_to_pair($filters[$bucket . '__month_range']);
+                $range = $this->convert_day_range_filter_to_pair($pivot, $filters[$bucket . '__day_range']);
 
                 $data = $this->fill_data_by_date_pivots($pivot, $range[0], $range[1]);
 

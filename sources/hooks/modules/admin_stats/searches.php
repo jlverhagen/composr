@@ -42,7 +42,7 @@ class Hook_admin_stats_searches extends CMSStatsProvider
                 'label' => do_lang_tempcode('SEARCHES'),
                 'category' => 'search_traffic',
                 'filters' => [
-                    'internal_searches__month_range' => new CMSStatsDateMonthRangeFilter('internal_searches__month_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
+                    'internal_searches__day_range' => new CMSStatsDayRangeFilter('internal_searches__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
                     'internal_searches__term' => new CMSStatsTextFilter('internal_searches__term', do_lang_tempcode('SEARCH')),
                 ],
                 'pivot' => null,
@@ -51,7 +51,7 @@ class Hook_admin_stats_searches extends CMSStatsProvider
                 'label' => do_lang_tempcode('KEYWORDS'),
                 'category' => 'search_traffic',
                 'filters' => [
-                    'internal_keywords__month_range' => new CMSStatsDateMonthRangeFilter('internal_keywords__month_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
+                    'internal_keywords__day_range' => new CMSStatsDayRangeFilter('internal_keywords__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
                     'internal_searches__term' => new CMSStatsTextFilter('internal_searches__term', do_lang_tempcode('KEYWORD')),
                 ],
                 'pivot' => null,
@@ -72,6 +72,8 @@ class Hook_admin_stats_searches extends CMSStatsProvider
 
         $server_timezone = get_server_timezone();
 
+        $date_pivots = $this->get_date_pivots();
+
         $max = 1000;
         $start = 0;
 
@@ -87,22 +89,25 @@ class Hook_admin_stats_searches extends CMSStatsProvider
                 $timestamp = $row['s_time'];
                 $timestamp = tz_time($timestamp, $server_timezone);
 
-                $month = to_epoch_interval_index($timestamp, 'months');
-
                 $search = cms_mb_strtolower($row['s_primary']);
 
-                if (!isset($data_buckets['internal_searches'][$month][''][$search])) {
-                    $data_buckets['internal_searches'][$month][''][$search] = 0;
-                }
-                $data_buckets['internal_searches'][$month][''][$search]++;
+                foreach (array_keys($date_pivots) as $pivot) {
+                    $pivot_interval = $this->calculate_date_pivot_interval($pivot, $timestamp);
+                    $pivot_value = $this->calculate_date_pivot_value($pivot, $timestamp);
 
-                list($_keywords) = _seo_meta_find_data([$search]);
-                $keywords = explode(',', $_keywords);
-                foreach ($keywords as $keyword) {
-                    if (!isset($data_buckets['internal_keywords'][$month][''][$keyword])) {
-                        $data_buckets['internal_keywords'][$month][''][$keyword] = 0;
+                    if (!isset($data_buckets['internal_searches'][$pivot][$pivot_interval][$pivot_value][$search])) {
+                        $data_buckets['internal_searches'][$pivot][$pivot_interval][$pivot_value][$search] = 0;
                     }
-                    $data_buckets['internal_keywords'][$month][''][$keyword]++;
+                    $data_buckets['internal_searches'][$pivot][$pivot_interval][$pivot_value][$search]++;
+
+                    list($_keywords) = _seo_meta_find_data([$search]);
+                    $keywords = explode(',', $_keywords);
+                    foreach ($keywords as $keyword) {
+                        if (!isset($data_buckets['internal_keywords'][$pivot][$pivot_interval][$pivot_value][$keyword])) {
+                            $data_buckets['internal_keywords'][$pivot][$pivot_interval][$pivot_value][$keyword] = 0;
+                        }
+                        $data_buckets['internal_keywords'][$pivot][$pivot_interval][$pivot_value][$keyword]++;
+                    }
                 }
             }
 
@@ -120,7 +125,7 @@ class Hook_admin_stats_searches extends CMSStatsProvider
      */
     public function generate_final_data(string $bucket, string $pivot, array $filters) : ?array
     {
-        $range = $this->convert_month_range_filter_to_pair($filters[$bucket . '__month_range']);
+        $range = $this->convert_day_range_filter_to_pair($pivot, $filters[$bucket . '__day_range']);
 
         $data = [];
 

@@ -144,7 +144,7 @@ class Hook_admin_stats_views extends CMSStatsProvider
                 'label' => do_lang_tempcode('VIEWS'),
                 'category' => 'hits',
                 'filters' => [
-                    'total_views__month_range' => new CMSStatsDateMonthRangeFilter('total_views__month_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
+                    'total_views__day_range' => new CMSStatsDayRangeFilter('total_views__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
                     'total_views__page_link' => new CMSStatsTextFilter('total_views__page_link', do_lang_tempcode('PAGE_LINK')),
                     'total_views__country' => has_geolocation_data() ? new CMSStatsCountryFilter('total_views__country', do_lang_tempcode('VISITOR_COUNTRY')) : null,
                 ],
@@ -155,7 +155,7 @@ class Hook_admin_stats_views extends CMSStatsProvider
                 'label' => do_lang_tempcode('UNIQUE_VIEWS'),
                 'category' => 'hits',
                 'filters' => [
-                    'total_unique_views__month_range' => new CMSStatsDateMonthRangeFilter('total_unique_views__month_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
+                    'total_unique_views__day_range' => new CMSStatsDayRangeFilter('total_unique_views__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
                     'total_unique_views__country' => has_geolocation_data() ? new CMSStatsCountryFilter('total_unique_views__country', do_lang_tempcode('VISITOR_COUNTRY')) : null,
                 ],
                 'pivot' => new CMSStatsDatePivot('total_unique_views__pivot', $this->get_date_pivots(!$for_kpi)),
@@ -165,7 +165,7 @@ class Hook_admin_stats_views extends CMSStatsProvider
                 'label' => do_lang_tempcode('POPULAR_PAGES'),
                 'category' => 'hits',
                 'filters' => [
-                    'popular_pages__month_range' => new CMSStatsDateMonthRangeFilter('popular_pages__month_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
+                    'popular_pages__day_range' => new CMSStatsDayRangeFilter('popular_pages__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
                     'popular_pages__country' => has_geolocation_data() ? new CMSStatsCountryFilter('popular_pages__country', do_lang_tempcode('VISITOR_COUNTRY')) : null,
                 ],
                 'pivot' => null,
@@ -174,7 +174,7 @@ class Hook_admin_stats_views extends CMSStatsProvider
                 'label' => do_lang_tempcode('WITH_VERSION_NUMBERS', do_lang_tempcode('OPERATING_SYSTEMS')),
                 'category' => 'audience_technical',
                 'filters' => [
-                    'operating_systems__month_range' => new CMSStatsDateMonthRangeFilter('operating_systems__month_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
+                    'operating_systems__day_range' => new CMSStatsDayRangeFilter('operating_systems__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
                     'operating_systems__country' => has_geolocation_data() ? new CMSStatsCountryFilter('operating_systems__country', do_lang_tempcode('VISITOR_COUNTRY')) : null,
                 ],
                 'pivot' => null,
@@ -183,7 +183,7 @@ class Hook_admin_stats_views extends CMSStatsProvider
                 'label' => do_lang_tempcode('WITHOUT_VERSION_NUMBERS', do_lang_tempcode('OPERATING_SYSTEMS')),
                 'category' => 'audience_technical',
                 'filters' => [
-                    'operating_systems__stripped__month_range' => new CMSStatsDateMonthRangeFilter('operating_systems__stripped__month_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
+                    'operating_systems__stripped__day_range' => new CMSStatsDayRangeFilter('operating_systems__stripped__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
                     'operating_systems__stripped__country' => has_geolocation_data() ? new CMSStatsCountryFilter('operating_systems__stripped__country', do_lang_tempcode('VISITOR_COUNTRY')) : null,
                 ],
                 'pivot' => null,
@@ -192,7 +192,7 @@ class Hook_admin_stats_views extends CMSStatsProvider
                 'label' => do_lang_tempcode('WITH_VERSION_NUMBERS', do_lang_tempcode('WEB_BROWSERS')),
                 'category' => 'audience_technical',
                 'filters' => [
-                    'web_browsers__month_range' => new CMSStatsDateMonthRangeFilter('web_browsers__month_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
+                    'web_browsers__day_range' => new CMSStatsDayRangeFilter('web_browsers__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
                     'web_browsers__country' => has_geolocation_data() ? new CMSStatsCountryFilter('web_browsers__country', do_lang_tempcode('VISITOR_COUNTRY')) : null,
                 ],
                 'pivot' => null,
@@ -201,7 +201,7 @@ class Hook_admin_stats_views extends CMSStatsProvider
                 'label' => do_lang_tempcode('WITHOUT_VERSION_NUMBERS', do_lang_tempcode('WEB_BROWSERS')),
                 'category' => 'audience_technical',
                 'filters' => [
-                    'web_browsers__stripped__month_range' => new CMSStatsDateMonthRangeFilter('web_browsers__stripped__month_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
+                    'web_browsers__stripped__day_range' => new CMSStatsDayRangeFilter('web_browsers__stripped__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
                     'web_browsers__stripped__country' => has_geolocation_data() ? new CMSStatsCountryFilter('web_browsers__stripped__country', do_lang_tempcode('VISITOR_COUNTRY')) : null,
                 ],
                 'pivot' => null,
@@ -210,7 +210,7 @@ class Hook_admin_stats_views extends CMSStatsProvider
                 'label' => do_lang_tempcode('USER_AGENT_TYPES'),
                 'category' => 'audience_technical',
                 'filters' => [
-                    'user_agent_types__month_range' => new CMSStatsDateMonthRangeFilter('user_agent_types__month_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
+                    'user_agent_types__day_range' => new CMSStatsDayRangeFilter('user_agent_types__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
                     'user_agent_types__country' => has_geolocation_data() ? new CMSStatsCountryFilter('user_agent_types__country', do_lang_tempcode('VISITOR_COUNTRY')) : null,
                 ],
                 'pivot' => null,
@@ -219,7 +219,7 @@ class Hook_admin_stats_views extends CMSStatsProvider
                 'label' => do_lang_tempcode('REFERRER_URLS'),
                 'category' => 'referrers_and_referrals',
                 'filters' => [
-                    'referrer_urls__month_range' => new CMSStatsDateMonthRangeFilter('referrer_urls__month_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
+                    'referrer_urls__day_range' => new CMSStatsDayRangeFilter('referrer_urls__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
                     'referrer_urls__country' => has_geolocation_data() ? new CMSStatsCountryFilter('referrer_urls__country', do_lang_tempcode('VISITOR_COUNTRY')) : null,
                 ],
                 'pivot' => null,
@@ -228,7 +228,7 @@ class Hook_admin_stats_views extends CMSStatsProvider
                 'label' => do_lang_tempcode('REFERRER_DOMAINS'),
                 'category' => 'referrers_and_referrals',
                 'filters' => [
-                    'referrer_domains__month_range' => new CMSStatsDateMonthRangeFilter('referrer_domains__month_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
+                    'referrer_domains__day_range' => new CMSStatsDayRangeFilter('referrer_domains__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
                     'referrer_domains__country' => has_geolocation_data() ? new CMSStatsCountryFilter('referrer_domains__country', do_lang_tempcode('VISITOR_COUNTRY')) : null,
                 ],
                 'pivot' => null,
@@ -237,7 +237,7 @@ class Hook_admin_stats_views extends CMSStatsProvider
                 'label' => do_lang_tempcode('TOTAL_REFERRALS'),
                 'category' => 'referrers_and_referrals',
                 'filters' => [
-                    'total_referrals__month_range' => new CMSStatsDateMonthRangeFilter('total_referrals__month_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
+                    'total_referrals__day_range' => new CMSStatsDayRangeFilter('total_referrals__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
                     'total_referrals__country' => has_geolocation_data() ? new CMSStatsCountryFilter('total_referrals__country', do_lang_tempcode('VISITOR_COUNTRY')) : null,
                 ],
                 'pivot' => new CMSStatsDatePivot('total_referrals__pivot', $this->get_date_pivots(!$for_kpi)),
@@ -247,7 +247,7 @@ class Hook_admin_stats_views extends CMSStatsProvider
                 'label' => do_lang_tempcode('REFERRER_TYPES'),
                 'category' => 'referrers_and_referrals',
                 'filters' => [
-                    'referrer_type__month_range' => new CMSStatsDateMonthRangeFilter('referrer_type__month_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
+                    'referrer_type__day_range' => new CMSStatsDayRangeFilter('referrer_type__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
                     'referrer_type__country' => has_geolocation_data() ? new CMSStatsCountryFilter('referrer_type__country', do_lang_tempcode('VISITOR_COUNTRY')) : null,
                 ],
                 'pivot' => null,
@@ -256,7 +256,7 @@ class Hook_admin_stats_views extends CMSStatsProvider
                 'label' => do_lang_tempcode('LOAD_TIMES'),
                 'category' => 'server_performance',
                 'filters' => [
-                    'load_times_spread__month_range' => new CMSStatsDateMonthRangeFilter('load_times_spread__month_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
+                    'load_times_spread__day_range' => new CMSStatsDayRangeFilter('load_times_spread__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
                 ],
                 'pivot' => null,
             ],
@@ -264,7 +264,7 @@ class Hook_admin_stats_views extends CMSStatsProvider
                 'label' => do_lang_tempcode('PAGE_AVERAGE_SPEEDS'),
                 'category' => 'server_performance',
                 'filters' => [
-                    'page_average_speeds__month_range' => new CMSStatsDateMonthRangeFilter('page_average_speeds__month_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
+                    'page_average_speeds__day_range' => new CMSStatsDayRangeFilter('page_average_speeds__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
                 ],
                 'pivot' => null,
                 'support_kpis' => self::KPI_LOW_IS_GOOD,
@@ -273,7 +273,7 @@ class Hook_admin_stats_views extends CMSStatsProvider
                 'label' => do_lang_tempcode('AVERAGE_PAGE_SPEED'),
                 'category' => 'server_performance',
                 'filters' => [
-                    'average_page_speed__month_range' => new CMSStatsDateMonthRangeFilter('average_page_speed__month_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
+                    'average_page_speed__day_range' => new CMSStatsDayRangeFilter('average_page_speed__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
                     'average_page_speed__page_link' => new CMSStatsTextFilter('average_page_speed__page_link', do_lang_tempcode('PAGE_LINK')),
                 ],
                 'pivot' => new CMSStatsDatePivot('average_page_speed__pivot', $this->get_date_pivots(!$for_kpi)),
@@ -283,7 +283,7 @@ class Hook_admin_stats_views extends CMSStatsProvider
                 'label' => do_lang_tempcode('REQUESTED_LANGUAGES'),
                 'category' => 'audience_demographics',
                 'filters' => [
-                    'requested_languages__month_range' => new CMSStatsDateMonthRangeFilter('requested_languages__month_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
+                    'requested_languages__day_range' => new CMSStatsDayRangeFilter('requested_languages__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
                 ],
                 'pivot' => null,
             ],
@@ -291,7 +291,7 @@ class Hook_admin_stats_views extends CMSStatsProvider
                 'label' => do_lang_tempcode('SESSION_BOUNCE_RATES'),
                 'category' => 'session_behaviours',
                 'filters' => [
-                    'session_bounce_rates__month_range' => new CMSStatsDateMonthRangeFilter('session_bounce_rates__month_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
+                    'session_bounce_rates__day_range' => new CMSStatsDayRangeFilter('session_bounce_rates__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
                     'session_bounce_rates__page_link' => new CMSStatsTextFilter('session_bounce_rates__page_link', do_lang_tempcode('PAGE_LINK')),
                     'session_bounce_rates__country' => has_geolocation_data() ? new CMSStatsCountryFilter('session_bounce_rates__country', do_lang_tempcode('VISITOR_COUNTRY')) : null,
                 ],
@@ -302,7 +302,7 @@ class Hook_admin_stats_views extends CMSStatsProvider
                 'label' => do_lang_tempcode('SESSION_ENTRY_PAGES'),
                 'category' => 'session_behaviours',
                 'filters' => [
-                    'session_entry_pages__month_range' => new CMSStatsDateMonthRangeFilter('session_entry_pages__month_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
+                    'session_entry_pages__day_range' => new CMSStatsDayRangeFilter('session_entry_pages__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
                     'session_entry_pages__country' => has_geolocation_data() ? new CMSStatsCountryFilter('session_entry_pages__country', do_lang_tempcode('VISITOR_COUNTRY')) : null,
                 ],
                 'pivot' => null,
@@ -311,7 +311,7 @@ class Hook_admin_stats_views extends CMSStatsProvider
                 'label' => do_lang_tempcode('SESSION_EXIT_PAGES'),
                 'category' => 'session_behaviours',
                 'filters' => [
-                    'session_exit_pages__month_range' => new CMSStatsDateMonthRangeFilter('session_exit_pages__month_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
+                    'session_exit_pages__day_range' => new CMSStatsDayRangeFilter('session_exit_pages__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
                     'session_exit_pages__country' => has_geolocation_data() ? new CMSStatsCountryFilter('session_exit_pages__country', do_lang_tempcode('VISITOR_COUNTRY')) : null,
                 ],
                 'pivot' => null,
@@ -320,7 +320,7 @@ class Hook_admin_stats_views extends CMSStatsProvider
                 'label' => do_lang_tempcode('SESSION_DURATIONS'),
                 'category' => 'session_behaviours',
                 'filters' => [
-                    'session_durations__month_range' => new CMSStatsDateMonthRangeFilter('session_durations__month_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
+                    'session_durations__day_range' => new CMSStatsDayRangeFilter('session_durations__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
                     'session_durations__country' => has_geolocation_data() ? new CMSStatsCountryFilter('session_durations__country', do_lang_tempcode('VISITOR_COUNTRY')) : null,
                 ],
                 'pivot' => null,
@@ -329,7 +329,7 @@ class Hook_admin_stats_views extends CMSStatsProvider
                 'label' => do_lang_tempcode('AVERAGE_SESSION_DURATION'),
                 'category' => 'session_behaviours',
                 'filters' => [
-                    'average_session_duration__month_range' => new CMSStatsDateMonthRangeFilter('average_session_duration__month_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
+                    'average_session_duration__day_range' => new CMSStatsDayRangeFilter('average_session_duration__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
                     'average_session_duration__country' => has_geolocation_data() ? new CMSStatsCountryFilter('average_session_duration__country', do_lang_tempcode('VISITOR_COUNTRY')) : null,
                 ],
                 'pivot' => new CMSStatsDatePivot('average_session_duration__pivot', $this->get_date_pivots(!$for_kpi)),
@@ -339,7 +339,7 @@ class Hook_admin_stats_views extends CMSStatsProvider
                 'label' => do_lang_tempcode('SESSION_TOTAL_VIEWS'),
                 'category' => 'session_behaviours',
                 'filters' => [
-                    'session_total_views__month_range' => new CMSStatsDateMonthRangeFilter('session_total_views__month_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
+                    'session_total_views__day_range' => new CMSStatsDayRangeFilter('session_total_views__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
                     'session_total_views__country' => has_geolocation_data() ? new CMSStatsCountryFilter('session_total_views__country', do_lang_tempcode('VISITOR_COUNTRY')) : null,
                 ],
                 'pivot' => null,
@@ -348,7 +348,7 @@ class Hook_admin_stats_views extends CMSStatsProvider
                 'label' => do_lang_tempcode('AVERAGE_SESSION_TOTAL_VIEWS'),
                 'category' => 'session_behaviours',
                 'filters' => [
-                    'average_session_total_views__month_range' => new CMSStatsDateMonthRangeFilter('average_session_total_views__month_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
+                    'average_session_total_views__day_range' => new CMSStatsDayRangeFilter('average_session_total_views__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
                     'average_session_total_views__country' => has_geolocation_data() ? new CMSStatsCountryFilter('average_session_total_views__country', do_lang_tempcode('VISITOR_COUNTRY')) : null,
                 ],
                 'pivot' => new CMSStatsDatePivot('average_session_total_views__pivot', $this->get_date_pivots(!$for_kpi)),
@@ -361,7 +361,7 @@ class Hook_admin_stats_views extends CMSStatsProvider
                 'label' => do_lang_tempcode('VISITOR_COUNTRIES'),
                 'category' => 'audience_demographics',
                 'filters' => [
-                    'countries__month_range' => new CMSStatsDateMonthRangeFilter('countries__month_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
+                    'countries__day_range' => new CMSStatsDayRangeFilter('countries__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
                 ],
                 'pivot' => null,
             ];
@@ -415,12 +415,11 @@ class Hook_admin_stats_views extends CMSStatsProvider
                 $timestamp = $row['date_and_time'];
                 $timestamp = tz_time($timestamp, $server_timezone);
 
-                $month = to_epoch_interval_index($timestamp, 'months');
-
+                // Use anonymous identifiers so it is hard to trace back to specific IPs or users
                 if ($row['member_id'] == $guest_id) {
-                    $unique_identifier = $row['ip'];
+                    $unique_identifier = cms_base64_encode($row['ip'], false, true, true);
                 } else {
-                    $unique_identifier = strval($row['member_id']);
+                    $unique_identifier = cms_base64_encode(strval($row['member_id']), false, true, true);
                 }
 
                 $ip_address = $row['ip'];
@@ -497,129 +496,124 @@ class Hook_admin_stats_views extends CMSStatsProvider
                     $referrer_type = self::REFERRER_TYPE__EXTERNAL_MISC;
                 }
 
-                // Hits...
-
                 foreach (array_keys($date_pivots) as $pivot) {
+                    $pivot_interval = $this->calculate_date_pivot_interval($pivot, $timestamp);
                     $pivot_value = $this->calculate_date_pivot_value($pivot, $timestamp);
+
+                    // Hits...
 
                     if ($is_real_human) {
-                        if (!isset($data_buckets['total_views'][$month][$pivot][$pivot_value][$country][$page_link])) {
-                            $data_buckets['total_views'][$month][$pivot][$pivot_value][$country][$page_link] = 0;
+                        if (!isset($data_buckets['total_views'][$pivot][$pivot_interval][$pivot_value][$country][$page_link])) {
+                            $data_buckets['total_views'][$pivot][$pivot_interval][$pivot_value][$country][$page_link] = 0;
                         }
-                        $data_buckets['total_views'][$month][$pivot][$pivot_value][$country][$page_link]++;
+                        $data_buckets['total_views'][$pivot][$pivot_interval][$pivot_value][$country][$page_link]++;
 
-                        $data_buckets['total_unique_views'][$month][$pivot][$pivot_value][$country][$unique_identifier] = true;
+                        $data_buckets['total_unique_views'][$pivot][$pivot_interval][$pivot_value][$country][$unique_identifier] = 1;
 
                         if ($referrer_type != self::REFERRER_TYPE__INTERNAL) {
-                            if (!isset($data_buckets['total_referrals'][$month][$pivot][$pivot_value][$country])) {
-                                $data_buckets['total_referrals'][$month][$pivot][$pivot_value][$country] = 0;
+                            if (!isset($data_buckets['total_referrals'][$pivot][$pivot_interval][$pivot_value][$country])) {
+                                $data_buckets['total_referrals'][$pivot][$pivot_interval][$pivot_value][$country] = 0;
                             }
-                            $data_buckets['total_referrals'][$month][$pivot][$pivot_value][$country]++;
+                            $data_buckets['total_referrals'][$pivot][$pivot_interval][$pivot_value][$country]++;
                         }
-                    }
-                }
 
-                if ($is_real_human) {
-                    if (!isset($data_buckets['popular_pages'][$month][''][$country][$page_link])) {
-                        $data_buckets['popular_pages'][$month][''][$country][$page_link] = 0;
-                    }
-                    $data_buckets['popular_pages'][$month][''][$country][$page_link]++;
-                }
-
-                // User agents...
-
-                if ($os != '') {
-                    if (!isset($data_buckets['operating_systems'][$month][''][$country][$os])) {
-                        $data_buckets['operating_systems'][$month][''][$country][$os] = 0;
-                    }
-                    $data_buckets['operating_systems'][$month][''][$country][$os]++;
-                }
-                if ($os_stripped != '') {
-                    if (!isset($data_buckets['operating_systems__stripped'][$month][''][$country][$os_stripped])) {
-                        $data_buckets['operating_systems__stripped'][$month][''][$country][$os_stripped] = 0;
-                    }
-                    $data_buckets['operating_systems__stripped'][$month][''][$country][$os_stripped]++;
-                }
-
-                if ($web_browser != brand_name()) {
-                    if (!isset($data_buckets['web_browsers'][$month][''][$country][$web_browser])) {
-                        $data_buckets['web_browsers'][$month][''][$country][$web_browser] = 0;
-                    }
-                    $data_buckets['web_browsers'][$month][''][$country][$web_browser]++;
-                    if (!isset($data_buckets['web_browsers__stripped'][$month][''][$country][$web_browser_stripped])) {
-                        $data_buckets['web_browsers__stripped'][$month][''][$country][$web_browser_stripped] = 0;
-                    }
-                    $data_buckets['web_browsers__stripped'][$month][''][$country][$web_browser_stripped]++;
-
-                    if (!isset($data_buckets['user_agent_types'][$month][''][$country][$user_agent_type])) {
-                        $data_buckets['user_agent_types'][$month][''][$country][$user_agent_type] = 0;
-                    }
-                    $data_buckets['user_agent_types'][$month][''][$country][$user_agent_type]++;
-                }
-
-                // Referrers...
-
-                if ($is_real_human) {
-                    if ($referrer_type != self::REFERRER_TYPE__INTERNAL) {
-                        if (!isset($data_buckets['referrer_urls'][$month][''][$country][$referrer_url])) {
-                            $data_buckets['referrer_urls'][$month][''][$country][$referrer_url] = 0;
+                        if (!isset($data_buckets['popular_pages'][$pivot][$pivot_interval][$pivot_value][$country][$page_link])) {
+                            $data_buckets['popular_pages'][$pivot][$pivot_interval][$pivot_value][$country][$page_link] = 0;
                         }
-                        $data_buckets['referrer_urls'][$month][''][$country][$referrer_url]++;
-                        if (!isset($data_buckets['referrer_domains'][$month][''][$country][$referrer_domain])) {
-                            $data_buckets['referrer_domains'][$month][''][$country][$referrer_domain] = 0;
+                        $data_buckets['popular_pages'][$pivot][$pivot_interval][$pivot_value][$country][$page_link]++;
+                    }
+
+                    // User agents...
+
+                    if ($os != '') {
+                        if (!isset($data_buckets['operating_systems'][$pivot][$pivot_interval][$pivot_value][$country][$os])) {
+                            $data_buckets['operating_systems'][$pivot][$pivot_interval][$pivot_value][$country][$os] = 0;
                         }
-                        $data_buckets['referrer_domains'][$month][''][$country][$referrer_domain]++;
+                        $data_buckets['operating_systems'][$pivot][$pivot_interval][$pivot_value][$country][$os]++;
+                    }
+                    if ($os_stripped != '') {
+                        if (!isset($data_buckets['operating_systems__stripped'][$pivot][$pivot_interval][$pivot_value][$country][$os_stripped])) {
+                            $data_buckets['operating_systems__stripped'][$pivot][$pivot_interval][$pivot_value][$country][$os_stripped] = 0;
+                        }
+                        $data_buckets['operating_systems__stripped'][$pivot][$pivot_interval][$pivot_value][$country][$os_stripped]++;
                     }
 
-                    if (!isset($data_buckets['referrer_type'][$month][''][$country][$referrer_type])) {
-                        $data_buckets['referrer_type'][$month][''][$country][$referrer_type] = 0;
+                    if ($web_browser != brand_name()) {
+                        if (!isset($data_buckets['web_browsers'][$pivot][$pivot_interval][$pivot_value][$country][$web_browser])) {
+                            $data_buckets['web_browsers'][$pivot][$pivot_interval][$pivot_value][$country][$web_browser] = 0;
+                        }
+                        $data_buckets['web_browsers'][$pivot][$pivot_interval][$pivot_value][$country][$web_browser]++;
+                        if (!isset($data_buckets['web_browsers__stripped'][$pivot][$pivot_interval][$pivot_value][$country][$web_browser_stripped])) {
+                            $data_buckets['web_browsers__stripped'][$pivot][$pivot_interval][$pivot_value][$country][$web_browser_stripped] = 0;
+                        }
+                        $data_buckets['web_browsers__stripped'][$pivot][$pivot_interval][$pivot_value][$country][$web_browser_stripped]++;
+
+                        if (!isset($data_buckets['user_agent_types'][$pivot][$pivot_interval][$pivot_value][$country][$user_agent_type])) {
+                            $data_buckets['user_agent_types'][$pivot][$pivot_interval][$pivot_value][$country][$user_agent_type] = 0;
+                        }
+                        $data_buckets['user_agent_types'][$pivot][$pivot_interval][$pivot_value][$country][$user_agent_type]++;
                     }
-                    $data_buckets['referrer_type'][$month][''][$country][$referrer_type]++;
-                }
 
-                // Speed...
+                    // Referrers...
 
-                $page_speed = $row['milliseconds'];
+                    if ($is_real_human) {
+                        if ($referrer_type != self::REFERRER_TYPE__INTERNAL) {
+                            if (!isset($data_buckets['referrer_urls'][$pivot][$pivot_interval][$pivot_value][$country][$referrer_url])) {
+                                $data_buckets['referrer_urls'][$pivot][$pivot_interval][$pivot_value][$country][$referrer_url] = 0;
+                            }
+                            $data_buckets['referrer_urls'][$pivot][$pivot_interval][$pivot_value][$country][$referrer_url]++;
+                            if (!isset($data_buckets['referrer_domains'][$pivot][$pivot_interval][$pivot_value][$country][$referrer_domain])) {
+                                $data_buckets['referrer_domains'][$pivot][$pivot_interval][$pivot_value][$country][$referrer_domain] = 0;
+                            }
+                            $data_buckets['referrer_domains'][$pivot][$pivot_interval][$pivot_value][$country][$referrer_domain]++;
+                        }
 
-                // Build up our distribution (in the Gaussian sense) of page speeds
-                $speed_bracket = $this->find_value_bracket($this->speed_brackets, $page_speed);
-                if (!isset($data_buckets['load_times_spread'][$month][''][$speed_bracket])) {
-                    $data_buckets['load_times_spread'][$month][''][$speed_bracket] = 0;
-                }
-                $data_buckets['load_times_spread'][$month][''][$speed_bracket]++;
+                        if (!isset($data_buckets['referrer_type'][$pivot][$pivot_interval][$pivot_value][$country][$referrer_type])) {
+                            $data_buckets['referrer_type'][$pivot][$pivot_interval][$pivot_value][$country][$referrer_type] = 0;
+                        }
+                        $data_buckets['referrer_type'][$pivot][$pivot_interval][$pivot_value][$country][$referrer_type]++;
+                    }
 
-                // Build in speed of this hit to its particular page for its particular month -- gives us an idea about what are our slow and fast pages
-                if (!isset($data_buckets['page_average_speeds'][$month][''][$page_link])) {
-                    $data_buckets['page_average_speeds'][$month][''][$page_link] = [0, 0];
-                }
-                $data_buckets['page_average_speeds'][$month][''][$page_link][0] += $page_speed;
-                $data_buckets['page_average_speeds'][$month][''][$page_link][1]++;
+                    // Speed...
 
-                foreach (array_keys($date_pivots) as $pivot) {
-                    $pivot_value = $this->calculate_date_pivot_value($pivot, $timestamp);
+                    $page_speed = $row['milliseconds'];
+
+                    // Build up our distribution (in the Gaussian sense) of page speeds
+                    $speed_bracket = $this->find_value_bracket($this->speed_brackets, $page_speed);
+                    if (!isset($data_buckets['load_times_spread'][$pivot][$pivot_interval][$pivot_value][$speed_bracket])) {
+                        $data_buckets['load_times_spread'][$pivot][$pivot_interval][$pivot_value][$speed_bracket] = 0;
+                    }
+                    $data_buckets['load_times_spread'][$pivot][$pivot_interval][$pivot_value][$speed_bracket]++;
+
+                    // Build in speed of this hit to its particular page for its particular month -- gives us an idea about what are our slow and fast pages
+                    if (!isset($data_buckets['page_average_speeds'][$pivot][$pivot_interval][$pivot_value][$page_link])) {
+                        $data_buckets['page_average_speeds'][$pivot][$pivot_interval][$pivot_value][$page_link] = [0, 0];
+                    }
+                    $data_buckets['page_average_speeds'][$pivot][$pivot_interval][$pivot_value][$page_link][0] += $page_speed;
+                    $data_buckets['page_average_speeds'][$pivot][$pivot_interval][$pivot_value][$page_link][1]++;
 
                     // Build in speed of this hit to its particular page for its particular month - but pivoted e.g. by hour of day, day of week, etc -- gives us an idea about peak times
-                    if (!isset($data_buckets['average_page_speed'][$month][$pivot][$pivot_value][$page_link])) {
-                        $data_buckets['average_page_speed'][$month][$pivot][$pivot_value][$page_link] = [0, 0];
+                    if (!isset($data_buckets['average_page_speed'][$pivot][$pivot_interval][$pivot_value][$page_link])) {
+                        $data_buckets['average_page_speed'][$pivot][$pivot_interval][$pivot_value][$page_link] = [0, 0];
                     }
-                    $data_buckets['average_page_speed'][$month][$pivot][$pivot_value][$page_link][0] += $page_speed;
-                    $data_buckets['average_page_speed'][$month][$pivot][$pivot_value][$page_link][1]++;
-                }
+                    $data_buckets['average_page_speed'][$pivot][$pivot_interval][$pivot_value][$page_link][0] += $page_speed;
+                    $data_buckets['average_page_speed'][$pivot][$pivot_interval][$pivot_value][$page_link][1]++;
 
-                // Languages and countries...
+                    // Languages and countries...
 
-                if ($is_real_human) {
-                    $language = preg_replace('#[\-_].*$#', '', $row['requested_language']);
-                    if (!isset($data_buckets['requested_languages'][$month][''][$language])) {
-                        $data_buckets['requested_languages'][$month][''][$language] = 0;
-                    }
-                    $data_buckets['requested_languages'][$month][''][$language]++;
-
-                    if (has_geolocation_data()) {
-                        if (!isset($data_buckets['countries'][$month][''][$country])) {
-                            $data_buckets['countries'][$month][''][$country] = 0;
+                    if ($is_real_human) {
+                        $language = preg_replace('#[\-_].*$#', '', $row['requested_language']);
+                        if (!isset($data_buckets['requested_languages'][$pivot][$pivot_interval][$pivot_value][$language])) {
+                            $data_buckets['requested_languages'][$pivot][$pivot_interval][$pivot_value][$language] = 0;
                         }
-                        $data_buckets['countries'][$month][''][$country]++;
+                        $data_buckets['requested_languages'][$pivot][$pivot_interval][$pivot_value][$language]++;
+
+                        if (has_geolocation_data()) {
+                            if (!isset($data_buckets['countries'][$pivot][$pivot_interval][$pivot_value][$country])) {
+                                $data_buckets['countries'][$pivot][$pivot_interval][$pivot_value][$country] = 0;
+                            }
+                            $data_buckets['countries'][$pivot][$pivot_interval][$pivot_value][$country]++;
+                        }
                     }
                 }
             }
@@ -628,27 +622,6 @@ class Hook_admin_stats_views extends CMSStatsProvider
             $start += $max;
         } while (!empty($rows));
         cms_profile_end_for('Hook_admin_stats_views->preprocess_raw_data (main processing loop)');
-
-        // We need to anonymise the IPs and simplify the data structure...
-
-        cms_profile_start_for('Hook_admin_stats_views->preprocess_raw_data (simplify data)');
-        foreach ($data_buckets['total_unique_views'] as $month => $_) {
-            foreach ($_ as $pivot => $__) {
-                foreach ($__ as $pivot_value => $___) {
-                    foreach ($___ as $country => $____) {
-                        $data_buckets['total_unique_views'][$month][$pivot][$pivot_value][$country] = [];
-
-                        foreach ($____ as $unique_identifier => $_____) {
-                            if (!is_string($unique_identifier)) {
-                                $unique_identifier = strval($unique_identifier);
-                            }
-                            $data_buckets['total_unique_views'][$month][$pivot][$pivot_value][$country][] = md5($unique_identifier);
-                        }
-                    }
-                }
-            }
-        }
-        cms_profile_end_for('Hook_admin_stats_views->preprocess_raw_data (simplify data)');
 
         // Session behaviours (slow)...
 
@@ -672,8 +645,6 @@ class Hook_admin_stats_views extends CMSStatsProvider
                 foreach ($rows as $row) {
                     $timestamp = $row['date_and_time'];
                     $timestamp = tz_time($timestamp, $server_timezone);
-
-                    $month = to_epoch_interval_index($timestamp, 'months');
 
                     list($zone, $attributes) = page_link_decode($row['page_link']);
                     $page = isset($attributes['page']) ? $attributes['page'] : DEFAULT_ZONE_PAGE_NAME;
@@ -704,49 +675,50 @@ class Hook_admin_stats_views extends CMSStatsProvider
             $session_duration = $last_page_timestamp - $first_page_timestamp;
 
             foreach (array_keys($date_pivots) as $pivot) {
+                $pivot_interval = $this->calculate_date_pivot_interval($pivot, $timestamp);
                 $pivot_value = $this->calculate_date_pivot_value($pivot, $timestamp);
 
-                if (!isset($data_buckets['session_bounce_rates'][$month][$pivot][$pivot_value][$country][$page_link])) {
-                    $data_buckets['session_bounce_rates'][$month][$pivot][$pivot_value][$country][$page_link] = [0, 0];
+                if (!isset($data_buckets['session_bounce_rates'][$pivot][$pivot_interval][$pivot_value][$country][$page_link])) {
+                    $data_buckets['session_bounce_rates'][$pivot][$pivot_interval][$pivot_value][$country][$page_link] = [0, 0];
                 }
                 if ($is_bounce) {
-                    $data_buckets['session_bounce_rates'][$month][$pivot][$pivot_value][$country][$page_link][0]++;
+                    $data_buckets['session_bounce_rates'][$pivot][$pivot_interval][$pivot_value][$country][$page_link][0]++;
                 }
-                $data_buckets['session_bounce_rates'][$month][$pivot][$pivot_value][$country][$page_link][1]++;
+                $data_buckets['session_bounce_rates'][$pivot][$pivot_interval][$pivot_value][$country][$page_link][1]++;
 
-                if (!isset($data_buckets['average_session_duration'][$month][$pivot][$pivot_value][$country])) {
-                    $data_buckets['average_session_duration'][$month][$pivot][$pivot_value][$country] = [0, 0];
+                if (!isset($data_buckets['average_session_duration'][$pivot][$pivot_interval][$pivot_value][$country])) {
+                    $data_buckets['average_session_duration'][$pivot][$pivot_interval][$pivot_value][$country] = [0, 0];
                 }
-                $data_buckets['average_session_duration'][$month][$pivot][$pivot_value][$country][0] += $session_duration;
-                $data_buckets['average_session_duration'][$month][$pivot][$pivot_value][$country][1]++;
+                $data_buckets['average_session_duration'][$pivot][$pivot_interval][$pivot_value][$country][0] += $session_duration;
+                $data_buckets['average_session_duration'][$pivot][$pivot_interval][$pivot_value][$country][1]++;
 
-                if (!isset($data_buckets['average_session_total_views'][$month][$pivot][$pivot_value][$country])) {
-                    $data_buckets['average_session_total_views'][$month][$pivot][$pivot_value][$country] = [0, 0];
+                if (!isset($data_buckets['average_session_total_views'][$pivot][$pivot_interval][$pivot_value][$country])) {
+                    $data_buckets['average_session_total_views'][$pivot][$pivot_interval][$pivot_value][$country] = [0, 0];
                 }
-                $data_buckets['average_session_total_views'][$month][$pivot][$pivot_value][$country][0] += $total_views;
-                $data_buckets['average_session_total_views'][$month][$pivot][$pivot_value][$country][1]++;
-            }
+                $data_buckets['average_session_total_views'][$pivot][$pivot_interval][$pivot_value][$country][0] += $total_views;
+                $data_buckets['average_session_total_views'][$pivot][$pivot_interval][$pivot_value][$country][1]++;
 
-            if (!isset($data_buckets['session_entry_pages'][$month][''][$country][$first_page_link])) {
-                $data_buckets['session_entry_pages'][$month][''][$country][$first_page_link] = 0;
-            }
-            $data_buckets['session_entry_pages'][$month][''][$country][$first_page_link]++;
+                if (!isset($data_buckets['session_entry_pages'][$pivot][$pivot_interval][$pivot_value][$country][$first_page_link])) {
+                    $data_buckets['session_entry_pages'][$pivot][$pivot_interval][$pivot_value][$country][$first_page_link] = 0;
+                }
+                $data_buckets['session_entry_pages'][$pivot][$pivot_interval][$pivot_value][$country][$first_page_link]++;
 
-            if (!isset($data_buckets['session_exit_pages'][$month][''][$country][$last_page_link])) {
-                $data_buckets['session_exit_pages'][$month][''][$country][$last_page_link] = 0;
-            }
-            $data_buckets['session_exit_pages'][$month][''][$country][$last_page_link]++;
+                if (!isset($data_buckets['session_exit_pages'][$pivot][$pivot_interval][$pivot_value][$country][$last_page_link])) {
+                    $data_buckets['session_exit_pages'][$pivot][$pivot_interval][$pivot_value][$country][$last_page_link] = 0;
+                }
+                $data_buckets['session_exit_pages'][$pivot][$pivot_interval][$pivot_value][$country][$last_page_link]++;
 
-            $session_duration_bracket = $this->find_value_bracket($this->session_duration_brackets, $session_duration);
-            if (!isset($data_buckets['session_durations'][$month][''][$country][$session_duration_bracket])) {
-                $data_buckets['session_durations'][$month][''][$country][$session_duration_bracket] = 0;
-            }
-            $data_buckets['session_durations'][$month][''][$country][$session_duration_bracket]++;
+                $session_duration_bracket = $this->find_value_bracket($this->session_duration_brackets, $session_duration);
+                if (!isset($data_buckets['session_durations'][$pivot][$pivot_interval][$pivot_value][$country][$session_duration_bracket])) {
+                    $data_buckets['session_durations'][$pivot][$pivot_interval][$pivot_value][$country][$session_duration_bracket] = 0;
+                }
+                $data_buckets['session_durations'][$pivot][$pivot_interval][$pivot_value][$country][$session_duration_bracket]++;
 
-            if (!isset($data_buckets['session_total_views'][$month][''][$country][$total_views])) {
-                $data_buckets['session_total_views'][$month][''][$country][$total_views] = 0;
+                if (!isset($data_buckets['session_total_views'][$pivot][$pivot_interval][$pivot_value][$country][$total_views])) {
+                    $data_buckets['session_total_views'][$pivot][$pivot_interval][$pivot_value][$country][$total_views] = 0;
+                }
+                $data_buckets['session_total_views'][$pivot][$pivot_interval][$pivot_value][$country][$total_views]++;
             }
-            $data_buckets['session_total_views'][$month][''][$country][$total_views]++;
         }
         cms_profile_end_for('Hook_admin_stats_views->preprocess_raw_data (session behaviours)');
 
@@ -801,7 +773,7 @@ class Hook_admin_stats_views extends CMSStatsProvider
 
         switch ($bucket) {
             case 'total_views':
-                $range = $this->convert_month_range_filter_to_pair($filters[$bucket . '__month_range']);
+                $range = $this->convert_day_range_filter_to_pair($pivot, $filters[$bucket . '__day_range']);
 
                 $data = $this->fill_data_by_date_pivots($pivot, $range[0], $range[1]);
 
@@ -849,7 +821,7 @@ class Hook_admin_stats_views extends CMSStatsProvider
                 ];
 
             case 'total_unique_views':
-                $range = $this->convert_month_range_filter_to_pair($filters[$bucket . '__month_range']);
+                $range = $this->convert_day_range_filter_to_pair($pivot, $filters[$bucket . '__day_range']);
 
                 $data = $this->fill_data_by_date_pivots($pivot, $range[0], $range[1]);
 
@@ -890,7 +862,7 @@ class Hook_admin_stats_views extends CMSStatsProvider
                 ];
 
             case 'total_referrals':
-                $range = $this->convert_month_range_filter_to_pair($filters[$bucket . '__month_range']);
+                $range = $this->convert_day_range_filter_to_pair($pivot, $filters[$bucket . '__day_range']);
 
                 $data = $this->fill_data_by_date_pivots($pivot, $range[0], $range[1]);
 
@@ -929,7 +901,7 @@ class Hook_admin_stats_views extends CMSStatsProvider
 
             case 'average_session_total_views':
             case 'average_session_duration':
-                $range = $this->convert_month_range_filter_to_pair($filters[$bucket . '__month_range']);
+                $range = $this->convert_day_range_filter_to_pair($pivot, $filters[$bucket . '__day_range']);
 
                 $data = $this->fill_data_by_date_pivots($pivot, $range[0], $range[1]);
 
@@ -984,7 +956,7 @@ class Hook_admin_stats_views extends CMSStatsProvider
                 ];
 
             case 'session_durations':
-                $range = $this->convert_month_range_filter_to_pair($filters[$bucket . '__month_range']);
+                $range = $this->convert_day_range_filter_to_pair($pivot, $filters[$bucket . '__day_range']);
 
                 $data = [];
                 foreach ($this->session_duration_brackets as $bracket) {
@@ -1026,7 +998,7 @@ class Hook_admin_stats_views extends CMSStatsProvider
                 ];
 
             case 'user_agent_types':
-                $range = $this->convert_month_range_filter_to_pair($filters[$bucket . '__month_range']);
+                $range = $this->convert_day_range_filter_to_pair($pivot, $filters[$bucket . '__day_range']);
 
                 $data = [];
 
@@ -1081,7 +1053,7 @@ class Hook_admin_stats_views extends CMSStatsProvider
                 ];
 
             case 'referrer_type':
-                $range = $this->convert_month_range_filter_to_pair($filters[$bucket . '__month_range']);
+                $range = $this->convert_day_range_filter_to_pair($pivot, $filters[$bucket . '__day_range']);
 
                 $data = [];
 
@@ -1151,7 +1123,7 @@ class Hook_admin_stats_views extends CMSStatsProvider
             case 'session_entry_pages':
             case 'session_exit_pages':
             case 'session_total_views':
-                $range = $this->convert_month_range_filter_to_pair($filters[$bucket . '__month_range']);
+                $range = $this->convert_day_range_filter_to_pair($pivot, $filters[$bucket . '__day_range']);
 
                 $data = [];
 
@@ -1229,7 +1201,7 @@ class Hook_admin_stats_views extends CMSStatsProvider
                 ];
 
             case 'load_times_spread':
-                $range = $this->convert_month_range_filter_to_pair($filters[$bucket . '__month_range']);
+                $range = $this->convert_day_range_filter_to_pair($pivot, $filters[$bucket . '__day_range']);
 
                 $data = [];
                 foreach ($this->speed_brackets as $bracket) {
@@ -1263,7 +1235,7 @@ class Hook_admin_stats_views extends CMSStatsProvider
             case 'requested_languages':
                 require_code('lang2');
 
-                $range = $this->convert_month_range_filter_to_pair($filters[$bucket . '__month_range']);
+                $range = $this->convert_day_range_filter_to_pair($pivot, $filters[$bucket . '__day_range']);
 
                 $data = [];
 
@@ -1312,7 +1284,7 @@ class Hook_admin_stats_views extends CMSStatsProvider
             case 'countries':
                 require_code('locations');
 
-                $range = $this->convert_month_range_filter_to_pair($filters[$bucket . '__month_range']);
+                $range = $this->convert_day_range_filter_to_pair($pivot, $filters[$bucket . '__day_range']);
 
                 $data = [];
 
@@ -1356,7 +1328,7 @@ class Hook_admin_stats_views extends CMSStatsProvider
                 ];
 
             case 'average_page_speed':
-                $range = $this->convert_month_range_filter_to_pair($filters[$bucket . '__month_range']);
+                $range = $this->convert_day_range_filter_to_pair($pivot, $filters[$bucket . '__day_range']);
 
                 $data = [];
 
@@ -1404,7 +1376,7 @@ class Hook_admin_stats_views extends CMSStatsProvider
                 ];
 
             case 'session_bounce_rates':
-                $range = $this->convert_month_range_filter_to_pair($filters[$bucket . '__month_range']);
+                $range = $this->convert_day_range_filter_to_pair($pivot, $filters[$bucket . '__day_range']);
 
                 $data = [];
 
@@ -1458,7 +1430,7 @@ class Hook_admin_stats_views extends CMSStatsProvider
                 ];
 
             case 'page_average_speeds':
-                $range = $this->convert_month_range_filter_to_pair($filters[$bucket . '__month_range']);
+                $range = $this->convert_day_range_filter_to_pair($pivot, $filters[$bucket . '__day_range']);
 
                 $data = [];
 

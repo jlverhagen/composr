@@ -42,7 +42,7 @@ class Hook_admin_stats_invites extends CMSStatsProvider
             'label' => do_lang_tempcode((get_option('is_on_invites') === '1') ? 'INVITATIONS_MADE' : 'RECOMMENDATIONS_MADE'),
             'category' => 'referrers_and_referrals',
             'filters' => [
-                'invites_sent__month_range' => new CMSStatsDateMonthRangeFilter('invites_sent__month_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
+                'invites_sent__day_range' => new CMSStatsDayRangeFilter('invites_sent__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
             ],
             'pivot' => new CMSStatsDatePivot('invites_sent__pivot', $this->get_date_pivots(!$for_kpi)),
             'support_kpis' => self::KPI_HIGH_IS_GOOD,
@@ -52,7 +52,7 @@ class Hook_admin_stats_invites extends CMSStatsProvider
                 'label' => do_lang_tempcode('INVITATIONS_ACCEPTED'),
                 'category' => 'referrers_and_referrals',
                 'filters' => [
-                    'invites_taken__month_range' => new CMSStatsDateMonthRangeFilter('invites_taken__month_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
+                    'invites_taken__day_range' => new CMSStatsDayRangeFilter('invites_taken__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
                 ],
                 'pivot' => new CMSStatsDatePivot('invites_taken__pivot', $this->get_date_pivots(!$for_kpi)),
                 'support_kpis' => self::KPI_HIGH_IS_GOOD,
@@ -89,21 +89,20 @@ class Hook_admin_stats_invites extends CMSStatsProvider
                 $timestamp = $row['i_time'];
                 $timestamp = tz_time($timestamp, $server_timezone);
 
-                $month = to_epoch_interval_index($timestamp, 'months');
-
                 foreach (array_keys($date_pivots) as $pivot) {
+                    $pivot_interval = $this->calculate_date_pivot_interval($pivot, $timestamp);
                     $pivot_value = $this->calculate_date_pivot_value($pivot, $timestamp);
 
-                    if (!isset($data_buckets['invites_sent'][$month][$pivot][$pivot_value])) {
-                        $data_buckets['invites_sent'][$month][$pivot][$pivot_value] = 0;
+                    if (!isset($data_buckets['invites_sent'][$pivot][$pivot_interval][$pivot_value])) {
+                        $data_buckets['invites_sent'][$pivot][$pivot_interval][$pivot_value] = 0;
                     }
-                    $data_buckets['invites_sent'][$month][$pivot][$pivot_value]++;
+                    $data_buckets['invites_sent'][$pivot][$pivot_interval][$pivot_value]++;
 
                     if (($row['i_taken'] == 1) && (get_option('is_on_invites') === '1') && (get_forum_type() == 'cns')) {
-                        if (!isset($data_buckets['invites_taken'][$month][$pivot][$pivot_value])) {
-                            $data_buckets['invites_taken'][$month][$pivot][$pivot_value] = 0;
+                        if (!isset($data_buckets['invites_taken'][$pivot][$pivot_interval][$pivot_value])) {
+                            $data_buckets['invites_taken'][$pivot][$pivot_interval][$pivot_value] = 0;
                         }
-                        $data_buckets['invites_taken'][$month][$pivot][$pivot_value]++;
+                        $data_buckets['invites_taken'][$pivot][$pivot_interval][$pivot_value]++;
                     }
                 }
             }
@@ -122,7 +121,7 @@ class Hook_admin_stats_invites extends CMSStatsProvider
      */
     public function generate_final_data(string $bucket, string $pivot, array $filters) : ?array
     {
-        $range = $this->convert_month_range_filter_to_pair($filters[$bucket . '__month_range']);
+        $range = $this->convert_day_range_filter_to_pair($pivot, $filters[$bucket . '__day_range']);
 
         $data = $this->fill_data_by_date_pivots($pivot, $range[0], $range[1]);
 

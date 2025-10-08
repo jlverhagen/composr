@@ -65,7 +65,7 @@ class Hook_admin_stats_warnings extends CMSStatsProvider
                 'label' => do_lang_tempcode('WARNINGS'),
                 'category' => 'moderation',
                 'filters' => [
-                    'recorded_punishments__month_range' => new CMSStatsDateMonthRangeFilter('recorded_punishments__month_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
+                    'recorded_punishments__day_range' => new CMSStatsDayRangeFilter('recorded_punishments__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
                     'recorded_punishments__country' => has_geolocation_data() ? new CMSStatsCountryFilter('recorded_punishments__country', do_lang_tempcode('VISITOR_COUNTRY')) : null,
                     'recorded_punishments__reason' => new CMSStatsTextFilter('recorded_punishments__reason', do_lang_tempcode('REASON'), ''),
                 ],
@@ -123,8 +123,6 @@ class Hook_admin_stats_warnings extends CMSStatsProvider
                 $timestamp = $row['w_time'];
                 $timestamp = tz_time($timestamp, $server_timezone);
 
-                $month = to_epoch_interval_index($timestamp, 'months');
-
                 $country = geolocate_ip($row['m_ip_address']);
                 if ($country === null) {
                     $country = '';
@@ -133,12 +131,13 @@ class Hook_admin_stats_warnings extends CMSStatsProvider
                 $explanation = $row['w_explanation'];
 
                 foreach (array_keys($date_pivots) as $pivot) {
+                    $pivot_interval = $this->calculate_date_pivot_interval($pivot, $timestamp);
                     $pivot_value = $this->calculate_date_pivot_value($pivot, $timestamp);
 
-                    if (!isset($data_buckets['recorded_punishments'][$month][$pivot][$pivot_value][$country][$explanation])) {
-                        $data_buckets['recorded_punishments'][$month][$pivot][$pivot_value][$country][$explanation] = 0;
+                    if (!isset($data_buckets['recorded_punishments'][$pivot][$pivot_interval][$pivot_value][$country][$explanation])) {
+                        $data_buckets['recorded_punishments'][$pivot][$pivot_interval][$pivot_value][$country][$explanation] = 0;
                     }
-                    $data_buckets['recorded_punishments'][$month][$pivot][$pivot_value][$country][$explanation]++;
+                    $data_buckets['recorded_punishments'][$pivot][$pivot_interval][$pivot_value][$country][$explanation]++;
                 }
             }
 
@@ -199,7 +198,7 @@ class Hook_admin_stats_warnings extends CMSStatsProvider
     {
         switch ($bucket) {
             case 'recorded_punishments':
-                $range = $this->convert_month_range_filter_to_pair($filters[$bucket . '__month_range']);
+                $range = $this->convert_day_range_filter_to_pair($pivot, $filters[$bucket . '__day_range']);
 
                 $data = $this->fill_data_by_date_pivots($pivot, $range[0], $range[1]);
 

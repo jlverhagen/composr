@@ -39,7 +39,7 @@ class Hook_admin_stats_emails extends CMSStatsProvider
                 'label' => do_lang_tempcode('EMAIL_LOG'),
                 'category' => 'server_performance',
                 'filters' => [
-                    'emails_sent__month_range' => new CMSStatsDateMonthRangeFilter('emails_sent__month_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
+                    'emails_sent__day_range' => new CMSStatsDayRangeFilter('emails_sent__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
                 ],
                 'pivot' => new CMSStatsDatePivot('emails_sent__pivot', $this->get_date_pivots(!$for_kpi)),
             ],
@@ -47,7 +47,7 @@ class Hook_admin_stats_emails extends CMSStatsProvider
                 'label' => do_lang_tempcode('UNSUBSCRIBED_EMAILS'),
                 'category' => 'conversions',
                 'filters' => [
-                    'unsubscribed_emails__month_range' => new CMSStatsDateMonthRangeFilter('unsubscribed_emails__month_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
+                    'unsubscribed_emails__day_range' => new CMSStatsDayRangeFilter('unsubscribed_emails__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
                 ],
                 'pivot' => new CMSStatsDatePivot('unsubscribed_emails__pivot', $this->get_date_pivots(!$for_kpi)),
             ],
@@ -83,15 +83,14 @@ class Hook_admin_stats_emails extends CMSStatsProvider
                 $timestamp = $row['m_date_and_time'];
                 $timestamp = tz_time($timestamp, $server_timezone);
 
-                $month = to_epoch_interval_index($timestamp, 'months');
-
                 foreach (array_keys($date_pivots) as $pivot) {
+                    $pivot_interval = $this->calculate_date_pivot_interval($pivot, $timestamp);
                     $pivot_value = $this->calculate_date_pivot_value($pivot, $timestamp);
 
-                    if (!isset($data_buckets['emails_sent'][$month][$pivot][$pivot_value])) {
-                        $data_buckets['emails_sent'][$month][$pivot][$pivot_value] = 0;
+                    if (!isset($data_buckets['emails_sent'][$pivot][$pivot_interval][$pivot_value])) {
+                        $data_buckets['emails_sent'][$pivot][$pivot_interval][$pivot_value] = 0;
                     }
-                    $data_buckets['emails_sent'][$month][$pivot][$pivot_value]++;
+                    $data_buckets['emails_sent'][$pivot][$pivot_interval][$pivot_value]++;
                 }
             }
 
@@ -113,15 +112,14 @@ class Hook_admin_stats_emails extends CMSStatsProvider
                 $timestamp = $row['b_time'];
                 $timestamp = tz_time($timestamp, $server_timezone);
 
-                $month = to_epoch_interval_index($timestamp, 'months');
-
                 foreach (array_keys($date_pivots) as $pivot) {
+                    $pivot_interval = $this->calculate_date_pivot_interval($pivot, $timestamp);
                     $pivot_value = $this->calculate_date_pivot_value($pivot, $timestamp);
 
-                    if (!isset($data_buckets['unsubscribed_emails'][$month][$pivot][$pivot_value])) {
-                        $data_buckets['unsubscribed_emails'][$month][$pivot][$pivot_value] = 0;
+                    if (!isset($data_buckets['unsubscribed_emails'][$pivot][$pivot_interval][$pivot_value])) {
+                        $data_buckets['unsubscribed_emails'][$pivot][$pivot_interval][$pivot_value] = 0;
                     }
-                    $data_buckets['unsubscribed_emails'][$month][$pivot][$pivot_value]++;
+                    $data_buckets['unsubscribed_emails'][$pivot][$pivot_interval][$pivot_value]++;
                 }
             }
 
@@ -139,7 +137,7 @@ class Hook_admin_stats_emails extends CMSStatsProvider
      */
     public function generate_final_data(string $bucket, string $pivot, array $filters) : ?array
     {
-        $range = $this->convert_month_range_filter_to_pair($filters[$bucket . '__month_range']);
+        $range = $this->convert_day_range_filter_to_pair($pivot, $filters[$bucket . '__day_range']);
 
         $data = $this->fill_data_by_date_pivots($pivot, $range[0], $range[1]);
 

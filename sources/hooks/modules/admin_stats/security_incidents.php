@@ -63,7 +63,7 @@ class Hook_admin_stats_security_incidents extends CMSStatsProvider
             'label' => do_lang_tempcode('SECURITY_LOG'),
             'category' => 'security',
             'filters' => [
-                'security_incidents__month_range' => new CMSStatsDateMonthRangeFilter('security_incidents__month_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
+                'security_incidents__day_range' => new CMSStatsDayRangeFilter('security_incidents__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
                 'security_incidents__include_hackattacks' => new CMSStatsTickFilter('security_incidents__include_hackattacks', do_lang_tempcode('SECURITY_ALERTS')),
                 'security_incidents__include_failedlogins' => new CMSStatsTickFilter('security_incidents__include_failedlogins', do_lang_tempcode('FAILED_LOGINS')),
             ],
@@ -75,7 +75,7 @@ class Hook_admin_stats_security_incidents extends CMSStatsProvider
                 'label' => do_lang_tempcode('_COUNTRIES', do_lang_tempcode('SECURITY_LOG')),
                 'category' => 'security',
                 'filters' => [
-                    'security_incidents_countries__month_range' => new CMSStatsDateMonthRangeFilter('security_incidents_countries__month_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
+                    'security_incidents_countries__day_range' => new CMSStatsDayRangeFilter('security_incidents_countries__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
                     'security_incidents_countries__include_hackattacks' => new CMSStatsTickFilter('security_incidents_countries__include_hackattacks', do_lang_tempcode('SECURITY_ALERTS')),
                     'security_incidents_countries__include_failedlogins' => new CMSStatsTickFilter('security_incidents_countries__include_failedlogins', do_lang_tempcode('FAILED_LOGINS')),
                 ],
@@ -115,27 +115,26 @@ class Hook_admin_stats_security_incidents extends CMSStatsProvider
                 $timestamp = $row['date_and_time'];
                 $timestamp = tz_time($timestamp, $server_timezone);
 
-                $month = to_epoch_interval_index($timestamp, 'months');
-
                 $country = geolocate_ip($row['ip']);
                 if ($country === null) {
                     $country = '';
                 }
 
-                if (has_geolocation_data()) {
-                    if (!isset($data_buckets['security_incidents_countries'][$month]['']['failedlogins'][$country])) {
-                        $data_buckets['security_incidents_countries'][$month]['']['failedlogins'][$country] = 0;
-                    }
-                    $data_buckets['security_incidents_countries'][$month]['']['failedlogins'][$country]++;
-                }
-
                 foreach (array_keys($date_pivots) as $pivot) {
+                    $pivot_interval = $this->calculate_date_pivot_interval($pivot, $timestamp);
                     $pivot_value = $this->calculate_date_pivot_value($pivot, $timestamp);
 
-                    if (!isset($data_buckets['security_incidents'][$month][$pivot][$pivot_value]['failedlogins'])) {
-                        $data_buckets['security_incidents'][$month][$pivot][$pivot_value]['failedlogins'] = 0;
+                    if (!isset($data_buckets['security_incidents'][$pivot][$pivot_interval][$pivot_value]['failedlogins'])) {
+                        $data_buckets['security_incidents'][$pivot][$pivot_interval][$pivot_value]['failedlogins'] = 0;
                     }
-                    $data_buckets['security_incidents'][$month][$pivot][$pivot_value]['failedlogins']++;
+                    $data_buckets['security_incidents'][$pivot][$pivot_interval][$pivot_value]['failedlogins']++;
+
+                    if (has_geolocation_data()) {
+                        if (!isset($data_buckets['security_incidents_countries'][$pivot][$pivot_interval][$pivot_value]['failedlogins'][$country])) {
+                            $data_buckets['security_incidents_countries'][$pivot][$pivot_interval][$pivot_value]['failedlogins'][$country] = 0;
+                        }
+                        $data_buckets['security_incidents_countries'][$pivot][$pivot_interval][$pivot_value]['failedlogins'][$country]++;
+                    }
                 }
             }
 
@@ -154,27 +153,26 @@ class Hook_admin_stats_security_incidents extends CMSStatsProvider
                 $timestamp = $row['date_and_time'];
                 $timestamp = tz_time($timestamp, $server_timezone);
 
-                $month = to_epoch_interval_index($timestamp, 'months');
-
                 $country = geolocate_ip($row['ip']);
                 if ($country === null) {
                     $country = '';
                 }
 
-                if (has_geolocation_data()) {
-                    if (!isset($data_buckets['security_incidents_countries'][$month]['']['hackattacks'][$country])) {
-                        $data_buckets['security_incidents_countries'][$month]['']['hackattacks'][$country] = 0;
-                    }
-                    $data_buckets['security_incidents_countries'][$month]['']['hackattacks'][$country]++;
-                }
-
                 foreach (array_keys($date_pivots) as $pivot) {
+                    $pivot_interval = $this->calculate_date_pivot_interval($pivot, $timestamp);
                     $pivot_value = $this->calculate_date_pivot_value($pivot, $timestamp);
 
-                    if (!isset($data_buckets['security_incidents'][$month][$pivot][$pivot_value]['hackattacks'])) {
-                        $data_buckets['security_incidents'][$month][$pivot][$pivot_value]['hackattacks'] = 0;
+                    if (!isset($data_buckets['security_incidents'][$pivot][$pivot_interval][$pivot_value]['hackattacks'])) {
+                        $data_buckets['security_incidents'][$pivot][$pivot_interval][$pivot_value]['hackattacks'] = 0;
                     }
-                    $data_buckets['security_incidents'][$month][$pivot][$pivot_value]['hackattacks']++;
+                    $data_buckets['security_incidents'][$pivot][$pivot_interval][$pivot_value]['hackattacks']++;
+
+                    if (has_geolocation_data()) {
+                        if (!isset($data_buckets['security_incidents_countries'][$pivot][$pivot_interval][$pivot_value]['hackattacks'][$country])) {
+                            $data_buckets['security_incidents_countries'][$pivot][$pivot_interval][$pivot_value]['hackattacks'][$country] = 0;
+                        }
+                        $data_buckets['security_incidents_countries'][$pivot][$pivot_interval][$pivot_value]['hackattacks'][$country]++;
+                    }
                 }
             }
 
@@ -194,7 +192,7 @@ class Hook_admin_stats_security_incidents extends CMSStatsProvider
     {
         switch ($bucket) {
             case 'security_incidents':
-                $range = $this->convert_month_range_filter_to_pair($filters[$bucket . '__month_range']);
+                $range = $this->convert_day_range_filter_to_pair($pivot, $filters[$bucket . '__day_range']);
 
                 $data = $this->fill_data_by_date_pivots($pivot, $range[0], $range[1]);
 
@@ -236,7 +234,7 @@ class Hook_admin_stats_security_incidents extends CMSStatsProvider
                 ];
 
             case 'security_incidents_countries':
-                $range = $this->convert_month_range_filter_to_pair($filters[$bucket . '__month_range']);
+                $range = $this->convert_day_range_filter_to_pair($pivot, $filters[$bucket . '__day_range']);
 
                 require_code('locations');
 

@@ -63,7 +63,7 @@ class Hook_admin_stats_cns_members extends CMSStatsProvider
                 'label' => do_lang_tempcode('JOINING'),
                 'category' => 'conversions',
                 'filters' => [
-                    'members__month_range' => new CMSStatsDateMonthRangeFilter('members__month_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
+                    'members__day_range' => new CMSStatsDayRangeFilter('members__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
                     'members__country' => has_geolocation_data() ? new CMSStatsCountryFilter('members__country', do_lang_tempcode('VISITOR_COUNTRY')) : null,
                 ],
                 'pivot' => new CMSStatsDatePivot('members__pivot', $this->get_date_pivots(!$for_kpi)),
@@ -73,7 +73,7 @@ class Hook_admin_stats_cns_members extends CMSStatsProvider
                 'label' => do_lang_tempcode('AGE_RANGE'),
                 'category' => 'audience_demographics',
                 'filters' => [
-                    'demographics__month_range' => new CMSStatsDateMonthRangeFilter('demographics__month_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
+                    'demographics__day_range' => new CMSStatsDayRangeFilter('demographics__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
                     'demographics__age_brackets' => new CMSStatsTextFilter('demographics__age_brackets', do_lang_tempcode('AGE_RANGE'), implode(',', $this->default_age_brackets)),
                 ],
                 'pivot' => null,
@@ -139,32 +139,31 @@ class Hook_admin_stats_cns_members extends CMSStatsProvider
                 $timestamp = $row['m_join_time'];
                 $timestamp = tz_time($timestamp, $server_timezone);
 
-                $month = to_epoch_interval_index($timestamp, 'months');
-
                 $country = geolocate_ip($row['m_ip_address']);
                 if ($country === null) {
                     $country = '';
                 }
 
                 foreach (array_keys($date_pivots) as $pivot) {
+                    $pivot_interval = $this->calculate_date_pivot_interval($pivot, $timestamp);
                     $pivot_value = $this->calculate_date_pivot_value($pivot, $timestamp);
 
-                    if (!isset($data_buckets['members'][$month][$pivot][$pivot_value][$country])) {
-                        $data_buckets['members'][$month][$pivot][$pivot_value][$country] = 0;
+                    if (!isset($data_buckets['members'][$pivot][$pivot_interval][$pivot_value][$country])) {
+                        $data_buckets['members'][$pivot][$pivot_interval][$pivot_value][$country] = 0;
                     }
-                    $data_buckets['members'][$month][$pivot][$pivot_value][$country]++;
-                }
+                    $data_buckets['members'][$pivot][$pivot_interval][$pivot_value][$country]++;
 
-                if ($row['m_dob_year'] !== null) {
-                    $age = intval(date('Y')) - $row['m_dob_year'];
-                    if (date('md', cms_mktime(0, 0, 0, $row['m_dob_month'], $row['m_dob_day'], $row['m_dob_year'])) > date('md')) {
-                        $age--;
-                    }
+                    if ($row['m_dob_year'] !== null) {
+                        $age = intval(date('Y')) - $row['m_dob_year'];
+                        if (date('md', cms_mktime(0, 0, 0, $row['m_dob_month'], $row['m_dob_day'], $row['m_dob_year'])) > date('md')) {
+                            $age--;
+                        }
 
-                    if (!isset($data_buckets['demographics'][$month][''][$age])) {
-                        $data_buckets['demographics'][$month][''][$age] = 0;
+                        if (!isset($data_buckets['demographics'][$pivot][$pivot_interval][$pivot_value][$age])) {
+                            $data_buckets['demographics'][$pivot][$pivot_interval][$pivot_value][$age] = 0;
+                        }
+                        $data_buckets['demographics'][$pivot][$pivot_interval][$pivot_value][$age]++;
                     }
-                    $data_buckets['demographics'][$month][''][$age]++;
                 }
             }
 
@@ -239,7 +238,7 @@ class Hook_admin_stats_cns_members extends CMSStatsProvider
     {
         switch ($bucket) {
             case 'members':
-                $range = $this->convert_month_range_filter_to_pair($filters[$bucket . '__month_range']);
+                $range = $this->convert_day_range_filter_to_pair($pivot, $filters[$bucket . '__day_range']);
 
                 $data = $this->fill_data_by_date_pivots($pivot, $range[0], $range[1]);
 
@@ -277,7 +276,7 @@ class Hook_admin_stats_cns_members extends CMSStatsProvider
                 ];
 
             case 'demographics':
-                $range = $this->convert_month_range_filter_to_pair($filters[$bucket . '__month_range']);
+                $range = $this->convert_day_range_filter_to_pair($pivot, $filters[$bucket . '__day_range']);
 
                 $age_brackets = explode(',', $filters[$bucket . '__age_brackets']);
 

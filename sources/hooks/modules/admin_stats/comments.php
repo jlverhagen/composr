@@ -74,7 +74,7 @@ class Hook_admin_stats_comments extends CMSStatsProvider
                 'label' => do_lang_tempcode('COMMENTS'),
                 'category' => 'feedback_and_engagement',
                 'filters' => [
-                    'comments__month_range' => new CMSStatsDateMonthRangeFilter('comments__month_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
+                    'comments__day_range' => new CMSStatsDayRangeFilter('comments__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
                     'comments_tallies__content_type' => new CMSStatsListFilter('comments_tallies__content_type', do_lang_tempcode('CONTENT_TYPE'), $this->find_all_feedback_type_codes()),
                 ],
                 'pivot' => new CMSStatsDatePivot('comments__pivot', $this->get_date_pivots(!$for_kpi)),
@@ -84,7 +84,7 @@ class Hook_admin_stats_comments extends CMSStatsProvider
                 'label' => do_lang_tempcode('COMMENT_ENGAGEMENT'),
                 'category' => 'feedback_and_engagement',
                 'filters' => [
-                    'comments_tallies__month_range' => new CMSStatsDateMonthRangeFilter('comments_tallies__month_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
+                    'comments_tallies__day_range' => new CMSStatsDayRangeFilter('comments_tallies__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
                     'comments_tallies__content_type' => new CMSStatsListFilter('comments_tallies__content_type', do_lang_tempcode('CONTENT_TYPE'), $this->find_all_feedback_type_codes()),
                 ],
                 'pivot' => null,
@@ -140,25 +140,24 @@ class Hook_admin_stats_comments extends CMSStatsProvider
                         continue;
                     }
 
-                    $month = to_epoch_interval_index($timestamp, 'months');
-
                     $num_comments = $topic['t_cache_num_posts'] - 1;
 
                     foreach (array_keys($date_pivots) as $pivot) {
+                        $pivot_interval = $this->calculate_date_pivot_interval($pivot, $timestamp);
                         $pivot_value = $this->calculate_date_pivot_value($pivot, $timestamp);
 
-                        if (!isset($data_buckets['comments'][$month][$pivot][$pivot_value][$feedback_type_code])) {
-                            $data_buckets['comments'][$month][$pivot][$pivot_value][$feedback_type_code] = [0, 0];
+                        if (!isset($data_buckets['comments'][$pivot][$pivot_interval][$pivot_value][$feedback_type_code])) {
+                            $data_buckets['comments'][$pivot][$pivot_interval][$pivot_value][$feedback_type_code] = [0, 0];
                         }
-                        $data_buckets['comments'][$month][$pivot][$pivot_value][$feedback_type_code][0] += $num_comments;
-                        $data_buckets['comments'][$month][$pivot][$pivot_value][$feedback_type_code][1]++;
+                        $data_buckets['comments'][$pivot][$pivot_interval][$pivot_value][$feedback_type_code][0] += $num_comments;
+                        $data_buckets['comments'][$pivot][$pivot_interval][$pivot_value][$feedback_type_code][1]++;
 
                         $comment_bracket = $this->find_value_bracket($this->comments_brackets, $num_comments);
                         if ($comment_bracket !== null) {
-                            if (!isset($data_buckets['comments_tallies'][$month][''][$comment_bracket])) {
-                                $data_buckets['comments_tallies'][$month][''][$comment_bracket] = 0;
+                            if (!isset($data_buckets['comments_tallies'][$pivot][$pivot_interval][$pivot_value][$comment_bracket])) {
+                                $data_buckets['comments_tallies'][$pivot][$pivot_interval][$pivot_value][$comment_bracket] = 0;
                             }
-                            $data_buckets['comments_tallies'][$month][''][$comment_bracket]++;
+                            $data_buckets['comments_tallies'][$pivot][$pivot_interval][$pivot_value][$comment_bracket]++;
                         }
                     }
                 }
@@ -180,7 +179,7 @@ class Hook_admin_stats_comments extends CMSStatsProvider
     {
         switch ($bucket) {
             case 'comments':
-                $range = $this->convert_month_range_filter_to_pair($filters[$bucket . '__month_range']);
+                $range = $this->convert_day_range_filter_to_pair($pivot, $filters[$bucket . '__day_range']);
 
                 $data = $this->fill_data_by_date_pivots($pivot, $range[0], $range[1]);
 
@@ -225,7 +224,7 @@ class Hook_admin_stats_comments extends CMSStatsProvider
                 ];
 
             case 'comments_tallies':
-                $range = $this->convert_month_range_filter_to_pair($filters[$bucket . '__month_range']);
+                $range = $this->convert_day_range_filter_to_pair($pivot, $filters[$bucket . '__day_range']);
 
                 $data = [];
                 foreach ($this->comments_brackets as $bracket) {
