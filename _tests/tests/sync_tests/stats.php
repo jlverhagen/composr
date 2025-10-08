@@ -29,7 +29,7 @@ class stats_test_set extends cms_test_case
         parent::setUp();
 
         disable_php_memory_limit();
-        cms_set_time_limit(TIME_LIMIT_EXTEND__SLUGGISH);
+        cms_set_time_limit(TIME_LIMIT_EXTEND__CRAWL);
 
         require_code('stats');
         require_code('temporal');
@@ -151,6 +151,7 @@ class stats_test_set extends cms_test_case
 
         // Remove old preprocessed stats so we can force pre-processing again
         $GLOBALS['SITE_DB']->query_delete('stats_preprocessed');
+        $GLOBALS['SITE_DB']->query_delete('stats_preprocessed_delta');
         $GLOBALS['SITE_DB']->query_delete('stats_preprocessed_flat');
 
         // Generate dummy data so we can process stats on them
@@ -168,7 +169,7 @@ class stats_test_set extends cms_test_case
             }
         }
 
-        $p_month = to_epoch_interval_index(time(), 'months');
+        $p_day = to_epoch_interval_index(time(), 'days');
         $server_timezone = get_server_timezone();
 
         $today = cms_date('Y-m-d');
@@ -190,7 +191,7 @@ class stats_test_set extends cms_test_case
             preprocess_raw_data_for($hook_name, $start_time, $end_time);
         }
 
-        $rows = $GLOBALS['SITE_DB']->query_select('stats_preprocessed', ['p_bucket']);
+        $rows = $GLOBALS['SITE_DB']->query_select('stats_preprocessed_delta', ['DISTINCT p_bucket']);
         foreach ($rows as $row) {
             $buckets_existing[] = $row['p_bucket'];
         }
@@ -226,11 +227,11 @@ class stats_test_set extends cms_test_case
             }
         }
 
-        $rows = $GLOBALS['SITE_DB']->query_select('stats_preprocessed', ['p_bucket', 'p_pivot'], ['p_month' => $p_month]);
+        $rows = $GLOBALS['SITE_DB']->query_select('stats_preprocessed_delta', ['p_bucket', 'p_pivot']);
         foreach ($rows as $row) {
             $this->assertTrue(isset($bucket_hook[$row['p_bucket']]), 'Orphaned bucket in database: ' . $row['p_bucket']);
             if (isset($bucket_hook[$row['p_bucket']])) {
-                $this->run_filter_tests($bucket_filters[$row['p_bucket']], $hook_obs[$bucket_hook[$row['p_bucket']]], $row['p_bucket'], $row['p_pivot'], $p_month);
+                $this->run_filter_tests($bucket_filters[$row['p_bucket']], $hook_obs[$bucket_hook[$row['p_bucket']]], $row['p_bucket'], $row['p_pivot'], $p_day);
             }
         }
 
@@ -238,34 +239,34 @@ class stats_test_set extends cms_test_case
         foreach ($rows as $row) {
             $this->assertTrue(isset($bucket_hook[$row['p_bucket']]), 'Orphaned bucket in database: ' . $row['p_bucket']);
             if (isset($bucket_hook[$row['p_bucket']])) {
-                $this->run_filter_tests($bucket_filters[$row['p_bucket']], $hook_obs[$bucket_hook[$row['p_bucket']]], $row['p_bucket'], '', $p_month);
+                $this->run_filter_tests($bucket_filters[$row['p_bucket']], $hook_obs[$bucket_hook[$row['p_bucket']]], $row['p_bucket'], '', $p_day);
             }
         }
     }
 
-    protected function run_filter_tests(array $filters, $hook, string $bucket, string $pivot, int $p_month)
+    protected function run_filter_tests(array $filters, $hook, string $bucket, string $pivot, int $p_day)
     {
         // Test that the filters do not cause crashes (TODO: does not yet actually test the filters filter as they should)
         foreach ($filters as $filter_name => $filter_class) {
-            // Test month range filters
+            // Test day range filters
             if ($filter_class instanceof CMSStatsDayRangeFilter) {
                 // Test integer filter
                 $data = $hook->generate_final_data($bucket, $pivot, [
-                    $filter_name => $p_month
+                    $filter_name => $p_day
                 ]);
-                $this->assertTrue(is_array($data) && (count($data) == 4), 'Did not receive standardised map data for month range filter (integer) on ' . $bucket . '=>' . $pivot . '=>' . $filter_name);
+                $this->assertTrue(is_array($data) && (count($data) == 4), 'Did not receive standardised map data for day range filter (integer) on ' . $bucket . '=>' . $pivot . '=>' . $filter_name);
 
                 // Test integer filter in array format
                 $data = $hook->generate_final_data($bucket, $pivot, [
-                    $filter_name => [$p_month]
+                    $filter_name => [$p_day]
                 ]);
-                $this->assertTrue(is_array($data) && (count($data) == 4), 'Did not receive standardised map data for month range filter (single item array) on ' . $bucket . '=>' . $pivot . '=>' . $filter_name);
+                $this->assertTrue(is_array($data) && (count($data) == 4), 'Did not receive standardised map data for day range filter (single item array) on ' . $bucket . '=>' . $pivot . '=>' . $filter_name);
 
                 // Test integer filter in array range format
                 $data = $hook->generate_final_data($bucket, $pivot, [
-                    $filter_name => [$p_month - 1, $p_month]
+                    $filter_name => [$p_day - 1, $p_day]
                 ]);
-                $this->assertTrue(is_array($data) && (count($data) == 4), 'Did not receive standardised map data for month range filter (array range) on ' . $bucket . '=>' . $pivot . '=>' . $filter_name);
+                $this->assertTrue(is_array($data) && (count($data) == 4), 'Did not receive standardised map data for day range filter (array range) on ' . $bucket . '=>' . $pivot . '=>' . $filter_name);
             }
 
             // Test text filters
@@ -324,6 +325,7 @@ class stats_test_set extends cms_test_case
     {
         // Remove old preprocessed stats so we can force pre-processing again
         $GLOBALS['SITE_DB']->query_delete('stats_preprocessed');
+        $GLOBALS['SITE_DB']->query_delete('stats_preprocessed_delta');
         $GLOBALS['SITE_DB']->query_delete('stats_preprocessed_flat');
 
         // Delete dummy data

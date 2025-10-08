@@ -910,7 +910,7 @@ abstract class CMSStatsProvider extends CMSStatsHookBase
 
                 for ($i = $start_day; $i <= $end_day; $i++) {
                     for ($j = 0; $j <= 23; $j++) {
-                        $data[$pivot][$i][$j] = 0;
+                        $data[$pivot][$i][$j] = null;
                     }
                 }
                 break;
@@ -920,7 +920,7 @@ abstract class CMSStatsProvider extends CMSStatsHookBase
                 $end_day = to_epoch_interval_index($end, 'days');
 
                 for ($i = $start_day; $i <= $end_day; $i++) {
-                    $data[$pivot][$i][0] = 0;
+                    $data[$pivot][$i][0] = null;
                 }
                 break;
 
@@ -933,7 +933,7 @@ abstract class CMSStatsProvider extends CMSStatsHookBase
 
                 for ($i = $start_week; $i <= $end_week; $i++) {
                     for ($j = 0; $j <= 6; $j++) {
-                        $data[$pivot][$i][$j] = 0;
+                        $data[$pivot][$i][$j] = null;
                     }
                 }
                 break;
@@ -946,7 +946,7 @@ abstract class CMSStatsProvider extends CMSStatsHookBase
                 $end_week = to_epoch_interval_index($end, 'weeks', $epoch);
 
                 for ($i = $start_week; $i <= $end_week; $i++) {
-                    $data[$pivot][$i][0] = 0;
+                    $data[$pivot][$i][0] = null;
                 }
                 break;
 
@@ -956,7 +956,7 @@ abstract class CMSStatsProvider extends CMSStatsHookBase
 
                 for ($i = $start_day; $i <= $end_day; $i++) {
                     for ($j = 1; $j <= 53; $j++) {
-                        $data[$pivot][$i][$j] = 0;
+                        $data[$pivot][$i][$j] = null;
                     }
                 }
                 break;
@@ -966,7 +966,7 @@ abstract class CMSStatsProvider extends CMSStatsHookBase
                 $end_month = to_epoch_interval_index($end, 'months');
 
                 for ($i = $start_month; $i <= $end_month; $i++) {
-                    $data[$pivot][$i][0] = 0;
+                    $data[$pivot][$i][0] = null;
                 }
                 break;
 
@@ -976,7 +976,7 @@ abstract class CMSStatsProvider extends CMSStatsHookBase
 
                 for ($i = $start_day; $i <= $end_day; $i++) {
                     for ($j = 0; $j <= 11; $j++) {
-                        $data[$pivot][$i][$j] = 0;
+                        $data[$pivot][$i][$j] = null;
                     }
                 }
                 break;
@@ -986,7 +986,7 @@ abstract class CMSStatsProvider extends CMSStatsHookBase
                 $end_quarter = intval(to_epoch_interval_index($end, 'months') / 3);
 
                 for ($i = $start_quarter; $i <= $end_quarter; $i++) {
-                    $data[$pivot][$i][0] = 0;
+                    $data[$pivot][$i][0] = null;
                 }
                 break;
 
@@ -996,7 +996,7 @@ abstract class CMSStatsProvider extends CMSStatsHookBase
 
                 for ($i = $start_day; $i <= $end_day; $i++) {
                     for ($j = 0; $j <= 3; $j++) {
-                        $data[$pivot][$i][$j] = 0;
+                        $data[$pivot][$i][$j] = null;
                     }
                 }
                 break;
@@ -1006,7 +1006,7 @@ abstract class CMSStatsProvider extends CMSStatsHookBase
                 $end_year = to_epoch_interval_index($end, 'years');
 
                 for ($i = $start_year; $i <= $end_year; $i++) {
-                    $data[$pivot][$i][0] = 0;
+                    $data[$pivot][$i][0] = null;
                 }
                 break;
 
@@ -1253,6 +1253,10 @@ function find_known_stats_day_bounds() : array
                 $max_day = $value;
             }
         }
+    }
+
+    if ($min_day === null) {
+        return [null, null];
     }
 
     return [to_epoch_interval_index($min_day, 'days'), to_epoch_interval_index($max_day, 'days')];
@@ -1802,62 +1806,36 @@ function preprocess_raw_data_for(string $hook_name, int $start_time = 0, ?int $e
 
     cms_profile_start_for('preprocess_raw_data_for::' . $hook_name);
 
-    // First we need to load up any data we already processed for the time range, so anything new will MERGE into that...
-
     cms_profile_start_for('preprocess_raw_data_for::' . $hook_name . '->preprocess_raw_data');
 
-    // We process on a daily interval to reduce the chance of PHP out of memory issues
+    // We process day by day to reduce the chance of PHP out of memory issues
     $_end_time = $start_time + (60 * 60 * 24);
     if ($_end_time > $end_time) {
         $_end_time = $end_time;
     }
 
     do {
-        // Figure out what data we need to get from the database and get it
         $data_buckets = [];
         foreach (array_keys($info) as $bucket) {
             $data_buckets[$bucket] = [];
-
-            foreach ($hook_ob->get_date_pivots() as $pivot => $pretty_name)
-            {
-                $data_buckets[$bucket] = array_merge($data_buckets[$bucket], $hook_ob->fill_data_by_date_pivots($pivot, $start_time, $_end_time));
-            }
-
-            // TODO: optimise???
-            foreach ($data_buckets[$bucket] as $pivot => $_) {
-                foreach ($_ as $pivot_interval => $__) {
-                    foreach ($__ as $pivot_value => $value) {
-                        $where_map = ['p_bucket' => $bucket, 'p_pivot' => $pivot, 'p_pivot_interval' => $pivot_interval, 'p_pivot_value'];
-
-                        $data_rows = $GLOBALS['SITE_DB']->query_select('stats_preprocessed', ['p_data'], $where_map);
-                        foreach ($data_rows as $row) {
-                            $data_buckets[$bucket][$pivot][$pivot_interval][$pivot_value] = @unserialize($row['p_data']);
-                            if ($data_buckets[$bucket][$pivot][$pivot_interval][$pivot_value] === false) {
-                                $data_buckets[$bucket][$pivot][$pivot_interval][$pivot_value] = [];
-                            }
-                        }
-                    }
-                }
-            }
         }
 
         // Preprocess new data...
 
         $hook_ob->preprocess_raw_data($start_time, $_end_time, $data_buckets);
 
-        // Re-save into the database...
+        // Save into the delta for later merging...
 
         foreach ($data_buckets as $bucket => $_) {
             foreach ($_ as $pivot => $__) {
                 foreach ($__ as $pivot_interval => $___) {
                     foreach ($___ as $pivot_value => $data) {
-                        $GLOBALS['SITE_DB']->query_insert_or_replace('stats_preprocessed', [
-                            'p_data' => serialize($data),
-                        ], [
+                        $GLOBALS['SITE_DB']->query_insert('stats_preprocessed_delta', [
                             'p_bucket' => $bucket,
                             'p_pivot' => $pivot,
                             'p_pivot_interval' => $pivot_interval,
                             'p_pivot_value' => $pivot_value,
+                            'p_data' => serialize($data),
                         ]);
                     }
                 }
@@ -1871,6 +1849,7 @@ function preprocess_raw_data_for(string $hook_name, int $start_time = 0, ?int $e
             break;
         }
 
+        $start_time = $_end_time + 1;
         $_end_time = $_end_time + (60 * 60 * 24);
         if ($_end_time > $end_time) {
             $_end_time = $end_time;

@@ -42,7 +42,7 @@ class Hook_cron_stats_preprocess_raw_data
         return [
             'label' => 'Stats preprocessing',
             'num_queued' => null,
-            'minutes_between_runs' => 60,
+            'minutes_between_runs' => 1,
             'enabled_by_default' => true,
         ];
     }
@@ -91,9 +91,17 @@ class Hook_cron_stats_preprocess_raw_data
             $end_time = ($start_time + self::END_TIME_CUTOFF);
         }
 
-        if ($end_time > $start_time) {
-            require_code('global3');
-            cms_profile_start_for('Hook_cron_stats_preprocess_raw_data');
+        require_code('global3');
+
+        // Determine if we are processing deltas opposed to running preprocessing
+        $pending_deltas = $GLOBALS['SITE_DB']->query_select_value('stats_preprocessed_delta', 'COUNT(*)');
+        $doing_deltas = ($pending_deltas > 0);
+        if (($doing_deltas === false) && ($start_time < (time() - (60 * 15)))) { // Do not preprocess stats data more than once every 15 minutes
+            return;
+        }
+
+        if (($end_time > $start_time) && ($doing_deltas === false)) { // Process new stats into the delta once every 15 minutes
+            cms_profile_start_for('Hook_cron_stats_preprocess_raw_data preprocess_raw_data_for');
 
             push_query_limiting(false);
             disable_php_memory_limit();
@@ -114,7 +122,109 @@ class Hook_cron_stats_preprocess_raw_data
 
             pop_query_limiting();
 
-            cms_profile_end_for('Hook_cron_stats_preprocess_raw_data');
+            cms_profile_end_for('Hook_cron_stats_preprocess_raw_data preprocess_raw_data_for');
+        } else { // Otherwise, let's merge in some pending deltas
+            cms_profile_start_for('Hook_cron_stats_preprocess_raw_data deltas');
+
+            push_query_limiting(false);
+
+            $start_at = time();
+            while ((memory_get_usage() < (1024 * 1024 * 32)) && ((time() - $start_at) < 5)) { // Time and memory checks
+                $row = $GLOBALS['SITE_DB']->query_select('stats_preprocessed_delta', ['*'], [], ' ORDER BY id', 1);
+                if (!array_key_exists(0, $row)) { // No more to do
+                    break;
+                }
+
+                $stats_row = $GLOBALS['SITE_DB']->query_select('stats_preprocessed', ['*'], [
+                    'p_bucket' => $row[0]['p_bucket'],
+                    'p_pivot' => $row[0]['p_pivot'],
+                    'p_pivot_interval' => $row[0]['p_pivot_interval'],
+                    'p_pivot_value' => $row[0]['p_pivot_value'],
+                ], '', 1);
+
+                if (!array_key_exists(0, $stats_row)) {
+                    $GLOBALS['SITE_DB']->query_insert('stats_preprocessed', [
+                        'p_bucket' => $row[0]['p_bucket'],
+                        'p_pivot' => $row[0]['p_pivot'],
+                        'p_pivot_interval' => $row[0]['p_pivot_interval'],
+                        'p_pivot_value' => $row[0]['p_pivot_value'],
+                        'p_data' => $row[0]['p_data'],
+                    ]);
+                } else {
+                    $row_u = @unserialize($row[0]['p_data']);
+                    if ($row_u === false) {
+                        warn_exit(do_lang_tempcode('INTERNAL_ERROR'), escape_html('TODO'));
+                    }
+
+                    $stats_row_u = @unserialize($stats_row[0]['p_data']);
+                    if ($stats_row_u === false) {
+                        warn_exit(do_lang_tempcode('INTERNAL_ERROR'), escape_html('TODO'));
+                    }
+
+                    $this->stats_deep_merge($stats_row_u, $row_u);
+
+                    $GLOBALS['SITE_DB']->query_update('stats_preprocessed', ['p_data' => serialize($stats_row_u)], [
+                        'p_bucket' => $row[0]['p_bucket'],
+                        'p_pivot' => $row[0]['p_pivot'],
+                        'p_pivot_interval' => $row[0]['p_pivot_interval'],
+                        'p_pivot_value' => $row[0]['p_pivot_value'],
+                    ]);
+                }
+
+                $GLOBALS['SITE_DB']->query_delete('stats_preprocessed_delta', ['id' => $row[0]['id']]);
+
+                unset($row);
+                unset($row_u);
+                unset($stats_row);
+                unset($stats_row_u);
+                unset($merged_data);
+            }
+
+            pop_query_limiting();
+
+            cms_profile_end_for('Hook_cron_stats_preprocess_raw_data preprocess_raw_data_for');
+        }
+    }
+
+    /**
+     * Deep-merge two statistics arrays.
+     *
+     * @param  mixed $base The base statistics, passed and modified by reference
+     * @param  mixed $delta The statistics we are merging into $base
+     */
+    protected function stats_deep_merge(&$base, $delta)
+    {
+        // Sanity check: $base and $delta must both be arrays or both not be arrays
+        if (is_array($base) && !is_array($delta)) {
+            warn_exit(do_lang_tempcode('INTERNAL_ERROR'), escape_html('TODO'));
+        }
+        if (!is_array($base) && is_array($delta)) {
+            warn_exit(do_lang_tempcode('INTERNAL_ERROR'), escape_html('TODO'));
+        }
+
+        if (!is_array($delta)) {
+            if (is_numeric($delta)) { // Numbers get added together (counters)
+                $base = $base + $delta;
+            } else { // All other types overwrite previous values
+                $base = $delta;
+            }
+            return;
+        }
+
+        foreach ($delta as $k => $v) {
+            // Does not exist on base? Create it!
+            if (!array_key_exists($k, $base)) {
+                $base[$k] = $v;
+                continue;
+            }
+
+            if (is_array($v)) { // Arrays get merged
+                stats_deep_merge($base[$k], $v);
+            } elseif (is_numeric($v)) { // Numbers get added together (counters)
+                $base[$k] = $base[$k] + $v;
+            } else { // All other types overwrite previous values
+                $base[$k] = $v;
+            }
         }
     }
 }

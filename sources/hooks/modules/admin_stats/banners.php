@@ -65,7 +65,7 @@ class Hook_admin_stats_banners extends CMSStatsProvider
      *
      * @param  TIME $start_time Start timestamp
      * @param  TIME $end_time End timestamp
-     * @param  array $data_buckets Map of data buckets; a map of bucket name to nested maps with the following maps in sequence: 'month', 'pivot', 'value' (then further map data) ; extended and returned by reference
+     * @param  array $data_buckets Map of data buckets; a map of bucket name to nested maps with the following maps in sequence: 'pivot', 'pivot interval', 'pivot value' (then further map data); passed by reference only with pre-filled zero data to later be merged
      */
     public function preprocess_raw_data(int $start_time, int $end_time, array &$data_buckets)
     {

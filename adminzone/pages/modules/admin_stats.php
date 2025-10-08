@@ -248,11 +248,23 @@ class Module_admin_stats extends Standard_crud_module
             $GLOBALS['SITE_DB']->create_index('stats_known_links', 'l_count_logged', ['l_count_logged']);
         }
 
+        if (($upgrade_from === null) || ($upgrade_from < 12)) { // LEGACY: 11.beta9
+            $GLOBALS['SITE_DB']->create_table('stats_preprocessed_delta', [
+                'id' => '*AUTO',
+                'p_bucket' => 'ID_TEXT',
+                'p_pivot' => 'ID_TEXT',
+                'p_pivot_interval' => 'INTEGER',
+                'p_pivot_value' => 'INTEGER',
+                'p_data' => 'LONG_TEXT',
+            ]);
+        }
+
         if (($upgrade_from !== null) && ($upgrade_from < 12)) { // LEGACY: 11.beta9
             // Must delete everything in stats; cannot safely migrate old data without PHP memory errors
             $GLOBALS['SITE_DB']->query_delete('stats_preprocessed');
+            delete_value('stats__last_processed', true);
+            delete_value('stats__last_day_processed', true);
 
-            // Optimisation for stats addon to avoid PHP out-of-memory errors
             $GLOBALS['SITE_DB']->delete_table_field('stats_preprocessed', 'p_month');
             $GLOBALS['SITE_DB']->add_table_field('stats_preprocessed', 'p_pivot_interval', '*INTEGER');
             $GLOBALS['SITE_DB']->add_table_field('stats_preprocessed', 'p_pivot_value', '*INTEGER');
