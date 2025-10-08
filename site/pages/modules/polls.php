@@ -35,7 +35,7 @@ class Module_polls
         $info['organisation'] = 'Composr';
         $info['hacked_by'] = null;
         $info['hack_version'] = null;
-        $info['version'] = 8;
+        $info['version'] = 9;
         $info['update_require_upgrade'] = true;
         $info['locked'] = false;
         $info['min_cms_version'] = 11.0;
@@ -194,6 +194,10 @@ class Module_polls
         if (($upgrade_from === null) || ($upgrade_from < 8)) {
             $GLOBALS['SITE_DB']->create_index('poll_votes', 'v_voting_member', ['v_voting_member']);
             $GLOBALS['SITE_DB']->create_index('poll_votes', 'v_voting_ip_address', ['v_voting_ip_address']);
+        }
+
+        if (($upgrade_from === null) || ($upgrade_from < 9)) { // 11.beta9
+            $GLOBALS['SITE_DB']->create_foreign_key('poll_votes', 'v_poll_id', 'poll', 'id');
         }
     }
 

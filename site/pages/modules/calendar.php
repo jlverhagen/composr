@@ -42,7 +42,7 @@ class Module_calendar
         $info['organisation'] = 'Composr';
         $info['hacked_by'] = null;
         $info['hack_version'] = null;
-        $info['version'] = 11;
+        $info['version'] = 12;
         $info['update_require_upgrade'] = true;
         $info['locked'] = false;
         $info['min_cms_version'] = 11.0;
@@ -301,6 +301,14 @@ class Module_calendar
 
         if (($upgrade_from !== null) && ($upgrade_from < 11)) { // LEGACY: 11.beta7
             $GLOBALS['SITE_DB']->add_table_field('calendar_events', 'validation_time', '?TIME');
+        }
+
+        if (($upgrade_from === null) || ($upgrade_from < 12)) { // 11.beta9
+            $GLOBALS['SITE_DB']->create_foreign_key('calendar_events', 'e_type', 'calendar_types', 'id');
+            $GLOBALS['SITE_DB']->create_foreign_key('calendar_interests', 't_type', 'calendar_types', 'id');
+            $GLOBALS['SITE_DB']->create_foreign_key('calendar_jobs', 'j_event_id', 'calendar_events', 'id');
+            $GLOBALS['SITE_DB']->create_foreign_key('calendar_jobs', 'j_reminder_id', 'calendar_reminders', 'id');
+            $GLOBALS['SITE_DB']->create_foreign_key('calendar_reminders', 'e_id', 'calendar_events', 'id');
         }
     }
 

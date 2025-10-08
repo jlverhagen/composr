@@ -270,7 +270,7 @@ function _helper_create_table(object $this_ref, string $table_name, array $field
             fatal_exit('AUTO columns must always have a field name of \'id\'');
         }
 
-        if (($table_name != 'db_meta') && ($table_name != 'db_meta_indices')) {
+        if (($table_name != 'db_meta') && ($table_name != 'db_meta_indices') && ($table_name != 'db_meta_foreign_keys')) {
             $ins_m_table[] = $table_name;
             $ins_m_name[] = $name;
             $ins_m_type[] = $type;
@@ -319,6 +319,18 @@ function _helper_create_table(object $this_ref, string $table_name, array $field
     }
 
     reload_lang_fields(false, $table_name, $fields);
+
+    // Add foreign key constraints which reference this new table
+    if (!in_array($table_name, ['db_meta', 'db_meta_indices', 'db_meta_foreign_keys'])) {
+        if ((!running_script('install') && (!running_script('upgrader'))) || $this_ref->table_exists('db_meta_foreign_keys')) {
+            require_code('database');
+            $fk = $GLOBALS['SITE_DB']->query_select('db_meta_foreign_keys', ['*'], ['to_table' => $table_name]);
+            foreach ($fk as $row) {
+                $db = get_db_for($row['from_table']);
+                _helper_create_foreign_key($db, $row['from_table'], $row['from_field'], $row['to_table'], $row['to_field'], unserialize($row['special_values']), false);
+            }
+        }
+    }
 }
 
 /**
@@ -517,28 +529,62 @@ function _helper_delete_index_if_exists(object $this_ref, string $table_name, st
  * @param  ID_TEXT $from_field The table's field on which we are creating a foreign key
  * @param  ID_TEXT $to_table The table which is being referenced
  * @param  ID_TEXT $to_field The table's field which is being referenced
+ * @param  array $special_values Array of special values which $from_field is allowed to have which do not reference anything in $to_field
+ * @param  boolean $also_meta Whether to also add this foreign key to the database meta (false: also bypasses duplicate key sanity check)
  */
-function _helper_create_foreign_key(object $this_ref, string $from_table, string $from_field, string $to_table, string $to_field)
+function _helper_create_foreign_key(object $this_ref, string $from_table, string $from_field, string $to_table, string $to_field, array $special_values = [], bool $also_meta = true)
 {
-    $test = $this_ref->query_select_value_if_there('db_meta_foreign_keys', 'to_table', ['from_table' => $from_table, 'from_field' => $from_field]);
-    if ($test !== null) {
-        fatal_exit('Tried to add a foreign key on ' . $from_table . '.' . $from_field . ' but there is already a foreign key in place.');
+    // Restricted tables which cannot have constraints
+    if (in_array($from_table, ['db_meta', 'db_meta_indices', 'db_meta_foreign_keys'])) {
+        fatal_exit('Not permitted to add a foreign key on the table ' . $from_table . '.');
+    }
+    if (in_array($to_table, ['db_meta', 'db_meta_indices', 'db_meta_foreign_keys'])) {
+        fatal_exit('Not permitted to add a foreign key referencing the table ' . $from_table . '.');
     }
 
-    $this_ref->query_insert('db_meta_foreign_keys', ['from_table' => $from_table, 'from_field' => $from_field, 'to_table' => $to_table, 'to_field' => $to_field]);
+    // Cannot add foreign key on something that does not exist yet
+    $test = $GLOBALS['SITE_DB']->query_select('db_meta', ['*'], ['m_table' => $from_table, 'm_name' => $from_field]);
+    if (!array_key_exists(0, $test)) {
+        fatal_exit('Cannot create foreign key on field ' . $from_table . '.' . $from_field . '; it must exist first.');
+    }
 
-    // Respect InnoDB toggle
-    $innodb = false;
-    global $USE_INNODB;
-    if ($USE_INNODB) {
-        $innodb = true;
+    // Meta check and insert
+    if ($also_meta) {
+        $test2 = $this_ref->query_select('db_meta_foreign_keys', ['*'], ['from_table' => $from_table, 'from_field' => $from_field], '', 1);
+        if (array_key_exists(0, $test2)) {
+            if (($test2[0]['to_table'] != $to_table) || ($test2[0]['to_field'] != $to_field)) { // Bomb out if trying to create a different foreign key on the same table/field
+                fatal_exit('Tried to add a foreign key on ' . $from_table . '.' . $from_field . ' but there is already a foreign key in place.');
+            } else { // Silently exit if trying to create a foreign key that already exists (this might happen in the upgrader)
+                return;
+            }
+        }
+
+        $this_ref->query_insert('db_meta_foreign_keys', ['from_table' => $from_table, 'from_field' => $from_field, 'to_table' => $to_table, 'to_field' => $to_field, 'special_values' => serialize($special_values)]);
     }
-    if (function_exists('get_value') && (get_value('innodb') == '1')) {
-        $innodb = true;
-    }
-    if (!$innodb) {
+
+    // If the table/field we are referencing does not yet exist, skip making the foreign key. When the table is created, the foreign key will be created via the entry we made in db_meta_foreign_keys.
+    $test3 = $GLOBALS['SITE_DB']->query_select('db_meta', ['*'], ['m_table' => $to_table, 'm_name' => $to_field]);
+    if (!array_key_exists(0, $test3)) {
         return;
     }
+
+    // Can only reference fields with primary keys
+    $meta = $test[0];
+    $meta2 = $test3[0];
+    if (strpos($meta2['m_type'], '*') === false) {
+        fatal_exit('Cannot create a foreign key referencing field ' . $to_table . '.' . $to_field . '; this is not a primary field.');
+    }
+
+    // Database types must match (except we ignore null)
+    // TODO: Disabled for now until foreign keys implemented
+    /*
+    $type_remap = $this_ref->driver->get_type_remap(true);
+    $db_type = $type_remap[str_replace(['*', '?'], ['', ''], $meta['m_type'])];
+    $db_type2 = $type_remap[str_replace(['*', '?'], ['', ''], $meta2['m_type'])];
+    if ($db_type != $db_type2) {
+        fatal_exit('Cannot create a foreign key on field ' . $from_table . '.' . $from_field . ' referencing field ' . $to_table . '.' . $to_field . '; type mismatch (' . $meta['m_type'] . ' versus ' . $meta2['m_type'] . ')');
+    }
+    */
 
     $from_table_full = $this_ref->table_prefix . $from_table;
     $to_table_full = $this_ref->table_prefix . $to_table;
@@ -555,21 +601,21 @@ function _helper_create_foreign_key(object $this_ref, string $from_table, string
  * @param  object $this_ref A reference to the database calling this helper
  * @param  ID_TEXT $from_table The table on which we want to delete the foreign key
  * @param  ID_TEXT $from_field The field on which we want to delete a foreign key
+ * @param  boolean $also_meta Whether to also remove this foreign key from database meta
  */
-function _helper_delete_foreign_key_if_exists(object $this_ref, string $from_table, string $from_field)
+function _helper_delete_foreign_key_if_exists(object $this_ref, string $from_table, string $from_field, bool $also_meta = true)
 {
-    $this_ref->query_delete('db_meta_foreign_keys', ['from_table' => $from_table, 'from_field' => $from_field]);
+    // Table might not exist yet if upgrading or installing fresh on top of an existing install
+    if ((running_script('install') || (running_script('upgrader'))) && !$this_ref->table_exists('db_meta_foreign_keys', true)) {
+        return;
+    }
+
+    if ($also_meta) {
+        $this_ref->query_delete('db_meta_foreign_keys', ['from_table' => $from_table, 'from_field' => $from_field]);
+    }
 
     // Respect InnoDB toggle
-    $innodb = false;
-    global $USE_INNODB;
-    if ($USE_INNODB) {
-        $innodb = true;
-    }
-    if (function_exists('get_value') && (get_value('innodb') == '1')) {
-        $innodb = true;
-    }
-    if (!$innodb) {
+    if (!db_is_innodb()) {
         return;
     }
 
@@ -597,7 +643,7 @@ function _helper_drop_table_if_exists(object $this_ref, $table)
 
     $_tables = [];
     foreach ($table as $t) {
-        if (($t != 'db_meta') && ($t != 'db_meta_indices')) {
+        if (($t != 'db_meta') && ($t != 'db_meta_indices') && ($t != 'db_meta_foreign_keys')) {
             if ((!running_script('install')) && (multi_lang_content())) {
                 require_code('lang3');
                 $attrs = $this_ref->query_select('db_meta', ['m_name', 'm_type'], ['m_table' => $t]);
@@ -620,6 +666,18 @@ function _helper_drop_table_if_exists(object $this_ref, $table)
 
             $this_ref->query_delete('db_meta', ['m_table' => $t]);
             $this_ref->query_delete('db_meta_indices', ['i_table' => $t]);
+
+            // Remove old foreign keys on this table
+            if ((!running_script('install') && (!running_script('upgrader'))) || $this_ref->table_exists('db_meta_foreign_keys', true)) {
+                $rows = $this_ref->query_select('db_meta_foreign_keys', ['*'], ['from_table' => $t]);
+                foreach ($rows as $row) {
+                    _helper_delete_foreign_key_if_exists($this_ref, $row['from_table'], $row['from_field']);
+                }
+                $rows = $this_ref->query_select('db_meta_foreign_keys', ['*'], ['to_table' => $t]);
+                foreach ($rows as $row) {
+                    _helper_delete_foreign_key_if_exists($this_ref, $row['from_table'], $row['from_field'], false);
+                }
+            }
         }
 
         $this_ref->ensure_connected();
@@ -632,7 +690,7 @@ function _helper_drop_table_if_exists(object $this_ref, $table)
 
     $queries = $this_ref->driver->drop_table_if_exists__sql($_tables);
     foreach ($queries as $sql) {
-        $this_ref->query($sql, null, 0, true); // Might already exist so suppress errors
+        $this_ref->query($sql, null, 0, true); // Might already be gone so suppress errors
     }
 
     if (function_exists('persistent_cache_delete')) {
@@ -669,11 +727,30 @@ function _helper_needs_to_save_bytes(string $table_name, array $fields) : bool
  */
 function _helper_rename_table(object $this_ref, string $old, string $new)
 {
+    // Remove old foreign keys
+    $foreign_key_rows = [];
+    $foreign_key_rows = $this_ref->query_select('db_meta_foreign_keys', ['*'], ['from_table' => $old]);
+    $foreign_key_rows = array_merge($foreign_key_rows, $this_ref->query_select('db_meta_foreign_keys', ['*'], ['to_table' => $old]));
+    foreach ($foreign_key_rows as $row) {
+        _helper_delete_foreign_key_if_exists($this_ref, $row['from_table'], $row['from_field']);
+    }
+
+    // Rename table
     $query = $this_ref->driver->rename_table__sql($this_ref->table_prefix . $old, $this_ref->table_prefix . $new);
     $this_ref->query($query);
 
+    // Update database meta
     $this_ref->query_update('db_meta', ['m_table' => $new], ['m_table' => $old]);
     $this_ref->query_update('db_meta_indices', ['i_table' => $new], ['i_table' => $old]);
+
+    // Add updated foreign keys
+    foreach ($foreign_key_rows as $row) {
+        if ($row['from_table'] == $old) {
+            _helper_create_foreign_key($this_ref, $new, $row['from_field'], $row['to_table'], $row['to_field'], unserialize($row['special_values']));
+        } elseif ($row['to_table'] == $old) {
+            _helper_create_foreign_key($this_ref, $row['from_table'], $row['from_field'], $new, $row['to_field'], unserialize($row['special_values']));
+        }
+    }
 
     if (function_exists('persistent_cache_delete')) {
         persistent_cache_delete('TABLE_LANG_FIELDS_CACHE');
@@ -764,6 +841,14 @@ function _helper_add_table_field(object $this_ref, string $table_name, string $n
         }
     }
 
+    // Add foreign key references to this field
+    require_code('database');
+    $fk = $GLOBALS['SITE_DB']->query_select('db_meta_foreign_keys', ['*'], ['to_table' => $table_name, 'to_field' => $name]);
+    foreach ($fk as $row) {
+        $db = get_db_for($row['from_table']);
+        _helper_create_foreign_key($db, $row['from_table'], $row['from_field'], $row['to_table'], $row['to_field'], unserialize($row['special_values']), false);
+    }
+
     if (function_exists('persistent_cache_delete')) {
         persistent_cache_delete('TABLE_LANG_FIELDS_CACHE');
     }
@@ -815,6 +900,16 @@ function _helper_alter_table_field(object $this_ref, string $table_name, string 
             foreach ($queries as $query) {
                 $this_ref->_query($query);
             }
+        }
+    }
+
+    // Remove old foreign keys if changing the field name (we need $foreign_key_rows again later on)
+    $foreign_key_rows = [];
+    if ($new_name !== null) {
+        $foreign_key_rows = $this_ref->query_select('db_meta_foreign_keys', ['*'], ['from_table' => $table_name, 'from_field' => $name]);
+        $foreign_key_rows = array_merge($foreign_key_rows, $this_ref->query_select('db_meta_foreign_keys', ['*'], ['to_table' => $table_name, 'to_field' => $name]));
+        foreach ($foreign_key_rows as $row) {
+            _helper_delete_foreign_key_if_exists($this_ref, $row['from_table'], $row['from_field']);
         }
     }
 
@@ -872,6 +967,17 @@ function _helper_alter_table_field(object $this_ref, string $table_name, string 
             }
             if ($changed_index) {
                 $this_ref->query_update('db_meta_indices', ['i_fields' => implode(',', $fields)], ['i_table' => $table_name, 'i_name' => $index['i_name']]);
+            }
+        }
+    }
+
+    // Add updated foreign keys
+    if ($new_name !== null) {
+        foreach ($foreign_key_rows as $row) {
+            if (($row['from_table'] == $table_name) && ($row['from_field'] == $name)) {
+                _helper_create_foreign_key($this_ref, $table_name, $new_name, $row['to_table'], $row['to_field'], unserialize($row['special_values']));
+            } elseif (($row['to_table'] == $table_name) && ($row['to_field'] == $name)) {
+                _helper_create_foreign_key($this_ref, $row['from_table'], $row['from_field'], $table_name, $new_name, unserialize($row['special_values']));
             }
         }
     }
@@ -969,11 +1075,30 @@ function _helper_add_auto_key(object $this_ref, string $table_name, string $fiel
  */
 function rebuild_table_from_meta_database(object $db, string $table_name)
 {
+    // Engage site lock to prevent data corruption
+    $engaged_lock = false;
+    if (!is_file(get_custom_file_base() . '/closed.html')) {
+        $result = file_put_contents(get_custom_file_base() . '/closed.html', 'Database maintenance in progress. Please check back later.');
+        if ($result !== false) {
+            $engaged_lock = true;
+        }
+    }
+
     $fields = $db->query_select('db_meta', ['*'], ['m_table' => $table_name]);
     $indexes = $db->query_select('db_meta_indices', ['*'], ['i_table' => $table_name]);
 
+    $foreign_keys_from = $db->query_select('db_meta_foreign_keys', ['*'], ['from_table' => $table_name]);
+    $foreign_keys_to = $db->query_select('db_meta_foreign_keys', ['*'], ['to_table' => $table_name]);
+    $foreign_keys = array_merge($foreign_keys_from, $foreign_keys_to);
+
+    // Drop foreign keys created on or referencing this table
+    foreach ($foreign_keys as $foreign_key) {
+        _helper_delete_foreign_key_if_exists($db, $foreign_key['from_table'], $foreign_key['from_field']);
+    }
+
     $table_name_old = $table_name . '__old';
 
+    // Rename current table to old one
     $db->rename_table($table_name, $table_name_old);
 
     $db->create_table($table_name, collapse_2d_complexity('m_name', 'm_type', $fields));
@@ -981,19 +1106,31 @@ function rebuild_table_from_meta_database(object $db, string $table_name)
     $start = 0;
     $max = 50;
     do {
-        $rows = $db->query_select($table_name, ['*'], [], '', $max, $start);
+        $rows = $db->query_select($table_name_old, ['*'], [], '', $max, $start);
         foreach ($rows as $row) {
-            $db->query_insert($table_name_old, $row);
+            $db->query_insert($table_name, $row);
         }
         $start += $max;
-    } while (count($rows) == $max);
+    } while (count($rows) > 0);
 
+    // Drop old table
+    $db->drop_table_if_exists($table_name_old);
+
+    // Re-create foreign keys
+    foreach ($foreign_keys as $foreign_key) {
+        _helper_create_foreign_key($db, $foreign_key['from_table'], $foreign_key['from_field'], $foreign_key['to_table'], $foreign_key['to_field'], unserialize($foreign_key['special_values']));
+    }
+
+    // Re-create indexes
     foreach ($indexes as $index) {
         $fields = explode(',', $index['i_fields']);
         $GLOBALS['SITE_DB']->create_index($index['i_table'], $index['i_name'], $fields);
     }
 
-    $db->drop_table_if_exists($table_name_old);
+    // Disengage lock
+    if ($engaged_lock) {
+        @unlink(get_custom_file_base() . '/closed.html');
+    }
 }
 
 /**
@@ -1076,6 +1213,14 @@ function _helper_delete_table_field(object $this_ref, string $table_name, string
         }
     }
 
+    // Remove foreign keys
+    $foreign_key_rows = $this_ref->query_select('db_meta_foreign_keys', ['*'], ['from_table' => $table_name, 'from_field' => $name]);
+    $foreign_key_rows = array_merge($foreign_key_rows, $this_ref->query_select('db_meta_foreign_keys', ['*'], ['to_table' => $table_name, 'to_field' => $name]));
+    foreach ($foreign_key_rows as $row) {
+        _helper_delete_foreign_key_if_exists($this_ref, $row['from_table'], $row['from_field']);
+    }
+
+    // Remove field
     foreach ($fields_to_delete as $_name) {
         $query = $this_ref->driver->alter_delete_table_field__sql($this_ref->table_prefix . $table_name, $_name);
         $this_ref->query($query);

@@ -40,7 +40,7 @@ class Module_admin_redirects
         $info['organisation'] = 'Composr';
         $info['hacked_by'] = null;
         $info['hack_version'] = null;
-        $info['version'] = 4;
+        $info['version'] = 5;
         $info['locked'] = true;
         $info['update_require_upgrade'] = true;
         $info['min_cms_version'] = 11.0;
@@ -107,6 +107,11 @@ class Module_admin_redirects
                     $GLOBALS['SITE_DB']->query_insert('redirects', ['r_from_page' => 'panel_bottom', 'r_from_zone' => $zone, 'r_to_page' => 'panel_bottom', 'r_to_zone' => '', 'r_is_transparent' => 1], false, true); // errors suppressed in case already there
                 }
             }
+        }
+
+        if (($upgrade_from === null) || ($upgrade_from < 5)) { // 11.beta9
+            $GLOBALS['SITE_DB']->create_foreign_key('redirects', 'r_from_zone', 'zones', 'zone_name', ['*']);
+            $GLOBALS['SITE_DB']->create_foreign_key('redirects', 'r_to_zone', 'zones', 'zone_name', ['*']);
         }
     }
 

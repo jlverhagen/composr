@@ -40,7 +40,7 @@ class Module_admin_revisions
         $info['organisation'] = 'Composr';
         $info['hacked_by'] = null;
         $info['hack_version'] = null;
-        $info['version'] = 2;
+        $info['version'] = 3;
         $info['locked'] = false;
         $info['min_cms_version'] = 11.0;
         $info['addon'] = 'actionlog';
@@ -92,6 +92,11 @@ class Module_admin_revisions
         $GLOBALS['SITE_DB']->create_index('revisions', 'lookup_by_cat', ['r_resource_type', 'r_category_id']);
         $GLOBALS['SITE_DB']->create_index('revisions', 'actionlog_link', ['r_actionlog_id']);
         $GLOBALS['SITE_DB']->create_index('revisions', 'moderatorlog_link', ['r_moderatorlog_id']);
+
+        if (($upgrade_from === null) || ($upgrade_from < 3)) { // 11.beta9
+            $GLOBALS['SITE_DB']->create_foreign_key('revisions', 'r_actionlog_id', 'actionlogs', 'id');
+            $GLOBALS['SITE_DB']->create_foreign_key('revisions', 'r_moderatorlog_id', 'f_moderator_logs', 'id');
+        }
     }
 
     /**

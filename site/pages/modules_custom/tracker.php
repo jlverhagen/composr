@@ -98,7 +98,7 @@ class Module_tracker
             // Tracker...
 
             if (strpos(get_db_type(), 'mysql') !== false) {
-                $table_type = (get_value('innodb') == '1') ? 'InnoDB' : 'MyISAM';
+                $table_type = (db_is_innodb()) ? 'InnoDB' : 'MyISAM';
 
                 $GLOBALS['SITE_DB']->query("CREATE TABLE IF NOT EXISTS `mantis_api_token_table` (
                     `id` int(10) unsigned NOT NULL AUTO_INCREMENT,

@@ -35,7 +35,7 @@ class Module_quiz
         $info['organisation'] = 'Composr';
         $info['hacked_by'] = null;
         $info['hack_version'] = null;
-        $info['version'] = 9;
+        $info['version'] = 10;
         $info['update_require_upgrade'] = true;
         $info['locked'] = false;
         $info['min_cms_version'] = 11.0;
@@ -213,6 +213,18 @@ class Module_quiz
 
         if (($upgrade_from !== null) && ($upgrade_from < 9)) { // LEGACY: 11.beta7
             $GLOBALS['SITE_DB']->add_table_field('quizzes', 'q_validation_time', '?TIME');
+        }
+
+        if (($upgrade_from === null) || ($upgrade_from < 10)) { // 11.beta9
+            $GLOBALS['SITE_DB']->create_foreign_key('quizzes', 'q_newsletter_id', 'newsletters', 'id');
+            $GLOBALS['SITE_DB']->create_foreign_key('quiz_entries', 'q_quiz_id', 'quizzes', 'id');
+            $GLOBALS['SITE_DB']->create_foreign_key('quiz_entry_answer', 'q_entry_id', 'quiz_entries', 'id');
+            $GLOBALS['SITE_DB']->create_foreign_key('quiz_entry_answer', 'q_question_id', 'quiz_questions', 'id');
+            $GLOBALS['SITE_DB']->create_foreign_key('quiz_member_last_visit', 'v_quiz_id', 'quizzes', 'id');
+            $GLOBALS['SITE_DB']->create_foreign_key('quiz_questions', 'q_quiz_id', 'quizzes', 'id');
+            $GLOBALS['SITE_DB']->create_foreign_key('quiz_question_answers', 'q_question_id', 'quiz_questions', 'id');
+            $GLOBALS['SITE_DB']->create_foreign_key('quiz_winner', 'q_entry_id', 'quiz_entries', 'id');
+            $GLOBALS['SITE_DB']->create_foreign_key('quiz_winner', 'q_quiz_id', 'quizzes', 'id');
         }
     }
 

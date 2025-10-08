@@ -35,7 +35,7 @@ class Module_news
         $info['organisation'] = 'Composr';
         $info['hacked_by'] = null;
         $info['hack_version'] = null;
-        $info['version'] = 10;
+        $info['version'] = 11;
         $info['update_require_upgrade'] = true;
         $info['locked'] = false;
         $info['min_cms_version'] = 11.0;
@@ -244,6 +244,12 @@ class Module_news
                     }
                 }
             }
+        }
+
+        if (($upgrade_from === null) || ($upgrade_from < 11)) { // 11.beta9
+            $GLOBALS['SITE_DB']->create_foreign_key('news', 'news_category', 'news_categories', 'id');
+            $GLOBALS['SITE_DB']->create_foreign_key('news_category_entries', 'news_entry', 'news', 'id');
+            $GLOBALS['SITE_DB']->create_foreign_key('news_category_entries', 'news_entry_category', 'news_categories', 'id');
         }
     }
 

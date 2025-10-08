@@ -35,7 +35,7 @@ class Module_subscriptions
         $info['organisation'] = 'Composr';
         $info['hacked_by'] = null;
         $info['hack_version'] = null;
-        $info['version'] = 6;
+        $info['version'] = 7;
         $info['update_require_upgrade'] = true;
         $info['locked'] = false;
         $info['min_cms_version'] = 11.0;
@@ -173,6 +173,10 @@ class Module_subscriptions
 
         if (($upgrade_from === null) || ($upgrade_from < 6)) {
             $GLOBALS['SITE_DB']->create_index('ecom_subscriptions', 's_member_id', ['s_member_id']);
+        }
+
+        if (($upgrade_from === null) || ($upgrade_from < 7)) { // 11.beta9
+            $GLOBALS['FORUM_DB']->create_foreign_key('f_usergroup_sub_mails', 'm_usergroup_sub_id', 'f_usergroup_subs', 'id');
         }
 
         pop_db_scope_check();

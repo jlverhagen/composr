@@ -272,6 +272,11 @@ class Module_warnings extends Standard_crud_module
                 pop_query_limiting();
             }
         }
+
+        if (($upgrade_from === null) || ($upgrade_from < 3)) { // 11.beta9
+            $GLOBALS['FORUM_DB']->create_foreign_key('f_warnings', 'w_topic_id', 'f_topics', 'id');
+            $GLOBALS['FORUM_DB']->create_foreign_key('f_warnings_punitive', 'p_warning_id', 'f_warnings', 'id');
+        }
     }
 
     /**

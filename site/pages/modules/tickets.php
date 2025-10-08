@@ -35,7 +35,7 @@ class Module_tickets
         $info['organisation'] = 'Composr';
         $info['hacked_by'] = null;
         $info['hack_version'] = null;
-        $info['version'] = 7;
+        $info['version'] = 8;
         $info['update_require_upgrade'] = true;
         $info['locked'] = false;
         $info['min_cms_version'] = 11.0;
@@ -194,6 +194,12 @@ class Module_tickets
                     }
                 }
             }
+        }
+
+        if (($upgrade_from === null) || ($upgrade_from < 8)) { // 11.beta9
+            $GLOBALS['SITE_DB']->create_foreign_key('tickets', 'forum_id', 'f_forums', 'id');
+            $GLOBALS['SITE_DB']->create_foreign_key('tickets', 'ticket_type', 'ticket_types', 'id');
+            $GLOBALS['SITE_DB']->create_foreign_key('tickets', 'topic_id', 'f_topics', 'id');
         }
     }
 

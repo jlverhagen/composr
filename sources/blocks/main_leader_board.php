@@ -35,7 +35,7 @@ class Block_main_leader_board
         $info['organisation'] = 'Composr';
         $info['hacked_by'] = null;
         $info['hack_version'] = null;
-        $info['version'] = 4;
+        $info['version'] = 5;
         $info['locked'] = false;
         $info['min_cms_version'] = 11.0;
         $info['addon'] = 'leader_board';
@@ -132,6 +132,12 @@ class Block_main_leader_board
             $GLOBALS['SITE_DB']->create_index('leader_board', 'lb_leader_board_id', ['lb_leader_board_id']);
             $GLOBALS['SITE_DB']->create_index('leader_board', 'lb_date_and_time', ['lb_date_and_time']);
             $GLOBALS['SITE_DB']->create_index('leader_board', 'lb_rank', ['lb_leader_board_id', 'lb_date_and_time', 'lb_rank']);
+        }
+
+        if (($upgrade_from === null) || ($upgrade_from < 5)) { // 11.beta9
+            $GLOBALS['SITE_DB']->create_foreign_key('leader_board', 'lb_leader_board_id', 'leader_boards', 'id');
+            $GLOBALS['SITE_DB']->create_foreign_key('leader_boards_groups', 'lb_leader_board_id', 'leader_boards', 'id');
+            $GLOBALS['SITE_DB']->create_foreign_key('leader_boards_groups', 'lb_group', 'f_groups', 'id');
         }
     }
 

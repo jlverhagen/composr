@@ -189,6 +189,20 @@ function version_specific() : bool
     if ($_version_database === null) {
         $version_database = $version_files;
     }
+
+    // LEGACY: 11.beta9; we have to do this extremely early on for previous v11 versions
+    if (!$GLOBALS['SITE_DB']->table_exists('db_meta_foreign_keys', true)) {
+        $GLOBALS['SITE_DB']->create_table('db_meta_foreign_keys', [
+            'from_table' => '*ID_TEXT',
+            'from_field' => '*ID_TEXT',
+            'to_table' => 'ID_TEXT',
+            'to_field' => 'ID_TEXT',
+            'special_values' => 'SERIAL',
+        ]);
+
+        echo do_lang('UPGRADER_UPGRADED_CUSTOM', '11', 'Added foreign key meta table');
+    }
+
     if ($version_database < $version_files) {
         // LEGACY
 
@@ -205,6 +219,7 @@ function version_specific() : bool
             }
             echo do_lang('UPGRADER_UPGRADED_CUSTOM', '9', 'Migrated imports/mods to imports/addons');
         }
+
         if ($version_database < 10.0) {
             $GLOBALS['SITE_DB']->add_table_field('config', 'c_value_trans', '?LONG_TRANS');
             $GLOBALS['SITE_DB']->query('UPDATE ' . $GLOBALS['SITE_DB']->get_table_prefix() . 'config SET c_value_trans=config_value,config_value=\'\' WHERE ' . db_string_not_equal_to('config_value', '') . ' AND (' . db_string_equal_to('the_type', 'transtext') . ' OR ' . db_string_equal_to('the_type', 'transline') . ')');
@@ -533,6 +548,9 @@ function version_specific() : bool
             $GLOBALS['SITE_DB']->alter_table_field('sessions', 'last_activity', 'TIME', 'last_activity_time');
             $GLOBALS['SITE_DB']->alter_table_field('menu_items', 'i_url', 'SHORT_TEXT', 'i_link');
 
+            // InnoDB
+            $GLOBALS['SITE_DB']->create_foreign_key('attachment_refs', 'a_id', 'attachments', 'id');
+
             echo do_lang('UPGRADER_UPGRADED_CORE_TABLES', '11');
 
             // Renamed blocks
@@ -702,7 +720,7 @@ function database_specific() : bool
         $done_something = true;
     }
 
-    // LEGACY: 11 beta7. Remove prior to release.
+    // LEGACY: 11 beta7. Remove prior to v11 release.
     if ((is_numeric($upgrade_from)) && (intval($upgrade_from) < 1739479687)) {
         $GLOBALS['SITE_DB']->add_table_field('comcode_pages', 'p_validation_time', '?TIME');
 
@@ -741,7 +759,7 @@ function database_specific() : bool
         $done_something = true;
     }
 
-    // LEGACY: 11 beta7. Remove prior to release.
+    // LEGACY: 11 beta7. Remove prior to v11 release.
     if ((is_numeric($upgrade_from)) && (intval($upgrade_from) < 1740769698)) {
         $GLOBALS['FORUM_DB']->add_table_field('f_members', 'm_region', 'ID_TEXT');
 
@@ -758,12 +776,52 @@ function database_specific() : bool
         $done_something = true;
     }
 
-    // LEGACY: 11 beta7. Remove prior to release.
+    // LEGACY: 11 beta7. Remove prior to v11 release.
     if ((is_numeric($upgrade_from)) && (intval($upgrade_from) < 1741632531)) {
         // Migrate _config.php multi_lang_content to a value
         global $SITE_INFO;
         $multi_lang_content = (((isset($SITE_INFO['multi_lang_content'])) && ($SITE_INFO['multi_lang_content'] == '0')) ? '0' : '1');
         set_value('multi_lang_content', $multi_lang_content);
+    }
+
+    // LEGACY: 11.beta9. Remove prior to v11 release.
+    if ((is_numeric($upgrade_from)) && (intval($upgrade_from) < 1758492212)) {
+        $GLOBALS['SITE_DB']->create_foreign_key('attachment_refs', 'a_id', 'attachments', 'id');
+        $GLOBALS['FORUM_DB']->create_foreign_key('group_privileges', 'privilege', 'privilege_list', 'the_name');
+        $GLOBALS['FORUM_DB']->create_foreign_key('group_privileges', 'the_page', 'modules', 'module_the_name', ['']);
+
+        $GLOBALS['FORUM_DB']->create_foreign_key('f_forums', 'f_cache_last_forum_id', 'f_forums', 'id');
+        $GLOBALS['FORUM_DB']->create_foreign_key('f_forums', 'f_cache_last_topic_id', 'f_topics', 'id');
+        $GLOBALS['FORUM_DB']->create_foreign_key('f_forums', 'f_forum_grouping_id', 'f_forum_groupings', 'id');
+        $GLOBALS['FORUM_DB']->create_foreign_key('f_forums', 'f_parent_forum_id', 'f_forums', 'id');
+        $GLOBALS['FORUM_DB']->create_foreign_key('f_forum_intro_ip', 'i_forum_id', 'f_forums', 'id');
+        $GLOBALS['FORUM_DB']->create_foreign_key('f_forum_intro_member', 'i_forum_id', 'f_forums', 'id');
+        $GLOBALS['FORUM_DB']->create_foreign_key('f_group_approvals', 'ga_old_group_id', 'f_groups', 'id');
+        $GLOBALS['FORUM_DB']->create_foreign_key('f_group_approvals', 'ga_new_group_id', 'f_groups', 'id');
+        $GLOBALS['FORUM_DB']->create_foreign_key('f_group_join_log', 'usergroup_id', 'f_groups', 'id');
+        $GLOBALS['FORUM_DB']->create_foreign_key('f_member_cpf_perms', 'field_id', 'f_custom_fields', 'id');
+        $GLOBALS['FORUM_DB']->create_foreign_key('f_moderator_logs', 'l_warning_id', 'f_warnings', 'id');
+        $GLOBALS['FORUM_DB']->create_foreign_key('f_poll_answers', 'pa_poll_id', 'f_polls', 'id');
+        $GLOBALS['FORUM_DB']->create_foreign_key('f_poll_votes', 'pv_answer_id', 'f_poll_answers', 'id');
+        $GLOBALS['FORUM_DB']->create_foreign_key('f_poll_votes', 'pv_poll_id', 'f_polls', 'id');
+        $GLOBALS['FORUM_DB']->create_foreign_key('f_posts', 'p_cache_forum_id', 'f_forums', 'id');
+        $GLOBALS['FORUM_DB']->create_foreign_key('f_posts', 'p_parent_id', 'f_posts', 'id');
+        $GLOBALS['FORUM_DB']->create_foreign_key('f_posts', 'p_topic_id', 'f_topics', 'id');
+        $GLOBALS['FORUM_DB']->create_foreign_key('f_read_logs', 'l_topic_id', 'f_topics', 'id');
+        $GLOBALS['FORUM_DB']->create_foreign_key('f_special_pt_access', 's_topic_id', 'f_topics', 'id');
+        $GLOBALS['FORUM_DB']->create_foreign_key('f_topics', 't_cache_first_post_id', 'f_posts', 'id');
+        $GLOBALS['FORUM_DB']->create_foreign_key('f_topics', 't_cache_last_post_id', 'f_posts', 'id');
+        $GLOBALS['FORUM_DB']->create_foreign_key('f_topics', 't_forum_id', 'f_forums', 'id');
+        $GLOBALS['FORUM_DB']->create_foreign_key('f_topics', 't_poll_id', 'f_polls', 'id');
+
+        $GLOBALS['FORUM_DB']->create_foreign_key('f_warnings', 'w_topic_id', 'f_topics', 'id');
+        $GLOBALS['FORUM_DB']->create_foreign_key('f_warnings_punitive', 'p_warning_id', 'f_warnings', 'id');
+
+        $GLOBALS['SITE_DB']->create_foreign_key('sessions', 'the_zone', 'zones', 'zone_name');
+
+        $GLOBALS['FORUM_DB']->create_foreign_key('f_posts_fulltext_index', 'i_forum_id', 'f_forums', 'id');
+        $GLOBALS['FORUM_DB']->create_foreign_key('f_posts_fulltext_index', 'i_post_id', 'f_posts', 'id');
+        $GLOBALS['FORUM_DB']->create_foreign_key('f_pposts_fulltext_index', 'i_post_id', 'f_posts', 'id');
     }
 
     return $done_something;

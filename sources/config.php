@@ -82,12 +82,12 @@ function init__config()
     $MULTI_LANG_CACHE = null;
 
     if (!$IN_MINIKERNEL_VERSION) {
-        // Check something isn't holding a lock (at time of writing this can only be addon management)
+        // Check something isn't holding a lock
         do {
             $site_maintenance_lock = get_value_newer_than('site_maintenance_lock', time() - 60/*one minute lock timeout*/);
             if ($site_maintenance_lock != '') {
                 if (php_function_allowed('usleep')) {
-                    usleep(5000000);
+                    sleep(5);
                 }
                 load_value_options();
             }

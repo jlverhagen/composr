@@ -35,7 +35,7 @@ class Module_wiki
         $info['organisation'] = 'Composr';
         $info['hacked_by'] = null;
         $info['hack_version'] = null;
-        $info['version'] = 11;
+        $info['version'] = 12;
         $info['update_require_upgrade'] = true;
         $info['locked'] = false;
         $info['min_cms_version'] = 11.0;
@@ -219,6 +219,12 @@ class Module_wiki
 
         if (($upgrade_from !== null) && ($upgrade_from < 11)) { // LEGACY: 11.beta7
             $GLOBALS['SITE_DB']->add_table_field('wiki_posts', 'validation_time', '?TIME');
+        }
+
+        if (($upgrade_from === null) || ($upgrade_from < 12)) { // 11.beta9
+            $GLOBALS['FORUM_DB']->create_foreign_key('wiki_children', 'child_id', 'wiki_pages', 'id');
+            $GLOBALS['FORUM_DB']->create_foreign_key('wiki_children', 'parent_id', 'wiki_pages', 'id');
+            $GLOBALS['FORUM_DB']->create_foreign_key('wiki_posts', 'page_id', 'wiki_pages', 'id');
         }
     }
 

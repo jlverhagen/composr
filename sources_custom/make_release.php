@@ -1026,12 +1026,19 @@ function make_database_manifest() // Builds db_meta.bin, which is used for datab
             continue; // skip ones we can’t attribute (e.g. non-bundled/unknown)
         }
 
+        $special_values = [];
+        $unser = @unserialize($fk['special_values']);
+        if (is_array($unser)) {
+            $special_values = $unser;
+        }
+
         $foreign_keys[$universal_fk_key] = [
             'addon' => $foreign_key_addons[$universal_fk_key],
             'from_table' => $from_table,
             'from_field' => $from_field,
             'to_table' => $fk['to_table'],
             'to_field' => $fk['to_field'],
+            'special_values' => $special_values,
         ];
     }
 

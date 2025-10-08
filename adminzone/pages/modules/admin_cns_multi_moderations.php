@@ -49,7 +49,7 @@ class Module_admin_cns_multi_moderations extends Standard_crud_module
         $info['organisation'] = 'Composr';
         $info['hacked_by'] = null;
         $info['hack_version'] = null;
-        $info['version'] = 2;
+        $info['version'] = 3;
         $info['update_require_upgrade'] = true;
         $info['locked'] = false;
         $info['min_cms_version'] = 11.0;
@@ -112,6 +112,10 @@ class Module_admin_cns_multi_moderations extends Standard_crud_module
 
                 add_privilege('FORUMS_AND_MEMBERS', 'run_multi_moderations', true);
             }
+        }
+
+        if (($upgrade_from === null) || ($upgrade_from < 3)) { // 11.beta9
+            $GLOBALS['FORUM_DB']->create_foreign_key('f_multi_moderations', 'mm_move_to_forum_id', 'f_forums', 'id');
         }
     }
 

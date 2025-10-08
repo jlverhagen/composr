@@ -35,7 +35,7 @@ class Module_shopping
         $info['organisation'] = 'Composr';
         $info['hacked_by'] = null;
         $info['hack_version'] = null;
-        $info['version'] = 9;
+        $info['version'] = 10;
         $info['update_require_upgrade'] = true;
         $info['locked'] = false;
         $info['min_cms_version'] = 11.0;
@@ -228,6 +228,13 @@ class Module_shopping
 
         if (($upgrade_from === null) || ($upgrade_from < 9)) {
             $GLOBALS['SITE_DB']->create_index('shopping_cart', 'ordering_member', ['ordering_member']);
+        }
+
+        if (($upgrade_from === null) || ($upgrade_from < 10)) { // 11.beta9
+            $GLOBALS['SITE_DB']->create_foreign_key('shopping_cart', 'ordering_member', 'f_members', 'id');
+            $GLOBALS['SITE_DB']->create_foreign_key('shopping_cart', 'type_code', 'catalogue_entries', 'id');
+            $GLOBALS['SITE_DB']->create_foreign_key('shopping_order_details', 'p_order_id', 'shopping_orders', 'id');
+            $GLOBALS['SITE_DB']->create_foreign_key('shopping_order_details', 'p_type_code', 'catalogue_entries', 'id');
         }
     }
 

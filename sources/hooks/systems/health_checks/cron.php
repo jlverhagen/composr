@@ -60,11 +60,11 @@ class Hook_health_check_cron extends Hook_Health_Check
     public function testCronSetUp(int $check_context, bool $manual_checks = false, bool $automatic_repair = false, ?bool $use_test_data_for_pass = null, ?array $urls_or_page_links = null, ?array $comcode_segments = null)
     {
         if ($check_context == CHECK_CONTEXT__INSTALL) {
-            $this->log('Skipped; we are running from installer.');
+            $this->stateCheckSkipped('Skipped; we are running from installer.');
             return;
         }
         if ($check_context == CHECK_CONTEXT__SPECIFIC_PAGE_LINKS) {
-            $this->log('Skipped; running on specific page links.');
+            $this->stateCheckSkipped('Skipped; running on specific page links.');
             return;
         }
 
@@ -74,9 +74,7 @@ class Hook_health_check_cron extends Hook_Health_Check
             require_code('version');
             $version_files = float_to_raw_string(cms_version_number(), 10, true);
             $version_db = strval(cms_version_time_db());
-            if ((get_value('version') != $version_files) || (get_value('cns_version') != $version_files) || (get_value('db_version', '', true) != $version_db)) {
-                $this->assertTrue(false, do_lang('CRON_UPGRADE_PENDING'));
-            }
+            $this->assertTrue(((get_value('version') == $version_files) && (get_value('cns_version') == $version_files) && (get_value('db_version', '', true) == $version_db)), do_lang('CRON_UPGRADE_PENDING'));
         }
     }
 
@@ -93,11 +91,11 @@ class Hook_health_check_cron extends Hook_Health_Check
     public function testCronSlow(int $check_context, bool $manual_checks = false, bool $automatic_repair = false, ?bool $use_test_data_for_pass = null, ?array $urls_or_page_links = null, ?array $comcode_segments = null)
     {
         if ($check_context == CHECK_CONTEXT__INSTALL) {
-            $this->log('Skipped; we are running from installer.');
+            $this->stateCheckSkipped('Skipped; we are running from installer.');
             return;
         }
         if ($check_context == CHECK_CONTEXT__SPECIFIC_PAGE_LINKS) {
-            $this->log('Skipped; running on specific page links.');
+            $this->stateCheckSkipped('Skipped; running on specific page links.');
             return;
         }
 
@@ -133,11 +131,11 @@ class Hook_health_check_cron extends Hook_Health_Check
     public function testCronLargeTaskQueue(int $check_context, bool $manual_checks = false, bool $automatic_repair = false, ?bool $use_test_data_for_pass = null, ?array $urls_or_page_links = null, ?array $comcode_segments = null)
     {
         if ($check_context == CHECK_CONTEXT__INSTALL) {
-            $this->log('Skipped; we are running from installer.');
+            $this->stateCheckSkipped('Skipped; we are running from installer.');
             return;
         }
         if ($check_context == CHECK_CONTEXT__SPECIFIC_PAGE_LINKS) {
-            $this->log('Skipped; running on specific page links.');
+            $this->stateCheckSkipped('Skipped; running on specific page links.');
             return;
         }
 

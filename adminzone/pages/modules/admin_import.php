@@ -35,7 +35,7 @@ class Module_admin_import
         $info['organisation'] = 'Composr';
         $info['hacked_by'] = null;
         $info['hack_version'] = null;
-        $info['version'] = 8;
+        $info['version'] = 9;
         $info['update_require_upgrade'] = true;
         $info['locked'] = false;
         $info['min_cms_version'] = 11.0;
@@ -122,6 +122,11 @@ class Module_admin_import
                 'id_type' => '*ID_TEXT',
                 'id_session' => '*ID_TEXT',
             ]);
+        }
+
+        if (($upgrade_from === null) || ($upgrade_from < 9)) { // 11.beta9
+            $GLOBALS['SITE_DB']->create_foreign_key('import_id_remap', 'id_session', 'import_session', 'imp_session');
+            $GLOBALS['SITE_DB']->create_foreign_key('import_parts_done', 'imp_session', 'import_session', 'imp_session');
         }
     }
 

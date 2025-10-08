@@ -1652,5 +1652,33 @@ function install_cns(?float $upgrade_from = null)
         $GLOBALS['FORUM_DB']->create_index('f_topics', 't_pt_from_member', ['t_pt_from_member']);
         $GLOBALS['FORUM_DB']->create_index('f_poll_votes', 'voting_member_id', ['pv_member_id']);
         $GLOBALS['FORUM_DB']->create_index('f_poll_votes', 'voting_ip_address', ['pv_ip_address']);
+
+        $GLOBALS['FORUM_DB']->create_foreign_key('f_forums', 'f_cache_last_forum_id', 'f_forums', 'id');
+        $GLOBALS['FORUM_DB']->create_foreign_key('f_forums', 'f_cache_last_topic_id', 'f_topics', 'id');
+        $GLOBALS['FORUM_DB']->create_foreign_key('f_forums', 'f_forum_grouping_id', 'f_forum_groupings', 'id');
+        $GLOBALS['FORUM_DB']->create_foreign_key('f_forums', 'f_parent_forum_id', 'f_forums', 'id');
+        $GLOBALS['FORUM_DB']->create_foreign_key('f_forum_intro_ip', 'i_forum_id', 'f_forums', 'id');
+        $GLOBALS['FORUM_DB']->create_foreign_key('f_forum_intro_member', 'i_forum_id', 'f_forums', 'id');
+        $GLOBALS['FORUM_DB']->create_foreign_key('f_group_approvals', 'ga_old_group_id', 'f_groups', 'id');
+        $GLOBALS['FORUM_DB']->create_foreign_key('f_group_approvals', 'ga_new_group_id', 'f_groups', 'id');
+        $GLOBALS['FORUM_DB']->create_foreign_key('f_group_join_log', 'usergroup_id', 'f_groups', 'id');
+        $GLOBALS['FORUM_DB']->create_foreign_key('f_member_cpf_perms', 'field_id', 'f_custom_fields', 'id');
+        $GLOBALS['FORUM_DB']->create_foreign_key('f_moderator_logs', 'l_warning_id', 'f_warnings', 'id');
+        $GLOBALS['FORUM_DB']->create_foreign_key('f_poll_answers', 'pa_poll_id', 'f_polls', 'id');
+        $GLOBALS['FORUM_DB']->create_foreign_key('f_poll_votes', 'pv_answer_id', 'f_poll_answers', 'id');
+        $GLOBALS['FORUM_DB']->create_foreign_key('f_poll_votes', 'pv_poll_id', 'f_polls', 'id');
+        $GLOBALS['FORUM_DB']->create_foreign_key('f_posts', 'p_cache_forum_id', 'f_forums', 'id');
+        $GLOBALS['FORUM_DB']->create_foreign_key('f_posts', 'p_parent_id', 'f_posts', 'id');
+        $GLOBALS['FORUM_DB']->create_foreign_key('f_posts', 'p_topic_id', 'f_topics', 'id');
+        $GLOBALS['FORUM_DB']->create_foreign_key('f_read_logs', 'l_topic_id', 'f_topics', 'id');
+        $GLOBALS['FORUM_DB']->create_foreign_key('f_special_pt_access', 's_topic_id', 'f_topics', 'id');
+        $GLOBALS['FORUM_DB']->create_foreign_key('f_topics', 't_cache_first_post_id', 'f_posts', 'id');
+        $GLOBALS['FORUM_DB']->create_foreign_key('f_topics', 't_cache_last_post_id', 'f_posts', 'id');
+        $GLOBALS['FORUM_DB']->create_foreign_key('f_topics', 't_forum_id', 'f_forums', 'id');
+        $GLOBALS['FORUM_DB']->create_foreign_key('f_topics', 't_poll_id', 'f_polls', 'id');
+
+        $GLOBALS['FORUM_DB']->create_foreign_key('f_posts_fulltext_index', 'i_forum_id', 'f_forums', 'id');
+        $GLOBALS['FORUM_DB']->create_foreign_key('f_posts_fulltext_index', 'i_post_id', 'f_posts', 'id');
+        $GLOBALS['FORUM_DB']->create_foreign_key('f_pposts_fulltext_index', 'i_post_id', 'f_posts', 'id');
     }
 }

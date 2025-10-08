@@ -40,7 +40,7 @@ class Module_admin_disastr extends Standard_crud_module
         $info['organisation'] = 'Composr';
         $info['hacked_by'] = null;
         $info['hack_version'] = null;
-        $info['version'] = 4;
+        $info['version'] = 5;
         $info['update_require_upgrade'] = true;
         $info['locked'] = false;
         $info['min_cms_version'] = 11.0;
@@ -104,6 +104,10 @@ class Module_admin_disastr extends Standard_crud_module
             // Database consistency fixes
             $GLOBALS['SITE_DB']->alter_table_field('diseases', 'image', 'URLPATH', 'image_url');
             $GLOBALS['SITE_DB']->alter_table_field('diseases', 'last_spread_time', 'TIME');
+        }
+
+        if (($upgrade_from === null) || ($upgrade_from < 5)) { // 11.beta9
+            $GLOBALS['SITE_DB']->create_foreign_key('members_diseases', 'disease_id', 'diseases', 'id');
         }
     }
 

@@ -45,7 +45,7 @@ class Module_admin_early_access extends Standard_crud_module
         $info['organisation'] = 'Composr';
         $info['hacked_by'] = null;
         $info['hack_version'] = null;
-        $info['version'] = 1;
+        $info['version'] = 2;
         $info['update_require_upgrade'] = true;
         $info['locked'] = false;
         $info['min_cms_version'] = 11.0;
@@ -90,6 +90,10 @@ class Module_admin_early_access extends Standard_crud_module
                 'a_content_type' => '*ID_TEXT',
                 'a_content_id' => '*ID_TEXT',
             ]);
+        }
+
+        if (($upgrade_from === null) || ($upgrade_from < 2)) { // 11.beta9
+            $GLOBALS['SITE_DB']->create_foreign_key('early_access_code_content', 'a_access_code', 'early_access_codes', 'c_access_code');
         }
     }
 

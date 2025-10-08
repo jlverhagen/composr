@@ -167,6 +167,11 @@ function upgrade_script()
             upgrader_db_upgrade_screen(); // Already echoed to help with error tracking
             break;
 
+        case 'innodb_upgrade':
+            require_code('upgrade_innodb_upgrade');
+            upgrader_innodb_upgrade_screen(); // Already echoed to help with error tracking
+            break;
+
         case 'theme_upgrade':
             require_code('upgrade_themes');
             appengine_live_guard();
@@ -205,6 +210,16 @@ function upgrade_script()
                 echo '<meta http-equiv="refresh" content="5;url=' . get_base_url() . $redirect . '">';
                 echo upgrader_link($redirect, do_lang('PROCEED'), true);
             }
+            break;
+
+        case 'data_integrity':
+            require_code('upgrade_mysql');
+            echo upgrader_data_integrity_screen();
+            break;
+
+        case '_data_integrity':
+            require_code('upgrade_mysql');
+            echo _upgrader_data_integrity_screen();
             break;
     }
 
@@ -543,6 +558,7 @@ function upgrader_menu_screen() : string
 
     // Database upgrade link
     $l_db_upgrade = upgrader_link('upgrader.php?type=db_upgrade', do_lang('UPGRADER_DATABASE_UPGRADE'), false);
+    $l_innodb_upgrade = upgrader_link('upgrader.php?type=innodb_upgrade', do_lang('UPGRADER_INNODB_UPGRADE'), false);
 
     // Theme upgrade link
     $l_theme_upgrade = upgrader_link('upgrader.php?type=theme_upgrade', do_lang('UPGRADER_THEME_UPGRADE'), false);
@@ -575,6 +591,7 @@ function upgrader_menu_screen() : string
     $show_mysql_buttons = (strpos(get_db_type(), 'mysql') !== false);
     $l_mysql_repair = upgrader_link('upgrader.php?type=mysql_repair', do_lang('MYSQL_REPAIR'), false);
     $l_criticise_mysql_fields = upgrader_link('upgrader.php?type=criticise_mysql_fields', do_lang('CORRECT_MYSQL_SCHEMA_ISSUES'), false);
+    $l_data_integrity = upgrader_link('upgrader.php?type=data_integrity', do_lang('UPGRADER_DATA_INTEGRITY'), false);
 
     $out = '';
 
@@ -654,6 +671,15 @@ function upgrader_menu_screen() : string
                     <tr><th>{$_step_num}</th><td>{$l_db_upgrade}<br />{$l_up_info}</td><td>" . escape_html(display_time_period(60 * 5)) . "</td></tr>
     ";
 
+    // InnoDB upgrade
+    if ((!db_is_innodb()) && ($show_mysql_buttons)) {
+        $step_num++;
+        $_step_num = strval($step_num);
+        $out .= "
+                    <tr><th>{$_step_num}</th><td>{$l_innodb_upgrade}<td>" . escape_html(display_time_period(60 * 30)) . "</td></tr>
+        ";
+    }
+
     // Theme upgrader
     if (is_maintained('theme_upgrader')) {
         $step_num++;
@@ -715,7 +741,8 @@ function upgrader_menu_screen() : string
     if ($show_mysql_buttons) {
         $out .= "
                 <li>{$l_mysql_repair}</li>
-                <li>{$l_criticise_mysql_fields}</li>";
+                <li>{$l_criticise_mysql_fields}</li>
+                <li>{$l_data_integrity}</li>";
     }
     $out .= "
             </ul>

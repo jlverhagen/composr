@@ -97,17 +97,12 @@ class database_relations_test_set extends cms_test_case
         foreach ($all_links as $l) {
             $_l = $l['m_table'] . '.' . $l['m_name'];
 
-            $this->assertTrue(array_key_exists($_l, $links), 'Link not described: ' . $_l);
+            $this->assertTrue(array_key_exists($_l, $links), 'AUTO_LINK field does not have a foreign key relation: ' . $_l);
         }
     }
 
     public function testRelationsAccurate()
     {
-        if (in_safe_mode()) {
-            $this->assertTrue(false, 'Cannot work in safe mode');
-            return;
-        }
-
         $links = get_relation_map();
         foreach ($links as $from => $to) {
             if ($from !== null) {
@@ -120,7 +115,7 @@ class database_relations_test_set extends cms_test_case
                 }
                 $db = get_db_for($from_table);
 
-                $db->query_select_value_if_there($from_table, $from_field);
+                $db->query_select_value_if_there($from_table, $from_field); // Will throw an error if invalid
             }
 
             if ($to !== null) {
@@ -133,7 +128,7 @@ class database_relations_test_set extends cms_test_case
                 }
                 $db = get_db_for($to_table);
 
-                $db->query_select_value_if_there($to_table, $to_field);
+                $db->query_select_value_if_there($to_table, $to_field); // Will throw an error if invalid
             }
         }
     }
