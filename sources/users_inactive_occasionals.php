@@ -33,12 +33,6 @@ function _enforce_sessioned_url(string $url) : string
         return $url;
     }
 
-    $test = false;
-    if (strpos($url, '#') !== false) {
-        $test = true;
-        //var_dump($url);
-    }
-
     // Take hash off
     $hash = '';
     if (strpos($url, '#') !== false) {
@@ -69,11 +63,6 @@ function _enforce_sessioned_url(string $url) : string
 
     // Get hash back
     $url .= $hash;
-
-    if ($test) {
-        //var_dump($url);
-        //exit;
-    }
 
     return $url;
 }
