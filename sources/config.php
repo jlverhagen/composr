@@ -416,11 +416,6 @@ function get_theme_option(string $name, ?string $default = null, ?string $theme 
  */
 function get_option(string $name, bool $missing_ok = false) : ?string
 {
-    // TODO: forced on temporarily due to a bug; see tracker issue #6166
-    if (($name == 'single_public_zone') && (get_option('url_scheme') == 'RAW')) {
-        return '1';
-    }
-
     global $CONFIG_OPTIONS_CACHE, $CONFIG_OPTIONS_FULLY_LOADED, $SMART_CACHE;
 
     require_code('lang');
