@@ -242,24 +242,26 @@ class Hook_admin_stats_security_incidents extends CMSStatsProvider
                                 continue;
                             }
 
-                            foreach ($__ as $country => $total_incidents) {
-                                if ((empty($filters[$bucket . '__include_failedlogins'])) && ($record_type == 'failedlogins')) {
-                                    continue;
-                                }
+                            foreach ($__ as $country => $___) {
+                                foreach ($__ as $record_type => $total_incidents) {
+                                    if ((empty($filters[$bucket . '__include_failedlogins'])) && ($record_type == 'failedlogins')) {
+                                        continue;
+                                    }
 
-                                if ((empty($filters[$bucket . '__include_hackattacks'])) && ($record_type == 'hackattacks')) {
-                                    continue;
-                                }
+                                    if ((empty($filters[$bucket . '__include_hackattacks'])) && ($record_type == 'hackattacks')) {
+                                        continue;
+                                    }
 
-                                $_country = find_country_name_from_iso($country);
-                                if ($_country === null) {
-                                    $_country = do_lang('OTHER');
-                                }
+                                    $_country = find_country_name_from_iso($country);
+                                    if ($_country === null) {
+                                        $_country = do_lang('OTHER');
+                                    }
 
-                                if (!isset($data[$_country])) {
-                                    $data[$_country] = 0;
+                                    if (!isset($data[$_country])) {
+                                        $data[$_country] = 0;
+                                    }
+                                    $data[$_country] += $total_incidents;
                                 }
-                                $data[$_country] += $total_incidents;
                             }
                         }
                     }
