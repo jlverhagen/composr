@@ -309,10 +309,10 @@ END;
 
         echo '<!--ERROR-->';
 
-        $contents = ob_get_contents();
         $dir = get_custom_file_base() . '/critical_errors';
         if ((is_dir($dir)) && ((!isset($_GET['page'])) || ($_GET['page'] != '_critical_error')) && ((!isset($GLOBALS['SEMI_DEV_MODE'])) || (!$GLOBALS['SEMI_DEV_MODE']) || ((!empty($_GET['keep_dev_mode']) && ($_GET['keep_dev_mode'] == '0'))))) {
             if ($may_save_critical_error_file) {
+                $contents = $error . "\n" . $full_trace;
                 $error_code = uniqid($code . '_', true);
                 file_put_contents($dir . '/' . $error_code . '.log', $contents);
             } else {
