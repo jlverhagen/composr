@@ -125,29 +125,27 @@ class Hook_admin_stats_searches extends CMSStatsProvider
      */
     public function generate_final_data(string $bucket, string $pivot, array $filters) : ?array
     {
-        $range = $this->convert_day_range_filter_to_pair($pivot, $filters[$bucket . '__day_range']);
-
         $data = [];
+        $_data = $this->prepare_preprocessed_data_for_graph($bucket, $pivot, $filters);
 
-        $where = [
-            'p_bucket' => $bucket,
-            'p_pivot' => $pivot,
-        ];
-        $extra = '';
-        $extra .= ' AND p_month>=' . strval($range[0]);
-        $extra .= ' AND p_month<=' . strval($range[1]);
-        $data_rows = $GLOBALS['SITE_DB']->query_select('stats_preprocessed', ['p_data'], $where, $extra);
-        foreach ($data_rows as $data_row) {
-            $_data = @unserialize($data_row['p_data']);
-            foreach ($_data as $term => $num_searches) {
-                if ((!empty($filters[$bucket . '__term'])) && (!simulated_wildcard_match($filters[$bucket . '__term'], $term, true))) {
-                    continue;
-                }
+        foreach ($_data as $_pivot => $__data) {
+            foreach ($__data as $pivot_interval => $_) {
+                foreach ($_ as $pivot_value => $__) {
+                    if ($__ === null) {
+                        continue;
+                    }
 
-                if (!isset($data[$term])) {
-                    $data[$term] = 0;
+                    foreach ($__ as $term => $num_searches) {
+                        if ((!empty($filters[$bucket . '__term'])) && (!simulated_wildcard_match($filters[$bucket . '__term'], $term, true))) {
+                            continue;
+                        }
+
+                        if (!isset($data[$term])) {
+                            $data[$term] = 0;
+                        }
+                        $data[$term] += $num_searches;
+                    }
                 }
-                $data[$term] += $num_searches;
             }
         }
 

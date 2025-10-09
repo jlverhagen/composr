@@ -179,36 +179,35 @@ class Hook_admin_stats_comments extends CMSStatsProvider
     {
         switch ($bucket) {
             case 'comments':
-                $range = $this->convert_day_range_filter_to_pair($pivot, $filters[$bucket . '__day_range']);
+                $data = [];
+                $_data = $this->prepare_preprocessed_data_for_graph($bucket, $pivot, $filters);
 
-                $data = $this->fill_data_by_date_pivots($pivot, $range[0], $range[1]);
+                foreach ($_data as $_pivot => $__data) {
+                    foreach ($__data as $pivot_interval => $_) {
+                        foreach ($_ as $pivot_value => $__) {
+                            $pivot_value_nice = $this->make_date_pivot_value_nice($_pivot, $pivot_interval, $pivot_value);
+                            if (!isset($data[$pivot_value_nice])) {
+                                $data[$pivot_value_nice] = 0;
+                            }
 
-                $where = [
-                    'p_bucket' => $bucket,
-                    'p_pivot' => $pivot,
-                ];
-                $extra = '';
-                $extra .= ' AND p_month>=' . strval($range[0]);
-                $extra .= ' AND p_month<=' . strval($range[1]);
-                $data_rows = $GLOBALS['SITE_DB']->query_select('stats_preprocessed', ['p_data'], $where, $extra);
-                foreach ($data_rows as $data_row) {
-                    $_data = @unserialize($data_row['p_data']);
-                    foreach ($_data as $pivot_value => $_) {
-                        $pivot_value = $this->make_date_pivot_value_nice($pivot, $pivot_value);
-
-                        $total_posts = 0;
-                        $total_topics = 0;
-
-                        foreach ($_ as $feedback_type_code => $value) {
-                            if ((!empty($filters[$bucket . '__content_type'])) && ($filters[$bucket . '__content_type'] != $feedback_type_code)) {
+                            if ($__ === null) {
                                 continue;
                             }
 
-                            $total_posts += $value[0];
-                            $total_topics += $value[1];
-                        }
+                            $total_posts = 0;
+                            $total_topics = 0;
 
-                        $data[$pivot_value] += floatval($total_posts) / floatval($total_topics);
+                            foreach ($__ as $feedback_type_code => $value) {
+                                if ((!empty($filters[$bucket . '__content_type'])) && ($filters[$bucket . '__content_type'] != $feedback_type_code)) {
+                                    continue;
+                                }
+
+                                $total_posts += $value[0];
+                                $total_topics += $value[1];
+                            }
+
+                            $data[$pivot_value_nice] += (floatval($total_posts) / floatval($total_topics));
+                        }
                     }
                 }
 
@@ -224,25 +223,23 @@ class Hook_admin_stats_comments extends CMSStatsProvider
                 ];
 
             case 'comments_tallies':
-                $range = $this->convert_day_range_filter_to_pair($pivot, $filters[$bucket . '__day_range']);
-
                 $data = [];
-                foreach ($this->comments_brackets as $bracket) {
-                    $data[$bracket] = 0;
-                }
+                $_data = $this->prepare_preprocessed_data_for_graph($bucket, $pivot, $filters);
 
-                $where = [
-                    'p_bucket' => $bucket,
-                    'p_pivot' => $pivot,
-                ];
-                $extra = '';
-                $extra .= ' AND p_month>=' . strval($range[0]);
-                $extra .= ' AND p_month<=' . strval($range[1]);
-                $data_rows = $GLOBALS['SITE_DB']->query_select('stats_preprocessed', ['p_data'], $where, $extra);
-                foreach ($data_rows as $data_row) {
-                    $_data = @unserialize($data_row['p_data']);
-                    foreach ($_data as $bracket => $total) {
-                        $data[$bracket] += $total;
+                foreach ($_data as $_pivot => $__data) {
+                    foreach ($__data as $pivot_interval => $_) {
+                        foreach ($_ as $pivot_value => $__) {
+                            if ($__ === null) {
+                                continue;
+                            }
+
+                            foreach ($__ as $bracket => $total) {
+                                if (!isset($data[$bracket])) {
+                                    $data[$bracket] = 0;
+                                }
+                                $data[$bracket] += $total;
+                            }
+                        }
                     }
                 }
 

@@ -773,41 +773,37 @@ class Hook_admin_stats_views extends CMSStatsProvider
 
         switch ($bucket) {
             case 'total_views':
-                $range = $this->convert_day_range_filter_to_pair($pivot, $filters[$bucket . '__day_range']);
+                $data = [];
+                $_data = $this->prepare_preprocessed_data_for_graph($bucket, $pivot, $filters);
 
-                $data = $this->fill_data_by_date_pivots($pivot, $range[0], $range[1]);
+                foreach ($_data as $_pivot => $__data) {
+                    foreach ($__data as $pivot_interval => $_) {
+                        foreach ($_ as $pivot_value => $__) {
+                            $pivot_value_nice = $this->make_date_pivot_value_nice($_pivot, $pivot_interval, $pivot_value);
+                            if (!isset($data[$pivot_value_nice])) {
+                                $data[$pivot_value_nice] = 0;
+                            }
 
-                $where = [
-                    'p_bucket' => $bucket,
-                    'p_pivot' => $pivot,
-                ];
-                $extra = '';
-                $extra .= ' AND p_month>=' . strval($range[0]);
-                $extra .= ' AND p_month<=' . strval($range[1]);
-                $data_rows = $GLOBALS['SITE_DB']->query_select('stats_preprocessed', ['p_data'], $where, $extra);
-                foreach ($data_rows as $data_row) {
-                    $_data = @unserialize($data_row['p_data']);
-                    foreach ($_data as $pivot_value => $__) {
-                        $pivot_value = $this->make_date_pivot_value_nice($pivot, $pivot_value);
-
-                        foreach ($__ as $country => $___) {
-                            if ((!empty($filters[$bucket . '__country'])) && ($filters[$bucket . '__country'] != $country)) {
+                            if ($__ === null) {
                                 continue;
                             }
 
-                            foreach ($___ as $page_link => $total_views) {
-                                if (!empty($filters[$bucket . '__page_link'])) {
-                                    list($current_zone_name, $attributes) = page_link_decode($page_link);
-                                    $current_page_name = isset($attributes['page']) ? $attributes['page'] : DEFAULT_ZONE_PAGE_NAME;
-                                    if (!match_key_match($filters[$bucket . '__page_link'], false, null, $current_zone_name, $current_page_name)) {
-                                        continue;
-                                    }
+                            foreach ($__ as $country => $___) {
+                                if ((!empty($filters[$bucket . '__country'])) && ($filters[$bucket . '__country'] != $country)) {
+                                    continue;
                                 }
 
-                                if (!isset($data[$pivot_value])) {
-                                    $data[$pivot_value] = 0;
+                                foreach ($___ as $page_link => $total_views) {
+                                    if (!empty($filters[$bucket . '__page_link'])) {
+                                        list($current_zone_name, $attributes) = page_link_decode($page_link);
+                                        $current_page_name = isset($attributes['page']) ? $attributes['page'] : DEFAULT_ZONE_PAGE_NAME;
+                                        if (!match_key_match($filters[$bucket . '__page_link'], false, null, $current_zone_name, $current_page_name)) {
+                                            continue;
+                                        }
+                                    }
+
+                                    $data[$pivot_value_nice] += $total_views;
                                 }
-                                $data[$pivot_value] += $total_views;
                             }
                         }
                     }
@@ -821,36 +817,35 @@ class Hook_admin_stats_views extends CMSStatsProvider
                 ];
 
             case 'total_unique_views':
-                $range = $this->convert_day_range_filter_to_pair($pivot, $filters[$bucket . '__day_range']);
+                $data = [];
+                $_data = $this->prepare_preprocessed_data_for_graph($bucket, $pivot, $filters);
 
-                $data = $this->fill_data_by_date_pivots($pivot, $range[0], $range[1]);
+                foreach ($_data as $_pivot => $__data) {
+                    foreach ($__data as $pivot_interval => $_) {
+                        foreach ($_ as $pivot_value => $__) {
+                            $pivot_value_nice = $this->make_date_pivot_value_nice($_pivot, $pivot_interval, $pivot_value);
+                            if (!isset($data[$pivot_value_nice])) {
+                                $data[$pivot_value_nice] = 0;
+                            }
 
-                $where = [
-                    'p_bucket' => $bucket,
-                    'p_pivot' => $pivot,
-                ];
-                $extra = '';
-                $extra .= ' AND p_month>=' . strval($range[0]);
-                $extra .= ' AND p_month<=' . strval($range[1]);
-                $data_rows = $GLOBALS['SITE_DB']->query_select('stats_preprocessed', ['p_data'], $where, $extra);
-                foreach ($data_rows as $data_row) {
-                    $_data = @unserialize($data_row['p_data']);
-                    foreach ($_data as $pivot_value => $__) {
-                        $pivot_value = $this->make_date_pivot_value_nice($pivot, $pivot_value);
-
-                        $_hashed_ips = [];
-
-                        foreach ($__ as $country => $hashed_ips) {
-                            if ((!empty($filters[$bucket . '__country'])) && ($filters[$bucket . '__country'] != $country)) {
+                            if ($__ === null) {
                                 continue;
                             }
 
-                            foreach ($hashed_ips as $hashed_ip) {
-                                $_hashed_ips[$hashed_ip] = true;
-                            }
-                        }
+                            $_hashed_ips = [];
 
-                        $data[$pivot_value] = count($_hashed_ips);
+                            foreach ($__ as $country => $hashed_ips) {
+                                if ((!empty($filters[$bucket . '__country'])) && ($filters[$bucket . '__country'] != $country)) {
+                                    continue;
+                                }
+
+                                foreach ($hashed_ips as $hashed_ip) {
+                                    $_hashed_ips[$hashed_ip] = true;
+                                }
+                            }
+
+                            $data[$pivot_value_nice] += count($_hashed_ips);
+                        }
                     }
                 }
 
@@ -862,32 +857,28 @@ class Hook_admin_stats_views extends CMSStatsProvider
                 ];
 
             case 'total_referrals':
-                $range = $this->convert_day_range_filter_to_pair($pivot, $filters[$bucket . '__day_range']);
+                $data = [];
+                $_data = $this->prepare_preprocessed_data_for_graph($bucket, $pivot, $filters);
 
-                $data = $this->fill_data_by_date_pivots($pivot, $range[0], $range[1]);
+                foreach ($_data as $_pivot => $__data) {
+                    foreach ($__data as $pivot_interval => $_) {
+                        foreach ($_ as $pivot_value => $__) {
+                            $pivot_value_nice = $this->make_date_pivot_value_nice($_pivot, $pivot_interval, $pivot_value);
+                            if (!isset($data[$pivot_value_nice])) {
+                                $data[$pivot_value_nice] = 0;
+                            }
 
-                $where = [
-                    'p_bucket' => $bucket,
-                    'p_pivot' => $pivot,
-                ];
-                $extra = '';
-                $extra .= ' AND p_month>=' . strval($range[0]);
-                $extra .= ' AND p_month<=' . strval($range[1]);
-                $data_rows = $GLOBALS['SITE_DB']->query_select('stats_preprocessed', ['p_data'], $where, $extra);
-                foreach ($data_rows as $data_row) {
-                    $_data = @unserialize($data_row['p_data']);
-                    foreach ($_data as $pivot_value => $__) {
-                        $pivot_value = $this->make_date_pivot_value_nice($pivot, $pivot_value);
-
-                        foreach ($__ as $country => $total) {
-                            if ((!empty($filters[$bucket . '__country'])) && ($filters[$bucket . '__country'] != $country)) {
+                            if ($__ === null) {
                                 continue;
                             }
 
-                            if (!isset($data[$pivot_value])) {
-                                $data[$pivot_value] = 0;
+                            foreach ($__ as $country => $total) {
+                                if ((!empty($filters[$bucket . '__country'])) && ($filters[$bucket . '__country'] != $country)) {
+                                    continue;
+                                }
+
+                                $data[$pivot_value_nice] += $total;
                             }
-                            $data[$pivot_value] += $total;
                         }
                     }
                 }
@@ -901,36 +892,35 @@ class Hook_admin_stats_views extends CMSStatsProvider
 
             case 'average_session_total_views':
             case 'average_session_duration':
-                $range = $this->convert_day_range_filter_to_pair($pivot, $filters[$bucket . '__day_range']);
+                $data = [];
+                $_data = $this->prepare_preprocessed_data_for_graph($bucket, $pivot, $filters);
 
-                $data = $this->fill_data_by_date_pivots($pivot, $range[0], $range[1]);
+                foreach ($_data as $_pivot => $__data) {
+                    foreach ($__data as $pivot_interval => $_) {
+                        foreach ($_ as $pivot_value => $__) {
+                            $pivot_value_nice = $this->make_date_pivot_value_nice($_pivot, $pivot_interval, $pivot_value);
+                            if (!isset($data[$pivot_value_nice])) {
+                                $data[$pivot_value_nice] = 0;
+                            }
 
-                $where = [
-                    'p_bucket' => $bucket,
-                    'p_pivot' => $pivot,
-                ];
-                $extra = '';
-                $extra .= ' AND p_month>=' . strval($range[0]);
-                $extra .= ' AND p_month<=' . strval($range[1]);
-                $data_rows = $GLOBALS['SITE_DB']->query_select('stats_preprocessed', ['p_data'], $where, $extra);
-                foreach ($data_rows as $data_row) {
-                    $_data = @unserialize($data_row['p_data']);
-                    foreach ($_data as $pivot_value => $__) {
-                        $pivot_value = $this->make_date_pivot_value_nice($pivot, $pivot_value);
-
-                        $aggregate_total = 0;
-                        $records_total = 0;
-
-                        foreach ($__ as $country => $___) {
-                            if ((!empty($filters[$bucket . '__country'])) && ($filters[$bucket . '__country'] != $country)) {
+                            if ($__ === null) {
                                 continue;
                             }
 
-                            $aggregate_total += $___[0];
-                            $records_total += $___[1];
-                        }
+                            $aggregate_total = 0;
+                            $records_total = 0;
 
-                        $data[$pivot_value] = floatval($aggregate_total) / floatval($records_total);
+                            foreach ($__ as $country => $___) {
+                                if ((!empty($filters[$bucket . '__country'])) && ($filters[$bucket . '__country'] != $country)) {
+                                    continue;
+                                }
+
+                                $aggregate_total += $___[0];
+                                $records_total += $___[1];
+                            }
+
+                            $data[$pivot_value_nice] += (floatval($aggregate_total) / floatval($records_total));
+                        }
                     }
                 }
 
@@ -956,32 +946,31 @@ class Hook_admin_stats_views extends CMSStatsProvider
                 ];
 
             case 'session_durations':
-                $range = $this->convert_day_range_filter_to_pair($pivot, $filters[$bucket . '__day_range']);
-
                 $data = [];
                 foreach ($this->session_duration_brackets as $bracket) {
                     $bracket = $this->cleanup_session_duration($bracket);
                     $data[$bracket] = 0;
                 }
 
-                $where = [
-                    'p_bucket' => $bucket,
-                    'p_pivot' => $pivot,
-                ];
-                $extra = '';
-                $extra .= ' AND p_month>=' . strval($range[0]);
-                $extra .= ' AND p_month<=' . strval($range[1]);
-                $data_rows = $GLOBALS['SITE_DB']->query_select('stats_preprocessed', ['p_data'], $where, $extra);
-                foreach ($data_rows as $data_row) {
-                    $_data = @unserialize($data_row['p_data']);
-                    foreach ($_data as $country => $__) {
-                        if ((!empty($filters[$bucket . '__country'])) && ($filters[$bucket . '__country'] != $country)) {
-                            continue;
-                        }
+                $_data = $this->prepare_preprocessed_data_for_graph($bucket, $pivot, $filters);
 
-                        foreach ($__ as $bracket => $total) {
-                            $bracket = $this->cleanup_session_duration($bracket);
-                            $data[$bracket] += $total;
+                foreach ($_data as $_pivot => $__data) {
+                    foreach ($__data as $pivot_interval => $_) {
+                        foreach ($_ as $pivot_value => $__) {
+                            if ($__ === null) {
+                                continue;
+                            }
+
+                            foreach ($__ as $country => $___) {
+                                if ((!empty($filters[$bucket . '__country'])) && ($filters[$bucket . '__country'] != $country)) {
+                                    continue;
+                                }
+
+                                foreach ($___ as $bracket => $total) {
+                                    $bracket = $this->cleanup_session_duration($bracket);
+                                    $data[$bracket] += $total;
+                                }
+                            }
                         }
                     }
                 }
@@ -998,45 +987,43 @@ class Hook_admin_stats_views extends CMSStatsProvider
                 ];
 
             case 'user_agent_types':
-                $range = $this->convert_day_range_filter_to_pair($pivot, $filters[$bucket . '__day_range']);
-
                 $data = [];
+                $_data = $this->prepare_preprocessed_data_for_graph($bucket, $pivot, $filters);
 
-                $where = [
-                    'p_bucket' => $bucket,
-                    'p_pivot' => $pivot,
-                ];
-                $extra = '';
-                $extra .= ' AND p_month>=' . strval($range[0]);
-                $extra .= ' AND p_month<=' . strval($range[1]);
-                $data_rows = $GLOBALS['SITE_DB']->query_select('stats_preprocessed', ['p_data'], $where, $extra);
-                foreach ($data_rows as $data_row) {
-                    $_data = @unserialize($data_row['p_data']);
-                    foreach ($_data as $country => $__) {
-                        if ((!empty($filters[$bucket . '__country'])) && ($filters[$bucket . '__country'] != $country)) {
-                            continue;
-                        }
-
-                        foreach ($__ as $user_agent_type => $total_views) {
-                            switch ($user_agent_type) {
-                                case self::USER_AGENT_TYPE__UNKNOWN:
-                                    $user_agent_type = do_lang('_UNKNOWN');
-                                    break;
-                                case self::USER_AGENT_TYPE__DESKTOP:
-                                    $user_agent_type = do_lang('USER_AGENT_TYPE__DESKTOP');
-                                    break;
-                                case self::USER_AGENT_TYPE__MOBILE:
-                                    $user_agent_type = do_lang('USER_AGENT_TYPE__MOBILE');
-                                    break;
-                                case self::USER_AGENT_TYPE__BOT:
-                                    $user_agent_type = do_lang('USER_AGENT_TYPE__BOT');
-                                    break;
+                foreach ($_data as $_pivot => $__data) {
+                    foreach ($__data as $pivot_interval => $_) {
+                        foreach ($_ as $pivot_value => $__) {
+                            if ($__ === null) {
+                                continue;
                             }
 
-                            if (!isset($data[$user_agent_type])) {
-                                $data[$user_agent_type] = 0;
+                            foreach ($__ as $country => $___) {
+                                if ((!empty($filters[$bucket . '__country'])) && ($filters[$bucket . '__country'] != $country)) {
+                                    continue;
+                                }
+
+                                foreach ($___ as $user_agent_type => $total_views) {
+                                    switch ($user_agent_type) {
+                                        case self::USER_AGENT_TYPE__UNKNOWN:
+                                            $user_agent_type = do_lang('_UNKNOWN');
+                                            break;
+                                        case self::USER_AGENT_TYPE__DESKTOP:
+                                            $user_agent_type = do_lang('USER_AGENT_TYPE__DESKTOP');
+                                            break;
+                                        case self::USER_AGENT_TYPE__MOBILE:
+                                            $user_agent_type = do_lang('USER_AGENT_TYPE__MOBILE');
+                                            break;
+                                        case self::USER_AGENT_TYPE__BOT:
+                                            $user_agent_type = do_lang('USER_AGENT_TYPE__BOT');
+                                            break;
+                                    }
+
+                                    if (!isset($data[$user_agent_type])) {
+                                        $data[$user_agent_type] = 0;
+                                    }
+                                    $data[$user_agent_type] += $total_views;
+                                }
                             }
-                            $data[$user_agent_type] += $total_views;
                         }
                     }
                 }
@@ -1053,51 +1040,49 @@ class Hook_admin_stats_views extends CMSStatsProvider
                 ];
 
             case 'referrer_type':
-                $range = $this->convert_day_range_filter_to_pair($pivot, $filters[$bucket . '__day_range']);
-
                 $data = [];
+                $_data = $this->prepare_preprocessed_data_for_graph($bucket, $pivot, $filters);
 
-                $where = [
-                    'p_bucket' => $bucket,
-                    'p_pivot' => $pivot,
-                ];
-                $extra = '';
-                $extra .= ' AND p_month>=' . strval($range[0]);
-                $extra .= ' AND p_month<=' . strval($range[1]);
-                $data_rows = $GLOBALS['SITE_DB']->query_select('stats_preprocessed', ['p_data'], $where, $extra);
-                foreach ($data_rows as $data_row) {
-                    $_data = @unserialize($data_row['p_data']);
-                    foreach ($_data as $country => $__) {
-                        if ((!empty($filters[$bucket . '__country'])) && ($filters[$bucket . '__country'] != $country)) {
-                            continue;
-                        }
-
-                        foreach ($__ as $referrer_type => $total_views) {
-                            switch ($referrer_type) {
-                                case self::REFERRER_TYPE__DIRECT:
-                                    $referrer_type = do_lang('REFERRER_TYPE__DIRECT');
-                                    break;
-                                case self::REFERRER_TYPE__UNKNOWN:
-                                    $referrer_type = do_lang('_UNKNOWN');
-                                    break;
-                                case self::REFERRER_TYPE__INTERNAL:
-                                    $referrer_type = do_lang('REFERRER_TYPE__INTERNAL');
-                                    break;
-                                case self::REFERRER_TYPE__EXTERNAL_SEARCH_ENGINE:
-                                    $referrer_type = do_lang('REFERRER_TYPE__EXTERNAL_SEARCH_ENGINE');
-                                    break;
-                                case self::REFERRER_TYPE__EXTERNAL_SOCIAL_MEDIA:
-                                    $referrer_type = do_lang('REFERRER_TYPE__EXTERNAL_SOCIAL_MEDIA');
-                                    break;
-                                case self::REFERRER_TYPE__EXTERNAL_MISC:
-                                    $referrer_type = do_lang('REFERRER_TYPE__EXTERNAL_MISC');
-                                    break;
+                foreach ($_data as $_pivot => $__data) {
+                    foreach ($__data as $pivot_interval => $_) {
+                        foreach ($_ as $pivot_value => $__) {
+                            if ($__ === null) {
+                                continue;
                             }
 
-                            if (!isset($data[$referrer_type])) {
-                                $data[$referrer_type] = 0;
+                            foreach ($__ as $country => $___) {
+                                if ((!empty($filters[$bucket . '__country'])) && ($filters[$bucket . '__country'] != $country)) {
+                                    continue;
+                                }
+
+                                foreach ($___ as $referrer_type => $total_views) {
+                                    switch ($referrer_type) {
+                                        case self::REFERRER_TYPE__DIRECT:
+                                            $referrer_type = do_lang('REFERRER_TYPE__DIRECT');
+                                            break;
+                                        case self::REFERRER_TYPE__UNKNOWN:
+                                            $referrer_type = do_lang('_UNKNOWN');
+                                            break;
+                                        case self::REFERRER_TYPE__INTERNAL:
+                                            $referrer_type = do_lang('REFERRER_TYPE__INTERNAL');
+                                            break;
+                                        case self::REFERRER_TYPE__EXTERNAL_SEARCH_ENGINE:
+                                            $referrer_type = do_lang('REFERRER_TYPE__EXTERNAL_SEARCH_ENGINE');
+                                            break;
+                                        case self::REFERRER_TYPE__EXTERNAL_SOCIAL_MEDIA:
+                                            $referrer_type = do_lang('REFERRER_TYPE__EXTERNAL_SOCIAL_MEDIA');
+                                            break;
+                                        case self::REFERRER_TYPE__EXTERNAL_MISC:
+                                            $referrer_type = do_lang('REFERRER_TYPE__EXTERNAL_MISC');
+                                            break;
+                                    }
+
+                                    if (!isset($data[$referrer_type])) {
+                                        $data[$referrer_type] = 0;
+                                    }
+                                    $data[$referrer_type] += $total_views;
+                                }
                             }
-                            $data[$referrer_type] += $total_views;
                         }
                     }
                 }
@@ -1123,34 +1108,32 @@ class Hook_admin_stats_views extends CMSStatsProvider
             case 'session_entry_pages':
             case 'session_exit_pages':
             case 'session_total_views':
-                $range = $this->convert_day_range_filter_to_pair($pivot, $filters[$bucket . '__day_range']);
-
                 $data = [];
+                $_data = $this->prepare_preprocessed_data_for_graph($bucket, $pivot, $filters);
 
-                $where = [
-                    'p_bucket' => $bucket,
-                    'p_pivot' => $pivot,
-                ];
-                $extra = '';
-                $extra .= ' AND p_month>=' . strval($range[0]);
-                $extra .= ' AND p_month<=' . strval($range[1]);
-                $data_rows = $GLOBALS['SITE_DB']->query_select('stats_preprocessed', ['p_data'], $where, $extra);
-                foreach ($data_rows as $data_row) {
-                    $_data = @unserialize($data_row['p_data']);
-                    foreach ($_data as $country => $__) {
-                        if ((!empty($filters[$bucket . '__country'])) && ($filters[$bucket . '__country'] != $country)) {
-                            continue;
-                        }
-
-                        foreach ($__ as $bar => $total_views) {
-                            if ($bar === '') {
-                                $bar = do_lang('_UNKNOWN');
+                foreach ($_data as $_pivot => $__data) {
+                    foreach ($__data as $pivot_interval => $_) {
+                        foreach ($_ as $pivot_value => $__) {
+                            if ($__ === null) {
+                                continue;
                             }
 
-                            if (!isset($data[$bar])) {
-                                $data[$bar] = 0;
+                            foreach ($__ as $country => $___) {
+                                if ((!empty($filters[$bucket . '__country'])) && ($filters[$bucket . '__country'] != $country)) {
+                                    continue;
+                                }
+
+                                foreach ($___ as $bar => $total_views) {
+                                    if ($bar === '') {
+                                        $bar = do_lang('_UNKNOWN');
+                                    }
+
+                                    if (!isset($data[$bar])) {
+                                        $data[$bar] = 0;
+                                    }
+                                    $data[$bar] += $total_views;
+                                }
                             }
-                            $data[$bar] += $total_views;
                         }
                     }
                 }
@@ -1201,27 +1184,26 @@ class Hook_admin_stats_views extends CMSStatsProvider
                 ];
 
             case 'load_times_spread':
-                $range = $this->convert_day_range_filter_to_pair($pivot, $filters[$bucket . '__day_range']);
-
                 $data = [];
                 foreach ($this->speed_brackets as $bracket) {
                     $bracket = $this->cleanup_speed($bracket);
                     $data[$bracket] = 0;
                 }
 
-                $where = [
-                    'p_bucket' => $bucket,
-                    'p_pivot' => $pivot,
-                ];
-                $extra = '';
-                $extra .= ' AND p_month>=' . strval($range[0]);
-                $extra .= ' AND p_month<=' . strval($range[1]);
-                $data_rows = $GLOBALS['SITE_DB']->query_select('stats_preprocessed', ['p_data'], $where, $extra);
-                foreach ($data_rows as $data_row) {
-                    $_data = @unserialize($data_row['p_data']);
-                    foreach ($_data as $bracket => $total) {
-                        $bracket = $this->cleanup_speed($bracket);
-                        $data[$bracket] += $total;
+                $_data = $this->prepare_preprocessed_data_for_graph($bucket, $pivot, $filters);
+
+                foreach ($_data as $_pivot => $__data) {
+                    foreach ($__data as $pivot_interval => $_) {
+                        foreach ($_ as $pivot_value => $__) {
+                            if ($__ === null) {
+                                continue;
+                            }
+
+                            foreach ($__ as $bracket => $total) {
+                                $bracket = $this->cleanup_speed($bracket);
+                                $data[$bracket] += $total;
+                            }
+                        }
                     }
                 }
 
@@ -1235,37 +1217,40 @@ class Hook_admin_stats_views extends CMSStatsProvider
             case 'requested_languages':
                 require_code('lang2');
 
-                $range = $this->convert_day_range_filter_to_pair($pivot, $filters[$bucket . '__day_range']);
-
                 $data = [];
+                $_data = $this->prepare_preprocessed_data_for_graph($bucket, $pivot, $filters);
 
-                $where = [
-                    'p_bucket' => $bucket,
-                    'p_pivot' => $pivot,
-                ];
-                $extra = '';
-                $extra .= ' AND p_month>=' . strval($range[0]);
-                $extra .= ' AND p_month<=' . strval($range[1]);
-                $data_rows = $GLOBALS['SITE_DB']->query_select('stats_preprocessed', ['p_data'], $where, $extra);
-                foreach ($data_rows as $data_row) {
-                    $_data = @unserialize($data_row['p_data']);
-                    foreach ($_data as $bar => $total) {
-                        if (empty($bar)) {
-                            $nice_bar = do_lang('_UNKNOWN');
-                        } else {
-                            $nice_bar = lookup_language_full_name(cms_strtoupper_ascii($bar));
-                            if (empty($nice_bar)) {
-                                $nice_bar = lookup_language_full_name(cms_strtoupper_ascii(preg_replace('#_.*$#', '', $bar)));
+                foreach ($_data as $_pivot => $__data) {
+                    foreach ($__data as $pivot_interval => $_) {
+                        foreach ($_ as $pivot_value => $__) {
+                            $pivot_value_nice = $this->make_date_pivot_value_nice($_pivot, $pivot_interval, $pivot_value);
+                            if (!isset($data[$pivot_value_nice])) {
+                                $data[$pivot_value_nice] = 0;
                             }
-                            if (empty($nice_bar)) {
-                                $nice_bar = $bar;
+
+                            if ($__ === null) {
+                                continue;
+                            }
+
+                            foreach ($__ as $bar => $total) {
+                                if (empty($bar)) {
+                                    $nice_bar = do_lang('_UNKNOWN');
+                                } else {
+                                    $nice_bar = lookup_language_full_name(cms_strtoupper_ascii($bar));
+                                    if (empty($nice_bar)) {
+                                        $nice_bar = lookup_language_full_name(cms_strtoupper_ascii(preg_replace('#_.*$#', '', $bar)));
+                                    }
+                                    if (empty($nice_bar)) {
+                                        $nice_bar = $bar;
+                                    }
+                                }
+
+                                if (!isset($data[$nice_bar])) {
+                                    $data[$nice_bar] = 0;
+                                }
+                                $data[$nice_bar] += $total;
                             }
                         }
-
-                        if (!isset($data[$nice_bar])) {
-                            $data[$nice_bar] = 0;
-                        }
-                        $data[$nice_bar] += $total;
                     }
                 }
 
@@ -1284,34 +1269,32 @@ class Hook_admin_stats_views extends CMSStatsProvider
             case 'countries':
                 require_code('locations');
 
-                $range = $this->convert_day_range_filter_to_pair($pivot, $filters[$bucket . '__day_range']);
-
                 $data = [];
+                $_data = $this->prepare_preprocessed_data_for_graph($bucket, $pivot, $filters);
 
-                $where = [
-                    'p_bucket' => $bucket,
-                    'p_pivot' => $pivot,
-                ];
-                $extra = '';
-                $extra .= ' AND p_month>=' . strval($range[0]);
-                $extra .= ' AND p_month<=' . strval($range[1]);
-                $data_rows = $GLOBALS['SITE_DB']->query_select('stats_preprocessed', ['p_data'], $where, $extra);
-                foreach ($data_rows as $data_row) {
-                    $_data = @unserialize($data_row['p_data']);
-                    foreach ($_data as $bar => $total) {
-                        if (empty($bar)) {
-                            $nice_bar = do_lang('_UNKNOWN');
-                        } else {
-                            $nice_bar = find_country_name_from_iso($bar);
-                            if (empty($nice_bar)) {
-                                $nice_bar = $bar;
+                foreach ($_data as $_pivot => $__data) {
+                    foreach ($__data as $pivot_interval => $_) {
+                        foreach ($_ as $pivot_value => $__) {
+                            if ($__ === null) {
+                                continue;
+                            }
+
+                            foreach ($__ as $bar => $total) {
+                                if (empty($bar)) {
+                                    $nice_bar = do_lang('_UNKNOWN');
+                                } else {
+                                    $nice_bar = find_country_name_from_iso($bar);
+                                    if (empty($nice_bar)) {
+                                        $nice_bar = $bar;
+                                    }
+                                }
+
+                                if (!isset($data[$nice_bar])) {
+                                    $data[$nice_bar] = 0;
+                                }
+                                $data[$nice_bar] += $total;
                             }
                         }
-
-                        if (!isset($data[$nice_bar])) {
-                            $data[$nice_bar] = 0;
-                        }
-                        $data[$nice_bar] += $total;
                     }
                 }
 
@@ -1328,42 +1311,41 @@ class Hook_admin_stats_views extends CMSStatsProvider
                 ];
 
             case 'average_page_speed':
-                $range = $this->convert_day_range_filter_to_pair($pivot, $filters[$bucket . '__day_range']);
-
                 $data = [];
+                $_data = $this->prepare_preprocessed_data_for_graph($bucket, $pivot, $filters);
 
-                $where = [
-                    'p_bucket' => $bucket,
-                    'p_pivot' => $pivot,
-                ];
-                $extra = '';
-                $extra .= ' AND p_month>=' . strval($range[0]);
-                $extra .= ' AND p_month<=' . strval($range[1]);
-                $data_rows = $GLOBALS['SITE_DB']->query_select('stats_preprocessed', ['p_data'], $where, $extra);
-                foreach ($data_rows as $data_row) {
-                    $_data = @unserialize($data_row['p_data']);
-                    foreach ($_data as $pivot_value => $__) {
-                        $pivot_value = $this->make_date_pivot_value_nice($pivot, $pivot_value);
-
-                        $total_time_spent = 0;
-                        $total_views = 0;
-
-                        foreach ($__ as $page_link => $___) {
-                            if (!empty($filters[$bucket . '__page_link'])) {
-                                list($current_zone_name, $attributes) = page_link_decode($page_link);
-                                $current_page_name = isset($attributes['page']) ? $attributes['page'] : DEFAULT_ZONE_PAGE_NAME;
-                                if (!match_key_match($filters[$bucket . '__page_link'], false, null, $current_zone_name, $current_page_name)) {
-                                    continue;
-                                }
+                foreach ($_data as $_pivot => $__data) {
+                    foreach ($__data as $pivot_interval => $_) {
+                        foreach ($_ as $pivot_value => $__) {
+                            $pivot_value_nice = $this->make_date_pivot_value_nice($_pivot, $pivot_interval, $pivot_value);
+                            if (!isset($data[$pivot_value_nice])) {
+                                $data[$pivot_value_nice] = 0;
                             }
 
-                            list($_total_time_spent, $_total_views) = $___;
-                            $total_time_spent += $_total_time_spent;
-                            $total_views += $_total_views;
-                        }
+                            if ($__ === null) {
+                                continue;
+                            }
 
-                        if ($total_views != 0) {
-                            $data[$pivot_value] = floatval($total_time_spent) / floatval($total_views);
+                            $total_time_spent = 0;
+                            $total_views = 0;
+
+                            foreach ($__ as $page_link => $___) {
+                                if (!empty($filters[$bucket . '__page_link'])) {
+                                    list($current_zone_name, $attributes) = page_link_decode($page_link);
+                                    $current_page_name = isset($attributes['page']) ? $attributes['page'] : DEFAULT_ZONE_PAGE_NAME;
+                                    if (!match_key_match($filters[$bucket . '__page_link'], false, null, $current_zone_name, $current_page_name)) {
+                                        continue;
+                                    }
+                                }
+
+                                list($_total_time_spent, $_total_views) = $___;
+                                $total_time_spent += $_total_time_spent;
+                                $total_views += $_total_views;
+                            }
+
+                            if ($total_views != 0) {
+                                $data[$pivot_value_nice] += (floatval($total_time_spent) / floatval($total_views));
+                            }
                         }
                     }
                 }
@@ -1376,48 +1358,48 @@ class Hook_admin_stats_views extends CMSStatsProvider
                 ];
 
             case 'session_bounce_rates':
-                $range = $this->convert_day_range_filter_to_pair($pivot, $filters[$bucket . '__day_range']);
-
                 $data = [];
+                $_data = $this->prepare_preprocessed_data_for_graph($bucket, $pivot, $filters);
 
-                $where = [
-                    'p_bucket' => $bucket,
-                    'p_pivot' => $pivot,
-                ];
-                $extra = '';
-                $extra .= ' AND p_month>=' . strval($range[0]);
-                $extra .= ' AND p_month<=' . strval($range[1]);
-                $data_rows = $GLOBALS['SITE_DB']->query_select('stats_preprocessed', ['p_data'], $where, $extra);
-                foreach ($data_rows as $data_row) {
-                    $_data = @unserialize($data_row['p_data']);
-                    foreach ($_data as $pivot_value => $__) {
-                        $pivot_value = $this->make_date_pivot_value_nice($pivot, $pivot_value);
+                foreach ($_data as $_pivot => $__data) {
+                    foreach ($__data as $pivot_interval => $_) {
+                        foreach ($_ as $pivot_value => $__) {
+                            $pivot_value_nice = $this->make_date_pivot_value_nice($_pivot, $pivot_interval, $pivot_value);
+                            if (!isset($data[$pivot_value_nice])) {
+                                $data[$pivot_value_nice] = 0;
+                            }
 
-                        $total_bounces = 0;
-                        $total_views = 0;
-
-                        foreach ($__ as $country => $___) {
-                            if ((!empty($filters[$bucket . '__country'])) && ($filters[$bucket . '__country'] != $country)) {
+                            if ($__ === null) {
                                 continue;
                             }
 
-                            foreach ($___ as $page_link => $____) {
-                                if (!empty($filters[$bucket . '__page_link'])) {
-                                    list($current_zone_name, $attributes) = page_link_decode($page_link);
-                                    $current_page_name = isset($attributes['page']) ? $attributes['page'] : DEFAULT_ZONE_PAGE_NAME;
-                                    if (!match_key_match($filters[$bucket . '__page_link'], false, null, $current_zone_name, $current_page_name)) {
-                                        continue;
-                                    }
+                            $total_bounces = 0;
+                            $total_views = 0;
+
+                            foreach ($__ as $country => $___) {
+                                if ((!empty($filters[$bucket . '__country'])) && ($filters[$bucket . '__country'] != $country)) {
+                                    continue;
                                 }
 
-                                list($_total_bounces, $_total_views) = $____;
-                                $total_bounces += $_total_bounces;
-                                $total_views += $_total_views;
-                            }
-                        }
+                                foreach ($___ as $page_link => $____) {
+                                    if (!empty($filters[$bucket . '__page_link'])) {
+                                        list($current_zone_name, $attributes) = page_link_decode($page_link);
+                                        $current_page_name = isset($attributes['page']) ? $attributes['page'] : DEFAULT_ZONE_PAGE_NAME;
+                                        if (!match_key_match($filters[$bucket . '__page_link'], false, null, $current_zone_name, $current_page_name)) {
+                                            continue;
+                                        }
+                                    }
 
-                        if ($total_views != 0) {
-                            $data[$pivot_value] = 100.0 * floatval($total_bounces) / floatval($total_views);
+                                    list($_total_bounces, $_total_views) = $____;
+                                    $total_bounces += $_total_bounces;
+                                    $total_views += $_total_views;
+                                }
+                            }
+
+                            // TODO: possibly buggy?
+                            if ($total_views != 0) {
+                                $data[$pivot_value_nice] = 100.0 * floatval($total_bounces) / floatval($total_views);
+                            }
                         }
                     }
                 }
@@ -1430,28 +1412,26 @@ class Hook_admin_stats_views extends CMSStatsProvider
                 ];
 
             case 'page_average_speeds':
-                $range = $this->convert_day_range_filter_to_pair($pivot, $filters[$bucket . '__day_range']);
-
                 $data = [];
+                $_data = $this->prepare_preprocessed_data_for_graph($bucket, $pivot, $filters);
 
-                $where = [
-                    'p_bucket' => $bucket,
-                    'p_pivot' => $pivot,
-                ];
-                $extra = '';
-                $extra .= ' AND p_month>=' . strval($range[0]);
-                $extra .= ' AND p_month<=' . strval($range[1]);
-                $data_rows = $GLOBALS['SITE_DB']->query_select('stats_preprocessed', ['p_data'], $where, $extra);
-                foreach ($data_rows as $data_row) {
-                    $_data = @unserialize($data_row['p_data']);
-                    foreach ($_data as $page_link => $__) {
-                        list($total_compound_speed, $total_views) = $__;
-
-                        if ($total_views != 0) {
-                            if (!isset($data[$page_link])) {
-                                $data[$page_link] = 0.0;
+                foreach ($_data as $_pivot => $__data) {
+                    foreach ($__data as $pivot_interval => $_) {
+                        foreach ($_ as $pivot_value => $__) {
+                            if ($__ === null) {
+                                continue;
                             }
-                            $data[$page_link] += floatval($total_compound_speed) / floatval($total_views);
+
+                            foreach ($__ as $page_link => $___) {
+                                list($total_compound_speed, $total_views) = $___;
+
+                                if ($total_views != 0) {
+                                    if (!isset($data[$page_link])) {
+                                        $data[$page_link] = 0.0;
+                                    }
+                                    $data[$page_link] += (floatval($total_compound_speed) / floatval($total_views));
+                                }
+                            }
                         }
                     }
                 }

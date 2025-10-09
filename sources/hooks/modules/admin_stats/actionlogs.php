@@ -224,32 +224,28 @@ class Hook_admin_stats_actionlogs extends CMSStatsProvider
      */
     public function generate_final_data(string $bucket, string $pivot, array $filters) : ?array
     {
-        $range = $this->convert_day_range_filter_to_pair($pivot, $filters[$bucket . '__day_range']);
+        $data = [];
+        $_data = $this->prepare_preprocessed_data_for_graph($bucket, $pivot, $filters);
 
-        $data = $this->fill_data_by_date_pivots($pivot, $range[0], $range[1]);
+        foreach ($_data as $_pivot => $__data) {
+            foreach ($__data as $pivot_interval => $_) {
+                foreach ($_ as $pivot_value => $__) {
+                    $pivot_value_nice = $this->make_date_pivot_value_nice($_pivot, $pivot_interval, $pivot_value);
+                    if (!isset($data[$pivot_value_nice])) {
+                        $data[$pivot_value_nice] = 0;
+                    }
 
-        $where = [
-            'p_bucket' => $bucket,
-            'p_pivot' => $pivot,
-        ];
-        $extra = '';
-        $extra .= ' AND p_month>=' . strval($range[0]);
-        $extra .= ' AND p_month<=' . strval($range[1]);
-        $data_rows = $GLOBALS['SITE_DB']->query_select('stats_preprocessed', ['p_data'], $where, $extra);
-        foreach ($data_rows as $data_row) {
-            $_data = @unserialize($data_row['p_data']);
-            foreach ($_data as $pivot_value => $__) {
-                $pivot_value = $this->make_date_pivot_value_nice($pivot, $pivot_value);
-
-                foreach ($__ as $the_type => $total) {
-                    if ((!empty($filters[$bucket . '__the_type'])) && (!simulated_wildcard_match($filters[$bucket . '__the_type'], $the_type, true))) {
+                    if ($__ === null) {
                         continue;
                     }
 
-                    if (!isset($data[$pivot_value])) {
-                        $data[$pivot_value] = 0;
+                    foreach ($__ as $the_type => $total) {
+                        if ((!empty($filters[$bucket . '__the_type'])) && (!simulated_wildcard_match($filters[$bucket . '__the_type'], $the_type, true))) {
+                            continue;
+                        }
+
+                        $data[$pivot_value_nice] += $total;
                     }
-                    $data[$pivot_value] += $total;
                 }
             }
         }

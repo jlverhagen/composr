@@ -96,7 +96,7 @@ class Hook_cron_stats_preprocess_raw_data
         // Determine if we are processing deltas opposed to running preprocessing
         $pending_deltas = $GLOBALS['SITE_DB']->query_select_value('stats_preprocessed_delta', 'COUNT(*)');
         $doing_deltas = ($pending_deltas > 0);
-        if (($doing_deltas === false) && ($start_time < (time() - (60 * 15)))) { // Do not preprocess stats data more than once every 15 minutes
+        if (($doing_deltas === false) && ($start_time >= (time() - (60 * 15)))) { // Do not preprocess stats data more than once every 15 minutes
             return;
         }
 
@@ -219,7 +219,7 @@ class Hook_cron_stats_preprocess_raw_data
             }
 
             if (is_array($v)) { // Arrays get merged
-                stats_deep_merge($base[$k], $v);
+                $this->stats_deep_merge($base[$k], $v);
             } elseif (is_numeric($v)) { // Numbers get added together (counters)
                 $base[$k] = $base[$k] + $v;
             } else { // All other types overwrite previous values
