@@ -23,7 +23,7 @@
  */
 class Hook_cron_stats_preprocess_raw_data
 {
-    protected const END_TIME_CUTOFF = 24 * 60 * 60; // Only process up to one day at a time to avoid server freezes.
+    protected const END_TIME_CUTOFF = 60 * 60; // Only process up to one hour at a time to avoid server freezes.
     protected const INITIAL_BACK_TIME = 24 * 60 * 60 * 31; // Don't calculate stats older than 31 days ago to prevent server freezes.
 
     /**
@@ -96,7 +96,7 @@ class Hook_cron_stats_preprocess_raw_data
         // Determine if we are processing deltas opposed to running preprocessing
         $pending_deltas = $GLOBALS['SITE_DB']->query_select_value('stats_preprocessed_delta', 'COUNT(*)');
         $doing_deltas = ($pending_deltas > 0);
-        if (($doing_deltas === false) && ($start_time >= (time() - (60 * 15)))) { // Do not preprocess stats data more than once every 15 minutes
+        if (($doing_deltas === false) && ($start_time >= (time() - (60 * 5)))) { // Do not preprocess stats data more than once every 5 minutes
             return;
         }
 
