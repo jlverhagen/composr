@@ -74,7 +74,7 @@ class Hook_admin_stats_comments extends CMSStatsProvider
                 'label' => do_lang_tempcode('COMMENTS'),
                 'category' => 'feedback_and_engagement',
                 'filters' => [
-                    'comments__month_range' => new CMSStatsDateMonthRangeFilter('comments__month_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
+                    'comments__day_range' => new CMSStatsDayRangeFilter('comments__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
                     'comments_tallies__content_type' => new CMSStatsListFilter('comments_tallies__content_type', do_lang_tempcode('CONTENT_TYPE'), $this->find_all_feedback_type_codes()),
                 ],
                 'pivot' => new CMSStatsDatePivot('comments__pivot', $this->get_date_pivots(!$for_kpi)),
@@ -84,7 +84,7 @@ class Hook_admin_stats_comments extends CMSStatsProvider
                 'label' => do_lang_tempcode('COMMENT_ENGAGEMENT'),
                 'category' => 'feedback_and_engagement',
                 'filters' => [
-                    'comments_tallies__month_range' => new CMSStatsDateMonthRangeFilter('comments_tallies__month_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
+                    'comments_tallies__day_range' => new CMSStatsDayRangeFilter('comments_tallies__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
                     'comments_tallies__content_type' => new CMSStatsListFilter('comments_tallies__content_type', do_lang_tempcode('CONTENT_TYPE'), $this->find_all_feedback_type_codes()),
                 ],
                 'pivot' => null,
@@ -97,7 +97,7 @@ class Hook_admin_stats_comments extends CMSStatsProvider
      *
      * @param  TIME $start_time Start timestamp
      * @param  TIME $end_time End timestamp
-     * @param  array $data_buckets Map of data buckets; a map of bucket name to nested maps with the following maps in sequence: 'month', 'pivot', 'value' (then further map data) ; extended and returned by reference
+     * @param  array $data_buckets Map of data buckets; a map of bucket name to nested maps with the following maps in sequence: 'pivot', 'pivot interval', 'pivot value' (then further map data); passed by reference only with pre-filled zero data to later be merged
      */
     public function preprocess_raw_data(int $start_time, int $end_time, array &$data_buckets)
     {
@@ -140,25 +140,24 @@ class Hook_admin_stats_comments extends CMSStatsProvider
                         continue;
                     }
 
-                    $month = to_epoch_interval_index($timestamp, 'months');
-
                     $num_comments = $topic['t_cache_num_posts'] - 1;
 
                     foreach (array_keys($date_pivots) as $pivot) {
+                        $pivot_interval = $this->calculate_date_pivot_interval($pivot, $timestamp);
                         $pivot_value = $this->calculate_date_pivot_value($pivot, $timestamp);
 
-                        if (!isset($data_buckets['comments'][$month][$pivot][$pivot_value][$feedback_type_code])) {
-                            $data_buckets['comments'][$month][$pivot][$pivot_value][$feedback_type_code] = [0, 0];
+                        if (!isset($data_buckets['comments'][$pivot][$pivot_interval][$pivot_value][$feedback_type_code])) {
+                            $data_buckets['comments'][$pivot][$pivot_interval][$pivot_value][$feedback_type_code] = [0, 0];
                         }
-                        $data_buckets['comments'][$month][$pivot][$pivot_value][$feedback_type_code][0] += $num_comments;
-                        $data_buckets['comments'][$month][$pivot][$pivot_value][$feedback_type_code][1]++;
+                        $data_buckets['comments'][$pivot][$pivot_interval][$pivot_value][$feedback_type_code][0] += $num_comments;
+                        $data_buckets['comments'][$pivot][$pivot_interval][$pivot_value][$feedback_type_code][1]++;
 
                         $comment_bracket = $this->find_value_bracket($this->comments_brackets, $num_comments);
                         if ($comment_bracket !== null) {
-                            if (!isset($data_buckets['comments_tallies'][$month][''][$comment_bracket])) {
-                                $data_buckets['comments_tallies'][$month][''][$comment_bracket] = 0;
+                            if (!isset($data_buckets['comments_tallies'][$pivot][$pivot_interval][$pivot_value][$comment_bracket])) {
+                                $data_buckets['comments_tallies'][$pivot][$pivot_interval][$pivot_value][$comment_bracket] = 0;
                             }
-                            $data_buckets['comments_tallies'][$month][''][$comment_bracket]++;
+                            $data_buckets['comments_tallies'][$pivot][$pivot_interval][$pivot_value][$comment_bracket]++;
                         }
                     }
                 }
@@ -180,36 +179,35 @@ class Hook_admin_stats_comments extends CMSStatsProvider
     {
         switch ($bucket) {
             case 'comments':
-                $range = $this->convert_month_range_filter_to_pair($filters[$bucket . '__month_range']);
+                $data = [];
+                $_data = $this->prepare_preprocessed_data_for_graph($bucket, $pivot, $filters);
 
-                $data = $this->fill_data_by_date_pivots($pivot, $range[0], $range[1]);
+                foreach ($_data as $_pivot => $__data) {
+                    foreach ($__data as $pivot_interval => $_) {
+                        foreach ($_ as $pivot_value => $__) {
+                            $pivot_value_nice = $this->make_date_pivot_value_nice($_pivot, $pivot_interval, $pivot_value);
+                            if (!isset($data[$pivot_value_nice])) {
+                                $data[$pivot_value_nice] = 0;
+                            }
 
-                $where = [
-                    'p_bucket' => $bucket,
-                    'p_pivot' => $pivot,
-                ];
-                $extra = '';
-                $extra .= ' AND p_month>=' . strval($range[0]);
-                $extra .= ' AND p_month<=' . strval($range[1]);
-                $data_rows = $GLOBALS['SITE_DB']->query_select('stats_preprocessed', ['p_data'], $where, $extra);
-                foreach ($data_rows as $data_row) {
-                    $_data = @unserialize($data_row['p_data']);
-                    foreach ($_data as $pivot_value => $_) {
-                        $pivot_value = $this->make_date_pivot_value_nice($pivot, $pivot_value);
-
-                        $total_posts = 0;
-                        $total_topics = 0;
-
-                        foreach ($_ as $feedback_type_code => $value) {
-                            if ((!empty($filters[$bucket . '__content_type'])) && ($filters[$bucket . '__content_type'] != $feedback_type_code)) {
+                            if ($__ === null) {
                                 continue;
                             }
 
-                            $total_posts += $value[0];
-                            $total_topics += $value[1];
-                        }
+                            $total_posts = 0;
+                            $total_topics = 0;
 
-                        $data[$pivot_value] += floatval($total_posts) / floatval($total_topics);
+                            foreach ($__ as $feedback_type_code => $value) {
+                                if ((!empty($filters[$bucket . '__content_type'])) && ($filters[$bucket . '__content_type'] != $feedback_type_code)) {
+                                    continue;
+                                }
+
+                                $total_posts += $value[0];
+                                $total_topics += $value[1];
+                            }
+
+                            $data[$pivot_value_nice] += (floatval($total_posts) / floatval($total_topics));
+                        }
                     }
                 }
 
@@ -225,25 +223,23 @@ class Hook_admin_stats_comments extends CMSStatsProvider
                 ];
 
             case 'comments_tallies':
-                $range = $this->convert_month_range_filter_to_pair($filters[$bucket . '__month_range']);
-
                 $data = [];
-                foreach ($this->comments_brackets as $bracket) {
-                    $data[$bracket] = 0;
-                }
+                $_data = $this->prepare_preprocessed_data_for_graph($bucket, $pivot, $filters);
 
-                $where = [
-                    'p_bucket' => $bucket,
-                    'p_pivot' => $pivot,
-                ];
-                $extra = '';
-                $extra .= ' AND p_month>=' . strval($range[0]);
-                $extra .= ' AND p_month<=' . strval($range[1]);
-                $data_rows = $GLOBALS['SITE_DB']->query_select('stats_preprocessed', ['p_data'], $where, $extra);
-                foreach ($data_rows as $data_row) {
-                    $_data = @unserialize($data_row['p_data']);
-                    foreach ($_data as $bracket => $total) {
-                        $data[$bracket] += $total;
+                foreach ($_data as $_pivot => $__data) {
+                    foreach ($__data as $pivot_interval => $_) {
+                        foreach ($_ as $pivot_value => $__) {
+                            if ($__ === null) {
+                                continue;
+                            }
+
+                            foreach ($__ as $bracket => $total) {
+                                if (!isset($data[$bracket])) {
+                                    $data[$bracket] = 0;
+                                }
+                                $data[$bracket] += $total;
+                            }
+                        }
                     }
                 }
 

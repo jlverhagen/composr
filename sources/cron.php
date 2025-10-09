@@ -149,6 +149,11 @@ function cron_run(bool $force = false, bool $verbose = false, ?array $limit_hook
         return $ret;
     }
 
+    // Disable query limiting if running scheduler hooks normally or as a loop
+    if (($limit_hooks === null) || ($loop)) {
+        push_query_limiting(false);
+    }
+
     // Starting logging
     $_log_file = get_custom_file_base() . '/data_custom/cron.log';
     $log_file = null;
@@ -536,6 +541,10 @@ function cron_run(bool $force = false, bool $verbose = false, ?array $limit_hook
         flock($log_file, LOCK_UN);
 
         fclose($log_file);
+    }
+
+    if (($limit_hooks === null) || ($loop)) {
+        pop_query_limiting();
     }
 
     return $ret;

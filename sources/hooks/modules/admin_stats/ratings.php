@@ -40,7 +40,7 @@ class Hook_admin_stats_ratings extends CMSStatsProvider
                 'label' => do_lang_tempcode('RATINGS'),
                 'category' => 'feedback_and_engagement',
                 'filters' => [
-                    'ratings__month_range' => new CMSStatsDateMonthRangeFilter('ratings__month_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
+                    'ratings__day_range' => new CMSStatsDayRangeFilter('ratings__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
                     'ratings__rating_for_type' => new CMSStatsListFilter('ratings__rating_for_type', do_lang_tempcode('CONTENT_TYPE'), $this->find_all_feedback_type_codes()),
                 ],
                 'pivot' => null,
@@ -49,7 +49,7 @@ class Hook_admin_stats_ratings extends CMSStatsProvider
                 'label' => do_lang_tempcode('AVERAGE_RATING'),
                 'category' => 'feedback_and_engagement',
                 'filters' => [
-                    'average_rating__month_range' => new CMSStatsDateMonthRangeFilter('average_rating__month_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
+                    'average_rating__day_range' => new CMSStatsDayRangeFilter('average_rating__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
                     'average_rating__rating_for_type' => new CMSStatsListFilter('average_rating__rating_for_type', do_lang_tempcode('CONTENT_TYPE'), $this->find_all_feedback_type_codes()),
                 ],
                 'pivot' => new CMSStatsDatePivot('average_rating__pivot', $this->get_date_pivots(!$for_kpi)),
@@ -63,7 +63,7 @@ class Hook_admin_stats_ratings extends CMSStatsProvider
      *
      * @param  TIME $start_time Start timestamp
      * @param  TIME $end_time End timestamp
-     * @param  array $data_buckets Map of data buckets; a map of bucket name to nested maps with the following maps in sequence: 'month', 'pivot', 'value' (then further map data) ; extended and returned by reference
+     * @param  array $data_buckets Map of data buckets; a map of bucket name to nested maps with the following maps in sequence: 'pivot', 'pivot interval', 'pivot value' (then further map data); passed by reference only with pre-filled zero data to later be merged
      */
     public function preprocess_raw_data(int $start_time, int $end_time, array &$data_buckets)
     {
@@ -86,24 +86,23 @@ class Hook_admin_stats_ratings extends CMSStatsProvider
                 $timestamp = $row['rating_time'];
                 $timestamp = tz_time($timestamp, $server_timezone);
 
-                $month = to_epoch_interval_index($timestamp, 'months');
-
                 $rating_for_type = $row['rating_for_type'];
                 $rating = $row['rating'];
 
-                if (!isset($data_buckets['ratings'][$month][''][$rating_for_type][$rating])) {
-                    $data_buckets['ratings'][$month][''][$rating_for_type][$rating] = 0;
-                }
-                $data_buckets['ratings'][$month][''][$rating_for_type][$rating]++;
-
                 foreach (array_keys($date_pivots) as $pivot) {
+                    $pivot_interval = $this->calculate_date_pivot_interval($pivot, $timestamp);
                     $pivot_value = $this->calculate_date_pivot_value($pivot, $timestamp);
 
-                    if (!isset($data_buckets['average_rating'][$month][$pivot][$pivot_value][$rating_for_type])) {
-                        $data_buckets['average_rating'][$month][$pivot][$pivot_value][$rating_for_type] = [0, 0];
+                    if (!isset($data_buckets['average_rating'][$pivot][$pivot_interval][$pivot_value][$rating_for_type])) {
+                        $data_buckets['average_rating'][$pivot][$pivot_interval][$pivot_value][$rating_for_type] = [0, 0];
                     }
-                    $data_buckets['average_rating'][$month][$pivot][$pivot_value][$rating_for_type][0] += $rating;
-                    $data_buckets['average_rating'][$month][$pivot][$pivot_value][$rating_for_type][1]++;
+                    $data_buckets['average_rating'][$pivot][$pivot_interval][$pivot_value][$rating_for_type][0] += $rating;
+                    $data_buckets['average_rating'][$pivot][$pivot_interval][$pivot_value][$rating_for_type][1]++;
+
+                    if (!isset($data_buckets['ratings'][$pivot][$pivot_interval][$pivot_value][$rating_for_type][$rating])) {
+                        $data_buckets['ratings'][$pivot][$pivot_interval][$pivot_value][$rating_for_type][$rating] = 0;
+                    }
+                    $data_buckets['ratings'][$pivot][$pivot_interval][$pivot_value][$rating_for_type][$rating]++;
                 }
             }
 
@@ -123,8 +122,6 @@ class Hook_admin_stats_ratings extends CMSStatsProvider
     {
         switch ($bucket) {
             case 'ratings':
-                $range = $this->convert_month_range_filter_to_pair($filters[$bucket . '__month_range']);
-
                 $data = [
                     1 => 0,
                     2 => 0,
@@ -133,24 +130,25 @@ class Hook_admin_stats_ratings extends CMSStatsProvider
                     5 => 0,
                 ];
 
-                $where = [
-                    'p_bucket' => $bucket,
-                    'p_pivot' => $pivot,
-                ];
-                $extra = '';
-                $extra .= ' AND p_month>=' . strval($range[0]);
-                $extra .= ' AND p_month<=' . strval($range[1]);
-                $data_rows = $GLOBALS['SITE_DB']->query_select('stats_preprocessed', ['p_data'], $where, $extra);
-                foreach ($data_rows as $data_row) {
-                    $_data = @unserialize($data_row['p_data']);
-                    foreach ($_data as $rating_for_type => $_) {
-                        if ((!empty($filters[$bucket . '__rating_for_type'])) && ($filters[$bucket . '__rating_for_type'] != $rating_for_type)) {
-                            continue;
-                        }
+                $data = [];
+                $_data = $this->prepare_preprocessed_data_for_graph($bucket, $pivot, $filters);
 
-                        foreach ($_ as $rating => $num_ratings) {
-                            $_rating = intval(round((floatval($rating) / 2.0)));
-                            $data[$_rating] += $num_ratings;
+                foreach ($_data as $_pivot => $__data) {
+                    foreach ($__data as $pivot_interval => $_) {
+                        foreach ($_ as $pivot_value => $__) {
+                            if ($__ === null) {
+                                continue;
+                            }
+
+                            foreach ($__ as $rating_for_type => $___)
+                            if ((!empty($filters[$bucket . '__rating_for_type'])) && ($filters[$bucket . '__rating_for_type'] != $rating_for_type)) {
+                                continue;
+
+                                foreach ($___ as $rating => $num_ratings) {
+                                    $_rating = intval(round((floatval($rating) / 2.0)));
+                                    $data[$_rating] += $num_ratings;
+                                }
+                            }
                         }
                     }
                 }
@@ -163,36 +161,35 @@ class Hook_admin_stats_ratings extends CMSStatsProvider
                 ];
 
             case 'average_rating':
-                $range = $this->convert_month_range_filter_to_pair($filters[$bucket . '__month_range']);
+                $data = [];
+                $_data = $this->prepare_preprocessed_data_for_graph($bucket, $pivot, $filters);
 
-                $data = $this->fill_data_by_date_pivots($pivot, $range[0], $range[1]);
+                foreach ($_data as $_pivot => $__data) {
+                    foreach ($__data as $pivot_interval => $_) {
+                        foreach ($_ as $pivot_value => $__) {
+                            $pivot_value_nice = $this->make_date_pivot_value_nice($_pivot, $pivot_interval, $pivot_value);
+                            if (!isset($data[$pivot_value_nice])) {
+                                $data[$pivot_value_nice] = 0;
+                            }
 
-                $where = [
-                    'p_bucket' => $bucket,
-                    'p_pivot' => $pivot,
-                ];
-                $extra = '';
-                $extra .= ' AND p_month>=' . strval($range[0]);
-                $extra .= ' AND p_month<=' . strval($range[1]);
-                $data_rows = $GLOBALS['SITE_DB']->query_select('stats_preprocessed', ['p_data'], $where, $extra);
-                foreach ($data_rows as $data_row) {
-                    $_data = @unserialize($data_row['p_data']);
-                    foreach ($_data as $pivot_value => $__) {
-                        $pivot_value = $this->make_date_pivot_value_nice($pivot, $pivot_value);
-
-                        $aggregate_rating = 0;
-                        $total_ratings = 0;
-
-                        foreach ($__ as $rating_for_type => $_) {
-                            if ((!empty($filters[$bucket . '__rating_for_type'])) && ($filters[$bucket . '__rating_for_type'] != $rating_for_type)) {
+                            if ($__ === null) {
                                 continue;
                             }
 
-                            $aggregate_rating += $_[0];
-                            $total_ratings += $_[1];
-                        }
+                            $aggregate_rating = 0;
+                            $total_ratings = 0;
 
-                        $data[$pivot_value] = (floatval($aggregate_rating) / 2.0) / floatval($total_ratings);
+                            foreach ($__ as $rating_for_type => $___) {
+                                if ((!empty($filters[$bucket . '__rating_for_type'])) && ($filters[$bucket . '__rating_for_type'] != $rating_for_type)) {
+                                    continue;
+                                }
+
+                                $aggregate_rating += $___[0];
+                                $total_ratings += $___[1];
+                            }
+
+                            $data[$pivot_value_nice] = (floatval($aggregate_rating) / 2.0) / floatval($total_ratings);
+                        }
                     }
                 }
 

@@ -91,7 +91,7 @@ class Hook_admin_stats_events extends CMSStatsProvider
                 'label' => do_lang_tempcode('STATS_EVENTS'),
                 'category' => 'conversions',
                 'filters' => [
-                    'events__month_range' => new CMSStatsDateMonthRangeFilter('events__month_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
+                    'events__day_range' => new CMSStatsDayRangeFilter('events__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
                     'events__country' => new CMSStatsCountryFilter('events__country', do_lang_tempcode('VISITOR_COUNTRY')),
                     'events__event' => new CMSStatsListFilter('events__event', do_lang_tempcode('STATS_EVENT'), $top_events),
                 ],
@@ -102,7 +102,7 @@ class Hook_admin_stats_events extends CMSStatsProvider
                 'label' => do_lang_tempcode('TRACKING_CODE_USAGE'),
                 'category' => 'conversions',
                 'filters' => [
-                    'tracking_code_usage__month_range' => new CMSStatsDateMonthRangeFilter('tracking_code_usage__month_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
+                    'tracking_code_usage__day_range' => new CMSStatsDayRangeFilter('tracking_code_usage__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
                     'tracking_code_usage__country' => new CMSStatsCountryFilter('tracking_code_usage__country', do_lang_tempcode('VISITOR_COUNTRY')),
                     'tracking_code_usage__event' => new CMSStatsListFilter('tracking_code_usage__tracking_code', do_lang_tempcode('TRACKING_CODE'), $top_tracking_codes),
                 ],
@@ -113,7 +113,7 @@ class Hook_admin_stats_events extends CMSStatsProvider
                 'label' => do_lang_tempcode('CONVERSION_RATES'),
                 'category' => 'conversions',
                 'filters' => [
-                    'conversion_rates__month_range' => new CMSStatsDateMonthRangeFilter('conversion_rates__month_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
+                    'conversion_rates__day_range' => new CMSStatsDayRangeFilter('conversion_rates__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
                     'conversion_rates__country' => new CMSStatsCountryFilter('conversion_rates__country', do_lang_tempcode('VISITOR_COUNTRY')),
                     'conversion_rates__event' => new CMSStatsListFilter('conversion_rates__event', do_lang_tempcode('STATS_EVENT'), $top_events),
                 ],
@@ -124,7 +124,7 @@ class Hook_admin_stats_events extends CMSStatsProvider
                 'label' => do_lang_tempcode('TRACKING_CODE_CONVERSION_RATES'),
                 'category' => 'conversions',
                 'filters' => [
-                    'tracking_code_conversion_rates__month_range' => new CMSStatsDateMonthRangeFilter('tracking_code_conversion_rates__month_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
+                    'tracking_code_conversion_rates__day_range' => new CMSStatsDayRangeFilter('tracking_code_conversion_rates__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
                     'tracking_code_conversion_rates__country' => new CMSStatsCountryFilter('tracking_code_conversion_rates__country', do_lang_tempcode('VISITOR_COUNTRY')),
                     'tracking_code_conversion_rates__event' => new CMSStatsListFilter('tracking_code_conversion_rates__event', do_lang_tempcode('STATS_EVENT'), $top_events),
                     'tracking_code_conversion_rates_usage__event' => new CMSStatsListFilter('tracking_code_conversion_rates_usage__tracking_code', do_lang_tempcode('TRACKING_CODE'), $top_tracking_codes),
@@ -140,7 +140,7 @@ class Hook_admin_stats_events extends CMSStatsProvider
      *
      * @param  TIME $start_time Start timestamp
      * @param  TIME $end_time End timestamp
-     * @param  array $data_buckets Map of data buckets; a map of bucket name to nested maps with the following maps in sequence: 'month', 'pivot', 'value' (then further map data) ; extended and returned by reference
+     * @param  array $data_buckets Map of data buckets; a map of bucket name to nested maps with the following maps in sequence: 'pivot', 'pivot interval', 'pivot value' (then further map data); passed by reference only with pre-filled zero data to later be merged
      */
     public function preprocess_raw_data(int $start_time, int $end_time, array &$data_buckets)
     {
@@ -176,8 +176,6 @@ class Hook_admin_stats_events extends CMSStatsProvider
                 $timestamp = $event_row['e_date_and_time'];
                 $timestamp = tz_time($timestamp, $server_timezone);
 
-                $month = to_epoch_interval_index($timestamp, 'months');
-
                 $country_code = $event_row['e_country_code'];
                 $event = $event_row['e_event'];
 
@@ -187,12 +185,13 @@ class Hook_admin_stats_events extends CMSStatsProvider
                 $events_seen[$event]++;
 
                 foreach (array_keys($date_pivots) as $pivot) {
+                    $pivot_interval = $this->calculate_date_pivot_interval($pivot, $timestamp);
                     $pivot_value = $this->calculate_date_pivot_value($pivot, $timestamp);
 
-                    if (!isset($data_buckets['events'][$month][$pivot][$pivot_value][$event][$country_code])) {
-                        $data_buckets['events'][$month][$pivot][$pivot_value][$event][$country_code] = 0;
+                    if (!isset($data_buckets['events'][$pivot][$pivot_interval][$pivot_value][$event][$country_code])) {
+                        $data_buckets['events'][$pivot][$pivot_interval][$pivot_value][$event][$country_code] = 0;
                     }
-                    $data_buckets['events'][$month][$pivot][$pivot_value][$event][$country_code]++;
+                    $data_buckets['events'][$pivot][$pivot_interval][$pivot_value][$event][$country_code]++;
                 }
             }
 
@@ -225,8 +224,6 @@ class Hook_admin_stats_events extends CMSStatsProvider
                 }
                 $timestamp = tz_time($timestamp, $server_timezone);
 
-                $month = to_epoch_interval_index($timestamp, 'months');
-
                 $session_id = $session_row['session_id'];
 
                 // Find tracking codes for this session
@@ -255,12 +252,13 @@ class Hook_admin_stats_events extends CMSStatsProvider
                     $tracking_codes_seen[$tracking_code]++;
 
                     foreach (array_keys($date_pivots) as $pivot) {
+                        $pivot_interval = $this->calculate_date_pivot_interval($pivot, $timestamp);
                         $pivot_value = $this->calculate_date_pivot_value($pivot, $timestamp);
 
-                        if (!isset($data_buckets['tracking_code_usage'][$month][$pivot][$pivot_value][$tracking_code][$country_code])) {
-                            $data_buckets['tracking_code_usage'][$month][$pivot][$pivot_value][$tracking_code][$country_code] = 0;
+                        if (!isset($data_buckets['tracking_code_usage'][$pivot][$pivot_interval][$pivot_value][$tracking_code][$country_code])) {
+                            $data_buckets['tracking_code_usage'][$pivot][$pivot_interval][$pivot_value][$tracking_code][$country_code] = 0;
                         }
-                        $data_buckets['tracking_code_usage'][$month][$pivot][$pivot_value][$tracking_code][$country_code]++;
+                        $data_buckets['tracking_code_usage'][$pivot][$pivot_interval][$pivot_value][$tracking_code][$country_code]++;
                     }
                 }
 
@@ -274,33 +272,35 @@ class Hook_admin_stats_events extends CMSStatsProvider
                 // Each combination of event wrt session
                 foreach (array_keys($top_events) as $event) {
                     foreach (array_keys($date_pivots) as $pivot) {
+                        $pivot_interval = $this->calculate_date_pivot_interval($pivot, $timestamp);
                         $pivot_value = $this->calculate_date_pivot_value($pivot, $timestamp);
 
-                        if (!isset($data_buckets['conversion_rates'][$month][$pivot][$pivot_value][$event])) {
-                            $data_buckets['conversion_rates'][$month][$pivot][$pivot_value][$event] = [0, 0];
+                        if (!isset($data_buckets['conversion_rates'][$pivot][$pivot_interval][$pivot_value][$event])) {
+                            $data_buckets['conversion_rates'][$pivot][$pivot_interval][$pivot_value][$event] = [0, 0];
                         }
 
-                        $data_buckets['conversion_rates'][$month][$pivot][$pivot_value][$event][0]++;
+                        $data_buckets['conversion_rates'][$pivot][$pivot_interval][$pivot_value][$event][0]++;
                         if (isset($events_for_session[$event])) {
-                            $data_buckets['conversion_rates'][$month][$pivot][$pivot_value][$event][1]++;
+                            $data_buckets['conversion_rates'][$pivot][$pivot_interval][$pivot_value][$event][1]++;
                         }
                     }
                 }
 
                 // Each combination of event tracking code wrt session
                 foreach (array_keys($top_tracking_codes) as $tracking_code) {
-                    $data_buckets['tracking_code_conversion_rates'][$month][$pivot][$pivot_value][$session_id][$tracking_code] = []; // We need this as we need to know tracking codes with no events
+                    $data_buckets['tracking_code_conversion_rates'][$pivot][$pivot_interval][$pivot_value][$session_id][$tracking_code] = []; // We need this as we need to know tracking codes with no events
                     foreach (array_keys($top_events) as $event) {
                         foreach (array_keys($date_pivots) as $pivot) {
+                            $pivot_interval = $this->calculate_date_pivot_interval($pivot, $timestamp);
                             $pivot_value = $this->calculate_date_pivot_value($pivot, $timestamp);
 
-                            if (!isset($data_buckets['tracking_code_conversion_rates'][$month][$pivot][$pivot_value][$session_id][$tracking_code][$event])) {
-                                $data_buckets['tracking_code_conversion_rates'][$month][$pivot][$pivot_value][$session_id][$tracking_code][$event] = [0, 0];
+                            if (!isset($data_buckets['tracking_code_conversion_rates'][$pivot][$pivot_interval][$pivot_value][$session_id][$tracking_code][$event])) {
+                                $data_buckets['tracking_code_conversion_rates'][$pivot][$pivot_interval][$pivot_value][$session_id][$tracking_code][$event] = [0, 0];
                             }
 
-                            $data_buckets['tracking_code_conversion_rates'][$month][$pivot][$pivot_value][$session_id][$tracking_code][$event][0]++;
+                            $data_buckets['tracking_code_conversion_rates'][$pivot][$pivot_interval][$pivot_value][$session_id][$tracking_code][$event][0]++;
                             if (isset($events_for_session[$event])) {
-                                $data_buckets['tracking_code_conversion_rates'][$month][$pivot][$pivot_value][$session_id][$tracking_code][$event][1]++;
+                                $data_buckets['tracking_code_conversion_rates'][$pivot][$pivot_interval][$pivot_value][$session_id][$tracking_code][$event][1]++;
                             }
                         }
                     }
@@ -365,40 +365,35 @@ class Hook_admin_stats_events extends CMSStatsProvider
      */
     public function generate_final_data(string $bucket, string $pivot, array $filters) : ?array
     {
-        $range = $this->convert_month_range_filter_to_pair($filters[$bucket . '__month_range']);
-
-        $data = $this->fill_data_by_date_pivots($pivot, $range[0], $range[1]);
-
-        $where = [
-            'p_bucket' => $bucket,
-            'p_pivot' => $pivot,
-        ];
-        $extra = '';
-        $extra .= ' AND p_month>=' . strval($range[0]);
-        $extra .= ' AND p_month<=' . strval($range[1]);
-        $data_rows = $GLOBALS['SITE_DB']->query_select('stats_preprocessed', ['p_data'], $where, $extra);
+        $data = [];
+        $_data = $this->prepare_preprocessed_data_for_graph($bucket, $pivot, $filters);
 
         switch ($bucket) {
             case 'events':
-                foreach ($data_rows as $data_row) {
-                    $_data = @unserialize($data_row['p_data']);
-                    foreach ($_data as $pivot_value => $_) {
-                        $pivot_value = $this->make_date_pivot_value_nice($pivot, $pivot_value);
+                foreach ($_data as $_pivot => $__data) {
+                    foreach ($__data as $pivot_interval => $_) {
+                        foreach ($_ as $pivot_value => $__) {
+                            $pivot_value_nice = $this->make_date_pivot_value_nice($_pivot, $pivot_interval, $pivot_value);
+                            if (!isset($data[$pivot_value_nice])) {
+                                $data[$pivot_value_nice] = 0;
+                            }
 
-                        foreach ($_ as $event => $__) {
-                            if ((!empty($filters[$bucket . '__event'])) && ($filters[$bucket . '__event'] != $event)) {
+                            if ($__ === null) {
                                 continue;
                             }
 
-                            foreach ($__ as $country => $value) {
-                                if ((!empty($filters[$bucket . '__country'])) && ($filters[$bucket . '__country'] != $country)) {
+                            foreach ($__ as $event => $___) {
+                                if ((!empty($filters[$bucket . '__event'])) && ($filters[$bucket . '__event'] != $event)) {
                                     continue;
                                 }
 
-                                if (!isset($data[$pivot_value])) {
-                                    $data[$pivot_value] = 0;
+                                foreach ($___ as $country => $value) {
+                                    if ((!empty($filters[$bucket . '__country'])) && ($filters[$bucket . '__country'] != $country)) {
+                                        continue;
+                                    }
+
+                                    $data[$pivot_value_nice] += $value;
                                 }
-                                $data[$pivot_value] += $value;
                             }
                         }
                     }
@@ -412,25 +407,30 @@ class Hook_admin_stats_events extends CMSStatsProvider
                 ];
 
             case 'tracking_code_usage':
-                foreach ($data_rows as $data_row) {
-                    $_data = @unserialize($data_row['p_data']);
-                    foreach ($_data as $pivot_value => $_) {
-                        $pivot_value = $this->make_date_pivot_value_nice($pivot, $pivot_value);
+                foreach ($_data as $_pivot => $__data) {
+                    foreach ($__data as $pivot_interval => $_) {
+                        foreach ($_ as $pivot_value => $__) {
+                            $pivot_value_nice = $this->make_date_pivot_value_nice($_pivot, $pivot_interval, $pivot_value);
+                            if (!isset($data[$pivot_value_nice])) {
+                                $data[$pivot_value_nice] = 0;
+                            }
 
-                        foreach ($_ as $tracking_code => $__) {
-                            if ((!empty($filters[$bucket . '__tracking_code'])) && ($filters[$bucket . '__tracking_code'] != $tracking_code)) {
+                            if ($__ === null) {
                                 continue;
                             }
 
-                            foreach ($__ as $country => $value) {
-                                if ((!empty($filters[$bucket . '__country'])) && ($filters[$bucket . '__country'] != $country)) {
+                            foreach ($__ as $tracking_code => $___) {
+                                if ((!empty($filters[$bucket . '__tracking_code'])) && ($filters[$bucket . '__tracking_code'] != $tracking_code)) {
                                     continue;
                                 }
 
-                                if (!isset($data[$pivot_value])) {
-                                    $data[$pivot_value] = 0;
+                                foreach ($___ as $country => $value) {
+                                    if ((!empty($filters[$bucket . '__country'])) && ($filters[$bucket . '__country'] != $country)) {
+                                        continue;
+                                    }
+
+                                    $data[$pivot_value_nice] += $value;
                                 }
-                                $data[$pivot_value] += $value;
                             }
                         }
                     }
@@ -444,24 +444,33 @@ class Hook_admin_stats_events extends CMSStatsProvider
                 ];
 
             case 'conversion_rates':
-                foreach ($data_rows as $data_row) {
-                    $_data = @unserialize($data_row['p_data']);
-                    foreach ($_data as $pivot_value => $_) {
-                        $pivot_value = $this->make_date_pivot_value_nice($pivot, $pivot_value);
+                foreach ($_data as $_pivot => $__data) {
+                    foreach ($__data as $pivot_interval => $_) {
+                        foreach ($_ as $pivot_value => $__) {
+                            $pivot_value_nice = $this->make_date_pivot_value_nice($_pivot, $pivot_interval, $pivot_value);
+                            if (!isset($data[$pivot_value_nice])) {
+                                $data[$pivot_value_nice] = 0;
+                            }
 
-                        $num_sessions = 0;
-                        $num_conversions = 0;
-                        foreach ($_ as $event => $__) {
-                            if ((!empty($filters[$bucket . '__event'])) && ($filters[$bucket . '__event'] != $event)) {
+                            if ($__ === null) {
                                 continue;
                             }
 
-                            $num_sessions += $__[0];
-                            $num_conversions += $__[1];
-                        }
+                            $num_sessions = 0;
+                            $num_conversions = 0;
+                            foreach ($__ as $event => $___) {
+                                if ((!empty($filters[$bucket . '__event'])) && ($filters[$bucket . '__event'] != $event)) {
+                                    continue;
+                                }
 
-                        if ($num_sessions > 0) {
-                            $data[$pivot_value] = 100.0 * floatval($num_conversions) / floatval($num_sessions);
+                                $num_sessions += $___[0];
+                                $num_conversions += $___[1];
+                            }
+
+                            // TODO: possibly buggy?
+                            if ($num_sessions > 0) {
+                                $data[$pivot_value_nice] = 100.0 * floatval($num_conversions) / floatval($num_sessions);
+                            }
                         }
                     }
                 }
@@ -474,33 +483,42 @@ class Hook_admin_stats_events extends CMSStatsProvider
                 ];
 
             case 'tracking_code_conversion_rates':
-                foreach ($data_rows as $data_row) {
-                    $_data = @unserialize($data_row['p_data']);
-                    foreach ($_data as $pivot_value => $_) {
-                        $pivot_value = $this->make_date_pivot_value_nice($pivot, $pivot_value);
+                foreach ($_data as $_pivot => $__data) {
+                    foreach ($__data as $pivot_interval => $_) {
+                        foreach ($_ as $pivot_value => $__) {
+                            $pivot_value_nice = $this->make_date_pivot_value_nice($_pivot, $pivot_interval, $pivot_value);
+                            if (!isset($data[$pivot_value_nice])) {
+                                $data[$pivot_value_nice] = 0;
+                            }
 
-                        $num_tracking_code_sessions = 0;
-                        $num_conversions = 0;
-                        foreach ($_ as $session_id => $__) {
-                            foreach ($__ as $tracking_code => $___) {
-                                if ((!empty($filters[$bucket . '__tracking_code'])) && ($filters[$bucket . '__tracking_code'] != $tracking_code)) {
-                                    continue;
-                                }
+                            if ($__ === null) {
+                                continue;
+                            }
 
-                                $has_conversion = false;
-                                foreach ($___ as $event => $____) {
-                                    if ((!empty($filters[$bucket . '__event'])) && ($filters[$bucket . '__event'] != $event)) {
+                            $num_tracking_code_sessions = 0;
+                            $num_conversions = 0;
+                            foreach ($__ as $session_id => $___) {
+                                foreach ($___ as $tracking_code => $____) {
+                                    if ((!empty($filters[$bucket . '__tracking_code'])) && ($filters[$bucket . '__tracking_code'] != $tracking_code)) {
                                         continue;
                                     }
 
-                                    $num_tracking_code_sessions += $____[0];
-                                    $num_conversions += $____[1];
+                                    $has_conversion = false;
+                                    foreach ($____ as $event => $_____) {
+                                        if ((!empty($filters[$bucket . '__event'])) && ($filters[$bucket . '__event'] != $event)) {
+                                            continue;
+                                        }
+
+                                        $num_tracking_code_sessions += $_____[0];
+                                        $num_conversions += $_____[1];
+                                    }
                                 }
                             }
-                        }
 
-                        if ($num_tracking_code_sessions > 0) {
-                            $data[$pivot_value] = 100.0 * floatval($num_conversions) / floatval($num_tracking_code_sessions);
+                            // TODO: possibly buggy?
+                            if ($num_tracking_code_sessions > 0) {
+                                $data[$pivot_value_nice] = 100.0 * floatval($num_conversions) / floatval($num_tracking_code_sessions);
+                            }
                         }
                     }
                 }

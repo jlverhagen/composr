@@ -60,7 +60,7 @@ class Hook_admin_stats_links extends CMSStatsProvider
                 'label' => do_lang_tempcode('LINK_TRACKING'),
                 'category' => 'conversions',
                 'filters' => [
-                    'link_tracking__month_range' => new CMSStatsDateMonthRangeFilter('link_tracking__month_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
+                    'link_tracking__day_range' => new CMSStatsDayRangeFilter('link_tracking__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
                     'link_tracking__url' => new CMSStatsListFilter('link_tracking__url', do_lang_tempcode('URL'), $top_urls),
                     'link_tracking__country' => has_geolocation_data() ? new CMSStatsCountryFilter('link_tracking__country', do_lang_tempcode('VISITOR_COUNTRY')) : null,
                 ],
@@ -74,7 +74,7 @@ class Hook_admin_stats_links extends CMSStatsProvider
      *
      * @param  TIME $start_time Start timestamp
      * @param  TIME $end_time End timestamp
-     * @param  array $data_buckets Map of data buckets; a map of bucket name to nested maps with the following maps in sequence: 'month', 'pivot', 'value' (then further map data) ; extended and returned by reference
+     * @param  array $data_buckets Map of data buckets; a map of bucket name to nested maps with the following maps in sequence: 'pivot', 'pivot interval', 'pivot value' (then further map data); passed by reference only with pre-filled zero data to later be merged
      */
     public function preprocess_raw_data(int $start_time, int $end_time, array &$data_buckets)
     {
@@ -103,8 +103,6 @@ class Hook_admin_stats_links extends CMSStatsProvider
                 $timestamp = $link_row['c_date_and_time'];
                 $timestamp = tz_time($timestamp, $server_timezone);
 
-                $month = to_epoch_interval_index($timestamp, 'months');
-
                 $country_code = geolocate_ip($link_row['c_ip_address']);
                 if ($country_code === null) {
                     $country_code = '';
@@ -118,12 +116,13 @@ class Hook_admin_stats_links extends CMSStatsProvider
                 $urls_seen[$url]++;
 
                 foreach (array_keys($date_pivots) as $pivot) {
+                    $pivot_interval = $this->calculate_date_pivot_interval($pivot, $timestamp);
                     $pivot_value = $this->calculate_date_pivot_value($pivot, $timestamp);
 
-                    if (!isset($data_buckets['link_tracking'][$month][$pivot][$pivot_value][$country_code][$url])) {
-                        $data_buckets['link_tracking'][$month][$pivot][$pivot_value][$country_code][$url] = 0;
+                    if (!isset($data_buckets['link_tracking'][$pivot][$pivot_interval][$pivot_value][$country_code][$url])) {
+                        $data_buckets['link_tracking'][$pivot][$pivot_interval][$pivot_value][$country_code][$url] = 0;
                     }
-                    $data_buckets['link_tracking'][$month][$pivot][$pivot_value][$country_code][$url]++;
+                    $data_buckets['link_tracking'][$pivot][$pivot_interval][$pivot_value][$country_code][$url]++;
                 }
             }
 
@@ -157,38 +156,33 @@ class Hook_admin_stats_links extends CMSStatsProvider
      */
     public function generate_final_data(string $bucket, string $pivot, array $filters) : ?array
     {
-        $range = $this->convert_month_range_filter_to_pair($filters[$bucket . '__month_range']);
+        $data = [];
+        $_data = $this->prepare_preprocessed_data_for_graph($bucket, $pivot, $filters);
 
-        $data = $this->fill_data_by_date_pivots($pivot, $range[0], $range[1]);
+        foreach ($_data as $_pivot => $__data) {
+            foreach ($__data as $pivot_interval => $_) {
+                foreach ($_ as $pivot_value => $__) {
+                    $pivot_value_nice = $this->make_date_pivot_value_nice($_pivot, $pivot_interval, $pivot_value);
+                    if (!isset($data[$pivot_value_nice])) {
+                        $data[$pivot_value_nice] = 0;
+                    }
 
-        $where = [
-            'p_bucket' => $bucket,
-            'p_pivot' => $pivot,
-        ];
-        $extra = '';
-        $extra .= ' AND p_month>=' . strval($range[0]);
-        $extra .= ' AND p_month<=' . strval($range[1]);
-        $data_rows = $GLOBALS['SITE_DB']->query_select('stats_preprocessed', ['p_data'], $where, $extra);
-
-        foreach ($data_rows as $data_row) {
-            $_data = @unserialize($data_row['p_data']);
-            foreach ($_data as $pivot_value => $_) {
-                $pivot_value = $this->make_date_pivot_value_nice($pivot, $pivot_value);
-
-                foreach ($_ as $country => $__) {
-                    if ((!empty($filters[$bucket . '__country'])) && ($filters[$bucket . '__country'] != $country)) {
+                    if ($__ === null) {
                         continue;
                     }
 
-                    foreach ($__ as $url => $value) {
-                        if ((!empty($filters[$bucket . '__url'])) && ($filters[$bucket . '__url'] != $url)) {
+                    foreach ($__ as $country => $___) {
+                        if ((!empty($filters[$bucket . '__country'])) && ($filters[$bucket . '__country'] != $country)) {
                             continue;
                         }
 
-                        if (!isset($data[$pivot_value])) {
-                            $data[$pivot_value] = 0;
+                        foreach ($___ as $url => $value) {
+                            if ((!empty($filters[$bucket . '__url'])) && ($filters[$bucket . '__url'] != $url)) {
+                                continue;
+                            }
+
+                            $data[$pivot_value_nice] += $value;
                         }
-                        $data[$pivot_value] += $value;
                     }
                 }
             }

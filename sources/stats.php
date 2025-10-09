@@ -755,7 +755,7 @@ abstract class CMSStatsProvider extends CMSStatsHookBase
      * @param  boolean $include_of_types Whether to include non-series pivots
      * @return array List of standardised date pivot names
      */
-    protected function get_date_pivots(bool $include_of_types = true) : array
+    public function get_date_pivots(bool $include_of_types = true) : array
     {
         require_lang('dates');
 
@@ -788,7 +788,7 @@ abstract class CMSStatsProvider extends CMSStatsHookBase
      *
      * @param  TIME $start_time Start timestamp
      * @param  TIME $end_time End timestamp
-     * @param  array $data_buckets Map of data buckets; a map of bucket name to nested maps with the following maps in sequence: 'month', 'pivot', 'value' (then further map data) ; extended and returned by reference
+     * @param  array $data_buckets Map of data buckets; a map of bucket name to nested maps with the following maps in sequence: 'day', 'pivot', 'pivot value' (then further map data) ; extended and returned by reference
      */
     public function preprocess_raw_data(int $start_time, int $end_time, array &$data_buckets)
     {
@@ -832,26 +832,56 @@ abstract class CMSStatsProvider extends CMSStatsHookBase
             case 'hour_of_day':
                 return intval(cms_date('H', $timestamp));
             case 'day_series':
-                return to_epoch_interval_index($timestamp, 'days');
+                return 0; // Always only have one entry per interval
             case 'day_of_week':
                 return intval(cms_date('w', $timestamp));
             case 'week_series':
-                // Proper Monday week start handling (we have to use Monday regardless of ssw because PHP only allows that)
-                $epoch = 345600;
-                return to_epoch_interval_index($timestamp, 'weeks', $epoch);
+                return 0; // Always only have one entry per interval
             case 'week_of_year':
                 return intval(cms_date('W', $timestamp));
             case 'month_series':
-                return to_epoch_interval_index($timestamp, 'months');
+                return 0; // Always only have one entry per interval
             case 'month_of_year':
                 return intval(cms_date('m', $timestamp));
             case 'quarter_series':
-                $month = to_epoch_interval_index($timestamp, 'months');
-                return intval(floor($month / 3.0));
+                return 0; // Always only have one entry per interval
             case 'quarter_of_year':
                 $_month = to_epoch_interval_index($timestamp, 'months');
                 $month = ($_month % 12);
                 return intval($month / 3);
+            case 'year_series':
+                return 0; // Always only have one entry per interval
+        }
+
+        fatal_exit(do_lang_tempcode('INTERNAL_ERROR', escape_html('3ad7fc19c15355a88480afc058c36e78')));
+        return 0;
+    }
+
+    /**
+     * Get the pivot interval for a standard date pivot type.
+     *
+     * @param  string $pivot Pivot type
+     * @param  TIME $timestamp Timestamp
+     * @return integer Pivot interval
+     */
+    protected function calculate_date_pivot_interval(string $pivot, int $timestamp) : int
+    {
+        require_code('temporal');
+
+        switch ($pivot) {
+            case 'hour_of_day':
+            case 'day_series':
+                return to_epoch_interval_index($timestamp, 'days');
+            case 'day_of_week':
+            case 'week_series':
+                return to_epoch_interval_index($timestamp, 'weeks');
+            case 'month_series':
+                return to_epoch_interval_index($timestamp, 'months');
+            case 'quarter_series':
+                return intval(to_epoch_interval_index($timestamp, 'months') / 3);
+            case 'week_of_year':
+            case 'month_of_year':
+            case 'quarter_of_year':
             case 'year_series':
                 return to_epoch_interval_index($timestamp, 'years');
         }
@@ -861,146 +891,107 @@ abstract class CMSStatsProvider extends CMSStatsHookBase
     }
 
     /**
-     * Fill up an array with all standard date pivot values between a month range.
+     * Fill up an array with all standard date pivot values between a day range.
      *
      * @param  string $pivot Pivot type
-     * @param  integer $start_month Start month (counting from 1970)
-     * @param  integer $end_month End month (counting from 1970)
-     * @return array All pivot values mapping to 0
+     * @param  integer $start The pivot interval at which we are starting
+     * @param  integer $end The pivot interval at which we are ending
+     * @return array Array of 'pivot', 'pivot interval', 'pivot value'
      */
-    protected function fill_data_by_date_pivots(string $pivot, int $start_month, int $end_month) : array
+    public function fill_data_by_date_pivots(string $pivot, int $start, int $end) : array
     {
         require_code('temporal');
-
-        $pivot_value = mixed();
 
         $data = [];
         switch ($pivot) {
             case 'hour_of_day':
-                for ($i = 0; $i <= 23; $i++) {
-                    $pivot_value = $i;
-                    $pivot_value = $this->make_date_pivot_value_nice($pivot, $pivot_value);
-                    $data[$pivot_value] = 0;
+                for ($i = $start; $i <= $end; $i++) {
+                    for ($j = 0; $j <= 23; $j++) {
+                        $data[$pivot][$i][$j] = null;
+                    }
                 }
                 break;
 
             case 'day_series':
-                for ($i = $start_month; $i <= $end_month; $i++) {
-                    $timestamp = from_epoch_interval_index($i, 'months');
-                    $start_days = to_epoch_interval_index($timestamp, 'days');
-
-                    list($year, $month) = array_map('intval', explode('-', cms_date('Y-m', $timestamp)));
-                    $days_in_month = cal_days_in_month(CAL_GREGORIAN, $month, $year);
-                    for ($j = 1; $j <= $days_in_month; $j++) {
-                        $pivot_value = $start_days + ($j - 1);
-                        $pivot_value = $this->make_date_pivot_value_nice($pivot, $pivot_value);
-                        $data[$pivot_value] = 0;
-                    }
+                for ($i = $start; $i <= $end; $i++) {
+                    $data[$pivot][$i][0] = null;
                 }
                 break;
 
             case 'day_of_week':
-                for ($i = 0; $i <= 6; $i++) {
-                    $pivot_value = $i;
-                    $pivot_value = $this->make_date_pivot_value_nice($pivot, $pivot_value);
-                    $data[$pivot_value] = 0;
+                for ($i = $start; $i <= $end; $i++) {
+                    for ($j = 0; $j <= 6; $j++) {
+                        $data[$pivot][$i][$j] = null;
+                    }
                 }
                 break;
 
             case 'week_series':
-                for ($i = $start_month; $i <= $end_month; $i++) {
-                    $timestamp = from_epoch_interval_index($i, 'months');
-                    list($year, $month) = array_map('intval', explode('-', cms_date('Y-m', $timestamp)));
-
-                    // Gather the timestamp range for this month
-                    $start_timestamp = cms_mktime(0, 0, 0, $month, 1, $year);
-                    $end_timestamp = cms_mktime(0, 0, 0, $month + 1, 1, $year) - 1; // -1 so we end on 11:59:59pm the last day of the month instead of possibly accidentally counting an extra week
-
-                    // Proper Monday week start handling (we have to use Monday regardless of ssw because PHP only allows that)
-                    $epoch = 345600;
-
-                    // Calculate the weeks in this month
-                    $first_week = to_epoch_interval_index($start_timestamp, 'weeks', $epoch);
-                    $last_week = to_epoch_interval_index($end_timestamp, 'weeks', $epoch);
-
-                    for ($j = $first_week; $j <= $last_week; $j++) {
-                        $pivot_value = $j;
-                        $pivot_value = $this->make_date_pivot_value_nice($pivot, $pivot_value);
-                        $data[$pivot_value] = 0;
-                    }
+                for ($i = $start; $i <= $end; $i++) {
+                    $data[$pivot][$i][0] = null;
                 }
                 break;
 
             case 'week_of_year':
-                for ($i = 1; $i <= 53; $i++) {
-                    $pivot_value = $i;
-                    $pivot_value = $this->make_date_pivot_value_nice($pivot, $pivot_value);
-                    $data[$pivot_value] = 0;
+                for ($i = $start; $i <= $end; $i++) {
+                    for ($j = 1; $j <= 53; $j++) {
+                        $data[$pivot][$i][$j] = null;
+                    }
                 }
                 break;
 
             case 'month_series':
-                for ($i = $start_month; $i <= $end_month; $i++) {
-                    // No special handling needed because buckets are already handled by month
-                    $pivot_value = $i;
-                    $pivot_value = $this->make_date_pivot_value_nice($pivot, $pivot_value);
-                    $data[$pivot_value] = 0;
+                for ($i = $start; $i <= $end; $i++) {
+                    $data[$pivot][$i][0] = null;
                 }
                 break;
 
             case 'month_of_year':
-                for ($i = 1; $i <= 12; $i++) {
-                    $pivot_value = $i;
-                    $pivot_value = $this->make_date_pivot_value_nice($pivot, $pivot_value);
-                    $data[$pivot_value] = 0;
+                for ($i = $start; $i <= $end; $i++) {
+                    for ($j = 0; $j <= 11; $j++) {
+                        $data[$pivot][$i][$j] = null;
+                    }
                 }
                 break;
 
             case 'quarter_series':
-                for ($i = $start_month; $i <= $end_month; $i++) {
-                    if (($i % 3 == 0) || (empty($data))) {
-                        $quarter = intval($i / 3);
-                        $pivot_value = $quarter;
-                        $pivot_value = $this->make_date_pivot_value_nice($pivot, $pivot_value);
-                        $data[$pivot_value] = 0;
-                    }
+                for ($i = $start; $i <= $end; $i++) {
+                    $data[$pivot][$i][0] = null;
                 }
                 break;
 
             case 'quarter_of_year':
-                for ($i = 0; $i <= 3; $i++) {
-                    $pivot_value = $i;
-                    $pivot_value = $this->make_date_pivot_value_nice($pivot, $pivot_value);
-                    $data[$pivot_value] = 0;
+                for ($i = $start; $i <= $end; $i++) {
+                    for ($j = 0; $j <= 3; $j++) {
+                        $data[$pivot][$i][$j] = null;
+                    }
                 }
                 break;
 
             case 'year_series':
-                for ($i = $start_month; $i <= $end_month; $i++) {
-                    if (($i % 12 == 0) || (empty($data))) {
-                        $timestamp = from_epoch_interval_index($i, 'months');
-                        $year = to_epoch_interval_index($timestamp, 'years');
-                        $pivot_value = $year;
-                        $pivot_value = $this->make_date_pivot_value_nice($pivot, $pivot_value);
-                        $data[$pivot_value] = 0;
-                    }
+                for ($i = $start; $i <= $end; $i++) {
+                    $data[$pivot][$i][0] = null;
                 }
                 break;
 
             default:
                 fatal_exit(do_lang_tempcode('INTERNAL_ERROR', escape_html('b7e50ce76c7f534d9b736f432fcb0072')));
         }
+
         return $data;
     }
 
     /**
-     * Convert a month range filter array to a range pair if it only specifies one value.
+     * Convert a pivot interval filter array to a range pair if it only specifies one value.
      *
-     * @param  mixed $_range_value The value of the $bucket . __month_range filter property
-     * @return array An array pair of start, end indicating the month range; start and end are the number of months since epoch (1970)
+     * @param  ID_TEXT $pivot The pivot for which we are calculating the interval
+     * @param  mixed $_range_value The value of the $bucket . __day_range filter property
+     * @return array An array pair of start, end indicating the day range; start and end are the number of days since epoch (1970)
      */
-    protected function convert_month_range_filter_to_pair($_range_value) : array
+    protected function convert_day_range_filter_to_pair(string $pivot, $_range_value) : array
     {
+        require_code('temporal');
+
         // Work out what our range value is as an integer if applicable if $_range_value is not already a range pair
         $range_value = null;
         if (is_array($_range_value) && (count($_range_value) == 1) && (is_integer($_range_value[0]))) {
@@ -1010,54 +1001,52 @@ abstract class CMSStatsProvider extends CMSStatsHookBase
             $range_value = $_range_value;
         }
 
-        // If $range_value has a value, this means $_range_value had only one value. Treat this as a month range length from (now - value) to now.
+        $from = null;
+        $to = null;
+
+        // If $range_value has a value, this means $_range_value had only one value. Treat this as a day range length from (now - value) to now.
         if ($range_value !== null) {
-            $epoch = new DateTime('1970-01-01');
-            $_start = new DateTime(date('Y-m-d H:i:s', strtotime(strval(0 - ($range_value - 1)) . ' months')));
-            $_end = new DateTime();
-
-            $start_interval = $_start->diff($epoch);
-            $start_months = ($start_interval->y * 12) + $start_interval->m;
-
-            $end_interval = $_end->diff($epoch);
-            $end_months = ($end_interval->y * 12) + $end_interval->m;
-
-            return [$start_months, $end_months];
+            $from = from_epoch_interval_index($range_value, 'days');
+            $to = from_epoch_interval_index(time(), 'days');
         }
 
-        // If $_range_value is an array with exactly two integer values, assume it is already in month range format and return as-is.
+        // If range is an array of exactly two integers, treat as a day range from key 0 to key 1
         if (is_array($_range_value) && (count($_range_value) == 2) && is_integer($_range_value[0]) && is_integer($_range_value[1])) {
-            return [$_range_value[0], $_range_value[1]];
+            $from = from_epoch_interval_index($_range_value[0], 'days');
+            $to = from_epoch_interval_index($_range_value[1], 'days');
         }
 
-        // If we reach this point, then $_range_value was invalid.
-        warn_exit(do_lang_tempcode('INTERNAL_ERROR', escape_html('e4d7c28853cb5b6da6d4a315774aae54')));
-        return [];
+        // Was range invalid?
+        if ($from === null) {
+            warn_exit(do_lang_tempcode('INTERNAL_ERROR', escape_html('e4d7c28853cb5b6da6d4a315774aae54')));
+        }
+
+        // Convert to pivot interval
+        $ret_from = $this->calculate_date_pivot_interval($pivot, $from);
+        $ret_to = $this->calculate_date_pivot_interval($pivot, $to);
+
+        return [$ret_from, $ret_to];
     }
 
     /**
      * Make a date pivot value look nice.
-     * TODO: make $pivot_value type integer when LEGACY code is removed.
      *
      * @param  string $pivot Current pivot
-     * @param  mixed $pivot_value Pivot value
-     * @return string Nice looking pivot value
+     * @param  integer $pivot_interval The pivot interval
+     * @param  integer $pivot_value Pivot value
+     * @return string Nice looking pivot interval/value
      */
-    protected function make_date_pivot_value_nice(string $pivot, $pivot_value) : string
+    protected function make_date_pivot_value_nice(string $pivot, int $pivot_interval, int $pivot_value) : string
     {
         require_lang('dates');
+        require_code('temporal');
 
         switch ($pivot) {
             case 'hour_of_day':
                 return trim(cms_date('ga', cms_mktime($pivot_value)));
 
             case 'day_series':
-                // LEGACY
-                if (is_string($pivot_value)) {
-                    return $pivot_value;
-                }
-
-                $timestamp = from_epoch_interval_index($pivot_value, 'days');
+                $timestamp = from_epoch_interval_index($pivot_interval, 'days');
                 return cms_date('Y-m-d', $timestamp);
 
             case 'day_of_week':
@@ -1075,7 +1064,8 @@ abstract class CMSStatsProvider extends CMSStatsHookBase
             case 'week_series':
                 // Proper Monday week start handling (we have to use Monday regardless of ssw because PHP only allows that)
                 $epoch = 345600;
-                $timestamp = from_epoch_interval_index($pivot_value, 'weeks', $epoch);
+
+                $timestamp = from_epoch_interval_index($pivot_interval, 'weeks', $epoch);
                 $year = intval(cms_date('Y', $timestamp));
                 $week = intval(cms_date('W', $timestamp));
                 return strval($year) . '-W' . str_pad(strval($week), 2, '0', STR_PAD_LEFT);
@@ -1084,7 +1074,7 @@ abstract class CMSStatsProvider extends CMSStatsHookBase
                 return do_lang('WEEK', comcode_escape(strval($pivot_value)));
 
             case 'month_series':
-                $timestamp = from_epoch_interval_index($pivot_value, 'months');
+                $timestamp = from_epoch_interval_index($pivot_interval, 'months');
                 return cms_date('Y-m', $timestamp);
 
             case 'month_of_year':
@@ -1102,27 +1092,59 @@ abstract class CMSStatsProvider extends CMSStatsHookBase
                     'NOVEMBER',
                     'DECEMBER',
                 ];
-                return do_lang($months[$pivot_value - 1]);
+                return do_lang($months[$pivot_value]);
 
             case 'quarter_series':
-                $timestamp = from_epoch_interval_index($pivot_value * 3, 'months');
-                $quarter = ($pivot_value % 4) + 1;
+                $timestamp = from_epoch_interval_index($pivot_interval * 3, 'months');
+                $quarter = ($pivot_interval % 4) + 1;
                 return cms_date('Y', $timestamp) . ' Q' . strval($quarter);
 
             case 'quarter_of_year':
                 return 'Q' . strval($pivot_value + 1);
 
             case 'year_series':
-                // LEGACY
-                if ($pivot_value >= 1970) {
-                    return strval($pivot_value);
-                }
-
-                $timestamp = from_epoch_interval_index($pivot_value, 'years');
+                $timestamp = from_epoch_interval_index($pivot_interval, 'years');
                 return cms_date('Y', $timestamp);
         }
 
-        return is_integer($pivot_value) ? strval($pivot_value) : $pivot_value;
+        // All else fails
+        return strval($pivot_interval) . '/' . strval($pivot_value);
+    }
+
+    /**
+     * Get base data for a pivot graph.
+     * This assumes '__day_range' is passed as a filter.
+     *
+     * @param  ID_TEXT $bucket The bucket we are loading
+     * @param  ID_TEXT $pivot The pivot at which we are viewing the graph (blank: graph does not support pivots, so use day_series data)
+     * @param  array $filters Array of active filters
+     * @return array Standardised pivot data as 'pivot', 'pivot interval', 'pivot value', mapped to unserialised data
+     */
+    protected function prepare_preprocessed_data_for_graph(string $bucket, string $pivot, array $filters) : array
+    {
+        if ($pivot == '') {
+            $pivot = 'day_series';
+        }
+
+        $range = $this->convert_day_range_filter_to_pair($pivot, $filters[$bucket . '__day_range']);
+
+        $where = [
+            'p_bucket' => $bucket,
+            'p_pivot' => $pivot,
+        ];
+        $extra = '';
+        $extra .= ' AND p_pivot_interval>=' . strval($range[0]);
+        $extra .= ' AND p_pivot_interval<=' . strval($range[1]);
+
+        $data_rows = $GLOBALS['SITE_DB']->query_select('stats_preprocessed', ['p_pivot_interval', 'p_pivot_value', 'p_data'], $where, $extra);
+
+        $data = $this->fill_data_by_date_pivots($pivot, $range[0], $range[1]);
+
+        foreach ($data_rows as $data_row) {
+            $data[$pivot][$data_row['p_pivot_interval']][$data_row['p_pivot_value']] = @unserialize($data_row['p_data']);
+        }
+
+        return $data;
     }
 }
 
@@ -1160,28 +1182,95 @@ abstract class CMSStatsRedirect extends CMSStatsHookBase
 }
 
 /**
- * Get the month bounds of what dates we have stats data for.
+ * Get the day bounds of what dates we have stats data for.
  *
- * @return array A pair: min month, max month
+ * @return array A pair: min day, max day (null: no stats processed)
  */
-function find_known_stats_date_month_bounds() : array
+function find_known_stats_day_bounds() : array
 {
     require_code('temporal');
 
-    static $min_month = null, $max_month = null;
-    if ($min_month === null) {
-        $min_month = $GLOBALS['SITE_DB']->query_select_value('stats_preprocessed', 'MIN(p_month)');
-        if ($min_month === null) {
-            $min_month = to_epoch_interval_index(time(), 'months');
+    static $min_day = null, $max_day = null;
+
+    if ($min_day === null) {
+        $_data = $GLOBALS['SITE_DB']->query_select('stats_preprocessed', ['p_pivot', 'MIN(p_pivot_interval) AS min_interval'], [], ' GROUP BY p_pivot');
+        foreach ($_data as $row) {
+            $value = 0;
+            switch ($row['p_pivot']) {
+                case 'hour_of_day':
+                case 'day_series':
+                    $value = from_epoch_interval_index($row['min_interval'], 'days');
+                    break;
+
+                case 'day_of_week':
+                case 'week_series':
+                    $value = from_epoch_interval_index($row['min_interval'], 'weeks');
+                    break;
+
+                case 'week_of_year':
+                case 'month_of_year':
+                case 'quarter_of_year':
+                case 'year_series':
+                    $value = from_epoch_interval_index($row['min_interval'], 'years');
+                    break;
+
+                case 'month_series':
+                    $value = from_epoch_interval_index($row['min_interval'], 'months');
+                    break;
+
+                case 'quarter_series':
+                    $value = from_epoch_interval_index($row['min_interval'] * 3, 'months');
+                    break;
+            }
+
+            if (($min_day === null) || ($value < $min_day)) {
+                $min_day = $value;
+            }
         }
     }
-    if ($max_month === null) {
-        $max_month = $GLOBALS['SITE_DB']->query_select_value('stats_preprocessed', 'MAX(p_month)');
-        if ($max_month === null) {
-            $max_month = to_epoch_interval_index(time(), 'months');
+
+    if ($max_day === null) {
+        $_data = $GLOBALS['SITE_DB']->query_select('stats_preprocessed', ['p_pivot', 'MAX(p_pivot_interval) AS max_interval'], [], ' GROUP BY p_pivot');
+        foreach ($_data as $row) {
+            $value = 0;
+            switch ($row['p_pivot']) {
+                case 'hour_of_day':
+                case 'day_series':
+                    $value = from_epoch_interval_index($row['max_interval'], 'days');
+                    break;
+
+                case 'day_of_week':
+                case 'week_series':
+                    $value = from_epoch_interval_index($row['max_interval'], 'weeks');
+                    break;
+
+                case 'week_of_year':
+                case 'month_of_year':
+                case 'quarter_of_year':
+                case 'year_series':
+                    $value = from_epoch_interval_index($row['max_interval'], 'years');
+                    break;
+
+                case 'month_series':
+                    $value = from_epoch_interval_index($row['max_interval'], 'months');
+                    break;
+
+                case 'quarter_series':
+                    $value = from_epoch_interval_index($row['max_interval'] * 3, 'months');
+                    break;
+            }
+
+            if (($max_day === null) || ($value > $max_day)) {
+                $max_day = $value;
+            }
         }
     }
-    return [$min_month, $max_month];
+
+    if ($min_day === null) {
+        return [null, null];
+    }
+
+    return [to_epoch_interval_index($min_day, 'days'), to_epoch_interval_index($max_day, 'days')];
 }
 
 /**
@@ -1421,11 +1510,11 @@ class CMSStatsCountryFilter extends CMSStatsListFilter
 }
 
 /**
- * Class for stat month date range input filters.
+ * Class for day range input filters.
  *
  * @package stats
  */
-class CMSStatsDateMonthRangeFilter extends CMSStatsFilter
+class CMSStatsDayRangeFilter extends CMSStatsFilter
 {
     protected $for_kpi = false;
 
@@ -1434,18 +1523,22 @@ class CMSStatsDateMonthRangeFilter extends CMSStatsFilter
      *
      * @param  string $filter_name Filter name
      * @param  Tempcode $label Label
-     * @param  ?mixed $default Default (null: past year)
+     * @param  ?mixed $default Default (null: past 365 days)
      * @param  boolean $for_kpi Whether this is for setting up a KPI
      */
     public function __construct(string $filter_name, object $label, $default = null, bool $for_kpi = false)
     {
         if ($default === null) {
             if ($for_kpi) {
-                $default = 12; // 12 months back
+                $default = 365; // 365 days back
             } else {
-                list($min_month, $max_month) = find_known_stats_date_month_bounds();
-                $min_month = max($min_month, $max_month - 12);
-                $default = [$min_month, $max_month];
+                list($min_day, $max_day) = find_known_stats_day_bounds();
+                if ($min_day === null) {
+                    $default = [to_epoch_interval_index(time(), 'days'), 0]; // No data
+                } else {
+                    $min_day = max($min_day, $max_day - 365);
+                    $default = [$min_day, $max_day];
+                }
             }
         }
 
@@ -1472,13 +1565,13 @@ class CMSStatsDateMonthRangeFilter extends CMSStatsFilter
 
         if ($this->for_kpi) {
             $_options = [
-                1 => do_lang_tempcode('MONTHS', escape_html(integer_format(1))),
-                3 => do_lang_tempcode('MONTHS', escape_html(integer_format(3))),
-                6 => do_lang_tempcode('MONTHS', escape_html(integer_format(6))),
-                12 => do_lang_tempcode('YEARS', escape_html(integer_format(1))),
-                24 => do_lang_tempcode('YEARS', escape_html(integer_format(2))),
-                36 => do_lang_tempcode('YEARS', escape_html(integer_format(3))),
-                60 => do_lang_tempcode('YEARS', escape_html(integer_format(5))),
+                30 => do_lang_tempcode('MONTHS', escape_html(integer_format(1))),
+                90 => do_lang_tempcode('MONTHS', escape_html(integer_format(3))),
+                182 => do_lang_tempcode('MONTHS', escape_html(integer_format(6))),
+                365 => do_lang_tempcode('YEARS', escape_html(integer_format(1))),
+                730 => do_lang_tempcode('YEARS', escape_html(integer_format(2))),
+                1095 => do_lang_tempcode('YEARS', escape_html(integer_format(3))),
+                1826 => do_lang_tempcode('YEARS', escape_html(integer_format(5))), // Leap year added
             ];
 
             $options = new Tempcode();
@@ -1492,38 +1585,23 @@ class CMSStatsDateMonthRangeFilter extends CMSStatsFilter
             return form_input_list($this->label, new Tempcode(), $this->filter_name, $options, null, false, true);
         }
 
-        list($min_month, $max_month) = find_known_stats_date_month_bounds();
-
-        $month_array = [
-            'JANUARY',
-            'FEBRUARY',
-            'MARCH',
-            'APRIL',
-            'MAY',
-            'JUNE',
-            'JULY',
-            'AUGUST',
-            'SEPTEMBER',
-            'OCTOBER',
-            'NOVEMBER',
-            'DECEMBER',
-        ];
-
-        $months = [];
-        for ($month = min($this->default[0], $min_month); $month <= max($this->default[1], $max_month); $month++) {
-            $year = 1970 + intval(floor(floatval($month) / 12.0));
-
-            $val = protect_from_escaping(strval($year) . ', ' . do_lang($month_array[($month % 12)]));
-            $months[$month] = $val;
-        }
-
         $tabindex = get_form_field_tabindex();
+
+        $start = post_param_date($this->filter_name . '__start', true);
+        if ($start === null) {
+            $start = from_epoch_interval_index($this->default[0], 'days');
+        }
+        $end = post_param_date($this->filter_name . '__end', true);
+        if ($end === null) {
+            $end = from_epoch_interval_index($this->default[1], 'days');
+        }
 
         $input = do_template('FORM_SCREEN_INPUT_STATS_DATE_RANGE', [
             '_GUID' => '01c83bc8745a294da28f13e6ab4f47a1',
             'TABINDEX' => strval($tabindex),
             'NAME' => $this->filter_name,
-            'MONTHS' => $months,
+            'START_INPUT' => _form_input_date($this->filter_name . '__start', false, false, false, $start),
+            'END_INPUT' => _form_input_date($this->filter_name . '__end', false, false, false, $end),
             'START' => strval($value[0]),
             'END' => strval($value[1]),
         ]);
@@ -1543,8 +1621,8 @@ class CMSStatsDateMonthRangeFilter extends CMSStatsFilter
 
         if ($for_kpi !== null) {
             if (($for_kpi) && (!$this->for_kpi)) {
-                $current_month = to_epoch_interval_index(time(), 'months');
-                $this->default = [$current_month - $default - 1, $current_month];
+                $current_day = to_epoch_interval_index(time(), 'days');
+                $this->default = [$current_day - $default - 1, $current_day];
                 return;
             } elseif ((!$for_kpi) && ($this->for_kpi)) {
                 list($start, $end) = $default;
@@ -1580,22 +1658,33 @@ class CMSStatsDateMonthRangeFilter extends CMSStatsFilter
 
             $wants_for_non_kpi = ($for_kpi !== null) && (!$for_kpi);
             if ($wants_for_non_kpi) {
-                $current_month = to_epoch_interval_index(time(), 'months');
-                $ret = [$current_month - $ret - 1, $current_month];
+                $current_day = to_epoch_interval_index(time(), 'days');
+                $ret = [$current_day - $ret - 1, $current_day];
             }
 
             $filters[$this->filter_name] = $ret;
             return $ret;
         }
 
-        $start = either_param_integer($this->filter_name . '__start', $default[0]);
-        $end = either_param_integer($this->filter_name . '__end', $default[1]);
-
-        if ($end <= 0) { // An end of 0 means now; negative values mean abs(value) months into the future
-            $end = to_epoch_interval_index(time(), 'months') + abs($end);
+        $start = post_param_date($this->filter_name . '__start', true);
+        if ($start === null) {
+            $start = $default[0];
+        } elseif ($start >= 0) {
+            $start = to_epoch_interval_index($start, 'days');
         }
 
-        if ($start < 0) { // Negative start means we go back that many months in the past from end
+        $end = post_param_date($this->filter_name . '__end', true);
+        if ($end === null) {
+            $end = $default[1];
+        } elseif ($end > 0) {
+            $end = to_epoch_interval_index($end, 'days');
+        }
+
+        if ($end <= 0) { // An end of 0 means now; negative values mean abs(value) days into the future
+            $end = to_epoch_interval_index(time(), 'days') + abs($end);
+        }
+
+        if ($start < 0) { // Negative start means we go back that many days in the past from end
             $start = $end + $start;
         }
 
@@ -1740,56 +1829,55 @@ function preprocess_raw_data_for(string $hook_name, int $start_time = 0, ?int $e
 
     cms_profile_start_for('preprocess_raw_data_for::' . $hook_name);
 
-    // First we need to load up any data we already processed for any months within the time range, so anything new will MERGE into that...
-
-    $months = [];
-    for ($timestamp = $start_time; $timestamp < $end_time; $timestamp += 60 * 60 * 24 * 28) {
-        $month = to_epoch_interval_index($timestamp, 'months');
-        $months[$month] = true;
-    }
-
     cms_profile_start_for('preprocess_raw_data_for::' . $hook_name . '->preprocess_raw_data');
 
-    $data_buckets = [];
-    foreach (array_keys($info) as $bucket) {
-        $data_buckets[$bucket] = [];
+    // We process day by day to reduce the chance of PHP out of memory issues
+    $_end_time = $start_time + (60 * 60 * 24);
+    if ($_end_time > $end_time) {
+        $_end_time = $end_time;
+    }
 
-        foreach (array_keys($months) as $month) {
-            $data_rows = $GLOBALS['SITE_DB']->query_select('stats_preprocessed', ['p_pivot', 'p_data'], [
-                'p_bucket' => $bucket,
-                'p_month' => $month,
-            ]);
-            foreach ($data_rows as $row) {
-                $pivot = $row['p_pivot'];
-                $data_buckets[$bucket][$month][$pivot] = @unserialize($row['p_data']);
-                if ($data_buckets[$bucket][$month][$pivot] === false) {
-                    $data_buckets[$bucket][$month][$pivot] = [];
+    do {
+        $data_buckets = [];
+        foreach (array_keys($info) as $bucket) {
+            $data_buckets[$bucket] = [];
+        }
+
+        // Preprocess new data...
+
+        $hook_ob->preprocess_raw_data($start_time, $_end_time, $data_buckets);
+
+        // Save into the delta for later merging...
+
+        foreach ($data_buckets as $bucket => $_) {
+            foreach ($_ as $pivot => $__) {
+                foreach ($__ as $pivot_interval => $___) {
+                    foreach ($___ as $pivot_value => $data) {
+                        $GLOBALS['SITE_DB']->query_insert('stats_preprocessed_delta', [
+                            'p_bucket' => $bucket,
+                            'p_pivot' => $pivot,
+                            'p_pivot_interval' => $pivot_interval,
+                            'p_pivot_value' => $pivot_value,
+                            'p_data' => serialize($data),
+                        ]);
+                    }
                 }
             }
         }
-    }
 
-    // Preprocess new data...
+        unset($data_buckets);
 
-    $hook_ob->preprocess_raw_data($start_time, $end_time, $data_buckets);
-
-    // Re-save into the database...
-
-    foreach ($data_buckets as $bucket => $_) {
-        foreach ($_ as $month => $__) {
-            foreach ($__ as $pivot => $data) {
-                $GLOBALS['SITE_DB']->query_insert_or_replace('stats_preprocessed', [
-                    'p_data' => serialize($data),
-                ], [
-                    'p_bucket' => $bucket,
-                    'p_month' => $month,
-                    'p_pivot' => $pivot,
-                ]);
-            }
+        // Are we done?
+        if ($_end_time >= $end_time) {
+            break;
         }
-    }
 
-    unset($data_buckets);
+        $start_time = $_end_time + 1;
+        $_end_time = $_end_time + (60 * 60 * 24);
+        if ($_end_time > $end_time) {
+            $_end_time = $end_time;
+        }
+    } while (true);
 
     cms_profile_end_for('preprocess_raw_data_for::' . $hook_name . '->preprocess_raw_data');
 
@@ -1797,7 +1885,7 @@ function preprocess_raw_data_for(string $hook_name, int $start_time = 0, ?int $e
 
     cms_profile_start_for('preprocess_raw_data_for::' . $hook_name . '->preprocess_raw_data_flat');
 
-    // First we need to load up any data we already processed for any months within the time range, so anything new will MERGE into that...
+    // First we need to load up any data we already processed for any days within the time range, so anything new will MERGE into that...
 
     $data_buckets_flat = [];
     foreach (array_keys($info) as $bucket) {

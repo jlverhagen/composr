@@ -53,7 +53,7 @@ class Hook_admin_stats_transactions extends CMSStatsProvider
                 'label' => do_lang_tempcode('TRANSACTIONS'),
                 'category' => 'economic_activity',
                 'filters' => [
-                    'transaction_quantity__month_range' => new CMSStatsDateMonthRangeFilter('transaction_quantity__month_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
+                    'transaction_quantity__day_range' => new CMSStatsDayRangeFilter('transaction_quantity__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
                     'transaction_quantity__product_name' => new CMSStatsListFilter('transaction_quantity__product_name', do_lang_tempcode('PRODUCT'), $type_codes),
                 ],
                 'pivot' => new CMSStatsDatePivot('transaction_quantity__pivot', $this->get_date_pivots(!$for_kpi)),
@@ -63,7 +63,7 @@ class Hook_admin_stats_transactions extends CMSStatsProvider
                 'label' => do_lang_tempcode('INCOME'),
                 'category' => 'economic_activity',
                 'filters' => [
-                    'transaction_income__month_range' => new CMSStatsDateMonthRangeFilter('transaction_income__month_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
+                    'transaction_income__day_range' => new CMSStatsDayRangeFilter('transaction_income__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
                     'transaction_income__product_name' => new CMSStatsListFilter('transaction_income__product_name', do_lang_tempcode('PRODUCT'), $type_codes),
                 ],
                 'pivot' => new CMSStatsDatePivot('transaction_income__pivot', $this->get_date_pivots(!$for_kpi)),
@@ -77,7 +77,7 @@ class Hook_admin_stats_transactions extends CMSStatsProvider
      *
      * @param  TIME $start_time Start timestamp
      * @param  TIME $end_time End timestamp
-     * @param  array $data_buckets Map of data buckets; a map of bucket name to nested maps with the following maps in sequence: 'month', 'pivot', 'value' (then further map data) ; extended and returned by reference
+     * @param  array $data_buckets Map of data buckets; a map of bucket name to nested maps with the following maps in sequence: 'pivot', 'pivot interval', 'pivot value' (then further map data); passed by reference only with pre-filled zero data to later be merged
      */
     public function preprocess_raw_data(int $start_time, int $end_time, array &$data_buckets)
     {
@@ -101,22 +101,21 @@ class Hook_admin_stats_transactions extends CMSStatsProvider
                 $timestamp = $row['t_time'];
                 $timestamp = tz_time($timestamp, $server_timezone);
 
-                $month = to_epoch_interval_index($timestamp, 'months');
-
                 $product_name = $row['t_type_code'];
 
                 foreach (array_keys($date_pivots) as $pivot) {
+                    $pivot_interval = $this->calculate_date_pivot_interval($pivot, $timestamp);
                     $pivot_value = $this->calculate_date_pivot_value($pivot, $timestamp);
 
-                    if (!isset($data_buckets['transaction_quantity'][$month][$pivot][$pivot_value][$product_name])) {
-                        $data_buckets['transaction_quantity'][$month][$pivot][$pivot_value][$product_name] = 0;
+                    if (!isset($data_buckets['transaction_quantity'][$pivot][$pivot_interval][$pivot_value][$product_name])) {
+                        $data_buckets['transaction_quantity'][$pivot][$pivot_interval][$pivot_value][$product_name] = 0;
                     }
-                    $data_buckets['transaction_quantity'][$month][$pivot][$pivot_value][$product_name]++;
+                    $data_buckets['transaction_quantity'][$pivot][$pivot_interval][$pivot_value][$product_name]++;
 
-                    if (!isset($data_buckets['transaction_income'][$month][$pivot][$pivot_value][$product_name])) {
-                        $data_buckets['transaction_income'][$month][$pivot][$pivot_value][$product_name] = 0;
+                    if (!isset($data_buckets['transaction_income'][$pivot][$pivot_interval][$pivot_value][$product_name])) {
+                        $data_buckets['transaction_income'][$pivot][$pivot_interval][$pivot_value][$product_name] = 0;
                     }
-                    $data_buckets['transaction_income'][$month][$pivot][$pivot_value][$product_name] += $row['t_price'];
+                    $data_buckets['transaction_income'][$pivot][$pivot_interval][$pivot_value][$product_name] += $row['t_price'];
                 }
             }
 
@@ -134,32 +133,28 @@ class Hook_admin_stats_transactions extends CMSStatsProvider
      */
     public function generate_final_data(string $bucket, string $pivot, array $filters) : ?array
     {
-        $range = $this->convert_month_range_filter_to_pair($filters[$bucket . '__month_range']);
+        $data = [];
+        $_data = $this->prepare_preprocessed_data_for_graph($bucket, $pivot, $filters);
 
-        $data = $this->fill_data_by_date_pivots($pivot, $range[0], $range[1]);
+        foreach ($_data as $_pivot => $__data) {
+            foreach ($__data as $pivot_interval => $_) {
+                foreach ($_ as $pivot_value => $__) {
+                    $pivot_value_nice = $this->make_date_pivot_value_nice($_pivot, $pivot_interval, $pivot_value);
+                    if (!isset($data[$pivot_value_nice])) {
+                        $data[$pivot_value_nice] = 0;
+                    }
 
-        $where = [
-            'p_bucket' => $bucket,
-            'p_pivot' => $pivot,
-        ];
-        $extra = '';
-        $extra .= ' AND p_month>=' . strval($range[0]);
-        $extra .= ' AND p_month<=' . strval($range[1]);
-        $data_rows = $GLOBALS['SITE_DB']->query_select('stats_preprocessed', ['p_data'], $where, $extra);
-        foreach ($data_rows as $data_row) {
-            $_data = @unserialize($data_row['p_data']);
-            foreach ($_data as $pivot_value => $__) {
-                $pivot_value = $this->make_date_pivot_value_nice($pivot, $pivot_value);
-
-                foreach ($__ as $product_name => $price) {
-                    if ((!empty($filters[$bucket . '__product_name'])) && (!simulated_wildcard_match($filters[$bucket . '__product_name'], $product_name, true))) {
+                    if ($__ === null) {
                         continue;
                     }
 
-                    if (!isset($data[$pivot_value])) {
-                        $data[$pivot_value] = 0;
+                    foreach ($__ as $product_name => $price) {
+                        if ((!empty($filters[$bucket . '__product_name'])) && (!simulated_wildcard_match($filters[$bucket . '__product_name'], $product_name, true))) {
+                            continue;
+                        }
+
+                        $data[$pivot_value_nice] += $price;
                     }
-                    $data[$pivot_value] += $price;
                 }
             }
         }

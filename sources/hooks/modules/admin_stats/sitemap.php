@@ -38,7 +38,7 @@ class Hook_admin_stats_sitemap extends CMSStatsProvider
                 'label' => do_lang_tempcode('SITEMAP'),
                 'category' => 'content_growth',
                 'filters' => [
-                    'sitemap_growth__month_range' => new CMSStatsDateMonthRangeFilter('sitemap_growth__month_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
+                    'sitemap_growth__day_range' => new CMSStatsDayRangeFilter('sitemap_growth__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
                     'sitemap_growth__page_link' => new CMSStatsTextFilter('sitemap_growth__page_link', do_lang_tempcode('PAGE_LINK')),
                 ],
                 'pivot' => new CMSStatsDatePivot('sitemap_growth__pivot', $this->get_date_pivots(!$for_kpi)),
@@ -52,7 +52,7 @@ class Hook_admin_stats_sitemap extends CMSStatsProvider
      *
      * @param  TIME $start_time Start timestamp
      * @param  TIME $end_time End timestamp
-     * @param  array $data_buckets Map of data buckets; a map of bucket name to nested maps with the following maps in sequence: 'month', 'pivot', 'value' (then further map data) ; extended and returned by reference
+     * @param  array $data_buckets Map of data buckets; a map of bucket name to nested maps with the following maps in sequence: 'pivot', 'pivot interval', 'pivot value' (then further map data); passed by reference only with pre-filled zero data to later be merged
      */
     public function preprocess_raw_data(int $start_time, int $end_time, array &$data_buckets)
     {
@@ -74,19 +74,18 @@ class Hook_admin_stats_sitemap extends CMSStatsProvider
                 $timestamp = $row['add_date'];
                 $timestamp = tz_time($timestamp, $server_timezone);
 
-                $month = to_epoch_interval_index($timestamp, 'months');
-
                 list($zone, $attributes) = page_link_decode($row['page_link']);
                 $page = isset($attributes['page']) ? $attributes['page'] : DEFAULT_ZONE_PAGE_NAME;
                 $page_link = $zone . ':' . $page;
 
                 foreach (array_keys($date_pivots) as $pivot) {
+                    $pivot_interval = $this->calculate_date_pivot_interval($pivot, $timestamp);
                     $pivot_value = $this->calculate_date_pivot_value($pivot, $timestamp);
 
-                    if (!isset($data_buckets['sitemap_growth'][$month][$pivot][$pivot_value][$page_link])) {
-                        $data_buckets['sitemap_growth'][$month][$pivot][$pivot_value][$page_link] = 0;
+                    if (!isset($data_buckets['sitemap_growth'][$pivot][$pivot_interval][$pivot_value][$page_link])) {
+                        $data_buckets['sitemap_growth'][$pivot][$pivot_interval][$pivot_value][$page_link] = 0;
                     }
-                    $data_buckets['sitemap_growth'][$month][$pivot][$pivot_value][$page_link]++;
+                    $data_buckets['sitemap_growth'][$pivot][$pivot_interval][$pivot_value][$page_link]++;
                 }
             }
 
@@ -104,36 +103,32 @@ class Hook_admin_stats_sitemap extends CMSStatsProvider
      */
     public function generate_final_data(string $bucket, string $pivot, array $filters) : ?array
     {
-        $range = $this->convert_month_range_filter_to_pair($filters[$bucket . '__month_range']);
+        $data = [];
+        $_data = $this->prepare_preprocessed_data_for_graph($bucket, $pivot, $filters);
 
-        $data = $this->fill_data_by_date_pivots($pivot, $range[0], $range[1]);
+        foreach ($_data as $_pivot => $__data) {
+            foreach ($__data as $pivot_interval => $_) {
+                foreach ($_ as $pivot_value => $__) {
+                    $pivot_value_nice = $this->make_date_pivot_value_nice($_pivot, $pivot_interval, $pivot_value);
+                    if (!isset($data[$pivot_value_nice])) {
+                        $data[$pivot_value_nice] = 0;
+                    }
 
-        $where = [
-            'p_bucket' => $bucket,
-            'p_pivot' => $pivot,
-        ];
-        $extra = '';
-        $extra .= ' AND p_month>=' . strval($range[0]);
-        $extra .= ' AND p_month<=' . strval($range[1]);
-        $data_rows = $GLOBALS['SITE_DB']->query_select('stats_preprocessed', ['p_data'], $where, $extra);
-        foreach ($data_rows as $data_row) {
-            $_data = @unserialize($data_row['p_data']);
-            foreach ($_data as $pivot_value => $__) {
-                $pivot_value = $this->make_date_pivot_value_nice($pivot, $pivot_value);
+                    if ($__ === null) {
+                        continue;
+                    }
 
-                foreach ($__ as $page_link => $num_new_nodes) {
-                    if (!empty($filters[$bucket . '__page_link'])) {
-                        list($current_zone_name, $attributes) = page_link_decode($page_link);
-                        $current_page_name = isset($attributes['page']) ? $attributes['page'] : DEFAULT_ZONE_PAGE_NAME;
-                        if (!match_key_match($filters[$bucket . '__page_link'], false, null, $current_zone_name, $current_page_name)) {
-                            continue;
+                    foreach ($__ as $page_link => $num_new_nodes) {
+                        if (!empty($filters[$bucket . '__page_link'])) {
+                            list($current_zone_name, $attributes) = page_link_decode($page_link);
+                            $current_page_name = isset($attributes['page']) ? $attributes['page'] : DEFAULT_ZONE_PAGE_NAME;
+                            if (!match_key_match($filters[$bucket . '__page_link'], false, null, $current_zone_name, $current_page_name)) {
+                                continue;
+                            }
                         }
-                    }
 
-                    if (!isset($data[$pivot_value])) {
-                        $data[$pivot_value] = 0;
+                        $data[$pivot_value_nice] += $num_new_nodes;
                     }
-                    $data[$pivot_value] += $num_new_nodes;
                 }
             }
         }
