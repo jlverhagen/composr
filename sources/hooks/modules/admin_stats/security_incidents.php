@@ -242,8 +242,8 @@ class Hook_admin_stats_security_incidents extends CMSStatsProvider
                                 continue;
                             }
 
-                            foreach ($__ as $country => $___) {
-                                foreach ($__ as $record_type => $total_incidents) {
+                            foreach ($__ as $record_type => $___) {
+                                foreach ($___ as $country => $total_incidents) {
                                     if ((empty($filters[$bucket . '__include_failedlogins'])) && ($record_type == 'failedlogins')) {
                                         continue;
                                     }
