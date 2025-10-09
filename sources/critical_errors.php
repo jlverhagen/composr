@@ -218,7 +218,7 @@ if (!function_exists('critical_error')) {
 
         if ($display_trace) {
             $_trace = debug_backtrace();
-            $extra = '<div class="box guid-{_GUID}"><div class="box-inner"><h2>Stack trace&hellip;</h2>';
+            $extra = '<div class="box"><div class="box-inner"><h2>Stack trace&hellip;</h2>';
             foreach ($_trace as $stage) {
                 $traces = '';
                 foreach ($stage as $key => $value) {
@@ -328,8 +328,12 @@ END;
             }
 
             if (is_file(get_custom_file_base() . '/_critical_error.html')) {
+                $_extra = 'Redacted for security; it has been logged for the staff.';
+                if ($display_trace) {
+                    $_extra = $full_trace;
+                }
                 $contents = file_get_contents(get_custom_file_base() . '/_critical_error.html');
-                $contents = str_replace(['{ERROR_CODE}', '{ERROR_MESSAGE}', '{STACK_TRACE}'], [$error_code, $error, $extra], $contents);
+                $contents = str_replace(['{ERROR_CODE}', '{ERROR_MESSAGE}', '{STACK_TRACE}'], [$error_code, $error, $_extra], $contents);
                 echo $contents;
             } else {
                 global $RELATIVE_PATH, $SITE_INFO;
