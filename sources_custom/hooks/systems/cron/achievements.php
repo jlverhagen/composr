@@ -46,7 +46,7 @@ class Hook_cron_achievements
         return [
             'label' => 'Check achievements on random members',
             'num_queued' => $num_queued,
-            'minutes_between_runs' => 1,
+            'minutes_between_runs' => 5,
             'enabled_by_default' => true,
         ];
     }
