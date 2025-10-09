@@ -153,6 +153,13 @@ class Module_admin_stats extends Standard_crud_module
             $GLOBALS['SITE_DB']->add_table_field('stats', 'tracking_code', 'ID_TEXT');
         }
 
+        if (($upgrade_from !== null) && ($upgrade_from < 12)) { // LEGACY: 11.beta9
+            // Must delete everything in stats; cannot safely migrate old data without PHP memory errors
+            delete_value('stats__last_processed', true);
+            delete_value('stats__last_day_processed', true);
+            $GLOBALS['SITE_DB']->drop_table_if_exists('stats_preprocessed');
+        }
+
         if (($upgrade_from === null) || ($upgrade_from < 10)) { // LEGACY
             $GLOBALS['SITE_DB']->create_table('stats_preprocessed', [
                 'p_bucket' => '*ID_TEXT',
@@ -257,17 +264,6 @@ class Module_admin_stats extends Standard_crud_module
                 'p_pivot_value' => 'INTEGER',
                 'p_data' => 'LONG_TEXT',
             ]);
-        }
-
-        if (($upgrade_from !== null) && ($upgrade_from < 12)) { // LEGACY: 11.beta9
-            // Must delete everything in stats; cannot safely migrate old data without PHP memory errors
-            $GLOBALS['SITE_DB']->query_delete('stats_preprocessed');
-            delete_value('stats__last_processed', true);
-            delete_value('stats__last_day_processed', true);
-
-            $GLOBALS['SITE_DB']->delete_table_field('stats_preprocessed', 'p_month');
-            $GLOBALS['SITE_DB']->add_table_field('stats_preprocessed', 'p_pivot_interval', '*INTEGER');
-            $GLOBALS['SITE_DB']->add_table_field('stats_preprocessed', 'p_pivot_value', '*INTEGER');
         }
     }
 
