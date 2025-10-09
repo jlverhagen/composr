@@ -1,60 +1,231 @@
 <!DOCTYPE html>
-<html>
-    <head>
-        <title>Critical Error</title>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Critical Error — Composr</title>
+    <style>
+        :root {
+            --bg: #f6f7fb;
+            --bg-accent: #eef1f7;
+            --card: #ffffff;
+            --text: #1f2430;
+            --muted: #5b6478;
+            --border: #e5e8f0;
+            --primary: #0b6cff;
+            --primary-700: #0956cc;
+            --danger: #e72b2b;
+            --shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+        }
 
-        <style>
-            body {
-                font-family: Arial, sans-serif;
-                text-align: center;
-                background-color: #f0f0f0;
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg: #0f1218;
+                --bg-accent: #0b0e14;
+                --card: #151a22;
+                --text: #eef1f7;
+                --muted: #a5acc1;
+                --border: #273142;
+                --primary: #4c8dff;
+                --primary-700: #2c6de6;
+                --danger: #ff5f5f;
+                --shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
             }
-    
-            .error-container {
-                margin: 100px auto;
-                padding: 20px;
-                background-color: #fff;
-                border: 1px solid #ccc;
-                border-radius: 5px;
-                box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
-            }
-    
-            h1 {
-                color: #ff4444;
-            }
-    
-            p {
-                color: #666666;
-                margin-bottom: 20px;
-            }
-    
-            button {
-                padding: 10px 20px;
-                background-color: #007bff;
-                color: #fff;
-                border: none;
-                border-radius: 3px;
-                cursor: pointer;
-            }
-    
-            button:hover {
-                background-color: #0069d9;
-            }
-        </style>
-    </head>
+        }
 
-    <body>
-        <div class="error-container">
-            <h1>Critical Error</h1>
-            <p>Uh oh! It seems something has gone terribly wrong. This incident has been logged for the Composr staff.</p>
-            <p>You may wish to <a target="_blank" rel="noopener noreferrer" href="https://composr.app/report-issue.htm">report this on our tracker</a> or, if you cannot do that, e-mail us at support at composr dot app .</p>
-            <p>Please include this error code in your report (if applicable): <strong>{ERROR_CODE}</strong></p>
+        html, body {
+            height: 100%;
+        }
+
+        body {
+            margin: 0;
+            font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+            color: var(--text);
+            background: radial-gradient(1200px 600px at 20% 10%, var(--bg-accent), transparent 60%),
+                        radial-gradient(1200px 600px at 80% 90%, var(--bg-accent), transparent 60%),
+                        var(--bg);
+            display: grid;
+            place-items: center;
+            padding: 24px;
+            line-height: 1.55;
+        }
+
+        .card {
+            width: min(880px, 100%);
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            box-shadow: var(--shadow);
+            padding: 28px;
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-bottom: 10px;
+        }
+
+        .icon {
+            flex: none;
+            width: 42px;
+            height: 42px;
+            border-radius: 10px;
+            display: grid;
+            place-items: center;
+            background: color-mix(in oklab, var(--danger) 12%, transparent);
+            border: 1px solid color-mix(in oklab, var(--danger) 26%, var(--border));
+        }
+
+        h1 {
+            font-size: clamp(22px, 4vw, 28px);
+            line-height: 1.2;
+            margin: 0;
+        }
+
+        .lead {
+            color: var(--muted);
+            margin: 8px 0 14px 56px;
+        }
+
+        .actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin: 10px 0 0 56px;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            height: 40px;
+            padding: 0 14px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            background: var(--card);
+            color: var(--text);
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .btn:hover { filter: brightness(0.98); }
+
+        .btn-primary {
+            background: linear-gradient(180deg, color-mix(in oklab, var(--primary) 12%, #fff), var(--primary));
+            color: #fff;
+            border-color: color-mix(in oklab, var(--primary) 50%, var(--border));
+        }
+
+        .btn-primary:hover { background: var(--primary-700); }
+
+        .meta {
+            margin: 18px 0 0 56px;
+            color: var(--muted);
+            font-size: 0.95rem;
+        }
+
+        .sections {
+            margin-top: 20px;
+            display: grid;
+            gap: 14px;
+        }
+
+        .section {
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 16px;
+            background: linear-gradient(180deg, color-mix(in oklab, var(--card) 90%, var(--bg)), var(--card));
+        }
+
+        .section h2 {
+            margin: 0 0 8px 0;
+            font-size: 1.05rem;
+        }
+
+        .message {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        details {
+            border-radius: 10px;
+        }
+
+        details > summary {
+            list-style: none;
+            cursor: pointer;
+            color: var(--text);
+            font-weight: 600;
+            user-select: none;
+        }
+
+        details > summary::marker, details > summary::-webkit-details-marker { display: none; }
+
+        details[open] > summary { margin-bottom: 8px; }
+
+        pre {
+            margin: 0;
+            padding: 12px;
+            background: var(--bg-accent);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            overflow: auto;
+            max-height: 45vh;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+            font-size: 12.5px;
+            line-height: 1.5;
+        }
+
+        .footer-hint {
+            margin-top: 10px;
+            color: var(--muted);
+            font-size: 0.92rem;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <main class="card" role="main" aria-labelledby="critical-title">
+        <div class="header">
+            <div class="icon" aria-hidden="true">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--danger);">
+                    <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"></path>
+                    <line x1="12" y1="9" x2="12" y2="13"></line>
+                    <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                </svg>
+            </div>
+            <h1 id="critical-title">Critical error</h1>
         </div>
 
-        <div class="error-container">
-            <h2>Additional Details</h2>
-            <p>{ERROR_MESSAGE}</p>
-            <p>{STACK_TRACE}</p>
+        <p class="lead">An error occurred which we could not gracefully handle. The error has been logged. If it continues, please let the Composr team know.</p>
+
+        <div class="actions">
+            <a class="btn btn-primary" target="_blank" rel="noopener noreferrer" href="https://composr.app/report-issue.htm">Report this issue</a>
+            <a class="btn" href="mailto:support@composr.app?subject=Critical%20error%20report&body=Please%20include%20error%20code%20and%20details%20about%20how%20you%20ended%20up%20getting%20this%20error">Email support</a>
         </div>
-    </body>
+
+        <div class="sections">
+            <section class="section" aria-labelledby="details-heading">
+                <h2 id="details-heading">What happened</h2>
+                <p class="message">{ERROR_MESSAGE}</p>
+            </section>
+
+            <section class="section" aria-labelledby="tech-heading">
+                <h2 id="tech-heading">Technical details</h2>
+                <details open>
+                    <summary>Error code</summary>
+                    <pre>{ERROR_CODE}</pre>
+                </details>
+                <details open>
+                    <summary>Stack trace</summary>
+                    <pre>{STACK_TRACE}</pre>
+                </details>
+            </section>
+        </div>
+
+        <p class="footer-hint">Unless otherwise told above, you can refresh the page or return later after the issue is resolved.</p>
+    </main>
+</body>
 </html>
