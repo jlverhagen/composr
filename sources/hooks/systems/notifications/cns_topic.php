@@ -99,7 +99,7 @@ class Hook_notification_cns_topic extends Hook_Notification
 
             foreach ($types2 as $type) {
                 if (is_numeric($type['l_code_category'])) {
-                    $title = $GLOBALS['FORUM_DB']->query_select_value_if_there('f_topics', 't_cache_first_title', ['id' => intval($type['l_code_category'])]);
+                    $title = $GLOBALS['FORUM_DB']->query_select_value_if_there('f_topics', 't_cache_first_title', ['id' => intval($type['l_code_category'])], ' AND t_forum_id IS NOT NULL');
                     if ($title !== null) {
                         $page_links[] = [
                             'id' => $type['l_code_category'],
@@ -117,12 +117,13 @@ class Hook_notification_cns_topic extends Hook_Notification
         }
 
         if ((!$done_in_url) && (is_numeric($notification_category))) {
-            $title = $GLOBALS['FORUM_DB']->query_select_value_if_there('f_topics', 't_cache_first_title', ['id' => intval($notification_category)]);
-
-            $page_links[] = [
-                'id' => $notification_category,
-                'title' => do_lang('A_TOPIC', $title),
-            ];
+            $title = $GLOBALS['FORUM_DB']->query_select_value_if_there('f_topics', 't_cache_first_title', ['id' => intval($notification_category)], ' AND t_forum_id IS NOT NULL');
+            if ($title !== null) {
+                $page_links[] = [
+                    'id' => $notification_category,
+                    'title' => do_lang('A_TOPIC', $title),
+                ];
+            }
         }
 
         return $page_links;
@@ -192,10 +193,15 @@ class Hook_notification_cns_topic extends Hook_Notification
             $forum_id = $topic_details[0]['t_forum_id'];
 
             if ($forum_id === null) {
+                // Actually, we handle private topics in a separate notification, so do not allow them at all here
+                return false;
+
+                /*
                 require_code('cns_topics');
                 if (!cns_may_access_topic(intval($only_if_enabled_on__category), $member_id, $topic_details[0])) {
                     return false;
                 }
+                */
             }
         }
 
@@ -236,15 +242,9 @@ class Hook_notification_cns_topic extends Hook_Notification
                 list($members2, $maybe_more2) = $this->_all_members_who_have_enabled($notification_code, 'forum:' . strval($forum_id), $to_member_ids, $start, $max);
                 $members += $members2;
                 $maybe_more = $maybe_more || $maybe_more2;
-            } else { // Private topic, scan for participation against those already monitoring, for retroactive security (maybe someone lost access)
-                require_code('cns_topics');
-                $members_new = $members;
-                foreach ($members as $member_id => $setting) {
-                    if (cns_may_access_topic(intval($category), $member_id, $topic_details[0])) {
-                        $members_new[$member_id] = $setting;
-                    }
-                }
-                $members = $members_new;
+            } else {
+                // Private topic: do not notify as we have a separate notification for these
+                return [[], false];
             }
         } else { // This is a forum. Actually this code path should rarely if ever run - we don't dispatch notifications against forums, but topics (see above code branch).
             $forum_id = intval(substr($category, 6));
