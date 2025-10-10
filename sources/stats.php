@@ -1309,6 +1309,7 @@ abstract class CMSStatsFilter
         }
 
         $filters[$this->filter_name] = either_param_string($this->filter_name, $default);
+
         return $filters[$this->filter_name];
     }
 
@@ -1506,6 +1507,31 @@ class CMSStatsCountryFilter extends CMSStatsListFilter
         $filters = [];
         $list = create_country_selection_list([$this->read_value($filters)]);
         return form_input_list(do_lang_tempcode('_FILTER', $this->label), new Tempcode(), $this->filter_name, $list, null, false, false);
+    }
+
+    /**
+     * Read in and/or post-process filter value.
+     *
+     * @param  array $filters An array of our current filters; passed by reference and modified as they are read in
+     * @param  ?boolean $for_kpi Whether we want this for a KPI (null: an object was initiated)
+     * @return mixed The filter
+     */
+    public function read_value(array &$filters, ?bool $for_kpi = null)
+    {
+        if (isset($filters[$this->filter_name])) {
+            $default = $filters[$this->filter_name];
+        } else {
+            $default = $this->default;
+        }
+
+        $filters[$this->filter_name] = either_param_string($this->filter_name, $default);
+
+        // We add a blank entry in the country list to mean none.
+        if ($filters[$this->filter_name] == '') {
+            $filters[$this->filter_name] = false;
+        }
+
+        return $filters[$this->filter_name];
     }
 }
 
