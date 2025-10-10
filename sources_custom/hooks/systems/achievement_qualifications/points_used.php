@@ -15,7 +15,7 @@
 /*
     Supported parameters for this qualification:
     1) count        -- The number of points required to have been used for this qualification to be satisfied (not specified: 1,000)
-    2) exclude_rank -- If 1, then exclude points used which deducted from rank points, such as charges from warnings (not specified: 1)
+    2) rank_only    -- If 1, then only considers points which affect rank (not specified: 1)
     3) sent_only    -- If 1, then we only consider points which have been given to other members; -1 has the opposite effect and only considers points which were spent as part of a purchase (not specified: 0)
     4) rows_only    -- If 1, then we do not want to count points but rather number of transactions instead (not specified: 0)
     5) include_gift -- If 1, also include gift points used; -1 makes us exclusively only count gift points used (not specified: 1)
@@ -73,7 +73,7 @@ class Hook_achievement_qualifications_points_used
 
         // Read in options
         $count_required = isset($params['count']) ? intval($params['count']) : 1000;
-        $exclude_rank = isset($params['exclude_rank']) ? ($params['exclude_rank'] == '1') : true;
+        $rank_only = isset($params['rank_only']) ? ($params['rank_only'] == '1') : true;
         $sent_only = isset($params['sent_only']) ? $params['sent_only'] : '0';
         $rows_only = isset($params['rows_only']) ? ($params['rows_only'] == '1') : false;
         $include_gift = isset($params['include_gift']) ? $params['include_gift'] : '1';
@@ -85,25 +85,25 @@ class Hook_achievement_qualifications_points_used
         require_code('points');
 
         // Optimisation; we might just be able to pull from points_used
-        $use_points_used = ((!$exclude_rank) && ($type === null) && ($subtype === null) && ($type_id === null) && ($days === null) && ($last_time === null) && ($sent_only == '0') && (!$rows_only) && ($include_gift == '0'));
+        $use_points_used = ((!$rank_only) && ($type === null) && ($subtype === null) && ($type_id === null) && ($days === null) && ($last_time === null) && ($sent_only == '0') && (!$rows_only) && ($include_gift == '0'));
         if ($use_points_used) {
             return [points_used($member_id), $count_required];
         }
 
         // Optimisation; we might just be able to pull from points_spent
-        $use_points_spent = ((!$exclude_rank) && ($type === null) && ($subtype === null) && ($type_id === null) && ($days === null) && ($last_time === null) && ($sent_only == '-1') && (!$rows_only) && ($include_gift == '0'));
+        $use_points_spent = ((!$rank_only) && ($type === null) && ($subtype === null) && ($type_id === null) && ($days === null) && ($last_time === null) && ($sent_only == '-1') && (!$rows_only) && ($include_gift == '0'));
         if ($use_points_spent) {
             return [points_spent($member_id), $count_required];
         }
 
         // Optimisation; we might just be able to pull from points_sent
-        $use_points_spent = ((!$exclude_rank) && ($type === null) && ($subtype === null) && ($type_id === null) && ($days === null) && ($last_time === null) && ($sent_only == '1') && (!$rows_only) && ($include_gift == '1'));
+        $use_points_spent = ((!$rank_only) && ($type === null) && ($subtype === null) && ($type_id === null) && ($days === null) && ($last_time === null) && ($sent_only == '1') && (!$rows_only) && ($include_gift == '1'));
         if ($use_points_spent) {
             return [points_sent($member_id), $count_required];
         }
 
         // Optimisation; we might just be able to pull from gift_points_sent
-        $use_points_spent = ((!$exclude_rank) && ($type === null) && ($subtype === null) && ($type_id === null) && ($days === null) && ($last_time === null) && ($sent_only == '0') && (!$rows_only) && ($include_gift == '-1'));
+        $use_points_spent = ((!$rank_only) && ($type === null) && ($subtype === null) && ($type_id === null) && ($days === null) && ($last_time === null) && ($sent_only == '0') && (!$rows_only) && ($include_gift == '-1'));
         if ($use_points_spent) {
             return [gift_points_sent($member_id), $count_required];
         }
@@ -111,8 +111,8 @@ class Hook_achievement_qualifications_points_used
         // Build our WHERE query
         $extra_where = '';
         $secondary_member = null;
-        if ($exclude_rank) {
-            $extra_where .= ' AND is_ranked=0';
+        if ($rank_only) {
+            $extra_where .= ' AND is_ranked=1';
         }
         if ($sent_only == '-1') {
             $secondary_member = $GLOBALS['FORUM_DRIVER']->get_guest_id();
@@ -192,7 +192,7 @@ class Hook_achievement_qualifications_points_used
 
         // Read in options
         $count_required = isset($params['count']) ? intval($params['count']) : 1000;
-        $exclude_rank = isset($params['exclude_rank']) ? ($params['exclude_rank'] == '1') : true;
+        $rank_only = isset($params['rank_only']) ? ($params['rank_only'] == '1') : true;
         $sent_only = isset($params['sent_only']) ? $params['sent_only'] : '0';
         $rows_only = isset($params['rows_only']) ? ($params['rows_only'] == '1') : false;
         $include_gift = isset($params['include_gift']) ? $params['include_gift'] : '1';
@@ -206,8 +206,8 @@ class Hook_achievement_qualifications_points_used
         $conditions = new Tempcode();
 
         // Rank
-        if ($exclude_rank) {
-            $conditions->attach(do_lang_tempcode('ACHIEVEMENT_POINTS_USED_REQUIREMENT_EXCLUDE_RANK'));
+        if ($rank_only) {
+            $conditions->attach(do_lang_tempcode('ACHIEVEMENT_POINTS_USED_REQUIREMENT_RANK_ONLY'));
         }
 
         // Sent
