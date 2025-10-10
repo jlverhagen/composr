@@ -252,27 +252,6 @@ class Module_warnings extends Standard_crud_module
             }
         }
 
-        if (($upgrade_from !== null) && ($upgrade_from < 3)) { // LEGACY: 11.beta9
-            // Fix corrupt stats records for warnings
-            if (addon_installed('stats')) {
-                $GLOBALS['SITE_DB']->query_delete('stats_preprocessed', ['p_bucket' => 'recorded_punishments']);
-                $GLOBALS['SITE_DB']->query_delete('stats_preprocessed', ['p_bucket' => 'recorded_punishment_reasons']);
-                $GLOBALS['SITE_DB']->query_delete('stats_preprocessed', ['p_bucket' => 'recorded_punishment_countries']);
-
-                require_code('stats');
-                require_code('global4');
-                require_lang('stats');
-
-                push_query_limiting(false);
-                disable_php_memory_limit();
-                cms_extend_time_limit(60);
-                $end_time = time();
-                $start_time = get_site_start_time(); // Should be safe because generally, we don't expect sites to create more than a few warnings per day
-                preprocess_raw_data_for('warnings', $start_time, $end_time);
-                pop_query_limiting();
-            }
-        }
-
         if (($upgrade_from === null) || ($upgrade_from < 3)) { // 11.beta9
             $GLOBALS['FORUM_DB']->create_foreign_key('f_warnings', 'w_topic_id', 'f_topics', 'id');
             $GLOBALS['FORUM_DB']->create_foreign_key('f_warnings_punitive', 'p_warning_id', 'f_warnings', 'id');
