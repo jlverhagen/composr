@@ -1009,7 +1009,7 @@ class Module_warnings extends Standard_crud_module
                 $action->attach(do_lang_tempcode('ACTION_LINK', do_lang('UNDONE')));
             }
 
-            $fields['PUNITIVE_ACTIONS']->attach(div($action));
+            $fields['PUNITIVE_ACTIONS']->attach(paragraph($action));
         }
 
         if ($fields['PUNITIVE_ACTIONS']->is_empty()) {
