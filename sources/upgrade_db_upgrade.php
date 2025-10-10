@@ -190,7 +190,7 @@ function version_specific() : bool
         $version_database = $version_files;
     }
 
-    // LEGACY: 11.beta9; we have to do this extremely early on for previous v11 versions
+    // LEGACY: 11.beta9; we have to do this extremely early on so future DB changes do not throw errors for missing foreign key meta table.
     if (!$GLOBALS['SITE_DB']->table_exists('db_meta_foreign_keys', true)) {
         $GLOBALS['SITE_DB']->create_table('db_meta_foreign_keys', [
             'from_table' => '*ID_TEXT',
@@ -684,6 +684,21 @@ function version_specific() : bool
             require_code('zones3');
             actual_delete_zone('collaboration', true);
             echo do_lang('UPGRADER_UPGRADED_CUSTOM', '11', 'removed collaboration zone');
+
+            // Make sure all attachments have a GUID if Commandr is installed (attachments are now resource meta-aware)
+            if (addon_installed('commandr')) {
+                require_code('resource_fs');
+                $start = 0;
+                $max = 50;
+                $rows = [];
+                do {
+                    $rows = $GLOBALS['SITE_DB']->query_select('attachments', ['id', 'a_original_filename'], [], '', $max, $start);
+                    foreach ($rows as $row) {
+                        generate_resource_fs_moniker('attachment', strval($row['id']), $row['a_original_filename'], null, false);
+                    }
+                    $start += $max;
+                } while (count($rows) > 0);
+            }
         }
 
         // Note: When adding upgrade code for a new version it's a good idea to review old code to get an idea for what might need to be done
@@ -782,6 +797,8 @@ function database_specific() : bool
         global $SITE_INFO;
         $multi_lang_content = (((isset($SITE_INFO['multi_lang_content'])) && ($SITE_INFO['multi_lang_content'] == '0')) ? '0' : '1');
         set_value('multi_lang_content', $multi_lang_content);
+
+        $done_something = true;
     }
 
     // LEGACY: 11.beta9. Remove prior to v11 release.
@@ -822,6 +839,28 @@ function database_specific() : bool
         $GLOBALS['FORUM_DB']->create_foreign_key('f_posts_fulltext_index', 'i_forum_id', 'f_forums', 'id');
         $GLOBALS['FORUM_DB']->create_foreign_key('f_posts_fulltext_index', 'i_post_id', 'f_posts', 'id');
         $GLOBALS['FORUM_DB']->create_foreign_key('f_pposts_fulltext_index', 'i_post_id', 'f_posts', 'id');
+
+        $done_something = true;
+    }
+
+    // LEGACY: 11.beta9. Remove prior to v11 release.
+    if ((is_numeric($upgrade_from)) && (intval($upgrade_from) < 1760071139)) {
+        // Make sure all attachments have a GUID if Commandr is installed
+        if (addon_installed('commandr')) {
+            require_code('resource_fs');
+            $start = 0;
+            $max = 50;
+            $rows = [];
+            do {
+                $rows = $GLOBALS['SITE_DB']->query_select('attachments', ['id', 'a_original_filename'], [], '', $max, $start);
+                foreach ($rows as $row) {
+                    generate_resource_fs_moniker('attachment', strval($row['id']), $row['a_original_filename'], null, false);
+                }
+                $start += $max;
+            } while (count($rows) > 0);
+        }
+
+        $done_something = true;
     }
 
     return $done_something;
