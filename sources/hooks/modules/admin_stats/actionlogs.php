@@ -49,7 +49,7 @@ class Hook_admin_stats_actionlogs extends CMSStatsProvider
             }
             $lang = do_lang($row['l_the_type'], null, null, null, null, false);
             if ($lang !== null) {
-                if ($this->should_skip_type($row['l_the_type'], 'actionlog_activity')) {
+                if (!$this->should_skip_type($row['l_the_type'], 'actionlog_activity')) {
                     $_action_type_list_activity[$row['l_the_type']] = $lang;
                 }
                 if (!$this->should_skip_type($row['l_the_type'], 'actionlog_growth')) {
@@ -63,7 +63,7 @@ class Hook_admin_stats_actionlogs extends CMSStatsProvider
             }
             $lang = do_lang($row['the_type'], null, null, null, null, false);
             if ($lang !== null) {
-                if ($this->should_skip_type($row['the_type'], 'actionlog_activity')) {
+                if (!$this->should_skip_type($row['the_type'], 'actionlog_activity')) {
                     $_action_type_list_activity[$row['the_type']] = $lang;
                 }
                 if (!$this->should_skip_type($row['the_type'], 'actionlog_growth')) {
