@@ -1,6 +1,7 @@
 ﻿<!DOCTYPE html>
 
 {$SET,page_link_privacy,{$PAGE_LINK,:privacy}}
+{$SET,running_script,{$RUNNING_SCRIPT}}
 
 {+START,SET,hero_slider}
 	{+START,IF,{$NEQ,{$CONFIG_OPTION,site_closed},2}}
@@ -14,7 +15,7 @@
 {$SET,has_right_panel,{$IS_NON_EMPTY,{$TRIM,{$LOAD_PANEL,right}}}}
 
 {$,We deploy as HTML5 but code and conform strictly to XHTML5}
-<html lang="{$LCASE*,{$METADATA,lang}}"{$ATTR_DEFAULTED,dir,{!dir},ltr} data-view="Global" data-view-params="{+START,PARAMS_JSON,page_link_privacy}{_*}{+END}" class="{+START,IF,{$SHOW_HEADER}}has-header-{$THEME_OPTION*,header_type}{+END} {+START,IF,{$IS_NON_EMPTY,{$TRIM,{$GET,hero_slider}}}}has-homepage-slider {$?,{$THEME_OPTION,homepage_slider_fullscreen},has-homepage-slider-fullscreen}{+END} {$?,{$GET,has_left_panel},has-left-panel} {$?,{$GET,has_right_panel},has-right-panel}">
+<html lang="{$LCASE*,{$METADATA,lang}}"{$ATTR_DEFAULTED,dir,{!dir},ltr} data-view="Global" data-view-params="{+START,PARAMS_JSON,page_link_privacy,running_script}{_*}{+END}" class="{+START,IF,{$SHOW_HEADER}}has-header-{$THEME_OPTION*,header_type}{+END} {+START,IF,{$IS_NON_EMPTY,{$TRIM,{$GET,hero_slider}}}}has-homepage-slider {$?,{$THEME_OPTION,homepage_slider_fullscreen},has-homepage-slider-fullscreen}{+END} {$?,{$GET,has_left_panel},has-left-panel} {$?,{$GET,has_right_panel},has-right-panel}">
 <head>
 	{+START,INCLUDE,HTML_HEAD}{+END}
 </head>
@@ -238,10 +239,10 @@
 									<li><a accesskey="z" rel="site_map" href="{$PAGE_LINK*,_SEARCH:sitemap}">{!SITEMAP}</a></li>
 								{+END}
 								{+START,IF,{$CONFIG_OPTION,bottom_show_rules_link}}
-									<li><a data-open-as-overlay="{}" rel="site_rules" accesskey="," href="{$PAGE_LINK*,:rules}">{!RULES}</a></li>
+									<li><a rel="site_rules" accesskey="," href="{$PAGE_LINK*,:rules}">{!RULES}</a></li>
 								{+END}
 								{+START,IF,{$CONFIG_OPTION,bottom_show_privacy_link}}
-									<li><a data-open-as-overlay="{}" rel="site_privacy" accesskey="." href="{$PAGE_LINK*,_SEARCH:privacy}">{!PRIVACY}</a></li>
+									<li><a rel="site_privacy" accesskey="." href="{$PAGE_LINK*,_SEARCH:privacy}">{!PRIVACY}</a></li>
 								{+END}
 								{+START,IF,{$CONFIG_OPTION,bottom_show_feedback_link}}
 									<li><a rel="site_contact" accesskey="'" href="{$PAGE_LINK*,_SEARCH:feedback:redirect={$SELF_URL&,1}}">{!_FEEDBACK}</a></li>
