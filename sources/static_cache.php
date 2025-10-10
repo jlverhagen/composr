@@ -103,7 +103,7 @@ function can_static_cache_request(bool $consider_failover_mode = false) : bool
             return false;
         }
     } else {
-        if ((isset($RELATIVE_PATH)) && ($RELATIVE_PATH == '') && ((!isset($_GET['page'])) || ($_GET['page'] == 'home')) && (!empty(array_diff(array_keys($_GET), ['page', 'keep_session', 'keep_devtest', 'keep_failover'])))) {
+        if ((isset($RELATIVE_PATH)) && ($RELATIVE_PATH == '') && ((!isset($_GET['page'])) || ($_GET['page'] == 'home')) && (!empty(array_diff(array_keys($_GET), ['page', 'keep_session', 'keep_devtest', 'keep_failover', 'for_session'])))) {
             if ($debugging) {
                 if (php_function_allowed('error_log')) {
                     @error_log(brand_name() . ' static cache: DEBUG Home page has spurious parameters, likely a bot probing');

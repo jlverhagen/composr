@@ -73,8 +73,8 @@ class Hook_admin_stats_cns_members extends CMSStatsProvider
                 'label' => do_lang_tempcode('AGE_RANGE_JOIN'),
                 'category' => 'audience_demographics',
                 'filters' => [
-                    'demographics__day_range' => new CMSStatsDayRangeFilter('demographics__day_range', do_lang_tempcode('DATE_RANGE_JOIN'), null, $for_kpi),
-                    'demographics__age_brackets' => new CMSStatsTextFilter('demographics__age_brackets', do_lang_tempcode('AGE_RANGE_JOIN'), implode(',', $this->default_age_brackets)),
+                    'demographics__day_range' => new CMSStatsDayRangeFilter('demographics__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
+                    'demographics__age_brackets' => new CMSStatsTextFilter('demographics__age_brackets', do_lang_tempcode('AGE_RANGE'), implode(',', $this->default_age_brackets)),
                 ],
                 'pivot' => null,
             ],
