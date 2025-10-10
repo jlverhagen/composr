@@ -110,15 +110,8 @@ class Hook_achievement_qualifications_points_used
 
         // Build our WHERE query
         $extra_where = '';
-        $secondary_member = null;
         if ($rank_only) {
             $extra_where .= ' AND is_ranked=1';
-        }
-        if ($sent_only == '-1') {
-            $secondary_member = $GLOBALS['FORUM_DRIVER']->get_guest_id();
-        }
-        if ($sent_only == '1') {
-            $extra_where .= ' AND sending_member<>' . strval($GLOBALS['FORUM_DRIVER']->get_guest_id());
         }
         if ($type !== null) {
             $extra_where .= ' AND ' . db_string_equal_to('t_type', $type);
@@ -143,7 +136,7 @@ class Hook_achievement_qualifications_points_used
         if (($sent_only == '0') || ($sent_only == '-1')) {
             $flags |= LEDGER_TYPE_SPENT;
         }
-        $points_info = points_ledger_calculate($flags, $member_id, $secondary_member, $extra_where);
+        $points_info = points_ledger_calculate($flags, $member_id, null, $extra_where);
         $rows = 0;
         $points = 0;
         $gift_points = 0;
