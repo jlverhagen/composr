@@ -70,11 +70,19 @@ class Hook_admin_stats_cns_members extends CMSStatsProvider
                 'support_kpis' => self::KPI_HIGH_IS_GOOD,
             ],
             'demographics' => [
-                'label' => do_lang_tempcode('AGE_RANGE'),
+                'label' => do_lang_tempcode('AGE_RANGE_JOIN'),
                 'category' => 'audience_demographics',
                 'filters' => [
                     'demographics__day_range' => new CMSStatsDayRangeFilter('demographics__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
                     'demographics__age_brackets' => new CMSStatsTextFilter('demographics__age_brackets', do_lang_tempcode('AGE_RANGE'), implode(',', $this->default_age_brackets)),
+                ],
+                'pivot' => null,
+            ],
+            'demographics_overall' => [
+                'label' => do_lang_tempcode('AGE_RANGE'),
+                'category' => 'audience_demographics',
+                'filters' => [
+                    'demographics_overall__age_brackets' => new CMSStatsTextFilter('demographics_overall__age_brackets', do_lang_tempcode('AGE_RANGE'), implode(',', $this->default_age_brackets)),
                 ],
                 'pivot' => null,
             ],
@@ -194,7 +202,7 @@ class Hook_admin_stats_cns_members extends CMSStatsProvider
         $max = 1000;
         $start = 0;
 
-        $query = 'SELECT id,m_username,m_cache_num_posts,m_total_sessions FROM ' . $GLOBALS['FORUM_DB']->get_table_prefix() . 'f_members WHERE ';
+        $query = 'SELECT id,m_username,m_cache_num_posts,m_total_sessions,m_dob_year,m_dob_month,m_dob_day FROM ' . $GLOBALS['FORUM_DB']->get_table_prefix() . 'f_members WHERE ';
         $query .= 'id<>' . strval($GLOBALS['FORUM_DRIVER']->get_guest_id());
         do {
             $rows = $GLOBALS['FORUM_DB']->query($query, $max, $start);
@@ -219,6 +227,18 @@ class Hook_admin_stats_cns_members extends CMSStatsProvider
                     if ($points > 100) { // Hard-coded minimum
                         $data_buckets['top_members_by_points'][$username] = $points;
                     }
+                }
+
+                if ($row['m_dob_year'] !== null) {
+                    $age = intval(date('Y')) - $row['m_dob_year'];
+                    if (date('md', cms_mktime(0, 0, 0, $row['m_dob_month'], $row['m_dob_day'], $row['m_dob_year'])) > date('md')) {
+                        $age--;
+                    }
+
+                    if (!isset($data_buckets['demographics_overall'][$age])) {
+                        $data_buckets['demographics_overall'][$age] = 0;
+                    }
+                    $data_buckets['demographics_overall'][$age]++;
                 }
             }
 
@@ -274,7 +294,11 @@ class Hook_admin_stats_cns_members extends CMSStatsProvider
             case 'demographics':
                 $age_brackets = explode(',', $filters[$bucket . '__age_brackets']);
 
-                $data = [];
+                $data = [do_lang('OTHER') => 0];
+                foreach ($age_brackets as $bracket) {
+                    $data[$bracket] = 0;
+                }
+
                 $_data = $this->prepare_preprocessed_data_for_graph($bucket, $pivot, $filters);
 
                 foreach ($_data as $_pivot => $__data) {
@@ -287,14 +311,8 @@ class Hook_admin_stats_cns_members extends CMSStatsProvider
                             foreach ($__ as $age => $num_users) {
                                 $bracket = $this->find_value_bracket($age_brackets, $age);
                                 if ($bracket === null) {
-                                    if (!isset($data[do_lang('OTHER')])) {
-                                        $data[do_lang('OTHER')] = 0;
-                                    }
                                     $data[do_lang('OTHER')] += $num_users;
                                 } else {
-                                    if (!isset($data[$bracket])) {
-                                        $data[$bracket] = 0;
-                                    }
                                     $data[$bracket] += $num_users;
                                 }
                             }
@@ -309,7 +327,7 @@ class Hook_admin_stats_cns_members extends CMSStatsProvider
                 return [
                     'type' => self::GRAPH_BAR_CHART,
                     'data' => $data,
-                    'x_axis_label' => do_lang_tempcode('AGE_RANGE'),
+                    'x_axis_label' => do_lang_tempcode('AGE_RANGE_JOIN'),
                     'y_axis_label' => do_lang_tempcode('COUNT_MEMBERS'),
                 ];
 
@@ -350,6 +368,39 @@ class Hook_admin_stats_cns_members extends CMSStatsProvider
                     'x_axis_label' => do_lang_tempcode('USERNAME'),
                     'y_axis_label' => $y_axis_label,
                     'limit_bars' => true,
+                ];
+            case 'demographics_overall':
+                $age_brackets = explode(',', $filters[$bucket . '__age_brackets']);
+
+                $data = [do_lang('OTHER') => 0];
+                foreach ($age_brackets as $bracket) {
+                    $data[$bracket] = 0;
+                }
+
+                $_data = $GLOBALS['SITE_DB']->query_select_value_if_there('stats_preprocessed_flat', 'p_data', ['p_bucket' => $bucket]);
+                if ($_data !== null) {
+                    $__data = @unserialize($_data);
+                    if ($__data === false) {
+                        $__data = [];
+                    }
+                } else {
+                    $__data = [];
+                }
+
+                foreach ($__data as $age => $num_users) {
+                    $bracket = $this->find_value_bracket($age_brackets, $age);
+                    if ($bracket === null) {
+                        $data[do_lang('OTHER')] += $num_users;
+                    } else {
+                        $data[$bracket] += $num_users;
+                    }
+                }
+
+                return [
+                    'type' => self::GRAPH_BAR_CHART,
+                    'data' => $data,
+                    'x_axis_label' => do_lang_tempcode('AGE_RANGE'),
+                    'y_axis_label' => do_lang_tempcode('COUNT_MEMBERS'),
                 ];
         }
 
