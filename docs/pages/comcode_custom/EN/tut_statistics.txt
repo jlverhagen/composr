@@ -96,11 +96,11 @@ The forum category is better thought as a sub-category of Feedback and engagemen
 
 [title="3"]Hits[/title]
 
-Most of the graphs under the 'Hits' category only show hits from user agents that look like real humans (i.e. real humans using a web browser).
-
 The 'Views per day of content existing' graph tallies and displays top content results based on average number of views per day to existing content. This is different from 'Content views' which tallies overall view counts to a piece of content.
 
-The 'Unique views' graph only counts hits to the website once for any particular user, even if they have viewed multiple pages. A 'user' is defined by member ID for logged in users, or by IP address for non-logged-in users. As the web is inherently transactional, and we do not use tracking cookies in Composr, the unique measurement algorithm will never be completely imperfect. For example, a user may be on a connection that has changing IP addresses.
+The 'Views' page counts the number of page views.
+
+The 'Unique views' graph counts the number of unique members or human-like IP addresses which viewed your site in the given pivot period. Note that this is an over-estimation; likely the number is slightly less because people on changing IP addresses will count more than one time.
 
 [title="3"]Inter-member engagement[/title]
 
