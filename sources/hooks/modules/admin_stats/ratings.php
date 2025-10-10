@@ -130,7 +130,6 @@ class Hook_admin_stats_ratings extends CMSStatsProvider
                     5 => 0,
                 ];
 
-                $data = [];
                 $_data = $this->prepare_preprocessed_data_for_graph($bucket, $pivot, $filters);
 
                 foreach ($_data as $_pivot => $__data) {

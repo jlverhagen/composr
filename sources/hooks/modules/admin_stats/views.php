@@ -147,6 +147,7 @@ class Hook_admin_stats_views extends CMSStatsProvider
                     'total_views__day_range' => new CMSStatsDayRangeFilter('total_views__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
                     'total_views__page_link' => new CMSStatsTextFilter('total_views__page_link', do_lang_tempcode('PAGE_LINK')),
                     'total_views__country' => has_geolocation_data() ? new CMSStatsCountryFilter('total_views__country', do_lang_tempcode('VISITOR_COUNTRY')) : null,
+                    'total_views__exclude_bots' => new CMSStatsTickFilter('total_views__exclude_bots', do_lang_tempcode('EXCLUDE_LIKELY_BOTS')),
                 ],
                 'pivot' => new CMSStatsDatePivot('total_views__pivot', $this->get_date_pivots(!$for_kpi)),
                 'support_kpis' => self::KPI_HIGH_IS_GOOD,
@@ -157,6 +158,7 @@ class Hook_admin_stats_views extends CMSStatsProvider
                 'filters' => [
                     'total_unique_views__day_range' => new CMSStatsDayRangeFilter('total_unique_views__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
                     'total_unique_views__country' => has_geolocation_data() ? new CMSStatsCountryFilter('total_unique_views__country', do_lang_tempcode('VISITOR_COUNTRY')) : null,
+                    'total_unique_views__exclude_bots' => new CMSStatsTickFilter('total_unique_views__exclude_bots', do_lang_tempcode('EXCLUDE_LIKELY_BOTS')),
                 ],
                 'pivot' => new CMSStatsDatePivot('total_unique_views__pivot', $this->get_date_pivots(!$for_kpi)),
                 'support_kpis' => self::KPI_HIGH_IS_GOOD,
@@ -167,6 +169,7 @@ class Hook_admin_stats_views extends CMSStatsProvider
                 'filters' => [
                     'popular_pages__day_range' => new CMSStatsDayRangeFilter('popular_pages__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
                     'popular_pages__country' => has_geolocation_data() ? new CMSStatsCountryFilter('popular_pages__country', do_lang_tempcode('VISITOR_COUNTRY')) : null,
+                    'popular_pages__exclude_bots' => new CMSStatsTickFilter('popular_pages__exclude_bots', do_lang_tempcode('EXCLUDE_LIKELY_BOTS')),
                 ],
                 'pivot' => null,
             ],
@@ -176,6 +179,7 @@ class Hook_admin_stats_views extends CMSStatsProvider
                 'filters' => [
                     'operating_systems__day_range' => new CMSStatsDayRangeFilter('operating_systems__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
                     'operating_systems__country' => has_geolocation_data() ? new CMSStatsCountryFilter('operating_systems__country', do_lang_tempcode('VISITOR_COUNTRY')) : null,
+                    'operating_systems__exclude_bots' => new CMSStatsTickFilter('operating_systems__exclude_bots', do_lang_tempcode('EXCLUDE_LIKELY_BOTS')),
                 ],
                 'pivot' => null,
             ],
@@ -185,6 +189,7 @@ class Hook_admin_stats_views extends CMSStatsProvider
                 'filters' => [
                     'operating_systems__stripped__day_range' => new CMSStatsDayRangeFilter('operating_systems__stripped__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
                     'operating_systems__stripped__country' => has_geolocation_data() ? new CMSStatsCountryFilter('operating_systems__stripped__country', do_lang_tempcode('VISITOR_COUNTRY')) : null,
+                    'operating_systems__stripped__exclude_bots' => new CMSStatsTickFilter('operating_systems__stripped__exclude_bots', do_lang_tempcode('EXCLUDE_LIKELY_BOTS')),
                 ],
                 'pivot' => null,
             ],
@@ -194,6 +199,7 @@ class Hook_admin_stats_views extends CMSStatsProvider
                 'filters' => [
                     'web_browsers__day_range' => new CMSStatsDayRangeFilter('web_browsers__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
                     'web_browsers__country' => has_geolocation_data() ? new CMSStatsCountryFilter('web_browsers__country', do_lang_tempcode('VISITOR_COUNTRY')) : null,
+                    'web_browsers__exclude_bots' => new CMSStatsTickFilter('web_browsers__exclude_bots', do_lang_tempcode('EXCLUDE_LIKELY_BOTS')),
                 ],
                 'pivot' => null,
             ],
@@ -203,6 +209,7 @@ class Hook_admin_stats_views extends CMSStatsProvider
                 'filters' => [
                     'web_browsers__stripped__day_range' => new CMSStatsDayRangeFilter('web_browsers__stripped__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
                     'web_browsers__stripped__country' => has_geolocation_data() ? new CMSStatsCountryFilter('web_browsers__stripped__country', do_lang_tempcode('VISITOR_COUNTRY')) : null,
+                    'web_browsers__stripped__exclude_bots' => new CMSStatsTickFilter('web_browsers__stripped__exclude_bots', do_lang_tempcode('EXCLUDE_LIKELY_BOTS')),
                 ],
                 'pivot' => null,
             ],
@@ -212,6 +219,7 @@ class Hook_admin_stats_views extends CMSStatsProvider
                 'filters' => [
                     'user_agent_types__day_range' => new CMSStatsDayRangeFilter('user_agent_types__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
                     'user_agent_types__country' => has_geolocation_data() ? new CMSStatsCountryFilter('user_agent_types__country', do_lang_tempcode('VISITOR_COUNTRY')) : null,
+                    'user_agent_types__exclude_bots' => new CMSStatsTickFilter('user_agent_types__exclude_bots', do_lang_tempcode('EXCLUDE_LIKELY_BOTS')),
                 ],
                 'pivot' => null,
             ],
@@ -221,6 +229,7 @@ class Hook_admin_stats_views extends CMSStatsProvider
                 'filters' => [
                     'referrer_urls__day_range' => new CMSStatsDayRangeFilter('referrer_urls__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
                     'referrer_urls__country' => has_geolocation_data() ? new CMSStatsCountryFilter('referrer_urls__country', do_lang_tempcode('VISITOR_COUNTRY')) : null,
+                    'referrer_urls__exclude_bots' => new CMSStatsTickFilter('referrer_urls__exclude_bots', do_lang_tempcode('EXCLUDE_LIKELY_BOTS')),
                 ],
                 'pivot' => null,
             ],
@@ -230,6 +239,7 @@ class Hook_admin_stats_views extends CMSStatsProvider
                 'filters' => [
                     'referrer_domains__day_range' => new CMSStatsDayRangeFilter('referrer_domains__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
                     'referrer_domains__country' => has_geolocation_data() ? new CMSStatsCountryFilter('referrer_domains__country', do_lang_tempcode('VISITOR_COUNTRY')) : null,
+                    'referrer_domains__exclude_bots' => new CMSStatsTickFilter('referrer_domains__exclude_bots', do_lang_tempcode('EXCLUDE_LIKELY_BOTS')),
                 ],
                 'pivot' => null,
             ],
@@ -239,6 +249,7 @@ class Hook_admin_stats_views extends CMSStatsProvider
                 'filters' => [
                     'total_referrals__day_range' => new CMSStatsDayRangeFilter('total_referrals__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
                     'total_referrals__country' => has_geolocation_data() ? new CMSStatsCountryFilter('total_referrals__country', do_lang_tempcode('VISITOR_COUNTRY')) : null,
+                    'total_referrals__exclude_bots' => new CMSStatsTickFilter('total_referrals__exclude_bots', do_lang_tempcode('EXCLUDE_LIKELY_BOTS')),
                 ],
                 'pivot' => new CMSStatsDatePivot('total_referrals__pivot', $this->get_date_pivots(!$for_kpi)),
                 'support_kpis' => self::KPI_HIGH_IS_GOOD,
@@ -249,6 +260,7 @@ class Hook_admin_stats_views extends CMSStatsProvider
                 'filters' => [
                     'referrer_type__day_range' => new CMSStatsDayRangeFilter('referrer_type__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
                     'referrer_type__country' => has_geolocation_data() ? new CMSStatsCountryFilter('referrer_type__country', do_lang_tempcode('VISITOR_COUNTRY')) : null,
+                    'referrer_type__exclude_bots' => new CMSStatsTickFilter('referrer_type__exclude_bots', do_lang_tempcode('EXCLUDE_LIKELY_BOTS')),
                 ],
                 'pivot' => null,
             ],
@@ -284,6 +296,7 @@ class Hook_admin_stats_views extends CMSStatsProvider
                 'category' => 'audience_demographics',
                 'filters' => [
                     'requested_languages__day_range' => new CMSStatsDayRangeFilter('requested_languages__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
+                    'requested_languages__exclude_bots' => new CMSStatsTickFilter('requested_languages__exclude_bots', do_lang_tempcode('EXCLUDE_LIKELY_BOTS')),
                 ],
                 'pivot' => null,
             ],
@@ -294,6 +307,7 @@ class Hook_admin_stats_views extends CMSStatsProvider
                     'session_bounce_rates__day_range' => new CMSStatsDayRangeFilter('session_bounce_rates__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
                     'session_bounce_rates__page_link' => new CMSStatsTextFilter('session_bounce_rates__page_link', do_lang_tempcode('PAGE_LINK')),
                     'session_bounce_rates__country' => has_geolocation_data() ? new CMSStatsCountryFilter('session_bounce_rates__country', do_lang_tempcode('VISITOR_COUNTRY')) : null,
+                    'session_bounce_rates__exclude_bots' => new CMSStatsTickFilter('session_bounce_rates__exclude_bots', do_lang_tempcode('EXCLUDE_LIKELY_BOTS')),
                 ],
                 'pivot' => new CMSStatsDatePivot('session_bounce_rates__pivot', $this->get_date_pivots(!$for_kpi)),
                 'support_kpis' => self::KPI_LOW_IS_GOOD,
@@ -304,6 +318,7 @@ class Hook_admin_stats_views extends CMSStatsProvider
                 'filters' => [
                     'session_entry_pages__day_range' => new CMSStatsDayRangeFilter('session_entry_pages__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
                     'session_entry_pages__country' => has_geolocation_data() ? new CMSStatsCountryFilter('session_entry_pages__country', do_lang_tempcode('VISITOR_COUNTRY')) : null,
+                    'session_entry_pages__exclude_bots' => new CMSStatsTickFilter('session_entry_pages__exclude_bots', do_lang_tempcode('EXCLUDE_LIKELY_BOTS')),
                 ],
                 'pivot' => null,
             ],
@@ -313,6 +328,7 @@ class Hook_admin_stats_views extends CMSStatsProvider
                 'filters' => [
                     'session_exit_pages__day_range' => new CMSStatsDayRangeFilter('session_exit_pages__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
                     'session_exit_pages__country' => has_geolocation_data() ? new CMSStatsCountryFilter('session_exit_pages__country', do_lang_tempcode('VISITOR_COUNTRY')) : null,
+                    'session_exit_pages__exclude_bots' => new CMSStatsTickFilter('session_exit_pages__exclude_bots', do_lang_tempcode('EXCLUDE_LIKELY_BOTS')),
                 ],
                 'pivot' => null,
             ],
@@ -322,6 +338,7 @@ class Hook_admin_stats_views extends CMSStatsProvider
                 'filters' => [
                     'session_durations__day_range' => new CMSStatsDayRangeFilter('session_durations__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
                     'session_durations__country' => has_geolocation_data() ? new CMSStatsCountryFilter('session_durations__country', do_lang_tempcode('VISITOR_COUNTRY')) : null,
+                    'session_durations__exclude_bots' => new CMSStatsTickFilter('session_durations__exclude_bots', do_lang_tempcode('EXCLUDE_LIKELY_BOTS')),
                 ],
                 'pivot' => null,
             ],
@@ -331,6 +348,7 @@ class Hook_admin_stats_views extends CMSStatsProvider
                 'filters' => [
                     'average_session_duration__day_range' => new CMSStatsDayRangeFilter('average_session_duration__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
                     'average_session_duration__country' => has_geolocation_data() ? new CMSStatsCountryFilter('average_session_duration__country', do_lang_tempcode('VISITOR_COUNTRY')) : null,
+                    'average_session_duration__exclude_bots' => new CMSStatsTickFilter('average_session_duration__exclude_bots', do_lang_tempcode('EXCLUDE_LIKELY_BOTS')),
                 ],
                 'pivot' => new CMSStatsDatePivot('average_session_duration__pivot', $this->get_date_pivots(!$for_kpi)),
                 'support_kpis' => self::KPI_HIGH_IS_GOOD,
@@ -341,6 +359,7 @@ class Hook_admin_stats_views extends CMSStatsProvider
                 'filters' => [
                     'session_total_views__day_range' => new CMSStatsDayRangeFilter('session_total_views__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
                     'session_total_views__country' => has_geolocation_data() ? new CMSStatsCountryFilter('session_total_views__country', do_lang_tempcode('VISITOR_COUNTRY')) : null,
+                    'session_total_views__exclude_bots' => new CMSStatsTickFilter('session_total_views__exclude_bots', do_lang_tempcode('EXCLUDE_LIKELY_BOTS')),
                 ],
                 'pivot' => null,
             ],
@@ -350,6 +369,7 @@ class Hook_admin_stats_views extends CMSStatsProvider
                 'filters' => [
                     'average_session_total_views__day_range' => new CMSStatsDayRangeFilter('average_session_total_views__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
                     'average_session_total_views__country' => has_geolocation_data() ? new CMSStatsCountryFilter('average_session_total_views__country', do_lang_tempcode('VISITOR_COUNTRY')) : null,
+                    'average_session_total_views__exclude_bots' => new CMSStatsTickFilter('average_session_total_views__exclude_bots', do_lang_tempcode('EXCLUDE_LIKELY_BOTS')),
                 ],
                 'pivot' => new CMSStatsDatePivot('average_session_total_views__pivot', $this->get_date_pivots(!$for_kpi)),
                 'support_kpis' => self::KPI_HIGH_IS_GOOD,
@@ -362,6 +382,7 @@ class Hook_admin_stats_views extends CMSStatsProvider
                 'category' => 'audience_demographics',
                 'filters' => [
                     'countries__day_range' => new CMSStatsDayRangeFilter('countries__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
+                    'countries__exclude_bots' => new CMSStatsTickFilter('countries__exclude_bots', do_lang_tempcode('EXCLUDE_LIKELY_BOTS')),
                 ],
                 'pivot' => null,
             ];
@@ -475,9 +496,7 @@ class Hook_admin_stats_views extends CMSStatsProvider
                     $user_agent_type = self::USER_AGENT_TYPE__UNKNOWN;
                 }
 
-                if ($is_real_human) {
-                    $found_sessions[$row['session_id']] = true;
-                }
+                $found_sessions[$row['session_id']] = $is_real_human;
 
                 $referrer_url = preg_replace('#\?.*$#', '', $row['referer_url']);
                 $referrer_domain = @strval(cms_parse_url_safe($referrer_url, PHP_URL_HOST));
@@ -502,77 +521,73 @@ class Hook_admin_stats_views extends CMSStatsProvider
 
                     // Hits...
 
-                    if ($is_real_human) {
-                        if (!isset($data_buckets['total_views'][$pivot][$pivot_interval][$pivot_value][$country][$page_link])) {
-                            $data_buckets['total_views'][$pivot][$pivot_interval][$pivot_value][$country][$page_link] = 0;
-                        }
-                        $data_buckets['total_views'][$pivot][$pivot_interval][$pivot_value][$country][$page_link]++;
-
-                        $data_buckets['total_unique_views'][$pivot][$pivot_interval][$pivot_value][$country][$unique_identifier] = 1;
-
-                        if ($referrer_type != self::REFERRER_TYPE__INTERNAL) {
-                            if (!isset($data_buckets['total_referrals'][$pivot][$pivot_interval][$pivot_value][$country])) {
-                                $data_buckets['total_referrals'][$pivot][$pivot_interval][$pivot_value][$country] = 0;
-                            }
-                            $data_buckets['total_referrals'][$pivot][$pivot_interval][$pivot_value][$country]++;
-                        }
-
-                        if (!isset($data_buckets['popular_pages'][$pivot][$pivot_interval][$pivot_value][$country][$page_link])) {
-                            $data_buckets['popular_pages'][$pivot][$pivot_interval][$pivot_value][$country][$page_link] = 0;
-                        }
-                        $data_buckets['popular_pages'][$pivot][$pivot_interval][$pivot_value][$country][$page_link]++;
+                    if (!isset($data_buckets['total_views'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$page_link])) {
+                        $data_buckets['total_views'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$page_link] = 0;
                     }
+                    $data_buckets['total_views'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$page_link]++;
+
+                    $data_buckets['total_unique_views'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$unique_identifier] = 1;
+
+                    if ($referrer_type != self::REFERRER_TYPE__INTERNAL) {
+                        if (!isset($data_buckets['total_referrals'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human])) {
+                            $data_buckets['total_referrals'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human] = 0;
+                        }
+                        $data_buckets['total_referrals'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human]++;
+                    }
+
+                    if (!isset($data_buckets['popular_pages'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$page_link])) {
+                        $data_buckets['popular_pages'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$page_link] = 0;
+                    }
+                    $data_buckets['popular_pages'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$page_link]++;
 
                     // User agents...
 
                     if ($os != '') {
-                        if (!isset($data_buckets['operating_systems'][$pivot][$pivot_interval][$pivot_value][$country][$os])) {
-                            $data_buckets['operating_systems'][$pivot][$pivot_interval][$pivot_value][$country][$os] = 0;
+                        if (!isset($data_buckets['operating_systems'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$os])) {
+                            $data_buckets['operating_systems'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$os] = 0;
                         }
-                        $data_buckets['operating_systems'][$pivot][$pivot_interval][$pivot_value][$country][$os]++;
+                        $data_buckets['operating_systems'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$os]++;
                     }
                     if ($os_stripped != '') {
-                        if (!isset($data_buckets['operating_systems__stripped'][$pivot][$pivot_interval][$pivot_value][$country][$os_stripped])) {
-                            $data_buckets['operating_systems__stripped'][$pivot][$pivot_interval][$pivot_value][$country][$os_stripped] = 0;
+                        if (!isset($data_buckets['operating_systems__stripped'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$os_stripped])) {
+                            $data_buckets['operating_systems__stripped'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$os_stripped] = 0;
                         }
-                        $data_buckets['operating_systems__stripped'][$pivot][$pivot_interval][$pivot_value][$country][$os_stripped]++;
+                        $data_buckets['operating_systems__stripped'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$os_stripped]++;
                     }
 
                     if ($web_browser != brand_name()) {
-                        if (!isset($data_buckets['web_browsers'][$pivot][$pivot_interval][$pivot_value][$country][$web_browser])) {
-                            $data_buckets['web_browsers'][$pivot][$pivot_interval][$pivot_value][$country][$web_browser] = 0;
+                        if (!isset($data_buckets['web_browsers'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$web_browser])) {
+                            $data_buckets['web_browsers'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$web_browser] = 0;
                         }
-                        $data_buckets['web_browsers'][$pivot][$pivot_interval][$pivot_value][$country][$web_browser]++;
-                        if (!isset($data_buckets['web_browsers__stripped'][$pivot][$pivot_interval][$pivot_value][$country][$web_browser_stripped])) {
-                            $data_buckets['web_browsers__stripped'][$pivot][$pivot_interval][$pivot_value][$country][$web_browser_stripped] = 0;
+                        $data_buckets['web_browsers'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$web_browser]++;
+                        if (!isset($data_buckets['web_browsers__stripped'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$web_browser_stripped])) {
+                            $data_buckets['web_browsers__stripped'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$web_browser_stripped] = 0;
                         }
-                        $data_buckets['web_browsers__stripped'][$pivot][$pivot_interval][$pivot_value][$country][$web_browser_stripped]++;
+                        $data_buckets['web_browsers__stripped'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$web_browser_stripped]++;
 
-                        if (!isset($data_buckets['user_agent_types'][$pivot][$pivot_interval][$pivot_value][$country][$user_agent_type])) {
-                            $data_buckets['user_agent_types'][$pivot][$pivot_interval][$pivot_value][$country][$user_agent_type] = 0;
+                        if (!isset($data_buckets['user_agent_types'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$user_agent_type])) {
+                            $data_buckets['user_agent_types'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$user_agent_type] = 0;
                         }
-                        $data_buckets['user_agent_types'][$pivot][$pivot_interval][$pivot_value][$country][$user_agent_type]++;
+                        $data_buckets['user_agent_types'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$user_agent_type]++;
                     }
 
                     // Referrers...
 
-                    if ($is_real_human) {
-                        if ($referrer_type != self::REFERRER_TYPE__INTERNAL) {
-                            if (!isset($data_buckets['referrer_urls'][$pivot][$pivot_interval][$pivot_value][$country][$referrer_url])) {
-                                $data_buckets['referrer_urls'][$pivot][$pivot_interval][$pivot_value][$country][$referrer_url] = 0;
-                            }
-                            $data_buckets['referrer_urls'][$pivot][$pivot_interval][$pivot_value][$country][$referrer_url]++;
-                            if (!isset($data_buckets['referrer_domains'][$pivot][$pivot_interval][$pivot_value][$country][$referrer_domain])) {
-                                $data_buckets['referrer_domains'][$pivot][$pivot_interval][$pivot_value][$country][$referrer_domain] = 0;
-                            }
-                            $data_buckets['referrer_domains'][$pivot][$pivot_interval][$pivot_value][$country][$referrer_domain]++;
+                    if ($referrer_type != self::REFERRER_TYPE__INTERNAL) {
+                        if (!isset($data_buckets['referrer_urls'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$referrer_url])) {
+                            $data_buckets['referrer_urls'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$referrer_url] = 0;
                         }
-
-                        if (!isset($data_buckets['referrer_type'][$pivot][$pivot_interval][$pivot_value][$country][$referrer_type])) {
-                            $data_buckets['referrer_type'][$pivot][$pivot_interval][$pivot_value][$country][$referrer_type] = 0;
+                        $data_buckets['referrer_urls'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$referrer_url]++;
+                        if (!isset($data_buckets['referrer_domains'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$referrer_domain])) {
+                            $data_buckets['referrer_domains'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$referrer_domain] = 0;
                         }
-                        $data_buckets['referrer_type'][$pivot][$pivot_interval][$pivot_value][$country][$referrer_type]++;
+                        $data_buckets['referrer_domains'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$referrer_domain]++;
                     }
+
+                    if (!isset($data_buckets['referrer_type'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$referrer_type])) {
+                        $data_buckets['referrer_type'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$referrer_type] = 0;
+                    }
+                    $data_buckets['referrer_type'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$referrer_type]++;
 
                     // Speed...
 
@@ -601,19 +616,17 @@ class Hook_admin_stats_views extends CMSStatsProvider
 
                     // Languages and countries...
 
-                    if ($is_real_human) {
-                        $language = preg_replace('#[\-_].*$#', '', $row['requested_language']);
-                        if (!isset($data_buckets['requested_languages'][$pivot][$pivot_interval][$pivot_value][$language])) {
-                            $data_buckets['requested_languages'][$pivot][$pivot_interval][$pivot_value][$language] = 0;
-                        }
-                        $data_buckets['requested_languages'][$pivot][$pivot_interval][$pivot_value][$language]++;
+                    $language = preg_replace('#[\-_].*$#', '', $row['requested_language']);
+                    if (!isset($data_buckets['requested_languages'][$pivot][$pivot_interval][$pivot_value][$is_real_human][$language])) {
+                        $data_buckets['requested_languages'][$pivot][$pivot_interval][$pivot_value][$is_real_human][$language] = 0;
+                    }
+                    $data_buckets['requested_languages'][$pivot][$pivot_interval][$pivot_value][$is_real_human][$language]++;
 
-                        if (has_geolocation_data()) {
-                            if (!isset($data_buckets['countries'][$pivot][$pivot_interval][$pivot_value][$country])) {
-                                $data_buckets['countries'][$pivot][$pivot_interval][$pivot_value][$country] = 0;
-                            }
-                            $data_buckets['countries'][$pivot][$pivot_interval][$pivot_value][$country]++;
+                    if (has_geolocation_data()) {
+                        if (!isset($data_buckets['countries'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human])) {
+                            $data_buckets['countries'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human] = 0;
                         }
+                        $data_buckets['countries'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human]++;
                     }
                 }
             }
@@ -626,7 +639,7 @@ class Hook_admin_stats_views extends CMSStatsProvider
         // Session behaviours (slow)...
 
         cms_profile_start_for('Hook_admin_stats_views->preprocess_raw_data (session behaviours)');
-        foreach (array_keys($found_sessions) as $session_id) {
+        foreach ($found_sessions as $session_id => $is_real_human) {
             $first_page_link = null;
             $first_page_timestamp = null;
             $last_page_link = null;
@@ -678,46 +691,46 @@ class Hook_admin_stats_views extends CMSStatsProvider
                 $pivot_interval = $this->calculate_date_pivot_interval($pivot, $timestamp);
                 $pivot_value = $this->calculate_date_pivot_value($pivot, $timestamp);
 
-                if (!isset($data_buckets['session_bounce_rates'][$pivot][$pivot_interval][$pivot_value][$country][$page_link])) {
-                    $data_buckets['session_bounce_rates'][$pivot][$pivot_interval][$pivot_value][$country][$page_link] = [0, 0];
+                if (!isset($data_buckets['session_bounce_rates'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$page_link])) {
+                    $data_buckets['session_bounce_rates'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$page_link] = [0, 0];
                 }
                 if ($is_bounce) {
-                    $data_buckets['session_bounce_rates'][$pivot][$pivot_interval][$pivot_value][$country][$page_link][0]++;
+                    $data_buckets['session_bounce_rates'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$page_link][0]++;
                 }
-                $data_buckets['session_bounce_rates'][$pivot][$pivot_interval][$pivot_value][$country][$page_link][1]++;
+                $data_buckets['session_bounce_rates'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$page_link][1]++;
 
-                if (!isset($data_buckets['average_session_duration'][$pivot][$pivot_interval][$pivot_value][$country])) {
-                    $data_buckets['average_session_duration'][$pivot][$pivot_interval][$pivot_value][$country] = [0, 0];
+                if (!isset($data_buckets['average_session_duration'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human])) {
+                    $data_buckets['average_session_duration'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human] = [0, 0];
                 }
-                $data_buckets['average_session_duration'][$pivot][$pivot_interval][$pivot_value][$country][0] += $session_duration;
-                $data_buckets['average_session_duration'][$pivot][$pivot_interval][$pivot_value][$country][1]++;
+                $data_buckets['average_session_duration'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][0] += $session_duration;
+                $data_buckets['average_session_duration'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][1]++;
 
-                if (!isset($data_buckets['average_session_total_views'][$pivot][$pivot_interval][$pivot_value][$country])) {
-                    $data_buckets['average_session_total_views'][$pivot][$pivot_interval][$pivot_value][$country] = [0, 0];
+                if (!isset($data_buckets['average_session_total_views'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human])) {
+                    $data_buckets['average_session_total_views'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human] = [0, 0];
                 }
-                $data_buckets['average_session_total_views'][$pivot][$pivot_interval][$pivot_value][$country][0] += $total_views;
-                $data_buckets['average_session_total_views'][$pivot][$pivot_interval][$pivot_value][$country][1]++;
+                $data_buckets['average_session_total_views'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][0] += $total_views;
+                $data_buckets['average_session_total_views'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][1]++;
 
-                if (!isset($data_buckets['session_entry_pages'][$pivot][$pivot_interval][$pivot_value][$country][$first_page_link])) {
-                    $data_buckets['session_entry_pages'][$pivot][$pivot_interval][$pivot_value][$country][$first_page_link] = 0;
+                if (!isset($data_buckets['session_entry_pages'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$first_page_link])) {
+                    $data_buckets['session_entry_pages'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$first_page_link] = 0;
                 }
-                $data_buckets['session_entry_pages'][$pivot][$pivot_interval][$pivot_value][$country][$first_page_link]++;
+                $data_buckets['session_entry_pages'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$first_page_link]++;
 
-                if (!isset($data_buckets['session_exit_pages'][$pivot][$pivot_interval][$pivot_value][$country][$last_page_link])) {
-                    $data_buckets['session_exit_pages'][$pivot][$pivot_interval][$pivot_value][$country][$last_page_link] = 0;
+                if (!isset($data_buckets['session_exit_pages'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$last_page_link])) {
+                    $data_buckets['session_exit_pages'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$last_page_link] = 0;
                 }
-                $data_buckets['session_exit_pages'][$pivot][$pivot_interval][$pivot_value][$country][$last_page_link]++;
+                $data_buckets['session_exit_pages'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$last_page_link]++;
 
                 $session_duration_bracket = $this->find_value_bracket($this->session_duration_brackets, $session_duration);
-                if (!isset($data_buckets['session_durations'][$pivot][$pivot_interval][$pivot_value][$country][$session_duration_bracket])) {
-                    $data_buckets['session_durations'][$pivot][$pivot_interval][$pivot_value][$country][$session_duration_bracket] = 0;
+                if (!isset($data_buckets['session_durations'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$session_duration_bracket])) {
+                    $data_buckets['session_durations'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$session_duration_bracket] = 0;
                 }
-                $data_buckets['session_durations'][$pivot][$pivot_interval][$pivot_value][$country][$session_duration_bracket]++;
+                $data_buckets['session_durations'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$session_duration_bracket]++;
 
-                if (!isset($data_buckets['session_total_views'][$pivot][$pivot_interval][$pivot_value][$country][$total_views])) {
-                    $data_buckets['session_total_views'][$pivot][$pivot_interval][$pivot_value][$country][$total_views] = 0;
+                if (!isset($data_buckets['session_total_views'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$total_views])) {
+                    $data_buckets['session_total_views'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$total_views] = 0;
                 }
-                $data_buckets['session_total_views'][$pivot][$pivot_interval][$pivot_value][$country][$total_views]++;
+                $data_buckets['session_total_views'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$total_views]++;
             }
         }
         cms_profile_end_for('Hook_admin_stats_views->preprocess_raw_data (session behaviours)');
@@ -793,16 +806,22 @@ class Hook_admin_stats_views extends CMSStatsProvider
                                     continue;
                                 }
 
-                                foreach ($___ as $page_link => $total_views) {
-                                    if (!empty($filters[$bucket . '__page_link'])) {
-                                        list($current_zone_name, $attributes) = page_link_decode($page_link);
-                                        $current_page_name = isset($attributes['page']) ? $attributes['page'] : DEFAULT_ZONE_PAGE_NAME;
-                                        if (!match_key_match($filters[$bucket . '__page_link'], false, null, $current_zone_name, $current_page_name)) {
-                                            continue;
-                                        }
+                                foreach ($___ as $is_real_human => $____) {
+                                    if ((!empty($filters[$bucket . '__exclude_bots'])) && ($is_real_human === false)) {
+                                        continue;
                                     }
 
-                                    $data[$pivot_value_nice] += $total_views;
+                                    foreach ($____ as $page_link => $total_views) {
+                                        if (!empty($filters[$bucket . '__page_link'])) {
+                                            list($current_zone_name, $attributes) = page_link_decode($page_link);
+                                            $current_page_name = isset($attributes['page']) ? $attributes['page'] : DEFAULT_ZONE_PAGE_NAME;
+                                            if (!match_key_match($filters[$bucket . '__page_link'], false, null, $current_zone_name, $current_page_name)) {
+                                                continue;
+                                            }
+                                        }
+
+                                        $data[$pivot_value_nice] += $total_views;
+                                    }
                                 }
                             }
                         }
@@ -834,13 +853,19 @@ class Hook_admin_stats_views extends CMSStatsProvider
 
                             $_hashed_ips = [];
 
-                            foreach ($__ as $country => $hashed_ips) {
+                            foreach ($__ as $country => $___) {
                                 if ((!empty($filters[$bucket . '__country'])) && ($filters[$bucket . '__country'] != $country)) {
                                     continue;
                                 }
 
-                                foreach ($hashed_ips as $hashed_ip) {
-                                    $_hashed_ips[$hashed_ip] = true;
+                                foreach ($___ as $is_real_human => $hashed_ips) {
+                                    if ((!empty($filters[$bucket . '__exclude_bots'])) && ($is_real_human === false)) {
+                                        continue;
+                                    }
+
+                                    foreach ($hashed_ips as $hashed_ip) {
+                                        $_hashed_ips[$hashed_ip] = true;
+                                    }
                                 }
                             }
 
@@ -872,12 +897,18 @@ class Hook_admin_stats_views extends CMSStatsProvider
                                 continue;
                             }
 
-                            foreach ($__ as $country => $total) {
+                            foreach ($__ as $country => $___) {
                                 if ((!empty($filters[$bucket . '__country'])) && ($filters[$bucket . '__country'] != $country)) {
                                     continue;
                                 }
 
-                                $data[$pivot_value_nice] += $total;
+                                foreach ($___ as $is_real_human => $total) {
+                                    if ((!empty($filters[$bucket . '__exclude_bots'])) && ($is_real_human === false)) {
+                                        continue;
+                                    }
+
+                                    $data[$pivot_value_nice] += $total;
+                                }
                             }
                         }
                     }
@@ -915,8 +946,14 @@ class Hook_admin_stats_views extends CMSStatsProvider
                                     continue;
                                 }
 
-                                $aggregate_total += $___[0];
-                                $records_total += $___[1];
+                                foreach ($___ as $is_real_human => $____) {
+                                    if ((!empty($filters[$bucket . '__exclude_bots'])) && ($is_real_human === false)) {
+                                        continue;
+                                    }
+
+                                    $aggregate_total += $____[0];
+                                    $records_total += $____[1];
+                                }
                             }
 
                             $data[$pivot_value_nice] += (floatval($aggregate_total) / floatval($records_total));
@@ -966,9 +1003,15 @@ class Hook_admin_stats_views extends CMSStatsProvider
                                     continue;
                                 }
 
-                                foreach ($___ as $bracket => $total) {
-                                    $bracket = $this->cleanup_session_duration($bracket);
-                                    $data[$bracket] += $total;
+                                foreach ($___ as $is_real_human => $____) {
+                                    if ((!empty($filters[$bucket . '__exclude_bots'])) && ($is_real_human === false)) {
+                                        continue;
+                                    }
+
+                                    foreach ($____ as $bracket => $total) {
+                                        $bracket = $this->cleanup_session_duration($bracket);
+                                        $data[$bracket] += $total;
+                                    }
                                 }
                             }
                         }
@@ -1002,26 +1045,32 @@ class Hook_admin_stats_views extends CMSStatsProvider
                                     continue;
                                 }
 
-                                foreach ($___ as $user_agent_type => $total_views) {
-                                    switch ($user_agent_type) {
-                                        case self::USER_AGENT_TYPE__UNKNOWN:
-                                            $user_agent_type = do_lang('_UNKNOWN');
-                                            break;
-                                        case self::USER_AGENT_TYPE__DESKTOP:
-                                            $user_agent_type = do_lang('USER_AGENT_TYPE__DESKTOP');
-                                            break;
-                                        case self::USER_AGENT_TYPE__MOBILE:
-                                            $user_agent_type = do_lang('USER_AGENT_TYPE__MOBILE');
-                                            break;
-                                        case self::USER_AGENT_TYPE__BOT:
-                                            $user_agent_type = do_lang('USER_AGENT_TYPE__BOT');
-                                            break;
+                                foreach ($___ as $is_real_human => $____) {
+                                    if ((!empty($filters[$bucket . '__exclude_bots'])) && ($is_real_human === false)) {
+                                        continue;
                                     }
 
-                                    if (!isset($data[$user_agent_type])) {
-                                        $data[$user_agent_type] = 0;
+                                    foreach ($____ as $user_agent_type => $total_views) {
+                                        switch ($user_agent_type) {
+                                            case self::USER_AGENT_TYPE__UNKNOWN:
+                                                $user_agent_type = do_lang('_UNKNOWN');
+                                                break;
+                                            case self::USER_AGENT_TYPE__DESKTOP:
+                                                $user_agent_type = do_lang('USER_AGENT_TYPE__DESKTOP');
+                                                break;
+                                            case self::USER_AGENT_TYPE__MOBILE:
+                                                $user_agent_type = do_lang('USER_AGENT_TYPE__MOBILE');
+                                                break;
+                                            case self::USER_AGENT_TYPE__BOT:
+                                                $user_agent_type = do_lang('USER_AGENT_TYPE__BOT');
+                                                break;
+                                        }
+
+                                        if (!isset($data[$user_agent_type])) {
+                                            $data[$user_agent_type] = 0;
+                                        }
+                                        $data[$user_agent_type] += $total_views;
                                     }
-                                    $data[$user_agent_type] += $total_views;
                                 }
                             }
                         }
@@ -1055,32 +1104,38 @@ class Hook_admin_stats_views extends CMSStatsProvider
                                     continue;
                                 }
 
-                                foreach ($___ as $referrer_type => $total_views) {
-                                    switch ($referrer_type) {
-                                        case self::REFERRER_TYPE__DIRECT:
-                                            $referrer_type = do_lang('REFERRER_TYPE__DIRECT');
-                                            break;
-                                        case self::REFERRER_TYPE__UNKNOWN:
-                                            $referrer_type = do_lang('_UNKNOWN');
-                                            break;
-                                        case self::REFERRER_TYPE__INTERNAL:
-                                            $referrer_type = do_lang('REFERRER_TYPE__INTERNAL');
-                                            break;
-                                        case self::REFERRER_TYPE__EXTERNAL_SEARCH_ENGINE:
-                                            $referrer_type = do_lang('REFERRER_TYPE__EXTERNAL_SEARCH_ENGINE');
-                                            break;
-                                        case self::REFERRER_TYPE__EXTERNAL_SOCIAL_MEDIA:
-                                            $referrer_type = do_lang('REFERRER_TYPE__EXTERNAL_SOCIAL_MEDIA');
-                                            break;
-                                        case self::REFERRER_TYPE__EXTERNAL_MISC:
-                                            $referrer_type = do_lang('REFERRER_TYPE__EXTERNAL_MISC');
-                                            break;
+                                foreach ($___ as $is_real_human => $____) {
+                                    if ((!empty($filters[$bucket . '__exclude_bots'])) && ($is_real_human === false)) {
+                                        continue;
                                     }
 
-                                    if (!isset($data[$referrer_type])) {
-                                        $data[$referrer_type] = 0;
+                                    foreach ($____ as $referrer_type => $total_views) {
+                                        switch ($referrer_type) {
+                                            case self::REFERRER_TYPE__DIRECT:
+                                                $referrer_type = do_lang('REFERRER_TYPE__DIRECT');
+                                                break;
+                                            case self::REFERRER_TYPE__UNKNOWN:
+                                                $referrer_type = do_lang('_UNKNOWN');
+                                                break;
+                                            case self::REFERRER_TYPE__INTERNAL:
+                                                $referrer_type = do_lang('REFERRER_TYPE__INTERNAL');
+                                                break;
+                                            case self::REFERRER_TYPE__EXTERNAL_SEARCH_ENGINE:
+                                                $referrer_type = do_lang('REFERRER_TYPE__EXTERNAL_SEARCH_ENGINE');
+                                                break;
+                                            case self::REFERRER_TYPE__EXTERNAL_SOCIAL_MEDIA:
+                                                $referrer_type = do_lang('REFERRER_TYPE__EXTERNAL_SOCIAL_MEDIA');
+                                                break;
+                                            case self::REFERRER_TYPE__EXTERNAL_MISC:
+                                                $referrer_type = do_lang('REFERRER_TYPE__EXTERNAL_MISC');
+                                                break;
+                                        }
+
+                                        if (!isset($data[$referrer_type])) {
+                                            $data[$referrer_type] = 0;
+                                        }
+                                        $data[$referrer_type] += $total_views;
                                     }
-                                    $data[$referrer_type] += $total_views;
                                 }
                             }
                         }
@@ -1123,15 +1178,21 @@ class Hook_admin_stats_views extends CMSStatsProvider
                                     continue;
                                 }
 
-                                foreach ($___ as $bar => $total_views) {
-                                    if ($bar === '') {
-                                        $bar = do_lang('_UNKNOWN');
+                                foreach ($___ as $is_real_human => $____) {
+                                    if ((!empty($filters[$bucket . '__exclude_bots'])) && ($is_real_human === false)) {
+                                        continue;
                                     }
 
-                                    if (!isset($data[$bar])) {
-                                        $data[$bar] = 0;
+                                    foreach ($____ as $bar => $total_views) {
+                                        if ($bar === '') {
+                                            $bar = do_lang('_UNKNOWN');
+                                        }
+
+                                        if (!isset($data[$bar])) {
+                                            $data[$bar] = 0;
+                                        }
+                                        $data[$bar] += $total_views;
                                     }
-                                    $data[$bar] += $total_views;
                                 }
                             }
                         }
@@ -1232,23 +1293,29 @@ class Hook_admin_stats_views extends CMSStatsProvider
                                 continue;
                             }
 
-                            foreach ($__ as $bar => $total) {
-                                if (empty($bar)) {
-                                    $nice_bar = do_lang('_UNKNOWN');
-                                } else {
-                                    $nice_bar = lookup_language_full_name(cms_strtoupper_ascii($bar));
-                                    if (empty($nice_bar)) {
-                                        $nice_bar = lookup_language_full_name(cms_strtoupper_ascii(preg_replace('#_.*$#', '', $bar)));
-                                    }
-                                    if (empty($nice_bar)) {
-                                        $nice_bar = $bar;
-                                    }
+                            foreach ($__ as $is_real_human => $___) {
+                                if ((!empty($filters[$bucket . '__exclude_bots'])) && ($is_real_human === false)) {
+                                    continue;
                                 }
 
-                                if (!isset($data[$nice_bar])) {
-                                    $data[$nice_bar] = 0;
+                                foreach ($___ as $bar => $total) {
+                                    if (empty($bar)) {
+                                        $nice_bar = do_lang('_UNKNOWN');
+                                    } else {
+                                        $nice_bar = lookup_language_full_name(cms_strtoupper_ascii($bar));
+                                        if (empty($nice_bar)) {
+                                            $nice_bar = lookup_language_full_name(cms_strtoupper_ascii(preg_replace('#_.*$#', '', $bar)));
+                                        }
+                                        if (empty($nice_bar)) {
+                                            $nice_bar = $bar;
+                                        }
+                                    }
+
+                                    if (!isset($data[$nice_bar])) {
+                                        $data[$nice_bar] = 0;
+                                    }
+                                    $data[$nice_bar] += $total;
                                 }
-                                $data[$nice_bar] += $total;
                             }
                         }
                     }
@@ -1279,20 +1346,26 @@ class Hook_admin_stats_views extends CMSStatsProvider
                                 continue;
                             }
 
-                            foreach ($__ as $bar => $total) {
-                                if (empty($bar)) {
-                                    $nice_bar = do_lang('_UNKNOWN');
-                                } else {
-                                    $nice_bar = find_country_name_from_iso($bar);
-                                    if (empty($nice_bar)) {
-                                        $nice_bar = $bar;
-                                    }
+                            foreach ($__ as $is_real_human => $___) {
+                                if ((!empty($filters[$bucket . '__exclude_bots'])) && ($is_real_human === false)) {
+                                    continue;
                                 }
 
-                                if (!isset($data[$nice_bar])) {
-                                    $data[$nice_bar] = 0;
+                                foreach ($___ as $bar => $total) {
+                                    if (empty($bar)) {
+                                        $nice_bar = do_lang('_UNKNOWN');
+                                    } else {
+                                        $nice_bar = find_country_name_from_iso($bar);
+                                        if (empty($nice_bar)) {
+                                            $nice_bar = $bar;
+                                        }
+                                    }
+
+                                    if (!isset($data[$nice_bar])) {
+                                        $data[$nice_bar] = 0;
+                                    }
+                                    $data[$nice_bar] += $total;
                                 }
-                                $data[$nice_bar] += $total;
                             }
                         }
                     }
@@ -1381,18 +1454,24 @@ class Hook_admin_stats_views extends CMSStatsProvider
                                     continue;
                                 }
 
-                                foreach ($___ as $page_link => $____) {
-                                    if (!empty($filters[$bucket . '__page_link'])) {
-                                        list($current_zone_name, $attributes) = page_link_decode($page_link);
-                                        $current_page_name = isset($attributes['page']) ? $attributes['page'] : DEFAULT_ZONE_PAGE_NAME;
-                                        if (!match_key_match($filters[$bucket . '__page_link'], false, null, $current_zone_name, $current_page_name)) {
-                                            continue;
-                                        }
+                                foreach ($___ as $is_real_human => $____) {
+                                    if ((!empty($filters[$bucket . '__exclude_bots'])) && ($is_real_human === false)) {
+                                        continue;
                                     }
 
-                                    list($_total_bounces, $_total_views) = $____;
-                                    $total_bounces += $_total_bounces;
-                                    $total_views += $_total_views;
+                                    foreach ($____ as $page_link => $_____) {
+                                        if (!empty($filters[$bucket . '__page_link'])) {
+                                            list($current_zone_name, $attributes) = page_link_decode($page_link);
+                                            $current_page_name = isset($attributes['page']) ? $attributes['page'] : DEFAULT_ZONE_PAGE_NAME;
+                                            if (!match_key_match($filters[$bucket . '__page_link'], false, null, $current_zone_name, $current_page_name)) {
+                                                continue;
+                                            }
+                                        }
+
+                                        list($_total_bounces, $_total_views) = $_____;
+                                        $total_bounces += $_total_bounces;
+                                        $total_views += $_total_views;
+                                    }
                                 }
                             }
 
