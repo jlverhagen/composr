@@ -995,7 +995,7 @@ class Module_warnings extends Standard_crud_module
 
             $hook = get_hook_ob('systems', 'cns_warnings', $row['p_hook'], 'Hook_cns_warnings_');
             if (method_exists($hook, 'generate_text') && ($hook->get_details() !== null)) {
-                $action->attach($hook->generate_text($row));
+                $action->attach(paragraph($hook->generate_text($row)));
             }
 
             // Undo actions
@@ -1009,7 +1009,7 @@ class Module_warnings extends Standard_crud_module
                 $action->attach(do_lang_tempcode('ACTION_LINK', do_lang('UNDONE')));
             }
 
-            $fields['PUNITIVE_ACTIONS']->attach(paragraph($action));
+            $fields['PUNITIVE_ACTIONS']->attach(div($action));
         }
 
         if ($fields['PUNITIVE_ACTIONS']->is_empty()) {
