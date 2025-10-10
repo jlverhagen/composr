@@ -1092,6 +1092,12 @@ class Hook_import_ipb2
                         $thumb_url = '';
                         $a_id[$i] = $GLOBALS['FORUM_DB']->query_insert('attachments', ['a_member_id' => $member_id, 'a_file_size' => $attachment['attach_filesize'], 'a_url' => $url, 'a_thumb_url' => $thumb_url, 'a_original_filename' => $attachment['attach_file'], 'a_num_downloads' => $attachment['attach_hits'], 'a_last_downloaded_time' => null, 'a_add_time' => $post_date, 'a_description' => ''], true);
                         $has_attachment = true;
+
+                        // Assign Resource-fs alternative ID (GUID)
+                        if (addon_installed('commandr')) {
+                            require_code('resource_fs');
+                            generate_resource_fs_moniker('attachment', strval($a_id[$i]), basename($attachment['attach_file']), null, true);
+                        }
                     } else {
                         if ($STRICT_FILE) {
                             warn_exit(do_lang_tempcode('MISSING_ATTACHMENT', escape_html($attachment['attach_location'])));

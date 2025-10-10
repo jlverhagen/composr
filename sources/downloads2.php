@@ -92,7 +92,6 @@ function dload_script()
     require_code('downloads');
 
     // Security: We use resource GUID if Commandr is installed to prevent content scraping
-    require_code('version');
     if (addon_installed('commandr')) {
         require_code('resource_fs');
 

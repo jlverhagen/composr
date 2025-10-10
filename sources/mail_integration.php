@@ -698,6 +698,13 @@ abstract class EmailIntegration
                 'a_description' => '',
                 'a_add_time' => time(),
             ], true);
+
+            // Assign Resource-fs alternative ID (GUID)
+            if (addon_installed('commandr')) {
+                require_code('resource_fs');
+                generate_resource_fs_moniker('attachment', strval($attachment_id), $filename, null, true);
+            }
+
             $GLOBALS['SITE_DB']->query_insert('attachment_refs', ['r_referer_type' => 'null', 'r_referer_id' => '', 'a_id' => $attachment_id]);
 
             $num_attachments_handed++;
@@ -752,7 +759,15 @@ abstract class EmailIntegration
                 if ($attachment['cid'] === $cid) {
                     $attachment['cid_referenced'] = true;
                     if ($attachment['cms_id'] !== null) {
-                        $rep = $matches[1][$i] . find_script('attachment') . '?id=' . strval($attachment['cms_id']) . $matches[3][$i];
+                        $id_param = strval($attachment['cms_id']);
+                        if (addon_installed('commandr')) {
+                            require_code('resource_fs');
+                            $_guid = find_guid_via_id('attachment', $id_param);
+                            if ($_guid !== null) {
+                                $id_param = $_guid;
+                            }
+                        }
+                        $rep = $matches[1][$i] . find_script('attachment') . '?id=' . $id_param . $matches[3][$i];
                         $body = str_replace($matches[0][$i], $rep, $body);
                     }
                     continue 2;
