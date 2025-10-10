@@ -989,31 +989,45 @@ class Module_warnings extends Standard_crud_module
 
         // Punitive actions
         $rows = $GLOBALS['FORUM_DB']->query_select('f_warnings_punitive', ['*'], ['p_warning_id' => $id]);
-        $fields['PUNITIVE_ACTIONS'] = new Tempcode();
+        $punitive_actions = [];
         foreach ($rows as $row) {
-            $action = new Tempcode();
-
             $hook = get_hook_ob('systems', 'cns_warnings', $row['p_hook'], 'Hook_cns_warnings_');
+
+            // Details
+            $details = do_lang_tempcode('NA_EM');
             if (method_exists($hook, 'generate_text') && ($hook->get_details() !== null)) {
-                $action->attach(paragraph($hook->generate_text($row)));
+                $details = $hook->generate_text($row);
             }
 
             // Undo actions
+            $action = do_lang_tempcode('NA_EM');
             if ($row['p_reversed'] == 0) {
                 if (method_exists($hook, 'undo_punitive_action') && ($hook->get_details() !== null)) {
                     $_undoing_url = build_url(['page' => '_SELF', 'type' => 'undo_punitive_action'], '_SELF');
                     $_undoing_link = hyperlink($_undoing_url, do_lang_tempcode('UNDO'), false, true, '', null, form_input_hidden('id', strval($row['id'])));
-                    $action->attach(do_lang_tempcode('ACTION_LINK', protect_from_escaping($_undoing_link)));
+                    $action = do_lang_tempcode('ACTION_LINK', protect_from_escaping($_undoing_link));
                 }
             } else {
-                $action->attach(do_lang_tempcode('ACTION_LINK', do_lang('UNDONE')));
+                $action = do_lang_tempcode('ACTION_LINK', do_lang('UNDONE'));
             }
 
-            $fields['PUNITIVE_ACTIONS']->attach(div($action));
+            $punitive_actions[] = [$details, $action];
         }
 
-        if ($fields['PUNITIVE_ACTIONS']->is_empty()) {
+        if (count($punitive_actions) == 0) {
             $fields['PUNITIVE_ACTIONS'] = do_lang_tempcode('NA_EM');
+        } else {
+            $header_row = columned_table_header_row([
+                do_lang('DETAILS'),
+                do_lang('ACTION'),
+            ]);
+
+            $table_rows = new Tempcode();
+            foreach ($punitive_actions as $punitive_action) {
+                $table_rows->attach(columned_table_row($punitive_action, true));
+            }
+
+            $fields['PUNITIVE_ACTIONS'] = do_template('COLUMNED_TABLE', ['_GUID' => 'TODO', 'HEADER_ROW' => $header_row, 'ROWS' => $table_rows, 'NONRESPONSIVE' => false]);
         }
 
         $fields['ACTIONS'] = new Tempcode();
