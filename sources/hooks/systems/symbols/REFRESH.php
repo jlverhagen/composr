@@ -53,7 +53,9 @@ class Hook_symbol_REFRESH
             if (!isset($REFRESH_URL[1])) {
                 $REFRESH_URL[1] = 1.0;
             }
-            $refresh = do_template('META_REFRESH_LINE', ['_GUID' => '6ee20694dfa474f160481a3ab5331d87', 'URL' => $REFRESH_URL[0], 'TIME' => float_to_raw_string($REFRESH_URL[1], 2, true)]);
+            require_code('users');
+            $url = enforce_sessioned_url($REFRESH_URL[0]);
+            $refresh = do_template('META_REFRESH_LINE', ['_GUID' => '6ee20694dfa474f160481a3ab5331d87', 'URL' => $url, 'TIME' => float_to_raw_string($REFRESH_URL[1], 2, true)]);
         } else {
             $refresh = new Tempcode();
         }

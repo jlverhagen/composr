@@ -2376,6 +2376,12 @@ function _do_tags_comcode(string $tag, array $attributes, $embed, bool $comcode_
                 ];
                 $attachment_row['id'] = $db->query_insert('attachments', $attachment_row, true);
 
+                // Assign Resource-fs alternative ID (GUID)
+                if (addon_installed('commandr')) {
+                    require_code('resource_fs');
+                    generate_resource_fs_moniker('attachment', strval($attachment_row['id']), $attachment_row['a_original_filename'], null, true);
+                }
+
                 // Create and document attachment
                 $COMCODE_ATTACHMENTS[$pass_id][] = ['type' => 'new', 'initial_id' => $id, 'id' => $attachment_row['id']]; // Marker will allow us to search back and replace this with the added ID
             }

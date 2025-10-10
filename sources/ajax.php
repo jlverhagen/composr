@@ -639,12 +639,49 @@ function snippet_script()
     prepare_backend_response('text/plain');
 
     if (get_param_string('zone', null) === null) {
-        // If zone not explicitly specified, try and work it out from the page name parameter (if one given)
+        // If zone not explicitly specified, try and work it out
         global $RELATIVE_PATH, $ZONE;
+
+        // 1) From page parameter (if one given)
         $test = get_module_zone(get_page_name());
-        if ($test !== null) {
+        if (($test !== null) && ($test != '')) {
             $RELATIVE_PATH = $test;
-            $ZONE = null;
+            $ZONE = null; // force recalculation based on RELATIVE_PATH
+        } else {
+            // 2) From HTTP_REFERER (common for AJAX calls coming from a page)
+            $ref = isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : '';
+            if ($ref != '') {
+                require_code('urls');
+                $page_link = url_to_page_link($ref, true, false); // be lenient; just want the zone
+                if ($page_link != '') {
+                    list($ref_zone,) = explode(':', $page_link, 2);
+                    if ($ref_zone == '_SELF') {
+                        $ref_zone = get_zone_name();
+                    } elseif ($ref_zone == '_SEARCH') {
+                        // Try infer from page part if present
+                        $parts = explode(':', $page_link);
+                        if (isset($parts[1])) {
+                            $_z = get_page_zone($parts[1], false);
+                            if ($_z !== null) {
+                                $ref_zone = $_z;
+                            }
+                        }
+                    } elseif (($ref_zone == 'site') && (get_option('single_public_zone') == '1')) {
+                        $ref_zone = '';
+                    }
+                    if ($ref_zone !== null) {
+                        $RELATIVE_PATH = $ref_zone;
+                        $ZONE = null; // force recalculation
+                    }
+                }
+            }
+
+            // 3) Final fallback: assume public zone
+            if (($RELATIVE_PATH == 'data') || ($RELATIVE_PATH == 'data_custom')) { // still unresolved
+                $fallback = (get_option('single_public_zone') == '1') ? '' : 'site';
+                $RELATIVE_PATH = $fallback;
+                $ZONE = null;
+            }
         }
     }
 

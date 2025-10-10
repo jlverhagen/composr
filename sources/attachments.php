@@ -68,12 +68,25 @@ function render_attachment(string $tag, array $attributes, array $attachment_row
     if (url_is_local($url_safe)) {
         $url_safe = get_custom_base_url() . '/' . $url_safe;
     }
+
+    if (addon_installed('commandr')) {
+        require_code('resource_fs');
+        $_guid = find_guid_via_id('attachment', strval($attachment_row['id']));
+        if ($_guid === null) {
+            $id_param = strval($attachment_row['id']);
+        } else {
+            $id_param = $_guid;
+        }
+    } else {
+        $id_param = strval($attachment_row['id']);
+    }
+
     $url = null;
     $is_bin = (substr($url_safe, -4) == '.bin') || (substr($url_safe, -4) == '.dat')/*LEGACY*/;
     if ($tag == 'attachment' || $is_bin) {
         $url = new Tempcode();
 
-        $url->attach(find_script('attachment') . '?id=' . urlencode(strval($attachment_row['id'])));
+        $url->attach(find_script('attachment') . '?id=' . urlencode($id_param));
         if ($db->is_forum_db()) {
             $url->attach('&forum_db=1');
             $attributes['num_downloads'] = symbol_tempcode('ATTACHMENT_DOWNLOADS', [strval($attachment_row['id']), '1']);
@@ -155,7 +168,7 @@ function has_attachment_access(int $member_id, int $id, ?object $db = null) : bo
 }
 
 /**
- * Show the image of an attachment/thumbnail.
+ * Stream an attachment file.
  */
 function attachments_script()
 {
@@ -167,14 +180,29 @@ function attachments_script()
         @exit(get_option('closed'));
     }
 
-    $id = get_param_integer('id', 0);
+    // Do not index attachments directly; attachments are considered a part of content we already index
+    header('X-Robots-Tag: noindex, nofollow');
+
+    // Enforce anti-leech on all attachment access when enabled
+    require_code('anti_leech');
+    check_anti_leech();
+
+    // Security: We use resource GUID if Commandr is installed to prevent content scraping
+    if (addon_installed('commandr')) {
+        require_code('resource_fs');
+
+        $__id = get_param_string('id');
+        $_id = find_id_via_guid($__id);
+        if ($_id === null) {
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'attachment'));
+        }
+        $id = intval($_id);
+    } else {
+        $id = get_param_integer('id', 0);
+    }
+
     $db = $GLOBALS[(get_param_integer('forum_db', 0) == 1) ? 'FORUM_DB' : 'SITE_DB'];
     $has_no_restricts = ($db->query_select_value_if_there('attachment_refs', 'id', ['r_referer_type' => 'null', 'a_id' => $id]) !== null);
-
-    if (!$has_no_restricts) {
-        require_code('anti_leech');
-        check_anti_leech();
-    }
 
     require_lang('comcode');
 

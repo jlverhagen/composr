@@ -72,6 +72,12 @@ class CMSAttachmentWrite
             'a_add_time' => time(),
         ], true);
 
+        // Assign Resource-fs alternative ID (GUID)
+        if (addon_installed('commandr')) {
+            require_code('resource_fs');
+            generate_resource_fs_moniker('attachment', strval($attachment_id), basename($urls[2]), null, true);
+        }
+
         return [
             'attachment_id' => $attachment_id,
             'filters_size' => $filesize,

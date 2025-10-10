@@ -35,10 +35,9 @@ function _enforce_sessioned_url(string $url) : string
 
     // Take hash off
     $hash = '';
-    $hash_pos = strpos($url, '#');
-    if ($hash_pos !== false) {
-        $hash = substr($url, $hash_pos);
-        $url = substr($url, 0, $hash_pos);
+    if (strpos($url, '#') !== false) {
+        list($url, $hash) = explode('#', $url, 2);
+        $hash = '#' . $hash;
     }
 
     if (strpos($url, '?') === false) {
@@ -52,9 +51,6 @@ function _enforce_sessioned_url(string $url) : string
     }
     $url = preg_replace('#keep_session=\w+&#', '', $url);
     $url = preg_replace('#&keep_session=\w+#', '', $url);
-
-    // Get hash back
-    $url .= $hash;
     $url = preg_replace('#\?keep_session=\w+#', '', $url);
 
     // Possibly a nested URL too
@@ -505,3 +501,4 @@ function try_cookie_login() : ?int
 
     return $member_id;
 }
+

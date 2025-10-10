@@ -16,10 +16,6 @@ showOverlay = !(multi || (isImage && $cms.browserMatches('simplified_attachments
 defaults.thumb = (isImage && !multi && showOverlay) ? '0' : '1';
 defaults.type = ''; // =autodetect rendering type
 
-if (isImage) {
-    tag = 'attachment_safe'; // [attachment_safe]
-}
-
 if (multi || isImage) {
     defaults.framed = '0';
 }

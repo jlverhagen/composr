@@ -46,7 +46,7 @@ function init__comcode_compiler()
         'surround' => true, 'cite' => true, 'ins' => true, 'del' => true, 'dfn' => true, 'address' => true, 'abbr' => true, 'acronym' => true, 'list' => true, 'highlight' => true, 'indent' => true, 'b' => true, 'i' => true, 'u' => true, 's' => true, 'sup' => true, 'sub' => true,
         'title' => ['sub'], 'size' => true, 'color' => true, 'font' => true, 'tt' => true, 'img' => ['rollover', 'refresh_time'], 'url' => true, 'email' => true,
         'semihtml' => true, 'html' => true, 'align' => true, 'left' => true, 'center' => true, 'right' => true, 'var' => true, 'samp' => true, 'q' => true,
-        'page' => true, 'thumb' => true, 'attachment_safe' => true,
+        'page' => true, 'thumb' => true,
     ];
     // The following could conceivably not need to be reversed, as they're pure HTML. However, it's better not to let the WYSIWYG'd HTML get too complex.
     // 'tooltip' => true, 'section' => true, 'section_controller' => true, 'big_tab' => true, 'big_tab_controller' => true, 'tabs' => true, 'tab' => true, 'carousel' => true, 'media' => true, 'hide' => true, 'quote' => true, 'ticker' => true, 'jumping' => true
@@ -69,7 +69,7 @@ function init__comcode_compiler()
     $CODE_TAGS = [/*'img' => true - no, can be a symbol,*/'media' => true, 'thumb' => true, 'menu' => true, 'no_parse' => true, 'code' => true, 'tt' => true, 'samp' => true, 'codebox' => true, 'staff_note' => true, 'section_controller' => true, 'big_tab_controller' => true];
 
     global $BUTTON_EDITED_TAGS;
-    $BUTTON_EDITED_TAGS = ['attachment' => true, 'attachment_safe' => true, 'section_controller' => true, 'big_tab_controller' => true, 'currency' => true, 'block' => true, 'contents' => true, 'concepts' => true, 'media' => true, 'menu' => true, 'email' => true, 'reference' => true, 'page' => true, 'thumb' => true, 'snapback' => true, 'post' => true, 'topic' => true, 'include' => true, 'random' => true, 'jumping' => true, 'shocker' => true,];
+    $BUTTON_EDITED_TAGS = ['attachment' => true, 'section_controller' => true, 'big_tab_controller' => true, 'currency' => true, 'block' => true, 'contents' => true, 'concepts' => true, 'media' => true, 'menu' => true, 'email' => true, 'reference' => true, 'page' => true, 'thumb' => true, 'snapback' => true, 'post' => true, 'topic' => true, 'include' => true, 'random' => true, 'jumping' => true, 'shocker' => true,];
 
     // ALSO:
     // See _get_details_comcode_tags function in comcode_add.php

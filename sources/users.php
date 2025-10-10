@@ -759,6 +759,50 @@ function enforce_sessioned_url(string $url) : string
 }
 
 /**
+ * Ensure all links pointing to this site contain a session ID if necessary.
+ *
+ * @param  string $html HTML to rewrite, passed by reference
+ */
+function enforce_sessioned_html(string &$html)
+{
+    $need_enforce = (((!has_cookies()) || !allowed_cookies('ESSENTIAL')) && (get_bot_type() === null) && (get_option('sessions_in_urls') == '1'));
+    if (!$need_enforce) {
+        return;
+    }
+
+    // Attributes
+    $html = preg_replace_callback('#\b(href|action|src)\s*=\s*[\"]([^\"]+)[\"]#i', '_enforce_sessioned_html_quoted', $html);
+}
+
+/**
+ * Callback for enforced_sessioned_html for matching / enforcing quoted link attributes.
+ *
+ * @param  array $m Array of matches
+ * @return string Replacement string
+ *
+ * @ignore
+ */
+function _enforce_sessioned_html_quoted(array $m) : string
+{
+    $base_url = get_base_url();
+    $base_url_http = preg_replace('#^https://#','http://', $base_url);
+    $base_url_https = preg_replace('#^http://#','https://', $base_url);
+
+    list($orig, $attr, $url) = $m;
+
+    // Only process same-site absolute URLs
+    $is_same = ((substr($url, 0, strlen($base_url)) === $base_url) || (substr($url, 0, strlen($base_url_http)) === $base_url_http) || (substr($url, 0, strlen($base_url_https)) === $base_url_https));
+    if (!$is_same) {
+        return $orig;
+    }
+
+    require_code('users_inactive_occasionals');
+    $new_url = _enforce_sessioned_url($url);
+
+    return $attr . '="' . $new_url . '"';
+}
+
+/**
  * Find what sessions are expired and delete them, and recover an existing one for $member_id if there is one.
  *
  * @param  ?MEMBER $member_id User to get a current session for (null: do not try, which guarantees a return result of null also)

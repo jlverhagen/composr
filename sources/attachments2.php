@@ -242,6 +242,13 @@ function _handle_data_url_attachments(string &$comcode, string $type, string $id
                         'a_description' => '',
                         'a_add_time' => time(),
                     ], true);
+
+                    // Assign Resource-fs alternative ID (GUID)
+                    if (addon_installed('commandr')) {
+                        require_code('resource_fs');
+                        generate_resource_fs_moniker('attachment', strval($attachment_id), basename($new_filename), null, true);
+                    }
+
                     $db->query_insert('attachment_refs', ['r_referer_type' => $type, 'r_referer_id' => $id, 'a_id' => $attachment_id]);
 
                     $comcode = str_replace($matches[0][$i], '[attachment framed="0" thumb="0"]' . strval($attachment_id) . '[/attachment]', $comcode);

@@ -415,9 +415,6 @@ function compile_included_code(string $orig_path, string $codename, bool $light_
 
         // Prepare code
 
-        // Strip BOM
-        $code = preg_replace('/^\xEF\xBB\xBF|^\x{FEFF}/u', '', $code);
-
         // Ensure a PHP open tag exists at the start
         if (!preg_match('/^\s*<\?php\b/s', $code)) {
             $code = '<?php ' . $code;

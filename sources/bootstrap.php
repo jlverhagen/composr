@@ -270,12 +270,20 @@ function require_code__bootstrap(string $codename)
  *
  * @param  string $c File contents
  * @param  ?string $path File path (null: N/A)
- * @return string Cleaned up file
+ * @return string Cleaned up file (blank: an error occurred)
  */
 function clean_php_file_for_eval(string $c, ?string $path = null) : string
 {
     // Remove UTF-8 BOM or stray U+FEFF
-    $c = preg_replace('/^\xEF\xBB\xBF|^\x{FEFF}/u', '', $c);
+    $_c = preg_replace('/^\xEF\xBB\xBF|^\x{FEFF}/u', '', $c);
+    if ($_c === null) {
+        // Try non-UTF-8
+        $_c = preg_replace('/^\xEF\xBB\xBF/', '', $c);
+    }
+    if ($_c === null) {
+        exit('<!DOCTYPE html>' . "\n" . '<html lang="EN"><head><title>Critical startup error</title></head><body><h1>Composr startup error</h1><p>Corrupt source file ' . serialize($path) . '.</p><p>The core developers maintain full documentation for all procedures and tools, especially those for installation. These may be found on the <a href="https://composr.app">Composr website</a>. If you are unable to easily solve this problem, we may be contacted from our website and can help resolve it for you.</p><hr /><p style="font-size: 0.8em">Composr is a website engine created by Christopher Graham.</p></body></html>');
+    }
+
     $reps = [];
     $reps['?' . '>'] = '';
     $reps['<' . '?php'] = '';
@@ -283,7 +291,7 @@ function clean_php_file_for_eval(string $c, ?string $path = null) : string
         $reps['__FILE__'] = "'" . addslashes($path) . "'";
         $reps['__DIR__'] = "'" . addslashes(dirname($path)) . "'";
     }
-    return str_replace(array_keys($reps), array_values($reps), $c);
+    return str_replace(array_keys($reps), array_values($reps), $_c);
 }
 
 /**

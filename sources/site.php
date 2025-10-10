@@ -1153,11 +1153,21 @@ function do_site()
 
     // Output
     if (!$GLOBALS['QUICK_REDIRECT']) {
-        if ($out_evaluated !== null) {
+        $need_enforce = (((!has_cookies()) || !allowed_cookies('ESSENTIAL')) && (get_bot_type() === null) && (get_option('sessions_in_urls') == '1'));
+        if ($need_enforce) {
+            if ($out_evaluated === null) {
+                $out_evaluated = $out->evaluate(null);
+            }
+            require_code('users');
+            enforce_sessioned_html($out_evaluated);
             echo $out_evaluated;
         } else {
-            $GLOBALS['FINISHING_OUTPUT'] = true;
-            $out->evaluate_echo(null);
+            if ($out_evaluated !== null) {
+                echo $out_evaluated;
+            } else {
+                $GLOBALS['FINISHING_OUTPUT'] = true;
+                $out->evaluate_echo(null);
+            }
         }
     }
 

@@ -226,10 +226,10 @@ PHP;
         }
 
         // Read in rows
-        $query = 'SELECT COUNT(DISTINCT r.id) FROM ' . get_table_prefix() . 'news r LEFT JOIN ' . $GLOBALS['SITE_DB']->get_table_prefix() . 'news_category_entries d ON d.news_entry=r.id' . $join . ' WHERE ' . $q_filter . (((addon_installed('validation')) && (!has_privilege(get_member(), 'see_not_validated'))) ? ' AND validated=1' : '');
+        $query = 'SELECT COUNT(DISTINCT r.id) FROM ' . get_table_prefix() . 'news r LEFT JOIN ' . get_table_prefix() . 'news_category_entries d ON d.news_entry=r.id' . $join . ' WHERE ' . $q_filter . (((addon_installed('validation')) && (!has_privilege(get_member(), 'see_not_validated'))) ? ' AND validated=1' : '');
         $max_rows = $GLOBALS['SITE_DB']->query_value_if_there($query, false, true);
         if ($historic == '') {
-            $query_full = 'SELECT DISTINCT r.* FROM ' . $GLOBALS['SITE_DB']->get_table_prefix() . 'news r LEFT JOIN ' . $GLOBALS['SITE_DB']->get_table_prefix() . 'news_category_entries d ON r.id=d.news_entry' . $join . ' WHERE ' . $q_filter . (((addon_installed('validation')) && (!has_privilege(get_member(), 'see_not_validated'))) ? ' AND validated=1' : '') . ' ORDER BY r.date_and_time DESC';
+            $query_full = 'SELECT DISTINCT r.* FROM ' . get_table_prefix() . 'news r LEFT JOIN ' . get_table_prefix() . 'news_category_entries d ON r.id=d.news_entry' . $join . ' WHERE ' . $q_filter . (((addon_installed('validation')) && (!has_privilege(get_member(), 'see_not_validated'))) ? ' AND validated=1' : '') . ' ORDER BY r.date_and_time DESC';
             $rows = $GLOBALS['SITE_DB']->query($query_full, $display_slides + $display_summaries + $display_briefs, $start, false, true, ['title' => 'SHORT_TRANS', 'news' => 'LONG_TRANS', 'news_article' => 'LONG_TRANS']);
         } else {
             $old_limit = cms_extend_time_limit(TIME_LIMIT_EXTEND__SLUGGISH);
@@ -237,7 +237,7 @@ PHP;
             $search_start = 0;
             $okayed = 0;
             do {
-                $_rows = $GLOBALS['SITE_DB']->query('SELECT DISTINCT r.* FROM ' . $GLOBALS['SITE_DB']->get_table_prefix() . 'news r LEFT JOIN ' . $GLOBALS['SITE_DB']->get_table_prefix() . 'news_category_entries d ON r.id=d.news_entry' . $join . ' WHERE ' . $q_filter . (((addon_installed('validation')) && (!has_privilege(get_member(), 'see_not_validated'))) ? ' AND validated=1' : '') . ' ORDER BY r.date_and_time DESC', 200, $search_start, false, true);
+                $_rows = $GLOBALS['SITE_DB']->query('SELECT DISTINCT r.* FROM ' . get_table_prefix() . 'news r LEFT JOIN ' . get_table_prefix() . 'news_category_entries d ON r.id=d.news_entry' . $join . ' WHERE ' . $q_filter . (((addon_installed('validation')) && (!has_privilege(get_member(), 'see_not_validated'))) ? ' AND validated=1' : '') . ' ORDER BY r.date_and_time DESC', 200, $search_start, false, true);
                 foreach ($_rows as $row) {
                     $ok = false;
                     switch ($historic) {
@@ -611,14 +611,14 @@ PHP;
      */
     protected function generate_selectcode_sql(string $select) : string
     {
+        // TODO: #5771
+        return '1=1';
+
+        /*
         require_code('selectcode');
-        $selects_1 = selectcode_to_sqlfragment($select, 'r.id', 'news_categories', null, 'r.news_category', 'id');
-        $selects_2 = selectcode_to_sqlfragment($select, 'r.id', 'news_categories', null, 'd.news_entry_category', 'id');
-        if ((strpos($select, '~') === false) && (strpos($select, '!') === false)) {
-            $q_filter = '(' . $selects_1 . ' OR ' . $selects_2 . ')';
-        } else {
-            $q_filter = '(' . $selects_1 . ' AND (' . $selects_2 . ' OR d.news_entry_category IS NULL))';
-        }
-        return $q_filter;
+        $selects_1 = selectcode_to_sqlfragment($select, 'r.id', 'news_categories', 'nc_parent', 'r.news_category', 'id');
+        $selects_2 = selectcode_to_sqlfragment($select, 'r.id', 'news_categories', 'nc_parent', 'd.news_entry_category', 'id');
+        return '(' . $selects_1 . ' OR ' . $selects_2 . ')';
+        */
     }
 }
