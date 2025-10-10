@@ -807,7 +807,7 @@ class Hook_admin_stats_views extends CMSStatsProvider
                                 }
 
                                 foreach ($___ as $is_real_human => $____) {
-                                    if ((!empty($filters[$bucket . '__exclude_bots'])) && ($is_real_human === false)) {
+                                    if ((!empty($filters[$bucket . '__exclude_bots'])) && (!$is_real_human)) {
                                         continue;
                                     }
 
@@ -859,7 +859,7 @@ class Hook_admin_stats_views extends CMSStatsProvider
                                 }
 
                                 foreach ($___ as $is_real_human => $hashed_ips) {
-                                    if ((!empty($filters[$bucket . '__exclude_bots'])) && ($is_real_human === false)) {
+                                    if ((!empty($filters[$bucket . '__exclude_bots'])) && (!$is_real_human)) {
                                         continue;
                                     }
 
@@ -903,7 +903,7 @@ class Hook_admin_stats_views extends CMSStatsProvider
                                 }
 
                                 foreach ($___ as $is_real_human => $total) {
-                                    if ((!empty($filters[$bucket . '__exclude_bots'])) && ($is_real_human === false)) {
+                                    if ((!empty($filters[$bucket . '__exclude_bots'])) && (!$is_real_human)) {
                                         continue;
                                     }
 
@@ -947,7 +947,7 @@ class Hook_admin_stats_views extends CMSStatsProvider
                                 }
 
                                 foreach ($___ as $is_real_human => $____) {
-                                    if ((!empty($filters[$bucket . '__exclude_bots'])) && ($is_real_human === false)) {
+                                    if ((!empty($filters[$bucket . '__exclude_bots'])) && (!$is_real_human)) {
                                         continue;
                                     }
 
@@ -1004,7 +1004,7 @@ class Hook_admin_stats_views extends CMSStatsProvider
                                 }
 
                                 foreach ($___ as $is_real_human => $____) {
-                                    if ((!empty($filters[$bucket . '__exclude_bots'])) && ($is_real_human === false)) {
+                                    if ((!empty($filters[$bucket . '__exclude_bots'])) && (!$is_real_human)) {
                                         continue;
                                     }
 
@@ -1046,7 +1046,7 @@ class Hook_admin_stats_views extends CMSStatsProvider
                                 }
 
                                 foreach ($___ as $is_real_human => $____) {
-                                    if ((!empty($filters[$bucket . '__exclude_bots'])) && ($is_real_human === false)) {
+                                    if ((!empty($filters[$bucket . '__exclude_bots'])) && (!$is_real_human)) {
                                         continue;
                                     }
 
@@ -1105,7 +1105,7 @@ class Hook_admin_stats_views extends CMSStatsProvider
                                 }
 
                                 foreach ($___ as $is_real_human => $____) {
-                                    if ((!empty($filters[$bucket . '__exclude_bots'])) && ($is_real_human === false)) {
+                                    if ((!empty($filters[$bucket . '__exclude_bots'])) && (!$is_real_human)) {
                                         continue;
                                     }
 
@@ -1179,7 +1179,7 @@ class Hook_admin_stats_views extends CMSStatsProvider
                                 }
 
                                 foreach ($___ as $is_real_human => $____) {
-                                    if ((!empty($filters[$bucket . '__exclude_bots'])) && ($is_real_human === false)) {
+                                    if ((!empty($filters[$bucket . '__exclude_bots'])) && (!$is_real_human)) {
                                         continue;
                                     }
 
@@ -1294,7 +1294,7 @@ class Hook_admin_stats_views extends CMSStatsProvider
                             }
 
                             foreach ($__ as $is_real_human => $___) {
-                                if ((!empty($filters[$bucket . '__exclude_bots'])) && ($is_real_human === false)) {
+                                if ((!empty($filters[$bucket . '__exclude_bots'])) && (!$is_real_human)) {
                                     continue;
                                 }
 
@@ -1347,7 +1347,7 @@ class Hook_admin_stats_views extends CMSStatsProvider
                             }
 
                             foreach ($__ as $is_real_human => $___) {
-                                if ((!empty($filters[$bucket . '__exclude_bots'])) && ($is_real_human === false)) {
+                                if ((!empty($filters[$bucket . '__exclude_bots'])) && (!$is_real_human)) {
                                     continue;
                                 }
 
@@ -1455,7 +1455,7 @@ class Hook_admin_stats_views extends CMSStatsProvider
                                 }
 
                                 foreach ($___ as $is_real_human => $____) {
-                                    if ((!empty($filters[$bucket . '__exclude_bots'])) && ($is_real_human === false)) {
+                                    if ((!empty($filters[$bucket . '__exclude_bots'])) && (!$is_real_human)) {
                                         continue;
                                     }
 
