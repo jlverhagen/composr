@@ -1013,7 +1013,7 @@ function get_address_fields(string $prefix, string $street_address, string $city
     if (get_option('cpf_enable_country') == '1') {
         $countries = new Tempcode();
         $countries->attach(form_input_list_entry('', $country == ''));
-        $countries->attach(create_country_selection_list([$country]));
+        $countries->attach(create_country_selection_list([$country], $require_all_details));
         $fields->attach(form_input_list(do_lang_cpf('country'), '', $prefix . 'country', $countries, null, false, $require_all_details));
     } else {
         $hidden->attach(form_input_hidden($prefix . 'country', ''));

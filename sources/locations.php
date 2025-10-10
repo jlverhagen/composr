@@ -125,15 +125,20 @@ function find_region_name_from_iso(?string $iso) : ?string
  * Get a nice, formatted HTML list of countries.
  *
  * @param  array $selected_countries The currently selected countries
+ * @param  boolean $required Whether this is a required field (false: we will include a blank entry)
  * @return Tempcode The list of countries
  */
-function create_country_selection_list(array $selected_countries = []) : object
+function create_country_selection_list(array $selected_countries = [], bool $required = false) : object
 {
     require_code('templates');
 
     $countries = find_countries();
 
     $list = new Tempcode();
+
+    if ($required === false) {
+        $list->attach(form_input_list_entry('', empty($selected_countries)));
+    }
 
     foreach ($countries as $country) {
         $list->attach(form_input_list_entry($country->getAlpha2(), in_array($country->getAlpha2(), $selected_countries), $country->getLocalName()));
@@ -372,7 +377,7 @@ function _form_input_region(string $stub, ?string $default = null, bool $require
 
     // Input for country
     $country_list = form_input_list_entry('', ($default === null), do_lang_tempcode('CHOOSE_COUNTRY'));
-    $country_list->attach(create_country_selection_list($selected_countries));
+    $country_list->attach(create_country_selection_list($selected_countries), true);
     $country_input = do_template('FORM_SCREEN_INPUT_LIST', [
         '_GUID' => '68441865957e5f07b44c27e7eb0a2ab8',
         'TABINDEX' => strval(get_form_field_tabindex()),

@@ -209,7 +209,7 @@ function build_config_inputter(string $name, array $details, ?string $current_va
             require_code('locations');
             $_list = new Tempcode();
             $_list->attach(form_input_list_entry('', false, do_lang_tempcode('NA_EM')));
-            $_list->attach(create_country_selection_list([$current_value]));
+            $_list->attach(create_country_selection_list([$current_value], $required));
             return form_input_list($title, $explanation_with_default, $config_field_name, $_list, null, false, $required);
 
         case 'country_multi':

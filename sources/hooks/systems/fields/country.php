@@ -129,7 +129,7 @@ class Hook_fields_country
         require_code('locations');
         $country_list = new Tempcode();
         $country_list->attach(form_input_list_entry('', '' == $actual_value, do_lang_tempcode('NA_EM')));
-        $country_list->attach(create_country_selection_list([$actual_value]));
+        $country_list->attach(create_country_selection_list([$actual_value], $field['cf_required'] == 1));
         return form_input_list($_cf_name, $_cf_description, $input_name, $country_list, null, false, $field['cf_required'] == 1, null, 5, $autocomplete);
     }
 

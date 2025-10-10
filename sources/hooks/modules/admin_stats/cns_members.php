@@ -31,9 +31,8 @@ class Hook_admin_stats_cns_members extends CMSStatsProvider
     public function __construct()
     {
         $this->default_age_brackets = [
-            '<6',
-            '6-11',
-            '12-17',
+            '<13',
+            '13-17',
             '18-24',
             '25-34',
             '35-44',
