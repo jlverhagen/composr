@@ -36,8 +36,8 @@ class Hook_admin_stats_emails extends CMSStatsProvider
 
         return [
             'emails_sent' => [
-                'label' => do_lang_tempcode('EMAIL_LOG'),
-                'category' => 'server_performance',
+                'label' => do_lang_tempcode('EMAILS_SENT'),
+                'category' => 'conversions',
                 'filters' => [
                     'emails_sent__day_range' => new CMSStatsDayRangeFilter('emails_sent__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
                 ],
