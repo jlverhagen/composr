@@ -53,83 +53,29 @@ class Hook_cron_stats_preprocess_raw_data
     public function run()
     {
         $start_time = null;
+
+        // LEGACY: 11.beta9
         $_start_time = get_value('stats__last_processed', null, true);
-
-        // LEGACY: 11.beta7
-        if ($_start_time === null) {
-            $_start_time = get_value('stats__last_day_processed', null, true);
-            if ($_start_time !== null) {
-                list($year, $month, $day) = array_map('intval', explode('-', $_start_time));
-                $start_time = cms_mktime(0, 0, 0, $month, $day, $year);
-                $start_time = tz_time($start_time, get_server_timezone());
-                delete_value('stats__last_day_processed', true);
-
-                $_start_time = strval($start_time);
-            }
+        if ($_start_time !== null) {
+            delete_value('stats__last_processed', true);
+            $GLOBALS['SITE_DB']->query_delete('stats_preprocessed');
+            $GLOBALS['SITE_DB']->query_delete('stats_preprocessed_flat');
         }
 
-        if ($_start_time === null) {
-            require_code('global4');
-            $start_time = get_site_start_time();
-        } else {
-            $start_time = intval($_start_time);
-        }
-
-        // Do not process too far back
-        if ($start_time < (time() - self::INITIAL_BACK_TIME)) {
-            $start_time = (time() - self::INITIAL_BACK_TIME);
-        }
-
-        /*
-            NB: We subtract 1 second due to an edge case; the current second is not over yet, so additional stats (especially views)
-            that happen this second might later get logged. If we process this second now, those views / stats might get neglected.
-        */
-        $end_time = (time() - 1);
-
-        // Do not process too much at once
-        if (($end_time - $start_time) > self::END_TIME_CUTOFF) {
-            $end_time = ($start_time + self::END_TIME_CUTOFF);
-        }
+        $hook_start = time();
 
         require_code('global3');
 
-        // Determine if we are processing deltas opposed to running preprocessing
+        // Determine if we are in need of processing deltas; these are done first
         $pending_deltas = $GLOBALS['SITE_DB']->query_select_value('stats_preprocessed_delta', 'COUNT(*)');
         $doing_deltas = ($pending_deltas > 0);
-        if (($doing_deltas === false) && ($start_time >= (time() - (60 * 5)))) { // Do not preprocess stats data more than once every 5 minutes
-            return;
-        }
 
-        if (($end_time > $start_time) && ($doing_deltas === false)) { // Process new stats into the delta once every 15 minutes
-            cms_profile_start_for('Hook_cron_stats_preprocess_raw_data preprocess_raw_data_for');
-
-            push_query_limiting(false);
-            disable_php_memory_limit();
-
-            require_code('stats');
-            require_lang('stats');
-
-            $hook_obs = find_all_hooks('modules', 'admin_stats');
-            foreach (array_keys($hook_obs) as $hook_name) {
-                preprocess_raw_data_for($hook_name, $start_time, $end_time);
-            }
-
-            set_value('stats__last_processed', strval($end_time), true);
-
-            // Send KPI notifications...
-
-            send_kpi_notifications();
-
-            pop_query_limiting();
-
-            cms_profile_end_for('Hook_cron_stats_preprocess_raw_data preprocess_raw_data_for');
-        } else { // Otherwise, let's merge in some pending deltas
+        if ($doing_deltas) {
             cms_profile_start_for('Hook_cron_stats_preprocess_raw_data deltas');
 
             push_query_limiting(false);
 
-            $start_at = time();
-            while ((memory_get_usage() < (1024 * 1024 * 32)) && ((time() - $start_at) < 5)) { // Time and memory checks
+            while ((memory_get_usage() < (1024 * 1024 * 32)) && ((time() - $hook_start) < 15)) { // Time and memory checks
                 $row = $GLOBALS['SITE_DB']->query_select('stats_preprocessed_delta', ['*'], [], ' ORDER BY id', 1);
                 if (!array_key_exists(0, $row)) { // No more to do
                     break;
@@ -184,6 +130,65 @@ class Hook_cron_stats_preprocess_raw_data
 
             cms_profile_end_for('Hook_cron_stats_preprocess_raw_data preprocess_raw_data_for');
         }
+
+        // Memory and time check
+        if ((memory_get_usage() >= (1024 * 1024 * 32)) || ((time() - $hook_start) >= 15)) {
+            return;
+        }
+
+        cms_profile_start_for('Hook_cron_stats_preprocess_raw_data preprocess_raw_data_for');
+
+        push_query_limiting(false);
+        disable_php_memory_limit();
+
+        require_code('stats');
+        require_lang('stats');
+
+        $hook_obs = array_keys(find_all_hooks('modules', 'admin_stats'));
+        cms_shuffle_assoc($hook_obs);
+
+        foreach ($hook_obs as $hook_name) {
+            $_start_time = get_value('stats__last_processed__' . $hook_name, null, true);
+            if ($_start_time === null) {
+                require_code('global4');
+                $start_time = get_site_start_time();
+            } else {
+                $start_time = intval($_start_time);
+            }
+
+            // Do not process too far back
+            if ($start_time < (time() - self::INITIAL_BACK_TIME)) {
+                $start_time = (time() - self::INITIAL_BACK_TIME);
+            }
+
+            /*
+                NB: We subtract 1 second due to an edge case; the current second is not over yet, so additional stats (especially views)
+                that happen this second might later get logged. If we process this second now, those views / stats might get neglected.
+            */
+            $end_time = (time() - 1);
+
+            // Do not process too much at once
+            if (($end_time - $start_time) > self::END_TIME_CUTOFF) {
+                $end_time = ($start_time + self::END_TIME_CUTOFF);
+            }
+
+            preprocess_raw_data_for($hook_name, $start_time, $end_time);
+
+            set_value('stats__last_processed__' . $hook_name, strval($end_time), true);
+
+            // Memory and time check
+            if ((memory_get_usage() >= (1024 * 1024 * 60)) || ((time() - $hook_start) >= 15)) {
+                break;
+            }
+        }
+
+        // Send KPI notifications...
+
+        send_kpi_notifications();
+
+        pop_query_limiting();
+
+        cms_profile_end_for('Hook_cron_stats_preprocess_raw_data preprocess_raw_data_for');
     }
 
     /**
