@@ -72,7 +72,7 @@ class Hook_achievement_qualifications_download
             $extra_where .= ' AND date_and_time>' . strval($last_time);
         }
 
-        $count_done = $GLOBALS['SITE_DB']->query_select_value('download_logging', 'COUNT(*)', ['member_id' => $member_id]);
+        $count_done = $GLOBALS['SITE_DB']->query_select_value('download_logging', 'COUNT(*)', ['member_id' => $member_id], $extra_where);
 
         return [$count_done, $count_required];
     }
