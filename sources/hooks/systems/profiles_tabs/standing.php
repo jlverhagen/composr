@@ -185,7 +185,7 @@ class Hook_profiles_tabs_standing
             if (cms_mb_strlen($row['w_explanation']) > 61) {
                 $explanation = do_lang('EXPLANATION') . ': ' . cms_mb_substr(str_replace("\n", ' ', $row['w_explanation']), 0, 61) . '...';
             }
-            $row_contents->attach($explanation);
+            $row_contents->attach(paragraph($explanation));
 
             // Warning private topic
             $private_topic = do_lang('NA');
@@ -205,7 +205,7 @@ class Hook_profiles_tabs_standing
             foreach ($prows as $prow) {
                 $hook = get_hook_ob('systems', 'cns_warnings', $prow['p_hook'], 'Hook_cns_warnings_');
                 if (method_exists($hook, 'generate_text') && ($hook->get_details() !== null)) {
-                    $row_contents->attach('<br />' . $hook->generate_text($prow));
+                    $row_contents->attach(paragraph($hook->generate_text($prow)));
                 }
             }
 
