@@ -106,7 +106,7 @@ function points_debit_member(int $member_id, string $reason, int $total_points, 
  * @param  ID_TEXT $t_type_id Some content or row ID of the specified $type
  * @param  ?TIME $time The time this transaction occurred (null: now)
  * @param  boolean $force Whether to force this transaction to occur even if the sender does not have enough points
- * @param  boolean $is_ranked Whether the points should affect rank points for the sending member if a debit, else the reciving member
+ * @param  boolean $is_ranked Whether the points should affect rank points for the sending member if a debit, else the receiving member
  * @return ?AUTO_LINK The ID of the transaction (null: a transaction was not created)
  */
 function points_transact(int $sending_member, int $receiving_member, string $reason, int $total_points, ?int $amount_gift_points = null, int $anonymous = 0, ?bool $send_notifications = true, int $locked = 0, string $t_type = '', string $t_subtype = '', string $t_type_id = '', ?int $time = null, bool $force = false, bool $is_ranked = true) : ?int
