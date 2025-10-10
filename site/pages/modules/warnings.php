@@ -1005,10 +1005,10 @@ class Module_warnings extends Standard_crud_module
                 if (method_exists($hook, 'undo_punitive_action') && ($hook->get_details() !== null)) {
                     $_undoing_url = build_url(['page' => '_SELF', 'type' => 'undo_punitive_action'], '_SELF');
                     $_undoing_link = hyperlink($_undoing_url, do_lang_tempcode('UNDO'), false, true, '', null, form_input_hidden('id', strval($row['id'])));
-                    $action = do_lang_tempcode('ACTION_LINK', protect_from_escaping($_undoing_link));
+                    $action = $_undoing_link;
                 }
             } else {
-                $action = do_lang_tempcode('ACTION_LINK', do_lang('UNDONE'));
+                $action = do_lang_tempcode('UNDONE');
             }
 
             $punitive_actions[] = [$details, $action];
