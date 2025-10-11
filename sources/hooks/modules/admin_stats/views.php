@@ -960,7 +960,9 @@ class Hook_admin_stats_views extends CMSStatsProvider
                                 }
                             }
 
-                            $data[$pivot_value_nice] += (floatval($aggregate_total) / floatval($records_total));
+                            if ($records_total > 0) {
+                                $data[$pivot_value_nice] += (floatval($aggregate_total) / floatval($records_total));
+                            }
                         }
                     }
                 }

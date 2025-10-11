@@ -23,7 +23,7 @@
  */
 class Hook_cron_stats_preprocess_raw_data
 {
-    protected const END_TIME_CUTOFF = 60 * 60; // Only process up to one hour at a time to avoid server freezes.
+    protected const END_TIME_CUTOFF = 60 * 60 * 6; // Only process up to 6 hours at a time to avoid server freezes.
     protected const INITIAL_BACK_TIME = 24 * 60 * 60 * 31; // Don't calculate stats older than 31 days ago to prevent server freezes.
 
     /**
