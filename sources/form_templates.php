@@ -3132,6 +3132,10 @@ function handle_conflict_resolution($id = null, $page_type = null, bool $only_st
         }
     }
 
+    if (get_value('disable_handle_conflict_resolution', '0') == '1') {
+        return [null, null];
+    }
+
     if ($page_type === null) {
         $page_type = get_param_string('type', 'browse');
     }

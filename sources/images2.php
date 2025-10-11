@@ -342,7 +342,7 @@ function _convert_image(string $from, string &$to, ?int $width, ?int $height, ?i
             warn_exit(do_lang_tempcode('CANNOT_ACCESS_URL', escape_html($from)), false, true);
         }
         require_code('site');
-        if (get_value('disable_cannot_access_url_messages') !== '1') {
+        if (get_value('disable_cannot_access_url_messages') !== '1') { // TODO: implement elsewhere when we check for broken URLs
             attach_message(do_lang_tempcode('CANNOT_ACCESS_URL', escape_html($from)), 'warn', false, true);
         }
         cms_set_time_limit($old_limit);

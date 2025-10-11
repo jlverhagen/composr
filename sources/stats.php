@@ -2119,6 +2119,7 @@ function send_kpi_notifications()
         'quarter_series' => (date('d') == '01') && (in_array(date('m'), ['01', '04', '07', '10'])),
         'month_series' => (date('d') == '01'),
         'day_series' => true,
+        '' => true, // No pivot; treated as day_series
     ];
 
     $kpis = [];

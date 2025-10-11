@@ -1429,8 +1429,14 @@ class CMSPermissionsScannerWindows extends CMSPermissionsScanner
                 if ((strpos(__FILE__, 'htdocs') !== false) || (strpos(__FILE__, 'httpdocs') !== false)) {
                     $this->key_users[] = 'SYSTEM'; // The services user which Apache will use
                 } else {
-                    $this->key_users[] = 'IUSR'; // This is the user; in the past it was IUSR_<machineName>
-                    $this->key_users[] = 'IIS_IUSRS'; // This is the usergroup, we'll use it also just to be safe; in the past it was IIS_WPG
+                    $this->key_users[] = 'IIS_IUSRS'; // Primary group for modern IIS web applications
+                    if (strpos(php_uname(), 'Windows NT') !== false) { // LEGACY: older IIS users
+                        $this->key_users[] = 'IUSR';
+                        $computer_name = getenv('COMPUTERNAME');
+                        if ($computer_name !== false) {
+                            $this->key_users[] = 'IUSR_' . $computer_name;
+                        }
+                    }
                 }
             } else {
                 $this->key_users[] = preg_replace('#^.*\\\#', '', $current_user); // On Windows this returns the user PHP is running as, counter to documentation

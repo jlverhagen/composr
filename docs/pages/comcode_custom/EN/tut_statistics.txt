@@ -436,17 +436,21 @@ This happens because statistics graphs do not directly use data from the site to
 
 All statistics are generated from pre-computed data, which is itself based on raw data.
 
-The pre-computation happens in the system scheduler as the name 'Stats preprocessing'. As such, the system scheduler is required for statistics. For efficiency, the scheduler splits the pre-computations up into two stages:
+The pre-computation happens in the system scheduler as the name 'Stats preprocessing'. As such, the system scheduler is required for statistics (and it is highly recommended you have the Cron running at least every 5 minutes).
+
+For efficiency, the scheduler splits the pre-computations up into two stages:
 [list]
-[*]The main preprocessing stage
-When no delta records are pending to me merged, Composr will run a scan for any new entries across all data points since the last preprocessing scan (or in one-hour batches if it's been longer than an hour). Any changes detected are logged as a delta record; these do not officially count in the statistics graphs yet.
-[*]The delta merge stage
-When there are delta records pending to merge, the scheduler will take a small batch of deltas on each run and merge them into the statistics, officially counting them in the graphs.
+[*]The delta stage
+Composr will scan for any changes (deltas) to statistics since the last run. These get logged into a temporary delta table which does not yet reflect in the statistics graphs. The reason we do this is because the process monitors for data size and memory use, and will regularly dump the deltas when use gets high, to reduce the chance of PHP out of memory errors.
+ - Composr will only generate statistics up to 31 days in the past.
+ - Composr computes no more than one-hour batches every scheduler cycle to reduce the chance of out of memory errors or timeouts. Therefore, you should never run the system scheduler any less often than once every 15 minutes to ensure statistics can keep up.
+[*]The merge stage
+When there are deltas in the database, the system scheduler will merge what it can on that run into the official statistics.
 [/list]
 
-This two-step process helps ensure that sites large and small do not get bogged down by statistics processing. This is not a fool-proof strategy; very large sites may experience very slow updating of statistics graphs or even out-of-memory errors. At that point, you have grown to the point that you should probably consider off-loading your analytics to a third-party service instead.
+This two-step process helps ensure that sites large and small do not get bogged down by statistics processing. This is not a fool-proof strategy; very large sites may experience very slow updating of statistics graphs or even out-of-memory errors in rare circumstances. At that point, you have grown to the point that you should probably consider off-loading your analytics to a third-party service instead.
 
-Why do we do this? There are a number of reasons:
+Why do we do pre-computed data processing? There are a number of reasons:
 1) We can not hold onto raw data forever, due to GDPR (EU privacy legislation), yet we want to be able to see statistics going as far back as possible.
 2) Some graphs require fairly complicated computations that should not be performed in real-time (for example doing geolocation of users, or tracing behaviour across user sessions).
 3) We want to be able to process huge numbers of records without performance degradation.

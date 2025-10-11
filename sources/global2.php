@@ -492,7 +492,7 @@ function init__global2()
 
     // Check installer not left behind
     if ((!$MICRO_AJAX_BOOTUP) && (!$MICRO_BOOTUP) && ((!isset($SITE_INFO['no_installer_checks'])) || ($SITE_INFO['no_installer_checks'] != '1'))) {
-        if ((is_file(get_file_base() . '/install.php')) && (!is_file(get_file_base() . '/install_ok')) && (running_script('index'))) {
+        if ((is_file(get_file_base() . '/install.php')) && (!is_file(get_file_base() . '/install_ok')) && (!is_file(get_file_base() . '/install_locked')) && (running_script('index'))) {
             if (get_param_integer('came_from_installer', 0) == 1) {
                 @unlink(get_file_base() . '/install.php');
             }
