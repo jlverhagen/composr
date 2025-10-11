@@ -136,7 +136,7 @@ We actually automatically set this on a session level when you do a search, so t
 
 [title="3"]Workaround 2: Use InnoDB[/title]
 
-Another workaround is to switch to InnoDB tables in MySQL. It won't stop slow queries, it'll just stop them locking the whole table and slowing other users down; your server will still suffer the load, but so long as your server is not overloaded that is likely not an issue.
+Another workaround is to switch to InnoDB tables in MySQL (we use InnoDB by default as of version 11). It won't stop slow queries, it'll just stop them locking the whole table and slowing other users down; your server will still suffer the load, but so long as your server is not overloaded that is likely not an issue.
 
 [title="3"]Actual solution: Use the fast custom index[/title]
 

@@ -682,8 +682,8 @@ Values are like hidden configuration options. They are either hidden because the
   - [tt]aggressive_tempcode_compilation[/tt] -- set this to '1' if you want to compile some things aggressively into Tempcode that may occasionally change, such as member avatar URLs or resource URLs; setting this implies you will tolerate some outdated data in return for slightly faster cache rendering
   - [tt]save_jpegs_as_png[/tt] -- set this to '1' to allow Composr to detect when JPEG files would be smaller, and save JPEG data into PNG file extensions. It is a bit of a hack, and goes against standards, but works well
   - [tt]js_keep_params[/tt] -- handle keep variable propagation via JavaScript. Used in conjunction with [tt]$SITE_INFO['no_keep_params'] = '1';[/tt]
-  - [tt]slow_counts[/tt] -- set this to '1' if you have switched to InnoDB, as table row counts are slow and this switch enables an approximation instead in certain places. Do not use with other databases than MySQL or PostgreSQL or SQL Server.
-  - [tt]innodb[/tt] -- set this to '1' if you have switched to MySQL's InnoDB
+  - [tt]slow_counts[/tt] -- set this to '1' if you need to do approximate row counts instead of exact counts. Note that if innodb is enabled, this will always be enabled regardless of setting.
+  - [tt]innodb[/tt] -- set this to '1' if you have switched to MySQL's InnoDB (as of version 11, this is '1' by default unless MyISAM was explicitly selected in the installer)
   - [tt]disable_post_rating[/tt] -- set this to '1' if you don't want to allow post ratings, which saves one query per displayed post
   - [tt]statistical_update_model[/tt] -- update view counts irregularly in bulk, using a statistical algorithm
   - [tt]safelisted_blocks[/tt] -- see explanation under "Low-level tuning"
