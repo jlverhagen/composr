@@ -291,11 +291,12 @@ class Hook_admin_stats_events extends CMSStatsProvider
 
                 // Each combination of event tracking code wrt session
                 foreach (array_keys($top_tracking_codes) as $tracking_code) {
-                    $data_buckets['tracking_code_conversion_rates'][$pivot][$pivot_interval][$pivot_value][$session_id][$tracking_code] = []; // We need this as we need to know tracking codes with no events
                     foreach (array_keys($top_events) as $event) {
                         foreach (array_keys($date_pivots) as $pivot) {
                             $pivot_interval = $this->calculate_date_pivot_interval($pivot, $timestamp);
                             $pivot_value = $this->calculate_date_pivot_value($pivot, $timestamp);
+
+                            $data_buckets['tracking_code_conversion_rates'][$pivot][$pivot_interval][$pivot_value][$session_id][$tracking_code] = []; // We need this as we need to know tracking codes with no events
 
                             if (!isset($data_buckets['tracking_code_conversion_rates'][$pivot][$pivot_interval][$pivot_value][$session_id][$tracking_code][$event])) {
                                 $data_buckets['tracking_code_conversion_rates'][$pivot][$pivot_interval][$pivot_value][$session_id][$tracking_code][$event] = [0, 0];
