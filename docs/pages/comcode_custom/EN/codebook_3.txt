@@ -539,7 +539,8 @@ The presence of the following empty files in the root directory have a special m
 
 [title="4"]Other special files[/title]
 
-If you put a file called [tt]closed.html[/tt] then this will be shown to people rather than the normal closed-site screen, regardless of whether the site is currently closed or not.
+ - [tt]closed.html[/tt] -- If present in your root directory then this will be shown to people rather than the site itself.
+ - [tt]_critical_error.html[/tt] -- If present then this file will be used for displaying critical errors instead of the bare-bones template Composr has by default. Supports template parameters which will be auto-filled in: [tt]{ERROR_CODE}[/tt], [tt]{ERROR_MESSAGE}[/tt], and [tt]{STACK_TRACE}[/tt].
 
 [title="4"]Hidden 'values'[/title]
 
@@ -547,7 +548,7 @@ Values are like hidden configuration options. They are either hidden because the
 
 {$IS_MAINTAINED,options_hidden,We have the following} which are either unlikely to be useful, or potentially unstable or unpolished:
  - Integrations:
-  - [tt]force_admin_auth[/tt] -- set this to '1' if you want any super-administrator to have to have some kind of authorisation-based login by redirecting them to [tt]http://yourbaseurl/admin_login/[/tt] which presumably you have configured to be a redirect-through that catches logins (Apache only)
+  - [tt]force_admin_auth[/tt] -- set this to '1' if you want any super-administrator to have to have some kind of authorisation-based login by redirecting them to [tt]http://yourbaseurl/admin_login/[/tt] which presumably you have configured to be a redirect-through that catches logins (Apache only; Conversr only)
   - [tt]disable_password_hashing[/tt] -- set this to '1' if you want passwords to be stored as plain-text in the database (not recommended)
   - [tt]webdav_root[/tt] -- set this to the subdirectory the WebDAV addon should run from. On Windows it needs to run from the root, i.e. '/'. However, to do this you would need to map onto a separate domain name. If you change this setting, you'll need to change the redirect in your [tt].htaccess[/tt] file (or non-Apache equivalent)
   - [tt]allow_member_mail_relay[/tt] -- set to '1' if the [tt]form_to_email.php[/tt] script should allow e-mailing to arbitrary members via the [tt]allow_member_mail_relay[/tt] parameter. This potentially allows people to spam your members, so you may want to add some kind of extra security here at a web-server level (i.e. restricting access to the script).

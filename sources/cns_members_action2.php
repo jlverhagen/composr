@@ -1124,9 +1124,13 @@ function cns_edit_member(int $member_id, ?string $username = null, ?string $pass
         $update['m_password_change_code'] = '';
         $update['m_password_change_code_time'] = null;
         switch ($password_compat_scheme) {
+            case 'plain': // Do not allow unless hashing disabled; force to bcrypt for security
+            case 'md5': // Do not allow unless hashing disabled; force to bcrypt for security
+                if (get_value('disable_password_hashing') === '1') {
+                    break;
+                }
+                // no break
             case '': // Old v10 bcrypt
-            case 'plain': // Do not allow; force to bcrypt for security
-            case 'md5': // Do not allow; force to bcrypt for security
                 $update['m_password_compat_scheme'] = 'bcrypt';
                 handle_active_logout__login_providers($member_id);
                 // no break
