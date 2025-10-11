@@ -105,6 +105,8 @@ class Hook_admin_stats_banners extends CMSStatsProvider
                     }
                     $data_buckets['banner_clicks'][$pivot][$pivot_interval][$pivot_value][$banner][$country]++;
                 }
+
+                $this->dump_delta_if_necessary($data_buckets);
             }
 
             $start += $max;

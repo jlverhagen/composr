@@ -155,6 +155,8 @@ class Hook_admin_stats_cns_forum extends CMSStatsProvider
                         $data_buckets['public_topics'][$pivot][$pivot_interval][$pivot_value]++;
                     }
                 }
+
+                $this->dump_delta_if_necessary($data_buckets);
             }
 
             $start += $max;
@@ -188,6 +190,8 @@ class Hook_admin_stats_cns_forum extends CMSStatsProvider
                         $data_buckets['public_posts'][$pivot][$pivot_interval][$pivot_value]++;
                     }
                 }
+
+                $this->dump_delta_if_necessary($data_buckets);
             }
 
             $start += $max;
@@ -215,6 +219,8 @@ class Hook_admin_stats_cns_forum extends CMSStatsProvider
                     }
                     $data_buckets['topic_poll_votes'][$pivot][$pivot_interval][$pivot_value]++;
                 }
+
+                $this->dump_delta_if_necessary($data_buckets);
             }
 
             $start += $max;

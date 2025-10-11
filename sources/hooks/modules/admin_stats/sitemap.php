@@ -87,6 +87,8 @@ class Hook_admin_stats_sitemap extends CMSStatsProvider
                     }
                     $data_buckets['sitemap_growth'][$pivot][$pivot_interval][$pivot_value][$page_link]++;
                 }
+
+                $this->dump_delta_if_necessary($data_buckets);
             }
 
             $start += $max;

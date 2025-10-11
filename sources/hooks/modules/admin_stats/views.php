@@ -629,6 +629,8 @@ class Hook_admin_stats_views extends CMSStatsProvider
                         $data_buckets['countries'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human]++;
                     }
                 }
+
+                $this->dump_delta_if_necessary($data_buckets);
             }
 
             cms_profile_end_for('Hook_admin_stats_views->preprocess_raw_data (group ' . integer_format($start) . ')');
@@ -731,6 +733,8 @@ class Hook_admin_stats_views extends CMSStatsProvider
                     $data_buckets['session_total_views'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$total_views] = 0;
                 }
                 $data_buckets['session_total_views'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$total_views]++;
+
+                $this->dump_delta_if_necessary($data_buckets);
             }
         }
         cms_profile_end_for('Hook_admin_stats_views->preprocess_raw_data (session behaviours)');

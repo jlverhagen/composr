@@ -1146,6 +1146,60 @@ abstract class CMSStatsProvider extends CMSStatsHookBase
 
         return $data;
     }
+
+    /**
+     * Check if the data buckets is getting large, and if so, dump to the database delta and then reset.
+     * This should regularly be used in stats hooks to avoid out of memory errors.
+     *
+     * @param  array $data_buckets Our current data, passed by reference
+     * @param  boolean $force Whether to forcefully dump regardless of size, e.g. we are finished processing data buckets
+     */
+    public function dump_delta_if_necessary(array &$data_buckets, bool $force = false)
+    {
+        // Check memory use
+        require_code('files');
+        $ml = php_return_bytes(ini_get('memory_limit'));
+        $current_memory = memory_get_usage(false);
+        $near_limit = (($ml > 0) && ($current_memory >= ($ml - (1024 * 1024 * 8)))); // within 8 MB of PHP memory limit
+        $large_bucket = (count($data_buckets, COUNT_RECURSIVE) >= 5000);
+
+        $should_dump = ($force || $near_limit || $large_bucket);
+
+        if ($should_dump) {
+            // Dump what we have to the database
+            foreach ($data_buckets as $bucket => $_) {
+                foreach ($_ as $pivot => $__) {
+                    foreach ($__ as $pivot_interval => $___) {
+                        foreach ($___ as $pivot_value => $data) {
+                            $GLOBALS['SITE_DB']->query_insert('stats_preprocessed_delta', [
+                                'p_bucket' => $bucket,
+                                'p_pivot' => $pivot,
+                                'p_pivot_interval' => $pivot_interval,
+                                'p_pivot_value' => $pivot_value,
+                                'p_data' => serialize($data),
+                            ]);
+                        }
+                    }
+                }
+            }
+
+            // Rebuild data structure (drop references to allow memory to be freed)
+            $data_buckets = [];
+            $info = $this->info();
+            if ($info === null) {
+                return;
+            }
+            foreach (array_keys($info) as $bucket) {
+                $data_buckets[$bucket] = [];
+            }
+
+            // Force garbage collection and free engine caches
+            gc_collect_cycles();
+            if (function_exists('gc_mem_caches')) {
+                @gc_mem_caches();
+            }
+        }
+    }
 }
 
 /**
@@ -1853,63 +1907,41 @@ function preprocess_raw_data_for(string $hook_name, int $start_time = 0, ?int $e
         return;
     }
 
+    push_query_limiting(false);
+    raise_php_memory_limit();
+
     cms_profile_start_for('preprocess_raw_data_for::' . $hook_name);
 
     cms_profile_start_for('preprocess_raw_data_for::' . $hook_name . '->preprocess_raw_data');
 
-    // We process day by day to reduce the chance of PHP out of memory issues
-    $_end_time = $start_time + (60 * 60 * 24);
-    if ($_end_time > $end_time) {
-        $_end_time = $end_time;
+    $data_buckets = [];
+    foreach (array_keys($info) as $bucket) {
+        $data_buckets[$bucket] = [];
     }
 
-    do {
-        $data_buckets = [];
-        foreach (array_keys($info) as $bucket) {
-            $data_buckets[$bucket] = [];
-        }
+    // Preprocess new data...
 
-        // Preprocess new data...
+    $extend_time = intval((($end_time - $start_time) / (60 * 60)) + 1.0); // We grant 1 second for every hour to be processed
 
-        $hook_ob->preprocess_raw_data($start_time, $_end_time, $data_buckets);
+    $old = cms_extend_time_limit($extend_time);
 
-        // Save into the delta for later merging...
+    $hook_ob->preprocess_raw_data($start_time, $end_time, $data_buckets);
 
-        foreach ($data_buckets as $bucket => $_) {
-            foreach ($_ as $pivot => $__) {
-                foreach ($__ as $pivot_interval => $___) {
-                    foreach ($___ as $pivot_value => $data) {
-                        $GLOBALS['SITE_DB']->query_insert('stats_preprocessed_delta', [
-                            'p_bucket' => $bucket,
-                            'p_pivot' => $pivot,
-                            'p_pivot_interval' => $pivot_interval,
-                            'p_pivot_value' => $pivot_value,
-                            'p_data' => serialize($data),
-                        ]);
-                    }
-                }
-            }
-        }
+    // Dump final delta data...
 
-        unset($data_buckets);
+    $hook_ob->dump_delta_if_necessary($data_buckets, true);
 
-        // Are we done?
-        if ($_end_time >= $end_time) {
-            break;
-        }
+    unset($data_buckets);
 
-        $start_time = $_end_time + 1;
-        $_end_time = $_end_time + (60 * 60 * 24);
-        if ($_end_time > $end_time) {
-            $_end_time = $end_time;
-        }
-    } while (true);
+    cms_set_time_limit($old);
 
     cms_profile_end_for('preprocess_raw_data_for::' . $hook_name . '->preprocess_raw_data');
 
     // Now for flat data...
 
     cms_profile_start_for('preprocess_raw_data_for::' . $hook_name . '->preprocess_raw_data_flat');
+
+    $old = cms_extend_time_limit(TIME_LIMIT_EXTEND__MODEST);
 
     // First we need to load up any data we already processed for any days within the time range, so anything new will MERGE into that...
 
@@ -1942,9 +1974,129 @@ function preprocess_raw_data_for(string $hook_name, int $start_time = 0, ?int $e
 
     unset($data_buckets_flat);
 
+    cms_set_time_limit($old);
+
     cms_profile_end_for('preprocess_raw_data_for::' . $hook_name . '->preprocess_raw_data_flat');
 
+    pop_query_limiting();
+
     cms_profile_end_for('preprocess_raw_data_for::' . $hook_name);
+}
+
+/**
+ * Process (merge) pending deltas into the official statistics.
+ *
+ * @param  integer $time_limit Only keep processing deltas for this many seconds; will still terminate if memory use starts getting high
+ */
+function stats_merge_deltas(int $time_limit = 15)
+{
+    $start = time();
+
+    cms_profile_start_for('Hook_cron_stats_preprocess_raw_data deltas');
+
+    $old = cms_extend_time_limit($time_limit + 1);
+
+    push_query_limiting(false);
+
+    while ((memory_get_usage() < (1024 * 1024 * 48)) && ((time() - $start) < $time_limit)) { // Time and memory checks
+        // Not ideal to process one at a time, but some rows can be several MBs, so we need to avoid out of memory issues
+        $row = $GLOBALS['SITE_DB']->query_select('stats_preprocessed_delta', ['*'], [], ' ORDER BY id', 1);
+        if (!array_key_exists(0, $row)) { // No more to do
+            break;
+        }
+
+        $stats_row = $GLOBALS['SITE_DB']->query_select('stats_preprocessed', ['*'], [
+            'p_bucket' => $row[0]['p_bucket'],
+            'p_pivot' => $row[0]['p_pivot'],
+            'p_pivot_interval' => $row[0]['p_pivot_interval'],
+            'p_pivot_value' => $row[0]['p_pivot_value'],
+        ], '', 1);
+
+        if (!array_key_exists(0, $stats_row)) {
+            $GLOBALS['SITE_DB']->query_insert('stats_preprocessed', [
+                'p_bucket' => $row[0]['p_bucket'],
+                'p_pivot' => $row[0]['p_pivot'],
+                'p_pivot_interval' => $row[0]['p_pivot_interval'],
+                'p_pivot_value' => $row[0]['p_pivot_value'],
+                'p_data' => $row[0]['p_data'],
+            ]);
+        } else {
+            $row_u = @unserialize($row[0]['p_data']);
+            if ($row_u === false) {
+                warn_exit(do_lang_tempcode('INTERNAL_ERROR'), escape_html('TODO'));
+            }
+
+            $stats_row_u = @unserialize($stats_row[0]['p_data']);
+            if ($stats_row_u === false) {
+                warn_exit(do_lang_tempcode('INTERNAL_ERROR'), escape_html('TODO'));
+            }
+
+            stats_deep_merge($stats_row_u, $row_u);
+
+            $GLOBALS['SITE_DB']->query_update('stats_preprocessed', ['p_data' => serialize($stats_row_u)], [
+                'p_bucket' => $row[0]['p_bucket'],
+                'p_pivot' => $row[0]['p_pivot'],
+                'p_pivot_interval' => $row[0]['p_pivot_interval'],
+                'p_pivot_value' => $row[0]['p_pivot_value'],
+            ]);
+        }
+
+        $GLOBALS['SITE_DB']->query_delete('stats_preprocessed_delta', ['id' => $row[0]['id']]);
+
+        unset($row);
+        unset($row_u);
+        unset($stats_row);
+        unset($stats_row_u);
+        unset($merged_data);
+    }
+
+    cms_set_time_limit($old);
+
+    pop_query_limiting();
+
+    cms_profile_end_for('Hook_cron_stats_preprocess_raw_data preprocess_raw_data_for');
+}
+
+/**
+ * Deep-merge two statistics arrays.
+ *
+ * @param  mixed $base The base statistics, passed and modified by reference
+ * @param  mixed $delta The statistics we are merging into $base
+ */
+function stats_deep_merge(&$base, $delta)
+{
+    // Sanity check: $base and $delta must both be arrays or both not be arrays
+    if (is_array($base) && !is_array($delta)) {
+        warn_exit(do_lang_tempcode('INTERNAL_ERROR'), escape_html('TODO'));
+    }
+    if (!is_array($base) && is_array($delta)) {
+        warn_exit(do_lang_tempcode('INTERNAL_ERROR'), escape_html('TODO'));
+    }
+
+    if (!is_array($delta)) {
+        if (is_numeric($delta)) { // Numbers get added together (counters)
+            $base = $base + $delta;
+        } else { // All other types overwrite previous values
+            $base = $delta;
+        }
+        return;
+    }
+
+    foreach ($delta as $k => $v) {
+        // Does not exist on base? Create it!
+        if (!array_key_exists($k, $base)) {
+            $base[$k] = $v;
+            continue;
+        }
+
+        if (is_array($v)) { // Arrays get merged
+            stats_deep_merge($base[$k], $v);
+        } elseif (is_numeric($v)) { // Numbers get added together (counters)
+            $base[$k] = $base[$k] + $v;
+        } else { // All other types overwrite previous values
+            $base[$k] = $v;
+        }
+    }
 }
 
 /**

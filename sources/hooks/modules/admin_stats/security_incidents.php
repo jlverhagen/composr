@@ -136,6 +136,8 @@ class Hook_admin_stats_security_incidents extends CMSStatsProvider
                         $data_buckets['security_incidents_countries'][$pivot][$pivot_interval][$pivot_value]['failedlogins'][$country]++;
                     }
                 }
+
+                $this->dump_delta_if_necessary($data_buckets);
             }
 
             $start += $max;
@@ -174,6 +176,8 @@ class Hook_admin_stats_security_incidents extends CMSStatsProvider
                         $data_buckets['security_incidents_countries'][$pivot][$pivot_interval][$pivot_value]['hackattacks'][$country]++;
                     }
                 }
+
+                $this->dump_delta_if_necessary($data_buckets);
             }
 
             $start += $max;

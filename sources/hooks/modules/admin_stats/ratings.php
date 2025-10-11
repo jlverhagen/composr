@@ -104,6 +104,8 @@ class Hook_admin_stats_ratings extends CMSStatsProvider
                     }
                     $data_buckets['ratings'][$pivot][$pivot_interval][$pivot_value][$rating_for_type][$rating]++;
                 }
+
+                $this->dump_delta_if_necessary($data_buckets);
             }
 
             $start += $max;

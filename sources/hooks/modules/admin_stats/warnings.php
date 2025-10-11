@@ -139,6 +139,8 @@ class Hook_admin_stats_warnings extends CMSStatsProvider
                     }
                     $data_buckets['recorded_punishments'][$pivot][$pivot_interval][$pivot_value][$country][$explanation]++;
                 }
+
+                $this->dump_delta_if_necessary($data_buckets);
             }
 
             $start += $max;

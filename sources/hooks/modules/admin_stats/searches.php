@@ -109,6 +109,8 @@ class Hook_admin_stats_searches extends CMSStatsProvider
                         $data_buckets['internal_keywords'][$pivot][$pivot_interval][$pivot_value][$keyword]++;
                     }
                 }
+
+                $this->dump_delta_if_necessary($data_buckets);
             }
 
             $start += $max;

@@ -102,6 +102,8 @@ class Hook_admin_stats_support_tickets extends CMSStatsProvider
                     }
                     $data_buckets['support_tickets'][$pivot][$pivot_interval][$pivot_value]++;
                 }
+
+                $this->dump_delta_if_necessary($data_buckets);
             }
 
             $start += $max;

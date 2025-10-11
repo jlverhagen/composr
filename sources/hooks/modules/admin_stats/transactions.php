@@ -117,6 +117,8 @@ class Hook_admin_stats_transactions extends CMSStatsProvider
                     }
                     $data_buckets['transaction_income'][$pivot][$pivot_interval][$pivot_value][$product_name] += $row['t_price'];
                 }
+
+                $this->dump_delta_if_necessary($data_buckets);
             }
 
             $start += $max;
