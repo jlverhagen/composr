@@ -46,7 +46,7 @@ class Hook_search_galleries extends FieldsSearchHook
             }
         }
 
-        if ($GLOBALS['SITE_DB']->query_select_value('galleries', 'COUNT(*)') <= 1) {
+        if ($GLOBALS['SITE_DB']->get_table_count_approx('galleries') <= 1) {
             return null;
         }
 

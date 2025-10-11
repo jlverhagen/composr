@@ -67,14 +67,14 @@ class Module_admin_cns_forums extends Standard_crud_module
 
         if ($support_crosslinks) {
             $ret['_SEARCH:admin_cns_forum_groupings:add'] = ['ADD_FORUM_GROUPING', 'admin/add_one_category'];
-            $ret['_SEARCH:admin_cns_forum_groupings:edit'] = [do_lang_tempcode('menus:ITEMS_HERE', do_lang_tempcode('EDIT_FORUM_GROUPING'), make_string_tempcode(escape_html(integer_format(intval($GLOBALS['FORUM_DB']->query_select_value('f_forum_groupings', 'COUNT(*)')), 0)))), 'admin/edit_one_category'];
+            $ret['_SEARCH:admin_cns_forum_groupings:edit'] = [do_lang_tempcode('menus:ITEMS_HERE', do_lang_tempcode('EDIT_FORUM_GROUPING'), make_string_tempcode(escape_html(integer_format(intval($GLOBALS['FORUM_DB']->get_table_count_approx('f_forum_groupings')), 0)))), 'admin/edit_one_category'];
             if (addon_installed('cns_post_templates')) {
                 require_lang('cns_post_templates');
-                $ret['_SEARCH:admin_cns_post_templates:browse'] = [do_lang_tempcode('menus:ITEMS_HERE', do_lang_tempcode('POST_TEMPLATES'), make_string_tempcode(escape_html(integer_format(intval($GLOBALS['FORUM_DB']->query_select_value('f_post_templates', 'COUNT(*)')), 0)))), 'menu/adminzone/structure/forum/post_templates'];
+                $ret['_SEARCH:admin_cns_post_templates:browse'] = [do_lang_tempcode('menus:ITEMS_HERE', do_lang_tempcode('POST_TEMPLATES'), make_string_tempcode(escape_html(integer_format(intval($GLOBALS['FORUM_DB']->get_table_count_approx('f_post_templates')), 0)))), 'menu/adminzone/structure/forum/post_templates'];
             }
             if (addon_installed('cns_multi_moderations')) {
                 require_lang('cns_multi_moderations');
-                $ret['_SEARCH:admin_cns_multi_moderations:browse'] = [do_lang_tempcode('menus:ITEMS_HERE', do_lang_tempcode('MULTI_MODERATIONS'), make_string_tempcode(escape_html(integer_format(intval($GLOBALS['FORUM_DB']->query_select_value('f_multi_moderations', 'COUNT(*)')), 0)))), 'menu/adminzone/structure/forum/multi_moderations'];
+                $ret['_SEARCH:admin_cns_multi_moderations:browse'] = [do_lang_tempcode('menus:ITEMS_HERE', do_lang_tempcode('MULTI_MODERATIONS'), make_string_tempcode(escape_html(integer_format(intval($GLOBALS['FORUM_DB']->get_table_count_approx('f_multi_moderations')), 0)))), 'menu/adminzone/structure/forum/multi_moderations'];
             }
 
             require_code('fields');
@@ -489,7 +489,7 @@ class Module_admin_cns_forums extends Standard_crud_module
      */
     public function edit() : object
     {
-        $huge = ($GLOBALS['FORUM_DB']->query_select_value('f_forums', 'COUNT(*)') > intval(get_option('general_safety_listing_limit')));
+        $huge = ($GLOBALS['FORUM_DB']->get_table_count_approx('f_forums') > intval(get_option('general_safety_listing_limit')));
 
         $all_forums = [];
         $forums = $this->get_forum_tree(db_get_first_id(), $GLOBALS['FORUM_DB']->query_select_value('f_forums', 'f_name', ['id' => db_get_first_id()]), $all_forums, 0, 1, null, null, $huge);

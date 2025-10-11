@@ -74,7 +74,7 @@ class Hook_sitemap_quiz extends Hook_sitemap_content
         $consider_validation = (($options & SITEMAP_GEN_CONSIDER_VALIDATION) != 0);
 
         if ($child_cutoff !== null) {
-            $count = $GLOBALS['SITE_DB']->query_select_value('quizzes', 'COUNT(*)', $consider_validation ? ['q_validated' => 1] : []);
+            $count = $GLOBALS['SITE_DB']->query_select_value('quizzes', 'COUNT(*)', $consider_validation ? ['q_validated' => 1] : [], ' AND 1=1');
             if ($count > $child_cutoff) {
                 return $nodes;
             }

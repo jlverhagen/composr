@@ -38,7 +38,7 @@ class Hook_stats_calendar
 
         $bits = new Tempcode();
         if (get_option('calendar_show_stats_count_events') == '1') {
-            $num_events = $GLOBALS['SITE_DB']->query_select_value('calendar_events', 'COUNT(*)');
+            $num_events = $GLOBALS['SITE_DB']->get_table_count_approx('calendar_events');
 
             $bits->attach(do_template('BLOCK_SIDE_STATS_SUBLINE', [
                 '_GUID' => 'bf4ae0b77a8ee8bef42adb8d7beb3884',

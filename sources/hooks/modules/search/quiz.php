@@ -46,7 +46,7 @@ class Hook_search_quiz extends FieldsSearchHook
             }
         }
 
-        if ($GLOBALS['SITE_DB']->query_select_value('quizzes', 'COUNT(*)') == 0) {
+        if ($GLOBALS['SITE_DB']->get_table_count_approx('quizzes') == 0) {
             return null;
         }
 

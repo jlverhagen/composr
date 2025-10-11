@@ -46,7 +46,7 @@ class Hook_search_images extends FieldsSearchHook
             }
         }
 
-        if ($GLOBALS['SITE_DB']->query_select_value('images', 'COUNT(*)') == 0) {
+        if ($GLOBALS['SITE_DB']->get_table_count_approx('images') == 0) {
             return null;
         }
 

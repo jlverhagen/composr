@@ -57,7 +57,7 @@ class Module_leader_board
             return null;
         }
 
-        if ($GLOBALS['SITE_DB']->query_select_value('leader_board', 'COUNT(*)') == 0) {
+        if ($GLOBALS['SITE_DB']->get_table_count_approx('leader_board') == 0) {
             return [];
         }
         return [

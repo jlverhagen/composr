@@ -35,7 +35,7 @@ class Hook_commandr_fs_forum_groupings extends Resource_fs_base
      */
     public function get_resources_count(string $resource_type) : int
     {
-        return $GLOBALS['FORUM_DB']->query_select_value('f_forum_groupings', 'COUNT(*)');
+        return $GLOBALS['FORUM_DB']->get_table_count_approx('f_forum_groupings');
     }
 
     /**

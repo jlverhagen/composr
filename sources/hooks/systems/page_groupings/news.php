@@ -36,7 +36,7 @@ class Hook_page_groupings_news
             return [];
         }
 
-        $cnt = intval($GLOBALS['SITE_DB']->query_select_value('news', 'COUNT(*)'));
+        $cnt = intval($GLOBALS['SITE_DB']->get_table_count_approx('news'));
         $cnt_blogs = $cnt - intval($GLOBALS['SITE_DB']->query_select_value('news n LEFT JOIN ' . get_table_prefix() . 'news_categories c ON c.id=n.news_category', 'COUNT(*)', ['nc_owner' => null]));
 
         return [

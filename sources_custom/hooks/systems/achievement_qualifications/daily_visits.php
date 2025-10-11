@@ -57,7 +57,7 @@ class Hook_achievement_qualifications_daily_visits
 
         $count_required = isset($params['count']) ? intval($params['count']) : 30;
 
-        $extra_where = '';
+        $extra_where = ' AND 1=1';
         if ($last_time !== null) {
             $extra_where .= ' AND d_date_and_time>' . strval($last_time);
         }

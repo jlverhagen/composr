@@ -160,7 +160,7 @@ class Module_admin_banners
         $end = ' ORDER BY ' . $sql_sort;
 
         $rows = $GLOBALS['SITE_DB']->query_select('banners r', ['*'], $where, $filtercode_end . $end, $max, $start);
-        $max_rows = $GLOBALS['SITE_DB']->query_select_value('banners r', 'COUNT(*)', $where, $filtercode_end);
+        $max_rows = $GLOBALS['SITE_DB']->query_select_value('banners r', 'COUNT(*)', $where, ' AND 1=1' . $filtercode_end);
 
         // Construct the table
         $result_entries = new Tempcode();

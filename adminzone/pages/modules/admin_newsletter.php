@@ -239,7 +239,7 @@ class Module_admin_newsletter extends Standard_crud_module
             set_option('newsletter_paused', strval($set_pause));
         }
 
-        $num_in_queue = $GLOBALS['SITE_DB']->query_select_value('newsletter_drip_send', 'COUNT(*)');
+        $num_in_queue = $GLOBALS['SITE_DB']->get_table_count_approx('newsletter_drip_send');
 
         $minutes_between_sends = intval(get_option('minutes_between_sends'));
         $mails_per_send = intval(get_option('mails_per_send'));
@@ -925,7 +925,7 @@ class Module_admin_newsletter extends Standard_crud_module
         $hidden = new Tempcode();
         $hidden->attach(form_input_hidden('lang', $lang));
 
-        $num_in_queue = $GLOBALS['SITE_DB']->query_select_value('newsletter_drip_send', 'COUNT(*)');
+        $num_in_queue = $GLOBALS['SITE_DB']->get_table_count_approx('newsletter_drip_send');
         if ($num_in_queue > 0) {
             attach_message(do_lang_tempcode('ALREADY_HAS_MAIL_IN_QUEUE'), 'notice');
         }

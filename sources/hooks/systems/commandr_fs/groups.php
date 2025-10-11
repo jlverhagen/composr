@@ -38,10 +38,10 @@ class Hook_commandr_fs_groups extends Resource_fs_base
     {
         switch ($resource_type) {
             case 'member':
-                return $GLOBALS['FORUM_DB']->query_select_value('f_members', 'COUNT(*)');
+                return $GLOBALS['FORUM_DB']->get_table_count_approx('f_members');
 
             case 'group':
-                return $GLOBALS['FORUM_DB']->query_select_value('f_groups', 'COUNT(*)');
+                return $GLOBALS['FORUM_DB']->get_table_count_approx('f_groups');
         }
         return 0;
     }

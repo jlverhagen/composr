@@ -996,7 +996,7 @@ class Module_admin_permissions
         $permission_module = is_array($info['permission_module']) ? $info['permission_module'][0] : $info['permission_module'];
         $save_id_stub = get_module_zone($info['cms_page']) . ':' . $permission_module . ':';
 
-        $total = $info['db']->query_select_value($info['table'], 'COUNT(*)');
+        $total = $info['db']->get_table_count_approx($info['table']);
         if ($total > $max) {
             return [];
         }

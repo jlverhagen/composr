@@ -72,7 +72,7 @@ class Hook_achievement_qualifications_friends
         // Build query
         $count_done = 0;
         $where_map = [];
-        $extra_where = '';
+        $extra_where = ' AND 1=1';
         if ($days !== null) {
             $extra_where .= ' AND date_and_time>=' . strval(time() - ($days * 24 * 60 * 60));
         } elseif ($last_time !== null) {

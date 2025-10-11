@@ -170,7 +170,7 @@ function cns_get_all_subordinate_forums(?int $forum_id, ?string $create_or_list 
         static $all_forums_struct_cache = null;
         if ($all_forums_struct_cache === null) {
             $max_forum_detail = intval(get_option('max_forum_detail'));
-            $huge_forums = $GLOBALS['FORUM_DB']->query_select_value('f_forums', 'COUNT(*)') > $max_forum_detail;
+            $huge_forums = $GLOBALS['FORUM_DB']->get_table_count_approx('f_forums') > $max_forum_detail;
             if ($huge_forums) {
                 $max_forum_inspect = intval(get_option('max_forum_inspect'));
 

@@ -128,13 +128,13 @@ $SITE_INFO[\'table_prefix\'] = \'' . $table_prefix . '\';
         // Now determine errors in expected row counts
         $db = new DatabaseConnector($database, get_db_site_host(), $username, $password, $table_prefix, false, $db_driver);
 
-        $has_db_meta = $db->query_select_value_if_there('db_meta', 'COUNT(*)');
+        $has_db_meta = !$db->table_exists('db_meta', true);
         if ($has_db_meta === null) {
             $this->assertTrue(false, 'Failed to restore database; db_meta is missing');
             return;
         }
 
-        $has_db_meta_indices = $db->query_select_value_if_there('db_meta_indices', 'COUNT(*)');
+        $has_db_meta_indices = !$db->table_exists('db_meta_indices', true);
         if ($has_db_meta_indices === null) {
             $this->assertTrue(false, 'Failed to restore database; db_meta_indices is missing');
             return;
@@ -151,8 +151,8 @@ $SITE_INFO[\'table_prefix\'] = \'' . $table_prefix . '\';
 
             $_db = get_db_for($table);
 
-            $count_a = $_db->query_select_value($table, 'COUNT(*)');
-            $count_b = $db->query_select_value_if_there($table, 'COUNT(*)');
+            $count_a = $_db->query_select_value($table, 'COUNT(*)', [], ' AND 1=1'); // HACK: 1=1 to prevent errors about doing simple COUNT queries; we want exact count
+            $count_b = $db->query_select_value_if_there($table, 'COUNT(*)', [], ' AND 1=1'); // HACK: 1=1 to prevent errors about doing simple COUNT queries; we want exact count
 
             if ($count_b === null) {
                 $this->assertTrue(false, 'Failed to restore table ' . $table);

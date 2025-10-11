@@ -46,7 +46,7 @@ class Hook_search_catalogue_entries extends FieldsSearchHook
             }
         }
 
-        if ($GLOBALS['SITE_DB']->query_select_value('catalogue_entries', 'COUNT(*)') == 0) {
+        if ($GLOBALS['SITE_DB']->get_table_count_approx('catalogue_entries') == 0) {
             return null;
         }
 
@@ -380,7 +380,7 @@ class Hook_search_catalogue_entries extends FieldsSearchHook
 
                 $rows = get_search_rows('catalogue_entry', 'id', $search_query, $content_where, $where_clause . $where_clause_2, $only_search_meta, $only_titles, $max, $start, $remapped_orderer, $direction, $table, 'r.*,r.id AS r_id,r.cc_id AS r_cc_id,' . $title_field . ' AS b_cv_value' . $extra_select, $trans_fields, $nontrans_fields);
             } else {
-                if (multi_lang_content() && $GLOBALS['SITE_DB']->query_select_value('translate', 'COUNT(*)') > 10000) { // Big sites can't do indiscriminate catalogue translatable searches for performance reasons
+                if (multi_lang_content() && $GLOBALS['SITE_DB']->get_table_count_approx('translate') > 10000) { // Big sites can't do indiscriminate catalogue translatable searches for performance reasons
                     $trans_fields = [];
                     $join = ' JOIN ' . get_table_prefix() . 'catalogue_efv_short c ON r.id=c.ce_id AND f.id=c.cf_id';
                     $extra_select = '';

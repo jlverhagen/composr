@@ -72,7 +72,7 @@ class Hook_achievement_qualifications_ecom_transactions
 
         // Build query
         $where_map = ['t_member_id' => $member_id, 't_status' => 'Completed'];
-        $extra_where = '';
+        $extra_where = ' AND 1=1';
         if (($types !== null) && (count($types) > 0)) {
             $stringified_types = [];
             foreach ($types as $type) {

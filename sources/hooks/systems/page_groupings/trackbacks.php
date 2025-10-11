@@ -32,7 +32,7 @@ class Hook_page_groupings_trackbacks
      */
     public function run(?int $member_id = null, bool $extensive_docs = false) : array
     {
-        if ((get_option('is_on_trackbacks') == '0') || (intval($GLOBALS['SITE_DB']->query_select_value('trackbacks', 'COUNT(*)')) == 0)) {
+        if ((get_option('is_on_trackbacks') == '0') || (intval($GLOBALS['SITE_DB']->get_table_count_approx('trackbacks')) == 0)) {
             return [];
         }
 

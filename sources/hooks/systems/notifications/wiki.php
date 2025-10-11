@@ -50,7 +50,7 @@ class Hook_notification_wiki extends Hook_Notification
 
         require_code('wiki');
 
-        $total = $GLOBALS['SITE_DB']->query_select_value('wiki_pages', 'COUNT(*)');
+        $total = $GLOBALS['SITE_DB']->get_table_count_approx('wiki_pages');
         if ($total > intval(get_option('general_safety_listing_limit'))/*reasonable limit*/) {
             return parent::create_category_tree($notification_code, $id); // Too many, so just allow removing UI
         }

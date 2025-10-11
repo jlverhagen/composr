@@ -222,7 +222,7 @@ function namelike_script()
         } else {
             $names = [];
             if ((addon_installed('authors')) && ($special == 'author')) {
-                $num_authors = $GLOBALS['SITE_DB']->query_select_value('authors', 'COUNT(*)');
+                $num_authors = $GLOBALS['SITE_DB']->get_table_count_approx('authors');
                 $like = ($num_authors < 1000) ? db_encode_like('%' . str_replace('_', '\_', $id) . '%') : db_encode_like(str_replace('_', '\_', $id) . '%'); // performance issue
                 $rows = $GLOBALS['SITE_DB']->query('SELECT author FROM ' . $GLOBALS['SITE_DB']->get_table_prefix() . 'authors WHERE author LIKE \'' . $like . '\' ORDER BY author', 15);
                 $names = collapse_1d_complexity('author', $rows);

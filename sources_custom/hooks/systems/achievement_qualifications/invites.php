@@ -72,7 +72,7 @@ class Hook_achievement_qualifications_invites
 
         // Build query
         $where_map = ['i_invite_member' => $member_id];
-        $extra_where = '';
+        $extra_where = ' AND 1=1';
         if ($taken_only) {
             $where_map['i_taken'] = 1;
         }

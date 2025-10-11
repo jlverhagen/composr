@@ -83,7 +83,7 @@ function cns_list_multi_moderations(?int $forum_id) : array
         return $out;
     }
 
-    $lots_of_forums = $GLOBALS['FORUM_DB']->query_select_value('f_forums', 'COUNT(*)') > 200;
+    $lots_of_forums = $GLOBALS['FORUM_DB']->get_table_count_approx('f_forums') > 200;
     if (!$lots_of_forums) {
         $all_forums = collapse_2d_complexity('id', 'f_parent_forum_id', $GLOBALS['FORUM_DB']->query_select('f_forums', ['id', 'f_parent_forum_id']));
     }

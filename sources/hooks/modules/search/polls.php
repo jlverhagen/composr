@@ -46,7 +46,7 @@ class Hook_search_polls extends FieldsSearchHook
             }
         }
 
-        if ($GLOBALS['SITE_DB']->query_select_value('poll', 'COUNT(*)') == 0) {
+        if ($GLOBALS['SITE_DB']->get_table_count_approx('poll') == 0) {
             return null;
         }
 

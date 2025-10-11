@@ -748,7 +748,7 @@ function cns_get_member_fields_settings(bool $mini_mode = true, string $special_
         }
 
         // Prepare list of usergroups, if maybe we are gonna let (a) usergroup-change field(s)
-        $group_count = $GLOBALS['FORUM_DB']->query_select_value('f_groups', 'COUNT(*)');
+        $group_count = $GLOBALS['FORUM_DB']->get_table_count_approx('f_groups');
         $rows = $GLOBALS['FORUM_DB']->query_select('f_groups', ['id', 'g_name', 'g_hidden', 'g_open_membership', 'g_order'], ($group_count > 200) ? ['g_is_private_club' => 0] : [], 'ORDER BY g_order,' . $GLOBALS['FORUM_DB']->translate_field_ref('g_name'));
         $_groups = new Tempcode();
         $current_primary_group = null;

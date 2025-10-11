@@ -85,7 +85,7 @@ class Hook_achievement_qualifications_escrows
 
         // Build query
         $where_map = ['status' => ESCROW_STATUS_COMPLETED];
-        $extra_where = '';
+        $extra_where = ' AND 1=1';
         $select_value = 'COUNT(*)';
         if ($as_points) {
             $select_value = 'SUM(amount)';

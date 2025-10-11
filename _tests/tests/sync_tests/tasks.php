@@ -41,7 +41,7 @@ class tasks_test_set extends cms_test_case
             return;
         }
 
-        if ($GLOBALS['FORUM_DB']->query_select_value('f_members', 'COUNT(*)') >= 100) {
+        if ($GLOBALS['FORUM_DB']->get_table_count_approx('f_members') >= 100) {
             $this->assertTrue(false, 'Test will not work on databases with a lot of members');
             return;
         }
@@ -111,7 +111,7 @@ class tasks_test_set extends cms_test_case
             return;
         }
 
-        if ($GLOBALS['SITE_DB']->query_select_value('calendar_events', 'COUNT(*)') >= 250) {
+        if ($GLOBALS['SITE_DB']->get_table_count_approx('calendar_events') >= 250) {
             $this->assertTrue(false, 'Test will not work on databases with a lot of calendar events');
             return;
         }
@@ -202,9 +202,9 @@ class tasks_test_set extends cms_test_case
         delete_calendar_event($complex_event_id);
         delete_calendar_event($simple_event_id);
 
-        $num_events_before = $GLOBALS['SITE_DB']->query_select_value('calendar_events', 'COUNT(*)');
+        $num_events_before = $GLOBALS['SITE_DB']->query_select_value('calendar_events', 'COUNT(*)', [], ' AND 1=1'); // HACK: need exact count
         ical_import($temp_path);
-        $num_events_after = $GLOBALS['SITE_DB']->query_select_value('calendar_events', 'COUNT(*)');
+        $num_events_after = $GLOBALS['SITE_DB']->query_select_value('calendar_events', 'COUNT(*)', [], ' AND 1=1'); // HACK: need exact count
         $this->assertTrue($num_events_after > $num_events_before, 'Did not appear to import events (' . integer_format($num_events_after) . ' after, ' . integer_format($num_events_before) . ' before)');
 
         $_last_rows_after = $GLOBALS['SITE_DB']->query_select('calendar_events', ['*'], [], 'ORDER BY e_add_date DESC,id DESC', 2);
@@ -243,7 +243,7 @@ class tasks_test_set extends cms_test_case
             return;
         }
 
-        if ($GLOBALS['FORUM_DB']->query_select_value('f_members', 'COUNT(*)') > 100) {
+        if ($GLOBALS['FORUM_DB']->get_table_count_approx('f_members') > 100) {
             $this->assertTrue(false, 'Test will not work on databases with a lot of users');
         }
 

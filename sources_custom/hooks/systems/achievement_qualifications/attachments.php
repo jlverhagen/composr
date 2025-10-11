@@ -66,7 +66,7 @@ class Hook_achievement_qualifications_attachments
 
         // Build query
         $where_map = ['a_member_id' => $member_id];
-        $extra_where = '';
+        $extra_where = ' AND 1=1';
         if ($file_size !== null) {
             $extra_where .= ' AND a_file_size>=' . strval($file_size);
         }

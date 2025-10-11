@@ -33,7 +33,7 @@ class sitemap_test_set extends cms_test_case
             warn_exit('This test should be run on the command line: php _tests/index.php cli_tests/sitemap');
         }
 
-        if ($GLOBALS['SITE_DB']->query_select_value('sitemap_cache', 'COUNT(*)') > 3000) {
+        if ($GLOBALS['SITE_DB']->get_table_count_approx('sitemap_cache') > 3000) {
             $this->assertTrue(false, 'Test will not work on databases with a huge sitemap');
             return;
         }

@@ -427,7 +427,7 @@ class Module_cms_galleries extends Standard_crud_module
         // Orphaned upload form
         // To choose to batch import what already exists in gallery directory, but is orphaned
         $orphaned_content = new Tempcode();
-        if ((has_actual_page_access(get_member(), 'admin_cleanup')) && ($GLOBALS['SITE_DB']->query_select_value('images', 'COUNT(*)') + $GLOBALS['SITE_DB']->query_select_value('videos', 'COUNT(*)') < 4000)) {
+        if ((has_actual_page_access(get_member(), 'admin_cleanup')) && ($GLOBALS['SITE_DB']->get_table_count_approx('images') + $GLOBALS['SITE_DB']->get_table_count_approx('videos') < 4000)) {
             require_code('files');
             $there = [];
             $_dir = opendir(get_custom_file_base() . '/uploads/galleries/');
@@ -746,7 +746,7 @@ class Module_cms_galleries extends Standard_crud_module
      */
     public function create_selection_list_ajax_tree() : array
     {
-        if ($GLOBALS['SITE_DB']->query_select_value('images', 'COUNT(*)') == 0) {
+        if ($GLOBALS['SITE_DB']->get_table_count_approx('images') == 0) {
             inform_exit(do_lang_tempcode('NO_ENTRIES', 'image'));
         }
 
@@ -1335,7 +1335,7 @@ class Module_cms_galleries_alt extends Standard_crud_module
      */
     public function create_selection_list_ajax_tree() : array
     {
-        if ($GLOBALS['SITE_DB']->query_select_value('videos', 'COUNT(*)') == 0) {
+        if ($GLOBALS['SITE_DB']->get_table_count_approx('videos') == 0) {
             inform_exit(do_lang_tempcode('NO_ENTRIES', 'video'));
         }
 

@@ -46,7 +46,7 @@ class Hook_search_wiki_posts extends FieldsSearchHook
             }
         }
 
-        if ($GLOBALS['SITE_DB']->query_select_value('wiki_posts', 'COUNT(*)') == 0) {
+        if ($GLOBALS['SITE_DB']->get_table_count_approx('wiki_posts') == 0) {
             return null;
         }
 

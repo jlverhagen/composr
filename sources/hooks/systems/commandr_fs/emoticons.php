@@ -35,7 +35,7 @@ class Hook_commandr_fs_emoticons extends Resource_fs_base
      */
     public function get_resources_count(string $resource_type) : int
     {
-        return $GLOBALS['FORUM_DB']->query_select_value('f_emoticons', 'COUNT(*)');
+        return $GLOBALS['FORUM_DB']->get_table_count_approx('f_emoticons');
     }
 
     /**

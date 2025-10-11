@@ -51,7 +51,7 @@ class Hook_ecommerce_classifieds
     {
         require_lang('classifieds');
 
-        $num_products_for_sale = $GLOBALS['SITE_DB']->query_select_value('catalogue_entries e JOIN ' . get_table_prefix() . 'ecom_classifieds_prices c ON c.c_catalogue_name=e.c_name', 'COUNT(*)');
+        $num_products_for_sale = $GLOBALS['SITE_DB']->query_select_value('catalogue_entries e JOIN ' . get_table_prefix() . 'ecom_classifieds_prices c ON c.c_catalogue_name=e.c_name', 'COUNT(*)', [], ' AND 1=1');
         if ($num_products_for_sale == 0) {
             return [];
         }

@@ -25,7 +25,7 @@ class notifications_test_set extends cms_test_case
             return;
         }
 
-        if ($GLOBALS['FORUM_DB']->query_select_value('f_members', 'COUNT(*)') > 300) {
+        if ($GLOBALS['FORUM_DB']->get_table_count_approx('f_members') > 300) {
             $this->assertTrue(false, 'Test will not work on databases with a lot of users');
             return;
         }

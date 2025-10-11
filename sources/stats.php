@@ -1998,7 +1998,12 @@ function stats_merge_deltas(int $time_limit = 15)
 
     push_query_limiting(false);
 
-    while ((memory_get_usage() < (1024 * 1024 * 48)) && ((time() - $start) < $time_limit)) { // Time and memory checks
+    require_code('files');
+    $ml = php_return_bytes(ini_get('memory_limit'));
+    $current_memory = memory_get_usage(false);
+    $near_limit = (($ml > 0) && ($current_memory >= ($ml - (1024 * 1024 * 8)))); // within 8 MB of PHP memory limit
+
+    while ((!$near_limit) && ((time() - $start) < $time_limit)) { // Time and memory checks
         // Not ideal to process one at a time, but some rows can be several MBs, so we need to avoid out of memory issues
         $row = $GLOBALS['SITE_DB']->query_select('stats_preprocessed_delta', ['*'], [], ' ORDER BY id', 1);
         if (!array_key_exists(0, $row)) { // No more to do
@@ -2048,6 +2053,9 @@ function stats_merge_deltas(int $time_limit = 15)
         unset($stats_row);
         unset($stats_row_u);
         unset($merged_data);
+
+        $current_memory = memory_get_usage(false);
+        $near_limit = (($ml > 0) && ($current_memory >= ($ml - (1024 * 1024 * 8)))); // within 8 MB of PHP memory limit
     }
 
     cms_set_time_limit($old);

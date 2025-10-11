@@ -251,7 +251,7 @@ class Module_admin_security
         $member_id = post_param_integer('member_id', null);
         $map = ($member_id !== null) ? ['failed_account' => $GLOBALS['FORUM_DRIVER']->get_username($member_id, false, USERNAME_DEFAULT_NULL)] : [];
 
-        $max_rows = $GLOBALS['SITE_DB']->query_select_value('failedlogins', 'COUNT(*)', $map);
+        $max_rows = $GLOBALS['SITE_DB']->get_table_count_approx('failedlogins', $map);
 
         $rows = $GLOBALS['SITE_DB']->query_select('failedlogins', ['*'], $map, 'ORDER BY ' . $_sortable . ' ' . $sort_order, $max, $start);
 

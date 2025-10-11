@@ -38,10 +38,10 @@ class Hook_commandr_fs_downloads extends Resource_fs_base
     {
         switch ($resource_type) {
             case 'download':
-                return $GLOBALS['SITE_DB']->query_select_value('download_downloads', 'COUNT(*)');
+                return $GLOBALS['SITE_DB']->get_table_count_approx('download_downloads');
 
             case 'download_category':
-                return $GLOBALS['SITE_DB']->query_select_value('download_categories', 'COUNT(*)');
+                return $GLOBALS['SITE_DB']->get_table_count_approx('download_categories');
         }
         return 0;
     }

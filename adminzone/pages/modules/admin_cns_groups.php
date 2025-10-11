@@ -479,7 +479,7 @@ class Module_admin_cns_groups extends Standard_crud_module
     {
         $fields = new Tempcode();
         $order = (get_param_integer('keep_id_order', 0) == 0) ? 'g_promotion_threshold,id' : 'id';
-        $group_count = $GLOBALS['FORUM_DB']->query_select_value('f_groups', 'COUNT(*)');
+        $group_count = $GLOBALS['FORUM_DB']->get_table_count_approx('f_groups');
         $rows = $GLOBALS['FORUM_DB']->query_select('f_groups', ['id', 'g_order', 'g_name', 'g_promotion_target_group'], ($group_count > 300) ? ['g_is_private_club' => 0] : [], 'ORDER BY ' . $order);
         require_code('cns_groups2');
         foreach ($rows as $row) {
@@ -536,7 +536,7 @@ class Module_admin_cns_groups extends Standard_crud_module
         $default_group = get_first_default_group();
 
         $groups = new Tempcode();
-        $group_count = $GLOBALS['FORUM_DB']->query_select_value('f_groups', 'COUNT(*)');
+        $group_count = $GLOBALS['FORUM_DB']->get_table_count_approx('f_groups');
         if (($myrow['g_is_private_club'] == 1) && ($group_count > 300)) {
             $delete_fields = form_input_integer(do_lang_tempcode('NEW_USERGROUP'), do_lang_tempcode('DESCRIPTION_NEW_USERGROUP'), 'new_usergroup', null, false);
         } else {

@@ -46,7 +46,7 @@ class Hook_search_wiki_pages extends FieldsSearchHook
             }
         }
 
-        if ($GLOBALS['SITE_DB']->query_select_value('wiki_pages', 'COUNT(*)') <= 1) {
+        if ($GLOBALS['SITE_DB']->get_table_count_approx('wiki_pages') <= 1) {
             return null;
         }
 

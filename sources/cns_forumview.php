@@ -782,7 +782,7 @@ function cns_get_forum_view(int $forum_id, array $forum_info, int $start = 0, in
     // Find our subforums first
     $sort = $forum_info['f_order_sub_alpha'] ? 'f_name' : 'f_position';
     $max_forum_detail = intval(get_option('max_forum_detail'));
-    $huge_forums = $GLOBALS['FORUM_DB']->query_select_value('f_forums', 'COUNT(*)') > $max_forum_detail;
+    $huge_forums = $GLOBALS['FORUM_DB']->get_table_count_approx('f_forums') > $max_forum_detail;
     if ($huge_forums) {
         $max_forum_inspect = intval(get_option('max_forum_inspect'));
 

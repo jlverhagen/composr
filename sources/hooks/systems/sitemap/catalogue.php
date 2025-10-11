@@ -111,7 +111,7 @@ class Hook_sitemap_catalogue extends Hook_sitemap_content
         }
 
         if ($child_cutoff !== null) {
-            $count = $GLOBALS['SITE_DB']->query_select_value('catalogues', 'COUNT(*)', $map);
+            $count = $GLOBALS['SITE_DB']->query_select_value('catalogues', 'COUNT(*)', $map, ' AND 1=1');
             if ($count > $child_cutoff) {
                 return $nodes;
             }

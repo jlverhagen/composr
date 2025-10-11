@@ -70,7 +70,7 @@ class Hook_achievement_qualifications_chat_messages
 
         // Build query
         $where_map = ['member_id' => $member_id, 'system_message' => 0];
-        $extra_where = '';
+        $extra_where = ' AND 1=1';
         if ($rooms !== null) {
             $extra_where .= ' AND room_id IN (' . implode(',', $rooms) . ')';
         }

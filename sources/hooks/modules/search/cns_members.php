@@ -123,7 +123,7 @@ class Hook_search_cns_members extends FieldsSearchHook
             $members_groups = $GLOBALS['CNS_DRIVER']->get_members_groups(get_member());
             $where .= ' AND (g_hidden=0 OR g.id IN (' . implode(',', array_map('strval', $members_groups)) . '))';
         }
-        $group_count = $GLOBALS['FORUM_DB']->query_select_value('f_groups g', 'COUNT(*)');
+        $group_count = $GLOBALS['FORUM_DB']->get_table_count_approx('f_groups g');
         if ($group_count > 300) {
             $where .= ' AND g_is_private_club=0';
         }

@@ -61,7 +61,7 @@ class Hook_symbol_CART_LINK
         } else {
             $where['ordering_member'] = get_member();
         }
-        $item_count = $GLOBALS['SITE_DB']->query_select_value('shopping_cart', 'COUNT(*)', $where);
+        $item_count = $GLOBALS['SITE_DB']->query_select_value('shopping_cart', 'COUNT(*)', $where, ' AND 1=1');
 
         if ($item_count > 0) {
             $title = do_lang_tempcode('BUTTON_CART_ITEMS', strval($item_count));

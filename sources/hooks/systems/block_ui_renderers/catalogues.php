@@ -94,7 +94,7 @@ class Hook_block_ui_renderers_catalogues
         }
 
         if ((($default == '') || (is_numeric($default))) && ($parameter == 'param') && (in_array($block, ['main_cc_embed']))) {
-            $num_categories = $GLOBALS['SITE_DB']->query_select_value('catalogue_categories', 'COUNT(*)');
+            $num_categories = $GLOBALS['SITE_DB']->get_table_count_approx('catalogue_categories');
             $num_categories_top = $GLOBALS['SITE_DB']->query_select_value('catalogue_categories', 'COUNT(*)', ['cc_parent_id' => null]);
             if (($num_categories_top < 300) && ((!$has_default) || ($num_categories < 300))) { // catalogue category
                 $list = new Tempcode();

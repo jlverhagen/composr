@@ -73,7 +73,7 @@ class Hook_cron_stats_preprocess_raw_data
         disable_php_memory_limit();
 
         // Determine if we are in need of processing deltas; these are done first
-        $pending_deltas = $GLOBALS['SITE_DB']->query_select_value('stats_preprocessed_delta', 'COUNT(*)');
+        $pending_deltas = $GLOBALS['SITE_DB']->get_table_count_approx('stats_preprocessed_delta');
         $doing_deltas = ($pending_deltas > 0);
 
         if ($doing_deltas) {

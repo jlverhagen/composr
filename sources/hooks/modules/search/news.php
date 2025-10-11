@@ -46,7 +46,7 @@ class Hook_search_news extends FieldsSearchHook
             }
         }
 
-        if ($GLOBALS['SITE_DB']->query_select_value('news', 'COUNT(*)') == 0) {
+        if ($GLOBALS['SITE_DB']->get_table_count_approx('news') == 0) {
             return null;
         }
 

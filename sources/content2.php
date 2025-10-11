@@ -119,7 +119,7 @@ function get_order_field(string $entry_type, ?string $category_type, ?int $curre
     }
 
     if ($total === null) {
-        $total = $info['db']->query_select_value($info['table'], 'COUNT(*)');
+        $total = $info['db']->get_table_count_approx($info['table']);
     }
 
     if ($total > $max) {

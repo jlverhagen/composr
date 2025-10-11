@@ -35,7 +35,7 @@ class Hook_commandr_fs_newsletter_subscribers extends Resource_fs_base
      */
     public function get_resources_count(string $resource_type) : int
     {
-        return $GLOBALS['SITE_DB']->query_select_value('newsletter_subscribers', 'COUNT(*)');
+        return $GLOBALS['SITE_DB']->get_table_count_approx('newsletter_subscribers');
     }
 
     /**

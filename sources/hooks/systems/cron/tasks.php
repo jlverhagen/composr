@@ -51,7 +51,7 @@ class Hook_cron_tasks
 
         return [
             'label' => 'Run queued background tasks',
-            'num_queued' => $calculate_num_queued ? $GLOBALS['SITE_DB']->query_select_value('task_queue', 'COUNT(*)') : null,
+            'num_queued' => $calculate_num_queued ? $GLOBALS['SITE_DB']->get_table_count_approx('task_queue') : null,
             'minutes_between_runs' => 0,
             'enabled_by_default' => true,
         ];
@@ -64,8 +64,8 @@ class Hook_cron_tasks
      */
     public function queued_details_tooltip() : object
     {
-        $max_rows = $GLOBALS['SITE_DB']->query_select_value('task_queue', 'COUNT(*)', []);
-        if ($max_rows >= 300) {
+        $max_rows = $GLOBALS['SITE_DB']->get_table_count_approx('task_queue');
+        if ($max_rows >= 100) {
             require_lang('tasks');
             return do_lang_tempcode('TOO_MANY_TASKS');
         }

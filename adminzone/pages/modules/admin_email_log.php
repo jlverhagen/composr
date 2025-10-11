@@ -225,7 +225,7 @@ class Module_admin_email_log
                 escape_html($row['m_subject']),
             ], false));
         }
-        $max_rows = $GLOBALS['SITE_DB']->query_select_value('logged_mail_messages', 'COUNT(*)');
+        $max_rows = $GLOBALS['SITE_DB']->get_table_count_approx('logged_mail_messages');
         $results_table = results_table(do_lang_tempcode('EMAIL_LOG'), $start, 'start', $max, 'max', $max_rows, $header_row, $result_entries, $sortables, $sortable, $sort_order, 'sort', new Tempcode());
 
         $mass_delete_url = build_url(['page' => '_SELF', 'type' => 'mass_delete'], '_SELF');

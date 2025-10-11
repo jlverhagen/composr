@@ -518,7 +518,7 @@ class Module_admin_quiz
         if ($member_id !== null) {
             $where['q_member'] = $member_id;
         }
-        $max_rows = $GLOBALS['SITE_DB']->query_select_value('quiz_entries', 'COUNT(*)', $where);
+        $max_rows = $GLOBALS['SITE_DB']->get_table_count_approx('quiz_entries', $where);
         $rows = $GLOBALS['SITE_DB']->query_select('quiz_entries e JOIN ' . get_table_prefix() . 'quizzes q ON q.id=e.q_quiz_id', ['e.id AS e_id', 'e.q_time', 'e.q_member', 'e.q_results', 'q.q_name', 'q.q_type'], $where, 'ORDER BY ' . str_replace('r.', '', $sql_sort), $max, $start);
         if (empty($rows)) {
             return inform_screen($this->title, do_lang_tempcode('NO_ENTRIES'));

@@ -332,9 +332,9 @@ function build_sitemap_cache_table()
 
     $GLOBALS['MEMORY_OVER_SPEED'] = true;
 
-    // Load ALL URL ID monikers (for efficiency)
+    // Load ALL URL ID monikers (for efficiency, but only if we do not have many of them)
     global $LOADED_MONIKERS_CACHE;
-    if ($GLOBALS['SITE_DB']->query_select_value('url_id_monikers', 'COUNT(*)'/*, ['m_deprecated' => 0] Poor performance to include this and it's unnecessary*/) < 10000) {
+    if ($GLOBALS['SITE_DB']->get_table_count_approx('url_id_monikers') < 10000) {
         $results = $GLOBALS['SITE_DB']->query_select('url_id_monikers', ['m_moniker', 'm_resource_page', 'm_resource_type', 'm_resource_id'], ['m_deprecated' => 0]);
         foreach ($results as $result) {
             $LOADED_MONIKERS_CACHE[$result['m_resource_page']][$result['m_resource_type']][$result['m_resource_id']] = $result['m_moniker'];
@@ -476,7 +476,7 @@ function notify_sitemap_node_add(string $page_link, ?int $add_date = null, ?int 
 
     static $fresh = null;
     if ($fresh === null) {
-        $fresh = ($GLOBALS['SITE_DB']->query_select_value('sitemap_cache', 'COUNT(*)') == 0) && (!$GLOBALS['RUNNING_BUILD_SITEMAP_CACHE_TABLE']);
+        $fresh = ($GLOBALS['SITE_DB']->get_table_count_approx('sitemap_cache') == 0) && (!$GLOBALS['RUNNING_BUILD_SITEMAP_CACHE_TABLE']);
     }
 
     // Find set number we will write into

@@ -1350,7 +1350,7 @@ function step_5() : object
 
     // Give warning if database contains data
     if (post_param_integer('confirm', 0) == 0) {
-        $test = $tmp->query_select_value_if_there('db_meta', 'COUNT(*)', [], '', true);
+        $test = $tmp->get_table_count_approx('db_meta');
         if ((($test !== null) && ($test > 0)) || file_exists(get_file_base() . '/_config.php')) {
             global $INSTALL_LANG;
             $sections = new Tempcode();
@@ -1378,7 +1378,7 @@ function step_5() : object
     // Give warning if setting up a multi-site-network to a bad database
     if (($_POST['db_forums'] != $_POST['db_site']) && (get_forum_type() == 'cns')) {
         $tmp2 = new DatabaseConnector(post_param_string('db_forums', false, INPUT_FILTER_POST_IDENTIFIER), post_param_string('db_forums_host', false, INPUT_FILTER_POST_IDENTIFIER), post_param_string('db_forums_user', false, INPUT_FILTER_POST_IDENTIFIER), post_param_string('db_forums_password', false, INPUT_FILTER_PASSWORD), post_param_string('cns_table_prefix', false, INPUT_FILTER_POST_IDENTIFIER));
-        if ($tmp2->query_select_value('db_meta', 'COUNT(*)', [], '', true) === null) {
+        if (!$tmp2->table_exists('db_meta', true)) {
             warn_exit(do_lang_tempcode('MSN_FORUM_DB_NOT_CNS_ALREADY'));
         }
     }

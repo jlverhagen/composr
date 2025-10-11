@@ -239,7 +239,7 @@ class Module_newsletter
         }
 
         if ($check_perms) {
-            if ($GLOBALS['SITE_DB']->query_select_value('newsletters', 'COUNT(*)') == 0) {
+            if ($GLOBALS['SITE_DB']->get_table_count_approx('newsletters') == 0) {
                 return [];
             }
         }
@@ -595,12 +595,15 @@ class Module_newsletter
 
         $GLOBALS['SITE_DB']->query_delete('newsletter_subscribe', ['email' => $subscriber['email']]);
 
+        // Actually not ideal because we may be creating more newsletters in the future
+        /*
         if (get_forum_type() == 'cns') {
             // Do a simple one-to-one-mapping if appropriate
-            if ($GLOBALS['SITE_DB']->query_select_value('newsletters', 'COUNT(*)') == 1) {
+            if ($GLOBALS['SITE_DB']->get_table_count_approx('newsletters') == 1) {
                 $GLOBALS['FORUM_DB']->query_update('f_members', ['m_allow_emails_from_staff' => 0], ['m_email_address' => $subscriber['email']], '', 1);
             }
         }
+        */
 
         return inform_screen($this->title, do_lang_tempcode('FULL_NEWSLETTER_UNSUBSCRIBED', escape_html(get_site_name())));
     }

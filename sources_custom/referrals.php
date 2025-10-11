@@ -546,7 +546,7 @@ function referrer_report_script($ret = false)
         $max,
         $start
     );
-    $max_rows = $GLOBALS['SITE_DB']->query_select_value('referees_qualified_for', 'COUNT(*)', ($member_id !== null) ? ['q_referring_member' => $member_id] : []) * 2;
+    $max_rows = $GLOBALS['SITE_DB']->query_select_value('referees_qualified_for', 'COUNT(*)', ($member_id !== null) ? ['q_referring_member' => $member_id] : [], ' AND 1=1') * 2;
     if ((empty($referrals)) && ($dif === null)) {
         inform_exit(do_lang_tempcode('NO_ENTRIES'), true);
     }

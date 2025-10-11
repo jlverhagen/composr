@@ -242,7 +242,7 @@ class Module_admin_redirects
         $post_url = build_url(['page' => '_SELF', 'type' => '_page'], '_SELF');
         $existing = new Tempcode();
         $rows = $GLOBALS['SITE_DB']->query_select('redirects', ['*']);
-        $num_zones = $GLOBALS['SITE_DB']->query_select_value('zones', 'COUNT(*)');
+        $num_zones = $GLOBALS['SITE_DB']->get_table_count_approx('zones');
         require_code('zones3');
         foreach ($rows as $i => $row) {
             if ($num_zones > 50) {

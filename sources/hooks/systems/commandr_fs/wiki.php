@@ -38,10 +38,10 @@ class Hook_commandr_fs_wiki extends Resource_fs_base
     {
         switch ($resource_type) {
             case 'wiki_post':
-                return $GLOBALS['SITE_DB']->query_select_value('wiki_posts', 'COUNT(*)');
+                return $GLOBALS['SITE_DB']->get_table_count_approx('wiki_posts');
 
             case 'wiki_page':
-                return $GLOBALS['SITE_DB']->query_select_value('wiki_pages', 'COUNT(*)');
+                return $GLOBALS['SITE_DB']->get_table_count_approx('wiki_pages');
         }
         return 0;
     }

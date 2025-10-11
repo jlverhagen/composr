@@ -72,7 +72,7 @@ class Hook_achievement_qualifications_poll_votes
 
         // Build query
         $where_map = ['v_voting_member' => $member_id];
-        $extra_where = '';
+        $extra_where = ' AND 1=1';
         if (($ids !== null) && (count($ids) > 0)) {
             $extra_where .= ' AND v_poll_id IN (' . implode(',', $ids) . ')';
         }

@@ -55,7 +55,7 @@ class Hook_checklist_polls
         require_code('config2');
         $config_url = config_option_url('poll_update_time');
 
-        if (($date === null) && ($GLOBALS['SITE_DB']->query_select_value('poll', 'COUNT(*)')) == 0) {
+        if (($date === null) && ($GLOBALS['SITE_DB']->get_table_count_approx('poll')) == 0) {
             $task_label = do_lang_tempcode('ADD_POLL');
         } else {
             $task_label = do_lang_tempcode('PRIVILEGE_choose_poll');
