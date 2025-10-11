@@ -954,7 +954,7 @@ function create_selection_list_events(?int $only_owned, ?int $it, bool $edit_vie
     if ($only_owned !== null) {
         $where['e_submitter'] = $only_owned;
     }
-    if ($GLOBALS['SITE_DB']->query_select_value('calendar_events', 'COUNT(*)') > intval(get_option('general_safety_listing_limit'))) {
+    if ($GLOBALS['SITE_DB']->get_table_count_approx('calendar_events', $where) > intval(get_option('general_safety_listing_limit'))) {
         warn_exit(do_lang_tempcode('TOO_MANY_TO_CHOOSE_FROM'));
     }
     $events = $GLOBALS['SITE_DB']->query_select('calendar_events', ['id', 'e_title', 'e_type'], $where);

@@ -38,7 +38,7 @@ class Hook_stats_quiz
 
         $bits = new Tempcode();
         if (get_option('quiz_show_stats_count_total_open') == '1') {
-            $quiz_count = $GLOBALS['SITE_DB']->query_select_value('quizzes', 'COUNT(*)');
+            $quiz_count = $GLOBALS['SITE_DB']->get_table_count_approx('quizzes');
 
             $bits->attach(do_template('BLOCK_SIDE_STATS_SUBLINE', [
                 '_GUID' => '736e5008b15c984768234dde7586adf7',

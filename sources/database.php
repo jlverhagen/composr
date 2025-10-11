@@ -1880,6 +1880,10 @@ class DatabaseConnector
      */
     public function query_select_value(string $table, string $selected_value, array $where_map = [], string $end = '', bool $fail_ok = false, ?array $lang_fields = null)
     {
+        if ($GLOBALS['DEV_MODE'] && (strpos($selected_value, 'COUNT(*)') !== false) && (count($where_map) == 0) && ($end == '')) {
+            attach_message('Detected query_select_value use for a simple COUNT query; You should use get_table_count_approx instead for optimisation.', 'notice', false, true);
+        }
+
         $values = $this->query_select($table, [$selected_value], $where_map, $end, 1, 0, $fail_ok, $lang_fields);
         if ($values === null) {
             return null; // error
@@ -1919,6 +1923,10 @@ class DatabaseConnector
      */
     public function query_select_value_if_there(string $table, string $select, array $where_map = [], string $end = '', bool $fail_ok = false, ?array $lang_fields = null)
     {
+        if ($GLOBALS['DEV_MODE'] && (strpos($select, 'COUNT(*)') !== false) && (count($where_map) == 0) && ($end == '')) {
+            attach_message('Detected query_select_value_if_there use for a simple COUNT query; You should use get_table_count_approx instead for optimisation.', 'notice', false, true);
+        }
+
         $values = $this->query_select($table, [$select], $where_map, $end, 1, 0, $fail_ok, $lang_fields);
         if ($values === null) {
             return null; // error
@@ -3186,7 +3194,7 @@ class DatabaseConnector
             return $ret;
         }
 
-        return $this->query_select_value($table, 'COUNT(*)', $where, ($where_clause === null) ? '' : (' AND ' . $where_clause));
+        return $this->query_select_value($table, 'COUNT(*)', $where, ($where_clause === null) ? ' AND 1=1' : (' AND ' . $where_clause));
     }
 
     /**

@@ -28,7 +28,7 @@ function get_num_wiki_pages() : int
     $value = get_value_newer_than('num_wiki_pages', time() - 60 * 60 * 24);
 
     if ($value === null) {
-        $_value = $GLOBALS['SITE_DB']->query_select_value('wiki_pages', 'COUNT(*)');
+        $_value = $GLOBALS['SITE_DB']->get_table_count_approx('wiki_pages');
         if (!($_value > 0)) {
             $_value = 0;
         }
@@ -49,7 +49,7 @@ function get_num_wiki_posts() : int
     $value = get_value_newer_than('num_wiki_posts', time() - 60 * 60 * 24);
 
     if ($value === null) {
-        $_value = $GLOBALS['SITE_DB']->query_select_value('wiki_posts', 'COUNT(*)');
+        $_value = $GLOBALS['SITE_DB']->get_table_count_approx('wiki_posts');
         if (!($_value > 0)) {
             $_value = 0;
         }

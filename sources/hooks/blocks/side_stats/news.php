@@ -38,7 +38,7 @@ class Hook_stats_news
 
         $bits = new Tempcode();
         if (get_option('news_show_stats_count_total_posts') == '1') {
-            $num_posts = $GLOBALS['SITE_DB']->query_select_value('news', 'COUNT(*)');
+            $num_posts = $GLOBALS['SITE_DB']->get_table_count_approx('news');
 
             $bits->attach(do_template('BLOCK_SIDE_STATS_SUBLINE', [
                 '_GUID' => '1b886065ad1190c2b7862024c8aad430',

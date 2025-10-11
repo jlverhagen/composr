@@ -60,7 +60,7 @@ class Hook_ajax_tree_choose_theme_files
                 'addons' => [do_lang('addons:ADDONS'), 'DOC_TEMPLATES_BY_ADDON'],
             ];
 
-            $test = $GLOBALS['SITE_DB']->query_select_value('theme_screen_tree', 'COUNT(*)');
+            $test = $GLOBALS['SITE_DB']->get_table_count_approx('theme_screen_tree');
             if ($test >= 0) {
                 $top_level['screens'] = [do_lang('SCREEN_TREES'), 'DOC_TEMPLATE_EDITOR_SCREENS'];
             }

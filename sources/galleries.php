@@ -442,7 +442,7 @@ function gallery_has_content(string $name) : bool
 
     static $gallery_entries_cats_used_cache = null;
     if ($gallery_entries_cats_used_cache === null) {
-        $num_galleries = $GLOBALS['SITE_DB']->query_select_value('galleries', 'COUNT(*)');
+        $num_galleries = $GLOBALS['SITE_DB']->get_table_count_approx('galleries');
 
         $gallery_entries_cats_used_cache = [];
         $images_cats = $GLOBALS['SITE_DB']->query_select('images', ['DISTINCT cat'], ($num_galleries < intval(get_option('general_safety_listing_limit'))) ? ['validated' => 1] : ['validated' => 1, 'cat' => $name]);
@@ -467,7 +467,7 @@ function gallery_has_content(string $name) : bool
     static $gallery_pairs_cache = null;
     if ($gallery_pairs_cache === null) {
         if ($num_galleries === null) {
-            $num_galleries = $GLOBALS['SITE_DB']->query_select_value('galleries', 'COUNT(*)');
+            $num_galleries = $GLOBALS['SITE_DB']->get_table_count_approx('galleries');
         }
 
         if ($num_galleries < intval(get_option('general_safety_listing_limit'))) {
@@ -553,7 +553,7 @@ function get_recursive_gallery_details(string $name, bool $test_videos = true, b
 {
     static $total_categories = null;
     if ($total_categories === null) {
-        $total_categories = $GLOBALS['SITE_DB']->query_select_value('galleries', 'COUNT(*)');
+        $total_categories = $GLOBALS['SITE_DB']->get_table_count_approx('galleries');
     }
 
     $num_images = $test_images ? $GLOBALS['SITE_DB']->query_select_value('images', 'COUNT(*)', ['cat' => $name]) : 0;

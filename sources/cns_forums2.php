@@ -294,7 +294,7 @@ function cns_get_forum_tree(?int $member_id = null, ?int $base_forum = null, str
     $forums = [];
     if ($forum_tree_secure_cache === null) {
         $forum_tree_secure_cache = mixed();
-        $num_forums = $GLOBALS['FORUM_DB']->query_select_value('f_forums', 'COUNT(*)');
+        $num_forums = $GLOBALS['FORUM_DB']->get_table_count_approx('f_forums');
         $forum_tree_secure_cache = ($num_forums >= 300); // Mark it as 'huge'
     }
     if ($forum_tree_secure_cache === true) {

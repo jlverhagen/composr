@@ -172,6 +172,8 @@ class Hook_admin_stats_cns_members extends CMSStatsProvider
                         $data_buckets['demographics'][$pivot][$pivot_interval][$pivot_value][$age]++;
                     }
                 }
+
+                $this->dump_delta_if_necessary($data_buckets);
             }
 
             $start += $max;

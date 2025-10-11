@@ -456,7 +456,7 @@ class Module_admin_early_access extends Standard_crud_module
             warn_exit(do_lang_tempcode('INTERNAL_ERROR', escape_html('9333df6115ba5c0fbf3e25244f158398')));
         }
 
-        $max_rows = $GLOBALS['SITE_DB']->query_select_value('early_access_codes', 'COUNT(*)', []);
+        $max_rows = $GLOBALS['SITE_DB']->get_table_count_approx('early_access_codes');
         $rows = $GLOBALS['SITE_DB']->query_select('early_access_codes', ['*'], [], '', $max, $start);
 
         $result_entries = new Tempcode();

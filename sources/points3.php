@@ -333,7 +333,7 @@ function points_get_transactions(string $type, int $member_id_of, int $member_id
     require_code('points');
 
     $where = [];
-    $end = '';
+    $end = ' AND 1=1';
 
     switch ($type) {
         case 'sender': // transactions where the member sent points to another member

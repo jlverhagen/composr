@@ -38,13 +38,13 @@ class Hook_commandr_fs_forums extends Resource_fs_base
     {
         switch ($resource_type) {
             case 'post':
-                return $GLOBALS['FORUM_DB']->query_select_value('f_posts', 'COUNT(*)');
+                return $GLOBALS['FORUM_DB']->get_table_count_approx('f_posts');
 
             case 'topic':
-                return $GLOBALS['FORUM_DB']->query_select_value('f_topics', 'COUNT(*)');
+                return $GLOBALS['FORUM_DB']->get_table_count_approx('f_topics');
 
             case 'forum':
-                return $GLOBALS['FORUM_DB']->query_select_value('f_forums', 'COUNT(*)');
+                return $GLOBALS['FORUM_DB']->get_table_count_approx('f_forums');
         }
         return 0;
     }

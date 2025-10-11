@@ -70,7 +70,7 @@ class Hook_achievement_qualifications_activity_feed
 
         // Build query
         $where_map = ['a_member_id' => $member_id, 'a_language_string_code' => 'RAW_DUMP'];
-        $extra_where = '';
+        $extra_where = ' AND 1=1';
         if ($days !== null) {
             $extra_where .= ' AND a_time>=' . strval(time() - ($days * 24 * 60 * 60));
         } elseif ($last_time !== null) {

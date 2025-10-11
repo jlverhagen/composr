@@ -64,7 +64,7 @@ class Hook_sitemap_author extends Hook_sitemap_content
         $page = $this->_make_zone_concrete($zone, $page_link);
 
         if ($child_cutoff !== null) {
-            $count = $GLOBALS['SITE_DB']->query_select_value('authors', 'COUNT(*)');
+            $count = $GLOBALS['SITE_DB']->get_table_count_approx('authors');
             if ($count > $child_cutoff) {
                 return $nodes;
             }

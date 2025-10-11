@@ -35,7 +35,7 @@ class Hook_commandr_fs_periodic_newsletters extends Resource_fs_base
      */
     public function get_resources_count(string $resource_type) : int
     {
-        return $GLOBALS['SITE_DB']->query_select_value('newsletter_periodic', 'COUNT(*)');
+        return $GLOBALS['SITE_DB']->get_table_count_approx('newsletter_periodic');
     }
 
     /**

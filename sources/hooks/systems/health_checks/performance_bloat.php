@@ -99,7 +99,7 @@ class Hook_health_check_performance_bloat extends Hook_Health_Check
 
         foreach ($tables as $table => $max_threshold) {
             if ($GLOBALS['SITE_DB']->table_exists($table)) {
-                $cnt = $GLOBALS['SITE_DB']->query_select_value($table, 'COUNT(*)');
+                $cnt = $GLOBALS['SITE_DB']->get_table_count_approx($table);
                 $this->assertTrue($cnt < $max_threshold, 'Volatile-defined table [tt]' . $table . '[/tt] is very large @ ' . integer_format($cnt) . ' records');
             }
         }

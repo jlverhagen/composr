@@ -37,8 +37,8 @@ class Hook_page_groupings_galleries
         }
 
         $cnt = 0;
-        $cnt += intval($GLOBALS['SITE_DB']->query_select_value('images', 'COUNT(*)'));
-        $cnt += intval($GLOBALS['SITE_DB']->query_select_value('videos', 'COUNT(*)'));
+        $cnt += intval($GLOBALS['SITE_DB']->get_table_count_approx('images'));
+        $cnt += intval($GLOBALS['SITE_DB']->get_table_count_approx('videos'));
 
         return [
             has_privilege(get_member(), 'submit_midrange_content', 'cms_galleries') ? ['cms', 'menu/rich_content/galleries', ['cms_galleries', ['type' => 'browse'], get_module_zone('cms_galleries')], do_lang_tempcode('ITEMS_HERE', do_lang_tempcode('galleries:GALLERIES'), make_string_tempcode(escape_html(integer_format($cnt, 0)))), 'galleries:DOC_GALLERIES'] : null,

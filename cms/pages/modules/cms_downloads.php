@@ -328,7 +328,7 @@ class Module_cms_downloads extends Standard_crud_module
      */
     public function create_selection_list_ajax_tree() : array
     {
-        if ($GLOBALS['SITE_DB']->query_select_value('download_downloads', 'COUNT(*)') == 0) {
+        if ($GLOBALS['SITE_DB']->get_table_count_approx('download_downloads') == 0) {
             inform_exit(do_lang_tempcode('NO_ENTRIES', 'download'));
         }
 
@@ -383,7 +383,7 @@ class Module_cms_downloads extends Standard_crud_module
         if ($id === null) {
             if ($licence === null) {
                 // Choose statistically
-                $total_count = $GLOBALS['SITE_DB']->query_select_value('download_downloads', 'COUNT(*)');
+                $total_count = $GLOBALS['SITE_DB']->get_table_count_approx('download_downloads');
                 $_licence = $GLOBALS['SITE_DB']->query_select('download_downloads', ['download_licence_id', 'COUNT(*) AS cnt'], [], 'GROUP BY download_licence_id ORDER BY cnt DESC');
                 if ((array_key_exists(0, $_licence)) && (floatval($_licence[0]['cnt']) * 1.25 >= floatval($total_count))) {
                     $license = $_licence[0]['download_licence_id'];
@@ -396,9 +396,9 @@ class Module_cms_downloads extends Standard_crud_module
         }
 
         if ($category_id === null) {
-            $num_categories = $GLOBALS['SITE_DB']->query_select_value('download_categories', 'COUNT(*)');
+            $num_categories = $GLOBALS['SITE_DB']->get_table_count_approx('download_categories');
             if ($num_categories == 1) {
-                $cat = db_get_first_id(); // Only option!
+                $category_id = db_get_first_id(); // Only option!
             }
         }
 

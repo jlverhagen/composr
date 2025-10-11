@@ -824,7 +824,7 @@ class Module_warnings extends Standard_crud_module
         }
 
         $rows = $GLOBALS['FORUM_DB']->query_select('f_warnings', ['*'], $where, 'ORDER BY w_time DESC', $max, $start);
-        $max_rows = $GLOBALS['FORUM_DB']->query_select_value('f_warnings', 'COUNT(*)', $where);
+        $max_rows = $GLOBALS['FORUM_DB']->get_table_count_approx('f_warnings', $where);
 
         $f = array_merge($f, [do_lang_tempcode('BY'), do_lang_tempcode('IS_FORMAL_WARNING'), do_lang_tempcode('ACTIONS')]);
 

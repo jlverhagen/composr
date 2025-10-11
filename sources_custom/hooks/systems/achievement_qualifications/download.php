@@ -67,7 +67,7 @@ class Hook_achievement_qualifications_download
 
         $count_required = isset($params['count']) ? intval($params['count']) : 10;
 
-        $extra_where = '';
+        $extra_where = ' AND 1=1';
         if ($last_time !== null) {
             $extra_where .= ' AND date_and_time>' . strval($last_time);
         }

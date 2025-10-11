@@ -48,7 +48,7 @@ class Hook_stats_galleries
             ]));
         }
         if (get_option('galleries_show_stats_count_images') == '1') {
-            $num_images = $GLOBALS['SITE_DB']->query_select_value('images', 'COUNT(*)');
+            $num_images = $GLOBALS['SITE_DB']->get_table_count_approx('images');
 
             $bits->attach(do_template('BLOCK_SIDE_STATS_SUBLINE', [
                 '_GUID' => '0f06d6a5e1632bae0101a531912b1c29',
@@ -58,7 +58,7 @@ class Hook_stats_galleries
             ]));
         }
         if (get_option('galleries_show_stats_count_videos') == '1') {
-            $num_videos = $GLOBALS['SITE_DB']->query_select_value('videos', 'COUNT(*)');
+            $num_videos = $GLOBALS['SITE_DB']->get_table_count_approx('videos');
 
             $bits->attach(do_template('BLOCK_SIDE_STATS_SUBLINE', [
                 '_GUID' => 'a9274594cde52028fc810b7b780e9942',

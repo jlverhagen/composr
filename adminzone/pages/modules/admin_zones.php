@@ -828,7 +828,7 @@ class Module_admin_zones
 
         $result_entries = new Tempcode();
 
-        $max_rows = $GLOBALS['SITE_DB']->query_select_value('zones', 'COUNT(*)');
+        $max_rows = $GLOBALS['SITE_DB']->get_table_count_approx('zones');
         foreach ($_zones as $_zone_details) {
             list($zone_name, $zone_title, $zone_default_page, $remaining_row) = $_zone_details;
 

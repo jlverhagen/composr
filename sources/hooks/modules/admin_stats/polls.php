@@ -85,6 +85,8 @@ class Hook_admin_stats_polls extends CMSStatsProvider
                     }
                     $data_buckets['poll_votes'][$pivot][$pivot_interval][$pivot_value]++;
                 }
+
+                $this->dump_delta_if_necessary($data_buckets);
             }
 
             $start += $max;

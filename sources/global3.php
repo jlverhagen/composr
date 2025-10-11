@@ -3246,8 +3246,8 @@ function ip_banned(string $ip, bool $force_db = false, bool $handle_uncertaintie
         $tables = ['banned_ip', 'usersubmitban_ip'/*LEGACY*/];
         $ip_bans = null;
         foreach ($tables as $table) {
-            $_ip_bans = $GLOBALS['SITE_DB']->query_select_value_if_there($table, 'COUNT(*)', [], '', true);
-            if ($_ip_bans === null) {
+            $_ip_bans = $GLOBALS['SITE_DB']->table_exists($table, true);
+            if (!$_ip_bans) {
                 continue;
             }
 

@@ -74,7 +74,7 @@ class Hook_achievement_qualifications_tutorials
 
         // Build query
         $where_map = ['t_submitter' => $member_id];
-        $extra_where = '';
+        $extra_where = ' AND 1=1';
         if ($views > 0) {
             $extra_where .= ' AND t_views>=' . strval($views);
         }

@@ -245,7 +245,7 @@ function count_catalogue_category_children(int $category_id) : array
 {
     static $total_categories = null;
     if ($total_categories === null) {
-        $total_categories = $GLOBALS['SITE_DB']->query_select_value('catalogue_categories', 'COUNT(*)');
+        $total_categories = $GLOBALS['SITE_DB']->get_table_count_approx('catalogue_categories');
     }
 
     $out = [];

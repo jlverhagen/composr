@@ -38,13 +38,13 @@ class Hook_commandr_fs_catalogues extends Resource_fs_base
     {
         switch ($resource_type) {
             case 'catalogue_entry':
-                return $GLOBALS['SITE_DB']->query_select_value('catalogue_entries', 'COUNT(*)');
+                return $GLOBALS['SITE_DB']->get_table_count_approx('catalogue_entries');
 
             case 'catalogue_category':
-                return $GLOBALS['SITE_DB']->query_select_value('catalogue_categories', 'COUNT(*)');
+                return $GLOBALS['SITE_DB']->get_table_count_approx('catalogue_categories');
 
             case 'catalogue':
-                return $GLOBALS['SITE_DB']->query_select_value('catalogues', 'COUNT(*)');
+                return $GLOBALS['SITE_DB']->get_table_count_approx('catalogues');
         }
         return 0;
     }

@@ -641,7 +641,7 @@ class Module_admin_telemetry
         $start = get_param_integer('start', 0);
         $max = get_param_integer('max', 50);
 
-        $max_rows = $GLOBALS['SITE_DB']->query_select_value('telemetry_errors_ignore', 'COUNT(*)');
+        $max_rows = $GLOBALS['SITE_DB']->get_table_count_approx('telemetry_errors_ignore');
         $sortables = [
             'id' => do_lang_tempcode('IDENTIFIER'),
             'ignore_string' => do_lang_tempcode('TELEMETRY_IGNORE_STRING'),

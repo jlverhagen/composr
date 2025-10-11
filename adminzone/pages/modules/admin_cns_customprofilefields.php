@@ -432,7 +432,7 @@ class Module_admin_cns_customprofilefields extends Standard_crud_module
         $sortables['cf_order'] = do_lang_tempcode('ORDER');
         list($sql_sort, $sort_order, $sortable) = process_sorting_params('cpf', $current_ordering);
 
-        $num_cpfs = $GLOBALS['FORUM_DB']->query_select_value('f_custom_fields', 'COUNT(*)');
+        $num_cpfs = $GLOBALS['FORUM_DB']->get_table_count_approx('f_custom_fields');
 
         // Only allow ordering if using default sorting, under 200 entries, and not using filters. Otherwise it won't work.
         $standard_ordering = (($current_ordering == 'cf_order ASC') && ($num_cpfs < 200) && ($end == ''));

@@ -38,10 +38,10 @@ class Hook_commandr_fs_news extends Resource_fs_base
     {
         switch ($resource_type) {
             case 'news':
-                return $GLOBALS['SITE_DB']->query_select_value('news', 'COUNT(*)');
+                return $GLOBALS['SITE_DB']->get_table_count_approx('news');
 
             case 'news_category':
-                return $GLOBALS['SITE_DB']->query_select_value('news_categories', 'COUNT(*)');
+                return $GLOBALS['SITE_DB']->get_table_count_approx('news_categories');
         }
         return 0;
     }

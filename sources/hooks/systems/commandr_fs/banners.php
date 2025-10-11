@@ -38,10 +38,10 @@ class Hook_commandr_fs_banners extends Resource_fs_base
     {
         switch ($resource_type) {
             case 'banner':
-                return $GLOBALS['SITE_DB']->query_select_value('banners', 'COUNT(*)');
+                return $GLOBALS['SITE_DB']->get_table_count_approx('banners');
 
             case 'banner_type':
-                return $GLOBALS['SITE_DB']->query_select_value('banner_types', 'COUNT(*)');
+                return $GLOBALS['SITE_DB']->get_table_count_approx('banner_types');
         }
         return 0;
     }

@@ -70,7 +70,7 @@ class Hook_achievement_qualifications_calendar_interests
 
         // Build query
         $where_map = ['i_member_id' => $member_id];
-        $extra_where = '';
+        $extra_where = ' AND 1=1';
         if ($types !== null) {
             $extra_where .= ' AND t_type IN (' . implode(',', $types) . ')';
         }

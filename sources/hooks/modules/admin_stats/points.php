@@ -159,6 +159,8 @@ class Hook_admin_stats_points extends CMSStatsProvider
                         $data_buckets['gift_points_used'][$pivot][$pivot_interval][$pivot_value] += $row['amount_gift_points'];
                     }
                 }
+
+                $this->dump_delta_if_necessary($data_buckets);
             }
 
             $start += $max;

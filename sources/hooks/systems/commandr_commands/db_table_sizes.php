@@ -85,7 +85,7 @@ class Hook_commandr_command_db_table_sizes
                 }
                 $out .= '<h2>' . escape_html($p) . '</h2>';
                 if (array_key_exists(get_table_prefix() . $p, $sizes)) {
-                    $num_rows = $db->query_select_value($p, 'COUNT(*)');
+                    $num_rows = $db->get_table_count_approx($p);
                     if ($num_rows > 0) {
                         $row = $db->query_select($p, ['*'], [], '', 1, mt_rand(0, $num_rows - 1));
                         $out .= '<table class="results-table"><tbody>';

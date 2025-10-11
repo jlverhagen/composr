@@ -74,7 +74,7 @@ class Hook_commandr_fs_members
         $listing = [];
         if (count($meta_dir) < 1) {
             // We're listing the users
-            $cnt = $GLOBALS['FORUM_DB']->query_select_value('f_members', 'COUNT(*)');
+            $cnt = $GLOBALS['FORUM_DB']->get_table_count_approx('f_members');
             if ($cnt > 1000) {
                 return false; // Too much to process
             }

@@ -79,7 +79,7 @@ class Hook_achievement_qualifications_awards
 
         // Build query
         $where_map = ['member_id' => $member_id];
-        $extra_where = '';
+        $extra_where = ' AND 1=1';
         if (($types !== null) && (count($types) > 0)) {
             if (count($types) == 1) {
                 $where_map['a_type_id'] = $types[0];

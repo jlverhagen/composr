@@ -419,7 +419,7 @@ class Module_cms_comcode_pages
 
         // Get file details
         $found_via_query = false;
-        $total_known_pages = $GLOBALS['SITE_DB']->query_select_value('comcode_pages', 'COUNT(*)');
+        $total_known_pages = $GLOBALS['SITE_DB']->get_table_count_approx('comcode_pages');
         $find_via_query = true;
         if (get_param_integer('force_manual_scan', null) === 0) {
             $find_via_query = true;
@@ -1423,7 +1423,7 @@ class Module_cms_comcode_pages
 
         $zone = get_param_string('filter', null);
 
-        $total_known_pages = $GLOBALS['SITE_DB']->query_select_value('comcode_pages', 'COUNT(*)');
+        $total_known_pages = $GLOBALS['SITE_DB']->get_table_count_approx('comcode_pages');
         if (
             ($total_known_pages < 300) &&
             ($GLOBALS['SITE_DB']->query_select_value_if_there('comcode_pages c LEFT JOIN ' . get_table_prefix() . 'cached_comcode_pages a ON c.the_page=a.the_page AND c.the_zone=a.the_zone', 'c.the_page', ['a.the_page' => null]) !== null)

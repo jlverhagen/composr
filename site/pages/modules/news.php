@@ -550,7 +550,7 @@ class Module_news
         if ($blogs === null) {
             $map = [];
             $categories = $GLOBALS['SITE_DB']->query_select('news_categories', ['*'], $map, 'ORDER BY nc_owner,' . $GLOBALS['SITE_DB']->translate_field_ref('nc_title'), $max, $start); // Ordered to show non-blogs first (nc_owner=NULL)
-            $max_rows = $GLOBALS['SITE_DB']->query_select_value('news_categories', 'COUNT(*)', $map);
+            $max_rows = $GLOBALS['SITE_DB']->get_table_count_approx('news_categories');
         } elseif ($blogs == 1) {
             $categories = $GLOBALS['SITE_DB']->query('SELECT c.* FROM ' . get_table_prefix() . 'news_categories c WHERE nc_owner IS NOT NULL ORDER BY nc_owner DESC,' . $GLOBALS['SITE_DB']->translate_field_ref('nc_title'), $max, $start, false, false, ['nc_title' => 'SHORT_TRANS']); // Ordered to show newest blogs first
             $max_rows = $GLOBALS['SITE_DB']->query_value_if_there('SELECT COUNT(*) FROM ' . get_table_prefix() . 'news_categories WHERE nc_owner IS NOT NULL', false, false, ['nc_title' => 'SHORT_TRANS']);

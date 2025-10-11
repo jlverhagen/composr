@@ -46,7 +46,7 @@ class Hook_search_catalogue_categories extends FieldsSearchHook
             }
         }
 
-        if ($GLOBALS['SITE_DB']->query_select_value('catalogue_categories', 'COUNT(*)') == 0) {
+        if ($GLOBALS['SITE_DB']->get_table_count_approx('catalogue_categories') == 0) {
             return null;
         }
 

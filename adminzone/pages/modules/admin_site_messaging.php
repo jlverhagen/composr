@@ -359,7 +359,7 @@ class Module_admin_site_messaging
         $max = get_param_integer('max', 50);
 
         // Query
-        $max_rows = $GLOBALS['SITE_DB']->query_select_value('site_messages', 'COUNT(*)', []);
+        $max_rows = $GLOBALS['SITE_DB']->get_table_count_approx('site_messages');
         $sortables = [
             'id' => do_lang_tempcode('IDENTIFIER'),
             'm_type' => do_lang_tempcode('TYPE'),

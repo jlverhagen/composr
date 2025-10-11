@@ -171,6 +171,8 @@ class Hook_admin_stats_actionlogs extends CMSStatsProvider
                         $data_buckets['actionlog_growth'][$pivot][$pivot_interval][$pivot_value][$type]++;
                     }
                 }
+
+                $this->dump_delta_if_necessary($data_buckets);
             }
 
             $start += $max;
@@ -208,6 +210,8 @@ class Hook_admin_stats_actionlogs extends CMSStatsProvider
                         $data_buckets['actionlog_growth'][$pivot][$pivot_interval][$pivot_value][$type]++;
                     }
                 }
+
+                $this->dump_delta_if_necessary($data_buckets);
             }
 
             $start += $max;

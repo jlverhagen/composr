@@ -44,7 +44,7 @@ class Hook_notification_downloads_followup_email extends Hook_Notification
         require_code('downloads');
 
         if ($id === null) {
-            $total = $GLOBALS['SITE_DB']->query_select_value('download_categories', 'COUNT(*)');
+            $total = $GLOBALS['SITE_DB']->get_table_count_approx('download_categories');
             if ($total > intval(get_option('general_safety_listing_limit'))/*reasonable limit*/) {
                 return parent::create_category_tree($notification_code, $id); // Too many, so just allow removing UI
             }

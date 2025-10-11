@@ -153,6 +153,8 @@ class Hook_admin_stats_cms_homesite extends CMSStatsProvider
                     }
                     $data_buckets['relayed_errors'][$pivot][$pivot_interval][$pivot_value]['']++;
                 }
+
+                $this->dump_delta_if_necessary($data_buckets);
             }
 
             $start += $max;
@@ -191,6 +193,8 @@ class Hook_admin_stats_cms_homesite extends CMSStatsProvider
                         }
                         $data_buckets['tracker_issue_activity'][$pivot][$pivot_interval][$pivot_value]['s_all']++;
                     }
+
+                    $this->dump_delta_if_necessary($data_buckets);
                 }
 
                 $start += $max;
@@ -230,6 +234,8 @@ class Hook_admin_stats_cms_homesite extends CMSStatsProvider
                         }
                         $data_buckets['tracker_issues'][$pivot][$pivot_interval][$pivot_value]['c_all']++;
                     }
+
+                    $this->dump_delta_if_necessary($data_buckets);
                 }
 
                 $start += $max;

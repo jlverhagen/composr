@@ -78,7 +78,7 @@ class Hook_achievement_qualifications_actionlog
 
         // Build query
         $where_map = ['member_id' => $member_id, 'the_type' => $type];
-        $extra_where = '';
+        $extra_where = ' AND 1=1';
         if ($param_a !== null) {
             $where_map['param_a'] = $param_a;
         }

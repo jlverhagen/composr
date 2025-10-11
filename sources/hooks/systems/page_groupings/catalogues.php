@@ -44,9 +44,9 @@ class Hook_page_groupings_catalogues
 
         $ret = [];
         if (has_privilege($member_id, 'submit_cat_highrange_content', 'cms_catalogues')) {
-            $where = '';
+            $where = ' AND 1=1';
             if (!addon_installed('ecommerce')) {
-                $where .= 'WHERE ' . db_string_not_equal_to('c_name', 'products');
+                $where .= ' AND ' . db_string_not_equal_to('c_name', 'products');
             }
             $cnt = intval($GLOBALS['SITE_DB']->query_select_value_if_there('catalogues', 'COUNT(*)', [], $where));
             $ret[] = ['cms', 'menu/rich_content/catalogues/catalogues', ['cms_catalogues', ['type' => 'browse'], get_module_zone('cms_catalogues')], do_lang_tempcode('ITEMS_HERE', do_lang_tempcode('catalogues:CATALOGUES'), make_string_tempcode(escape_html(integer_format($cnt, 0)))), 'catalogues:DOC_CATALOGUES'];

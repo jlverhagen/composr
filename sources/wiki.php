@@ -831,7 +831,7 @@ function create_selection_list_wiki_page_tree(?int $select = null, ?int $id = nu
         $id = db_get_first_id();
     }
 
-    if ($GLOBALS['SITE_DB']->query_select_value('wiki_pages', 'COUNT(*)') > 1000) {
+    if ($GLOBALS['SITE_DB']->get_table_count_approx('wiki_pages') > 1000) {
         return new Tempcode();
     }
 

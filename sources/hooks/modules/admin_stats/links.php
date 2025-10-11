@@ -124,6 +124,8 @@ class Hook_admin_stats_links extends CMSStatsProvider
                     }
                     $data_buckets['link_tracking'][$pivot][$pivot_interval][$pivot_value][$country_code][$url]++;
                 }
+
+                $this->dump_delta_if_necessary($data_buckets);
             }
 
             $start += $max;

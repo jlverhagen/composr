@@ -631,7 +631,7 @@ function count_download_category_children(int $category_id) : array
 {
     static $total_categories = null;
     if ($total_categories === null) {
-        $total_categories = $GLOBALS['SITE_DB']->query_select_value('download_categories', 'COUNT(*)');
+        $total_categories = $GLOBALS['SITE_DB']->get_table_count_approx('download_categories');
     }
 
     $out = [];
@@ -639,7 +639,7 @@ function count_download_category_children(int $category_id) : array
     $out['num_downloads'] = $GLOBALS['SITE_DB']->query_select_value('download_downloads', 'COUNT(*)', ['category_id' => $category_id, 'validated' => 1]);
 
     if ($category_id == db_get_first_id()) {
-        $out['num_children_children'] = $GLOBALS['SITE_DB']->query_select_value('download_categories', 'COUNT(*)') - 1;
+        $out['num_children_children'] = $GLOBALS['SITE_DB']->get_table_count_approx('download_categories') - 1;
         $out['num_downloads_children'] = $GLOBALS['SITE_DB']->query_select_value('download_downloads', 'COUNT(*)', ['validated' => 1]);
     } else {
         $out['num_children_children'] = $out['num_children'];

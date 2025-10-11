@@ -43,7 +43,7 @@ class Hook_cron_newsletter_drip_send
 
         return [
             'label' => 'Send queued newsletters',
-            'num_queued' => $calculate_num_queued ? $GLOBALS['SITE_DB']->query_select_value('newsletter_drip_send', 'COUNT(*)') : null,
+            'num_queued' => $calculate_num_queued ? $GLOBALS['SITE_DB']->get_table_count_approx('newsletter_drip_send') : null,
             'minutes_between_runs' => intval(get_option('minutes_between_sends')),
             'enabled_by_default' => true,
         ];

@@ -1138,7 +1138,11 @@ abstract class Standard_crud_module
             push_db_scope_check(false);
         }
 
-        $max_rows = $db->query_select_value($table . $join, 'COUNT(*)', $where, $query_end, false, find_lang_fields($table_raw, 'r'));
+        if (($join == '') && (count($where) == 0) && ($query_end == '')) {
+            $max_rows = $db->get_table_count_approx($table);
+        } else {
+            $max_rows = $db->query_select_value($table . $join, 'COUNT(*)', $where, ' AND 1=1' . $query_end, false, find_lang_fields($table_raw, 'r'));
+        }
         if ($max_rows == 0) {
             return [[], 0];
         }

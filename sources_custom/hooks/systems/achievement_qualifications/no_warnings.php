@@ -78,7 +78,7 @@ class Hook_achievement_qualifications_no_warnings
         $days = isset($params['days']) ? intval($params['days']) : null;
 
         $where_map = ['w_member_id' => $member_id, 'w_is_warning' => 1];
-        $extra_where = '';
+        $extra_where = ' AND 1=1';
         if ($days !== null) {
             $extra_where .= ' AND w_time>=' . strval(time() - ($days * 24 * 60 * 60));
         } elseif ($last_time !== null) {

@@ -105,6 +105,8 @@ class Hook_admin_stats_invites extends CMSStatsProvider
                         $data_buckets['invites_taken'][$pivot][$pivot_interval][$pivot_value]++;
                     }
                 }
+
+                $this->dump_delta_if_necessary($data_buckets);
             }
 
             $start += $max;

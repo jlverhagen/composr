@@ -92,6 +92,8 @@ class Hook_admin_stats_emails extends CMSStatsProvider
                     }
                     $data_buckets['emails_sent'][$pivot][$pivot_interval][$pivot_value]++;
                 }
+
+                $this->dump_delta_if_necessary($data_buckets);
             }
 
             $start += $max;
@@ -121,6 +123,8 @@ class Hook_admin_stats_emails extends CMSStatsProvider
                     }
                     $data_buckets['unsubscribed_emails'][$pivot][$pivot_interval][$pivot_value]++;
                 }
+
+                $this->dump_delta_if_necessary($data_buckets);
             }
 
             $start += $max;

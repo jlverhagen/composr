@@ -38,10 +38,10 @@ class Hook_commandr_fs_calendar extends Resource_fs_base
     {
         switch ($resource_type) {
             case 'event':
-                return $GLOBALS['SITE_DB']->query_select_value('calendar_events', 'COUNT(*)');
+                return $GLOBALS['SITE_DB']->get_table_count_approx('calendar_events');
 
             case 'calendar_type':
-                return $GLOBALS['SITE_DB']->query_select_value('calendar_types', 'COUNT(*)');
+                return $GLOBALS['SITE_DB']->get_table_count_approx('calendar_types');
         }
         return 0;
     }

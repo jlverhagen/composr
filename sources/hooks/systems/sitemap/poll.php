@@ -94,7 +94,7 @@ class Hook_sitemap_poll extends Hook_sitemap_content
         $consider_validation = (($options & SITEMAP_GEN_CONSIDER_VALIDATION) != 0);
 
         if ($child_cutoff !== null) {
-            $count = $GLOBALS['SITE_DB']->query_select_value('poll', 'COUNT(*)', [], ($consider_validation ? ' AND date_and_time IS NOT NULL' : ''));
+            $count = $GLOBALS['SITE_DB']->query_select_value('poll', 'COUNT(*)', [], ($consider_validation ? ' AND date_and_time IS NOT NULL' : ' AND 1=1'));
             if ($count > $child_cutoff) {
                 return $nodes;
             }

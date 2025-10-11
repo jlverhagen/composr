@@ -66,7 +66,7 @@ class Hook_achievement_qualifications_ratings
 
         // Build query
         $where_map = ['rating_member' => $member_id];
-        $extra_where = '';
+        $extra_where = ' AND 1=1';
         if (($types !== null) && (count($types) > 0)) {
             $stringified_types = [];
             foreach ($types as $type) {

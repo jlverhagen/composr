@@ -201,7 +201,7 @@ class Module_subscriptions
             $member_id = get_member();
         }
 
-        if ((!$check_perms || !is_guest($member_id)) && (get_forum_type() != 'cns') && ($GLOBALS['SITE_DB']->query_select_value('ecom_subscriptions', 'COUNT(*)') > 0)) {
+        if ((!$check_perms || !is_guest($member_id)) && (get_forum_type() != 'cns') && ($GLOBALS['SITE_DB']->get_table_count_approx('ecom_subscriptions') > 0)) {
             return [
                 'browse' => ['MY_SUBSCRIPTIONS', 'menu/adminzone/audit/ecommerce/subscriptions'],
             ];

@@ -83,7 +83,7 @@ function render_group_box(array $row, string $zone = '_SEARCH', bool $give_conte
  */
 function cns_create_selection_list_usergroups(?int $it = null, bool $allow_guest_group = true) : object
 {
-    $group_count = $GLOBALS['FORUM_DB']->query_select_value('f_groups', 'COUNT(*)');
+    $group_count = $GLOBALS['FORUM_DB']->get_table_count_approx('f_groups');
     $_m = $GLOBALS['FORUM_DB']->query_select('f_groups', ['id', 'g_name', 'g_order'], ($group_count > 200) ? ['g_is_private_club' => 0] : [], 'ORDER BY g_order,' . $GLOBALS['FORUM_DB']->translate_field_ref('g_name'));
     $entries = new Tempcode();
     foreach ($_m as $m) {
@@ -106,7 +106,7 @@ function cns_create_selection_list_usergroups(?int $it = null, bool $allow_guest
  */
 function cns_create_multi_list_usergroups(array $it = [], bool $allow_guest_group = true) : object
 {
-    $group_count = $GLOBALS['FORUM_DB']->query_select_value('f_groups', 'COUNT(*)');
+    $group_count = $GLOBALS['FORUM_DB']->get_table_count_approx('f_groups');
     $_m = $GLOBALS['FORUM_DB']->query_select('f_groups', ['id', 'g_name', 'g_order'], ($group_count > 200) ? ['g_is_private_club' => 0] : [], 'ORDER BY g_order,' . $GLOBALS['FORUM_DB']->translate_field_ref('g_name'));
     $entries = new Tempcode();
     foreach ($_m as $m) {
@@ -200,7 +200,7 @@ function cns_ensure_groups_cached($groups, bool $tolerant = false)
     global $USER_GROUPS_CACHED;
 
     if ($groups === '*') {
-        $group_count = $GLOBALS['FORUM_DB']->query_select_value('f_groups', 'COUNT(*)');
+        $group_count = $GLOBALS['FORUM_DB']->get_table_count_approx('f_groups');
         $rows = $GLOBALS['FORUM_DB']->query_select('f_groups', ['*'], ($group_count > 200) ? ['g_is_private_club' => 0] : []);
         foreach ($rows as $row) {
             $row['g__name'] = get_translated_text($row['g_name'], $GLOBALS['FORUM_DB']);

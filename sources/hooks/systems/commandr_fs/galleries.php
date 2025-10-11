@@ -39,10 +39,10 @@ class Hook_commandr_fs_galleries extends Resource_fs_base
         switch ($resource_type) {
             case 'image':
             case 'video':
-                return $GLOBALS['SITE_DB']->query_select_value($resource_type . 's', 'COUNT(*)');
+                return $GLOBALS['SITE_DB']->get_table_count_approx($resource_type . 's');
 
             case 'gallery':
-                return $GLOBALS['SITE_DB']->query_select_value('galleries', 'COUNT(*)');
+                return $GLOBALS['SITE_DB']->get_table_count_approx('galleries');
         }
         return 0;
     }

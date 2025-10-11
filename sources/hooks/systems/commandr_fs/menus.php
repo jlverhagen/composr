@@ -38,7 +38,7 @@ class Hook_commandr_fs_menus extends Resource_fs_base
     {
         switch ($resource_type) {
             case 'menu_item':
-                return $GLOBALS['SITE_DB']->query_select_value('menu_items', 'COUNT(*)');
+                return $GLOBALS['SITE_DB']->get_table_count_approx('menu_items');
 
             case 'menu':
                 return $GLOBALS['SITE_DB']->query_select_value('menu_items', 'COUNT(DISTINCT i_menu)');

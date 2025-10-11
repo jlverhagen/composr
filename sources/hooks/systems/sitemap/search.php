@@ -266,7 +266,7 @@ class Hook_sitemap_search extends Hook_sitemap_base
                 $skip_children = false;
                 $count = null;
                 if ($child_cutoff !== null) {
-                    $count = $GLOBALS['SITE_DB']->query_select_value('catalogues', 'COUNT(*)');
+                    $count = $GLOBALS['SITE_DB']->get_table_count_approx('catalogues');
                     if ($count > $child_cutoff) {
                         $skip_children = true;
                     }

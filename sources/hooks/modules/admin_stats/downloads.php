@@ -95,6 +95,8 @@ class Hook_admin_stats_downloads extends CMSStatsProvider
                     }
                     $data_buckets['downloads'][$pivot][$pivot_interval][$pivot_value][$country_code]++;
                 }
+
+                $this->dump_delta_if_necessary($data_buckets);
             }
 
             $start += $max;

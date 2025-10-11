@@ -181,7 +181,7 @@ PHP;
 
         $result_entries = new Tempcode();
         $done = 0;
-        $max_rows = $GLOBALS['SITE_DB']->query_select_value('actionlogs', 'COUNT(*)', $where);
+        $max_rows = $GLOBALS['SITE_DB']->query_select_value('actionlogs', 'COUNT(*)', $where, ' AND 1=1');
         $done_already = [];
         $_start = $start;
 

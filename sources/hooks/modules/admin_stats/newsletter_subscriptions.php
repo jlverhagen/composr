@@ -88,6 +88,8 @@ class Hook_admin_stats_newsletter_subscriptions extends CMSStatsProvider
                     }
                     $data_buckets['newsletter_subscriptions'][$pivot][$pivot_interval][$pivot_value]++;
                 }
+
+                $this->dump_delta_if_necessary($data_buckets);
             }
 
             $start += $max;

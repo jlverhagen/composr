@@ -46,7 +46,7 @@ class Hook_search_videos extends FieldsSearchHook
             }
         }
 
-        if ($GLOBALS['SITE_DB']->query_select_value('videos', 'COUNT(*)') == 0) {
+        if ($GLOBALS['SITE_DB']->get_table_count_approx('videos') == 0) {
             return null;
         }
 

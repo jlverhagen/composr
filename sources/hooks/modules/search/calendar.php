@@ -46,7 +46,7 @@ class Hook_search_calendar extends FieldsSearchHook
             }
         }
 
-        if ($GLOBALS['SITE_DB']->query_select_value('calendar_events', 'COUNT(*)') == 0) {
+        if ($GLOBALS['SITE_DB']->get_table_count_approx('calendar_events') == 0) {
             return null;
         }
 

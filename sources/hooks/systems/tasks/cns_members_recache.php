@@ -35,8 +35,8 @@ class Hook_task_cns_members_recache
         require_code('cns_posts_action');
         require_code('cns_posts_action2');
 
-        $num_members = $GLOBALS['FORUM_DB']->query_select_value('f_members', 'COUNT(*)');
-        $num_warnings_total = $GLOBALS['FORUM_DB']->query_select_value('f_warnings', 'COUNT(*)');
+        $num_members = $GLOBALS['FORUM_DB']->get_table_count_approx('f_members');
+        $num_warnings_total = $GLOBALS['FORUM_DB']->get_table_count_approx('f_warnings');
 
         // Members
         $start = 0;

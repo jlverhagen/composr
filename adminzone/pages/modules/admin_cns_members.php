@@ -422,7 +422,7 @@ class Module_admin_cns_members
         // Secondary groups
         $secondary_groups = [];
         if (array_key_exists('secondary_groups', $_POST)) {
-            $group_count = $GLOBALS['FORUM_DB']->query_select_value('f_groups', 'COUNT(*)');
+            $group_count = $GLOBALS['FORUM_DB']->get_table_count_approx('f_groups');
             $groups = list_to_map('id', $GLOBALS['FORUM_DB']->query_select('f_groups', ['*'], ($group_count > 200) ? ['g_is_private_club' => 0] : []));
             foreach ($_POST['secondary_groups'] as $group_id) {
                 $group = $groups[intval($group_id)];
@@ -620,7 +620,7 @@ class Module_admin_cns_members
         $fields->attach(form_input_integer(do_lang_tempcode('DELURK_MIN_DAYS_SINCE_JOIN'), do_lang_tempcode('DELURK_MIN_DAYS_SINCE_JOIN_DESCRIPTION'), 'min_days_since_join', $min_days_since_join, false));
         $fields->attach(form_input_tick(do_lang_tempcode('DELURK_NON_CONFIRMED'), do_lang_tempcode('DELURK_NON_CONFIRMED_DESCRIPTION'), 'non_confirmed', $non_confirmed));
         $groups = new Tempcode();
-        $group_count = $GLOBALS['FORUM_DB']->query_select_value('f_groups', 'COUNT(*)');
+        $group_count = $GLOBALS['FORUM_DB']->get_table_count_approx('f_groups');
         $rows = $GLOBALS['FORUM_DB']->query_select('f_groups', ['id', 'g_name'], ($group_count > 200) ? ['g_is_private_club' => 0] : []);
         foreach ($rows as $row) {
             if ($row['id'] != db_get_first_id()) {

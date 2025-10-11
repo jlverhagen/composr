@@ -46,7 +46,7 @@ class Hook_search_download_categories extends FieldsSearchHook
             }
         }
 
-        if ($GLOBALS['SITE_DB']->query_select_value('download_categories', 'COUNT(*)') <= 1) {
+        if ($GLOBALS['SITE_DB']->get_table_count_approx('download_categories') <= 1) {
             return null;
         }
 

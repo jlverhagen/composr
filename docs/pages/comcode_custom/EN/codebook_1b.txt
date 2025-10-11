@@ -342,7 +342,7 @@ $hr = array(
 $header_row = results_header_row($hr, $sortables, 'sort', $sortable . ' ' . $sort_order);
 
 // Query, with pagination
-$max_rows = $GLOBALS['SITE_DB']->query_select_value('example', 'COUNT(*)');
+$max_rows = $GLOBALS['SITE_DB']->get_table_count_approx('example');
 if ($max_rows == 0) {
     inform_exit(do_lang_tempcode('NO_ENTRIES'));
 }

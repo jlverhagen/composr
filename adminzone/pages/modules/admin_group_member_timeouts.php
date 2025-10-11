@@ -117,10 +117,10 @@ class Module_admin_group_member_timeouts
 
         $start = get_param_integer('start', 0);
         $max = get_param_integer('max', 100);
-        $max_rows = $db->query_select_value('f_group_member_timeouts', 'COUNT(*)');
+        $max_rows = $db->get_table_count_approx('f_group_member_timeouts');
 
         if (get_forum_type() == 'cns') {
-            $num_usergroups = $GLOBALS['FORUM_DB']->query_select_value('f_groups', 'COUNT(*)');
+            $num_usergroups = $GLOBALS['FORUM_DB']->get_table_count_approx('f_groups');
             if (($num_usergroups > 50) && (addon_installed('ecommerce'))) {
                 $_usergroups = $GLOBALS['FORUM_DB']->query_select('f_usergroup_subs s JOIN ' . $GLOBALS['FORUM_DB']->get_table_prefix() . 'f_groups g ON g.id=s.s_group_id', ['g.id', 'g.g_name', 'g.g_order'], [], 'ORDER BY g_order,' . $GLOBALS['FORUM_DB']->translate_field_ref('g_name'), 1, 0, false, ['g_name' => 'SHORT_TRANS']);
                 $usergroups = [];

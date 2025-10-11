@@ -83,6 +83,8 @@ class Hook_admin_stats_users_online extends CMSStatsProvider
                         $data_buckets['users_online'][$pivot][$pivot_interval][$pivot_value] = $row['peak'];
                     }
                 }
+
+                $this->dump_delta_if_necessary($data_buckets);
             }
 
             $start += $max;

@@ -161,6 +161,8 @@ class Hook_admin_stats_comments extends CMSStatsProvider
                         }
                     }
                 }
+
+                $this->dump_delta_if_necessary($data_buckets);
             }
 
             $start += $max;
