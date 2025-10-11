@@ -103,6 +103,14 @@ class Hook_admin_stats_users_online extends CMSStatsProvider
         }
 
         foreach ($_data as $_interval => $value) {
+            // Makeshift day pivot
+            if (isset($filters[$bucket . '__day_range'])) {
+                list($min_day, $max_day) = $filters[$bucket . '__day_range'];
+                if (($_interval < $min_day) || ($_interval > $max_day)) {
+                    continue;
+                }
+            }
+
             $interval = $this->make_date_pivot_value_nice('day_series', $_interval, 0);
 
             $data[$interval] = $value;
