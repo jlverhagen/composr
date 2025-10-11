@@ -742,7 +742,7 @@
     $posting.initFormSaving = function initFormSaving(formId) {
         window.lastAutosave = new Date();
 
-        //$util.inform('Initialising auto-save subsystem');
+        $util.inform('Initialising auto-save subsystem');
 
         // Go through all forms/elements
         var form = document.getElementById(formId);
@@ -787,9 +787,9 @@
                             biggestLengthData = value;
                         }
 
-                        //$util.inform('+ Has autosave for ' + elementName + ' (' + autosaveName + ')');
+                        $util.inform('+ Has autosave for ' + elementName + ' (' + autosaveName + ')');
                     } else {
-                        //$util.inform('- Has no autosave for ' + elementName);
+                        $util.inform('- Has no autosave for ' + elementName);
                     }
                 }
 
@@ -797,16 +797,16 @@
                     _restoreFormAutosave(form, fieldsToDo, biggestLengthData);
                     return; // If we had it locally, we won't let it continue on to try via AJAX
                 } else {
-                    //$util.inform('No auto-save, fields found was ' + fieldsToDoCounter + ', largest length was ' + biggestLengthData.length);
+                    $util.inform('No auto-save, fields found was ' + fieldsToDoCounter + ', largest length was ' + biggestLengthData.length);
                 }
             }
         } else {
-            //$util.inform('Nothing in local storage');
+            $util.inform('Nothing in local storage');
         }
 
         // Load via AJAX (if issue happened on another machine, or if we do not support local storage)
         if (navigator.onLine) {
-            //$util.inform('Searching AJAX for auto-save');
+            $util.inform('Searching AJAX for auto-save');
 
             var url = '{$FIND_SCRIPT_NOHTTP;,autosave}?type=retrieve';
             url += '&stem=' + encodeURIComponent(getAutosaveUrlStem());
@@ -814,7 +814,7 @@
             var callback = (function (form) {
                 return function (responseXML) {
                     var result = responseXML && responseXML.querySelector('result');
-                    //$util.inform('Auto-save AJAX says', result);
+                    $util.inform('Auto-save AJAX says', result);
                     _retrieveFormAutosave(result, form);
                 };
             }(form));
@@ -823,7 +823,7 @@
 
         function handleFormSavingExplicit(event, form) {
             if (event.keyCode === 83/*s*/ && (navigator.platform.match('Mac') ? event.metaKey : event.ctrlKey) && (!navigator.platform.match('Mac') ? event.ctrlKey : event.metaKey) && (!event.altKey)) {
-                //$util.inform('Doing explicit auto-save');
+                $util.inform('Doing explicit auto-save');
 
                 event.preventDefault(); // Prevent browser save dialog
 
@@ -908,7 +908,7 @@
             if ((fieldsToDoCounter !== 0) && (biggestLengthData.length > 25)) {
                 _restoreFormAutosave(form, fieldsToDo, biggestLengthData);
             } else {
-                //$util.inform('No auto-save, fields found was ' + fieldsToDoCounter + ', largest length was ' + biggestLengthData.length);
+                $util.inform('No auto-save, fields found was ' + fieldsToDoCounter + ', largest length was ' + biggestLengthData.length);
             }
         }
 
@@ -929,7 +929,7 @@
                         }
 
                         if (form.elements[key] !== undefined) {
-                            //$util.inform('Restoring ' + key);
+                            $util.inform('Restoring ' + key);
                             cleverSetValue(form, form.elements[key], fieldsToDo[key]);
                         }
                     }

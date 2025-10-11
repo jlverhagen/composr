@@ -1048,7 +1048,7 @@ Composr has support for the TextMate [tt]txmt[/tt] URL handler, for opening file
 
 To enable this support you need to run this command in Commandr:
 [code="Commandr"]
-:set_value('textmate', '1');
+set_value 'textmate' '1'
 [/code]
 
 While this feature is fairly unique to TextMate, you can configure other text editors to work with it too, on different operating systems. We won't be documenting every text editor and operating system combination, but we have documented Geany on Gnome (Linux) below. For Windows there is a registry editing mechanism to register protocol handlers. Some browsers such as Firefox don't actually need operating system integration.

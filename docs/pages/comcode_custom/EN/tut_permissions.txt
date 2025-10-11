@@ -227,9 +227,8 @@ As an alternative to FirePHP, you can create an empty writable [tt]data_custom/p
 
 If you set a hidden value in Commandr then all checks will be logged (with pass status):
 [code="Commandr"]
-:set_value('permission_log_success_too', '1');
+set_value 'permission_log_success_too' '1'
 [/code]
-Just note that this will make the logs very large very quickly.
 
 Just don't leave the file there or it'll get very big, very fast!
 
