@@ -639,27 +639,27 @@ Values are like hidden configuration options. They are either hidden because the
   - [tt]disable_form_auto_saving[/tt] -- set this to '1' if you want to disable form auto saving
   - [tt]default_newsletter_mail_template[/tt] -- set to the name of a template to set the default template for newsletters (instead of [tt]MAIL[/tt])
   - [tt]default_comcode_text[/tt] -- set this if you want to have multi-line Comcode editing fields to have a default value; this is useful for setting default font styles but don't want to retroactively affect old content; if you want it to be able to auto-wrap quick-reply content then you can put [tt]{content}[/tt] where you'd like the content to be inserted
-  - [tt]addon_disabled_<addon>[/tt] -- set this to '1' to disable a particular addon (may not be supported by all addons)
+  - [tt]addon_disabled_<addon>[/tt] -- set this to '1' to disable a particular addon (Composr will pretend the addon is not installed and hide / disable its functionality). This is useful if you want to disable an addon's functionality without removing its data (uninstalling also erases database data).
   - [tt]mail_theme[/tt] -- set this to the name of a theme to force that theme to be used for all outbound e-mails. This is useful because otherwise the theme of the user triggering the e-mail to be sent will be used.
-  - [tt]sitemap_orphans_to_pages[/tt] -- set this to '0' if you don't want orphaned pages to be put under the default Pages page grouping of the Sitemap
+  - [tt]sitemap_orphans_to_pages[/tt] -- set this to '0' if you don't want orphaned pages to be put under the default Pages page grouping of the Sitemap (instead, they will be hidden)
   - [tt]time_sensitive_rankings__<catalogue_name>[/tt] -- set this to a number for catalogue rating sorting to only consider this number of records. This is useful for a upvote/downvote system that is responsive to change in voting pattern. Requires the database to support window functions (MySQL 8+ does, Maria DB 10.2+ does).
   - [tt]keep_gallery_gps[/tt] -- set this to '1' if you want galleries (and related to feature) to not strip GPS metadata from images (which is done by default for privacy reasons)
   - [tt]hide_author_skills[/tt] -- set this to '1' if you do not want the author addon to have a skills field
  - Low-level Action log tuning:
   - [tt]log_actions__create_topic[/tt] -- set this to '1' to enable Action logs for new topics
-  - [tt]log_actions__reply[/tt] -- set this to '1' to enable Action logs for topic replies
-  - [tt]log_actions__chat[/tt] -- set this to '1' to enable Action logs for chatroom posts
-  - [tt]log_actions__im[/tt] -- set this to '1' to enable Action logs for instant messaging messages
+  - [tt]log_actions__reply[/tt] -- set this to '1' to enable Action logs for topic replies (caution: this can populate your action logs quickly)
+  - [tt]log_actions__chat[/tt] -- set this to '1' to enable Action logs for chatroom posts (caution: this can populate your action logs quickly)
+  - [tt]log_actions__im[/tt] -- set this to '1' to enable Action logs for instant messaging messages (caution: this can populate your action logs quickly)
  - Low-level search tuning:
   - [tt]really_want_highlighting[/tt] -- set this to '1' if you want to force HTML to be converted to Comcode when searches happen, so keyword highlighting works better.
   - [tt]search_days__<search-hook>[/tt] -- set the default day search period for a search hook (e.g. 60, or blank for no limit). This may be set for reasons of user experience, or for performance -- searching without a day constraint is actually faster.
   - [tt]fast_custom_index__max_ngram_size__<language>[/tt] -- Overrides the maximum ngram size config option for a particular language
   - [tt]fast_custom_index__enable_for__<search-hook>[/tt] -- Enable the fast custom index for a particular search hook (if you need more fidelity than the regular config allows)
-  - [tt]fast_custom_index__enable_for__<language>[/tt] -- Enable the fast custom index for a particular language (if you need more fidelity than the regular config allows)
+  - [tt]fast_custom_index__enable_for_lang__<language>[/tt] -- Enable the fast custom index for a particular language (if you need more fidelity than the regular config allows)
   - [tt]fast_custom_index__startup_hack[/tt] -- Forces the forum post indexer to resume where it left off. Useful when debugging indexing problems.
  - Performance tuning (positive) [not official options as will break normal expectations of how the system will behave / complicate things]:
   - [tt]assume_indices_exist[/tt] -- set this to '1' to assume all indices exist, to avoid having to check before using them
-  - [tt]lots_of_data_in_*[/tt] -- set this to '1', with '*' replaced with a database table name, if you want the Selectcode mechanism to work with recursive DB lookups rather than one huge flat lookup
+  - [tt]lots_of_data_in_<database-table>[/tt] -- set this to '1' if you want the Selectcode mechanism to work with recursive DB lookups rather than one huge flat lookup
   - [tt]disable_cat_cat_perms[/tt] -- set this to '1' if you want to disable catalogue category permissions
   - [tt]catalogue_limit_cat_field_load__<cataloguename>[/tt] -- set this to '1' if you want that catalogue to not have all fields loaded on category views, an optimisation that reduces templating flexibility
   - [tt]no_catalogue_field_assembly[/tt] -- set this to '1' if you want catalogue entries to be 100% hand-templated; removing this will improve performance but remove pre-assembly
@@ -668,31 +668,30 @@ Values are like hidden configuration options. They are either hidden because the
   - [tt]no_catalogue_field_assembly_tabular[/tt] -- see above, but only if tabular assembly not required
   - [tt]assume_modules_correct[/tt] -- set to '1' if module/block version checking should not happen; this will improve performance
   - [tt]no_priority_redirects[/tt] -- set to '1' if redirects should only be considered if a page cannot be found via other means
-  - [tt]disable_tags[/tt] -- set to '1' if you don't want tags to be generated (small performance tweak)
+  - [tt]disable_tags[/tt] -- set to '1' if you don't want SEO tags to be generated (small performance tweak)
   - [tt]disable_awards_in_titles[/tt] -- set this to '1' if you don't want awards to be displayed on content screens (small performance improvement)
-  - [tt]disable_user_online_counting[/tt] -- set this to '1' if you don't want to count online users (small performance improvement)
-  - [tt]disable_banner_count_updates[/tt] -- set this to '1' if you don't want to maintain banner view counts (small performance improvement)
+  - [tt]disable_user_online_counting[/tt] -- set this to '1' if you don't want to count online users (small performance improvement); be aware this breaks "site busy" functionality.
+  - [tt]disable_banner_count_updates[/tt] -- set this to '1' if you don't want to maintain banner view counts (small performance improvement); be aware this breaks functionality pertaining to views, such as CTRs.
   - [tt]pinpoint_submitban_check[/tt] -- set this to '1' if you only want submitter ban checks to occur in the CMS zone (small performance improvement)
-  - [tt]disable_sitemap_for__*[/tt] -- disable sitemap generation for a particular page (e.g. if there's too much data in it and the server can't cope, and the data isn't so important anyway). Replace '*' with the page name
-  - [tt]disable_view_counts[/tt] -- set this to '1' if you don't want view counts to be maintained (reduces database writes). You will probably want to disable the normal "Reveal usage figures" configuration option (Admin Zone > Setup > Configuration > Site options > Analytics / Logging) too, to hide all the zero counts. You can also set it to -1 if you do not want view counts to be recorded for staff
+  - [tt]disable_view_counts[/tt] -- set this to '1' if you don't want view counts to be maintained (reduces database writes). You will probably want to disable the normal "Reveal usage figures" configuration option (Admin Zone > Setup > Configuration > Site options > Analytics / Logging) too, to hide all the zero counts. You can also set it to -1 if you only want view counts to exclude staff.
   - [tt]disable_normal_topic_read_history[/tt] -- set this to '1' if you don't want topic-read history to be maintained for things other than private topics
-  - [tt]disable_member_tracking[/tt] -- set this to '1' if you want to disable the member tracking feature where it's supported (it shows who is viewing a forum topic, for example)
+  - [tt]disable_member_tracking[/tt] -- set this to '1' if you want to disable the member tracking feature where it's supported (being able to view which members are online or are viewing a particular piece of content)
   - [tt]min_lastvisit_frequency[/tt] -- set this to the number of seconds waited between the last-visit time being updated (performance tweak, minimises database writes)
-  - [tt]disable_flood_control[/tt] -- set this to '1' if you will not have flood control
+  - [tt]disable_flood_control[/tt] -- set this to '1' to disable posting flood control on Conversr
   - [tt]shortened_tempcode[/tt] -- set this to '1' to not store parameter reference origins in Tempcode, which makes Tempcode use less memory/storage/CPU
-  - [tt]aggressive_tempcode_compilation[/tt] -- set this to '1' if you want to compile some things aggressively into Tempcode that may occasionally change, such as member avatar URLs or resource URLs; setting this implies you will tolerate some outdated data in return for slightly faster cache rendering
+  - [tt]aggressive_tempcode_compilation[/tt] -- set this to '1' if you want to compile some things aggressively into Tempcode cache that may occasionally change, such as member avatar URLs or resource URLs; setting this implies you will tolerate some outdated data in return for slightly faster cache rendering
   - [tt]save_jpegs_as_png[/tt] -- set this to '1' to allow Composr to detect when JPEG files would be smaller, and save JPEG data into PNG file extensions. It is a bit of a hack, and goes against standards, but works well
   - [tt]js_keep_params[/tt] -- handle keep variable propagation via JavaScript. Used in conjunction with [tt]$SITE_INFO['no_keep_params'] = '1';[/tt]
   - [tt]slow_counts[/tt] -- set this to '1' if you need to do approximate row counts instead of exact counts. Note that if innodb is enabled, this will always be enabled regardless of setting.
   - [tt]innodb[/tt] -- set this to '1' if you have switched to MySQL's InnoDB (as of version 11, this is '1' by default unless MyISAM was explicitly selected in the installer)
-  - [tt]disable_post_rating[/tt] -- set this to '1' if you don't want to allow post ratings, which saves one query per displayed post
-  - [tt]statistical_update_model[/tt] -- update view counts irregularly in bulk, using a statistical algorithm
+  - [tt]disable_post_rating[/tt] -- set this to '1' if you don't want to allow ratings on posts, which reduces queries and rendering
+  - [tt]statistical_update_model[/tt] -- progressively update view counts less and less often on each hit as the number of total hits increase. This runs under the assumption that the more hits a piece of content has, the more frequently it is visited. So this balances out the number of database queries made. But it decreases the accuracy of the view counts.
   - [tt]safelisted_blocks[/tt] -- see explanation under "Low-level tuning"
  - Performance tuning (negative):
-  - [tt]flush_cache_on_action[/tt] -- set this to '1' to automatically flush the static cache when actions are performed
-  - [tt]allow_admin_in_other_zones[/tt] -- set this to '1' if you want to allow admin and CMS modules to run in other zones (small performance cost)
-  - [tt]memory_limit_simulate_hard[/tt] -- set this to '1' if you do not want the memory limit to be disableable; useful for testing compatibility with hosts that have low limits
-  - [tt]disable_web_resources_static_compression[/tt] -- set this to '1' to not create [tt].gz[/tt]/[tt].br[/tt] versions of JavaScript and CSS files (such compression may slow a fast-changing development environment more than the gain in download speed helps)
+  - [tt]flush_cache_on_action[/tt] -- set this to '1' to automatically flush the static cache when an action log entry is added
+  - [tt]allow_admin_in_other_zones[/tt] -- set this to '1' if you want to allow admin and CMS modules to run in other zones (small performance cost; not recommended as it may break other functionality)
+  - [tt]memory_limit_simulate_hard[/tt] -- set this to '1' to cap the max PHP memory limit at 128 MB; otherwise for memory-intensive operations, Composr may request up to 512 MB if possible.
+  - [tt]disable_web_resources_static_compression[/tt] -- set this to '1' to not create [tt].gz[/tt]/[tt].br[/tt] versions of JavaScript and CSS files (in some server set-ups it may be better to offset this to a third-party CDN such as Cloudflare)
   - [tt]cron_block_caching_careful_contexts[/tt] -- set this to '1' if you want Cron generated block-caching to use the requested theme and language to fill the cache; this requires loopback HTTP requests
   - [tt]force_memory_sort__<catalogue-name>[/tt] -- set this to '1' to force an in-memory sort on a particular catalogue (this is slower, but it will sort more accurately by resolving content language string fallback and Comcode fully before sorting)
  - Easter eggs:
@@ -700,7 +699,7 @@ Values are like hidden configuration options. They are either hidden because the
  - Experimental functionality
   - [tt]download_associated_media[/tt] -- set this to '1' to add an option on posting forms to have any referenced media automatically downloading locally, to protect against the risk of future broken links
   - [tt]highlight_extracted_file_data[/tt] -- set this to '1' if downloads searches should show highlighted data from extracted keywords, if there's no match on the body text of the download
-  - [tt]download_gallery_queue_images[/tt] -- set this to a string of the number of images that exist in a gallery before gallery export triggers the task queue (if enabled)
+  - [tt]download_gallery_queue_images[/tt] -- set this to a string of the number of images that exist in a gallery before gallery export triggers the task queue (if enabled); default is '5'.
 
 [title="4"]Hidden 'keep' parameters[/title]
 

@@ -5594,26 +5594,31 @@ function statistical_update_model(string $table, int $view_count) : int
     if (get_value('disable_view_counts') === '1') {
         return 0;
     }
-
     if ((get_value('disable_view_counts') === '-1') && ($GLOBALS['FORUM_DRIVER']->is_staff(get_member()))) {
         return 0;
     }
 
+    if ($GLOBALS['SITE_DB']->table_is_locked($table)) {
+        return 0;
+    }
+
+    /*
+        Randomly update view count using an algorithm that updates less often the more views we have.
+        This reduces the number of queries where we reasonably expect more frequent hits on something.
+
+        For example, let's say something currently has 1,000 views.
+        On each hit, there is a 1/50 chance we update the view count, and when updated, we increase by 50.
+        This averages out over time to about the view count we expect while significantly decreasing queries.
+    */
     if (get_value('statistical_update_model') == '1') {
         $st_increment = max(1, intval(round(floatval($view_count) / 20.0)));
     } else {
         $st_increment = 1;
     }
-
     if ($st_increment == 0) {
         return 0;
     }
-
     if (mt_rand(1, $st_increment) != 1) {
-        return 0;
-    }
-
-    if ($GLOBALS['SITE_DB']->table_is_locked($table)) {
         return 0;
     }
 

@@ -99,7 +99,9 @@ function banners_script(bool $ret = false, ?string $type = null, ?string $dest =
     if ($type == 'image_proxy') {
         $dest = substr(get_param_string('dest'), 0, 80);
 
-        $GLOBALS['SITE_DB']->query('UPDATE ' . get_table_prefix() . 'banners SET views_to=(views_to+1) WHERE ' . db_string_equal_to('name', $dest), 1);
+        if ((get_db_type() != 'xml') && (get_value('disable_banner_count_updates') !== '1')) {
+            $GLOBALS['SITE_DB']->query('UPDATE ' . get_table_prefix() . 'banners SET views_to=(views_to+1) WHERE ' . db_string_equal_to('name', $dest), 1);
+        }
 
         $img_url = $GLOBALS['SITE_DB']->query_select_value_if_there('banners', 'img_url', ['name' => $dest]);
         if (empty($img_url)) {
@@ -318,7 +320,7 @@ function banners_script(bool $ret = false, ?string $type = null, ?string $dest =
             });
         }
         if ($source != '') {
-            if (get_db_type() != 'xml') {
+            if ((get_db_type() != 'xml') && (get_value('disable_banner_count_updates') !== '1')) {
                 cms_register_shutdown_function_safe(function () use ($source) {
                     if (!$GLOBALS['SITE_DB']->table_is_locked('banners')) {
                         $GLOBALS['SITE_DB']->query('UPDATE ' . get_table_prefix() . 'banners SET views_from=(views_from+1) WHERE ' . db_string_equal_to('name', $source), 1, 0, true); // Errors suppressed in case DB write access broken

@@ -452,7 +452,7 @@ class Module_banners
         if ($myrow['site_url'] == '') {
             $click_through = do_lang_tempcode('CANT_TRACK');
         } else {
-            if ($myrow['views_to'] != 0) {
+            if (($myrow['views_to'] != 0) && (get_value('disable_banner_count_updates') !== '1')) {
                 $click_through = protect_from_escaping(escape_html(float_format(round(100.0 * ($myrow['hits_to'] / $myrow['views_to']))) . '%'));
             } else {
                 $click_through = do_lang_tempcode('NA_EM');
@@ -487,7 +487,7 @@ class Module_banners
             $fields->attach(map_table_field(do_lang_tempcode('BANNER_VIEWS_FROM'), integer_format($myrow['views_from'], 0), true, 'views_from'));
         }
         $fields->attach(map_table_field(do_lang_tempcode('BANNER_HITS_TO'), ($myrow['site_url'] == '') ? do_lang_tempcode('CANT_TRACK') : protect_from_escaping(escape_html(integer_format($myrow['hits_to'], 0))), true, 'hits_to'));
-        $fields->attach(map_table_field(do_lang_tempcode('BANNER_VIEWS_TO'), ($myrow['site_url'] == '') ? do_lang_tempcode('CANT_TRACK') : protect_from_escaping(escape_html(integer_format($myrow['views_to'], 0))), true, 'views_to'));
+        $fields->attach(map_table_field(do_lang_tempcode('BANNER_VIEWS_TO'), (($myrow['site_url'] == '') || (get_value('disable_banner_count_updates') === '1')) ? do_lang_tempcode('CANT_TRACK') : protect_from_escaping(escape_html(integer_format($myrow['views_to'], 0))), true, 'views_to'));
         $fields->attach(map_table_field(do_lang_tempcode('BANNER_CLICKTHROUGH'), $click_through, true));
 
         $username = $GLOBALS['FORUM_DRIVER']->member_profile_hyperlink($myrow['submitter']);

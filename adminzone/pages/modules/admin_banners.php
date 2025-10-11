@@ -139,7 +139,9 @@ class Module_admin_banners
         }
         $_header_row = array_merge($_header_row, [do_lang_tempcode('BANNER_HITS_TO'), do_lang_tempcode('BANNER_VIEWS_TO'), do_lang_tempcode('BANNER_CLICKTHROUGH'), do_lang_tempcode('DISPLAY_LIKELIHOOD'), do_lang_tempcode('SUBMITTER'), do_lang_tempcode('ADDED')]);
         $filtercode[] = 'hits_to<hits_to_op><hits_to>';
-        $filtercode[] = 'views_to<views_to_op><views_to>';
+        if (get_value('disable_banner_count_updates') !== '1') {
+            $filtercode[] = 'views_to<views_to_op><views_to>';
+        }
         $filtercode[] = 'display_likelihood<display_likelihood_op><display_likelihood>';
         $filtercode[] = 'submitter=<submitter>';
         $filtercode[] = 'add_date<add_date_op><add_date>';
@@ -191,9 +193,9 @@ class Module_admin_banners
             $hits_from = integer_format($myrow['hits_from']);
             $views_from = integer_format($myrow['views_from']);
             $hits_to = ($myrow['site_url'] == '') ? do_lang_tempcode('CANT_TRACK') : protect_from_escaping(escape_html(integer_format($myrow['hits_to'], 0)));
-            $views_to = ($myrow['site_url'] == '') ? do_lang_tempcode('CANT_TRACK') : protect_from_escaping(escape_html(integer_format($myrow['views_to'], 0)));
+            $views_to = (($myrow['site_url'] == '') || (get_value('disable_banner_count_updates') === '1')) ? do_lang_tempcode('CANT_TRACK') : protect_from_escaping(escape_html(integer_format($myrow['views_to'], 0)));
 
-            if ($myrow['views_to'] != 0) {
+            if (($myrow['views_to'] != 0) && (get_value('disable_banner_count_updates') !== '1')) {
                 $click_through = protect_from_escaping(escape_html(float_format(round(100.0 * ($myrow['hits_to'] / $myrow['views_to']))) . '%'));
             } else {
                 $click_through = do_lang_tempcode('NA_EM');

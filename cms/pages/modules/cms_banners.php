@@ -668,7 +668,7 @@ class Module_cms_banners extends Standard_crud_module
             $spreadsheet_row[strip_html(do_lang('BANNER_HITS_TO'))] = ($row['site_url'] == '') ? strip_html(do_lang('CANT_TRACK')) : integer_format($row['hits_to'], 0);
             $spreadsheet_row[strip_html(do_lang('BANNER_VIEWS_TO'))] = ($row['site_url'] == '') ? strip_html(do_lang('CANT_TRACK')) : integer_format($row['views_to'], 0);
 
-            if ($row['views_to'] != 0) {
+            if (($row['views_to'] != 0) && (get_value('disable_banner_count_updates') !== '1')) {
                 $click_through = float_format(100.0 * (floatval($row['hits_to']) / floatval($row['views_to'])));
             } else {
                 $click_through = do_lang('NA');

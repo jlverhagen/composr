@@ -1127,11 +1127,12 @@ function raise_php_memory_limit()
 
 /**
  * Disable the PHP memory limit. Do not use this carelessly, use it if a screen is a bit fat or in an importer, don't use it assuming memory is infinite.
- * Mar 2021: Actually we will still cap it, as nobody needs more than 512MB of RAM (for a PHP process) and bugs can crash a machine.
+ * Mar 2021: Actually we will still cap it, as nobody needs more than 512 MB of RAM (for a PHP process) and bugs can crash a machine.
  */
 function disable_php_memory_limit()
 {
     if ((function_exists('get_value')) && (get_value('memory_limit_simulate_hard') === '1')) {
+        raise_php_memory_limit(); // Do a raise instead
         return;
     }
 
