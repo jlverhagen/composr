@@ -191,7 +191,7 @@ class Hook_admin_stats_cns_members extends CMSStatsProvider
     public function preprocess_raw_data_flat(int $start_time, int $end_time, array &$data_buckets)
     {
         // Optimisation: as this always calculates full statistics, do not always calculate
-        if (($end_time < (time() - (60 * 60))) || (mt_rand(0, 29) != 0)) {
+        if (($end_time < (time() - (60 * 60 * 24))) || (mt_rand(0, 29) != 0)) {
             return;
         }
 

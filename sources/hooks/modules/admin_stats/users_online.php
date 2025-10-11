@@ -38,7 +38,7 @@ class Hook_admin_stats_users_online extends CMSStatsProvider
                 'filters' => [
                     'users_online__day_range' => new CMSStatsDayRangeFilter('users_online__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
                 ],
-                'pivot' => new CMSStatsDatePivot('users_online__pivot', $this->get_date_pivots(false)),
+                'pivot' => null,
                 'support_kpis' => self::KPI_HIGH_IS_GOOD,
             ],
         ];
@@ -46,13 +46,19 @@ class Hook_admin_stats_users_online extends CMSStatsProvider
 
     /**
      * Preprocess raw data in the database into something we can efficiently draw graphs/conclusions from.
+     * This is for flat and timeless data.
      *
      * @param  TIME $start_time Start timestamp
      * @param  TIME $end_time End timestamp
-     * @param  array $data_buckets Map of data buckets; a map of bucket name to nested maps with the following maps in sequence: 'pivot', 'pivot interval', 'pivot value' (then further map data); passed by reference only with pre-filled zero data to later be merged
+     * @param  array $data_buckets Map of data buckets; a map of bucket name to nested maps
      */
-    public function preprocess_raw_data(int $start_time, int $end_time, array &$data_buckets)
+    public function preprocess_raw_data_flat(int $start_time, int $end_time, array &$data_buckets)
     {
+        // Optimisation: as this always calculates full statistics, do not always calculate
+        if (($end_time < (time() - (60 * 60 * 24))) || (mt_rand(0, 29) != 0)) {
+            return;
+        }
+
         require_code('temporal');
 
         $server_timezone = get_server_timezone();
@@ -60,31 +66,15 @@ class Hook_admin_stats_users_online extends CMSStatsProvider
         $max = 1000;
         $start = 0;
 
-        $date_pivots = $this->get_date_pivots();
-
-        $query = 'SELECT * FROM ' . get_table_prefix() . 'usersonline_track WHERE ';
-        $query .= 'date_and_time>=' . strval($start_time) . ' AND ';
-        $query .= 'date_and_time<=' . strval($end_time);
-        $query .= ' ORDER BY date_and_time';
+        $query = 'SELECT * FROM ' . get_table_prefix() . 'usersonline_track';
         do {
             $rows = $GLOBALS['SITE_DB']->query($query, $max, $start);
             foreach ($rows as $row) {
                 $timestamp = $row['date_and_time'];
                 $timestamp = tz_time($timestamp, $server_timezone);
+                $date_interval = to_epoch_interval_index($timestamp, 'days');
 
-                foreach (array_keys($date_pivots) as $pivot) {
-                    $pivot_interval = $this->calculate_date_pivot_interval($pivot, $timestamp);
-                    $pivot_value = $this->calculate_date_pivot_value($pivot, $timestamp);
-
-                    if (!isset($data_buckets['users_online'][$pivot][$pivot_interval][$pivot_value])) {
-                        $data_buckets['users_online'][$pivot][$pivot_interval][$pivot_value] = 0;
-                    }
-                    if ($row['peak'] > $data_buckets['users_online'][$pivot][$pivot_interval][$pivot_value]) {
-                        $data_buckets['users_online'][$pivot][$pivot_interval][$pivot_value] = $row['peak'];
-                    }
-                }
-
-                $this->dump_delta_if_necessary($data_buckets);
+                $data_buckets['users_online'][$date_interval] = $row['peak'];
             }
 
             $start += $max;
@@ -102,25 +92,20 @@ class Hook_admin_stats_users_online extends CMSStatsProvider
     public function generate_final_data(string $bucket, string $pivot, array $filters) : ?array
     {
         $data = [];
-        $_data = $this->prepare_preprocessed_data_for_graph($bucket, $pivot, $filters);
-
-        foreach ($_data as $_pivot => $__data) {
-            foreach ($__data as $pivot_interval => $_) {
-                foreach ($_ as $pivot_value => $peak) {
-                    $pivot_value_nice = $this->make_date_pivot_value_nice($_pivot, $pivot_interval, $pivot_value);
-                    if (!isset($data[$pivot_value_nice])) {
-                        $data[$pivot_value_nice] = 0;
-                    }
-
-                    if ($peak === null) {
-                        continue;
-                    }
-
-                    if ($peak > $data[$pivot_value_nice]) {
-                        $data[$pivot_value_nice] = $peak;
-                    }
-                }
+        $__data = $GLOBALS['SITE_DB']->query_select_value_if_there('stats_preprocessed_flat', 'p_data', ['p_bucket' => $bucket]);
+        if ($__data !== null) {
+            $_data = @unserialize($__data);
+            if ($_data === false) {
+                $_data = [];
             }
+        } else {
+            $_data = [];
+        }
+
+        foreach ($_data as $_interval => $value) {
+            $interval = $this->make_date_pivot_value_nice('day_series', $_interval, 0);
+
+            $data[$interval] = $value;
         }
 
         return [
