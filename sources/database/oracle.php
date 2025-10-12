@@ -297,8 +297,8 @@ class Database_Static_oracle extends DatabaseDriver
             'TIME' => 'bigint',
             'LONG_TRANS' => 'bigint',
             'SHORT_TRANS' => 'bigint',
-            'LONG_TRANS__COMCODE' => 'integer',
-            'SHORT_TRANS__COMCODE' => 'integer',
+            'LONG_TRANS__COMCODE' => multi_lang_content() ? 'bigint' : 'CLOB',
+            'SHORT_TRANS__COMCODE' => multi_lang_content() ? 'bigint' : 'varchar(255)',
             'SHORT_TEXT' => 'varchar(255)',
             'TEXT' => 'varchar(4000)', // Set consistently as 4000 across all drivers due to SQL Server having the lowest limit ; this field type should only be used as an alternative to LONG_TEXT that can be defaulted to '' if not specified, necessary for adding fields to the table's of external systems
             'LONG_TEXT' => 'CLOB',

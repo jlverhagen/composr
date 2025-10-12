@@ -164,8 +164,8 @@ abstract class Database_super_sqlserver extends DatabaseDriver
             'TIME' => 'bigint',
             'LONG_TRANS' => 'bigint',
             'SHORT_TRANS' => 'bigint',
-            'LONG_TRANS__COMCODE' => 'bigint',
-            'SHORT_TRANS__COMCODE' => 'bigint',
+            'LONG_TRANS__COMCODE' => multi_lang_content() ? 'bigint' : 'nvarchar(MAX)',
+            'SHORT_TRANS__COMCODE' => multi_lang_content() ? 'bigint' : 'nvarchar(255)',
             'SHORT_TEXT' => 'nvarchar(255)',
             'TEXT' => 'nvarchar(4000)', // Set consistently as 4000 across all drivers due to SQL Server having the lowest limit ; this field type should only be used as an alternative to LONG_TEXT that can be defaulted to '' if not specified, necessary for adding fields to the table's of external systems
             'LONG_TEXT' => 'nvarchar(MAX)', // 'TEXT' cannot be indexed.

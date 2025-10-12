@@ -257,7 +257,7 @@ class DatabaseRepair
             'foreign_keys' => [],
             'privileges' => [],
         ];
-        require_code('hooks');
+        require_code('zones');
         $hooks = find_all_hook_obs('systems', 'database_manifest', 'Hook_database_manifest_');
         foreach ($hooks as $hook) {
             if (!method_exists($hook, 'db_meta')) {
@@ -290,14 +290,14 @@ class DatabaseRepair
 
         $expected_tables = [];
         foreach ($data['tables'] as $table_name => $table) {
-            if (addon_installed($table['addon'], false, false, true, true)) {
+            if (addon_installed($table['addon'], false, false, false, true)) {
                 $expected_tables[$table_name] = $table['fields'];
             }
         }
 
         $expected_indices = [];
         foreach ($data['indices'] as $universal_index_key => $index) {
-            if (addon_installed($index['addon'], false, false, true, true)) {
+            if (addon_installed($index['addon'], false, false, false, true)) {
                 unset($index['addon']);
                 $expected_indices[$universal_index_key] = $index;
             }
@@ -306,7 +306,7 @@ class DatabaseRepair
         $expected_foreign_keys = [];
         if (array_key_exists('foreign_keys', $data)) {
             foreach ($data['foreign_keys'] as $universal_fk_key => $fk) {
-                if (addon_installed($fk['addon'], false, false, true, true)) {
+                if (addon_installed($fk['addon'], false, false, false, true)) {
                     $expected_foreign_keys[$universal_fk_key] = [
                         'from_table' => $fk['from_table'],
                         'from_field' => $fk['from_field'],
@@ -320,7 +320,7 @@ class DatabaseRepair
 
         $expected_privileges = [];
         foreach ($data['privileges'] as $privilege_name => $privilege) {
-            if (addon_installed($privilege['addon'], false, false, true, true)) {
+            if (addon_installed($privilege['addon'], false, false, false, true)) {
                 unset($privilege['addon']);
                 $expected_privileges[$privilege_name] = $privilege;
             }
@@ -467,7 +467,7 @@ class DatabaseRepair
 
         // Tables alien in DB
         foreach ($existent_tables as $table_name => $table) {
-            if ($table_name == 'db_meta' || $table_name == 'db_meta_indices' || table_has_purpose_flag($table_name, TABLE_PURPOSE__NON_BUNDLED)) {
+            if ($table_name == 'db_meta' || $table_name == 'db_meta_indices' || $table_name == 'db_meta_foreign_keys') {
                 continue;
             }
 
@@ -525,7 +525,7 @@ class DatabaseRepair
         foreach ($existent_indices as $universal_index_key => $index) {
             $table_name = $index['table'];
 
-            if (($table_name == 'db_meta') || ($table_name == 'db_meta_indices') || table_has_purpose_flag($table_name, TABLE_PURPOSE__NON_BUNDLED)) {
+            if (($table_name == 'db_meta') || ($table_name == 'db_meta_indices') || ($table_name == 'db_meta_foreign_keys')) {
                 continue;
             }
 
@@ -649,7 +649,7 @@ class DatabaseRepair
 
         // Tables alien in DB
         foreach ($existent_tables as $table_name => $table) {
-            if ($table_name == 'db_meta' || $table_name == 'db_meta_indices' || table_has_purpose_flag($table_name, TABLE_PURPOSE__NON_BUNDLED)) {
+            if (($table_name == 'db_meta') || ($table_name == 'db_meta_indices') || ($table_name == 'db_meta_foreign_keys')) {
                 continue;
             }
             if (!isset($expected_tables[$table_name])) {
@@ -738,7 +738,7 @@ class DatabaseRepair
                 continue; // Can't check this, table is dynamic
             }
 
-            if (($table_name == 'db_meta') || ($table_name == 'db_meta_indices') || (table_has_purpose_flag($table_name, TABLE_PURPOSE__NON_BUNDLED))) {
+            if (($table_name == 'db_meta') || ($table_name == 'db_meta_indices') || ($table_name == 'db_meta_foreign_keys')) {
                 continue;
             }
 
@@ -832,7 +832,7 @@ class DatabaseRepair
         // Foreign-keys alien in DB (exist physically but not in meta)
         foreach ($existent_foreign_keys as $universal_fk_key => $ex_fk) {
             $table_name = $ex_fk['from_table'];
-            if (($table_name == 'db_meta') || ($table_name == 'db_meta_indices') || table_has_purpose_flag($table_name, TABLE_PURPOSE__NON_BUNDLED)) {
+            if (($table_name == 'db_meta') || ($table_name == 'db_meta_indices') || ($table_name == 'db_meta_foreign_keys')) {
                 continue;
             }
             if (!isset($meta_foreign_keys[$universal_fk_key])) {
@@ -887,7 +887,7 @@ class DatabaseRepair
         // Alien foreign-keys in DB
         foreach ($existent_foreign_keys as $universal_fk_key => $ex_fk) {
             $table_name = $ex_fk['from_table'];
-            if (($table_name == 'db_meta') || ($table_name == 'db_meta_indices') || table_has_purpose_flag($table_name, TABLE_PURPOSE__NON_BUNDLED)) {
+            if (($table_name == 'db_meta') || ($table_name == 'db_meta_indices') || ($table_name == 'db_meta_foreign_keys')) {
                 continue;
             }
             if (!isset($expected_foreign_keys[$universal_fk_key])) {
@@ -1471,7 +1471,7 @@ class DatabaseRepair
      */
     private function add_fixup_query(string $query)
     {
-        $this->sql_fixup[md5($query)/*De-duplicates*/] = $query . ';';
+        $this->sql_fixup[hash('sha256', $query)/*De-duplicates*/] = $query . ';';
 
         if (current_fatalistic() > 0) {
             fatal_exit($query);

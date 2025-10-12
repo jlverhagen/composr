@@ -463,8 +463,8 @@ abstract class Database_super_mysql extends DatabaseDriver
             'TIME' => 'integer unsigned',
             'LONG_TRANS' => 'integer unsigned',
             'SHORT_TRANS' => 'integer unsigned',
-            'LONG_TRANS__COMCODE' => 'integer', // TODO: must be unsigned when implementing foreign keys
-            'SHORT_TRANS__COMCODE' => 'integer', // TODO: must be unsigned when implementing foreign keys
+            'LONG_TRANS__COMCODE' => multi_lang_content() ? 'integer' : 'longtext',
+            'SHORT_TRANS__COMCODE' => multi_lang_content() ? 'integer' : 'varchar(255)',
             'SHORT_TEXT' => 'varchar(255)',
             'TEXT' => 'varchar(4000)', // Set consistently as 4000 across all drivers due to SQL Server having the lowest limit ; this field type should only be used as an alternative to LONG_TEXT that can be defaulted to '' if not specified, necessary for adding fields to the table's of external systems
             'LONG_TEXT' => 'longtext',
@@ -605,7 +605,7 @@ abstract class Database_super_mysql extends DatabaseDriver
      */
     public function get_table_count_approx(string $table, $connection) : ?int
     {
-        if ((get_value('slow_counts') === '1') || db_is_innodb()) {
+        if ((function_exists('get_value') && (get_value('slow_counts') === '1')) || db_is_innodb()) {
             $sql = 'SELECT TABLE_ROWS FROM information_schema.tables WHERE table_schema=DATABASE() AND TABLE_NAME=\'' . $this->escape_string($table) . '\'';
             $values = $this->query($sql, $connection, null, 0, true);
             if (!isset($values[0])) {
