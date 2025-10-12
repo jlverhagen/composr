@@ -1853,27 +1853,31 @@ function addon_installed(string $addon_name, bool $check_hookless = false, bool 
             if ($test !== null) {
                 $answer = true;
             }
-
-            // NB: Won't check tables because we don't know them for hookless addons (not in db_meta.bin)
+            // NB: Won't check tables because we don't know them for hookless addons (no addon_registry hook)
         } else {
             if (($answer) && ($deep_scan)) {
-                // Do a full scan to see if the addon is fully installed; check tables defined in db_meta.bin (bundled addons only)
-                static $data = null;
+                // Do a full scan to see if the addon is fully installed; check tables defined in database manifest
+                static $data = [];
                 if ($data === null) {
-                    $data = is_file(get_file_base() . '/data/db_meta.bin') ? @unserialize(cms_file_get_contents_safe(get_file_base() . '/data/db_meta.bin', FILE_READ_LOCK)) : [];
+                    require_code('zones');
+                    $hooks = find_all_hook_obs('systems', 'database_manifest', 'Hook_database_manifest_');
+                    foreach ($hooks as $addon => $ob) {
+                        if (!method_exists($ob, 'db_meta')) {
+                            continue;
+                        }
+                        $data[$addon] = $ob->db_meta();
+                    }
                 }
-                if (is_array($data) && array_key_exists('tables', $data)) {
-                    foreach ($data['tables'] as $table_name => $table) {
-                        if (array_key_exists('addon', $table) && ($table['addon'] == $addon_name)) {
-                            $db = get_db_for($table_name);
-                            if (!$db->table_exists($table_name)) {
-                                $answer = false;
-                                break;
-                            }
+
+                if (is_array($data[$addon_name]) && array_key_exists('tables', $data[$addon_name])) {
+                    require_code('database');
+                    foreach ($data[$addon_name]['tables'] as $table_name => $table_details) {
+                        $db = get_db_for($table_name);
+                        if (!$db->table_exists($table_name)) {
+                            $answer = false;
+                            break;
                         }
                     }
-                } else { // Corrupt db_meta file; delete it silently as we will notice it in git and can re-generate it
-                    @unlink(get_file_base() . '/data/db_meta.bin');
                 }
             }
         }

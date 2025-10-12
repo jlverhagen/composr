@@ -233,6 +233,7 @@ The documentation for this addon is covered in a [url="' . get_brand_base_url() 
             'sources_custom/hooks/systems/config/enable_notifications_instant_ios.php',
             'sources_custom/hooks/systems/config/ios_cert_passphrase.php',
             'sources_custom/hooks/systems/config/notification_codes_for_mobile.php',
+            'sources_custom/hooks/systems/database_manifest/composr_mobile_sdk.php',
             'sources_custom/hooks/systems/notification_types_extended/composr_mobile_sdk.php',
             'sources_custom/hooks/systems/privacy/composr_mobile_sdk.php',
             'sources_custom/hooks/systems/tasks/android_notification.php',

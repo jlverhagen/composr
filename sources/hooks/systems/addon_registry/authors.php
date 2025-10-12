@@ -140,6 +140,7 @@ class Hook_addon_registry_authors
             'sources/hooks/systems/attachments/author.php',
             'sources/hooks/systems/commandr_fs/authors.php',
             'sources/hooks/systems/content_meta_aware/author.php',
+            'sources/hooks/systems/database_manifest/authors.php',
             'sources/hooks/systems/page_groupings/authors.php',
             'sources/hooks/systems/privacy/authors.php',
             'sources/hooks/systems/rss/authors.php',

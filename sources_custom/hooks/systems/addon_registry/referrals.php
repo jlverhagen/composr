@@ -173,6 +173,7 @@ Allows people to specify who referred them when they join your site or other con
             'sources_custom/hooks/systems/actionlog/referrals.php',
             'sources_custom/hooks/systems/addon_registry/referrals.php',
             'sources_custom/hooks/systems/contentious_overrides/referrals.php',
+            'sources_custom/hooks/systems/database_manifest/referrals.php',
             'sources_custom/hooks/systems/notifications/referral.php',
             'sources_custom/hooks/systems/notifications/referral_staff.php',
             'sources_custom/hooks/systems/page_groupings/referrals.php',

@@ -132,6 +132,7 @@ class Hook_addon_registry_core_permission_management
         return [
             'adminzone/pages/modules/admin_permissions.php',
             'sources/hooks/systems/addon_registry/core_permission_management.php',
+            'sources/hooks/systems/database_manifest/core_permission_management.php',
             'sources/hooks/systems/sitemap/privilege_category.php',
             'themes/default/css/permissions_editor.css',
             'themes/default/images/icons/menu/adminzone/security/permissions/index.html',

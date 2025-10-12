@@ -171,6 +171,7 @@ class Hook_addon_registry_points
             'sources/hooks/systems/cron/points_daily.php',
             'sources/hooks/systems/cron/points_escrow.php',
             'sources/hooks/systems/cron/points_posts.php',
+            'sources/hooks/systems/database_manifest/points.php',
             'sources/hooks/systems/notifications/points.php',
             'sources/hooks/systems/notifications/points_transaction_staff.php',
             'sources/hooks/systems/page_groupings/points.php',

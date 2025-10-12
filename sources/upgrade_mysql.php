@@ -74,7 +74,7 @@ function upgrader_criticise_mysql_fields_screen() : string
 function upgrader_data_integrity_screen() : string
 {
     if (strpos(get_db_type(), 'mysql') === false) {
-        warn_exit(do_lang_tempcode('INTERNAL_ERROR', escape_html('TODO')));
+        warn_exit(do_lang_tempcode('INTERNAL_ERROR', escape_html('2ea573c3107e51ddb83bcd735fa5fed2')));
     }
 
     $out = '<h2>' . do_lang('UPGRADER_DATA_INTEGRITY') . '</h2>';
@@ -108,7 +108,7 @@ END;
 function _upgrader_data_integrity_screen() : string
 {
     if (strpos(get_db_type(), 'mysql') === false) {
-        warn_exit(do_lang_tempcode('INTERNAL_ERROR', escape_html('TODO')));
+        warn_exit(do_lang_tempcode('INTERNAL_ERROR', escape_html('4ee3174f56ca5f4baa99aa585f6a79cc')));
     }
 
     require_code('database');

@@ -135,6 +135,7 @@ class Hook_addon_registry_site_messaging
             'sources/hooks/systems/actionlog/site_messaging.php',
             'sources/hooks/systems/addon_registry/site_messaging.php',
             'sources/hooks/systems/commandr_fs/site_messaging.php',
+            'sources/hooks/systems/database_manifest/site_messaging.php',
             'sources/hooks/systems/page_groupings/site_messaging.php',
             'sources/hooks/systems/privacy/site_messaging.php',
             'sources/hooks/systems/resource_meta_aware/site_message.php',

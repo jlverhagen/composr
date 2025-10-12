@@ -154,6 +154,7 @@ class Hook_addon_registry_content_read_tracking
         return [
             'lang_custom/EN/content_read_tracking.ini',
             'sources_custom/hooks/systems/addon_registry/content_read_tracking.php',
+            'sources_custom/hooks/systems/database_manifest/content_read_tracking.php',
             'sources_custom/hooks/systems/privacy/content_read_tracking.php',
             'sources_custom/hooks/systems/symbols/HAS_READ.php',
             'sources_custom/hooks/systems/symbols/MARK_READ.php',

@@ -187,6 +187,7 @@ class Hook_addon_registry_downloads
             'sources/hooks/systems/config/search_downloads.php',
             'sources/hooks/systems/content_meta_aware/download.php',
             'sources/hooks/systems/content_meta_aware/download_category.php',
+            'sources/hooks/systems/database_manifest/downloads.php',
             'sources/hooks/systems/disposable_values/archive_size.php',
             'sources/hooks/systems/disposable_values/download_bandwidth.php',
             'sources/hooks/systems/disposable_values/num_archive_downloads.php',

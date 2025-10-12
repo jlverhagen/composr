@@ -136,6 +136,7 @@ class Hook_addon_registry_welcome_emails
             'sources/hooks/systems/addon_registry/welcome_emails.php',
             'sources/hooks/systems/commandr_fs/welcome_emails.php',
             'sources/hooks/systems/cron/cns_welcome_emails.php',
+            'sources/hooks/systems/database_manifest/welcome_emails.php',
             'sources/hooks/systems/preview/cns_welcome_email.php',
             'sources/hooks/systems/resource_meta_aware/welcome_email.php',
             'themes/default/images/icons/menu/adminzone/setup/welcome_emails.svg',

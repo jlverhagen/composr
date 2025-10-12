@@ -188,6 +188,7 @@ This addon does not itself handle the transaction to purchase what is being adve
             'sources_custom/hooks/systems/config/classifieds_tax_code.php',
             'sources_custom/hooks/systems/config/max_classified_listings_per_page.php',
             'sources_custom/hooks/systems/cron/classifieds.php',
+            'sources_custom/hooks/systems/database_manifest/classified_ads.php',
             'sources_custom/hooks/systems/ecommerce/classifieds.php',
             'sources_custom/hooks/systems/notifications/classifieds.php',
             'sources_custom/hooks/systems/page_groupings/classifieds.php',

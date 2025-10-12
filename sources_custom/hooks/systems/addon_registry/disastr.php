@@ -176,6 +176,7 @@ To configure the diseases go to Admin Zone > Setup > Manage Diseases.';
             'sources_custom/hooks/systems/actionlog/disastr.php',
             'sources_custom/hooks/systems/addon_registry/disastr.php',
             'sources_custom/hooks/systems/cron/disastr.php',
+            'sources_custom/hooks/systems/database_manifest/disastr.php',
             'sources_custom/hooks/systems/ecommerce/disastr.php',
             'sources_custom/hooks/systems/notifications/got_disease.php',
             'sources_custom/hooks/systems/page_groupings/disastr.php',

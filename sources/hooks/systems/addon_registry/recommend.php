@@ -137,6 +137,7 @@ class Hook_addon_registry_recommend
             'sources/hooks/systems/addon_registry/recommend.php',
             'sources/hooks/systems/config/enable_spreadsheet_recommend.php',
             'sources/hooks/systems/config/points_RECOMMEND_SITE.php',
+            'sources/hooks/systems/database_manifest/recommend.php',
             'sources/hooks/systems/page_groupings/recommend.php',
             'sources/hooks/systems/privacy/recommend.php',
             'sources/hooks/systems/realtime_rain/recommend.php',

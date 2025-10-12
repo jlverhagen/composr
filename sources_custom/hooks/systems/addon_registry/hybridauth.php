@@ -505,6 +505,7 @@ And also Instagram...
             'sources_custom/hooks/systems/config/hybridauth_sync_username.php',
             'sources_custom/hooks/systems/contentious_overrides/hybridauth.php',
             'sources_custom/hooks/systems/cron/hybridauth_admin.php',
+            'sources_custom/hooks/systems/database_manifest/hybridauth.php',
             'sources_custom/hooks/systems/hybridauth/.htaccess',
             'sources_custom/hooks/systems/hybridauth/_misc_overrides.php',
             'sources_custom/hooks/systems/hybridauth/apple.php',

@@ -205,6 +205,7 @@ class Hook_addon_registry_chat
             'sources/hooks/systems/config/points_chat.php',
             'sources/hooks/systems/config/sitewide_im.php',
             'sources/hooks/systems/content_meta_aware/chat.php',
+            'sources/hooks/systems/database_manifest/chat.php',
             'sources/hooks/systems/notifications/chat.php',
             'sources/hooks/systems/page_groupings/chat.php',
             'sources/hooks/systems/points/chat_message__add.php',

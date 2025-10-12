@@ -886,7 +886,7 @@ abstract class CMSStatsProvider extends CMSStatsHookBase
                 return to_epoch_interval_index($timestamp, 'years');
         }
 
-        fatal_exit(do_lang_tempcode('INTERNAL_ERROR', escape_html('3ad7fc19c15355a88480afc058c36e78')));
+        fatal_exit(do_lang_tempcode('INTERNAL_ERROR', escape_html('994970ac19665c158f27f7dbd486725b')));
         return 0;
     }
 
@@ -2028,12 +2028,12 @@ function stats_merge_deltas(int $time_limit = 15)
         } else {
             $row_u = @unserialize($row[0]['p_data']);
             if ($row_u === false) {
-                warn_exit(do_lang_tempcode('INTERNAL_ERROR'), escape_html('TODO'));
+                warn_exit(do_lang_tempcode('INTERNAL_ERROR', escape_html('67b35ad8e6935ab8b8f76f5734789f72')), escape_html('TODO'));
             }
 
             $stats_row_u = @unserialize($stats_row[0]['p_data']);
             if ($stats_row_u === false) {
-                warn_exit(do_lang_tempcode('INTERNAL_ERROR'), escape_html('TODO'));
+                warn_exit(do_lang_tempcode('INTERNAL_ERROR', escape_html('df243edab1d45299b9d8b79f6de6d357')), escape_html('TODO'));
             }
 
             stats_deep_merge($stats_row_u, $row_u);
@@ -2075,10 +2075,10 @@ function stats_deep_merge(&$base, $delta)
 {
     // Sanity check: $base and $delta must both be arrays or both not be arrays
     if (is_array($base) && !is_array($delta)) {
-        warn_exit(do_lang_tempcode('INTERNAL_ERROR'), escape_html('TODO'));
+        warn_exit(do_lang_tempcode('INTERNAL_ERROR', escape_html('13e4e28074765b2480c21e0e1a75fa27')), escape_html('TODO'));
     }
     if (!is_array($base) && is_array($delta)) {
-        warn_exit(do_lang_tempcode('INTERNAL_ERROR'), escape_html('TODO'));
+        warn_exit(do_lang_tempcode('INTERNAL_ERROR', escape_html('3a468e9dfb835362a1dc7673c3234f1f')), escape_html('TODO'));
     }
 
     if (!is_array($delta)) {

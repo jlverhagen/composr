@@ -137,6 +137,7 @@ class Hook_addon_registry_actionlog
             'sources/hooks/systems/actionlog/actionlog.php',
             'sources/hooks/systems/addon_registry/actionlog.php',
             'sources/hooks/systems/config/store_revisions.php',
+            'sources/hooks/systems/database_manifest/actionlog.php',
             'sources/hooks/systems/notifications/actionlog.php',
             'sources/hooks/systems/privacy/actionlog.php',
             'sources/hooks/systems/realtime_rain/actionlog.php',

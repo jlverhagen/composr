@@ -203,6 +203,7 @@ When creating new gifts please only use images which are free to use, we suggest
             'sources_custom/hooks/systems/actionlog/giftr.php',
             'sources_custom/hooks/systems/addon_registry/giftr.php',
             'sources_custom/hooks/systems/contentious_overrides/giftr.php',
+            'sources_custom/hooks/systems/database_manifest/giftr.php',
             'sources_custom/hooks/systems/ecommerce/giftr.php',
             'sources_custom/hooks/systems/notifications/gift.php',
             'sources_custom/hooks/systems/page_groupings/giftr.php',

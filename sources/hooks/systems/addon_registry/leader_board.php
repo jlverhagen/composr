@@ -142,6 +142,7 @@ class Hook_addon_registry_leader_board
             'sources/hooks/systems/block_ui_renderers/leader_board.php',
             'sources/hooks/systems/commandr_fs/leader_board.php',
             'sources/hooks/systems/cron/leader_board.php',
+            'sources/hooks/systems/database_manifest/leader_board.php',
             'sources/hooks/systems/page_groupings/leader_board.php',
             'sources/hooks/systems/privacy/leader_board.php',
             'sources/hooks/systems/resource_meta_aware/leader_board.php',

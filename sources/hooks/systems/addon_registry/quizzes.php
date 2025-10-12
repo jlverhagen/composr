@@ -145,6 +145,7 @@ class Hook_addon_registry_quizzes
             'sources/hooks/systems/config/quiz_show_stats_count_total_open.php',
             'sources/hooks/systems/config/search_quiz.php',
             'sources/hooks/systems/content_meta_aware/quiz.php',
+            'sources/hooks/systems/database_manifest/quizzes.php',
             'sources/hooks/systems/notifications/quiz_results.php',
             'sources/hooks/systems/page_groupings/quiz.php',
             'sources/hooks/systems/points/quiz__add.php',

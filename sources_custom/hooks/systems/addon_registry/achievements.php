@@ -210,6 +210,7 @@ class Hook_addon_registry_achievements
             'sources_custom/hooks/systems/addon_registry/achievements.php',
             'sources_custom/hooks/systems/contentious_overrides/achievements.php',
             'sources_custom/hooks/systems/cron/achievements.php',
+            'sources_custom/hooks/systems/database_manifest/achievements.php',
             'sources_custom/hooks/systems/notifications/achievements.php',
             'sources_custom/hooks/systems/page_groupings/achievements.php',
             'sources_custom/hooks/systems/privacy/achievements.php',

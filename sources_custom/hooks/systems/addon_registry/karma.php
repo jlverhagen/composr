@@ -206,6 +206,7 @@ Karma and its API can be further extended for additional functionality. For exam
             'sources_custom/hooks/systems/config/karma_threshold.php',
             'sources_custom/hooks/systems/config/karma_voting.php',
             'sources_custom/hooks/systems/contentious_overrides/karma.php',
+            'sources_custom/hooks/systems/database_manifest/karma.php',
             'sources_custom/hooks/systems/member_boxes/karma.php',
             'sources_custom/hooks/systems/page_groupings/karma.php',
             'sources_custom/hooks/systems/points_transact/karma.php',

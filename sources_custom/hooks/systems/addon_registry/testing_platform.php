@@ -766,6 +766,7 @@ We hope other users will appreciate your efforts and give you some points to rew
             '_tests/tests/async_tests/find_broken_screen_links.php',
             '_tests/tests/async_tests/firephp.php',
             '_tests/tests/async_tests/firewall_rules.php',
+            '_tests/tests/async_tests/foreign_keys.php',
             '_tests/tests/async_tests/form_reserved_names.php',
             '_tests/tests/async_tests/forum_drivers.php',
             '_tests/tests/async_tests/forum_groupings.php',

@@ -178,6 +178,7 @@ class Hook_addon_registry_catalogues
             'sources/hooks/systems/content_meta_aware/catalogue_entry.php',
             'sources/hooks/systems/cron/catalogue_entry_timeouts.php',
             'sources/hooks/systems/cron/catalogue_view_reports.php',
+            'sources/hooks/systems/database_manifest/catalogues.php',
             'sources/hooks/systems/notifications/catalogues.php',
             'sources/hooks/systems/page_groupings/catalogues.php',
             'sources/hooks/systems/points/catalogue_entry__add.php',

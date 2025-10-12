@@ -135,6 +135,7 @@ class Hook_addon_registry_redirects_editor
             'sources/hooks/systems/actionlog/redirects_editor.php',
             'sources/hooks/systems/addon_registry/redirects_editor.php',
             'sources/hooks/systems/commandr_fs_extended_config/redirects.php',
+            'sources/hooks/systems/database_manifest/redirects_editor.php',
             'themes/default/css/redirects_editor.css',
             'themes/default/images/icons/menu/adminzone/structure/redirects.svg',
             'themes/default/images/icons_monochrome/menu/adminzone/structure/redirects.svg',

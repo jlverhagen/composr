@@ -149,6 +149,7 @@ class Hook_addon_registry_core_notifications
             'sources/hooks/systems/config/pt_notifications_as_web.php',
             'sources/hooks/systems/config/web_notifications_enabled.php',
             'sources/hooks/systems/cron/notification_digests.php',
+            'sources/hooks/systems/database_manifest/core_notifications.php',
             'sources/hooks/systems/notification_types_extended/.htaccess',
             'sources/hooks/systems/notification_types_extended/index.html',
             'sources/hooks/systems/notifications/.htaccess',

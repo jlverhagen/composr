@@ -140,6 +140,7 @@ class Hook_addon_registry_aggregate_types
             'sources/hooks/systems/actionlog/aggregate_types.php',
             'sources/hooks/systems/addon_registry/aggregate_types.php',
             'sources/hooks/systems/commandr_fs/aggregate_type_instances.php',
+            'sources/hooks/systems/database_manifest/aggregate_types.php',
             'sources/hooks/systems/page_groupings/aggregate_types.php',
             'sources/hooks/systems/resource_meta_aware/aggregate_type_instance.php',
             'themes/default/images/icons/menu/adminzone/structure/aggregate_types.svg',

@@ -167,6 +167,7 @@ class Hook_addon_registry_search
             'sources/hooks/systems/config/search_with_date_range.php',
             'sources/hooks/systems/config_categories/search.php',
             'sources/hooks/systems/cron/fast_custom_index.php',
+            'sources/hooks/systems/database_manifest/search.php',
             'sources/hooks/systems/page_groupings/search.php',
             'sources/hooks/systems/privacy/search.php',
             'sources/hooks/systems/realtime_rain/search.php',

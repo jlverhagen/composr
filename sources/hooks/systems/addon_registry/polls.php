@@ -147,6 +147,7 @@ class Hook_addon_registry_polls
             'sources/hooks/systems/config/poll_update_time.php',
             'sources/hooks/systems/config/search_polls.php',
             'sources/hooks/systems/content_meta_aware/poll.php',
+            'sources/hooks/systems/database_manifest/polls.php',
             'sources/hooks/systems/notifications/poll_chosen.php',
             'sources/hooks/systems/page_groupings/polls.php',
             'sources/hooks/systems/points/poll__add.php',

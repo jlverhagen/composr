@@ -182,6 +182,7 @@ The blocks provided are [tt]main_activity_feed[/tt] and the status entry box is 
             'sources_custom/blocks/main_activity_feed_state.php',
             'sources_custom/hooks/systems/addon_registry/activity_feed.php',
             'sources_custom/hooks/systems/config/syndicate_site_activity_default.php',
+            'sources_custom/hooks/systems/database_manifest/activity_feed.php',
             'sources_custom/hooks/systems/notifications/activity_feed.php',
             'sources_custom/hooks/systems/privacy/activity_feed.php',
             'sources_custom/hooks/systems/profiles_tabs/activity_feed.php',

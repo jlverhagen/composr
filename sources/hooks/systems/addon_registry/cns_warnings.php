@@ -149,6 +149,7 @@ class Hook_addon_registry_cns_warnings
             'sources/hooks/systems/cns_warnings/probation.php',
             'sources/hooks/systems/cns_warnings/silencing.php',
             'sources/hooks/systems/commandr_fs_extended_member/warnings.php',
+            'sources/hooks/systems/database_manifest/cns_warnings.php',
             'sources/hooks/systems/preview/warnings.php',
             'sources/hooks/systems/profiles_tabs/standing.php',
             'sources/hooks/systems/realtime_rain/cns_warnings.php',

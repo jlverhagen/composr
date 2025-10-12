@@ -165,6 +165,7 @@ Note that this addon only affects galleries at the moment, and it requires the "
             'sources_custom/hooks/systems/actionlog/workflows.php',
             'sources_custom/hooks/systems/addon_registry/workflows.php',
             'sources_custom/hooks/systems/contentious_overrides/workflows.php',
+            'sources_custom/hooks/systems/database_manifest/workflows.php',
             'sources_custom/hooks/systems/notifications/workflow_step.php',
             'sources_custom/hooks/systems/page_groupings/workflows.php',
             'sources_custom/hooks/systems/privacy/workflows.php',

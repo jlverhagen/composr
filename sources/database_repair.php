@@ -249,12 +249,43 @@ class DatabaseRepair
             ];
         }
 
-        $data = is_file(get_file_base() . '/data/db_meta.bin') ? unserialize(cms_file_get_contents_safe(get_file_base() . '/data/db_meta.bin', FILE_READ_LOCK)) : [];
+        // Load expected database metadata from addon_registry hook db_meta() methods
+        // TODO: clean up
+        $data = [
+            'tables' => [],
+            'indices' => [],
+            'foreign_keys' => [],
+            'privileges' => [],
+        ];
+        require_code('hooks');
+        $hooks = find_all_hook_obs('systems', 'database_manifest', 'Hook_database_manifest_');
+        foreach ($hooks as $hook) {
+            if (!method_exists($hook, 'db_meta')) {
+                continue;
+            }
 
-        // Corrupt db_meta? Delete it and warn_exit.
-        if (!is_array($data) || !array_key_exists('tables', $data) || !array_key_exists('indices', $data) || !array_key_exists('privileges', $data)) {
-            @unlink(get_file_base() . '/data/db_meta.bin');
-            warn_exit(do_lang_tempcode('DB_META_CORRUPT_MISSING'));
+            $meta = $hook->db_meta();
+
+            if (isset($meta['tables']) && is_array($meta['tables'])) {
+                foreach ($meta['tables'] as $k => $v) {
+                    $data['tables'][$k] = $v;
+                }
+            }
+            if (isset($meta['indices']) && is_array($meta['indices'])) {
+                foreach ($meta['indices'] as $k => $v) {
+                    $data['indices'][$k] = $v;
+                }
+            }
+            if (isset($meta['foreign_keys']) && is_array($meta['foreign_keys'])) {
+                foreach ($meta['foreign_keys'] as $k => $v) {
+                    $data['foreign_keys'][$k] = $v;
+                }
+            }
+            if (isset($meta['privileges']) && is_array($meta['privileges'])) {
+                foreach ($meta['privileges'] as $k => $v) {
+                    $data['privileges'][$k] = $v;
+                }
+            }
         }
 
         $expected_tables = [];
@@ -814,7 +845,7 @@ class DatabaseRepair
     }
 
     /**
-     * Phase 2: Bring DB into line with expected foreign-keys from db_meta.bin
+     * Phase 2: Bring DB into line with expected foreign-keys.
      * and sync meta accordingly.
      *
      * @param array $existent_foreign_keys Physical foreign keys keyed by universal FK key

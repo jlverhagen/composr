@@ -16,6 +16,7 @@
 function load_table_fields()
 {
     global $TABLE_FIELDS, $COMPOSR_PATH;
+    // TODO
     if (file_exists($COMPOSR_PATH . '/data/db_meta.bin') && (filemtime($COMPOSR_PATH . '/index.php') < filemtime($COMPOSR_PATH . '/data/db_meta.bin'))) {
         $_table_fields = unserialize(file_get_contents($COMPOSR_PATH . '/data/db_meta.bin'));
         $TABLE_FIELDS = $_table_fields['tables'];
@@ -36,6 +37,16 @@ function load_table_fields()
             'i_table' => '*ID_TEXT',
             'i_name' => '*ID_TEXT',
             'i_fields' => '*ID_TEXT',
+        ]
+    ];
+    $TABLE_FIELDS['db_meta_foreign_keys'] = [
+        'addon' => 'core',
+        'fields' => [
+            'from_table' => '*ID_TEXT',
+            'from_field' => '*ID_TEXT',
+            'to_table' => 'ID_TEXT',
+            'to_field' => 'ID_TEXT',
+            'special_values' => 'SERIAL',
         ]
     ];
 }
