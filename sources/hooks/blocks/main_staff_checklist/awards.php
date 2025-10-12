@@ -56,7 +56,7 @@ class Hook_checklist_awards
                 $date = $GLOBALS['SITE_DB']->query_select_value_if_there('award_archive', 'date_and_time', ['a_type_id' => $award['id']], 'ORDER BY date_and_time DESC');
 
                 if ($date === null) {
-                    $count = $details['db']->query_select_value($details['table'], 'COUNT(*)', [], '', true);
+                    $count = $details['db']->get_table_count_approx($details['table']);
                     if ($count === null) {
                         continue;
                     }

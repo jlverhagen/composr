@@ -53,16 +53,10 @@ class Block_main_staff_checklist
     public function caching_environment() : ?array
     {
         $info = [];
-        // No cache on POST as this is when we save text data
         $info['cache_on'] = <<<'PHP'
-        (count($_POST) > 0)
-        ?
-        null
-        :
-        [
-        ]
+            (count($_POST) > 0) ? null : []
 PHP;
-        $info['ttl'] = 10; // Needs to be short given due times
+        $info['ttl'] = 10;
         return $info;
     }
 
@@ -123,6 +117,14 @@ PHP;
      */
     public function run(array $map) : object
     {
+        // Prevent infinite nesting/re-entrancy if this block is triggered during its own rendering
+        static $rendering = false;
+        if ($rendering) {
+            return new Tempcode();
+        }
+
+        $rendering = true;
+
         require_lang('dates');
         require_lang('staff_checklist');
         require_css('adminzone_dashboard');
@@ -206,7 +208,7 @@ PHP;
             $out_dates->attach($item[0]);
         }
 
-        return do_template('BLOCK_MAIN_STAFF_CHECKLIST', [
+        $tpl = do_template('BLOCK_MAIN_STAFF_CHECKLIST', [
             '_GUID' => 'aefbca8252dc1d6edc44fc6d1e78b3ec',
             'BLOCK_ID' => $block_id,
             'URL' => get_self_url(),
@@ -215,6 +217,10 @@ PHP;
             'TODO_COUNTS' => $out_todo_counts,
             'CUSTOM_TASKS' => $custom_tasks,
         ]);
+
+        $rendering = false;
+
+        return $tpl;
     }
 }
 
