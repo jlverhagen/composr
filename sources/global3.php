@@ -1843,7 +1843,7 @@ function addon_installed(string $addon_name, bool $check_hookless = false, bool 
         }
     }
 
-    if ((!$GLOBALS['IN_MINIKERNEL_VERSION']) && (($check_hookless || $deep_scan || $disabled_scan)) && (!$GLOBALS['DEV_MODE']/*stuff maybe changed during dev*/)) {
+    if ((!$GLOBALS['IN_MINIKERNEL_VERSION']) && (($check_hookless || $deep_scan || $disabled_scan))) {
         require_code('database');
 
         // Check addons table
@@ -1869,7 +1869,7 @@ function addon_installed(string $addon_name, bool $check_hookless = false, bool 
                     }
                 }
 
-                if (is_array($data[$addon_name]) && array_key_exists('tables', $data[$addon_name])) {
+                if (isset($data[$addon_name]) && array_key_exists('tables', $data[$addon_name])) {
                     require_code('database');
                     foreach ($data[$addon_name]['tables'] as $table_name => $table_details) {
                         $db = get_db_for($table_name);
