@@ -60,11 +60,47 @@
 
     /**
      * @memberof $cms.ui
+     */
+    $cms.ui._openModals = $cms.ui._openModals || new Map();
+    
+    /**
+     * @memberof $cms.ui
      * @param options
      * @returns { $cms.views.ModalWindow }
      */
     $cms.ui.openModalWindow = function openModalWindow(options) {
-        return new $cms.views.ModalWindow(options);
+        options = options || {};
+
+        // Allow callers to force de-duplication via a uniqueKey, otherwise derive from common fields
+        var key = options.uniqueKey || [
+            options.type || 'alert',
+            options.href || '',
+            options.title || '',
+            options.text || ''
+        ].join('|');
+
+        // If we already have an open modal with this key, return it instead of opening a duplicate
+        var existing;
+        if ($cms.ui._openModals.has(key)) {
+            existing = $cms.ui._openModals.get(key);
+            if (existing.opened && existing.el) {
+                return existing;
+            } else {
+                $cms.ui._openModals.delete(key);
+            }
+        }
+
+        var modal = new $cms.views.ModalWindow(options);
+
+        // Store and ensure cleanup when closed
+        $cms.ui._openModals.set(key, modal);
+        var originalClose = modal.close.bind(modal);
+        modal.close = function () {
+            $cms.ui._openModals.delete(key);
+            return originalClose();
+        };
+
+        return modal;
     };
 
     /**
