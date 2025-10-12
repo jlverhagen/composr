@@ -36,7 +36,7 @@ class __database_fields_test_set extends cms_test_case
     {
         /*
          * These checks ensure database fields are consistent with how database repair determines if fields in the database are the wrong CMS type.
-         * These checks use what is stored in the db_meta table rather than db_meta.bin.
+         * These checks use what is stored in the db_meta table rather than db_meta from addon registry hooks.
          *
          * Specific notes on field names:
          *

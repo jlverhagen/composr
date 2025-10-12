@@ -171,6 +171,7 @@ class Hook_addon_registry_banners
             'sources/hooks/systems/config/use_banner_permissions.php',
             'sources/hooks/systems/content_meta_aware/banner.php',
             'sources/hooks/systems/content_meta_aware/banner_type.php',
+            'sources/hooks/systems/database_manifest/banners.php',
             'sources/hooks/systems/ecommerce/banners.php',
             'sources/hooks/systems/page_groupings/banners.php',
             'sources/hooks/systems/points/banner__add.php',

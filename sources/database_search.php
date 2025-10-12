@@ -225,7 +225,7 @@ function can_use_fast_custom_index(string $hook, ?object $db = null, ?string $in
         return ($default_choice == '1'); // Explicitly specified by config for this hook
     }
 
-    $default_choice = get_value('fast_custom_index__enable_for__' . user_lang(), '');
+    $default_choice = get_value('fast_custom_index__enable_for_lang__' . user_lang(), '');
     if ($default_choice != '') {
         return ($default_choice == '1'); // Explicitly specified by config for current language
     }

@@ -142,6 +142,7 @@ class Hook_addon_registry_awards
             'sources/hooks/systems/block_ui_renderers/awards.php',
             'sources/hooks/systems/commandr_fs/award_types.php',
             'sources/hooks/systems/config/awarded_items_per_page.php',
+            'sources/hooks/systems/database_manifest/awards.php',
             'sources/hooks/systems/privacy/awards.php',
             'sources/hooks/systems/resource_meta_aware/award_type.php',
             'sources/hooks/systems/symbols/AWARD_ID.php',

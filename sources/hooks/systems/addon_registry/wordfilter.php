@@ -137,6 +137,7 @@ class Hook_addon_registry_wordfilter
             'sources/hooks/systems/actionlog/wordfilter.php',
             'sources/hooks/systems/addon_registry/wordfilter.php',
             'sources/hooks/systems/commandr_fs_extended_config/wordfilter.php',
+            'sources/hooks/systems/database_manifest/wordfilter.php',
             'sources/hooks/systems/page_groupings/wordfilter.php',
             'themes/default/images/icons/menu/adminzone/security/wordfilter.svg',
             'themes/default/images/icons_monochrome/menu/adminzone/security/wordfilter.svg',

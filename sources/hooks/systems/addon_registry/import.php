@@ -148,6 +148,7 @@ class Hook_addon_registry_import
             'sources/hooks/systems/addon_registry/import.php',
             'sources/hooks/systems/cns_auth/wordpress.php',
             'sources/hooks/systems/commandr_commands/continue_import.php',
+            'sources/hooks/systems/database_manifest/import.php',
             'sources/hooks/systems/page_groupings/import.php',
             'sources/import.php',
             'sources_custom/hooks/modules/admin_import/.htaccess',

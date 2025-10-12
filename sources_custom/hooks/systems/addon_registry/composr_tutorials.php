@@ -1701,6 +1701,7 @@ The documentation is primarily maintained on our website, and this archive is on
             'sources_custom/hooks/modules/search/tutorials_external.php',
             'sources_custom/hooks/systems/actionlog/composr_tutorials.php',
             'sources_custom/hooks/systems/addon_registry/composr_tutorials.php',
+            'sources_custom/hooks/systems/database_manifest/composr_tutorials.php',
             'sources_custom/hooks/systems/notifications/tutorial_added.php',
             'sources_custom/hooks/systems/page_groupings/composr_tutorials.php',
             'sources_custom/hooks/systems/privacy/composr_tutorials.php',

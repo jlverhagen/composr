@@ -240,6 +240,7 @@ Buildr is a full zone addon for Composr.';
             'sources_custom/hooks/modules/admin_themewizard/buildr.php',
             'sources_custom/hooks/modules/members/buildr.php',
             'sources_custom/hooks/systems/addon_registry/buildr.php',
+            'sources_custom/hooks/systems/database_manifest/buildr.php',
             'sources_custom/hooks/systems/member_boxes/buildr.php',
             'sources_custom/hooks/systems/page_groupings/buildr.php',
             'sources_custom/hooks/systems/privacy/buildr.php',

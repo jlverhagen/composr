@@ -153,6 +153,7 @@ class Hook_addon_registry_core_adminzone_dashboard
             'sources/hooks/systems/config/dashboard_new_version.php',
             'sources/hooks/systems/config/dashboard_tips.php',
             'sources/hooks/systems/cron/staff_checklist_notify.php',
+            'sources/hooks/systems/database_manifest/core_adminzone_dashboard.php',
             'sources/hooks/systems/notifications/staff_checklist_notify.php',
             'sources/hooks/systems/snippets/checklist_task_manage.php',
             'sources_custom/hooks/blocks/main_staff_checklist/.htaccess',

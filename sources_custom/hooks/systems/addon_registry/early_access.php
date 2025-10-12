@@ -158,6 +158,7 @@ class Hook_addon_registry_early_access
             'sources_custom/early_access2.php',
             'sources_custom/hooks/systems/actionlog/early_access.php',
             'sources_custom/hooks/systems/addon_registry/early_access.php',
+            'sources_custom/hooks/systems/database_manifest/early_access.php',
             'sources_custom/hooks/systems/page_groupings/early_access.php',
             'sources_custom/hooks/systems/privacy/early_access.php',
             'sources_custom/hooks/systems/symbols/HAS_TRIGGER_ACCESS.php',

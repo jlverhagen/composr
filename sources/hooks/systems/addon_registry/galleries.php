@@ -236,6 +236,7 @@ class Hook_addon_registry_galleries
             'sources/hooks/systems/content_meta_aware/gallery.php',
             'sources/hooks/systems/content_meta_aware/image.php',
             'sources/hooks/systems/content_meta_aware/video.php',
+            'sources/hooks/systems/database_manifest/galleries.php',
             'sources/hooks/systems/notifications/gallery_entry.php',
             'sources/hooks/systems/page_groupings/galleries.php',
             'sources/hooks/systems/points/image__add.php',

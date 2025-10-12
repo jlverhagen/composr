@@ -187,6 +187,7 @@ Basic setup instructions:
             'sources_custom/hooks/systems/config/patreon_tiers.php',
             'sources_custom/hooks/systems/config/patreon_webhook_secret.php',
             'sources_custom/hooks/systems/cron/patreon.php',
+            'sources_custom/hooks/systems/database_manifest/patreon.php',
             'sources_custom/hooks/systems/privacy/patreon.php',
             'sources_custom/miniblocks/main_patreon_patrons.php',
             'sources_custom/patreon.php',

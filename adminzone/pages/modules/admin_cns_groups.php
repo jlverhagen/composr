@@ -316,8 +316,14 @@ class Module_admin_cns_groups extends Standard_crud_module
         }
 
         $fields->attach(do_template('FORM_SCREEN_FIELD_SPACER', ['_GUID' => '251cbc5b4e8a3dd600535ed29b3cd9d1', 'SECTION_HIDDEN' => true, 'TITLE' => do_lang_tempcode('FLOOD_CONTROL')]));
-        $fields->attach(form_input_integer(do_lang_tempcode('FLOOD_CONTROL_ACCESS_SECS'), do_lang_tempcode('DESCRIPTION_FLOOD_CONTROL_ACCESS_SECS'), 'flood_control_access_secs', $flood_control_access_secs, true));
-        $fields->attach(form_input_integer(do_lang_tempcode('FLOOD_CONTROL_SUBMIT_SECS'), do_lang_tempcode('DESCRIPTION_FLOOD_CONTROL_SUBMIT_SECS'), 'flood_control_submit_secs', $flood_control_submit_secs, true));
+
+        if (get_value('disable_flood_control') !== '1') {
+            $fields->attach(form_input_integer(do_lang_tempcode('FLOOD_CONTROL_ACCESS_SECS'), do_lang_tempcode('DESCRIPTION_FLOOD_CONTROL_ACCESS_SECS'), 'flood_control_access_secs', $flood_control_access_secs, true));
+            $fields->attach(form_input_integer(do_lang_tempcode('FLOOD_CONTROL_SUBMIT_SECS'), do_lang_tempcode('DESCRIPTION_FLOOD_CONTROL_SUBMIT_SECS'), 'flood_control_submit_secs', $flood_control_submit_secs, true));
+        } else {
+            $fields->attach(form_input_hidden('flood_control_access_secs', $flood_control_access_secs));
+            $fields->attach(form_input_hidden('flood_control_submit_secs', $flood_control_submit_secs));
+        }
 
         $fields->attach(metadata_get_fields('group', ($id === null) ? null : strval($id), false, ['submitter']));
 

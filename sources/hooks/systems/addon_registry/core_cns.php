@@ -290,6 +290,7 @@ class Hook_addon_registry_core_cns
             'sources/hooks/systems/content_meta_aware/topic.php',
             'sources/hooks/systems/cron/cns_birthdays.php',
             'sources/hooks/systems/cron/cns_confirm_reminder.php',
+            'sources/hooks/systems/database_manifest/core_cns.php',
             'sources/hooks/systems/disposable_values/cns_member_count.php',
             'sources/hooks/systems/disposable_values/cns_newest_member_id.php',
             'sources/hooks/systems/disposable_values/cns_newest_member_username.php',

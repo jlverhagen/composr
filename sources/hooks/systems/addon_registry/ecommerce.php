@@ -268,6 +268,7 @@ class Hook_addon_registry_ecommerce
             'sources/hooks/systems/cron/manual_subscription_notification.php',
             'sources/hooks/systems/cron/subscription_mails.php',
             'sources/hooks/systems/cron/topic_pin.php',
+            'sources/hooks/systems/database_manifest/ecommerce.php',
             'sources/hooks/systems/ecommerce/.htaccess',
             'sources/hooks/systems/ecommerce/custom.php',
             'sources/hooks/systems/ecommerce/email.php',

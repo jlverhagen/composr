@@ -145,6 +145,7 @@ class Hook_addon_registry_core_themeing
             'sources/hooks/systems/addon_registry/core_themeing.php',
             'sources/hooks/systems/ajax_tree/choose_theme_files.php',
             'sources/hooks/systems/config/enable_theme_img_buttons.php',
+            'sources/hooks/systems/database_manifest/core_themeing.php',
             'sources/hooks/systems/snippets/exists_theme.php',
             'sources/hooks/systems/snippets/template_editor_load.php',
             'sources/hooks/systems/snippets/template_editor_save.php',

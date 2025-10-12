@@ -147,6 +147,7 @@ class Hook_addon_registry_securitylogging
             'sources/hooks/systems/commandr_fs_extended_config/ip_banned.php',
             'sources/hooks/systems/commandr_fs_extended_config/ip_unbannable.php',
             'sources/hooks/systems/commandr_fs_extended_member/banned_from_submitting.php',
+            'sources/hooks/systems/database_manifest/securitylogging.php',
             'sources/hooks/systems/privacy/securitylogging.php',
             'sources/hooks/systems/realtime_rain/security.php',
             'sources/lookup.php',

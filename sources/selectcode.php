@@ -520,7 +520,7 @@ function _selectcode_subtree_fetch(string $look_under, ?string $table_name, ?str
         return $under;
     }
 
-    if ((get_value('lots_of_data_in_' . $table_name) !== null) || (!$recurse)) {
+    if ((get_value('lots_of_data_in_' . $table_name) === '1') || (!$recurse)) {
         if ($numeric_ids) {
             $children = $db->query_select($table_name, [$field_name], [$parent_name => intval($look_under)], '', 400/*reasonable limit*/);
         } else {

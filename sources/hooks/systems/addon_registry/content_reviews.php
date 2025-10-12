@@ -140,6 +140,7 @@ class Hook_addon_registry_content_reviews
             'sources/hooks/blocks/main_staff_checklist/content_reviews.php',
             'sources/hooks/systems/addon_registry/content_reviews.php',
             'sources/hooks/systems/cron/content_reviews.php',
+            'sources/hooks/systems/database_manifest/content_reviews.php',
             'sources/hooks/systems/notifications/content_reviews.php',
             'sources/hooks/systems/symbols/REVIEW_STATUS.php',
             'themes/default/images/icons/menu/adminzone/audit/content_reviews.svg',

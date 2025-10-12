@@ -169,6 +169,7 @@ class Hook_addon_registry_newsletter
             'sources/hooks/systems/config/newsletter_website_email.php',
             'sources/hooks/systems/cron/newsletter_drip_send.php',
             'sources/hooks/systems/cron/newsletter_periodic.php',
+            'sources/hooks/systems/database_manifest/newsletter.php',
             'sources/hooks/systems/notifications/newsletter_paused.php',
             'sources/hooks/systems/page_groupings/newsletter.php',
             'sources/hooks/systems/preview/newsletter_whatsnew.php',

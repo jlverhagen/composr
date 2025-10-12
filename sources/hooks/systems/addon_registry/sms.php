@@ -140,6 +140,7 @@ class Hook_addon_registry_sms
             'sources/hooks/systems/config/sms_low_trigger_limit.php',
             'sources/hooks/systems/config/sms_password.php',
             'sources/hooks/systems/config/sms_username.php',
+            'sources/hooks/systems/database_manifest/sms.php',
             'sources/hooks/systems/privacy/sms.php',
             'sources/sms.php',
         ];

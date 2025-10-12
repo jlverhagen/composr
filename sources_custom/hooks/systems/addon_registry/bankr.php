@@ -160,6 +160,7 @@ class Hook_addon_registry_bankr
             'sources_custom/hooks/systems/addon_registry/bankr.php',
             'sources_custom/hooks/systems/config/bank_dividend.php',
             'sources_custom/hooks/systems/cron/bank.php',
+            'sources_custom/hooks/systems/database_manifest/bankr.php',
             'sources_custom/hooks/systems/ecommerce/bank.php',
             'sources_custom/hooks/systems/privacy/bankr.php',
         ];

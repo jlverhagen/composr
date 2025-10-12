@@ -1653,6 +1653,7 @@ function current_fatalistic() : int
 function disable_php_memory_limit()
 {
     if ((function_exists('get_value')) && (get_value('memory_limit_simulate_hard') === '1')) {
+        raise_php_memory_limit(); // Do a raise instead
         return;
     }
 

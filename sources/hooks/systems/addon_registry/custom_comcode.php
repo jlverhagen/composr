@@ -144,6 +144,7 @@ class Hook_addon_registry_custom_comcode
             'sources/hooks/systems/comcode/.htaccess',
             'sources/hooks/systems/comcode/index.html',
             'sources/hooks/systems/commandr_fs/custom_comcode_tags.php',
+            'sources/hooks/systems/database_manifest/custom_comcode.php',
             'sources/hooks/systems/page_groupings/custom_comcode.php',
             'sources/hooks/systems/preview/custom_comcode.php',
             'sources/hooks/systems/resource_meta_aware/custom_comcode_tag.php',

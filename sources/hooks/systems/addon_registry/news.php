@@ -172,6 +172,7 @@ class Hook_addon_registry_news
             'sources/hooks/systems/config/separate_blogs.php',
             'sources/hooks/systems/content_meta_aware/news.php',
             'sources/hooks/systems/content_meta_aware/news_category.php',
+            'sources/hooks/systems/database_manifest/news.php',
             'sources/hooks/systems/notifications/news_entry.php',
             'sources/hooks/systems/page_groupings/news.php',
             'sources/hooks/systems/points/news__add.php',

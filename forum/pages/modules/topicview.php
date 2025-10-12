@@ -502,7 +502,7 @@ class Module_topicview
                 list($post_class, $emphasis) = cns_get_post_emphasis($_postdetails, $topic_info);
 
                 require_code('feedback');
-                if (!array_key_exists('whisper_to_member', $_postdetails) && get_value('disable_post_rating', '0', true) !== '1') {
+                if (!array_key_exists('whisper_to_member', $_postdetails) && get_value('disable_post_rating', '0') !== '1') {
                     actualise_rating(true, 'post', strval($_postdetails['id']), get_self_url(), $_postdetails['title']);
                     $rating = display_rating(get_self_url(), $_postdetails['title'], 'post', strval($_postdetails['id']), 'RATING_INLINE_DYNAMIC', $_postdetails['poster']);
                 } else {

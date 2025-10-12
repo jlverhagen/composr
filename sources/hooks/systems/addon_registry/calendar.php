@@ -164,6 +164,7 @@ class Hook_addon_registry_calendar
             'sources/hooks/systems/content_meta_aware/event.php',
             'sources/hooks/systems/cron/calendar_next_tracking.php',
             'sources/hooks/systems/cron/calendar_reminders.php',
+            'sources/hooks/systems/database_manifest/calendar.php',
             'sources/hooks/systems/notifications/calendar.php',
             'sources/hooks/systems/page_groupings/calendar.php',
             'sources/hooks/systems/points/event__add.php',

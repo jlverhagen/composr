@@ -830,7 +830,7 @@ function make_files_manifest() // Builds files.bin, the Composr file manifest (u
     cms_file_put_contents_safe($builds_path . '/builds/build/' . $version_branch . '/data/files.bin', $file_manifest, FILE_WRITE_FIX_PERMISSIONS | FILE_WRITE_SYNC_FILE);
 }
 
-function make_database_manifest() // Builds db_meta.bin, which is used for database integrity checks
+function make_database_manifest() // Builds database_manifest, which is used for database integrity checks
 {
     if (!addon_installed('meta_toolkit')) {
         warn_exit(do_lang_tempcode('MISSING_ADDON', escape_html('meta_toolkit')));
@@ -972,7 +972,7 @@ function make_database_manifest() // Builds db_meta.bin, which is used for datab
         }
     }
 
-    // Build up db_meta.bin structure...
+    // Build up the manifest structure...
 
     $field_details = $GLOBALS['SITE_DB']->query_select('db_meta', ['*']);
     $tables = [];
@@ -1027,9 +1027,9 @@ function make_database_manifest() // Builds db_meta.bin, which is used for datab
         }
 
         $special_values = [];
-        $unser = @unserialize($fk['special_values']);
-        if (is_array($unser)) {
-            $special_values = $unser;
+        $_special_values = @unserialize($fk['special_values']);
+        if (is_array($_special_values)) {
+            $special_values = $_special_values;
         }
 
         $foreign_keys[$universal_fk_key] = [
@@ -1056,19 +1056,176 @@ function make_database_manifest() // Builds db_meta.bin, which is used for datab
         ];
     }
 
-    $data = [
-        'tables' => $tables,
-        'indices' => $indices,
-        'foreign_keys' => $foreign_keys,
-        'privileges' => $privileges,
-    ];
+    // Write manifest into hooks...
 
-    // Save
     require_code('files');
-    $path = get_file_base() . '/data/db_meta.bin';
-    cms_file_put_contents_safe($path, serialize($data), FILE_WRITE_FIX_PERMISSIONS | FILE_WRITE_SYNC_FILE);
+
+    // Build per-addon mapping
+    // TODO: clean up
+    $by_addon = [];
+    foreach ($tables as $table_name => $table) {
+        $addon = $table['addon'];
+        if (!isset($by_addon[$addon])) {
+            $by_addon[$addon] = [
+                'tables' => [],
+                'indices' => [],
+                'foreign_keys' => [],
+                'privileges' => [],
+            ];
+        }
+        $by_addon[$addon]['tables'][$table_name] = $table;
+    }
+    foreach ($indices as $uik => $index) {
+        $addon = $index['addon'];
+        if (!isset($by_addon[$addon])) {
+            $by_addon[$addon] = [
+                'tables' => [],
+                'indices' => [],
+                'foreign_keys' => [],
+                'privileges' => [],
+            ];
+        }
+        $by_addon[$addon]['indices'][$uik] = $index;
+    }
+    foreach ($foreign_keys as $ufk => $fk) {
+        $addon = $fk['addon'];
+        if (!isset($by_addon[$addon])) {
+            $by_addon[$addon] = [
+                'tables' => [],
+                'indices' => [],
+                'foreign_keys' => [],
+                'privileges' => [],
+            ];
+        }
+        $by_addon[$addon]['foreign_keys'][$ufk] = $fk;
+    }
+    foreach ($privileges as $pname => $priv) {
+        $addon = $priv['addon'];
+        if (!isset($by_addon[$addon])) {
+            $by_addon[$addon] = [
+                'tables' => [],
+                'indices' => [],
+                'foreign_keys' => [],
+                'privileges' => [],
+            ];
+        }
+        $by_addon[$addon]['privileges'][$pname] = $priv;
+    }
+
+    // Update the hooks
+    foreach ($by_addon as $addon => $addon_meta) {
+        $export = format_array_export_for_db_meta(var_export($addon_meta, true));
+
+        $paths_to_try = [
+            get_file_base() . '/sources_custom/hooks/systems/database_manifest/' . $addon . '.php',
+            get_file_base() . '/sources/hooks/systems/database_manifest/' . $addon . '.php',
+        ];
+
+        $hook_path = null;
+        $contents = '';
+        foreach ($paths_to_try as $p) {
+            if (is_file($p)) {
+                $contents = cms_file_get_contents_safe($p);
+
+                // Ensure db_meta() exists in the file
+                if (preg_match('#function\s+db_meta\s*\(\)\s*:\s*array#', $contents) == 0) {
+                    warn_exit('Database manifest: hook for ' . $addon . ' is missing the db_meta() function.');
+                }
+
+                $hook_path = $p;
+                break;
+            }
+        }
+
+        if ($hook_path === null) {
+            warn_exit('Database manifest: missing database_manifest hook for addon ' . $addon . '.');
+        }
+
+        // Replace the return contents within existing db_meta()
+        $contents = preg_replace('#(function\s+db_meta\s*\(\)\s*:\s*array\s*\{.*?^\s*)return\s*[^;]*;#sm', '$1return ' . $export . ';', $contents, 1);
+
+        cms_file_put_contents_safe($hook_path, $contents, FILE_WRITE_FIX_PERMISSIONS | FILE_WRITE_SYNC_FILE);
+    }
 
     pop_db_scope_check();
+}
+
+/**
+ * Get a specially-formatted array for exporting to database manifest hooks.
+ *
+ * @param  string $export The var_export contents
+ * @return string The formatted contents
+ */
+function format_array_export_for_db_meta(string $export) : string
+{
+    // Convert var_export output (array (...) syntax) into nicely formatted short array syntax
+    // matching the style used in database_manifest hooks (e.g. achievements.php).
+
+    // 1) Convert long array syntax to short array syntax
+    $s = $export;
+    // Convert "array (" to "["
+    $s = preg_replace('#array\s*\(#', '[', $s);
+    // Convert closing ")" to "]" (safe here as var_export for arrays only uses these parentheses)
+    $s = str_replace(')', ']', $s);
+
+    // Normalise any spacing where var_export might have broken the "=> ["
+    $s = preg_replace('#=>\s+\[#', '=> [', $s);
+
+    // Collapse empty arrays from "[\n\s*]" to "[]"
+    $s = preg_replace("#\[\s*\]#s", '[]', $s);
+
+    // Trim outer whitespace
+    $s = trim($s);
+
+    // Ensure we are dealing with a single top-level short array
+    // Remove one pair of top-level brackets to re-indent interior, then we'll wrap again.
+    if ($s !== '' && $s[0] === '[' && substr($s, -1) === ']') {
+        $inner = substr($s, 1, -1);
+    } else {
+        $inner = $s; // Fallback (should not happen)
+    }
+
+    // Split to lines as produced by var_export; if it's a single-line, explode will still work
+    $lines = preg_split("#\r?\n#", $inner);
+
+    // Reformat with 4-space indents and align with 8 spaces relative to the return keyword
+    $out = '[' . "\n";
+    $base_indent = '        '; // 8 spaces, to align with the code style used in hooks
+    $indent_unit = '    '; // 4 spaces per nesting level within the array
+
+    $level = 1; // We are inside the top-level array already
+
+    foreach ($lines as $line) {
+        $line = trim($line);
+        if ($line === '') {
+            continue;
+        }
+
+        // Reduce multiple internal spaces around arrows for neatness, but avoid touching inside strings
+        // Keep a basic cleanup only around the => operator
+        $line = preg_replace('#\s*=>\s*#', ' => ', $line);
+
+        // Normalise any stray empty arrays again (could have been split with whitespace)
+        if (preg_match('#^\]#', $line)) {
+            // Line starts with a closing bracket, so de-indent first
+            $level = max(1, $level - 1);
+        }
+
+        $indent = $base_indent . str_repeat($indent_unit, $level);
+
+        // If the line is just "]" or "]," keep it as is
+        $out .= $indent . $line . "\n";
+
+        // If line ends with "[" (opening a new array), increase level for following lines
+        if (preg_match('#\[\s*(?:,)?\s*$#', $line)) {
+            $level++;
+        }
+    }
+
+    // Close the top-level array, aligned with base indent (no extra indent levels)
+    $out .= $base_indent . ']' ;
+
+    return $out;
 }
 
 function make_install_sql()

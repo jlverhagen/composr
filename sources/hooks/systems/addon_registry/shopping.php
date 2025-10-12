@@ -141,6 +141,7 @@ class Hook_addon_registry_shopping
             'sources/hooks/systems/addon_registry/shopping.php',
             'sources/hooks/systems/cns_cpf_filter/shopping_cart.php',
             'sources/hooks/systems/config/cart_hold_hours.php',
+            'sources/hooks/systems/database_manifest/shopping.php',
             'sources/hooks/systems/ecommerce/cart_orders.php',
             'sources/hooks/systems/ecommerce/catalogue_items.php',
             'sources/hooks/systems/notifications/order_dispatched.php',

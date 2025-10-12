@@ -155,6 +155,7 @@ class Hook_addon_registry_wiki
             'sources/hooks/systems/config/wiki_show_stats_count_posts.php',
             'sources/hooks/systems/content_meta_aware/wiki_page.php',
             'sources/hooks/systems/content_meta_aware/wiki_post.php',
+            'sources/hooks/systems/database_manifest/wiki.php',
             'sources/hooks/systems/disposable_values/num_wiki_files.php',
             'sources/hooks/systems/disposable_values/num_wiki_pages.php',
             'sources/hooks/systems/disposable_values/num_wiki_posts.php',

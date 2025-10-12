@@ -127,8 +127,9 @@ function get_screen_title($title, bool $dereference_lang = true, array $params =
     }
 
     if ((function_exists('get_session_id')) && (get_bot_type() === null) && ((!$GLOBALS['SESSION_IS_NEW']) || (!is_guest()))/*We don't bother tracking 'the_title' for new guest users, due to bot overhead*/) {
-        if (get_value('disable_member_tracking') !== '1') {
-            if (!$GLOBALS['SITE_DB']->table_is_locked('sessions')) {
+        $member_tracking = (get_value('disable_member_tracking') !== '1');
+        if (!$GLOBALS['SITE_DB']->table_is_locked('sessions')) {
+            if ($member_tracking) {
                 $change_map = [
                     'last_activity_time' => time(),
                     'the_title' => ($user_online_title === null) ? cms_mb_substr($_title->evaluate(), 0, 255) : $user_online_title->evaluate(),
@@ -137,16 +138,26 @@ function get_screen_title($title, bool $dereference_lang = true, array $params =
                     'the_type' => cms_mb_substr(get_param_string('type', '', INPUT_FILTER_GET_COMPLEX), 0, 80),
                     'the_id' => cms_mb_substr(get_param_string('id', '', INPUT_FILTER_GET_COMPLEX), 0, 80),
                 ];
+            } else {
+                $change_map = [
+                    'last_activity_time' => time(), // We still need to track activity time so the session does not expire
+                    'the_title' => '',
+                    'the_zone' => '',
+                    'the_page' => '',
+                    'the_type' => '',
+                    'the_id' => '',
+                ];
+            }
 
-                $session_id = get_session_id();
-                global $SESSION_CACHE;
-                if ((get_value('disable_user_online_counting') !== '1') || (get_option('session_prudence') == '0') || (!isset($SESSION_CACHE[$session_id])) || ($SESSION_CACHE[$session_id]['last_activity_time'] < time() - 60 * 60 * 5)) {
-                    $GLOBALS['SITE_DB']->query_update('sessions', $change_map, ['the_session' => $session_id], '', 1, 0, false, true); // Errors suppressed in case DB write access broken
+            $session_id = get_session_id();
+            global $SESSION_CACHE;
 
-                    if (get_option('session_prudence') == '0' && isset($SESSION_CACHE[$session_id]/*if not logging out?*/)) {
-                        $SESSION_CACHE[$session_id] = $change_map + $SESSION_CACHE[$session_id];
-                        persistent_cache_set('SESSION_CACHE', $SESSION_CACHE);
-                    }
+            if ((get_value('disable_user_online_counting') !== '1') || (get_option('session_prudence') == '0') || (!isset($SESSION_CACHE[$session_id])) || ($SESSION_CACHE[$session_id]['last_activity_time'] < time() - 60 * 60 * 5)) {
+                $GLOBALS['SITE_DB']->query_update('sessions', $change_map, ['the_session' => $session_id], '', 1, 0, false, true); // Errors suppressed in case DB write access broken
+
+                if (get_option('session_prudence') == '0' && isset($SESSION_CACHE[$session_id]/*if not logging out?*/)) {
+                    $SESSION_CACHE[$session_id] = $change_map + $SESSION_CACHE[$session_id];
+                    persistent_cache_set('SESSION_CACHE', $SESSION_CACHE);
                 }
             }
         }

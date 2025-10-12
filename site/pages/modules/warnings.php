@@ -1006,7 +1006,7 @@ class Module_warnings extends Standard_crud_module
                 $table_rows->attach(columned_table_row($punitive_action, true));
             }
 
-            $fields['PUNITIVE_ACTIONS'] = do_template('COLUMNED_TABLE', ['_GUID' => 'TODO', 'HEADER_ROW' => $header_row, 'ROWS' => $table_rows, 'NONRESPONSIVE' => false]);
+            $fields['PUNITIVE_ACTIONS'] = do_template('COLUMNED_TABLE', ['_GUID' => '4e3e5531db885237bfcf4244c2283dd5', 'HEADER_ROW' => $header_row, 'ROWS' => $table_rows, 'NONRESPONSIVE' => false]);
         }
 
         $fields['ACTIONS'] = new Tempcode();

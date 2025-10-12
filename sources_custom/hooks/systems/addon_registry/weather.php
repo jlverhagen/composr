@@ -158,6 +158,7 @@ You will need to set up an OpenWeatherMap API key at Admin Zone > Setup > Config
             'sources_custom/blocks/side_weather.php',
             'sources_custom/hooks/systems/addon_registry/weather.php',
             'sources_custom/hooks/systems/config/openweathermap_api_key.php',
+            'sources_custom/hooks/systems/database_manifest/weather.php',
             'sources_custom/hooks/systems/health_checks/weather.php',
             'sources_custom/hooks/systems/weather/.htaccess',
             'sources_custom/hooks/systems/weather/index.html',

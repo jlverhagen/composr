@@ -163,6 +163,7 @@ class Hook_addon_registry_tickets
             'sources/hooks/systems/config/ticket_type_forums.php',
             'sources/hooks/systems/cron/ticket_type_lead_times.php',
             'sources/hooks/systems/cron/tickets_email_integration.php',
+            'sources/hooks/systems/database_manifest/tickets.php',
             'sources/hooks/systems/notifications/ticket_assigned_staff.php',
             'sources/hooks/systems/notifications/ticket_new_staff.php',
             'sources/hooks/systems/notifications/ticket_reply.php',
