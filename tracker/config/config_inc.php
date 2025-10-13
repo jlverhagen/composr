@@ -223,7 +223,7 @@ $g_html_make_links = LINKS_NEW_WINDOW | LINKS_NOOPENER | LINKS_NOREFERRER; // Pr
 $g_issue_activity_note_attachments_seconds_threshold = 180; // Might be using the submit bugfix tool in Composr
 
 if ($SITE_INFO['base_url'] == 'https://composr.app') { // FUDGE: force session saving to a directory; hopefully this resolves token issues
-    $g_session_save_path = realpath(dirname($_SERVER['DOCUMENT_ROOT']) . '/../mantis_sessions');
+    $g_session_save_path = dirname($_SERVER['DOCUMENT_ROOT']) . '/mantis_sessions';
     ini_set('session.gc_probability', 1);
 }
 
