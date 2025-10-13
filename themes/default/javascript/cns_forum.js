@@ -52,27 +52,33 @@
         var usernameField = document.getElementById('to_member_id_0');
         if (usernameField) {
             var checkPtUsername = function (event) {
-                var usernameField = event.target;
-                if (usernameField.value.trim() !== '') {
-                    $cms.loadSnippet('pt_rules&username=' + usernameField.value.trim()).then(function (result) {
-                        if (result === '-1') {
-                            // Missing member
-                            $cms.ui.alert('{!MEMBER_NO_EXIST;^}'.replace(/\\{1\\}/, $cms.filter.html(usernameField.value.trim())));
-                        } else if (result === '-2') {
-                            // Permission denied
-                            $cms.ui.alert('{!cns:_NO_PT_FROM_ALLOW;^}'.replace(/\\{1\\}/, $cms.filter.html(usernameField.value.trim())));
-                        } else if (result !== '') {
-                            // Rules
-                            $cms.ui.confirm('{!cns:PT_RULES_PAGE_INTRO;^,xxx}'.replace(/xxx/, usernameField.value.trim()) + '<br /><br />' + result, function (result2) {
-                                if (!result2) {
-                                    usernameField.value = '';
-                                }
-                            }, '{!RULES;^}: {!I_AGREE;^}', true);
+                var field = event.target;
+
+                setTimeout(function () {
+                    if (field.value.trim() !== '') {
+                        $cms.loadSnippet('pt_rules&username=' + $cms.filter.html(field.value)).then(function (result) {
+                            if (result === '-1') {
+                                // Missing member
+                                $cms.ui.alert('{!_MEMBER_NO_EXIST;^}'.replace(/\\{1\\}/, $cms.filter.html(field.value)));
+                                field.value = '';
+                            } else if (result === '-2') {
+                                // Permission denied
+                                $cms.ui.alert('{!cns:_NO_PT_FROM_ALLOW;^}'.replace(/\\{1\\}/, $cms.filter.html(field.value)));
+                                field.value = '';
+                            } else if (result !== '') {
+                                // Rules
+                                $cms.ui.confirm('{!cns:PT_RULES_PAGE_INTRO;^,xxx}'.replace(/xxx/, $cms.filter.html(field.value)) + '<br /><br />' + result, function (result2) {
+                                    if (!result2) {
+                                        field.value = '';
+                                    }
+                                }, '{!RULES;^}: {!I_AGREE;^}', true);
+                            }
+                        });
                         }
-                    });
-                }
+                }, 250);
             };
-            usernameField.onblur = checkPtUsername; // We use onblur because that can be replicated via ensureNextField
+
+            usernameField.addEventListener('blur', checkPtUsername);
         }
 
         var extraChecks = [];

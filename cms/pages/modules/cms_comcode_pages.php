@@ -667,9 +667,10 @@ class Module_cms_comcode_pages
         foreach ($rows as $row) {
             if (!$found_via_query) {
                 if ($i < $start) {
+                    $i++;
                     continue;
                 }
-                if ($i > $max + $start) {
+                if ($i >= $max + $start) {
                     break;
                 }
             }

@@ -1238,7 +1238,7 @@ abstract class CMSStatsRedirect extends CMSStatsHookBase
 /**
  * Get the day bounds of what dates we have stats data for.
  *
- * @return array A pair: min day, max day (null: no stats processed)
+ * @return array A pair: min day, max day, which can be null if not processed
  */
 function find_known_stats_day_bounds() : array
 {
@@ -1541,13 +1541,12 @@ class CMSStatsCountryFilter extends CMSStatsListFilter
      *
      * @param  string $filter_name Filter name
      * @param  Tempcode $label Label
-     * @param  array $list List (a map)
      * @param  string $default Default
      */
     public function __construct(string $filter_name, object $label, string $default = '')
     {
         require_code('locations');
-        parent::__construct($filter_name, $label, []/* Hard-coded */, $default);
+        parent::__construct($filter_name, $label, [], $default);
     }
 
     /**

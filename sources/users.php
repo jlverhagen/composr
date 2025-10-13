@@ -315,9 +315,9 @@ function get_member(bool $quick_only = false) : int
     is_httpauth_login();
 
     if ($member_id !== null) {
-        enforce_temporary_passwords($member_id);
         enforce_declarations($member_id);
         enforce_parental_controls($member_id);
+        enforce_temporary_passwords($member_id);
 
         if (get_forum_type() == 'cns') {
             $GLOBALS['FORUM_DRIVER']->cns_flood_control($member_id);
@@ -503,7 +503,7 @@ function enforce_parental_controls(int $member_id)
     $dob_month = $GLOBALS['FORUM_DRIVER']->get_member_row_field($member_id, 'm_dob_month');
     $dob_year = $GLOBALS['FORUM_DRIVER']->get_member_row_field($member_id, 'm_dob_year');
 
-    // Can only check parental controls if date of birth was filled in
+    // These checks enforce parental consent and lockout conditions when date of birth has already been filled in
     if (($dob_day !== null) && ($dob_month !== null) && ($dob_year !== null)) {
         $age = to_epoch_interval_index(utctime_to_usertime(time()), 'years', utctime_to_usertime(cms_gmmktime(0, 0, 0, $dob_month, $dob_day, $dob_year)));
 
@@ -576,7 +576,7 @@ function enforce_parental_controls(int $member_id)
         if ((cms_empty_safe($dob_year)) && (has_privilege(get_member(), 'bypass_dob_if_already_empty'))) {
             require_code('site2');
             require_lang('locations');
-            redirect_exit($redirect_url, null, do_lang_tempcode('PARENTAL_CONTROLS_ENFORCE_DOB'), false, 'warn');
+            redirect_exit($redirect_url, null, do_lang_tempcode('PARENTAL_CONTROLS_ENFORCE'), false, 'warn');
         }
     }
 
@@ -585,7 +585,7 @@ function enforce_parental_controls(int $member_id)
         if ((cms_empty_safe($timezone)) && (has_privilege(get_member(), 'bypass_timezone_offset_if_already_empty'))) {
             require_code('site2');
             require_lang('locations');
-            redirect_exit($redirect_url, null, do_lang_tempcode('PARENTAL_CONTROLS_ENFORCE_TIMEZONE'), false, 'warn');
+            redirect_exit($redirect_url, null, do_lang_tempcode('PARENTAL_CONTROLS_ENFORCE'), false, 'warn');
         }
     }
 
@@ -594,7 +594,7 @@ function enforce_parental_controls(int $member_id)
         if ((cms_empty_safe($region)) && (has_privilege(get_member(), 'bypass_region_if_already_empty'))) {
             require_code('site2');
             require_lang('locations');
-            redirect_exit($redirect_url, null, do_lang_tempcode('PARENTAL_CONTROLS_ENFORCE_REGION'), false, 'warn');
+            redirect_exit($redirect_url, null, do_lang_tempcode('PARENTAL_CONTROLS_ENFORCE'), false, 'warn');
         }
     }
 }
@@ -1018,6 +1018,9 @@ function get_default_theme_name() : string
     return substr(preg_replace('#[^A-Za-z\d]#', '_', get_site_name()), 0, 80);
 }
 
+/**
+ * Script for determining if our session is about to expire.
+ */
 function session_expiration_script()
 {
     prepare_backend_response('text/plain');

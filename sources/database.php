@@ -972,7 +972,7 @@ abstract class DatabaseDriver
      * @param  ID_TEXT $from_field The table's field on which we are creating a foreign key
      * @param  ID_TEXT $to_table The table which is being referenced
      * @param  ID_TEXT $to_field The table's field which is being referenced
-     * @return string The SQL
+     * @return ?string The SQL (null: foreign keys not supported)
      */
     public function create_foreign_key__sql(string $from_table, string $from_field, string $to_table, string $to_field) : ?string
     {
@@ -980,6 +980,13 @@ abstract class DatabaseDriver
         return null;
     }
 
+    /**
+     * Get SQL for deleting a foreign key.
+     *
+     * @param  ID_TEXT $from_table The table on which we are deleting a foreign key
+     * @param  ID_TEXT $from_field The table's field on which we are deleting a foreign key
+     * @return ?string The SQL (null: foreign keys not supported)
+     */
     public function delete_foreign_key__sql(string $from_table, string $from_field) : ?string
     {
         // Not supported by default; only MySQL uses this.

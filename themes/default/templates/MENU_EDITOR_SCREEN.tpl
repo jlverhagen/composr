@@ -2,6 +2,7 @@
 {$REQUIRE_CSS,widget_select2}
 {$REQUIRE_JAVASCRIPT,jquery}
 {$REQUIRE_JAVASCRIPT,select2}
+{$REQUIRE_JAVASCRIPT,core_configuration}
 
 <div data-tpl="menuEditorScreen" data-tpl-params="{+START,PARAMS_JSON,ALL_MENUS,MENU_TYPE}{_*}{+END}">
 	{TITLE}
@@ -15,32 +16,15 @@
 
 	<div class="menu-editor-page docked js-el-menu-editor-wrap" id="menu-editor-wrap">
 		<div class="menu-editor-page-inner">
-			<form title="" action="{URL*}" method="post">
-				<!-- In separate form due to mod_security -->
-				<textarea aria-hidden="true" cols="30" rows="3" style="display: none" name="template" id="template">{CHILD_BRANCH_TEMPLATE*}</textarea>
-			</form>
-
 			<form title="{!PRIMARY_PAGE_FORM}" id="edit-form" action="{URL*}" method="post" data-submit-modsecurity-workaround="1">
 				{$INSERT_FORM_POST_SECURITY}
 
 				<div class="clearfix menu-edit-main">
-					<div class="menu-editor-rh-side">
-						<h2>{!HELP}</h2>
+					<h2>{!BRANCHES}</h2>
 
-						<p>{!BRANCHES_DESCRIPTION,{$PAGE_LINK*,_SEARCH:admin_sitemap:browse}}</p>
-
-						<p>{!ENTRY_POINTS_DESCRIPTION}</p>
-					</div>
-
-					<div class="menu-editor-lh-side">
-						<h2>{!BRANCHES}</h2>
-
-						<input type="hidden" name="highest_order" id="highest_order" value="{HIGHEST_ORDER*}" />
-
-						<div class="menu-editor-root">
-							{ROOT_BRANCH}
-						</div>
-					</div>
+					<input type="hidden" name="highest_order" id="highest_order" value="{HIGHEST_ORDER*}" />
+					<label for="xml" class="accessibility-hidden">XML</label>
+					<textarea name="xml" id="xml" cols="30" rows="30" class="form-control form-control-wide">{XML*}</textarea>
 
 					<p class="proceed-button">
 						<button accesskey="p" class="btn btn-primary btn-scr buttons--preview js-click-preview-menu" type="submit">{+START,INCLUDE,ICON}NAME=buttons/preview{+END} {!PREVIEW}</button>
@@ -89,6 +73,9 @@
 								{FIELDS_TEMPLATE}
 							</tbody>
 						</table>
+						<p class="proceed-button">
+							<button type="button" class="btn btn-primary js-click-insert-xml-branch">Insert/update line</button>
+						</p>
 					</div>
 				</div>
 
@@ -124,3 +111,6 @@
 		</div>
 	</div>
 </div>
+
+<script {$CSP_NONCE_HTML} defer="defer" src="{$BASE_URL*}/data/ace/ace.js"></script>
+<script {$CSP_NONCE_HTML} defer="defer" src="{$BASE_URL*}/data/ace/ace_composr.js"></script>

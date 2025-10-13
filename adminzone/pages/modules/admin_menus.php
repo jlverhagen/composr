@@ -240,6 +240,7 @@ class Module_admin_menus
 
         $clickable_sections = (get_param_integer('clickable_sections', 1) == 1); // This is set to '1 if we have a menu type where pop out sections may be clicked on to be loaded. If we do then we make no UI distinction between page nodes and contracted/expanded, so people don't get compelled to choose a URL for everything, it simply becomes an option for them.
 
+        /*
         // This will be a templates for branches created dynamically
         $t_id = 'replace_me_with_random';
         $branch = do_template('MENU_EDITOR_BRANCH', [
@@ -266,17 +267,22 @@ class Module_admin_menus
             'I' => $t_id,
             'BRANCH' => $branch,
         ]);
+        */
 
         $order = 0;
         $menu_items = $GLOBALS['SITE_DB']->query_select('menu_items', ['*'], ['i_menu' => $id], 'ORDER BY i_parent_id,i_order');
-        $child_branches = $this->menu_branch($id, null, $order, $clickable_sections, $menu_items);
+        $xml = '<menu>' . "\n";
+        $xml .= $this->menu_branch($id, null, $order, $clickable_sections, $menu_items);
+        $xml .= '</menu>';
 
+        /*
         $root_branch = do_template('MENU_EDITOR_BRANCH', [
             '_GUID' => '28009b66089c05744d2727ff4689e43e',
             'CLICKABLE_SECTIONS' => $clickable_sections ? 'true' : 'false',
             'CHILD_BRANCHES' => $child_branches,
             'I' => '',
         ]);
+        */
 
         $map = ['page' => '_SELF', 'type' => '_edit', 'id' => $id, 'menu_type' => get_param_string('menu_type', null)];
         if (get_param_string('redirect', '!', INPUT_FILTER_URL_INTERNAL) != '!') {
@@ -341,82 +347,71 @@ class Module_admin_menus
             'FIELDS_TEMPLATE' => $fields_template,
             'HIGHEST_ORDER' => strval($order),
             'URL' => $post_url,
-            'CHILD_BRANCH_TEMPLATE' => $child_branch_template,
-            'ROOT_BRANCH' => $root_branch,
+            //'CHILD_BRANCH_TEMPLATE' => $child_branch_template,
+            //'ROOT_BRANCH' => $root_branch,
             'TITLE' => $this->title,
             'TOTAL_ITEMS' => strval(count($menu_items)),
             'MENU_TYPE' => get_param_string('menu_type', null),
+            'XML' => $xml,
         ]);
     }
 
     /**
-     * Show a branch-editor of the menu editor.
+     * Generate XML for a menu branch.
      *
      * @param  ID_TEXT $id The menu we are displaying items for
      * @param  ?AUTO_LINK $branch The parent branch holding the branch (null: root)
-     * @param  integer $order The order this branch has in the editor (and due to linearly moving through, the number of branches shown assembled ready)
+     * @param  integer $order The order this branch has (used for indentation)
      * @param  boolean $clickable_sections Whether childed branches themselves can have URLs (etc)
-     * @param  array $menu_items All rows on the menu
-     * @return Tempcode The part of the UI
+     * @param  array $menu_items All database rows on the menu
+     * @return LONG_TEXT The XML
      */
-    public function menu_branch(string $id, ?int $branch, int &$order, bool $clickable_sections, array $menu_items) : object
+    public function menu_branch(string $id, ?int $branch, int &$order, bool $clickable_sections, array $menu_items) : string
     {
-        $child_branches = new Tempcode();
+        $child_branches = '';
+
         foreach ($menu_items as $menu_item) {
-            if ($menu_item['i_parent_id'] === $branch) {
-                $caption = get_translated_text($menu_item['i_caption']);
-                $url = $menu_item['i_link'];
-                $page_only = $menu_item['i_page_only'];
-                $theme_img_code = $menu_item['i_theme_img_code'];
-                $new_window = $menu_item['i_new_window'];
-                $check_perms = $menu_item['i_check_permissions'];
-                $include_sitemap = $menu_item['i_include_sitemap'];
-                $caption_long = get_translated_text($menu_item['i_caption_long']);
-                $branch_type = 0;
-                foreach ($menu_items as $_menu_item) {
-                    if ($_menu_item['i_parent_id'] == $menu_item['id']) {
-                        $branch_type = ($menu_item['i_expanded'] == 1) ? 2 : 1;
-                        break;
-                    }
-                }
-                if (($url == '') && ($branch_type == 0)) {
-                    $branch_type = 1;
-                }
-
-                // To make it more user-friendly, show a page-link as a URL
-                if ((!looks_like_url($url)) && (strpos($url, ':') !== false) && (strpos($url, '{') === false) && (get_value('show_menu_items_as_url') === '1')) {
-                    $url = page_link_to_url($url, true);
-                }
-
-                $display = (($branch_type == 0) && (!$clickable_sections)) ? 'display: none' : '';
-                $_child_branches = $this->menu_branch($id, $menu_item['id'], $order, $clickable_sections, $menu_items);
-                $_branch = do_template('MENU_EDITOR_BRANCH', [
-                    '_GUID' => '381f5600da214b84e300bcf668f66570',
-                    'CLICKABLE_SECTIONS' => $clickable_sections ? 'true' : 'false',
-                    'I' => strval($menu_item['id']),
-                    'CHILD_BRANCHES' => $_child_branches->evaluate(),
-                ]);
-                $_wrap = do_template('MENU_EDITOR_BRANCH_WRAP', [
-                    '_GUID' => '1ace7da7a1d8a18f13305eec5069e4c5',
-                    'DISPLAY' => $display,
-                    'CLICKABLE_SECTIONS' => $clickable_sections,
-                    'ORDER' => strval($order),
-                    'PARENT' => ($branch === null) ? '' : strval($branch),
-                    'BRANCH_TYPE' => strval($branch_type),
-                    'NEW_WINDOW' => strval($new_window),
-                    'CHECK_PERMS' => strval($check_perms),
-                    'INCLUDE_SITEMAP' => strval($include_sitemap),
-                    'CAPTION' => $caption,
-                    'CAPTION_LONG' => $caption_long,
-                    'URL' => $url,
-                    'PAGE_ONLY' => $page_only,
-                    'THEME_IMG_CODE' => $theme_img_code,
-                    'I' => strval($menu_item['id']),
-                    'BRANCH' => $_branch,
-                ]);
-                $child_branches->attach($_wrap);
-                $order++;
+            if ($menu_item['i_parent_id'] !== $branch) {
+                continue;
             }
+
+            $child_branches .= str_repeat('    ', $order + 1) . '<menubranch';
+
+            $menu_id = $menu_item['id'];
+            $caption = get_translated_text($menu_item['i_caption']);
+            $caption_long = get_translated_text($menu_item['i_caption_long']);
+            $url = $menu_item['i_link'];
+            $page_only = $menu_item['i_page_only'];
+            $theme_img_code = $menu_item['i_theme_img_code'];
+            $new_window = $menu_item['i_new_window'];
+            $check_perms = $menu_item['i_check_permissions'];
+            $include_sitemap = $menu_item['i_include_sitemap'];
+            $expanded = $menu_item['i_expanded'];
+
+            // To make it more user-friendly, show a page-link as a URL if requested
+            if ((!looks_like_url($url)) && (strpos($url, ':') !== false) && (strpos($url, '{') === false) && (get_value('show_menu_items_as_url') === '1')) {
+                $url = page_link_to_url($url, true);
+            }
+
+            $child_branches .= ' id="' . escape_html(strval($menu_id)) . '"';
+            $child_branches .= ' caption="' . escape_html($caption) . '"';
+            $child_branches .= ' caption_long="' . escape_html($caption_long) . '"';
+            $child_branches .= ' url="' . escape_html($url) . '"';
+            $child_branches .= ' page_only="' . escape_html($page_only) . '"';
+            $child_branches .= ' theme_image="' . escape_html($theme_img_code) . '"';
+            $child_branches .= ' new_window="' . escape_html(strval($new_window)) . '"';
+            $child_branches .= ' check_permissions="' . escape_html(strval($check_perms)) . '"';
+            $child_branches .= ' include_sitemap="' . escape_html(strval($include_sitemap)) . '"';
+            $child_branches .= ' expanded="' . escape_html(strval($expanded)) . '"';
+            $child_branches .= '>' . "\n";
+
+            $order++;
+
+            $child_branches .= $this->menu_branch($id, $menu_item['id'], $order, $clickable_sections, $menu_items);
+
+            $order--;
+
+            $child_branches .= str_repeat('    ', $order + 1) . '</menubranch>' . "\n";
         }
 
         return $child_branches;
@@ -448,24 +443,9 @@ class Module_admin_menus
             // Get content language strings currently used
             $old_menu_bits = list_to_map('id', $GLOBALS['SITE_DB']->query_select('menu_items', ['id', 'i_caption', 'i_caption_long'], ['i_menu' => $menu_id]));
 
-            // Now, process everything on the root
-            $ids = menu_items_being_saved();
-            $order = 0;
-            foreach (array_keys($ids) as $id) {
-                $parent = $ids[$id];
-
-                if ($parent == '') {
-                    save_add_menu_item_from_post($menu_id, $id, $ids, null, $old_menu_bits, $order);
-                    $order++;
-                }
-            }
-
-            // Erase old stuff
-            foreach ($old_menu_bits as $menu_item_id => $lang_code) {
-                $GLOBALS['SITE_DB']->query_delete('menu_items', ['id' => $menu_item_id]);
-                delete_lang($lang_code['i_caption']);
-                delete_lang($lang_code['i_caption_long']);
-            }
+            // Now, process everything
+            $menu_items = menu_items_being_saved();
+            save_menu_items_from_editor($menu_id, $menu_items);
 
             log_it('EDIT_MENU', $menu_id);
 

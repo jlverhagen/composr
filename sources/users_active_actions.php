@@ -233,9 +233,9 @@ function handle_active_login(string $username)
         global $MEMBER_CACHED;
         $MEMBER_CACHED = $member_id;
 
-        enforce_temporary_passwords($member_id);
         enforce_declarations($member_id);
         enforce_parental_controls($member_id);
+        enforce_temporary_passwords($member_id);
     } elseif ($login_array['failed_login'] === true) {
         $GLOBALS['SITE_DB']->query_insert('failedlogins', [
             'failed_account' => cms_mb_substr(post_param_string('username', false, INPUT_FILTER_DEFAULT_POST & ~INPUT_FILTER_TRUSTED_SITES | INPUT_FILTER_TRIMMED), 0, 80),

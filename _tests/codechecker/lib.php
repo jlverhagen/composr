@@ -303,9 +303,13 @@ function require_code($codename)
 {
     global $COMPOSR_PATH;
     if (file_exists($COMPOSR_PATH . '/sources_custom/' . $codename . '.php')) {
-        require_once($COMPOSR_PATH . '/sources_custom/' . $codename . '.php');
+        require_once $COMPOSR_PATH . '/sources_custom/' . $codename . '.php';
     } else {
-        require_once($COMPOSR_PATH . '/sources/' . $codename . '.php');
+        require_once $COMPOSR_PATH . '/sources/' . $codename . '.php';
+    }
+
+    if (function_exists('init__' . $codename)) {
+        call_user_func_array('init__' . $codename, []);
     }
 }
 
@@ -392,5 +396,58 @@ if (!function_exists('is_alphanumeric')) {
             return $test;
         }
         return preg_match('#^[\w\-\.]*$#D', $string) != 0;
+    }
+}
+
+if (!function_exists('get_hook_ob')) {
+    /**
+     * Get the specified hook implementation object and fail if it does not exist.
+     *
+     * @param  ID_TEXT $type The type of hook
+     * @param  ID_TEXT $subtype The hook sub-type to find hook implementations for (e.g. the name of a module)
+     * @param  ID_TEXT $hook The name of the hook
+     * @param  string $classname_prefix The hook class-name prefix, the classes are named {$classname_prefix}{$hook}
+     * @param  boolean $fail_ok Whether to return null opposed to failing if the hook or its object does not exist
+     * @return ?object The hook implementation object (null: hook was not found and $fail_ok was true)
+     */
+    function get_hook_ob(string $type, string $subtype, string $hook, string $classname_prefix, bool $fail_ok = false) : ?object
+    {
+        if (!hook_exists($type, $subtype, $hook)) {
+            if ($fail_ok) {
+                return null;
+            }
+            $error_message = 'Internal error: Could not find class ' . ($classname_prefix . $hook);
+            warn_exit($error_message);
+        }
+
+        require_code('hooks/' . $type . '/' . $subtype . '/' . $hook);
+
+        $ob = object_factory(($classname_prefix . $hook), true, [], true);
+        if ((!$fail_ok) && ($ob === null)) {
+            $error_message = 'Internal error: Could not construct class ' . ($classname_prefix . $hook);
+            warn_exit($error_message);
+        }
+
+        return $ob;
+    }
+}
+
+if (!function_exists('hook_exists')) {
+    /**
+     * Check if a given hook exists.
+     *
+     * @param  ID_TEXT $type The type of hook
+     * @set blocks endpoints modules systems
+     * @param  ID_TEXT $subtype The hook sub-type to find hook implementations for (e.g. the name of a module)
+     * @param  ID_TEXT $hook The name of the hook
+     * @return boolean Whether or not the hook exists
+     */
+    function hook_exists(string $type, string $subtype, string $hook) : bool
+    {
+        if ((is_file(get_file_base() . '/sources/hooks/' . $type . '/' . $subtype . '/' . $hook . '.php')) || (is_file(get_file_base() . '/sources_custom/hooks/' . $type . '/' . $subtype . '/' . $hook . '.php'))) {
+            return true;
+        }
+
+        return false;
     }
 }
