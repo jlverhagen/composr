@@ -796,9 +796,9 @@ class DatabaseRepair
      * Phase 1: Keep meta foreign-keys in sync with what exists physically.
      * Considers real DB canonical over meta.
      *
-     * @param array $existent_foreign_keys Physical foreign keys keyed by universal FK key
-     * @param array $meta_foreign_keys     Meta foreign keys keyed by universal FK key
-     * @return bool Whether issues were found
+     * @param  array $existent_foreign_keys Physical foreign keys keyed by universal FK key
+     * @param  array $meta_foreign_keys Meta foreign keys keyed by universal FK key
+     * @return boolean Whether issues were found
      */
     private function search_for_meta_foreign_key_issues(array $existent_foreign_keys, array $meta_foreign_keys) : bool
     {
@@ -848,10 +848,10 @@ class DatabaseRepair
      * Phase 2: Bring DB into line with expected foreign-keys.
      * and sync meta accordingly.
      *
-     * @param array $existent_foreign_keys Physical foreign keys keyed by universal FK key
-     * @param array $expected_foreign_keys Expected foreign keys keyed by universal FK key
-     * @param array $meta_foreign_keys     Meta foreign keys keyed by universal FK key
-     * @return bool Whether issues were found
+     * @param  array $existent_foreign_keys Physical foreign keys keyed by universal FK key
+     * @param  array $expected_foreign_keys Expected foreign keys keyed by universal FK key
+     * @param  array $meta_foreign_keys Meta foreign keys keyed by universal FK key
+     * @return boolean Whether issues were found
      */
     private function search_for_foreign_key_issues(array $existent_foreign_keys, array $expected_foreign_keys, array $meta_foreign_keys) : bool
     {

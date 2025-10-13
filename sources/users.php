@@ -1018,6 +1018,9 @@ function get_default_theme_name() : string
     return substr(preg_replace('#[^A-Za-z\d]#', '_', get_site_name()), 0, 80);
 }
 
+/**
+ * Script for determining if our session is about to expire.
+ */
 function session_expiration_script()
 {
     prepare_backend_response('text/plain');

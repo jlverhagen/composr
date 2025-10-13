@@ -206,6 +206,9 @@ function check_js(string $data, bool $raw_errors = false) : array
     $JS_ERRORS = [];
     $JS_TAG_RANGES = [];
     $JS_VALUE_RANGES = [];
+
+    require_code('webstandards_js_lex');
+
     $lexed = webstandards_js_lex($data);
     if ($lexed !== null) {
         $parsed = webstandards_js_parse();

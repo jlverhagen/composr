@@ -18,6 +18,8 @@
  * @package    core_menus
  */
 
+/*EXTRA FUNCTIONS: libxml_.*|simplexml_.*/
+
 /**
  * Standard code module initialisation function.
  *
@@ -551,7 +553,7 @@ function menu_items_being_saved() : array
  *
  * @param  mixed $xml SimpleXMLElement of the menu items
  * @param  array $ret Processed menu items, passed by reference
- * @param  ID_TEXT $parent_id The ID of the menu which is a parent to this one (null: this is a top-level menu item)
+ * @param  ?ID_TEXT $parent_id The ID of the menu which is a parent to this one (null: this is a top-level menu item)
  * @ignore
  */
 function _menu_items_being_saved($xml, array &$ret, ?string $parent_id = null)

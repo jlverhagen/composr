@@ -1513,7 +1513,7 @@ function put_value_in_stack_trace($value) : string
 /**
  * Return a debugging back-trace of the current execution stack as plain text. Use this for debugging purposes in error logs.
  *
- * @return void
+ * @return string The back-trace
  */
 function get_text_trace() : string
 {
