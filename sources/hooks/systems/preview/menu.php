@@ -71,19 +71,9 @@ class Hook_preview_menu
 
         delete_menu($menu_id);
 
-        $old_ids = [];
-
         // Now, process everything on the root
-        $ids = menu_items_being_saved();
-        $order = 0;
-        foreach (array_keys($ids) as $id) {
-            $parent = $ids[$id];
-
-            if ($parent == '') {
-                save_add_menu_item_from_post($menu_id, $id, $ids, null, $old_ids, $order);
-                $order++;
-            }
-        }
+        $menu_items = menu_items_being_saved();
+        save_menu_items_from_editor($menu_id, $menu_items);
 
         $output = new Tempcode();
         foreach ($menu_types as $menu_type) {

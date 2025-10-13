@@ -523,95 +523,225 @@ function _copy_from_sitemap_to_new_menu(string $target_menu, array $node, int &$
  */
 function menu_items_being_saved() : array
 {
-    // Find what we have on the menu first
-    $ids = [];
-    foreach ($_POST as $key => $val) {
-        if (is_string($val)) {
-            if ((is_string($key)) && (substr($key, 0, 7) == 'parent_')) {
-                $ids[intval(substr($key, 7))] = $val;
-            }
-        }
+    $xml = post_param_string('xml');
+
+    // Set error handling to throw exceptions (we need to be strict because any attempts to auto-recover the XML may result in loss of menu items)
+    $previous = libxml_use_internal_errors(true);
+
+    $parsed = simplexml_load_string($xml, null, LIBXML_HTML_NOIMPLIED | LIBXML_PEDANTIC);
+
+    // Check for errors
+    $errors = libxml_get_errors();
+    libxml_clear_errors();
+    libxml_use_internal_errors($previous);
+
+    if ($errors || !$parsed) {
+        $error = ((count($errors) > 0) ? $errors[0]->message : 'Invalid XML structure');
+        warn_exit('XML Parse Error: ' . $error); // TODO: lang string
     }
-    return $ids;
+
+    $ret = [];
+    _menu_items_being_saved($parsed, $ret);
+
+    return $ret;
 }
 
 /**
- * Add a menu item from details in POST.
+ * Process and validate a menu branch.
+ *
+ * @param  mixed $xml SimpleXMLElement of the menu items
+ * @param  array $ret Processed menu items, passed by reference
+ * @param  ID_TEXT $parent_id The ID of the menu which is a parent to this one (null: this is a top-level menu item)
+ * @ignore
+ */
+function _menu_items_being_saved($xml, array &$ret, ?string $parent_id = null)
+{
+    if (!isset($xml->menubranch)) {
+        return;
+    }
+
+    static $ids_checked = [];
+
+    require_code('urls');
+    require_code('urls2');
+
+    foreach ($xml->menubranch as $child) {
+        $obj = [
+            'id' => (string)$child['id'],
+            'new_window' => (int)$child['new_window'],
+            'check_permissions' => (int)$child['check_permissions'],
+            'include_sitemap' => (int)$child['include_sitemap'],
+            'expanded' => (int)$child['expanded'],
+            'caption' => (string)$child['caption'],
+            'caption_long' => (string)$child['caption_long'],
+            'url' => (string)$child['url'],
+            'theme_image' => (string)$child['theme_image'],
+            'page_only' => (string)$child['page_only'],
+        ];
+
+        // Validation (strict)...
+
+        // IDs (actually let's not error on invalid IDs because there are easy ways for someone to trigger them; just create a new menu / ID as this won't do anything destructive)
+        if ($obj['id'] == '') {
+            $obj['id'] = uniqid('NEW_', true);
+        } elseif (!is_numeric($obj['id'])) {
+            $obj['id'] = uniqid('NEW_', true);
+        } elseif (in_array($obj['id'], $ids_checked)) {
+            $obj['id'] = uniqid('NEW_', true);
+        }
+        $ids_checked[] = $obj['id'];
+
+        // New window
+        if (($obj['new_window'] !== 0) && ($obj['new_window'] !== 1)) {
+            warn_exit('Invalid XML on menu ID ' . strval($obj['id']) . '; new_window must be 0 or 1. Omit for the default (0).');
+            return;
+        }
+
+        // Check permissions
+        if (($obj['check_permissions'] !== 0) && ($obj['check_permissions'] !== 1)) {
+            warn_exit('Invalid XML on menu ID ' . strval($obj['id']) . '; check_permissions must be 0 or 1. Omit for the default (0).');
+            return;
+        }
+
+        // Expanded
+        if (($obj['expanded'] !== 0) && ($obj['expanded'] !== 1)) {
+            warn_exit('Invalid XML on menu ID ' . strval($obj['id']) . '; expanded must be 0 or 1. Omit for the default (0).');
+            return;
+        }
+
+        // Validation (lenient)...
+
+        // Give a warning on empty captions
+        if (trim($obj['caption']) == '') {
+            attach_message('Item ' . strval($obj['id']) . ' is missing a caption; it might not show up on the menu without one.', 'notice'); // TODO: lang string
+        }
+
+        // Give a warning on broken URLs
+        if (trim($obj['url']) != '') {
+            $obj['url'] = filter_naughty($obj['url']);
+
+            /*
+            $url = page_link_to_url($obj['url'], true);
+            $ok = check_url_exists($url, 60 * 60 * 24 * 7);
+            if (!$ok) {
+                attach_message('Double-check the URL for item ' . strval($obj['id']) . ' as it may be broken (or it is not accessible by guests).', 'notice'); // TODO: lang string
+            }
+            */
+        }
+
+        // Give a warning on invalid theme image codes
+        if (trim($obj['theme_image']) != '') {
+            $url = find_theme_image($obj['theme_image'], true);
+            if ($url == '') {
+                attach_message(do_lang_tempcode('NO_SUCH_THEME_IMAGE', escape_html($obj['theme_image'])), 'warn');
+            }
+        }
+
+        $ret[] = $obj + ['parent_id' => $parent_id];
+
+        _menu_items_being_saved($child, $ret, $obj['id']);
+    }
+}
+
+/**
+ * Save a menu from details parsed from the menu editor.
  *
  * @param  ID_TEXT $menu_id The name of the menu the item is on
- * @param  integer $id The ID of the menu item (i.e. what it is referenced as in POST)
- * @param  array $ids The map of IDs on the menu (ID=>parent)
- * @param  ?integer $parent The ID of the parent branch (null: no parent)
- * @param  array $old_menu_bits The map of menu id=>string content language string IDs employed by items before the edit
- * @param  integer $order The order this branch has in the editor (and due to linearly moving through, the number of branches shown assembled ready)
+ * @param  array $menu_items Menu items to save, processed from menu_items_being_saved
  */
-function save_add_menu_item_from_post(string $menu_id, int $id, array &$ids, ?int $parent, array &$old_menu_bits, int &$order)
+function save_menu_items_from_editor(string $menu_id, array $menu_items)
 {
-    // Load in details of menu item
-    $caption = post_param_string('caption_' . strval($id), '');
-    $caption_long = post_param_string('caption_long_' . strval($id), '');
-    $page_only = post_param_string('page_only_' . strval($id), '');
-    $theme_img_code = post_param_string('theme_img_code_' . strval($id), '');
-    $check_permissions = post_param_integer('check_perms_' . strval($id), 0);
-    $branch_type = post_param_string('branch_type_' . strval($id), 'branch_plus');
-    if ($branch_type == 'branch_plus') {
-        $expanded = 1;
-    } else {
-        $expanded = 0;
-    }
-    $new_window = post_param_integer('new_window_' . strval($id), 0);
-    $include_sitemap = post_param_integer('include_sitemap_' . strval($id), 0);
+    require_code('urls');
 
-    $url = post_param_string('url_' . strval($id), '', INPUT_FILTER_URL_GENERAL);
+    // Round 1: maintenance
+    foreach ($menu_items as $order => &$menu_item) {
+        // See if we can tidy a URL back to a page-link
+        if (isset($menu_item['url'])) {
+            if (preg_match('#^[' . URL_CONTENT_REGEXP . ']+$#', $menu_item['url']) != 0) {
+                $menu_item['url'] = ':' . $menu_item['url']; // So users do not have to think about zones
+            }
+            $page_link = url_to_page_link($menu_item['url'], true);
+            if ($page_link != '') {
+                $menu_item['url'] = $page_link;
+            } elseif (strpos($menu_item['url'], ':') === false) {
+                $menu_item['url'] = fixup_protocolless_urls($menu_item['url']);
+            }
+        }
 
-    // See if we can tidy it back to a page-link
-    if (preg_match('#^[' . URL_CONTENT_REGEXP . ']+$#', $url) != 0) {
-        $url = ':' . $url; // So users do not have to think about zones
-    }
-    $page_link = url_to_page_link($url, true);
-    if ($page_link != '') {
-        $url = $page_link;
-    } elseif (strpos($url, ':') === false) {
-        $url = fixup_protocolless_urls($url);
-    }
-
-    $menu_save_map = [
-        'i_menu' => $menu_id,
-        'i_order' => $order,
-        'i_parent_id' => $parent,
-        'i_link' => $url,
-        'i_check_permissions' => $check_permissions,
-        'i_expanded' => $expanded,
-        'i_new_window' => $new_window,
-        'i_include_sitemap' => $include_sitemap,
-        'i_page_only' => $page_only,
-        'i_theme_img_code' => $theme_img_code,
-    ];
-
-    // Save
-    if (array_key_exists($id, $old_menu_bits)) {
-        $menu_save_map += lang_remap_comcode('i_caption', $old_menu_bits[$id]['i_caption'], $caption);
-        $menu_save_map += lang_remap_comcode('i_caption_long', $old_menu_bits[$id]['i_caption_long'], $caption_long);
-        $GLOBALS['SITE_DB']->query_update('menu_items', $menu_save_map, ['id' => $id]);
-
-        unset($old_menu_bits[$id]);
-        $insert_id = $id;
-    } else {
-        $menu_save_map += insert_lang_comcode('i_caption', $caption, 1);
-        $menu_save_map += insert_lang_comcode('i_caption_long', $caption_long, 1);
-        $insert_id = $GLOBALS['SITE_DB']->query_insert('menu_items', $menu_save_map, true);
-    }
-
-    // Menu item children
-    $my_kids = [];
-    foreach ($ids as $new_id => $child_parent) {
-        if (strval($id) == $child_parent) {
-            $my_kids[] = $new_id;
+        // Check that the given IDs exist. If not, set them to a new ID so it creates a new menu item.
+        if (strpos($menu_item['id'], 'NEW_') === false) {
+            $test = $GLOBALS['SITE_DB']->query_select_value_if_there('menu_items', 'id', ['id' => intval($menu_item['id'])]);
+            if ($test === null) {
+                $menu_item['id'] = uniqid('NEW_', true);
+            }
         }
     }
 
-    foreach ($my_kids as $new_id) {
-        save_add_menu_item_from_post($menu_id, $new_id, $ids, $insert_id, $old_menu_bits, $order);
-        $order++;
+    // Round 2: save new menu items
+    $new_map = [];
+    $ids_processed = [];
+    foreach ($menu_items as $order => &$menu_item) {
+        if (strpos($menu_item['id'], 'NEW_') === false) {
+            continue;
+        }
+
+        $menu_save_map = [
+            'i_menu' => $menu_id,
+            'i_order' => $order,
+            'i_parent_id' => $menu_item['parent_id'], // This will get re-mapped to the correct ID later if we have a parent of a new item as well
+            'i_link' => $menu_item['url'],
+            'i_check_permissions' => intval($menu_item['check_permissions']),
+            'i_expanded' => intval($menu_item['expanded']),
+            'i_new_window' => intval($menu_item['new_window']),
+            'i_include_sitemap' => intval($menu_item['include_sitemap']),
+            'i_page_only' => $menu_item['page_only'],
+            'i_theme_img_code' => $menu_item['theme_image'],
+        ];
+
+        $menu_save_map += insert_lang_comcode('i_caption', $menu_item['caption'], 1);
+        $menu_save_map += insert_lang_comcode('i_caption_long', $menu_item['caption_long'], 1);
+        $new_map[$menu_item['id']] = $GLOBALS['SITE_DB']->query_insert('menu_items', $menu_save_map, true);
+
+        $ids_processed[] = $new_map[$menu_item['id']];
+    }
+
+    // Round 3: update existing items
+    foreach ($menu_items as $order => &$menu_item) {
+        $id = isset($new_map[$menu_item['id']]) ? $new_map[$menu_item['id']] : intval($menu_item['id']);
+
+        $menu_save_map = [
+            'i_menu' => $menu_id,
+            'i_order' => $order,
+            'i_parent_id' => isset($new_map[$menu_item['parent_id']]) ? $new_map[$menu_item['parent_id']] : $menu_item['parent_id'],
+            'i_link' => $menu_item['url'],
+            'i_check_permissions' => intval($menu_item['check_permissions']),
+            'i_expanded' => intval($menu_item['expanded']),
+            'i_new_window' => intval($menu_item['new_window']),
+            'i_include_sitemap' => intval($menu_item['include_sitemap']),
+            'i_page_only' => $menu_item['page_only'],
+            'i_theme_img_code' => $menu_item['theme_image'],
+        ];
+
+        $old_caption = $GLOBALS['SITE_DB']->query_select_value('menu_items', 'i_caption', ['id' => $id]);
+        $old_caption_long = $GLOBALS['SITE_DB']->query_select_value('menu_items', 'i_caption_long', ['id' => $id]);
+
+        $menu_save_map += lang_remap_comcode('i_caption', $old_caption, $menu_item['caption']);
+        $menu_save_map += lang_remap_comcode('i_caption_long', $old_caption_long, $menu_item['caption_long']);
+        $GLOBALS['SITE_DB']->query_update('menu_items', $menu_save_map, ['id' => $id]);
+
+        $ids_processed[] = $id;
+    }
+
+    // Round 4: delete erased menu items
+    $ids_in_db = $GLOBALS['SITE_DB']->query_select('menu_items', ['DISTINCT id']);
+    foreach ($ids_in_db as $row) {
+        if (!in_array($row['id'], $ids_processed)) {
+            $old_caption = $GLOBALS['SITE_DB']->query_select_value('menu_items', 'i_caption', ['id' => $row['id']]);
+            $old_caption_long = $GLOBALS['SITE_DB']->query_select_value('menu_items', 'i_caption_long', ['id' => $row['id']]);
+
+            $GLOBALS['SITE_DB']->query_delete('menu_items', ['id' => $row['id']]);
+            delete_lang($old_caption);
+            delete_lang($old_caption_long);
+        }
     }
 }
