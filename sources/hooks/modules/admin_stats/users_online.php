@@ -102,6 +102,8 @@ class Hook_admin_stats_users_online extends CMSStatsProvider
             $_data = [];
         }
 
+        ksort($_data, SORT_NUMERIC);
+
         foreach ($_data as $_interval => $value) {
             // Makeshift day pivot
             if (isset($filters[$bucket . '__day_range'])) {
