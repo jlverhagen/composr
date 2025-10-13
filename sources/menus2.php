@@ -564,6 +564,7 @@ function _menu_items_being_saved($xml, array &$ret, ?string $parent_id = null)
 
     require_code('urls');
     require_code('urls2');
+    require_lang('menus');
 
     foreach ($xml->menubranch as $child) {
         $obj = [
@@ -584,19 +585,19 @@ function _menu_items_being_saved($xml, array &$ret, ?string $parent_id = null)
 
         // New window
         if (($obj['new_window'] !== 0) && ($obj['new_window'] !== 1)) {
-            warn_exit('Invalid XML on menu ID ' . strval($obj['id']) . '; new_window must be 0 or 1. Omit for the default (0).');
+            warn_exit(do_lang_tempcode('MENU_EDITOR_INVALID_XML__0_OR_1', escape_html('new_window')));
             return;
         }
 
         // Check permissions
         if (($obj['check_permissions'] !== 0) && ($obj['check_permissions'] !== 1)) {
-            warn_exit('Invalid XML on menu ID ' . strval($obj['id']) . '; check_permissions must be 0 or 1. Omit for the default (0).');
+            warn_exit(do_lang_tempcode('MENU_EDITOR_INVALID_XML__0_OR_1', escape_html('new_window')));
             return;
         }
 
         // Expanded
         if (($obj['expanded'] !== 0) && ($obj['expanded'] !== 1)) {
-            warn_exit('Invalid XML on menu ID ' . strval($obj['id']) . '; expanded must be 0 or 1. Omit for the default (0).');
+            warn_exit(do_lang_tempcode('MENU_EDITOR_INVALID_XML__0_OR_1', escape_html('new_window')));
             return;
         }
 
@@ -604,7 +605,7 @@ function _menu_items_being_saved($xml, array &$ret, ?string $parent_id = null)
 
         // Give a warning on empty captions
         if (trim($obj['caption']) == '') {
-            attach_message('Item ' . strval($obj['id']) . ' is missing a caption; it might not show up on the menu without one.', 'notice'); // TODO: lang string
+            attach_message(do_lang_tempcode('MENU_EDITOR_MISSING_CAPTION'), 'notice');
         }
 
         // Give a warning on broken URLs
@@ -615,7 +616,7 @@ function _menu_items_being_saved($xml, array &$ret, ?string $parent_id = null)
             $url = page_link_to_url($obj['url'], true);
             $ok = check_url_exists($url, 60 * 60 * 24 * 7);
             if (!$ok) {
-                attach_message('Double-check the URL for item ' . strval($obj['id']) . ' as it may be broken (or it is not accessible by guests).', 'notice'); // TODO: lang string
+                attach_message('Double-check the URL for item ' . strval($obj['id']) . ' as it may be broken (or it is not accessible by guests).', 'notice');
             }
             */
         }

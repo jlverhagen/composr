@@ -74,7 +74,7 @@
 							</tbody>
 						</table>
 						<p class="proceed-button">
-							<button type="button" class="btn btn-primary js-click-insert-xml-branch">Insert/update line</button>
+							<button type="button" class="btn btn-primary js-click-insert-xml-branch">{+START,INCLUDE,ICON}NAME=buttons/proceed2{+END}{!UPDATE}</button>
 						</p>
 					</div>
 				</div>
