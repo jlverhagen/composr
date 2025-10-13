@@ -562,14 +562,12 @@ function _menu_items_being_saved($xml, array &$ret, ?string $parent_id = null)
         return;
     }
 
-    static $ids_checked = [];
-
     require_code('urls');
     require_code('urls2');
 
     foreach ($xml->menubranch as $child) {
         $obj = [
-            'id' => (string)$child['id'],
+            'id' => uniqid('NEW_', true), // We are deleting and re-creating everything
             'new_window' => (int)$child['new_window'],
             'check_permissions' => (int)$child['check_permissions'],
             'include_sitemap' => (int)$child['include_sitemap'],
@@ -579,19 +577,10 @@ function _menu_items_being_saved($xml, array &$ret, ?string $parent_id = null)
             'url' => (string)$child['url'],
             'theme_image' => (string)$child['theme_image'],
             'page_only' => (string)$child['page_only'],
+            'parent_id' => $parent_id,
         ];
 
         // Validation (strict)...
-
-        // IDs (actually let's not error on invalid IDs because there are easy ways for someone to trigger them; just create a new menu / ID as this won't do anything destructive)
-        if ($obj['id'] == '') {
-            $obj['id'] = uniqid('NEW_', true);
-        } elseif (!is_numeric($obj['id'])) {
-            $obj['id'] = uniqid('NEW_', true);
-        } elseif (in_array($obj['id'], $ids_checked)) {
-            $obj['id'] = uniqid('NEW_', true);
-        }
-        $ids_checked[] = $obj['id'];
 
         // New window
         if (($obj['new_window'] !== 0) && ($obj['new_window'] !== 1)) {
@@ -639,9 +628,11 @@ function _menu_items_being_saved($xml, array &$ret, ?string $parent_id = null)
             }
         }
 
-        $ret[] = $obj + ['parent_id' => $parent_id];
+        $ret[] = $obj;
 
-        _menu_items_being_saved($child, $ret, $obj['id']);
+        if ($child->count() > 0) {
+            _menu_items_being_saved($child, $ret, $obj['id']);
+        }
     }
 }
 
@@ -655,7 +646,18 @@ function save_menu_items_from_editor(string $menu_id, array $menu_items)
 {
     require_code('urls');
 
-    // Round 1: maintenance
+    // Round 1: delete all menu items
+    $ids_in_db = $GLOBALS['SITE_DB']->query_select('menu_items', ['DISTINCT id']);
+    foreach ($ids_in_db as $row) {
+        $old_caption = $GLOBALS['SITE_DB']->query_select_value('menu_items', 'i_caption', ['id' => $row['id']]);
+        $old_caption_long = $GLOBALS['SITE_DB']->query_select_value('menu_items', 'i_caption_long', ['id' => $row['id']]);
+
+        $GLOBALS['SITE_DB']->query_delete('menu_items', ['id' => $row['id']]);
+        delete_lang($old_caption);
+        delete_lang($old_caption_long);
+    }
+
+    // Round 2: maintenance
     foreach ($menu_items as $order => &$menu_item) {
         // See if we can tidy a URL back to a page-link
         if (isset($menu_item['url'])) {
@@ -669,28 +671,17 @@ function save_menu_items_from_editor(string $menu_id, array $menu_items)
                 $menu_item['url'] = fixup_protocolless_urls($menu_item['url']);
             }
         }
-
-        // Check that the given IDs exist. If not, set them to a new ID so it creates a new menu item.
-        if (strpos($menu_item['id'], 'NEW_') === false) {
-            $test = $GLOBALS['SITE_DB']->query_select_value_if_there('menu_items', 'id', ['id' => intval($menu_item['id'])]);
-            if ($test === null) {
-                $menu_item['id'] = uniqid('NEW_', true);
-            }
-        }
     }
 
-    // Round 2: save new menu items
-    $new_map = [];
-    $ids_processed = [];
-    foreach ($menu_items as $order => &$menu_item) {
-        if (strpos($menu_item['id'], 'NEW_') === false) {
-            continue;
-        }
+    unset($menu_item);
 
+    // Round 3: save new menu items
+    $new_map = [];
+    foreach ($menu_items as $order => $menu_item) {
         $menu_save_map = [
             'i_menu' => $menu_id,
             'i_order' => $order,
-            'i_parent_id' => $menu_item['parent_id'], // This will get re-mapped to the correct ID later if we have a parent of a new item as well
+            'i_parent_id' => isset($new_map[$menu_item['parent_id']]) ? $new_map[$menu_item['parent_id']] : null,
             'i_link' => $menu_item['url'],
             'i_check_permissions' => intval($menu_item['check_permissions']),
             'i_expanded' => intval($menu_item['expanded']),
@@ -703,47 +694,5 @@ function save_menu_items_from_editor(string $menu_id, array $menu_items)
         $menu_save_map += insert_lang_comcode('i_caption', $menu_item['caption'], 1);
         $menu_save_map += insert_lang_comcode('i_caption_long', $menu_item['caption_long'], 1);
         $new_map[$menu_item['id']] = $GLOBALS['SITE_DB']->query_insert('menu_items', $menu_save_map, true);
-
-        $ids_processed[] = $new_map[$menu_item['id']];
-    }
-
-    // Round 3: update existing items
-    foreach ($menu_items as $order => &$menu_item) {
-        $id = isset($new_map[$menu_item['id']]) ? $new_map[$menu_item['id']] : intval($menu_item['id']);
-
-        $menu_save_map = [
-            'i_menu' => $menu_id,
-            'i_order' => $order,
-            'i_parent_id' => isset($new_map[$menu_item['parent_id']]) ? $new_map[$menu_item['parent_id']] : $menu_item['parent_id'],
-            'i_link' => $menu_item['url'],
-            'i_check_permissions' => intval($menu_item['check_permissions']),
-            'i_expanded' => intval($menu_item['expanded']),
-            'i_new_window' => intval($menu_item['new_window']),
-            'i_include_sitemap' => intval($menu_item['include_sitemap']),
-            'i_page_only' => $menu_item['page_only'],
-            'i_theme_img_code' => $menu_item['theme_image'],
-        ];
-
-        $old_caption = $GLOBALS['SITE_DB']->query_select_value('menu_items', 'i_caption', ['id' => $id]);
-        $old_caption_long = $GLOBALS['SITE_DB']->query_select_value('menu_items', 'i_caption_long', ['id' => $id]);
-
-        $menu_save_map += lang_remap_comcode('i_caption', $old_caption, $menu_item['caption']);
-        $menu_save_map += lang_remap_comcode('i_caption_long', $old_caption_long, $menu_item['caption_long']);
-        $GLOBALS['SITE_DB']->query_update('menu_items', $menu_save_map, ['id' => $id]);
-
-        $ids_processed[] = $id;
-    }
-
-    // Round 4: delete erased menu items
-    $ids_in_db = $GLOBALS['SITE_DB']->query_select('menu_items', ['DISTINCT id']);
-    foreach ($ids_in_db as $row) {
-        if (!in_array($row['id'], $ids_processed)) {
-            $old_caption = $GLOBALS['SITE_DB']->query_select_value('menu_items', 'i_caption', ['id' => $row['id']]);
-            $old_caption_long = $GLOBALS['SITE_DB']->query_select_value('menu_items', 'i_caption_long', ['id' => $row['id']]);
-
-            $GLOBALS['SITE_DB']->query_delete('menu_items', ['id' => $row['id']]);
-            delete_lang($old_caption);
-            delete_lang($old_caption_long);
-        }
     }
 }
