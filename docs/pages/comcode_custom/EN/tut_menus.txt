@@ -8,7 +8,7 @@
 
 When you install Composr there is a menu already there in the header (or in the side, depending on theme preferences). This menu is automatically generated from the Sitemap (i.e. on-the-fly using an algorithm) and not directly editable in any way. It is quite nice in that any content categories you add will automatically show in the navigation.
 
-If you try and edit the default menu then Composr will offer to copy everything through to an editable menu, which you may then fully customise. Composr will never add anything to your editable menu for you as it can't deduce your intention for your site's navigation. There are, however, features to help you locate page-links to add, and also to auto-include subtrees of the Sitemap into your menu (see "Menu auto-generation / chaining").
+If you try and edit the default menu then Composr will offer to copy everything through to an editable menu, which you may then fully customise. Composr will never add anything to your editable menu from that point on as it can't deduce your intention for your site's navigation. There are, however, features to help you locate page-links to add, and also to auto-include subtrees of the Sitemap into your menu (see "Menu auto-generation / chaining").
 
 If you want to revert back to the default menu then you need to change the "Header-menu call string" configuration option (Admin Zone > Setup > Configuration > Theme options > Header blocks) back to the default. The default will be shown if you click to view the description for that configuration option. Copy and paste it exactly.
 
@@ -58,24 +58,78 @@ Admin Zone > Structure > Menu management
 
 [title="2"]The menu editor[/title]
 
-[media width="150" description="The menu editor" float="right"]data_custom/images/docs/tut_menus/menus_editor.png[/media]
+[media width="150" description="The menu editor" float="right"]data_custom/images/docs/tut_menus/menus_editor.jpg[/media]
 The menu editing screen is split into three main sections:
-1) the actual menu tree structure
-2) a form for editing a branch in the tree structure (invisible, until one of the branches is selected)
+1) the XML document for editing the menu tree structure
+2) a graphical form for editing a branch in the XML tree structure (invisible, until you place your text cursor on a branch item or a blank line)
 3) a Sitemap tool to find 'entry points' for insertion into the selected branch's URL field
 
-Menus are a tree structure made up of branches, where each branch may be a simple link and/or be a container for more child branches. For a branch with children that branch can be set to be initially expanded or contracted. Note that the expand/contract setting may not do anything; some menu types don't use it, and if you enter a Link then it probably would be displayed auto-expanded anyway (due to clickability on the parent being used to open that link, not expand).
+Menus are a tree structure made up of branches, where each branch may be a simple link and/or a container for more child branches. For a branch with children, that branch can be set to be initially expanded or contracted. Note that the expand/contract setting may not do anything; some menu types don't use it, and if you enter a Link then it probably would be displayed auto-expanded anyway (due to clickability on the parent being used to open that link, not expand).
 
-The 'add branch' tool, used in conjunction with the branch-type drop-down list (shown for each branch) allows the full structure to be developed. When you change a branch so it can have children (contracted or expanded branch), you will see that suddenly you may create sub-branches for it.
+The XML document contains the following tags:
+[list]
+[*][tt]menu[/tt]
+This is just the container for all your menu branches.
+[*][tt]menubranch[/tt]
+Every menu item is a [tt]menubranch[/tt]. And tags can have child tags to indicate child branches of that menu branch. See the example further down for more explanation. 
+[/list]
 
-In the form part of the screen there are the following fields:
- - a field for a caption
- - a field for a tooltip
- - a field for a URL or entry-point
- - a field for match-keys -- match-keys are a powerful tool for making menus 'context sensitive'.
- - a check-box to determine if the link opens in a new window
- - a check-box to determine whether the link will be shown only if there is permission to actually view the page (slight efficiency hit, and can't check permissions deeper than the page level)
- - options to automatically include Sitemap children (useful if you want to have deep menus that automatically expand as you add new content categories)
+The [tt]menubranch[/tt] tag contains the following attributes (all strings):
+[list]
+[*][tt]id[/tt]
+Don't worry about this; Composr auto-sets the ID for saving into the database. Changing this, having duplicates, or even omitting it will have no effect on your menus.
+[*][tt]caption[/tt]
+This is the text that will appear on the menu item.
+[*][tt]caption_long[/tt]
+This is an optional tooltip that will appear when hovering over the menu item. Omit or leave blank for no tooltip.
+[*][tt]url[/tt]
+This can either be a standard URL or a page-link to the page a user will be taken when clicking on the menu. Leave blank for no URL; typically you would do this on the parent branch of child branches.
+[*][tt]page_only[/tt]
+This is the "Restrict link visibility" field under "Advanced" in the "Edit selected field" GUI. You can define a comma-separated list of match-keys that define on what pages this menu item becomes visible.
+[*][tt]theme_image[/tt]
+This is the theme image code of the icon that will be displayed on the menu item. You can select one in the "Edit selected field" section under "Advanced".
+[*][tt]new_window[/tt]
+Set to "1" to open the [tt]url[/tt] in a new window, otherwise it will open in the same window. Generally, you should have this on "0" for links to pages on your site, and "1" for external sites.
+[*][tt]check_permissions[/tt]
+If "1", then the menu item will only be shown if the user has permission to view the page indicated in [tt]url[/tt] (it will always show for external URLs).
+[*][tt]include_sitemap[/tt]
+ - "0" sets it to "(Do not include)", meaning the children of this branch will be exactly as you define them in the XML.
+ - "1" sets it to "Replace this branch with the child branches of the given page-link", meaning the entire menu branch and its children will be replaced with the parent/children of the given [tt]url[/tt] according to the sitemap.
+ - "2" sets it to "Include the children of the given page-link as automatic children of this branch", meaning the branch itself will be preserved, but all its children will be replaced with the children of the given [tt]url[/tt] according to the sitemap.
+[*][tt]expanded[/tt]
+Set to "1" for an expanded branch, otherwise it will be a contracted branch.
+[/list]
+
+Here is an example of a simple XML menu structure to demonstrate hierarchy and order:
+[code="XML"]
+<menu>
+	<menubranch caption="Home" caption_long="" url=":" page_only="" theme_image="icons/menu/home" new_window="0" check_permissions="0" include_sitemap="0" expanded="0">
+	</menubranch>
+	<menubranch caption="Parent A" caption_long="" url=":parenta" page_only="" theme_image="icons/menu/home" new_window="0" check_permissions="0" include_sitemap="0" expanded="0">
+		<menubranch caption="Child A" caption_long="" url=":childa" page_only="" theme_image="icons/menu/home" new_window="0" check_permissions="0" include_sitemap="0" expanded="0">
+		</menubranch>
+		<menubranch caption="Child B" caption_long="" url=":childb" page_only="" theme_image="icons/menu/home" new_window="0" check_permissions="0" include_sitemap="0" expanded="0">
+			<menubranch caption="Sub-Child A" caption_long="" url=":subchilda" page_only="" theme_image="icons/menu/home" new_window="0" check_permissions="0" include_sitemap="0" expanded="0">
+			</menubranch>
+		</menubranch>
+	</menubranch>
+	<menubranch caption="Parent B" caption_long="" url=":parenta" page_only="" theme_image="icons/menu/home" new_window="0" check_permissions="0" include_sitemap="0" expanded="0">
+		<menubranch caption="Child C" caption_long="" url=":childa" page_only="" theme_image="icons/menu/home" new_window="0" check_permissions="0" include_sitemap="0" expanded="0">
+		</menubranch>
+	</menubranch>
+</menu>
+[/code]
+
+This will create a menu with the following structure:
+ - Home
+ - Parent A
+  - Child A
+  - Child B
+   - Sub-Child A
+ - Parent B
+  - Child C
+
+You should take great care when copy/pasting menu branches in the XML document to ensure you preserve your structure (or modify it correctly if you are modifying the structure). When in doubt, click the "Preview" button before saving your changes. And [b]always[/b] back-up your XML before saving in case of errors (the XML does not get preserved if an error occurs, such as invalid syntax).
 
 You can also delete the menu from a button at the bottom.
 
@@ -263,16 +317,17 @@ There are advantages and disadvantages for both types of menu inside a panel pag
 Comcode menus:
 [tt]+[/tt]	Quick to edit for those who prefer to do things in a quick but technical way
 [tt]+[/tt]	Unifies the panel pages and menus under a single editing interface
-[tt]-[/tt]	Complex syntax
+[tt]+[/tt]	Supports source-control (e.g. Git) because Comcode pages are txt files
+[tt]-[/tt]	Does not offer the same level of customisation as the menu editor
 [/surround]
 
 [surround]
 [media thumb="0" framed="0" float="right" width="60"]data_custom/images/docs/advantage.png[/media]
 Editable menus:
-[tt]+[/tt]	User friendly
 [tt]+[/tt]	Provides menus with greater power (context dependant menus)
 [tt]+[/tt]	Provides an interface to find all 'entry points' and easily add them to the menu
-[tt]-[/tt]	Not as quick to edit, and does not support merging across source control (e.g. Git)
+[tt]-[/tt]	More complex and uses XML
+[tt]-[/tt]	Does not support source-control (e.g. Git) because the XML is not actually saved as a file; it is processed into the database
 [/surround]
 
 Most users would choose editable menus and use Comcode menus just for a default / testing.

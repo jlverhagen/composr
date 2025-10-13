@@ -87,6 +87,9 @@ class Module_admin_menus
         if ($type == 'edit') {
             breadcrumb_set_parents([['_SELF:_SELF:browse', do_lang_tempcode('MENU_MANAGEMENT')]]);
 
+            set_helper_panel_tutorial('tut_menus');
+            set_helper_panel_text(comcode_lang_string('DOC_MENU_MANAGEMENT'));
+
             $id = get_param_string('id', get_param_string('id_new', ''));
             if ($id == '') {
                 $this->title = get_screen_title('EDIT_MENU');

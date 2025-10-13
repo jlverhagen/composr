@@ -235,7 +235,7 @@ Your choice of image file formats:
 [title="2"]Editing menus[/title]
 
 [surround]
-[media width="150" description="The menu editor" float="right"]data_custom/images/docs/tut_configuration/menu_editor.png[/media]
+[media width="150" description="The menu editor" float="right"]data_custom/images/docs/tut_configuration/menu_editor.jpg[/media]
 [media width="150" description="The default menu" float="right"]data_custom/images/docs/tut_configuration/menu_edit_link.png[/media]
 You may wish to remove some of the links from the default menus on your installation. To do this, log in as an administrator and click the 'Edit menu' link.
 
