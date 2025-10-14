@@ -221,11 +221,7 @@ $g_logo_url = './';
 $g_summary_category_include_project = ON;
 $g_html_make_links = LINKS_NEW_WINDOW | LINKS_NOOPENER | LINKS_NOREFERRER; // Prevent SEO benefit on spam links
 $g_issue_activity_note_attachments_seconds_threshold = 180; // Might be using the submit bugfix tool in Composr
-
-if ($SITE_INFO['base_url'] == 'https://composr.app') { // FUDGE: force session saving to a directory; hopefully this resolves token issues
-    $g_session_save_path = dirname($_SERVER['DOCUMENT_ROOT']) . '/mantis_sessions';
-    ini_set('session.gc_probability', 1);
-}
+$g_form_security_validation = OFF; // TODO: re-enable when we resolve the "invalid token" issue; high priority
 
 // Debugging
 //$g_show_detailed_errors = ON;
