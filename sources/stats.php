@@ -231,7 +231,7 @@ function stats_generate_graph(string $graph_name, array $filters = [], $pivot = 
     $y_axis_label = $graph_final_details['y_axis_label'];
 
     if ($graph_final_details['type'] === null) {
-        if (strpos($pivot, '_of_') !== false) {
+        if (($pivot === null) || (strpos($pivot, '_of_') !== false)) {
             $graph_final_details['type'] = CMSStatsProvider::GRAPH_BAR_CHART;
         } else {
             $graph_final_details['type'] = CMSStatsProvider::GRAPH_LINE_CHART;
