@@ -99,6 +99,7 @@ class Hook_content_meta_aware_topic extends Hook_CMA
             'validation_is_minor' => true,
             'validation_time_field' => 't_validation_time',
             'additional_sort_fields' => null,
+            'additional_antispam_fields' => [],
 
             'seo_type_code' => 'topic',
 

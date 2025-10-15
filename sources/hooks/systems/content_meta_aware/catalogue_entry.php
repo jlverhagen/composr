@@ -89,6 +89,7 @@ class Hook_content_meta_aware_catalogue_entry extends Hook_CMA
             'validated_field' => 'ce_validated',
             'validation_time_field' => 'ce_validation_time',
             'additional_sort_fields' => null,
+            'additional_antispam_fields' => ['CALL: generate_catalogue_entry_antispam_fields'],
 
             'seo_type_code' => 'catalogue_entry',
 
@@ -367,4 +368,58 @@ function generate_catalogue_entry_content_type_universal_label(array $row) : str
 
     $catalogue = load_catalogue_row($row['c_name']);
     return get_translated_text($catalogue['c_title']) . ' entry';
+}
+
+/**
+ * Find content on which to train / predict antispam from a given catalogue entry.
+ *
+ * @param  array $row Database row of entry
+ * @return array Array of content to be trained
+ */
+function generate_catalogue_entry_antispam_fields(array $row) : array
+{
+    if (!addon_installed('catalogues')) {
+        return [];
+    }
+
+    if (!array_key_exists('c_name', $row)) {
+        return [];
+    }
+
+    require_code('catalogues');
+
+    $catalogue_name = $row['c_name'];
+    $wanted_fields = [];
+
+    global $CAT_FIELDS_CACHE;
+    if (array_key_exists($catalogue_name, $CAT_FIELDS_CACHE)) {
+        $fields = $CAT_FIELDS_CACHE[$catalogue_name];
+    } else {
+        $fields = $GLOBALS['SITE_DB']->query_select('catalogue_fields', ['*'], ['c_name' => $catalogue_name], 'ORDER BY cf_order,' . $GLOBALS['SITE_DB']->translate_field_ref('cf_name'));
+        $CAT_FIELDS_CACHE[$catalogue_name] = $fields;
+    }
+    foreach ($fields as $i => $f) {
+        if (in_array($f['cf_type'], ['list', 'list_multi', 'long_text', 'long_trans', 'posting_field', 'short_text', 'short_text_multi', 'short_trans', 'short_trans_multi'])) {
+            $wanted_fields[] = $i;
+        }
+    }
+
+    if (count($wanted_fields) == 0) {
+        return [];
+    }
+
+    require_code('comcode');
+
+    $field_values = get_catalogue_entry_field_values($catalogue_name, $row['id'], $wanted_fields, $fields);
+    $ret = [];
+    foreach ($field_values as $i => $f) {
+        if ($f['effective_value_pure'] === null) {
+            continue;
+        }
+
+        $comcode = html_to_comcode($f['effective_value_pure']);
+        $plain_text = strip_comcode($comcode);
+        $ret[] = $plain_text;
+    }
+    return $ret;
 }

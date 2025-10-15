@@ -93,6 +93,7 @@ class Hook_content_meta_aware_post extends Hook_CMA
             'validation_is_minor' => true,
             'validation_time_field' => null, // Posts are too time-sensitive and chronological
             'additional_sort_fields' => null,
+            'additional_antispam_fields' => [],
 
             'seo_type_code' => null,
 

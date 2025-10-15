@@ -15,7 +15,7 @@
 /**
  * @license    http://opensource.org/licenses/cpal_1.0 Common Public Attribution License
  * @copyright  Christopher Graham
- * @package    search
+ * @package    core
  */
 
 /**
@@ -36,10 +36,12 @@
  *
  * Vietnamese has spaces but they dilineate syllables, not words.
  *
- * @package search
+ * @package core
  */
 class LangTokeniser_EN
 {
+    public static $stop_words = ['the' => 1, 'a' => 1, 'an' => 1, 'and' => 1, 'or' => 1, 'but' => 1, 'if' => 1, 'in' => 1, 'on' => 1, 'at' => 1, 'to' => 1, 'for' => 1, 'of' => 1, 'with' => 1, 'as' => 1, 'by' => 1, 'is' => 1, 'are' => 1, 'was' => 1, 'were' => 1, 'be' => 1, 'been' => 1, 'am' => 1, 'i' => 1, 'you' => 1, 'he' => 1, 'she' => 1, 'it' => 1, 'we' => 1, 'they' => 1, 'this' => 1, 'that' => 1, 'these' => 1, 'those' => 1, 'do' => 1, 'did' => 1, 'does' => 1, 'not' => 1, 'no' => 1, 'yes' => 1, 'from' => 1, 'your' => 1, 'my' => 1, 'our' => 1, 'their' => 1];
+
     /* Querying */
 
     /**
@@ -216,6 +218,68 @@ class LangTokeniser_EN
     }
 
     /**
+     * Convert tokeniser n-grams to weighted counts.
+     * This keeps tokeniser TF, stems unigrams, downweights non-unigrams, and drops stop words in unigrams.
+     *
+     * @param  array $ngrams_map Tokeniser output: n-gram => is_singular_ngram (bool)
+     * @return array Map of ngrams to their weight as a float
+     */
+    public function weight_ngrams(array $ngrams_map) : array
+    {
+        require_code('lang_stemmer_EN');
+        $stemmer = object_factory('Stemmer_EN', false, [], true);
+
+        $tokens = [];
+
+        foreach ($ngrams_map as $_ngram => $is_unigram) {
+            $ngram = strval($_ngram);
+
+            $count = 1.0;
+
+            if ($is_unigram) { // Stem unigrams
+                if (isset(self::$stop_words[$ngram])) {
+                    continue;
+                }
+
+                // Consider non-stemmed ngram first, but with less weight
+                if (!isset($tokens[$ngram])) {
+                    $tokens[$ngram] = 0.0;
+                }
+                $tokens[$ngram] += ($count * 0.75);
+
+                $ngram_lc = $ngram;
+                $stemmed = $stemmer::stem($ngram_lc);
+
+                // Consider stemmed ngram but only if it is different from the non-stemmed one
+                if ($stemmed != $ngram) {
+                    if (!isset($tokens[$stemmed])) {
+                        $tokens[$stemmed] = 0.0;
+                    }
+                    $tokens[$stemmed] += $count;
+                }
+            } else { // Down-weight non-unigrams
+                $len = substr_count($ngram, ' ');
+                $weight = (0.67 ** $len);
+                $weighted = max(0.0001, $weight * $count);
+                if (!isset($tokens[$ngram])) {
+                    $tokens[$ngram] = 0.0;
+                }
+                $tokens[$ngram] += $weighted;
+            }
+        }
+
+        // Cap per-token to reduce bursts on repeated words
+        $cap = 5.0;
+        foreach ($tokens as $t => $c) {
+            if ($c > $cap) {
+                $tokens[$t] = $cap;
+            }
+        }
+
+        return $tokens;
+    }
+
+    /**
      * Convert text to phrases (a phrase is a sequence of words that go together, that can be used for ngram sequences).
      *
      * @param  string $text The text
@@ -316,7 +380,7 @@ class LangTokeniser_EN
                 if ($j != 0) {
                     $current_ngram .= ' ';
                 }
-                $current_ngram .= $word;
+                $current_ngram .= strval($word);
 
                 $is_singular_ngram = ($j == 0);
                 $word_ngrams[$current_ngram] = $is_singular_ngram;

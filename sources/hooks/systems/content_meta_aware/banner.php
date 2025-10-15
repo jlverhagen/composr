@@ -93,6 +93,7 @@ class Hook_content_meta_aware_banner extends Hook_CMA
                 'display_likelihood' => null,
                 'expiry_date' => null,
             ],
+            'additional_antispam_fields' => ['title_text', 'direct_code'],
 
             'seo_type_code' => null,
 

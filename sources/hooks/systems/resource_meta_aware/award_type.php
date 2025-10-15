@@ -59,9 +59,9 @@ class Hook_resource_meta_aware_award_type extends Hook_CMA
 
             'title_field' => 'a_title',
             'title_field_dereference' => true,
-            'description_field' => null,
-            'description_field_dereference' => null,
-            'description_field_supports_comcode' => null,
+            'description_field' => 'a_description',
+            'description_field_dereference' => true,
+            'description_field_supports_comcode' => true,
             'image_field' => null,
             'image_field_is_theme_image' => false,
             'alternate_icon_theme_image' => null,
@@ -87,6 +87,7 @@ class Hook_resource_meta_aware_award_type extends Hook_CMA
                 'a_content_type' => null,
                 'a_points' => null,
             ],
+            'additional_antispam_fields' => [],
 
             'seo_type_code' => null,
 

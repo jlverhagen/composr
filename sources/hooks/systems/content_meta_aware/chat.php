@@ -89,6 +89,7 @@ class Hook_content_meta_aware_chat extends Hook_CMA
                     'DESC' => '',
                 ],
             ],
+            'additional_antispam_fields' => [],
 
             'seo_type_code' => null,
 

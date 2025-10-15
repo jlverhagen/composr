@@ -92,6 +92,7 @@ class Hook_content_meta_aware_member extends Hook_CMA
                 'm_last_visit_time' => null,
                 'total_sessions' => 'r.m_total_sessions/(' . strval(time()) . '-r.m_join_time)',
             ],
+            'additional_antispam_fields' => ['CALL: generate_member_custom_fields', 'm_pt_rules_text'],
 
             'seo_type_code' => null,
 
@@ -179,4 +180,35 @@ function generate_member_entry_image_url(array $row) : string
     }
 
     return $GLOBALS['FORUM_DRIVER']->get_member_photo_url($row['id']);
+}
+
+/**
+ * Get content from a member's custom fields for use in antispam training.
+ *
+ * @param  array $row Database row of entry
+ * @return array Data to train
+ */
+function generate_member_custom_fields(array $row) : array
+{
+    require_code('cns_general');
+
+    $ret = [];
+
+    $member_info = cns_read_in_member_profile($row['id'], ['custom_fields', 'signature_comcode'], false);
+
+    if (isset($member_info['signature_comcode'])) {
+        $ret[] = strip_comcode($member_info['signature_comcode']);
+    }
+
+    if (isset($member_info['custom_fields'])) {
+        foreach ($member_info['custom_fields'] as $trans_name => $bindings) {
+            if (($bindings['RAW'] !== null) && in_array($bindings['FIELD_TYPE'], ['list', 'list_multi', 'long_text', 'long_trans', 'posting_field', 'short_text', 'short_text_multi', 'short_trans', 'short_trans_multi'])) {
+                $comcode = html_to_comcode($bindings['RAW']);
+                $plain_text = strip_comcode($comcode);
+                $ret[] = $plain_text;
+            }
+        }
+    }
+
+    return $ret;
 }

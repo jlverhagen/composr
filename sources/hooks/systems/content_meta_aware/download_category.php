@@ -84,6 +84,7 @@ class Hook_content_meta_aware_download_category extends Hook_CMA
             'validated_field' => null,
             'validation_time_field' => null,
             'additional_sort_fields' => null,
+            'additional_antispam_fields' => [],
 
             'seo_type_code' => 'downloads_category',
 

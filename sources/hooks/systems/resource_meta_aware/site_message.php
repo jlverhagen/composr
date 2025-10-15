@@ -88,6 +88,7 @@ class Hook_resource_meta_aware_site_message extends Hook_CMA
                 'm_start_date_time' => null,
                 'm_end_date_time' => null,
             ],
+            'additional_antispam_fields' => [],
 
             'seo_type_code' => null,
 

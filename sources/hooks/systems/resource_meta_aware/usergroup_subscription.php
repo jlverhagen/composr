@@ -59,9 +59,9 @@ class Hook_resource_meta_aware_usergroup_subscription extends Hook_CMA
 
             'title_field' => 's_title',
             'title_field_dereference' => true,
-            'description_field' => null,
-            'description_field_dereference' => null,
-            'description_field_supports_comcode' => null,
+            'description_field' => 's_description',
+            'description_field_dereference' => true,
+            'description_field_supports_comcode' => true,
             'image_field' => null,
             'image_field_is_theme_image' => false,
             'alternate_icon_theme_image' => null,
@@ -89,6 +89,7 @@ class Hook_resource_meta_aware_usergroup_subscription extends Hook_CMA
                 's_group_id' => null,
                 's_enabled' => null,
             ],
+            'additional_antispam_fields' => ['s_mail_start', 's_mail_end', 's_mail_uhoh'],
 
             'seo_type_code' => null,
 

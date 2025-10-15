@@ -87,6 +87,7 @@ class Hook_content_meta_aware_image extends Hook_CMA
             'additional_sort_fields' => [
                 'url' => null,
             ],
+            'additional_antispam_fields' => [],
 
             'seo_type_code' => 'image',
 

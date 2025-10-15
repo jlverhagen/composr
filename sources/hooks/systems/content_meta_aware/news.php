@@ -84,6 +84,7 @@ class Hook_content_meta_aware_news extends Hook_CMA
             'validated_field' => 'validated',
             'validation_time_field' => 'validation_time',
             'additional_sort_fields' => null,
+            'additional_antispam_fields' => ['news_article'],
 
             'seo_type_code' => 'news',
 

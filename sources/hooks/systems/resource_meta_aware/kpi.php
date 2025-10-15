@@ -84,6 +84,7 @@ class Hook_resource_meta_aware_kpi
             'validated_field' => null,
             'validation_time_field' => null,
             'additional_sort_fields' => null,
+            'additional_antispam_fields' => [],
 
             'seo_type_code' => null,
 

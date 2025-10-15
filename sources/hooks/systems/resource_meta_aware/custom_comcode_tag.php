@@ -90,6 +90,7 @@ class Hook_resource_meta_aware_custom_comcode_tag extends Hook_CMA
                 'tag_textual_tag' => null,
                 'tag_enabled' => null,
             ],
+            'additional_antispam_fields' => ['tag_title', 'tag_description', 'tag_replace', 'tag_example', /*'tag_parameters'*/],
 
             'seo_type_code' => null,
 

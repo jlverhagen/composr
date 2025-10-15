@@ -118,4 +118,76 @@ class antispam_test_set extends cms_test_case
     {
         $this->assertTrue(is_string(http_get_contents('https://www.stopforumspam.com/add.php', ['timeout' => 20.0, 'trigger_error' => false])), 'Failed to call the Stop Forum Spam API add endpoint'); // Very rough, at least tells us URL still exists
     }
+
+    public function testBayes()
+    {
+        cms_extend_time_limit(100);
+
+        require_code('bayes');
+        require_code('files_spreadsheets_read');
+
+        $table = uniqid('t_spam_', false);
+
+        $GLOBALS['SITE_DB']->create_table($table, [
+            'id' => '*AUTO',
+            't_id' => 'SHORT_TEXT',
+            't_category' => 'ID_TEXT',
+            't_count' => 'REAL',
+            't_last_date_and_time' => 'TIME',
+        ]);
+        $GLOBALS['SITE_DB']->create_index($table, 'tid', ['t_id']);
+
+        $model = new CMS_Bayes_classifier($GLOBALS['SITE_DB'], $table, 'EN', 0.2);
+
+        // Train our data, but only the first 1000 lines as it takes a while to train
+        $sheet_reader = spreadsheet_open_read(get_file_base() . '/_tests/assets/spreadsheets/spam.csv');
+        $i = 0;
+        do {
+            $line = $sheet_reader->read_row();
+            if ($line === false) {
+                break;
+            }
+
+            $model->train($line['v2'], [$line['v1']]);
+            $i++;
+        } while (($line !== false) && ($i < 1000));
+
+        // Spam
+        $prediction_a = $model->predict('To learn more, click this link!');
+        $prediction_b = $model->predict('You just won a free phone');
+        $prediction_c = $model->predict('You are entitled to a $100 gift card');
+        $this->assertTrue(($prediction_a['spam'] >= 0.9), 'Expected prediction A to almost certainly be spam, but got ' . serialize($prediction_a));
+        $this->assertTrue(($prediction_b['spam'] >= 0.9), 'Expected prediction B to almost certainly be spam, but got ' . serialize($prediction_b));
+        $this->assertTrue(($prediction_c['spam'] >= 0.9), 'Expected prediction C to almost certainly be spam, but got ' . serialize($prediction_c));
+
+        // Explicit ham
+        $prediction_d = $model->predict('I will see you in 5 minutes');
+        $prediction_e = $model->predict('I think the Buffalo Bills really suck this year; the quarterback got sacked a million times.');
+        $prediction_f = $model->predict('Where did u get tat pasta bowl?');
+        $this->assertTrue(($prediction_d['ham'] >= 0.9), 'Expected prediction D to almost certainly be ham, but got ' . serialize($prediction_d));
+        $this->assertTrue(($prediction_e['ham'] >= 0.9), 'Expected prediction E to almost certainly be ham, but got ' . serialize($prediction_e));
+        $this->assertTrue(($prediction_f['ham'] >= 0.9), 'Expected prediction F to almost certainly be ham, but got ' . serialize($prediction_f));
+
+        // Implicit ham with a few spam words to try tripping up the model
+        $prediction_g = $model->predict('I need to call my Mom before she gets upset with me');
+        $prediction_h = $model->predict('My mp3 player died today');
+        $prediction_i = $model->predict('Do u really think someone as ugly as me can go out on a date?');
+        $this->assertTrue(($prediction_g['ham'] >= 0.8), 'Expected prediction G to probably be ham, but got ' . serialize($prediction_g));
+        $this->assertTrue(($prediction_h['ham'] >= 0.8), 'Expected prediction H to probably be ham, but got ' . serialize($prediction_h));
+        $this->assertTrue(($prediction_i['ham'] >= 0.8), 'Expected prediction I to probably be ham, but got ' . serialize($prediction_i));
+
+        // Spam, but with the words garbled up to trick the model
+        $prediction_j = $model->predict('You will receive many many happy returns on your mobile ringtone investment');
+        $prediction_k = $model->predict('It will be your lucky day today at the casino');
+        $prediction_l = $model->predict('Called you, we tried. Our customer service line, you call.'); // Who let Yoda in the test suite? ;)
+        $this->assertTrue(($prediction_j['spam'] > 0.7), 'Expected prediction J to probably be spam, but got ' . serialize($prediction_j));
+        $this->assertTrue(($prediction_k['spam'] > 0.7), 'Expected prediction K to probably be spam, but got ' . serialize($prediction_k));
+        $this->assertTrue(($prediction_l['spam'] > 0.7), 'Expected prediction L to probably be spam, but got ' . serialize($prediction_l));
+
+        if ($this->debug) {
+            var_dump($prediction_a, $prediction_b, $prediction_c, $prediction_d, $prediction_e, $prediction_f, $prediction_g, $prediction_h, $prediction_i, $prediction_j, $prediction_k, $prediction_l);
+        } else {
+            //$GLOBALS['SITE_DB']->drop_table_if_exists($table);
+        }
+    }
 }

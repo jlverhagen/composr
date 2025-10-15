@@ -79,6 +79,7 @@ class Hook_resource_meta_aware_tutorials_internal
             'validated_field' => null,
             'validation_time_field' => null,
             'additional_sort_fields' => null,
+            'additional_antispam_fields' => [],
 
             'seo_type_code' => null,
 
@@ -163,7 +164,7 @@ function generate_tutorials_entry_description(array $row, int $render_type = 1, 
 
     switch ($render_type) {
         case FIELD_RENDER_COMCODE:
-            return escape_comcode($ret);
+            return comcode_escape($ret);
 
         case FIELD_RENDER_HTML:
             return make_string_tempcode(escape_html($ret));

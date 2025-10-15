@@ -46,7 +46,7 @@ class Stemmer_EN
      * @param string $word Word to stem
      * @return string Stemmed word
      */
-    public static function stem($word)
+    public static function stem(string $word)
     {
         if (strlen($word) <= 2) {
             return $word;

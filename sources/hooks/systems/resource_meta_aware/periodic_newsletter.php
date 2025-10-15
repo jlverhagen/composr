@@ -59,9 +59,9 @@ class Hook_resource_meta_aware_periodic_newsletter extends Hook_CMA
 
             'title_field' => 'np_subject',
             'title_field_dereference' => false,
-            'description_field' => null,
-            'description_field_dereference' => null,
-            'description_field_supports_comcode' => null,
+            'description_field' => 'np_message',
+            'description_field_dereference' => false,
+            'description_field_supports_comcode' => false,
             'image_field' => null,
             'image_field_is_theme_image' => false,
             'alternate_icon_theme_image' => null,
@@ -84,6 +84,7 @@ class Hook_resource_meta_aware_periodic_newsletter extends Hook_CMA
             'validated_field' => null,
             'validation_time_field' => null,
             'additional_sort_fields' => null,
+            'additional_antispam_fields' => [],
 
             'seo_type_code' => null,
 

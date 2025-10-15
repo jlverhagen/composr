@@ -80,6 +80,7 @@ class Hook_resource_meta_aware_emoticon extends Hook_CMA
             'validated_field' => null,
             'validation_time_field' => null,
             'additional_sort_fields' => null,
+            'additional_antispam_fields' => null,
 
             'seo_type_code' => null,
 

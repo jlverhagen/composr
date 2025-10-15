@@ -93,6 +93,7 @@ class Hook_content_meta_aware_comcode_page extends Hook_CMA
                     'DESC' => 'r.the_zone DESC,r.the_page DESC',
                 ],
             ],
+            'additional_antispam_fields' => null,
 
             'seo_type_code' => 'comcode_page',
 

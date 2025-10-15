@@ -86,6 +86,7 @@ class Hook_content_meta_aware_news_category extends Hook_CMA
             'additional_sort_fields' => [
                 'entries_count' => '((SELECT COUNT(*) FROM ' . get_table_prefix() . 'news n WHERE n.news_category=r.id) + (SELECT COUNT(*) FROM ' . get_table_prefix() . 'news_category_entries nc WHERE nc.news_entry_category=r.id))',
             ],
+            'additional_antispam_fields' => [],
 
             'seo_type_code' => 'news_category',
 

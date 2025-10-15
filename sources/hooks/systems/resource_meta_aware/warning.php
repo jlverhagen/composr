@@ -84,6 +84,7 @@ class Hook_resource_meta_aware_warning extends Hook_CMA
             'validated_field' => null,
             'validation_time_field' => null,
             'additional_sort_fields' => null,
+            'additional_antispam_fields' => null, // We don't want to train on this because warnings may contain example spam content which would then accidentally get trained on as ham
 
             'seo_type_code' => null,
 

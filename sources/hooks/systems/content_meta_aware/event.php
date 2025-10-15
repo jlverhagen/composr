@@ -90,6 +90,7 @@ class Hook_content_meta_aware_event extends Hook_CMA
                     'DESC' => 'e_start_year DESC,e_start_month DESC,e_start_day DESC,e_start_hour DESC,e_start_minute DESC',
                 ],
             ],
+            'additional_antispam_fields' => [], // TODO: support custom fields
 
             'seo_type_code' => 'event',
 

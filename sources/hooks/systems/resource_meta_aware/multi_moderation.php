@@ -59,9 +59,9 @@ class Hook_resource_meta_aware_multi_moderation extends Hook_CMA
 
             'title_field' => 'mm_name',
             'title_field_dereference' => true,
-            'description_field' => null,
-            'description_field_dereference' => null,
-            'description_field_supports_comcode' => null,
+            'description_field' => 'mm_post_text',
+            'description_field_dereference' => false,
+            'description_field_supports_comcode' => false,
             'image_field' => null,
             'image_field_is_theme_image' => false,
             'alternate_icon_theme_image' => null,
@@ -87,6 +87,7 @@ class Hook_resource_meta_aware_multi_moderation extends Hook_CMA
                 'mm_pin_state' => null,
                 'mm_open_state' => null,
             ],
+            'additional_antispam_fields' => [],
 
             'seo_type_code' => null,
 

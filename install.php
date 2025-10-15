@@ -1350,28 +1350,30 @@ function step_5() : object
 
     // Give warning if database contains data
     if (post_param_integer('confirm', 0) == 0) {
-        $test = $tmp->get_table_count_approx('db_meta');
-        if ((($test !== null) && ($test > 0)) || file_exists(get_file_base() . '/_config.php')) {
-            global $INSTALL_LANG;
-            $sections = new Tempcode();
+        if ($tmp->table_exists('db_meta', true)) {
+            $test = $tmp->get_table_count_approx('db_meta');
+            if ((($test !== null) && ($test > 0)) || file_exists(get_file_base() . '/_config.php')) {
+                global $INSTALL_LANG;
+                $sections = new Tempcode();
 
-            $url = prepare_installer_url('install.php?step=5');
+                $url = prepare_installer_url('install.php?step=5');
 
-            $hidden = build_keep_post_fields();
-            $hidden->attach(form_input_hidden('confirm', '1'));
+                $hidden = build_keep_post_fields();
+                $hidden->attach(form_input_hidden('confirm', '1'));
 
-            return do_template('INSTALLER_STEP_4', [
-                '_GUID' => 'aaf0386966dd4b75c8027a6b1f7454c6',
-                'URL' => $url,
-                'HIDDEN' => $hidden,
-                'MESSAGE' => do_lang_tempcode('WARNING_OVERWRITE', escape_html(get_tutorial_url('tut_upgrade'))),
-                'LANG' => $INSTALL_LANG,
-                'DB_TYPE' => post_param_string('db_type'),
-                'FORUM_TYPE' => $forum_type,
-                'BOARD_PATH' => post_param_string('board_path', false, INPUT_FILTER_POST_IDENTIFIER),
-                'SECTIONS' => $sections,
-                'MAX' => null,
-            ]);
+                return do_template('INSTALLER_STEP_4', [
+                    '_GUID' => 'aaf0386966dd4b75c8027a6b1f7454c6',
+                    'URL' => $url,
+                    'HIDDEN' => $hidden,
+                    'MESSAGE' => do_lang_tempcode('WARNING_OVERWRITE', escape_html(get_tutorial_url('tut_upgrade'))),
+                    'LANG' => $INSTALL_LANG,
+                    'DB_TYPE' => post_param_string('db_type'),
+                    'FORUM_TYPE' => $forum_type,
+                    'BOARD_PATH' => post_param_string('board_path', false, INPUT_FILTER_POST_IDENTIFIER),
+                    'SECTIONS' => $sections,
+                    'MAX' => null,
+                ]);
+            }
         }
     }
 

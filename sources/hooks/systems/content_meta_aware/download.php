@@ -88,6 +88,7 @@ class Hook_content_meta_aware_download extends Hook_CMA
                 'file_size' => null,
                 'num_downloads' => null,
             ],
+            'additional_antispam_fields' => ['additional_details', 'download_data_mash'],
 
             'seo_type_code' => 'downloads_download',
 

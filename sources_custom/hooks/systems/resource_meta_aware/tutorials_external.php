@@ -83,6 +83,7 @@ class Hook_resource_meta_aware_tutorials_external
                 't_media_type' => null,
                 't_pinned' => null,
             ],
+            'additional_antispam_fields' => [],
 
             'seo_type_code' => null,
 

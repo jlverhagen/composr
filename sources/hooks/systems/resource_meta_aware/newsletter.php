@@ -59,9 +59,9 @@ class Hook_resource_meta_aware_newsletter extends Hook_CMA
 
             'title_field' => 'title',
             'title_field_dereference' => true,
-            'description_field' => null,
-            'description_field_dereference' => null,
-            'description_field_supports_comcode' => null,
+            'description_field' => 'the_description',
+            'description_field_dereference' => false,
+            'description_field_supports_comcode' => false,
             'image_field' => null,
             'image_field_is_theme_image' => false,
             'alternate_icon_theme_image' => null,
@@ -86,6 +86,7 @@ class Hook_resource_meta_aware_newsletter extends Hook_CMA
             'additional_sort_fields' => [
                  'count_subscribers' => '(SELECT COUNT(*) FROM ' . get_table_prefix() . 'newsletter_subscribe s JOIN ' . get_table_prefix() . 'newsletter_subscribers n ON n.email=s.email WHERE n.code_confirm=0 AND s.newsletter_id=r.id)',
             ],
+            'additional_antispam_fields' => [],
 
             'seo_type_code' => null,
 

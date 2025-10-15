@@ -88,6 +88,7 @@ class Hook_content_meta_aware_quiz extends Hook_CMA
             'additional_sort_fields' => [
                 'q_type' => null,
             ],
+            'additional_antispam_fields' => ['q_end_text', 'q_end_text_fail', 'CALL: generate_quiz_content'],
 
             'seo_type_code' => null,
 
@@ -219,4 +220,26 @@ function generate_quiz_content_type_universal_label(array $row) : string
             break;
     }
     return $type;
+}
+
+/**
+ * Get additional content to be trained on the antispam system.
+ *
+ * @param  array $row Database row of entry
+ * @return array Array of content to be trained
+ */
+function generate_quiz_content(array $row) : array
+{
+    if (!addon_installed('quizzes')) {
+        return [];
+    }
+
+    $ret = [];
+
+    require_code('quiz2');
+    $quiz_text = load_quiz_questions_to_string($row['id']);
+    $parsed_text = trim(preg_replace('#\[[^\]]*\]#', '', $quiz_text)); // Remove anything in brackets as these are special controllers
+    $ret[] = $parsed_text;
+
+    return $ret;
 }

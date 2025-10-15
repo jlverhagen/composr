@@ -86,6 +86,7 @@ class Hook_resource_meta_aware_aggregate_type_instance extends Hook_CMA
             'additional_sort_fields' => [
                 'aggregate_type' => null,
             ],
+            'additional_antispam_fields' => null,
 
             'seo_type_code' => null,
 

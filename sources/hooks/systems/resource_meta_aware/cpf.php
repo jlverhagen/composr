@@ -59,9 +59,9 @@ class Hook_resource_meta_aware_cpf extends Hook_CMA
 
             'title_field' => 'cf_name',
             'title_field_dereference' => true,
-            'description_field' => null,
-            'description_field_dereference' => null,
-            'description_field_supports_comcode' => null,
+            'description_field' => 'cf_description',
+            'description_field_dereference' => true,
+            'description_field_supports_comcode' => false,
             'image_field' => null,
             'image_field_is_theme_image' => false,
             'alternate_icon_theme_image' => null,
@@ -91,6 +91,7 @@ class Hook_resource_meta_aware_cpf extends Hook_CMA
                 'cf_public_view' => null,
                 'cf_required' => null,
             ],
+            'additional_antispam_fields' => [], // Note that this is for the fields themselves; CPF values are processed in the member content type
 
             'seo_type_code' => null,
 

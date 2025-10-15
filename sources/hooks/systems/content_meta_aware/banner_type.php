@@ -91,6 +91,7 @@ class Hook_content_meta_aware_banner_type extends Hook_CMA
                 't_comcode_inline' => null,
                 'entries_count' => '(SELECT COUNT(*) FROM ' . get_table_prefix() . 'banners b WHERE b.b_type=r.id)',
             ],
+            'additional_antispam_fields' => null,
 
             'seo_type_code' => null,
 

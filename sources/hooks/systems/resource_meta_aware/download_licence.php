@@ -59,8 +59,8 @@ class Hook_resource_meta_aware_download_licence extends Hook_CMA
 
             'title_field' => 'l_title',
             'title_field_dereference' => false,
-            'description_field' => null,
-            'description_field_dereference' => null,
+            'description_field' => 'l_text',
+            'description_field_dereference' => false,
             'description_field_supports_comcode' => null,
             'image_field' => null,
             'image_field_is_theme_image' => false,
@@ -84,6 +84,7 @@ class Hook_resource_meta_aware_download_licence extends Hook_CMA
             'validated_field' => null,
             'validation_time_field' => null,
             'additional_sort_fields' => null,
+            'additional_antispam_fields' => [],
 
             'seo_type_code' => null,
 

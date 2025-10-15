@@ -90,6 +90,7 @@ class Hook_content_meta_aware_poll extends Hook_CMA
                 ],
                 'count_votes' => 'r.votes1+r.votes2+r.votes3+r.votes4+r.votes5+r.votes6+r.votes7+r.votes8+r.votes9+r.votes10',
             ],
+            'additional_antispam_fields' => ['option1', 'option2', 'option3', 'option4', 'option5', 'option6', 'option7', 'option8', 'option9', 'option10'],
 
             'seo_type_code' => null,
 

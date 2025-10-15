@@ -95,6 +95,7 @@ class Hook_content_meta_aware_group extends Hook_CMA
                 ],
                 'g_is_super_admin' => null,
             ],
+            'additional_antispam_fields' => ['g_title'],
 
             'seo_type_code' => null,
 

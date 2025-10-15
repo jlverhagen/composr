@@ -87,6 +87,7 @@ class Hook_resource_meta_aware_welcome_email extends Hook_CMA
                 'w_subject' => null,
                 'w_send_after_hours' => null,
             ],
+            'additional_antispam_fields' => ['w_subject'],
 
             'seo_type_code' => null,
 
