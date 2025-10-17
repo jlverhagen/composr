@@ -24,6 +24,8 @@ Answers are propagated all the way through.
 
 A decision tree consists of a map between named screen name and screen details
 
+TODO: Convert hard-coded strings to lang strings
+
 Each screen details has:
  - title (string) REQUIRED
  - expects_parameters (list of parameters that must be set on this screen, so that you can't have leakiness by jumping deep in). Goes back to start screen if missing

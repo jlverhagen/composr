@@ -642,7 +642,7 @@
             // continue
         }
 
-        var soundUrl = 'data/sounds/message_received.mp3',
+        var soundUrl = 'data/sounds/general/info.mp3',
             baseUrl = $util.rel((!soundUrl.includes('data_custom') && !soundUrl.includes('uploads/')) ? $cms.getBaseUrl() : $cms.getCustomBaseUrl()),
             soundObject = window.soundManager.createSound({ url: baseUrl + '/' + soundUrl });
 
@@ -652,7 +652,7 @@
 
         var myToast = Toastify({ // eslint-disable-line no-undef
             text: '{!CONTENT_CHANGE_DETECTED;/}',
-            duration: 4000
+            duration: 5000
         });
         myToast.showToast();
     }

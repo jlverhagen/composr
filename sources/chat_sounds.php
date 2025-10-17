@@ -79,9 +79,9 @@ function get_effect_settings(bool $full_urls = false, ?int $for_member = null, b
             if (array_key_exists($effect, $EFFECT_SETTINGS_ROWS)) {
                 $member_setting = $EFFECT_SETTINGS_ROWS[$effect];
             } else {
-                $member_setting = 'data_custom/sounds/' . $effect . '.mp3';
+                $member_setting = 'data_custom/sounds/chat/' . $effect . '.mp3';
                 if (!file_exists(get_custom_file_base() . '/' . $member_setting)) {
-                    $member_setting = 'data/sounds/' . $effect . '.mp3';
+                    $member_setting = 'data/sounds/chat/' . $effect . '.mp3';
                 }
                 if (!file_exists(get_file_base() . '/' . $member_setting)) {
                     $member_setting = '';

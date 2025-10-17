@@ -18,6 +18,7 @@
         "ext-ftp": "*",
         "ext-sodium": "*",
         "ext-enchant": "*",
-        "ext-gettext": "*"
+        "ext-gettext": "*",
+        "ext-posix": "*"
     }
 }

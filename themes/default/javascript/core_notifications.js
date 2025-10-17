@@ -267,9 +267,9 @@
                 sound = (parseInt(notification.getAttribute('priority')) < 3) ? 'on' : 'off';
             }
             var notificationCode = notification.getAttribute('notification_code');
-            if (sound === 'on' && notificationCode !== 'ticket_reply' && notificationCode !== 'ticket_reply_staff') {
+            if (sound === 'on') {
                 var goFunc = function goFunc() {
-                    var soundObject = window.soundManager.createSound({url: $util.rel('data/sounds/message_received.mp3') });
+                    var soundObject = window.soundManager.createSound({url: $util.rel('data/sounds/general/notification.mp3') });
                     if (soundObject && document.hasFocus()/*don't want multiple tabs all pinging*/) {
                         soundObject.play();
                     }

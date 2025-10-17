@@ -1216,25 +1216,25 @@ class Module_chat
 
         // Find all sounds available
         $library = [];
-        $dh = @opendir(get_file_base() . '/data/sounds');
+        $dh = @opendir(get_file_base() . '/data/sounds/chat');
         if ($dh !== false) {
             while (($f = readdir($dh)) !== false) {
                 if (cms_strtolower_ascii(substr($f, -4)) == '.mp3') {
                     $library[$f] = [
                         'EFFECT_SHORT' => $f,
-                        'EFFECT' => 'data/sounds/' . $f,
+                        'EFFECT' => 'data/sounds/chat/' . $f,
                     ];
                 }
             }
             closedir($dh);
         }
-        $dh = @opendir(get_file_base() . '/data_custom/sounds');
+        $dh = @opendir(get_file_base() . '/data_custom/sounds/chat');
         if ($dh !== false) {
             while (($f = readdir($dh)) !== false) {
                 if (cms_strtolower_ascii(substr($f, -4)) == '.mp3') {
                     $library[$f] = [
                         'EFFECT_SHORT' => $f,
-                        'EFFECT' => 'data_custom/sounds/' . $f,
+                        'EFFECT' => 'data_custom/sounds/chat/' . $f,
                     ];
                 }
             }
