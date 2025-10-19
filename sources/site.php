@@ -1196,7 +1196,7 @@ function do_site()
 
         // Send very basic software details to homesite if enabled
         require_code('telemetry');
-        if ((is_encryption_enabled_telemetry()) && (!is_local_machine()) && (get_option('telemetry') == '2') && (get_value_newer_than('last_call_home', time() - (60 * 60 * 24)) === null)) {
+        if ((is_encryption_enabled_telemetry()) && (!is_local_machine()) && (get_option('telemetry_statistics') == '1') && (get_value_newer_than('last_call_home', time() - (60 * 60 * 24)) === null)) {
             require_code('version2');
             $count_members = $GLOBALS['FORUM_DRIVER']->get_num_members();
             $count_daily_hits = $GLOBALS['SITE_DB']->query_value_if_there('SELECT COUNT(*) FROM ' . get_table_prefix() . 'stats WHERE date_and_time>' . strval(time() - 60 * 60 * 24));

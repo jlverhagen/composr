@@ -35,11 +35,35 @@ class Module_admin_privacy
         $info['organisation'] = 'Composr';
         $info['hacked_by'] = null;
         $info['hack_version'] = null;
-        $info['version'] = 1;
+        $info['version'] = 2;
         $info['locked'] = false;
         $info['min_cms_version'] = 11.0;
         $info['addon'] = 'core_privacy';
         return $info;
+    }
+
+    /**
+     * Install the module.
+     *
+     * @param  ?integer $upgrade_from What version we're upgrading from (null: new install)
+     * @param  ?integer $upgrade_from_hack What hack version we're upgrading from (null: new-install/not-upgrading-from-a-hacked-version)
+     */
+    public function install(?int $upgrade_from = null, ?int $upgrade_from_hack = null)
+    {
+        if (($upgrade_from !== null) && ($upgrade_from < 2)) { // LEGACY: 11.beta9
+            // Revert new telemetry setting back to old settings from before 11.beta7 but with new names
+            require_code('config2');
+
+            rename_config_option('call_home', 'telemetry_statistics');
+            rename_config_option('send_error_emails_developers', 'telemetry_errors');
+
+            $telemetry = get_option('telemetry', true);
+            if ($telemetry !== null) {
+                set_option('telemetry_statistics', ($telemetry == '2') ? '1' : '0');
+                set_option('telemetry_errors', ($telemetry != '0') ? '1' : '0');
+            }
+            delete_config_option('telemetry');
+        }
     }
 
     /**
@@ -359,8 +383,9 @@ class Module_admin_privacy
     {
         require_lang('privacy');
         require_code('http');
+        require_code('telemetry');
 
-        if (get_option('telemetry') == '0') {
+        if (!is_telemetry_enabled()) {
             // Check if we are still registered in the system
             $url = get_brand_base_url() . '/data/endpoint.php/cms_homesite/telemetry?type=is_registered&url=' . rawurlencode(get_base_url());
             $data = cache_and_carry('cms_http_request', [$url, ['timeout' => 6.0, 'trigger_error' => false]], 15, false, false);
@@ -379,8 +404,6 @@ class Module_admin_privacy
 
             return warn_screen($this->title, do_lang_tempcode('TELEMETRY_DISABLED'), false);
         }
-
-        require_code('telemetry');
 
         if (!is_encryption_enabled_telemetry()) {
             return warn_screen($this->title, do_lang_tempcode('TELEMETRY_NOT_AVAILABLE'), false);

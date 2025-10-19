@@ -1313,21 +1313,6 @@ class Module_admin_version
         }
 
         if (($upgrade_from !== null) && ($upgrade_from < 23)) { // LEGACY: 11.beta7
-            // Migrate old telemetry options
-            require_code('config2');
-            $send_errors = get_option('send_error_emails_developers', true);
-            $call_home = get_option('call_home', true);
-            $telemetry = 0;
-            if ($send_errors === '1') {
-                $telemetry++;
-                if ($call_home === '1') {
-                    $telemetry++;
-                }
-            }
-            set_option('telemetry', strval($telemetry));
-            delete_config_option('send_error_emails_developers');
-            delete_config_option('call_home');
-
             delete_value('implicit_usergroup_sync'); // In favor of the native system scheduler enable / disable system
 
             $GLOBALS['SITE_DB']->add_table_field('comcode_pages', 'p_validation_time', '?TIME');

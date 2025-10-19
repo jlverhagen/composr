@@ -1260,7 +1260,7 @@ function relay_error_notification(string $text, bool $developers = true, string 
     if (
         ($mail !== null) &&
         ($developers) &&
-        (get_option('telemetry') != '0') &&
+        (get_option('telemetry_errors') == '1') &&
         (!$BLOCK_CORE_DEVELOPERS_ERROR_EMAILS) &&
         (!running_script('cron_bridge')) &&
         ($text != '!') &&

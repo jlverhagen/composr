@@ -21,7 +21,7 @@
 /**
  * Hook class.
  */
-class Hook_config_telemetry
+class Hook_config_telemetry_statistics
 {
     /**
      * Gets the details relating to the config option.
@@ -31,14 +31,13 @@ class Hook_config_telemetry
     public function get_details() : array
     {
         return [
-            'human_name' => 'CONFIG_TELEMETRY',
-            'type' => 'list',
+            'human_name' => 'CONFIG_TELEMETRY_STATISTICS',
+            'type' => 'tick',
             'category' => 'PRIVACY',
             'group' => 'GENERAL',
-            'explanation' => 'CONFIG_OPTION_telemetry',
+            'explanation' => 'CONFIG_OPTION_telemetry_statistics',
             'shared_hosting_restricted' => '1',
-            'list_options' => '0|1|2',
-            'order_in_category_group' => 1,
+            'order_in_category_group' => 2,
             'required' => true,
             'public' => false,
             'addon' => 'core_privacy',
@@ -62,22 +61,8 @@ class Hook_config_telemetry
      */
     public function postsave_handler(string $new_value)
     {
-        // If disabling telemetry, destroy the site keys
-        if ($new_value == '0') {
-            @unlink(get_file_base() . '/data_custom/keys/telemetry-site.json');
-
-            require_lang('privacy');
-
-            attach_message(do_lang_tempcode('TELEMETRY_DATA_STILL_EXISTS'), 'notice');
-            return;
-        }
-
-        // We need to make sure we are registered with the telemetry service.
         require_code('telemetry');
-        $success = register_site_telemetry();
-        if ($success === false) {
-            require_lang('privacy');
-            attach_message(do_lang_tempcode('TELEMETRY_FAILED_TO_REGISTER', escape_html(get_brand_base_url())), 'warn', false, true);
-        }
+
+        telemetry_postsave_handler();
     }
 }

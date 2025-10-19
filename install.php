@@ -1323,7 +1323,8 @@ function step_5() : object
     // Read in a temporary SITE_INFO, but only so this step has something to run with (the _config.php write doesn't use this data)
     foreach ($_POST as $key => $val) {
         if (in_array($key, [
-            'telemetry',
+            'telemetry_errors',
+            'telemetry_statistics',
             'telemetry_may_feature',
 
             'ftp_password',
@@ -1907,7 +1908,8 @@ if (!function_exists(\'git_repos\')) {
     // Write in inputted settings
     foreach ($_POST as $key => $val) {
         if (in_array($key, [
-            'telemetry',
+            'telemetry_errors',
+            'telemetry_statistics',
             'telemetry_may_feature',
 
             'ftp_password',
@@ -2770,7 +2772,8 @@ function step_8() : object
     if ($was_finished === true) { // Final tasks; we are done with this step
         @unlink(get_file_base() . '/data_custom/installer_step_8.bin');
 
-        set_option('telemetry', strval(post_param_integer('telemetry', 0)));
+        set_option('telemetry_errors', (post_param_integer('telemetry_errors', 0) == 1) ? '1' : '0');
+        set_option('telemetry_statistics', (post_param_integer('telemetry_statistics', 0) == 1) ? '1' : '0');
         set_option('telemetry_may_feature', (post_param_integer('telemetry_may_feature', 0) == 1) ? '1' : '0');
 
         $url = prepare_installer_url('install.php?step=9');

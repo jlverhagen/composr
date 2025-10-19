@@ -21,7 +21,7 @@
 /**
  * Hook class.
  */
-class Hook_config_telemetry_may_feature
+class Hook_config_telemetry_errors
 {
     /**
      * Gets the details relating to the config option.
@@ -31,14 +31,13 @@ class Hook_config_telemetry_may_feature
     public function get_details() : array
     {
         return [
-            'human_name' => 'CONFIG_TELEMETRY_MAY_FEATURE',
+            'human_name' => 'CONFIG_TELEMETRY_ERRORS',
             'type' => 'tick',
             'category' => 'PRIVACY',
             'group' => 'GENERAL',
-            'explanation' => 'CONFIG_OPTION_telemetry_may_feature',
+            'explanation' => 'CONFIG_OPTION_telemetry_errors',
             'shared_hosting_restricted' => '1',
-            'list_options' => '',
-            'order_in_category_group' => 3,
+            'order_in_category_group' => 1,
             'required' => true,
             'public' => false,
             'addon' => 'core_privacy',

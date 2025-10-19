@@ -19,7 +19,8 @@
 class telemetry_test_set extends cms_test_case
 {
     private $brand_base_url = null;
-    private $telemetry = '0';
+    private $telemetry_statistics = '0';
+    private $telemetry_errors = '0';
     public function setUp()
     {
         parent::setUp();
@@ -43,8 +44,10 @@ class telemetry_test_set extends cms_test_case
         set_value('rebrand_base_url', get_base_url());
 
         // Turn telemetry on
-        $this->telemetry = get_option('telemetry');
-        set_option('telemetry', '2');
+        $this->telemetry_statistics = get_option('telemetry_statistics');
+        $this->telemetry_errors = get_option('telemetry_errors');
+        set_option('telemetry_statistics', '1');
+        set_option('telemetry_errors', '1');
 
         // Try registering this site with telemetry
         $status = register_site_telemetry();
@@ -181,7 +184,8 @@ class telemetry_test_set extends cms_test_case
         }
 
         // Reset telemetry
-        set_option('telemetry', $this->telemetry);
+        set_option('telemetry_statistics', $this->telemetry_statistics);
+        set_option('telemetry_errors', $this->telemetry_errors);
 
         parent::tearDown();
     }

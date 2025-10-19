@@ -21,6 +21,56 @@
  */
 
 /**
+ * Determine whether telemetry is enabled for this site based on configuration.
+ *
+ * @return boolean Whether it is
+ */
+function is_telemetry_enabled() : bool
+{
+    if (get_option('telemetry_statistics') == '1') {
+        return true;
+    }
+    if (get_option('telemetry_errors') == '1') {
+        return true;
+    }
+    if (get_option('telemetry_may_feature') == '1') {
+        return true;
+    }
+
+    return false;
+}
+
+/**
+ * Post-save handler for telemetry configuration options.
+ * This should be called after changing any settings pertaining to telemetry.
+ */
+function telemetry_postsave_handler()
+{
+    static $registered_shutdown = false;
+    if ($registered_shutdown) {
+        return;
+    }
+
+    $registered_shutdown = cms_register_shutdown_function_safe(function () {
+        require_code('telemetry');
+
+        if (is_telemetry_enabled()) { // Make sure we register the site with the telemetry service
+            $success = register_site_telemetry();
+            if ($success === false) {
+                require_lang('privacy');
+                attach_message(do_lang_tempcode('TELEMETRY_FAILED_TO_REGISTER', escape_html(get_brand_base_url())), 'warn', false, true);
+            }
+        } else { // Make sure we destroy the key-pair
+            @unlink(get_file_base() . '/data_custom/keys/telemetry-site.json');
+
+            require_lang('privacy');
+
+            attach_message(do_lang_tempcode('TELEMETRY_DATA_STILL_EXISTS'), 'notice');
+        }
+    });
+}
+
+/**
  * Determine whether encryption support is available for telemetry.
  * This also checks if all keys are in place including the software key and the site keys.
  *
@@ -427,8 +477,7 @@ function encrypt_data_script()
 function register_site_telemetry(bool $skip_creation = false) : bool
 {
     // Is telemetry disabled?
-    $telemetry = get_option('telemetry');
-    if ($telemetry == '0') {
+    if (!is_telemetry_enabled()) {
         return false;
     }
 
