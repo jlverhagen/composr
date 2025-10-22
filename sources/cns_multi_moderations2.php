@@ -137,13 +137,37 @@ function cns_perform_multi_moderation(int $id, int $topic_id, string $reason, st
         $update_array['t_is_open'] = $open_state;
     }
     if ($title_suffix != '') {
+        if (addon_installed('bayes_common') && addon_installed('bayes_antispam')) {
+            require_code('antispam2');
+            $old_content = content_get_antispam_data('post', strval($topic_details[0]['t_cache_first_post_id']), false, true);
+            $submitter = $GLOBALS['FORUM_DB']->query_select_value_if_there('f_posts', 'p_posting_member', ['id' => $topic_details[0]['t_cache_first_post_id']]);
+        }
+
         $new_title = $topic_details[0]['t_cache_first_title'] . ' [' . $title_suffix . ']';
         $update_array['t_cache_first_title'] = $new_title;
         $GLOBALS['FORUM_DB']->query_update('f_posts', ['p_title' => $new_title], ['id' => $topic_details[0]['t_cache_first_post_id']], '', 1);
+
+        if (addon_installed('bayes_common') && addon_installed('bayes_antispam')) {
+            require_code('tasks');
+            require_lang('bayes_antispam');
+            call_user_func_array__long_task(do_lang('HAM_TRAINING'), null, 'bayes_antispam', [['ham'], 'post', strval($topic_details[0]['t_cache_first_post_id']), $submitter, $old_content], false, true, false);
+        }
     }
 
     if (!empty($update_array)) {
+        if (addon_installed('bayes_common') && addon_installed('bayes_antispam')) {
+            require_code('antispam2');
+            $old_content = content_get_antispam_data('topic', strval($topic_id), false, true);
+            $submitter = $topic_details[0]['t_cache_first_member_id'];
+        }
+
         $GLOBALS['FORUM_DB']->query_update('f_topics', $update_array, ['id' => $topic_id], '', 1);
+
+        if (addon_installed('bayes_common') && addon_installed('bayes_antispam')) {
+            require_code('tasks');
+            require_lang('bayes_antispam');
+            call_user_func_array__long_task(do_lang('HAM_TRAINING'), null, 'bayes_antispam', [['ham'], 'topic', strval($topic_id), $submitter, $old_content], false, true, false);
+        }
     }
 
     if ($move_to !== null) {

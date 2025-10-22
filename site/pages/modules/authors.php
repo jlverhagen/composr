@@ -35,7 +35,7 @@ class Module_authors
         $info['organisation'] = 'Composr';
         $info['hacked_by'] = null;
         $info['hack_version'] = null;
-        $info['version'] = 5;
+        $info['version'] = 6;
         $info['update_require_upgrade'] = true;
         $info['locked'] = true;
         $info['min_cms_version'] = 11.0;
@@ -66,6 +66,8 @@ class Module_authors
                 'author' => '*ID_TEXT',
                 'url' => 'URLPATH',
                 'member_id' => '?MEMBER',
+                'add_date_and_time' => 'TIME',
+                'edit_date_and_time' => '?TIME',
                 'the_description' => 'LONG_TRANS__COMCODE',
                 'skills' => 'LONG_TRANS__COMCODE',
             ]);
@@ -89,6 +91,11 @@ class Module_authors
 
         if (($upgrade_from !== null) && ($upgrade_from < 5)) { // LEGACY
             $GLOBALS['SITE_DB']->alter_table_field('authors', 'description', 'LONG_TRANS__COMCODE', 'the_description');
+        }
+
+        if (($upgrade_from !== null) && ($upgrade_from < 6)) { // LEGACY: 11.beta9
+            $GLOBALS['SITE_DB']->add_table_field('authors', 'add_date_and_time', 'TIME');
+            $GLOBALS['SITE_DB']->add_table_field('authors', 'edit_date_and_time', '?TIME');
         }
     }
 

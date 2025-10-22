@@ -93,7 +93,7 @@ class Hook_content_meta_aware_post extends Hook_CMA
             'validation_is_minor' => true,
             'validation_time_field' => null, // Posts are too time-sensitive and chronological
             'additional_sort_fields' => null,
-            'additional_antispam_fields' => [],
+            'additional_antispam_fields' => [], // A fudge is present where we skip private topics pertaining to warnings so we don't train spam evidence as ham
 
             'seo_type_code' => null,
 

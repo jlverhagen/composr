@@ -127,6 +127,7 @@ function cns_make_group(string $name, int $is_default = 0, int $is_super_admin =
         'g_rank_image_pri_only' => $rank_image_pri_only,
         'g_open_membership' => $open_membership,
         'g_is_private_club' => $is_private_club,
+        'g_add_date_and_time' => time(),
     ];
     $map += insert_lang('g_name', $name, 2, $GLOBALS['FORUM_DB']);
     $map += insert_lang('g_title', $title, 2, $GLOBALS['FORUM_DB']);

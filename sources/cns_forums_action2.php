@@ -34,6 +34,7 @@ function cns_edit_forum_grouping(int $forum_grouping_id, string $title, string $
         'c_title' => $title,
         'c_description' => $description,
         'c_expanded_by_default' => $expanded_by_default,
+        'c_edit_date_and_time' => time(),
     ], ['id' => $forum_grouping_id], '', 1);
 
     if ($old_title != $title) {
@@ -147,6 +148,11 @@ function cns_edit_forum(int $forum_id, string $name, string $description, int $f
         }
     }
 
+    if (addon_installed('bayes_common') && addon_installed('bayes_antispam')) {
+        require_code('antispam2');
+        $old_content = content_get_antispam_data('forum', strval($forum_id), false, true);
+    }
+
     if (($reset_intro_acceptance) && (trim(get_translated_text($forum_info[0]['f_intro_question'], $GLOBALS['FORUM_DB'])) != trim($intro_question)) && ($intro_question != STRING_MAGIC_NULL)) {
         $GLOBALS['FORUM_DB']->query_delete('f_forum_intro_ip', ['i_forum_id' => $forum_id]);
         $GLOBALS['FORUM_DB']->query_delete('f_forum_intro_member', ['i_forum_id' => $forum_id]);
@@ -173,7 +179,8 @@ function cns_edit_forum(int $forum_id, string $name, string $description, int $f
         'f_mail_password' => $mail_password,
         'f_mail_nonmatch_policy' => $mail_nonmatch_policy,
         'f_mail_unconfirmed_notice' => $mail_unconfirmed_notice,
-        'f_poll_default_options_xml' => $poll_default_options_xml
+        'f_poll_default_options_xml' => $poll_default_options_xml,
+        'f_edit_date_and_time' => time(),
     ];
     $map += lang_remap_comcode('f_description', $forum_info[0]['f_description'], $description, $GLOBALS['FORUM_DB']);
     $map += lang_remap_comcode('f_intro_question', $forum_info[0]['f_intro_question'], $intro_question, $GLOBALS['FORUM_DB']);
@@ -198,6 +205,12 @@ function cns_edit_forum(int $forum_id, string $name, string $description, int $f
         if ($new_parent !== null) {
             cns_force_update_forum_caching($new_parent, $num_topics_forum, $num_posts_forum);
         }
+    }
+
+    if (addon_installed('bayes_common') && addon_installed('bayes_antispam')) {
+        require_code('tasks');
+        require_lang('bayes_antispam');
+        call_user_func_array__long_task(do_lang('HAM_TRAINING'), null, 'bayes_antispam', [['ham'], 'forum', strval($forum_id), null, $old_content], false, true, false);
     }
 
     log_it('EDIT_FORUM', strval($forum_id), $name);
@@ -228,6 +241,12 @@ function cns_delete_forum(int $forum_id, ?int $target_forum_id = null, int $dele
     if ($forum_id == db_get_first_id()) {
         warn_exit(do_lang_tempcode('CANNOT_DELETE_ROOT_FORUM'));
     }
+
+    if (addon_installed('bayes_common') && addon_installed('bayes_antispam')) {
+        require_code('antispam2');
+        $old_content = content_get_antispam_data('forum', strval($forum_id), false, true);
+    }
+
     require_code('cns_topics_action');
     require_code('cns_topics_action2');
     if ($delete_topics == 0) {
@@ -262,6 +281,12 @@ function cns_delete_forum(int $forum_id, ?int $target_forum_id = null, int $dele
     }
 
     $GLOBALS['SITE_DB']->query_update('url_id_monikers', ['m_deprecated' => 1], ['m_resource_page' => 'forumview', 'm_resource_type' => 'browse', 'm_resource_id' => strval($forum_id)]);
+
+    if (addon_installed('bayes_common') && addon_installed('bayes_antispam')) {
+        require_code('tasks');
+        require_lang('bayes_antispam');
+        call_user_func_array__long_task(do_lang('HAM_TRAINING'), null, 'bayes_antispam', [['ham'], 'forum', strval($forum_id), null, $old_content], false, true, false);
+    }
 
     log_it('DELETE_FORUM', strval($forum_id), $name);
 

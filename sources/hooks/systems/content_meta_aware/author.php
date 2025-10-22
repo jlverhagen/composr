@@ -76,10 +76,10 @@ class Hook_content_meta_aware_author extends Hook_CMA
 
             'views_field' => null,
             'order_field' => null,
-            'submitter_field' => null,
+            'submitter_field' => 'member_id',
             'author_field' => null,
-            'add_time_field' => null,
-            'edit_time_field' => null,
+            'add_time_field' => 'add_date_and_time',
+            'edit_time_field' => 'edit_date_and_time',
             'date_field' => null,
             'validated_field' => null,
             'validation_time_field' => null,

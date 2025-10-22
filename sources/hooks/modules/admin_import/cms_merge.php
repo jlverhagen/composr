@@ -161,6 +161,7 @@ class Hook_import_cms_merge
         $info['final_message'] = do_lang_tempcode('FORUM_CACHE_CLEAR', escape_html($cleanup_url));
 
         $info['final_tasks'] = [
+            'final_task__reset_bayes_antispam',
             ['cns_members_dedup', do_lang('DEDUP_MEMBERS'), 'f_members', 1000000], // Realistically, there would be very few e-mail address duplicates, and the hook uses intelligent SQL filtering so we aren't processing the full member list
             ['cns_topics_recache', do_lang('CACHE_TOPICS'), 'f_topics', 100],
             ['cns_recache', do_lang('CACHE_FORUMS'), 'f_topics', 100],
@@ -628,6 +629,7 @@ class Hook_import_cms_merge
                         's_auto_recur' => $row['s_auto_recur'],
                         's_group_id' => $group_id,
                         's_enabled' => $row['s_enabled'],
+                        's_add_date_and_time' => $row['s_add_date_and_time'],
                     ];
                     $map += insert_lang('s_title', $this->get_lang_string($db, $row['s_title']), 2, $GLOBALS['FORUM_DB']);
                     $map += insert_lang('s_description', $this->get_lang_string($db, $row['s_description']), 2, $GLOBALS['FORUM_DB']);
@@ -1680,7 +1682,7 @@ class Hook_import_cms_merge
                 continue;
             }
 
-            $map = [];
+            $map = ['add_date_and_time' => $row['add_date_and_time'], 'edit_date_and_time' => $row['edit_date_and_time']];
             $map += insert_lang('title', $this->get_lang_string($db, $row['title']), 2);
             $map += insert_lang('the_description', $this->get_lang_string($db, $row['the_description']), 2);
             $id_new = $GLOBALS['SITE_DB']->query_insert('newsletters', $map, true);
@@ -1885,7 +1887,7 @@ class Hook_import_cms_merge
                 continue;
             }
 
-            $GLOBALS['SITE_DB']->query_insert('download_licences', ['l_title' => $row['l_title'], 'l_text' => $row['l_text']]);
+            $GLOBALS['SITE_DB']->query_insert('download_licences', ['l_title' => $row['l_title'], 'l_text' => $row['l_text'], 'l_add_date_and_time' => $row['l_add_date_and_time'], 'l_edit_date_and_time' => $row['l_edit_date_and_time']]);
 
             import_id_remap_put('download_licence', strval($row['id']), $id_new);
         }
@@ -5279,6 +5281,16 @@ class Hook_import_cms_merge
             $start += $max;
         } while (($rows !== null) && !empty($rows));
         $this->_import_alternative_ids($db, 'kpi', 'kpi');
+    }
+
+    /**
+     * Reset the last run time of the Bayes antispam scheduler hook to the site start time.
+     * This enables training of newly-imported content on its next run.
+     */
+    public function final_task__reset_bayes_antispam()
+    {
+        require_code('global4');
+        $GLOBALS['SITE_DB']->query_update('cron_progression', ['c_last_run_time' => get_site_start_time()], ['c_hook' => 'bayes_antispam']);
     }
 
     /**

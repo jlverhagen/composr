@@ -1101,6 +1101,11 @@ function cns_edit_member(int $member_id, ?string $username = null, ?string $pass
         suggest_new_idmoniker_for('members', 'view', strval($member_id), '', $username);
     }
 
+    if (addon_installed('bayes_common') && addon_installed('bayes_antispam')) {
+        require_code('antispam2');
+        $old_content = content_get_antispam_data('member', strval($member_id), false, true);
+    }
+
     // Password change
     if ($password !== null) {
         // Invalidate any existing login key
@@ -1339,7 +1344,19 @@ function cns_edit_member(int $member_id, ?string $username = null, ?string $pass
                 $parent_title = get_translated_text($GLOBALS['SITE_DB']->query_select_value('galleries', 'fullname', ['name' => $gallery['parent_id']]));
                 if (get_translated_text($gallery['fullname']) == do_lang('PERSONAL_GALLERY_OF', $old_username, $parent_title)) {
                     $new_fullname = do_lang('PERSONAL_GALLERY_OF', $username, $parent_title);
+
+                    if (addon_installed('bayes_common') && addon_installed('bayes_antispam')) {
+                        require_code('antispam2');
+                        $old_content = content_get_antispam_data('gallery', $gallery['name'], false, true);
+                    }
+
                     $GLOBALS['SITE_DB']->query_update('galleries', lang_remap_comcode('fullname', $gallery['fullname'], $new_fullname), ['name' => $gallery['name']], '', 1);
+
+                    if (addon_installed('bayes_common') && addon_installed('bayes_antispam')) {
+                        require_code('tasks');
+                        require_lang('bayes_antispam');
+                        call_user_func_array__long_task(do_lang('HAM_TRAINING'), null, 'bayes_antispam', [['ham'], 'gallery', $gallery['name'], $member_id, $old_content], false, true, false);
+                    }
                 }
             }
         }
@@ -1391,6 +1408,12 @@ function cns_edit_member(int $member_id, ?string $username = null, ?string $pass
     $join_time = $GLOBALS['FORUM_DRIVER']->get_member_row_field($member_id, 'm_join_time');
 
     $GLOBALS['FORUM_DB']->query_update('f_members', $update, ['id' => $member_id], '', 1);
+
+    if (addon_installed('bayes_common') && addon_installed('bayes_antispam')) {
+        require_code('tasks');
+        require_lang('bayes_antispam');
+        call_user_func_array__long_task(do_lang('HAM_TRAINING'), null, 'bayes_antispam', [['ham'], 'member', strval($member_id), $member_id, $old_content], false, true, false);
+    }
 
     if (get_member() != $member_id) {
         log_it('EDIT_MEMBER_PROFILE', strval($member_id), $username);
@@ -1523,6 +1546,11 @@ function cns_delete_member(int $member_id, ?int $member_id_deleting = null)
         warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'member'));
     }
 
+    if (addon_installed('bayes_common') && addon_installed('bayes_antispam')) {
+        require_code('antispam2');
+        $old_content = content_get_antispam_data('member', strval($member_id), false, true);
+    }
+
     if ($member_id_deleting === null) {
         $member_id_deleting = get_member();
     }
@@ -1537,7 +1565,25 @@ function cns_delete_member(int $member_id, ?int $member_id_deleting = null)
     delete_lang_comcode_attachments($signature, 'signature', strval($member_id), $GLOBALS['FORUM_DB']);
     $GLOBALS['FORUM_DB']->query_delete('f_members', ['id' => $member_id], '', 1);
     $GLOBALS['FORUM_DB']->query_delete('f_group_members', ['gm_member_id' => $member_id]);
-    $GLOBALS['FORUM_DB']->query_update('f_groups', ['g_group_lead_member' => get_member()], ['g_group_lead_member' => $member_id]);
+
+    $g_rows = $GLOBALS['FORUM_DB']->query_select('f_groups', ['g_group_lead_member', 'id'], ['g_group_lead_member' => $member_id]);
+    foreach ($g_rows as $g_row) {
+        $update_to = ($member_id_deleting == $member_id) ? null : get_member();
+
+        if (addon_installed('bayes_common') && addon_installed('bayes_antispam')) {
+            require_code('antispam2');
+            $old_content = content_get_antispam_data('group', strval($g_row['id']), false, true);
+        }
+
+        $GLOBALS['FORUM_DB']->query_update('f_groups', ['g_group_lead_member' => $update_to], ['id' => $g_row['id']]);
+
+        if (addon_installed('bayes_common') && addon_installed('bayes_antispam')) {
+            require_code('tasks');
+            require_lang('bayes_antispam');
+            call_user_func_array__long_task(do_lang('HAM_TRAINING'), null, 'bayes_antispam', [['ham'], 'group', strval($g_row['id']), $update_to, $old_content], false, true, false);
+        }
+    }
+
     require_code('users_active_actions');
     delete_session_by_member_id($member_id);
 
@@ -1589,6 +1635,12 @@ function cns_delete_member(int $member_id, ?int $member_id_deleting = null)
 
     delete_value('cns_newest_member_id');
     delete_value('cns_newest_member_username');
+
+    if (addon_installed('bayes_common') && addon_installed('bayes_antispam')) {
+        require_code('tasks');
+        require_lang('bayes_antispam');
+        call_user_func_array__long_task(do_lang('HAM_TRAINING'), null, 'bayes_antispam', [['ham'], 'member', strval($member_id), $member_id, $old_content], false, true, false);
+    }
 
     // Must use cns_mod_log_it instead of log_it because we need to define the member who did the deleting
     require_code('cns_general_action2');
@@ -1750,6 +1802,7 @@ function cns_edit_custom_field(int $id, string $name, string $description, strin
         'cf_tempcode' => $tempcode,
         'cf_autofill_type' => $autofill_type,
         'cf_autofill_hint' => $autofill_hint,
+        'cf_edit_date_and_time' => time(),
     ];
     $map += lang_remap('cf_name', $_name, $name, $GLOBALS['FORUM_DB']);
     $map += lang_remap('cf_description', $_description, $description, $GLOBALS['FORUM_DB']);
@@ -2134,7 +2187,18 @@ function cns_member_choose_title(string $new_title, ?int $member_id = null)
         warn_exit(do_lang_tempcode('MEMBER_TITLE_TOO_BIG'));
     }
 
+    if (addon_installed('bayes_common') && addon_installed('bayes_antispam')) {
+        require_code('antispam2');
+        $old_content = content_get_antispam_data('member', strval($member_id), false, true);
+    }
+
     $GLOBALS['FORUM_DB']->query_update('f_members', ['m_title' => $new_title], ['id' => $member_id], '', 1);
+
+    if (addon_installed('bayes_common') && addon_installed('bayes_antispam')) {
+        require_code('tasks');
+        require_lang('bayes_antispam');
+        call_user_func_array__long_task(do_lang('HAM_TRAINING'), null, 'bayes_antispam', [['ham'], 'member', strval($member_id), $member_id, $old_content], false, true, false);
+    }
 
     // Decache from run-time cache
     unset($GLOBALS['FORUM_DRIVER']->MEMBER_ROWS_CACHED[$member_id]);
@@ -2167,11 +2231,22 @@ function cns_member_choose_signature(string $new_signature, ?int $member_id = nu
         return;
     }
 
+    if (addon_installed('bayes_common') && addon_installed('bayes_antispam')) {
+        require_code('antispam2');
+        $old_content = content_get_antispam_data('member', strval($member_id), false, true);
+    }
+
     require_code('attachments2');
     require_code('attachments3');
     $map = [];
     $map += update_lang_comcode_attachments('m_signature', $_signature, $new_signature, 'cns_signature', strval($member_id), $GLOBALS['FORUM_DB'], $member_id);
     $GLOBALS['FORUM_DB']->query_update('f_members', $map, ['id' => $member_id], '', 1);
+
+    if (addon_installed('bayes_common') && addon_installed('bayes_antispam')) {
+        require_code('tasks');
+        require_lang('bayes_antispam');
+        call_user_func_array__long_task(do_lang('HAM_TRAINING'), null, 'bayes_antispam', [['ham'], 'member', strval($member_id), $member_id, $old_content], false, true, false);
+    }
 
     require_code('notifications');
     $subject = do_lang('CHOOSE_SIGNATURE_SUBJECT', $GLOBALS['FORUM_DRIVER']->get_username($member_id, true), $GLOBALS['FORUM_DRIVER']->get_username($member_id), null, get_lang($member_id));

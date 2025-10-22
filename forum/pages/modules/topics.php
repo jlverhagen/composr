@@ -2898,7 +2898,19 @@ class Module_topics
             if (array_key_exists(0, $_topic_info2)) {
                 require_lang('cns');
                 if ($_topic_info2[0]['t_cache_first_title'] == do_lang('NO_TOPIC_TITLE', strval($topic_id))) {
+                    if (addon_installed('bayes_common') && addon_installed('bayes_antispam')) {
+                        require_code('antispam2');
+                        $old_content = content_get_antispam_data('post', strval($_topic_info2[0]['t_cache_first_post_id']), false, true);
+                        $submitter = $GLOBALS['FORUM_DB']->query_select_value_if_there('f_posts', 'p_posting_member', ['id' => $_topic_info2[0]['t_cache_first_post_id']]);
+                    }
+
                     $GLOBALS['FORUM_DB']->query_update('f_posts', ['p_title' => $current_title], ['id' => $_topic_info2[0]['t_cache_first_post_id']], '', 1);
+
+                    if (addon_installed('bayes_common') && addon_installed('bayes_antispam')) {
+                        require_code('tasks');
+                        require_lang('bayes_antispam');
+                        call_user_func_array__long_task(do_lang('HAM_TRAINING'), null, 'bayes_antispam', [['ham'], 'post', strval($_topic_info2[0]['t_cache_first_post_id']), $submitter, $old_content], false, true, false);
+                    }
                 }
             }
         }
@@ -4559,7 +4571,20 @@ class Module_topics
             warn_exit(do_lang_tempcode('_MEMBER_NO_EXIST', escape_html($_b)), false, false, 404);
         }
 
+        if (addon_installed('bayes_common') && addon_installed('bayes_antispam')) {
+            require_code('antispam2');
+            $old_content = content_get_antispam_data('topic', strval($topic_id), false, true);
+            $submitter = $GLOBALS['FORUM_DB']->query_select_value_if_there('f_topics', 't_cache_first_member_id', ['id' => $topic_id]);
+        }
+
         $GLOBALS['FORUM_DB']->query_update('f_topics', ['t_pt_from_member' => $a, 't_pt_to_member' => $b, 't_forum_id' => null], ['id' => $topic_id], '', 1);
+
+        // We must re-train because we have a special exception against training PTs with a title matching a warning
+        if (addon_installed('bayes_common') && addon_installed('bayes_antispam')) {
+            require_code('tasks');
+            require_lang('bayes_antispam');
+            call_user_func_array__long_task(do_lang('HAM_TRAINING'), null, 'bayes_antispam', [['ham'], 'topic', strval($topic_id), $submitter, $old_content], false, true, false);
+        }
 
         require_code('notifications');
         set_notifications('cns_topic', strval($topic_id), $a); // from

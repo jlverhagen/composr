@@ -93,6 +93,7 @@ class Hook_import_mybb
         $info['final_message'] = do_lang_tempcode('FORUM_CACHE_CLEAR', escape_html($cleanup_url));
 
         $info['final_tasks'] = [
+            'final_task__reset_bayes_antispam',
             ['cns_topics_recache', do_lang('CACHE_TOPICS'), 'f_topics', 100],
             ['cns_recache', do_lang('CACHE_FORUMS'), 'f_topics', 100],
             ['cns_members_recache', do_lang('CACHE_MEMBERS'), 'f_members', 100],
@@ -245,7 +246,7 @@ class Hook_import_mybb
                 }
             }
 
-            $GLOBALS['FORUM_DB']->query_update('f_groups', ['g_max_attachments_per_post' => $additional_data['maxattachments'], 'g_max_avatar_width' => $additional_data['avatar_max_width'], 'g_max_avatar_height' => $additional_data['avatar_max_height']], ['id' => $id], '', 1);
+            $GLOBALS['FORUM_DB']->query_update('f_groups', ['g_max_attachments_per_post' => $additional_data['maxattachments'], 'g_max_avatar_width' => $additional_data['avatar_max_width'], 'g_max_avatar_height' => $additional_data['avatar_max_height'], 'g_edit_date_and_time' => time()], ['id' => $id], '', 1);
 
             set_privilege($id, 'use_quick_reply', $additional_data['quickreply']);
         }
@@ -1388,5 +1389,15 @@ class Hook_import_mybb
             $map += insert_lang('mm_name', $mm_name, 3, $GLOBALS['FORUM_DB']);
             $GLOBALS['FORUM_DB']->query_insert('f_multi_moderations', $map);
         }
+    }
+
+    /**
+     * Reset the last run time of the Bayes antispam scheduler hook to the site start time.
+     * This enables training of newly-imported content on its next run.
+     */
+    public function final_task__reset_bayes_antispam()
+    {
+        require_code('global4');
+        $GLOBALS['SITE_DB']->query_update('cron_progression', ['c_last_run_time' => get_site_start_time()], ['c_hook' => 'bayes_antispam']);
     }
 }

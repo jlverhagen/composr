@@ -1421,7 +1421,7 @@ LINK2_TEXT=' . do_lang('DEFAULT_LINK2_TEXT', null, null, null, $lang) . '
             // Delete the category as well if now empty
             $image_count = $GLOBALS['SITE_DB']->query_select_value('images', 'COUNT(*)', ['cat' => $default_homepage_hero_slider_category]);
             if ($image_count == 0) {
-                $GLOBALS['SITE_DB']->query_delete('galleries', ['name' => $default_homepage_hero_slider_category]);
+                delete_gallery($default_homepage_hero_slider_category);
             }
         }
     }

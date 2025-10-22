@@ -108,6 +108,7 @@ class Hook_import_phpbb3
         $info['final_message'] = do_lang_tempcode('FORUM_CACHE_CLEAR', escape_html($cleanup_url));
 
         $info['final_tasks'] = [
+            'final_task__reset_bayes_antispam',
             ['cns_topics_recache', do_lang('CACHE_TOPICS'), 'f_topics', 100],
             ['cns_recache', do_lang('CACHE_FORUMS'), 'f_topics', 100],
             ['cns_members_recache', do_lang('CACHE_MEMBERS'), 'f_members', 100],
@@ -201,7 +202,7 @@ class Hook_import_phpbb3
                 continue;
             }
 
-            $GLOBALS['FORUM_DB']->query_update('f_groups', ['g_max_avatar_width' => $PROBED_FORUM_CONFIG['avatar_max_width'], 'g_max_avatar_height' => $PROBED_FORUM_CONFIG['avatar_max_height'], 'g_max_sig_length_comcode' => $PROBED_FORUM_CONFIG['max_sig_chars']], ['id' => $id], '', 1);
+            $GLOBALS['FORUM_DB']->query_update('f_groups', ['g_max_avatar_width' => $PROBED_FORUM_CONFIG['avatar_max_width'], 'g_max_avatar_height' => $PROBED_FORUM_CONFIG['avatar_max_height'], 'g_max_sig_length_comcode' => $PROBED_FORUM_CONFIG['max_sig_chars'], 'g_edit_date_and_time' => time()], ['id' => $id], '', 1);
 
             set_privilege($id, 'own_avatars', $PROBED_FORUM_CONFIG['allow_avatar_upload'] == '1');
             set_privilege($id, 'rename_self', $PROBED_FORUM_CONFIG['allow_namechange'] == '1');
@@ -1268,6 +1269,7 @@ class Hook_import_phpbb3
                 'tag_dangerous_tag' => 0,
                 'tag_block_tag' => 0,
                 'tag_textual_tag' => 0,
+                'tag_add_date_and_time' => time(),
             ];
             $map += insert_lang('tag_title', $row['bbcode_tag'], 3);
             $map += insert_lang('tag_description', $row['bbcode_helpline'], 3);
@@ -1452,5 +1454,15 @@ class Hook_import_phpbb3
             require_code('report_content');
             report_post($post_id, $row['report_text'], 0, ($row['report_closed'] == 1) ? 0 : 1, $row['report_time'], $user_id);
         }
+    }
+
+    /**
+     * Reset the last run time of the Bayes antispam scheduler hook to the site start time.
+     * This enables training of newly-imported content on its next run.
+     */
+    public function final_task__reset_bayes_antispam()
+    {
+        require_code('global4');
+        $GLOBALS['SITE_DB']->query_update('cron_progression', ['c_last_run_time' => get_site_start_time()], ['c_hook' => 'bayes_antispam']);
     }
 }

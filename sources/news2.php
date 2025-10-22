@@ -483,6 +483,11 @@ function edit_news(int $id, string $title, string $news, string $author, int $va
     $_news = $rows[0]['news'];
     $_news_article = $rows[0]['news_article'];
 
+    if (addon_installed('bayes_common') && addon_installed('bayes_antispam')) {
+        require_code('antispam2');
+        $old_content = content_get_antispam_data('news', strval($id), false, true);
+    }
+
     require_code('urls2');
 
     suggest_new_idmoniker_for('news', 'view', strval($id), '', $title);
@@ -597,6 +602,12 @@ function edit_news(int $id, string $title, string $news, string $author, int $va
         process_overridden_comment_forum('news', strval($id), strval($main_news_category), strval($rows[0]['news_category']))
     );
 
+    if (addon_installed('bayes_common') && addon_installed('bayes_antispam')) {
+        require_code('tasks');
+        require_lang('bayes_antispam');
+        call_user_func_array__long_task(do_lang('HAM_TRAINING'), null, 'bayes_antispam', [['ham'], 'news', strval($id), (($submitter !== null) ? $submitter : $rows[0]['submitter']), $old_content], false, true, false);
+    }
+
     require_code('sitemap_xml');
     if ($validated == 1) {
         notify_sitemap_node_edit('_SEARCH:news:view:' . strval($id));
@@ -653,6 +664,11 @@ function delete_news(int $id)
     $news = $rows[0]['news'];
     $news_article = $rows[0]['news_article'];
 
+    if (addon_installed('bayes_common') && addon_installed('bayes_antispam')) {
+        require_code('antispam2');
+        $old_content = content_get_antispam_data('news', strval($id), false, true);
+    }
+
     $_title = get_translated_text($title);
 
     require_code('files2');
@@ -690,6 +706,12 @@ function delete_news(int $id)
     }
 
     $GLOBALS['SITE_DB']->query_update('url_id_monikers', ['m_deprecated' => 1], ['m_resource_page' => 'news', 'm_resource_type' => 'view', 'm_resource_id' => strval($id)]);
+
+    if (addon_installed('bayes_common') && addon_installed('bayes_antispam')) {
+        require_code('tasks');
+        require_lang('bayes_antispam');
+        call_user_func_array__long_task(do_lang('HAM_TRAINING'), null, 'bayes_antispam', [['ham'], 'news', strval($id), $rows[0]['submitter'], $old_content], false, true, false);
+    }
 
     log_it('DELETE_NEWS', strval($id), $_title);
 

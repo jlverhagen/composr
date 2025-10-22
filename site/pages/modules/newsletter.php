@@ -111,9 +111,11 @@ class Module_newsletter
                 'id' => '*AUTO',
                 'title' => 'SHORT_TRANS',
                 'the_description' => 'LONG_TRANS',
+                'add_date_and_time' => 'TIME',
+                'edit_date_and_time' => '?TIME',
             ]);
 
-            $map = [];
+            $map = ['add_date_and_time' => time()];
             require_code('lang3');
             $map += lang_code_to_default_content('title', 'GENERAL');
             $map += lang_code_to_default_content('the_description', 'NEWSLETTER_GENERAL');
@@ -151,6 +153,8 @@ class Module_newsletter
                 'np_in_full' => 'BINARY',
                 'np_template' => 'ID_TEXT',
                 'np_last_sent_time' => 'TIME',
+                'np_add_date_and_time' => 'TIME',
+                'np_edit_date_and_time' => '?TIME',
             ]);
         }
 
@@ -220,6 +224,13 @@ class Module_newsletter
         if (($upgrade_from === null) || ($upgrade_from < 16)) { // 11.beta9
             $GLOBALS['SITE_DB']->create_foreign_key('newsletter_subscribe', 'newsletter_id', 'newsletters', 'id');
             $GLOBALS['SITE_DB']->create_foreign_key('newsletter_drip_send', 'd_message_id', 'newsletter_archive', 'id');
+        }
+
+        if (($upgrade_from !== null) && ($upgrade_from < 16)) { // LEGACY: 11.beta9
+            $GLOBALS['FORUM_DB']->add_table_field('newsletters', 'add_date_and_time', 'TIME');
+            $GLOBALS['FORUM_DB']->add_table_field('newsletters', 'edit_date_and_time', '?TIME');
+            $GLOBALS['FORUM_DB']->add_table_field('newsletter_periodic', 'np_add_date_and_time', 'TIME');
+            $GLOBALS['FORUM_DB']->add_table_field('newsletter_periodic', 'np_edit_date_and_time', '?TIME');
         }
     }
 

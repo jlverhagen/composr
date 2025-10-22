@@ -579,6 +579,7 @@ class Module_admin_zones
             $comcode = post_param_string($for, null);
             if ($comcode !== null) {
                 $_for = ($for == DEFAULT_ZONE_PAGE_NAME) ? $default_page : $for;
+                $page_link = (($redirect === null) ? $id : $redirect) . ':' . $_for;
 
                 // Where to save to
                 $full_path = zone_black_magic_filterer(get_custom_file_base() . (((($redirect === null) ? $id : $redirect) == '') ? '' : '/') . (($redirect === null) ? $id : $redirect) . '/pages/comcode_custom/' . $lang . '/' . $_for . '.txt');

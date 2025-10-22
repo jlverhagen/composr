@@ -241,11 +241,11 @@ class LangTokeniser_EN
                     continue;
                 }
 
-                // Consider non-stemmed ngram first, but with less weight
+                // Consider non-stemmed ngram first, but with slightly less weight
                 if (!isset($tokens[$ngram])) {
                     $tokens[$ngram] = 0.0;
                 }
-                $tokens[$ngram] += ($count * 0.75);
+                $tokens[$ngram] += ($count * 0.9);
 
                 $ngram_lc = $ngram;
                 $stemmed = $stemmer::stem($ngram_lc);
@@ -259,7 +259,7 @@ class LangTokeniser_EN
                 }
             } else { // Down-weight non-unigrams
                 $len = substr_count($ngram, ' ');
-                $weight = (0.67 ** $len);
+                $weight = (0.8 ** $len);
                 $weighted = max(0.0001, $weight * $count);
                 if (!isset($tokens[$ngram])) {
                     $tokens[$ngram] = 0.0;

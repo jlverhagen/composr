@@ -418,6 +418,11 @@ function edit_download_category(int $category_id, string $category, ?int $parent
     $_category = $rows[0]['category'];
     $_description = $rows[0]['the_description'];
 
+    if (addon_installed('bayes_common') && addon_installed('bayes_antispam')) {
+        require_code('antispam2');
+        $old_content = content_get_antispam_data('download_category', strval($category_id), false, true);
+    }
+
     $update_map = [
         'notes' => $notes,
         'parent_id' => $parent_id,
@@ -438,6 +443,12 @@ function edit_download_category(int $category_id, string $category, ?int $parent
     seo_meta_set_for_explicit('downloads_category', strval($category_id), $meta_keywords, $meta_description);
 
     reorganise_uploads__download_categories(['id' => $category_id]);
+
+    if (addon_installed('bayes_common') && addon_installed('bayes_antispam')) {
+        require_code('tasks');
+        require_lang('bayes_antispam');
+        call_user_func_array__long_task(do_lang('HAM_TRAINING'), null, 'bayes_antispam', [['ham'], 'download_category', strval($category_id), null, $old_content], false, true, false);
+    }
 
     log_it('EDIT_DOWNLOAD_CATEGORY', strval($category_id), $category);
 
@@ -470,6 +481,11 @@ function delete_download_category(int $category_id)
     $category = $rows[0]['category'];
     $description = $rows[0]['the_description'];
 
+    if (addon_installed('bayes_common') && addon_installed('bayes_antispam')) {
+        require_code('antispam2');
+        $old_content = content_get_antispam_data('download_category', strval($category_id), false, true);
+    }
+
     require_code('files2');
     delete_upload('uploads/repimages', 'download_categories', 'rep_image', 'id', $category_id);
 
@@ -496,6 +512,12 @@ function delete_download_category(int $category_id)
 
     require_code('uploads2');
     clean_empty_upload_directories('uploads/repimages');
+
+    if (addon_installed('bayes_common') && addon_installed('bayes_antispam')) {
+        require_code('tasks');
+        require_lang('bayes_antispam');
+        call_user_func_array__long_task(do_lang('HAM_TRAINING'), null, 'bayes_antispam', [['ham'], 'download_category', strval($category_id), null, $old_content], false, true, false);
+    }
 
     log_it('DELETE_DOWNLOAD_CATEGORY', strval($category_id), get_translated_text($category));
 
@@ -1160,11 +1182,17 @@ function edit_download(int $id, int $category_id, string $name, string $url, str
         $edit_time = $null_is_literal ? null : time();
     }
 
-    $rows = $GLOBALS['SITE_DB']->query_select('download_downloads', ['name', 'the_description', 'additional_details', 'category_id'], ['id' => $id], '', 1);
+    $rows = $GLOBALS['SITE_DB']->query_select('download_downloads', ['name', 'the_description', 'additional_details', 'category_id', 'submitter'], ['id' => $id], '', 1);
     if (!array_key_exists(0, $rows)) {
         warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'download'));
     }
     $myrow = $rows[0];
+
+    if (addon_installed('bayes_common') && addon_installed('bayes_antispam')) {
+        require_code('antispam2');
+        $old_content = content_get_antispam_data('download', strval($id), false, true);
+        $old_submitter = $myrow['submitter'];
+    }
 
     require_code('urls2');
     suggest_new_idmoniker_for('downloads', 'view', strval($id), '', $name);
@@ -1276,6 +1304,12 @@ function edit_download(int $id, int $category_id, string $name, string $url, str
         call_user_func_array__long_task(do_lang('INDEX_DOWNLOAD'), null, 'index_download', [$id, $actual_url, $original_filename], false, false, false);
     }
 
+    if (addon_installed('bayes_common') && addon_installed('bayes_antispam')) {
+        require_code('tasks');
+        require_lang('bayes_antispam');
+        call_user_func_array__long_task(do_lang('HAM_TRAINING'), null, 'bayes_antispam', [['ham'], 'download', strval($id), (($submitter !== null) ? $submitter : $old_submitter), $old_content], false, true, false);
+    }
+
     log_it('EDIT_DOWNLOAD', strval($id), get_translated_text($myrow['name']));
 
     if ((addon_installed('commandr')) && (!running_script('install')) && (!get_mass_import_mode())) {
@@ -1336,6 +1370,11 @@ function delete_download(int $id, bool $leave = false)
     }
     $myrow = $rows[0];
 
+    if (addon_installed('bayes_common') && addon_installed('bayes_antispam')) {
+        require_code('antispam2');
+        $old_content = content_get_antispam_data('download', strval($id), false, true);
+    }
+
     if (addon_installed('catalogues')) {
         update_catalogue_content_ref('download', strval($id), '');
     }
@@ -1377,6 +1416,12 @@ function delete_download(int $id, bool $leave = false)
     require_code('uploads2');
     clean_empty_upload_directories('uploads/downloads');
 
+    if (addon_installed('bayes_common') && addon_installed('bayes_antispam')) {
+        require_code('tasks');
+        require_lang('bayes_antispam');
+        call_user_func_array__long_task(do_lang('HAM_TRAINING'), null, 'bayes_antispam', [['ham'], 'download', strval($id), $myrow['submitter'], $old_content], false, true, false);
+    }
+
     log_it('DELETE_DOWNLOAD', strval($id), get_translated_text($myrow['name']));
 
     if ((addon_installed('commandr')) && (!running_script('install')) && (!get_mass_import_mode())) {
@@ -1400,7 +1445,7 @@ function add_download_licence(string $title, string $text) : int
     require_code('global4');
     prevent_double_submit('ADD_DOWNLOAD_LICENCE', null, $title);
 
-    $id = $GLOBALS['SITE_DB']->query_insert('download_licences', ['l_title' => $title, 'l_text' => $text], true);
+    $id = $GLOBALS['SITE_DB']->query_insert('download_licences', ['l_title' => $title, 'l_text' => $text, 'l_add_date_and_time' => time()], true);
 
     log_it('ADD_DOWNLOAD_LICENCE', strval($id), $title);
 
@@ -1426,7 +1471,7 @@ function edit_download_licence(int $id, string $title, string $text)
         warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'download_licence'));
     }
 
-    $GLOBALS['SITE_DB']->query_update('download_licences', ['l_title' => $title, 'l_text' => $text], ['id' => $id], '', 1);
+    $GLOBALS['SITE_DB']->query_update('download_licences', ['l_title' => $title, 'l_text' => $text, 'l_edit_date_and_time' => time()], ['id' => $id], '', 1);
 
     log_it('EDIT_DOWNLOAD_LICENCE', strval($id), $title);
 

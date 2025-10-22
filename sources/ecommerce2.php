@@ -54,6 +54,7 @@ function add_usergroup_subscription(string $title, string $description, float $p
         's_group_id' => $group_id,
         's_uses_primary' => $uses_primary,
         's_enabled' => $enabled,
+        's_add_date_and_time' => time(),
     ];
     $map += insert_lang('s_title', $title, 2, $db);
     $map += insert_lang_comcode('s_description', $description, 2, $db);
@@ -150,6 +151,7 @@ function edit_usergroup_subscription(int $id, string $title, string $description
         's_group_id' => $group_id,
         's_uses_primary' => $uses_primary,
         's_enabled' => $enabled,
+        's_edit_date_and_time' => time(),
     ];
     $map += lang_remap('s_title', $_title, $title, $db);
     $map += lang_remap_comcode('s_description', $_description, $description, $db);

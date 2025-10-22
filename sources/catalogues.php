@@ -1162,6 +1162,7 @@ function get_catalogue_entry_field_values(?string $catalogue_name, $entry_id, ?a
         $field_id = $field['id'];
 
         if (($only_fields !== null) && (!isset($only_fields[$i]))) {
+            unset($fields[$i]);
             continue;
         }
 

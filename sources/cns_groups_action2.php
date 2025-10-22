@@ -89,12 +89,17 @@ function cns_edit_group(int $group_id, ?string $name, ?int $is_default, ?int $is
     $_name = $_group_info[0]['g_name'];
     $_title = $_group_info[0]['g_title'];
 
+    if (addon_installed('bayes_common') && addon_installed('bayes_antispam')) {
+        require_code('antispam2');
+        $old_content = content_get_antispam_data('group', strval($group_id), false, true);
+    }
+
     if (get_translated_text($_name) == get_option('probation_usergroup')) {
         require_code('config2');
         set_option('probation_usergroup', $name);
     }
 
-    $map = [];
+    $map = ['g_edit_date_and_time' => time()];
     if ($name !== null) {
         $map += lang_remap('g_name', $_name, $name, $GLOBALS['FORUM_DB']);
     }
@@ -188,6 +193,12 @@ function cns_edit_group(int $group_id, ?string $name, ?int $is_default, ?int $is
         generate_resource_fs_moniker('group', strval($group_id));
     }
 
+    if (addon_installed('bayes_common') && addon_installed('bayes_antispam')) {
+        require_code('tasks');
+        require_lang('bayes_antispam');
+        call_user_func_array__long_task(do_lang('HAM_TRAINING'), null, 'bayes_antispam', [['ham'], 'group', strval($group_id), (($group_leader !== null) ? $group_leader : $_group_info[0]['g_group_lead_member']), $old_content], false, true, false);
+    }
+
     persistent_cache_delete('GROUPS');
     persistent_cache_delete('GROUPS_PO');
     persistent_cache_delete('SUPER_ADMIN_GROUPS');
@@ -223,6 +234,12 @@ function cns_delete_group(int $group_id, ?int $target_group = null)
     }
     $_name = $_group_info[0]['g_name'];
     $_title = $_group_info[0]['g_title'];
+
+    if (addon_installed('bayes_common') && addon_installed('bayes_antispam')) {
+        require_code('antispam2');
+        $old_content = content_get_antispam_data('group', strval($group_id), false, true);
+    }
+
     $name = get_translated_text($_name, $GLOBALS['FORUM_DB']);
     delete_lang($_name, $GLOBALS['FORUM_DB']);
     delete_lang($_title, $GLOBALS['FORUM_DB']);
@@ -265,6 +282,12 @@ function cns_delete_group(int $group_id, ?int $target_group = null)
     $map = ['ga_status' => -1, 'ga_status_member_id' => $GLOBALS['FORUM_DRIVER']->get_guest_id()];
     $map += insert_lang_comcode('ga_reason', do_lang('ORIGINAL_USERGROUP_DELETED'), 4, $GLOBALS['FORUM_DB']);
     $GLOBALS['FORUM_DB']->query_update('f_group_approvals', $map, ['ga_old_group_id' => $group_id, 'ga_status' => 0]);
+
+    if (addon_installed('bayes_common') && addon_installed('bayes_antispam')) {
+        require_code('tasks');
+        require_lang('bayes_antispam');
+        call_user_func_array__long_task(do_lang('HAM_TRAINING'), null, 'bayes_antispam', [['ham'], 'group', strval($group_id), $_group_info[0]['g_group_lead_member'], $old_content], false, true, false);
+    }
 
     log_it('DELETE_GROUP', strval($group_id), $name);
 
@@ -377,7 +400,18 @@ function cns_member_leave_secondary_group(int $group_id, ?int $member_id = null)
 
     $group_leader = $GLOBALS['FORUM_DB']->query_select_value('f_groups', 'g_group_lead_member', ['id' => $group_id]);
     if ($group_leader == $member_id) {
+        if (addon_installed('bayes_common') && addon_installed('bayes_antispam')) {
+            require_code('antispam2');
+            $old_content = content_get_antispam_data('group', strval($group_id), false, true);
+        }
+
         $GLOBALS['FORUM_DB']->query_update('f_groups', ['g_group_lead_member' => null], ['id' => $group_id], '', 1);
+
+        if (addon_installed('bayes_common') && addon_installed('bayes_antispam')) {
+            require_code('tasks');
+            require_lang('bayes_antispam');
+            call_user_func_array__long_task(do_lang('HAM_TRAINING'), null, 'bayes_antispam', [['ham'], 'group', strval($group_id), null, $old_content], false, true, false);
+        }
     }
 
     $test = $GLOBALS['FORUM_DB']->query_select_value_if_there('f_group_members', 'gm_group_id', ['gm_group_id' => $group_id, 'gm_member_id' => $member_id]);

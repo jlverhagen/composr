@@ -25,9 +25,10 @@
  * @param  boolean $for_extract Whether this is for generating an extract that does not need to be fully comprehended (i.e. favour brevity)
  * @param  array $tags_to_preserve List of tags to preserve
  * @param  boolean $include_urls Whether to include URLs in the text version
+ * @param  boolean $strip_references Whether to also strip reference Comcode which we normally leave in
  * @return string Clean text
  */
-function _strip_comcode(string $in, bool $for_extract = false, array $tags_to_preserve = [], bool $include_urls = false) : string
+function _strip_comcode(string $in, bool $for_extract = false, array $tags_to_preserve = [], bool $include_urls = false, bool $strip_references = false) : string
 {
     $text = $in;
 
@@ -233,11 +234,25 @@ function _strip_comcode(string $in, bool $for_extract = false, array $tags_to_pr
         'attachment',
         'attachment_safe',
     ], $tags_to_preserve);
+
+    if ($strip_references) {
+        $tags_to_strip_entirely = array_merge($tags_to_strip_entirely, array_diff([
+            'reference',
+            'cite',
+            'quote',
+            'ins',
+            's',
+            'del',
+            'dfn',
+        ], $tags_to_preserve));
+    }
+
     if (!$include_urls) {
         $tags_to_strip_entirely[] = 'media';
         $tags_to_strip_entirely[] = 'url';
         $tags_to_strip_entirely[] = 'email';
     }
+
     foreach ($tags_to_strip_entirely as $s) {
         if (stripos($text, '[' . $s) !== false) {
             $text = preg_replace('#\[' . $s . '[^\]]*\].*\[/' . $s . '\]#Usi', '', $text);

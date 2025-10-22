@@ -444,6 +444,11 @@ function edit_quiz(int $id, string $name, ?int $timeout, string $start_text, str
     $_end_text = $rows[0]['q_end_text'];
     $_end_text_fail = $rows[0]['q_end_text_fail'];
 
+    if (addon_installed('bayes_common') && addon_installed('bayes_antispam')) {
+        require_code('antispam2');
+        $old_content = content_get_antispam_data('quiz', strval($id), false, true);
+    }
+
     if ($open_time === null) {
         $open_time = time();
     }
@@ -500,6 +505,12 @@ function edit_quiz(int $id, string $name, ?int $timeout, string $start_text, str
     require_code('content2');
     seo_meta_set_for_explicit('quiz', strval($id), $meta_keywords, $meta_description);
 
+    if (addon_installed('bayes_common') && addon_installed('bayes_antispam')) {
+        require_code('tasks');
+        require_lang('bayes_antispam');
+        call_user_func_array__long_task(do_lang('HAM_TRAINING'), null, 'bayes_antispam', [['ham'], 'quiz', strval($id), (($submitter !== null) ? $submitter : $rows[0]['q_submitter']), $old_content], false, true, false);
+    }
+
     log_it('EDIT_QUIZ', strval($id), $name);
 
     if ((addon_installed('commandr')) && (!running_script('install')) && (!get_mass_import_mode())) {
@@ -532,6 +543,11 @@ function delete_quiz(int $id)
     $_end_text_fail = $rows[0]['q_end_text_fail'];
     $name = get_translated_text($_name);
 
+    if (addon_installed('bayes_common') && addon_installed('bayes_antispam')) {
+        require_code('antispam2');
+        $old_content = content_get_antispam_data('quiz', strval($id), false, true);
+    }
+
     delete_lang($_name);
     delete_lang($_start_text);
     delete_lang($_end_text);
@@ -563,6 +579,12 @@ function delete_quiz(int $id)
     $GLOBALS['SITE_DB']->query_delete('group_category_access', ['module_the_name' => 'quiz', 'category_name' => strval($id)]);
 
     $GLOBALS['SITE_DB']->query_update('url_id_monikers', ['m_deprecated' => 1], ['m_resource_page' => 'quiz', 'm_resource_type' => 'do', 'm_resource_id' => strval($id)]);
+
+    if (addon_installed('bayes_common') && addon_installed('bayes_antispam')) {
+        require_code('tasks');
+        require_lang('bayes_antispam');
+        call_user_func_array__long_task(do_lang('HAM_TRAINING'), null, 'bayes_antispam', [['ham'], 'quiz', strval($id), $rows[0]['q_submitter'], $old_content], false, true, false);
+    }
 
     log_it('DELETE_QUIZ', strval($id), $name);
 

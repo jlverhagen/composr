@@ -124,6 +124,7 @@ function cns_make_welcome_email(string $name, string $subject, string $text, int
         'w_send_after_hours' => $send_after_hours,
         'w_usergroup' => $usergroup,
         'w_usergroup_type' => $usergroup_type,
+        'w_add_date_and_time' => time(),
     ];
     $map += insert_lang('w_subject', $subject, 2);
     $map += insert_lang('w_text', $text, 2);

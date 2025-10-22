@@ -186,29 +186,29 @@ function generate_member_entry_image_url(array $row) : string
  * Get content from a member's custom fields for use in antispam training.
  *
  * @param  array $row Database row of entry
- * @return array Data to train
+ * @return string Data to train, delimited by ||NEWITEM||; must be Comcode-stripped first
  */
-function generate_member_custom_fields(array $row) : array
+function generate_member_custom_fields(array $row) : string
 {
     require_code('cns_general');
+    require_code('comcode');
 
     $ret = [];
 
     $member_info = cns_read_in_member_profile($row['id'], ['custom_fields', 'signature_comcode'], false);
 
     if (isset($member_info['signature_comcode'])) {
-        $ret[] = strip_comcode($member_info['signature_comcode']);
+        $ret[] = $member_info['signature_comcode'];
     }
 
     if (isset($member_info['custom_fields'])) {
         foreach ($member_info['custom_fields'] as $trans_name => $bindings) {
             if (($bindings['RAW'] !== null) && in_array($bindings['FIELD_TYPE'], ['list', 'list_multi', 'long_text', 'long_trans', 'posting_field', 'short_text', 'short_text_multi', 'short_trans', 'short_trans_multi'])) {
                 $comcode = html_to_comcode($bindings['RAW']);
-                $plain_text = strip_comcode($comcode);
-                $ret[] = $plain_text;
+                $ret[] = $comcode;
             }
         }
     }
 
-    return $ret;
+    return implode('||NEWITEM||', $ret);
 }

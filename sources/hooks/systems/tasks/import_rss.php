@@ -449,7 +449,12 @@ class Hook_task_import_rss
             $news = $item['import__news'];
             $news_article = $item['import__news_article'];
 
-            $news_rows = $GLOBALS['SITE_DB']->query_select('news', ['news', 'news_article'], ['id' => $item['import_id']], '', 1);
+            $news_rows = $GLOBALS['SITE_DB']->query_select('news', ['news', 'news_article', 'submitter'], ['id' => $item['import_id']], '', 1);
+
+            if (addon_installed('bayes_common') && addon_installed('bayes_antispam')) {
+                require_code('antispam2');
+                $old_content = content_get_antispam_data('news', strval($item['import_id']), false, true);
+            }
 
             _news_import_grab_images_and_fix_links($download_images == 1, $news, $imported_news);
             _news_import_grab_images_and_fix_links($download_images == 1, $news_article, $imported_news);
@@ -458,6 +463,12 @@ class Hook_task_import_rss
             $map += lang_remap_comcode('news', $news_rows[0]['news'], $news);
             $map += lang_remap_comcode('news_article', $news_rows[0]['news_article'], $news_article);
             $GLOBALS['SITE_DB']->query_update('news', $map, ['id' => $item['import_id']], '', 1);
+
+            if (addon_installed('bayes_common') && addon_installed('bayes_antispam')) {
+                require_code('tasks');
+                require_lang('bayes_antispam');
+                call_user_func_array__long_task(do_lang('HAM_TRAINING'), null, 'bayes_antispam', [['ham'], 'news', strval($item['import_id']), $news_rows[0]['submitter'], $old_content], false, true, false);
+            }
         }
         foreach ($imported_pages as $item) {
             $contents = $item['contents'];

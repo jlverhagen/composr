@@ -1303,9 +1303,26 @@ class Module_tickets
             $topic_id = $GLOBALS['SITE_DB']->query_select_value('tickets', 'topic_id', ['ticket_id' => $ticket_id]);
             $post_id = $GLOBALS['FORUM_DB']->query_select_value('f_topics', 't_cache_first_post_id', ['id' => $topic_id]);
             $post_id = $GLOBALS['FORUM_DB']->query_select_value('f_posts', 'MIN(id)', ['p_topic_id' => $topic_id], 'AND id<>' . strval($post_id));
+
+            if (addon_installed('bayes_common') && addon_installed('bayes_antispam')) {
+                require_code('antispam2');
+                $old_content = content_get_antispam_data('post', strval($post_id), false, true);
+                $submitter = $GLOBALS['FORUM_DB']->query_select_value_if_there('f_posts', 'p_posting_member', ['id' => $post_id]);
+
+                $old_content_t = content_get_antispam_data('topic', strval($topic_id), false, true);
+                $submitter_t = $GLOBALS['FORUM_DB']->query_select_value_if_there('f_topics', 't_cache_first_member_id', ['id' => $topic_id]);
+            }
+
             $GLOBALS['FORUM_DB']->query_update('f_topics', ['t_forum_id' => $forum_id, 't_cache_first_title' => $title], ['id' => $topic_id], '', 1);
             $GLOBALS['FORUM_DB']->query_update('f_posts', ['p_cache_forum_id' => $forum_id], ['p_topic_id' => $topic_id], '', 1);
             $GLOBALS['FORUM_DB']->query_update('f_posts', ['p_title' => $title], ['id' => $post_id], '', 1);
+
+            if (addon_installed('bayes_common') && addon_installed('bayes_antispam')) {
+                require_code('tasks');
+                require_lang('bayes_antispam');
+                call_user_func_array__long_task(do_lang('HAM_TRAINING'), null, 'bayes_antispam', [['ham'], 'post', strval($post_id), $submitter, $old_content], false, true, false);
+                call_user_func_array__long_task(do_lang('HAM_TRAINING'), null, 'bayes_antispam', [['ham'], 'topic', strval($topic_id), $submitter_t, $old_content_t], false, true, false);
+            }
         }
 
         $url = build_url(['page' => '_SELF', 'type' => 'ticket', 'id' => $ticket_id], '_SELF');

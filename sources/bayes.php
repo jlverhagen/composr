@@ -15,13 +15,13 @@
 /**
  * @license    http://opensource.org/licenses/cpal_1.0 Common Public Attribution License
  * @copyright  Christopher Graham
- * @package    core
+ * @package    bayes_common
  */
 
 /**
- * Simple Naive Bayes text classifier (single-file, no dependencies).
+ * Simple Naive Bayes text classifier which stores its training data in the database.
  *
- * @package core
+ * @package bayes_common
  */
 class CMS_Bayes_classifier
 {
@@ -31,11 +31,11 @@ class CMS_Bayes_classifier
     private $smoothing_k;
 
     /**
-     * Simple Naive Bayes text classifier.
+     * Simple Naive Bayes text classifier which stores its training data in the database.
      *
      * @param  object $db The database to use for loading and saving training data
      * @param  ID_TEXT $table The database table for the training data
-     * @param  ID_TEXT $lang The language to use; we should have matching stemmers and tokenisers in the software sources
+     * @param  LANGUAGE_NAME $lang The language to use; we should have matching stemmers and tokenisers in the software sources
      * @param  float $smoothing_k Smoothing factor (Laplace/add-k smoothing)
      */
     public function __construct($db, string $table, string $lang, float $smoothing_k = 1.0)
@@ -47,12 +47,24 @@ class CMS_Bayes_classifier
     }
 
     /**
+     * Get the language we loaded for this instance.
+     *
+     * @return LANGUAGE_NAME The language
+     */
+    public function get_lang() : string
+    {
+        return $this->lang;
+    }
+
+    /**
      * Train the model with a text sample and one or more categories it belongs to.
+     * The data will be hashed and salted in the database for privacy compliance.
      *
      * @param  LONG_TEXT $text The text to be trained
      * @param  array $categories Array of category names to categorise the text
+     * @param  boolean $untrain Whether we actually want to "untrain" the data by subtracting token counts
      */
-    public function train(string $text, array $categories)
+    public function train(string $text, array $categories, bool $untrain = false)
     {
         if (trim($text) == '') { // Nothing to train
             return;
@@ -61,10 +73,19 @@ class CMS_Bayes_classifier
         require_code('crypt');
 
         push_query_limiting(false);
+        raise_php_memory_limit();
+        $old = cms_extend_time_limit(30);
 
         $token_counts = [];
 
         $tokens = $this->text_to_tokens($text);
+
+        // Optimisation: bail out now if we have nothing to do
+        if (count($tokens) == 0) {
+            pop_query_limiting();
+            cms_set_time_limit($old);
+            return;
+        }
 
         $unique_categories = $this->unique_array($categories);
         foreach ($unique_categories as $category) {
@@ -77,60 +98,122 @@ class CMS_Bayes_classifier
                 $token = cms_base64_encode(strval($_token), false, true, true);
 
                 if (!isset($token_counts[$category][$token])) {
-                    $prev_count = $this->db->query_select_value_if_there($this->table, 't_count', ['t_id' => $token, 't_category' => $category]);
+                    $prev_count = $this->db->query_select_value_if_there($this->table, 't_count', ['t_id' => $token, 't_category' => $category, 't_lang' => $this->lang]);
                     if ($prev_count === null) {
+                        if ($untrain) {
+                            continue; // Nothing to untrain
+                        }
                         $token_counts[$category][$token] = 0.0;
                     } else {
                         $token_counts[$category][$token] = $prev_count;
                     }
                 }
-                $token_counts[$category][$token] += $count;
-            }
-        }
-
-        // Save the data
-        foreach ($token_counts as $category => $tokens) {
-            foreach ($tokens as $token => $count) {
-                $id = $this->db->query_select_value_if_there($this->table, 'id', ['t_id' => $token, 't_category' => $category]);
-                if ($id === null) {
-                    $this->db->query_insert($this->table, ['t_id' => $token, 't_category' => $category, 't_count' => $count, 't_last_date_and_time' => time()]);
+                if ($untrain) {
+                    $token_counts[$category][$token] -= $count;
                 } else {
-                    $this->db->query_update($this->table, ['t_count' => $count, 't_last_date_and_time' => time()], ['t_id' => $token, 't_category' => $category]);
+                    $token_counts[$category][$token] += $count;
                 }
             }
         }
 
+        // Must continue beyond this point to prevent partial data training.
+        $abort_old = ignore_user_abort(true);
+
+        // Save the data
+        foreach ($token_counts as $category => $tokens) {
+            foreach ($tokens as $token => $count) {
+                if ($untrain && ($count <= 0.0)) {
+                    $this->db->query_delete($this->table, ['t_id' => $token, 't_category' => $category, 't_lang' => $this->lang]);
+                    continue;
+                }
+
+                $id = $this->db->query_select_value_if_there($this->table, 'id', ['t_id' => $token, 't_category' => $category, 't_lang' => $this->lang]);
+                if ($id === null) {
+                    $this->db->query_insert($this->table, ['t_id' => $token, 't_category' => $category, 't_count' => $count, 't_last_date_and_time' => time(), 't_lang' => $this->lang]);
+                } else {
+                    $this->db->query_update($this->table, ['t_count' => $count, 't_last_date_and_time' => time()], ['t_id' => $token, 't_category' => $category, 't_lang' => $this->lang]);
+                }
+            }
+        }
+
+        // Update doc counts
+        foreach ($unique_categories as $category) {
+            $doc_count = $this->db->query_select_value_if_there('bayes_doc_counts', 'b_doc_count', ['b_table' => $this->table, 'b_category' => $category, 'b_lang' => $this->lang]);
+            if (($doc_count === null) && (!$untrain)) {
+                $this->db->query_insert('bayes_doc_counts', ['b_table' => $this->table, 'b_category' => $category, 'b_doc_count' => 1, 'b_lang' => $this->lang]);
+            } else {
+                if ($untrain) {
+                    $doc_count--;
+                } else {
+                    $doc_count++;
+                }
+
+                if ($doc_count > 0) {
+                    $this->db->query_update('bayes_doc_counts', ['b_doc_count' => $doc_count], ['b_table' => $this->table, 'b_category' => $category, 'b_lang' => $this->lang]);
+                } else {
+                    $this->db->query_delete('bayes_doc_counts', ['b_table' => $this->table, 'b_category' => $category, 'b_lang' => $this->lang]);
+                }
+            }
+        }
+
+        ignore_user_abort(($abort_old == 1) ? true : false);
         pop_query_limiting();
+        cms_set_time_limit($old);
     }
 
     /**
      * Give a prediction for each trained category for a given string of text.
      *
      * @param  LONG_TEXT $text The text to predict
-     * @return array A map of categories to their confidence as a float
+     * @return array A map of categories to their confidence as a float (empty: no training data, empty text passed, or model does not have enough data to make a prediction yet)
      */
     public function predict(string $text) : array
     {
         push_query_limiting(false);
+        raise_php_memory_limit();
+        $old = cms_extend_time_limit(30);
 
-        $token_counts = [];
-        $total_docs = $this->db->get_table_count_approx($this->table);
+        $total_docs = $this->db->query_select_value('bayes_doc_counts', 'COUNT(*)', ['b_table' => $this->table, 'b_lang' => $this->lang]);
+
+        // Optimisation: Nothing to do if we have no training data
         if ($total_docs == 0) {
+            pop_query_limiting();
+            cms_set_time_limit($old);
+            return [];
+        }
+
+        $tokens = $this->text_to_tokens($text);
+
+        // Optimisation: bail out now if we have nothing to do
+        if (count($tokens) == 0) {
+            pop_query_limiting();
+            cms_set_time_limit($old);
+            return [];
+        }
+
+        $vocabulary_size = $this->get_vocabulary_size();
+
+        // Consider the model as not ready if we do not yet have 1k unique tokens
+        if ($vocabulary_size < 1000) {
+            pop_query_limiting();
+            cms_set_time_limit($old);
             return [];
         }
 
         require_code('crypt');
 
-        $tokens = $this->text_to_tokens($text);
-
-        $vocabulary_size = $this->get_vocabulary_size();
-
         $log_scores = [];
+        $token_counts = [];
         foreach ($this->get_categories() as $category => $doc_count) {
+            // Not enough docs to do a prediction on that category?
+            if ($doc_count < 10) {
+                continue;
+            }
+
             $prior = ($doc_count / $total_docs);
             $log_score = ($prior > 0.0) ? log($prior) : log(1.0 / max(1.0, $total_docs));
 
-            $category_total = $this->db->query_select_value_if_there($this->table, 'SUM(t_count)', ['t_category' => $category]);
+            $category_total = $this->db->query_select_value_if_there($this->table, 'SUM(t_count)', ['t_category' => $category, 't_lang' => $this->lang]);
             if ($category_total === null) {
                 $category_total = 0;
             }
@@ -141,7 +224,7 @@ class CMS_Bayes_classifier
 
                 $count_in_cat = 0.0;
                 if (!isset($token_counts[$category][$token])) {
-                    $token_counts[$category][$token] = $this->db->query_select_value_if_there($this->table, 't_count', ['t_category' => $category, 't_id' => $token]);
+                    $token_counts[$category][$token] = $this->db->query_select_value_if_there($this->table, 't_count', ['t_category' => $category, 't_id' => $token, 't_lang' => $this->lang]);
                 }
                 if ($token_counts[$category][$token] !== null) {
                     $count_in_cat = $token_counts[$category][$token];
@@ -176,6 +259,7 @@ class CMS_Bayes_classifier
         }
 
         pop_query_limiting();
+        cms_set_time_limit($old);
 
         return $probabilities;
     }
@@ -184,10 +268,15 @@ class CMS_Bayes_classifier
      * Convert text into a map of ngram tokens to weights.
      *
      * @param  LONG_TEXT $text The text to parse
-     * @return array Map of ngrams to a float of their weight
+     * @return array Map of ngrams to a float of their weight (empty: we do not support the given language)
      */
     private function text_to_tokens(string $text) : array
     {
+        // Can we support the given language?
+        if (!is_file(get_file_base() . '/sources/lang_tokeniser_' . $this->lang . '.php') && !is_file(get_file_base() . '/sources_custom/lang_tokeniser_' . $this->lang . '.php')) {
+            return [];
+        }
+
         require_code('lang_tokeniser_' . $this->lang);
         $tokeniser = object_factory('LangTokeniser_' . $this->lang, false, [], true);
 
@@ -200,19 +289,68 @@ class CMS_Bayes_classifier
     }
 
     /**
-     * Normalise text to reduce noisy n-grams (URLs/emails/numbers).
+     * Normalise text to reduce noisy n-grams.
      *
      * @param  LONG_TEXT $text The text to normalise
      * @return LONG_TEXT The normalised text
      */
     private function normalise_text(string $text) : string
     {
+        // Unicode normalisation
+        require_code('character_sets');
+        $text = entity_utf8_decode($text, 'utf-8');
+
+        // Strip HTML and Comcode
+        require_code('comcode_from_html');
+        $text = semihtml_to_comcode($text);
+        $text = strip_comcode($text);
+        $text = strip_html($text);
+
+        // Consistent case
+        $text = cms_strtolower_ascii($text);
+
+        // URLs and bare domains
         $text = preg_replace('#https?://[^\s]+#i', ' ||URL|| ', $text); // URLs
+        $text = preg_replace('#\bwww\.[^\s]+#i', ' ||URL|| ', $text); // bare domains (not perfect but gets the job done)
+
+        // E-mail addresses
         $text = preg_replace('#[A-Z0-9._%+\-]+@[A-Z0-9.\-]+\.[A-Z]{2,}#i', ' ||EMAIL|| ', $text); // e-mail addresses
+
+        // Mentions and hashtags
+        $text = preg_replace('/(^|[\s\p{P}])@[\p{L}\p{N}_\.]{2,}/', ' ||MENTION|| ', $text);
+        $text = preg_replace('/(^|[\s\p{P}])#[\p{L}\p{N}_\.]{2,}/', ' ||HASHTAG|| ', $text);
+
+        // IP addresses (IPv4 and IPv6)
+        $text = preg_replace('/\b(?:\d{1,3}\.){3}\d{1,3}\b/', ' ||IP|| ', $text); // IPv4
+        $text = preg_replace('/\b(?:[A-F0-9]{1,4}:){2,7}[A-F0-9]{1,4}\b/i', ' ||IP|| ', $text); // IPv6
+
+        // Phone numbers (rough pattern)
+        $text = preg_replace('/\b(?:\+?\d{1,3}[\s\-\.]?)?(?:\(?\d{2,4}\)?[\s\-\.]?){2,4}\d{2,4}\b/', ' ||PHONE|| ', $text);
+
+        // Dates and times
+        $text = preg_replace('/\b\d{1,2}[\/\.\-]\d{1,2}[\/\.\-]\d{2,4}\b/', ' ||DATE|| ', $text);
+        $text = preg_replace('/\b\d{4}[\/\.\-]\d{1,2}[\/\.\-]\d{1,2}\b/', ' ||DATE|| ', $text);
+        $text = preg_replace('/\b\d{1,2}:\d{2}(:\d{2})?\s?(am|pm)?\b/i', ' ||TIME|| ', $text);
+
+        // File paths (Windows and POSIX-like)
+        $text = preg_replace('#\b([a-zA-Z]:\\\\[^\s]+|/(?:[\w\.-]+/)+[\w\.-]+)\b#', ' ||PATH|| ', $text);
+
+        // Long technical identifiers (hashes, GUIDs, base64-like, etc.)
+        $text = preg_replace('/[a-z0-9]{20,}/i', ' ||IDENTIFIER|| ', $text); // long hex/base
         $text = preg_replace('/[a-zA-Z0-9\-\_\+\=\.]{13,}/', ' ||IDENTIFIER|| ', $text); // Hex hashes, uniqids, crypto strings, and GUIDs
 
-        $text = preg_replace('#[\$\€\£]?\d{1,3}(?:[,\.\s]?\d{3})+#', ' ||NUMBER|| ', $text); // Numbers and currencies of 4 or more digits
+        // Numbers: large numbers/currencies/percentages
+        $text = preg_replace('#[\$\€\£]?\d{1,3}(?:[,\.\s]?\d{3})+(?:\.\d+)?#', ' ||NUMBER|| ', $text); // 4+ digit numbers/currencies
+        $text = preg_replace('/\b\d+(\.\d+)?%/', ' ||NUMBER|| ', $text); // percentages
 
+        // Normalize punctuation and repeated characters
+        $text = preg_replace('/[“”«»„‟]+/', '"', $text);
+        $text = preg_replace('/[‘’‚‛]+/', "'", $text);
+        $text = preg_replace('/[—–]+/', '-', $text);
+        $text = preg_replace('/(\!|\?|\.){2,}/', ' $1 ', $text); // collapse repeated punctuation
+        $text = preg_replace('/([a-z])\1{3,}/', '$1$1$1', $text); // limit elongated letters: sooooo -> sooo
+
+        // Collapse whitespace and trim
         $text = preg_replace('#\s+#', ' ', $text); // Collapse boundaries
         return trim($text);
     }
@@ -226,22 +364,22 @@ class CMS_Bayes_classifier
     {
         $ret = [];
 
-        $cats = $this->db->query_select($this->table, ['DISTINCT t_category']);
+        $cats = $this->db->query_select('bayes_doc_counts', ['DISTINCT b_category'], ['b_lang' => $this->lang, 'b_table' => $this->table]);
         foreach ($cats as $cat) {
-            $ret[$cat['t_category']] = $this->db->query_select_value($this->table, 'COUNT(*)', ['t_category' => $cat['t_category']]);
+            $ret[$cat['b_category']] = $this->db->query_select_value('bayes_doc_counts', 'b_doc_count', ['b_lang' => $this->lang, 'b_table' => $this->table, 'b_category' => $cat['b_category']]);
         }
 
         return $ret;
     }
 
     /**
-     * Count unique tokens across the entire training data.
+     * Count unique tokens across the entire training data for this language.
      *
      * @return integer The number of unique tokens in the training data
      */
     private function get_vocabulary_size(): int
     {
-        return $this->db->query_select_value($this->table, 'COUNT(DISTINCT t_id)');
+        return $this->db->query_select_value($this->table, 'COUNT(DISTINCT t_id)', ['t_lang' => $this->lang]);
     }
 
     /**

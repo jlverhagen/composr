@@ -1562,7 +1562,8 @@ $secondary_groups = explode(',', $row['additionalGroups']);
 foreach ($secondary_groups as $group) {
     $GLOBAL['FORUM_DB']->query_insert('f_groups',array(
         'm_group_id' => $group,
-        'm_member' => get_member()
+        'm_member' => get_member(),
+		  'a_add_date_and_time' => time(),
     ));
 }
 [/code]

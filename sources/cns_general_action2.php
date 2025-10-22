@@ -245,6 +245,7 @@ function cns_edit_welcome_email(int $id, string $name, string $subject, string $
         'w_send_after_hours' => $send_after_hours,
         'w_usergroup' => $usergroup,
         'w_usergroup_type' => $usergroup_type,
+        'w_edit_date_and_time' => time(),
     ];
     $map += lang_remap('w_subject', $_subject, $subject);
     $map += lang_remap('w_text', $_text, $text);

@@ -93,7 +93,7 @@ class Hook_resource_meta_aware_tracker_issue extends Hook_CMA
                 'hours' => null, // Abstract
                 'sponsorship_progress' => null, // Abstract
             ],
-            'additional_antispam_fields' => null, // Could contain spam reports
+            'additional_antispam_fields' => null, // May contain stuff we don't want to train (spam messages, stack traces, etc)
 
             'seo_type_code' => null,
 

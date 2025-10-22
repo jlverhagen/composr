@@ -1287,7 +1287,14 @@ function tempcode_compiler_eval(?string $code, ?array &$tpl_funcs = null, ?array
         return '';
     }
 
+    global $LAST_EVAL_CODE, $IN_TEMPCODE_EVAL;
+    $IN_TEMPCODE_EVAL = true;
+    $LAST_EVAL_CODE = $code;
+
     $result = @eval($code); // Simple error suppressing because we totally expect this to sometimes fail. We can't always set the full Tempcode context correctly.
+
+    $IN_TEMPCODE_EVAL = false;
+    unset($LAST_EVAL_CODE);
 
     return $result;
 }

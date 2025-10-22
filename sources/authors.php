@@ -149,17 +149,29 @@ function add_author(string $author, string $url, ?int $member_id, string $descri
         $_description = $rows[0]['the_description'];
         $_skills = $rows[0]['skills'];
 
+        if (addon_installed('bayes_common') && addon_installed('bayes_antispam')) {
+            require_code('antispam2');
+            $old_content = content_get_antispam_data('author', $author, false, true);
+        }
+
         require_code('attachments2');
         require_code('attachments3');
 
         $map = [
             'url' => $url,
             'member_id' => $member_id,
+            'edit_date_and_time' => time(),
         ];
         $map += lang_remap('skills', $_skills, $skills);
         $map += update_lang_comcode_attachments('the_description', $_description, $description, 'author', $author, null, $member_id);
 
         $GLOBALS['SITE_DB']->query_update('authors', $map, ['author' => $author], '', 1);
+
+        if (addon_installed('bayes_common') && addon_installed('bayes_antispam')) {
+            require_code('tasks');
+            require_lang('bayes_antispam');
+            call_user_func_array__long_task(do_lang('HAM_TRAINING'), null, 'bayes_antispam', [['ham'], 'author', $author, $member_id, $old_content], false, true, false);
+        }
     } else {
         require_code('attachments2');
 
@@ -167,6 +179,7 @@ function add_author(string $author, string $url, ?int $member_id, string $descri
             'author' => $author,
             'url' => $url,
             'member_id' => $member_id,
+            'add_date_and_time' => time(),
         ];
         $map += insert_lang_comcode_attachments('the_description', 3, $description, 'author', $author, null, false, $member_id);
         $map += insert_lang_comcode('skills', $skills, 3);
@@ -196,9 +209,14 @@ function add_author(string $author, string $url, ?int $member_id, string $descri
  */
 function delete_author(string $author)
 {
-    $rows = $GLOBALS['SITE_DB']->query_select('authors', ['the_description', 'skills'], ['author' => $author], '', 1);
+    $rows = $GLOBALS['SITE_DB']->query_select('authors', ['the_description', 'skills', 'member_id'], ['author' => $author], '', 1);
     if (!array_key_exists(0, $rows)) {
         warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'author'));
+    }
+
+    if (addon_installed('bayes_common') && addon_installed('bayes_antispam')) {
+        require_code('antispam2');
+        $old_content = content_get_antispam_data('author', $author, false, true);
     }
 
     require_code('attachments2');
@@ -211,6 +229,12 @@ function delete_author(string $author)
 
     if (addon_installed('catalogues')) {
         update_catalogue_content_ref('author', $author, '');
+    }
+
+    if (addon_installed('bayes_common') && addon_installed('bayes_antispam')) {
+        require_code('tasks');
+        require_lang('bayes_antispam');
+        call_user_func_array__long_task(do_lang('HAM_TRAINING'), null, 'bayes_antispam', [['ham'], 'author', $author, $rows[0]['member_id'], $old_content], false, true, false);
     }
 
     log_it('DELETE_AUTHOR', $author);
@@ -281,7 +305,19 @@ function merge_authors(string $from, string $to)
         }
     }
     if ($from != $to) {
+        if (addon_installed('bayes_common') && addon_installed('bayes_antispam')) {
+            require_code('antispam2');
+            $old_content = content_get_antispam_data('author', $from, false, true);
+            $member_id = $GLOBALS['SITE_DB']->query_select_value_if_there('authors', 'member_id', ['author' => $from]);
+        }
+
         $GLOBALS['SITE_DB']->query_delete('authors', ['author' => $from], '', 1);
+
+        if (addon_installed('bayes_common') && addon_installed('bayes_antispam')) {
+            require_code('tasks');
+            require_lang('bayes_antispam');
+            call_user_func_array__long_task(do_lang('HAM_TRAINING'), null, 'bayes_antispam', [['ham'], 'author', $from, $member_id, $old_content], false, true, false);
+        }
     }
 
     log_it('MERGE_AUTHORS', $from, $to);

@@ -277,7 +277,7 @@ function add_newsletter(string $title, string $description) : int
     require_code('global4');
     prevent_double_submit('ADD_NEWSLETTER', null, $title);
 
-    $map = [];
+    $map = ['add_date_and_time' => time()];
     $map += insert_lang('title', $title, 2);
     $map += insert_lang('the_description', $description, 2);
     $id = $GLOBALS['SITE_DB']->query_insert('newsletters', $map, true);
@@ -312,7 +312,7 @@ function edit_newsletter(int $id, string $title, string $description)
     $myrow = $rows[0];
     $_title = $myrow['title'];
     $_description = $myrow['the_description'];
-    $map = [];
+    $map = ['edit_date_and_time' => time()];
     $map += lang_remap('title', $_title, $title);
     $map += lang_remap('the_description', $_description, $description);
     $GLOBALS['SITE_DB']->query_update('newsletters', $map, ['id' => $id], '', 1);
@@ -403,6 +403,7 @@ function add_periodic_newsletter(string $subject, string $message, string $lang,
         'np_in_full' => $in_full,
         'np_template' => $template,
         'np_last_sent_time' => $last_sent,
+        'np_add_date_and_time' => time(),
     ], true);
 
     if ((addon_installed('commandr')) && (!running_script('install')) && (!get_mass_import_mode())) {
@@ -457,6 +458,7 @@ function edit_periodic_newsletter(int $id, string $subject, string $message, str
         'np_day' => $day,
         'np_in_full' => $in_full,
         'np_template' => $template,
+        'np_edit_date_and_time' => time(),
     ];
     if ($last_sent !== null) {
         $map['np_last_sent_time'] = $last_sent;

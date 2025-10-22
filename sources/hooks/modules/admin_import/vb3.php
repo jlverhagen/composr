@@ -94,6 +94,7 @@ class Hook_import_vb3
         $info['final_message'] = do_lang_tempcode('FORUM_CACHE_CLEAR', escape_html($cleanup_url));
 
         $info['final_tasks'] = [
+            'final_task__reset_bayes_antispam',
             ['cns_topics_recache', do_lang('CACHE_TOPICS'), 'f_topics', 100],
             ['cns_recache', do_lang('CACHE_FORUMS'), 'f_topics', 100],
             ['cns_members_recache', do_lang('CACHE_MEMBERS'), 'f_members', 100],
@@ -201,7 +202,7 @@ class Hook_import_vb3
                 }
             }
 
-            $map = [];
+            $map = ['g_edit_date_and_time' => time()];
             $map['g_max_attachments_per_post'] = $PROBED_FORUM_CONFIG['attachlimit'];
             if ($PROBED_FORUM_CONFIG['postmaxchars'] > 0) {
                 $map['g_max_post_length_comcode'] = $PROBED_FORUM_CONFIG['postmaxchars'];
@@ -307,7 +308,7 @@ class Hook_import_vb3
         foreach ($rows as $row) {
             if ($row['joinusergroupid'] !== null) {
                 $row_promotion_target = $remap_id[$row['joinusergroupid']];
-                $GLOBALS['FORUM_DB']->query_update('f_groups', ['g_promotion_target_group' => $row_promotion_target], ['id' => $remap_id[$row['usergroupid']]], '', 1);
+                $GLOBALS['FORUM_DB']->query_update('f_groups', ['g_promotion_target_group' => $row_promotion_target, 'g_edit_date_and_time' => time()], ['id' => $remap_id[$row['usergroupid']]], '', 1);
             }
         }
     }
@@ -1468,5 +1469,15 @@ class Hook_import_vb3
                 add_wordfilter_word($word);
             }
         }
+    }
+
+    /**
+     * Reset the last run time of the Bayes antispam scheduler hook to the site start time.
+     * This enables training of newly-imported content on its next run.
+     */
+    public function final_task__reset_bayes_antispam()
+    {
+        require_code('global4');
+        $GLOBALS['SITE_DB']->query_update('cron_progression', ['c_last_run_time' => get_site_start_time()], ['c_hook' => 'bayes_antispam']);
     }
 }

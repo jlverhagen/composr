@@ -21,7 +21,7 @@
 /**
  * Edit a topic.
  *
- * @param  ?AUTO_LINK $topic_id The ID of the topic to edit (null: Private Topic)
+ * @param  ?AUTO_LINK $topic_id The ID of the topic to edit
  * @param  ?SHORT_TEXT $description Description of the topic (null: do not change)
  * @param  ?SHORT_TEXT $emoticon The image code of the emoticon for the topic (null: do not change)
  * @param  ?BINARY $validated Whether the topic is validated (null: do not change)
@@ -35,7 +35,7 @@
  * @param  ?integer $views Number of views (null: do not change)
  * @param  boolean $null_is_literal Determines whether some nulls passed mean 'use a default' or literally mean 'set to null'
  */
-function cns_edit_topic(?int $topic_id, ?string $description = null, ?string $emoticon = null, ?int $validated = null, ?int $open = null, ?int $pinned = null, ?int $cascading = null, string $reason = '', ?string $title = null, ?string $description_link = null, bool $check_perms = true, ?int $views = null, bool $null_is_literal = false)
+function cns_edit_topic(int $topic_id, ?string $description = null, ?string $emoticon = null, ?int $validated = null, ?int $open = null, ?int $pinned = null, ?int $cascading = null, string $reason = '', ?string $title = null, ?string $description_link = null, bool $check_perms = true, ?int $views = null, bool $null_is_literal = false)
 {
     $info = $GLOBALS['FORUM_DB']->query_select('f_topics', ['*'], ['id' => $topic_id], '', 1);
     if (!array_key_exists(0, $info)) {
@@ -44,6 +44,11 @@ function cns_edit_topic(?int $topic_id, ?string $description = null, ?string $em
     $name = $info[0]['t_cache_first_title'];
     $forum_id = $info[0]['t_forum_id'];
     $poll_id = $info[0]['t_poll_id'];
+
+    if (addon_installed('bayes_common') && addon_installed('bayes_antispam')) {
+        require_code('antispam2');
+        $old_content = content_get_antispam_data('topic', strval($topic_id), false, true);
+    }
 
     require_code('cns_forums');
 
@@ -126,8 +131,20 @@ function cns_edit_topic(?int $topic_id, ?string $description = null, ?string $em
     }
 
     if (!cms_empty_safe($title)) {
+        if (addon_installed('bayes_common') && addon_installed('bayes_antispam')) {
+            require_code('antispam2');
+            $old_content = content_get_antispam_data('post', strval($info[0]['t_cache_first_post_id']), false, true);
+            $submitter = $GLOBALS['FORUM_DB']->query_select_value_if_there('f_posts', 'p_posting_member', ['id' => $info[0]['t_cache_first_post_id']]);
+        }
+
         $update['t_cache_first_title'] = $title;
         $GLOBALS['FORUM_DB']->query_update('f_posts', ['p_title' => $title], ['id' => $info[0]['t_cache_first_post_id']], '', 1);
+
+        if (addon_installed('bayes_common') && addon_installed('bayes_antispam')) {
+            require_code('tasks');
+            require_lang('bayes_antispam');
+            call_user_func_array__long_task(do_lang('HAM_TRAINING'), null, 'bayes_antispam', [['ham'], 'post', strval($info[0]['t_cache_first_post_id']), $submitter, $old_content], false, true, false);
+        }
     }
 
     if (($validated !== null) && ($validated == 1)) {
@@ -145,6 +162,12 @@ function cns_edit_topic(?int $topic_id, ?string $description = null, ?string $em
     if ((!cms_empty_safe($title)) && ($forum_id !== null)) {
         require_code('cns_posts_action2');
         cns_force_update_forum_caching($forum_id, 0, 0);
+    }
+
+    if (addon_installed('bayes_common') && addon_installed('bayes_antispam')) {
+        require_code('tasks');
+        require_lang('bayes_antispam');
+        call_user_func_array__long_task(do_lang('HAM_TRAINING'), null, 'bayes_antispam', [['ham'], 'topic', strval($topic_id), $info[0]['t_cache_first_member_id'], $old_content], false, true, false);
     }
 
     if ((addon_installed('commandr')) && (!running_script('install')) && (!get_mass_import_mode())) {
@@ -192,6 +215,11 @@ function cns_delete_topic(int $topic_id, string $reason = '', ?int $post_target_
     $forum_id = $info[0]['t_forum_id'];
     $num_posts = $info[0]['t_cache_num_posts'];
     $validated = $info[0]['t_validated'];
+
+    if (addon_installed('bayes_common') && addon_installed('bayes_antispam')) {
+        require_code('antispam2');
+        $old_content = content_get_antispam_data('topic', strval($topic_id), false, true);
+    }
 
     require_code('cns_topics');
     if ($check_perms) {
@@ -270,11 +298,22 @@ function cns_delete_topic(int $topic_id, string $reason = '', ?int $post_target_
         $_postdetails = [];
         $posts_deleted = [];
         do {
-            $_postdetails = $GLOBALS['FORUM_DB']->query_select('f_posts', ['p_post', 'id'], ['p_topic_id' => $topic_id], '', 200);
+            $_postdetails = $GLOBALS['FORUM_DB']->query_select('f_posts', ['p_post', 'id', 'p_posting_member'], ['p_topic_id' => $topic_id], '', 200);
             foreach ($_postdetails as $post) {
+                if (addon_installed('bayes_common') && addon_installed('bayes_antispam')) {
+                    require_code('antispam2');
+                    $old_content = content_get_antispam_data('post', strval($post['id']), false, true);
+                }
+
                 delete_lang($post['p_post'], $GLOBALS['FORUM_DB']);
                 $GLOBALS['FORUM_DB']->query_delete('f_posts', ['id' => $post['id']], '', 1);
                 $posts_deleted[] = $post['id'];
+
+                if (addon_installed('bayes_common') && addon_installed('bayes_antispam')) {
+                    require_code('tasks');
+                    require_lang('bayes_antispam');
+                    call_user_func_array__long_task(do_lang('HAM_TRAINING'), null, 'bayes_antispam', [['ham'], 'post', strval($post['id']), $post['p_posting_member'], $old_content], false, true, false);
+                }
             }
         } while (!empty($_postdetails));
 
@@ -318,6 +357,12 @@ function cns_delete_topic(int $topic_id, string $reason = '', ?int $post_target_
 
     if (addon_installed('catalogues')) {
         update_catalogue_content_ref('topic', strval($topic_id), '');
+    }
+
+    if (addon_installed('bayes_common') && addon_installed('bayes_antispam')) {
+        require_code('tasks');
+        require_lang('bayes_antispam');
+        call_user_func_array__long_task(do_lang('HAM_TRAINING'), null, 'bayes_antispam', [['ham'], 'topic', strval($topic_id), $info[0]['t_cache_first_member_id'], $old_content], false, true, false);
     }
 
     if ($forum_id !== null) {

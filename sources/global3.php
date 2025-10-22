@@ -4573,6 +4573,8 @@ function cms_eval(string $code, string $context, bool $trigger_error = true)
     }
     $errormsg_before = error_get_last();
 
+    global $LAST_EVAL_CODE;
+    $LAST_EVAL_CODE = $code;
     try {
         $result = eval($code);
         $attach_manually = false;
@@ -4596,6 +4598,8 @@ function cms_eval(string $code, string $context, bool $trigger_error = true)
         $errormsg = $e->getMessage();
         $errorline = $e->getLine();
     }
+
+    unset($LAST_EVAL_CODE);
 
     pop_suppress_error_death();
 

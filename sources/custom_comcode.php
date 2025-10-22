@@ -64,6 +64,7 @@ function add_custom_comcode_tag(string $tag, $title, $description, string $repla
         'tag_dangerous_tag' => $dangerous_tag,
         'tag_block_tag' => $block_tag,
         'tag_textual_tag' => $textual_tag,
+        'tag_add_date_and_time' => time(),
     ];
     if (is_array($title)) {
         $map += $title;
@@ -145,6 +146,7 @@ function edit_custom_comcode_tag(string $old_tag, string $tag, string $title, st
         'tag_dangerous_tag' => $dangerous_tag,
         'tag_block_tag' => $block_tag,
         'tag_textual_tag' => $textual_tag,
+        'tag_edit_date_and_time' => time(),
     ];
     $map += lang_remap('tag_title', $_title, $title);
     $map += lang_remap('tag_description', $_description, $description);

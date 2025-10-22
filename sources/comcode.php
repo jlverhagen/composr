@@ -267,9 +267,10 @@ function comcode_to_tempcode(string $comcode, ?int $source_member = null, bool $
  * @param  boolean $for_extract Whether this is for generating an extract that does not need to be fully comprehended (i.e. favour brevity)
  * @param  array $tags_to_preserve List of tags to preserve
  * @param  boolean $include_urls Whether to include URLs in the text version
+ * @param  boolean $strip_references Whether to also strip reference Comcode which we normally leave in
  * @return string Purified plain-text
  */
-function strip_comcode(string $in, bool $for_extract = false, array $tags_to_preserve = [], bool $include_urls = false) : string
+function strip_comcode(string $in, bool $for_extract = false, array $tags_to_preserve = [], bool $include_urls = false, bool $strip_references = false) : string
 {
     $text = $in;
 
@@ -293,7 +294,7 @@ function strip_comcode(string $in, bool $for_extract = false, array $tags_to_pre
     }
 
     require_code('comcode_to_text');
-    $text = _strip_comcode($text, $for_extract, $tags_to_preserve, $include_urls);
+    $text = _strip_comcode($text, $for_extract, $tags_to_preserve, $include_urls, $strip_references);
 
     $done[$sz] = $text;
     return $text;

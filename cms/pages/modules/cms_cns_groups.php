@@ -406,7 +406,21 @@ class Module_cms_cns_groups extends Standard_crud_module
 
         // Rename forum
         if ($name != $old_name) {
-            $GLOBALS['FORUM_DB']->query_update('f_forums', ['f_name' => $name], $forum_where, '', 1);
+            $rows = $GLOBALS['FORUM_DB']->query_select('f_forums', ['*'], $forum_where, '', 1);
+            foreach ($rows as $row) {
+                if (addon_installed('bayes_common') && addon_installed('bayes_antispam')) {
+                    require_code('antispam2');
+                    $old_content = content_get_antispam_data('forum', strval($row['id']), false, true);
+                }
+
+                $GLOBALS['FORUM_DB']->query_update('f_forums', ['f_name' => $name, 'f_edit_date_and_time' => time()], ['id' => $row['id']], '', 1);
+
+                if (addon_installed('bayes_common') && addon_installed('bayes_antispam')) {
+                    require_code('tasks');
+                    require_lang('bayes_antispam');
+                    call_user_func_array__long_task(do_lang('HAM_TRAINING'), null, 'bayes_antispam', [['ham'], 'forum', strval($row['id']), null, $old_content], false, true, false);
+                }
+            }
         }
 
         return null;

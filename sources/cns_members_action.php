@@ -691,6 +691,7 @@ function cns_make_custom_field(string $name, int $locked = 0, string $descriptio
             'cf_tempcode' => $tempcode,
             'cf_autofill_type' => $autofill_type,
             'cf_autofill_hint' => $autofill_hint,
+            'cf_add_date_and_time' => time(),
         ];
     }
 

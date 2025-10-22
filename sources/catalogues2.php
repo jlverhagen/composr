@@ -374,6 +374,11 @@ function actual_edit_catalogue(string $old_name, string $name, string $title, st
     $_title = $myrow['c_title'];
     $_description = $myrow['c_description'];
 
+    if (addon_installed('bayes_common') && addon_installed('bayes_antispam')) {
+        require_code('antispam2');
+        $old_content = content_get_antispam_data('catalogue', $old_name, false, true);
+    }
+
     // Edit
     $update_map = [
         'c_send_view_reports' => $send_view_reports,
@@ -414,6 +419,17 @@ function actual_edit_catalogue(string $old_name, string $name, string $title, st
     $GLOBALS['SITE_DB']->query_update('catalogue_fields', ['cf_type' => 'cx_' . $name], ['cf_type' => 'cx_' . $old_name]);
     update_catalogue_content_ref('catalogue', $old_name, $name);
 
+    if (addon_installed('bayes_common') && addon_installed('bayes_antispam')) {
+        require_code('tasks');
+        require_lang('bayes_antispam');
+        call_user_func_array__long_task(do_lang('HAM_TRAINING'), null, 'bayes_antispam', [['ham'], 'catalogue', $name, null, $old_content], false, true, false);
+
+        // Must also un-train old catalogue name if we changed it
+        if ($old_name != $name) {
+            call_user_func_array__long_task(do_lang('HAM_TRAINING'), null, 'bayes_antispam', [['ham'], 'catalogue', $old_name, null, $old_content], false, true, false);
+        }
+    }
+
     delete_cache_entry('main_cc_embed');
 
     log_it('EDIT_CATALOGUE', $name, $title);
@@ -450,6 +466,11 @@ function actual_delete_catalogue(string $name)
         warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'catalogue'));
     }
     $myrow = $rows[0];
+
+    if (addon_installed('bayes_common') && addon_installed('bayes_antispam')) {
+        require_code('antispam2');
+        $old_content = content_get_antispam_data('catalogue', $name, false, true);
+    }
 
     // Delete anything involved (ha ha destruction!)
     do {
@@ -491,6 +512,12 @@ function actual_delete_catalogue(string $name)
     update_catalogue_content_ref('catalogue', $name, '');
 
     log_it('DELETE_CATALOGUE', $name, $__title);
+
+    if (addon_installed('bayes_common') && addon_installed('bayes_antispam')) {
+        require_code('tasks');
+        require_lang('bayes_antispam');
+        call_user_func_array__long_task(do_lang('HAM_TRAINING'), null, 'bayes_antispam', [['ham'], 'catalogue', $name, null, $old_content], false, true, false);
+    }
 
     if ((addon_installed('commandr')) && (!running_script('install')) && (!get_mass_import_mode())) {
         require_code('resource_fs');
@@ -867,6 +894,11 @@ function actual_edit_catalogue_category(int $id, string $title, string $descript
     $_title = $myrow['cc_title'];
     $_description = $myrow['cc_description'];
 
+    if (addon_installed('bayes_common') && addon_installed('bayes_antispam')) {
+        require_code('antispam2');
+        $old_content = content_get_antispam_data('catalogue_category', strval($id), false, true);
+    }
+
     store_in_catalogue_cat_treecache($id, $parent_id);
 
     $update_map = [
@@ -902,6 +934,12 @@ function actual_edit_catalogue_category(int $id, string $title, string $descript
     $old_parent_id = $GLOBALS['SITE_DB']->query_select_value('catalogue_categories', 'cc_parent_id', ['id' => $id]);
 
     $GLOBALS['SITE_DB']->query_update('catalogue_categories', $update_map, ['id' => $id], '', 1);
+
+    if (addon_installed('bayes_common') && addon_installed('bayes_antispam')) {
+        require_code('tasks');
+        require_lang('bayes_antispam');
+        call_user_func_array__long_task(do_lang('HAM_TRAINING'), null, 'bayes_antispam', [['ham'], 'catalogue_category', strval($id), null, $old_content], false, true, false);
+    }
 
     require_code('urls2');
     suggest_new_idmoniker_for('catalogues', 'category', strval($id), '', $title);
@@ -950,6 +988,11 @@ function actual_delete_catalogue_category(int $id, bool $deleting_all = false)
         if ($id == $root_category) {
             warn_exit(do_lang_tempcode('CATALOGUE_NO_DELETE_ROOT'));
         }
+    }
+
+    if (addon_installed('bayes_common') && addon_installed('bayes_antispam')) {
+        require_code('antispam2');
+        $old_content = content_get_antispam_data('catalogue_category', strval($id), false, true);
     }
 
     $GLOBALS['SITE_DB']->query_delete('catalogue_cat_treecache', ['cc_id' => $id]);
@@ -1012,6 +1055,12 @@ function actual_delete_catalogue_category(int $id, bool $deleting_all = false)
     $GLOBALS['SITE_DB']->query_update('url_id_monikers', ['m_deprecated' => 1], ['m_resource_page' => 'catalogues', 'm_resource_type' => 'category', 'm_resource_id' => strval($id)]);
 
     calculate_category_child_count_cache($old_parent_id);
+
+    if (addon_installed('bayes_common') && addon_installed('bayes_antispam')) {
+        require_code('tasks');
+        require_lang('bayes_antispam');
+        call_user_func_array__long_task(do_lang('HAM_TRAINING'), null, 'bayes_antispam', [['ham'], 'catalogue_category', strval($id), null, $old_content], false, true, false);
+    }
 
     require_code('uploads2');
     clean_empty_upload_directories('uploads/repimages');
@@ -1274,6 +1323,11 @@ function actual_edit_catalogue_entry(int $id, int $category_id, int $validated, 
 
     $old_category_id = $GLOBALS['SITE_DB']->query_select_value('catalogue_entries', 'cc_id', ['id' => $id]);
 
+    if (addon_installed('bayes_common') && addon_installed('bayes_antispam')) {
+        require_code('antispam2');
+        $old_content = content_get_antispam_data('catalogue_entry', strval($id), false, true);
+    }
+
     if (!addon_installed('validation')) {
         $validated = 1;
     }
@@ -1388,6 +1442,13 @@ function actual_edit_catalogue_entry(int $id, int $category_id, int $validated, 
         }
     }
 
+    if (addon_installed('bayes_common') && addon_installed('bayes_antispam')) {
+        require_code('tasks');
+        require_lang('bayes_antispam');
+        $member_id = (($submitter !== null) ? $submitter : $original_submitter);
+        call_user_func_array__long_task(do_lang('HAM_TRAINING'), null, 'bayes_antispam', [['ham'], 'catalogue_entry', strval($id), $member_id, $old_content], false, true, false);
+    }
+
     delete_cache_entry('main_cc_embed');
 
     if ($catalogue_name[0] != '_') {
@@ -1458,6 +1519,12 @@ function actual_delete_catalogue_entry(int $id)
     }
 
     $catalogue_name = $GLOBALS['SITE_DB']->query_select_value('catalogue_entries', 'c_name', ['id' => $id]);
+    $original_submitter = $GLOBALS['SITE_DB']->query_select_value('catalogue_entries', 'ce_submitter', ['id' => $id]);
+
+    if (addon_installed('bayes_common') && addon_installed('bayes_antispam')) {
+        require_code('antispam2');
+        $old_content = content_get_antispam_data('catalogue_entry', strval($id), false, true);
+    }
 
     @ignore_user_abort(true);
 
@@ -1514,6 +1581,12 @@ function actual_delete_catalogue_entry(int $id)
     calculate_category_child_count_cache($old_category_id);
 
     $GLOBALS['SITE_DB']->query_update('url_id_monikers', ['m_deprecated' => 1], ['m_resource_page' => 'catalogues', 'm_resource_type' => 'entry', 'm_resource_id' => strval($id)]);
+
+    if (addon_installed('bayes_common') && addon_installed('bayes_antispam')) {
+        require_code('tasks');
+        require_lang('bayes_antispam');
+        call_user_func_array__long_task(do_lang('HAM_TRAINING'), null, 'bayes_antispam', [['ham'], 'catalogue_entry', strval($id), $original_submitter, $old_content], false, true, false);
+    }
 
     delete_cache_entry('main_cc_embed');
 

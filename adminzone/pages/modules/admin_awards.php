@@ -94,6 +94,8 @@ class Module_admin_awards extends Standard_crud_module
                 'a_content_type' => 'ID_TEXT', // uses same naming convention as cms_merge importer
                 'a_show_awardee' => 'BINARY',
                 'a_update_interval_hours' => 'INTEGER',
+                'a_add_date_and_time' => 'TIME',
+                'a_edit_date_and_time' => '?TIME',
             ]);
 
             require_code('content2');
@@ -112,6 +114,11 @@ class Module_admin_awards extends Standard_crud_module
 
         if (($upgrade_from === null) || ($upgrade_from < 7)) { // 11.beta9
             $GLOBALS['SITE_DB']->create_foreign_key('award_archive', 'a_type_id', 'award_types', 'id');
+        }
+
+        if (($upgrade_from !== null) && ($upgrade_from < 7)) { // LEGACY: 11.beta9
+            $GLOBALS['FORUM_DB']->add_table_field('award_types', 'a_add_date_and_time', 'TIME');
+            $GLOBALS['FORUM_DB']->add_table_field('award_types', 'a_edit_date_and_time', '?TIME');
         }
     }
 

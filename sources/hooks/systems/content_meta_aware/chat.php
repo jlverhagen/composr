@@ -76,7 +76,7 @@ class Hook_content_meta_aware_chat extends Hook_CMA
 
             'views_field' => null,
             'order_field' => null,
-            'submitter_field' => null,
+            'submitter_field' => 'room_owner',
             'author_field' => null,
             'add_time_field' => null,
             'edit_time_field' => null,

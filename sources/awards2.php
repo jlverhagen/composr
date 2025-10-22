@@ -43,6 +43,7 @@ function add_award_type(string $title, string $description, int $points, string 
         'a_content_type' => filter_naughty_harsh($content_type),
         'a_show_awardee' => $show_awardee,
         'a_update_interval_hours' => $update_interval_hours,
+        'a_add_date_and_time' => time(),
     ];
     $map += insert_lang('a_title', $title, 2);
     $map += insert_lang_comcode('a_description', $description, 2);
@@ -82,6 +83,7 @@ function edit_award_type(int $id, string $title, string $description, int $point
         'a_content_type' => filter_naughty_harsh($content_type),
         'a_show_awardee' => $show_awardee,
         'a_update_interval_hours' => $update_interval_hours,
+        'a_edit_date_and_time' => time(),
     ];
     $map += lang_remap('a_title', $_title, $title);
     $map += lang_remap_comcode('a_description', $_description, $description);

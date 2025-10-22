@@ -333,9 +333,10 @@ function _helper_show_forum_topics(object $this_ref, $name, int $limit, int $sta
         $out[$i]['firstmemberid'] = $fp_rows[0]['p_posting_member'];
         $out[$i]['firsttitle'] = $fp_rows[0]['p_title'];
         if ($show_first_posts) {
-            $post_row = db_map_restrict($fp_rows[0], ['id', 'p_post'], ['id' => 'p_id']);
+            $post_row = db_map_restrict($fp_rows[0], ['id', 'p_post', 'p_posting_member'], ['id' => 'p_id']);
             $out[$i]['firstpost_language_string'] = $fp_rows[0]['p_post'];
             $out[$i]['firstpost'] = get_translated_tempcode('f_posts', $post_row, 'p_post', $this_ref->db);
+            $out[$i]['firstpost_member'] = $post_row['p_posting_member'];
         }
     }
     if (!empty($out)) {

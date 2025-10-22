@@ -246,12 +246,6 @@ function actual_edit_zone(string $zone, string $title, string $default_page, str
                 warn_exit(do_lang_tempcode('ALREADY_EXISTS', escape_html($new_zone)));
             }
         }
-
-        require_code('abstract_file_manager');
-        if (!$skip_afm) {
-            force_have_afm_details(['', $zone]);
-        }
-        afm_move($zone, $new_zone);
     }
 
     $_header_text = $GLOBALS['SITE_DB']->query_select_value('zones', 'zone_header_text', ['zone_name' => $zone]);
@@ -271,6 +265,12 @@ function actual_edit_zone(string $zone, string $title, string $default_page, str
         actual_rename_zone_lite($zone, $new_zone, true);
 
         $GLOBALS['SITE_DB']->query_update('menu_items', ['i_link' => $new_zone], ['i_link' => $zone], '', 1);
+
+        require_code('abstract_file_manager');
+        if (!$skip_afm) {
+            force_have_afm_details(['', $zone]);
+        }
+        afm_move($zone, $new_zone);
     }
 
     // If we're in this zone, update the theme
@@ -299,6 +299,7 @@ function actual_edit_zone(string $zone, string $title, string $default_page, str
 
 /**
  * Rename a zone in the database.
+ * This must be called before renaming the zone on disk.
  *
  * @param  ID_TEXT $zone The old name of the zone
  * @param  ID_TEXT $new_zone The new name of the zone
@@ -317,10 +318,14 @@ function actual_rename_zone_lite(string $zone, string $new_zone, bool $dont_both
     }
     $GLOBALS['SITE_DB']->query_update('group_page_access', ['zone_name' => $new_zone], ['zone_name' => $zone]);
     $GLOBALS['SITE_DB']->query_update('member_page_access', ['zone_name' => $new_zone], ['zone_name' => $zone]);
-    $GLOBALS['SITE_DB']->query_update('comcode_pages', ['the_zone' => $new_zone], ['the_zone' => $zone]);
     if (addon_installed('redirects_editor')) {
         $GLOBALS['SITE_DB']->query_update('redirects', ['r_from_zone' => $new_zone], ['r_from_zone' => $zone]);
         $GLOBALS['SITE_DB']->query_update('redirects', ['r_to_zone' => $new_zone], ['r_to_zone' => $zone]);
+    }
+
+    $rows = $GLOBALS['SITE_DB']->query_select('comcode_pages', ['the_zone', 'the_page', 'p_submitter'], ['the_zone' => $zone]);
+    foreach ($rows as $row) {
+        $GLOBALS['SITE_DB']->query_update('comcode_pages', ['the_zone' => $new_zone], ['the_zone' => $row['the_zone'], 'the_page' => $row['the_page']]);
     }
 
     // Copy logo theme images if needed
@@ -401,6 +406,7 @@ function actual_delete_zone(string $zone, bool $force = false, bool $skip_afm = 
 
 /**
  * Delete a zone's database stuff.
+ * This should be called before deleting the zone files on the disk.
  *
  * @param  ID_TEXT $zone The name of the zone
  */
@@ -409,7 +415,14 @@ function actual_delete_zone_lite(string $zone)
     $GLOBALS['SITE_DB']->query_delete('zones', ['zone_name' => $zone], '', 1);
     $GLOBALS['SITE_DB']->query_delete('group_zone_access', ['zone_name' => $zone]);
     $GLOBALS['SITE_DB']->query_delete('group_page_access', ['zone_name' => $zone]);
-    $GLOBALS['SITE_DB']->query_delete('comcode_pages', ['the_zone' => $zone], '', null, 0, true); // May fail because the table might not exist when this is called
+
+    if ($GLOBALS['SITE_DB']->table_exists('comcode_pages', true)) {
+        $rows = $GLOBALS['SITE_DB']->query_select('comcode_pages', ['the_zone', 'the_page', 'p_submitter'], ['the_zone' => $zone]);
+        foreach ($rows as $row) {
+            $GLOBALS['SITE_DB']->query_delete('comcode_pages', ['the_zone' => $row['the_zone'], 'the_page' => $row['the_page']]);
+        }
+    }
+
     if (addon_installed('redirects_editor')) {
         $GLOBALS['SITE_DB']->query_delete('redirects', ['r_from_zone' => $zone]);
         $GLOBALS['SITE_DB']->query_delete('redirects', ['r_to_zone' => $zone]);
@@ -750,13 +763,14 @@ function save_comcode_page(string $zone, string $new_file, ?string $lang = null,
                 attach_message(do_lang_tempcode('ORIGINAL_PAGE_NO_RENAME'), 'warn');
             }
         }
+
+        // Got to rename various resources
+        rename_live_comcode_page($zone, $file, $zone, $new_file);
+
         foreach ($rename_map as $path => $new_path) {
             rename(get_custom_file_base() . '/' . $path, get_custom_file_base() . '/' . $new_path);
             sync_file_move(get_custom_file_base() . '/' . $path, get_custom_file_base() . '/' . $new_path);
         }
-
-        // Got to rename various resources
-        rename_live_comcode_page($zone, $file, $zone, $new_file);
     }
 
     // Set metadata
@@ -771,11 +785,11 @@ function save_comcode_page(string $zone, string $new_file, ?string $lang = null,
         }
     }
 
-    // Store in DB
     $GLOBALS['SITE_DB']->query_delete('comcode_pages', [ // To support rename
         'the_zone' => $zone,
         'the_page' => $file,
     ]);
+
     $GLOBALS['SITE_DB']->query_delete('comcode_pages', [ // To stop conflicts
         'the_zone' => $zone,
         'the_page' => $new_file,
@@ -866,7 +880,7 @@ function save_comcode_page(string $zone, string $new_file, ?string $lang = null,
 /**
  * Rename/move a Comcode page.
  * Does create a redirect, if requested.
- * Does not rename the actual .txt files or rebuild the Sitemap files or empty caches.
+ * Does not rename the actual .txt files or rebuild the Sitemap files or empty caches; must be called before doing those.
  *
  * @param  ID_TEXT $zone The old zone
  * @param  ID_TEXT $file The old page

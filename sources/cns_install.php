@@ -501,6 +501,8 @@ function install_cns(?float $upgrade_from = null)
             'cf_tempcode' => 'LONG_TEXT',
             'cf_autofill_type' => 'ID_TEXT',
             'cf_autofill_hint' => 'ID_TEXT',
+            'cf_add_date_and_time' => 'TIME',
+            'cf_edit_date_and_time' => '?TIME',
         ]);
 
         // These don't need to be filled in. We just use default from custom field if they aren't
@@ -652,6 +654,8 @@ function install_cns(?float $upgrade_from = null)
             'g_rank_image_pri_only' => 'BINARY',
             'g_open_membership' => 'BINARY',
             'g_is_private_club' => 'BINARY',
+            'g_add_date_and_time' => 'TIME',
+            'g_edit_date_and_time' => '?TIME',
         ]);
         $GLOBALS['FORUM_DB']->create_index('f_groups', 'ftjoin_gname', ['g_name']);
         $GLOBALS['FORUM_DB']->create_index('f_groups', 'ftjoin_gtitle', ['g_title']);
@@ -684,6 +688,8 @@ function install_cns(?float $upgrade_from = null)
             'c_title' => 'SHORT_TEXT',
             'c_description' => 'LONG_TEXT',
             'c_expanded_by_default' => 'BINARY',
+            'c_add_date_and_time' => 'TIME',
+            'c_edit_date_and_time' => '?TIME',
         ]);
         $forum_grouping_id = cns_make_forum_grouping(do_lang('DEFAULT_GROUPING_TITLE'), '');
         $forum_grouping_id_staff = cns_make_forum_grouping(do_lang('STAFF'), '');
@@ -721,6 +727,8 @@ function install_cns(?float $upgrade_from = null)
             'f_mail_nonmatch_policy' => 'ID_TEXT',
             'f_mail_unconfirmed_notice' => 'BINARY',
             'f_poll_default_options_xml' => 'LONG_TEXT',
+            'f_add_date_and_time' => 'TIME',
+            'f_edit_date_and_time' => '?TIME',
         ]);
         $GLOBALS['FORUM_DB']->create_index('f_forums', 'cache_num_posts', ['f_cache_num_posts']); // Used to find active forums
         $GLOBALS['FORUM_DB']->create_index('f_forums', 'subforum_parenting', ['f_parent_forum_id']);
@@ -1642,6 +1650,15 @@ function install_cns(?float $upgrade_from = null)
         $GLOBALS['FORUM_DB']->delete_index_if_exists('f_poll_votes', 'v_voter_ip');
 
         $GLOBALS['FORUM_DB']->create_index('f_poll_answers', 'pollid', ['pa_poll_id']);
+
+        $GLOBALS['FORUM_DB']->add_table_field('f_forums', 'f_add_date_and_time', 'TIME');
+        $GLOBALS['FORUM_DB']->add_table_field('f_forums', 'f_edit_date_and_time', '?TIME');
+        $GLOBALS['FORUM_DB']->add_table_field('f_groups', 'g_add_date_and_time', 'TIME');
+        $GLOBALS['FORUM_DB']->add_table_field('f_groups', 'g_edit_date_and_time', '?TIME');
+        $GLOBALS['FORUM_DB']->add_table_field('f_custom_fields', 'cf_add_date_and_time', 'TIME');
+        $GLOBALS['FORUM_DB']->add_table_field('f_custom_fields', 'cf_edit_date_and_time', '?TIME');
+        $GLOBALS['FORUM_DB']->add_table_field('f_forum_groupings', 'c_add_date_and_time', 'TIME');
+        $GLOBALS['FORUM_DB']->add_table_field('f_forum_groupings', 'c_edit_date_and_time', '?TIME');
     }
 
     if (($upgrade_from === null) || ($upgrade_from < 11.0)) {

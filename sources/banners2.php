@@ -595,7 +595,23 @@ function edit_banner(string $old_name, string $name, string $imgurl, string $tit
         $update_map['add_date'] = $add_time;
     }
 
+    if (addon_installed('bayes_common') && addon_installed('bayes_antispam')) {
+        require_code('antispam2');
+        $old_content = content_get_antispam_data('banner', $old_name, false, true);
+    }
+
     $GLOBALS['SITE_DB']->query_update('banners', $update_map, ['name' => $old_name], '', 1);
+
+    if (addon_installed('bayes_common') && addon_installed('bayes_antispam')) {
+        require_code('tasks');
+        require_lang('bayes_antispam');
+        call_user_func_array__long_task(do_lang('HAM_TRAINING'), null, 'bayes_antispam', [['ham'], 'banner', $name, null, $old_content], false, true, false);
+
+        // Must also un-train old banner name contents if applicable
+        if ($old_name != $name) {
+            call_user_func_array__long_task(do_lang('HAM_TRAINING'), null, 'bayes_antispam', [['ham'], 'banner', $old_name, null, $old_content], false, true, false);
+        }
+    }
 
     foreach ($b_types as $b_type_sup) {
         $GLOBALS['SITE_DB']->query_insert('banners_types', ['name' => $name, 'b_type' => $b_type_sup]);
@@ -633,11 +649,23 @@ function delete_banner(string $name)
         warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'banner'));
     }
 
+    if (addon_installed('bayes_common') && addon_installed('bayes_antispam')) {
+        require_code('antispam2');
+        $old_content = content_get_antispam_data('banner', $name, false, true);
+    }
+
     if (addon_installed('catalogues')) {
         update_catalogue_content_ref('banner', $name, '');
     }
 
     $GLOBALS['SITE_DB']->query_delete('banner_clicks', ['c_banner_id' => $name]);
+
+    if (addon_installed('bayes_common') && addon_installed('bayes_antispam')) {
+        require_code('tasks');
+        require_lang('bayes_antispam');
+
+        call_user_func_array__long_task(do_lang('HAM_TRAINING'), null, 'bayes_antispam', [['ham'], 'banner', $name, null, $old_content], false, true, false);
+    }
 
     delete_lang($caption);
 

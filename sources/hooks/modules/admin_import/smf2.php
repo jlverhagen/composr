@@ -96,6 +96,7 @@ class Hook_import_smf2
         $info['final_message'] = do_lang_tempcode('FORUM_CACHE_CLEAR', escape_html($cleanup_url));
 
         $info['final_tasks'] = [
+            'final_task__reset_bayes_antispam',
             ['cns_topics_recache', do_lang('CACHE_TOPICS'), 'f_topics', 100],
             ['cns_recache', do_lang('CACHE_FORUMS'), 'f_topics', 100],
             ['cns_members_recache', do_lang('CACHE_MEMBERS'), 'f_members', 100],
@@ -317,7 +318,7 @@ class Hook_import_smf2
             $old_id = strval($row['id_group']);
             // Here we get the software ID of the group
             $id_new = import_id_remap_get('group', $old_id, true);
-            $GLOBALS['FORUM_DB']->query_update('f_groups', ['g_promotion_target_group' => $promotion_target, 'g_promotion_threshold' => $promotion_threshold], ['id' => $id_new]);
+            $GLOBALS['FORUM_DB']->query_update('f_groups', ['g_promotion_target_group' => $promotion_target, 'g_promotion_threshold' => $promotion_threshold, 'g_edit_date_and_time' => time()], ['id' => $id_new]);
             // On the next run the promotion target will be this last updated group
             $promotion_target = $id_new;
             // On the next run the promotion threshold will be this last updated groups required posts
@@ -325,7 +326,7 @@ class Hook_import_smf2
         }
         // Now we've done all the groups based on posts lets check whether to update the default group
         if ($updates) {
-            $GLOBALS['FORUM_DB']->query_update('f_groups', ['g_promotion_target_group' => $promotion_target, 'g_promotion_threshold' => $promotion_threshold], ['id' => $default_group]);
+            $GLOBALS['FORUM_DB']->query_update('f_groups', ['g_promotion_target_group' => $promotion_target, 'g_promotion_threshold' => $promotion_threshold, 'g_edit_date_and_time' => time()], ['id' => $default_group]);
         }
     }
 
@@ -1936,6 +1937,16 @@ class Hook_import_smf2
 
             $row_start += 200;
         } while (!empty($rows));
+    }
+
+    /**
+     * Reset the last run time of the Bayes antispam scheduler hook to the site start time.
+     * This enables training of newly-imported content on its next run.
+     */
+    public function final_task__reset_bayes_antispam()
+    {
+        require_code('global4');
+        $GLOBALS['SITE_DB']->query_update('cron_progression', ['c_last_run_time' => get_site_start_time()], ['c_hook' => 'bayes_antispam']);
     }
 
     /**

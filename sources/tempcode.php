@@ -364,6 +364,10 @@ function closure_eval(string $code, array $parameters) : string
         return do_lang('NO_PHP_IN_TEMPLATES');
     }
 
+    global $LAST_EVAL_CODE, $IN_TEMPCODE_EVAL;
+    $IN_TEMPCODE_EVAL = true;
+    $LAST_EVAL_CODE = $code;
+
     require_code('failure');
     set_throw_errors(true);
     try {
@@ -372,6 +376,9 @@ function closure_eval(string $code, array $parameters) : string
         tempcode_error($e, $code);
     }
     set_throw_errors(false);
+
+    $IN_TEMPCODE_EVAL = false;
+    unset($LAST_EVAL_CODE);
 
     if (!is_string($ret)) {
         $ret = @strval($ret);
@@ -1993,6 +2000,9 @@ class Tempcode
             // We don't actually use $code_to_preexecute, because it uses too much RAM and DB space throwing full templates into the caching. Instead we rewrite to custom load it whenever it's needed. This isn't inefficient due to normal opcode caching and optimizer opcode caching, and because we cache Tempcode object's evaluations at runtime so it can only happen once per screen view.
             $_file = (strpos($file, '\'') === false) ? $file : php_addslashes($file);
             $this->code_to_preexecute[] = '
+                global $LAST_EVAL_CODE, $IN_TEMPCODE_EVAL;
+                $IN_TEMPCODE_EVAL = true;
+
                 if (($result=tempcode_include(\'' . $_file . '\'))===false) {
                     $tmp=do_template(\'' . php_addslashes($forced_reload_details[0]) . '\',null,\'' . ((strpos($forced_reload_details[2], '\'') === false) ? $forced_reload_details[2] : php_addslashes($forced_reload_details[2])) . '\',false,\'' . (($forced_reload_details[6] === '') ? '' : ((strpos($forced_reload_details[6], '\'') === false) ? $forced_reload_details[6] : php_addslashes($forced_reload_details[6]))) . '\',\'' . ($forced_reload_details[4]) . '\',\'' . ($forced_reload_details[5]) . '\');
                     clearstatcache();
@@ -2000,6 +2010,8 @@ class Tempcode
                     if (!@is_file(\'' . $_file . '\')) {
                         $GLOBALS[\'CACHE_TEMPLATES\']=false;
                     }
+
+                    $LAST_EVAL_CODE = $tmp->code_to_preexecute;
 
                     require_code(\'failure\');
                     set_throw_errors(true);
@@ -2014,6 +2026,8 @@ class Tempcode
                     $GLOBALS[\'CACHE_TEMPLATES\']=$tmp2;
                     unset($tmp);
                 } else {
+                    $LAST_EVAL_CODE = $result[4];
+
                     require_code(\'failure\');
                     set_throw_errors(true);
                     try {
@@ -2026,6 +2040,8 @@ class Tempcode
 
                     unset($result);
                 }
+                $IN_TEMPCODE_EVAL = false;
+                unset($LAST_EVAL_CODE);
             ';
             // NB: $GLOBALS[\'CACHE_TEMPLATES\']=false; is in case the template cache has been detected as broken, it prevents this branch running as it would fail again
         }
@@ -2087,6 +2103,10 @@ class Tempcode
             $this->metadata = create_template_tree_metadata();
         }
 
+        global $LAST_EVAL_CODE, $IN_TEMPCODE_EVAL;
+        $IN_TEMPCODE_EVAL = true;
+        $LAST_EVAL_CODE = ('' . $raw_data); // Breaks pass by reference
+
         require_code('failure');
         set_throw_errors(true);
         try {
@@ -2095,6 +2115,9 @@ class Tempcode
             tempcode_error($e, $raw_data);
         }
         set_throw_errors(false);
+
+        $IN_TEMPCODE_EVAL = false;
+        unset($LAST_EVAL_CODE);
 
         if ($result === false) {
             if ($allow_failure) {
@@ -2364,10 +2387,14 @@ class Tempcode
 
         $codename = $this->codename;
 
+        global $IN_TEMPCODE_EVAL, $LAST_EVAL_CODE;
+        $IN_TEMPCODE_EVAL = true;
         foreach ($this->seq_parts as $seq_parts_group) {
             foreach ($seq_parts_group as $seq_part) {
                 $seq_part_0 = $seq_part[0];
                 if (!isset($tpl_funcs[$seq_part_0])) {
+                    $LAST_EVAL_CODE = $this->code_to_preexecute[$seq_part_0];
+
                     require_code('failure');
                     set_throw_errors(true);
                     try {
@@ -2382,6 +2409,7 @@ class Tempcode
                     call_user_func($tpl_funcs[$seq_part_0], $seq_part[1], $current_lang, $seq_part[4]);
                 } else {
                     $parameters = $seq_part[1];
+                    $LAST_EVAL_CODE = $tpl_funcs[$seq_part_0];
 
                     require_code('failure');
                     set_throw_errors(true);
@@ -2409,6 +2437,8 @@ class Tempcode
             }
         }
 
+        $IN_TEMPCODE_EVAL = false;
+        unset($LAST_EVAL_CODE);
         $tmp = ob_get_clean();
         if ((!$MEMORY_OVER_SPEED) && (!$NO_EVAL_CACHE) && (!$GLOBALS['STUCK_ABORT_SIGNAL'])) {
             $this->cached_output = $tmp; // Optimisation to store it in here. We don't do the same for evaluate_echo as that's a final use case and hence it would be unnecessarily inefficient to store the result
@@ -2481,10 +2511,16 @@ class Tempcode
 
         $tpl_funcs = $KEEP_TPL_FUNCS;
         $no_eval_cache_before = $NO_EVAL_CACHE;
+
+        global $IN_TEMPCODE_EVAL, $LAST_EVAL_CODE;
+        $IN_TEMPCODE_EVAL = true;
+
         foreach ($this->seq_parts as $seq_parts_group) {
             foreach ($seq_parts_group as $seq_part) {
                 $seq_part_0 = $seq_part[0];
                 if (!isset($tpl_funcs[$seq_part_0])) {
+                    $LAST_EVAL_CODE = $this->code_to_preexecute[$seq_part_0];
+
                     require_code('failure');
                     set_throw_errors(true);
                     try {
@@ -2499,6 +2535,8 @@ class Tempcode
                     call_user_func($tpl_funcs[$seq_part_0], $seq_part[1], $current_lang, $seq_part[4]);
                 } else {
                     $parameters = $seq_part[1];
+                    $LAST_EVAL_CODE = $tpl_funcs[$seq_part_0];
+
                     require_code('failure');
                     set_throw_errors(true);
                     try {
@@ -2510,6 +2548,9 @@ class Tempcode
                 }
             }
         }
+
+        $IN_TEMPCODE_EVAL = false;
+        unset($LAST_EVAL_CODE);
 
         if (($XSS_DETECT) && ($before !== false)) {
             cms_ini_set('ocproducts.xss_detect', $before);
@@ -2571,6 +2612,9 @@ class Tempcode
         }
         $i = &$this->evaluate_echo_offset_group; // A reference, so evaluate_echo_offset_group will go up naturally via looping of $i
         $first_i = true;
+
+        global $IN_TEMPCODE_EVAL, $LAST_EVAL_CODE;
+        $IN_TEMPCODE_EVAL = true;
         for (; $i < $seq_parts_group_cnt; $i++) {
             $seq_parts_group = $this->seq_parts[$i];
 
@@ -2586,6 +2630,8 @@ class Tempcode
 
                 $seq_part_0 = $seq_part[0];
                 if (!isset($tpl_funcs[$seq_part_0])) {
+                    $LAST_EVAL_CODE = $this->code_to_preexecute[$seq_part_0];
+
                     require_code('failure');
                     set_throw_errors(true);
                     try {
@@ -2600,6 +2646,8 @@ class Tempcode
                     call_user_func($tpl_funcs[$seq_part_0], $seq_part[1], $current_lang, $seq_part[4]);
                 } else {
                     $parameters = $seq_part[1];
+                    $LAST_EVAL_CODE = $tpl_funcs[$seq_part_0];
+
                     require_code('failure');
                     set_throw_errors(true);
                     try {
@@ -2611,6 +2659,9 @@ class Tempcode
                 }
             }
         }
+
+        $IN_TEMPCODE_EVAL = false;
+        unset($LAST_EVAL_CODE);
 
         cms_flush_safe();
 
@@ -2633,6 +2684,11 @@ function recall_named_function(string $id, string $parameters, string $code)
     $k = 'TEMPCODE_FUNCTION__' . $id;
     if (!isset($GLOBALS[$k])) {
         $code = 'return function (' . $parameters . ') { $cl = user_lang(); ' . $code . ' };';
+
+        global $LAST_EVAL_CODE, $IN_TEMPCODE_EVAL;
+        $IN_TEMPCODE_EVAL = true;
+        $LAST_EVAL_CODE = $code;
+
         require_code('failure');
         set_throw_errors(true);
         try {
@@ -2641,7 +2697,11 @@ function recall_named_function(string $id, string $parameters, string $code)
             tempcode_error($e, $code);
         }
         set_throw_errors(false);
+
+        $IN_TEMPCODE_EVAL = false;
+        unset($LAST_EVAL_CODE);
     }
+
     return $GLOBALS[$k];
 }
 

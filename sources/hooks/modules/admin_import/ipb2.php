@@ -91,6 +91,7 @@ class Hook_import_ipb2
         $info['final_message'] = do_lang_tempcode('FORUM_CACHE_CLEAR', escape_html($cleanup_url));
 
         $info['final_tasks'] = [
+            'final_task__reset_bayes_antispam',
             ['cns_topics_recache', do_lang('CACHE_TOPICS'), 'f_topics', 100],
             ['cns_recache', do_lang('CACHE_FORUMS'), 'f_topics', 100],
             ['cns_members_recache', do_lang('CACHE_MEMBERS'), 'f_members', 100],
@@ -322,7 +323,7 @@ class Hook_import_ipb2
                 $GLOBALS['SITE_DB']->query_insert('group_page_access', ['page_name' => 'join', 'zone_name' => get_module_zone('join'), 'group_id' => $id]);
             }
 
-            $GLOBALS['FORUM_DB']->query_update('f_groups', ['g_flood_control_submit_secs' => intval($PROBED_FORUM_CONFIG['flood_control']), 'g_max_avatar_width' => $width, 'g_max_avatar_height' => $height, 'g_max_sig_length_comcode' => $PROBED_FORUM_CONFIG['max_sig_length'], 'g_max_post_length_comcode' => $PROBED_FORUM_CONFIG['max_post_length']], ['id' => $id], '', 1);
+            $GLOBALS['FORUM_DB']->query_update('f_groups', ['g_flood_control_submit_secs' => intval($PROBED_FORUM_CONFIG['flood_control']), 'g_max_avatar_width' => $width, 'g_max_avatar_height' => $height, 'g_max_sig_length_comcode' => $PROBED_FORUM_CONFIG['max_sig_length'], 'g_max_post_length_comcode' => $PROBED_FORUM_CONFIG['max_post_length'], 'g_edit_date_and_time' => time()], ['id' => $id], '', 1);
         }
     }
 
@@ -1342,5 +1343,15 @@ class Hook_import_ipb2
             add_wordfilter_word($row['type'], $row['swop'], (($row['m_exact'] == 1) ? WORDFILTER_MATCH_TYPE_FULL : WORDFILTER_MATCH_TYPE_SUBSTRING));
             $done[$row['type']] = true;
         }
+    }
+
+    /**
+     * Reset the last run time of the Bayes antispam scheduler hook to the site start time.
+     * This enables training of newly-imported content on its next run.
+     */
+    public function final_task__reset_bayes_antispam()
+    {
+        require_code('global4');
+        $GLOBALS['SITE_DB']->query_update('cron_progression', ['c_last_run_time' => get_site_start_time()], ['c_hook' => 'bayes_antispam']);
     }
 }

@@ -176,11 +176,26 @@ PHP;
                 if ($optimise) {
                     $news = make_string_tempcode($news->evaluate());
                     if (get_forum_type() == 'cns') {
+                        /*
+                        if (addon_installed('bayes_common') && addon_installed('bayes_antispam')) {
+                            require_code('antispam2');
+                            $old_content = content_get_antispam_data('post', strval($myrow['id']), false, true);
+                        }
+                        */
+
                         if (multi_lang_content()) {
                             $GLOBALS['FORUM_DB']->query_update('translate', ['text_parsed' => $news->to_assembly()], ['id' => $myrow['firstpost_language_string'], 'language' => user_lang()], '', 1);
                         } else {
                             $GLOBALS['FORUM_DB']->query_update('f_posts', ['p_post__text_parsed' => $news->to_assembly()], ['id' => $myrow['id']], '', 1);
                         }
+
+                        /*
+                        if (addon_installed('bayes_common') && addon_installed('bayes_antispam')) {
+                            require_code('tasks');
+                            require_lang('bayes_antispam');
+                            call_user_func_array__long_task(do_lang('HAM_TRAINING'), null, 'bayes_antispam', [['ham'], 'post', strval($myrow['id']), $myrow['firstpost_member'], $old_content], false, true, false);
+                        }
+                        */
                     }
                 }
             } else {

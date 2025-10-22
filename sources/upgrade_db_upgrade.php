@@ -863,6 +863,33 @@ function database_specific() : bool
         $done_something = true;
     }
 
+    // LEGACY: 11.beta9. Remove prior to v11 release.
+    if ((is_numeric($upgrade_from)) && (intval($upgrade_from) < 1760923845)) {
+        $GLOBALS['FORUM_DB']->add_table_field('f_forums', 'f_add_date_and_time', 'TIME');
+        $GLOBALS['FORUM_DB']->add_table_field('f_forums', 'f_edit_date_and_time', '?TIME');
+        $GLOBALS['FORUM_DB']->add_table_field('f_groups', 'g_add_date_and_time', 'TIME');
+        $GLOBALS['FORUM_DB']->add_table_field('f_groups', 'g_edit_date_and_time', '?TIME');
+        $GLOBALS['FORUM_DB']->add_table_field('f_custom_fields', 'cf_add_date_and_time', 'TIME');
+        $GLOBALS['FORUM_DB']->add_table_field('f_custom_fields', 'cf_edit_date_and_time', '?TIME');
+        $GLOBALS['FORUM_DB']->add_table_field('f_forum_groupings', 'c_add_date_and_time', 'TIME');
+        $GLOBALS['FORUM_DB']->add_table_field('f_forum_groupings', 'c_edit_date_and_time', '?TIME');
+
+        $GLOBALS['SITE_DB']->add_table_field('award_types', 'a_add_date_and_time', 'TIME');
+        $GLOBALS['SITE_DB']->add_table_field('award_types', 'a_edit_date_and_time', '?TIME');
+        $GLOBALS['SITE_DB']->add_table_field('download_licences', 'l_add_date_and_time', 'TIME');
+        $GLOBALS['SITE_DB']->add_table_field('download_licences', 'l_edit_date_and_time', '?TIME');
+        $GLOBALS['SITE_DB']->add_table_field('newsletters', 'add_date_and_time', 'TIME');
+        $GLOBALS['SITE_DB']->add_table_field('newsletters', 'edit_date_and_time', '?TIME');
+        $GLOBALS['SITE_DB']->add_table_field('newsletter_periodic', 'np_add_date_and_time', 'TIME');
+        $GLOBALS['SITE_DB']->add_table_field('newsletter_periodic', 'np_edit_date_and_time', '?TIME');
+        $GLOBALS['SITE_DB']->add_table_field('f_usergroup_subs', 's_add_date_and_time', 'TIME');
+        $GLOBALS['SITE_DB']->add_table_field('f_usergroup_subs', 's_edit_date_and_time', '?TIME');
+        $GLOBALS['SITE_DB']->add_table_field('f_welcome_emails', 'w_add_date_and_time', 'TIME');
+        $GLOBALS['SITE_DB']->add_table_field('f_welcome_emails', 'w_edit_date_and_time', '?TIME');
+
+        $done_something = true;
+    }
+
     return $done_something;
 }
 

@@ -69,7 +69,7 @@ class Module_admin_custom_comcode extends Standard_crud_module
         $info['organisation'] = 'Composr';
         $info['hacked_by'] = null;
         $info['hack_version'] = null;
-        $info['version'] = 3;
+        $info['version'] = 4;
         $info['update_require_upgrade'] = true;
         $info['locked'] = true;
         $info['min_cms_version'] = 11.0;
@@ -104,12 +104,19 @@ class Module_admin_custom_comcode extends Standard_crud_module
                 'tag_enabled' => 'BINARY',
                 'tag_dangerous_tag' => 'BINARY',
                 'tag_block_tag' => 'BINARY',
-                'tag_textual_tag' => 'BINARY'
+                'tag_textual_tag' => 'BINARY',
+                'tag_add_date_and_time' => 'TIME',
+                'tag_edit_date_and_time' => '?TIME',
             ]);
         }
 
-        if (($upgrade_from !== null) && ($upgrade_from < 3)) {
+        if (($upgrade_from !== null) && ($upgrade_from < 3)) { // LEGACY
             $GLOBALS['SITE_DB']->alter_table_field('custom_comcode', 'tag_parameters', 'LONG_TEXT');
+        }
+
+        if (($upgrade_from !== null) && ($upgrade_from < 4)) { // LEGACY: 11.beta9
+            $GLOBALS['FORUM_DB']->add_table_field('custom_comcode', 'tag_add_date_and_time', 'TIME');
+            $GLOBALS['FORUM_DB']->add_table_field('custom_comcode', 'tag_edit_date_and_time', '?TIME');
         }
     }
 

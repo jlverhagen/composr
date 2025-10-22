@@ -106,6 +106,8 @@ class Module_subscriptions
                 's_mail_end' => 'LONG_TRANS',
                 's_mail_uhoh' => 'LONG_TRANS',
                 's_uses_primary' => 'BINARY',
+                's_add_date_and_time' => 'TIME',
+                's_edit_date_and_time' => '?TIME',
             ]);
         }
 
@@ -177,6 +179,11 @@ class Module_subscriptions
 
         if (($upgrade_from === null) || ($upgrade_from < 7)) { // 11.beta9
             $GLOBALS['FORUM_DB']->create_foreign_key('f_usergroup_sub_mails', 'm_usergroup_sub_id', 'f_usergroup_subs', 'id');
+        }
+
+        if (($upgrade_from !== null) && ($upgrade_from < 7)) { // LEGACY: 11.beta9
+            $GLOBALS['SITE_DB']->add_table_field('f_usergroup_subs', 's_add_date_and_time', 'TIME');
+            $GLOBALS['SITE_DB']->add_table_field('f_usergroup_subs', 's_edit_date_and_time', '?TIME');
         }
 
         pop_db_scope_check();

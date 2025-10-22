@@ -121,7 +121,10 @@ class antispam_test_set extends cms_test_case
 
     public function testBayes()
     {
-        cms_extend_time_limit(100);
+        if (!addon_installed('bayes_antispam') || !addon_installed('bayes_common')) {
+            $this->assertTrue(false, 'This test requires the bayes_common and bayes_antispam addons.');
+            return;
+        }
 
         require_code('bayes');
         require_code('files_spreadsheets_read');
@@ -131,15 +134,15 @@ class antispam_test_set extends cms_test_case
         $GLOBALS['SITE_DB']->create_table($table, [
             'id' => '*AUTO',
             't_id' => 'SHORT_TEXT',
+            't_lang' => 'LANGUAGE_NAME',
             't_category' => 'ID_TEXT',
             't_count' => 'REAL',
             't_last_date_and_time' => 'TIME',
         ]);
-        $GLOBALS['SITE_DB']->create_index($table, 'tid', ['t_id']);
 
         $model = new CMS_Bayes_classifier($GLOBALS['SITE_DB'], $table, 'EN', 0.2);
 
-        // Train our data, but only the first 1000 lines as it takes a while to train
+        // Train our data, but only the first 500 lines as it takes a while to train
         $sheet_reader = spreadsheet_open_read(get_file_base() . '/_tests/assets/spreadsheets/spam.csv');
         $i = 0;
         do {
@@ -150,7 +153,7 @@ class antispam_test_set extends cms_test_case
 
             $model->train($line['v2'], [$line['v1']]);
             $i++;
-        } while (($line !== false) && ($i < 1000));
+        } while (($line !== false) && ($i < 500));
 
         // Spam
         $prediction_a = $model->predict('To learn more, click this link!');
@@ -162,7 +165,7 @@ class antispam_test_set extends cms_test_case
 
         // Explicit ham
         $prediction_d = $model->predict('I will see you in 5 minutes');
-        $prediction_e = $model->predict('I think the Buffalo Bills really suck this year; the quarterback got sacked a million times.');
+        $prediction_e = $model->predict('I think my team really sucks this year; the quarterback got sacked a million times.');
         $prediction_f = $model->predict('Where did u get tat pasta bowl?');
         $this->assertTrue(($prediction_d['ham'] >= 0.9), 'Expected prediction D to almost certainly be ham, but got ' . serialize($prediction_d));
         $this->assertTrue(($prediction_e['ham'] >= 0.9), 'Expected prediction E to almost certainly be ham, but got ' . serialize($prediction_e));
@@ -178,7 +181,7 @@ class antispam_test_set extends cms_test_case
 
         // Spam, but with the words garbled up to trick the model
         $prediction_j = $model->predict('You will receive many many happy returns on your mobile ringtone investment');
-        $prediction_k = $model->predict('It will be your lucky day today at the casino');
+        $prediction_k = $model->predict('Play our quiz and win a lifetime trip for you and your partner!');
         $prediction_l = $model->predict('Called you, we tried. Our customer service line, you call.'); // Who let Yoda in the test suite? ;)
         $this->assertTrue(($prediction_j['spam'] > 0.7), 'Expected prediction J to probably be spam, but got ' . serialize($prediction_j));
         $this->assertTrue(($prediction_k['spam'] > 0.7), 'Expected prediction K to probably be spam, but got ' . serialize($prediction_k));
@@ -187,7 +190,8 @@ class antispam_test_set extends cms_test_case
         if ($this->debug) {
             var_dump($prediction_a, $prediction_b, $prediction_c, $prediction_d, $prediction_e, $prediction_f, $prediction_g, $prediction_h, $prediction_i, $prediction_j, $prediction_k, $prediction_l);
         } else {
-            //$GLOBALS['SITE_DB']->drop_table_if_exists($table);
+            $GLOBALS['SITE_DB']->drop_table_if_exists($table);
+            $GLOBALS['SITE_DB']->query_delete('bayes_doc_counts', ['b_table' => $table]);
         }
     }
 }

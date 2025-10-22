@@ -38,7 +38,7 @@ class Hook_content_meta_aware_catalogue_entry extends Hook_CMA
         }
 
         return [
-            'support_custom_fields' => false,
+            'support_custom_fields' => false, // Do not enable or it will trigger recursive loops!
 
             'content_type_label' => 'catalogues:CATALOGUE_ENTRY',
             'content_type_universal_label' => 'Catalogue entry',
@@ -374,16 +374,16 @@ function generate_catalogue_entry_content_type_universal_label(array $row) : str
  * Find content on which to train / predict antispam from a given catalogue entry.
  *
  * @param  array $row Database row of entry
- * @return array Array of content to be trained
+ * @return LONG_TEXT Content to be trained, delimited by ||NEWITEM||; must be Comcode-stripped first
  */
-function generate_catalogue_entry_antispam_fields(array $row) : array
+function generate_catalogue_entry_antispam_fields(array $row) : string
 {
     if (!addon_installed('catalogues')) {
-        return [];
+        return '';
     }
 
     if (!array_key_exists('c_name', $row)) {
-        return [];
+        return '';
     }
 
     require_code('catalogues');
@@ -405,21 +405,24 @@ function generate_catalogue_entry_antispam_fields(array $row) : array
     }
 
     if (count($wanted_fields) == 0) {
-        return [];
+        return '';
     }
 
     require_code('comcode');
 
     $field_values = get_catalogue_entry_field_values($catalogue_name, $row['id'], $wanted_fields, $fields);
+
     $ret = [];
     foreach ($field_values as $i => $f) {
-        if ($f['effective_value_pure'] === null) {
-            continue;
+        if (isset($f['effective_value_pure'])) {
+            $value = $f['effective_value_pure'];
+        } elseif (isset($f['effective_value'])) {
+            $value = $f['effective_value'];
         }
 
-        $comcode = html_to_comcode($f['effective_value_pure']);
-        $plain_text = strip_comcode($comcode);
-        $ret[] = $plain_text;
+        $comcode = html_to_comcode($value);
+
+        $ret[] = $comcode;
     }
-    return $ret;
+    return implode('||NEWITEM||', $ret);
 }

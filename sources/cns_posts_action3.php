@@ -144,6 +144,11 @@ function cns_edit_post(int $post_id, ?int $validated, string $title, string $pos
     $forum_id = $post_info[0]['p_cache_forum_id'];
     $topic_id = $post_info[0]['p_topic_id'];
 
+    if (addon_installed('bayes_common') && addon_installed('bayes_antispam')) {
+        require_code('antispam2');
+        $old_content = content_get_antispam_data('post', strval($post_id), false, true);
+    }
+
     $topic_info = $GLOBALS['FORUM_DB']->query_select('f_topics', ['t_cache_first_post_id', 't_pt_from_member', 't_cache_first_title'], ['id' => $topic_id], '', 1);
 
     require_code('cns_posts_action');
@@ -171,7 +176,20 @@ function cns_edit_post(int $post_id, ?int $validated, string $title, string $pos
             if ($cache_last_username === null) {
                 $cache_last_username = do_lang('UNKNOWN');
             }
+
+            if (addon_installed('bayes_common') && addon_installed('bayes_antispam')) {
+                require_code('antispam2');
+                $old_content_t = content_get_antispam_data('topic', strval($topic_id), false, true);
+                $submitter_t = $GLOBALS['FORUM_DB']->query_select_value_if_there('f_topics', 't_cache_first_member_id', ['id' => $topic_id]);
+            }
+
             $GLOBALS['FORUM_DB']->query_update('f_topics', ['t_cache_last_time' => time(), 't_cache_last_post_id' => $post_id, 't_cache_last_title' => $title, 't_cache_last_username' => $cache_last_username, 't_cache_last_member_id' => $post_owner], ['id' => $topic_id], '', 1);
+
+            if (addon_installed('bayes_common') && addon_installed('bayes_antispam')) {
+                require_code('tasks');
+                require_lang('bayes_antispam');
+                call_user_func_array__long_task(do_lang('HAM_TRAINING'), null, 'bayes_antispam', [['ham'], 'topic', strval($topic_id), $submitter_t, $old_content_t], false, true, false);
+            }
 
             $GLOBALS['FORUM_DB']->query_delete('f_read_logs', ['l_topic_id' => $topic_id]);
         }
@@ -245,10 +263,22 @@ function cns_edit_post(int $post_id, ?int $validated, string $title, string $pos
 
     $info = $GLOBALS['FORUM_DB']->query_select('f_topics', ['t_cache_first_post_id', 't_cache_first_title'], ['id' => $topic_id], '', 1);
     if ((array_key_exists(0, $info)) && ($info[0]['t_cache_first_post_id'] == $post_id) && ($info[0]['t_cache_first_title'] != $title)) {
+        if (addon_installed('bayes_common') && addon_installed('bayes_antispam')) {
+            require_code('antispam2');
+            $old_content_t = content_get_antispam_data('topic', strval($topic_id), false, true);
+            $submitter_t = $GLOBALS['FORUM_DB']->query_select_value_if_there('f_topics', 't_cache_first_member_id', ['id' => $topic_id]);
+        }
+
         require_code('urls2');
         suggest_new_idmoniker_for('topicview', 'browse', strval($topic_id), '', $title);
 
         $GLOBALS['FORUM_DB']->query_update('f_topics', ['t_cache_first_title' => $title], ['id' => $topic_id], '', 1);
+
+        if (addon_installed('bayes_common') && addon_installed('bayes_antispam')) {
+            require_code('tasks');
+            require_lang('bayes_antispam');
+            call_user_func_array__long_task(do_lang('HAM_TRAINING'), null, 'bayes_antispam', [['ham'], 'topic', strval($topic_id), $submitter_t, $old_content_t], false, true, false);
+        }
     }
 
     if ($forum_id !== null) {
@@ -265,6 +295,12 @@ function cns_edit_post(int $post_id, ?int $validated, string $title, string $pos
                 points_credit_member($post_owner, do_lang('ACTIVITY_ADD_POST', strval($post_id), $info[0]['t_cache_first_title']), $post_points, 0, null, 0, 'post', 'add', strval($post_id));
             }
         }
+    }
+
+    if (addon_installed('bayes_common') && addon_installed('bayes_antispam')) {
+        require_code('tasks');
+        require_lang('bayes_antispam');
+        call_user_func_array__long_task(do_lang('HAM_TRAINING'), null, 'bayes_antispam', [['ham'], 'post', strval($post_id), (($submitter !== null) ? $submitter : $post_info[0]['p_posting_member']), $old_content], false, true, false);
     }
 
     if ((addon_installed('commandr')) && (!running_script('install')) && (!get_mass_import_mode())) {
@@ -542,7 +578,19 @@ function cns_move_posts(int $from_topic_id, ?int $to_topic_id, array $posts, str
         }
 
         if (($title !== null) && (!empty($posts))) {
+            if (addon_installed('bayes_common') && addon_installed('bayes_antispam')) {
+                require_code('antispam2');
+                $old_content = content_get_antispam_data('post', strval($posts[0]), false, true);
+                $submitter = $GLOBALS['FORUM_DB']->query_select_value_if_there('f_posts', 'p_posting_member', ['id' => $posts[0]]);
+            }
+
             $GLOBALS['FORUM_DB']->query_update('f_posts', ['p_title' => $title], ['id' => $posts[0]], '', 1);
+
+            if (addon_installed('bayes_common') && addon_installed('bayes_antispam')) {
+                require_code('tasks');
+                require_lang('bayes_antispam');
+                call_user_func_array__long_task(do_lang('HAM_TRAINING'), null, 'bayes_antispam', [['ham'], 'post', strval($posts[0]), $submitter, $old_content], false, true, false);
+            }
         }
     }
 

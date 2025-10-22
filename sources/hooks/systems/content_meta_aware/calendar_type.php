@@ -87,7 +87,7 @@ class Hook_content_meta_aware_calendar_type extends Hook_CMA
             'additional_sort_fields' => [
                 'count_entries' => '(SELECT COUNT(*) FROM ' . get_table_prefix() . 'calendar_events e WHERE e.e_type=r.id)'
             ],
-            'additional_antispam_fields' => [],
+            'additional_antispam_fields' => null,
 
             'seo_type_code' => 'calendar_type',
 

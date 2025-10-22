@@ -955,7 +955,7 @@ function edit_image(int $id, string $title, string $cat, string $description, st
         $edit_time = $null_is_literal ? null : time();
     }
 
-    $rows = $GLOBALS['SITE_DB']->query_select('images', ['title', 'the_description', 'cat'], ['id' => $id]);
+    $rows = $GLOBALS['SITE_DB']->query_select('images', ['title', 'the_description', 'cat', 'submitter'], ['id' => $id]);
     if (!array_key_exists(0, $rows)) {
         warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'image'));
     }
@@ -963,6 +963,11 @@ function edit_image(int $id, string $title, string $cat, string $description, st
     $_title = $rows[0]['title'];
     $_description = $rows[0]['the_description'];
     $old_cat = $rows[0]['cat'];
+
+    if (addon_installed('bayes_common') && addon_installed('bayes_antispam')) {
+        require_code('antispam2');
+        $old_content = content_get_antispam_data('image', strval($id), false, true);
+    }
 
     require_code('urls2');
     suggest_new_idmoniker_for('galleries', 'image', strval($id), '', ($title == '') ? $description : $title);
@@ -1055,6 +1060,12 @@ function edit_image(int $id, string $title, string $cat, string $description, st
 
     reorganise_uploads__gallery_images(['id' => $id]);
 
+    if (addon_installed('bayes_common') && addon_installed('bayes_antispam')) {
+        require_code('tasks');
+        require_lang('bayes_antispam');
+        call_user_func_array__long_task(do_lang('HAM_TRAINING'), null, 'bayes_antispam', [['ham'], 'image', strval($id), (($submitter !== null) ? $submitter : $rows[0]['submitter']), $old_content], false, true, false);
+    }
+
     log_it('EDIT_IMAGE', strval($id), $title);
 
     if ((addon_installed('commandr')) && (!running_script('install')) && (!get_mass_import_mode())) {
@@ -1090,7 +1101,7 @@ function edit_image(int $id, string $title, string $cat, string $description, st
  */
 function delete_image(int $id, bool $delete_full = true)
 {
-    $rows = $GLOBALS['SITE_DB']->query_select('images', ['title', 'the_description', 'cat'], ['id' => $id]);
+    $rows = $GLOBALS['SITE_DB']->query_select('images', ['title', 'the_description', 'cat', 'submitter'], ['id' => $id]);
     if (!array_key_exists(0, $rows)) {
         warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'image'));
     }
@@ -1098,6 +1109,11 @@ function delete_image(int $id, bool $delete_full = true)
     $title = $rows[0]['title'];
     $description = $rows[0]['the_description'];
     $cat = $rows[0]['cat'];
+
+    if (addon_installed('bayes_common') && addon_installed('bayes_antispam')) {
+        require_code('antispam2');
+        $old_content = content_get_antispam_data('catalogue_category', strval($id), false, true);
+    }
 
     delete_lang($title);
     delete_lang($description);
@@ -1129,6 +1145,12 @@ function delete_image(int $id, bool $delete_full = true)
 
     require_code('uploads2');
     clean_empty_upload_directories('uploads/galleries');
+
+    if (addon_installed('bayes_common') && addon_installed('bayes_antispam')) {
+        require_code('tasks');
+        require_lang('bayes_antispam');
+        call_user_func_array__long_task(do_lang('HAM_TRAINING'), null, 'bayes_antispam', [['ham'], 'image', strval($id), $rows[0]['submitter'], $old_content], false, true, false);
+    }
 
     log_it('DELETE_IMAGE', strval($id), get_translated_text($title));
 
@@ -1698,6 +1720,7 @@ function edit_gallery(string $old_name, string $name, string $fullname, string $
     if (!array_key_exists(0, $rows)) {
         warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'gallery'));
     }
+    $myrow = $rows[0];
 
     require_code('urls2');
     suggest_new_idmoniker_for('galleries', 'browse', $name, '', $name);
@@ -1716,6 +1739,11 @@ function edit_gallery(string $old_name, string $name, string $fullname, string $
 
     if ($parent_id === null) {
         $parent_id = '';
+    }
+
+    if (addon_installed('bayes_common') && addon_installed('bayes_antispam')) {
+        require_code('antispam2');
+        $old_content = content_get_antispam_data('gallery', $old_name, false, true);
     }
 
     require_code('content2');
@@ -1757,12 +1785,6 @@ function edit_gallery(string $old_name, string $name, string $fullname, string $
     if ($meta_keywords !== null) {
         seo_meta_set_for_explicit('gallery', $name, $meta_keywords, $meta_description);
     }
-
-    $rows = $GLOBALS['SITE_DB']->query_select('galleries', ['fullname', 'the_description'], ['name' => $old_name], '', 1);
-    if (!array_key_exists(0, $rows)) {
-        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'gallery'));
-    }
-    $myrow = $rows[0];
 
     $update_map = [
         'name' => $name,
@@ -1843,6 +1865,15 @@ function edit_gallery(string $old_name, string $name, string $fullname, string $
         process_overridden_comment_forum('galleries', $name, $name, $old_name)
     );
 
+    if (addon_installed('bayes_common') && addon_installed('bayes_antispam')) {
+        require_code('tasks');
+        require_lang('bayes_antispam');
+        call_user_func_array__long_task(do_lang('HAM_TRAINING'), null, 'bayes_antispam', [['ham'], 'gallery', $old_name, (($g_owner !== null) ? $g_owner : $myrow['g_owner']), $old_content], false, true, false);
+        if ($old_name != $name) {
+            call_user_func_array__long_task(do_lang('HAM_TRAINING'), null, 'bayes_antispam', [['ham'], 'gallery', $name, (($g_owner !== null) ? $g_owner : $myrow['g_owner'])], false, true, false);
+        }
+    }
+
     require_code('sitemap_xml');
     notify_sitemap_node_edit('_SEARCH:galleries:browse:' . $name, has_category_access($GLOBALS['FORUM_DRIVER']->get_guest_id(), 'galleries', $name));
 
@@ -1863,6 +1894,11 @@ function delete_gallery(string $name)
     $rows = $GLOBALS['SITE_DB']->query_select('galleries', ['*'], ['name' => $name], '', 1);
     if (!array_key_exists(0, $rows)) {
         warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'gallery'));
+    }
+
+    if (addon_installed('bayes_common') && addon_installed('bayes_antispam')) {
+        require_code('antispam2');
+        $old_content = content_get_antispam_data('gallery', $name, false, true);
     }
 
     require_code('files2');
@@ -1910,6 +1946,12 @@ function delete_gallery(string $name)
     require_code('uploads2');
     clean_empty_upload_directories('uploads/repimages');
     clean_empty_upload_directories('uploads/watermarks');
+
+    if (addon_installed('bayes_common') && addon_installed('bayes_antispam')) {
+        require_code('tasks');
+        require_lang('bayes_antispam');
+        call_user_func_array__long_task(do_lang('HAM_TRAINING'), null, 'bayes_antispam', [['ham'], 'gallery', $name, $rows[0]['g_owner'], $old_content], false, true, false);
+    }
 
     log_it('DELETE_GALLERY', $name, get_translated_text($rows[0]['fullname']));
 

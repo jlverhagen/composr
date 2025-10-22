@@ -166,6 +166,12 @@ class CMSAttachmentWrite
             }
         }
 
+        if (addon_installed('bayes_common') && addon_installed('bayes_antispam')) {
+            require_code('antispam2');
+            $old_content = content_get_antispam_data('post', strval($post_id), false, true);
+            $submitter = $GLOBALS['FORUM_DB']->query_select_value_if_there('f_posts', 'p_posting_member', ['id' => $post_id]);
+        }
+
         $_post_comcode = $GLOBALS['FORUM_DB']->query_select_value_if_there('f_posts', 'p_post', ['id' => $post_id]);
         if ($_post_comcode === null) {
             warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'post'));
@@ -173,6 +179,12 @@ class CMSAttachmentWrite
         $post_comcode = get_translated_text($_post_comcode, $GLOBALS['FORUM_DB']);
         $post_comcode = preg_replace('#\n*\[attachment(_safe)?( [^\[\]]*)?\]' . strval($attachment_id) . '\[/attachment(_safe)?\]#U', '', $post_comcode);
         $GLOBALS['FORUM_DB']->query_update('f_posts', lang_remap_comcode('p_post', $_post_comcode, $post_comcode, $GLOBALS['FORUM_DB']), ['id' => $post_id], '', 1);
+
+        if (addon_installed('bayes_common') && addon_installed('bayes_antispam')) {
+            require_code('tasks');
+            require_lang('bayes_antispam');
+            call_user_func_array__long_task(do_lang('HAM_TRAINING'), null, 'bayes_antispam', [['ham'], 'post', strval($post_id), $submitter, $old_content], false, true, false);
+        }
 
         require_code('attachments3');
 

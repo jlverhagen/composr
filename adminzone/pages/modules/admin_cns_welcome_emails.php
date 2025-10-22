@@ -79,6 +79,8 @@ class Module_admin_cns_welcome_emails extends Standard_crud_module
                 'w_newsletter_id' => '?AUTO_LINK',
                 'w_usergroup' => '?GROUP',
                 'w_usergroup_type' => 'ID_TEXT', // <blank>, primary, secondary
+                'w_add_date_and_time' => 'TIME',
+                'w_edit_date_and_time' => '?TIME',
             ]);
         }
 
@@ -98,6 +100,11 @@ class Module_admin_cns_welcome_emails extends Standard_crud_module
         if (($upgrade_from === null) || ($upgrade_from < 6)) { // 11.beta9
             $GLOBALS['FORUM_DB']->create_foreign_key('f_welcome_emails', 'w_newsletter_id', 'newsletters', 'id');
             $GLOBALS['FORUM_DB']->create_foreign_key('f_welcome_emails', 'w_usergroup', 'f_groups', 'id');
+        }
+
+        if (($upgrade_from !== null) && ($upgrade_from < 6)) { // LEGACY: 11.beta9
+            $GLOBALS['SITE_DB']->add_table_field('f_welcome_emails', 'w_add_date_and_time', 'TIME');
+            $GLOBALS['SITE_DB']->add_table_field('f_welcome_emails', 'w_edit_date_and_time', '?TIME');
         }
     }
 

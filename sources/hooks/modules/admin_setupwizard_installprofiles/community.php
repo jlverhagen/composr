@@ -43,7 +43,25 @@ class Hook_admin_setupwizard_installprofiles_community
     public function get_addon_list() : array
     {
         return [
-            ['facebook_support'/*this will be downloaded as it is not bundled*/, 'cns_forum', 'points', 'leader_board', 'ecommerce', 'cns_thematic_avatars', 'cns_cartoon_avatars', 'calendar', 'chat', 'polls', 'users_online_block', 'forum_blocks', 'polls', 'newsletter'],
+            [
+                'facebook_support', // This will be downloaded as it is not bundled
+                'cns_forum',
+                'points',
+                'leader_board',
+                'ecommerce',
+                'cns_thematic_avatars',
+                'cns_cartoon_avatars',
+                'cns_warnings',
+                'calendar',
+                'chat',
+                'polls',
+                'users_online_block',
+                'forum_blocks',
+                'polls',
+                'newsletter',
+                'bayes_common',
+                'bayes_antispam',
+            ],
             []
         ];
     }

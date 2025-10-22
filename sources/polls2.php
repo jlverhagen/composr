@@ -206,6 +206,11 @@ function edit_poll(int $id, string $question, string $a1, string $a2, string $a3
         warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'poll'));
     }
 
+    if (addon_installed('bayes_common') && addon_installed('bayes_antispam')) {
+        require_code('antispam2');
+        $old_content = content_get_antispam_data('poll', strval($id), false, true);
+    }
+
     log_it('EDIT_POLL', strval($id), $question);
 
     if ((addon_installed('commandr')) && (!running_script('install')) && (!get_mass_import_mode())) {
@@ -264,6 +269,12 @@ function edit_poll(int $id, string $question, string $a1, string $a2, string $a3
     require_code('urls2');
     suggest_new_idmoniker_for('polls', 'view', strval($id), '', $question);
 
+    if (addon_installed('bayes_common') && addon_installed('bayes_antispam')) {
+        require_code('tasks');
+        require_lang('bayes_antispam');
+        call_user_func_array__long_task(do_lang('HAM_TRAINING'), null, 'bayes_antispam', [['ham'], 'poll', strval($id), (($submitter !== null) ? $submitter : $rows[0]['submitter']), $old_content], false, true, false);
+    }
+
     require_code('feedback');
     update_spacer_post(
         $allow_comments != 0,
@@ -294,6 +305,11 @@ function delete_poll(int $id)
         warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'poll'));
     }
 
+    if (addon_installed('bayes_common') && addon_installed('bayes_antispam')) {
+        require_code('antispam2');
+        $old_content = content_get_antispam_data('poll', strval($id), false, true);
+    }
+
     persistent_cache_delete('POLL');
 
     if (addon_installed('catalogues')) {
@@ -315,6 +331,12 @@ function delete_poll(int $id)
     $GLOBALS['SITE_DB']->query_delete('poll', ['id' => $id], '', 1);
 
     $GLOBALS['SITE_DB']->query_update('url_id_monikers', ['m_deprecated' => 1], ['m_resource_page' => 'polls', 'm_resource_type' => 'view', 'm_resource_id' => strval($id)]);
+
+    if (addon_installed('bayes_common') && addon_installed('bayes_antispam')) {
+        require_code('tasks');
+        require_lang('bayes_antispam');
+        call_user_func_array__long_task(do_lang('HAM_TRAINING'), null, 'bayes_antispam', [['ham'], 'poll', strval($id), $rows[0]['submitter'], $old_content], false, true, false);
+    }
 
     log_it('DELETE_POLL', strval($id), $question);
 

@@ -407,6 +407,11 @@ function edit_chatroom(int $id, string $welcome, string $room_name, ?int $room_o
         warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'chat'));
     }
 
+    if (addon_installed('bayes_common') && addon_installed('bayes_antispam')) {
+        require_code('antispam2');
+        $old_content = content_get_antispam_data('chat', strval($id), false, true);
+    }
+
     $c_welcome = $rows[0]['c_welcome'];
 
     $map = [
@@ -420,6 +425,12 @@ function edit_chatroom(int $id, string $welcome, string $room_name, ?int $room_o
     ];
     $map += lang_remap('c_welcome', $c_welcome, $welcome);
     $GLOBALS['SITE_DB']->query_update('chat_rooms', $map, ['id' => $id], '', 1);
+
+    if (addon_installed('bayes_common') && addon_installed('bayes_antispam')) {
+        require_code('tasks');
+        require_lang('bayes_antispam');
+        call_user_func_array__long_task(do_lang('HAM_TRAINING'), null, 'bayes_antispam', [['ham'], 'chat', strval($id), null, $old_content], false, true, false);
+    }
 
     delete_cache_entry('side_shoutbox');
 
@@ -449,6 +460,11 @@ function delete_chatroom(int $id)
         warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'chat'));
     }
 
+    if (addon_installed('bayes_common') && addon_installed('bayes_antispam')) {
+        require_code('antispam2');
+        $old_content = content_get_antispam_data('chat', strval($id), false, true);
+    }
+
     delete_lang($rows[0]['c_welcome']);
 
     $GLOBALS['SITE_DB']->query_delete('chat_rooms', ['id' => $id], '', 1);
@@ -459,6 +475,12 @@ function delete_chatroom(int $id)
 
     if (addon_installed('catalogues')) {
         update_catalogue_content_ref('chat', strval($id), '');
+    }
+
+    if (addon_installed('bayes_common') && addon_installed('bayes_antispam')) {
+        require_code('tasks');
+        require_lang('bayes_antispam');
+        call_user_func_array__long_task(do_lang('HAM_TRAINING'), null, 'bayes_antispam', [['ham'], 'chat', strval($id), null, $old_content], false, true, false);
     }
 
     if ($rows[0]['is_im'] == 0) {
@@ -523,9 +545,20 @@ function delete_all_chatrooms()
 
         $c_welcomes = $GLOBALS['SITE_DB']->query_select('chat_rooms', ['id', 'c_welcome'], ['is_im' => 0], '', 400);
         foreach ($c_welcomes as $c_welcome) {
+            if (addon_installed('bayes_common') && addon_installed('bayes_antispam')) {
+                require_code('antispam2');
+                $old_content = content_get_antispam_data('chat', strval($c_welcome['id']), false, true);
+            }
+
             delete_lang($c_welcome['c_welcome']);
             $GLOBALS['SITE_DB']->query_delete('chat_rooms', ['id' => $c_welcome['id']]);
             delete_chat_messages(['room_id' => $c_welcome['id']]);
+
+            if (addon_installed('bayes_common') && addon_installed('bayes_antispam')) {
+                require_code('tasks');
+                require_lang('bayes_antispam');
+                call_user_func_array__long_task(do_lang('HAM_TRAINING'), null, 'bayes_antispam', [['ham'], 'chat', strval($c_welcome['id']), null, $old_content], false, true, false);
+            }
         }
 
         cms_set_time_limit($old_limit);

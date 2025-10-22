@@ -87,7 +87,7 @@ class Hook_resource_meta_aware_multi_moderation extends Hook_CMA
                 'mm_pin_state' => null,
                 'mm_open_state' => null,
             ],
-            'additional_antispam_fields' => [],
+            'additional_antispam_fields' => null, // Post templates eventually get trained anyway when a multi-moderation is used
 
             'seo_type_code' => null,
 

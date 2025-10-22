@@ -327,10 +327,16 @@ function cns_merge_members(int $from_id, int $to_id, bool $keep = false)
         warn_exit(do_lang_tempcode('INTERNAL_ERROR', escape_html('8f6253cfcf8a52a39f5d7cc3d8e17e01')));
     }
 
+    if (addon_installed('bayes_common') && addon_installed('bayes_antispam')) {
+        require_code('antispam2');
+        $old_content = content_get_antispam_data('member', strval($from_id), false, true);
+        $old_content_b = content_get_antispam_data('member', strval($to_id), false, true);
+    }
+
     $from_username = $GLOBALS['FORUM_DRIVER']->get_username($from_id);
     $to_username = $GLOBALS['FORUM_DRIVER']->get_username($to_id);
 
-    // Reassign submitter field values
+    // Reassign member field values
     $meta = $GLOBALS['SITE_DB']->query('SELECT m_table,m_name FROM ' . get_table_prefix() . 'db_meta WHERE ' . db_string_equal_to('m_type', 'MEMBER') . ' OR ' . db_string_equal_to('m_type', '?MEMBER') . ' OR ' . db_string_equal_to('m_type', '*MEMBER'));
     foreach ($meta as $m) {
         $db = get_db_for($m['m_table']);
@@ -357,7 +363,19 @@ function cns_merge_members(int $from_id, int $to_id, bool $keep = false)
 
             $test = $GLOBALS['SITE_DB']->query_select_value_if_there('galleries', 'name', ['name' => $new_gallery_name]);
             if ($test === null) { // Rename
+                if (addon_installed('bayes_common') && addon_installed('bayes_antispam')) {
+                    require_code('antispam2');
+                    $old_content = content_get_antispam_data('gallery', $old_gallery_name, false, true);
+                }
+
                 $GLOBALS['SITE_DB']->query_update('galleries', ['name' => $new_gallery_name], ['name' => $old_gallery_name], '', 1);
+
+                if (addon_installed('bayes_common') && addon_installed('bayes_antispam')) {
+                    require_code('tasks');
+                    require_lang('bayes_antispam');
+                    call_user_func_array__long_task(do_lang('HAM_TRAINING'), null, 'bayes_antispam', [['ham'], 'gallery', $old_gallery_name, $from_id, $old_content], false, true, false);
+                    call_user_func_array__long_task(do_lang('HAM_TRAINING'), null, 'bayes_antispam', [['ham'], 'gallery', $new_gallery_name, $to_id], false, true, false);
+                }
             } else { // Delete
                 require_code('galleries2');
                 delete_gallery($old_gallery_name);
@@ -413,6 +431,15 @@ function cns_merge_members(int $from_id, int $to_id, bool $keep = false)
     }
 
     // ---
+
+    if (addon_installed('bayes_common') && addon_installed('bayes_antispam')) {
+        require_code('tasks');
+        require_lang('bayes_antispam');
+
+        // We must re-train both from and to member regardless of $keep because both accounts change
+        call_user_func_array__long_task(do_lang('HAM_TRAINING'), null, 'bayes_antispam', [['ham'], 'member', strval($from_id), $from_id, $old_content], false, true, false);
+        call_user_func_array__long_task(do_lang('HAM_TRAINING'), null, 'bayes_antispam', [['ham'], 'member', strval($to_id), $to_id, $old_content_b], false, true, false);
+    }
 
     log_it('MERGE_MEMBERS', $from_username, $to_username);
 }

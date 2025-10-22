@@ -1553,7 +1553,13 @@ function do_block_get_cache_identifier(string $codename, $cache_on, array $map) 
         if ($cache_on != '') {
             $block_id = get_block_id($map);
 
+            global $LAST_EVAL_CODE;
+            $LAST_EVAL_CODE = 'return ' . $cache_on . ';';
+
             $_cache_on = eval('return ' . $cache_on . ';'); // NB: This uses $map, as $map is referenced inside $cache_on
+
+            unset($LAST_EVAL_CODE);
+
             if ($_cache_on === null) {
                 return null;
             }
@@ -1826,8 +1832,12 @@ function extract_module_functions(string $path, array $functions, array $params 
             }
 
             $parse_error = false;
+            $code = 'return true;' . $pre . $new_func;
+
+            global $LAST_EVAL_CODE;
+            $LAST_EVAL_CODE = $code;
             try {
-                if (@eval('return true;' . $pre . $new_func) === false) {
+                if (@eval($code) === false) {
                     $parse_error = true;
                 }
             } catch (ParseError $e) {
@@ -1835,6 +1845,7 @@ function extract_module_functions(string $path, array $functions, array $params 
             } catch (Exception $e) {
                 $parse_error = true;
             }
+            unset($LAST_EVAL_CODE);
 
             if ($parse_error) {
                 return extract_module_functions($path, $functions, $params, true, $class_name);

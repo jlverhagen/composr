@@ -84,7 +84,7 @@ class Hook_resource_meta_aware_post_template extends Hook_CMA
             'validated_field' => null,
             'validation_time_field' => null,
             'additional_sort_fields' => null,
-            'additional_antispam_fields' => [],
+            'additional_antispam_fields' => null, // Template; will get trained eventually when used as an actual post
 
             'seo_type_code' => null,
 

@@ -35,6 +35,7 @@ function cns_make_forum_grouping(string $title, string $description, int $expand
         'c_title' => $title,
         'c_description' => $description,
         'c_expanded_by_default' => $expanded_by_default,
+        'c_add_date_and_time' => time(),
     ], true);
 
     log_it('ADD_FORUM_GROUPING', strval($forum_grouping_id), $title);
@@ -127,7 +128,8 @@ function cns_make_forum(string $name, string $description, ?int $forum_grouping_
         'f_mail_password' => $mail_password,
         'f_mail_nonmatch_policy' => $mail_nonmatch_policy,
         'f_mail_unconfirmed_notice' => $mail_unconfirmed_notice,
-        'f_poll_default_options_xml' => $poll_default_options_xml
+        'f_poll_default_options_xml' => $poll_default_options_xml,
+        'f_add_date_and_time' => time(),
     ];
     $map += insert_lang_comcode('f_description', $description, 2, $GLOBALS['FORUM_DB']);
     $map += insert_lang_comcode('f_intro_question', $intro_question, 3, $GLOBALS['FORUM_DB']);

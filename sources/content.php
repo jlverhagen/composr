@@ -28,7 +28,11 @@ Notes about hook info...
  - permission_module may be array
  - permission_module may be null
  - permission_module may be missing
-
+ - additional_sort_fields may be null (only supports abstract sorting)
+ - additional_sort_fields is a map when an array (codename to custom SQL [null if codename is a field name and we are doing basic sorting by field])
+ - additional_sort_fields map values may also be an array (defines separate SQL for ASC and DESC sorting)
+ - additional_antispam_fields may be null (do not train on that content)
+ - additional_antispam_fields may be an empty array (train only on custom fields, title, and description)
 */
 
 /**
@@ -1238,15 +1242,31 @@ abstract class Hook_CMA
      * @param  integer $render_type A FIELD_RENDER_* constant
      * @param  array $info The info map for the content type
      * @param  string $field The field name for what we are looking up
-     * @param  boolean $dereference Whether we need to dereference the field as a language string
-     * @param  boolean $supports_comcode Whether the field supports Comcode
+     * @param  ?boolean $dereference Whether we need to dereference the field as a language string (null: look it up)
+     * @param  ?boolean $supports_comcode Whether the field supports Comcode (null: look it up)
      * @param  boolean $resource_fs_style Whether to use the content API as resource-fs requires (may be slightly different)
      * @return ?mixed Content title (string or Tempcode, depending on $render_type) (null: could not generate)
      */
-    protected function get_textual_field(array $row, int $render_type, array $info, string $field, bool $dereference, bool $supports_comcode, bool $resource_fs_style = false)
+    public function get_textual_field(array $row, int $render_type, array $info, string $field, ?bool $dereference, ?bool $supports_comcode, bool $resource_fs_style = false)
     {
         if (strpos($field, 'CALL:') !== false) {
             return call_user_func(trim(substr($field, 5)), $row, $render_type, $resource_fs_style);
+        }
+
+        if (($dereference === null) || ($supports_comcode === null)) {
+            $meta = $GLOBALS['SITE_DB']->query_select_value('db_meta', 'm_type', ['m_table' => $info['table'], 'm_name' => $field]);
+        }
+        if ($dereference === null) {
+            $dereference = false;
+            if (strpos($meta, '_TRANS') !== false) {
+                $dereference = true;
+            }
+        }
+        if ($supports_comcode === null) {
+            $supports_comcode = false;
+            if (strpos($meta, '_COMCODE') !== false) {
+                $supports_comcode = true;
+            }
         }
 
         $id_field = is_array($info['id_field']) ? $info['id_field'] : [$info['id_field']];

@@ -148,10 +148,21 @@ function handle_chatroom_pruning(array $row) : bool
         // As this is a private chatroom, we need to delete it if it has been idle for too long ;-)
         $message = $GLOBALS['SITE_DB']->query_select('chat_messages', ['date_and_time'], ['room_id' => $row['id']], 'ORDER BY date_and_time DESC', 1);
         if ((isset($message[0])) && (($message[0]['date_and_time'] + ($deletion_time * 60)) <= time())) {
+            if (addon_installed('bayes_common') && addon_installed('bayes_antispam')) {
+                require_code('antispam2');
+                $old_content = content_get_antispam_data('chat', strval($row['id']), false, true);
+            }
+
             // Delete the room and its messages
             $GLOBALS['SITE_DB']->query_delete('chat_rooms', ['id' => $row['id']], '', 1);
             require_code('chat2');
             delete_chat_messages(['room_id' => $row['id']]);
+
+            if (addon_installed('bayes_common') && addon_installed('bayes_antispam')) {
+                require_code('tasks');
+                require_lang('bayes_antispam');
+                call_user_func_array__long_task(do_lang('HAM_TRAINING'), null, 'bayes_antispam', [['ham'], 'chat', strval($row['id']), null, $old_content], false, true, false);
+            }
             return true;
         }
     }

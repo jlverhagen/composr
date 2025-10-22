@@ -178,6 +178,8 @@ class Module_downloads
                 'id' => '*AUTO',
                 'l_title' => 'SHORT_TEXT',
                 'l_text' => 'LONG_TEXT',
+                'l_add_date_and_time' => 'TIME',
+                'l_edit_date_and_time' => '?TIME',
             ]);
         }
 
@@ -231,6 +233,11 @@ class Module_downloads
             $GLOBALS['SITE_DB']->create_foreign_key('download_downloads', 'download_licence_id', 'download_licences', 'id');
             $GLOBALS['SITE_DB']->create_foreign_key('download_downloads', 'out_mode_id', 'download_downloads', 'id');
             $GLOBALS['SITE_DB']->create_foreign_key('download_logging', 'id', 'download_downloads', 'id');
+        }
+
+        if (($upgrade_from !== null) && ($upgrade_from < 12)) { // LEGACY: 11.beta9
+            $GLOBALS['FORUM_DB']->add_table_field('download_licences', 'l_add_date_and_time', 'TIME');
+            $GLOBALS['FORUM_DB']->add_table_field('download_licences', 'l_edit_date_and_time', '?TIME');
         }
     }
 

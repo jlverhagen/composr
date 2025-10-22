@@ -600,6 +600,11 @@ class Module_admin_import
 
             $done_all = true;
             foreach ($tasks as $task) {
+                if (!is_array($task)) { // Is a function name to call immediately
+                    call_user_func([$object, $task]);
+                    continue;
+                }
+
                 list($task_hook, $task_label, $task_table, $task_max_row_count) = $task;
 
                 if ($GLOBALS['FORUM_DB']->get_table_count_approx($task_table) <= $task_max_row_count) {

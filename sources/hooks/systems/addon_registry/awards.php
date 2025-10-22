@@ -254,6 +254,7 @@ class Hook_addon_registry_awards
                 'a_content_type' => 'download',
                 'a_show_awardee' => 0,
                 'a_update_interval_hours' => 168,
+                'a_add_date_and_time' => time(),
             ];
             $map += lang_code_to_default_content('a_title', 'DOTW');
             $map += lang_code_to_default_content('a_description', 'DESCRIPTION_DOTW', true);

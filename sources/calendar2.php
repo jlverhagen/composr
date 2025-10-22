@@ -269,6 +269,11 @@ function edit_calendar_event(int $id, ?int $type, string $recurrence, ?int $recu
     }
     $myrow = $rows[0];
 
+    if (addon_installed('bayes_common') && addon_installed('bayes_antispam')) {
+        require_code('antispam2');
+        $old_content = content_get_antispam_data('event', strval($id), false, true);
+    }
+
     require_code('urls2');
     suggest_new_idmoniker_for('calendar', 'view', strval($id), '', $title);
 
@@ -409,6 +414,12 @@ function edit_calendar_event(int $id, ?int $type, string $recurrence, ?int $recu
         process_overridden_comment_forum('calendar', strval($id), strval($type), strval($myrow['e_type']))
     );
 
+    if (addon_installed('bayes_common') && addon_installed('bayes_antispam')) {
+        require_code('tasks');
+        require_lang('bayes_antispam');
+        call_user_func_array__long_task(do_lang('HAM_TRAINING'), null, 'bayes_antispam', [['ham'], 'event', strval($id), (($submitter !== null) ? $submitter : $myrow['e_submitter']), $old_content], false, true, false);
+    }
+
     log_it('EDIT_CALENDAR_EVENT', strval($id), $title);
 
     if ((addon_installed('commandr')) && (!running_script('install')) && (!get_mass_import_mode())) {
@@ -439,6 +450,11 @@ function delete_calendar_event(int $id)
 
     $myrow = $rows[0];
     $e_title = get_translated_text($myrow['e_title']);
+
+    if (addon_installed('bayes_common') && addon_installed('bayes_antispam')) {
+        require_code('antispam2');
+        $old_content = content_get_antispam_data('event', strval($id), false, true);
+    }
 
     $GLOBALS['SITE_DB']->query_delete('calendar_events', ['id' => $id], '', 1);
 
@@ -503,6 +519,12 @@ function delete_calendar_event(int $id)
     }
 
     $GLOBALS['SITE_DB']->query_update('url_id_monikers', ['m_deprecated' => 1], ['m_resource_page' => 'calendar', 'm_resource_type' => 'view', 'm_resource_id' => strval($id)]);
+
+    if (addon_installed('bayes_common') && addon_installed('bayes_antispam')) {
+        require_code('tasks');
+        require_lang('bayes_antispam');
+        call_user_func_array__long_task(do_lang('HAM_TRAINING'), null, 'bayes_antispam', [['ham'], 'event', strval($id), $myrow['e_submitter'], $old_content], false, true, false);
+    }
 
     log_it('DELETE_CALENDAR_EVENT', strval($id), $e_title);
 

@@ -79,7 +79,7 @@ class Hook_resource_meta_aware_tutorials_internal
             'validated_field' => null,
             'validation_time_field' => null,
             'additional_sort_fields' => null,
-            'additional_antispam_fields' => [],
+            'additional_antispam_fields' => null, // These are Comcode pages, so avoid double-training
 
             'seo_type_code' => null,
 

@@ -2111,6 +2111,7 @@ function load_comcode_page(string $string, string $zone, string $codename, ?stri
                     if ($mtime > time()) {
                         $mtime = time(); // Timezone error, we have to assume that cache is ok rather than letting us get in a loop decaching the file. It'll get fixed automatically in a few hours when the hours of the timezone difference passes.
                     }
+
                     $GLOBALS['SITE_DB']->query_update('comcode_pages', ['p_edit_date' => $mtime], ['the_page' => $codename, 'the_zone' => $zone], '', 1);
                     $GLOBALS['SITE_DB']->query_delete('cached_comcode_pages', ['the_zone' => $zone, 'the_page' => $codename]);
                     delete_lang($comcode_page_row['string_index']);

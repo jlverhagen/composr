@@ -226,12 +226,12 @@ function generate_quiz_content_type_universal_label(array $row) : string
  * Get additional content to be trained on the antispam system.
  *
  * @param  array $row Database row of entry
- * @return array Array of content to be trained
+ * @return string Content to be trained, delimited by ||NEWITEM||; must be Comcode-parsed first
  */
-function generate_quiz_content(array $row) : array
+function generate_quiz_content(array $row) : string
 {
     if (!addon_installed('quizzes')) {
-        return [];
+        return '';
     }
 
     $ret = [];
@@ -241,5 +241,5 @@ function generate_quiz_content(array $row) : array
     $parsed_text = trim(preg_replace('#\[[^\]]*\]#', '', $quiz_text)); // Remove anything in brackets as these are special controllers
     $ret[] = $parsed_text;
 
-    return $ret;
+    return implode('||NEWITEM||', $ret);
 }

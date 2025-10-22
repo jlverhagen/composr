@@ -1314,7 +1314,7 @@ function catch_fatal_errors()
 {
     $error = error_get_last(); // If the last error is E_*_ERROR then it would have been fatal, so we should show it via this function
     if ($error !== null) {
-        // @var_dump($error);@debug_print_backtrace(); // Useful for debugging
+        //@var_dump($error);@debug_print_backtrace();exit; // Useful for debugging
 
         // Smart refresh when we timed out
         if (substr($error['message'], 0, 26) == 'Maximum execution time of ') {
@@ -1345,7 +1345,13 @@ function catch_fatal_errors()
                 push_suppress_error_death(false); // We can't recover as we've lost our execution track. Force a nice death rather than trying to display a recoverable error.
                 $GLOBALS['DYING_BADLY'] = true; // Tells software_error_handler to roll through, definitely an error.
                 $GLOBALS['EXITING'] = 2; // Fudge to force a critical error, we're too desperate to show a Tempcode stack trace.
-                cms_error_handler($error['type'], $error['message'], $error['file'], $error['line']);
+
+                $label = $error['message'];
+                if (isset($GLOBALS['LAST_EVAL_CODE'])) {
+                    $label .= ' (' . $GLOBALS['LAST_EVAL_CODE'] . ')';
+                }
+
+                cms_error_handler($error['type'], $label, $error['file'], $error['line']);
                 break;
         }
     }

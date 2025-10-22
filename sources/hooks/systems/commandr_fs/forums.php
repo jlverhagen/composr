@@ -339,8 +339,23 @@ class Hook_commandr_fs_forums extends Resource_fs_base
             list($description, $emoticon, $validated, $open, $pinned, $cascading, $pt_from, $pt_to, $num_views, $description_link) = $this->__folder_read_in_properties_topic($path, $properties);
 
             $id = cns_make_topic($forum_id, $description, $emoticon, $validated, $open, $pinned, $cascading, $pt_from, $pt_to, false, $num_views, null, $description_link);
+
+            if (addon_installed('bayes_common') && addon_installed('bayes_antispam')) {
+                require_code('antispam2');
+                $old_content = content_get_antispam_data('topic', strval($id), false, true);
+                $submitter = $GLOBALS['FORUM_DB']->query_select_value_if_there('f_topics', 't_cache_first_member_id', ['id' => $id]);
+            }
+
             $GLOBALS['FORUM_DB']->query_update('f_topics', ['t_cache_first_title' => $label], ['id' => $id], '', 1);
+
+            if (addon_installed('bayes_common') && addon_installed('bayes_antispam')) {
+                require_code('tasks');
+                require_lang('bayes_antispam');
+                call_user_func_array__long_task(do_lang('HAM_TRAINING'), null, 'bayes_antispam', [['ham'], 'catalogue_category', strval($id), $submitter, $old_content], false, true, false);
+            }
+
             generate_resource_fs_moniker('topic', strval($id));
+
             if ((array_key_exists('poll', $properties)) && (!empty($properties['poll']))) {
                 require_code('cns_polls_action');
 
