@@ -1349,7 +1349,7 @@ function step_5() : object
     include_cns();
 
     // Give warning if database contains data
-    if (post_param_integer('confirm', 0) == 0) {
+    if ((post_param_integer('confirm', 0) == 0) && ($tmp->table_exists('db_meta', true))) {
         $test = $tmp->get_table_count_approx('db_meta');
         if ((($test !== null) && ($test > 0)) || file_exists(get_file_base() . '/_config.php')) {
             global $INSTALL_LANG;
