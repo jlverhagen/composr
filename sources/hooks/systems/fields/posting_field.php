@@ -115,7 +115,7 @@ class Hook_fields_posting_field
      * @param  string $_cf_name The field name
      * @param  string $_cf_description The field description
      * @param  array $field The field details
-     * @param  ?string $actual_value The actual current value of the field (null: none)
+     * @param  ?string $actual_value The actual current value of the field, or default value if not set (null: none, and no default value set)
      * @param  boolean $new Whether this is for a new entry
      * @param  boolean $last Whether this is the last field in the catalogue
      * @return ?Tempcode The Tempcode for the input field (null: skip the field - it's not input)
@@ -129,11 +129,21 @@ class Hook_fields_posting_field
             $done_one = true;
         }
 
-        if ($done_one) {
-            if ($actual_value === null) {
-                $actual_value = ''; // Plug anomaly due to unusual corruption
-            }
+        if ($actual_value === null) {
+            $actual_value = ''; // Plug anomaly due to unusual corruption
+        }
 
+        $input_name = @cms_empty_safe($field['cf_input_name']) ? ('field_' . strval($field['id'])) : $field['cf_input_name'];
+
+        $edit_only = option_value_from_field_array($field, 'edit_only', '0');
+        if (($field['cf_required'] == 1) && ($actual_value == '')) {
+            $edit_only = '0';
+        }
+        if (($edit_only != '0') && $new) {
+            return form_input_hidden($input_name, $actual_value);
+        }
+
+        if ($done_one) {
             $wysiwyg = (option_value_from_field_array($field, 'wysiwyg', 'on') == 'on');
 
             $wordwrap = (option_value_from_field_array($field, 'wordwrap', 'on') == 'on');
@@ -143,15 +153,10 @@ class Hook_fields_posting_field
             $_maxlength = option_value_from_field_array($field, 'maxlength', '');
             $maxlength = ($_maxlength == '') ? null : intval($_maxlength);
 
-            $input_name = @cms_empty_safe($field['cf_input_name']) ? ('field_' . strval($field['id'])) : $field['cf_input_name'];
             return form_input_text_comcode($_cf_name, $_cf_description, $input_name, $actual_value, $field['cf_required'] == 1, null, !$wysiwyg, '', null, !$wordwrap, $input_size);
         }
 
         $done_one = true;
-
-        if ($actual_value === null) {
-            $actual_value = ''; // Plug anomaly due to unusual corruption
-        }
 
         require_javascript('posting');
         require_javascript('editing');
@@ -161,8 +166,6 @@ class Hook_fields_posting_field
         require_lang('comcode');
 
         $tabindex = get_form_field_tabindex();
-
-        $input_name = @cms_empty_safe($field['cf_input_name']) ? ('field_' . strval($field['id'])) : $field['cf_input_name'];
 
         $actual_value = filter_form_field_default($_cf_name, $actual_value);
 

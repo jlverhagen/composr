@@ -118,7 +118,7 @@ class Hook_fields_guid
      * @param  string $_cf_name The field name
      * @param  string $_cf_description The field description
      * @param  array $field The field details
-     * @param  ?string $actual_value The actual current value of the field (null: none)
+     * @param  ?string $actual_value The actual current value of the field, or default value if not set (null: none, and no default value set)
      * @param  boolean $new Whether this is for a new entry
      * @return ?Tempcode The Tempcode for the input field (null: skip the field - it's not input)
      */
@@ -132,6 +132,7 @@ class Hook_fields_guid
             $actual_value = ''; // Plug anomaly due to unusual corruption
         }
         $input_name = @cms_empty_safe($field['cf_input_name']) ? ('field_' . strval($field['id'])) : $field['cf_input_name'];
+
         return form_input_codename($_cf_name, $_cf_description, $input_name, $actual_value, $field['cf_required'] == 1);
     }
 
