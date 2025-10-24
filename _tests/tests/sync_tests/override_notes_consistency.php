@@ -37,15 +37,17 @@ class override_notes_consistency_test_set extends cms_test_case
         $files = get_directory_contents(get_file_base(), '', IGNORE_ALIEN | IGNORE_FLOATING, true, true, ['php']);
         $files[] = 'install.php';
         foreach ($files as $path) {
+            // No overrides within a zone's root directory
             if (file_exists(dirname($path) . '/index.php')) {
-                continue; // Zone directory, no override support
+                continue;
             }
 
+            // Anything not located in sources/modules/data cannot be overridden
             if (preg_match('#(^sources|/modules|^data)(_custom)?/#', $path) == 0) {
                 continue;
             }
 
-            // Exceptions
+            // Third party code, and the test suite, cannot be overridden
             $exceptions = array_merge(list_untouchable_third_party_directories(), [
                 '_tests',
             ]);
@@ -60,6 +62,7 @@ class override_notes_consistency_test_set extends cms_test_case
 
             $c = cms_file_get_contents_safe(get_file_base() . '/' . $path);
 
+            // Also likely third party code which cannot be overridden
             if (strpos($c, 'CQC: No check') !== false) {
                 continue;
             }
