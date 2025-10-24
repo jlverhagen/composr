@@ -64,6 +64,18 @@
                     var response = xhr.responseText;
                     if (response !== '') {
                         pendingConfirm = true;
+                        $cms.requireJavascript('sound').then(function () {
+                            window.soundManager.setup({
+                                url: $util.rel('data'),
+                                debugMode: false,
+                                onready: function () {
+                                    var soundObject = window.soundManager.createSound({url: $util.rel('data/sounds/general/inform.mp3')});
+                                    if (soundObject) {
+                                        soundObject.play();
+                                    }
+                                }
+                            });
+                        });
                         $cms.ui.alert(response, undefined, true).then(function () {
                             pendingConfirm = false;
                             $cms.doAjaxRequest('{$FIND_SCRIPT_NOHTTP;,session_poller}?update_session=1' + $cms.keep());
