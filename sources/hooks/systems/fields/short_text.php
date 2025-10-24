@@ -161,7 +161,7 @@ class Hook_fields_short_text
         }
 
         $type = 'text';
-        if ($field['cf_type'] != 'short_text') {
+        if (in_array($field['cf_type'], ['tel', 'username'])) { // We have to be explicit because any fields extending short_text likely are not named for HTML input types
             $type = $field['cf_type'];
         }
 
@@ -170,7 +170,10 @@ class Hook_fields_short_text
 
         $autocomplete = ($new && !empty($field['cf_autofill_type'])) ? (($field['cf_autofill_hint'] ? ($field['cf_autofill_hint'] . ' ') : '') . $field['cf_autofill_type']) : null;
 
-        return form_input_line($_cf_name, $_cf_description, $input_name, $actual_value, $field['cf_required'] == 1, null, $maxlength, $type, null, null, null, null, $autocomplete);
+        $_size = option_value_from_field_array($field, 'input_size', '27');
+        $size = intval($_size);
+
+        return form_input_line($_cf_name, $_cf_description, $input_name, $actual_value, $field['cf_required'] == 1, null, $maxlength, $type, null, null, null, $size, $autocomplete);
     }
 
     /**

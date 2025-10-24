@@ -303,6 +303,8 @@ function convert_image_plus(string $orig_url, ?string $dimensions = null, string
  */
 function _convert_image(string $from, string &$to, ?int $width, ?int $height, ?int $box_size = null, bool $exit_on_error = true, ?string $ext2 = null, bool $using_path = false, bool $only_make_smaller = false, ?array $thumb_options = null) : string
 {
+    check_for_infinite_loop('_convert_image', [$from, $width, $height, $box_size, $only_make_smaller, $thumb_options], 5);
+
     disable_php_memory_limit();
     $old_limit = cms_extend_time_limit(TIME_LIMIT_EXTEND__MODEST);
 

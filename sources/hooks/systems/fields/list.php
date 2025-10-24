@@ -161,8 +161,6 @@ class Hook_fields_list extends ListFieldHook
             $actual_value = ''; // Plug anomaly due to unusual corruption
         }
 
-        $default = $field['cf_default'];
-
         $list = $this->get_input_list_map($field);
 
         $input_name = @cms_empty_safe($field['cf_input_name']) ? ('field_' . strval($field['id'])) : $field['cf_input_name'];

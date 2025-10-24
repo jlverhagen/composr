@@ -1555,7 +1555,7 @@ function form_input_tick($pretty_name, $description, string $name, bool $ticked,
  */
 function form_input_various_ticks(array $options, $description, ?int $_tabindex = null, $_pretty_name = '', bool $simple_style = false, ?string $custom_name = null, $custom_value = null) : object
 {
-    if (empty($options)) {
+    if (empty($options) && ($custom_name === null)) {
         return new Tempcode();
     }
 
@@ -1574,7 +1574,7 @@ function form_input_various_ticks(array $options, $description, ?int $_tabindex 
 
     $input = new Tempcode();
 
-    if (count($options[0]) != 3) {
+    if (empty($options) || count($options[0]) != 3) {
         $options = [[$options, null, new Tempcode()]];
     }
     foreach ($options as $_option) {

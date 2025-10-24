@@ -45,7 +45,7 @@ class Hook_fields_content_link_multi
         $hooks = find_all_hooks('systems', 'content_meta_aware');
         $ret = [];
         foreach (array_keys($hooks) as $hook) {
-            if ($hook != 'catalogue_entry'/*got a better field hook specifically for catalogue entries*/) {
+            if ($hook != 'catalogue_entry'/*got a better field hook specifically for catalogue entries (reference)*/) {
                 $ret['ax_' . $hook] = do_lang_tempcode('FIELD_TYPE_content_link_multi_x', escape_html($hook));
             }
         }

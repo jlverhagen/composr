@@ -50,7 +50,7 @@ class Hook_fields_content_link
         $hooks = find_all_hooks('systems', 'content_meta_aware');
         $ret = [];
         foreach (array_keys($hooks) as $hook) {
-            if ($hook != 'catalogue_entry'/*got a better field hook specifically for catalogue entries*/) {
+            if ($hook != 'catalogue_entry'/*got a better field hook specifically for catalogue entries (reference)*/) {
                 if ((is_file(get_file_base() . '/sources_custom/hooks/systems/content_meta_aware/' . $hook . '.php')) || (is_file(get_file_base() . '/sources/hooks/systems/content_meta_aware/' . $hook . '.php'))) {
                     $ret['at_' . $hook] = do_lang_tempcode('FIELD_TYPE_content_link_x', escape_html($hook));
                 }

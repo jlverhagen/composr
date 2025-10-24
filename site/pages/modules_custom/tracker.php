@@ -41,7 +41,7 @@ class Module_tracker
         $info['organisation'] = 'Composr';
         $info['hacked_by'] = null;
         $info['hack_version'] = null;
-        $info['version'] = 4;
+        $info['version'] = 5;
         $info['update_require_upgrade'] = true;
         $info['locked'] = false;
         $info['min_cms_version'] = 11.0;
@@ -105,453 +105,229 @@ class Module_tracker
      */
     public function install(?int $upgrade_from = null, ?int $upgrade_from_hack = null)
     {
-        if ($upgrade_from === null) {
-            // Tracker...
+        if (($upgrade_from === null) || ($upgrade_from < 5)) { // 11.beta9
+            cms_extend_time_limit(TIME_LIMIT_EXTEND__SLOW);
+            raise_php_memory_limit();
 
-            if (strpos(get_db_type(), 'mysql') !== false) {
-                $table_type = (db_is_innodb()) ? 'InnoDB' : 'MyISAM';
+            require_lang('catalogues');
+            require_lang('tracker');
+            require_lang('addons');
+            require_code('permissions2');
+            require_code('catalogues');
+            require_code('catalogues2');
+            require_code('lang3');
+            require_code('cns_groups');
 
-                $GLOBALS['SITE_DB']->query("CREATE TABLE IF NOT EXISTS `mantis_api_token_table` (
-                    `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
-                    `user_id` int(10) unsigned NOT NULL DEFAULT '0',
-                    `name` varchar(128) NOT NULL,
-                    `hash` varchar(128) NOT NULL,
-                    `date_created` int(10) unsigned NOT NULL DEFAULT '1',
-                    `date_used` int(10) unsigned NOT NULL DEFAULT '1',
-                    PRIMARY KEY (`id`),
-                    UNIQUE KEY `idx_user_id_name` (`user_id`,`name`)
-                ) ENGINE=" . $table_type . " DEFAULT CHARSET=utf8");
+            $admin_groups = $GLOBALS['FORUM_DRIVER']->get_super_admin_groups();
+            $mod_groups = $GLOBALS['FORUM_DRIVER']->get_moderator_groups();
+            $probation_groups = [get_probation_group()];
+            $guest_groups = [$GLOBALS['FORUM_DRIVER']->get_guest_id()];
+            $groups = array_diff(array_keys($GLOBALS['FORUM_DRIVER']->get_usergroup_list(false, true, true)), $guest_groups); // Never include guests
+            $non_staff_groups = array_diff($groups, $admin_groups, $mod_groups);
 
-                $GLOBALS['SITE_DB']->query("CREATE TABLE IF NOT EXISTS `mantis_bug_file_table` (
-                    `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
-                    `bug_id` int(10) unsigned NOT NULL DEFAULT '0',
-                    `title` varchar(250) NOT NULL DEFAULT '',
-                    `description` varchar(250) NOT NULL DEFAULT '',
-                    `diskfile` varchar(250) NOT NULL DEFAULT '',
-                    `filename` varchar(250) NOT NULL DEFAULT '',
-                    `folder` varchar(250) NOT NULL DEFAULT '',
-                    `filesize` int(11) NOT NULL DEFAULT '0',
-                    `file_type` varchar(250) NOT NULL DEFAULT '',
-                    `content` longblob,
-                    `date_added` int(10) unsigned NOT NULL DEFAULT '1',
-                    `user_id` int(10) unsigned NOT NULL DEFAULT '0',
-                    `bugnote_id` int(10) unsigned NOT NULL DEFAULT '0',
-                    PRIMARY KEY (`id`),
-                    KEY `idx_bug_file_bug_id` (`bug_id`),
-                    KEY `idx_diskfile` (`diskfile`)
-                ) ENGINE=" . $table_type . " DEFAULT CHARSET=utf8");
+            // Step 1: Create the tracker catalogue.
+            actual_add_catalogue(
+                'tracker',
+                lang_code_to_default_content('c_title', 'TRACKER', false, 2),
+                lang_code_to_default_content('c_description', 'DESCRIPTION_TRACKER_CATALOGUE', true, 3),
+                C_DT_TABULAR,
+                0,
+                do_lang('TRACKER_CATALOGUE_NOTES'),
+                0 // Points are assigned when an issue gets resolved
+            );
 
-                $GLOBALS['SITE_DB']->query("CREATE TABLE IF NOT EXISTS `mantis_bug_history_table` (
-                    `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
-                    `user_id` int(10) unsigned NOT NULL DEFAULT '0',
-                    `bug_id` int(10) unsigned NOT NULL DEFAULT '0',
-                    `field_name` varchar(64) NOT NULL,
-                    `old_value` varchar(255) NOT NULL,
-                    `new_value` varchar(255) NOT NULL,
-                    `type` smallint(6) NOT NULL DEFAULT '0',
-                    `date_modified` int(10) unsigned NOT NULL DEFAULT '1',
-                    PRIMARY KEY (`id`),
-                    KEY `idx_bug_history_bug_id` (`bug_id`),
-                    KEY `idx_history_user_id` (`user_id`),
-                    KEY `idx_bug_history_date_modified` (`date_modified`)
-                ) ENGINE=" . $table_type . " DEFAULT CHARSET=utf8");
+            // Step 2. Set catalogue permissions.
+            set_global_category_access('catalogues_catalogue', 'tracker');
 
-                $GLOBALS['SITE_DB']->query("CREATE TABLE IF NOT EXISTS `mantis_bug_monitor_table` (
-                    `user_id` int(10) unsigned NOT NULL DEFAULT '0',
-                    `bug_id` int(10) unsigned NOT NULL DEFAULT '0',
-                    PRIMARY KEY (`user_id`,`bug_id`),
-                    KEY `idx_bug_id` (`bug_id`)
-                ) ENGINE=" . $table_type . " DEFAULT CHARSET=utf8");
+            foreach ($non_staff_groups as $group) {
+                // However we must reject the ability to edit own entries except for staff
+                $GLOBALS['SITE_DB']->query_insert('group_privileges', [
+                    'group_id' => $group,
+                    'privilege' => 'edit_own_midrange_content',
+                    'the_page' => '',
+                    'module_the_name' => 'catalogues_catalogue',
+                    'category_name' => 'tracker',
+                    'the_value' => 0,
+                ]);
 
-                $GLOBALS['SITE_DB']->query("CREATE TABLE IF NOT EXISTS `mantis_bug_relationship_table` (
-                    `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
-                    `source_bug_id` int(10) unsigned NOT NULL DEFAULT '0',
-                    `destination_bug_id` int(10) unsigned NOT NULL DEFAULT '0',
-                    `relationship_type` smallint(6) NOT NULL DEFAULT '0',
-                    PRIMARY KEY (`id`),
-                    KEY `idx_relationship_source` (`source_bug_id`),
-                    KEY `idx_relationship_destination` (`destination_bug_id`)
-                ) ENGINE=" . $table_type . " DEFAULT CHARSET=utf8");
+                // However we must reject the ability to delete own entries except for staff
+                $GLOBALS['SITE_DB']->query_insert('group_privileges', [
+                    'group_id' => $group,
+                    'privilege' => 'delete_own_midrange_content',
+                    'the_page' => '',
+                    'module_the_name' => 'catalogues_catalogue',
+                    'category_name' => 'tracker',
+                    'the_value' => 0,
+                ]);
+            }
 
-                $GLOBALS['SITE_DB']->query("CREATE TABLE IF NOT EXISTS `mantis_bug_revision_table` (
-                    `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
-                    `bug_id` int(10) unsigned NOT NULL,
-                    `bugnote_id` int(10) unsigned NOT NULL DEFAULT '0',
-                    `user_id` int(10) unsigned NOT NULL,
-                    `type` int(10) unsigned NOT NULL,
-                    `value` longtext NOT NULL,
-                    `timestamp` int(10) unsigned NOT NULL DEFAULT '1',
-                    PRIMARY KEY (`id`),
-                    KEY `idx_bug_rev_type` (`type`),
-                    KEY `idx_bug_rev_id_time` (`bug_id`,`timestamp`)
-                ) ENGINE=" . $table_type . " DEFAULT CHARSET=utf8");
+            foreach (array_diff($groups, $probation_groups) as $group) {
+                // However we must allow bypassing validation (except for probation) so anyone can quickly report issues
+                $GLOBALS['SITE_DB']->query_insert('group_privileges', [
+                    'group_id' => $group,
+                    'privilege' => 'bypass_validation_midrange_content',
+                    'the_page' => '',
+                    'module_the_name' => 'catalogues_catalogue',
+                    'category_name' => 'tracker',
+                    'the_value' => 1,
+                ]);
+            }
 
-                $GLOBALS['SITE_DB']->query("CREATE TABLE IF NOT EXISTS `mantis_bug_table` (
-                    `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
-                    `project_id` int(10) unsigned NOT NULL DEFAULT '0',
-                    `reporter_id` int(10) unsigned NOT NULL DEFAULT '0',
-                    `handler_id` int(10) unsigned NOT NULL DEFAULT '0',
-                    `duplicate_id` int(10) unsigned NOT NULL DEFAULT '0',
-                    `priority` smallint(6) NOT NULL DEFAULT '30',
-                    `severity` smallint(6) NOT NULL DEFAULT '50',
-                    `reproducibility` smallint(6) NOT NULL DEFAULT '10',
-                    `status` smallint(6) NOT NULL DEFAULT '10',
-                    `resolution` smallint(6) NOT NULL DEFAULT '10',
-                    `projection` smallint(6) NOT NULL DEFAULT '10',
-                    `eta` smallint(6) NOT NULL DEFAULT '10',
-                    `bug_text_id` int(10) unsigned NOT NULL DEFAULT '0',
-                    `os` varchar(32) NOT NULL DEFAULT '',
-                    `os_build` varchar(32) NOT NULL DEFAULT '',
-                    `platform` varchar(32) NOT NULL DEFAULT '',
-                    `version` varchar(64) NOT NULL DEFAULT '',
-                    `fixed_in_version` varchar(64) NOT NULL DEFAULT '',
-                    `build` varchar(32) NOT NULL DEFAULT '',
-                    `profile_id` int(10) unsigned NOT NULL DEFAULT '0',
-                    `view_state` smallint(6) NOT NULL DEFAULT '10',
-                    `summary` varchar(128) NOT NULL DEFAULT '',
-                    `sponsorship_total` int(11) NOT NULL DEFAULT '0',
-                    `sticky` tinyint(4) NOT NULL DEFAULT '0',
-                    `target_version` varchar(64) NOT NULL DEFAULT '',
-                    `category_id` int(10) unsigned NOT NULL DEFAULT '1',
-                    `date_submitted` int(10) unsigned NOT NULL DEFAULT '1',
-                    `due_date` int(10) unsigned NOT NULL DEFAULT '1',
-                    `last_updated` int(10) unsigned NOT NULL DEFAULT '1',
-                    PRIMARY KEY (`id`),
-                    KEY `idx_bug_sponsorship_total` (`sponsorship_total`),
-                    KEY `idx_bug_fixed_in_version` (`fixed_in_version`),
-                    KEY `idx_bug_status` (`status`),
-                    KEY `idx_project` (`project_id`)
-                ) ENGINE=" . $table_type . " DEFAULT CHARSET=utf8");
+            // Step 3: create the fields.
+            $fields = [
+                // Name, description, type, defines order, required, visible, options, sensitive, put in category / search, sortable, default (language string)
+                ['IDENTIFIER', 'DESCRIPTION_TRACKER_CATALOGUE_IDENTIFIER', 'tracker_id', 1, 1, 1, '', 0, 1, 0, ''],
+                ['ISSUE_TYPE', 'DESCRIPTION_TRACKER_CATALOGUE_ISSUE_TYPE', 'list', 0, 1, 1, 'display_val=on', 0, 1, 1, 'TRACKER_CATALOGUE_ISSUE_TYPE_DEFAULT'],
+                ['TITLE', 'DESCRIPTION_TRACKER_CATALOGUE_TITLE', 'short_text', 0, 1, 1, 'input_size=56', 0, 1, 0, ''],
+                ['STATUS', 'DESCRIPTION_TRACKER_CATALOGUE_STATUS', 'list', 0, 1, 1, 'display_val=on,edit_only=1', 0, 1, 1, 'TRACKER_CATALOGUE_STATUS_DEFAULT'],
+                ['ISSUE_TAGS', 'DESCRIPTION_TRACKER_CATALOGUE_TAGS', 'list_multi', 0, 0, 1, 'custom_values=multiple,edit_only=1,widget=vertical_checkboxes', 0, 0, 1, ''],
+                ['HANDLER', 'DESCRIPTION_TRACKER_CATALOGUE_HANDLER', 'member', 0, 0, 1, 'edit_only=1', 0, 0, 0, ''],
+                ['VERSION', 'DESCRIPTION_TRACKER_CATALOGUE_VERSION', 'version', 0, 0, 1, '', 0, 0, 1, ''],
+                ['ADDON', 'DESCRIPTION_TRACKER_CATALOGUE_ADDON', 'addon', 0, 0, 1, 'auto_sort=on', 0, 0, 1, ''],
+                ['DESCRIPTION', 'DESCRIPTION_TRACKER_CATALOGUE_DESCRIPTION', 'long_trans', 0, 1, 1, '', 1, 0, 0, ''],
+                ['STEPS_TO_REPRODUCE', 'DESCRIPTION_TRACKER_CATALOGUE_STEPS_TO_REPRODUCE', 'short_trans_multi', 0, 0, 1, '', 1, 0, 0, ''],
+                ['ADDITIONAL_INFORMATION', 'DESCRIPTION_TRACKER_CATALOGUE_ADDITIONAL_INFORMATION', 'long_trans', 0, 0, 1, '', 1, 0, 0, ''],
+                ['RELATED_TO', 'DESCRIPTION_TRACKER_CATALOGUE_RELATED_TO', 'cx_tracker', 0, 0, 1, 'edit_only=1', 0, 0, 0, ''],
+                ['IS_FUNDED', 'DESCRIPTION_TRACKER_CATALOGUE_IS_FUNDED', 'tick', 0, 1, 1, 'edit_only=1', 0, 1, 1, 'TRACKER_CATALOGUE_IS_FUNDED_DEFAULT'],
+                ['RELEASED_IN_VERSION', 'DESCRIPTION_TRACKER_CATALOGUE_RELEASED_IN_VERSION', 'version', 0, 0, 1, 'edit_only=1', 0, 0, 1, ''],
+                ['HOTFIX', 'DESCRIPTION_TRACKER_CATALOGUE_HOTFIX', 'upload', 0, 0, 1, 'edit_only=1', 0, 0, 0, ''],
+            ];
+            foreach ($fields as $i => $field) {
+                $default = '';
 
-                $GLOBALS['SITE_DB']->query("CREATE TABLE IF NOT EXISTS `mantis_bug_tag_table` (
-                    `bug_id` int(10) unsigned NOT NULL DEFAULT '0',
-                    `tag_id` int(10) unsigned NOT NULL DEFAULT '0',
-                    `user_id` int(10) unsigned NOT NULL DEFAULT '0',
-                    `date_attached` int(10) unsigned NOT NULL DEFAULT '1',
-                    PRIMARY KEY (`bug_id`,`tag_id`),
-                    KEY `idx_bug_tag_tag_id` (`tag_id`)
-                ) ENGINE=" . $table_type . " DEFAULT CHARSET=utf8");
+                // Values for default can be mapped by additional language strings
+                if ($field[10] != '') {
+                    $values = explode('|', do_lang($field[10]));
+                    foreach ($values as $j => $value) {
+                        if ($j > 0) {
+                            $default .= '|';
+                        }
 
-                $GLOBALS['SITE_DB']->query("CREATE TABLE IF NOT EXISTS `mantis_bug_text_table` (
-                    `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
-                    `description` longtext NOT NULL,
-                    `steps_to_reproduce` longtext NOT NULL,
-                    `additional_information` longtext NOT NULL,
-                    PRIMARY KEY (`id`)
-                ) ENGINE=" . $table_type . " DEFAULT CHARSET=utf8;
-                    ");
+                        $default .= $value;
+                        $remap = do_lang($field[10] . '_' . filter_naughty_harsh($value, true), null, null, null, null, false);
+                        if ($remap !== null) {
+                            $default .= '=' . $remap;
+                        }
+                    }
+                }
 
-                $GLOBALS['SITE_DB']->query("CREATE TABLE IF NOT EXISTS `mantis_bugnote_table` (
-                    `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
-                    `bug_id` int(10) unsigned NOT NULL DEFAULT '0',
-                    `reporter_id` int(10) unsigned NOT NULL DEFAULT '0',
-                    `bugnote_text_id` int(10) unsigned NOT NULL DEFAULT '0',
-                    `view_state` smallint(6) NOT NULL DEFAULT '10',
-                    `note_type` int(11) DEFAULT '0',
-                    `note_attr` varchar(250) DEFAULT '',
-                    `time_tracking` int(10) unsigned NOT NULL DEFAULT '0',
-                    `last_modified` int(10) unsigned NOT NULL DEFAULT '1',
-                    `date_submitted` int(10) unsigned NOT NULL DEFAULT '1',
-                    PRIMARY KEY (`id`),
-                    KEY `idx_bug` (`bug_id`),
-                    KEY `idx_last_mod` (`last_modified`)
-                ) ENGINE=" . $table_type . " DEFAULT CHARSET=utf8");
+                actual_add_catalogue_field(
+                    'tracker', // $c_name
+                    lang_code_to_default_content('cf_name', $field[0], false, 2), // $name
+                    lang_code_to_default_content('cf_description', $field[1], false, 3), // $description
+                    $field[2], // $type
+                    $i, // $order
+                    $field[3], // $defines_order
+                    $field[5], // $visible
+                    $field[7], // $sensitive
+                    $default, // $default
+                    $field[4], // $required
+                    $field[9],
+                    1,
+                    0,
+                    $field[8], // $put_in_category
+                    $field[8], // $put_in_search
+                    $field[6] // $options
+                );
+            }
 
-                $GLOBALS['SITE_DB']->query("CREATE TABLE IF NOT EXISTS `mantis_bugnote_text_table` (
-                    `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
-                    `note` longtext NOT NULL,
-                    PRIMARY KEY (`id`)
-                ) ENGINE=" . $table_type . " DEFAULT CHARSET=utf8");
+            // Step 4: Create the categories and their privileges
+            for ($i = 1; $i <= 6; $i++) {
+                $cat_id = actual_add_catalogue_category('tracker', lang_code_to_default_content('cc_title', 'TRACKER_CATALOGUE_CATEGORY_' . strval($i), false, 2), lang_code_to_default_content('cc_description', 'DESCRIPTION_TRACKER_CATALOGUE_CATEGORY_' . strval($i), true, 3), '', null, '');
+                set_global_category_access('catalogues_category', $cat_id);
 
-                $GLOBALS['SITE_DB']->query("CREATE TABLE IF NOT EXISTS `mantis_category_table` (
-                    `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
-                    `project_id` int(10) unsigned NOT NULL DEFAULT '0',
-                    `user_id` int(10) unsigned NOT NULL DEFAULT '0',
-                    `name` varchar(128) NOT NULL DEFAULT '',
-                    `status` int(10) unsigned NOT NULL DEFAULT '0',
-                    PRIMARY KEY (`id`),
-                    UNIQUE KEY `idx_category_project_name` (`project_id`,`name`)
-                ) ENGINE=" . $table_type . " DEFAULT CHARSET=utf8");
+                foreach ($non_staff_groups as $group) {
+                    // However we must reject the ability to edit own entries except for staff
+                    $GLOBALS['SITE_DB']->query_insert('group_privileges', [
+                        'group_id' => $group,
+                        'privilege' => 'edit_own_midrange_content',
+                        'the_page' => '',
+                        'module_the_name' => 'catalogues_category',
+                        'category_name' => strval($cat_id),
+                        'the_value' => 0,
+                    ]);
 
-                $GLOBALS['SITE_DB']->query("INSERT INTO `mantis_category_table` values('1','0','0','General','0')");
+                    // However we must reject the ability to delete own entries except for staff
+                    $GLOBALS['SITE_DB']->query_insert('group_privileges', [
+                        'group_id' => $group,
+                        'privilege' => 'delete_own_midrange_content',
+                        'the_page' => '',
+                        'module_the_name' => 'catalogues_category',
+                        'category_name' => strval($cat_id),
+                        'the_value' => 0,
+                    ]);
+                }
 
-                $GLOBALS['SITE_DB']->query("CREATE TABLE IF NOT EXISTS `mantis_config_table` (
-                    `config_id` varchar(64) NOT NULL,
-                    `project_id` int(11) NOT NULL DEFAULT '0',
-                    `user_id` int(11) NOT NULL DEFAULT '0',
-                    `access_reqd` int(11) DEFAULT '0',
-                    `type` int(11) DEFAULT '90',
-                    `value` longtext NOT NULL,
-                    PRIMARY KEY (`config_id`,`project_id`,`user_id`)
-                ) ENGINE=" . $table_type . " DEFAULT CHARSET=utf8");
-
-                $GLOBALS['SITE_DB']->query("INSERT INTO `mantis_config_table` values('database_version','0','0','90','1','209')");
-
-                $GLOBALS['SITE_DB']->query("CREATE TABLE IF NOT EXISTS `mantis_custom_field_project_table` (
-                    `field_id` int(11) NOT NULL DEFAULT '0',
-                    `project_id` int(10) unsigned NOT NULL DEFAULT '0',
-                    `sequence` smallint(6) NOT NULL DEFAULT '0',
-                    PRIMARY KEY (`field_id`,`project_id`)
-                ) ENGINE=" . $table_type . " DEFAULT CHARSET=utf8");
-
-                $GLOBALS['SITE_DB']->query("INSERT INTO `mantis_custom_field_project_table` values('1','1','0'),('2','1','0')");
-
-                $GLOBALS['SITE_DB']->query("CREATE TABLE IF NOT EXISTS `mantis_custom_field_string_table` (
-                    `field_id` int(11) NOT NULL DEFAULT '0',
-                    `bug_id` int(11) NOT NULL DEFAULT '0',
-                    `value` varchar(255) NOT NULL DEFAULT '',
-                    `text` longtext,
-                    PRIMARY KEY (`field_id`,`bug_id`),
-                    KEY `idx_custom_field_bug` (`bug_id`)
-                ) ENGINE=" . $table_type . " DEFAULT CHARSET=utf8");
-
-                $GLOBALS['SITE_DB']->query("CREATE TABLE IF NOT EXISTS `mantis_custom_field_table` (
-                    `id` int(11) NOT NULL AUTO_INCREMENT,
-                    `name` varchar(64) NOT NULL DEFAULT '',
-                    `type` smallint(6) NOT NULL DEFAULT '0',
-                    `possible_values` text NOT NULL,
-                    `default_value` varchar(255) NOT NULL DEFAULT '',
-                    `valid_regexp` varchar(255) NOT NULL DEFAULT '',
-                    `access_level_r` smallint(6) NOT NULL DEFAULT '0',
-                    `access_level_rw` smallint(6) NOT NULL DEFAULT '0',
-                    `length_min` int(11) NOT NULL DEFAULT '0',
-                    `length_max` int(11) NOT NULL DEFAULT '0',
-                    `require_report` tinyint(4) NOT NULL DEFAULT '0',
-                    `require_update` tinyint(4) NOT NULL DEFAULT '0',
-                    `display_report` tinyint(4) NOT NULL DEFAULT '0',
-                    `display_update` tinyint(4) NOT NULL DEFAULT '1',
-                    `require_resolved` tinyint(4) NOT NULL DEFAULT '0',
-                    `display_resolved` tinyint(4) NOT NULL DEFAULT '0',
-                    `display_closed` tinyint(4) NOT NULL DEFAULT '0',
-                    `require_closed` tinyint(4) NOT NULL DEFAULT '0',
-                    `filter_by` tinyint(4) NOT NULL DEFAULT '1',
-                    PRIMARY KEY (`id`),
-                    KEY `idx_custom_field_name` (`name`)
-                ) ENGINE=" . $table_type . " DEFAULT CHARSET=utf8");
-
-                $GLOBALS['SITE_DB']->query("INSERT INTO `mantis_custom_field_table` values('1','Time estimation (hours)','2','','0','','10','10','0','0','0','0','1','1','0','1','1','0','1'),('2','Sponsorship open','5','Open','0','','10','55','0','0','0','0','1','1','0','1','1','0','1')");
-
-                $GLOBALS['SITE_DB']->query("CREATE TABLE IF NOT EXISTS `mantis_email_table` (
-                    `email_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
-                    `email` varchar(64) NOT NULL DEFAULT '',
-                    `subject` varchar(250) NOT NULL DEFAULT '',
-                    `metadata` longtext NOT NULL,
-                    `body` longtext NOT NULL,
-                    `submitted` int(10) unsigned NOT NULL DEFAULT '1',
-                    PRIMARY KEY (`email_id`)
-                ) ENGINE=" . $table_type . " DEFAULT CHARSET=utf8");
-
-                $GLOBALS['SITE_DB']->query("CREATE TABLE IF NOT EXISTS `mantis_filters_table` (
-                    `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
-                    `user_id` int(11) NOT NULL DEFAULT '0',
-                    `project_id` int(11) NOT NULL DEFAULT '0',
-                    `is_public` tinyint(4) DEFAULT NULL,
-                    `name` varchar(64) NOT NULL DEFAULT '',
-                    `filter_string` longtext NOT NULL,
-                    PRIMARY KEY (`id`)
-                ) ENGINE=" . $table_type . " DEFAULT CHARSET=utf8");
-
-                $GLOBALS['SITE_DB']->query("CREATE TABLE IF NOT EXISTS `mantis_news_table` (
-                    `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
-                    `project_id` int(10) unsigned NOT NULL DEFAULT '0',
-                    `poster_id` int(10) unsigned NOT NULL DEFAULT '0',
-                    `view_state` smallint(6) NOT NULL DEFAULT '10',
-                    `announcement` tinyint(4) NOT NULL DEFAULT '0',
-                    `headline` varchar(64) NOT NULL DEFAULT '',
-                    `body` longtext NOT NULL,
-                    `last_modified` int(10) unsigned NOT NULL DEFAULT '1',
-                    `date_posted` int(10) unsigned NOT NULL DEFAULT '1',
-                    PRIMARY KEY (`id`)
-                ) ENGINE=" . $table_type . " DEFAULT CHARSET=utf8");
-
-                $GLOBALS['SITE_DB']->query("CREATE TABLE IF NOT EXISTS `mantis_plugin_table` (
-                    `basename` varchar(40) NOT NULL,
-                    `enabled` tinyint(4) NOT NULL DEFAULT '0',
-                    `protected` tinyint(4) NOT NULL DEFAULT '0',
-                    `priority` int(10) unsigned NOT NULL DEFAULT '3',
-                    PRIMARY KEY (`basename`)
-                ) ENGINE=" . $table_type . " DEFAULT CHARSET=utf8");
-
-                $GLOBALS['SITE_DB']->query("INSERT INTO `mantis_plugin_table` values('MantisCoreFormatting','1','0','3')");
-
-                $GLOBALS['SITE_DB']->query("CREATE TABLE IF NOT EXISTS `mantis_project_file_table` (
-                    `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
-                    `project_id` int(10) unsigned NOT NULL DEFAULT '0',
-                    `title` varchar(250) NOT NULL DEFAULT '',
-                    `description` varchar(250) NOT NULL DEFAULT '',
-                    `diskfile` varchar(250) NOT NULL DEFAULT '',
-                    `filename` varchar(250) NOT NULL DEFAULT '',
-                    `folder` varchar(250) NOT NULL DEFAULT '',
-                    `filesize` int(11) NOT NULL DEFAULT '0',
-                    `file_type` varchar(250) NOT NULL DEFAULT '',
-                    `content` longblob,
-                    `date_added` int(10) unsigned NOT NULL DEFAULT '1',
-                    `user_id` int(10) unsigned NOT NULL DEFAULT '0',
-                    PRIMARY KEY (`id`)
-                ) ENGINE=" . $table_type . " DEFAULT CHARSET=utf8");
-
-                $GLOBALS['SITE_DB']->query("CREATE TABLE IF NOT EXISTS `mantis_project_hierarchy_table` (
-                    `child_id` int(10) unsigned NOT NULL,
-                    `parent_id` int(10) unsigned NOT NULL,
-                    `inherit_parent` tinyint(4) NOT NULL DEFAULT '0',
-                    UNIQUE KEY `idx_project_hierarchy` (`child_id`,`parent_id`),
-                    KEY `idx_project_hierarchy_child_id` (`child_id`),
-                    KEY `idx_project_hierarchy_parent_id` (`parent_id`)
-                ) ENGINE=" . $table_type . " DEFAULT CHARSET=utf8");
-
-                $GLOBALS['SITE_DB']->query("CREATE TABLE IF NOT EXISTS `mantis_project_table` (
-                    `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
-                    `name` varchar(128) NOT NULL DEFAULT '',
-                    `status` smallint(6) NOT NULL DEFAULT '10',
-                    `enabled` tinyint(4) NOT NULL DEFAULT '1',
-                    `view_state` smallint(6) NOT NULL DEFAULT '10',
-                    `access_min` smallint(6) NOT NULL DEFAULT '10',
-                    `file_path` varchar(250) NOT NULL DEFAULT '',
-                    `description` longtext NOT NULL,
-                    `category_id` int(10) unsigned NOT NULL DEFAULT '1',
-                    `inherit_global` tinyint(4) NOT NULL DEFAULT '0',
-                    PRIMARY KEY (`id`),
-                    UNIQUE KEY `idx_project_name` (`name`),
-                    KEY `idx_project_view` (`view_state`)
-                ) ENGINE=" . $table_type . " DEFAULT CHARSET=utf8");
-
-                $GLOBALS['SITE_DB']->query("INSERT INTO `mantis_project_table` values('1','All Projects','10','1','10','10','','','1','1')");
-
-                $GLOBALS['SITE_DB']->query("CREATE TABLE IF NOT EXISTS `mantis_project_user_list_table` (
-                    `project_id` int(10) unsigned NOT NULL DEFAULT '0',
-                    `user_id` int(10) unsigned NOT NULL DEFAULT '0',
-                    `access_level` smallint(6) NOT NULL DEFAULT '10',
-                    PRIMARY KEY (`project_id`,`user_id`),
-                    KEY `idx_project_user` (`user_id`)
-                ) ENGINE=" . $table_type . " DEFAULT CHARSET=utf8");
-
-                $GLOBALS['SITE_DB']->query("CREATE TABLE IF NOT EXISTS `mantis_project_version_table` (
-                    `id` int(11) NOT NULL AUTO_INCREMENT,
-                    `project_id` int(10) unsigned NOT NULL DEFAULT '0',
-                    `version` varchar(64) NOT NULL DEFAULT '',
-                    `description` longtext NOT NULL,
-                    `released` tinyint(4) NOT NULL DEFAULT '1',
-                    `obsolete` tinyint(4) NOT NULL DEFAULT '0',
-                    `date_order` int(10) unsigned NOT NULL DEFAULT '1',
-                    PRIMARY KEY (`id`),
-                    UNIQUE KEY `idx_project_version` (`project_id`,`version`)
-                ) ENGINE=" . $table_type . " DEFAULT CHARSET=utf8");
-
-                $GLOBALS['SITE_DB']->query("CREATE TABLE IF NOT EXISTS `mantis_sponsorship_table` (
-                    `id` int(11) NOT NULL AUTO_INCREMENT,
-                    `bug_id` int(11) NOT NULL DEFAULT '0',
-                    `user_id` int(11) NOT NULL DEFAULT '0',
-                    `amount` int(11) NOT NULL DEFAULT '0',
-                    `logo` varchar(128) NOT NULL DEFAULT '',
-                    `url` varchar(128) NOT NULL DEFAULT '',
-                    `paid` tinyint(4) NOT NULL DEFAULT '0',
-                    `date_submitted` int(10) unsigned NOT NULL DEFAULT '1',
-                    `last_updated` int(10) unsigned NOT NULL DEFAULT '1',
-                    PRIMARY KEY (`id`),
-                    KEY `idx_sponsorship_bug_id` (`bug_id`),
-                    KEY `idx_sponsorship_user_id` (`user_id`)
-                ) ENGINE=" . $table_type . " DEFAULT CHARSET=utf8");
-
-                $GLOBALS['SITE_DB']->query("CREATE TABLE IF NOT EXISTS `mantis_tag_table` (
-                    `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
-                    `user_id` int(10) unsigned NOT NULL DEFAULT '0',
-                    `name` varchar(100) NOT NULL DEFAULT '',
-                    `description` longtext NOT NULL,
-                    `date_created` int(10) unsigned NOT NULL DEFAULT '1',
-                    `date_updated` int(10) unsigned NOT NULL DEFAULT '1',
-                    PRIMARY KEY (`id`,`name`),
-                    KEY `idx_tag_name` (`name`)
-                ) ENGINE=" . $table_type . " DEFAULT CHARSET=utf8");
-
-                $GLOBALS['SITE_DB']->query("CREATE TABLE IF NOT EXISTS `mantis_tokens_table` (
-                    `id` int(11) NOT NULL AUTO_INCREMENT,
-                    `owner` int(11) NOT NULL,
-                    `type` int(11) NOT NULL,
-                    `value` longtext NOT NULL,
-                    `timestamp` int(10) unsigned NOT NULL DEFAULT '1',
-                    `expiry` int(10) unsigned NOT NULL DEFAULT '1',
-                    PRIMARY KEY (`id`),
-                    KEY `idx_typeowner` (`type`,`owner`)
-                ) ENGINE=" . $table_type . " DEFAULT CHARSET=utf8");
-
-                $GLOBALS['SITE_DB']->query("CREATE TABLE IF NOT EXISTS `mantis_user_pref_table` (
-                    `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
-                    `user_id` int(10) unsigned NOT NULL DEFAULT '0',
-                    `project_id` int(10) unsigned NOT NULL DEFAULT '0',
-                    `default_profile` int(10) unsigned NOT NULL DEFAULT '0',
-                    `default_project` int(10) unsigned NOT NULL DEFAULT '0',
-                    `refresh_delay` int(11) NOT NULL DEFAULT '0',
-                    `redirect_delay` int(11) NOT NULL DEFAULT '0',
-                    `bugnote_order` varchar(4) NOT NULL DEFAULT 'ASC',
-                    `email_on_new` tinyint(4) NOT NULL DEFAULT '0',
-                    `email_on_assigned` tinyint(4) NOT NULL DEFAULT '0',
-                    `email_on_feedback` tinyint(4) NOT NULL DEFAULT '0',
-                    `email_on_resolved` tinyint(4) NOT NULL DEFAULT '0',
-                    `email_on_closed` tinyint(4) NOT NULL DEFAULT '0',
-                    `email_on_reopened` tinyint(4) NOT NULL DEFAULT '0',
-                    `email_on_bugnote` tinyint(4) NOT NULL DEFAULT '0',
-                    `email_on_status` tinyint(4) NOT NULL DEFAULT '0',
-                    `email_on_priority` tinyint(4) NOT NULL DEFAULT '0',
-                    `email_on_priority_min_severity` smallint(6) NOT NULL DEFAULT '10',
-                    `email_on_status_min_severity` smallint(6) NOT NULL DEFAULT '10',
-                    `email_on_bugnote_min_severity` smallint(6) NOT NULL DEFAULT '10',
-                    `email_on_reopened_min_severity` smallint(6) NOT NULL DEFAULT '10',
-                    `email_on_closed_min_severity` smallint(6) NOT NULL DEFAULT '10',
-                    `email_on_resolved_min_severity` smallint(6) NOT NULL DEFAULT '10',
-                    `email_on_feedback_min_severity` smallint(6) NOT NULL DEFAULT '10',
-                    `email_on_assigned_min_severity` smallint(6) NOT NULL DEFAULT '10',
-                    `email_on_new_min_severity` smallint(6) NOT NULL DEFAULT '10',
-                    `email_bugnote_limit` smallint(6) NOT NULL DEFAULT '0',
-                    `language` varchar(32) NOT NULL DEFAULT 'english',
-                    `timezone` varchar(32) NOT NULL DEFAULT '',
-                    PRIMARY KEY (`id`)
-                ) ENGINE=" . $table_type . " DEFAULT CHARSET=utf8");
-
-                $GLOBALS['SITE_DB']->query("CREATE TABLE IF NOT EXISTS `mantis_user_print_pref_table` (
-                    `user_id` int(10) unsigned NOT NULL DEFAULT '0',
-                    `print_pref` varchar(64) NOT NULL,
-                    PRIMARY KEY (`user_id`)
-                ) ENGINE=" . $table_type . " DEFAULT CHARSET=utf8");
-
-                $GLOBALS['SITE_DB']->query("CREATE TABLE IF NOT EXISTS `mantis_user_profile_table` (
-                    `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
-                    `user_id` int(10) unsigned NOT NULL DEFAULT '0',
-                    `platform` varchar(32) NOT NULL DEFAULT '',
-                    `os` varchar(32) NOT NULL DEFAULT '',
-                    `os_build` varchar(32) NOT NULL DEFAULT '',
-                    `description` longtext NOT NULL,
-                    PRIMARY KEY (`id`)
-                ) ENGINE=" . $table_type . " DEFAULT CHARSET=utf8");
-
-                $GLOBALS['SITE_DB']->query("CREATE TABLE IF NOT EXISTS `mantis_user_table` (
-                    `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
-                    `username` varchar(191) NOT NULL DEFAULT '',
-                    `realname` varchar(191) NOT NULL DEFAULT '',
-                    `email` varchar(191) NOT NULL DEFAULT '',
-                    `password` varchar(255) NOT NULL DEFAULT '',
-                    `enabled` tinyint(4) NOT NULL DEFAULT '1',
-                    `protected` tinyint(4) NOT NULL DEFAULT '0',
-                    `access_level` smallint(6) NOT NULL DEFAULT '10',
-                    `login_count` int(11) NOT NULL DEFAULT '0',
-                    `lost_password_request_count` smallint(6) NOT NULL DEFAULT '0',
-                    `failed_login_count` smallint(6) NOT NULL DEFAULT '0',
-                    `cookie_string` varchar(64) NOT NULL DEFAULT '',
-                    `last_visit` int(10) unsigned NOT NULL DEFAULT '1',
-                    `date_created` int(10) unsigned NOT NULL DEFAULT '1',
-                    PRIMARY KEY (`id`),
-                    UNIQUE KEY `idx_user_cookie_string` (`cookie_string`),
-                    UNIQUE KEY `idx_user_username` (`username`),
-                    KEY `idx_enable` (`enabled`),
-                    KEY `idx_access` (`access_level`),
-                    KEY `idx_email` (`email`)
-                ) ENGINE=" . $table_type . " DEFAULT CHARSET=utf8");
+                foreach (array_diff($groups, $probation_groups) as $group) {
+                    // However we must allow bypassing validation (except for probation) so anyone can quickly report issues
+                    $GLOBALS['SITE_DB']->query_insert('group_privileges', [
+                        'group_id' => $group,
+                        'privilege' => 'bypass_validation_midrange_content',
+                        'the_page' => '',
+                        'module_the_name' => 'catalogues_category',
+                        'category_name' => strval($cat_id),
+                        'the_value' => 1,
+                    ]);
+                }
             }
         }
 
-        if (($upgrade_from !== null) && ($upgrade_from < 3)) { // LEGACY
-            if (strpos(get_db_type(), 'mysql') !== false) {
-                $GLOBALS['SITE_DB']->query("ALTER TABLE mantis_bug_file_table ADD bugnote_id int(10) unsigned NOT NULL DEFAULT '0'");
-            }
+        if (($upgrade_from !== null) && ($upgrade_from < 5)) { // LEGACY: 11.beta9
+            // TODO step 5: Migrate Mantis issues
+            set_mass_import_mode(true);
+            set_mass_import_mode(false);
+            // TODO step 6: Migrate issue relations
+            // TODO step 7: Migrate bug notes as comments
+            // TODO step 8: Migrate monitor status
+            // TODO step 9: Migrate tags
+            // TODO step 10: Migrate sponsorships
+            // TODO: be sure to add a contentious override that throws an error when a non-staff who did not create an issue tries to view a type security issue.
+            // TODO: Add contentious override which forces a redirect from adding an entry into this catalogue to the report_issue module.
+            // TODO: Add a contentious override to force URL moniker pertaining to the ID (and no category).
+            // TODO: add custom templates for the catalogue
+            // TODO: make a sponsorship block and include it on viewing an issue (catalogue entry) template
+            // TODO: add catalogue hooks for editing to handle sponsorships and points (but do not do it if mass import mode is active)
+            // TODO: Modify and rename the mantis API; make sure it also works with the endpoints
+
+            // Step x: Uninstall Mantis
+            $tables = [
+                'mantis_api_token_table',
+                'mantis_bug_file_table',
+                'mantis_bug_history_table',
+                'mantis_bug_monitor_table',
+                'mantis_bug_relationship_table',
+                'mantis_bug_revision_table',
+                'mantis_bug_table',
+                'mantis_bug_tag_table',
+                'mantis_bug_text_table',
+                'mantis_bugnote_table',
+                'mantis_bugnote_text_table',
+                'mantis_category_table',
+                'mantis_config_table',
+                'mantis_custom_field_project_table',
+                'mantis_custom_field_string_table',
+                'mantis_custom_field_table',
+                'mantis_email_table',
+                'mantis_filters_table',
+                'mantis_news_table',
+                'mantis_plugin_table',
+                'mantis_project_file_table',
+                'mantis_project_hierarchy_table',
+                'mantis_project_table',
+                'mantis_project_user_list_table',
+                'mantis_project_version_table',
+                'mantis_sponsorship_table',
+                'mantis_tag_table',
+                'mantis_tokens_table',
+                'mantis_user_pref_table',
+                'mantis_user_print_pref_table',
+                'mantis_user_profile_table',
+                'mantis_user_table',
+            ];
+            $GLOBALS['SITE_DB']->query('DROP TABLE IF EXISTS ' . implode(',' , $tables));
+
+            require_code('files');
+            deldir_contents(get_file_base() . '/tracker', false, true);
         }
     }
 
