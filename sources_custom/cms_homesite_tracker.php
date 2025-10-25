@@ -466,12 +466,13 @@ function resolve_tracker_issue(int $tracker_id, ?int $handler = null)
  * Award points for a resolved tracker issue.
  * This will undo previous transactions for the same issue if they exist (treated as an edit).
  *
- * @param  AUTO_LINK $bug_id The issue that was resolved
- * @param  ?MEMBER $reporter The member who reported the issue (null: look it up)
- * @param  ?MEMBER $handler The member who resolved the issue (null: look it up)
+ * @param  integer $tracker_id The issue identifier
+ * @param  AUTO_LINK $entry_id The catalogue entry ID
+ * @param  MEMBER $reporter The member who reported the issue
+ * @param  ?MEMBER $handler The member who resolved the issue (null: not defined)
  * @return boolean Whether the operation was successful
  */
-function award_tracker_points(int $bug_id, ?int $reporter = null, ?int $handler = null) : bool
+function award_tracker_points(int $tracker_id, int $entry_id, int $reporter, ?int $handler = null) : bool
 {
     if (!addon_installed('points')) {
         warn_exit(do_lang_tempcode('MISSING_ADDON', escape_html('points')));
@@ -482,30 +483,27 @@ function award_tracker_points(int $bug_id, ?int $reporter = null, ?int $handler 
     $ret = true;
     $points = 25; // FUDGE
 
-    if (($reporter === null) || ($handler === null)) {
-        $rows = $GLOBALS['SITE_DB']->query_parameterised('SELECT reporter_id,handler_id FROM mantis_bug_table WHERE id={id}', ['id' => $bug_id]);
-        if (array_key_exists(0, $rows)) {
-            if ($reporter === null) {
-                $reporter = $rows[0]['reporter_id'];
-            }
-            if ($handler === null) {
-                $handler = $rows[0]['handler_id'];
-            }
-        } else {
-            return false;
-        }
+    // Did we already award points?
+    $test_a = $GLOBALS['SITE_DB']->query_select_value_if_there('points_ledger', 'id', ['receiving_member' => $reporter, 'status' => LEDGER_STATUS_NORMAL, 't_type' => 'catalogue_entry', 't_type_id' => strval($entry_id)]);
+    $test_b = ($handler === null) ? null : $GLOBALS['SITE_DB']->query_select_value_if_there('points_ledger', 'id', ['receiving_member' => $handler, 'status' => LEDGER_STATUS_NORMAL, 't_type' => 'catalogue_entry', 't_type_id' => strval($entry_id)]);
+
+    // Did both the reporter and handler already receive points?
+    if (($test_a !== null) && ($test_b !== null)) {
+        return true;
     }
 
     // Reset so we do not dog-pile points
-    points_transactions_reverse_all(true, null, null, 'tracker_issue', '', strval($bug_id));
+    points_transactions_reverse_all(true, null, null, 'catalogue_entry', '', strval($entry_id));
 
-    $id = points_credit_member($handler, 'Programming god: Resolved tracker issue #' . strval($bug_id), $points, 0, true, 0, 'tracker_issue', 'resolve', strval($bug_id));
-    if ($id === null) {
-        $ret = false;
+    if (($handler !== null) && !is_guest($handler)) {
+        $id = points_credit_member($handler, 'Programming god: Resolved tracker issue #' . strval($tracker_id), $points, 0, true, 0, 'catalogue_entry', 'tracker_resolve', strval($entry_id));
+        if ($id === null) {
+            $ret = false;
+        }
     }
 
-    if (($reporter > 0) && !is_guest($reporter) && ($reporter != $handler)) {
-        $id = points_credit_member($reporter, 'Tracker master: Reported resolved tracker issue #' . strval($bug_id), $points, 0, true, 0, 'tracker_issue', 'report_resolved', strval($bug_id));
+    if (!is_guest($reporter) && ($reporter != $handler)) {
+        $id = points_credit_member($reporter, 'Tracker master: Reported resolved tracker issue #' . strval($tracker_id), $points, 0, true, 0, 'catalogue_entry', 'tracker_resolved', strval($entry_id));
         if ($id === null) {
             $ret = false;
         }
@@ -518,9 +516,9 @@ function award_tracker_points(int $bug_id, ?int $reporter = null, ?int $handler 
  * Undo points awarded on a tracker issue.
  * This does not undo sponsorships.
  *
- * @param  AUTO_LINK $bug_id The tracker issue
+ * @param  AUTO_LINK $entry_id The catalogue entry
  */
-function reverse_tracker_points(int $bug_id)
+function reverse_tracker_points(int $entry_id)
 {
     if (!addon_installed('points')) {
         warn_exit(do_lang_tempcode('MISSING_ADDON', escape_html('points')));
@@ -528,5 +526,5 @@ function reverse_tracker_points(int $bug_id)
 
     require_code('points2');
 
-    points_transactions_reverse_all(true, null, null, 'tracker_issue', '', strval($bug_id));
+    points_transactions_reverse_all(true, null, null, 'catalogue_entry', '', strval($entry_id));
 }

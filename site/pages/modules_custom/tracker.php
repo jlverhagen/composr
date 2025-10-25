@@ -273,7 +273,7 @@ class Module_tracker
         }
 
         if (($upgrade_from !== null) && ($upgrade_from < 5)) { // LEGACY: 11.beta9
-            // TODO step 5: Migrate Mantis issues
+            // TODO step 5: Migrate Mantis issues, and also re-map points ledger t_type and t_type_id for tracker issues
             set_mass_import_mode(true);
             set_mass_import_mode(false);
             // TODO step 6: Migrate issue relations
@@ -281,12 +281,10 @@ class Module_tracker
             // TODO step 8: Migrate monitor status
             // TODO step 9: Migrate tags
             // TODO step 10: Migrate sponsorships
+            // TODO: Modify or create notification types for the tracker
             // TODO: be sure to add a contentious override that throws an error when a non-staff who did not create an issue tries to view a type security issue.
-            // TODO: Add contentious override which forces a redirect from adding an entry into this catalogue to the report_issue module.
-            // TODO: Add a contentious override to force URL moniker pertaining to the ID (and no category).
             // TODO: add custom templates for the catalogue
             // TODO: make a sponsorship block and include it on viewing an issue (catalogue entry) template
-            // TODO: add catalogue hooks for editing to handle sponsorships and points (but do not do it if mass import mode is active)
             // TODO: Modify and rename the mantis API; make sure it also works with the endpoints
 
             // Step x: Uninstall Mantis
@@ -342,12 +340,14 @@ class Module_tracker
      */
     public function get_entry_points(bool $check_perms = true, ?int $member_id = null, bool $support_crosslinks = true, bool $be_deferential = false) : ?array
     {
-        if (!addon_installed('booking')) {
+        require_lang('tracker');
+
+        if (!addon_installed('cms_homesite_tracker')) {
             return null;
         }
 
         return [
-            'browse' => ['CREATE_BOOKING', 'booking/book'],
+            'browse' => ['TRACKER', 'menu/rich_content/catalogues/catalogues'], // TODO: custom icon
         ];
     }
 
@@ -365,16 +365,6 @@ class Module_tracker
         $error_msg = new Tempcode();
         if (!addon_installed__messaged('cms_homesite_tracker', $error_msg)) {
             return $error_msg;
-        }
-        if (!addon_installed__messaged('calendar', $error_msg)) {
-            return $error_msg;
-        }
-        if (!addon_installed__messaged('ecommerce', $error_msg)) {
-            return $error_msg;
-        }
-
-        if (strpos(get_db_type(), 'mysql') === false) {
-            warn_exit('This works with MySQL only');
         }
 
         require_lang('tracker');

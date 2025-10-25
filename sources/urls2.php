@@ -687,6 +687,12 @@ function suggest_new_idmoniker_for(string $page, string $type, string $id, strin
         }
     }
 
+    // No numeric monikers (We already check for this in $moniker_src later on)
+    if (is_numeric($moniker)) {
+        require_lang('critical_error');
+        warn_exit(do_lang_tempcode('NO_NUMERIC_CUSTOM_MONIKERS'), false, true);
+    }
+
     $manually_chosen_now = ($moniker !== null);
 
     if (!$is_new) {

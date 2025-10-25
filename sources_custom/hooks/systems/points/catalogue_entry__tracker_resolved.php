@@ -28,7 +28,7 @@
  * Hook class.
  * Points hooks should follow this naming convention according to points_ledger column names: t_type__t_subtype (or just t_type to match all t_subtypes). By defining a hook accordingly, you are indicating that all transactions matching the t_type (and t_subtype if applicable) are considered 'low-impact'. This means they will be hidden from ledger tables on members' point profiles and instead displayed as a cumulative tally (determined by the points_profile function) at the top of their points profile.
  */
-class Hook_points_tracker_issue__resolve
+class Hook_points_catalogue_entry__tracker_resolved
 {
     /**
      * Determine the aggregate row language for POINTS_PROFILE.tpl.
@@ -44,7 +44,7 @@ class Hook_points_tracker_issue__resolve
         }
 
         return [
-            'label' => do_lang('cms_homesite:RESOLVING_TRACKER_ISSUES'),
+            'label' => do_lang('tracker:REPORTING_TRACKER_ISSUES'),
         ];
     }
 }

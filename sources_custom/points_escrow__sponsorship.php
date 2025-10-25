@@ -145,6 +145,7 @@ function escrow_cancel_all_sponsorships(int $bug_id, string $reason) : array
 
 /**
  * Complete all escrows / sponsorships tied to an issue, and credit a recipient with the points.
+ * TODO: Just use complete_all_escrows_by_content
  *
  * @param  AUTO_LINK $bug_id The issue on which to complete all sponsorships
  * @param  ?MEMBER $recipient The member receiving all the points (null: the handler user)
