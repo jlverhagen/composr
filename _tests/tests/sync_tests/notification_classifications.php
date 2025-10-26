@@ -153,7 +153,7 @@ class notification_classifications_test_set extends cms_test_case
 
             // By code similarity...
 
-            $contents = preg_replace('#Hook_notification_\w+#', '', $contents);
+            $contents = preg_replace('#(Hook|Hx)_notification_\w+#', '', $contents);
             $contents = preg_replace('#\$list.*#', '', $contents);
 
             if (!array_key_exists($contents, $code)) {

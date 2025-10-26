@@ -502,6 +502,9 @@ function actual_delete_catalogue(string $name)
 
     update_catalogue_content_ref('catalogue', $name, '');
 
+    require_code('notifications');
+    delete_all_notifications_on('catalogue_entry__' . $name, null);
+
     log_it('DELETE_CATALOGUE', $name, $__title);
 
     if ((addon_installed('commandr')) && (!running_script('install')) && (!get_mass_import_mode())) {
@@ -1027,6 +1030,9 @@ function actual_delete_catalogue_category(int $id, bool $deleting_all = false)
 
     require_code('uploads2');
     clean_empty_upload_directories('uploads/repimages');
+
+    require_code('notifications');
+    delete_all_notifications_on('catalogue_entry__' . $myrow['c_name'], strval($id));
 
     log_it('DELETE_CATALOGUE_CATEGORY', strval($id), $_title);
 

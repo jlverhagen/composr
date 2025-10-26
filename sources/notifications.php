@@ -1098,16 +1098,22 @@ function notifications_setting(string $notification_code, ?string $notification_
  * Disable notifications for all members on a certain notification code+category.
  *
  * @param  ID_TEXT $notification_code The notification code
- * @param  ?SHORT_TEXT $notification_category The category within the notification code (null: none)
+ * @param  ?SHORT_TEXT $notification_category The category within the notification code (null: all categories and root) (blank: root category only)
  */
 function delete_all_notifications_on(string $notification_code, ?string $notification_category)
 {
     $db = get_notification_code_db($notification_code);
 
-    $db->query_delete('notifications_enabled', [
-        'l_notification_code' => substr($notification_code, 0, 80),
-        'l_code_category' => ($notification_category === null) ? '' : $notification_category,
-    ]);
+    if ($notification_category === null) {
+        $db->query_delete('notifications_enabled', [
+            'l_notification_code' => substr($notification_code, 0, 80),
+        ]);
+    } else {
+        $db->query_delete('notifications_enabled', [
+            'l_notification_code' => substr($notification_code, 0, 80),
+            'l_code_category' => $notification_category,
+        ]);
+    }
 }
 
 /**
@@ -1184,7 +1190,7 @@ abstract class Hook_Notification
     public function list_handled_codes() : array
     {
         $list = [];
-        $codename = preg_replace('#^Hook_Notification_#', '', cms_strtolower_ascii(get_class($this)));
+        $codename = preg_replace('#^(Hook|Hx)_notification_#', '', cms_strtolower_ascii(get_class($this)));
         $list[$codename] = [do_lang('GENERAL'), do_lang('NOTIFICATION_TYPE_' . $codename)];
         return $list;
     }
@@ -1616,7 +1622,7 @@ abstract class Hook_notification__Staff extends Hook_Notification
     public function list_handled_codes() : array
     {
         $list = [];
-        $codename = preg_replace('#^Hook_Notification_#', '', cms_strtolower_ascii(get_class($this)));
+        $codename = preg_replace('#^(Hook|Hx)_notification_#', '', cms_strtolower_ascii(get_class($this)));
         $list[$codename] = [do_lang('STAFF'), do_lang('NOTIFICATION_TYPE_' . $codename)];
         return $list;
     }

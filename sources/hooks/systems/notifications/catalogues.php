@@ -75,8 +75,8 @@ class Hook_notification_catalogues extends Hook_Notification
                 return parent::create_category_tree($notification_code, $id); // Too many, so just allow removing UI
             }
 
-            $page_links = get_catalogue_category_tree($name, ($id === null) ? null : intval($id), '', null, ($id === null) ? 0 : 1);
-            foreach ($page_links as $p) {
+            $entries = get_catalogue_category_tree($name, ($id === null) ? null : intval($id), '', null, 1);
+            foreach ($entries as $p) {
                 if (strval($p['id']) !== $id) {
                     $filtered[] = $p;
                 }
@@ -149,14 +149,13 @@ class Hook_notification_catalogues extends Hook_Notification
         if (substr($notification_code, 0, strlen('catalogue_entry__')) == 'catalogue_entry__') {
             $members = $this->_all_members_who_have_enabled($notification_code, $category, $to_member_ids, $start, $max);
             $members = $this->_all_members_who_have_enabled_with_page_access($members, 'catalogues', $notification_code, $category, $to_member_ids, $start, $max);
-            $catalogue_category_id = intval($category);
-            $catalogue_name = $GLOBALS['SITE_DB']->query_select_value_if_there('catalogue_categories', 'c_name', ['id' => $catalogue_category_id]);
-            if ($catalogue_name === null) {
-                return [[], false];
-            }
+
+            $catalogue_name = str_replace('catalogue_entry__', '', $notification_code);
+
             $members = $this->_all_members_who_have_enabled_with_category_access($members, 'catalogues_catalogue', $notification_code, $catalogue_name, $to_member_ids, $start, $max);
-            if (get_value('disable_cat_cat_perms') !== '1') {
-                $members = $this->_all_members_who_have_enabled_with_category_access($members, 'catalogues_category', $notification_code, strval($catalogue_category_id), $to_member_ids, $start, $max);
+
+            if ($category !== null) {
+                $members = $this->_all_members_who_have_enabled_with_category_access($members, 'catalogues_category', $notification_code, $category, $to_member_ids, $start, $max);
             }
         }
 
