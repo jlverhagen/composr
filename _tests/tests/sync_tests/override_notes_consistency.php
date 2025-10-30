@@ -1,7 +1,18 @@
 <?php /*
 
- Composr
- Copyright (c) Christopher Graham, 2004-2024
+ The contents of this file are subject to the Common Public Attribution License Version 1.0 (the "License");
+ you may not use this file except in compliance with the License.
+ You may obtain a copy of the License at http://opensource.org/licenses/cpal_1.0.
+
+ Software distributed under the License is distributed on an "AS IS" basis, WITHOUT WARRANTY OF ANY KIND, either express or implied.
+ See the License for the specific language governing rights and limitations under the License.
+
+ The Original Code is Composr CMS.
+
+ The Original Developer is the Initial Developer.
+
+ The Initial Developer of the Original Code is Chris Graham.
+ All portions of the code written by Chris Graham are Copyright (c) Christopher Graham. All Rights Reserved.
 
  See docs/LICENSE.md for full licensing information.
 
@@ -26,15 +37,17 @@ class override_notes_consistency_test_set extends cms_test_case
         $files = get_directory_contents(get_file_base(), '', IGNORE_ALIEN | IGNORE_FLOATING, true, true, ['php']);
         $files[] = 'install.php';
         foreach ($files as $path) {
+            // No overrides within a zone's root directory
             if (file_exists(dirname($path) . '/index.php')) {
-                continue; // Zone directory, no override support
+                continue;
             }
 
+            // Anything not located in sources/modules/data cannot be overridden
             if (preg_match('#(^sources|/modules|^data)(_custom)?/#', $path) == 0) {
                 continue;
             }
 
-            // Exceptions
+            // Third party code, and the test suite, cannot be overridden
             $exceptions = array_merge(list_untouchable_third_party_directories(), [
                 '_tests',
             ]);
@@ -49,6 +62,7 @@ class override_notes_consistency_test_set extends cms_test_case
 
             $c = cms_file_get_contents_safe(get_file_base() . '/' . $path);
 
+            // Also likely third party code which cannot be overridden
             if (strpos($c, 'CQC: No check') !== false) {
                 continue;
             }

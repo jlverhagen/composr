@@ -1,7 +1,18 @@
 <?php /*
 
- Composr
- Copyright (c) Christopher Graham, 2004-2024
+ The contents of this file are subject to the Common Public Attribution License Version 1.0 (the "License");
+ you may not use this file except in compliance with the License.
+ You may obtain a copy of the License at http://opensource.org/licenses/cpal_1.0.
+
+ Software distributed under the License is distributed on an "AS IS" basis, WITHOUT WARRANTY OF ANY KIND, either express or implied.
+ See the License for the specific language governing rights and limitations under the License.
+
+ The Original Code is Composr CMS.
+
+ The Original Developer is the Initial Developer.
+
+ The Initial Developer of the Original Code is Chris Graham.
+ All portions of the code written by Chris Graham are Copyright (c) Christopher Graham. All Rights Reserved.
 
  See docs/LICENSE.md for full licensing information.
 
@@ -221,11 +232,7 @@ $g_logo_url = './';
 $g_summary_category_include_project = ON;
 $g_html_make_links = LINKS_NEW_WINDOW | LINKS_NOOPENER | LINKS_NOREFERRER; // Prevent SEO benefit on spam links
 $g_issue_activity_note_attachments_seconds_threshold = 180; // Might be using the submit bugfix tool in Composr
-
-if ($SITE_INFO['base_url'] == 'https://composr.app') { // FUDGE: force session saving to a directory; hopefully this resolves token issues
-    $g_session_save_path = dirname($_SERVER['DOCUMENT_ROOT']) . '/mantis_sessions';
-    ini_set('session.gc_probability', 1);
-}
+$g_form_security_validation = OFF; // TODO: re-enable when we resolve the "invalid token" issue; high priority
 
 // Debugging
 //$g_show_detailed_errors = ON;

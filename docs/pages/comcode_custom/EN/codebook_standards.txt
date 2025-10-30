@@ -2488,7 +2488,7 @@ Appropriate branch naming
 | Consistency
 | Composr development
 | Automated test [tt]async_tests/sensible_git_branches[/tt]
-| The current stable version branch should be in the {$VERSION_BRANCH_NAME} branch, and any other version branch should be in [tt]v<version-number>[/tt].
+| All base version branches should have the name [tt]vX[/tt] where [tt]X[/tt] is the version number (up to minor version precision; do not include patch version or development codenames). All feature branches should be named [tt]feature_keywords_vX[/tt] where [tt]keywords[/tt] are a couple alpha-numeric words to describe the feature (alternatively, use the tracker issue ID number if applicable), and [tt]X[/tt] is the target version (up to minor precision only). All bug fix branches should be named [tt]bug_issueID_vX[/tt] where [tt]issueID[/tt] is the tracker issue number, and [tt]X[/tt] is the target version (up to minor precision only). Do not use [tt]main[/tt] or [tt]master[/tt] as a branch. When a feature or a bug branch is complete (and has been tested), it should be merged into its base version branch, and then the feature/bug branch deleted.
 |}
 
 [title="3"]Agency standards[/title]
