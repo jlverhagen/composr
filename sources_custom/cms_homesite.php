@@ -404,7 +404,7 @@ function get_composr_branches() : array
         $_branches = collapse_1d_complexity('name', $_branches);
 
         foreach ($_branches as $branch) {
-            if (preg_match('#^v[\d\.]+$#', $branch['git_branch']) !== 1) { // We only want version branches
+            if (preg_match('#^v[\d\.]+$#', $branch) !== 1) { // We only want version branches
                 continue;
             }
 
