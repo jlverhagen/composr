@@ -246,7 +246,7 @@ function get_composr_branches()
     $branches = array();
     foreach (explode("\n", $_branches) as $_branch) {
         $matches = array();
-        if (preg_match('#^\s*\*?\s*(master|v[\d\.]+)$#', $_branch, $matches) != 0) {
+        if (preg_match('#^\s*\*?\s*(v[\d\.]+)$#', $_branch, $matches) != 0) {
             $git_branch = $matches[1];
 
             $version_file = shell_exec('git show ' . $git_branch . ':sources/version.php');
