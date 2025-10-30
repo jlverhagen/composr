@@ -86,137 +86,71 @@ function get_tracker_issues(array $ids, ?string $version = null, ?string $previo
 }
 
 /**
- * Create a new tracker issue in Mantis.
+ * Create a new tracker issue programmatically.
+ * This should only be used for issue importing and for creating issues through endpoints.
  *
- * @param  ID_TEXT $version The version in which this issue occurs
+ * @param  ID_TEXT $version The version in which this issue occurs (blank: not applicable)
  * @param  SHORT_TEXT $tracker_title The title for this issue
- * @param  LONG_TEXT $tracker_message The description of the issue
+ * @param  ID_TEXT $tracker_type The type (severity) of issue
+ * @param  LONG_TEXT $tracker_description The description of the issue
  * @param  LONG_TEXT $tracker_additional Additional information
- * @param  integer $tracker_severity The severity identifier
- * @param  AUTO_LINK $tracker_category The issue category ID, usually an addon
- * @param  AUTO_LINK $tracker_project The project in which to file this issue
- * @param  ?MEMBER $handler_id The member handling this issue (null: current member)
- * @param  LONG_TEXT $steps_to_reproduce Steps to reproduce this issue
- * @param  integer $reproducibility Reproducibility identifier
- * @param  integer $status Issue status identifier
- * @param  integer $resolution Issue resolution identifier
- * @param  integer $view_state The identifier determining how this issue can be viewed
- * @return AUTO The issue ID
+ * @param  ID_TEXT $tracker_addon The relevant addon name (blank: not applicable)
+ * @param  AUTO_LINK $tracker_category The catalogue category in which to place this issue
+ * @param  ?MEMBER $handler_id The member handling this issue (null: none)
+ * @param  LONG_TEXT $steps_to_reproduce Steps to reproduce this issue, delimited by a new line
+ * @param  ID_TEXT $status Issue status identifier
+ * @param  ?TIME $add_time The time this issue was added (null: now)
+ * @param  ?MEMBER $submitter The member who submitted this issue (null: current member)
+ * @param  ?integer $identifier The tracker issue ID (null: assign one automatically)
+ * @return array Double: Catalogue entry ID, tracker issue ID
  */
-function create_tracker_issue(string $version, string $tracker_title, string $tracker_message, string $tracker_additional, int $tracker_severity, int $tracker_category, int $tracker_project = 1, ?int $handler_id = null, string $steps_to_reproduce = '', int $reproducibility = 10/*always*/, int $status = 80/*resolved*/, int $resolution = 20/*fixed*/, int $view_state = 10/*public*/) : int
+function create_tracker_issue(string $version, string $tracker_title, string $tracker_type, string $tracker_description, string $tracker_additional, string $tracker_addon, int $tracker_category, ?int $handler_id = null, string $steps_to_reproduce = '', string $status = 'open', ?int $add_time = null, ?int $submitter = null, ?int $identifier = null) : array
 {
-    $query = "
-        INSERT INTO
-        `mantis_bug_text_table`
-        (
-            `description`,
-            `steps_to_reproduce`,
-            `additional_information`
-        )
-        VALUES
-        (
-            '" . db_escape_string($tracker_message) . "',
-            '" . db_escape_string($steps_to_reproduce) . "',
-            '" . db_escape_string($tracker_additional) . "'
-        )
-    ";
-    $text_id = $GLOBALS['SITE_DB']->_query(trim($query), null, 0, false, true);
-
-    ensure_version_exists_in_tracker($version);
-
-    if ($handler_id === null) {
-        $handler_id = strval(get_member());
+    if (!addon_installed('cms_homesite_tracker') || !addon_installed('catalogues')) {
+        warn_exit(do_lang_tempcode('INTERNAL_ERROR', escape_html('TODO')));
     }
 
-    $query = "
-        INSERT INTO
-        `mantis_bug_table`
-        (
-            `project_id`,
-            `reporter_id`,
-            `handler_id`,
-            `duplicate_id`,
-            `priority`,
-            `severity`,
-            `reproducibility`,
-            `status`,
-            `resolution`,
-            `projection`,
-            `eta`,
-            `bug_text_id`,
-            `os`,
-            `os_build`,
-            `platform`,
-            `version`,
-            `fixed_in_version`,
-            `build`,
-            `profile_id`,
-            `view_state`,
-            `summary`,
-            `sponsorship_total`,
-            `sticky`,
-            `target_version`,
-            `category_id`,
-            `date_submitted`,
-            `due_date`,
-            `last_updated`
-        )
-        VALUES
-        (
-            '" . db_escape_string(strval($tracker_project)) . "',
-            '" . strval(get_member()) . "',
-            '" . db_escape_string(strval($handler_id)) . "',
-            '0',
-            '30', /* Not Sponsored */
-            '" . db_escape_string(strval($tracker_severity)) . "',
-            '" . db_escape_string(strval($reproducibility)) . "',
-            '" . db_escape_string(strval($status)) . "',
-            '" . db_escape_string(strval($resolution)) . "',
-            '10',
-            '10',
-            '" . strval($text_id) . "',
-            '',
-            '',
-            '',
-            '" . db_escape_string($version) . "',
-            '',
-            '',
-            '0',
-            '" . db_escape_string($view_state) . "',
-            '" . db_escape_string($tracker_title) . "',
-            '0',
-            '0',
-            '" . db_escape_string($version) . "',
-            '" . db_escape_string(strval($tracker_category)) . "',
-            '" . strval(time()) . "',
-            '1',
-            '" . strval(time()) . "'
-        )
-    ";
-    $ret = $GLOBALS['SITE_DB']->_query(trim($query), null, 0, false, true, null, '', false);
+    require_code('catalogues2');
+    require_lang('tracker');
 
-    // We need to send out our own e-mail notifications for the issue because Mantis won't do that (we're using the database directly)
-    require_code('notifications');
-    dispatch_notification(
-        'tracker_issue_added',
-        null,
-        'New tracker issue: ' . $tracker_title,
-        'A new tracker issue has been reported through the report issue wizard, [url="issue #' . strval($ret) . '"]' . get_base_url() . '/tracker/view.php?id=' . strval($ret) . '[/url]' . "\n\n" . 'Subject: ' . comcode_escape($tracker_title) . "\n\n" . 'Message: ' . comcode_escape($tracker_message),
-        null,
-        A_FROM_SYSTEM_PRIVILEGED
-    );
-
-    // If this is an auto-resolved issue we are creating, handle points
-    if (addon_installed('points') && ($status == 80)) {
-        if (addon_installed('cms_homesite')) {
-            require_code('points_escrow__sponsorship');
-            escrow_complete_all_sponsorships($ret, $handler_id);
-        }
-
-        award_tracker_points($ret, get_member(), $handler_id);
+    // Map field names to catalogue field IDs
+    $fields = $GLOBALS['SITE_DB']->query_select('catalogue_fields', ['id', 'cf_name'], ['c_name' => 'tracker']);
+    if (count($fields) == 0) {
+        warn_exit(do_lang_tempcode('INTERNAL_ERROR', escape_html('TODO')));
+    }
+    $field_map = [];
+    foreach ($fields as $field) {
+        $field_map[get_translated_text($field['cf_name'])] = $field['id'];
     }
 
-    return $ret;
+    // Build our catalogue entry map
+    $map = [
+        $field_map[do_lang('VERSION')] => $version,
+        $field_map[do_lang('TITLE')] => $tracker_title,
+        $field_map[do_lang('ISSUE_TYPE')] => $tracker_type,
+        $field_map[do_lang('DESCRIPTION')] => $tracker_description,
+        $field_map[do_lang('ADDITIONAL_INFORMATION')] => $tracker_additional,
+        $field_map[do_lang('ADDON')] => $tracker_addon,
+        $field_map[do_lang('HANDLER')] => ($handler_id === null) ? '' : strval($handler_id),
+        $field_map[do_lang('STEPS_TO_REPRODUCE')] => $steps_to_reproduce,
+        $field_map[do_lang('STATUS')] => $status,
+        $field_map[do_lang('IDENTIFIER')] => ($identifier === null) ? '' : strval($identifier),
+    ];
+
+    // Create the issue (which also triggers form handler hooks to do additional maintenance)
+    $entry_id = actual_add_catalogue_entry($tracker_category, 1, do_lang('TRACKER_ISSUE_AUTOMATIC'), 1, 1, 0, $map, $add_time, $submitter);
+
+    // Now we need to get the tracker issue ID
+    $fields = $GLOBALS['SITE_DB']->query_select('catalogue_fields', ['id'], ['c_name' => 'tracker', $GLOBALS['SITE_DB']->translate_field_ref('cf_name') => do_lang('IDENTIFIER')]);
+    $values = get_catalogue_entry_field_values('tracker', $entry_id, collapse_1d_complexity('id', $fields));
+    $val = $values[0]['cf_default'];
+    if (array_key_exists('effective_value_pure', $values[0])) {
+        $val = $values[0]['effective_value_pure'];
+    } elseif (array_key_exists('effective_value', $values[0])) {
+        $val = $values[0]['effective_value'];
+    }
+
+    return [$entry_id, intval($val)];
 }
 
 /**

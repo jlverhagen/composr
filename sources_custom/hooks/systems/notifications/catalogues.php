@@ -24,10 +24,9 @@
  * @package    cms_homesite_tracker
  */
 
-/**
- * Hook class.
- */
-class Hook_notification_tracker_issue_added extends Hook_notification__Staff
+/*FORCE_ORIGINAL_LOAD_FIRST*/
+
+class Hx_notification_catalogues extends Hook_notification_catalogues
 {
     /**
      * Find the initial setting that members have for a notification code (only applies to the member_could_potentially_enable members).
@@ -39,26 +38,11 @@ class Hook_notification_tracker_issue_added extends Hook_notification__Staff
      */
     public function get_initial_setting(string $notification_code, ?string $category, int $member_id) : int
     {
-        return A__STATISTICAL;
-    }
-
-    /**
-     * Get a list of all the notification codes this hook can handle.
-     * (Addons can define hooks that handle whole sets of codes, so hooks are written so they can take wide authority).
-     *
-     * @return array List of codes (mapping between code names, and a pair: section and labelling for those codes)
-     */
-    public function list_handled_codes() : array
-    {
-        if (!addon_installed('cms_homesite')) {
-            return [];
-        }
-        if (!addon_installed('cms_homesite_tracker')) {
-            return [];
+        // By default, staff should get notifications for the tracker catalogue
+        if (($notification_code == 'catalogue_entry__tracker') && $GLOBALS['FORUM_DRIVER']->is_staff($member_id)) {
+            return A__STATISTICAL;
         }
 
-        $list = [];
-        $list['tracker_issue_added'] = [do_lang('cms_homesite:TRACKER_ISSUE'), do_lang('NOTIFICATION_TYPE_tracker_issue_added')];
-        return $list;
+        return parent::get_initial_setting($notification_code, $category, $member_id);
     }
 }

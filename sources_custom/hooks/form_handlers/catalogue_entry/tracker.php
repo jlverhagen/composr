@@ -64,7 +64,6 @@ class Hook_form_handlers_catalogue_entry_tracker
         if (($id_field === null) || (!isset($map[$id_field]))) {
             return;
         }
-
         $tracker_id = intval($map[$id_field]);
 
         // We want tracker issue URL monikers to be based on the issue identifier and not to include the category
@@ -115,15 +114,15 @@ class Hook_form_handlers_catalogue_entry_tracker
             return;
         }
 
+        $id_field = $GLOBALS['SITE_DB']->query_select_value_if_there('catalogue_fields', 'id', ['c_name' => $catalogue_name, 'cf_name' => do_lang('IDENTIFIER'), 'cf_defines_order' => '1', 'cf_type' => 'tracker_id']);
+        if ($id_field === null) {
+            return;
+        }
+
         // Handle points awarding (or revoking) and sponsorships
         if (addon_installed('points')) {
             require_code('cms_homesite_tracker');
             require_lang('tracker');
-
-            $id_field = $GLOBALS['SITE_DB']->query_select_value_if_there('catalogue_fields', 'id', ['c_name' => $catalogue_name, 'cf_name' => do_lang('IDENTIFIER'), 'cf_defines_order' => '1', 'cf_type' => 'tracker_id']);
-            if ($id_field === null) {
-                return;
-            }
 
             $tracker_id = intval($map[$id_field]);
 
@@ -189,13 +188,15 @@ class Hook_form_handlers_catalogue_entry_tracker
             return;
         }
 
-        // Deleting an issue implies a possible spam submission; revoke points and cancel sponsorships
+        // NB: We cannot send an issue deleted notification; the entry is already gone. But it will be in the action log as a catalogue entry deleted.
+
+        // The assumption is we treat issues like forum posts; they are only deleted if spam (therefore, revoke points). Otherwise, we keep them for archive purposes.
         if (addon_installed('points')) {
             require_code('cms_homesite_tracker');
             require_code('points_escrow');
 
             reverse_tracker_points($id);
-            cancel_all_escrows_by_content('catalogue_entry', strval($id), 'Deleted');
+            cancel_all_escrows_by_content('catalogue_entry', strval($id), do_lang('DELETED'));
         }
     }
 }

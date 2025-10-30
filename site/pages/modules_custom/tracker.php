@@ -273,10 +273,289 @@ class Module_tracker
         }
 
         if (($upgrade_from !== null) && ($upgrade_from < 5)) { // LEGACY: 11.beta9
-            // TODO step 5: Migrate Mantis issues, and also re-map points ledger t_type and t_type_id for tracker issues
+            require_lang('catalogues');
+            require_lang('tracker');
+            require_lang('addons');
+            require_code('permissions2');
+            require_code('catalogues');
+            require_code('catalogues2');
+            require_code('lang3');
+            require_code('cns_groups');
+
+            $admin_groups = $GLOBALS['FORUM_DRIVER']->get_super_admin_groups();
+            $mod_groups = $GLOBALS['FORUM_DRIVER']->get_moderator_groups();
+            $probation_groups = [get_probation_group()];
+            $guest_groups = [$GLOBALS['FORUM_DRIVER']->get_guest_id()];
+            $groups = array_diff(array_keys($GLOBALS['FORUM_DRIVER']->get_usergroup_list(false, true, true)), $guest_groups); // Never include guests
+            $non_staff_groups = array_diff($groups, $admin_groups, $mod_groups);
+
+            // Step 1: Create the tracker catalogue.
+            actual_add_catalogue(
+                'tracker',
+                lang_code_to_default_content('c_title', 'TRACKER', false, 2),
+                lang_code_to_default_content('c_description', 'DESCRIPTION_TRACKER_CATALOGUE', true, 3),
+                C_DT_TABULAR,
+                0,
+                do_lang('TRACKER_CATALOGUE_NOTES'),
+                0 // Points are assigned when an issue gets resolved
+            );
+
+            // Step 2. Set catalogue permissions.
+            set_global_category_access('catalogues_catalogue', 'tracker');
+
+            foreach ($non_staff_groups as $group) {
+                // However we must reject the ability to edit own entries except for staff
+                $GLOBALS['SITE_DB']->query_insert('group_privileges', [
+                    'group_id' => $group,
+                    'privilege' => 'edit_own_midrange_content',
+                    'the_page' => '',
+                    'module_the_name' => 'catalogues_catalogue',
+                    'category_name' => 'tracker',
+                    'the_value' => 0,
+                ]);
+
+                // However we must reject the ability to delete own entries except for staff
+                $GLOBALS['SITE_DB']->query_insert('group_privileges', [
+                    'group_id' => $group,
+                    'privilege' => 'delete_own_midrange_content',
+                    'the_page' => '',
+                    'module_the_name' => 'catalogues_catalogue',
+                    'category_name' => 'tracker',
+                    'the_value' => 0,
+                ]);
+            }
+
+            foreach (array_diff($groups, $probation_groups) as $group) {
+                // However we must allow bypassing validation (except for probation) so anyone can quickly report issues
+                $GLOBALS['SITE_DB']->query_insert('group_privileges', [
+                    'group_id' => $group,
+                    'privilege' => 'bypass_validation_midrange_content',
+                    'the_page' => '',
+                    'module_the_name' => 'catalogues_catalogue',
+                    'category_name' => 'tracker',
+                    'the_value' => 1,
+                ]);
+            }
+
+            // Step 3: create the fields.
+            $fields = [
+                // Name, description, type, defines order, required, visible, options, sensitive, put in category / search, sortable, default (language string)
+                ['IDENTIFIER', 'DESCRIPTION_TRACKER_CATALOGUE_IDENTIFIER', 'tracker_id', 1, 1, 1, '', 0, 1, 0, ''],
+                ['ISSUE_TYPE', 'DESCRIPTION_TRACKER_CATALOGUE_ISSUE_TYPE', 'list', 0, 1, 1, 'display_val=on', 0, 1, 1, 'TRACKER_CATALOGUE_ISSUE_TYPE_DEFAULT'],
+                ['TITLE', 'DESCRIPTION_TRACKER_CATALOGUE_TITLE', 'short_text', 0, 1, 1, 'input_size=56', 0, 1, 0, ''],
+                ['STATUS', 'DESCRIPTION_TRACKER_CATALOGUE_STATUS', 'list', 0, 1, 1, 'display_val=on,edit_only=1', 0, 1, 1, 'TRACKER_CATALOGUE_STATUS_DEFAULT'],
+                ['ISSUE_TAGS', 'DESCRIPTION_TRACKER_CATALOGUE_TAGS', 'list_multi', 0, 0, 1, 'custom_values=multiple,edit_only=1,widget=vertical_checkboxes', 0, 0, 1, ''],
+                ['HANDLER', 'DESCRIPTION_TRACKER_CATALOGUE_HANDLER', 'member', 0, 0, 1, 'edit_only=1', 0, 0, 0, ''],
+                ['VERSION', 'DESCRIPTION_TRACKER_CATALOGUE_VERSION', 'version', 0, 0, 1, '', 0, 0, 1, ''],
+                ['ADDON', 'DESCRIPTION_TRACKER_CATALOGUE_ADDON', 'addon', 0, 0, 1, 'auto_sort=on', 0, 0, 1, ''],
+                ['DESCRIPTION', 'DESCRIPTION_TRACKER_CATALOGUE_DESCRIPTION', 'long_trans', 0, 1, 1, '', 1, 0, 0, ''],
+                ['STEPS_TO_REPRODUCE', 'DESCRIPTION_TRACKER_CATALOGUE_STEPS_TO_REPRODUCE', 'short_trans_multi', 0, 0, 1, '', 1, 0, 0, ''],
+                ['ADDITIONAL_INFORMATION', 'DESCRIPTION_TRACKER_CATALOGUE_ADDITIONAL_INFORMATION', 'long_trans', 0, 0, 1, '', 1, 0, 0, ''],
+                ['RELATED_TO', 'DESCRIPTION_TRACKER_CATALOGUE_RELATED_TO', 'cx_tracker', 0, 0, 1, 'edit_only=1', 0, 0, 0, ''],
+                ['IS_FUNDED', 'DESCRIPTION_TRACKER_CATALOGUE_IS_FUNDED', 'tick', 0, 1, 1, 'edit_only=1', 0, 1, 1, 'TRACKER_CATALOGUE_IS_FUNDED_DEFAULT'],
+                ['RELEASED_IN_VERSION', 'DESCRIPTION_TRACKER_CATALOGUE_RELEASED_IN_VERSION', 'version', 0, 0, 1, 'edit_only=1', 0, 0, 1, ''],
+                ['HOTFIX', 'DESCRIPTION_TRACKER_CATALOGUE_HOTFIX', 'upload', 0, 0, 1, 'edit_only=1', 0, 0, 0, ''],
+            ];
+            foreach ($fields as $i => $field) {
+                $default = '';
+
+                // Values for default can be mapped by additional language strings
+                if ($field[10] != '') {
+                    $values = explode('|', do_lang($field[10]));
+                    foreach ($values as $j => $value) {
+                        if ($j > 0) {
+                            $default .= '|';
+                        }
+
+                        $default .= $value;
+                        $remap = do_lang($field[10] . '_' . filter_naughty_harsh($value, true), null, null, null, null, false);
+                        if ($remap !== null) {
+                            $default .= '=' . $remap;
+                        }
+                    }
+                }
+
+                actual_add_catalogue_field(
+                    'tracker', // $c_name
+                    lang_code_to_default_content('cf_name', $field[0], false, 2), // $name
+                    lang_code_to_default_content('cf_description', $field[1], false, 3), // $description
+                    $field[2], // $type
+                    $i, // $order
+                    $field[3], // $defines_order
+                    $field[5], // $visible
+                    $field[7], // $sensitive
+                    $default, // $default
+                    $field[4], // $required
+                    $field[9],
+                    1,
+                    0,
+                    $field[8], // $put_in_category
+                    $field[8], // $put_in_search
+                    $field[6] // $options
+                );
+            }
+
+            // Step 4: Create the categories and their privileges
+            for ($i = 1; $i <= 6; $i++) {
+                $cat_id = actual_add_catalogue_category('tracker', lang_code_to_default_content('cc_title', 'TRACKER_CATALOGUE_CATEGORY_' . strval($i), false, 2), lang_code_to_default_content('cc_description', 'DESCRIPTION_TRACKER_CATALOGUE_CATEGORY_' . strval($i), true, 3), '', null, '');
+                set_global_category_access('catalogues_category', $cat_id);
+
+                foreach ($non_staff_groups as $group) {
+                    // However we must reject the ability to edit own entries except for staff
+                    $GLOBALS['SITE_DB']->query_insert('group_privileges', [
+                        'group_id' => $group,
+                        'privilege' => 'edit_own_midrange_content',
+                        'the_page' => '',
+                        'module_the_name' => 'catalogues_category',
+                        'category_name' => strval($cat_id),
+                        'the_value' => 0,
+                    ]);
+
+                    // However we must reject the ability to delete own entries except for staff
+                    $GLOBALS['SITE_DB']->query_insert('group_privileges', [
+                        'group_id' => $group,
+                        'privilege' => 'delete_own_midrange_content',
+                        'the_page' => '',
+                        'module_the_name' => 'catalogues_category',
+                        'category_name' => strval($cat_id),
+                        'the_value' => 0,
+                    ]);
+                }
+
+                foreach (array_diff($groups, $probation_groups) as $group) {
+                    // However we must allow bypassing validation (except for probation) so anyone can quickly report issues
+                    $GLOBALS['SITE_DB']->query_insert('group_privileges', [
+                        'group_id' => $group,
+                        'privilege' => 'bypass_validation_midrange_content',
+                        'the_page' => '',
+                        'module_the_name' => 'catalogues_category',
+                        'category_name' => strval($cat_id),
+                        'the_value' => 1,
+                    ]);
+                }
+            }
+
+            // step 5: Migrate Mantis issues, and also re-map points ledger t_type and t_type_id for tracker issues
             set_mass_import_mode(true);
+            push_query_limiting(false);
+
+            require_code('cms_homesite_tracker');
+            require_lang('tracker');
+
+            $_category_rows = $GLOBALS['SITE_DB']->query_select('catalogue_categories', ['id', 'cc_title'], ['c_name' => 'tracker']);
+            $category_rows = [];
+            foreach ($_category_rows as $crow) {
+                $category_rows[get_translated_text($crow['cc_title'])] = $crow['id'];
+            }
+
+            $project_map = [
+                1 => $category_rows[do_lang('TRACKER_CATALOGUE_CATEGORY_1')],
+                10 => $category_rows[do_lang('TRACKER_CATALOGUE_CATEGORY_5')],
+                8 => $category_rows[do_lang('TRACKER_CATALOGUE_CATEGORY_2')],
+                7 => $category_rows[do_lang('TRACKER_CATALOGUE_CATEGORY_3')],
+                5 => $category_rows[do_lang('TRACKER_CATALOGUE_CATEGORY_2')],
+                9 => $category_rows[do_lang('TRACKER_CATALOGUE_CATEGORY_5')],
+                3 => $category_rows[do_lang('TRACKER_CATALOGUE_CATEGORY_4')],
+                4 => $category_rows[do_lang('TRACKER_CATALOGUE_CATEGORY_2')],
+            ];
+
+            $resolution_map = [
+                10 => 'open',
+                20 => 'completed',
+                30 => 'open',
+                40 => 'closed_noreproduce',
+                50 => 'closed_nofix',
+                60 => 'closed_duplicate',
+                70 => 'closed_nochange',
+                80 => 'closed_stale',
+                90 => 'closed_rejected',
+            ];
+
+            $severity_map = [
+                10 => 'feature',
+                20 => 'trivial',
+                50 => 'minor',
+                60 => 'major',
+                95 => 'security',
+            ];
+
+            $start = 0;
+            $max = 100;
+            $rows = [];
+            do {
+                $rows = $GLOBALS['SITE_DB']->query('SELECT * FROM mantis_bug_table', $max, $start);
+                foreach ($rows as $row) {
+                    $bug_info = $GLOBALS['SITE_DB']->query_parameterised('SELECT * FROM mantis_bug_text_table WHERE id={id}', ['id' => $row['bug_text_id']]);
+                    $category_info = $GLOBALS['SITE_DB']->query_parameterised('SELECT * FROM mantis_category_table WHERE id={id}', ['id' => $row['category_id']]);
+
+                    if (!isset($bug_info[0]) || !isset($category_info[0])) {
+                        continue;
+                    }
+
+                    $ids = create_tracker_issue(
+                        $row['version'],
+                        $row['summary'],
+                        $severity_map[$row['severity']],
+                        $bug_info[0]['description'],
+                        $bug_info[0]['additional_information'],
+                        $category_info[0]['name'],
+                        $project_map[$row['project_id']],
+                        (($row['handler_id'] != 0) && (!is_guest($row['handler_id']))) ? $row['handler_id'] : null,
+                        $bug_info[0]['steps_to_reproduce'],
+                        $resolution_map[$row['resolution']],
+                        $row['date_submitted'],
+                        $row['reporter_id'],
+                        $row['id']
+                    );
+
+                    $GLOBALS['SITE_DB']->query_update('points_ledger', ['t_type' => 'catalogue_entry', 't_type_id' => strval($ids[0])], ['t_type' => 'tracker_issue', 't_type_id' => strval($row['id'])]);
+                    $GLOBALS['SITE_DB']->query_update('escrow', ['content_type' => 'catalogue_entry', 'content_id' => strval($ids[0])], ['content_type' => 'tracker_issue', 'content_id' => strval($row['id'])]);
+                }
+
+                $start += $max;
+            } while (count($rows) > 0);
+
             set_mass_import_mode(false);
-            // TODO step 6: Migrate issue relations
+
+            // TODO step 6: Migrate issue relations (needs testing)
+            $identifier_field = $GLOBALS['SITE_DB']->query_select_value('catalogue_fields', 'id', ['c_name' => 'tracker', $GLOBALS['SITE_DB']->translate_field_ref('cf_name') => do_lang('IDENTIFIER')]);
+            $relationship_field = $GLOBALS['SITE_DB']->query_select_value('catalogue_fields', 'id', ['c_name' => 'tracker', $GLOBALS['SITE_DB']->translate_field_ref('cf_name') => do_lang('RELATED_TO')]);
+
+            $start = 0;
+            $max = 100;
+            $rows = [];
+            do {
+                $rows = $GLOBALS['SITE_DB']->query('SELECT * FROM mantis_bug_relationship_table', $max, $start);
+                foreach ($rows as $row) {
+                    $source_entry = $GLOBALS['SITE_DB']->query_select_value_if_there('catalogue_efv_integer', 'ce_id', ['cf_id' => $identifier_field, 'cv_value' => $row['source_bug_id']]);
+                    $destination_entry = $GLOBALS['SITE_DB']->query_select_value_if_there('catalogue_efv_integer', 'ce_id', ['cf_id' => $identifier_field, 'cv_value' => $row['destination_bug_id']]);
+
+                    if (($source_entry === null) || ($destination_entry === null)) {
+                        continue;
+                    }
+
+                    $new_field = false;
+                    $current_relationships = $GLOBALS['SITE_DB']->query_select_value_if_there('catalogue_efv_long', 'cv_value', ['cf_id' => $relationship_field, 'ce_id' => $source_entry]);
+                    if ($current_relationships === null) {
+                        $current_relationships = '';
+                        $new_field = true;
+                    } elseif (trim($current_relationships != '')) {
+                        $current_relationships .= "\n";
+                    }
+
+                    $current_relationships .= strval($destination_entry);
+
+                    if ($new_field) {
+                        $GLOBALS['SITE_DB']->query_insert('catalogue_efv_long', ['cf_id' => $relationship_field, 'ce_id' => $source_entry, 'cv_value' => strval($current_relationships)]);
+                    } else {
+                        $GLOBALS['SITE_DB']->query_update('catalogue_efv_long', ['cv_value' => strval($current_relationships)], ['cf_id' => $relationship_field, 'ce_id' => $source_entry]);
+                    }
+                }
+
+                $start += $max;
+            } while (count($rows) > 0);
+
+            pop_query_limiting();
             // TODO step 7: Migrate bug notes as comments
             // TODO step 8: Migrate monitor status
             // TODO step 9: Migrate tags
