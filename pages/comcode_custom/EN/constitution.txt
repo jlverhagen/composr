@@ -213,15 +213,7 @@ Everyone is equally bound by the Constitution, in full, regardless of their hist
 
 [title="3"]Amendment I - Transition Clause[/title]
 
-This clause and its terms shall take precedence over the rest of the Constitution as applicable until [b]1st January, 2026[/b]. On that date, this Clause shall be deemed dissolved.
-
-Until the given date, the following terms shall apply as the Composr community transitions from compo.sr over to composr.app, and from the sponsorship support model over to the Bazaar model / the terms of this Constitution:
- - A Transition Board shall assume temporary responsibilities of the members of the Board until official members of the Board are voted in, and the Transition Clause expires. Should a Board not be voted in before the Clause expires, then there will be no Board until one is voted in by the community. The Transition Board shall consist of the following members:
-  - Christopher Graham
-  - Patrick Schmalstig
- - The governance of this Constitution shall only be loosely enforced during the Transition Clause.
- - The Constitution may be amended at any time without a vote, but a final version must be voted in before the Transition Clause expires. Should the Clause expire without a final version of the Constitution being voted in, then no Constitution shall apply until one is voted in.
- - Voting of a final Constitution and members of the Board shall be conducted according to the terms of the Constitution as written at the time voting takes place.
+[page="forum:topicview:browse:2164"]This amendment has been repealed.[/page]
 
 [concepts
 	1_key="Measure (noun)"	1_value="Declarative text which goes into effect if ratified"
