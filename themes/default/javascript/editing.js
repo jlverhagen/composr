@@ -89,12 +89,16 @@
 
                     if (savingCookies.toLowerCase() === '{!javascript:WYSIWYG_DISABLE_ONCE_AND_DONT_ASK;^}'.toLowerCase()) {
                         _toggleWysiwyg(name);
-                        $cms.setCookie('use_wysiwyg', '-1', 'PERSONALIZATION', 3000);
+                        if (!$cms.setCookie('use_wysiwyg', '-1', 'PERSONALIZATION', 3000)) {
+                            $cms.ui.alert('{!COOKIE_CONFLICT_SETTINGS_PERSONALIZATION;^}', '{!ERROR_OCCURRED;^}');
+                        };
                     }
 
                     if (savingCookies.toLowerCase() === '{!javascript:WYSIWYG_DISABLE_ALWAYS;^}'.toLowerCase()) {
                         _toggleWysiwyg(name);
-                        $cms.setCookie('use_wysiwyg', '0', 'PERSONALIZATION', 3000);
+                        if (!$cms.setCookie('use_wysiwyg', '0', 'PERSONALIZATION', 3000)) {
+                            $cms.ui.alert('{!COOKIE_CONFLICT_SETTINGS_PERSONALIZATION;^}', '{!ERROR_OCCURRED;^}');
+                        };
                     }
                 });
             }

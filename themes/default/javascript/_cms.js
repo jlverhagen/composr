@@ -557,6 +557,7 @@
      * @param cookieValue
      * @param cookieCategory
      * @param numDays
+     * @returns {bool}
      */
     $cms.setCookie = function setCookie(cookieName, cookieValue, cookieCategory, numDays) {
         cookieName = strVal(cookieName);
@@ -564,8 +565,11 @@
         cookieCategory = strVal(cookieCategory);
 
         if (!$cms.acceptsCookieCategory(cookieCategory)) {
-            return;
+            $util.inform('Skipped setting cookie ' + cookieName + '; cookie category ' + cookieCategory + ' rejected by user.');
+            return false;
         }
+
+        $util.inform('Setting cookie ' + cookieName);
 
         var expires = new Date(),
             output;
@@ -591,7 +595,10 @@
         if (read && (read !== cookieValue) && $cms.isDevMode() && !alertedCookieConflict) {
             $cms.ui.alert('{!COOKIE_CONFLICT_DELETE_COOKIES;^}' + '... ' + document.cookie + ' (' + output + ')', '{!ERROR_OCCURRED;^}');
             alertedCookieConflict = true;
+            return false;
         }
+
+        return true;
     };
 
     /**
@@ -607,9 +614,12 @@
         defaultValue = strVal(defaultValue);
 
         // If cookies have not been consented, pretend no cookies are set even if there are old cookies remaining
-        if ((cookieName !== 'cc_cookie') && ($cms.acceptsCookieCategory(cookieCategory))) {
+        if ((cookieName !== 'cc_cookie') && (!$cms.acceptsCookieCategory(cookieCategory))) {
+            $util.inform('Skipped reading cookie ' + cookieName + '; cookie category ' + cookieCategory + ' rejected by user.');
             return '';
         }
+
+        $util.inform('Reading cookie ' + cookieName);
 
         var cookies = String(document.cookie),
             startIdx = cookies.startsWith(cookieName + '=') ? 0 : cookies.indexOf(' ' + cookieName + '=');

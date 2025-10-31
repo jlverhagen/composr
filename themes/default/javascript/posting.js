@@ -1157,7 +1157,9 @@
 
         function actuallyAutosave() {
             // Mark it as saved, so the server can clear it out when we submit, signally local storage should get deleted too
-            $cms.setCookie(encodeURIComponent(getAutosaveUrlStem()), '1', 'PERSONALIZATION', 0.167/*4 hours*/);
+            if (!$cms.setCookie(encodeURIComponent(getAutosaveUrlStem()), '1', 'PERSONALIZATION', 0.167/*4 hours*/)) {
+                return;
+            }
 
             window.lastAutosave = thisDate;
 
