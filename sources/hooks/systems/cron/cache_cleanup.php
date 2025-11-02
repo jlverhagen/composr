@@ -66,6 +66,10 @@ class Hook_cron_cache_cleanup
 
         $path = get_custom_file_base() . '/caches/static';
         $dh = @opendir($path);
+        if ($dh === false) {
+            //intelligent_write_error($path);
+            return; // Just ignore; we have a mechanism for creating the directory when actually trying to save a static cache file.
+        }
         while (($f = readdir($dh)) !== false) {
             if (preg_match('#\.(htm|br|gz|xml)$#', $f) != 0) {
                 // Over a week old
