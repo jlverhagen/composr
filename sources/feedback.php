@@ -842,10 +842,12 @@ function extract_topic_identifier(string $full_text) : string
  * @param  boolean $private Whether posts made should not be shared
  * @param  ?string $post_title Title of the post (null: lookup from POST environment)
  * @param  ?string $post Body of the post (null: lookup from POST environment)
- * @param  ?TIME $time Time of comment topic (null: now)
+ * @param  ?TIME $time Time of the comment, and also the comment topic if it has not yet been created (null: now)
+ * @param  ?MEMBER $poster The member who posted the comment (null: current member)
+ * @param  boolean $staff_only Whether this comment is only visible to staff
  * @return boolean Whether a hidden post has been made
  */
-function actualise_post_comment(bool $allow_comments, string $feedback_type, string $content_id, $content_url, ?string $content_title, ?string $forum = null, bool $do_captcha = true, ?int $validated = null, bool $explicit_allow = false, bool $show_success_message = true, bool $private = false, ?string $post_title = null, ?string $post = null, ?int $time = null) : bool
+function actualise_post_comment(bool $allow_comments, string $feedback_type, string $content_id, $content_url, ?string $content_title, ?string $forum = null, bool $do_captcha = true, ?int $validated = null, bool $explicit_allow = false, bool $show_success_message = true, bool $private = false, ?string $post_title = null, ?string $post = null, ?int $time = null, ?int $poster = null, bool $staff_only = false) : bool
 {
     if (!$explicit_allow) {
         if ((get_option('is_on_comments') == '0') || (!$allow_comments)) {
@@ -902,6 +904,10 @@ function actualise_post_comment(bool $allow_comments, string $feedback_type, str
         }
     }
 
+    if ($poster === null) {
+        $poster = get_member();
+    }
+
     $email = post_param_string('email', '', INPUT_FILTER_POST_IDENTIFIER);
 
     require_code('type_sanitisation');
@@ -949,7 +955,7 @@ function actualise_post_comment(bool $allow_comments, string $feedback_type, str
         $real_feedback_type . '_' . $content_id,
 
         // What is being posted
-        get_member(),
+        $poster,
         $post_title,
         $post,
 
@@ -966,13 +972,13 @@ function actualise_post_comment(bool $allow_comments, string $feedback_type, str
         $explicit_allow,
         $poster_name_if_guest,
         $parent_id,
-        false,
+        $staff_only,
 
         // Do not send notifications to someone also getting one defined by the following
         ((!$private) && ($post != '')) ? 'comment_posted' : null,
         ((!$private) && ($post != '')) ? ($real_feedback_type . '_' . $content_id) : null,
 
-        null, // current time
+        $time,
         $submitter
     );
 
