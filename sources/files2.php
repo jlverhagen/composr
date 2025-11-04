@@ -653,7 +653,7 @@ function get_max_file_size(?int $source_member = null, ?object $db = null, bool 
  * @param  string $path The file path or filename
  * @param  boolean $skip_server_side_security_check Whether to skip the server side security check
  * @param  ?string $file_to_delete Delete this file if we have to exit (null: no file to delete)
- * @param  boolean $accept_errors Whether to allow errors without dying
+ * @param  boolean $accept_errors Whether to allow errors without dying (true: server-side security checks will not trigger hack-attack alerts)
  * @param  ?MEMBER $member_id Member to check as (null: current member)
  * @return boolean Success status
  */
@@ -664,15 +664,35 @@ function check_extension(string &$path, bool $skip_server_side_security_check = 
     }
 
     $bad_file_extensions = [
-        // Also see .htaccess files that use these same lists
-        'phtml', 'php', 'php3', 'php4', 'php5', 'phar', 'phps', // PHP
-        'py', // Python
-        'rhtml', 'rb', // Ruby
-        'pl', // Perl
-        'jsp', // JavaServer Pages
-        'dll', 'aspx', 'ashx', 'asmx', 'asx', 'axd', 'asp', // ASP / .net
-        'vbs', // Server-side VBScript
-        'cgi', 'fcgi', 'sh', // CGI
+        // PHP related
+        'phtml', 'php', 'php3', 'php4', 'php5', 'php7', 'phar', 'phps', 'pht', 'phpt', 'pgif', // PHP
+        'inc', // PHP includes
+
+        // Script/Shell related
+        'py', 'pyc', 'pyo', 'pyw', // Python
+        'rb', 'rbw', 'rhtml', 'erb', // Ruby
+        'pl', 'cgi', 'fcgi', // Perl and CGI
+        'sh', 'bash', 'ksh', 'zsh', 'bat', 'cmd', // Shell scripts
+
+        // Server-side frameworks
+        'jsp', 'jspx', 'jsw', 'jsv', 'jspf', // JavaServer Pages
+        'asp', 'aspx', 'ascx', 'ashx', 'asmx', 'cer', 'asa', // ASP / .NET
+        'cshtml', 'vbhtml', // Razor views
+
+        // Executable/Binary
+        'exe', 'dll', 'so', 'dylib', // Executable binaries
+        'msi', 'com', 'scr', 'gadget', // Windows executables
+        'action', 'app', 'bin', 'command', // Various executables
+
+        // System/Config
+        'htaccess', 'htpasswd', // Apache configs
+        'config', 'conf', 'ini', // Configuration files
+        'reg', // Windows registry
+
+        // Web server specific
+        'csproj', 'vbproj', 'asax', 'master', // .NET specific
+        'cfm', 'cfml', // ColdFusion
+        'vbs', 'vbe', 'ws', 'wsf', 'wsc', 'wsh', // Visual Basic Script
     ];
 
     $filename = basename($path);
@@ -689,9 +709,15 @@ function check_extension(string &$path, bool $skip_server_side_security_check = 
     $_types = get_option('valid_types');
     $types = array_flip(explode(',', $_types));
     ksort($types);
+
     if (!$skip_server_side_security_check) {
+        foreach ($bad_file_extensions as $type) {
+            unset($types[$type]);
+        }
+
         if (!has_privilege($member_id, 'use_very_dangerous_comcode')) {
             $dangerous_markup_types = [
+                // Web markup and scripts
                 'js',
                 'json',
                 'html',
@@ -699,13 +725,33 @@ function check_extension(string &$path, bool $skip_server_side_security_check = 
                 'shtml',
                 'svg',
                 'xml',
+                'xhtml',
                 'rss',
                 'atom',
                 'xsd',
                 'xsl',
+                'xslt',
                 'css',
+                'scss',
+                'less',
+
+                // Web fonts (can contain embedded code)
                 'woff',
+                'woff2',
+                'eot',
+
+                // Additional markup formats
+                'xaml',
+                'hta',
+                'htr',
+                'htc',
+                'mht',
+                'mhtml',
+                'vue',
+                'jsx',
+                'tsx',
             ];
+
             foreach ($dangerous_markup_types as $type) {
                 unset($types[$type]);
             }
@@ -727,6 +773,10 @@ function check_extension(string &$path, bool $skip_server_side_security_check = 
                 unlink($file_to_delete);
             }
             if ($accept_errors) {
+                $message = do_lang_tempcode('INVALID_FILE_TYPE', escape_html($ext), escape_html(str_replace(',', ', ', $_types)));
+
+                require_code('site');
+                attach_message($message, 'warn');
                 return false;
             }
             log_hack_attack_and_exit('SCRIPT_UPLOAD_HACK');
