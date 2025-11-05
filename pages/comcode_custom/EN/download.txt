@@ -55,7 +55,6 @@ We recommend the following criteria for an optimal install of Composr CMS:
    - Hash
    - Intl
    - Json
-   - Posix
    - Sodium (if you enable anonymous sending of errors or telemetry to composr.app)
    - Unicode
    - ZipArchive
