@@ -13,7 +13,7 @@ Manage banners from Admin Zone > Content > Banners.
 
 There are many options to allow a rich and flexible rotation system. These include:
  - The deployment agreement. A permanent banner can always be shown. A campaign banner is given a finite number of 'clicks', and will not be shown when the clicks have run out. Default banners can always be shown, but are generally set to only appear when there are no permanent or campaign banners.
- - You may specify a banner type. Types are set up to enforce certain restrictions (image dimensions, and file size) on the banners within that type. It is possible to call up the Composr [tt]banner.php[/tt] with [tt]?b_type=<type[/tt] on the URL, which will force only banners of that type to be shown. Likewise, the 'BANNER' symbols first parameter can be set to <type> (e.g. [tt]{$BANNER,skyscraper}[/tt]). This is useful for a number of things, but perhaps the most significant is that is allows you to distinguish between banners of different sizes, storing each in an effectively separate rotation. You can then edit your templates to reference these different rotations, by pasting in the appropriate HTML (see [tt]BANNER.tpl[/tt] for an unfiltered example -- this is the HTML used for the banner that appears in the top-right by default).
+ - You may specify a banner type. Types are set up to enforce certain restrictions (image dimensions, and file size) on the banners within that type. It is possible to call up the Composr [tt]banner.php[/tt] with [tt]?b_type=<type[/tt] on the URL, which will force only banners of that type to be shown. Likewise, the 'BANNER' symbols first parameter can be set to <type> (e.g. [tt]{\$BANNER,skyscraper}[/tt]). This is useful for a number of things, but perhaps the most significant is that is allows you to distinguish between banners of different sizes, storing each in an effectively separate rotation. You can then edit your templates to reference these different rotations, by pasting in the appropriate HTML (see [tt]BANNER.tpl[/tt] for an unfiltered example -- this is the HTML used for the banner that appears in the top-right by default).
  - Banners may be given an expiration date; this is useful in many situations, such as if a banner becomes inappropriate after an advertised event finishes, or if a client has only paid until a certain date.
  - The 'Display likelihood' allows you to balance the likelihoods of different banners being shown. The higher the number, the more likely the banner will be shown. This is explained in more detail in a section below.
 
@@ -228,7 +228,7 @@ Adding a new banner with the new type:
 
 Next we need to tie the banner into our layout. There are a couple of options:
 1) using a banner wave (the [tt]main_banner_wave[/tt] block)
-2) using a rotation (the [tt]{$BANNER}[/tt] symbol directly in a Comcode page or a template)
+2) using a rotation (the [tt]{\$BANNER}[/tt] symbol directly in a Comcode page or a template)
 [/surround][surround]
 [media width="150" description="Adding the wave block" float="right"]data_custom/images/docs/tut_banners/example_banner_wave.png[/media]
 Adding the new square banner using a banner wave:
@@ -248,7 +248,7 @@ Adding the new square banner using a rotation:
 1) Navigate to the page where you want the banners to appear
 2) Click "edit this page" under the page
 3) Select where in the page you want the block to be
-4) Paste in the following code: [tt]{$BANNER,square}[/tt]. This symbol invokes the internal banner code. "square" is passed as a string parameter which defines the type of banner.
+4) Paste in the following code: [tt]{\$BANNER,square}[/tt]. This symbol invokes the internal banner code. "square" is passed as a string parameter which defines the type of banner.
 5) Save the page via the "Save" button
 6) Observe the banner is added to the page now
 (for a template steps 1-2 would be going to edit the appropriate template)

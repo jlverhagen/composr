@@ -352,7 +352,7 @@ Permissions are usually the tool to use to customise things for different users,
 [title="3"]I turned off WYSIWYG for a page, and now I can't get it back on, how do I?[/title]
 
 In order to stop other potential authors accidentally corrupting the hand-crafted page while using WYSIWYG, WYSIWYG will have been locked off for the page when you originally disabled it.
-Simply remove [tt]{$,page hint: no_wysiwyg}[/tt] from the bottom of the page's Comcode (it will have been added there automatically), re-save, then go back in to edit.
+Simply remove [tt]{\$,page hint: no_wysiwyg}[/tt] from the bottom of the page's Comcode (it will have been added there automatically), re-save, then go back in to edit.
 
 [title="3"]Various blocks require ID codes for what content to include. Where do I find these?[/title]
 

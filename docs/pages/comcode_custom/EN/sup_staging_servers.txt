@@ -198,7 +198,7 @@ You may want a similar startup hook that customises database settings based upon
 
 Here are some assorted tips to help with portability:
 1) Avoid using Composr attachments because it's hard to sync them due to database changes. Instead place files in [tt]uploads/website_specific[/tt] or [tt]uploads/filedump[/tt] and reference them using the [tt]media[/tt] Comcode tag (which has all the same rendering functionality attachments do).
-2) Avoid coding in the site's base URL directly, use [tt]{$BASE_URL}[/tt].
+2) Avoid coding in the site's base URL directly, use [tt]{\$BASE_URL}[/tt].
 
 [title="2"]Helping users use the correct server[/title]
 

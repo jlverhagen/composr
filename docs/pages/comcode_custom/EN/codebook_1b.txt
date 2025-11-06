@@ -388,7 +388,7 @@ For theme images, we use [tt]find_theme_image[/tt].
 
 For entry-point scripts we use [tt]find_script[/tt] to locate the script.
 
-For other URLs we typically will prepend [tt]get_base_url() . '/'[/tt] to turn a relative URL into an absolute URL. Or in templates, prepend [tt]{$BASE_URL*}/[/tt].
+For other URLs we typically will prepend [tt]get_base_url() . '/'[/tt] to turn a relative URL into an absolute URL. Or in templates, prepend [tt]{\$BASE_URL*}/[/tt].
 
 [title="4"]URL monikers[/title]
 
@@ -532,7 +532,7 @@ To do this:
 2) Pass in the name of the Custom Profile Field as [tt]<your-chosen-name>[/tt] (e.g. [tt]example[/tt]). It will be stored with an [tt]cms_[/tt] prefix, which indicates it is a system field.
 3) Conversr-only. Define a language string [tt]SPECIAL_CPF__cms_<your-chosen-name>[/tt] that contains the true human-readable name. You can define this in your own language file.
 4) Conversr-only. Write a new [tt]systems/cns_cpf_filter[/tt] hook. If you want your field to be editable, you need to include it as a key in the returned array of the [tt]to_enable[/tt] function (see existing hooks for examples). You can use one hook file for lots of fields. Your function should [tt]require_lang[/tt] the language file you defined your strings in.
-Retrieve your field using the [tt]get_cms_cpf[/tt] function, or in templates with the [tt]{$CPF_VALUE}[/tt] symbol, omitting the [tt]cms_[/tt] prefix (i.e. just use the name you set).
+Retrieve your field using the [tt]get_cms_cpf[/tt] function, or in templates with the [tt]{\$CPF_VALUE}[/tt] symbol, omitting the [tt]cms_[/tt] prefix (i.e. just use the name you set).
 
 Conversr stores the data in two tables (you should not need to know this, but it may be useful if you are manually checking the database during the debugging process):
 1) [tt]f_custom_fields[/tt] -- this stores the field definitions, one field definition per row. Think of it being like a schema.

@@ -181,14 +181,14 @@ In this example the subject field has been made required.
 
 If you want to use this outside Composr:
 [indent="30"]
-The Tempcode is just to make it easily portable between sites, no Tempcode is required. You would replace [tt]{$BASE_URL*}[/tt] with your known base URL, replace [tt]{$PAGE_LINK*,:thanks}[/tt] with a static URL, and either remove [tt]{$INSERT_FORM_POST_SECURITY}[/tt] or replace it with whatever Composr outputs for this symbol (as it produces static code based on your website name).
+The Tempcode is just to make it easily portable between sites, no Tempcode is required. You would replace [tt]{\$BASE_URL*}[/tt] with your known base URL, replace [tt]{\$PAGE_LINK*,:thanks}[/tt] with a static URL, and either remove [tt]{\$INSERT_FORM_POST_SECURITY}[/tt] or replace it with whatever Composr outputs for this symbol (as it produces static code based on your website name).
 The required field validation wouldn't work as this is controlled via the Composr JavaScript framework. You'd need to either implement $cms.form.checkForm yourself, or remove/change the onsubmit attribute.
 [/indent]
 
 If you want this within a Comcode page:
 [indent="30"]
 Put it inside [tt]semihtml[/tt] Comcode tags, or paste into the source view of the WYSIWYG editor.
-It also is likely a good idea to change [tt]{$BASE_URL*}/data/form_to_email.php[/tt] to [tt]{$FORM_TO_EMAIL_URL,_some_page_name}[/tt], where [tt]_some_page_name[/tt] is your "message sent, thank you" page. The symbol automatically inserts a redirect parameter and propagates any [tt]keep_*[/tt] URL parameters, without you having to embed too much complex Tempcode which you'd then risk having mangled by content editors. If you just use [tt]{$FORM_TO_EMAIL_URL}[/tt] then it will redirect back to the page your form is on.
+It also is likely a good idea to change [tt]{\$BASE_URL*}/data/form_to_email.php[/tt] to [tt]{\$FORM_TO_EMAIL_URL,_some_page_name}[/tt], where [tt]_some_page_name[/tt] is your "message sent, thank you" page. The symbol automatically inserts a redirect parameter and propagates any [tt]keep_*[/tt] URL parameters, without you having to embed too much complex Tempcode which you'd then risk having mangled by content editors. If you just use [tt]{\$FORM_TO_EMAIL_URL}[/tt] then it will redirect back to the page your form is on.
 [/indent]
 
 The example will produce an e-mail like:

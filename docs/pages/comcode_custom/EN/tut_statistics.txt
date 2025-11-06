@@ -160,10 +160,10 @@ Other software may use terms such as 'goals' or 'conversions': these are roughly
 There are a number of ways to record events happening:
 [list="1"]
 [*] The inbuilt events are recorded automatically.
-[*] You can use the [tt]{$LOG_STATS_EVENT,event}[/tt] symbol to track an event from within your templates (i.e. when the template is shown, the event is recorded).
+[*] You can use the [tt]{\$LOG_STATS_EVENT,event}[/tt] symbol to track an event from within your templates (i.e. when the template is shown, the event is recorded).
 [*] You can use the JavaScript [tt]$cms.statsEventTrack[/tt] function to track an event from within JavaScript code.
 [*] You can use add [tt]data-click-stats-event-track="{ category: 'some event', nativeTracking: true }"[/tt] on HTML [tt]<a>[/tt] elements. This is actually a wrapper around the above.
-[*] You can wrap URLs in links with the [tt]{$STATS_TRACK_URL,URL,event}[/tt] symbol.
+[*] You can wrap URLs in links with the [tt]{\$STATS_TRACK_URL,URL,event}[/tt] symbol.
 E.g. [tt]<a href="{$STATS_TRACK_URL*,https://example.com/,Example.com Link clicked}">Click me</a>[/tt]
 This handles the event recording within a redirection script, so does not depend on JavaScript. It also will track the external URL as having been viewed regardless of the event (the event parameter is actually optional).
 [/list]
@@ -368,7 +368,7 @@ Composr has broadly integrated referral tracking integration:
 4) The non-bundled [tt]referrals[/tt] addon allows manually inputting tracking codes on joining and creates a system of referrer rewards.
 5) The stats addon can draw graph of tracking codes, including measuring conversion rates against them.
 6) The user lookup tool (in the bundled [tt]securitylogging[/tt] addon) allows easily seeing if that user accessed via a tracking code.
-7) Tracking is integrated with Tempcode. You can inject a tracking code of your choice in Tempcode by using the Tempcode [tt]{$SET_TRACKING_CODE,some code}[/tt] or [tt]{$SPLIT_TEST,some code,some other code}[/tt] symbol. You can use the [tt]{$HAS_TRACKING_CODE,some code}[/tt] symbol to see if a tracking code is active for the user session.
+7) Tracking is integrated with Tempcode. You can inject a tracking code of your choice in Tempcode by using the Tempcode [tt]{\$SET_TRACKING_CODE,some code}[/tt] or [tt]{\$SPLIT_TEST,some code,some other code}[/tt] symbol. You can use the [tt]{\$HAS_TRACKING_CODE,some code}[/tt] symbol to see if a tracking code is active for the user session.
 
 * Tracking codes are structured as follows:
  - Numeric values are for member IDs (referral schemes)

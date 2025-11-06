@@ -483,7 +483,7 @@ There is no clear risk.
 | No limitations implemented in Composr
 (webmasters could not realistically meet these CSP limitations)
 |}
-* Nonces are configurable in HTML/templates via placing [tt]{$CSP_NONCE_HTML}[/tt] in the opening tag. An XSS hacker has no way to know the nonce (it is cryptographically generated on the server side), so can't inject script/style requiring it. At the current time nonces are only supported in CSP by script and CSS files, but the W3C is discussing changing this.
+* Nonces are configurable in HTML/templates via placing [tt]{\$CSP_NONCE_HTML}[/tt] in the opening tag. An XSS hacker has no way to know the nonce (it is cryptographically generated on the server side), so can't inject script/style requiring it. At the current time nonces are only supported in CSP by script and CSS files, but the W3C is discussing changing this.
 
 Note that the "Trusted partner sites" configuration options automatically include "www." if not specified.
 

@@ -13,7 +13,7 @@ The "syntax" of a language is simply the grammar. Tempcode's syntax is extremely
 Tempcode provides four constructs other than the plain text of the template itself:
 1) [b]Parameters[/b]: [tt]{PARAMETER}[/tt] where PARAMETER is a code-name of something that was actually passed to the template.
 2) [b]Language strings[/b]: [tt]{!STRING,<parameters>...}[/tt] where STRING is a real language string from a loaded language file (e.g. Banner code could use strings from banners.ini, but most other code could not; global.ini contains strings usable anywhere).
-3) [b]Symbols[/b]: [tt]{$SYMBOL,<parameters>...}[/tt] where SYMBOL is a real symbol Composr supports. Embedding a symbol is like making a function call or running a command in the complex place, or a substitution in the simple case.
+3) [b]Symbols[/b]: [tt]{\$SYMBOL,<parameters>...}[/tt] where SYMBOL is a real symbol Composr supports. Embedding a symbol is like making a function call or running a command in the complex place, or a substitution in the simple case.
 4) [b]Directives[/b]: [tt]{+START,DIRECTIVE,<parameters>...}...{+END}[/tt] where DIRECTIVE is a real directive Composr supports. Directives essentially wrap portions of the template, controlling that portion; they are generally used for types of condition checking (e.g. IF) or loops. There are also directives like [tt]{+IMPLODE,<parameters>...}[/tt] that do not wrap, but work outside the normal "string manipulation" bounds that symbols do.
 
 [title="3"]Escaping[/title]
@@ -225,7 +225,7 @@ The following escaping substitutions work:
 
 Backslashes cannot be escaped. So [tt]\\[/tt] will output literally, and [tt]\\{EXAMPLE}[/tt] will output [tt]\{EXAMPLE}[/tt] (i.e. Tempcode will not be triggered because the first slash outputs literally and the second slash escapes Tempcode).
 This is intentional: we don't want Tempcode programmers to have to layer escaping schemes, as JavaScript and CSS feature similar backslash-based escaping.
-If you really need to output a backslash without it working as an escape character on a succeeding [tt]{[/tt] / [tt]}[/tt] / [tt]_[/tt] character you can use the [tt]{$BACKSLASH}[/tt] symbol. Or, you can drop down to a character-code scheme in the output you're generating (for example, HTML allows output characters using HTML entities, and JavaScript strings support escaped character codes).
+If you really need to output a backslash without it working as an escape character on a succeeding [tt]{[/tt] / [tt]}[/tt] / [tt]_[/tt] character you can use the [tt]{\$BACKSLASH}[/tt] symbol. Or, you can drop down to a character-code scheme in the output you're generating (for example, HTML allows output characters using HTML entities, and JavaScript strings support escaped character codes).
 
 [title="3"]The Tempcode tree (advanced)[/title]
 
@@ -265,7 +265,7 @@ be really hurting by now)[/center]
 [/box]
 This is your first practical example of Tempcode, and perhaps the most common use of Tempcode symbols.
 
-To insert an image into your template, use Composr's image symbol: [tt]{$IMG,<codename>}[/tt]. Replace [tt]<codename>[/tt] with the image code for the image you want to use. This will turn into the image's URL. Be aware that this does not insert any HTML for you, so to use it fully:
+To insert an image into your template, use Composr's image symbol: [tt]{\$IMG,<codename>}[/tt]. Replace [tt]<codename>[/tt] with the image code for the image you want to use. This will turn into the image's URL. Be aware that this does not insert any HTML for you, so to use it fully:
 [code="HTML"]<img src="{$IMG*,under_construction_animated}" alt="Under Construction" title="Under Construction" />[/code]
 This would insert the image [tt]http://yourbaseurl/themes/default/images/under_construction_animated.png[/tt] into your page, as shown on the right.
 
@@ -301,7 +301,7 @@ You are very unlikely to ever want to use rows in red, as they are intended for 
 	<tbody>
 		<tr style="background: #DDFFDD">
 			<td>{$,comment}</td>
-			<td>Place a comment. E.g... [/html][tt]{$,this is a comment}[/tt][html]. Careful as commas in your comment need to be escaped with a backslash.</td>
+			<td>Place a comment. E.g... [/html][tt]{\$,this is a comment}[/tt][html]. Careful as commas in your comment need to be escaped with a backslash.</td>
 		</tr>
 		<tr style="background: #DDFFDD">
 			<td>{$RAND,min,max}</td>
@@ -313,7 +313,7 @@ You are very unlikely to ever want to use rows in red, as they are intended for 
 		</tr>
 		<tr style="background: #DDFFDD">
 			<td>{$CYCLE,cyclename,a,b,c}</td>
-			<td>Cycle through parameters in a sequence (intended for use across template calls to create, for example, striping effects). The first parameter is the name of the cycle, and the following parameters are the parameters of the cycle. The pointer for the named cycle will move forward/around each time the cycle symbol is referenced (e.g. [/html][tt]{$CYCLE,mycycle,a,b,c,d}[/tt][html] would produce "a" the first time it's called, "b" the next, "c" next, then "d", then back to "a" again). If you only provide one parameter then the cycles current index is returned. If only two parameters are provided then the second parameter is split up by commas; this is useful for programming cycles on a higher level (e.g. for making chequered patterns using floats).</td>
+			<td>Cycle through parameters in a sequence (intended for use across template calls to create, for example, striping effects). The first parameter is the name of the cycle, and the following parameters are the parameters of the cycle. The pointer for the named cycle will move forward/around each time the cycle symbol is referenced (e.g. [/html][tt]{\$CYCLE,mycycle,a,b,c,d}[/tt][html] would produce "a" the first time it's called, "b" the next, "c" next, then "d", then back to "a" again). If you only provide one parameter then the cycles current index is returned. If only two parameters are provided then the second parameter is split up by commas; this is useful for programming cycles on a higher level (e.g. for making chequered patterns using floats).</td>
 		</tr>
 		<tr style="background: #DDFFDD">
 			<td>{$RESET_CYCLE,cyclename}</td>
@@ -990,7 +990,7 @@ These are advanced symbols, and mirror Composr's internal API. The parameters ar
 	<tbody>
 		<tr style="background: #DDFFDD">
 			<td>{$BLOCK,block=main_search,zone=site}</td>
-			<td>Place a block into the template. Takes any number of parameters (but at least 1 for the block name), each of which defines a block parameter and its value. Parameters must include the block name, which is encoded against the special reserved name <kbd>block</kbd> (<strong>not</strong> just placed in there as a lone parameter). For example: [/html][tt]{$BLOCK,block=main_news,filter=1\,2\,3}[/tt][html]</td>
+			<td>Place a block into the template. Takes any number of parameters (but at least 1 for the block name), each of which defines a block parameter and its value. Parameters must include the block name, which is encoded against the special reserved name <kbd>block</kbd> (<strong>not</strong> just placed in there as a lone parameter). For example: [/html][tt]{\$BLOCK,block=main_news,filter=1\,2\,3}[/tt][html]</td>
 		</tr>
 		<tr style="background: #DDFFDD">
 			<td>{$LOAD_PAGE,about,site}</td>
@@ -1170,9 +1170,9 @@ These are advanced symbols, and mirror Composr's internal API. The parameters ar
 
 [title="4"]Thumbnail generation[/title]
 
-The [tt]{$THUMBNAIL}[/tt] tag is actually much more sophisticated and powerful than described above. It's full syntax is as follows...
+The [tt]{\$THUMBNAIL}[/tt] tag is actually much more sophisticated and powerful than described above. It's full syntax is as follows...
 
-Usage: [tt]{$THUMBNAIL,source_image,widthxheight,output_dir,filename,fallback_image,algorithm,where,background,only_make_smaller}[/tt]
+Usage: [tt]{\$THUMBNAIL,source_image,widthxheight,output_dir,filename,fallback_image,algorithm,where,background,only_make_smaller}[/tt]
 where:
  - [tt]source_image[/tt] is the URL to the full image
  - [tt]widthxheight[/tt] is the desired width/height for the thumbnail. For types (see below) of width, height, or crop, you can omit either the width or height to scale according to the aspect ratio of the source image (e.g. [tt]x20[/tt] for just a height, or [tt]160x[/tt] for just a width). If you specify both dimensions for crop or pad, the thumbnail will be cropped or padded to the exact dimensions regardless of aspect ratio. If no dimensions are specified, the default is the value of the thumb_width option, with height omitted.
@@ -1656,7 +1656,7 @@ Understanding of these symbols requires an understanding of basic boolean operat
 		</tr>
 		<tr style="background: #DDFFDD">
 			<td>{$NEQ,a,b}</td>
-			<td>Test for string inequality (this is the same as [/html][tt]{$NOT,{$EQ,...}}[/tt])[html]</td>
+			<td>Test for string inequality (this is the same as [/html][tt]{\$NOT,{$EQ,...}}[/tt])[html]</td>
 		</tr>
 		<tr style="background: #DDFFDD">
 			<td>{$NOT,1}</td>
@@ -1668,7 +1668,7 @@ Understanding of these symbols requires an understanding of basic boolean operat
 		</tr>
 		<tr style="background: #DDFFDD">
 			<td>{$NOR,1,1}</td>
-			<td>Boolean NOR (this is the same as [/html][tt]{$NOT,{$OR,...}}[/tt][html]). NOR means "Neither"</td>
+			<td>Boolean NOR (this is the same as [/html][tt]{\$NOT,{$OR,...}}[/tt][html]). NOR means "Neither"</td>
 		</tr>
 		<tr style="background: #DDFFDD">
 			<td>{$XOR,1,1}</td>
@@ -1680,7 +1680,7 @@ Understanding of these symbols requires an understanding of basic boolean operat
 		</tr>
 		<tr style="background: #DDFFDD">
 			<td>{$NAND,1,1}</td>
-			<td>Boolean NAND (this is the same as [/html][tt]{$NOT,{$AND,...}}[/tt][html]). NAND means "Not both"</td>
+			<td>Boolean NAND (this is the same as [/html][tt]{\$NOT,{$AND,...}}[/tt][html]). NAND means "Not both"</td>
 		</tr>
 		<tr style="background: #DDFFDD">
 			<td>{$LT,1,2}</td>
@@ -2306,7 +2306,7 @@ Here's another 'IF' directive showing a more complex computation:
 Background: a unix timestamp is a common measurement of time on computers -- it represents the number of seconds since 1970 and because of its nature as a simple decimal number, is very useful for performing arithmetic.
 This example checks to see if [tt]ADD_DATE_RAW[/tt] is less than the current unix timestamp minus 86400. 86400 is the number of seconds in a day, so in other words the example checks to see if [tt]ADD_DATE_RAW[/tt] is at least a day in the past. Because [tt]ADD_DATE_RAW[/tt] is often passed into templates that display content, it checks to see if the content is at least a day old.
 
-I threw [tt]{$SITE_NAME}[/tt] into the example just to demonstrate symbols are not only for use in IF directives -- this one is being used to perform a simple placement of the website name. All symbols do is compute results, so those results might be used for further computations as parameters to computational symbols (such as 'SUBTRACT'), or they might be passed into a directive, or they might be simply output. It merely depends on where they are placed.
+I threw [tt]{\$SITE_NAME}[/tt] into the example just to demonstrate symbols are not only for use in IF directives -- this one is being used to perform a simple placement of the website name. All symbols do is compute results, so those results might be used for further computations as parameters to computational symbols (such as 'SUBTRACT'), or they might be passed into a directive, or they might be simply output. It merely depends on where they are placed.
 
 Tempcode is extremely powerful, and hopefully now you can see how symbols, directives, and parameters, can come together to allow great things to happen!
 

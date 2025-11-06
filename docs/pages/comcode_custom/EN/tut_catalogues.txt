@@ -75,7 +75,7 @@ There are two options to set how a catalogue may display:
 2) 'Is tree' -- a tree catalogue has a full hierarchical category tree, much like the download system does; a non-tree catalogue just shows the categories from a single catalogue index.
 
 Note that if you set all fields of your catalogue to "Display in category-views" and disable comments and trackbacks, there will be no links to the entry view screen. This is due to there being little purpose in this screen because everything already displays on categories.
-If you want to change this behaviour then you can edit the relevant display template (e.g. [tt]CATALOGUE_DEFAULT_GRID_ENTRY_WRAP.tpl[/tt]) to replace [tt]{VIEW_URL}[/tt] with [tt]{$PAGE_LINK,_SEARCH:catalogues:entry:{ID}}[/tt] and [tt]{VIEW_URL*}[/tt] with [tt]{$PAGE_LINK*,_SEARCH:catalogues:entry:{ID}}[/tt].
+If you want to change this behaviour then you can edit the relevant display template (e.g. [tt]CATALOGUE_DEFAULT_GRID_ENTRY_WRAP.tpl[/tt]) to replace [tt]{VIEW_URL}[/tt] with [tt]{\$PAGE_LINK,_SEARCH:catalogues:entry:{ID}}[/tt] and [tt]{VIEW_URL*}[/tt] with [tt]{\$PAGE_LINK*,_SEARCH:catalogues:entry:{ID}}[/tt].
 [/surround]
 
 [title="3"]Display type[/title]
