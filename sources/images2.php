@@ -112,6 +112,14 @@ function _ensure_thumbnail(string $full_url, string $thumb_url, string $thumb_di
  */
 function convert_image_plus(string $orig_url, ?string $dimensions = null, string $output_dir = 'uploads/auto_thumbs', ?string $filename = null, ?string $fallback_image = null, string $algorithm = 'box', string $where = 'both', ?string $background = null, bool $only_make_smaller = false) : string
 {
+    static $thumbnail_cache = [];
+    $serial = serialize([$orig_url, $dimensions, $output_dir, $filename, $fallback_image, $algorithm, $where, $background, $only_make_smaller]);
+    if (isset($thumbnail_cache[$serial])) {
+        return $thumbnail_cache[$serial];
+    }
+
+    check_for_infinite_loop('convert_image_plus', [$orig_url, $dimensions, $output_dir, $filename, $fallback_image, $algorithm, $where, $background, $only_make_smaller], 5);
+
     cms_profile_start_for('convert_image_plus');
 
     if (($dimensions === null) || ($dimensions == 'x')) {
@@ -155,6 +163,7 @@ function convert_image_plus(string $orig_url, ?string $dimensions = null, string
 
     // Only bother calculating the image if we've not already made one with these options
     if (is_file($save_path)) {
+        $thumbnail_cache[$serial] = $thumbnail_url;
         cms_profile_end_for('convert_image_plus', $orig_url);
         return $thumbnail_url;
     }
@@ -175,6 +184,8 @@ function convert_image_plus(string $orig_url, ?string $dimensions = null, string
             // Find dimensions of the source
             $sizes = cms_getimagesize_url($orig_url);
             if (($sizes === false) || ($sizes[0] === null) || ($sizes[1] === null)) {
+                $thumbnail_cache[$serial] = $fallback_image;
+
                 cms_profile_end_for('convert_image_plus', $orig_url);
 
                 cms_set_time_limit($old_limit);
@@ -196,10 +207,10 @@ function convert_image_plus(string $orig_url, ?string $dimensions = null, string
 
             // If either width or height was not specified in dimensions, set one according to aspect ratio to avoid division by zero.
             if ($exp_dimensions[0] === null) {
-                $exp_dimensions[0] = ($exp_dimensions[1] * $source_aspect);
+                $exp_dimensions[0] = intval($exp_dimensions[1] * $source_aspect);
             }
             if ($exp_dimensions[1] === null) {
-                $exp_dimensions[1] = ($exp_dimensions[0] * (1 / $source_aspect));
+                $exp_dimensions[1] = intval($exp_dimensions[0] * (1 / $source_aspect));
             }
 
             // NB: We will test the scaled sizes, rather than the ratios directly, so that differences too small to affect the integer dimensions will be tolerated.
@@ -277,6 +288,8 @@ function convert_image_plus(string $orig_url, ?string $dimensions = null, string
             break;
     }
 
+    $thumbnail_cache[$serial] = $thumbnail_url;
+
     cms_profile_end_for('convert_image_plus', $orig_url);
 
     cms_set_time_limit($old_limit);
@@ -303,7 +316,7 @@ function convert_image_plus(string $orig_url, ?string $dimensions = null, string
  */
 function _convert_image(string $from, string &$to, ?int $width, ?int $height, ?int $box_size = null, bool $exit_on_error = true, ?string $ext2 = null, bool $using_path = false, bool $only_make_smaller = false, ?array $thumb_options = null) : string
 {
-    check_for_infinite_loop('_convert_image', [$from, $width, $height, $box_size, $only_make_smaller, $thumb_options], 5);
+    cms_profile_start_for('_convert_image');
 
     disable_php_memory_limit();
     $old_limit = cms_extend_time_limit(TIME_LIMIT_EXTEND__MODEST);
@@ -322,6 +335,7 @@ function _convert_image(string $from, string &$to, ?int $width, ?int $height, ?i
             sync_file($to);
 
             cms_set_time_limit($old_limit);
+            cms_profile_end_for('_convert_image', 'SVG or memory pass-through on using path');
             return $from;
         }
         $from_file = @cms_file_get_contents_safe($from, FILE_READ_LOCK);
@@ -331,6 +345,7 @@ function _convert_image(string $from, string &$to, ?int $width, ?int $height, ?i
         if ($file_path_stub !== null) {
             if (($ext == 'svg'/* SVG is pass-through */) || (!check_memory_limit_for($file_path_stub, $exit_on_error))) {
                 cms_set_time_limit($old_limit);
+                cms_profile_end_for('_convert_image', 'SVG or memory pass-through on NOT using path WITH stub');
                 return $from;
             }
             $from_file = @cms_file_get_contents_safe($file_path_stub, FILE_READ_LOCK);
@@ -346,6 +361,7 @@ function _convert_image(string $from, string &$to, ?int $width, ?int $height, ?i
                 $exif = function_exists('exif_read_data') ? @exif_read_data($to) : false;
                 if ($ext == 'svg') { // SVG is pass-through
                     cms_set_time_limit($old_limit);
+                    cms_profile_end_for('_convert_image', 'SVG pass-through on NOT using path WITHOUT stub');
                     return $from;
                 }
             }
@@ -360,6 +376,7 @@ function _convert_image(string $from, string &$to, ?int $width, ?int $height, ?i
             attach_message(do_lang_tempcode('CANNOT_ACCESS_URL', escape_html($from)), 'warn', false, true);
         }
         cms_set_time_limit($old_limit);
+        cms_profile_end_for('_convert_image', 'From file invalid');
         return $from;
     }
 
@@ -371,6 +388,7 @@ function _convert_image(string $from, string &$to, ?int $width, ?int $height, ?i
         require_code('site');
         attach_message(do_lang_tempcode('CORRUPT_FILE', escape_html($from)), 'warn', false, true);
         cms_set_time_limit($old_limit);
+        cms_profile_end_for('_convert_image', 'Source invalid');
         return $from;
     }
     imagepalettetotruecolor($source);
@@ -434,6 +452,7 @@ function _convert_image(string $from, string &$to, ?int $width, ?int $height, ?i
 
                 if (($using_path) && ($from == $to)) {
                     cms_set_time_limit($old_limit);
+                    cms_profile_end_for('_convert_image', 'Using path, from is to so nothing to do - 1');
                     return $from;
                 }
 
@@ -446,6 +465,7 @@ function _convert_image(string $from, string &$to, ?int $width, ?int $height, ?i
                     cms_file_put_contents_safe($to, $from_file, FILE_WRITE_FIX_PERMISSIONS | FILE_WRITE_SYNC_FILE);
                 }
                 cms_set_time_limit($old_limit);
+                cms_profile_end_for('_convert_image', 'pass to _image_path_to_url - 1');
                 return _image_path_to_url($to);
             }
         }
@@ -628,6 +648,7 @@ function _convert_image(string $from, string &$to, ?int $width, ?int $height, ?i
 
         if (($using_path) && ($from == $to)) {
             cms_set_time_limit($old_limit);
+            cms_profile_end_for('_convert_image', 'from is to, so nothing to do - 2');
             return $from;
         }
 
@@ -640,6 +661,7 @@ function _convert_image(string $from, string &$to, ?int $width, ?int $height, ?i
             cms_file_put_contents_safe($to, $from_file, FILE_WRITE_FIX_PERMISSIONS | FILE_WRITE_SYNC_FILE);
         }
         cms_set_time_limit($old_limit);
+        cms_profile_end_for('_convert_image', 'Pass to _image_path_to_url - 2');
         return _image_path_to_url($to);
     }
 
@@ -693,6 +715,7 @@ function _convert_image(string $from, string &$to, ?int $width, ?int $height, ?i
             attach_message(do_lang_tempcode('ERROR_IMAGE_SAVE', cms_error_get_last()), 'warn', false, true);
         }
         cms_set_time_limit($old_limit);
+        cms_profile_end_for('_convert_image', 'Failed imagesave');
         return $from;
     }
 
@@ -703,6 +726,8 @@ function _convert_image(string $from, string &$to, ?int $width, ?int $height, ?i
     sync_file($to);
 
     cms_set_time_limit($old_limit);
+
+    cms_profile_end_for('_convert_image', 'Pass to _image_path_to_url - 3');
     return _image_path_to_url($to);
 }
 
