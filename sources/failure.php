@@ -65,6 +65,8 @@ function init__failure()
     if (!isset($BLOCK_CORE_DEVELOPERS_ERROR_EMAILS)) {
         $BLOCK_CORE_DEVELOPERS_ERROR_EMAILS = false;
     }
+
+    require_code('cms_exception');
 }
 
 /**
@@ -538,7 +540,7 @@ function _generic_exit($text, string $template, ?bool $support_match_key_message
         require_lang('tasks');
         $n_subject = do_lang('_TASK_FAILED_SUBJECT');
         $n_message = do_notification_lang('TASK_FAILED_BODY', '[semihtml]' . $text_eval . '[/semihtml]');
-        dispatch_notification('task_completed', null, $n_subject, $n_message, [get_member()], A_FROM_SYSTEM_PRIVILEGED, ['priority' => 2, 'send_immediately' => true]);
+        Source_notification_dispatcher::dispatch_notification('task_completed', null, $n_subject, $n_message, [get_member()], A_FROM_SYSTEM_PRIVILEGED, ['priority' => 2, 'send_immediately' => true]);
     }
 
     if ($support_match_key_messages === null) {
@@ -657,7 +659,7 @@ function _log_hack_attack_and_exit(string $reason, string $reason_param_a = '', 
 
     // Read control from XML
     require_code('input_filter');
-    list(, , $hackattack_specifiers) = load_advanced_banning();
+    list(, , $hackattack_specifiers) = Source_advanced_banning_loader::load_advanced_banning();
     foreach ($hackattack_specifiers as $specifier) {
         if (_log_hack_attack_matches($specifier, $reason, $reason_param_a, $reason_param_b)) {
             if ($specifier['silent_to_user'] !== null) {
@@ -858,14 +860,14 @@ function _log_hack_attack_and_exit(string $reason, string $reason_param_a = '', 
 
         if (!$silent_to_staff_notifications) {
             $subject = do_lang('HACK_ATTACK_SUBJECT', $ip, null, null, get_site_default_lang());
-            dispatch_notification('core_staff:hack_attack', null, $subject, $message->evaluate(get_site_default_lang()), null, A_FROM_SYSTEM_PRIVILEGED);
+            Source_notification_dispatcher::dispatch_notification('core_staff:hack_attack', null, $subject, $message->evaluate(get_site_default_lang()), null, A_FROM_SYSTEM_PRIVILEGED);
         }
 
         // IP ban notification (if applicable)...
 
         if ($ip_ban_todo !== null) {
             $subject = do_lang('AUTO_BAN_SUBJECT', $ip, null, null, get_site_default_lang());
-            dispatch_notification('core_staff:auto_ban', null, $subject, $ip_ban_todo, null, A_FROM_SYSTEM_PRIVILEGED);
+            Source_notification_dispatcher::dispatch_notification('core_staff:auto_ban', null, $subject, $ip_ban_todo, null, A_FROM_SYSTEM_PRIVILEGED);
         }
     }
 
@@ -1264,7 +1266,7 @@ function relay_error_notification(string $text, bool $developers = true, string 
     require_code('comcode');
     if ($send_error_email) {
         $mail = do_notification_lang('ERROR_MAIL', comcode_escape($error_url), $text, $developers ? '?' : get_ip_address(), get_site_default_lang());
-        dispatch_notification('error_occurred', $notification_category, do_lang('ERROR_OCCURRED_SUBJECT', get_page_or_script_name(), $developers ? '?' : get_ip_address(), null, get_site_default_lang()), $mail, null, A_FROM_SYSTEM_PRIVILEGED);
+        Source_notification_dispatcher::dispatch_notification('error_occurred', $notification_category, do_lang('ERROR_OCCURRED_SUBJECT', get_page_or_script_name(), $developers ? '?' : get_ip_address(), null, get_site_default_lang()), $mail, null, A_FROM_SYSTEM_PRIVILEGED);
     }
 
     $mail = do_notification_lang('ERROR_MAIL', comcode_escape($error_url), $_text, $developers ? '?' : get_ip_address(), get_site_default_lang());
@@ -1812,7 +1814,7 @@ function banned_exit(?string $reasoned_ban = null)
 
     if ($reasoned_ban !== null) {
         require_code('input_filter');
-        list(, $reasoned_bans) = load_advanced_banning();
+        list(, $reasoned_bans) = Source_advanced_banning_loader::load_advanced_banning();
         if (array_key_exists($reasoned_ban, $reasoned_bans)) {
             $_reasoned_ban = $reasoned_bans[$reasoned_ban];
 
@@ -1869,26 +1871,4 @@ function throwing_errors() : bool
 {
     global $THROWING_ERRORS;
     return $THROWING_ERRORS;
-}
-
-/**
- * A software exception.
- *
- * @package core
- */
-class CMSException extends Exception
-{
-    /**
-     * Constructor.
-     *
-     * @param  mixed $msg Error message (Tempcode containing HTML, or string containing non-HTML)
-     */
-    public function __construct($msg)
-    {
-        if (is_object($msg)) {
-            $msg = strip_html($msg->evaluate());
-        }
-
-        parent::__construct($msg);
-    }
 }

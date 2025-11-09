@@ -35,7 +35,7 @@ require_code('crud_module');
 /**
  * Module page class.
  */
-class Module_admin_wordfilter extends Standard_crud_module
+class Module_admin_wordfilter extends Source_standard_crud_module
 {
     protected $lang_type = 'WORDFILTER';
     protected $select_name = 'NAME';

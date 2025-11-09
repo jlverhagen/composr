@@ -60,22 +60,22 @@ class feeds_and_podcasts_test_set extends cms_test_case
         $url = find_script('backend');
         $data = http_get_contents($url, ['timeout' => 10.0, 'cookies' => [get_session_cookie() => $this->session_id]]);
         $this->assertTrue(strpos($data, '</opml>') !== false, 'Failed on ' . $url);
-        $parsed = new CMS_simple_xml_reader($data);
+        $parsed = object_factory('Source_simple_xml_reader', false, [$data]);
 
         $url = find_script('backend') . '?type=xslt-opml';
         $data = http_get_contents($url, ['timeout' => 10.0, 'cookies' => [get_session_cookie() => $this->session_id]]);
         $this->assertTrue(strpos($data, '</xsl:stylesheet>') !== false, 'Failed on ' . $url);
-        $parsed = new CMS_simple_xml_reader($data);
+        $parsed = object_factory('Source_simple_xml_reader', false, [$data]);
 
         $url = find_script('backend') . '?type=xslt-atom';
         $data = http_get_contents($url, ['timeout' => 10.0, 'cookies' => [get_session_cookie() => $this->session_id]]);
         $this->assertTrue(strpos($data, '</xsl:stylesheet>') !== false, 'Failed on ' . $url);
-        $parsed = new CMS_simple_xml_reader($data);
+        $parsed = object_factory('Source_simple_xml_reader', false, [$data]);
 
         $url = find_script('backend') . '?type=xslt-rss';
         $data = http_get_contents($url, ['timeout' => 10.0, 'cookies' => [get_session_cookie() => $this->session_id]]);
         $this->assertTrue(strpos($data, '</xsl:stylesheet>') !== false, 'Failed on ' . $url);
-        $parsed = new CMS_simple_xml_reader($data);
+        $parsed = object_factory('Source_simple_xml_reader', false, [$data]);
     }
 
     public function testFeeds()

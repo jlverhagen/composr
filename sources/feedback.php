@@ -735,7 +735,7 @@ function actualise_specific_rating(?int $rating, string $page_name, int $member_
                 } else {
                     $mail = do_notification_lang('CONTENT_LIKED_NOTIFICATION_MAIL', comcode_escape(get_site_name()), comcode_escape(($content_title == '') ? cms_mb_strtolower($content_type_title) : $content_title), [comcode_escape(is_object($safe_content_url) ? $safe_content_url->evaluate() : $safe_content_url), $rendered, comcode_escape($displayname), comcode_escape($username)]);
                 }
-                dispatch_notification('like', null, $subject, $mail, [$submitter], A_FROM_SYSTEM_PRIVILEGED);
+                Source_notification_dispatcher::dispatch_notification('like', null, $subject, $mail, [$submitter], A_FROM_SYSTEM_PRIVILEGED);
             }
 
             $privacy_ok = true;
@@ -803,7 +803,7 @@ function get_comments(string $feedback_type, bool $allow_comments, string $conte
         }
 
         require_code('topics');
-        $renderer = new CMS_Topic();
+        $renderer = object_factory('Source_topic');
 
         return $renderer->render_as_comment_topic($real_feedback_type, $content_id, $invisible_if_no_comments, $forum, $post_warning, $_comments, $reverse, $highlight_by_user, $allow_reviews, $num_to_show_limit, $hidden);
     }
@@ -1042,7 +1042,7 @@ function actualise_post_comment(bool $allow_comments, string $feedback_type, str
         } else {
             $privacy_limits = null;
         }
-        dispatch_notification('comment_posted', $real_feedback_type . '_' . $content_id, $subject, $message_raw, $privacy_limits);
+        Source_notification_dispatcher::dispatch_notification('comment_posted', $real_feedback_type . '_' . $content_id, $subject, $message_raw, $privacy_limits);
 
         // Is the user gonna automatically enable notifications for this?
         if (get_forum_type() == 'cns') {

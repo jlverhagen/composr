@@ -119,7 +119,7 @@ class Hook_cron_birthday_points
                     );
                 }
 
-                dispatch_notification('points_transaction', null, $subject, $mail, [$_birthday['id']]);
+                Source_notification_dispatcher::dispatch_notification('points_transaction', null, $subject, $mail, [$_birthday['id']]);
             }
         }
     }

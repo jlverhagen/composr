@@ -33,7 +33,7 @@
 /**
  * Hook class.
  */
-class Hook_privacy_quizzes extends Hook_privacy_base
+class Hook_privacy_quizzes extends Source_hook_privacy_base
 {
     /**
      * Find privacy details.

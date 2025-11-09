@@ -41,21 +41,11 @@ We have not used the PHP DB2 extension, although we probably could have done so 
 */
 
 /**
- * Standard code module initialisation function.
- *
- * @ignore
- */
-function init__database__ibm()
-{
-    cms_ini_set('odbc.defaultlrl', '20M');
-}
-
-/**
  * Database driver class.
  *
  * @package core_database_drivers
  */
-class Database_Static_ibm extends DatabaseDriver
+class Source_database_static_ibm extends Source_database_driver
 {
     protected $cache_db = [];
 
@@ -68,6 +58,8 @@ class Database_Static_ibm extends DatabaseDriver
      */
     public function __construct(string $table_prefix)
     {
+        cms_ini_set('odbc.defaultlrl', '20M');
+
         $this->table_prefix = $table_prefix;
     }
 

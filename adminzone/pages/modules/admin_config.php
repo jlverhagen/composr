@@ -307,7 +307,7 @@ class Module_admin_config
             $path = get_file_base() . '/_tests/assets/keys.csv';
             if (is_file($path)) {
                 require_code('files_spreadsheets_read');
-                $sheet_reader = spreadsheet_open_read($path);
+                $sheet_reader = Source_spreadsheet_reader::spreadsheet_open_read($path);
                 $import_map = [];
                 $list_options = [];
                 while (($row = $sheet_reader->read_row()) !== false) {

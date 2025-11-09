@@ -416,7 +416,7 @@ There are a number of different functions we use for encoding/decoding URLs:
  - [tt]urlencode[/tt] / [tt]urldecode[/tt] -- PHP function for URL encoding specifically for GET parameters. It's the same as [tt]rawurlencode[/tt] except spaces become [tt]+[/tt] rather than [tt]%20[/tt].
  - [tt]cms_urlencode[/tt] / [tt]cms_rawurlencode[/tt] / [tt]cms_urldecode[/tt] -- A layer around [tt]urlencode[/tt] / [tt]rawurlencode[/tt] / [tt]urldecode[/tt] that provides software-specific encoding that stops Apache's [tt]mod_rewrite[/tt] from corrupting certain special characters during its "smart" processing.
  - [tt]cms_rawurlrecode[/tt] -- Shortens URLs that are too long for the database (255 character limit) by intelligently cheating in our encoding. The URLs are technically non-compliant but will work.
- - [tt]HarmlessURLCoder[/tt] -- Simplifies/desimplifies URLs, trading human-readability for non-compliance, and handling Punycode (if the [tt]intl[/tt] PHP extension is available). Similar to what browsers do in their address bars. It is a non-destructive operation that doesn't allow for double encoding or double decoding. Non-latin characters in URLs encoded with HarmlessURLCoder are much easier to understand.
+ - [tt]Source_URL_coder[/tt] -- Simplifies/desimplifies URLs, trading human-readability for non-compliance, and handling Punycode (if the [tt]intl[/tt] PHP extension is available). Similar to what browsers do in their address bars. It is a non-destructive operation that doesn't allow for double encoding or double decoding. Non-latin characters in URLs encoded with Source_URL_coder are much easier to understand.
 
 [title="4"]Unicode (utf-8)[/title]
 
@@ -428,7 +428,7 @@ Here is our Unicode-support status on various kinds of URL-related ID:
  - Filenames: Unicode may be used, except on Windows servers with PHP version 7.2 or lower[staff_note]LEGACY[/staff_note]; transliteration will be used if it was enabled for monikers
  - Directory names: Transliteration will be used, as Unicode directory names are more problematic than Unicode filenames
 
-However, the Unicode will get heavily percent-encoded for the URLs generated (unless [tt]HarmlessURLCoder[/tt] or [tt]cms_rawurlrecode[/tt] is active), because non-ASCII characters are not permitted in URLs.
+However, the Unicode will get heavily percent-encoded for the URLs generated (unless [tt]Source_URL_coder[/tt] or [tt]cms_rawurlrecode[/tt] is active), because non-ASCII characters are not permitted in URLs.
 
 [title="3"]Breadcrumbs[/title]
 
@@ -1085,7 +1085,7 @@ Most Composr create/edit/delete interfaces are done via an CRUD module, as this 
 
 There are lots of CRUD module's to look at as examples in the CMS zone. This section describes how they work in general terms.
 
-Each CRUD module extends the 'Standard_crud_module' base class. This class has many internal methods that abstract the interface and actualisation functions of the CRUD functionality, and it actually takes hold of the whole CRUD process, limiting the burden on us just to defining a few special methods/properties. We inherit from the CRUD class in our module to use its functionality. To do this it must first require up that class, just before the module is defined:
+Each CRUD module extends the 'Source_standard_crud_module' base class. This class has many internal methods that abstract the interface and actualisation functions of the CRUD functionality, and it actually takes hold of the whole CRUD process, limiting the burden on us just to defining a few special methods/properties. We inherit from the CRUD class in our module to use its functionality. To do this it must first require up that class, just before the module is defined:
 [code="PHP"]
 require_code('crud_module');
 [/code]

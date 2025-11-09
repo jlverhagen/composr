@@ -132,7 +132,7 @@ function friend_add(int $likes, int $liked, ?int $time = null, bool $send_notifi
             $remove_friend_url = build_url(['page' => 'chat', 'type' => 'friend_remove', 'member_id' => $likes], get_module_zone('chat'), [], false, false, true);
             $message_raw = do_notification_lang('FRIENDSHIP_FINISH_BODY', comcode_escape($to_username), comcode_escape(get_site_name()), [$remove_friend_url->evaluate(), comcode_escape($from_username), comcode_escape($to_displayname), comcode_escape($from_displayname)], get_lang($liked));
 
-            dispatch_notification('new_friend', null, $subject_line, $message_raw, [$liked], $likes);
+            Source_notification_dispatcher::dispatch_notification('new_friend', null, $subject_line, $message_raw, [$liked], $likes);
         }
 
         $sent_mutual_add = false;
@@ -146,7 +146,7 @@ function friend_add(int $likes, int $liked, ?int $time = null, bool $send_notifi
             $befriend_url = build_url(['page' => 'chat', 'type' => 'friend_add', 'member_id' => $likes], get_module_zone('chat'), [], false, false, true);
             $message_raw = do_notification_lang('FRIENDSHIP_START_BODY', comcode_escape($to_username), comcode_escape(get_site_name()), [$befriend_url->evaluate(), comcode_escape($from_username), comcode_escape($to_displayname), comcode_escape($from_displayname)], get_lang($liked));
 
-            $sent_mutual_add = (dispatch_notification('new_friend', null, $subject_line, $message_raw, [$liked], $likes, ['send_immediately' => true]) != 0);
+            $sent_mutual_add = (Source_notification_dispatcher::dispatch_notification('new_friend', null, $subject_line, $message_raw, [$liked], $likes, ['send_immediately' => true]) != 0);
         } else {
             $sent_mutual_add = false;
         }

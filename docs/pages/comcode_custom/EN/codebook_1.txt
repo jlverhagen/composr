@@ -225,7 +225,7 @@ Note that Composr has proper spreadsheet APIs, this is just a simple example tha
 
 [title="4"]How do you create a new full-module?[/title]
 
-A module is a PHP file that defines one class. For a page in the [tt]site[/tt] zone named [tt]example[/tt], the file would be [tt]site/pages/modules/example.php[/tt] (or [tt]site/pages/modules_custom/example.php[/tt] if this module is non-official, or a modified version of an official module). Our module [tt]example[/tt] would contain a class named [tt]Module_example[/tt]. Usually this class does not inherit, although some modules do inherit from a class named [tt]Standard_crud_module[/tt], which is used for acceleration/standardising development of add/edit/delete user interfaces.
+A module is a PHP file that defines one class. For a page in the [tt]site[/tt] zone named [tt]example[/tt], the file would be [tt]site/pages/modules/example.php[/tt] (or [tt]site/pages/modules_custom/example.php[/tt] if this module is non-official, or a modified version of an official module). Our module [tt]example[/tt] would contain a class named [tt]Module_example[/tt]. Usually this class does not inherit, although some modules do inherit from a class named [tt]Source_standard_crud_module[/tt], which is used for acceleration/standardising development of add/edit/delete user interfaces.
 
 [title="5"]The [tt]info[/tt] function[/title]
 

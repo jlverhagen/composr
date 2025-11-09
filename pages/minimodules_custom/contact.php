@@ -279,6 +279,6 @@ Also ask us if you want to be listed as one of the [page=\"site:stars\"]Composr 
     ],
 ];
 
-$ob = new DecisionTree($decision_tree, 'start');
+$ob = object_factory('Source_decision_tree', false, [$decision_tree, 'start'], true);
 $tpl = $ob->run();
 $tpl->evaluate_echo();

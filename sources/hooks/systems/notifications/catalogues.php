@@ -33,7 +33,7 @@
 /**
  * Hook class.
  */
-class Hook_notification_catalogues extends Hook_Notification
+class Hook_notification_catalogues extends Source_hook_notification
 {
     /**
      * Find whether a handled notification code supports categories.

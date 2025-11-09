@@ -35,7 +35,7 @@ require_code('crud_module');
 /**
  * Module page class.
  */
-class Module_cms_blogs extends Standard_crud_module
+class Module_cms_blogs extends Source_standard_crud_module
 {
     protected $lang_type = 'NEWS_BLOG';
     protected $select_name = 'TITLE';
@@ -835,7 +835,7 @@ class Module_cms_blogs extends Standard_crud_module
             }
 
             require_code('rss');
-            $rss = new CMS_RSS($rss_feed, $is_filesystem_path);
+            $rss = object_factory('Source_RSS', false, [$rss_feed, $is_filesystem_path], true);
 
             // Cleanup
             if ($is_filesystem_path) { // Means it is a temp file

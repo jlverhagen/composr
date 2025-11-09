@@ -33,7 +33,7 @@
 /**
  * Hook class.
  */
-class Hook_admin_stats_polls extends CMSStatsProvider
+class Hook_admin_stats_polls extends Source_hook_stats_provider
 {
     /**
      * Find metadata about stats graphs that are provided by this stats hook.
@@ -52,9 +52,9 @@ class Hook_admin_stats_polls extends CMSStatsProvider
                 'label' => do_lang_tempcode('POLL_VOTES'),
                 'category' => 'feedback_and_engagement',
                 'filters' => [
-                    'poll_votes__day_range' => new CMSStatsDayRangeFilter('poll_votes__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
+                    'poll_votes__day_range' => new Source_stats_filter_day_range('poll_votes__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
                 ],
-                'pivot' => new CMSStatsDatePivot('poll_votes__pivot', $this->get_date_pivots(!$for_kpi)),
+                'pivot' => new Source_stats_filter_date_pivot('poll_votes__pivot', $this->get_date_pivots(!$for_kpi)),
                 'support_kpis' => self::KPI_HIGH_IS_GOOD,
             ],
         ];

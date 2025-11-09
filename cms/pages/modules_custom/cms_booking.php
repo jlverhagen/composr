@@ -29,7 +29,7 @@ require_code('crud_module');
 /**
  * Module page class.
  */
-class Module_cms_booking extends Standard_crud_module
+class Module_cms_booking extends Source_standard_crud_module
 {
     protected $lang_type = 'BOOKABLE';
     protected $select_name = 'TITLE';
@@ -154,9 +154,9 @@ class Module_cms_booking extends Standard_crud_module
         }
 
         if ($top_level) {
-            $this->cat_crud_module = class_exists('Mx_cms_booking_blacks') ? new Mx_cms_booking_blacks() : new Module_cms_booking_blacks(); // Blacks
-            $this->alt_crud_module = class_exists('Mx_cms_booking_supplements') ? new Mx_cms_booking_supplements() : new Module_cms_booking_supplements(); // Supplements
-            $this->bookings_crud_module = class_exists('Mx_cms_booking_bookings') ? new Mx_cms_booking_bookings() : new Module_cms_booking_bookings(); // Bookings
+            $this->cat_crud_module = object_factory('Module_cms_booking_blacks'); // Blacks
+            $this->alt_crud_module = object_factory('Module_cms_booking_supplements'); // Supplements
+            $this->bookings_crud_module = object_factory('Module_cms_booking_bookings'); // Bookings
         }
 
         require_lang('booking');
@@ -479,7 +479,7 @@ class Module_cms_booking extends Standard_crud_module
 /**
  * Module page class.
  */
-class Module_cms_booking_supplements extends Standard_crud_module
+class Module_cms_booking_supplements extends Source_standard_crud_module
 {
     protected $lang_type = 'BOOKABLE_SUPPLEMENT';
     protected $select_name = 'EXPLANATION';
@@ -681,7 +681,7 @@ class Module_cms_booking_supplements extends Standard_crud_module
 /**
  * Module page class.
  */
-class Module_cms_booking_blacks extends Standard_crud_module
+class Module_cms_booking_blacks extends Source_standard_crud_module
 {
     protected $lang_type = 'BOOKABLE_BLACKED';
     protected $select_name = 'EXPLANATION';
@@ -876,7 +876,7 @@ class Module_cms_booking_blacks extends Standard_crud_module
 /**
  * Module page class.
  */
-class Module_cms_booking_bookings extends Standard_crud_module
+class Module_cms_booking_bookings extends Source_standard_crud_module
 {
     protected $lang_type = 'BOOKING';
     protected $select_name = 'MEMBER_ID';

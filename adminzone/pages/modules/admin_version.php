@@ -1500,7 +1500,7 @@ class Module_admin_version
             'PDStig, LLC' => ['AREAS' => ['Web hosting for composr.app']],
         ];
         require_code('files_spreadsheets_read');
-        $sheet_reader = spreadsheet_open_read(get_file_base() . '/data/maintenance_status.csv');
+        $sheet_reader = Source_spreadsheet_reader::spreadsheet_open_read(get_file_base() . '/data/maintenance_status.csv');
         while (($row = $sheet_reader->read_row()) !== false) {
             /*if (!empty($row['Bug-fix sponsor'])) { Don't actually want to list bug-fix sponsors
                 if (!isset($sponsors[$row['Bug-fix sponsor']])) {

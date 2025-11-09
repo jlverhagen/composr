@@ -71,7 +71,7 @@ class search_test_set extends cms_test_case
 
         $url = find_script('opensearch');
         $data = cms_http_request($url, ['cookies' => [get_session_cookie() => $session_id]]);
-        $parsed = new CMS_simple_xml_reader($data->data);
+        $parsed = object_factory('Source_simple_xml_reader', false, [$data->data]);
         $this->assertTrue(strpos($data->download_mime_type, 'text/xml') !== false);
 
         $url = find_script('opensearch') . '?type=suggest&request=abc';

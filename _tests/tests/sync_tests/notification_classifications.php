@@ -142,7 +142,7 @@ class notification_classifications_test_set extends cms_test_case
                     //$addon = preg_replace('#^core_\w+$#', 'core', $addon);    Nah, means merging stuff that doesn't semantically fit well together
                 }
             }
-            if (strpos($contents, 'Hook_notification__Staff') !== false) {
+            if (strpos($contents, 'Source_hook_notification__staff') !== false) {
                 $addon .= '__staff';
             }
 

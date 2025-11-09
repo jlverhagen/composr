@@ -35,7 +35,7 @@ require_code('crud_module');
 /**
  * Module page class.
  */
-class Module_cms_downloads extends Standard_crud_module
+class Module_cms_downloads extends Source_standard_crud_module
 {
     protected $lang_type = 'DOWNLOAD';
     protected $select_name = 'NAME';
@@ -77,8 +77,8 @@ class Module_cms_downloads extends Standard_crud_module
             'browse' => ['MANAGE_DOWNLOADS', 'menu/rich_content/downloads'],
         ];
 
-        $this->cat_crud_module = class_exists('Mx_cms_downloads_cat') ? new Mx_cms_downloads_cat() : new Module_cms_downloads_cat();
-        $this->alt_crud_module = class_exists('Mx_cms_downloads_alt') ? new Mx_cms_downloads_alt() : new Module_cms_downloads_alt();
+        $this->cat_crud_module = object_factory('Module_cms_downloads_cat');
+        $this->alt_crud_module = object_factory('Module_cms_downloads_alt');
 
         $ret += parent::get_entry_points();
 
@@ -137,8 +137,8 @@ class Module_cms_downloads extends Standard_crud_module
             return $error_msg;
         }
 
-        $this->cat_crud_module = class_exists('Mx_cms_downloads_cat') ? new Mx_cms_downloads_cat() : new Module_cms_downloads_cat();
-        $this->alt_crud_module = class_exists('Mx_cms_downloads_alt') ? new Mx_cms_downloads_alt() : new Module_cms_downloads_alt();
+        $this->cat_crud_module = object_factory('Module_cms_downloads_cat');
+        $this->alt_crud_module = object_factory('Module_cms_downloads_alt');
         $GLOBALS['MODULE_CMS_DOWNLOADS'] = $this;
 
         $type = get_param_string('type', 'browse');
@@ -858,7 +858,7 @@ class Module_cms_downloads extends Standard_crud_module
 /**
  * Module page class.
  */
-class Module_cms_downloads_alt extends Standard_crud_module
+class Module_cms_downloads_alt extends Source_standard_crud_module
 {
     protected $lang_type = 'DOWNLOAD_LICENCE';
     protected $select_name = 'TITLE';
@@ -986,7 +986,7 @@ class Module_cms_downloads_alt extends Standard_crud_module
 /**
  * Module page class.
  */
-class Module_cms_downloads_cat extends Standard_crud_module
+class Module_cms_downloads_cat extends Source_standard_crud_module
 {
     protected $lang_type = 'DOWNLOAD_CATEGORY';
     protected $select_name = 'NAME';

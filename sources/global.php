@@ -160,36 +160,94 @@ function require_code(string $codename, bool $light_exit = false, ?bool $has_cus
             $orig = clean_php_file_for_eval(file_get_contents($path_orig), $path_orig);
             $custom = clean_php_file_for_eval(file_get_contents($path_custom), $path_custom);
 
-            if (strpos($custom, '/*FORCE_ORIGINAL_LOAD_FIRST*/') === false/*e.g. Cannot do code rewrite for a module override that includes an Mx, because the extends needs the parent class already defined - in such cases we put this comment in the code*/) {
-                // We need to identify the new functions and classes. Ideally we'd use get_defined_functions and get_declared_classes, and do a diff before/after - but this does a massive amount of memory access
+            // Whether we are loading the original file first or the custom one, we need to determine defined classes in both cases.
+            $has_new = false;
+            $overlaps = false;
+            $class_matches = [];
+            $possible_new_classes = [];
+            $num_class_matches = preg_match_all('#\sclass\s+(\w+)#', $custom, $class_matches);
+            for ($i = 0; $i < $num_class_matches; $i++) {
+                $stripped = strip_class_name($class_matches[1][$i]);
+                if ($stripped === null) {
+                $possible_new_classes[] = $class_matches[1][$i];
+                    continue;
+                }
+                $possible_new_classes[] = $stripped[2][0] . $stripped[0];
+            }
+            $class_matches = [];
+            $orig_classes = [];
+            $num_class_matches = preg_match_all('#\sclass\s+(\w+)#', $orig, $class_matches);
+            for ($i = 0; $i < $num_class_matches; $i++) {
+                $stripped = strip_class_name($class_matches[1][$i]);
+                if ($stripped === null) {
+                    $orig_classes[] = $class_matches[1][$i];
+                    continue;
+                }
+                $orig_classes[] = $stripped[2][0] . $stripped[0];
+            }
+            $classes_diff = [];
+            foreach ($possible_new_classes as $possible_new_class) {
+                if (in_array($possible_new_class, $orig_classes)) {
+                    $classes_diff[] = $possible_new_class;
+                } else {
+                    $has_new = true;
+                }
+            }
+
+            /*
+                This comment indicates the file has a class which overrides a class in the original source.
+                The custom file defines a special "x" prefix class which extends the class on the original file.
+                This code will rename the class name in the original file to the "x" prefix.
+                Then, it reverses the order of the class definition in the custom file so it defines the original name extending the "x" prefix.
+                The original code will be required first (with the renamed "x" prefix class) so that the custom code can extend it.
+                This process ensures any code extending the original class name will have the overridden class applied to it.
+            */
+            if (strpos($custom, '/*FORCE_ORIGINAL_LOAD_FIRST*/') !== false) {
+                // Rewrite class names in the original and custom files
+                foreach ($classes_diff as $class) {
+                    if (strpos($orig, 'class ' . $class) === false) {
+                        continue;
+                    }
+
+                    $class_parts = strip_class_name($class);
+                    if ($class_parts === null) {
+                        continue;
+                    }
+                    $override_class = $class_parts[2][1] . $class_parts[0];
+
+                    $original_definition = 'class ' . $override_class . ' extends ' . $class;
+                    $new_definition = 'class ' . $class . ' extends ' . $override_class;
+
+                    if (strpos($custom, $original_definition) === false) {
+                        continue;
+                    }
+
+                    $orig = str_replace('class ' . $class, 'class ' . $override_class, $orig);
+                    $custom = str_replace($original_definition, $new_definition, $custom);
+                    $overlaps = true;
+                }
+
+                // Compile source codes
+                $delete_orig = compile_included_code($path_orig, $codename, $light_exit, $orig);
+                $delete_custom = compile_included_code($path_custom, $codename, $light_exit, $custom);
+
+                // Require in the compiled code
+                call_compiled_code($path_orig, $codename, $light_exit, $delete_orig);
+                call_compiled_code($path_custom, $codename, $light_exit, $delete_custom);
+            } else {
+                // When loading the original file first, we may be overriding functions. We need to determine which ones.
                 $function_matches = [];
                 $possible_new_functions = [];
-                $has_new = false;
                 $num_function_matches = preg_match_all('#\sfunction\s+(\w+)\(#', $custom, $function_matches);
                 for ($i = 0; $i < $num_function_matches; $i++) {
                     $possible_new_functions[] = $function_matches[1][$i];
                 }
-                $class_matches = [];
-                $possible_new_classes = [];
-                $num_class_matches = preg_match_all('#\sclass\s+(\w+)#', $custom, $class_matches);
-                for ($i = 0; $i < $num_class_matches; $i++) {
-                    $possible_new_classes[] = $class_matches[1][$i];
-                }
-
-                // We need to also get the functions and classes from the original
                 $function_matches = [];
                 $orig_functions = [];
                 $num_function_matches = preg_match_all('#\sfunction\s+(\w+)\(#', $orig, $function_matches);
                 for ($i = 0; $i < $num_function_matches; $i++) {
                     $orig_functions[] = $function_matches[1][$i];
                 }
-                $class_matches = [];
-                $orig_classes = [];
-                $num_class_matches = preg_match_all('#\sclass\s+(\w+)#', $orig, $class_matches);
-                for ($i = 0; $i < $num_class_matches; $i++) {
-                    $orig_classes[] = $class_matches[1][$i];
-                }
-
                 $functions_diff = [];
                 foreach ($possible_new_functions as $possible_new_function) {
                     if (in_array($possible_new_function, $orig_functions)) {
@@ -198,34 +256,21 @@ function require_code(string $codename, bool $light_exit = false, ?bool $has_cus
                         $has_new = true;
                     }
                 }
-                $classes_diff = [];
-                foreach ($possible_new_classes as $possible_new_class) {
-                    if (in_array($possible_new_class, $orig_classes)) {
-                        $classes_diff[] = $possible_new_class;
-                    } else {
-                        $has_new = true;
-                    }
-                }
 
+                // Rewrite function names in the original file which are being overridden in the custom one
                 $strpos_func = 'strpos';
                 $str_replace_func = 'str_replace';
-                $overlaps = false;
                 foreach ($functions_diff as $function) { // Go through override's functions and make sure original doesn't have them: rename original's to non_overridden__ equivs.
                     if ($strpos_func($orig, 'function ' . $function . '(') !== false) { // NB: If this fails, it may be that "function\t" is in the file (you can't tell with a three-width proper tab)
                         $orig = $str_replace_func('function ' . $function . '(', 'function non_overridden__' . $function . '(', $orig);
                         $overlaps = true;
                     }
                 }
+
+                // If we are trying to override classes without first loading the original, this will cause a PHP error. So bail out.
                 foreach ($classes_diff as $class) {
-                    if (cms_strtolower_ascii(substr($class, 0, 6)) === 'module') {
-                        $class = cms_ucfirst_ascii($class);
-                    }
-                    if (cms_strtolower_ascii(substr($class, 0, 4)) === 'hook') {
-                        $class = cms_ucfirst_ascii($class);
-                    }
                     if (strpos($orig, 'class ' . $class) !== false) {
-                        $orig = str_replace('class ' . $class, 'class non_overridden__' . $class, $orig);
-                        $overlaps = true;
+                        throw new Exception('A code override is corrupt (tried to override a class without loading the original file first): ' . $path_custom);
                     }
                 }
 
@@ -246,14 +291,6 @@ function require_code(string $codename, bool $light_exit = false, ?bool $has_cus
                 // We are clear to call the compiled code now
                 call_compiled_code($path_custom, $codename, $light_exit, $delete_custom, $code_custom);
                 call_compiled_code($path_orig, $codename, $light_exit, $delete_orig, $code_orig);
-            } else {
-                // Note we load the original and then the override. This is so function_exists can be used in the overrides (as we can't support the re-definition) OR in the case of Mx_ class derivation, so that the base class is loaded first.
-                $delete_orig = compile_included_code($path_orig, $codename, $light_exit);
-                $delete_custom = compile_included_code($path_custom, $codename, $light_exit);
-
-                // We are clear to call the compiled code now
-                call_compiled_code($path_orig, $codename, $light_exit, $delete_orig);
-                call_compiled_code($path_custom, $codename, $light_exit, $delete_custom);
             }
         } else {
             // Have a custom but no original...
@@ -745,12 +782,33 @@ function tacit_https() : bool
 }
 
 /**
- * Make an object of the given class.
+ * Strip a class name with a special prefix.
  *
- * @param  string $class The class name
+ * @param  ID_TEXT $class The class name
+ * @return ?array List of class name without the prefix, the prefix, array of [source prefix, custom prefix] (null: this is not a specially-prefixed class name)
+ */
+function strip_class_name(string $class) : ?array
+{
+    foreach ([['Hook_', 'Hx_'], ['Module_', 'Mx_'], ['Block_', 'Bx_'], ['Source_', 'Sx_']] as $special_prefixes) {
+        foreach ($special_prefixes as $special_prefix) {
+            if (strpos($class, $special_prefix) === 0) {
+                $stripped = substr($class, strlen($special_prefix));
+                return [$stripped, $special_prefix, $special_prefixes];
+            }
+        }
+    }
+
+    return null;
+}
+
+/**
+ * Construct a class.
+ * For proper annotations, you should specify a var PHPDoc annotation on the returned object after this function is called.
+ *
+ * @param  string $class The class name; always use original prefix and not the overridden "x" prefix
  * @param  boolean $failure_ok Whether to return null if there is no such class
- * @param  array $parameters Array of parameters
- * @param  boolean $cache Whether to use the cache to avoid initialising the same class repeatedly
+ * @param  array $parameters Array of parameters for the class construct
+ * @param  boolean $cache Whether to use a cache; this prevents creating multiple instances of a class unless the parameters are different
  * @return ?object The object (null: could not create)
  */
 function object_factory(string $class, bool $failure_ok = false, array $parameters = [], bool $cache = false) : ?object
@@ -766,15 +824,13 @@ function object_factory(string $class, bool $failure_ok = false, array $paramete
 
     if ($cache) {
         $hash = hash('sha256', serialize($parameters));
-        if (isset($class_objects[$class][$hash]) && is_object($class_objects[$class][$hash])) {
-            return $class_objects[$class][$hash];
+        if (!isset($class_objects[$class][$hash]) || !is_object($class_objects[$class][$hash])) {
+            $class_objects[$class][$hash] = new $class(...$parameters);
         }
-    } else {
-        return new $class(...$parameters);
+        return $class_objects[$class][$hash];
     }
 
-    $class_objects[$class][$hash] = new $class(...$parameters);
-    return $class_objects[$class][$hash];
+    return new $class(...$parameters);
 }
 
 /**
@@ -1158,8 +1214,9 @@ function normalise_ip_address(string $ip, ?int $amount = null) : string
             $ip = preg_replace('#%.*$#', '', $ip);
         }
 
+        // In IPv6, we double the number of octets we want
         if ($amount !== null) {
-            $amount += (8 - $amount);
+            $amount *= 2;
         }
 
         if (substr_count($ip, ':') < 7) {
@@ -1460,9 +1517,10 @@ function hook_exists(string $type, string $subtype, string $hook) : bool
  * @param  ID_TEXT $hook The name of the hook
  * @param  string $classname_prefix The hook class-name prefix, the classes are named {$classname_prefix}{$hook}
  * @param  boolean $fail_ok Whether to return null opposed to failing if the hook or its object does not exist
+ * @param  boolean $cache Whether to avoid constructing duplicate hooks
  * @return ?object The hook implementation object (null: hook was not found and $fail_ok was true)
  */
-function get_hook_ob(string $type, string $subtype, string $hook, string $classname_prefix, bool $fail_ok = false) : ?object
+function get_hook_ob(string $type, string $subtype, string $hook, string $classname_prefix, bool $fail_ok = false, bool $cache = true) : ?object
 {
     if (($fail_ok) && (!hook_exists($type, $subtype, $hook))) {
         return null;
@@ -1470,7 +1528,7 @@ function get_hook_ob(string $type, string $subtype, string $hook, string $classn
 
     require_code('hooks/' . $type . '/' . $subtype . '/' . $hook, !$fail_ok);
 
-    $ob = object_factory(class_exists(str_replace('Hook_', 'Hx_', $classname_prefix) . $hook) ? (str_replace('Hook_', 'Hx_', $classname_prefix) . $hook) : ($classname_prefix . $hook), true, [], true);
+    $ob = object_factory(($classname_prefix . $hook), true, [], $cache);
     if ((!$fail_ok) && ($ob === null)) {
         $error_message = do_lang_tempcode('INTERNAL_ERROR', escape_html('f45146eaa359580bb0d10db80263e9c3'));
         if (function_exists('warn_exit')) {

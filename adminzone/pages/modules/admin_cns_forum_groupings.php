@@ -35,7 +35,7 @@ require_code('crud_module');
 /**
  * Module page class.
  */
-class Module_admin_cns_forum_groupings extends Standard_crud_module
+class Module_admin_cns_forum_groupings extends Source_standard_crud_module
 {
     protected $lang_type = 'FORUM_GROUPING';
     protected $select_name = 'TITLE';

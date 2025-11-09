@@ -598,7 +598,7 @@ class Module_admin_zones
                 // Store revision
                 if (addon_installed('actionlog')) {
                     require_code('revisions_engine_files');
-                    $revision_engine = new RevisionEngineFiles();
+                    $revision_engine = object_factory('Source_revisions_engine_files');
                     list(, , $existing_path) = find_comcode_page($lang, $_for, $id);
                     if ($existing_path != '') {
                         $revision_engine->add_revision(dirname($existing_path), $_for, 'txt', cms_file_get_contents_safe($existing_path, FILE_READ_LOCK | FILE_READ_BOM), filemtime($existing_path));

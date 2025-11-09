@@ -228,7 +228,7 @@ class Hook_ecommerce_community_billboard
         $manage_url = $_url->evaluate();
         $subject = do_lang('SUBJECT_COMMUNITY_BILLBOARD_TEXT', null, null, null, get_site_default_lang());
         $body = do_notification_lang('MAIL_COMMUNITY_BILLBOARD_TEXT', $message, comcode_escape($manage_url), null, get_site_default_lang());
-        dispatch_notification('ecom_product_request_community_billboard', null, $subject, $body);
+        Source_notification_dispatcher::dispatch_notification('ecom_product_request_community_billboard', null, $subject, $body);
 
         return false;
     }

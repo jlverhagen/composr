@@ -33,7 +33,7 @@
 /**
  * Hook class.
  */
-class Hook_media_rendering_audio_websafe extends Media_renderer_with_fallback
+class Hook_media_rendering_audio_websafe extends Source_media_renderer_with_fallback
 {
     /**
      * Get the label for this media rendering type.

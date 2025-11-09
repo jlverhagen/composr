@@ -33,7 +33,7 @@
 /**
  * Hook class.
  */
-class Hook_privacy_captcha extends Hook_privacy_base
+class Hook_privacy_captcha extends Source_hook_privacy_base
 {
     /**
      * Find privacy details.

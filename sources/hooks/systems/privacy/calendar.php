@@ -33,7 +33,7 @@
 /**
  * Hook class.
  */
-class Hook_privacy_calendar extends Hook_privacy_base
+class Hook_privacy_calendar extends Source_hook_privacy_base
 {
     /**
      * Find privacy details.

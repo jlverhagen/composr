@@ -35,7 +35,7 @@ require_code('crud_module');
 /**
  * Module page class.
  */
-class Module_cms_catalogues extends Standard_crud_module
+class Module_cms_catalogues extends Source_standard_crud_module
 {
     protected $lang_type = 'CATALOGUE_ENTRY';
     protected $select_name = 'ENTRY';
@@ -120,8 +120,8 @@ class Module_cms_catalogues extends Standard_crud_module
             ];
         }
 
-        $this->cat_crud_module = class_exists('Mx_cms_catalogues_cat') ? new Mx_cms_catalogues_cat() : new Module_cms_catalogues_cat();
-        $this->alt_crud_module = class_exists('Mx_cms_catalogues_alt') ? new Mx_cms_catalogues_alt() : new Module_cms_catalogues_alt();
+        $this->cat_crud_module = object_factory('Module_cms_catalogues_cat');
+        $this->alt_crud_module = object_factory('Module_cms_catalogues_alt');
 
         $ret += parent::get_entry_points();
         unset($ret['add_other']);
@@ -175,8 +175,8 @@ class Module_cms_catalogues extends Standard_crud_module
             modsecurity_workaround_enable();
         }
 
-        $this->cat_crud_module = class_exists('Mx_cms_catalogues_cat') ? new Mx_cms_catalogues_cat() : new Module_cms_catalogues_cat();
-        $this->alt_crud_module = class_exists('Mx_cms_catalogues_alt') ? new Mx_cms_catalogues_alt() : new Module_cms_catalogues_alt();
+        $this->cat_crud_module = object_factory('Module_cms_catalogues_cat');
+        $this->alt_crud_module = object_factory('Module_cms_catalogues_alt');
         $GLOBALS['MODULE_CMS_CATALOGUES'] = $this;
 
         $type = get_param_string('type', 'browse');
@@ -1136,7 +1136,7 @@ class Module_cms_catalogues extends Standard_crud_module
         $fields = new Tempcode();
 
         require_code('files_spreadsheets_read');
-        $fields->attach(form_input_upload(do_lang_tempcode('UPLOAD'), do_lang_tempcode('SPREADSHEET_UPLOAD_DESC'), 'file_anytype', true, null, null, true, spreadsheet_read_file_types()));
+        $fields->attach(form_input_upload(do_lang_tempcode('UPLOAD'), do_lang_tempcode('SPREADSHEET_UPLOAD_DESC'), 'file_anytype', true, null, null, true, Source_spreadsheet_reader::spreadsheet_read_file_types()));
         $hidden = new Tempcode();
         handle_max_file_size($hidden);
 
@@ -1219,7 +1219,7 @@ class Module_cms_catalogues extends Standard_crud_module
         $target_path = get_temporary_upload_path('file_anytype');
 
         require_code('files_spreadsheets_read');
-        if (!is_spreadsheet_readable($_FILES['file_anytype']['name'])) {
+        if (!Source_spreadsheet_reader::is_spreadsheet_readable($_FILES['file_anytype']['name'])) {
             unlink($target_path);
             sync_file($target_path);
             warn_exit(do_lang_tempcode('UNKNOWN_FORMAT', escape_html(get_file_extension($_FILES['file_anytype']['name']))));
@@ -1292,7 +1292,7 @@ class Module_cms_catalogues extends Standard_crud_module
 /**
  * Module page class.
  */
-class Module_cms_catalogues_cat extends Standard_crud_module
+class Module_cms_catalogues_cat extends Source_standard_crud_module
 {
     protected $lang_type = 'CATALOGUE_CATEGORY';
     protected $select_name = 'NAME';
@@ -1707,7 +1707,7 @@ class Module_cms_catalogues_cat extends Standard_crud_module
 /**
  * Module page class.
  */
-class Module_cms_catalogues_alt extends Standard_crud_module
+class Module_cms_catalogues_alt extends Source_standard_crud_module
 {
     protected $lang_type = 'CATALOGUE';
     protected $select_name = 'CATALOGUE';

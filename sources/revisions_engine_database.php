@@ -35,7 +35,7 @@
  *
  * @package actionlog
  */
-class RevisionEngineDatabase
+class Source_revisions_engine_database
 {
     protected $db;
     protected $is_log_mod;

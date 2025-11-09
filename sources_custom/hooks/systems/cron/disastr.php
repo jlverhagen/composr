@@ -142,7 +142,7 @@ class Hook_cron_disastr
                         }
 
                         $message = do_notification_lang('DISEASES_MAIL_MESSAGE', $disease['name'], $disease['name'], [$cure_url, get_site_name()], get_lang($friends_healthy[$to_infect]));
-                        dispatch_notification('got_disease', null, do_lang('DISEASES_MAIL_SUBJECT', get_site_name(), $disease['name'], null, get_lang($friends_healthy[$to_infect])), $message, [$friends_healthy[$to_infect]], A_FROM_SYSTEM_PRIVILEGED);
+                        Source_notification_dispatcher::dispatch_notification('got_disease', null, do_lang('DISEASES_MAIL_SUBJECT', get_site_name(), $disease['name'], null, get_lang($friends_healthy[$to_infect])), $message, [$friends_healthy[$to_infect]], A_FROM_SYSTEM_PRIVILEGED);
 
                         $sick_members[] = $friends_healthy[$to_infect];
                     }
@@ -197,7 +197,7 @@ class Hook_cron_disastr
                 }
 
                 $message = do_notification_lang('DISEASES_MAIL_MESSAGE', $disease['name'], $disease['name'], [$cure_url, get_site_name()], get_lang($random_member[0]['id']));
-                dispatch_notification('got_disease', null, do_lang('DISEASES_MAIL_SUBJECT', get_site_name(), $disease['name'], null, get_lang($random_member[0]['id'])), $message, [$random_member[0]['id']], A_FROM_SYSTEM_PRIVILEGED);
+                Source_notification_dispatcher::dispatch_notification('got_disease', null, do_lang('DISEASES_MAIL_SUBJECT', get_site_name(), $disease['name'], null, get_lang($random_member[0]['id'])), $message, [$random_member[0]['id']], A_FROM_SYSTEM_PRIVILEGED);
             }
 
             // Record disease spreading

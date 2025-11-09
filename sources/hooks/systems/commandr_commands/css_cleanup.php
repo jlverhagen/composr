@@ -63,11 +63,11 @@ class Hook_commandr_command_css_cleanup
 
             switch ($parameter) {
                 case 'DirSimplify':
-                    $ob = new DirSimplify($parameters[0]);
+                    $ob = object_factory('Source_dir_simplify', false, [$parameters[0]], true);
                     break;
 
                 case 'EmToPx':
-                    $ob = new EmToPx($parameters[0]);
+                    $ob = object_factory('Source_em_to_px', false, [$parameters[0]], true);
                     break;
 
                 default:

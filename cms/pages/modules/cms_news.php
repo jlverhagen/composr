@@ -35,7 +35,7 @@ require_code('crud_module');
 /**
  * Module page class.
  */
-class Module_cms_news extends Standard_crud_module
+class Module_cms_news extends Source_standard_crud_module
 {
     protected $lang_type = 'NEWS';
     protected $select_name = 'TITLE';
@@ -70,7 +70,7 @@ class Module_cms_news extends Standard_crud_module
             return null;
         }
 
-        $this->cat_crud_module = class_exists('Mx_cms_news_cat') ? new Mx_cms_news_cat() : new Module_cms_news_cat();
+        $this->cat_crud_module = object_factory('Module_cms_news_cat');
 
         if ($member_id === null) {
             $member_id = get_member();
@@ -154,7 +154,7 @@ class Module_cms_news extends Standard_crud_module
             warn_exit(do_lang_tempcode('MISSING_ADDON', escape_html('news_shared')));
         }
 
-        $this->cat_crud_module = class_exists('Mx_cms_news_cat') ? new Mx_cms_news_cat() : new Module_cms_news_cat();
+        $this->cat_crud_module = object_factory('Module_cms_news_cat');
 
         $type = get_param_string('type', 'browse');
 
@@ -926,7 +926,7 @@ class Module_cms_news extends Standard_crud_module
         }
 
         require_code('rss');
-        $rss = new CMS_RSS($rss_feed, $is_filesystem_path);
+        $rss = object_factory('Source_RSS', false, [$rss_feed, $is_filesystem_path], true);
 
         // Cleanup
         if ($is_filesystem_path) { // Means it is a temp file
@@ -965,7 +965,7 @@ class Module_cms_news extends Standard_crud_module
 /**
  * Module page class.
  */
-class Module_cms_news_cat extends Standard_crud_module
+class Module_cms_news_cat extends Source_standard_crud_module
 {
     protected $lang_type = 'NEWS_CATEGORY';
     protected $select_name = 'TITLE';

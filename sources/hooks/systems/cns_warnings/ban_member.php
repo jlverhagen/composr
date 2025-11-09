@@ -104,7 +104,7 @@ class Hook_cns_warnings_ban_member
             $already_banned = ($GLOBALS['FORUM_DRIVER']->get_member_row_field($member_id, 'm_is_perm_banned') != '0');
 
             require_code('input_filter');
-            list(, $reasoned_bans) = load_advanced_banning();
+            list(, $reasoned_bans) = Source_advanced_banning_loader::load_advanced_banning();
             if ((empty($reasoned_bans)) || ($already_banned)) {
                 $fields->attach(form_input_tick(do_lang_tempcode('BAN_MEMBER'), do_lang_tempcode('DESCRIPTION_BANNED_MEMBER'), 'banned_member', (($spam_mode == 1) || $already_banned), null, '1', false, $already_banned));
             } else {

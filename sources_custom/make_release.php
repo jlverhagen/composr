@@ -1407,7 +1407,7 @@ function _download_latest_data_ip_country()
     _shell_exec_bin($cmd);
 
     require_code('files_spreadsheets_read');
-    $sheet_reader = spreadsheet_open_read($tmp_name_csv, 'IP_Country.txt', CMS_Spreadsheet_Reader::ALGORITHM_RAW);
+    $sheet_reader = Source_spreadsheet_reader::spreadsheet_open_read($tmp_name_csv, 'IP_Country.txt', Source_spreadsheet_reader::ALGORITHM_RAW);
     while (($record = $sheet_reader->read_row()) !== false) {
         if (!isset($record[2])) {
             continue;

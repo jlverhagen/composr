@@ -188,7 +188,7 @@ class Hook_task_send_newsletter
             $subject = do_lang('NEWSLETTER_PAUSED_SUBJECT');
             $newsletter_manage_url = build_url(['page' => 'admin_newsletter'], get_module_zone('admin_newsletter'), [], false, false, true);
             $message = do_lang('NEWSLETTER_PAUSED_BODY', escape_html($newsletter_manage_url->evaluate()));
-            dispatch_notification('newsletter_paused', 'newsletter_' . strval(time()), $subject, $message, null, null, ['priority' => 4, 'create_ticket' => true]);
+            Source_notification_dispatcher::dispatch_notification('newsletter_paused', 'newsletter_' . strval(time()), $subject, $message, null, null, ['priority' => 4, 'create_ticket' => true]);
         }
 
         $newsletter_manage_url = build_url(['page' => 'admin_newsletter'], get_module_zone('admin_newsletter'));

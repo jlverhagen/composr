@@ -1257,7 +1257,7 @@ function load_user_stuff()
             $SITE_INFO['forum_type'] = 'cns';
         }
         require_code('forum/' . $SITE_INFO['forum_type']);     // So we can at least get user details
-        $class = 'Forum_driver_' . filter_naughty_harsh($SITE_INFO['forum_type']);
+        $class = 'Source_forum_driver_' . filter_naughty_harsh($SITE_INFO['forum_type']);
         if (class_exists($class . '_sub')) {
             $class .= '_sub';
         }

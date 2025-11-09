@@ -73,7 +73,7 @@ class Hook_cron_cns_forum_email_integration
     {
         require_code('mail_integration');
         require_code('cns_forum_email_integration');
-        $email_ob = new ForumEmailIntegration();
+        $email_ob = object_factory('Source_forum_email_integration');
         $email_ob->incoming_scan();
     }
 }

@@ -324,7 +324,7 @@ class Module_subscriptions
                 require_code('notifications');
                 $trans_id = $GLOBALS['SITE_DB']->query_select_value('ecom_transactions', 'id', ['t_purchase_id' => strval($id)]);
                 $username = $GLOBALS['FORUM_DRIVER']->get_username(get_member());
-                dispatch_notification('subscriptions_staff', null, do_lang('SUBSCRIPTION_CANCELLED_SUBJECT', null, null, null, get_site_default_lang()), do_notification_lang('SUBSCRIPTION_CANCELLED_BODY', $trans_id, $username, null, get_site_default_lang()));
+                Source_notification_dispatcher::dispatch_notification('subscriptions_staff', null, do_lang('SUBSCRIPTION_CANCELLED_SUBJECT', null, null, null, get_site_default_lang()), do_notification_lang('SUBSCRIPTION_CANCELLED_BODY', $trans_id, $username, null, get_site_default_lang()));
             }
         }
 

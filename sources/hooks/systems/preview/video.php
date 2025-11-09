@@ -59,11 +59,7 @@ class Hook_preview_video
         $cat = post_param_string('cat');
 
         require_code(_get_module_path(get_module_zone('cms_galleries'), 'cms_galleries'));
-        if (class_exists('Mx_' . filter_naughty_harsh('cms_galleries'))) {
-            $object = object_factory('Mx_' . filter_naughty_harsh('cms_galleries'), false, [], true);
-        } else {
-            $object = object_factory('Module_' . filter_naughty_harsh('cms_galleries'), false, [], true);
-        }
+        $object = object_factory('Module_' . filter_naughty_harsh('cms_galleries'), false, [], true);
 
         list(
             $url,

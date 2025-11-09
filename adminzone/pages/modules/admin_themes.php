@@ -1836,7 +1836,7 @@ class Module_admin_themes
         }
 
         require_code('revisions_engine_files');
-        $revision_engine = new RevisionEngineFiles();
+        $revision_engine = object_factory('Source_revisions_engine_files');
 
         $directory = get_param_string('directory');
         $filename = get_param_string('filename');

@@ -170,7 +170,7 @@ function _get_sql_keywords() : array
  *
  * @package core_database_drivers
  */
-class Database_Static_xml extends DatabaseDriver
+class Source_database_static_xml extends Source_database_driver
 {
     protected $table_prefix;
 

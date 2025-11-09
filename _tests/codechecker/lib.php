@@ -77,21 +77,39 @@ function cms_preg_match_all_safe($in1, $in2, &$in3)
     return preg_match_all($in1, $in2, $in3);
 }
 
+/**
+ * Strip a class name with a special prefix.
+ *
+ * @param  ID_TEXT $class The class name
+ * @return ?array List of class name without the prefix, the prefix, array of [source prefix, custom prefix] (null: this is not a specially-prefixed class name)
+ */
+function strip_class_name(string $class) : ?array
+{
+    foreach ([['Hook_', 'Hx_'], ['Module_', 'Mx_'], ['Block_', 'Bx_'], ['Source_', 'Sx_']] as $special_prefixes) {
+        foreach ($special_prefixes as $special_prefix) {
+            if (strpos($class, $special_prefix) === 0) {
+                $stripped = substr($class, strlen($special_prefix));
+                return [$stripped, $special_prefix, $special_prefixes];
+            }
+        }
+    }
+
+    return null;
+}
+
 function object_factory($class, $failure_ok = false, $parameters = [], $cache = false)
 {
     static $class_objects = [];
 
     if ($cache) {
         $hash = hash('sha256', serialize($parameters));
-        if (isset($class_objects[$class][$hash]) && is_object($class_objects[$class][$hash])) {
-            return $class_objects[$class][$hash];
+        if (!isset($class_objects[$class][$hash]) || !is_object($class_objects[$class][$hash])) {
+            $class_objects[$class][$hash] = new $class(...$parameters);
         }
-    } else {
-        return new $class(...$parameters);
+        return $class_objects[$class][$hash];
     }
 
-    $class_objects[$class][$hash] = new $class(...$parameters);
-    return $class_objects[$class][$hash];
+    return new $class(...$parameters);
 }
 
 function find_all_hook_obs($type, $subtype, $classname_prefix)
@@ -101,7 +119,7 @@ function find_all_hook_obs($type, $subtype, $classname_prefix)
     foreach ($hooks as $hook => $hook_dir) {
         require_code('hooks/' . $type . '/' . $subtype . '/' . $hook, false, $hook_dir == 'sources_custom');
 
-        $ob = object_factory(class_exists(str_replace('Hook_', 'Hx_', $classname_prefix) . $hook) ? (str_replace('Hook_', 'Hx_', $classname_prefix) . $hook) : ($classname_prefix . $hook), true, [], true);
+        $ob = object_factory(($classname_prefix . $hook), true, [], true);
         if ($ob !== null) {
             $hooks[$hook] = $ob;
         } else {

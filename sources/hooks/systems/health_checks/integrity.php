@@ -33,7 +33,7 @@
 /**
  * Hook class.
  */
-class Hook_health_check_integrity extends Hook_Health_Check
+class Hook_health_check_integrity extends Source_hook_health_check
 {
     protected $category_label = 'Software integrity';
 
@@ -126,7 +126,7 @@ class Hook_health_check_integrity extends Hook_Health_Check
         }
 
         require_code('database_repair');
-        $repair_ob = new DatabaseRepair();
+        $repair_ob = object_factory('Source_database_repair');
         list($phase, $sql) = $repair_ob->search_for_database_issues();
         $this->assertTrue($sql == '', 'There seem to be some inconsistencies in the database, run the "Check for MySQL schema issues" tool in upgrader.php');
     }
@@ -342,7 +342,7 @@ class Hook_health_check_integrity extends Hook_Health_Check
                 return;
             }
 
-            /*Actually CMSPermissionsScannerSimplified will be used which is safer if (strpos(PHP_OS, 'WIN') !== false) {
+            /*Actually Source_permissions_scanner_Simplified will be used which is safer if (strpos(PHP_OS, 'WIN') !== false) {
                 if ($sdc === null) {
                     return; // Too unreliable/slow, so has to be explicitly enabled
                 }
@@ -355,14 +355,14 @@ class Hook_health_check_integrity extends Hook_Health_Check
 
         require_code('file_permissions_check');
         if ($check_context == CHECK_CONTEXT__INSTALL) {
-            $minimum_level = CMSPermissionsScanner::RESULT_TYPE_ERROR_MISSING;
+            $minimum_level = Source_permissions_scanner::RESULT_TYPE_ERROR_MISSING;
         } elseif ($manual_checks) {
-            $minimum_level = CMSPermissionsScanner::RESULT_TYPE_SUGGESTION_EXCESSIVE;
+            $minimum_level = Source_permissions_scanner::RESULT_TYPE_SUGGESTION_EXCESSIVE;
         } else {
-            $minimum_level = CMSPermissionsScanner::RESULT_TYPE_ERROR_EXCESSIVE;
+            $minimum_level = Source_permissions_scanner::RESULT_TYPE_ERROR_EXCESSIVE;
         }
 
-        list($messages) = scan_permissions(is_cli(), false, null, null, $minimum_level);
+        list($messages) = Source_permissions_scanner::scan_permissions(is_cli(), false, null, null, $minimum_level);
 
         $this->assertTrue(empty($messages), implode("\n", $messages));
     }

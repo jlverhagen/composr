@@ -33,7 +33,7 @@
 /**
  * Hook class.
  */
-class Hook_admin_stats_comments extends CMSStatsProvider
+class Hook_admin_stats_comments extends Source_hook_stats_provider
 {
     protected $comments_brackets;
 
@@ -86,18 +86,18 @@ class Hook_admin_stats_comments extends CMSStatsProvider
                 'label' => do_lang_tempcode('COMMENTS'),
                 'category' => 'feedback_and_engagement',
                 'filters' => [
-                    'comments__day_range' => new CMSStatsDayRangeFilter('comments__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
-                    'comments_tallies__content_type' => new CMSStatsListFilter('comments_tallies__content_type', do_lang_tempcode('CONTENT_TYPE'), $this->find_all_feedback_type_codes()),
+                    'comments__day_range' => new Source_stats_filter_day_range('comments__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
+                    'comments_tallies__content_type' => new Source_stats_filter_list('comments_tallies__content_type', do_lang_tempcode('CONTENT_TYPE'), $this->find_all_feedback_type_codes()),
                 ],
-                'pivot' => new CMSStatsDatePivot('comments__pivot', $this->get_date_pivots(!$for_kpi)),
+                'pivot' => new Source_stats_filter_date_pivot('comments__pivot', $this->get_date_pivots(!$for_kpi)),
                 'support_kpis' => self::KPI_HIGH_IS_GOOD,
             ],
             'comments_tallies' => [ // Tally by content
                 'label' => do_lang_tempcode('COMMENT_ENGAGEMENT'),
                 'category' => 'feedback_and_engagement',
                 'filters' => [
-                    'comments_tallies__day_range' => new CMSStatsDayRangeFilter('comments_tallies__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
-                    'comments_tallies__content_type' => new CMSStatsListFilter('comments_tallies__content_type', do_lang_tempcode('CONTENT_TYPE'), $this->find_all_feedback_type_codes()),
+                    'comments_tallies__day_range' => new Source_stats_filter_day_range('comments_tallies__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
+                    'comments_tallies__content_type' => new Source_stats_filter_list('comments_tallies__content_type', do_lang_tempcode('CONTENT_TYPE'), $this->find_all_feedback_type_codes()),
                 ],
                 'pivot' => null,
             ],

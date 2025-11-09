@@ -71,7 +71,7 @@ class Hook_snippet_template_editor_save
             // Store revision
             if (addon_installed('actionlog')) {
                 require_code('revisions_engine_files');
-                $revision_engine = new RevisionEngineFiles();
+                $revision_engine = object_factory('Source_revisions_engine_files');
                 $existing_path = find_template_path($_file, $subdir, $theme);
                 if ($existing_path !== null) {
                     $revision_engine->add_revision(

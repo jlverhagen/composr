@@ -30,25 +30,31 @@
  * @package    core
  */
 
-/*EXTRA FUNCTIONS: Memcached*/
+/*EXTRA FUNCTIONS: xcache\_.+*/
 
 /**
  * Cache driver class.
  */
-class Persistent_caching_memcached
+class Hook_persistent_cache_xcache
 {
-    protected $object;
+    public $objects_list = null;
 
     /**
-     * Constructor.
+     * Determine the priority of this cache.
+     * Zero is not available. Otherwise, lower number is higher priority.
+     *
+     * @return integer The priority
      */
-    public function __construct()
+    public static function cache_priority() : int
     {
-        $this->object = new Memcached();
-        $this->object->addServer('localhost', 11211);
-    }
+        global $SITE_INFO;
 
-    public $objects_list = null;
+        if ((function_exists('xcache_get')) && (($SITE_INFO['use_persistent_cache'] == 'xcache') || ($SITE_INFO['use_persistent_cache'] == '1'))) {
+            return 100; // Deprecated; treat as a fallback
+        }
+
+        return 0;
+    }
 
     /**
      * Instruction to load up the objects list.
@@ -58,8 +64,8 @@ class Persistent_caching_memcached
     public function &load_objects_list() : array
     {
         if ($this->objects_list === null) {
-            $this->objects_list = $this->object->get(get_file_base() . 'PERSISTENT_CACHE_OBJECTS');
-            if ($this->objects_list === false) {
+            $this->objects_list = xcache_get(get_file_base() . 'PERSISTENT_CACHE_OBJECTS');
+            if ($this->objects_list === null) {
                 $this->objects_list = [];
             }
         }
@@ -75,7 +81,7 @@ class Persistent_caching_memcached
      */
     public function get(string $key, ?int $min_cache_date = null)
     {
-        $data = $this->object->get($key);
+        $data = xcache_get($key);
         if ($data === false) {
             return null;
         }
@@ -99,10 +105,10 @@ class Persistent_caching_memcached
         $this->load_objects_list();
         if (!array_key_exists($key, $this->objects_list)) {
             $this->objects_list[$key] = true;
-            $this->set(get_file_base() . 'PERSISTENT_CACHE_OBJECTS', $this->objects_list, 0, 0);
+            xcache_set(get_file_base() . 'PERSISTENT_CACHE_OBJECTS', $this->objects_list);
         }
 
-        $this->object->set($key, [time(), $data], $expire_secs);
+        xcache_set($key, [time(), $data], $expire_secs);
     }
 
     /**
@@ -115,9 +121,9 @@ class Persistent_caching_memcached
         // Update list of persistent-objects
         $this->load_objects_list();
         unset($this->objects_list[$key]);
-        //$this->set(get_file_base() . 'PERSISTENT_CACHE_OBJECTS', $this->objects_list, 0, 0); Wasteful
+        //xcache_set(get_file_base() . 'PERSISTENT_CACHE_OBJECTS', $this->objects_list); Wasteful
 
-        $this->object->delete($key);
+        xcache_unset($key);
     }
 
     /**
@@ -127,8 +133,8 @@ class Persistent_caching_memcached
     {
         // Update list of persistent-objects
         $this->objects_list = [];
-        $this->set(get_file_base() . 'PERSISTENT_CACHE_OBJECTS', $this->objects_list, 0, 0);
+        xcache_set(get_file_base() . 'PERSISTENT_CACHE_OBJECTS', $this->objects_list);
 
-        $this->object->flush();
+        xcache_unset_by_prefix('');
     }
 }

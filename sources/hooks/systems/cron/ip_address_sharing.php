@@ -163,7 +163,7 @@ class Hook_cron_ip_address_sharing
             $subject = do_lang('MAIL_IP_ADDRESS_REPORT_SUBJECT', integer_format(intval($limit), 0));
             $message = do_notification_lang('MAIL_IP_ADDRESS_REPORT_BODY', integer_format(intval($limit), 0), $table);
 
-            dispatch_notification('ip_address_sharing', null, $subject, $message);
+            Source_notification_dispatcher::dispatch_notification('ip_address_sharing', null, $subject, $message);
         }
     }
 }

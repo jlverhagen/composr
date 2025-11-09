@@ -25,10 +25,12 @@
  * @package    user_mappr
  */
 
+/*FORCE_ORIGINAL_LOAD_FIRST*/
+
 /**
  * Hook class.
  */
-class Hook_fields_float
+class Hx_fields_float extends Hook_fields_float
 {
     // ==============
     // Module: search

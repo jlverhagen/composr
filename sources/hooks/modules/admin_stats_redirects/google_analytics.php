@@ -33,7 +33,7 @@
 /**
  * Hook class.
  */
-class Hook_admin_stats_redirects_google_analytics extends CMSStatsRedirect
+class Hook_admin_stats_redirects_google_analytics extends Source_hook_stats_redirect
 {
     /**
      * Find metadata about stats icons that are provided by this stats hook.

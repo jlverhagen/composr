@@ -30,26 +30,29 @@
  * @package    core_forum_drivers
  */
 
- /**
-  * Initialize with constants used in the forum driver.
-  */
- function init__forum__mybb() {
-    if (!defined('MYBB_USERGROUP_ADMINISTRATORS')) {
-        // Define the usergroup IDs of staff in myBB
-        define('MYBB_USERGROUP_ADMINISTRATORS', 4);
-        define('MYBB_USERGROUP_SUPER_MODERATORS', 3);
-        define('MYBB_USERGROUP_MODERATORS', 6);
-        define('MYBB_USERGROUP_GUESTS', 1);
-    }
- }
-
 /**
  * Forum driver class.
  *
  * @package core_forum_drivers
  */
-class Forum_driver_mybb extends Forum_driver_base
+class Source_forum_driver_mybb extends Source_forum_driver_base
 {
+    /**
+     * Define constants.
+     */
+    public function __construct()
+    {
+        parent::__construct();
+
+        if (!defined('MYBB_USERGROUP_ADMINISTRATORS')) {
+            // Define the usergroup IDs of staff in myBB
+            define('MYBB_USERGROUP_ADMINISTRATORS', 4);
+            define('MYBB_USERGROUP_SUPER_MODERATORS', 3);
+            define('MYBB_USERGROUP_MODERATORS', 6);
+            define('MYBB_USERGROUP_GUESTS', 1);
+        }
+    }
+
     /**
      * Check the connected DB is valid for this forum driver.
      *

@@ -538,11 +538,11 @@ class Module_admin_actionlog
 
         // Is there a revision here?
         require_code('revisions_engine_database');
-        $revision_engine = new RevisionEngineDatabase($mode == 'cns');
+        $revision_engine = object_factory('Source_revisions_engine_database', false, [($mode == 'cns')]);
         $revision = $revision_engine->find_revision_for_log($id);
         if ($revision === null) {
             require_code('revisions_engine_files');
-            $revision_engine = new RevisionEngineFiles();
+            $revision_engine = object_factory('Source_revisions_engine_files');
             $revision = $revision_engine->find_revision_for_log($id);
         }
         if ($revision !== null) {

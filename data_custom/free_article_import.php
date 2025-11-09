@@ -102,7 +102,7 @@ foreach ($categories_default as $category) {
 // Import news
 $done = 0;
 require_code('files_spreadsheets_read');
-$sheet_reader = spreadsheet_open_read(get_custom_file_base() . '/data_custom/free_article_import__articles.csv');
+$sheet_reader = Source_spreadsheet_reader::spreadsheet_open_read(get_custom_file_base() . '/data_custom/free_article_import__articles.csv');
 while (($r = $sheet_reader->read_row()) !== false) {
     $time_limit = cms_set_time_limit(TIME_LIMIT_EXTEND__MODEST);
 

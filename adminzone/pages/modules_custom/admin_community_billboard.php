@@ -29,7 +29,7 @@ require_code('crud_module');
 /**
  * Module page class.
  */
-class Module_admin_community_billboard extends Standard_crud_module
+class Module_admin_community_billboard extends Source_standard_crud_module
 {
     protected $lang_type = 'COMMUNITY_BILLBOARD';
     protected $special_edit_frontend = true;

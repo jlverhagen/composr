@@ -311,12 +311,12 @@ class Hook_ecommerce_usergroup
                     // Notification to user
                     $subject = do_lang('PAID_SUBSCRIPTION_ENDED', null, null, null, get_lang($member_id));
                     $body = get_translated_text($myrow['s_mail_end'], $db, get_lang($member_id));
-                    dispatch_notification('paid_subscription_messages', null/*Not currently per-sub settable strval($usergroup_subscription_id)*/, $subject, $body, [$member_id], A_FROM_SYSTEM_PRIVILEGED);
+                    Source_notification_dispatcher::dispatch_notification('paid_subscription_messages', null/*Not currently per-sub settable strval($usergroup_subscription_id)*/, $subject, $body, [$member_id], A_FROM_SYSTEM_PRIVILEGED);
 
                     // Notification to staff
                     $subject = do_lang('SUBSCRIPTION_CANCELLED', $item_name, $username, get_site_name(), get_site_default_lang());
                     $body = do_notification_lang('_SUBSCRIPTION_CANCELLED', $item_name, $username, get_site_name(), get_site_default_lang());
-                    dispatch_notification('subscriptions_staff', null, $subject, $body);
+                    Source_notification_dispatcher::dispatch_notification('subscriptions_staff', null, $subject, $body);
                 }
             }
         } else { // Completed
@@ -376,12 +376,12 @@ class Hook_ecommerce_usergroup
             // Notification to user
             $subject = do_lang('PAID_SUBSCRIPTION_STARTED', null, null, null, get_lang($member_id));
             $body = get_translated_text($myrow['s_mail_start'], $db, get_lang($member_id));
-            dispatch_notification('paid_subscription_messages', null/*Not currently per-sub settable strval($usergroup_subscription_id)*/, $subject, $body, [$member_id], A_FROM_SYSTEM_PRIVILEGED);
+            Source_notification_dispatcher::dispatch_notification('paid_subscription_messages', null/*Not currently per-sub settable strval($usergroup_subscription_id)*/, $subject, $body, [$member_id], A_FROM_SYSTEM_PRIVILEGED);
 
             // Notification to staff
             $subject = do_lang('SUBSCRIPTION_PAID_FOR', $item_name, $username, get_site_name(), get_site_default_lang());
             $body = do_notification_lang('_SUBSCRIPTION_PAID_FOR', $item_name, $username, get_site_name(), get_site_default_lang());
-            dispatch_notification('subscriptions_staff', null, $subject, $body);
+            Source_notification_dispatcher::dispatch_notification('subscriptions_staff', null, $subject, $body);
 
             $GLOBALS['SITE_DB']->query_insert('ecom_sales', ['date_and_time' => time(), 'member_id' => $member_id, 'details' => $details['item_name'], 'details2' => strval($usergroup_subscription_id), 'txn_id' => $details['TXN_ID']]);
         }

@@ -84,7 +84,7 @@ class Hook_task_import_catalogue
 
         // Open spreadsheet file
         require_code('files_spreadsheets_read');
-        $sheet_reader = spreadsheet_open_read($spreadsheet_path, $filename, CMS_Spreadsheet_Reader::ALGORITHM_RAW);
+        $sheet_reader = Source_spreadsheet_reader::spreadsheet_open_read($spreadsheet_path, $filename, Source_spreadsheet_reader::ALGORITHM_RAW);
 
         // Read column names
         $spreadsheet_field_titles = array_flip($sheet_reader->read_row());

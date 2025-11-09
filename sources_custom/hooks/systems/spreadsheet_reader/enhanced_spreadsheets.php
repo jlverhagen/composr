@@ -25,11 +25,70 @@
  */
 
 /**
+ * Hook class.
+ */
+class Hook_spreadsheet_reader_enhanced_spreadsheets
+{
+    /**
+     * Get a list of file types supported by this hook.
+     *
+     * @return ?array A list of supported file types without dots (null: hook disabled)
+     */
+    public function spreadsheet_read_file_types() : ?array
+    {
+        if (!addon_installed('enhanced_spreadsheets')) {
+            return null;
+        }
+
+        // Required PHP extensions
+        if (!class_exists('ZipArchive', false) || !function_exists('xml_parser_create')) {
+            return null;
+        }
+
+        // Required PHP version
+        if (version_compare(PHP_VERSION, '8.2.0', '<')) { // LEGACY
+            return null;
+        }
+
+        return ['ods', 'xlsx'];
+    }
+
+    /**
+     * Open spreadsheet for reading.
+     *
+     * @param  PATH $path File path
+     * @param  ?string $filename Filename (null: derive from $path)
+     * @param  integer $algorithm An ALGORITHM_* constant
+     * @param  boolean $trim Whether to trim each cell
+     * @param  ?string $default_charset The default character set to assume if none is specified in the file (null: website character set) (blank: smart detection)
+     * @return ?object A subclass of Source_spreadsheet_reader (null: hook disabled)
+     */
+    public function spreadsheet_open_read(string $path, ?string $filename = null, int $algorithm = 3, bool $trim = true, ?string $default_charset = '') : ?object
+    {
+        if (!addon_installed('enhanced_spreadsheets')) {
+            return null;
+        }
+
+        // Required PHP extensions
+        if (!class_exists('ZipArchive', false) || !function_exists('xml_parser_create')) {
+            return null;
+        }
+
+        // Required PHP version
+        if (version_compare(PHP_VERSION, '8.2.0', '<')) { // LEGACY
+            return null;
+        }
+
+        return new CMS_OpenSpout_Reader($path, $filename, $algorithm, $trim, $default_charset);
+    }
+}
+
+/**
  * OpenSpout spreadsheet reader.
  *
- * @package core
+ * @package enhanced_spreadsheets
  */
-class CMS_OpenSpout_Reader extends CMS_Spreadsheet_Reader
+class CMS_OpenSpout_Reader extends Source_spreadsheet_reader
 {
     protected $reader = null;
     protected $row_iterator = null;

@@ -201,7 +201,7 @@ class Module_admin_broken_urls
         disable_php_memory_limit();
         cms_disable_time_limit();
 
-        $url_scanner = new BrokenURLScanner();
+        $url_scanner = object_factory('Source_broken_url_scanner');
 
         $chosen_link_types = isset($_POST['chosen_link_types']) ? $_POST['chosen_link_types'] : [];
 

@@ -292,7 +292,7 @@ class Module_tracker
             require_lang('addons');
             require_lang('tracker');
 
-            // step 5: Migrate Mantis issues, and also re-map points ledger t_type and t_type_id for tracker issues
+            // step 5: Migrate Mantis issues, and also re-map points ledger and escrow t_type and t_type_id for tracker issues
             $_category_rows = $GLOBALS['SITE_DB']->query_select('catalogue_categories', ['id', 'cc_title'], ['c_name' => 'tracker']);
             $category_rows = [];
             foreach ($_category_rows as $crow) {
@@ -505,8 +505,7 @@ class Module_tracker
 
             set_mass_import_mode(false);
             pop_query_limiting();
-            // TODO step 9: Migrate sponsorships
-            // TODO step 10: Migrate monitor status
+            // TODO step 9: Migrate monitor status
             // TODO: Modify or create notification types for the tracker
             // TODO: be sure to add a contentious override that throws an error when a non-staff who did not create an issue tries to view a type security issue.
             // TODO: add custom templates for the catalogue

@@ -892,7 +892,7 @@ class Achievements_loader
         require_code('notifications');
         $subject = do_lang('ACHIEVEMENT_AWARD_NOTIFICATION_SUBJECT', comcode_escape($this->achievements[$name]['title']));
         $message = do_notification_lang('ACHIEVEMENT_AWARD_NOTIFICATION_MESSAGE', comcode_escape($this->achievements[$name]['title']));
-        dispatch_notification('achievement_unlocked', null, $subject, $message, [$member_id], A_FROM_SYSTEM_UNPRIVILEGED);
+        Source_notification_dispatcher::dispatch_notification('achievement_unlocked', null, $subject, $message, [$member_id], A_FROM_SYSTEM_UNPRIVILEGED);
 
         // Award points, if applicable
         if (addon_installed('points')) {
@@ -956,7 +956,7 @@ class Achievements_loader
             $subject = do_lang('ACHIEVEMENT_REVOKE_SYSTEM_NOTIFICATION_SUBJECT', comcode_escape($name));
             $message = do_notification_lang('ACHIEVEMENT_REVOKE_SYSTEM_NOTIFICATION_MESSAGE', comcode_escape($name));
         }
-        dispatch_notification('achievement_revoked', null, $subject, $message, [$member_id], A_FROM_SYSTEM_UNPRIVILEGED);
+        Source_notification_dispatcher::dispatch_notification('achievement_revoked', null, $subject, $message, [$member_id], A_FROM_SYSTEM_UNPRIVILEGED);
 
         // Reverse points, if applicable (points are maintained if the achievement was removed from the system)
         if (($removed_from_system === false) && (addon_installed('points'))) {

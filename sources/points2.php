@@ -630,7 +630,7 @@ function points_dispatch_notification(int $id, int $sending_member, int $receivi
             );
             $subject = do_lang_tempcode('NOTIFICATION_POINTS_TRANSACTION_SUBJECT', $transaction_type);
             // Leave this comment: Any code overrides attaching additional information to the sender notification should go here.
-            dispatch_notification('points_transaction', null, $subject->evaluate(get_lang($sending_member)), $message_raw->evaluate(get_lang($sending_member)), [$sending_member], A_FROM_SYSTEM_UNPRIVILEGED);
+            Source_notification_dispatcher::dispatch_notification('points_transaction', null, $subject->evaluate(get_lang($sending_member)), $message_raw->evaluate(get_lang($sending_member)), [$sending_member], A_FROM_SYSTEM_UNPRIVILEGED);
         }
 
         // Recipient
@@ -662,7 +662,7 @@ function points_dispatch_notification(int $id, int $sending_member, int $receivi
             );
             $subject = do_lang_tempcode('NOTIFICATION_POINTS_TRANSACTION_SUBJECT', $transaction_type);
             // Leave this comment: Any code overrides attaching additional information to the recipient notification should go here.
-            dispatch_notification('points_transaction', null, $subject->evaluate(get_lang($receiving_member)), $message_raw->evaluate(get_lang($receiving_member)), [$receiving_member], A_FROM_SYSTEM_UNPRIVILEGED);
+            Source_notification_dispatcher::dispatch_notification('points_transaction', null, $subject->evaluate(get_lang($receiving_member)), $message_raw->evaluate(get_lang($receiving_member)), [$receiving_member], A_FROM_SYSTEM_UNPRIVILEGED);
         }
     }
 
@@ -702,5 +702,5 @@ function points_dispatch_notification(int $id, int $sending_member, int $receivi
         ]
     );
     // Leave this comment: Any code overrides attaching additional information to the staff notification should go here.
-    dispatch_notification('points_transaction_staff', null, $subject->evaluate(get_site_default_lang()), $message_raw->evaluate(get_site_default_lang()), null, A_FROM_SYSTEM_UNPRIVILEGED);
+    Source_notification_dispatcher::dispatch_notification('points_transaction_staff', null, $subject->evaluate(get_site_default_lang()), $message_raw->evaluate(get_site_default_lang()), null, A_FROM_SYSTEM_UNPRIVILEGED);
 }

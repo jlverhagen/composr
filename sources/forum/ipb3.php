@@ -35,7 +35,7 @@
  *
  * @package core_forum_drivers
  */
-class Forum_driver_ipb3 extends Forum_driver_base
+class Source_forum_driver_ipb3 extends Source_forum_driver_base
 {
     /**
      * Check the connected DB is valid for this forum driver.

@@ -35,9 +35,26 @@
 /**
  * Cache driver class.
  */
-class Persistent_caching_memcache
+class Hook_persistent_cache_memcache
 {
     protected $object;
+
+    /**
+     * Determine the priority of this cache.
+     * Zero is not available. Otherwise, lower number is higher priority.
+     *
+     * @return integer The priority
+     */
+    public static function cache_priority() : int
+    {
+        global $SITE_INFO;
+
+        if ((class_exists('Memcache')) && (($SITE_INFO['use_persistent_cache'] == 'memcache') || ($SITE_INFO['use_persistent_cache'] == '1'))) {
+            return 20;
+        }
+
+        return 0;
+    }
 
     /**
      * Constructor.

@@ -33,245 +33,245 @@
 /*EXTRA FUNCTIONS: crypt*/
 
 /**
- * Find whether a phpBB password should be checked using the PHP password API (password_hash/password_verify).
- *
- * @param  string $password_hash Password hash
- * @return boolean Whether it should
- *
- * @ignore
- */
-function _phpbb_uses_php_password_api(string $password_hash) : bool
-{
-    return (substr($password_hash, 0, 10) == '$argon2id$') && defined('PASSWORD_ARGON2ID')/*password_hash supports PHP >=5.5 but argon2id only supports PHP >=7.3*/;
-}
-
-/**
- * phpBB: The crypt function/replacement.
- *
- * @param  string $password To encode
- * @param  string $setting Encode settings in special format
- * @return ~string The encoded output (false: error)
- * @ignore
- */
-function _phpbb_hash_crypt(string $password, string $setting)
-{
-    $itoa64 = './0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
-
-    $output = '*';
-
-    if (substr($setting, 0, 3) == '$H$') {
-        $count_log2 = strpos($itoa64, $setting[3]);
-
-        if ($count_log2 < 7 || $count_log2 > 30) {
-            return $output;
-        }
-
-        $count = 1 << $count_log2;
-        $salt = substr($setting, 4, 8);
-
-        if (strlen($salt) != 8) {
-            return $output;
-        }
-
-        /**
-         * We're kind of forced to use MD5 here since it's the only
-         * cryptographic primitive available in all versions of PHP
-         * currently in use.  To implement our own low-level crypto
-         * in PHP would result in much worse performance and
-         * consequently in lower iteration counts and hashes that are
-         * quicker to crack (by non-PHP code).
-         */
-        $hash = pack('H*', md5($salt . $password));
-        do {
-            $hash = pack('H*', md5($hash . $password));
-            --$count;
-        } while ($count > 0);
-
-        $output = substr($setting, 0, 12);
-        $output .= _phpbb_hash_encode64($hash, 16, $itoa64);
-    }
-
-    if ((substr($setting, 0, 3) == '$2y') || (substr($setting, 0, 3) == '$2a$')) {
-        $hash = $setting;
-        $salt = substr($hash, 0, 29);
-        $output = crypt($password, $salt);
-        if (strlen($output) < 60) {
-            return false;
-        }
-    }
-
-    return $output;
-}
-
-/**
- * phpBB: Encode hash.
- *
- * @param  string $input To encode
- * @param  integer $count How many chars to encode
- * @param  string $itoa64 Lookup table used internally
- * @return string The encoded output
- *
- * @ignore
- */
-function _phpbb_hash_encode64(string $input, int $count, string $itoa64) : string
-{
-    $output = '';
-    $i = 0;
-
-    do {
-        $value = ord($input[$i]);
-        $i++;
-        $output .= $itoa64[$value & 0x3f];
-
-        if ($i < $count) {
-            $value |= ord($input[$i]) << 8;
-        }
-
-        $output .= $itoa64[($value >> 6) & 0x3f];
-
-        if ($i >= $count) {
-            $i++;
-            break;
-        }
-        $i++;
-
-        if ($i < $count) {
-            $value |= ord($input[$i]) << 16;
-        }
-
-        $output .= $itoa64[($value >> 12) & 0x3f];
-
-        if ($i >= $count) {
-            $i++;
-            break;
-        }
-        $i++;
-
-        $output .= $itoa64[($value >> 18) & 0x3f];
-    } while ($i < $count);
-
-    return $output;
-}
-
-/**
- * Cleanup a phpBB post to match Comcode.
- * Handles phpBB's special post markup.
- *
- * @param  string $text The post
- * @param  ?array $attach_ids List of attachment IDs (null: do not include attachments)
- * @return string Cleaned post
- */
-function _phpbb3_post_text_to_comcode(string $text, ?array $attach_ids = null) : string
-{
-    /*
-    <t>                                         outer tag, no nested tags
-    <r>                                         outer tag, has nested tags
-    <s>                                         start bbcode tag
-    <e>                                         end bbcode tag
-    <E>                                         emoticon
-    <ATTACHMENT filename="..." index="...">     attachment
-    */
-
-    $attach_ids_used = [];
-
-    $emoticons = array_keys($GLOBALS['FORUM_DRIVER']->find_emoticons());
-    $special_first_chars = ['[' => true, '<' => true];
-    foreach ($emoticons as $emoticon) {
-        $c = $emoticon[0];
-        $special_first_chars[$c] = true;
-    }
-
-    $comcode = '';
-    $xml_tag_stack = [];
-    $len = strlen($text);
-    $matches = [];
-    for ($i = 0; $i < $len; $i++) {
-        $c = $text[$i];
-
-        if (isset($special_first_chars[$c])) {
-            if (($c == '<') && (preg_match('#^<(/?)(\w+)(\s[^<>]*)?' . '>#', substr($text, $i), $matches) != 0)) {
-                $upcoming_tag = $matches[2];
-                if ($upcoming_tag != 't' && $upcoming_tag != 'r') {
-                    if ($matches[1] == '/') {
-                        // Closing
-                        if (array_peek($xml_tag_stack) == $upcoming_tag) {
-                            array_pop($xml_tag_stack);
-                        }
-                    } else {
-                        // See if we need to remap an attachment tag
-                        $matches2 = [];
-                        if (($upcoming_tag == 'ATTACHMENT') && (preg_match('#^<ATTACHMENT[^<>]*><s>\[attachment=(\d+)\]</s>.*?<e>\[/attachment\]</e></ATTACHMENT>#', substr($text, $i), $matches2) != 0)) {
-                            $index = intval($matches2[1]);
-                            if (($attach_ids !== null) && (isset($attach_ids[$index]))) {
-                                $comcode .= '[attachment]' . strval($attach_ids[$index]) . '[/attachment]';
-                                $attach_ids_used[] = $attach_ids[$index];
-                            }
-                            $i += strlen($matches2[0]) - 1;
-                            continue;
-                        }
-
-                        array_push($xml_tag_stack, $matches[2]);
-                    }
-                }
-
-                $i += strlen($matches[0]) - 1;
-                continue;
-            }
-
-            if ($c == '[') {
-                if (substr($text, $i, 2) != '[/') {
-                    // See if we need to hide a start tag
-                    if (!in_array('s', $xml_tag_stack)) {
-                        $comcode .= '[semihtml]&#91;[/semihtml]';
-                        continue;
-                    }
-                } else {
-                    // See if we need to hide an end tag
-                    if (!in_array('e', $xml_tag_stack)) {
-                        $comcode .= '[semihtml]&#91;[/semihtml]';
-                        continue;
-                    }
-                }
-            }
-
-            if (!in_array('E', $xml_tag_stack)) {
-                // See if we need to hide an emoticon, because an emoticon appears without it being marked up as one
-                foreach ($emoticons as $emoticon) {
-                    if (substr($text, $i, strlen($emoticon)) == $emoticon) {
-                        $comcode .= '[semihtml]' . $emoticon . '[/semihtml]';
-                        $i += strlen($emoticon) - 1;
-                        continue 2;
-                    }
-                }
-            }
-        }
-
-        $comcode .= $c;
-    }
-
-    // Append any remaining attachments
-    if ($attach_ids !== null) {
-        foreach ($attach_ids as $attach_id) {
-            if (($attach_id !== null) && (!in_array($attach_id, $attach_ids_used))) {
-                $comcode .= '[attachment]' . strval($attach_id) . '[/attachment]';
-            }
-        }
-    }
-
-    $comcode = preg_replace('#\[size="?(\d+)"?\]#i', '[size="${1}%"]', $comcode);
-
-    $comcode = str_replace('{', '\{', $comcode);
-
-    return $comcode;
-}
-
-/**
  * Forum driver class.
  *
  * @package core_forum_drivers
  */
-class Forum_driver_phpbb3 extends Forum_driver_base
+class Source_forum_driver_phpbb3 extends Source_forum_driver_base
 {
+    /**
+     * Find whether a phpBB password should be checked using the PHP password API (password_hash/password_verify).
+     *
+     * @param  string $password_hash Password hash
+     * @return boolean Whether it should
+     *
+     * @ignore
+     */
+    public static function _phpbb_uses_php_password_api(string $password_hash) : bool
+    {
+        return (substr($password_hash, 0, 10) == '$argon2id$') && defined('PASSWORD_ARGON2ID')/*password_hash supports PHP >=5.5 but argon2id only supports PHP >=7.3*/;
+    }
+
+    /**
+     * phpBB: The crypt function/replacement.
+     *
+     * @param  string $password To encode
+     * @param  string $setting Encode settings in special format
+     * @return ~string The encoded output (false: error)
+     * @ignore
+     */
+    public static function _phpbb_hash_crypt(string $password, string $setting)
+    {
+        $itoa64 = './0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
+
+        $output = '*';
+
+        if (substr($setting, 0, 3) == '$H$') {
+            $count_log2 = strpos($itoa64, $setting[3]);
+
+            if ($count_log2 < 7 || $count_log2 > 30) {
+                return $output;
+            }
+
+            $count = 1 << $count_log2;
+            $salt = substr($setting, 4, 8);
+
+            if (strlen($salt) != 8) {
+                return $output;
+            }
+
+            /**
+             * We're kind of forced to use MD5 here since it's the only
+             * cryptographic primitive available in all versions of PHP
+             * currently in use.  To implement our own low-level crypto
+             * in PHP would result in much worse performance and
+             * consequently in lower iteration counts and hashes that are
+             * quicker to crack (by non-PHP code).
+             */
+            $hash = pack('H*', md5($salt . $password));
+            do {
+                $hash = pack('H*', md5($hash . $password));
+                --$count;
+            } while ($count > 0);
+
+            $output = substr($setting, 0, 12);
+            $output .= Source_forum_driver_phpbb3::_phpbb_hash_encode64($hash, 16, $itoa64);
+        }
+
+        if ((substr($setting, 0, 3) == '$2y') || (substr($setting, 0, 3) == '$2a$')) {
+            $hash = $setting;
+            $salt = substr($hash, 0, 29);
+            $output = crypt($password, $salt);
+            if (strlen($output) < 60) {
+                return false;
+            }
+        }
+
+        return $output;
+    }
+
+    /**
+     * phpBB: Encode hash.
+     *
+     * @param  string $input To encode
+     * @param  integer $count How many chars to encode
+     * @param  string $itoa64 Lookup table used internally
+     * @return string The encoded output
+     *
+     * @ignore
+     */
+    public static function _phpbb_hash_encode64(string $input, int $count, string $itoa64) : string
+    {
+        $output = '';
+        $i = 0;
+
+        do {
+            $value = ord($input[$i]);
+            $i++;
+            $output .= $itoa64[$value & 0x3f];
+
+            if ($i < $count) {
+                $value |= ord($input[$i]) << 8;
+            }
+
+            $output .= $itoa64[($value >> 6) & 0x3f];
+
+            if ($i >= $count) {
+                $i++;
+                break;
+            }
+            $i++;
+
+            if ($i < $count) {
+                $value |= ord($input[$i]) << 16;
+            }
+
+            $output .= $itoa64[($value >> 12) & 0x3f];
+
+            if ($i >= $count) {
+                $i++;
+                break;
+            }
+            $i++;
+
+            $output .= $itoa64[($value >> 18) & 0x3f];
+        } while ($i < $count);
+
+        return $output;
+    }
+
+    /**
+     * Cleanup a phpBB post to match Comcode.
+     * Handles phpBB's special post markup.
+     *
+     * @param  string $text The post
+     * @param  ?array $attach_ids List of attachment IDs (null: do not include attachments)
+     * @return string Cleaned post
+     */
+    public static function _phpbb3_post_text_to_comcode(string $text, ?array $attach_ids = null) : string
+    {
+        /*
+        <t>                                         outer tag, no nested tags
+        <r>                                         outer tag, has nested tags
+        <s>                                         start bbcode tag
+        <e>                                         end bbcode tag
+        <E>                                         emoticon
+        <ATTACHMENT filename="..." index="...">     attachment
+        */
+
+        $attach_ids_used = [];
+
+        $emoticons = array_keys($GLOBALS['FORUM_DRIVER']->find_emoticons());
+        $special_first_chars = ['[' => true, '<' => true];
+        foreach ($emoticons as $emoticon) {
+            $c = $emoticon[0];
+            $special_first_chars[$c] = true;
+        }
+
+        $comcode = '';
+        $xml_tag_stack = [];
+        $len = strlen($text);
+        $matches = [];
+        for ($i = 0; $i < $len; $i++) {
+            $c = $text[$i];
+
+            if (isset($special_first_chars[$c])) {
+                if (($c == '<') && (preg_match('#^<(/?)(\w+)(\s[^<>]*)?' . '>#', substr($text, $i), $matches) != 0)) {
+                    $upcoming_tag = $matches[2];
+                    if ($upcoming_tag != 't' && $upcoming_tag != 'r') {
+                        if ($matches[1] == '/') {
+                            // Closing
+                            if (array_peek($xml_tag_stack) == $upcoming_tag) {
+                                array_pop($xml_tag_stack);
+                            }
+                        } else {
+                            // See if we need to remap an attachment tag
+                            $matches2 = [];
+                            if (($upcoming_tag == 'ATTACHMENT') && (preg_match('#^<ATTACHMENT[^<>]*><s>\[attachment=(\d+)\]</s>.*?<e>\[/attachment\]</e></ATTACHMENT>#', substr($text, $i), $matches2) != 0)) {
+                                $index = intval($matches2[1]);
+                                if (($attach_ids !== null) && (isset($attach_ids[$index]))) {
+                                    $comcode .= '[attachment]' . strval($attach_ids[$index]) . '[/attachment]';
+                                    $attach_ids_used[] = $attach_ids[$index];
+                                }
+                                $i += strlen($matches2[0]) - 1;
+                                continue;
+                            }
+
+                            array_push($xml_tag_stack, $matches[2]);
+                        }
+                    }
+
+                    $i += strlen($matches[0]) - 1;
+                    continue;
+                }
+
+                if ($c == '[') {
+                    if (substr($text, $i, 2) != '[/') {
+                        // See if we need to hide a start tag
+                        if (!in_array('s', $xml_tag_stack)) {
+                            $comcode .= '[semihtml]&#91;[/semihtml]';
+                            continue;
+                        }
+                    } else {
+                        // See if we need to hide an end tag
+                        if (!in_array('e', $xml_tag_stack)) {
+                            $comcode .= '[semihtml]&#91;[/semihtml]';
+                            continue;
+                        }
+                    }
+                }
+
+                if (!in_array('E', $xml_tag_stack)) {
+                    // See if we need to hide an emoticon, because an emoticon appears without it being marked up as one
+                    foreach ($emoticons as $emoticon) {
+                        if (substr($text, $i, strlen($emoticon)) == $emoticon) {
+                            $comcode .= '[semihtml]' . $emoticon . '[/semihtml]';
+                            $i += strlen($emoticon) - 1;
+                            continue 2;
+                        }
+                    }
+                }
+            }
+
+            $comcode .= $c;
+        }
+
+        // Append any remaining attachments
+        if ($attach_ids !== null) {
+            foreach ($attach_ids as $attach_id) {
+                if (($attach_id !== null) && (!in_array($attach_id, $attach_ids_used))) {
+                    $comcode .= '[attachment]' . strval($attach_id) . '[/attachment]';
+                }
+            }
+        }
+
+        $comcode = preg_replace('#\[size="?(\d+)"?\]#i', '[size="${1}%"]', $comcode);
+
+        $comcode = str_replace('{', '\{', $comcode);
+
+        return $comcode;
+    }
+
     /**
      * Constructor.
      */
@@ -848,7 +848,7 @@ class Forum_driver_phpbb3 extends Forum_driver_base
                 $temp['title'] = '';
             }
             push_lax_comcode(true);
-            $temp['message'] = comcode_to_tempcode(_phpbb3_post_text_to_comcode($myrow['post_text']), $myrow['poster_id']);
+            $temp['message'] = comcode_to_tempcode(Source_forum_driver_phpbb3::_phpbb3_post_text_to_comcode($myrow['post_text']), $myrow['poster_id']);
             pop_lax_comcode();
             $temp['member'] = $myrow['poster_id'];
             $temp['date'] = $myrow['post_time'];
@@ -1000,7 +1000,7 @@ class Forum_driver_phpbb3 extends Forum_driver_base
             // Process first post for displaying if applicable
             if ($show_first_posts) {
                 push_lax_comcode(true);
-                $out[$i]['firstpost'] = comcode_to_tempcode(_phpbb3_post_text_to_comcode($fp_rows[0]['post_text']), $fp_rows[0]['poster_id']);
+                $out[$i]['firstpost'] = comcode_to_tempcode(Source_forum_driver_phpbb3::_phpbb3_post_text_to_comcode($fp_rows[0]['post_text']), $fp_rows[0]['poster_id']);
                 pop_lax_comcode();
             }
 
@@ -1598,13 +1598,13 @@ class Forum_driver_phpbb3 extends Forum_driver_base
                 return $out;
             }
         } else {
-            if (_phpbb_uses_php_password_api($row['user_password'])) {
+            if (Source_forum_driver_phpbb3::_phpbb_uses_php_password_api($row['user_password'])) {
                 if (!password_verify($password_mixed, $row['user_password'])) {
                     $out['error'] = do_lang_tempcode((get_option('login_error_secrecy') == '1') ? 'MEMBER_INVALID_LOGIN' : 'MEMBER_BAD_PASSWORD');
                     return $out;
                 }
             } else {
-                $password_hashed = _phpbb_hash_crypt($password_mixed, $row['user_password']);
+                $password_hashed = Source_forum_driver_phpbb3::_phpbb_hash_crypt($password_mixed, $row['user_password']);
                 if (!hash_equals($password_hashed, $row['user_password'])) {
                     $out['error'] = do_lang_tempcode((get_option('login_error_secrecy') == '1') ? 'MEMBER_INVALID_LOGIN' : 'MEMBER_BAD_PASSWORD');
                     return $out;

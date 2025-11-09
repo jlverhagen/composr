@@ -383,7 +383,7 @@ function add_filedump_file(string $subpath, string &$filename, string $tmp_path,
     require_code('notifications');
     $subject = do_lang('FILEDUMP_NOTIFICATION_MAIL_SUBJECT', get_site_name(), $filename, $subpath);
     $mail = do_notification_lang('FILEDUMP_NOTIFICATION_MAIL', comcode_escape(get_site_name()), comcode_escape($filename), [comcode_escape($subpath), comcode_escape($description)]);
-    dispatch_notification('filedump', $subpath, $subject, $mail);
+    Source_notification_dispatcher::dispatch_notification('filedump', $subpath, $subject, $mail);
     log_it('FILEDUMP_UPLOAD', $filename, $subpath);
     require_code('users2');
     if (has_actual_page_access(get_modal_user(), 'filedump', get_module_zone('filedump'))) {

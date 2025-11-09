@@ -711,7 +711,7 @@ function _log_it(string $type, ?string $a = null, ?string $b = null, ?int $relat
                 require_lang('actionlog');
                 $subject = do_lang('ACTIONLOG_NOTIFICATION_MAIL_SUBJECT', get_site_name(), do_lang($type), [($a === null) ? '' : $a, ($b === null) ? '' : $b]);
                 $mail = do_notification_lang('ACTIONLOG_NOTIFICATION_MAIL', comcode_escape(get_site_name()), comcode_escape(do_lang($type)), [($a === null) ? '' : comcode_escape($a), ($b === null) ? '' : comcode_escape($b)]);
-                dispatch_notification('actionlog', $type, $subject, $mail, null, get_member(), ['use_real_from' => true]);
+                Source_notification_dispatcher::dispatch_notification('actionlog', $type, $subject, $mail, null, get_member(), ['use_real_from' => true]);
             }
         }
     }

@@ -27,7 +27,7 @@
 /**
  * Hook class.
  */
-class Hook_privacy_content_read_tracking extends Hook_privacy_base
+class Hook_privacy_content_read_tracking extends Source_hook_privacy_base
 {
     /**
      * Find privacy details.

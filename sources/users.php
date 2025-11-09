@@ -509,7 +509,7 @@ function enforce_parental_controls(int $member_id)
     require_code('locations');
     require_code('temporal');
 
-    $pc = load_parental_control_settings();
+    $pc = object_factory('Source_parental_controls', false, [false], true);
 
     $dob_day = $GLOBALS['FORUM_DRIVER']->get_member_row_field($member_id, 'm_dob_day');
     $dob_month = $GLOBALS['FORUM_DRIVER']->get_member_row_field($member_id, 'm_dob_month');

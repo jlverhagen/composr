@@ -93,34 +93,67 @@ Composr lets you override individual PHP files with changes by adding to the [tt
 
 Overrides work at the file level. When Composr is running code it is rarely doing anything at an addon level, addon management is more to do with initial packaging/install, and then it's just files.
 
-If you are overriding a file you are taking responsibility for merging in any changes made to the original file back into your version.
-If some other non-bundled addon is overriding the same file, it is up to you to resolve the conflict by somehow merging the two sets of changes together manually (or making a contentious override hook instead).
-It isn't feasible for us to create any mechanism for multiple people overriding the same files, as this would just create a complicated tangle in the long-run.
+If you are overriding a file you are taking responsibility for merging in any changes made to the original file back into your version (the upgrader file integrity check can help).
+If some other non-bundled addon is overriding the same file, it is up to you to resolve the conflict by doing one of the following (most preferred method at the top):
+ - Creating a new set of hooks for the conflicting functionality (which also allows future developers to expand on it)
+ - Creating a [tt]contentious_overrides[/tt] hook for programmatic alteration
+ - Merging the overrides together (not recommended because ideally, each file should only belong to one addon, and Composr only supports this)
+It isn't feasible right now for us to create any mechanism for multiple people overriding the same files, as this would just create a complicated tangle in the long-run. However, the issue tracker may have an issue suggesting rearchitecturing of Composr for the future to support this.
 
 There are 4 different kinds of PHP override in Composr:
-1) Extending a module -- a special case where we allow automatic instantiation of a derived version of the original module
+1) Class extension -- a special case where we allow automatic instantiation of a derived version of the original class
 2) Replacing/supplementing a file, with your override loading first, then any non-overridden functions/classes from the original loading second
 3) Replacing/supplementing a file, with the original loading first, then your override
 4) Replacing/supplementing a file, [b]with support for programmatic alteration of the original code[/b] -- actually this can be done in tandem with techniques 1 & 2 above, but not so easily technique 3
 
-It's important to note that as well as overrides you can place entirely new files in the [tt]*_custom[/tt] directories, and Composr will be able to compile them as if they were original files.
+It's important to note that as well as overrides you can place entirely new files in the [tt]*_custom[/tt] directories, and Composr will be able to compile them as if they were original files. In fact, this is what non-bundled addons do. And ideally, you should do this as well for any new code you write. That way, changes are not lost during upgrades.
 
-All these techniques are handled inside the Composr [tt]sources/global.php[/tt] file. If you are a good programmer but still can't work out how to do all this stuff (it's easy once you know how, but a bit unorthodox compared to normal techniques), look at the code of this file. As [tt]sources/global.php[/tt] is the file that does the magic it's the only file that you can't override; it is therefore kept minimal, hence why we have a [tt]sources/global2.php[/tt] which picks up where [tt]sources/global.php[/tt] leaves off.
+All these techniques are handled inside the Composr [tt]sources/global.php[/tt] file. If you are a good programmer but still can't work out how to do all this stuff (it's easy once you know how, but a bit unorthodox compared to normal techniques), look at the code of this file.
 
-Where possible it is good to use hooks to add in functionality. For example, you can write hooks that listen for particular database queries then do additional things when those queries happen. As hooks are individual unique files, rather than overrides, there's no problem there. But it requires us predicting in advance where hooks would be useful, and implementing them, and there'd be an overhead to us allowing more of that.
+Note that the following files cannot be overridden:
+ - sources/bootstrap.php (this is Composr's entry point into the API)
+ - sources/global.php (this contains the code override system itself, so you cannot override the override system)
+ - sources/minikernel.php (a slimmed down API which does not contain the robust code override logic that global.php does)
+ - sources/crypt_maintenance.php (could be called outside of Composr's API)
+ - sources/version.php (could be called outside of Composr's API)
+ - sources/file_permissions_check.php (technically can be overridden, but if fixperms is run without the --full parameter, the overrides will not apply)
+ - Anything that is not loaded in through Composr's [tt]require_code[/tt] function (e.g., third party code)
 
-[title="3"]Extending a module[/title]
+Also be aware that overrides do not apply when Composr is running in minikernel, and often do not apply when running in safe mode. This is by design so that the core Composr system can function even if something else is breaking it.
 
-This form of overriding works via class inheritance. All you need to do is to make a [tt]modules_custom[/tt] directory version of an original [tt]modules[/tt] directory file, with two differences:
-1) Instead of just naming the module class [tt]Module_<modulename>[/tt], rename it and inherit using [tt]Mx_<modulename> extends Module_<modulename>[/tt]
-2) Make sure the top of the file contains [tt]/*FORCE_ORIGINAL_LOAD_FIRST*/[/tt], otherwise you will get errors about the class [tt]Module_<modulename>[/tt] not being found.
-3) As this works via standard class inheritance you are at liberty to, and should, only re-define methods in your override when those methods are actually different from the original ones. i.e. start with a shell of a class and only re-define methods that you are actually wanting to change
+Where possible it is good to use hooks to add in functionality instead of overrides. For example, you can write hooks that listen for particular database queries, then do additional things when those queries happen. As hooks are individual unique files, rather than overrides, there's no problem there. But it requires us predicting in advance where hooks would be useful, and implementing them, and there'd be an overhead to us allowing more of that.
+
+If you are developing a non-bundled addon and feel the need for a type of hook that doesn't exist yet in Composr, please [page="_SEARCH:report_issue"]create an issue on the tracker[/page].
+
+[title="3"]Extending a class[/title]
+
+This form of overriding works via class inheritance. All you need to do is to make a [tt]*_custom[/tt] directory version of an original directory file, with a few things to keep in mind:
+1) You need to use a special prefix:
+ - For [tt]Module_*[/tt], use [tt]Mx_* extends Module_*[/tt]
+ - For [tt]Block_*[/tt], use [tt]Bx_* extends Block_*[/tt]
+ - For [tt]Hook_*[/tt], use [tt]Hx_* extends Hook_*[/tt]
+ - For [tt]Source_*[/tt], use [tt]Sx_* extends Source_*[/tt]
+2) Make sure the top of the [tt]*_custom[/tt] file you created contains the [tt]/*FORCE_ORIGINAL_LOAD_FIRST*/[/tt] comment, otherwise you will get errors about the extended class not being found. This forces Composr to load the original file first, which ensures the original class is defined when you extend it.
+3) As this works via standard class inheritance you are at liberty to, and should, only re-define methods in your override when those methods are actually different from the original ones. i.e. start with a shell of a class and only re-define methods that you are actually wanting to change. And remember that you can use [tt]parent::[/tt] when you want to call the original logic on that method.
+
+Note that "Tempcode" is a special class that is treated as a data type in Composr. Therefore, this class cannot be overridden except through contentious overrides.
+
+When you override a class (and define the comment [tt]/*FORCE_ORIGINAL_LOAD_FIRST*/[/tt]), the following happens in the code compiler:
+ - The class name in the original file is renamed to the special "x" prefix.
+ - The class definition in the custom file is reversed (e.g., [tt]Mx_* extends Module_*[/tt] becomes [tt]Module_* extends Mx_*[/tt]).
+ - The compiled original file is loaded first, defining the "x" prefix class.
+ - The custom file is loaded second, defining a class with the original name which extends the "x" prefix class in the compiled original file.
+
+This may be a lot to wrap your head around, but this process ensures the following:
+ - We do not need to modify every file which calls the overridden class so it calls a new class name
+ - Calls to static functions and properties on the original class name still work, and in fact, will inherit any overrides you define
+ - We do not need to put in any special considerations for whether a custom class exists; the code can continue calling the original class name
 
 [title="3"]Replacing/supplementing a file[/title]
 
 If you override a file to the [tt]sources_custom[/tt] directory then that file will essentially be overlaid on top of its equivalent in the [tt]sources[/tt] directory. (You can use this technique in other [tt]*_custom[/tt] directories too, such as [tt]modules_custom[/tt] directories -- although in this case it is less useful, as there is less granularity due to a module only containing a single class)
 
-You can redefine any existing function or class, and you can define new functions or classes. Composr does some magic so that you can reference the old versions of the functions or classes by prepending [tt]non_overridden__[/tt] to their names (e.g. [tt]example_function[/tt] would become [tt]non_overridden__example_function[/tt]). This is very useful if you can write your overridden function without having to completely replace the original function. For example, if we just want to add some logging to [tt]example_function[/tt]...
+You can redefine any existing function or class, and you can define new functions or classes. Composr does some magic so that you can reference the old versions of the functions by prepending [tt]non_overridden__[/tt] to their names (e.g. [tt]example_function[/tt] would become [tt]non_overridden__example_function[/tt]). This is very useful if you can write your overridden function without having to completely replace the original function. For example, if we just want to add some logging to [tt]example_function[/tt]...
 [code="PHP"]
 function example_function($a,$b)
 {
@@ -131,24 +164,14 @@ function example_function($a,$b)
 }
 [/code]
 
-It is also very useful for classes because it allows you to create a subclass of the original, without changing its name (which would break Composr, as Composr expects a certain fixed name for its classes). For example:
-[code="PHP"]
-class example extends non_overridden__example
-{
-	function mymethod($a,$b)
-	{
-		some_logging_function('call to example::mymethod with ' . $a.' and ' . $b);
-		$ret = parent::mymethod($a,$b);
-		some_logging_function('leaving example::mymethod returning ' . $ret);
-		return $ret;
-	}
-}
-[/code]
-This is a great technique for making changes to forum drivers.
+Be aware this does not work for classes. If you want to override a class, you must use a method defined in the "Extending a class" section above. You can, however, define new classes in your custom file without any special considerations.
 
-A word of caution -- if you are not supplementing a code files [tt]init[/tt] function, then you will want to strip out the init function from your override, otherwise both it and the original will be called in sequence. This is unavoidable, because the modified file is loaded first and thus cannot call the original init function itself -- and thus responsibility for that stays with the Composr code. There are two exceptions:
-1) If your override contains every class or function the original file has (i.e. you overrode the whole file by copy&pasting) then the original init function will not be called as Composr assumes you copy&pasted all that code into your own init function.
+A word of caution -- if you are not supplementing a code file's [tt]init__*[/tt] function, then you will want to strip out the init function from your override, otherwise both it and the original will be called in sequence. This is unavoidable, because the modified file is loaded first and thus cannot call the original init function itself -- and thus responsibility for that stays with the Composr code. There are two exceptions:
+1) If your override contains every class or function the original file has (i.e. you overrode the whole file by copy&pasting) then the original init function will not be called as Composr assumes you copy&pasted all that code into your own init function (we use the logic, "if it's 80-120% the size of the original, then it's probably a copy and paste.").
 2) If you want a partial override but don't want the original init function to run, you need to use programmatic alteration to mask the original init function. This is explained in the last paragraph of the next section.
+
+[media thumb="0" framed="0" float="right"]data_custom/images/docs/dont.png[/media]
+There is one important rule when it comes to init functions: you are not allowed to call [tt]non_overridden__init__<whatever>[/tt] from your [tt]init__<whatever>[/tt] function. You cannot do this because the PHP code containing that function has not been evaluated at that point and thus the function is not yet defined. If you try and do it then Composr will disable programmatic alteration and hence revert to the more basic 'Replacing/supplementing a file' technique. Composr will automatically call [tt]non_overridden__init__<whatever>[/tt] as soon as it becomes available so you do not need to copy&paste its contents to your own function. If you do not want [tt]non_overridden__init__<whatever>[/tt] to be automatically called then you need to rename it in your own init function so that Composr cannot find it.
 
 A second sticking point is when you are extending a class defined in the original file. In such a case you need the original to load first. Do that by including [tt]/*FORCE_ORIGINAL_LOAD_FIRST*/[/tt] in your code. You will need to make sure that no function/class names conflict, which you can also do with "Programmatic alteration" (see next section).
 
@@ -164,7 +187,7 @@ There are 3 ways this problem could be solved:
 2) Override whole functions. This is a [b]bad idea[/b] for non-trivial functions because it makes feature/major upgrades much more problematic
 3) Use a mechanism that goes beyond what programming languages can normally do
 
-We took approach '3', and thus have written a special feature into Composr for it. Its admittedly a bit messy but in practical terms it works almost flawlessly.
+We took approach '3', and thus have written a special feature into Composr for it. Its admittedly a bit messy but in practical terms it is a very powerful tool.
 
 In Composr it works as thus:
 1) First, you create a [tt]contentious_overrides[/tt] hook in [tt]sources_custom/hooks/systems/contentious_overrides[/tt]. Generally, name it the same name as your addon, but you do not have to do that.
@@ -173,9 +196,6 @@ In Composr it works as thus:
 4) Put your [tt]$codename[/tt] guards in place, doing different things depending on what code is being included. You want to make sure your overrides only apply to the applicable files you want to override and nothing else.
 5) When you know for sure you are about to modify the code, make sure to populate [tt]$code[/tt] with the file contents of [tt]$path[/tt] if it is null.
 6) Finally, you can define your overrides. You can use any string functions like [tt]preg_replace[/tt] or [tt]strpos[/tt], but it is highly recommended to instead use the handy Composr [tt]get_function_hash / insert_code_before__by_linenum / insert_code_after__by_linenum / insert_code_before__by_command / insert_code_after__by_command / remove_code[/tt] functions from the [tt]override_api[/tt] source. This is more elegant and will also output proper errors should the overrides no-longer work.
-
-[media thumb="0" framed="0" float="right"]data_custom/images/docs/dont.png[/media]
-There is one important rule when it comes to init functions: you are not allowed to call [tt]non_overridden__init__<whatever>[/tt] from your [tt]init__<whatever>[/tt] function. You cannot do this because the PHP code containing that function has not been evaluated at that point and thus the function is not yet defined. If you try and do it then Composr will disable programmatic alteration and hence revert to the more basic 'Replacing/supplementing a file' technique. Composr will automatically call [tt]non_overridden__init__<whatever>[/tt] as soon as it becomes available so you do not need to copy&paste its contents to your own function. If you do not want [tt]non_overridden__init__<whatever>[/tt] to be automatically called then you need to rename it in your own init function so that Composr cannot find it.
 
 [title="2"]Exporting addons[/title]
 
@@ -209,11 +229,11 @@ The date/time of the exported addon TAR file will be the date/time of the most r
 [media width="150" description="Choosing a code file to edit" float="right"]data_custom/images/docs/tut_framework/framework_code_editor_2.png[/media]
 [media width="150" description="Using the code editor" float="right"]data_custom/images/docs/tut_framework/framework_code_editor_3.png[/media]
 [/media_set]
-Composr provides a very simple code editor for editing of existing Composr code files, or creation of new files. The code editor has inbuilt, automated, support for the Composr file override system: editing an original Composr file will save the edited version in the equivalent [tt]_custom[/tt] suffixed directory where possible.
+Composr provides a very simple code editor for editing of existing Composr code files, or creation of new files. The code editor has inbuilt, automated, basic support for the Composr file override system: editing an original Composr file will save the edited version in the equivalent [tt]_custom[/tt] suffixed directory where possible.
 
 Access the code editor from Admin Zone > Tools > Code editor.
 
-The code editor is very useful for making ad hoc changes to a live-site, but is not intended as a full development environment.
+The code editor is very useful for making ad hoc changes to a live-site, but is not intended as a full development environment. In fact, we prefer you do not use the code editor except for temporary emergency code changes. It is inefficient as it will copy over entire source files into the custom directories (unless you clear out duplicate code yourself). And for files which have a custom override, you will only see the contents of the custom file and cannot see the original file so long as the custom one exists.
 [/surround]
 
 [title="2"]PHP programming help[/title]
@@ -230,7 +250,7 @@ If you still are not convinced that Composr is the right choice for you, conside
  [*] In addition to the above, few pure frameworks provide the dimensions of functionality that Composr can provide.
  [*] Composr's framework has excellent security. For example,[list]
   [*] the database abstraction system allows relational databases to be accessed without concern of SQL-injection;
-  [*] The template system is written to make XSS injection virtually impossible (where the vast majority of programmers write code that is full of XSS vulnerabilities, without even knowing what they are).
+  [*] The template system and JavaScript framework are written to make XSS injection virtually impossible (where the vast majority of programmers write code that is full of XSS vulnerabilities, without even knowing what they are).
  [/list]
  [*] Composr's framework is of professional quality. If you opt for frameworks which are incomplete, and end up using addon libraries to achieve additional functionality, you will soon realise, both immediately and after-time, that the lack of central control results in:[list="1"]
   [*] major compatibility problems;

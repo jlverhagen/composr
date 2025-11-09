@@ -45,7 +45,7 @@ $file = empty($map['file']) ? 'uploads/website_specific/graph_test/pie_chart.csv
 
 $datapoints = [];
 require_code('files_spreadsheets_read');
-$sheet_reader = spreadsheet_open_read(get_custom_file_base() . '/' . $file, null, CMS_Spreadsheet_Reader::ALGORITHM_RAW);
+$sheet_reader = Source_spreadsheet_reader::spreadsheet_open_read(get_custom_file_base() . '/' . $file, null, Source_spreadsheet_reader::ALGORITHM_RAW);
 while (($line = $sheet_reader->read_row()) !== false) {
     if (substr($line[0], 0, 1) == '#') {
         continue; // Comment line

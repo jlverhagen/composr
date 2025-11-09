@@ -42,7 +42,7 @@ class suphp_test_set extends cms_test_case
         require_code('file_permissions_check');
 
         $paths = get_directory_contents(get_file_base(), '', 0, true, false);
-        $chmod_paths = get_chmod_array(false, true);
+        $chmod_paths = Source_permissions_scanner::get_chmod_array(false, true);
 
         foreach ($paths as $path) {
             // Exceptions

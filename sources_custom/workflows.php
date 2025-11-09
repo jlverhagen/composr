@@ -705,7 +705,7 @@ function workflow_update_handler() : object
     }
     $subject = do_lang('APPROVAL_EMAIL_SUBJECT', $content_title, null, null, get_site_default_lang());
     $body = do_notification_lang('APPROVAL_EMAIL_BODY', post_param_string('http_referer', $_SERVER['HTTP_REFERER']), $status_list, $workflow_notes, get_site_default_lang());
-    dispatch_notification('workflow_step', strval($workflow_id), $subject, $body, $actual_send_to_members);
+    Source_notification_dispatcher::dispatch_notification('workflow_step', strval($workflow_id), $subject, $body, $actual_send_to_members);
 
     // Finally return a success message
     $return_url = post_param_string('return_url', false, INPUT_FILTER_URL_INTERNAL);

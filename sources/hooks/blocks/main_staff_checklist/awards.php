@@ -110,7 +110,7 @@ class Hook_checklist_awards
                     $num_new_since = new Tempcode();
                 }
 
-                list($info, $seconds_due_in) = staff_checklist_time_ago_and_due($seconds_ago, $limit_hours);
+                list($info, $seconds_due_in) = Block_main_staff_checklist::staff_checklist_time_ago_and_due($seconds_ago, $limit_hours);
                 $info->attach($num_new_since);
                 $tpl = do_template('BLOCK_MAIN_STAFF_CHECKLIST_ITEM', ['_GUID' => '4049affae5a6f38712ee3e0237a2e18e', 'CONFIG_URL' => $config_url, 'URL' => $url, 'STATUS' => $_status, 'TASK' => $task, 'INFO' => $info]);
                 $out[] = [$tpl, $seconds_due_in, null, null];

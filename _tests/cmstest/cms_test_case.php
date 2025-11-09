@@ -194,7 +194,7 @@ class cms_test_case extends WebTestCase
 
         require_code('files_spreadsheets_read');
 
-        $sheet_reader = spreadsheet_open_read($path);
+        $sheet_reader = Source_spreadsheet_reader::spreadsheet_open_read($path);
         while (($row = $sheet_reader->read_row()) !== false) {
             if (!isset($row['Option'])) {
                 exit('Option column missing');

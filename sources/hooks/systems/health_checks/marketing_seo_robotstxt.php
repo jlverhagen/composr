@@ -33,7 +33,7 @@
 /**
  * Hook class.
  */
-class Hook_health_check_marketing_seo_robotstxt extends Hook_Health_Check
+class Hook_health_check_marketing_seo_robotstxt extends Source_hook_health_check
 {
     /*
     Hook covers both SEO and Security issues in robots.txt

@@ -264,7 +264,7 @@ class Module_cms_wiki
         require_lang('notifications');
         if (addon_installed('actionlog')) {
             require_code('revisions_engine_database');
-            $revision_engine = new RevisionEngineDatabase(false);
+            $revision_engine = object_factory('Source_revisions_engine_database', false, [false]);
             $notify = ($page_id === null) || ($revision_engine->find_most_recent_category_change('wiki_page', strval($page_id)) < time() - 60 * 10);
         } else {
             $notify = true;
@@ -467,7 +467,7 @@ class Module_cms_wiki
 
         if (addon_installed('actionlog')) {
             require_code('revisions_engine_database');
-            $revision_engine = new RevisionEngineDatabase();
+            $revision_engine = object_factory('Source_revisions_engine_database');
             $revision_loaded = null;
             $revisions = $revision_engine->ui_revisions_controller('wiki_page', strval($id), $description, $revision_loaded);
             if ((get_param_integer('diffing', 0) == 1) && (!$revisions->is_empty())) {

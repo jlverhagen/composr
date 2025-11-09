@@ -1577,8 +1577,8 @@ function cms_rawurlrecode(string $url, bool $force = false, bool $tolerate_error
  */
 function normalise_idn_url(string $url) : string
 {
-    require_code('urls_simplifier');
-    $coder_ob = new HarmlessURLCoder();
+    require_code('urls_coder');
+    $coder_ob = new Source_URL_coder();
     return $coder_ob->encode($url);
 }
 

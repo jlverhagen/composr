@@ -540,9 +540,7 @@ class Module_cms_comcode_pages
         $rows = [];
         foreach ($files_list as $page_link => $path_bits) {
             list($zone, $page) = explode(':', $page_link, 2);
-            if (!is_string($page)) {
-                $page = strval($page);
-            }
+            $page = strval($page);
 
             // Check permissions
             if (!has_actual_page_access(get_member(), $page, $zone)) {
@@ -983,7 +981,7 @@ class Module_cms_comcode_pages
 
         if (addon_installed('actionlog')) {
             require_code('revisions_engine_files');
-            $revision_engine = new RevisionEngineFiles();
+            $revision_engine = object_factory('Source_revisions_engine_files');
             $directory = $zone . (($zone == '') ? '' : '/') . 'pages/comcode_custom/' . $lang;
             $revision_loaded = null;
             $revisions = $revision_engine->ui_revisions_controller($directory, $file, 'txt', 'COMCODE_PAGE_EDIT', $contents, $revision_loaded);
@@ -1453,9 +1451,7 @@ class Module_cms_comcode_pages
                 send_http_output_ping();
 
                 list($_zone, $_page) = explode(':', $page_link, 2);
-                if (!is_string($_page)) {
-                    $_page = strval($_page);
-                }
+                $_page = strval($_page);
 
                 $__pages[] = [
                     'the_zone' => $_zone,

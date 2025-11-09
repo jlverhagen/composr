@@ -510,7 +510,7 @@ function reinstall_module(string $zone, string $module) : bool
         $functions = extract_module_functions($module_path, ['info', 'install', 'uninstall']);
     }
 
-    // TODO: must be kept up to date via Standard_crud_module (but do not include min_cms_version nor max_cms_version, and addon should be NA)
+    // TODO: must be kept up to date via Source_standard_crud_module (but do not include min_cms_version nor max_cms_version, and addon should be NA)
     $info = [];
     $info['author'] = 'Chris Graham';
     $info['organisation'] = 'Composr';

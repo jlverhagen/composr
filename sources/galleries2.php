@@ -924,7 +924,7 @@ function add_image($title, string $cat, $description, string $url, int $validate
         $subject = do_lang('IMAGE_NOTIFICATION_MAIL_SUBJECT', get_site_name(), strip_comcode($title));
         $self_url = build_url(['page' => 'galleries', 'type' => 'image', 'id' => $id], get_module_zone('galleries'), [], false, false, true);
         $mail = do_notification_lang('IMAGE_NOTIFICATION_MAIL', comcode_escape(get_site_name()), comcode_escape($title), [comcode_escape($self_url->evaluate())]);
-        dispatch_notification('gallery_entry', $cat, $subject, $mail, $privacy_limits);
+        Source_notification_dispatcher::dispatch_notification('gallery_entry', $cat, $subject, $mail, $privacy_limits);
     }
 
     decache_gallery_blocks();
@@ -1062,7 +1062,7 @@ function edit_image(int $id, string $title, string $cat, string $description, st
         require_code('notifications');
         $subject = do_lang('IMAGE_NOTIFICATION_MAIL_SUBJECT', get_site_name(), strip_comcode($title));
         $mail = do_notification_lang('IMAGE_NOTIFICATION_MAIL', comcode_escape(get_site_name()), comcode_escape($title), [comcode_escape($self_url->evaluate())]);
-        dispatch_notification('gallery_entry', $cat, $subject, $mail, $privacy_limits);
+        Source_notification_dispatcher::dispatch_notification('gallery_entry', $cat, $subject, $mail, $privacy_limits);
     }
 
     reorganise_uploads__gallery_images(['id' => $id]);
@@ -1253,7 +1253,7 @@ function add_video(string $title, string $cat, string $description, string $url,
         $subject = do_lang('VIDEO_NOTIFICATION_MAIL_SUBJECT', get_site_name(), strip_comcode($title));
         $self_url = build_url(['page' => 'galleries', 'type' => 'video', 'id' => $id], get_module_zone('galleries'), [], false, false, true);
         $mail = do_notification_lang('VIDEO_NOTIFICATION_MAIL', comcode_escape(get_site_name()), comcode_escape($title), [comcode_escape($self_url->evaluate())]);
-        dispatch_notification('gallery_entry', $cat, $subject, $mail, $privacy_limits);
+        Source_notification_dispatcher::dispatch_notification('gallery_entry', $cat, $subject, $mail, $privacy_limits);
     }
 
     require_code('content2');
@@ -1390,7 +1390,7 @@ function edit_video(int $id, string $title, string $cat, string $description, st
         require_code('notifications');
         $subject = do_lang('VIDEO_NOTIFICATION_MAIL_SUBJECT', get_site_name(), strip_comcode($title));
         $mail = do_notification_lang('VIDEO_NOTIFICATION_MAIL', comcode_escape(get_site_name()), comcode_escape($title), [comcode_escape($self_url->evaluate())]);
-        dispatch_notification('gallery_entry', $cat, $subject, $mail, $privacy_limits);
+        Source_notification_dispatcher::dispatch_notification('gallery_entry', $cat, $subject, $mail, $privacy_limits);
     }
 
     reorganise_uploads__gallery_videos(['id' => $id]);

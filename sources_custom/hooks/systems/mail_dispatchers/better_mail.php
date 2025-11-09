@@ -24,14 +24,12 @@
  * @package    better_mail
  */
 
-/*FORCE_ORIGINAL_LOAD_FIRST*/
-
 /**
  * E-mail dispatcher object. Handles the actual delivery of an e-mail over PHP's mail function.
  *
  * @package core
  */
-class Mail_dispatcher_override extends Mail_dispatcher_base
+class Hook_mail_dispatcher_better_mail extends Source_mail_dispatcher_base
 {
     // Configuration if using SMTP
     public $smtp_sockets_host;
@@ -64,18 +62,22 @@ class Mail_dispatcher_override extends Mail_dispatcher_base
     }
 
     /**
-     * Find whether the dispatcher instance is capable of sending e-mails.
+     * Find the priority for this dispatcher.
      *
      * @param  array $advanced_parameters List of advanced parameters
-     * @return boolean Whether the dispatcher instance is capable of sending e-mails
+     * @return integer One of MAIL_DISPATCHER_PRIORITY_* constants
      */
-    public function is_dispatcher_available(array $advanced_parameters) : bool
+    public static function dispatcher_priority(array $advanced_parameters) : int
     {
         $smtp_sockets_use = isset($advanced_parameters['smtp_sockets_use']) ? $advanced_parameters['smtp_sockets_use'] : null; // Whether to use SMTP sockets (null: default configured)
         if ($smtp_sockets_use === null) {
             $smtp_sockets_use = (intval(get_option('smtp_sockets_use')) == 1);
         }
-        return $smtp_sockets_use;
+        if ($smtp_sockets_use) {
+            return MAIL_DISPATCHER_PRIORITY_HIGH;
+        }
+
+        return MAIL_DISPATCHER_PRIORITY_NONE;
     }
 
     /**

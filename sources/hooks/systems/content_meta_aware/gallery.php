@@ -33,7 +33,7 @@
 /**
  * Hook class.
  */
-class Hook_content_meta_aware_gallery extends Hook_CMA
+class Hook_content_meta_aware_gallery extends Source_hook_CMA
 {
     /**
      * Get content type details.
@@ -80,7 +80,7 @@ class Hook_content_meta_aware_gallery extends Hook_CMA
             'description_field' => 'the_description',
             'description_field_dereference' => true,
             'description_field_supports_comcode' => true,
-            'image_field' => ['rep_image', 'CALL: generate_gallery_entry_image_url'],
+            'image_field' => ['rep_image', 'CALL: Hook_content_meta_aware_gallery::generate_gallery_entry_image_url'],
             'image_field_is_theme_image' => false,
             'alternate_icon_theme_image' => null,
 
@@ -205,43 +205,43 @@ class Hook_content_meta_aware_gallery extends Hook_CMA
     {
         return 'choose_gallery';
     }
-}
 
-/**
- * Find an entry image.
- *
- * @param  array $row Database row of entry
- * @return URLPATH The image URL (blank: none)
- */
-function generate_gallery_entry_image_url(array $row) : string
-{
-    if ($row['rep_image'] != '') {
-        $image_url = $row['rep_image'];
-        if (url_is_local($image_url)) {
-            $image_url = get_custom_base_url() . '/' . $image_url;
+    /**
+     * Find an entry image.
+     *
+     * @param  array $row Database row of entry
+     * @return URLPATH The image URL (blank: none)
+     */
+    public static function generate_gallery_entry_image_url(array $row) : string
+    {
+        if ($row['rep_image'] != '') {
+            $image_url = $row['rep_image'];
+            if (url_is_local($image_url)) {
+                $image_url = get_custom_base_url() . '/' . $image_url;
+            }
+            return $image_url;
         }
-        return $image_url;
-    }
 
-    if (!addon_installed('galleries')) {
+        if (!addon_installed('galleries')) {
+            return '';
+        }
+
+        $image_url = $GLOBALS['SITE_DB']->query_select_value_if_there('images', 'url', ['cat' => $row['name']]);
+        if (!cms_empty_safe($image_url)) {
+            if (url_is_local($image_url)) {
+                $image_url = get_custom_base_url() . '/' . $image_url;
+            }
+            return $image_url;
+        }
+
+        $image_url = $GLOBALS['SITE_DB']->query_select_value_if_there('videos', 'thumb_url', ['cat' => $row['name']]);
+        if (!cms_empty_safe($image_url)) {
+            if (url_is_local($image_url)) {
+                $image_url = get_custom_base_url() . '/' . $image_url;
+            }
+            return $image_url;
+        }
+
         return '';
     }
-
-    $image_url = $GLOBALS['SITE_DB']->query_select_value_if_there('images', 'url', ['cat' => $row['name']]);
-    if (!cms_empty_safe($image_url)) {
-        if (url_is_local($image_url)) {
-            $image_url = get_custom_base_url() . '/' . $image_url;
-        }
-        return $image_url;
-    }
-
-    $image_url = $GLOBALS['SITE_DB']->query_select_value_if_there('videos', 'thumb_url', ['cat' => $row['name']]);
-    if (!cms_empty_safe($image_url)) {
-        if (url_is_local($image_url)) {
-            $image_url = get_custom_base_url() . '/' . $image_url;
-        }
-        return $image_url;
-    }
-
-    return '';
 }

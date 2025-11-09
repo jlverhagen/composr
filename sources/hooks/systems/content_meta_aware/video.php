@@ -33,7 +33,7 @@
 /**
  * Hook class.
  */
-class Hook_content_meta_aware_video extends Hook_CMA
+class Hook_content_meta_aware_video extends Source_hook_CMA
 {
     /**
      * Get content type details.
@@ -80,7 +80,7 @@ class Hook_content_meta_aware_video extends Hook_CMA
             'alternate_icon_theme_image' => null,
 
             'video_field' => ['url', 'video_width', 'video_height', 'submitter'],
-            'video_generator' => 'generate_video_entry_video_details',
+            'video_generator' => 'Hook_content_meta_aware_video::generate_video_entry_video_details',
 
             'view_page_link_pattern' => '_SEARCH:galleries:video:_WILD',
             'edit_page_link_pattern' => '_SEARCH:cms_galleries:_edit_other:_WILD',
@@ -187,28 +187,28 @@ class Hook_content_meta_aware_video extends Hook_CMA
     {
         return 'choose_video';
     }
-}
 
-/**
- * Find an entry video details.
- *
- * @param  array $row Database row of entry
- * @return array A tuple: Video URL, Video width, Video height, Video mime-type
- */
-function generate_video_entry_video_details(array $row) : array
-{
-    if (!addon_installed('galleries')) {
-        return ['', 0, 0, 'application/octet-stream'];
+    /**
+     * Find an entry video details.
+     *
+     * @param  array $row Database row of entry
+     * @return array A tuple: Video URL, Video width, Video height, Video mime-type
+     */
+    public static function generate_video_entry_video_details(array $row) : array
+    {
+        if (!addon_installed('galleries')) {
+            return ['', 0, 0, 'application/octet-stream'];
+        }
+
+        $url = $row['url'];
+
+        $extension = get_file_extension($url);
+        require_code('mime_types');
+        $mime_type = get_mime_type($extension, has_privilege($row['submitter'], 'comcode_dangerous'));
+
+        $width = $row['video_width'];
+        $height = $row['video_height'];
+
+        return [$url, $width, $height, $mime_type];
     }
-
-    $url = $row['url'];
-
-    $extension = get_file_extension($url);
-    require_code('mime_types');
-    $mime_type = get_mime_type($extension, has_privilege($row['submitter'], 'comcode_dangerous'));
-
-    $width = $row['video_width'];
-    $height = $row['video_height'];
-
-    return [$url, $width, $height, $mime_type];
 }

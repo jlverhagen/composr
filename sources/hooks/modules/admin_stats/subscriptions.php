@@ -33,7 +33,7 @@
 /**
  * Hook class.
  */
-class Hook_admin_stats_subscriptions extends CMSStatsProvider
+class Hook_admin_stats_subscriptions extends Source_hook_stats_provider
 {
     /**
      * Find metadata about stats graphs that are provided by this stats hook.
@@ -54,9 +54,9 @@ class Hook_admin_stats_subscriptions extends CMSStatsProvider
                 'label' => do_lang_tempcode('MODULE_TRANS_NAME_subscriptions'),
                 'category' => 'conversions',
                 'filters' => [
-                    'subscriptions__day_range' => new CMSStatsDayRangeFilter('subscriptions__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
+                    'subscriptions__day_range' => new Source_stats_filter_day_range('subscriptions__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
                 ],
-                'pivot' => new CMSStatsDatePivot('subscriptions__pivot', $this->get_date_pivots(!$for_kpi)),
+                'pivot' => new Source_stats_filter_date_pivot('subscriptions__pivot', $this->get_date_pivots(!$for_kpi)),
                 'support_kpis' => self::KPI_HIGH_IS_GOOD,
             ],
         ];

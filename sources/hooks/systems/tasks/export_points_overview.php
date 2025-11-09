@@ -56,11 +56,11 @@ class Hook_task_export_points_overview
 
         require_code('files_spreadsheets_write');
         if ($file_type === null) {
-            $file_type = spreadsheet_write_default();
+            $file_type = Source_spreadsheet_writer::spreadsheet_write_default();
         }
         $filename = 'points_overview_' . date('Y-m-d', $from) . '--' . date('Y-m-d', $to) . '.' . $file_type;
         $outfile_path = null;
-        $sheet_writer = spreadsheet_open_write($outfile_path, $filename);
+        $sheet_writer = Source_spreadsheet_writer::spreadsheet_open_write($outfile_path, $filename);
 
         $quizzes = [];
         if (addon_installed('quizzes')) {

@@ -129,9 +129,9 @@ class Hook_cron_content_reviews
             require_code('notifications');
             $subject = do_lang('NOTIFICATION_SUBJECT_CONTENT_REVIEWS' . (($auto_action == 'delete') ? '_delete' : ''), $title, $auto_action_str);
             $message = do_notification_lang('NOTIFICATION_BODY_CONTENT_REVIEWS' . (($auto_action == 'delete') ? '_delete' : ''), $title, $auto_action_str, $edit_url->evaluate());
-            dispatch_notification('content_reviews', $content_type, $subject, $message, null, null, ['priority' => 4]);
+            Source_notification_dispatcher::dispatch_notification('content_reviews', $content_type, $subject, $message, null, null, ['priority' => 4]);
             if (($submitter !== null) && (!notifications_enabled('content_reviews', $content_type, $submitter))) {
-                dispatch_notification('content_reviews__own', $content_type, $subject, $message, [$submitter], null, ['priority' => 4]);
+                Source_notification_dispatcher::dispatch_notification('content_reviews__own', $content_type, $subject, $message, [$submitter], null, ['priority' => 4]);
             }
 
             // Do auto-action

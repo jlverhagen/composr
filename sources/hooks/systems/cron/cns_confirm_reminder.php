@@ -72,7 +72,7 @@ class Hook_cron_cns_confirm_reminder
             $query = 'SELECT * FROM ' . $GLOBALS['FORUM_DB']->get_table_prefix() . 'f_members WHERE ' . db_string_not_equal_to('m_validated_email_confirm_code', '') . ' AND m_join_time>' . strval($last_run - self::SECS_REMIND_AFTER) . ' AND m_join_time<=' . strval($last_run);
             $this->rows = $GLOBALS['FORUM_DB']->query($query);
 
-            $pc = load_parental_control_settings();
+            $pc = object_factory('Source_parental_controls', false, [false], true);
 
             foreach ($this->rows as $i => $row) {
                 $age_time = cms_mktime(0, 0, 0, $row['m_dob_month'], $row['m_dob_day'], $row['m_dob_year']);

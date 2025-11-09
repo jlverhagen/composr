@@ -33,7 +33,7 @@
 /**
  * Hook class.
  */
-class Hook_content_meta_aware_catalogue_category extends Hook_CMA
+class Hook_content_meta_aware_catalogue_category extends Source_hook_CMA
 {
     /**
      * Get content type details.
@@ -53,8 +53,8 @@ class Hook_content_meta_aware_catalogue_category extends Hook_CMA
 
             'content_type_label' => 'catalogues:CATALOGUE_CATEGORY',
             'content_type_universal_label' => 'Catalogue category',
-            'content_type_label_override' => 'CALL: generate_catalogue_category_content_type_label',
-            'content_type_universal_label_override' => 'CALL: generate_catalogue_category_content_type_universal_label',
+            'content_type_label_override' => 'CALL: Hook_content_meta_aware_catalogue_category::generate_catalogue_category_content_type_label',
+            'content_type_universal_label_override' => 'CALL: Hook_content_meta_aware_catalogue_category::generate_catalogue_category_content_type_universal_label',
 
             'db' => $GLOBALS['SITE_DB'],
             'table' => 'catalogue_categories',
@@ -198,44 +198,44 @@ class Hook_content_meta_aware_catalogue_category extends Hook_CMA
     {
         return 'choose_catalogue_category';
     }
-}
 
-/**
- * Find an entry content-type language string label.
- *
- * @param  array $row Database row of entry
- * @return Tempcode Label
- */
-function generate_catalogue_category_content_type_label(array $row) : object
-{
-    if (!addon_installed('catalogues')) {
-        return new Tempcode();
+    /**
+     * Find an entry content-type language string label.
+     *
+     * @param  array $row Database row of entry
+     * @return Tempcode Label
+     */
+    public static function generate_catalogue_category_content_type_label(array $row) : object
+    {
+        if (!addon_installed('catalogues')) {
+            return new Tempcode();
+        }
+
+        if (!array_key_exists('c_name', $row)) {
+            return do_lang_tempcode('catalogues:CATALOGUE_CATEGORY');
+        }
+        require_code('catalogues');
+        $catalogue = load_catalogue_row($row['c_name']);
+        return do_lang_tempcode('catalogues:CATALOGUE_GENERIC_CATEGORY', escape_html(get_translated_text($catalogue['c_title'])));
     }
 
-    if (!array_key_exists('c_name', $row)) {
-        return do_lang_tempcode('catalogues:CATALOGUE_CATEGORY');
-    }
-    require_code('catalogues');
-    $catalogue = load_catalogue_row($row['c_name']);
-    return do_lang_tempcode('catalogues:CATALOGUE_GENERIC_CATEGORY', escape_html(get_translated_text($catalogue['c_title'])));
-}
+    /**
+     * Find an entry content-type universal label (doesn't depend on language pack).
+     *
+     * @param  array $row Database row of entry
+     * @return string Label
+     */
+    public static function generate_catalogue_category_content_type_universal_label(array $row) : string
+    {
+        if (!addon_installed('catalogues')) {
+            return 'Catalogue category';
+        }
 
-/**
- * Find an entry content-type universal label (doesn't depend on language pack).
- *
- * @param  array $row Database row of entry
- * @return string Label
- */
-function generate_catalogue_category_content_type_universal_label(array $row) : string
-{
-    if (!addon_installed('catalogues')) {
-        return 'Catalogue category';
+        if (!array_key_exists('c_name', $row)) {
+            return 'Catalogue category';
+        }
+        require_code('catalogues');
+        $catalogue = load_catalogue_row($row['c_name']);
+        return get_translated_text($catalogue['c_title']) . ' category';
     }
-
-    if (!array_key_exists('c_name', $row)) {
-        return 'Catalogue category';
-    }
-    require_code('catalogues');
-    $catalogue = load_catalogue_row($row['c_name']);
-    return get_translated_text($catalogue['c_title']) . ' category';
 }

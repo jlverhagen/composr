@@ -260,7 +260,7 @@ class stats_test_set extends cms_test_case
         // Test that the filters do not cause crashes (TODO: does not yet actually test the filters filter as they should)
         foreach ($filters as $filter_name => $filter_class) {
             // Test day range filters
-            if ($filter_class instanceof CMSStatsDayRangeFilter) {
+            if ($filter_class instanceof Source_stats_filter_day_range) {
                 // Test integer filter
                 $data = $hook->generate_final_data($bucket, $pivot, [
                     $filter_name => $p_day
@@ -281,7 +281,7 @@ class stats_test_set extends cms_test_case
             }
 
             // Test text filters
-            if ($filter_class instanceof CMSStatsTextFilter) {
+            if ($filter_class instanceof Source_stats_filter_text) {
                 // Test blank filter
                 $data = $hook->generate_final_data($bucket, $pivot, [
                     $filter_name => ''
@@ -296,7 +296,7 @@ class stats_test_set extends cms_test_case
             }
 
             // Test tick filters
-            if ($filter_class instanceof CMSStatsTickFilter) {
+            if ($filter_class instanceof Source_stats_filter_tick) {
                 // Test un-ticked
                 $data = $hook->generate_final_data($bucket, $pivot, [
                     $filter_name => '0'
@@ -311,7 +311,7 @@ class stats_test_set extends cms_test_case
             }
 
             // Test list filters
-            if ($filter_class instanceof CMSStatsListFilter) {
+            if ($filter_class instanceof Source_stats_filter_list) {
                 foreach ($filter_class->get_list_values() as $key => $val) {
                     $data = $hook->generate_final_data($bucket, $pivot, [
                         $filter_name => $val
@@ -321,7 +321,7 @@ class stats_test_set extends cms_test_case
             }
 
             // Test pivot filters
-            if ($filter_class instanceof CMSStatsDatePivot) {
+            if ($filter_class instanceof Source_stats_filter_date_pivot) {
                 foreach ($filter_class->get_pivot_values() as $key => $val) {
                     $data = $hook->generate_final_data($bucket, $pivot, [
                         $filter_name => $val

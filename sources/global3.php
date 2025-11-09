@@ -567,7 +567,7 @@ function detect_string_bom(string $contents) : array
  * Return the contents of the URL by downloading it over HTTP. If a byte limit is given, it will only download that many bytes. It outputs warnings, returning null, on error.
  *
  * @param  URLPATH $url The URL to download
- * @param  array $options Map of options (see the properties of the HttpDownloader class for what you may set)
+ * @param  array $options Map of options (see the properties of the Source_HTTP_downloader class for what you may set)
  * @return ?string The data downloaded (null: error)
  */
 function http_get_contents(string $url, array $options = []) : ?string
@@ -583,8 +583,8 @@ function http_get_contents(string $url, array $options = []) : ?string
  * Return the file in the URL by downloading it over HTTP. If a byte limit is given, it will only download that many bytes. It outputs warnings, returning null, on error.
  *
  * @param  URLPATH $url The URL to download
- * @param  array $options Map of options (see the properties of the HttpDownloader class for what you may set)
- * @return object HttpDownloader object, which can be checked for return data
+ * @param  array $options Map of options (see the properties of the Source_HTTP_downloader class for what you may set)
+ * @return object Source_HTTP_downloader object, which can be checked for return data
  */
 function cms_http_request(string $url, array $options = []) : object
 {
@@ -5089,7 +5089,7 @@ function is_maintained(string $code) : bool
             $path = get_file_base() . '/data/maintenance_status.csv';
         }
         require_code('files_spreadsheets_read');
-        $sheet_reader = spreadsheet_open_read($path, 'maintenance_status.csv');
+        $sheet_reader = Source_spreadsheet_reader::spreadsheet_open_read($path, 'maintenance_status.csv');
         while (($row = $sheet_reader->read_row()) !== false) {
             $cache[$row['Codename']] = !empty($row['Current active sponsor']);
         }

@@ -191,7 +191,7 @@ function add_calendar_event(int $type, string $recurrence, ?int $recurrences, in
         $subject = do_lang('CALENDAR_EVENT_NOTIFICATION_MAIL_SUBJECT', get_site_name(), strip_comcode($title), $date_range);
         $self_url = build_url(['page' => 'calendar', 'type' => 'view', 'id' => $id], get_module_zone('calendar'), [], false, false, true);
         $mail = do_notification_lang('CALENDAR_EVENT_NOTIFICATION_MAIL', comcode_escape(get_site_name()), comcode_escape($title), [$self_url->evaluate(), comcode_escape($date_range)]);
-        dispatch_notification('calendar_event', strval($type), $subject, $mail, $privacy_limits);
+        Source_notification_dispatcher::dispatch_notification('calendar_event', strval($type), $subject, $mail, $privacy_limits);
     }
 
     if ($member_calendar !== null) {
@@ -204,7 +204,7 @@ function add_calendar_event(int $type, string $recurrence, ?int $recurrences, in
             $subject = do_lang('MEMBER_CALENDAR_NOTIFICATION_NEW_EVENT_SUBJECT', get_site_name(), strip_comcode($title), [$date_range, $username]);
             $self_url = build_url(['page' => 'calendar', 'type' => 'view', 'id' => $id, 'member_id' => $member_calendar, 'private' => 1], get_module_zone('calendar'), [], false, false, true);
             $mail = do_notification_lang('MEMBER_CALENDAR_NOTIFICATION_NEW_EVENT_BODY', comcode_escape(get_site_name()), comcode_escape($title), [$self_url->evaluate(), comcode_escape($date_range), comcode_escape($username)]);
-            dispatch_notification('member_calendar_changes', strval($member_calendar), $subject, $mail, [$member_calendar]);
+            Source_notification_dispatcher::dispatch_notification('member_calendar_changes', strval($member_calendar), $subject, $mail, [$member_calendar]);
         }
     }
 
@@ -387,7 +387,7 @@ function edit_calendar_event(int $id, ?int $type, string $recurrence, ?int $recu
         $subject = do_lang('CALENDAR_EVENT_NOTIFICATION_MAIL_SUBJECT', get_site_name(), strip_comcode($title), $date_range);
         $self_url = build_url(['page' => 'calendar', 'type' => 'view', 'id' => $id], get_module_zone('calendar'), [], false, false, true);
         $mail = do_notification_lang('CALENDAR_EVENT_NOTIFICATION_MAIL', comcode_escape(get_site_name()), comcode_escape($title), [$self_url->evaluate(), comcode_escape($date_range)]);
-        dispatch_notification('calendar_event', strval($type), $subject, $mail, $privacy_limits);
+        Source_notification_dispatcher::dispatch_notification('calendar_event', strval($type), $subject, $mail, $privacy_limits);
     }
 
     if ($member_calendar !== null) {
@@ -405,7 +405,7 @@ function edit_calendar_event(int $id, ?int $type, string $recurrence, ?int $recu
             $self_url = build_url(['page' => 'calendar', 'type' => 'view', 'id' => $id, 'member_id' => $member_calendar, 'private' => 1], get_module_zone('calendar'), [], false, false, true);
             $l_body = $rescheduled ? 'MEMBER_CALENDAR_NOTIFICATION_RESCHEDULED_EVENT_BODY' : 'MEMBER_CALENDAR_NOTIFICATION_EDITED_EVENT_BODY';
             $mail = do_notification_lang($l_body, comcode_escape(get_site_name()), comcode_escape($title), [$self_url->evaluate(), comcode_escape($date_range), comcode_escape($username)]);
-            dispatch_notification('member_calendar_changes', strval($member_calendar), $subject, $mail, [(get_member() == $member_calendar) ? $myrow['e_submitter'] : $member_calendar]);
+            Source_notification_dispatcher::dispatch_notification('member_calendar_changes', strval($member_calendar), $subject, $mail, [(get_member() == $member_calendar) ? $myrow['e_submitter'] : $member_calendar]);
         }
     }
 
@@ -506,7 +506,7 @@ function delete_calendar_event(int $id)
             list($date_range) = get_calendar_event_first_date($timezone, $do_timezone_conv, $start_year, $start_month, $start_day, $start_monthly_spec_type, $start_hour, $start_minute, $end_year, $end_month, $end_day, $end_monthly_spec_type, $end_hour, $end_minute, $recurrence, $recurrences);
             $subject = do_lang('MEMBER_CALENDAR_NOTIFICATION_DELETED_EVENT_SUBJECT', get_site_name(), strip_comcode($e_title), [$date_range, $username]);
             $mail = do_notification_lang('MEMBER_CALENDAR_NOTIFICATION_DELETED_EVENT_BODY', comcode_escape(get_site_name()), comcode_escape($e_title), [comcode_escape($date_range), comcode_escape($username)]);
-            dispatch_notification('member_calendar_changes', strval($member_calendar), $subject, $mail, [(get_member() == $member_calendar) ? $myrow['e_submitter'] : $member_calendar]);
+            Source_notification_dispatcher::dispatch_notification('member_calendar_changes', strval($member_calendar), $subject, $mail, [(get_member() == $member_calendar) ? $myrow['e_submitter'] : $member_calendar]);
         }
     }
 

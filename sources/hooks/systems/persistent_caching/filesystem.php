@@ -33,8 +33,25 @@
 /**
  * Cache driver class.
  */
-class Persistent_caching_filesystem
+class Hook_persistent_cache_filesystem
 {
+    /**
+     * Determine the priority of this cache.
+     * Zero is not available. Otherwise, lower number is higher priority.
+     *
+     * @return integer The priority
+     */
+    public static function cache_priority() : int
+    {
+        global $SITE_INFO;
+
+        if ((file_exists(get_custom_file_base() . '/caches/persistent/')) && (($SITE_INFO['use_persistent_cache'] == 'filesystem') || ($SITE_INFO['use_persistent_cache'] == '1'))) {
+            return 1000; // Least efficient; treat as a last resort, even lower than deprecated cache engines
+        }
+
+        return 0;
+    }
+
     /**
      * Constructor.
      */

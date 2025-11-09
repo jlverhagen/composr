@@ -39,7 +39,7 @@ Notes...
 /**
  * Hook class.
  */
-class Hook_media_rendering_oembed extends Media_renderer_with_fallback
+class Hook_media_rendering_oembed extends Source_media_renderer_with_fallback
 {
     /**
      * Get the label for this media rendering type.
@@ -289,7 +289,7 @@ class Hook_media_rendering_oembed extends Media_renderer_with_fallback
             case 'text/xml':
             case 'text/xml+oembed':
                 require_code('xml');
-                $parsed = new CMS_simple_xml_reader($result[0]);
+                $parsed = object_factory('Source_simple_xml_reader', false, [$result[0]]);
                 list($root_tag, $root_attributes, , $this_children) = $parsed->gleamed;
                 if ($root_tag == 'oembed') {
                     foreach ($this_children as $child) {

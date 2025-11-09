@@ -27,7 +27,7 @@
 /**
  * Hook class.
  */
-class Hook_admin_stats_google_keywords extends CMSStatsProvider
+class Hook_admin_stats_google_keywords extends Source_hook_stats_provider
 {
     /**
      * Find metadata about stats graphs that are provided by this stats hook.
@@ -58,8 +58,8 @@ class Hook_admin_stats_google_keywords extends CMSStatsProvider
                 'label' => do_lang_tempcode('GOOGLE_KEYWORDS_HITS'),
                 'category' => 'search_traffic',
                 'filters' => [
-                    'google_keywords_hits__day_range' => new CMSStatsDayRangeFilter('google_keywords_hits__day_range', do_lang_tempcode('DATE_RANGE'), [$max_day - 365, $max_day], $for_kpi),
-                    'google_keywords_hits__keyword' => new CMSStatsTextFilter('google_keywords_hits__keyword', do_lang_tempcode('KEYWORD')),
+                    'google_keywords_hits__day_range' => new Source_stats_filter_day_range('google_keywords_hits__day_range', do_lang_tempcode('DATE_RANGE'), [$max_day - 365, $max_day], $for_kpi),
+                    'google_keywords_hits__keyword' => new Source_stats_filter_text('google_keywords_hits__keyword', do_lang_tempcode('KEYWORD')),
                 ],
                 'pivot' => null,
             ],
@@ -67,8 +67,8 @@ class Hook_admin_stats_google_keywords extends CMSStatsProvider
                 'label' => do_lang_tempcode('GOOGLE_KEYWORDS_IMPRESSIONS'),
                 'category' => 'search_traffic',
                 'filters' => [
-                    'google_keywords_impressions__day_range' => new CMSStatsDayRangeFilter('google_keywords_impressions__day_range', do_lang_tempcode('DATE_RANGE'), [$max_day - 365, $max_day], $for_kpi),
-                    'google_keywords_impressions__keyword' => new CMSStatsTextFilter('google_keywords_impressions__keyword', do_lang_tempcode('KEYWORD')),
+                    'google_keywords_impressions__day_range' => new Source_stats_filter_day_range('google_keywords_impressions__day_range', do_lang_tempcode('DATE_RANGE'), [$max_day - 365, $max_day], $for_kpi),
+                    'google_keywords_impressions__keyword' => new Source_stats_filter_text('google_keywords_impressions__keyword', do_lang_tempcode('KEYWORD')),
                 ],
                 'pivot' => null,
             ],
@@ -76,8 +76,8 @@ class Hook_admin_stats_google_keywords extends CMSStatsProvider
                 'label' => do_lang_tempcode('GOOGLE_KEYWORDS_CTR'),
                 'category' => 'search_traffic',
                 'filters' => [
-                    'google_keywords_ctr__day_range' => new CMSStatsDayRangeFilter('google_keywords_ctr__day_range', do_lang_tempcode('DATE_RANGE'), [$max_day - 365, $max_day], $for_kpi),
-                    'google_keywords_ctr__keyword' => new CMSStatsTextFilter('google_keywords_ctr__keyword', do_lang_tempcode('KEYWORD')),
+                    'google_keywords_ctr__day_range' => new Source_stats_filter_day_range('google_keywords_ctr__day_range', do_lang_tempcode('DATE_RANGE'), [$max_day - 365, $max_day], $for_kpi),
+                    'google_keywords_ctr__keyword' => new Source_stats_filter_text('google_keywords_ctr__keyword', do_lang_tempcode('KEYWORD')),
                 ],
                 'pivot' => null,
             ],
@@ -85,8 +85,8 @@ class Hook_admin_stats_google_keywords extends CMSStatsProvider
                 'label' => do_lang_tempcode('GOOGLE_KEYWORDS_POSITIONS'),
                 'category' => 'search_traffic',
                 'filters' => [
-                    'google_keywords_positions__day_range' => new CMSStatsDayRangeFilter('google_keywords_positions__day_range', do_lang_tempcode('DATE_RANGE'), [$max_day - 365, $max_day], $for_kpi),
-                    'google_keywords_positions__keyword' => new CMSStatsTextFilter('google_keywords_positions__keyword', do_lang_tempcode('KEYWORD')),
+                    'google_keywords_positions__day_range' => new Source_stats_filter_day_range('google_keywords_positions__day_range', do_lang_tempcode('DATE_RANGE'), [$max_day - 365, $max_day], $for_kpi),
+                    'google_keywords_positions__keyword' => new Source_stats_filter_text('google_keywords_positions__keyword', do_lang_tempcode('KEYWORD')),
                 ],
                 'pivot' => null,
             ],

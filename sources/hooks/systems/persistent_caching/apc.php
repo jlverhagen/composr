@@ -30,14 +30,31 @@
  * @package    core
  */
 
-/*EXTRA FUNCTIONS: wincache\_.+*/
+/*EXTRA FUNCTIONS: apc\_.+*/
 
 /**
  * Cache driver class.
  */
-class Persistent_caching_wincache
+class Hook_persistent_cache_apc
 {
     public $objects_list = null;
+
+    /**
+     * Determine the priority of this cache.
+     * Zero is not available. Otherwise, lower number is higher priority.
+     *
+     * @return integer The priority
+     */
+    public static function cache_priority() : int
+    {
+        global $SITE_INFO;
+
+        if ((function_exists('apc_fetch')) && (($SITE_INFO['use_persistent_cache'] == 'apc') || ($SITE_INFO['use_persistent_cache'] == '1'))) {
+            return 100; // APC is no-longer available, so this should be treated as a fallback
+        }
+
+        return 0;
+    }
 
     /**
      * Instruction to load up the objects list.
@@ -47,9 +64,8 @@ class Persistent_caching_wincache
     public function &load_objects_list() : array
     {
         if ($this->objects_list === null) {
-            $success = false;
-            $this->objects_list = wincache_ucache_get(get_file_base() . 'PERSISTENT_CACHE_OBJECTS', $success);
-            if ($this->objects_list === null || !$success) {
+            $this->objects_list = apc_fetch(get_file_base() . 'PERSISTENT_CACHE_OBJECTS');
+            if ($this->objects_list === false) {
                 $this->objects_list = [];
             }
         }
@@ -65,9 +81,8 @@ class Persistent_caching_wincache
      */
     public function get(string $key, ?int $min_cache_date = null)
     {
-        $success = false;
-        $data = wincache_ucache_get($key, $success);
-        if (!$success) {
+        $data = apc_fetch($key);
+        if ($data === false) {
             return null;
         }
         if (($min_cache_date !== null) && ($data[0] < $min_cache_date)) {
@@ -90,13 +105,10 @@ class Persistent_caching_wincache
         $this->load_objects_list();
         if (!array_key_exists($key, $this->objects_list)) {
             $this->objects_list[$key] = true;
-            wincache_ucache_set(get_file_base() . 'PERSISTENT_CACHE_OBJECTS', $this->objects_list);
+            @apc_store(get_file_base() . 'PERSISTENT_CACHE_OBJECTS', $this->objects_list);
         }
 
-        if ($expire_secs === null) {
-            $expire_secs = 0;
-        }
-        wincache_ucache_set($key, [time(), $data], $expire_secs);
+        @apc_store($key, [time(), $data], $expire_secs);
     }
 
     /**
@@ -109,9 +121,9 @@ class Persistent_caching_wincache
         // Update list of persistent-objects
         $this->load_objects_list();
         unset($this->objects_list[$key]);
-        //wincache_ucache_set(get_file_base() . 'PERSISTENT_CACHE_OBJECTS', $this->objects_list); Wasteful
+        //@apc_store(get_file_base() . 'PERSISTENT_CACHE_OBJECTS', $this->objects_list); Wasteful
 
-        wincache_ucache_delete($key);
+        apc_delete($key);
     }
 
     /**
@@ -121,8 +133,8 @@ class Persistent_caching_wincache
     {
         // Update list of persistent-objects
         $this->objects_list = [];
-        wincache_ucache_set(get_file_base() . 'PERSISTENT_CACHE_OBJECTS', $this->objects_list);
+        @apc_store(get_file_base() . 'PERSISTENT_CACHE_OBJECTS', $this->objects_list);
 
-        wincache_ucache_clear();
+        apc_clear_cache('user');
     }
 }

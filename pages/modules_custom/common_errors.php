@@ -124,7 +124,7 @@ class Module_common_errors
         require_code('files_spreadsheets_read');
 
         // Read in the errorservice file
-        $sheet_reader = spreadsheet_open_read(get_custom_file_base() . '/uploads/website_specific/cms_homesite/errorservice.csv');
+        $sheet_reader = Source_spreadsheet_reader::spreadsheet_open_read(get_custom_file_base() . '/uploads/website_specific/cms_homesite/errorservice.csv');
         while (($row = $sheet_reader->read_row()) !== false) {
             $message = $row['Message'];
             $summary = $row['Summary'];

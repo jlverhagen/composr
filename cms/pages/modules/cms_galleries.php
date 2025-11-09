@@ -35,7 +35,7 @@ require_code('crud_module');
 /**
  * Module page class.
  */
-class Module_cms_galleries extends Standard_crud_module
+class Module_cms_galleries extends Source_standard_crud_module
 {
     protected $lang_type = 'IMAGE';
     protected $select_name_description = 'DESCRIPTION_IMAGE';
@@ -104,8 +104,8 @@ class Module_cms_galleries extends Standard_crud_module
             $ret['import'] = ['GALLERY_IMPORT', 'admin/import'];
         }
 
-        $this->cat_crud_module = class_exists('Mx_cms_galleries_cat') ? new Mx_cms_galleries_cat() : new Module_cms_galleries_cat();
-        $this->alt_crud_module = class_exists('Mx_cms_galleries_alt') ? new Mx_cms_galleries_alt() : new Module_cms_galleries_alt();
+        $this->cat_crud_module = object_factory('Module_cms_galleries_cat');
+        $this->alt_crud_module = object_factory('Module_cms_galleries_alt');
 
         $ret += parent::get_entry_points();
 
@@ -166,8 +166,8 @@ class Module_cms_galleries extends Standard_crud_module
             return $error_msg;
         }
 
-        $this->cat_crud_module = class_exists('Mx_cms_galleries_cat') ? new Mx_cms_galleries_cat() : new Module_cms_galleries_cat();
-        $this->alt_crud_module = class_exists('Mx_cms_galleries_alt') ? new Mx_cms_galleries_alt() : new Module_cms_galleries_alt();
+        $this->cat_crud_module = object_factory('Module_cms_galleries_cat');
+        $this->alt_crud_module = object_factory('Module_cms_galleries_alt');
         $GLOBALS['MODULE_CMS_GALLERIES'] = $this;
 
         $type = get_param_string('type', 'browse');
@@ -1282,7 +1282,7 @@ class Module_cms_galleries extends Standard_crud_module
 /**
  * Module page class.
  */
-class Module_cms_galleries_alt extends Standard_crud_module
+class Module_cms_galleries_alt extends Source_standard_crud_module
 {
     protected $lang_type = 'VIDEO';
     protected $select_name = 'NAME';
@@ -1831,7 +1831,7 @@ class Module_cms_galleries_alt extends Standard_crud_module
 /**
  * Module page class.
  */
-class Module_cms_galleries_cat extends Standard_crud_module
+class Module_cms_galleries_cat extends Source_standard_crud_module
 {
     protected $lang_type = 'GALLERY';
     protected $select_name = 'NAME';

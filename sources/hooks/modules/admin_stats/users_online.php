@@ -33,7 +33,7 @@
 /**
  * Hook class.
  */
-class Hook_admin_stats_users_online extends CMSStatsProvider
+class Hook_admin_stats_users_online extends Source_hook_stats_provider
 {
     /**
      * Find metadata about stats graphs that are provided by this stats hook.
@@ -48,7 +48,7 @@ class Hook_admin_stats_users_online extends CMSStatsProvider
                 'label' => do_lang_tempcode('USERS_ONLINE'),
                 'category' => 'hits',
                 'filters' => [
-                    'users_online__day_range' => new CMSStatsDayRangeFilter('users_online__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
+                    'users_online__day_range' => new Source_stats_filter_day_range('users_online__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
                 ],
                 'pivot' => null,
                 'support_kpis' => self::KPI_HIGH_IS_GOOD,

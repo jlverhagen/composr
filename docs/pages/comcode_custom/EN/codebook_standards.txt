@@ -304,9 +304,33 @@ Do not mix class and global function definitions together in the same file
 | Modularity: So Composr code-overriding can work on it
 | Composr development +
 | Automated test [tt]sync_tests/override_issues[/tt]
-| Files should not define both classes and global functions together; they should define one or the other. This is because files containing class overrides require that we specify [tt]/*FORCE_ORIGINAL_LOAD_FIRST*/[/tt] at the top of the file so we load the original file first (granting us access to the original class so it can be extended). But this breaks global function overrides. Furthermore, doing the reverse (not specifying the line and loading the custom file first) when trying to override a class will throw a PHP error (the extended class is not defined yet).
+| Files should not define both classes and global functions together; they should define one or the other. This is because files containing class overrides require that we specify [tt]/*FORCE_ORIGINAL_LOAD_FIRST*/[/tt] at the top of the file so we load the original file first and apply special class renaming. But this breaks global function overrides. Furthermore, doing the reverse (not specifying the line and loading the custom file first) when trying to override a class will throw a PHP error (the extended class is not defined yet).
 Alternatively, you can merge global functions into class methods if their operations relate to the class; define it as a public static function. You cannot do this for [tt]init__*[/tt] functions.
 Alternatively, for [tt]init__*[/tt] global functions, you might be able to put the logic in the class [tt]__construct[/tt] (and remove the function) providing none of the class' static functions need it. If you cannot, then it is best to refactor the classes into a separate file, and use [tt]require_code[/tt] for the new file(s) in the [tt]init__*[/tt] function.
+|-
+| [size="0.8"]{$INC,cs_count,1})[/size]
+All software classes should begin with the correct applicable prefix
+| Consistency; Modularity: So Composr code-overriding can work on it
+| Composr development +
+| Automated test [tt]sync_tests/override_issues[/tt]
+| All class names used in the software should start with one of the following prefixes; this ensures developers can later override these classes:
+[list]
+[*][tt]Hook_[/tt] (or overridden equivalent [tt]Hx_ extends Hook_[/tt])
+Hook classes (in files within the hooks directories of sources) should use this prefix so they are available in the hooks APIs.
+[*][tt]Block_[/tt] (or overridden equivalent [tt]Bx_ extends Block_[/tt])
+Block classes (in files within the blocks directories of sources) should use this prefix so they are available in the blocks APIs.
+[*][tt]Module_[/tt] (or overridden equivalent [tt]Mx_ extends Module_[/tt])
+Module classes (in files within the modules directories of zones) should use this prefix so they are available in the module APIs.
+[*][tt]Source_[/tt] (or overridden equivalent [tt]Sx_ extends Source_[/tt])
+All other classes which can be overridden (e.g., in APIs within the sources directories) should use this prefix.
+[/list]
+|-
+| [size="0.8"]{$INC,cs_count,1})[/size]
+Use [tt]object_factory[/tt] when constructing classes
+| Modularity: So Composr code-overriding can work on it
+| Composr development +
+| Automated test [tt]sync_tests/override_issues[/tt]
+| Classes which start with the special prefixes of [tt]Hook_[/tt], [tt]Module_[/tt], [tt]Block_[/tt], or [tt]Source_[/tt] should be constructed using [tt]object_factory[/tt] and not [tt]new ...[/tt]. It supports advanced functionality such as making sure we do not construct duplicate classes (unless the parameters are different).
 |-
 | [size="0.8"]{$INC,cs_count,1})[/size]
 [color="red"]Pass URLs properly[/color]

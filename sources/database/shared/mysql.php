@@ -37,7 +37,7 @@
  *
  * @package core_database_drivers
  */
-abstract class Database_super_mysql extends DatabaseDriver
+abstract class Source_database_super_mysql extends Source_database_driver
 {
     protected $table_prefix;
     protected $version = null;

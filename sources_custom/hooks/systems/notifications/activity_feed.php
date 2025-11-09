@@ -27,7 +27,7 @@
 /**
  * Hook class.
  */
-class Hook_notification_activity_feed extends Hook_Notification
+class Hook_notification_activity_feed extends Source_hook_notification
 {
     /**
      * Find whether a handled notification code supports categories.

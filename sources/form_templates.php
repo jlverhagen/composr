@@ -592,7 +592,7 @@ function get_field_restrict_property(string $property, string $field, ?string $p
         $type = get_param_string('type', post_param_string('type', 'browse'));
     }
 
-    $restrictions = load_field_restrictions($page, $type);
+    $restrictions = Source_field_restriction_loader::load_field_restrictions($page, $type);
     foreach ($restrictions as $_r => $_restrictions) {
         $_r_exp = explode(',', $_r);
         foreach ($_r_exp as $__r) {
@@ -734,8 +734,8 @@ function form_input_url($pretty_name, $description, string $name, ?string $defau
     $default = filter_form_field_default($name, $default);
     $required = filter_form_field_required($name, $required);
 
-    require_code('urls_simplifier');
-    $coder_ob = new HarmlessURLCoder();
+    require_code('urls_coder');
+    $coder_ob = new Source_URL_coder();
     $_default = ($default === null) ? '' : $coder_ob->decode($default);
 
     $autocomplete = _get_autocomplete_attribute_value($name, $autocomplete);

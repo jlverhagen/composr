@@ -33,7 +33,7 @@
 /**
  * Hook class.
  */
-class Hook_privacy_core_cns extends Hook_privacy_base
+class Hook_privacy_core_cns extends Source_hook_privacy_base
 {
     /**
      * Find privacy details.
@@ -47,7 +47,7 @@ class Hook_privacy_core_cns extends Hook_privacy_base
         }
 
         require_code('cns_parental_controls');
-        $pc = load_parental_control_settings();
+        $pc = object_factory('Source_parental_controls', false, [false], true);
 
         return [
             'label' => 'cns:ACCOUNT_FORUMS',

@@ -625,7 +625,7 @@ class Hook_ecommerce_catalogue_items
         $subject = do_lang('STOCK_LEVEL_MAIL_SUBJECT', get_site_name(), $product_title, null, get_site_default_lang());
         $message = do_notification_lang('STOCK_MAINTENANCE_WARN_MAIL', comcode_escape(get_site_name()), comcode_escape($product_title), [$product_details_url->evaluate()], get_site_default_lang());
 
-        dispatch_notification('low_stock', null, $subject, $message, null, null, A_FROM_SYSTEM_PRIVILEGED);
+        Source_notification_dispatcher::dispatch_notification('low_stock', null, $subject, $message, null, null, A_FROM_SYSTEM_PRIVILEGED);
     }
 
     /**

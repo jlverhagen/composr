@@ -1721,12 +1721,32 @@ function cms_ini_set(string $var, string $value)
 }
 
 /**
- * Make an object of the given class.
+ * Strip a class name with a special prefix.
  *
- * @param  string $class The class name
+ * @param  ID_TEXT $class The class name
+ * @return ?array List of class name without the prefix, the prefix, array of [source prefix, custom prefix] (null: this is not a specially-prefixed class name)
+ */
+function strip_class_name(string $class) : ?array
+{
+    foreach ([['Hook_', 'Hx_'], ['Module_', 'Mx_'], ['Block_', 'Bx_'], ['Source_', 'Sx_']] as $special_prefixes) {
+        foreach ($special_prefixes as $special_prefix) {
+            if (strpos($class, $special_prefix) === 0) {
+                $stripped = substr($class, strlen($special_prefix));
+                return [$stripped, $special_prefix, $special_prefixes];
+            }
+        }
+    }
+
+    return null;
+}
+
+/**
+ * Construct a class.
+ *
+ * @param  string $class The class name; always use original prefix and not the overridden "x" prefix
  * @param  boolean $failure_ok Whether to return null if there is no such class
- * @param  array $parameters Array of parameters
- * @param  boolean $cache Whether to use the cache to avoid initialising the same class repeatedly
+ * @param  array $parameters Array of parameters for the class construct
+ * @param  boolean $cache Whether to use a cache; this prevents creating multiple instances of a class unless the parameters are different
  * @return ?object The object (null: could not create)
  */
 function object_factory(string $class, bool $failure_ok = false, array $parameters = [], bool $cache = false) : ?object
@@ -1735,15 +1755,13 @@ function object_factory(string $class, bool $failure_ok = false, array $paramete
 
     if ($cache) {
         $hash = hash('sha256', serialize($parameters));
-        if (isset($class_objects[$class][$hash]) && is_object($class_objects[$class][$hash])) {
-            return $class_objects[$class][$hash];
+        if (!isset($class_objects[$class][$hash]) || !is_object($class_objects[$class][$hash])) {
+            $class_objects[$class][$hash] = new $class(...$parameters);
         }
-    } else {
-        return new $class(...$parameters);
+        return $class_objects[$class][$hash];
     }
 
-    $class_objects[$class][$hash] = new $class(...$parameters);
-    return $class_objects[$class][$hash];
+    return new $class(...$parameters);
 }
 
 /**

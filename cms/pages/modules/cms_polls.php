@@ -35,7 +35,7 @@ require_code('crud_module');
 /**
  * Module page class.
  */
-class Module_cms_polls extends Standard_crud_module
+class Module_cms_polls extends Source_standard_crud_module
 {
     protected $lang_type = 'POLL';
     protected $archive_entry_point = '_SEARCH:polls:browse';

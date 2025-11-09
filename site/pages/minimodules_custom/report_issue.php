@@ -135,7 +135,7 @@ if ($type == 'submit') {
         ]
     ];
 
-    $ob = new DecisionTree($decision_tree, 'submit');
+    $ob = object_factory('Source_decision_tree', false, [$decision_tree, 'submit'], true);
 } else {
     $decision_tree = [
         'start' => [
@@ -624,7 +624,7 @@ if ($type == 'submit') {
         ],
     ];
 
-    $ob = new DecisionTree($decision_tree, 'start');
+    $ob = object_factory('Source_decision_tree', false, [$decision_tree, 'start'], true);
 }
 
 $tpl = $ob->run();

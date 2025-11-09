@@ -642,7 +642,7 @@ function send_shopping_order_purchased_staff_mail(int $order_id)
     $subject = do_lang('ORDER_PLACED_MAIL_SUBJECT', get_site_name(), strval($order_id), [$displayname, $username], get_site_default_lang());
     $message = do_notification_lang('ORDER_PLACED_MAIL_MESSAGE', comcode_escape(get_site_name()), comcode_escape($displayname), [strval($order_id), strval($member_id), comcode_escape($username), $order_details_url->evaluate()], get_site_default_lang());
 
-    dispatch_notification('new_order', null, $subject, $message);
+    Source_notification_dispatcher::dispatch_notification('new_order', null, $subject, $message);
 }
 
 /*

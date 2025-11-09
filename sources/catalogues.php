@@ -1306,7 +1306,7 @@ function _get_catalogue_entry_field(int $field_id, $entry_id, string $type = 'sh
 
     // Pre-caching of whole entry
     static $catalogue_entry_cache = [];
-    if ((!isset($catalogue_entry_cache[$entry_id])) || (class_exists('Resource_fs_base')/*Implies resource-fs import*/)) {
+    if ((!isset($catalogue_entry_cache[$entry_id])) || (class_exists('Source_resource_fs_base')/*Implies resource-fs import*/)) {
         $catalogue_entry_cache[$entry_id] = [];
 
         $only_fields_sql = '';
@@ -1400,7 +1400,7 @@ function _get_catalogue_entry_field(int $field_id, $entry_id, string $type = 'sh
 
         $value = isset($catalogue_entry_cache[$entry_id][$field_id]) ? $catalogue_entry_cache[$entry_id][$field_id] : null;
 
-        if (class_exists('Resource_fs_base')) {
+        if (class_exists('Source_resource_fs_base')) {
             $catalogue_entry_cache = [];
         }
     } else {

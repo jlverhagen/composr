@@ -896,7 +896,7 @@ function newsletter_block_list() : array
     $block_path = get_custom_file_base() . '/uploads/website_specific/newsletter_blocked.csv';
     if (is_file($block_path)) {
         require_code('files_spreadsheets_read');
-        $sheet_reader = spreadsheet_open_read($block_path, null, CMS_Spreadsheet_Reader::ALGORITHM_RAW);
+        $sheet_reader = Source_spreadsheet_reader::spreadsheet_open_read($block_path, null, Source_spreadsheet_reader::ALGORITHM_RAW);
         while (($row = $sheet_reader->read_row()) !== false) {
             if ($row[0] != '') {
                 $blocked[$row[0]] = true;

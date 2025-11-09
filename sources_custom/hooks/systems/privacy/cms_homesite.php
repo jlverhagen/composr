@@ -27,7 +27,7 @@
 /**
  * Hook class.
  */
-class Hook_privacy_cms_homesite extends Hook_privacy_base
+class Hook_privacy_cms_homesite extends Source_hook_privacy_base
 {
     /**
      * Find privacy details.

@@ -75,7 +75,7 @@ function send_content_validated_notification(string $content_type, string $conte
         if (addon_installed('points') && ($points_credited > 0)) {
             $mail .= do_notification_lang('CONTENT_VALIDATED_NOTIFICATION_MAIL_SUP_POINTS', comcode_escape(integer_format($points_credited, 0)));
         }
-        dispatch_notification('content_validated', null, $subject, $mail, [$submitter_id]);
+        Source_notification_dispatcher::dispatch_notification('content_validated', null, $subject, $mail, [$submitter_id]);
     }
 }
 
@@ -131,7 +131,7 @@ function send_validation_request(string $type, string $table, bool $non_integer_
 
     $subject = do_lang('NOT_VALIDATED_TITLE', $title, '', '', get_site_default_lang());
     $message = $comcode->evaluate(get_site_default_lang());
-    dispatch_notification('needs_validation', null, $subject, $message, null, $member_id, ['use_real_from' => true]);
+    Source_notification_dispatcher::dispatch_notification('needs_validation', null, $subject, $message, null, $member_id, ['use_real_from' => true]);
 }
 
 /**

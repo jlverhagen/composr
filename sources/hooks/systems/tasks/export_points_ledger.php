@@ -58,11 +58,11 @@ class Hook_task_export_points_ledger
         // Prepare the file
         require_code('files_spreadsheets_write');
         if ($file_type === null) {
-            $file_type = spreadsheet_write_default();
+            $file_type = Source_spreadsheet_writer::spreadsheet_write_default();
         }
         $filename = 'points_ledger_' . strval(time()) . '.' . $file_type;
         $outfile_path = null;
-        $sheet_writer = spreadsheet_open_write($outfile_path, $filename);
+        $sheet_writer = Source_spreadsheet_writer::spreadsheet_open_write($outfile_path, $filename);
 
         $start = 0;
         $max = 1000;

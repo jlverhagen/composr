@@ -33,7 +33,7 @@
 /**
  * Hook class.
  */
-class Hook_admin_stats_links extends CMSStatsProvider
+class Hook_admin_stats_links extends Source_hook_stats_provider
 {
     /**
      * Get a list of top events.
@@ -72,11 +72,11 @@ class Hook_admin_stats_links extends CMSStatsProvider
                 'label' => do_lang_tempcode('LINK_TRACKING'),
                 'category' => 'conversions',
                 'filters' => [
-                    'link_tracking__day_range' => new CMSStatsDayRangeFilter('link_tracking__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
-                    'link_tracking__url' => new CMSStatsListFilter('link_tracking__url', do_lang_tempcode('URL'), $top_urls),
-                    'link_tracking__country' => has_geolocation_data() ? new CMSStatsCountryFilter('link_tracking__country', do_lang_tempcode('VISITOR_COUNTRY')) : null,
+                    'link_tracking__day_range' => new Source_stats_filter_day_range('link_tracking__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
+                    'link_tracking__url' => new Source_stats_filter_list('link_tracking__url', do_lang_tempcode('URL'), $top_urls),
+                    'link_tracking__country' => has_geolocation_data() ? new Source_stats_filter_country('link_tracking__country', do_lang_tempcode('VISITOR_COUNTRY')) : null,
                 ],
-                'pivot' => new CMSStatsDatePivot('link_tracking__pivot', $this->get_date_pivots(!$for_kpi)),
+                'pivot' => new Source_stats_filter_date_pivot('link_tracking__pivot', $this->get_date_pivots(!$for_kpi)),
             ],
         ];
     }

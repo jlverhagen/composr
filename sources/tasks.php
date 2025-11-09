@@ -487,5 +487,5 @@ function dispatch_task_notification(string $task_title, int $requester, $result,
         }
     }
 
-    dispatch_notification('task_completed', null, $subject, $message, [$requester], A_FROM_SYSTEM_PRIVILEGED, ['priority' => 2, 'attachments' => $attachments, 'send_immediately' => true]);
+    Source_notification_dispatcher::dispatch_notification('task_completed', null, $subject, $message, [$requester], A_FROM_SYSTEM_PRIVILEGED, ['priority' => 2, 'attachments' => $attachments, 'send_immediately' => true]);
 }

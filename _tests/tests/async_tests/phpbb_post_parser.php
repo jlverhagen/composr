@@ -40,7 +40,7 @@ class phpbb_post_parser_test_set extends cms_test_case
             '<t>:D</t>' => '[semihtml]:D[/semihtml]', // Emoticons disabled
         ];
         foreach ($tests as $in => $expected_comcode) {
-            $got_comcode = _phpbb3_post_text_to_comcode($in);
+            $got_comcode = Source_forum_driver_phpbb3::_phpbb3_post_text_to_comcode($in);
             $this->assertTrue($got_comcode == $expected_comcode, 'Expected ' . $expected_comcode . ' but got ' . $got_comcode);
         }
 
@@ -48,7 +48,7 @@ class phpbb_post_parser_test_set extends cms_test_case
             '<r>blah<ATTACHMENT filename="sample-logo.png" index="0"><s>[attachment=0]</s>sample-logo.png<e>[/attachment]</e></ATTACHMENT>blah</r>' => 'blah[attachment]12345[/attachment]blah', // With attachment (inline)
         ];
         foreach ($tests as $in => $expected_comcode) {
-            $got_comcode = _phpbb3_post_text_to_comcode($in, [12345]);
+            $got_comcode = Source_forum_driver_phpbb3::_phpbb3_post_text_to_comcode($in, [12345]);
             $this->assertTrue($got_comcode == $expected_comcode, 'Expected ' . $expected_comcode . ' but got ' . $got_comcode);
         }
     }

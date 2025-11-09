@@ -766,7 +766,7 @@ class Module_quiz
                     'RESULT' => $result_to_staff,
                     'USERNAME' => $GLOBALS['FORUM_DRIVER']->get_username(get_member()),
                 ], null, false, null, '.txt', 'text');
-                dispatch_notification('quiz_results', strval($quiz_id), $notification_title, $mail->evaluate(get_site_default_lang()));
+                Source_notification_dispatcher::dispatch_notification('quiz_results', strval($quiz_id), $notification_title, $mail->evaluate(get_site_default_lang()));
 
                 break;
 
@@ -797,7 +797,7 @@ class Module_quiz
                 ], null, false, null, '.txt', 'text');
 
                 // Send notification of answers to the staff
-                dispatch_notification('quiz_results', strval($quiz_id), $notification_title, $given_answers_to_staff->evaluate(get_site_default_lang()));
+                Source_notification_dispatcher::dispatch_notification('quiz_results', strval($quiz_id), $notification_title, $given_answers_to_staff->evaluate(get_site_default_lang()));
 
                 // Syndicate
                 require_code('syndication');

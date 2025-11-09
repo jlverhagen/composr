@@ -30,13 +30,41 @@
  * @package    core
  */
 
-/*EXTRA FUNCTIONS: apcu\_.+*/
+/*EXTRA FUNCTIONS: Memcached*/
 
 /**
  * Cache driver class.
  */
-class Persistent_caching_apcucache
+class Hook_persistent_cache_memcached
 {
+    protected $object;
+
+    /**
+     * Determine the priority of this cache.
+     * Zero is not available. Otherwise, lower number is higher priority.
+     *
+     * @return integer The priority
+     */
+    public static function cache_priority() : int
+    {
+        global $SITE_INFO;
+
+        if ((class_exists('Memcached')) && (($SITE_INFO['use_persistent_cache'] == 'memcached') || ($SITE_INFO['use_persistent_cache'] == '1'))) {
+            return 10;
+        }
+
+        return 0;
+    }
+
+    /**
+     * Constructor.
+     */
+    public function __construct()
+    {
+        $this->object = new Memcached();
+        $this->object->addServer('localhost', 11211);
+    }
+
     public $objects_list = null;
 
     /**
@@ -47,7 +75,7 @@ class Persistent_caching_apcucache
     public function &load_objects_list() : array
     {
         if ($this->objects_list === null) {
-            $this->objects_list = apcu_fetch(get_file_base() . 'PERSISTENT_CACHE_OBJECTS');
+            $this->objects_list = $this->object->get(get_file_base() . 'PERSISTENT_CACHE_OBJECTS');
             if ($this->objects_list === false) {
                 $this->objects_list = [];
             }
@@ -64,7 +92,7 @@ class Persistent_caching_apcucache
      */
     public function get(string $key, ?int $min_cache_date = null)
     {
-        $data = apcu_fetch($key);
+        $data = $this->object->get($key);
         if ($data === false) {
             return null;
         }
@@ -88,10 +116,10 @@ class Persistent_caching_apcucache
         $this->load_objects_list();
         if (!array_key_exists($key, $this->objects_list)) {
             $this->objects_list[$key] = true;
-            @apcu_store(get_file_base() . 'PERSISTENT_CACHE_OBJECTS', $this->objects_list);
+            $this->set(get_file_base() . 'PERSISTENT_CACHE_OBJECTS', $this->objects_list, 0, 0);
         }
 
-        @apcu_store($key, [time(), $data], $expire_secs);
+        $this->object->set($key, [time(), $data], $expire_secs);
     }
 
     /**
@@ -104,9 +132,9 @@ class Persistent_caching_apcucache
         // Update list of persistent-objects
         $this->load_objects_list();
         unset($this->objects_list[$key]);
-        //@apcu_store(get_file_base() . 'PERSISTENT_CACHE_OBJECTS', $this->objects_list); Wasteful
+        //$this->set(get_file_base() . 'PERSISTENT_CACHE_OBJECTS', $this->objects_list, 0, 0); Wasteful
 
-        apcu_delete($key);
+        $this->object->delete($key);
     }
 
     /**
@@ -116,8 +144,8 @@ class Persistent_caching_apcucache
     {
         // Update list of persistent-objects
         $this->objects_list = [];
-        @apcu_store(get_file_base() . 'PERSISTENT_CACHE_OBJECTS', $this->objects_list);
+        $this->set(get_file_base() . 'PERSISTENT_CACHE_OBJECTS', $this->objects_list, 0, 0);
 
-        apcu_clear_cache();
+        $this->object->flush();
     }
 }

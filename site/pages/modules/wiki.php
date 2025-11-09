@@ -760,7 +760,7 @@ class Module_wiki
         ];
 
         require_code('revisions_engine_database');
-        $revision_engine = new RevisionEngineDatabase();
+        $revision_engine = object_factory('Source_revisions_engine_database');
         return $revision_engine->ui_revisions_browser(
             $this->title,
             $_header_rows,
@@ -1007,7 +1007,7 @@ class Module_wiki
 
         if (addon_installed('actionlog')) {
             require_code('revisions_engine_database');
-            $revision_engine = new RevisionEngineDatabase();
+            $revision_engine = object_factory('Source_revisions_engine_database');
             $revision_engine->recategorise_old_revisions('wiki_post', strval($post_id), strval($target));
         }
 
@@ -1122,7 +1122,7 @@ class Module_wiki
         require_lang('notifications');
         if (addon_installed('actionlog')) {
             require_code('revisions_engine_database');
-            $revision_engine = new RevisionEngineDatabase(false);
+            $revision_engine = object_factory('Source_revisions_engine_database', false, [false]);
             $notify = ($revision_engine->find_most_recent_category_change('wiki_post', strval($page_id)) < time() - (60 * 10));
         } else {
             $notify = true;

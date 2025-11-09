@@ -35,7 +35,7 @@ require_code('crud_module');
 /**
  * Module page class.
  */
-class Module_admin_stats extends Standard_crud_module
+class Module_admin_stats extends Source_standard_crud_module
 {
     protected $lang_type = 'KPI';
     protected $select_name = 'KPI';
@@ -346,7 +346,7 @@ class Module_admin_stats extends Standard_crud_module
             $_graphs = stats_find_graphs_in_category($category_name);
             foreach ($_graphs as $graph_name => $_graph) {
                 list($hook_ob, $graph_details) = $_graph;
-                if ($hook_ob instanceof CMSStatsProvider) {
+                if ($hook_ob instanceof Source_hook_stats_provider) {
                     foreach ($graph_details['filters'] as $filter) {
                         if ($filter !== null) {
                             inform_non_canonical_parameter($filter->filter_name);

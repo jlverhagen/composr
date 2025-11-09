@@ -1041,7 +1041,7 @@ function check_form_field_image(string $name, string $val, ?string $delete_on_er
     require_code('input_filter');
     require_code('images');
 
-    $restrictions = load_field_restrictions();
+    $restrictions = Source_field_restriction_loader::load_field_restrictions();
 
     static $image_size_cache = [];
 

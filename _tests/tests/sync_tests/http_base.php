@@ -241,6 +241,8 @@ class http_base_test_set extends cms_test_case
 
     public function testHttpAuth()
     {
+        // DISABLED: Jigsaw has a Cloudflare challenge on this endpoint, causing this test to fail
+        /*
         if (($this->only !== null) && ($this->only != 'httpauth')) {
             return;
         }
@@ -252,6 +254,10 @@ class http_base_test_set extends cms_test_case
                 $this->dump($result, 'HttpAuth HTTP object');
             }
         }
+        */
+
+        $message = 'testHttpAuth must be done manually; Jigsaw has Cloudflare challenges, breaking the automated test.';
+        $this->dump($message, 'INFO:');
     }
 
     public function testWriteToFile()

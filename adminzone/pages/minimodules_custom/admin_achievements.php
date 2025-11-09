@@ -128,7 +128,7 @@ if ($type == 'save') {
 $revision_loaded = null;
 if (addon_installed('actionlog')) {
     require_code('revisions_engine_files');
-    $revision_engine = new RevisionEngineFiles();
+    $revision_engine = object_factory('Source_revisions_engine_files');
     $directory = 'data_custom/xml_config';
 
     // Log a revision if we are about to save

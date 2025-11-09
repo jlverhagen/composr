@@ -62,11 +62,11 @@ class Hook_task_export_catalogue
 
         require_code('files_spreadsheets_write');
         if ($file_type === null) {
-            $file_type = spreadsheet_write_default();
+            $file_type = Source_spreadsheet_writer::spreadsheet_write_default();
         }
         $filename = $catalogue_name . '-' . date('Y-m-d') . '.' . $file_type;
         $outfile_path = null;
-        $sheet_writer = spreadsheet_open_write($outfile_path, $filename, CMS_Spreadsheet_Writer::ALGORITHM_RAW);
+        $sheet_writer = Source_spreadsheet_writer::spreadsheet_open_write($outfile_path, $filename, Source_spreadsheet_writer::ALGORITHM_RAW);
 
         $fields = $GLOBALS['SITE_DB']->query_select('catalogue_fields', ['*'], ['c_name' => $catalogue_name], 'ORDER BY cf_order,' . $GLOBALS['SITE_DB']->translate_field_ref('cf_name'));
         global $CAT_FIELDS_CACHE;
