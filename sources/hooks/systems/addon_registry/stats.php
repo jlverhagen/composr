@@ -184,6 +184,8 @@ class Hook_addon_registry_stats
             'sources/hooks/systems/symbols/SPLIT_TEST.php',
             'sources/hooks/systems/symbols/STATS_TRACK_URL.php',
             'sources/stats.php',
+            'sources/stats_filter.php',
+            'sources/stats_hook.php',
             'sources_custom/hooks/modules/admin_stats/.htaccess',
             'sources_custom/hooks/modules/admin_stats/index.html',
             'text/search_engine_domains.txt',

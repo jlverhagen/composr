@@ -177,6 +177,7 @@ You may want to put them in your Git \'cmd\' directory, as that is in your path.
     public function get_file_list() : array
     {
         return [
+            '.vscode/settings.json',
             '_config.php.template',
             'adminzone/pages/minimodules_custom/plug_guid.php',
             'adminzone/pages/modules_custom/admin_make_release.php',

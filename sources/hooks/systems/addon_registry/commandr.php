@@ -153,6 +153,7 @@ class Hook_addon_registry_commandr
             'pages/modules/mail.php',
             'sources/commandr.php',
             'sources/commandr_fs.php',
+            'sources/commandr_virtual_shell.php',
             'sources/hooks/systems/actionlog/commandr.php',
             'sources/hooks/systems/addon_registry/commandr.php',
             'sources/hooks/systems/commandr_commands/.htaccess',

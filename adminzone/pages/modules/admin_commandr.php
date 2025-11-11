@@ -178,7 +178,7 @@ class Module_admin_commandr
         if ($command != '') {
             // We've had a normal form submission
             require_code('commandr_virtual_shell');
-            $temp = new Virtual_shell($command);
+            $temp = object_factory('Source_virtual_shell', false, [$command]);
             $commands = $temp->output_html();
         } else {
             $commands = new Tempcode();

@@ -136,7 +136,9 @@ This form of overriding works via class inheritance. All you need to do is to ma
 2) Make sure the top of the [tt]*_custom[/tt] file you created contains the [tt]/*FORCE_ORIGINAL_LOAD_FIRST*/[/tt] comment, otherwise you will get errors about the extended class not being found. This forces Composr to load the original file first, which ensures the original class is defined when you extend it.
 3) As this works via standard class inheritance you are at liberty to, and should, only re-define methods in your override when those methods are actually different from the original ones. i.e. start with a shell of a class and only re-define methods that you are actually wanting to change. And remember that you can use [tt]parent::[/tt] when you want to call the original logic on that method.
 
-Note that "Tempcode" is a special class that is treated as a data type in Composr. Therefore, this class cannot be overridden except through contentious overrides.
+Note that these classes cannot be overridden:
+ - [tt]Tempcode[/tt]: This is treated as a data type in Composr
+ - [tt]CMSException[/tt]: This is a special PHP exception defined by Composr
 
 When you override a class (and define the comment [tt]/*FORCE_ORIGINAL_LOAD_FIRST*/[/tt]), the following happens in the code compiler:
  - The class name in the original file is renamed to the special "x" prefix.

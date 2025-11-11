@@ -166,6 +166,7 @@ class Hook_addon_registry_core_themeing
             'sources/themes2.php',
             'sources/themes3.php',
             'sources/themes_meta_tree.php',
+            'sources/themes_meta_tree_builder.php',
             'themes/default/css/themes_editor.css',
             'themes/default/images/icons/menu/adminzone/style/themes/css.svg',
             'themes/default/images/icons/menu/adminzone/style/themes/templates.svg',

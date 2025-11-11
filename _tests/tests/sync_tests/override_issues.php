@@ -88,7 +88,7 @@ class override_issues_test_set extends cms_test_case
 
                 $this->assertTrue(((!$has_class) || (!$has_function)), 'File defines both classes and functions (should be one or the other), in ' . $path);
 
-                $this->assertTrue(preg_match('#^(abstract\s|static\s)?class\s(?!Hook_|Module_|Block_|Source_|Tempcode$)#m', $_c) === 0, 'Class names in bundled files should start with Hook_, Module_, Block_, or Source_, in ' . $path);
+                $this->assertTrue(preg_match('#^(abstract\s|static\s)?class\s(?!Hook_|Module_|Block_|Source_|Tempcode$|CMSException\sextends\sException$)#m', $_c) === 0, 'Class names in bundled files should start with Hook_, Module_, Block_, or Source_, in ' . $path);
             } else {
                 $this->assertTrue(preg_match('#^(abstract\s|static\s)?class\s(Hook_|Module_|Block_|Source_)([a-zA-Z0-9\_\-]*)\sextends\s(Hx_|Mx_|Bx_|Sx_)#m', $_c) === 0, 'Class overrides should use the special "x" prefix, in ' . $path);
                 if (preg_match('#^(abstract\s|static\s)?class\s(Hx_|Sx_|Bx_|Mx_)#m', $_c) > 0) {

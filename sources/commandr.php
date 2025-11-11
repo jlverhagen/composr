@@ -104,7 +104,7 @@ function commandr_script()
             if (trim($command) == 'exit') {
                 break;
             }
-            $temp = new Virtual_shell(trim($command));
+            $temp = object_factory('Source_virtual_shell', false, [$command]);
             if (trim($temp->output[STREAM_STDHTML]) != '') {
                 fwrite($stdout, trim(strip_comcode(semihtml_to_comcode(preg_replace('#<(\w+) [^<>]*>#', '<${1}>', $temp->output[STREAM_STDHTML])))));
             }
@@ -122,7 +122,7 @@ function commandr_script()
         require_code('failure');
         set_throw_errors();
         try {
-            $temp = new Virtual_shell(trim($command));
+            $temp = object_factory('Source_virtual_shell', false, [$command]);
             $temp->output_xml();
         } catch (Exception $e) {
             if (has_smart_quotes($command)) {

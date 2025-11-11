@@ -188,12 +188,12 @@ function cns_authorise_login(object $this_ref, ?string $username, ?int $member_i
     // Check valid user
     if (addon_installed('validation')) {
         if ($row['m_validated'] == 0) {
-            $out['error'] = do_lang_tempcode('MEMBER_NOT_VALIDATED_STAFF');
+            $out['error'] = do_lang_tempcode((get_option('login_error_secrecy') == '1') ? 'MEMBER_INVALID_LOGIN' : 'MEMBER_NOT_VALIDATED_STAFF');
             return $out;
         }
     }
     if ($row['m_validated_email_confirm_code'] != '') {
-        $out['error'] = do_lang_tempcode('MEMBER_NOT_VALIDATED_EMAIL');
+        $out['error'] = do_lang_tempcode((get_option('login_error_secrecy') == '1') ? 'MEMBER_INVALID_LOGIN' : 'MEMBER_NOT_VALIDATED_EMAIL');
         return $out;
     }
 

@@ -131,7 +131,7 @@ class Hook_cron_calendar_reminders
 
                                 // Commandr code
                                 require_code('commandr_virtual_shell');
-                                $temp = new Virtual_shell($job_text);
+                                $temp = object_factory('Source_virtual_shell', false, [$job_text]);
                                 $output = $temp->output_html(true);
                                 if (is_object($output)) {
                                     echo $output->evaluate();

@@ -35,7 +35,7 @@
  *
  * @package commandr
  */
-class Virtual_shell
+class Source_virtual_shell
 {
     public $current_input;
     public $parsed_input;
@@ -798,7 +798,7 @@ class Virtual_shell
                     if (!isset($extra[STREAM_IDENTIFIER][0])) {
                         $extra[STREAM_IDENTIFIER] = [STREAM_STDOUT];
                     }
-                    $virtual_shell = new Virtual_shell($extra[REDIRECT_IDENTIFIER]);
+                    $virtual_shell = object_factory('Source_virtual_shell', false, [$extra[REDIRECT_IDENTIFIER]]);
                     $virtual_output = $virtual_shell->return_output();
                     $pertinant_output = $virtual_output[$extra[STREAM_IDENTIFIER][count($extra[STREAM_IDENTIFIER]) - 1]];
                     if ($virtual_output[STREAM_STDERR] != '') {
@@ -866,7 +866,7 @@ class Virtual_shell
 
                     foreach ($script_lines as $script_line) {
                         if (strlen($script_line) > 0) {
-                            $virtual_shell = new Virtual_shell($script_line, $this->parsed_input[SECTION_PARAMETERS]);
+                            $virtual_shell = object_factory('Source_virtual_shell', false, [$this->parsed_input[SECTION_PARAMETERS]]);
                             $script_output = $virtual_shell->return_output();
                             $this->output = $this->_combine_streams($this->output, $script_output);
                         }

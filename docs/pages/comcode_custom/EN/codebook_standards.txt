@@ -331,6 +331,7 @@ Use [tt]object_factory[/tt] when constructing classes
 | Composr development +
 | Automated test [tt]sync_tests/override_issues[/tt]
 | Classes which start with the special prefixes of [tt]Hook_[/tt], [tt]Module_[/tt], [tt]Block_[/tt], or [tt]Source_[/tt] should be constructed using [tt]object_factory[/tt] and not [tt]new ...[/tt]. It supports advanced functionality such as making sure we do not construct duplicate classes (unless the parameters are different).
+Note that [tt]Tempcode[/tt] and [tt]CMSException[/tt] should not be used with object_factory.
 |-
 | [size="0.8"]{$INC,cs_count,1})[/size]
 [color="red"]Pass URLs properly[/color]
