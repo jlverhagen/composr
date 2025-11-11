@@ -51,10 +51,18 @@ class Hook_cron_stats_preprocess_raw_data
             return null;
         }
 
+        $minutes_between_runs = 10; // Standard
+
+        $catching_up = get_value('stats_catching_up', null, true);
+
+        if (($last_run === null) || ($catching_up !== '0')) {
+            $minutes_between_runs = 1; // We have to catch up
+        }
+
         return [
             'label' => 'Stats preprocessing',
             'num_queued' => null,
-            'minutes_between_runs' => 1,
+            'minutes_between_runs' => $minutes_between_runs,
             'enabled_by_default' => true,
         ];
     }
@@ -64,6 +72,9 @@ class Hook_cron_stats_preprocess_raw_data
      */
     public function run()
     {
+        // Prevent compound processes
+        set_value('stats_catching_up', '0', true);
+
         $start_time = null;
 
         // LEGACY: 11.beta9
@@ -97,11 +108,14 @@ class Hook_cron_stats_preprocess_raw_data
         $current_memory = memory_get_usage(false);
         $near_limit = (($ml > 0) && ($current_memory >= ($ml - (1024 * 1024 * 8)))); // within 8 MB of PHP memory limit
         if (($near_limit) || ((time() - $hook_start) >= 15)) {
+            set_value('stats_catching_up', '1', true);
             pop_query_limiting();
             return;
         }
 
         cms_profile_start_for('Hook_cron_stats_preprocess_raw_data preprocess_raw_data_for');
+
+        $catching_up = false;
 
         $hook_obs = array_keys(find_all_hooks('modules', 'admin_stats'));
         cms_shuffle_assoc($hook_obs);
@@ -129,6 +143,7 @@ class Hook_cron_stats_preprocess_raw_data
             // Do not process too much at once
             if (($end_time - $start_time) > self::END_TIME_CUTOFF) {
                 $end_time = ($start_time + self::END_TIME_CUTOFF);
+                $catching_up = true;
             }
 
             preprocess_raw_data_for($hook_name, $start_time, $end_time);
@@ -140,8 +155,13 @@ class Hook_cron_stats_preprocess_raw_data
             $current_memory = memory_get_usage(false);
             $near_limit = (($ml > 0) && ($current_memory >= ($ml - (1024 * 1024 * 8)))); // within 8 MB of PHP memory limit
             if (($near_limit) || ((time() - $hook_start) >= 15)) {
+                $catching_up = true;
                 break;
             }
+        }
+
+        if ($catching_up) {
+            set_value('stats_catching_up', '1', true);
         }
 
         // Send KPI notifications...
