@@ -35,6 +35,9 @@
  */
 class Hook_cron_leader_board
 {
+    public $label = 'leader_board:LEADER_BOARD_CRON';
+    public $fallback_label = 'Leader-board generation';
+
     /**
      * Get info from this hook.
      *
@@ -62,7 +65,6 @@ class Hook_cron_leader_board
         }
 
         return [
-            'label' => 'Leader-board generation',
             'num_queued' => $num_queued,
             'minutes_between_runs' => 15,
             'enabled_by_default' => true,

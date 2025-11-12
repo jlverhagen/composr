@@ -35,6 +35,9 @@
  */
 class Hook_cron_oracle
 {
+    public $label = 'cleanup:ORACLE_CRON'; // TODO: find a better file (do not use global)
+    public $fallback_label = 'Oracle database index sync';
+
     /**
      * Get info from this hook.
      *
@@ -49,7 +52,6 @@ class Hook_cron_oracle
         }
 
         return [
-            'label' => 'Oracle index synchronisation',
             'num_queued' => null,
             'minutes_between_runs' => 60 * 5,
             'enabled_by_default' => true,

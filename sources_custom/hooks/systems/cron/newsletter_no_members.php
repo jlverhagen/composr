@@ -29,6 +29,9 @@
  */
 class Hook_cron_newsletter_no_members
 {
+    public $label = 'NA'; // TODO
+    public $fallback_label = 'Remove newsletter subscribers who are members';
+
     protected $new_members;
 
     /**
@@ -84,7 +87,6 @@ class Hook_cron_newsletter_no_members
         }
 
         return [
-            'label' => 'Delete newsletter users who are also members',
             'num_queued' => $num_queued,
             'minutes_between_runs' => 0,
             'enabled_by_default' => true,

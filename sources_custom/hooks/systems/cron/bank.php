@@ -29,6 +29,9 @@
  */
 class Hook_cron_bank
 {
+    public $label = 'bank:BANK_CRON';
+    public $fallback_label = 'Bankr restored deposits / dividends';
+
     protected $to_be_restored;
 
     /**
@@ -64,7 +67,6 @@ class Hook_cron_bank
         }
 
         return [
-            'label' => 'Bankr restored deposits / dividends',
             'num_queued' => $num_queued,
             'minutes_between_runs' => 60,
             'enabled_by_default' => true,

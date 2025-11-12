@@ -35,6 +35,9 @@
  */
 class Hook_cron_cns_birthdays
 {
+    public $label = 'catalogues:BIRTHDAY_NOTIFICATIONS_CRON';
+    public $fallback_label = 'Send member birthday notifications';
+
     protected $this_birthday_day;
 
     /**
@@ -68,7 +71,6 @@ class Hook_cron_cns_birthdays
         }
 
         return [
-            'label' => 'Send Member Birthday Notifications',
             'num_queued' => $num_queued,
             'minutes_between_runs' => 60,
             'enabled_by_default' => true,

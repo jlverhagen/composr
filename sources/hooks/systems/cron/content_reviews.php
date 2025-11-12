@@ -35,6 +35,9 @@
  */
 class Hook_cron_content_reviews
 {
+    public $label = 'content_reviews:CONTENT_REVIEWS_CRON';
+    public $fallback_label = 'Periodic content reviews';
+
     protected $pending_content_reviews;
 
     /**
@@ -71,7 +74,6 @@ class Hook_cron_content_reviews
         }
 
         return [
-            'label' => 'Periodic content reviews',
             'num_queued' => $num_queued,
             'minutes_between_runs' => 60 * 24,
             'enabled_by_default' => true,

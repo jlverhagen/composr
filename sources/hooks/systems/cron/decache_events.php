@@ -35,6 +35,9 @@
  */
 class Hook_cron_decache_events
 {
+    public $label = 'cleanup:DECACHE_EVENTS_CRON';
+    public $fallback_label = 'Specialised decaching';
+
     /**
      * Get info from this hook.
      *
@@ -45,9 +48,8 @@ class Hook_cron_decache_events
     public function info(?int $last_run, ?bool $calculate_num_queued) : ?array
     {
         return [
-            'label' => 'Event-based decaching',
             'num_queued' => null,
-            'minutes_between_runs' => 29, // So it runs before Health Check
+            'minutes_between_runs' => 30,
             'enabled_by_default' => true,
         ];
     }
@@ -59,7 +61,7 @@ class Hook_cron_decache_events
      */
     public function run(?int $last_run)
     {
-        // We cache the copyright symbol, but each year it needs replacing...
+        // We cache the copyright symbol, but we need to quickly decache on a new year...
         $current_year = intval(date('Y', tz_time(time(), get_server_timezone())));
         $current_year_recently = intval(date('Y', tz_time(time() - 60 * 60, get_server_timezone())));
         if ($current_year != $current_year_recently) {

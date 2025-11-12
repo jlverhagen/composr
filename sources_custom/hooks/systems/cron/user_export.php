@@ -29,6 +29,9 @@
  */
 class Hook_cron_user_export
 {
+    public $label = 'NA'; // TODO
+    public $fallback_label = 'User export';
+
     /**
      * Get info from this hook.
      *
@@ -49,7 +52,6 @@ class Hook_cron_user_export
         }
 
         return [
-            'label' => 'User export',
             'num_queued' => null,
             'minutes_between_runs' => USER_EXPORT_MINUTES,
             'enabled_by_default' => true,

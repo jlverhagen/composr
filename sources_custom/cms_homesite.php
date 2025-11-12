@@ -354,7 +354,7 @@ function get_composr_branches() : array
     if (is_string($_branches)) { // Local git repository present
         foreach (explode("\n", $_branches) as $_branch) {
             $matches = [];
-            if (preg_match('#^\s*\*?\s*(master|main|v[\S]+)$#', $_branch, $matches) != 0) { // We only want main/master and 'v' branches
+            if (preg_match('#^\s*\*?\s*(v[\d\.]+)$#', $_branch, $matches) != 0) { // We only want version branches
                 $git_branch = $matches[1];
 
                 $version_file = shell_exec('git show ' . $git_branch . ':sources/version.php');
@@ -404,7 +404,7 @@ function get_composr_branches() : array
         $_branches = collapse_1d_complexity('name', $_branches);
 
         foreach ($_branches as $branch) {
-            if (!in_array($branch, ['main', 'master']) && (strpos($branch, 'v') !== 0)) { // We only want main/master and 'v' branches
+            if (preg_match('#^v[\d\.]+$#', $branch) !== 1) { // We only want version branches
                 continue;
             }
 

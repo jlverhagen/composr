@@ -29,6 +29,9 @@
  */
 class Hook_cron_user_import
 {
+    public $label = 'NA'; // TODO
+    public $fallback_label = 'User import';
+
     /**
      * Get info from this hook.
      *
@@ -49,7 +52,6 @@ class Hook_cron_user_import
         }
 
         return [
-            'label' => 'User import',
             'num_queued' => null,
             'minutes_between_runs' => USER_IMPORT_MINUTES,
             'enabled_by_default' => true,

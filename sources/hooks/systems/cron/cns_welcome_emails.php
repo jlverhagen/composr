@@ -35,6 +35,8 @@
  */
 class Hook_cron_cns_welcome_emails
 {
+    public $label = 'cns_welcome_emails:WELCOME_EMAIL_CRON';
+    public $fallback_label = 'Send welcome e-mails';
     protected $member_sets_to_send_to;
     protected $time_now;
 
@@ -137,7 +139,6 @@ class Hook_cron_cns_welcome_emails
         }
 
         return [
-            'label' => 'Send welcome e-mails',
             'num_queued' => $num_queued,
             'minutes_between_runs' => 60,
             'enabled_by_default' => true,

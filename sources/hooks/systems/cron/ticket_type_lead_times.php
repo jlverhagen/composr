@@ -35,6 +35,9 @@
  */
 class Hook_cron_ticket_type_lead_times
 {
+    public $label = 'tickets:TICKET_TYPE_LEAD_TIMES_CRON';
+    public $fallback_label = 'Support lead time calculation';
+
     /**
      * Get info from this hook.
      *
@@ -49,7 +52,6 @@ class Hook_cron_ticket_type_lead_times
         }
 
         return [
-            'label' => 'Support lead time calculation',
             'num_queued' => null,
             'minutes_between_runs' => 24 * 60,
             'enabled_by_default' => true,

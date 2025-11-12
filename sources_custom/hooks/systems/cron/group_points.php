@@ -29,6 +29,9 @@
  */
 class Hook_cron_group_points
 {
+    public $label = 'NA'; // TODO
+    public $fallback_label = 'Group membership points';
+
     /**
      * Get info from this hook.
      *
@@ -47,7 +50,6 @@ class Hook_cron_group_points
         }
 
         return [
-            'label' => 'Assign points for usergroup membership',
             'num_queued' => null,
             'minutes_between_runs' => 30,
             'enabled_by_default' => true,

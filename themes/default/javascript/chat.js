@@ -192,11 +192,11 @@
             }
 
             if ($dom.keyPressed(e, 'Enter')) {
-                $cms.setCookie('last_chat_msg_' + chatroomId, '', 'PERSONALIZATION');
+                $cms.setCookie('last_chat_msg_' + chatroomId, '', 'NON-ESSENTIAL');
                 chatPost(e, chatroomId, 'post_' + chatroomId, '', '');
                 e.preventDefault();
             } else {
-                $cms.setCookie('last_chat_msg_' + chatroomId, textarea.value, 'PERSONALIZATION');
+                $cms.setCookie('last_chat_msg_' + chatroomId, textarea.value, 'NON-ESSENTIAL');
             }
         });
     };

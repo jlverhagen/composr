@@ -1699,7 +1699,9 @@
                 $dom.fadeIn(helperPanelContents);
 
                 if ($cms.readCookie('hide_helper_panel', 'PERSONALIZATION') === '1') {
-                    $cms.setCookie('hide_helper_panel', '0', 'PERSONALIZATION', 100);
+                    if (!$cms.setCookie('hide_helper_panel', '0', 'PERSONALIZATION', 100)) {
+                        $cms.ui.alert('{!COOKIE_CONFLICT_SETTINGS_PERSONALIZATION;^}', '{!ERROR_OCCURRED;^}');
+                    }
                 }
 
                 helperPanelToggle.title = '{!HELP_OR_ADVICE}: {!HIDE}';
@@ -1720,7 +1722,9 @@
                 panelRight.classList.remove('helper-panel-visible');
                 panelRight.classList.add('helper-panel-hidden');
                 helperPanelContents.style.display = 'none';
-                $cms.setCookie('hide_helper_panel', '1', 'PERSONALIZATION', 100);
+                if (!$cms.setCookie('hide_helper_panel', '1', 'PERSONALIZATION', 100)) {
+                    $cms.ui.alert('{!COOKIE_CONFLICT_SETTINGS_PERSONALIZATION;^}', '{!ERROR_OCCURRED;^}');
+                }
                 helperPanelToggle.title = '{!HELP_OR_ADVICE}: {!SHOW}';
                 $cms.ui.setIcon(helperPanelToggleIcon, 'helper_panel/show', '{$IMG;,{$?,{$THEME_OPTION,use_monochrome_icons},icons_monochrome,icons}/helper_panel/show}');
             }

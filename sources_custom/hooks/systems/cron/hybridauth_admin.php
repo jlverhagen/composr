@@ -29,6 +29,9 @@
  */
 class Hook_cron_hybridauth_admin
 {
+    public $label = 'hybridauth:HYBRIDAUTH_ADMIN_CRON';
+    public $fallback_label = 'Refresh Hybridauth tokens';
+
     /**
      * Get info from this hook.
      *
@@ -47,7 +50,6 @@ class Hook_cron_hybridauth_admin
         }
 
         return [
-            'label' => 'Refresh Hybridauth tokens',
             'num_queued' => null,
             'minutes_between_runs' => 24 * 60 * 30,
             'enabled_by_default' => true,

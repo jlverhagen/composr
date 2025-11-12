@@ -35,6 +35,9 @@
  */
 class Hook_cron_rate_limiting_cleanup
 {
+    public $label = 'cleanup:RATE_LIMITING_CLEANUP_CRON';
+    public $fallback_label = 'Purge old rate-limiting data';
+
     /**
      * Get info from this hook.
      *
@@ -51,7 +54,6 @@ class Hook_cron_rate_limiting_cleanup
         }
 
         return [
-            'label' => 'Cleanup rate limit data',
             'num_queued' => null,
             'minutes_between_runs' => 1,
             'enabled_by_default' => true,

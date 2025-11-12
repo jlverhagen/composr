@@ -35,6 +35,9 @@
  */
 class Hook_cron_tasks
 {
+    public $label = 'tasks:TASKS_CRON';
+    public $fallback_label = 'Task queue';
+
     protected const MAX_TIME = 8.0; // Once tasks have exceeded this long in seconds, stop (and resume on the next Cron execution)
     protected const MAX_QUERIES = 1000; // Once tasks have exceeded this many queries (calculated by query limiting), stop (and resume on the next Cron execution)
 
@@ -62,7 +65,6 @@ class Hook_cron_tasks
         }
 
         return [
-            'label' => 'Run queued background tasks',
             'num_queued' => $calculate_num_queued ? $GLOBALS['SITE_DB']->get_table_count_approx('task_queue') : null,
             'minutes_between_runs' => 0,
             'enabled_by_default' => true,
