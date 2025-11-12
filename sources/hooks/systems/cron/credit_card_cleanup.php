@@ -35,6 +35,9 @@
  */
 class Hook_cron_credit_card_cleanup
 {
+    public $label = 'ecommerce:CREDIT_CARD_CLEANUP_CRON';
+    public $fallback_label = 'Credit card number scrubbing';
+
     protected $threshold;
     protected $card_number_field_id;
 
@@ -85,7 +88,6 @@ class Hook_cron_credit_card_cleanup
         }
 
         return [
-            'label' => 'Credit card number scrubbing',
             'num_queued' => $num_queued,
             'minutes_between_runs' => 60 * 24,
             'enabled_by_default' => true,

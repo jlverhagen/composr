@@ -35,6 +35,9 @@
  */
 class Hook_cron_cns_confirm_reminder
 {
+    public $label = 'catalogues:CONFIRM_REMINDER_CRON';
+    public $fallback_label = 'Send account confirmation reminders';
+
     protected $rows;
 
     protected const SECS_REMIND_AFTER = 24 * 60 * 60 * 2;
@@ -88,7 +91,6 @@ class Hook_cron_cns_confirm_reminder
         }
 
         return [
-            'label' => 'Send account confirmation reminders',
             'num_queued' => $num_queued,
             'minutes_between_runs' => 24 * 60 * 2,
             'enabled_by_default' => true,

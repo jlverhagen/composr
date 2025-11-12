@@ -29,6 +29,9 @@
  */
 class Hook_cron_patreon
 {
+    public $label = 'patreon:PATREON_CRON';
+    public $fallback_label = 'Patreon patron sync';
+
     protected $adapters;
 
     /**
@@ -60,7 +63,6 @@ class Hook_cron_patreon
         }
 
         return [
-            'label' => 'Patreon patron sync',
             'num_queued' => null,
             'minutes_between_runs' => 24 * 60,
             'enabled_by_default' => true,

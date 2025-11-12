@@ -35,6 +35,8 @@
  */
 class Hook_cron_stats_preprocess_raw_data
 {
+    public $label = 'stats:STATS_PREPROCESS_RAW_DATA_CRON';
+    public $fallback_label = 'Stats preprocessing';
     protected const END_TIME_CUTOFF = 60 * 60; // Only process up to one hour at a time to avoid server freezes.
     protected const INITIAL_BACK_TIME = 24 * 60 * 60 * 31; // Don't calculate stats older than 31 days ago to prevent server freezes.
 
@@ -51,7 +53,7 @@ class Hook_cron_stats_preprocess_raw_data
             return null;
         }
 
-        $minutes_between_runs = 10; // Standard
+        $minutes_between_runs = 15; // Standard; stats runs a bunch of database queries, so we do not want to run too often if we are caught up.
 
         $catching_up = get_value('stats_catching_up', null, true);
 
@@ -60,7 +62,6 @@ class Hook_cron_stats_preprocess_raw_data
         }
 
         return [
-            'label' => 'Stats preprocessing',
             'num_queued' => null,
             'minutes_between_runs' => $minutes_between_runs,
             'enabled_by_default' => true,
@@ -72,7 +73,7 @@ class Hook_cron_stats_preprocess_raw_data
      */
     public function run()
     {
-        // Prevent compound processes
+        // Prevent dog-piling
         set_value('stats_catching_up', '0', true);
 
         $start_time = null;

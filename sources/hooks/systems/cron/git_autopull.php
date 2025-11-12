@@ -37,6 +37,9 @@
  */
 class Hook_cron_git_autopull
 {
+    public $label = 'version:GIT_AUTOPULL_CRON';
+    public $fallback_label = 'Git autopull';
+
     /**
      * Get info from this hook.
      *
@@ -51,7 +54,6 @@ class Hook_cron_git_autopull
         }
 
         return [
-            'label' => 'Git autopulling',
             'num_queued' => null,
             'minutes_between_runs' => 1,
             'enabled_by_default' => true,

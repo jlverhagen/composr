@@ -29,6 +29,9 @@
  */
 class Hook_cron_cmsusers
 {
+    public $label = 'cms_homesite:CMSUSERS_CRON';
+    public $fallback_label = 'Composr installs check';
+
     /**
      * Get info from this hook.
      *
@@ -43,7 +46,6 @@ class Hook_cron_cmsusers
         }
 
         return [
-            'label' => 'Check site install status of CMS users',
             'num_queued' => 10, // We only check up to 10 at a time
             'minutes_between_runs' => 15,
             'enabled_by_default' => true,

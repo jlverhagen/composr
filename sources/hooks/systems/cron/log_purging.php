@@ -35,6 +35,9 @@
  */
 class Hook_cron_log_purging
 {
+    public $label = 'privacy:LOG_PURGING_CRON';
+    public $fallback_label = 'Purge low-level logs';
+
     /**
      * Get info from this hook.
      *
@@ -45,7 +48,6 @@ class Hook_cron_log_purging
     public function info(?int $last_run, ?bool $calculate_num_queued) : ?array
     {
         return [
-            'label' => 'Log purging',
             'num_queued' => null,
             'minutes_between_runs' => 60 * 24,
             'enabled_by_default' => true,

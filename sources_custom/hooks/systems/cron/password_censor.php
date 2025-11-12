@@ -29,6 +29,9 @@
  */
 class Hook_cron_password_censor
 {
+    public $label = 'NA'; // TODO
+    public $fallback_label = 'Censor passwords in old support tickets';
+
     /**
      * Get info from this hook.
      *
@@ -43,7 +46,6 @@ class Hook_cron_password_censor
         }
 
         return [
-            'label' => 'Censor old written passwords',
             'num_queued' => null, // Too time-consuming to calculate
             'minutes_between_runs' => 60 * 12,
             'enabled_by_default' => true,

@@ -29,6 +29,9 @@
  */
 class Hook_cron_user_sync
 {
+    public $label = 'NA'; // TODO
+    public $fallback_label = 'User sync';
+
     /**
      * Get info from this hook.
      *
@@ -55,7 +58,6 @@ class Hook_cron_user_sync
         }
 
         return [
-            'label' => 'User synchronisation',
             'num_queued' => null,
             'minutes_between_runs' => 60 * 24,
             'enabled_by_default' => true,

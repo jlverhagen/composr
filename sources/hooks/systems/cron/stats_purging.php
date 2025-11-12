@@ -35,6 +35,9 @@
  */
 class Hook_cron_stats_purging
 {
+    public $label = 'stats:STATS_PURGING_CRON';
+    public $fallback_label = 'Stats log purging';
+
     /**
      * Get info from this hook.
      *
@@ -49,7 +52,6 @@ class Hook_cron_stats_purging
         }
 
         return [
-            'label' => 'Stats purging',
             'num_queued' => null,
             'minutes_between_runs' => 15,
             'enabled_by_default' => true,

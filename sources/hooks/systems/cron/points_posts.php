@@ -35,6 +35,9 @@
  */
 class Hook_cron_points_posts
 {
+    public $label = 'points:POINTS_POSTS_CRON';
+    public $fallback_label = 'Credit points from external forum posts';
+
     /**
      * Get info from this hook.
      *
@@ -49,7 +52,6 @@ class Hook_cron_points_posts
         }
 
         return [
-            'label' => 'Credit forum post points',
             'num_queued' => null,
             'minutes_between_runs' => (60 * 24),
             'enabled_by_default' => true,

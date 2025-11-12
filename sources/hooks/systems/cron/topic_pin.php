@@ -35,6 +35,8 @@
  */
 class Hook_cron_topic_pin
 {
+    public $label = 'cns:TOPIC_PIN_CRON';
+    public $fallback_label = 'Topic unpinning';
     protected $topics;
 
     /**
@@ -75,7 +77,6 @@ class Hook_cron_topic_pin
         }
 
         return [
-            'label' => 'Topic unpinning',
             'num_queued' => $num_queued,
             'minutes_between_runs' => 60,
             'enabled_by_default' => true,
