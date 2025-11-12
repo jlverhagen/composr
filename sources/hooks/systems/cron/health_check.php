@@ -35,6 +35,9 @@
  */
 class Hook_cron_health_check
 {
+    public $label = 'health_check:HEALTH_CHECK';
+    public $fallback_label = 'Health Check';
+
     /**
      * Get info from this hook.
      *
@@ -49,7 +52,6 @@ class Hook_cron_health_check
         }
 
         return [
-            'label' => 'Health Check',
             'num_queued' => null,
             'minutes_between_runs' => intval(get_option('hc_cron_regularity')),
             'enabled_by_default' => true,

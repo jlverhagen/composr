@@ -35,6 +35,9 @@
  */
 class Hook_cron_catalogue_entry_timeouts
 {
+    public $label = 'catalogues:CATALOGUE_ENTRY_EXPIRY_CRON';
+    public $fallback_label = 'Catalogue entry expiry';
+
     /**
      * Get info from this hook.
      *
@@ -65,7 +68,6 @@ class Hook_cron_catalogue_entry_timeouts
         }
 
         return [
-            'label' => 'Catalogue entry expiry',
             'num_queued' => $num_queued,
             'minutes_between_runs' => 6 * 60,
             'enabled_by_default' => true,

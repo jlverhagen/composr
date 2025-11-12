@@ -35,6 +35,9 @@
  */
 class Hook_cron_fast_custom_index
 {
+    public $label = 'search:FAST_CUSTOM_INDEX_CRON';
+    public $fallback_label = 'Fast custom indexing';
+
     /**
      * Get info from this hook.
      *
@@ -49,7 +52,6 @@ class Hook_cron_fast_custom_index
         }
 
         return [
-            'label' => 'Index content for the fast custom index',
             'num_queued' => null,
             'minutes_between_runs' => 15,
             'enabled_by_default' => true,

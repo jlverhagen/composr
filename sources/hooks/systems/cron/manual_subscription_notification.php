@@ -35,6 +35,9 @@
  */
 class Hook_cron_manual_subscription_notification
 {
+    public $label = 'ecommerce:MANUAL_SUBSCRIPTION_NOTIFICATION_CRON';
+    public $fallback_label = 'ECommerce manual subscription expiry notifications';
+
     /**
      * Get info from this hook.
      *
@@ -53,7 +56,6 @@ class Hook_cron_manual_subscription_notification
         }
 
         return [
-            'label' => 'Send subscription expiry notifications (for manual subscriptions)',
             'num_queued' => null, // Too time-consuming to calculate
             'minutes_between_runs' => 60,
             'enabled_by_default' => true,

@@ -35,6 +35,9 @@
  */
 class Hook_cron_subscription_mails
 {
+    public $label = 'ecommerce:SUBSCRIPTION_MAILS_CRON';
+    public $fallback_label = 'Send subscription notifications';
+
     /**
      * Get info from this hook.
      *
@@ -53,7 +56,6 @@ class Hook_cron_subscription_mails
         }
 
         return [
-            'label' => 'Send subscription e-mails',
             'num_queued' => null, // Too time-consuming to calculate
             'minutes_between_runs' => 30,
             'enabled_by_default' => true,

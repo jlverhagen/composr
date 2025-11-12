@@ -35,6 +35,9 @@
  */
 class Hook_cron_dynamic_firewall
 {
+    public $label = 'security:DYNAMIC_FIREWALL_CRON'; // TODO: security is with a non-core addon; find a better place (do not use global)
+    public $fallback_label = 'Update dynamic firewall';
+
     /**
      * Get info from this hook.
      *
@@ -49,7 +52,6 @@ class Hook_cron_dynamic_firewall
         }
 
         return [
-            'label' => 'Update dynamic firewall',
             'num_queued' => null,
             'minutes_between_runs' => 60 * 6,
             'enabled_by_default' => true,

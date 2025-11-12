@@ -35,6 +35,9 @@
  */
 class Hook_cron_mail_queue
 {
+    public $label = 'mail:MAIL_QUEUE_CRON';
+    public $fallback_label = 'Send queued e-mails';
+
     /**
      * Get info from this hook.
      *
@@ -54,7 +57,6 @@ class Hook_cron_mail_queue
         }
 
         return [
-            'label' => 'Send queued e-mails',
             'num_queued' => $calculate_num_queued ? $GLOBALS['SITE_DB']->query_select_value('logged_mail_messages', 'COUNT(*)', ['m_queued' => 1]) : null,
             'minutes_between_runs' => 0,
             'queued_details_url' => build_url(['page' => 'admin_email_log'], get_module_zone('admin_email_log')),

@@ -35,6 +35,9 @@
  */
 class Hook_cron_publish_content
 {
+    public $label = 'validation:PUBLISH_CONTENT_CRON';
+    public $fallback_label = 'Validate scheduled content';
+
     /**
      * Get info from this hook.
      *
@@ -54,7 +57,6 @@ class Hook_cron_publish_content
         }
 
         return [
-            'label' => 'Validate scheduled content',
             'num_queued' => null,
             'minutes_between_runs' => 1,
             'enabled_by_default' => true,

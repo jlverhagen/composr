@@ -29,6 +29,9 @@
  */
 class Hook_cron_disastr
 {
+    public $label = 'disastr:DISASTR_CRON';
+    public $fallback_label = 'Disastr diseases';
+
     /**
      * Get info from this hook.
      *
@@ -51,7 +54,6 @@ class Hook_cron_disastr
         }
 
         return [
-            'label' => 'Disastr diseases',
             'num_queued' => null,
             'minutes_between_runs' => 24 * 60,
             'enabled_by_default' => true,

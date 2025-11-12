@@ -35,6 +35,9 @@
  */
 class Hook_cron_ip_address_sharing
 {
+    public $label = 'ecommerce:IP_ADDRESS_SHARING_CRON';
+    public $fallback_label = 'Detect IP address sharing';
+
     /**
      * Get info from this hook.
      *
@@ -63,7 +66,6 @@ class Hook_cron_ip_address_sharing
         }
 
         return [
-            'label' => 'Detect IP address sharing',
             'num_queued' => null,
             'minutes_between_runs' => 7 * 24 * 60,
             'enabled_by_default' => true,

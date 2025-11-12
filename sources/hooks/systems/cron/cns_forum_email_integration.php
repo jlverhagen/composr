@@ -35,6 +35,9 @@
  */
 class Hook_cron_cns_forum_email_integration
 {
+    public $label = 'cns_mailinglists:FORUM_EMAIL_INTEGRATION_CRON';
+    public $fallback_label = 'Forum email integration';
+
     /**
      * Get info from this hook.
      *
@@ -59,7 +62,6 @@ class Hook_cron_cns_forum_email_integration
         }
 
         return [
-            'label' => 'Forum email integration',
             'num_queued' => null,
             'minutes_between_runs' => 1,
             'enabled_by_default' => true,

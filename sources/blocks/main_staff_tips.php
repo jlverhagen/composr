@@ -108,6 +108,7 @@ class Block_main_staff_tips
             escape_html(get_tutorial_url('tutorials')),
             escape_html(get_tutorial_url(null)),
             escape_html(get_tutorial_url('tut_do')),
+            get_brand_base_url(),
         ];
 
         // Load up tips by searching for the correctly named language files; also choose level

@@ -29,6 +29,9 @@
  */
 class Hook_cron_classifieds
 {
+    public $label = 'classifieds:CLASSIFIEDS_CRON';
+    public $fallback_label = 'Classified listings expiry';
+
     /**
      * Get info from this hook.
      *
@@ -62,7 +65,6 @@ class Hook_cron_classifieds
         }
 
         return [
-            'label' => 'Classified listings expiry',
             'num_queued' => $num_queued,
             'minutes_between_runs' => 60,
             'enabled_by_default' => true,

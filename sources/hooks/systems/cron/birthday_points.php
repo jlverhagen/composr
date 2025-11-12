@@ -35,6 +35,8 @@
  */
 class Hook_cron_birthday_points
 {
+    public $label = 'cns:HAPPY_BIRTHDAY_CRON';
+    public $fallback_label = 'Send Birthday Wishes (and Points, if applicable)';
     protected $this_birthday_day;
 
     /**
@@ -68,7 +70,6 @@ class Hook_cron_birthday_points
         }
 
         return [
-            'label' => 'Send Birthday Wishes (and Points, if applicable)',
             'num_queued' => $num_queued,
             'minutes_between_runs' => 60,
             'enabled_by_default' => true,

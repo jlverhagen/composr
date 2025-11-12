@@ -35,6 +35,9 @@
  */
 class Hook_cron_calendar_reminders
 {
+    public $label = 'calendar:CALENDAR_JOBS_CRON';
+    public $fallback_label = 'Run calendar jobs and reminders';
+
     /**
      * Get info from this hook.
      *
@@ -61,7 +64,6 @@ class Hook_cron_calendar_reminders
         }
 
         return [
-            'label' => 'Run calendar jobs and reminders',
             'num_queued' => $num_queued,
             'minutes_between_runs' => 1,
             'enabled_by_default' => true,
@@ -83,13 +85,10 @@ class Hook_cron_calendar_reminders
         $start = 0;
         do {
             $jobs = $GLOBALS['SITE_DB']->query('SELECT *,j.id AS j_id FROM ' . $GLOBALS['SITE_DB']->get_table_prefix() . 'calendar_jobs j LEFT JOIN ' . $GLOBALS['SITE_DB']->get_table_prefix() . 'calendar_events e ON e.id=j.j_event_id LEFT JOIN ' . $GLOBALS['SITE_DB']->get_table_prefix() . 'calendar_reminders n ON n.id=j.j_reminder_id WHERE validated=1 AND j_time<' . strval(time()), 300, $start);
-            $or_list = '';
+            $or_list = [];
             foreach ($jobs as $job) {
                 // Build up OR list of the jobs
-                if ($or_list != '') {
-                    $or_list .= ' OR ';
-                }
-                $or_list .= 'id=' . strval($job['j_id']);
+                $or_list[] = $job['j_id'];
 
                 $_start_hour = ($job['e_start_hour'] === null) ? find_timezone_start_hour_in_utc($job['e_timezone'], $job['e_start_year'], $job['e_start_month'], $job['e_start_day'], $job['e_start_monthly_spec_type']) : $job['e_start_hour'];
                 $_start_minute = ($job['e_start_minute'] === null) ? find_timezone_start_minute_in_utc($job['e_timezone'], $job['e_start_year'], $job['e_start_month'], $job['e_start_day'], $job['e_start_monthly_spec_type']) : $job['e_start_minute'];
@@ -168,8 +167,8 @@ class Hook_cron_calendar_reminders
             }
 
             // Delete jobs just run
-            if ($or_list != '') {
-                $GLOBALS['SITE_DB']->query('DELETE FROM ' . $GLOBALS['SITE_DB']->get_table_prefix() . 'calendar_jobs WHERE ' . $or_list, null, 0, false, true);
+            if (count($or_list) > 0) {
+                $GLOBALS['SITE_DB']->query('DELETE FROM ' . $GLOBALS['SITE_DB']->get_table_prefix() . 'calendar_jobs WHERE id IN (' . implode(',', $or_list) . ')', null, 0, false, true);
             }
 
             //$start += 300;    No, we just deleted, so offsets would have changed

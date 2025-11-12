@@ -35,6 +35,8 @@
  */
 class Hook_cron_catalogue_view_reports
 {
+    public $label = 'catalogues:CATALOGUE_VIEW_REPORTS_CRON';
+    public $fallback_label = 'Send catalogue entry view-reports';
     protected $doing;
 
     /**
@@ -100,7 +102,6 @@ class Hook_cron_catalogue_view_reports
         }
 
         return [
-            'label' => 'Send catalogue entry view-reports',
             'num_queued' => $num_queued,
             'minutes_between_runs' => 60 * 12,
             'enabled_by_default' => true,

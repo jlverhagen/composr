@@ -29,6 +29,9 @@
  */
 class Hook_cron_upgrade_cleanup
 {
+    public $label = 'cms_homesite:UPGRADE_CLEANUP_CRON';
+    public $fallback_label = 'Purge old generated upgrader TARs';
+
     /**
      * Get info from this hook.
      *
@@ -49,7 +52,6 @@ class Hook_cron_upgrade_cleanup
         }
 
         return [
-            'label' => 'Clean up old personal upgraders',
             'num_queued' => $num_queued_val,
             'minutes_between_runs' => 60 * 24,
             'enabled_by_default' => true,
