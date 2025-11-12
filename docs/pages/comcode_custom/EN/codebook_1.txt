@@ -362,20 +362,26 @@ Note that Composr also comes with a database integrity scan (for MySQL). In orde
 Composr minimises its use of database features, in order to increase portability. We intentionally do not use the following database features:
  - stored procedures
  - transactions
+  - Some database storage engines, such as [tt]InnoDB[/tt] (default as of Composr 11 beta9), can handle transactions natively in the event of a corruption
  - default field values
+  - Composr handles this on a software level
  - functions
- - foreign key constraints, and automatic tidy up
-On a practical level, these things aren't really necessary so long as the PHP code takes up the responsibility for providing the same kind of abilities instead. E.g. the model code for an addon would define default field values in how it pre-populates form fields for a new entry.
+  - Composr handles this on a software level
+ - foreign key constraints, and automatic tidying up
+  - Composr has a tool in the upgrader for purging orphaned data, and the health check can scan for it; what's nice is that you can use this even if your database does not support foreign key constraints
+On a practical level, these things aren't really necessary (or may even fundamentally break Composr) so long as the PHP code takes up the responsibility for providing the same kind of abilities instead.
 
-When tables are created, a special meta table is updated. This meta table stores the database schema in a database independent manner that allows the backup/restore system to work. Because of this, you should never manually change the database structure outside the context of the Composr database functions.
+When tables are created, three special meta tables are updated. These meta tables store the database schema in a database independent manner that allows the backup/restore system to work. Because of this, you should never manually change the database structure outside the context of the Composr database functions.
 
-You might wonder why we don't just read the database schemas directly via abstraction code in the database drivers, and avoid the need for the special meta table. It would certainly make it easier to manage the database if this were the case. The reason is that our typing system (with the field types explained above) encodes semantic information beyond what simple SQL data types can encode, and this is of wider use within Composr. For example, the broken-URL scanner looks at all field values of type 'URLPATH'.
+You might wonder why we don't just read the database schemas directly via abstraction code in the database drivers, and avoid the need for the special meta table. It would certainly make it easier to manage the database if this were the case. The reason is that our typing system (with the field types explained above) encodes semantic information beyond what simple SQL data types can encode, and this is of wider use within Composr. For example, the broken-URL scanner looks at all field values of type 'URLPATH'. It also adds a third point of checking when running the database repair tool.
 
 Database indexes are created using the [tt]create_index[/tt] function of a database object. This function takes three parameters:
 1) The name of the table to create the index on
 2) A unique name for the index
 3) A list of fields to include in the index
 (Indexes provide important speed improvements if you routinely look-up data from tables using fields other than the primary key)
+
+Database foreign key "constraints" are created using the [tt]create_foreign_key[/tt] function of a database object. This does not create a foreign key constraint on the database level. However, it establishes an internal mapping of tables and columns (within the special meta tables). And this is used by the orphaned data checking and purging tools.
 
 One important thing to understand at this point is that Composr supports multi-language content at its core. This means that any resources that are defined need to be able to define their human-readable strings via the [tt]translate[/tt] table rather than directly. As of Composr 10, by default multi-language content is not enabled, but the code needs to support it anyway. This is the purpose behind the [tt]transtext[/tt] and [tt]transline[/tt] configuration option, as well as the 'SHORT_TRANS'/'LONG_TRANS'/'SHORT_TRANS__COMCODE'/'LONG_TRANS__COMCODE' field-type-identifiers.
 
@@ -441,6 +447,12 @@ function install($upgrade_from = null, $upgrade_from_hack = null)
 	if (($upgrade_from !== null) && ($upgrade_from<2))
 	{
 		// Code from upgrading from v1 goes here (1<2)
+		...
+	}
+
+	if (($upgrade_from === null) || ($upgrade_from<2))
+	{
+		// Code for both new installs and those upgrading to v2 go here
 		...
 	}
 }
