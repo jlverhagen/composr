@@ -36,16 +36,12 @@ if (is_guest()) {
 }
 
 require_code('decision_tree');
-require_code('mantis');
+require_code('cms_homesite_tracker');
 require_code('cms_homesite');
 require_lang('decision_tree');
 
 global $BASE_URL;
 $BASE_URL = get_custom_base_url();
-
-// Get tracker categories
-$_categories = collapse_2d_complexity('id', 'name', $GLOBALS['SITE_DB']->query('SELECT id,name FROM mantis_category_table WHERE status=0 ORDER BY name'));
-$categories = array_unique($_categories);
 
 // Submit?
 $type = get_param_string('type', 'browse');
@@ -53,15 +49,14 @@ if ($type == 'submit') {
     require_code('version2');
 
     // Required
-    $project = post_param_string('project');
+    $_category = post_param_string('category');
     $_severity = explode(':', post_param_string('severity'));
     $severity = $_severity[0];
     $summary = post_param_string('summary');
     $description = post_param_string('description');
 
     // Optional
-    $_category = post_param_string('category', '[All Projects] General');
-    $category_aux = post_param_string('category_aux', '');
+    $addon = post_param_string('addon', 'core');
     $version = get_version_dotted__from_anything(post_param_string('version', ''));
     $steps_to_reproduce = post_param_string('steps_to_reproduce', '');
     $additional_information = post_param_string('additional_information', '');
@@ -69,14 +64,17 @@ if ($type == 'submit') {
     $search_tutorials = post_param_integer('search_tutorials', 0);
     $remote_access = post_param_integer('remote_access', 0);
 
-    // Map project values from the form to their ID in Mantis
-    $projects = [
-        'Core software / bundled addons / default theme' => 1,
-        'Downloadable (non-bundled) addons or themes' => 4,
-        'Content in a Documentation / Tutorial' => 7,
-        'Homesite' => 3,
+    // Map category values from the form to their category title language string code
+    $categories = [
+        'Core software / bundled addons / default theme' => 'TRACKER_CATALOGUE_CATEGORY_1',
+        'Downloadable (non-bundled) addons or themes' => 'TRACKER_CATALOGUE_CATEGORY_2',
+        'Content in a Documentation / Tutorial' => 'TRACKER_CATALOGUE_CATEGORY_3',
+        'Homesite' => 'TRACKER_CATALOGUE_CATEGORY_4',
         'Custom code' => null, // Never gets added as an issue
     ];
+
+    // Get category
+    $category = $GLOBALS['SITE_DB']->query_select_value('catalogue_categories', 'id', ['c_name' => 'tracker', $GLOBALS['SITE_DB']->translate_field_ref('cc_title') => do_lang($categories[$_category])]);
 
     // Map severities to their integer value
     $severities = [
@@ -89,19 +87,6 @@ if ($type == 'submit') {
 
     // Set security reports to private
     $view_state = ($severities[$severity] == 95) ? 50 : 10;
-
-    // Get category ID
-    // TODO: Need to add back in ORDER BY id once we figure out why it's failing sql_compat and how to fix it
-    $category = array_search($_category, $_categories);
-    if (($category === false) || ($category === '')) {
-        $_category = $GLOBALS['SITE_DB']->query('SELECT id FROM mantis_category_table WHERE status=0 LIMIT 1');
-        $category = $_category[0]['id'];
-    }
-
-    // Add category aux to summary if applicable
-    if ($category_aux != '') {
-        $summary = $category_aux . ': ' . $summary;
-    }
 
     // Add confirmation tick boxes if applicable
     if ($search == 1) {
@@ -124,14 +109,23 @@ if ($type == 'submit') {
     }
 
     // Create the tracker issue
-    $tracker_id = create_tracker_issue($version, $summary, $description, $additional_information, $severities[$severity], $category, $projects[$project], 0, $steps_to_reproduce, 10, 10, 10, $view_state);
-    create_tracker_post($tracker_id, 'Automated message: This issue was created using the Report Issue Wizard on the homesite.');
+    $tracker_id = create_tracker_issue(
+        $version,
+        $summary,
+        $severity,
+        $description,
+        $additional_information,
+        $addon,
+        $category,
+        null,
+        $steps_to_reproduce,
+    );
 
     // Inform the member it has been done with a redirect to it.
     $decision_tree = [
         'submit' => [
             'title' => 'Issue Submitted',
-            'text' => 'Thank you for submitting an issue! Your issue is [url="#' . strval($tracker_id) . '"]' . $BASE_URL . '/tracker/view.php?id=' . strval($tracker_id) . '[/url] on the tracker. You can click the issue number to be directed to it. Be sure to save or bookmark the page for future reference.' . "\n\n" . 'If you have any screenshots or relevant files to attach to the issue (such as errors and stack traces), you can do so in a follow-up comment on the issue.',
+            'text' => 'Thank you for submitting an issue! Your issue is [url="#' . strval($tracker_id[1]) . '"]' . $BASE_URL . '/tracker/issue/' . strval($tracker_id[1]) . '.htm[/url] on the tracker. You can click the issue number to be directed to it. Be sure to save or bookmark the page for future reference.' . "\n\n" . 'If you have any screenshots or relevant files to attach to the issue (such as errors and stack traces), you can do so in a follow-up comment on the issue.',
         ]
     ];
 
@@ -145,15 +139,15 @@ if ($type == 'submit') {
             'questions' => [
                 'search' => [
                     'label' => 'Searched the tracker for existing issues?',
-                    'description' => 'Did you already search the tracker to see if your issue was already reported by someone else? You can do so from your Admin Zone dashboard in the version block (there is a link to view reported issues), or at ' . $BASE_URL . '/tracker/view_all_bug_page.php (make sure you have "All Projects" selected). We encourage you do so, but we do not require it especially if the interface is overwhelming.',
+                    'description' => 'Did you already search the tracker to see if your issue was already reported by someone else? You can do so from your Admin Zone dashboard in the version block (there is a link to view reported issues), or at ' . $BASE_URL . '/tracker? We encourage you do so, but we do not require it especially if the interface is overwhelming.',
                     'type' => 'tick',
                     'default' => '',
                     'options' => '',
                     'required' => true,
                 ],
-                'project' => [
-                    'label' => 'Choose relevant component',
-                    'description' => 'Which of these best describes the component of the issue you are reporting or the request you are making?',
+                'category' => [
+                    'label' => 'Category',
+                    'description' => 'Which of these best describes the category of the issue you are reporting or the request you are making?',
                     'type' => 'list',
                     'default' => 'Core software / bundled addons / default theme',
                     'default_list' => [
@@ -169,11 +163,11 @@ if ($type == 'submit') {
             ],
             'next' => [
                 // Parameter, Value, Target
-                ['project', 'Custom code', 'custom_code'],
-                ['project', 'Core software / bundled addons / default theme', 'core_category'],
-                ['project', 'Content in a Documentation / Tutorial', 'doc_issue'],
-                ['project', 'Downloadable (non-bundled) addons or themes', 'nb_issue'],
-                ['project', 'Homesite', 'site_issue'],
+                ['category', 'Custom code', 'custom_code'],
+                ['category', 'Core software / bundled addons / default theme', 'core_software'],
+                ['category', 'Content in a Documentation / Tutorial', 'doc_issue'],
+                ['category', 'Downloadable (non-bundled) addons or themes', 'nb_issue'],
+                ['category', 'Homesite', 'site_issue'],
             ],
         ],
 
@@ -182,20 +176,20 @@ if ($type == 'submit') {
             'text' => 'We apologize, but the issue tracker is not for reporting issues with custom code which is not part of the core software or a non-bundled addon. Please consider [page=":partners"]hiring a developer[/page] for your needs.',
         ],
 
-        'core_category' => [
+        'core_software' => [
             'expects_parameters' => [
-                'project'
+                'category'
             ],
             'title' => 'Basic Issue Information (Core software)',
             'text' => 'Step 2 of 3: Please provide the following basic information about your issue.',
             'form_method' => 'POST',
             'questions' => [
-                'category' => [
-                    'label' => 'Addon / Category',
-                    'description' => 'Choose the relevant addon / category for this issue. If you do not know, you can make a best guess; developers can always correct this later. Or, you can use "General / Uncategorised".',
-                    'type' => 'list',
+                'addon' => [
+                    'label' => 'Addon',
+                    'description' => 'Choose the relevant addon for this issue. If you do not know, you can make a best guess; developers can always correct this later.',
+                    'type' => 'addon',
                     'default' => '',
-                    'default_list' => $categories,
+                    'default_list' => '',
                     'options' => '',
                     'required' => true,
                 ],
@@ -213,11 +207,11 @@ if ($type == 'submit') {
                     'type' => 'list',
                     'default' => 'Feature / Request',
                     'default_list' => [
-                        'Feature-request: For feature requests and suggestions on improving the software',
-                        'Trivial-bug: For typos and other issues that do not affect the operation of the software',
-                        'Minor-bug: For issues that affect software operation but not to the point entire features are unusable',
-                        'Major-bug: For issues that render entire features unusable or cause corruption to the site',
-                        'Security-hole: For reporting security vulnerabilities in the software'
+                        'feature: For feature requests and suggestions on improving the software',
+                        'trivial: For typos and other issues that do not affect the operation of the software',
+                        'minor: For issues that affect software operation but not to the point entire features are unusable',
+                        'major: For issues that render entire features unusable or cause corruption to the site',
+                        'security: For reporting security vulnerabilities in the software'
                     ],
                     'options' => 'widget=radio',
                     'required' => true,
@@ -225,29 +219,29 @@ if ($type == 'submit') {
             ],
             'next' => [
                 // Parameter, Value, Target
-                ['severity', 'Feature-request: For feature requests and suggestions on improving the software', 'feature'],
-                ['severity', 'Trivial-bug: For typos and other issues that do not affect the operation of the software', 'bug'],
-                ['severity', 'Minor-bug: For issues that affect software operation but not to the point entire features are unusable', 'bug'],
-                ['severity', 'Major-bug: For issues that render entire features unusable or cause corruption to the site', 'bug'],
-                ['severity', 'Security-hole: For reporting security vulnerabilities in the software', 'security'],
+                ['severity', 'feature: For feature requests and suggestions on improving the software', 'feature'],
+                ['severity', 'trivial: For typos and other issues that do not affect the operation of the software', 'bug'],
+                ['severity', 'minor: For issues that affect software operation but not to the point entire features are unusable', 'bug'],
+                ['severity', 'major: For issues that render entire features unusable or cause corruption to the site', 'bug'],
+                ['severity', 'security: For reporting security vulnerabilities in the software', 'security'],
             ],
         ],
 
         'nb_issue' => [
             'expects_parameters' => [
-                'project'
+                'category'
             ],
             'title' => 'Basic Issue Information (Non-bundled addons)',
             'text' => 'Step 2 of 3: Please provide the following basic information about your issue.',
             'form_method' => 'POST',
             'notice' => [
-              'Please do not use the issue tracker to report issues with addons or themes which were not downloaded from your Admin Zone\'s Addons page or from the Addons / Themes pages on the homesite. If you need support for an addon independently distributed by someone else, please see ' . $BASE_URL . '/support.htm .'
+                'The responsibility of implementing issues for a non-bundled addon falls on the author of the addon and not the core developers. Issues for non-bundled addons usually have lower priority than bundled ones.'
             ],
             'questions' => [
-                'category_aux' => [
-                    'label' => 'Addon / Theme',
-                    'description' => 'If applicable, please specify the name of the non-bundled addon or theme relevant to your issue.',
-                    'type' => 'short_text',
+                'addon' => [
+                    'label' => 'Addon',
+                    'description' => 'Please choose the relevant non-bundled addon. For themes, and addons that are not listed on the homesite, leave this blank and specify the name in the summary (on the next step).',
+                    'type' => 'addon',
                     'default' => '',
                     'options' => '',
                     'required' => false,
@@ -266,11 +260,11 @@ if ($type == 'submit') {
                     'type' => 'list',
                     'default' => 'Feature / Request',
                     'default_list' => [
-                        'Feature-request: For feature requests and suggestions on improving a non-bundled addon',
-                        'Trivial-bug: For typos and other issues that do not affect the operation of the addon',
-                        'Minor-bug: For issues that affect addon operation but not to the point entire features are unusable',
-                        'Major-bug: For issues that render entire features / addons unusable or cause corruption to the site',
-                        'Security-hole: For reporting security vulnerabilities in an addon'
+                        'feature: For feature requests and suggestions on improving a non-bundled addon',
+                        'trivial: For typos and other issues that do not affect the operation of the addon',
+                        'minor: For issues that affect addon operation but not to the point entire features are unusable',
+                        'major: For issues that render entire features / addons unusable or cause corruption to the site',
+                        'security: For reporting security vulnerabilities in an addon'
                     ],
                     'options' => 'widget=radio',
                     'required' => true,
@@ -278,17 +272,17 @@ if ($type == 'submit') {
             ],
             'next' => [
                 // Parameter, Value, Target
-                ['severity', 'Feature-request: For feature requests and suggestions on improving a non-bundled addon', 'feature'],
-                ['severity', 'Trivial-bug: For typos and other issues that do not affect the operation of the addon', 'bug'],
-                ['severity', 'Minor-bug: For issues that affect addon operation but not to the point entire features are unusable', 'bug'],
-                ['severity', 'Major-bug: For issues that render entire features / addons unusable or cause corruption to the site', 'bug'],
-                ['severity', 'Security-hole: For reporting security vulnerabilities in an addon', 'security'],
+                ['severity', 'feature: For feature requests and suggestions on improving a non-bundled addon', 'feature'],
+                ['severity', 'trivial: For typos and other issues that do not affect the operation of the addon', 'bug'],
+                ['severity', 'minor: For issues that affect addon operation but not to the point entire features are unusable', 'bug'],
+                ['severity', 'major: For issues that render entire features / addons unusable or cause corruption to the site', 'bug'],
+                ['severity', 'security: For reporting security vulnerabilities in an addon', 'security'],
             ],
         ],
 
         'site_issue' => [
             'expects_parameters' => [
-                'project'
+                'category'
             ],
             'title' => 'Basic Issue Information (Homesite)',
             'text' => 'Step 2 of 3: Please provide the following basic information about your issue.',
@@ -300,11 +294,11 @@ if ($type == 'submit') {
                     'type' => 'list',
                     'default' => 'Feature / Request',
                     'default_list' => [
-                        'Feature-request: For feature requests and suggestions on improving the homesite',
-                        'Trivial-bug: For typos and other issues that do not affect the operation of the homesite',
-                        'Minor-bug: For issues that affect the the homesite\'s operation but not to the point entire features are unusable',
-                        'Major-bug: For issues that render entire features unusable or cause corruption to the homesite',
-                        'Security-hole: For reporting security vulnerabilities in the homesite'
+                        'feature: For feature requests and suggestions on improving the homesite',
+                        'trivial: For typos and other issues that do not affect the operation of the homesite',
+                        'minor: For issues that affect the the homesite\'s operation but not to the point entire features are unusable',
+                        'major: For issues that render entire features unusable or cause corruption to the homesite',
+                        'security: For reporting security vulnerabilities in the homesite'
                     ],
                     'options' => 'widget=radio',
                     'required' => true,
@@ -312,17 +306,17 @@ if ($type == 'submit') {
             ],
             'next' => [
                 // Parameter, Value, Target
-                ['severity', 'Feature-request: For feature requests and suggestions on improving the homesite', 'feature'],
-                ['severity', 'Trivial-bug: For typos and other issues that do not affect the operation of the homesite', 'bug'],
-                ['severity', 'Minor-bug: For issues that affect the the homesite\'s operation but not to the point entire features are unusable', 'bug'],
-                ['severity', 'Major-bug: For issues that render entire features unusable or cause corruption to the homesite', 'bug'],
-                ['severity', 'Security-hole: For reporting security vulnerabilities in the homesite', 'security'],
+                ['severity', 'feature: For feature requests and suggestions on improving the homesite', 'feature'],
+                ['severity', 'trivial: For typos and other issues that do not affect the operation of the homesite', 'bug'],
+                ['severity', 'minor: For issues that affect the the homesite\'s operation but not to the point entire features are unusable', 'bug'],
+                ['severity', 'major: For issues that render entire features unusable or cause corruption to the homesite', 'bug'],
+                ['severity', 'security: For reporting security vulnerabilities in the homesite', 'security'],
             ],
         ],
 
         'feature' => [
             'expects_parameters' => [
-                'project',
+                'category',
                 'severity'
             ],
             'title' => 'Feature / Request Details',
@@ -366,7 +360,7 @@ if ($type == 'submit') {
 
         'bug' => [
             'expects_parameters' => [
-                'project',
+                'category',
                 'severity'
             ],
             'title' => 'Bug Report Details',
@@ -397,8 +391,8 @@ if ($type == 'submit') {
                 ],
                 'steps_to_reproduce' => [
                     'label' => 'How do you reproduce the bug / issue?',
-                    'description' => 'If possible / applicable, please explain how one can reproduce this bug / issue. Please list steps in sequential order and note any special details (such as config options that need to be set).',
-                    'type' => 'long_text',
+                    'description' => 'If possible / applicable, please explain how one can reproduce this bug / issue. Please list steps in sequential order, one per box, and note any special details (such as config options that need to be set).',
+                    'type' => 'short_trans_multi',
                     'default' => '',
                     'options' => '',
                     'required' => false,
@@ -426,7 +420,7 @@ if ($type == 'submit') {
 
         'security' => [
             'expects_parameters' => [
-                'project',
+                'category',
                 'severity'
             ],
             'title' => 'Security Vulnerability Details',
@@ -461,8 +455,8 @@ if ($type == 'submit') {
                 ],
                 'steps_to_reproduce' => [
                     'label' => 'How do you expose / exploit this vulnerability?',
-                    'description' => 'Please explain how one can reproduce / verify this security vulnerability. Please list steps in sequential order and note any special details (such as config options that need to be set or that one must gain access to a privileged account first). This field is required for security vulnerability reports.',
-                    'type' => 'long_text',
+                    'description' => 'Please explain how one can reproduce / verify this security vulnerability. Please list steps in sequential order, one per box, and note any special details (such as config options that need to be set or that one must gain access to a privileged account first). This field is required for security vulnerability reports.',
+                    'type' => 'short_trans_multi',
                     'default' => '',
                     'options' => '',
                     'required' => true,
@@ -490,29 +484,21 @@ if ($type == 'submit') {
 
         'doc_issue' => [
             'expects_parameters' => [
-                'project'
+                'category'
             ],
             'title' => 'Basic Issue Information (Documentation)',
             'text' => 'Step 2 of 3: I will now ask a few quick questions so I can best guide you to the next screen for your issue.',
             'form_method' => 'POST',
             'questions' => [
-                'category_aux' => [
-                    'label' => 'Name of Tutorial Page',
-                    'description' => 'Please specify the name of the tutorial page relevant to your issue. If you are suggesting a new tutorial, please provide a name for your tutorial.',
-                    'type' => 'short_text',
-                    'default' => '',
-                    'options' => '',
-                    'required' => false,
-                ],
                 'severity' => [
                     'label' => 'Issue Type',
                     'description' => 'Please choose the type of the issue you are reporting. Note that for tutorial pages, major bugs and security holes do not apply. If there is a bug with the tutorial system itself, it should be reported under Downloadable (non-bundled) addons or themes.',
                     'type' => 'list',
                     'default' => '',
                     'default_list' => [
-                        'Feature-request: For suggesting new official tutorials or additions to existing ones',
-                        'Trivial-bug: For reporting typos or inaccuracies in existing tutorials',
-                        'Minor-bug: For reporting issues with tutorials not rendering properly',
+                        'feature: For suggesting new official tutorials or additions to existing ones',
+                        'trivial: For reporting typos or inaccuracies in existing tutorials',
+                        'minor: For reporting issues with tutorials not rendering properly',
                     ],
                     'options' => 'widget=radio',
                     'required' => true,
@@ -520,15 +506,15 @@ if ($type == 'submit') {
             ],
             'next' => [
                 // Parameter, Value, Target
-                ['severity', 'Feature-request: For suggesting new official tutorials or additions to existing ones', 'doc_new'],
-                ['severity', 'Trivial-bug: For reporting typos or inaccuracies in existing tutorials', 'doc_fix'],
-                ['severity', 'Minor-bug: For reporting issues with tutorials not rendering properly', 'bug'],
+                ['severity', 'feature: For suggesting new official tutorials or additions to existing ones', 'doc_new'],
+                ['severity', 'trivial: For reporting typos or inaccuracies in existing tutorials', 'doc_fix'],
+                ['severity', 'minor: For reporting issues with tutorials not rendering properly', 'bug'],
             ],
         ],
 
         'doc_new' => [
             'expects_parameters' => [
-                'project',
+                'category',
                 'severity',
             ],
             'title' => 'Suggest a New Tutorial',
@@ -581,7 +567,7 @@ if ($type == 'submit') {
 
         'doc_fix' => [
             'expects_parameters' => [
-                'project',
+                'category',
                 'severity',
             ],
             'title' => 'Report an Error in a Tutorial',

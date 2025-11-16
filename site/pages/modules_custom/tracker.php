@@ -432,6 +432,11 @@ class Module_tracker
                         $text = '';
                     }
 
+                    // Skip automated messages about using the wizard
+                    if ($text == '[html]' . escape_html('Automated message: This issue was created using the Report Issue Wizard on the homesite.') . '[/html]') {
+                        continue;
+                    }
+
                     // Attachments
                     $files = $GLOBALS['SITE_DB']->query_parameterised('SELECT `id`,`diskfile`,`filename`,`filesize`,`user_id`,`description`,`file_type` FROM mantis_bug_file_table WHERE bugnote_id={id}', ['id' => $row['id']]);
                     foreach ($files as $i => $file) {
@@ -500,12 +505,47 @@ class Module_tracker
             } while (count($rows) > 0);
 
             // TODO step 8: Migrate tags
-            $rows = $GLOBALS['SITE_DB']->query('SELECT DISTINCT `name` FROM mantis_tags_table');
-            $tags = collapse_1d_complexity('name', $rows);
+            $rows = $GLOBALS['SITE_DB']->query('SELECT `id`,`name` FROM mantis_tag_table');
+            $tags = collapse_2d_complexity('id', 'name', $rows);
+
+            $identifier_field = $GLOBALS['SITE_DB']->query_select_value('catalogue_fields', 'id', ['c_name' => 'tracker', $GLOBALS['SITE_DB']->translate_field_ref('cf_name') => do_lang('IDENTIFIER')]);
+            $tag_field = $GLOBALS['SITE_DB']->query_select_value('catalogue_fields', 'id', ['c_name' => 'tracker', $GLOBALS['SITE_DB']->translate_field_ref('cf_name') => do_lang('ISSUE_TAGS')]);
+
+            $start = 0;
+            $max = 100;
+            $rows = [];
+            do {
+                $rows = $GLOBALS['SITE_DB']->query('SELECT * FROM mantis_bug_tag_table', $max, $start);
+                foreach ($rows as $row) {
+                    $source_entry = $GLOBALS['SITE_DB']->query_select_value_if_there('catalogue_efv_integer', 'ce_id', ['cf_id' => $identifier_field, 'cv_value' => $row['bug_id']]);
+
+                    if (($source_entry === null) || (!isset($tags[$row['tag_id']]))) {
+                        continue;
+                    }
+
+                    $new_field = false;
+                    $current_tags = $GLOBALS['SITE_DB']->query_select_value_if_there('catalogue_efv_long', 'cv_value', ['cf_id' => $tag_field, 'ce_id' => $source_entry]);
+                    if ($current_tags === null) {
+                        $current_tags = '';
+                        $new_field = true;
+                    } elseif (trim($current_tags != '')) {
+                        $current_tags .= "\n";
+                    }
+
+                    $current_tags .= strval($tags[$row['tag_id']]);
+
+                    if ($new_field) {
+                        $GLOBALS['SITE_DB']->query_insert('catalogue_efv_long', ['cf_id' => $tag_field, 'ce_id' => $source_entry, 'cv_value' => strval($current_tags)]);
+                    } else {
+                        $GLOBALS['SITE_DB']->query_update('catalogue_efv_long', ['cv_value' => strval($current_tags)], ['cf_id' => $tag_field, 'ce_id' => $source_entry]);
+                    }
+                }
+
+                $start += $max;
+            } while (count($rows) > 0);
 
             set_mass_import_mode(false);
             pop_query_limiting();
-            // TODO step 9: Migrate monitor status
             // TODO: Modify or create notification types for the tracker
             // TODO: be sure to add a contentious override that throws an error when a non-staff who did not create an issue tries to view a type security issue.
             // TODO: add custom templates for the catalogue
@@ -549,10 +589,7 @@ class Module_tracker
                 'mantis_user_profile_table',
                 'mantis_user_table',
             ];
-            $GLOBALS['SITE_DB']->query('DROP TABLE IF EXISTS ' . implode(',' , $tables));
-
-            require_code('files');
-            deldir_contents(get_file_base() . '/tracker', false, true);
+            $GLOBALS['SITE_DB']->query('DROP TABLE IF EXISTS ' . implode(',', $tables));
         }
     }
 
