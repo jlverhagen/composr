@@ -609,6 +609,7 @@ function find_ticket_assigned_to(string $ticket_id) : array
 /**
  * Update the cache of ticket type lead times (average time taken for a response to tickets of that type) in the database.
  * This is a query-intensive function, so should only be run occasionally.
+ * TODO: needs optimised
  */
 function update_ticket_type_lead_times()
 {

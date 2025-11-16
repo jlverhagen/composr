@@ -35,6 +35,9 @@
  */
 class Hook_cron_newsletter_periodic
 {
+    public $label = 'newsletter:NEWSLETTER_PERIODIC_CRON';
+    public $fallback_label = 'Send periodic newsletters';
+
     /**
      * Get info from this hook.
      *
@@ -68,7 +71,6 @@ class Hook_cron_newsletter_periodic
         }
 
         return [
-            'label' => 'Send periodic newsletters',
             'num_queued' => $num_queued,
             'minutes_between_runs' => 60,
             'enabled_by_default' => true,

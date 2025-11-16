@@ -60,13 +60,13 @@ function get_forum_sort_order(string $_sort = 'first_post', bool $simplified = f
         case 'first_post':
             $sort .= 't_cache_first_time DESC';
             $keyset_clause = 't_cache_first_time<XXX';
-            $keyset_field = 'first_time';
+            $keyset_field = 't_cache_first_time';
             break;
 
         case 'title':
             $sort .= 't_cache_first_title ASC';
             $keyset_clause = 't_cache_first_title>\'XXX\'';
-            $keyset_field = 'first_title';
+            $keyset_field = 't_cache_first_title';
             break;
 
         case 'views':
@@ -97,7 +97,7 @@ function get_forum_sort_order(string $_sort = 'first_post', bool $simplified = f
         default:
             $sort .= 't_cache_last_time DESC';
             $keyset_clause = 't_cache_last_time<XXX';
-            $keyset_field = 'last_time';
+            $keyset_field = 't_cache_last_time';
             break;
     }
 

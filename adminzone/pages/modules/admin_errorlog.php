@@ -486,7 +486,10 @@ class Module_admin_errorlog
         $cron_progression = list_to_map('c_hook', $GLOBALS['SITE_DB']->query_select('cron_progression', ['*']));
         $cron_hooks = find_all_hook_obs('systems', 'cron', 'Hook_cron_');
         foreach ($cron_hooks as $hook => $object) {
-            $label = $hook;
+            $label = do_lang($object->label, null, null, null, null, false);
+            if ($label === null) {
+                $label = $object->fallback_label;
+            }
             $num_queued = null;
             $minutes_between_runs = 0;
             $available = true;
@@ -504,7 +507,6 @@ class Module_admin_errorlog
 
             $info = $object->info($last_run, null); // Low priority for calculating queued items
             if ($info !== null) {
-                $label = $info['label'];
                 $num_queued = $info['num_queued'];
                 $minutes_between_runs = $info['minutes_between_runs'];
                 if (!isset($cron_progression[$hook])) {

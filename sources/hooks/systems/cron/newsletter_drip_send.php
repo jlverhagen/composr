@@ -35,6 +35,9 @@
  */
 class Hook_cron_newsletter_drip_send
 {
+    public $label = 'newsletter:NEWSLETTER_DRIP_SEND_CRON';
+    public $fallback_label = 'Newsletter drip-send';
+
     /**
      * Get info from this hook.
      *
@@ -54,7 +57,6 @@ class Hook_cron_newsletter_drip_send
         }
 
         return [
-            'label' => 'Send queued newsletters',
             'num_queued' => $calculate_num_queued ? $GLOBALS['SITE_DB']->get_table_count_approx('newsletter_drip_send') : null,
             'minutes_between_runs' => intval(get_option('minutes_between_sends')),
             'enabled_by_default' => true,

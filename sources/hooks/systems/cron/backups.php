@@ -35,6 +35,9 @@
  */
 class Hook_cron_backups
 {
+    public $label = 'backups:BACKUPS';
+    public $fallback_label = 'Backups';
+
     /**
      * Get info from this hook.
      *
@@ -66,7 +69,6 @@ class Hook_cron_backups
         }
 
         return [
-            'label' => 'Backups',
             'num_queued' => $num_queued,
             'minutes_between_runs' => 60,
             'enabled_by_default' => true,

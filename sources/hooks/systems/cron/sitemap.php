@@ -35,6 +35,9 @@
  */
 class Hook_cron_sitemap
 {
+    public $label = 'menus:SITEMAP_CRON';
+    public $fallback_label = 'Update XML sitemap nodes';
+
     /**
      * Get info from this hook.
      *
@@ -57,7 +60,6 @@ class Hook_cron_sitemap
         }
 
         return [
-            'label' => 'Update XML Sitemap',
             'num_queued' => $num_queued,
             'minutes_between_runs' => 60 * 24, // Every day. Contrast to the news sitemap which is built and pinged instantly, so content needing instant promotion should go via news
             'enabled_by_default' => true,

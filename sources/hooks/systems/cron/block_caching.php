@@ -35,6 +35,9 @@
  */
 class Hook_cron_block_caching
 {
+    public $label = 'blocks:BLOCK_CACHE_CRON';
+    public $fallback_label = 'Block cache population';
+
     /**
      * Get info from this hook.
      *
@@ -51,7 +54,7 @@ class Hook_cron_block_caching
 
         return [
             'label' => 'Block cache population',
-            'num_queued' => $calculate_num_queued ? $GLOBALS['SITE_DB']->get_table_count_approx('cron_caching_requests') : 0,
+            'num_queued' => $calculate_num_queued ? $GLOBALS['SITE_DB']->get_table_count_approx('cron_caching_requests') : null,
             'minutes_between_runs' => 0,
             'enabled_by_default' => true,
         ];

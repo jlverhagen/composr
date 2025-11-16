@@ -35,6 +35,9 @@
  */
 class Hook_cron_tickets_email_integration
 {
+    public $label = 'tickets:TICKETS_EMAIL_INTEGRATION_CRON';
+    public $fallback_label = 'Process e-mailed support tickets';
+
     /**
      * Get info from this hook.
      *
@@ -53,7 +56,6 @@ class Hook_cron_tickets_email_integration
         }
 
         return [
-            'label' => 'Process e-mailed support tickets',
             'num_queued' => null, // Too time-consuming to calculate
             'minutes_between_runs' => 1,
             'enabled_by_default' => true,

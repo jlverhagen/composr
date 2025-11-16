@@ -29,6 +29,9 @@
  */
 class Hook_cron_cms_homesite_tracker
 {
+    public $label = 'NA';
+    public $fallback_label = 'TODO: REMOVE'; // TODO: this hook needs removed
+
     /**
      * Get info from this hook.
      *

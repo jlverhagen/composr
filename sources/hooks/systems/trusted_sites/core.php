@@ -66,5 +66,10 @@ class Hook_trusted_sites_core
         if (get_option('csp_on_forms') == '1') {
             $sites[] = 'validator.w3.org';
         }
+
+        global $MIGHT_BE_USING_CF;
+        if ($MIGHT_BE_USING_CF) {
+            $sites[] = 'static.cloudflareinsights.com';
+        }
     }
 }

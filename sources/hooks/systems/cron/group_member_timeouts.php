@@ -35,6 +35,9 @@
  */
 class Hook_cron_group_member_timeouts
 {
+    public $label = 'cns:GROUP_MEMBER_TIMEOUTS_CRON';
+    public $fallback_label = 'Group membership expiry';
+
     /**
      * Get info from this hook.
      *
@@ -57,7 +60,6 @@ class Hook_cron_group_member_timeouts
         }
 
         return [
-            'label' => 'Expire temporary usergroup subscriptions',
             'num_queued' => $num_queued,
             'minutes_between_runs' => 5,
             'enabled_by_default' => true,

@@ -200,28 +200,24 @@ function cron_run(bool $force = false, bool $verbose = false, ?array $limit_hook
     require_code('zones');
     $cron_hooks = find_all_hook_obs('systems', 'cron', 'Hook_cron_');
 
-    // We randomise the order because we have a global safety time-out. This ensures every hook has a chance to run at some point over Cron executions.
+    // Randomise order of hook execution so they have an equal chance of running given our safety cut-outs.
     cms_shuffle_assoc($cron_hooks);
 
-    // FUDGE: Newsletter drip send should always run third to first so it runs before sending queued e-mails
-    if (array_key_exists('newsletter_drip_send', $cron_hooks)) {
-        $cron_hook = $cron_hooks['newsletter_drip_send'];
-        unset($cron_hooks['newsletter_drip_send']);
-        $cron_hooks = ['newsletter_drip_send' => $cron_hook] + $cron_hooks;
-    }
-
-    // FUDGE: Background tasks should always run second to first as tasks are considered high priority (may involve users waiting on a response)
-    if (array_key_exists('tasks', $cron_hooks)) {
-        $cron_hook = $cron_hooks['tasks'];
-        unset($cron_hooks['tasks']);
-        $cron_hooks = ['tasks' => $cron_hook] + $cron_hooks;
-    }
-
-    // FUDGE: Health checks should always run first as server monitoring is critical
-    if (array_key_exists('health_check', $cron_hooks)) {
-        $cron_hook = $cron_hooks['health_check'];
-        unset($cron_hooks['health_check']);
-        $cron_hooks = ['health_check' => $cron_hook] + $cron_hooks;
+    // FUDGE: These hooks must be given priority and run first in the order listed. You should not prioritise any hooks with a high likelihood of taking more than a few seconds every Cron execution (e.g., an intensive hook that only runs every hour is fine).
+    $priority_hooks = [
+        'decache_events', // Must be run before health checks, which is our effective top-priority hook
+        'health_check', // Needs top priority so it can catch backed-up queues before we process them
+        'tasks', // Give priority to the task queue since members are often waiting on these (we have a safety cut-off so other hooks can run if it's really backed up)
+        'newsletter_drip_send', // Newsletters are important; we need to send these out quick, so run before the mail queue
+        'mail_queue', // Could be time-sensitive
+    ];
+    foreach (array_reverse($priority_hooks) as $must_run_first) {
+        if (!array_key_exists($must_run_first, $cron_hooks)) {
+            continue;
+        }
+        $cron_hook = $cron_hooks[$must_run_first];
+        unset($cron_hooks[$must_run_first]);
+        $cron_hooks = [$must_run_first => $cron_hook] + $cron_hooks;
     }
 
     $cron_hooks_info = [];
@@ -325,7 +321,7 @@ function cron_run(bool $force = false, bool $verbose = false, ?array $limit_hook
             // Run, with basic locking support
             if ((get_value_newer_than('cron_currently_running__' . $hook, time() - 60 * 60 * 24/*huge 24 hour timeout in case a particular hook is badly broken and we do not want frequent trip ups*/, true) !== '1') || ($force)) {
                 // Update log to say starting
-                $log_message = loggable_date() . '  STARTING ' . $hook . ' (' . $info['label'] . ')' . "\n";
+                $log_message = loggable_date() . '  STARTING ' . $hook . "\n";
                 if ($verbose) {
                     $ret .= $log_message;
                     if ($echo_out) {
@@ -398,9 +394,9 @@ function cron_run(bool $force = false, bool $verbose = false, ?array $limit_hook
                 // Unlock, but only if there were no errors
                 if ($last_error == '') {
                     delete_value('cron_currently_running__' . $hook, true);
-                    $log_message = loggable_date() . '  FINISHED ' . $hook . ' (' . $info['label'] . ')' . "\n";
+                    $log_message = loggable_date() . '  FINISHED ' . $hook . "\n";
                 } else {
-                    $log_message = loggable_date() . '  FINISHED WITH ERRORS ' . $hook . ' (' . $info['label'] . ') (Hook will remain locked because of errors)' . "\n";
+                    $log_message = loggable_date() . '  FINISHED WITH ERRORS ' . $hook . ' (Hook will remain locked because of errors)' . "\n";
 
                     // Log the error and relay it to telemetry
                     require_code('failure');
@@ -425,7 +421,7 @@ function cron_run(bool $force = false, bool $verbose = false, ?array $limit_hook
                 }
             } else {
                 // Update log to say locked
-                $log_message = loggable_date() . '  WAS LOCKED ' . $hook . ' (' . $info['label'] . ')' . "\n";
+                $log_message = loggable_date() . '  WAS LOCKED ' . $hook . "\n";
                 if ($verbose) {
                     $ret .= $log_message;
                     if ($echo_out) {

@@ -35,6 +35,9 @@
  */
 class Hook_cron_implicit_usergroup_sync
 {
+    public $label = 'cns:IMPLICIT_USERGROUP_SYNC_CRON';
+    public $fallback_label = 'Sync implicit usergroups';
+
     /**
      * Get info from this hook.
      *
@@ -49,7 +52,6 @@ class Hook_cron_implicit_usergroup_sync
         }
 
         return [
-            'label' => 'Sync implicit usergroups',
             'num_queued' => null,
             'minutes_between_runs' => 5,
             'enabled_by_default' => false,

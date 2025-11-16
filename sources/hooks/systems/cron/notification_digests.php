@@ -35,7 +35,10 @@
  */
 class Hook_cron_notification_digests
 {
-    protected const MAXIMUM_DIGEST_LENGTH = 1024 * 512; // After this many characters in a digest e-mail, remaining entries will be deferred to another
+    public $label = 'notifications:NOTIFICATION_DIGESTS_CRON';
+    public $fallback_label = 'Send notification digests';
+
+    protected const MAXIMUM_DIGEST_LENGTH = 1024 * 512; // After this many characters in a digest e-mail, remaining entries will be deferred to another e-mail
     protected const MAXIMUM_DIGEST_RECORDS = 100; // If a digest exceeds this many entries, the remaining ones will be deferred to another e-mail
 
     /**
@@ -53,7 +56,6 @@ class Hook_cron_notification_digests
         }
 
         return [
-            'label' => 'Send notification digests',
             'num_queued' => $calculate_num_queued ? $GLOBALS['SITE_DB']->get_table_count_approx('digestives_tin') : null, // Not quite accurate, as not everything ready to send, but an indication
             'minutes_between_runs' => 60,
             'enabled_by_default' => true,

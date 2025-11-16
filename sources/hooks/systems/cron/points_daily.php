@@ -35,6 +35,9 @@
  */
 class Hook_cron_points_daily
 {
+    public $label = 'points:POINTS_DAILY_CRON';
+    public $fallback_label = 'Credit daily points';
+
     protected $this_points_daily;
     /**
      * Get info from this hook.
@@ -70,7 +73,6 @@ class Hook_cron_points_daily
         }
 
         return [
-            'label' => 'Credit daily points',
             'num_queued' => $num_queued,
             'minutes_between_runs' => 60,
             'enabled_by_default' => true,

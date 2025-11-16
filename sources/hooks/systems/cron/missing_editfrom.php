@@ -35,6 +35,9 @@
  */
 class Hook_cron_missing_editfrom
 {
+    public $label = 'upgrade:MISSING_EDITFROM_CRON'; // TODO: find a better file (do not use global)
+    public $fallback_label = 'Create missing .editfrom files';
+
     /**
      * Get info from this hook.
      *
@@ -45,7 +48,6 @@ class Hook_cron_missing_editfrom
     public function info(?int $last_run, ?bool $calculate_num_queued) : ?array
     {
         return [
-            'label' => 'Create missing .editfrom files',
             'num_queued' => null,
             'minutes_between_runs' => 60 * 24,
             'enabled_by_default' => true,

@@ -29,6 +29,9 @@
  */
 class Hook_cron_stealr
 {
+    public $label = 'stealr:STEALR_CRON';
+    public $fallback_label = 'Steal points (Stealr)';
+
     /**
      * Get info from this hook.
      *
@@ -58,7 +61,6 @@ class Hook_cron_stealr
         }
 
         return [
-            'label' => 'Stealr Steal points',
             'num_queued' => null,
             'minutes_between_runs' => 60 * 7 * 24,
             'enabled_by_default' => true,
