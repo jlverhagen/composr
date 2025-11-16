@@ -68,4 +68,22 @@ class Hook_contentious_overrides_cms_homesite
                 break;
         }
     }
+
+    public function require_lang_compile(array &$load_target, string $codename, string $lang)
+    {
+        if (get_base_url() != get_brand_base_url()) {
+            return;
+        }
+
+        if (!addon_installed('cms_homesite')) {
+            return;
+        }
+
+        if ($lang != 'EN') {
+            return;
+        }
+
+        $load_target['ECOM_PRODUCTS_INTRO_POINTS_ONLY'] = '<p>You can purchase products using your points (you currently have {2}).</p><p>You earn points by contributing to our community in some way. That might be through posting on our forums, receiving points from other members, or submitting something to the site. Explore enough and do enough, and you will notice your point count rising. Our aim is to encourage participation in the community by rewarding our active members.</p><p>On the homesite, you can also buy points by donating to any partners (Community > Partners) who are asking for funds in exchange for points (typically, you receive 100 points for every $1 USD, excluding transaction fees; these points do not count towards rank points or voting power).</p><p>The products that may be purchased are listed below&hellip;</p>';
+        $load_target['ECOM_PRODUCTS_INTRO_BOTH'] = '<p>You can purchase products via money or from your points (you currently have {2}).</p><p>You earn points by contributing to our community in some way. That might be through posting on our forums, receiving points from other members, or submitting something to the site. Explore enough and do enough, and you will notice your point count rising. Our aim is to encourage participation in the community by rewarding our active members.</p><p>On the homesite, you can also buy points by donating to any partners (Community > Partners) who are asking for funds in exchange for points (typically, you receive 100 points for every $1 USD, excluding transaction fees; these points do not count towards rank points or voting power).</p><p>The products that may be purchased are listed below&hellip;</p>';
+    }
 }
