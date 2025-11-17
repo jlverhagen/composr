@@ -770,7 +770,7 @@ function cns_get_members_groups_ldap(?int $member_id) : array
  * Get the primary usergroup of a member in LDAP.
  *
  * @param  MEMBER $member_id The member
- * @return GROUP The
+ * @return GROUP The group
  */
 function cns_ldap_get_member_primary_group(int $member_id) : int
 {

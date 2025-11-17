@@ -576,13 +576,13 @@ class Hook_addon_registry_cms_homesite_tracker
 
                     $_text = $GLOBALS['SITE_DB']->query_parameterised('SELECT note FROM mantis_bugnote_text_table WHERE id={id}', ['id' => $row['bugnote_text_id']]);
                     if (array_key_exists(0, $_text)) {
-                        $text = '[html]' . escape_html($_text[0]['note']) . '[/html]';
+                        $text = escape_html($_text[0]['note']);
                     } else {
                         $text = '';
                     }
 
                     // Skip automated messages about using the wizard
-                    if ($text == '[html]' . escape_html('Automated message: This issue was created using the Report Issue Wizard on the homesite.') . '[/html]') {
+                    if (strpos($text, 'Automated message: This issue was created using the Report Issue Wizard on the homesite.') !== false) {
                         continue;
                     }
 

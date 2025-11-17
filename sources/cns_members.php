@@ -557,9 +557,9 @@ function cns_get_custom_fields_member(int $member_id) : array
  * Get the primary of a member (supports consulting of LDAP).
  *
  * @param  MEMBER $member_id The member
- * @return GROUP The primary
+ * @return GROUP The primary group
  */
-function cns_get_member_primary_group(int $member_id) : int
+function cns_get_member_primary_group(int $member_id) : ?int
 {
     global $PRIMARY_GROUP_MEMBERS_CACHE;
     if (isset($PRIMARY_GROUP_MEMBERS_CACHE[$member_id])) {
@@ -570,6 +570,11 @@ function cns_get_member_primary_group(int $member_id) : int
         cns_ldap_get_member_primary_group($member_id);
     } else {
         $PRIMARY_GROUP_MEMBERS_CACHE[$member_id] = $GLOBALS['CNS_DRIVER']->get_member_row_field($member_id, 'm_primary_group');
+    }
+
+    // Could not find the member; use the guest member instead
+    if ($PRIMARY_GROUP_MEMBERS_CACHE[$member_id] === null) {
+        $PRIMARY_GROUP_MEMBERS_CACHE[$member_id] = $GLOBALS['CNS_DRIVER']->get_member_row_field($GLOBALS['CNS_DRIVER']->get_guest_id(), 'm_primary_group');
     }
 
     return $PRIMARY_GROUP_MEMBERS_CACHE[$member_id];
