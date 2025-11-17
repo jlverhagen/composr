@@ -478,6 +478,14 @@ class Hook_addon_registry_cms_homesite_tracker
             do {
                 $rows = $GLOBALS['SITE_DB']->query('SELECT * FROM mantis_bug_table', $max, $start);
                 foreach ($rows as $row) {
+                    // LEGACY: These issues from the homesite Mantis tracker will break the site if imported; skip them
+                    $exceptions = [
+                        2538, // Description contains highly complex serialized data that corrupts Tempcode
+                    ];
+                    if (in_array($row['id'], $exceptions)) {
+                        continue;
+                    }
+
                     $bug_info = $GLOBALS['SITE_DB']->query_parameterised('SELECT * FROM mantis_bug_text_table WHERE id={id}', ['id' => $row['bug_text_id']]);
                     $category_info = $GLOBALS['SITE_DB']->query_parameterised('SELECT * FROM mantis_category_table WHERE id={id}', ['id' => $row['category_id']]);
 
