@@ -654,7 +654,7 @@ function comcode_safelisted(string $tag, int $marker, string $comcode) : bool
  * @param  MEMBER $source_member The member who is responsible for this Comcode
  * @param  boolean $as_admin Whether to check as arbitrary admin
  * @param  ?object $db The database connector to use (null: none; only do this for very simple Comcode)
- * @param  string $comcode The whole chunk of Comcode
+ * @param  string $comcode The whole chunk of Comcode; passed by reference
  * @param  boolean $structure_sweep Whether this is only a structure sweep
  * @param  boolean $semiparse_mode Whether we are in semi-parse-mode (some tags might convert differently)
  * @param  array $highlight_bits A list of words to highlight

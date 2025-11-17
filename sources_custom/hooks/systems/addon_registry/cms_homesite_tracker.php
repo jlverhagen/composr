@@ -422,6 +422,7 @@ class Hook_addon_registry_cms_homesite_tracker
             require_code('cms_homesite_tracker');
             require_code('uploads');
             require_code('comcode');
+            require_code('comcode_renderer');
 
             require_lang('catalogues');
             require_lang('tracker');
@@ -576,10 +577,9 @@ class Hook_addon_registry_cms_homesite_tracker
 
                     $_text = $GLOBALS['SITE_DB']->query_parameterised('SELECT note FROM mantis_bugnote_text_table WHERE id={id}', ['id' => $row['bugnote_text_id']]);
                     if (array_key_exists(0, $_text)) {
-                        $text = escape_html($_text[0]['note']); // Cannot use render_raw because we might have attachments
-                        $text = str_replace("\n", '<br />', $text);
+                        $text = $_text[0]['note'] . '{$,page hint: render_raw}';
                     } else {
-                        $text = '';
+                        $text = '{$,page hint: render_raw}';
                     }
 
                     // Skip automated messages about using the wizard
@@ -626,9 +626,36 @@ class Hook_addon_registry_cms_homesite_tracker
                             continue;
                         }
 
-                        $_POST['file' . strval($i)] = $relativepath; // FUDGE
+                        // FUDGE: We have to render migrated bug notes raw, so we cannot use the attachments Comcode tag
+                        $_POST['file' . strval($i)] = $relativepath;
+                        $comcode = '[attachment thumb="1" description="' . comcode_escape($file['description']) . '" filename="' . comcode_escape($file['filename']) . '"]post_' . strval($i) . '[/attachment]';
+                        $embed = new Tempcode();
+                        $embed->attach('post_' . strval($i));
+                        $result = _do_tags_comcode(
+                            'attachment',
+                            [
+                                'thumb' => '1',
+                                'description' => comcode_escape($file['description']),
+                                'filename' => comcode_escape($file['filename']),
+                            ],
+                            $embed,
+                            false,
+                            strval(mt_rand(0, mt_getrandmax())),
+                            0,
+                            $row['reporter_id'],
+                            true, // Bypass limits as this is an import
+                            $GLOBALS['SITE_DB'],
+                            $comcode,
+                            false,
+                            false,
+                            [],
+                            null,
+                            false,
+                            false,
+                            false
+                        );
 
-                        $text .= '[attachment thumb="1" description="' . comcode_escape($file['description']) . '" filename="' . comcode_escape($file['filename']) . '"]post_' . strval($i) . '[/attachment]';
+                        $text .= "\n\n" . strip_comcode(html_to_comcode($result->evaluate()));
                     }
 
                     actualise_post_comment(
