@@ -1213,14 +1213,12 @@ function actual_add_catalogue_entry(int $category_id, int $validated, string $no
                 $privacy_limits = null;
             }
 
-            if (!get_mass_import_mode()) {
-                require_lang('catalogues');
-                require_code('notifications');
-                $subject = do_lang('CATALOGUE_ENTRY_NOTIFICATION_MAIL_SUBJECT', get_site_name(), strip_comcode($title), [$catalogue_title]);
-                $self_url = build_url(['page' => 'catalogues', 'type' => 'entry', 'id' => $id], get_module_zone('catalogues'), [], false, false, true);
-                $mail = do_notification_lang('CATALOGUE_ENTRY_NOTIFICATION_MAIL', comcode_escape(get_site_name()), comcode_escape(strip_comcode($title)), [comcode_escape($self_url->evaluate()), comcode_escape($catalogue_title)]);
-                Source_notification_dispatcher::dispatch_notification('catalogue_entry__' . $catalogue_name, strval($category_id), $subject, $mail, $privacy_limits);
-            }
+            require_lang('catalogues');
+            require_code('notifications');
+            $subject = do_lang('CATALOGUE_ENTRY_NOTIFICATION_MAIL_SUBJECT', get_site_name(), strip_comcode($title), [$catalogue_title]);
+            $self_url = build_url(['page' => 'catalogues', 'type' => 'entry', 'id' => $id], get_module_zone('catalogues'), [], false, false, true);
+            $mail = do_notification_lang('CATALOGUE_ENTRY_NOTIFICATION_MAIL', comcode_escape(get_site_name()), comcode_escape(strip_comcode($title)), [comcode_escape($self_url->evaluate()), comcode_escape($catalogue_title)]);
+            Source_notification_dispatcher::dispatch_notification('catalogue_entry__' . $catalogue_name, strval($category_id), $subject, $mail, $privacy_limits);
         }
 
         log_it('ADD_CATALOGUE_ENTRY', strval($id), $title);

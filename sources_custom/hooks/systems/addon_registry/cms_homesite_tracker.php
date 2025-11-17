@@ -409,6 +409,8 @@ class Hook_addon_registry_cms_homesite_tracker
 
             set_mass_import_mode(true);
             push_query_limiting(false);
+            global $NOTIFICATIONS_ON;
+            $NOTIFICATIONS_ON = false;
 
             require_code('permissions2');
             require_code('catalogues');
@@ -691,6 +693,7 @@ class Hook_addon_registry_cms_homesite_tracker
                 $start += $max;
             } while (count($rows) > 0);
 
+            $NOTIFICATIONS_ON = true;
             set_mass_import_mode(false);
             pop_query_limiting();
             // TODO: Modify or create notification types for the tracker
