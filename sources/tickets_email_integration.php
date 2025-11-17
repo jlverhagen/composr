@@ -31,24 +31,23 @@
  */
 
 /**
- * Standard code module initialisation function.
- *
- * @ignore
- */
-function init__tickets_email_integration()
-{
-    require_lang('tickets');
-    require_code('tickets');
-    require_code('tickets2');
-}
-
-/**
  * Ticket e-mail integration class.
  *
  * @package tickets
  */
-class TicketsEmailIntegration extends EmailIntegration
+class Source_tickets_email_integration extends Source_email_integration
 {
+    /**
+     * Load in required APIs.
+     */
+    public function __construct()
+    {
+        parent::__construct();
+        require_lang('tickets');
+        require_code('tickets');
+        require_code('tickets2');
+    }
+
     /**
      * Send out an e-mail message for a ticket / ticket reply.
      *

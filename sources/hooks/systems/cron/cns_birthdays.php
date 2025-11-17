@@ -128,11 +128,11 @@ class Hook_cron_cns_birthdays
 
                 if (addon_installed('chat')) {
                     $friends = $GLOBALS['SITE_DB']->query_select('chat_friends', ['member_likes'], ['member_liked' => $_birthday['id']]);
-                    dispatch_notification('chat:cns_friend_birthday', null, $subject, $mail, collapse_1d_complexity('member_likes', $friends));
+                    Source_notification_dispatcher::dispatch_notification('chat:cns_friend_birthday', null, $subject, $mail, collapse_1d_complexity('member_likes', $friends));
                 }
 
                 if (count($_birthdays) == 1) {
-                    dispatch_notification('cns_birthday', null, $subject, $mail);
+                    Source_notification_dispatcher::dispatch_notification('cns_birthday', null, $subject, $mail);
                 }
             }
 
@@ -140,7 +140,7 @@ class Hook_cron_cns_birthdays
                 $combined_birthdays_subject = do_lang('COMBINED_BIRTHDAY_NOTIFICATION_MAIL_SUBJECT', get_site_name(), integer_format(count($_birthdays), 0));
                 $combined_birthdays_mail = do_notification_lang('COMBINED_BIRTHDAY_NOTIFICATION_MAIL', comcode_escape(get_site_name()), $combined_birthdays_mail, comcode_escape(integer_format(count($_birthdays), 0)));
 
-                dispatch_notification('cns_birthday', null, $combined_birthdays_subject, $combined_birthdays_mail);
+                Source_notification_dispatcher::dispatch_notification('cns_birthday', null, $combined_birthdays_subject, $combined_birthdays_mail);
             }
         }
     }

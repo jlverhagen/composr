@@ -185,7 +185,6 @@ pages/html_custom/*/*.htm
 /data_custom/modules/user_export/out.csv
 /data_custom/execute_temp.php
 /cms.sql
-/tracker/uploads/
 /stats
 /uploads/website_specific/cms_homesite/upgrades/full
 /data_custom/fonts/*.ttf

@@ -31,90 +31,11 @@
  */
 
 /**
- * Find whether a file is a writable spreadsheet.
- *
- * @param  string $filename Filename
- * @return boolean Whether it is
- */
-function is_spreadsheet_writable(string $filename) : bool
-{
-    $ext = get_file_extension($filename);
-    return in_array($ext, ['csv', 'txt']);
-}
-
-/**
- * Find the default spreadsheet file format.
- *
- * @return string Default format
- */
-function spreadsheet_write_default() : string
-{
-    $file_type = either_param_string('file_type', null);
-    if (($file_type !== null) && (is_spreadsheet_writable('example.' . $file_type))) {
-        return $file_type;
-    }
-    return 'csv';
-}
-
-/**
- * Output data to a spreadsheet file.
- * Generally it is better to write row-by-row rather than use this function, for performance reasons.
- *
- * @param  ?PATH $path File to write into (null: create a temporary file and return by reference)
- * @param  array $data List of maps, each map representing a row
- * @param  ?ID_TEXT $filename Filename we will be using (null: try and derive from $outfile_path, otherwise generate a .csv filename)
- * @param  array $metadata List of maps, each map representing metadata of a row; supports 'url'; will only be used by file formats that support it
- * @return object A CMS_Spreadsheet_Writer object (pre-closed, you don't need to close it)
- */
-function make_spreadsheet(?string &$path, array $data, ?string $filename = null, array $metadata = []) : object
-{
-    if ($filename === null) {
-        $filename = basename($path);
-    }
-
-    $sheet_writer = spreadsheet_open_write($path, $filename);
-    foreach ($data as $i => $row) {
-        $sheet_writer->write_row($row, array_key_exists($i, $metadata) ? $metadata[$i] : null);
-    }
-    $sheet_writer->close();
-
-    return $sheet_writer;
-}
-
-/**
- * Open spreadsheet for writing.
- *
- * @param  ?PATH $path File to write into (null: create a temporary file and return by reference)
- * @param  ?string $filename Filename (null: derive from $path)
- * @param  integer $algorithm An ALGORITHM_* constant
- * @param  ?string $charset The character set to write with (if supported) (null: website character set)
- * @return object A subclass of CMS_Spreadsheet_Writer
- */
-function spreadsheet_open_write(?string &$path, ?string $filename = null, int $algorithm = 3, ?string $charset = '') : object
-{
-    if ($filename === null) {
-        $filename = basename($path);
-        if (!is_spreadsheet_writable($filename)) {
-            $filename = 'data.csv';
-        }
-    }
-
-    $ext = get_file_extension($filename);
-    switch ($ext) {
-        case 'csv':
-        case 'txt':
-            return new CMS_CSV_Writer($path, $filename, $algorithm, $charset);
-    }
-
-    warn_exit(do_lang_tempcode('UNKNOWN_FORMAT', escape_html($ext)));
-}
-
-/**
  * Spreadsheet reader.
  *
  * @package core
  */
-abstract class CMS_Spreadsheet_Writer
+abstract class Source_spreadsheet_writer
 {
     public const ALGORITHM_RAW = 1;
     public const ALGORITHM_NAMED_FIELDS = 3;
@@ -123,6 +44,111 @@ abstract class CMS_Spreadsheet_Writer
     protected $charset = null;
     protected $fields = null;
     protected $path = null;
+
+    /**
+     * Find whether a file is a writable spreadsheet.
+     *
+     * @param  string $filename Filename
+     * @return boolean Whether it is
+     */
+    public static function is_spreadsheet_writable(string $filename) : bool
+    {
+        $ext = get_file_extension($filename);
+        return in_array($ext, explode(',', Source_spreadsheet_writer::spreadsheet_write_file_types()));
+    }
+
+    /**
+     * Find supported spreadsheet file types for writing.
+     *
+     * @return string A comma-separated list of supported file types
+     */
+    public static function spreadsheet_write_file_types() : string
+    {
+        $ret = [];
+
+        $hooks = find_all_hook_obs('systems', 'spreadsheet_writer', 'Hook_spreadsheet_writer_');
+        foreach ($hooks as $hook => $ob) {
+            $handles = $ob->spreadsheet_write_file_types();
+            if (is_array($handles)) {
+                array_merge($ret, $handles);
+            }
+        }
+        return implode(',', array_unique($ret));
+    }
+
+    /**
+     * Find the default spreadsheet file format.
+     *
+     * @return string Default format
+     */
+    public static function spreadsheet_write_default() : string
+    {
+        $file_type = either_param_string('file_type', null);
+        if (($file_type !== null) && (Source_spreadsheet_writer::is_spreadsheet_writable('example.' . $file_type))) {
+            return $file_type;
+        }
+        return 'csv';
+    }
+
+    /**
+     * Output data to a spreadsheet file.
+     * Generally it is better to write row-by-row rather than use this function, for performance reasons.
+     *
+     * @param  ?PATH $path File to write into (null: create a temporary file and return by reference)
+     * @param  array $data List of maps, each map representing a row
+     * @param  ?ID_TEXT $filename Filename we will be using (null: try and derive from $outfile_path, otherwise generate a .csv filename)
+     * @param  array $metadata List of maps, each map representing metadata of a row; supports 'url'; will only be used by file formats that support it
+     * @return object A Source_spreadsheet_writer object (pre-closed, you don't need to close it)
+     */
+    public static function make_spreadsheet(?string &$path, array $data, ?string $filename = null, array $metadata = []) : object
+    {
+        if ($filename === null) {
+            $filename = basename($path);
+        }
+
+        $sheet_writer = Source_spreadsheet_writer::spreadsheet_open_write($path, $filename);
+        foreach ($data as $i => $row) {
+            $sheet_writer->write_row($row, array_key_exists($i, $metadata) ? $metadata[$i] : null);
+        }
+        $sheet_writer->close();
+
+        return $sheet_writer;
+    }
+
+    /**
+     * Open spreadsheet for writing.
+     *
+     * @param  ?PATH $path File to write into (null: create a temporary file and return by reference)
+     * @param  ?string $filename Filename (null: derive from $path)
+     * @param  integer $algorithm An ALGORITHM_* constant
+     * @param  ?string $charset The character set to write with (if supported) (null: website character set)
+     * @return object A subclass of Source_spreadsheet_writer
+     */
+    public static function spreadsheet_open_write(?string &$path, ?string $filename = null, int $algorithm = 3, ?string $charset = '') : object
+    {
+        if ($filename === null) {
+            $filename = basename($path);
+            if (!Source_spreadsheet_writer::is_spreadsheet_writable($filename)) {
+                $filename = 'data.csv';
+            }
+        }
+
+        $ext = get_file_extension($filename);
+
+        $hooks = find_all_hook_obs('systems', 'spreadsheet_writer', 'Hook_spreadsheet_writer_');
+        foreach ($hooks as $hook => $ob) {
+            $handles = $ob->spreadsheet_read_file_types();
+            if (is_array($handles) && in_array($ext, $handles)) {
+                $ret = $ob->spreadsheet_open_write($path, $filename, $algorithm, $charset);
+                if ($ret === null) {
+                    continue;
+                }
+                return $ret;
+            }
+        }
+
+        warn_exit(do_lang_tempcode('UNKNOWN_FORMAT', escape_html($ext)));
+    }
 
     /**
      * Open spreadsheet for writing.
@@ -186,7 +212,7 @@ abstract class CMS_Spreadsheet_Writer
 
         if ($filename === null) {
             $filename = basename($this->path);
-            if (!is_spreadsheet_writable($filename)) {
+            if (!Source_spreadsheet_writer::is_spreadsheet_writable($filename)) {
                 $filename = 'data.csv';
             }
         }
@@ -212,117 +238,5 @@ abstract class CMS_Spreadsheet_Writer
         }
 
         exit();
-    }
-}
-
-/**
- * CSV spreadsheet file writer.
- *
- * @package core
- */
-class CMS_CSV_Writer extends CMS_Spreadsheet_Writer
-{
-    protected const FORMAT_CSV = 1; // Comma
-    protected const FORMAT_TSV = 2; // Tab
-    protected const FORMAT_SCSV = 3; // Semicolon
-
-    protected $handle = null;
-    protected $format = 1;
-
-    /**
-     * Open spreadsheet for writing.
-     *
-     * @param  ?PATH $path File to write into (null: create a temporary file and return by reference)
-     * @param  string $filename Filename
-     * @param  integer $algorithm An ALGORITHM_* constant
-     * @param  ?string $charset The character set to write with (if supported) (null: website character set)
-     * @param  integer $format A FORMAT_* constant
-     * @param  boolean $write_bom Whether to write a byte-order-mark (BOM)
-     */
-    public function __construct(?string &$path, string $filename, int $algorithm = 3, ?string $charset = null, int $format = 1, bool $write_bom = true)
-    {
-        require_code('files');
-
-        if ($path === null) {
-            $path = cms_tempnam();
-        }
-
-        $this->path = $path;
-        $this->algorithm = $algorithm;
-        $this->charset = $charset;
-        $this->format = $format;
-
-        if ($write_bom) {
-            $this->handle = cms_fopen_text_write($path, true, null, $charset);
-        } else {
-            $this->handle = fopen($path, 'cb');
-            flock($this->handle, LOCK_EX);
-            ftruncate($this->handle, 0);
-        }
-    }
-
-    /**
-     * Write spreadsheet row.
-     *
-     * @param  array $row Row
-     */
-    protected function _write_row(array $row)
-    {
-        if ($this->handle === null) {
-            warn_exit(do_lang_tempcode('INTERNAL_ERROR', escape_html('411ee01b90db57819fb71320ee586453')));
-        }
-
-        require_code('character_sets');
-        $_row = [];
-        foreach ($row as $k => $v) {
-            $v = convert_to_internal_encoding(@strval($v), get_charset(), $this->charset);
-            $_row[$k] = $v;
-        }
-
-        switch ($this->format) {
-            case self::FORMAT_CSV:
-                $delimiter = ',';
-                break;
-            case self::FORMAT_TSV:
-                $delimiter = "\t";
-                break;
-            case self::FORMAT_SCSV:
-                $delimiter = ';';
-                break;
-            default:
-                fatal_exit(do_lang_tempcode('INTERNAL_ERROR', escape_html('a6f27195229a5ee3a4f309fc4220162c')));
-        }
-
-        fputcsv($this->handle, @array_map('strval', $_row), $delimiter, '"', (version_compare(PHP_VERSION, '7.4.0') >= 0) ? '' : '\\'/*LEGACY*/);
-    }
-
-    /**
-     * Standard destructor.
-     */
-    public function __destruct()
-    {
-        $this->close();
-    }
-
-    /**
-     * Close down the spreadsheet file handle, for when we're done.
-     */
-    public function close()
-    {
-        if ($this->handle !== null) {
-            flock($this->handle, LOCK_UN);
-            fclose($this->handle);
-            $this->handle = null;
-        }
-    }
-
-    /**
-     * Get the mime-type for the spreadsheet.
-     *
-     * @return string Mime-type
-     */
-    public function get_mime_type() : string
-    {
-        return 'text/csv';
     }
 }

@@ -31,7 +31,7 @@ Note that text fields will sort using a text sort algorithm. For example, "10" c
 | [i]None[/i]
 |-
 ! Supported field options
-| [i]None[/i]
+| [tt]edit_only=1[/tt]: Make the field hidden on the add entry screen (but not edit entry). If the field is required, you must have a default field value.
 |-
 ! Special field validation behaviour
 | [i]None[/i]
@@ -60,6 +60,8 @@ Note that text fields will sort using a text sort algorithm. For example, "10" c
 |-
 ! Supported field options
 | [tt]auto_sort=on|off[/tt] (whether to sort the entered options; default is off)
+
+[tt]edit_only=1[/tt]: Make the field hidden on the add entry screen (but not edit entry). If the field is required, you must have a default field value.
 
 [tt]num_required[/tt] (the number of required values; default is 0 or 1 depending on if required is set)
 
@@ -92,6 +94,8 @@ Note that text fields will sort using a text sort algorithm. For example, "10" c
 |-
 ! Supported field options
 | [tt]maxlength[/tt] (the number of characters to have as a maximum; default is 255)
+
+[tt]edit_only=1[/tt]: Make the field hidden on the add entry screen (but not edit entry). If the field is required, you must have a default field value.
 |-
 ! Special field validation behaviour
 | [i]None[/i]
@@ -124,6 +128,8 @@ Note that text fields will sort using a text sort algorithm. For example, "10" c
 [tt]num_required[/tt] (the number of required values; default is 0 or 1 depending on if required is set)
 
 [tt]cms_type=line|codename|integer|float|email[/tt] (which Composr styling and validation code to use; default is line)
+
+[tt]edit_only=1[/tt]: Make the field hidden on the add entry screen (but not edit entry). If the field is required, you must have a default field value.
 |-
 ! Special field validation behaviour
 | [i]None[/i]
@@ -158,6 +164,8 @@ Note that text fields will sort using a text sort algorithm. For example, "10" c
 [tt]input_size[/tt] (the number of lines in the text area; default is 9)
 
 [tt]maxlength[/tt] (the number of characters to have as a maximum; default is to have no limit)
+
+[tt]edit_only=1[/tt]: Make the field hidden on the add entry screen (but not edit entry). If the field is required, you must have a default field value.
 |-
 ! Special field validation behaviour
 | [i]None[/i]
@@ -192,6 +200,8 @@ Note that text fields will sort using a text sort algorithm. For example, "10" c
 [tt]input_size[/tt] (the number of lines in the text area; default is 9)
 
 [tt]maxlength[/tt] (the number of characters to have as a maximum; default is to have no limit)
+
+[tt]edit_only=1[/tt]: Make the field hidden on the add entry screen (but not edit entry). If the field is required, you must have a default field value.
 |-
 ! Special field validation behaviour
 | [i]None[/i]
@@ -223,7 +233,7 @@ Note that you are only allowed one [tt]posting_field[/tt] field per catalogue. A
 | [i]None[/i]
 |-
 ! Supported field options
-| [i]None[/i]
+| [tt]edit_only=1[/tt]: Make the field hidden on the add entry screen (but not edit entry). If the field is required, you must have a default field value.
 |-
 ! Special field validation behaviour
 | [i]None[/i]
@@ -248,10 +258,10 @@ Note that you are only allowed one [tt]posting_field[/tt] field per catalogue. A
 | Up to 255 characters of text
 |-
 ! Special default values
-| [tt]RANDOM[/tt]: 10 random numbers and letters (for catalogues it will be enforced as unique also) [catalogues only]
+| [tt]RANDOM[/tt]: 10 random numbers and letters (it will be enforced as unique also) [catalogues only]
 |-
 ! Supported field options
-| [i]None[/i]
+| [tt]edit_only=1[/tt]: Make the field hidden on the add entry screen (but not edit entry). If the field is required, you must have a default field value.
 |-
 ! Special field validation behaviour
 | An entry will be rejected if this field contains characters other than letters, numbers, and underscores.
@@ -269,6 +279,8 @@ Note that you are only allowed one [tt]posting_field[/tt] field per catalogue. A
 
 [title="3"]password[/title]
 
+[b]CAUTION[/b]: While this field masks the password on the user interface, the password will be stored in plain-text in the database. And it will be possible to reveal the password when using inspect element.
+
 {| 15em wide
 ! Type label
 | A password (i.e. masked input)
@@ -280,7 +292,7 @@ Note that you are only allowed one [tt]posting_field[/tt] field per catalogue. A
 | [tt]RANDOM[/tt]: A cryptographically-secure random password will be generated as the placeholder which matches the security requirements configured for the site
 |-
 ! Supported field options
-| [i]None[/i]
+| [tt]edit_only=1[/tt]: Make the field hidden on the add entry screen (but not edit entry). If the field is required, you must have a default field value.
 |-
 ! Special field validation behaviour
 | [i]None[/i]. Be cautious because this does not validate against password strength.
@@ -308,7 +320,7 @@ Note that you are only allowed one [tt]posting_field[/tt] field per catalogue. A
 | [tt]![/tt]: Current member's configured e-mail address
 |-
 ! Supported field options
-| [i]None[/i]
+| [tt]edit_only=1[/tt]: Make the field hidden on the add entry screen (but not edit entry). If the field is required, you must have a default field value.
 |-
 ! Special field validation behaviour
 | The entry will be rejected of the value is not formatted as a valid e-mail address.
@@ -337,6 +349,8 @@ Note that you are only allowed one [tt]posting_field[/tt] field per catalogue. A
 |-
 ! Supported field options
 | [tt]allow_wildcards=yes|no[/tt]: whether wildcards are allowed in provided IP addresses (default is no)
+
+[tt]edit_only=1[/tt]: Make the field hidden on the add entry screen (but not edit entry). If the field is required, you must have a default field value.
 |-
 ! Special field validation behaviour
 | The entry will be rejected if the value is not a valid IPv4 or IPv6 address.
@@ -365,6 +379,8 @@ Note that you are only allowed one [tt]posting_field[/tt] field per catalogue. A
 |-
 ! Supported field options
 | [tt]allow_wildcards=yes|no[/tt]: whether wildcards are allowed in provided IP addresses (default is no)
+
+[tt]edit_only=1[/tt]: Make the field hidden on the add entry screen (but not edit entry). If the field is required, you must have a default field value.
 |-
 ! Special field validation behaviour
 | Values which are invalid IPv4 or IPv6 addresses will be automatically removed.
@@ -395,6 +411,8 @@ Note that you are only allowed one [tt]posting_field[/tt] field per catalogue. A
 |-
 ! Supported field options
 | [tt]range_search=on|off[/tt]: search forms will allow a range-based search
+
+[tt]edit_only=1[/tt]: Make the field hidden on the add entry screen (but not edit entry). If the field is required, you must have a default field value.
 |-
 ! Special field validation behaviour
 | The entry will be rejected if this is not a valid integer.
@@ -425,9 +443,11 @@ NB: When adding there is no UI if 'AUTO_INCREMENT' was used.
 ! Supported field options
 | [tt]range_search=on|off[/tt]: search forms will allow a range-based search
 
-[tt]decimal_points=2[/tt]: the (maximum) number of decimal points we want
+[tt]decimal_points[/tt]: the (maximum) number of decimal points we want
 
 [tt]decimal_points_behaviour=dp|trim|price[/tt]: dp = always show exact number of decimal places (default), trim = trim any zero decimal places off, price = show exact number of decimal places or none if a whole number
+
+[tt]edit_only=1[/tt]: Make the field hidden on the add entry screen (but not edit entry). If the field is required, you must have a default field value.
 |-
 ! Special field validation behaviour
 | The entry will be rejected if this is not a valid number.
@@ -478,6 +498,8 @@ A pathname to a [tt].csv[/tt] spreadsheet file (relative to base directory), if 
 [tt]widget=radio|inline|dropdown|inline_huge|dropdown_huge[/tt] (the UI mechanism; default is dropdown)
 
 [tt]spreadsheet_heading[/tt] (the column from the spreadsheet file to use, if the default was set as a spreadsheet file; default is to use the first column)
+
+[tt]edit_only=1[/tt]: Make the field hidden on the add entry screen (but not edit entry). If the field is required, you must have a default field value.
 |-
 ! Special field validation behaviour
 | [i]None[/i]
@@ -524,6 +546,8 @@ A pathname to a [tt].csv[/tt] spreadsheet file (relative to base directory), if 
 [tt]widget=vertical_checkboxes|horizontal_checkboxes|multilist[/tt] (what input style to use; default is multilist)
 
 [tt]input_size[/tt] (the number of options shown in the list before scrolling is required, applies only to the 'inline' widget type; default is 5)
+
+[tt]edit_only=1[/tt]: Make the field hidden on the add entry screen (but not edit entry). If the field is required, you must have a default field value.
 |-
 ! Special field validation behaviour
 | [i]None[/i]
@@ -559,7 +583,7 @@ This field requires input of a raw ISO code. Ideally, you should use the 'region
 | [i]None[/i]
 |-
 ! Supported field options
-| [i]None[/i]
+| [tt]edit_only=1[/tt]: Make the field hidden on the add entry screen (but not edit entry). If the field is required, you must have a default field value.
 |-
 ! Special field validation behaviour
 | If using American English, will ensure the typed ISO code is a valid U.S. state. Otherwise, it will ensure it is a valid region ISO code.
@@ -587,7 +611,7 @@ This field requires input of a raw ISO code. Ideally, you should use the 'region
 | [i]None[/i]
 |-
 ! Supported field options
-| [i]None[/i]
+| [tt]edit_only=1[/tt]: Make the field hidden on the add entry screen (but not edit entry). If the field is required, you must have a default field value.
 |-
 ! Special field validation behaviour
 | [i]None[/i]
@@ -617,7 +641,7 @@ A 'region' is a way to define a country and province/state. The field has two dr
 | [i]None[/i]
 |-
 ! Supported field options
-| [i]None[/i]
+| [tt]edit_only=1[/tt]: Make the field hidden on the add entry screen (but not edit entry). If the field is required, you must have a default field value.
 |-
 ! Special field validation behaviour
 | [i]None[/i]
@@ -645,7 +669,7 @@ A 'region' is a way to define a country and province/state. The field has two dr
 | [i]None[/i]
 |-
 ! Supported field options
-| [i]None[/i]
+| [tt]edit_only=1[/tt]: Make the field hidden on the add entry screen (but not edit entry). If the field is required, you must have a default field value.
 |-
 ! Special field validation behaviour
 | [i]None[/i]
@@ -682,6 +706,8 @@ The first image-like field will be injected into screen metadata (i.e. will come
 |-
 ! Supported field options
 | [tt]filetype_filter[/tt] (comma-separated list of file extensions; default is not to have a filter)
+
+[tt]edit_only=1[/tt]: Make the field hidden on the add entry screen (but not edit entry). If the field is required, you must have a default field value.
 |-
 ! Special field validation behaviour
 | The entry will be rejected if a disallowed file was selected or uploaded.
@@ -712,6 +738,8 @@ The first image-like field will be injected into screen metadata (i.e. will come
 | [tt]auto_sort=on|off[/tt] (whether to sort the entered options; default is off)
 
 [tt]filetype_filter[/tt] (comma-separated list of file extensions; default is not to have a filter)
+
+[tt]edit_only=1[/tt]: Make the field hidden on the add entry screen (but not edit entry). If the field is required, you must have a default field value.
 |-
 ! Special field validation behaviour
 | Disallowed files will be removed.
@@ -746,6 +774,8 @@ The first image-like field will be injected into screen metadata (i.e. will come
 [tt]is_metadata[/tt] (set to '1' if the field should take precedence for metadata over earlier picture fields [and innate images], and '0' if it should never be the metadata field)
 
 [tt]keep_gps=on|off[/tt] (whether to keep GPS metadata in images, which is stripped by default for privacy reasons; default is off)
+
+[tt]edit_only=1[/tt]: Make the field hidden on the add entry screen (but not edit entry). If the field is required, you must have a default field value.
 |-
 ! Special field validation behaviour
 | The entry will be rejected if the file is not a valid picture.
@@ -780,6 +810,8 @@ The first image-like field will be injected into screen metadata (i.e. will come
 [tt]is_metadata[/tt] (set to '1' if the field should take precedence for metadata over earlier picture fields [and innate images], and '0' if it should never be the metadata field)
 
 [tt]keep_gps=on|off[/tt] (whether to keep GPS metadata in images, which is stripped by default for privacy reasons; default is off)
+
+[tt]edit_only=1[/tt]: Make the field hidden on the add entry screen (but not edit entry). If the field is required, you must have a default field value.
 |-
 ! Special field validation behaviour
 | Invalid pictures will be removed.
@@ -801,7 +833,7 @@ The first image-like field will be injected into screen metadata (i.e. will come
 | An uploaded video
 |-
 ! Storage format (for programmer reference)
-| Up to 255 characters of text ([tt]<url>[ <width> <height> <length>][/tt], or blank)
+| Up to 255 characters of text ([tt]<url>[::<thumb_url>::<width>::<height>::<length>][/tt], or blank)
 |-
 ! Special default values
 | [i]None[/i]
@@ -810,6 +842,8 @@ The first image-like field will be injected into screen metadata (i.e. will come
 | [tt]width[/tt] (the width all the media will be shown at; default is to auto-detect for each individual file)
 
 [tt]height[/tt] (the height all the media will be shown at; default is to auto-detect for each individual file)
+
+[tt]edit_only=1[/tt]: Make the field hidden on the add entry screen (but not edit entry). If the field is required, you must have a default field value.
 |-
 ! Special field validation behaviour
 | The entry will be rejected if the file is not a valid video.
@@ -831,7 +865,7 @@ The first image-like field will be injected into screen metadata (i.e. will come
 | Multiple uploaded videos
 |-
 ! Storage format (for programmer reference)
-| [tt]<url>[ <width> <height> <length>][/tt] separated by linebreaks
+| [tt]<url>[::<thumb_url>::<width>::<height>::<length>][/tt] separated by linebreaks
 |-
 ! Special default values
 | [i]None[/i]
@@ -840,6 +874,8 @@ The first image-like field will be injected into screen metadata (i.e. will come
 | [tt]width[/tt] (the width all the media will be shown at; default is to auto-detect for each individual file)
 
 [tt]height[/tt] (the height all the media will be shown at; default is to auto-detect for each individual file)
+
+[tt]edit_only=1[/tt]: Make the field hidden on the add entry screen (but not edit entry). If the field is required, you must have a default field value.
 |-
 ! Special field validation behaviour
 | Invalid videos will be removed.
@@ -868,7 +904,7 @@ NB: You can see I uploaded a non-web-safe video as the first video. We do suppor
 | [i]None[/i]
 |-
 ! Supported field options
-| [i]None[/i]
+| [tt]edit_only=1[/tt]: Make the field hidden on the add entry screen (but not edit entry). If the field is required, you must have a default field value.
 |-
 ! Special field validation behaviour
 | The entry will be rejected if the value is not a valid URL. If the URL is broken, the entry will be allowed but a warning will be displayed.
@@ -897,6 +933,8 @@ NB: You can see I uploaded a non-web-safe video as the first video. We do suppor
 |-
 ! Supported field options
 | [tt]auto_sort=on|off[/tt] (whether to sort the entered options; default is off)
+
+[tt]edit_only=1[/tt]: Make the field hidden on the add entry screen (but not edit entry). If the field is required, you must have a default field value.
 |-
 ! Special field validation behaviour
 | Invalid URLs will be removed from the list. Broken URLs will be allowed but a warning will be displayed.
@@ -924,7 +962,7 @@ NB: You can see I uploaded a non-web-safe video as the first video. We do suppor
 | [i]None[/i]
 |-
 ! Supported field options
-| [i]None[/i]
+| [tt]edit_only=1[/tt]: Make the field hidden on the add entry screen (but not edit entry). If the field is required, you must have a default field value.
 |-
 ! Special field validation behaviour
 | The entry will be rejected if the provided page-link does not exist.
@@ -957,6 +995,8 @@ NB: You can see I uploaded a non-web-safe video as the first video. We do suppor
 [tt]height[/tt] (the height all the media will be shown at; default is to auto-detect for each individual file)
 
 [tt]is_metadata[/tt] (set to '1' if the field should take precedence for metadata over earlier picture fields [and innate images], and '0' if it should never be the metadata field)
+
+[tt]edit_only=1[/tt]: Make the field hidden on the add entry screen (but not edit entry). If the field is required, you must have a default field value.
 |-
 ! Special field validation behaviour
 | [i]None[/i]
@@ -1020,6 +1060,8 @@ If you have manually added new theme images and are not seeing field types for t
 |-
 ! Supported field options
 | [tt]strict_isbn_validation=on|off[/tt] (whether submitted values should strictly adhere to ISBN-10 or ISBN-13 checksums; default is 'off')
+
+[tt]edit_only=1[/tt]: Make the field hidden on the add entry screen (but not edit entry). If the field is required, you must have a default field value.
 |-
 ! Special field validation behaviour
 | If [tt]strict_isbn_validation=on|off[/tt] is defined as on, then the entry will be rejected if the value is not a valid ISBN.
@@ -1047,7 +1089,7 @@ If you have manually added new theme images and are not seeing field types for t
 | [i]None[/i]
 |-
 ! Supported field options
-| [i]None[/i]
+| [tt]edit_only=1[/tt]: Make the field hidden on the add entry screen (but not edit entry). If the field is required, you must have a default field value.
 |-
 ! Special field validation behaviour
 | The entry will be rejected if the given reference does not exist.
@@ -1078,6 +1120,8 @@ If you have manually added new theme images and are not seeing field types for t
 |-
 ! Supported field options
 | [tt]auto_sort=on|off[/tt] (whether to sort the entered options; default is off)
+
+[tt]edit_only=1[/tt]: Make the field hidden on the add entry screen (but not edit entry). If the field is required, you must have a default field value.
 |-
 ! Special field validation behaviour
 | References which do not exist will be removed from the list.
@@ -1107,7 +1151,7 @@ If you have manually added new theme images and are not seeing field types for t
 | [i]None[/i]
 |-
 ! Supported field options
-| [i]None[/i]
+| [tt]edit_only=1[/tt]: Make the field hidden on the add entry screen (but not edit entry). If the field is required, you must have a default field value.
 |-
 ! Special field validation behaviour
 | The entry will be rejected if the content does not exist.
@@ -1139,6 +1183,8 @@ NB: Where we support Composr tree-list inputters (like shown for 'reference') fo
 |-
 ! Supported field options
 | [tt]auto_sort=on|off[/tt] (whether to sort the entered options; default is off)
+
+[tt]edit_only=1[/tt]: Make the field hidden on the add entry screen (but not edit entry). If the field is required, you must have a default field value.
 |-
 ! Special field validation behaviour
 | Links to content which do not exist will be removed from the list.
@@ -1169,7 +1215,7 @@ NB: Where we support Composr tree-list inputters (like shown for 'reference') fo
 | [tt]![/tt]: Current user's username
 |-
 ! Supported field options
-| [i]None[/i]
+| [tt]edit_only=1[/tt]: Make the field hidden on the add entry screen (but not edit entry). If the field is required, you must have a default field value.
 |-
 ! Privacy (managing personal data) behaviour
 | Will match against [tt]Member ID[/tt] (additional member ID fields) criteria. Ignores the 'May contain personal information' setting as member IDs are always sensitive.
@@ -1198,6 +1244,8 @@ NB: Where we support Composr tree-list inputters (like shown for 'reference') fo
 |-
 ! Supported field options
 | [tt]auto_sort=on|off[/tt] (whether to sort the entered options; default is off)
+
+[tt]edit_only=1[/tt]: Make the field hidden on the add entry screen (but not edit entry). If the field is required, you must have a default field value.
 |-
 ! Special field validation behaviour
 | Member IDs which do not exist will be removed from the list.
@@ -1225,7 +1273,7 @@ NB: Where we support Composr tree-list inputters (like shown for 'reference') fo
 | [tt]![/tt]: Current user's username
 |-
 ! Supported field options
-| [i]None[/i]
+| [tt]edit_only=1[/tt]: Make the field hidden on the add entry screen (but not edit entry). If the field is required, you must have a default field value.
 |-
 ! Special field validation behaviour
 | [i]None[/i] (to allow specifying old usernames)
@@ -1254,6 +1302,8 @@ NB: Where we support Composr tree-list inputters (like shown for 'reference') fo
 |-
 ! Supported field options
 | [tt]auto_sort=on|off[/tt] (whether to sort the entered options; default is off)
+
+[tt]edit_only=1[/tt]: Make the field hidden on the add entry screen (but not edit entry). If the field is required, you must have a default field value.
 |-
 ! Special field validation behaviour
 | [i]None[/i] (to allow specifying old usernames)
@@ -1281,7 +1331,7 @@ NB: Where we support Composr tree-list inputters (like shown for 'reference') fo
 | [i]None[/i]
 |-
 ! Supported field options
-| [i]None[/i]
+| [tt]edit_only=1[/tt]: Make the field hidden on the add entry screen (but not edit entry). If the field is required, you must have a default field value.
 |-
 ! Special field validation behaviour
 | The entry will be rejected if the given author does not exist.
@@ -1311,7 +1361,7 @@ NB: Where we support Composr tree-list inputters (like shown for 'reference') fo
 | [i]None[/i]
 |-
 ! Supported field options
-| [i]None[/i]
+| [tt]edit_only=1[/tt]: Make the field hidden on the add entry screen (but not edit entry). If the field is required, you must have a default field value.
 |-
 ! Special field validation behaviour
 | The entry will be rejected if the value is not a valid color.
@@ -1346,6 +1396,8 @@ NB: There is no special styling by default: this field exists so as to provide a
 [tt]max_year=YYYY[/tt] (defaults to 3000ad)
 
 [tt]range_search=on|off[/tt]: search forms will allow a range-based search
+
+[tt]edit_only=1[/tt]: Make the field hidden on the add entry screen (but not edit entry). If the field is required, you must have a default field value.
 |-
 ! Special field validation behaviour
 | The entry will be rejected if the given date and time is invalid.
@@ -1379,6 +1431,8 @@ NB: There is no special styling by default: this field exists so as to provide a
 [tt]max_year=YYYY[/tt] (defaults to 3000ad)
 
 [tt]range_search=on|off[/tt]: search forms will allow a range-based search
+
+[tt]edit_only=1[/tt]: Make the field hidden on the add entry screen (but not edit entry). If the field is required, you must have a default field value.
 |-
 ! Special field validation behaviour
 | The entry will be rejected if the given date is invalid.
@@ -1407,6 +1461,8 @@ NB: There is no special styling by default: this field exists so as to provide a
 |-
 ! Supported field options
 | [tt]range_search=on|off[/tt]: search forms will allow a range-based search
+
+[tt]edit_only=1[/tt]: Make the field hidden on the add entry screen (but not edit entry). If the field is required, you must have a default field value.
 |-
 ! Special field validation behaviour
 | The entry will be rejected if the given time is invalid.
@@ -1434,7 +1490,7 @@ NB: There is no special styling by default: this field exists so as to provide a
 | [i]None[/i]
 |-
 ! Supported field options
-| [i]None[/i]
+| [tt]edit_only=1[/tt]: Make the field hidden on the add entry screen (but not edit entry). If the field is required, you must have a default field value.
 |-
 ! Special field validation behaviour
 | [i]None[/i] (there are too many variations to telephone numbers that it is unreasonable to check for them)
@@ -1463,6 +1519,8 @@ NB: There is no special styling by default: this field exists so as to provide a
 |-
 ! Supported field options
 | [tt]in_money=on|off[/tt]: Show the tax in money, rather than as a tax code (will use the user's address for tax calculation if known, otherwise the site address)
+
+[tt]edit_only=1[/tt]: Make the field hidden on the add entry screen (but not edit entry). If the field is required, you must have a default field value.
 |-
 ! Special field validation behaviour
 | The entry will be rejected if an invalid tax code was given.
@@ -1490,7 +1548,7 @@ NB: There is no special styling by default: this field exists so as to provide a
 | [i]None[/i]
 |-
 ! Supported field options
-| [i]None[/i]
+| [tt]edit_only=1[/tt]: Make the field hidden on the add entry screen (but not edit entry). If the field is required, you must have a default field value.
 |-
 ! Special field validation behaviour
 | The entry will be rejected if an invalid year or month was given.
@@ -1509,6 +1567,16 @@ NB: There is no special styling by default: this field exists so as to provide a
 
 In almost all cases a field left as blank will not show in the default templates at all.
 'color' is the only exception to this (at the time of writing), as there is no way to actually leave that input field blank.
+
+[title="2"]Edit-only fields[/title]
+
+Almost all fields support the [tt]edit_only[/tt] option. If this is set to '1', then the field will not be shown when adding a new entry. However, it will be shown when editing an entry.
+
+This is useful if you want some fields that can only be changed or set by staff. What you would do is grant the ability for members to add entries, but not to edit their own entries.
+
+Additionally, this could be useful if you only want basic fields to be present when adding an entry (for simplicity). And then you would allow members to specify additional information when applicable by editing the entry after saving.
+
+Note that for required fields, if you enable this option, then the field must have a default value. Otherwise, to conform with field validation (required fields cannot be blank, and a hidden field without a default value would have been blank), the field will still be visible when adding an entry.
 
 [title="2"]Styling multiple-selection fields[/title]
 

@@ -1,36 +1,75 @@
-<?php
-# MantisBT - A PHP based bugtracking system
+<?php /*
 
-# MantisBT is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 2 of the License, or
-# (at your option) any later version.
-#
-# MantisBT is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with MantisBT.  If not, see <http://www.gnu.org/licenses/>.
+ The contents of this file are subject to the Common Public Attribution License Version 1.0 (the "License");
+ you may not use this file except in compliance with the License.
+ You may obtain a copy of the License at http://opensource.org/licenses/cpal_1.0.
+
+ Software distributed under the License is distributed on an "AS IS" basis, WITHOUT WARRANTY OF ANY KIND, either express or implied.
+ See the License for the specific language governing rights and limitations under the License.
+
+ The Original Code is Composr CMS.
+
+ The Original Developer is the Initial Developer.
+
+ The Initial Developer of the Original Code is Chris Graham.
+ All portions of the code written by Chris Graham are Copyright (c) Christopher Graham. All Rights Reserved.
+
+ See docs/LICENSE.md for full licensing information.
+
+*/
 
 /**
- * View Bug
- *
- * @package MantisBT
- * @copyright Copyright 2000 - 2002  Kenzaburo Ito - kenito@300baud.org
- * @copyright Copyright 2002  MantisBT Team - mantisbt-dev@lists.sourceforge.net
- * @link http://www.mantisbt.org
- *
- * @uses core.php
+ * @license    http://opensource.org/licenses/cpal_1.0 Common Public Attribution License
+ * @copyright  Christopher Graham
+ * @package    core
  */
 
-require_once( 'core.php' );
+// This is the standard zone bootstrap file.
 
-$t_file = __FILE__;
-$t_mantis_dir = dirname( __FILE__ ) . DIRECTORY_SEPARATOR;
-$t_show_page_header = true;
-$t_force_readonly = false;
+// Fixup SCRIPT_FILENAME potentially being missing
+$_SERVER['SCRIPT_FILENAME'] = __FILE__;
 
-define( 'BUG_VIEW_INC_ALLOW', true );
-include( dirname( __FILE__ ) . '/bug_view_inc.php' );
+// Find Composr base directory, and chdir into it
+global $FILE_BASE, $RELATIVE_PATH;
+$FILE_BASE = (strpos(__FILE__, './') === false) ? __FILE__ : realpath(__FILE__);
+$FILE_BASE = dirname($FILE_BASE);
+if (!is_file($FILE_BASE . '/sources/bootstrap.php')) {
+    $RELATIVE_PATH = basename($FILE_BASE);
+    $FILE_BASE = dirname($FILE_BASE);
+} else {
+    $RELATIVE_PATH = '';
+}
+if (!is_file($FILE_BASE . '/sources/bootstrap.php')) {
+    $FILE_BASE = $_SERVER['SCRIPT_FILENAME']; // this is with symlinks-unresolved (__FILE__ has them resolved); we need as we may want to allow zones to be symlinked into the base directory without getting path-resolved
+    $FILE_BASE = dirname($FILE_BASE);
+    if (!is_file($FILE_BASE . '/sources/bootstrap.php')) {
+        $RELATIVE_PATH = basename($FILE_BASE);
+        $FILE_BASE = dirname($FILE_BASE);
+    } else {
+        $RELATIVE_PATH = '';
+    }
+}
+@chdir($FILE_BASE);
+
+global $FORCE_INVISIBLE_GUEST;
+$FORCE_INVISIBLE_GUEST = false;
+global $EXTERNAL_CALL;
+$EXTERNAL_CALL = false;
+global $CSRF_TOKENS;
+$CSRF_TOKENS = true;
+global $STATIC_CACHE_ENABLED;
+$STATIC_CACHE_ENABLED = true;
+global $IN_SELF_ROUTING_SCRIPT;
+$IN_SELF_ROUTING_SCRIPT = true;
+if (!is_file($FILE_BASE . '/sources/bootstrap.php')) {
+    exit('<!DOCTYPE html>' . "\n" . '<html lang="EN"><head><title>Critical startup error</title></head><body><h1>Composr startup error</h1><p>The second most basic Composr startup file, sources/bootstrap.php, could not be located. This is almost always due to an incomplete upload of the Composr system, so please check all files are uploaded correctly.</p><p>Once all Composr files are in place, Composr must actually be installed by running the installer. You must be seeing this message either because your system has become corrupt since installation, or because you have uploaded some but not all files from our manual installer package: the quick installer is easier, so you might consider using that instead.</p><p>The core developers maintain full documentation for all procedures and tools, especially those for installation. These may be found on the <a href="https://composr.app">Composr website</a>. If you are unable to easily solve this problem, we may be contacted from our website and can help resolve it for you.</p><hr /><p style="font-size: 0.8em">Composr is a website engine created by Christopher Graham.</p></body></html>');
+}
+require_once $FILE_BASE . '/sources/bootstrap.php';
+require_code__bootstrap('global');
+
+// LEGACY: Hard-coded redirect for old Mantis issues
+require_code('urls');
+require_code('site2');
+$id = get_param_string('id');
+$url = build_url(['page' => 'catalogues', 'type' => 'entry', 'id' => 'tracker-' . $id], get_module_zone('catalogues'));
+redirect_exit($url);

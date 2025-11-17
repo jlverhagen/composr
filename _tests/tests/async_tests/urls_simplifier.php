@@ -39,8 +39,8 @@ class urls_simplifier_test_set extends cms_test_case
 
         require_code('uploads');
 
-        require_code('urls_simplifier');
-        $this->ob = new HarmlessURLCoder();
+        require_code('urls_coder');
+        $this->ob = new Source_URL_coder();
     }
 
     public function testRecode()

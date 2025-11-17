@@ -215,6 +215,7 @@ class Hook_addon_registry_core_rich_media
             'sources/hooks/systems/symbols/DISPLAY_CONCEPT.php',
             'sources/hooks/systems/symbols/SET_TUTORIAL_LINK.php',
             'sources/media_renderer.php',
+            'sources/media_renderer_fallback.php',
             'sources/member_mentions.php',
             'sources_custom/hooks/systems/attachments/.htaccess',
             'sources_custom/hooks/systems/attachments/index.html',

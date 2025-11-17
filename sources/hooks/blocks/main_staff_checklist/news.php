@@ -69,7 +69,7 @@ class Hook_checklist_news
         $config_url = config_option_url('news_update_time');
 
         $url = build_url(['page' => 'cms_news', 'type' => 'add'], get_module_zone('cms_news'));
-        list($info, $seconds_due_in) = staff_checklist_time_ago_and_due($seconds_ago, $limit_hours);
+        list($info, $seconds_due_in) = Block_main_staff_checklist::staff_checklist_time_ago_and_due($seconds_ago, $limit_hours);
         $tpl = do_template('BLOCK_MAIN_STAFF_CHECKLIST_ITEM', [
             '_GUID' => 'dd14f34eafa4f24c4c173c195cd84fe3',
             'CONFIG_URL' => $config_url,

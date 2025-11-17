@@ -256,7 +256,7 @@ class Module_admin_svg_sprites
             $sprite_path = get_file_base() . '/' . $_sprite_path;
         }
 
-        $svg_xml = new CMS_simple_xml_reader(cms_file_get_contents_safe($sprite_path, FILE_READ_LOCK | FILE_READ_BOM));
+        $svg_xml = object_factory('Source_simple_xml_reader', false, [cms_file_get_contents_safe($sprite_path, FILE_READ_LOCK | FILE_READ_BOM)]);
         $svg_xml_children = $svg_xml->gleamed[3];
         $sprite_url = find_theme_image('icons' . (($monochrome === 1) ? '_monochrome' : '') . '_sprite', true, false, $theme);
         $sprite_url .= '?t=' . float_to_raw_string(microtime(true));

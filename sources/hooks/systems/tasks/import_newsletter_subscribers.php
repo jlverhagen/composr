@@ -63,7 +63,7 @@ class Hook_task_import_newsletter_subscribers
         push_query_limiting(false);
 
         require_code('files_spreadsheets_read');
-        $sheet_reader = spreadsheet_open_read($path, $filename, CMS_Spreadsheet_Reader::ALGORITHM_RAW);
+        $sheet_reader = Source_spreadsheet_reader::spreadsheet_open_read($path, $filename, Source_spreadsheet_reader::ALGORITHM_RAW);
 
         $email_address_index = 0;
         $forename_index = null;

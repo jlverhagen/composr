@@ -39,7 +39,7 @@ require_code('database/shared/mysql');
  *
  * @package core_database_drivers
  */
-class Database_Static_mysql_pdo extends Database_super_mysql
+class Source_database_static_mysql_pdo extends Source_database_super_mysql
 {
     protected $cache_db = [];
     public $last_select_db = null;

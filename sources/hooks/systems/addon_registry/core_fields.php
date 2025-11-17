@@ -145,6 +145,7 @@ class Hook_addon_registry_core_fields
             'lang/EN/fields.ini',
             'site/catalogue_file.php',
             'sources/fields.php',
+            'sources/fields_list_field_hook.php',
             'sources/hooks/systems/addon_registry/core_fields.php',
             'sources/hooks/systems/fields/.htaccess',
             'sources/hooks/systems/fields/author.php',

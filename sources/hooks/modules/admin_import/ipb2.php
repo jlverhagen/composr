@@ -31,24 +31,22 @@
  */
 
 /**
- * Standard code module initialisation function.
- *
- * @ignore
- */
-function init__hooks__modules__admin_import__ipb()
-{
-    global $TOPIC_FORUM_CACHE;
-    $TOPIC_FORUM_CACHE = [];
-
-    global $STRICT_FILE;
-    $STRICT_FILE = false; // Disable this for a quicker import that is quite liable to go wrong if you don't have the files in the right place
-}
-
-/**
  * Hook class.
  */
 class Hook_import_ipb2
 {
+    /**
+     * Hook class initialisation.
+     */
+    public function __construct()
+    {
+        global $TOPIC_FORUM_CACHE;
+        $TOPIC_FORUM_CACHE = [];
+
+        global $STRICT_FILE;
+        $STRICT_FILE = false; // Disable this for a quicker import that is quite liable to go wrong if you don't have the files in the right place
+    }
+
     /**
      * Standard importer hook info function.
      *

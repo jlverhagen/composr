@@ -190,7 +190,7 @@ These parameters work both in the body of an individual newsletter and the [tt]N
 
 [title="3"]Custom Profile Fields[/title]
 
-If sending newsletters to members (via usergroups), rather than via newsletter signup, you can reference Custom Profile Fields using normal Tempcode. For example, to find field #20 for the recipient, [tt]{$CPF_VALUE,20,{MEMBER_ID}}[/tt].
+If sending newsletters to members (via usergroups), rather than via newsletter signup, you can reference Custom Profile Fields using normal Tempcode. For example, to find field #20 for the recipient, [tt]{\$CPF_VALUE,20,{MEMBER_ID}}[/tt].
 
 [title="3"]Full HTML[/title]
 

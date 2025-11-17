@@ -237,24 +237,6 @@ class file_type_safelisting_test_set extends cms_test_case
         }
     }
 
-    public function testTrackerValidTypes()
-    {
-        $path = get_file_base() . '/tracker/config/config_inc.php';
-        $c = cms_file_get_contents_safe($path, FILE_READ_LOCK);
-
-        $file_types = [];
-        $matches = [];
-        preg_match('#\$g_allowed_files = \'(.*)\';#', $c, $matches);
-        $file_types = explode(',', $matches[1]);
-        sort($file_types);
-
-        $file_types_expected = $this->file_types;
-        $file_types_expected = array_diff($file_types_expected, ['bin', 'exe', 'dmg', 'htm', 'html', 'svg', 'css', 'js', 'json', 'woff', 'woff2', 'xml', 'xsd', 'xsl', 'rss', 'atom', 'yaml', 'yml']); // No executable or web formats should be uploaded by non-admins
-        sort($file_types_expected);
-
-        $this->assertTrue($file_types == $file_types_expected, 'Difference of: ' . serialize(array_diff($file_types_expected, $file_types)) . '/' . serialize(array_diff($file_types, $file_types_expected)));
-    }
-
     public function testConfigValidTypes()
     {
         $path = get_file_base() . '/sources/hooks/systems/config/valid_types.php';

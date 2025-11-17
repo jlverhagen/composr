@@ -37,7 +37,7 @@ require_code('crud_module');
 /**
  * Module page class.
  */
-class Module_admin_cns_multi_moderations extends Standard_crud_module
+class Module_admin_cns_multi_moderations extends Source_standard_crud_module
 {
     protected $lang_type = 'MULTI_MODERATION';
     protected $select_name = 'NAME';

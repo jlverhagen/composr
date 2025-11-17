@@ -37,6 +37,8 @@
  */
 function init__caches()
 {
+    require_code('Self_learning_cache');
+
     global $BLOCK_CACHE_ON_CACHE;
     $BLOCK_CACHE_ON_CACHE = null;
 
@@ -63,32 +65,7 @@ function init__caches()
      */
     $PERSISTENT_CACHE = null;
 
-    $use_persistent_cache = (!empty($SITE_INFO['use_persistent_cache'])); // Default to off because badly configured caches can result in lots of very slow misses
-    if ($use_persistent_cache) {
-        if ((class_exists('Memcached')) && (($SITE_INFO['use_persistent_cache'] == 'memcached') || ($SITE_INFO['use_persistent_cache'] == '1'))) {
-            require_code('persistent_caching/memcached');
-            $PERSISTENT_CACHE = new Persistent_caching_memcached();
-        } elseif ((class_exists('Memcache')) && (($SITE_INFO['use_persistent_cache'] == 'memcache') || ($SITE_INFO['use_persistent_cache'] == '1'))) {
-            require_code('persistent_caching/memcache');
-            $PERSISTENT_CACHE = new Persistent_caching_memcache();
-        } elseif ((function_exists('apc_fetch')) && (($SITE_INFO['use_persistent_cache'] == 'apc') || ($SITE_INFO['use_persistent_cache'] == '1'))) {
-            require_code('persistent_caching/apc');
-            $PERSISTENT_CACHE = new Persistent_caching_apccache();
-        } elseif ((function_exists('apcu_fetch')) && (($SITE_INFO['use_persistent_cache'] == 'apcu') || ($SITE_INFO['use_persistent_cache'] == '1'))) {
-            require_code('persistent_caching/apcu');
-            $PERSISTENT_CACHE = new Persistent_caching_apcucache();
-        } elseif ((function_exists('xcache_get')) && (($SITE_INFO['use_persistent_cache'] == 'xcache') || ($SITE_INFO['use_persistent_cache'] == '1'))) {
-            require_code('persistent_caching/xcache');
-            $PERSISTENT_CACHE = new Persistent_caching_xcache();
-        } elseif ((function_exists('wincache_ucache_get')) && (($SITE_INFO['use_persistent_cache'] == 'wincache') || ($SITE_INFO['use_persistent_cache'] == '1'))) {
-            require_code('persistent_caching/wincache');
-            $PERSISTENT_CACHE = new Persistent_caching_wincache();
-        } elseif ((file_exists(get_custom_file_base() . '/caches/persistent/')) && (($SITE_INFO['use_persistent_cache'] == 'filesystem') || ($SITE_INFO['use_persistent_cache'] == '1'))) {
-            require_code('persistent_caching/filesystem');
-            $PERSISTENT_CACHE = new Persistent_caching_filesystem();
-        }
-        // NB: sources/hooks/systems/health_checks/persistent_cache.php also references some of this ^
-    }
+    persistent_cache_init();
 
     /** The smart cache (self-learning cache).
      *
@@ -130,328 +107,50 @@ function init__caches()
 }
 
 /**
- * The self-learning cache is an adaptive per-page/script cache, which loads from disk in a single efficient operation.
- * If something will not 'get' then the expectation is that a more costly "full load" or "upfront work" operation will be performed, but
- * a 'set' will also happen so on next script load this won't be needed (at least, eventually, after things settle down across different access patterns).
- *
- * The cache size is minimised, only required resources by the particular per-page/script are put there.
- * Typically cache entries will be very small and voluminous, but predictable,
- * hence why we don't just use individual fetches on a conventional cache layer.
- * It is a disk vs CPU trade-off. The intent is to approach performance as if each page/script were hand-coded to know its exact dependencies.
- *
- * Some usage notes:
- * Cached items should not be too volatile, although the cache is clever enough to not re-save if no real changes actually resulted from set/append operations;
- *  in other words the cache should quickly stabilise and not keep having to do writes
- * You should not use this as an alternative to the persistent cache for caching everything that the persistent cache can already do;
- *  although sometimes it is good to do special batching operations (e.g. avoid repeating query patterns) that would already be separately optimised when the persistent cache was on
- * We cannot always put cache stuff direct into smart cache as it may vary per-usergroup for example;
- *  anything in the cache really should be useful for all page loads, we do not want to have to load a great bloated smart cache on each page load;
- *  the above said, we will often *say* what is needed, then feed this in for doing bulk loads from the dedicated caches (e.g. saying which blocks to bulk load)
- *
- * @package core
+ * Try to initialise a persistent cache if we can.
  */
-class Self_learning_cache
+function persistent_cache_init()
 {
-    private $bucket_name = null;
-    private $path = null;
-    private $data = null; // null means "Nothing loaded"
-    private $pending_save = false;
-    public $paused = false;
-    public $empty = true;
-    private $already_invalidated = false;
-    private $keys_initial = [];
+    static $is_initialising = false;
 
-    /**
-     * Constructor. Initialise our cache.
-     *
-     * @param  ID_TEXT $bucket_name The identifier this cache object is for
-     */
-    public function __construct(string $bucket_name)
-    {
-        $this->bucket_name = $bucket_name;
-        $dir = get_custom_file_base() . '/caches/self_learning';
-        //$this->path = $dir . '/' . filter_naughty(str_replace(['/', '\\', ':'], ['__', '__', '__'], $bucket_name)) . '.gcd'; Windows has a 260 character path limit, so we can't do it this way
-        $this->path = $dir . '/' . cms_base64_encode($bucket_name, true, true) . '.gcd';
-        $this->load();
+    global $SITE_INFO, $PERSISTENT_CACHE;
+
+    if (isset($PERSISTENT_CACHE)) {
+        return;
     }
 
-    /**
-     * Find whether the smart cache is on.
-     *
-     * @return boolean Whether it is
-     */
-    public static function is_on() : bool
-    {
-        static $is_on = null;
-        if ($is_on === null) {
-            $is_on = null; // For CQC
-        }
-        if ($is_on !== null) {
-            return $is_on;
-        }
-        global $SITE_INFO;
-        $is_on = (isset($SITE_INFO['self_learning_cache']) && $SITE_INFO['self_learning_cache'] == '1');
-        return $is_on;
+    if (empty($SITE_INFO['use_persistent_cache'])) {
+        return;
     }
 
-    /**
-     * Load the cache for the particular bucket this cache object is for.
-     */
-    private function load()
-    {
-        if (!$this->is_on()) {
-            return;
-        }
+    if (!function_exists('find_all_hooks')) {
+        return;
+    }
 
-        $data = persistent_cache_get(['SELF_LEARNING_CACHE', $this->bucket_name]);
-        if ($data !== null) {
-            $this->data = $data;
-        } elseif (is_file($this->path)) {
-            $_data = @cms_file_get_contents_safe($this->path, FILE_READ_LOCK);
-            if ($_data !== false) {
-                $this->data = @unserialize($_data);
-                if ($this->data === false) {
-                    $this->invalidate(); // Corrupt
-                }
-            } else {
-                $this->data = null;
-            }
-        }
+    // We might trigger this again while trying to find a persistent cache to use. Prevent this loop.
+    if ($is_initialising) {
+        return;
+    }
+    $is_initialising = true;
 
-        $this->empty = cms_empty_safe($this->data);
-
-        if ($this->data !== null) {
-            $this->keys_initial = array_flip(array_keys($this->data));
+    $priorities = [];
+    $hooks = find_all_hooks('systems', 'persistent_caching');
+    foreach ($hooks as $hook => $type) {
+        require_code('hooks/systems/persistent_caching/' . filter_naughty_harsh($hook));
+        $priority = call_user_func('Hook_persistent_cache_' . filter_naughty_harsh($hook) . '::cache_priority');
+        if ($priority) { // Not false and not zero
+            $priorities[] = ['hook' => $hook, 'priority' => $priority];
         }
     }
 
-    /**
-     * Get a cache key.
-     *
-     * @param  ID_TEXT $key Cache key
-     * @return ?mixed The value (null: not in cache - needs to be learnt)
-     */
-    public function get(string $key)
-    {
-        if (isset($this->data[$key])) {
-            return $this->data[$key];
-        }
-        return null; // Not set. We cannot take a default value to return, as we need to signal that this was missing in order to allow the cache to be adapted
+    sort_maps_by($priorities, 'priority');
+
+    if (array_key_exists(0, $priorities)) {
+        $PERSISTENT_CACHE = get_hook_ob('systems', 'persistent_caching', filter_naughty_harsh($priorities[0]['hook']), 'Hook_persistent_cache_');
     }
 
-    /**
-     * See if a cache key was initially set.
-     *
-     * @param  ID_TEXT $key Cache key
-     * @return boolean Whether it was
-     */
-    public function get_initial_status(string $key) : bool
-    {
-        return isset($this->keys_initial[$key]);
-    }
-
-    /**
-     * Set a cache key.
-     *
-     * @param  ID_TEXT $key Cache key
-     * @param  mixed $value Value. Should not be null, as that is reserved for "not in cache"
-     */
-    public function set(string $key, $value)
-    {
-        if ($this->paused) {
-            return;
-        }
-
-        if (!isset($this->data[$key]) || $this->data[$key] !== $value) {
-            $this->data[$key] = $value;
-
-            $this->save(false);
-        }
-    }
-
-    /**
-     * Add something to a list entry in the cache. Uses keys to set the value, then assigns $value_2 to the key.
-     * This is efficient for duplication prevention.
-     *
-     * @param  ID_TEXT $key Cache key
-     * @param  mixed $value Value to append (must not be an object or array, so you may need to pre-serialize)
-     * @param  mixed $value_2 Secondary value to attach to appended value (optional)
-     * @return boolean Whether the value was appended (false if it was already there)
-     */
-    public function append(string $key, $value, $value_2 = true) : bool
-    {
-        if (!isset($this->data[$key])) {
-            $this->data[$key] = [];
-        }
-
-        if ((isset($this->data[$key])) && (!is_array($this->data[$key]))) { // Fix to corrupted data
-            $this->data[$key] = [];
-        }
-
-        if ((!isset($this->data[$key][$value])) && !array_key_exists($value, $this->data[$key]) || $this->data[$key][$value] !== $value_2) {
-            if ($this->paused) {
-                return true;
-            }
-
-            $this->data[$key][$value] = $value_2;
-
-            $this->save(false);
-
-            return true;
-        }
-
-        return false;
-    }
-
-    /**
-     * Remove something from a list entry in the cache; the opposite of append.
-     * Be careful because this only removes from the current bucket.
-     *
-     * @param  ID_TEXT $key Cache key
-     * @param  mixed $value The value to remove; the same as what was used in append
-     * @return boolean Whether the value was actually removed
-     */
-    public function remove(string $key, $value) : bool
-    {
-        if ($this->data === null) {
-            return false;
-        }
-
-        if (!array_key_exists($key, $this->data)) {
-            return false;
-        }
-
-        if (!array_key_exists($value, $this->data[$key])) {
-            return false;
-        }
-
-        if ($this->paused) {
-            return true;
-        }
-
-        unset($this->data[$key][$value]);
-
-        $this->save(false);
-
-        return true;
-    }
-
-    /**
-     * Save the cache, after some change has happened.
-     *
-     * @param  boolean $do_immediately Immediately save the cache change (slow...)
-     */
-    private function save(bool $do_immediately = false)
-    {
-        if (!$this->is_on()) {
-            return;
-        }
-
-        if (!$do_immediately) {
-            if (!$this->pending_save || !function_exists('register_shutdown_function')) {
-                // Mark to save later
-                cms_register_shutdown_function_safe([$this, '_page_cache_resave']);
-            }
-            $this->pending_save = true;
-            return;
-        }
-
-        $this->_page_cache_resave();
-    }
-
-    /**
-     * Actually save the cache.
-     * Has to be public for register_shutdown_function.
-     *
-     * @ignore
-     */
-    public function _page_cache_resave()
-    {
-        $dir = get_custom_file_base() . '/caches/self_learning';
-        if (!is_dir($dir)) {
-            require_code('files2');
-            make_missing_directory($dir);
-        }
-
-        if ($GLOBALS['PERSISTENT_CACHE'] !== null) {
-            persistent_cache_set(['SELF_LEARNING_CACHE', $this->bucket_name], $this->data);
-            return;
-        }
-
-        if ($this->path !== null) {
-            $contents = serialize($this->data);
-
-            require_code('files');
-            $flags = FILE_WRITE_FIX_PERMISSIONS;
-            if (!headers_sent()) {
-                $flags |= FILE_WRITE_FAILURE_SOFT;
-            }
-            cms_file_put_contents_safe($this->path, $contents, $flags);
-        } else {
-            fatal_exit(do_lang_tempcode('INTERNAL_ERROR', escape_html('d5cbb686151e52c59b3a742a28478fdc')));
-        }
-    }
-
-    /**
-     * Invalidate the cache, so that it will rebuild.
-     */
-    public function invalidate()
-    {
-        if (!$this->is_on()) {
-            return;
-        }
-
-        if ($this->already_invalidated) {
-            return;
-        }
-        $this->already_invalidated = true;
-
-        if ($this->path !== null) {
-            if (file_exists($this->path)) {
-                @unlink($this->path);
-            }
-        } else {
-            fatal_exit(do_lang_tempcode('INTERNAL_ERROR', escape_html('d8330d84a71c500f98e471b07cf646c3')));
-        }
-
-        $this->data = null;
-    }
-
-    /**
-     * Called by various other erase_* functions that know the smart cache may be involved.
-     */
-    public static function erase_smart_cache()
-    {
-        if (!Self_learning_cache::is_on()) {
-            return;
-        }
-
-        static $done_once = false;
-        global $ALLOW_DOUBLE_DECACHE;
-        if (!$ALLOW_DOUBLE_DECACHE) {
-            if ($done_once) {
-                return;
-            }
-        }
-        $done_once = true;
-
-        $dh = @opendir(get_custom_file_base() . '/caches/self_learning');
-        if ($dh !== false) {
-            while (($f = readdir($dh)) !== false) {
-                if (substr($f, -4) == '.gcd') {
-                    @unlink(get_custom_file_base() . '/caches/self_learning/' . $f);
-                }
-            }
-            closedir($dh);
-        }
-
-        erase_persistent_cache();
-
-        global $SMART_CACHE;
-        if ($SMART_CACHE !== null) {
-            $SMART_CACHE->invalidate();
-        }
-    }
+    $is_initialising = false;
+    // NB: sources/hooks/systems/health_checks/persistent_cache.php also references some of this ^
 }
 
 /**
@@ -464,6 +163,8 @@ class Self_learning_cache
 function persistent_cache_get($key, ?int $min_cache_date = null)
 {
     global $PERSISTENT_CACHE;
+    persistent_cache_init();
+
     //if (($GLOBALS['DEV_MODE']) && (mt_rand(0, 3) == 1)) return null;  Annoying when doing performance tests, but you can enable to test persistent cache more
     if ($PERSISTENT_CACHE === null) {
         return null;
@@ -473,7 +174,7 @@ function persistent_cache_get($key, ?int $min_cache_date = null)
     if ($test !== null) {
         return $test;
     }
-    /*if (!is_a($PERSISTENT_CACHE, 'Persistent_caching_filesystem')) {  Server-wide bad idea
+    /*if (!is_a($PERSISTENT_CACHE, 'Hook_persistent_cache_filesystem')) {  Server-wide bad idea
         $test = $PERSISTENT_CACHE->get(('cms' . float_to_raw_string(cms_version_number())) . serialize($key), $min_cache_date); // And last we'll try server-wide
     }*/
     return $test;
@@ -490,6 +191,8 @@ function persistent_cache_get($key, ?int $min_cache_date = null)
 function persistent_cache_set($key, $data, bool $server_wide = false, ?int $expire_secs = null)
 {
     global $PERSISTENT_CACHE;
+    persistent_cache_init();
+
     if ($PERSISTENT_CACHE === null) {
         return;
     }
@@ -497,7 +200,7 @@ function persistent_cache_set($key, $data, bool $server_wide = false, ?int $expi
         $expire_secs = $server_wide ? 0 : (60 * 60);
     }
 
-    /*if (is_a($PERSISTENT_CACHE, 'Persistent_caching_filesystem')) {   Server-wide bad idea
+    /*if (is_a($PERSISTENT_CACHE, 'Hook_persistent_cache_filesystem')) {   Server-wide bad idea
         $server_wide = false;
     }*/
     $server_wide = false;
@@ -514,9 +217,12 @@ function persistent_cache_set($key, $data, bool $server_wide = false, ?int $expi
 function persistent_cache_delete($key, bool $substring = false)
 {
     global $PERSISTENT_CACHE;
+    persistent_cache_init();
+
     if ($PERSISTENT_CACHE === null) {
         return;
     }
+
     if ($substring) {
         $list = $PERSISTENT_CACHE->load_objects_list();
         foreach (array_keys($list) as $l) {
@@ -533,25 +239,10 @@ function persistent_cache_delete($key, bool $substring = false)
         }
     } else {
         $PERSISTENT_CACHE->delete(get_file_base() . serialize($key));
-        /*if (!is_a($PERSISTENT_CACHE, 'Persistent_caching_filesystem')) {  Server-wide bad idea
+        /*if (!is_a($PERSISTENT_CACHE, 'Hook_persistent_cache_filesystem')) {  Server-wide bad idea
             $PERSISTENT_CACHE->delete('cms' . float_to_raw_string(cms_version_number()) . serialize($key));
         }*/
     }
-}
-
-/**
- * Get the name of the class for the active persistent cache.
- *
- * @return ?ID_TEXT The class name of the persistent cache being used (null: persistent cache is disabled)
- */
-function persistent_cache_type() : ?string
-{
-    global $PERSISTENT_CACHE;
-    if ($PERSISTENT_CACHE === null) {
-        return null;
-    }
-
-    return get_class($PERSISTENT_CACHE);
 }
 
 /**
@@ -596,14 +287,16 @@ function erase_persistent_cache()
     // Flush database cache
     $GLOBALS['SITE_DB']->query_delete('cache');
 
-    // Do not continue if we do not have a persistent cache
     global $PERSISTENT_CACHE;
+    persistent_cache_init();
+
+    // Do not continue if we do not have a persistent cache
     if ($PERSISTENT_CACHE === null) {
         return;
     }
 
-    // We do not set expiry on the filesystem based cache, so clear it in case we switch to it later
-    if (!is_a($PERSISTENT_CACHE, 'Persistent_caching_filesystem')) {
+    // Clear the filesystem cache as well since we cannot set expiration dates on files
+    if (!is_a($PERSISTENT_CACHE, 'Hook_persistent_cache_filesystem')) {
         $path = get_custom_file_base() . '/caches/persistent';
         if (is_dir($path)) {
             $d = opendir($path);
@@ -875,7 +568,7 @@ function _get_cache_entries(array $dets) : array
         get_cache_signature_details($special_cache_flags, $staff_status, $member_id, $groups, $is_bot, $timezone, $theme, $lang);
 
         if ($GLOBALS['PERSISTENT_CACHE'] !== null) {
-            $cache_row = persistent_cache_get(['CACHE', $codename, $cache_identifier_hash, $lang, $theme, $staff_status, $member_id, $groups, $is_bot, $timezone]);
+            $cache_row = persistent_cache_get(['CACHE', $codename, $cache_identifier_hash, $lang, $theme, $staff_status, $member_id, $groups, $is_bot, $timezone], time() - ($ttl * 60));
 
             if ($cache_row === null) { // No
                 if ($caching_via_cron) {
@@ -944,24 +637,26 @@ function _get_cache_entries(array $dets) : array
             request_via_cron($codename, $map, $special_cache_flags, $tempcode);
         }
 
-        // Process the cache data
-        if ($tempcode) {
-            $ob = new Tempcode();
-            if (!$ob->from_assembly($cache_row['the_value'], true)) { // Error
-                $ret = null;
-                $cache[$sz] = [$ret, time()];
-                $rets[$i] = $ret;
-                continue;
-            }
+        // Process the cache data (only necessary for database cache)
+        if ($GLOBALS['PERSISTENT_CACHE'] === null) {
+            if ($tempcode) {
+                $ob = new Tempcode();
+                if (!$ob->from_assembly($cache_row['the_value'], true)) { // Error
+                    $ret = null;
+                    $cache[$sz] = [$ret, time()];
+                    $rets[$i] = $ret;
+                    continue;
+                }
 
-            $cache_row['the_value'] = $ob;
-        } else {
-            $cache_row['the_value'] = @unserialize($cache_row['the_value']);
+                $cache_row['the_value'] = $ob;
+            } else {
+                $cache_row['the_value'] = @unserialize($cache_row['the_value']);
 
-            if ($cache_row['the_value'] === false) { // Corrupt data
-                $cache[$sz] = null;
-                $rets[$i] = null;
-                continue;
+                if ($cache_row['the_value'] === false) { // Corrupt data
+                    $cache[$sz] = null;
+                    $rets[$i] = null;
+                    continue;
+                }
             }
         }
 

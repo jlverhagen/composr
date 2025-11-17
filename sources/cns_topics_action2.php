@@ -84,7 +84,7 @@ function cns_edit_topic(?int $topic_id, ?string $description = null, ?string $em
     $log_id = cns_mod_log_it('EDIT_TOPIC', strval($topic_id), $name, $reason);
     if (addon_installed('actionlog')) {
         require_code('revisions_engine_database');
-        $revision_engine = new RevisionEngineDatabase();
+        $revision_engine = object_factory('Source_revisions_engine_database');
         $revision_engine->add_revision(
             'topic',
             strval($topic_id),
@@ -223,7 +223,7 @@ function cns_delete_topic(int $topic_id, string $reason = '', ?int $post_target_
     $log_id = cns_mod_log_it('DELETE_TOPIC', strval($topic_id), $name, $reason);
     if ((addon_installed('actionlog')) && ($info[0]['t_cache_first_member_id'] !== null)) {
         require_code('revisions_engine_database');
-        $revision_engine = new RevisionEngineDatabase();
+        $revision_engine = object_factory('Source_revisions_engine_database');
         $revision_engine->add_revision(
             'topic',
             strval($topic_id),
@@ -584,7 +584,7 @@ function cns_invite_to_pt(int $member_id, int $topic_id)
     require_code('notifications');
     $subject = do_lang('INVITED_TO_TOPIC_SUBJECT', get_site_name(), $topic_title, get_lang($member_id));
     $mail = do_notification_lang('INVITED_TO_TOPIC_BODY', get_site_name(), comcode_escape($topic_title), [comcode_escape($current_username), $topic_url], get_lang($member_id));
-    dispatch_notification('cns_topic_invite', null, $subject, $mail, [$member_id]);
+    Source_notification_dispatcher::dispatch_notification('cns_topic_invite', null, $subject, $mail, [$member_id]);
 }
 
 /**
@@ -613,7 +613,7 @@ function send_pt_notification(int $post_id, string $subject, int $topic_id, int 
     require_code('notifications');
     $msubject = do_lang('NEW_PRIVATE_TOPIC_SUBJECT', $subject, null, null, get_lang($to_id));
     $mmessage = do_notification_lang('NEW_PRIVATE_TOPIC_MESSAGE', comcode_escape($GLOBALS['FORUM_DRIVER']->get_username($from_id, true)), comcode_escape($subject), [comcode_escape($GLOBALS['FORUM_DRIVER']->topic_url($topic_id, '')), $post_comcode, strval($from_id)], get_lang($to_id));
-    dispatch_notification('cns_new_pt', null, $msubject, $mmessage, [$to_id], $from_id, ['priority' => $emphasised ? 1 : 3]);
+    Source_notification_dispatcher::dispatch_notification('cns_new_pt', null, $msubject, $mmessage, [$to_id], $from_id, ['priority' => $emphasised ? 1 : 3]);
 
     if ($mark_unread) {
         $GLOBALS['FORUM_DB']->query_delete('f_read_logs', ['l_topic_id' => $topic_id, 'l_member_id' => $to_id], '', 1);

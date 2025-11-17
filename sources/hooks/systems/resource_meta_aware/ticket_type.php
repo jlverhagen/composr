@@ -33,7 +33,7 @@
 /**
  * Hook class.
  */
-class Hook_resource_meta_aware_ticket_type extends Hook_CMA
+class Hook_resource_meta_aware_ticket_type extends Source_hook_CMA
 {
     /**
      * Get content type details.

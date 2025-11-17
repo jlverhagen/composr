@@ -35,7 +35,7 @@
 /**
  * Hook class.
  */
-class Hook_admin_stats_events extends CMSStatsProvider
+class Hook_admin_stats_events extends Source_hook_stats_provider
 {
     /**
      * Get a list of top events.
@@ -100,45 +100,45 @@ class Hook_admin_stats_events extends CMSStatsProvider
                 'label' => do_lang_tempcode('STATS_EVENTS'),
                 'category' => 'conversions',
                 'filters' => [
-                    'events__day_range' => new CMSStatsDayRangeFilter('events__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
-                    'events__country' => new CMSStatsCountryFilter('events__country', do_lang_tempcode('VISITOR_COUNTRY')),
-                    'events__event' => new CMSStatsListFilter('events__event', do_lang_tempcode('STATS_EVENT'), $top_events),
+                    'events__day_range' => new Source_stats_filter_day_range('events__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
+                    'events__country' => new Source_stats_filter_country('events__country', do_lang_tempcode('VISITOR_COUNTRY')),
+                    'events__event' => new Source_stats_filter_list('events__event', do_lang_tempcode('STATS_EVENT'), $top_events),
                 ],
-                'pivot' => new CMSStatsDatePivot('events__pivot', $this->get_date_pivots(!$for_kpi)),
+                'pivot' => new Source_stats_filter_date_pivot('events__pivot', $this->get_date_pivots(!$for_kpi)),
                 'support_kpis' => self::KPI_HIGH_IS_GOOD,
             ],
             'tracking_code_usage' => [
                 'label' => do_lang_tempcode('TRACKING_CODE_USAGE'),
                 'category' => 'conversions',
                 'filters' => [
-                    'tracking_code_usage__day_range' => new CMSStatsDayRangeFilter('tracking_code_usage__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
-                    'tracking_code_usage__country' => new CMSStatsCountryFilter('tracking_code_usage__country', do_lang_tempcode('VISITOR_COUNTRY')),
-                    'tracking_code_usage__event' => new CMSStatsListFilter('tracking_code_usage__tracking_code', do_lang_tempcode('TRACKING_CODE'), $top_tracking_codes),
+                    'tracking_code_usage__day_range' => new Source_stats_filter_day_range('tracking_code_usage__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
+                    'tracking_code_usage__country' => new Source_stats_filter_country('tracking_code_usage__country', do_lang_tempcode('VISITOR_COUNTRY')),
+                    'tracking_code_usage__event' => new Source_stats_filter_list('tracking_code_usage__tracking_code', do_lang_tempcode('TRACKING_CODE'), $top_tracking_codes),
                 ],
-                'pivot' => new CMSStatsDatePivot('tracking_code_usage__pivot', $this->get_date_pivots(!$for_kpi)),
+                'pivot' => new Source_stats_filter_date_pivot('tracking_code_usage__pivot', $this->get_date_pivots(!$for_kpi)),
                 'support_kpis' => self::KPI_HIGH_IS_GOOD,
             ],
             'conversion_rates' => [
                 'label' => do_lang_tempcode('CONVERSION_RATES'),
                 'category' => 'conversions',
                 'filters' => [
-                    'conversion_rates__day_range' => new CMSStatsDayRangeFilter('conversion_rates__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
-                    'conversion_rates__country' => new CMSStatsCountryFilter('conversion_rates__country', do_lang_tempcode('VISITOR_COUNTRY')),
-                    'conversion_rates__event' => new CMSStatsListFilter('conversion_rates__event', do_lang_tempcode('STATS_EVENT'), $top_events),
+                    'conversion_rates__day_range' => new Source_stats_filter_day_range('conversion_rates__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
+                    'conversion_rates__country' => new Source_stats_filter_country('conversion_rates__country', do_lang_tempcode('VISITOR_COUNTRY')),
+                    'conversion_rates__event' => new Source_stats_filter_list('conversion_rates__event', do_lang_tempcode('STATS_EVENT'), $top_events),
                 ],
-                'pivot' => new CMSStatsDatePivot('conversion_rates__pivot', $this->get_date_pivots(!$for_kpi)),
+                'pivot' => new Source_stats_filter_date_pivot('conversion_rates__pivot', $this->get_date_pivots(!$for_kpi)),
                 'support_kpis' => self::KPI_HIGH_IS_GOOD,
             ],
             'tracking_code_conversion_rates' => [
                 'label' => do_lang_tempcode('TRACKING_CODE_CONVERSION_RATES'),
                 'category' => 'conversions',
                 'filters' => [
-                    'tracking_code_conversion_rates__day_range' => new CMSStatsDayRangeFilter('tracking_code_conversion_rates__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
-                    'tracking_code_conversion_rates__country' => new CMSStatsCountryFilter('tracking_code_conversion_rates__country', do_lang_tempcode('VISITOR_COUNTRY')),
-                    'tracking_code_conversion_rates__event' => new CMSStatsListFilter('tracking_code_conversion_rates__event', do_lang_tempcode('STATS_EVENT'), $top_events),
-                    'tracking_code_conversion_rates_usage__event' => new CMSStatsListFilter('tracking_code_conversion_rates_usage__tracking_code', do_lang_tempcode('TRACKING_CODE'), $top_tracking_codes),
+                    'tracking_code_conversion_rates__day_range' => new Source_stats_filter_day_range('tracking_code_conversion_rates__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
+                    'tracking_code_conversion_rates__country' => new Source_stats_filter_country('tracking_code_conversion_rates__country', do_lang_tempcode('VISITOR_COUNTRY')),
+                    'tracking_code_conversion_rates__event' => new Source_stats_filter_list('tracking_code_conversion_rates__event', do_lang_tempcode('STATS_EVENT'), $top_events),
+                    'tracking_code_conversion_rates_usage__event' => new Source_stats_filter_list('tracking_code_conversion_rates_usage__tracking_code', do_lang_tempcode('TRACKING_CODE'), $top_tracking_codes),
                 ],
-                'pivot' => new CMSStatsDatePivot('tracking_code_conversion_rates__pivot', $this->get_date_pivots(!$for_kpi)),
+                'pivot' => new Source_stats_filter_date_pivot('tracking_code_conversion_rates__pivot', $this->get_date_pivots(!$for_kpi)),
                 'support_kpis' => self::KPI_HIGH_IS_GOOD,
             ],
         ];

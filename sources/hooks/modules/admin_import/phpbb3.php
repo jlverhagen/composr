@@ -31,40 +31,38 @@
  */
 
 /**
- * Standard code module initialisation function.
- *
- * @ignore
- */
-function init__hooks__modules__admin_import__phpbb3()
-{
-    global $TOPIC_FORUM_CACHE;
-    $TOPIC_FORUM_CACHE = [];
-
-    global $STRICT_FILE;
-    $STRICT_FILE = false; // Disable this for a quicker import that is quite liable to go wrong if you don't have the files in the right place
-
-    global $OLD_BASE_URL;
-    $OLD_BASE_URL = null;
-
-    // Profile Field Types
-    if (!defined('PHPB_FIELD_BASE')) {
-        define('PHPBB_FIELD_BASE', 'profilefields.type.base');
-        define('PHPBB_FIELD_INT', 'profilefields.type.integer');
-        define('PHPBB_FIELD_STRING', 'profilefields.type.string');
-        define('PHPBB_FIELD_STRING_COMMON', 'profilefields.type.string.common');
-        define('PHPBB_FIELD_URL', 'profilefields.type.url');
-        define('PHPBB_FIELD_TEXT', 'profilefields.type.text');
-        define('PHPBB_FIELD_BOOL', 'profilefields.type.bool');
-        define('PHPBB_FIELD_DROPDOWN', 'profilefields.type.dropdown');
-        define('PHPBB_FIELD_DATE', 'profilefields.type.date');
-    }
-}
-
-/**
  * Forum Driver.
  */
 class Hook_import_phpbb3
 {
+    /**
+     * Hook class initialisation.
+     */
+    public function __construct()
+    {
+        global $TOPIC_FORUM_CACHE;
+        $TOPIC_FORUM_CACHE = [];
+
+        global $STRICT_FILE;
+        $STRICT_FILE = false; // Disable this for a quicker import that is quite liable to go wrong if you don't have the files in the right place
+
+        global $OLD_BASE_URL;
+        $OLD_BASE_URL = null;
+
+        // Profile Field Types
+        if (!defined('PHPB_FIELD_BASE')) {
+            define('PHPBB_FIELD_BASE', 'profilefields.type.base');
+            define('PHPBB_FIELD_INT', 'profilefields.type.integer');
+            define('PHPBB_FIELD_STRING', 'profilefields.type.string');
+            define('PHPBB_FIELD_STRING_COMMON', 'profilefields.type.string.common');
+            define('PHPBB_FIELD_URL', 'profilefields.type.url');
+            define('PHPBB_FIELD_TEXT', 'profilefields.type.text');
+            define('PHPBB_FIELD_BOOL', 'profilefields.type.bool');
+            define('PHPBB_FIELD_DROPDOWN', 'profilefields.type.dropdown');
+            define('PHPBB_FIELD_DATE', 'profilefields.type.date');
+        }
+    }
+
     /**
      * Standard importer hook info function.
      *
@@ -922,7 +920,7 @@ class Hook_import_phpbb3
 
                 $post = $this->fix_links($row['post_text'], $row['bbcode_uid'], $db, $table_prefix, $row['post_id']);
                 require_code('forum/phpbb3');
-                $post = _phpbb3_post_text_to_comcode($post, $attach_ids);
+                $post = Source_forum_driver_phpbb3::_phpbb3_post_text_to_comcode($post, $attach_ids);
 
                 $id_new = cns_make_post($topic_id, $title, $post, 0, $first_post, $row['post_visibility'], 0, $row['post_username'], $row['poster_ip'], $row['post_time'], $member_id, null, $last_edit_time, $last_edit_member, false, false, $forum_id, false);
 
@@ -1035,7 +1033,7 @@ class Hook_import_phpbb3
             $rows2 = $db->query_select('poll_options', ['*'], ['topic_id' => $row['topic_id']], 'ORDER BY poll_option_id');
             $answers = [];
             foreach ($rows2 as $answer) {
-                $answers[] = _phpbb3_post_text_to_comcode($answer['poll_option_text']);
+                $answers[] = Source_forum_driver_phpbb3::_phpbb3_post_text_to_comcode($answer['poll_option_text']);
             }
             $maximum = 1;
 
@@ -1044,7 +1042,7 @@ class Hook_import_phpbb3
                 $row2['vote_user_id'] = import_id_remap_get('member', strval($row2['vote_user_id']), true);
             }
 
-            $id_new = cns_make_poll($topic_id, _phpbb3_post_text_to_comcode($row['poll_title']), 0, $is_open ? 1 : 0, 1, $maximum, 0, $answers, 0, 0, 1, 0, false);
+            $id_new = cns_make_poll($topic_id, Source_forum_driver_phpbb3::_phpbb3_post_text_to_comcode($row['poll_title']), 0, $is_open ? 1 : 0, 1, $maximum, 0, $answers, 0, 0, 1, 0, false);
 
             $answers = collapse_1d_complexity('id', $GLOBALS['FORUM_DB']->query_select('f_poll_answers', ['id'], ['pa_poll_id' => $id_new])); // Effectively, a remapping from IPB vote number to a software vote number
 
@@ -1139,7 +1137,7 @@ class Hook_import_phpbb3
 
                 $post = $this->fix_links($_postdetails['message_text'], $row['bbcode_uid'], $db, $table_prefix, $_postdetails['msg_id'], true);
                 require_code('forum/phpbb3');
-                $post = _phpbb3_post_text_to_comcode($post);
+                $post = Source_forum_driver_phpbb3::_phpbb3_post_text_to_comcode($post);
 
                 $post_id = cns_make_post($topic_id, $title, $post, 0, $first_post, $validated, 0, $poster_name_if_guest, $ip_address, $time, $poster, null, $last_edit_time, $last_edit_member, false, false, null, false);
 

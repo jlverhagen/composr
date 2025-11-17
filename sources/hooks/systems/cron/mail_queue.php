@@ -224,6 +224,6 @@ class Hook_cron_mail_queue
         require_code('notifications');
         require_code('comcode');
         require_lang('mail');
-        dispatch_notification('error_occurred', 'error_occurred_mail', do_lang('MAIL_QUEUE_FAIL_SUBJECT'), do_lang('MAIL_QUEUE_FAIL_MESSAGE', comcode_escape($row['m_subject']), comcode_escape($filename)));
+        Source_notification_dispatcher::dispatch_notification('error_occurred', 'error_occurred_mail', do_lang('MAIL_QUEUE_FAIL_SUBJECT'), do_lang('MAIL_QUEUE_FAIL_MESSAGE', comcode_escape($row['m_subject']), comcode_escape($filename)));
     }
 }

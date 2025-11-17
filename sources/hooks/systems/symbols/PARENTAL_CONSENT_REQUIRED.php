@@ -58,7 +58,7 @@ class Hook_symbol_PARENTAL_CONSENT_REQUIRED
     public function run(array $param, string $lang, array $escaped) : string
     {
         require_code('cns_parental_controls');
-        $pc = load_parental_control_settings();
+        $pc = object_factory('Source_parental_controls', false, [false], true);
 
         $value = ($pc->has_control('parental_consent') ? '1' : '0');
 

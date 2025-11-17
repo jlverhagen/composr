@@ -48,12 +48,12 @@ class Hook_cns_auth_phpbb3
     {
         require_code('forum/phpbb3');
 
-        if (_phpbb_uses_php_password_api($row['m_pass_hash_salted'])) {
+        if (Source_forum_driver_phpbb3::_phpbb_uses_php_password_api($row['m_pass_hash_salted'])) {
             if (!password_verify($password_raw, $row['m_pass_hash_salted'])) {
                 return do_lang_tempcode((get_option('login_error_secrecy') == '1') ? 'MEMBER_INVALID_LOGIN' : 'MEMBER_BAD_PASSWORD');
             }
         } else {
-            $password_hashed = _phpbb_hash_crypt($password_raw, $row['m_pass_hash_salted']);
+            $password_hashed = Source_forum_driver_phpbb3::_phpbb_hash_crypt($password_raw, $row['m_pass_hash_salted']);
             if (!hash_equals($password_hashed, $row['m_pass_hash_salted'])) {
                 return do_lang_tempcode((get_option('login_error_secrecy') == '1') ? 'MEMBER_INVALID_LOGIN' : 'MEMBER_BAD_PASSWORD');
             }

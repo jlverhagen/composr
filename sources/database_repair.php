@@ -37,79 +37,79 @@ Only works with MySQL.
 */
 
 /**
- * Run a MySQL database repair (inbuilt).
- *
- * @return Tempcode Results
- */
-function database_repair_inbuilt() : object
-{
-    require_lang('upgrade');
-
-    $out = new Tempcode();
-
-    if (strpos(get_db_type(), 'mysql') === false) {
-        return $out;
-    }
-
-    $tables = $GLOBALS['SITE_DB']->query_select('db_meta', ['DISTINCT m_table']);
-
-    $GLOBALS['SITE_DB']->ensure_connected();
-    $db = $GLOBALS['SITE_DB'];
-
-    foreach ($tables as $table) {
-        if ($table['m_table'] == 'sessions') {
-            continue; // HEAP, so can't be repaired
-        }
-
-        $table = get_table_prefix() . $table['m_table'];
-
-        // Check/Repair
-        $result = $db->query('CHECK TABLE ' . $table . ' FAST');
-        $status_row = end($result);
-        if ($status_row['Msg_type'] != 'status') {
-            $out->attach(paragraph(do_lang_tempcode('TABLE_ERROR', escape_html($table), escape_html($status_row['Msg_type']), [escape_html($status_row['Msg_text'])]), 'dfsdgdsgfgd'));
-            $result2 = $db->query('REPAIR TABLE ' . $table);
-            $status_row_2 = end($result2);
-            $out->attach(paragraph(do_lang_tempcode('TABLE_FIXED', escape_html($table), escape_html($status_row_2['Msg_type']), [escape_html($status_row_2['Msg_text'])]), 'dfsdfgdst4'));
-        }
-    }
-
-    if ($out->is_empty()) {
-        $out = do_lang_tempcode('NO_ISSUES_FOUND');
-    }
-
-    return $out;
-}
-
-/**
- * Run a MySQL database repair (schema check).
- *
- * @return Tempcode Results
- */
-function database_repair_wrap() : object
-{
-    require_lang('upgrade');
-
-    $repair_ob = new DatabaseRepair();
-    list($phase, $sql) = $repair_ob->search_for_database_issues();
-
-    if ($sql != '') {
-        return do_lang_tempcode('MYSQL_QUERY_CHANGES_MAKE_' . strval($phase), escape_html($sql));
-    }
-
-    return do_lang_tempcode('NO_MYSQL_QUERY_CHANGES_MAKE');
-}
-
-/**
  * Provide advice for repairing database issues.
  *
  * @package core
  */
-class DatabaseRepair
+class Source_database_repair
 {
     private $sql_fixup = [];
 
     private $deleting_tables = [];
+
+    /**
+     * Run a MySQL database repair (inbuilt).
+     *
+     * @return Tempcode Results
+     */
+    public static function database_repair_inbuilt() : object
+    {
+        require_lang('upgrade');
+
+        $out = new Tempcode();
+
+        if (strpos(get_db_type(), 'mysql') === false) {
+            return $out;
+        }
+
+        $tables = $GLOBALS['SITE_DB']->query_select('db_meta', ['DISTINCT m_table']);
+
+        $GLOBALS['SITE_DB']->ensure_connected();
+        $db = $GLOBALS['SITE_DB'];
+
+        foreach ($tables as $table) {
+            if ($table['m_table'] == 'sessions') {
+                continue; // HEAP, so can't be repaired
+            }
+
+            $table = get_table_prefix() . $table['m_table'];
+
+            // Check/Repair
+            $result = $db->query('CHECK TABLE ' . $table . ' FAST');
+            $status_row = end($result);
+            if ($status_row['Msg_type'] != 'status') {
+                $out->attach(paragraph(do_lang_tempcode('TABLE_ERROR', escape_html($table), escape_html($status_row['Msg_type']), [escape_html($status_row['Msg_text'])]), 'dfsdgdsgfgd'));
+                $result2 = $db->query('REPAIR TABLE ' . $table);
+                $status_row_2 = end($result2);
+                $out->attach(paragraph(do_lang_tempcode('TABLE_FIXED', escape_html($table), escape_html($status_row_2['Msg_type']), [escape_html($status_row_2['Msg_text'])]), 'dfsdfgdst4'));
+            }
+        }
+
+        if ($out->is_empty()) {
+            $out = do_lang_tempcode('NO_ISSUES_FOUND');
+        }
+
+        return $out;
+    }
+
+    /**
+     * Run a MySQL database repair (schema check).
+     *
+     * @return Tempcode Results
+     */
+    public static function database_repair_wrap() : object
+    {
+        require_lang('upgrade');
+
+        $repair_ob = object_factory('Source_database_repair', false, [], true);
+        list($phase, $sql) = $repair_ob->search_for_database_issues();
+
+        if ($sql != '') {
+            return do_lang_tempcode('MYSQL_QUERY_CHANGES_MAKE_' . strval($phase), escape_html($sql));
+        }
+
+        return do_lang_tempcode('NO_MYSQL_QUERY_CHANGES_MAKE');
+    }
 
     /**
      * Look for database issues.

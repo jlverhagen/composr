@@ -33,7 +33,7 @@
 /**
  * Hook class.
  */
-class Hook_admin_stats_security_incidents extends CMSStatsProvider
+class Hook_admin_stats_security_incidents extends Source_hook_stats_provider
 {
     /**
      * Find metadata about stats categories that are defined by this stats hook.
@@ -75,11 +75,11 @@ class Hook_admin_stats_security_incidents extends CMSStatsProvider
             'label' => do_lang_tempcode('SECURITY_LOG'),
             'category' => 'security',
             'filters' => [
-                'security_incidents__day_range' => new CMSStatsDayRangeFilter('security_incidents__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
-                'security_incidents__include_hackattacks' => new CMSStatsTickFilter('security_incidents__include_hackattacks', do_lang_tempcode('SECURITY_ALERTS')),
-                'security_incidents__include_failedlogins' => new CMSStatsTickFilter('security_incidents__include_failedlogins', do_lang_tempcode('FAILED_LOGINS')),
+                'security_incidents__day_range' => new Source_stats_filter_day_range('security_incidents__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
+                'security_incidents__include_hackattacks' => new Source_stats_filter_tick('security_incidents__include_hackattacks', do_lang_tempcode('SECURITY_ALERTS')),
+                'security_incidents__include_failedlogins' => new Source_stats_filter_tick('security_incidents__include_failedlogins', do_lang_tempcode('FAILED_LOGINS')),
             ],
-            'pivot' => new CMSStatsDatePivot('security_incidents__pivot', $this->get_date_pivots(!$for_kpi)),
+            'pivot' => new Source_stats_filter_date_pivot('security_incidents__pivot', $this->get_date_pivots(!$for_kpi)),
         ];
 
         if (has_geolocation_data()) {
@@ -87,9 +87,9 @@ class Hook_admin_stats_security_incidents extends CMSStatsProvider
                 'label' => do_lang_tempcode('_COUNTRIES', do_lang_tempcode('SECURITY_LOG')),
                 'category' => 'security',
                 'filters' => [
-                    'security_incidents_countries__day_range' => new CMSStatsDayRangeFilter('security_incidents_countries__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
-                    'security_incidents_countries__include_hackattacks' => new CMSStatsTickFilter('security_incidents_countries__include_hackattacks', do_lang_tempcode('SECURITY_ALERTS')),
-                    'security_incidents_countries__include_failedlogins' => new CMSStatsTickFilter('security_incidents_countries__include_failedlogins', do_lang_tempcode('FAILED_LOGINS')),
+                    'security_incidents_countries__day_range' => new Source_stats_filter_day_range('security_incidents_countries__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
+                    'security_incidents_countries__include_hackattacks' => new Source_stats_filter_tick('security_incidents_countries__include_hackattacks', do_lang_tempcode('SECURITY_ALERTS')),
+                    'security_incidents_countries__include_failedlogins' => new Source_stats_filter_tick('security_incidents_countries__include_failedlogins', do_lang_tempcode('FAILED_LOGINS')),
                 ],
                 'pivot' => null,
             ];

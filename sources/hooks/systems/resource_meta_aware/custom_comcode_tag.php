@@ -33,7 +33,7 @@
 /**
  * Hook class.
  */
-class Hook_resource_meta_aware_custom_comcode_tag extends Hook_CMA
+class Hook_resource_meta_aware_custom_comcode_tag extends Source_hook_CMA
 {
     /**
      * Get content type details.

@@ -148,6 +148,8 @@ class Hook_addon_registry_search
             'sources/blocks/side_tag_cloud.php',
             'sources/blocks/top_search.php',
             'sources/crc24.php',
+            'sources/fast_custom_index.php',
+            'sources/fields_search_hook.php',
             'sources/hooks/modules/admin_setupwizard/search.php',
             'sources/hooks/modules/admin_stats/searches.php',
             'sources/hooks/modules/search/.htaccess',

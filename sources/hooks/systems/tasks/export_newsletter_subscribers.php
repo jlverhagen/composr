@@ -59,11 +59,11 @@ class Hook_task_export_newsletter_subscribers
 
         require_code('files_spreadsheets_write');
         if ($file_type === null) {
-            $file_type = spreadsheet_write_default();
+            $file_type = Source_spreadsheet_writer::spreadsheet_write_default();
         }
         $filename = 'newsletter_subscribers_' . $key . '.' . $file_type;
         $outfile_path = null;
-        $sheet_writer = spreadsheet_open_write($outfile_path, $filename, CMS_Spreadsheet_Writer::ALGORITHM_RAW);
+        $sheet_writer = Source_spreadsheet_writer::spreadsheet_open_write($outfile_path, $filename, Source_spreadsheet_writer::ALGORITHM_RAW);
 
         $sheet_writer->write_row([
             do_lang('EMAIL_ADDRESS'),

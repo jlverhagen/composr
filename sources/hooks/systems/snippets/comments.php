@@ -62,7 +62,7 @@ class Hook_snippet_comments
         $parent_id = ($_parent_id == '') ? null : intval($_parent_id);
 
         require_code('topics');
-        $renderer = new CMS_Topic();
+        $renderer = object_factory('Source_topic');
         return $renderer->render_posts_from_topic($topic_id, $num_to_show_limit, $allow_comments, $invisible_if_no_comments, $forum, null, $reverse, $may_reply, $highlight_by_user, $allow_reviews, $posts, $parent_id);
     }
 }

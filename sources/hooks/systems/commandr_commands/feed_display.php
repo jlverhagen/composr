@@ -67,7 +67,7 @@ class Hook_commandr_command_feed_display
         require_lang('rss');
         require_code('rss');
 
-        $rss = new CMS_RSS($parameters[0]);
+        $rss = object_factory('Source_RSS', false, [$parameters[0]], true);
         if ($rss->error !== null) {
             return ['', '', '', $rss->error];
         }

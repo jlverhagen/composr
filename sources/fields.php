@@ -30,7 +30,13 @@
  * @package    core_fields
  */
 
-/*EXTRA FUNCTIONS: get_nested_spreadsheet_structure*/
+/**
+ * Standard initialisation for fields.
+ */
+function init__fields()
+{
+    require_code('fields_list_field_hook');
+}
 
 /**
  * Farm out the files for catalogue entry fields.
@@ -925,117 +931,4 @@ function create_selection_list_field_type(string $type = '', bool $limit_to_stor
     }
 
     return $ret;
-}
-
-/**
- * Used by list fields to derive list data based on field options.
- *
- * @package core_fields
- */
-abstract class ListFieldHook
-{
-    /**
-     * Get field list.
-     *
-     * @param  array $field The field details
-     * @param  ?boolean $dynamic_choices Whether to put custom choices from previous data back into the main list (null: decide based on field options)
-     * @return array List
-     */
-    protected function get_input_list_map(array $field, ?bool $dynamic_choices = null) : array
-    {
-        $default = option_value_from_field_array($field, 'default', $field['cf_default']);
-
-        switch ($default) {
-            case 'CURRENCY':
-                if (addon_installed('ecommerce')) {
-                    require_code('currency');
-                    $currencies = array_keys(get_currency_map());
-                    $list = array_combine($currencies, $currencies);
-                } else {
-                    $list = [];
-                }
-                break;
-
-            // Not supported anymore; there are specific fields for these
-            /*
-            case 'REGION':
-                require_code('locations');
-                $continents_and_countries = find_continents_and_countries();
-                $list = [];
-                foreach ($continents_and_countries as $continent => $countries) {
-                    foreach ($countries as $country_code => $country_name) {
-                        $list[$country_code] = $continent . ' > ' . $country_name;
-                    }
-                }
-                break;
-
-            case 'COUNTRY':
-                require_code('locations');
-                $list = find_countries();
-                break;
-
-            case 'USA_STATE':
-                require_code('locations');
-                global $USA_STATE_LIST;
-                $list = $USA_STATE_LIST;
-                break;
-            */
-
-            default:
-                if ((addon_installed('nested_cpf_spreadsheet_lists')) && (cms_strtolower_ascii(substr($default, -4)) == '.spreadsheet')) {
-                    $spreadsheet_heading = option_value_from_field_array($field, 'spreadsheet_heading', '');
-
-                    require_code('nested_spreadsheet');
-                    $spreadsheet_structure = get_nested_spreadsheet_structure();
-
-                    $list = [];
-                    foreach ($spreadsheet_structure['spreadsheet_files'][$default]['data'] as $row) {
-                        if ($spreadsheet_heading == '') {
-                            $l = array_shift($row);
-                            $list[$l] = $l;
-                        } else {
-                            $l = $row[$spreadsheet_heading];
-                            $list[$l] = $l;
-                        }
-                    }
-                } else {
-                    if ($default == '') {
-                        $list = [];
-                    } else {
-                        if (substr_count($default, '|') + 1 == substr_count($default, '=')) {
-                            foreach (explode('|', $default) as $l) {
-                                list($l, $written) = explode('=', $l, 2);
-                                $list[$l] = $written;
-                            }
-                        } else {
-                            foreach (explode('|', $default) as $l) {
-                                $list[preg_replace('#=.*$#', '', $l)] = preg_replace('#^.*=#', '', $l);
-                            }
-                        }
-                    }
-                }
-                break;
-        }
-
-        $custom_values = option_value_from_field_array($field, 'custom_values', 'off');
-
-        if ($custom_values != 'off') { // Only makes sense to allow dynamic choices if custom values are enterable
-            if ($dynamic_choices === null) {
-                $dynamic_choices = (option_value_from_field_array($field, 'dynamic_choices', 'off') == 'on');
-            }
-            if (isset($field['c_name'])) {
-                $existing_data = $GLOBALS['SITE_DB']->query_select('catalogue_efv_long', ['DISTINCT cv_value AS d'], ['cf_id' => $field['id']]);
-            } else {
-                $existing_data = $GLOBALS['FORUM_DB']->query_select('f_member_custom_fields', ['DISTINCT field_' . strval($field['id']) . ' AS d']);
-            }
-            foreach ($existing_data as $d) {
-                if ($d['d'] != '') {
-                    $parts = explode("\n", $d['d']);
-                    $list += array_combine($parts, $parts);
-                }
-            }
-        }
-
-        return $list;
-    }
 }

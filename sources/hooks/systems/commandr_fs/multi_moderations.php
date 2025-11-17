@@ -35,7 +35,7 @@ require_code('resource_fs');
 /**
  * Hook class.
  */
-class Hook_commandr_fs_multi_moderations extends Resource_fs_base
+class Hook_commandr_fs_multi_moderations extends Source_resource_fs_base
 {
     public $file_resource_type = 'multi_moderation';
 

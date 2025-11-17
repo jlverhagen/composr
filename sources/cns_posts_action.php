@@ -314,7 +314,7 @@ function cns_make_post(int $topic_id, string $title, string $post, int $skip_sig
             $subject = do_lang('POST_REQUIRING_VALIDATION_MAIL_SUBJECT', $topic_title, null, null, get_site_default_lang());
             $post_text = get_translated_text($map['p_post'], $GLOBALS['FORUM_DB'], get_site_default_lang());
             $mail = do_notification_lang('POST_REQUIRING_VALIDATION_MAIL', comcode_escape($url), comcode_escape($poster_name_if_guest), [$post_text, $poster_name_if_guest, strval($anonymous ? db_get_first_id() : $poster)]);
-            dispatch_notification('needs_validation', null, $subject, $mail, null, $poster, ['use_real_from' => true]);
+            Source_notification_dispatcher::dispatch_notification('needs_validation', null, $subject, $mail, null, $poster, ['use_real_from' => true]);
         }
     } else {
         if ($send_notification) {
@@ -326,7 +326,7 @@ function cns_make_post(int $topic_id, string $title, string $post, int $skip_sig
                 $msubject = do_lang('NEW_PERSONAL_POST_SUBJECT', $topic_title, null, null, get_lang($whisper_to_member));
                 $mmessage = do_notification_lang('NEW_PERSONAL_POST_MESSAGE', comcode_escape($GLOBALS['FORUM_DRIVER']->get_username($anonymous ? db_get_first_id() : $poster, true)), comcode_escape($topic_title), [comcode_escape($url), $post_comcode, $poster_name_if_guest, get_lang($whisper_to_member), strval($anonymous ? db_get_first_id() : $poster)]);
                 $use_real_from = ($GLOBALS['FORUM_DRIVER']->get_member_row_field($poster, 'm_allow_emails') == 1);
-                dispatch_notification('cns_new_pt', null, $msubject, $mmessage, [$whisper_to_member], $anonymous ? db_get_first_id() : $poster);
+                Source_notification_dispatcher::dispatch_notification('cns_new_pt', null, $msubject, $mmessage, [$whisper_to_member], $anonymous ? db_get_first_id() : $poster);
             } else {
                 require_code('cns_posts_action2');
                 cms_profile_start_for('cns_make_post:cns_send_topic_notification');

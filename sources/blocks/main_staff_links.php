@@ -67,7 +67,7 @@ class Block_main_staff_links
     /**
      * Find caching details for the block.
      *
-     * @return ?array Map of cache details (cache_on and ttl) (null: block is disabled)
+     * @return ?array Map of cache details (cache_on and ttl) (null: do not cache)
      */
     public function caching_environment() : ?array
     {

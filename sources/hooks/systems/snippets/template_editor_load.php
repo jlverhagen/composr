@@ -117,7 +117,7 @@ class Hook_snippet_template_editor_load
                 // Revisions
                 if (addon_installed('actionlog')) {
                     require_code('revisions_engine_files');
-                    $revision_engine = new RevisionEngineFiles();
+                    $revision_engine = object_factory('Source_revisions_engine_files');
                     $revision_loaded = null;
                     $revisions = $revision_engine->ui_revisions_controller(
                         dirname($custom_path_short),
@@ -178,7 +178,7 @@ class Hook_snippet_template_editor_load
                 // Revisions
                 if (addon_installed('actionlog')) {
                     require_code('revisions_engine_files');
-                    $revision_engine = new RevisionEngineFiles();
+                    $revision_engine = object_factory('Source_revisions_engine_files');
                     $revision_loaded = null;
                     $revisions = $revision_engine->ui_revisions_controller(
                         dirname($custom_path_short),

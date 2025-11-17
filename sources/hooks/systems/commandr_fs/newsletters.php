@@ -35,7 +35,7 @@ require_code('resource_fs');
 /**
  * Hook class.
  */
-class Hook_commandr_fs_newsletters extends Resource_fs_base
+class Hook_commandr_fs_newsletters extends Source_resource_fs_base
 {
     public $file_resource_type = 'newsletter';
 

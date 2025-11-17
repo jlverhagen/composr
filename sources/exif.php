@@ -136,7 +136,7 @@ function get_exif_image_caption(string $path, string $filename) : string
     $spreadsheet_path = get_custom_file_base() . '/uploads/galleries/descriptions.csv';
     if (file_exists($spreadsheet_path)) {
         require_code('files_spreadsheets_read');
-        $sheet_reader = spreadsheet_open_read($spreadsheet_path, null, CMS_Spreadsheet_Reader::ALGORITHM_RAW);
+        $sheet_reader = Source_spreadsheet_reader::spreadsheet_open_read($spreadsheet_path, null, Source_spreadsheet_reader::ALGORITHM_RAW);
         while (($spreadsheet_line = $sheet_reader->read_row()) !== false) {
             if (preg_match('#(^|/|\\\\)' . preg_quote(trim($spreadsheet_line[0]), '#') . '#', $filename) != 0) {
                 $comments = trim($spreadsheet_line[1]);

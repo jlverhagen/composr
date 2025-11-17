@@ -265,7 +265,7 @@ class Module_topicview
             }
         } else {
             require_code('topics');
-            $threaded_topic_ob = new CMS_Topic();
+            $threaded_topic_ob = object_factory('Source_topic');
 
             // Load some settings into the renderer
             $threaded_topic_ob->first_post_id = $topic_info['first_post_id'];
@@ -1044,7 +1044,7 @@ class Module_topicview
             }
             if (addon_installed('actionlog')) {
                 require_code('revisions_engine_database');
-                $revision_engine = new RevisionEngineDatabase(true);
+                $revision_engine = object_factory('Source_revisions_engine_database', false, [true]);
                 if ($revision_engine->has_revisions(['post'], null, strval($id))) {
                     $moderator_actions .= '<option value="topic_history">' . do_lang('actionlog:REVISIONS') . '</option>';
                 }

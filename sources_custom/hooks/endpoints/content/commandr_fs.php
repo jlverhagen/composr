@@ -75,7 +75,7 @@ class Hook_endpoint_content_commandr_fs
         }
 
         require_code('commandr_fs');
-        $commandr_fs = new Commandr_fs();
+        $commandr_fs = object_factory('Source_commandr_fs');
 
         $data = [
             'message' => strip_html(do_lang('SUCCESS')),

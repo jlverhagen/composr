@@ -36,12 +36,12 @@ class Block_youtube_channel
     /**
      * Find caching details for the block.
      *
-     * @return ?array Map of cache details (cache_on and ttl) (null: block is disabled)
+     * @return ?array Map of cache details (cache_on and ttl) (null: do not cache)
      */
     public function caching_environment() : ?array
     {
         $info = [];
-        $info['cache_on'] = ['block_youtube_channel__cache_on'];
+        $info['cache_on'] = ['Block_youtube_channel::block_youtube_channel__cache_on'];
         $info['ttl'] = intval(get_option('youtube_channel_block_update_time'));
         return $info;
     }
@@ -581,38 +581,38 @@ class Block_youtube_channel
             'CONTENT' => $content
         ]);
     }
-}
 
-/**
- * Find the cache signature for the block.
- *
- * @param  array $map The block parameters
- * @return array The cache signature
- */
-function block_youtube_channel__cache_on(array $map) : array
-{
-    if (!addon_installed('youtube_channel_integration_block')) {
-        return [];
+    /**
+     * Find the cache signature for the block.
+     *
+     * @param  array $map The block parameters
+     * @return array The cache signature
+     */
+    public static function block_youtube_channel__cache_on(array $map) : array
+    {
+        if (!addon_installed('youtube_channel_integration_block')) {
+            return [];
+        }
+
+        return [
+            array_key_exists('max_videos', $map) ? intval($map['max_videos']) : 25,
+            array_key_exists('start_video', $map) ? intval($map['start_video']) : 1,
+            array_key_exists('embed_player', $map) ? intval($map['embed_player']) : 1,
+            array_key_exists('show_player', $map) ? intval($map['show_player']) : 1,
+            array_key_exists('style', $map) ? intval($map['style']) : 1,
+            array_key_exists('nothumbplayer', $map) ? intval($map['nothumbplayer']) : 0,
+            array_key_exists('thumbnail', $map) ? intval($map['thumbnail']) : 0,
+            array_key_exists('player_width', $map) ? intval($map['player_width']) : 480,
+            array_key_exists('player_height', $map) ? intval($map['player_height']) : 270,
+            array_key_exists('title', $map) ? $map['title'] : '',
+            array_key_exists('player_align', $map) ? $map['player_align'] : 'center',
+            array_key_exists('formorelead', $map) ? $map['formorelead'] : '',
+            array_key_exists('formoretext', $map) ? $map['formoretext'] : '',
+            array_key_exists('formoreurl', $map) ? $map['formoreurl'] : '',
+            array_key_exists('name', $map) ? $map['name'] : '',
+            array_key_exists('template_main', $map) ? $map['template_main'] : '',
+            array_key_exists('description_type', $map) ? $map['description_type'] : 'long',
+            array_key_exists('playlist_id', $map) ? $map['playlist_id'] : '',
+        ];
     }
-
-    return [
-        array_key_exists('max_videos', $map) ? intval($map['max_videos']) : 25,
-        array_key_exists('start_video', $map) ? intval($map['start_video']) : 1,
-        array_key_exists('embed_player', $map) ? intval($map['embed_player']) : 1,
-        array_key_exists('show_player', $map) ? intval($map['show_player']) : 1,
-        array_key_exists('style', $map) ? intval($map['style']) : 1,
-        array_key_exists('nothumbplayer', $map) ? intval($map['nothumbplayer']) : 0,
-        array_key_exists('thumbnail', $map) ? intval($map['thumbnail']) : 0,
-        array_key_exists('player_width', $map) ? intval($map['player_width']) : 480,
-        array_key_exists('player_height', $map) ? intval($map['player_height']) : 270,
-        array_key_exists('title', $map) ? $map['title'] : '',
-        array_key_exists('player_align', $map) ? $map['player_align'] : 'center',
-        array_key_exists('formorelead', $map) ? $map['formorelead'] : '',
-        array_key_exists('formoretext', $map) ? $map['formoretext'] : '',
-        array_key_exists('formoreurl', $map) ? $map['formoreurl'] : '',
-        array_key_exists('name', $map) ? $map['name'] : '',
-        array_key_exists('template_main', $map) ? $map['template_main'] : '',
-        array_key_exists('description_type', $map) ? $map['description_type'] : 'long',
-        array_key_exists('playlist_id', $map) ? $map['playlist_id'] : '',
-    ];
 }

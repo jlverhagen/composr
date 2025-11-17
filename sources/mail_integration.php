@@ -33,25 +33,23 @@
 /*EXTRA FUNCTIONS: imap\_.+*/
 
 /**
- * Standard code module initialisation function.
- *
- * @ignore
- */
-function init__mail_integration()
-{
-    require_code('mail');
-}
-
-/**
  * E-mail integration  base class.
  *
  * @package core
  */
-abstract class EmailIntegration
+abstract class Source_email_integration
 {
     protected const STRIP_SUBJECT = 1;
     protected const STRIP_HTML = 2;
     protected const STRIP_TEXT = 3;
+
+    /**
+     * Require in APIs when loading this class.
+     */
+    public function __construct()
+    {
+        require_code('mail');
+    }
 
     /**
      * Log a message, if the log has been created.

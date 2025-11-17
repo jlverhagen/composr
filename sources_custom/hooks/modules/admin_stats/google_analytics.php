@@ -27,7 +27,7 @@
 /**
  * Hook class.
  */
-class Hook_admin_stats_google_analytics extends CMSStatsBlob
+class Hook_admin_stats_google_analytics extends Source_hook_stats_blob
 {
     /**
      * Find metadata about stats categories that are defined by this stats hook.

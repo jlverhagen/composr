@@ -31,59 +31,11 @@
  */
 
 /**
- * Find whether a file is a readable spreadsheet.
- *
- * @param  string $filename Filename
- * @return boolean Whether it is
- */
-function is_spreadsheet_readable(string $filename) : bool
-{
-    $ext = get_file_extension($filename);
-    return in_array($ext, explode(',', spreadsheet_read_file_types()));
-}
-
-/**
- * Find supported spreadsheet file types for reading.
- *
- * @return string A comma-separated list of supported file types
- */
-function spreadsheet_read_file_types() : string
-{
-    return 'csv,txt';
-}
-
-/**
- * Open spreadsheet for reading.
- *
- * @param  PATH $path File path
- * @param  ?string $filename Filename (null: derive from $path)
- * @param  integer $algorithm An ALGORITHM_* constant
- * @param  boolean $trim Whether to trim each cell
- * @param  ?string $default_charset The default character set to assume if none is specified in the file (null: website character set) (blank: smart detection)
- * @return object A subclass of CMS_Spreadsheet_Reader
- */
-function spreadsheet_open_read(string $path, ?string $filename = null, int $algorithm = 3, bool $trim = true, ?string $default_charset = '') : object
-{
-    if ($filename === null) {
-        $filename = basename($path);
-    }
-
-    $ext = get_file_extension($filename);
-    switch ($ext) {
-        case 'csv':
-        case 'txt':
-            return new CMS_CSV_Reader($path, $filename, $algorithm, $trim, $default_charset);
-    }
-
-    warn_exit(do_lang_tempcode('UNKNOWN_FORMAT', escape_html($ext)));
-}
-
-/**
  * Spreadsheet reader.
  *
  * @package core
  */
-abstract class CMS_Spreadsheet_Reader
+abstract class Source_spreadsheet_reader
 {
     public const ALGORITHM_RAW = 1;
     public const ALGORITHM_UNNAMED_FIELDS = 2;
@@ -92,6 +44,70 @@ abstract class CMS_Spreadsheet_Reader
     protected $algorithm = 3;
     protected $trim = true;
     protected $fields = null;
+
+    /**
+     * Find whether a file is a readable spreadsheet.
+     *
+     * @param  string $filename Filename
+     * @return boolean Whether it is
+     */
+    public static function is_spreadsheet_readable(string $filename) : bool
+    {
+        $ext = get_file_extension($filename);
+        return in_array($ext, explode(',', Source_spreadsheet_reader::spreadsheet_read_file_types()));
+    }
+
+    /**
+     * Find supported spreadsheet file types for reading.
+     *
+     * @return string A comma-separated list of supported file types
+     */
+    public static function spreadsheet_read_file_types() : string
+    {
+        $ret = [];
+
+        $hooks = find_all_hook_obs('systems', 'spreadsheet_reader', 'Hook_spreadsheet_reader_');
+        foreach ($hooks as $hook => $ob) {
+            $handles = $ob->spreadsheet_read_file_types();
+            if (is_array($handles)) {
+                array_merge($ret, $handles);
+            }
+        }
+        return implode(',', array_unique($ret));
+    }
+
+    /**
+     * Open spreadsheet for reading.
+     *
+     * @param  PATH $path File path
+     * @param  ?string $filename Filename (null: derive from $path)
+     * @param  integer $algorithm An ALGORITHM_* constant
+     * @param  boolean $trim Whether to trim each cell
+     * @param  ?string $default_charset The default character set to assume if none is specified in the file (null: website character set) (blank: smart detection)
+     * @return object A subclass of Source_spreadsheet_reader
+     */
+    public static function spreadsheet_open_read(string $path, ?string $filename = null, int $algorithm = 3, bool $trim = true, ?string $default_charset = '') : object
+    {
+        if ($filename === null) {
+            $filename = basename($path);
+        }
+
+        $ext = get_file_extension($filename);
+
+        $hooks = find_all_hook_obs('systems', 'spreadsheet_reader', 'Hook_spreadsheet_reader_');
+        foreach ($hooks as $hook => $ob) {
+            $handles = $ob->spreadsheet_read_file_types();
+            if (is_array($handles) && in_array($ext, $handles)) {
+                $ret = $ob->spreadsheet_open_read($path, $filename, $algorithm, $trim, $default_charset);
+                if ($ret === null) {
+                    continue;
+                }
+                return $ret;
+            }
+        }
+
+        warn_exit(do_lang_tempcode('UNKNOWN_FORMAT', escape_html($ext)));
+    }
 
     /**
      * Constructor. Opens spreadsheet for reading.
@@ -184,227 +200,4 @@ abstract class CMS_Spreadsheet_Reader
      * Close down the spreadsheet file handle, for when we're done.
      */
     abstract public function close();
-}
-
-/**
- * CSV spreadsheet file reader.
- *
- * @package core
- */
-class CMS_CSV_Reader extends CMS_Spreadsheet_Reader
-{
-    protected const FORMAT_CSV = 1; // Comma
-    protected const FORMAT_TSV = 2; // Tab
-    protected const FORMAT_SCSV = 3; // Semicolon
-
-    protected $tmp_path = null;
-    protected $handle = null;
-    protected $charset = null;
-    protected $format = 1;
-    protected $start_pos = 0;
-
-    /**
-     * Constructor. Opens spreadsheet for reading.
-     *
-     * @param  PATH $path File path
-     * @param  string $filename Filename
-     * @param  integer $algorithm An ALGORITHM_* constant
-     * @param  boolean $trim Whether to trim each cell
-     * @param  ?string $default_charset The default character set to assume if none is specified in the file (null: website character set) (blank: smart detection)
-     * @param  ?integer $format A FORMAT_* constant (null: autodetect)
-     */
-    public function __construct(string $path, string $filename, int $algorithm = 3, bool $trim = true, ?string $default_charset = '', ?int $format = null)
-    {
-        require_code('files');
-
-        // First we need to fix line endings, as there's a chance of Classic Mac line endings due to Microsoft Excel Mac's behaviour, and cms_fgets cannot cope with that
-        if ($GLOBALS['IN_MINIKERNEL_VERSION']) {
-            $open_path = $path;
-        } else {
-            $this->tmp_path = cms_tempnam();
-            cms_file_put_contents_safe($this->tmp_path, cms_file_get_contents_safe($path, FILE_READ_UNIXIFIED_TEXT | FILE_READ_LOCK), 0);
-            $open_path = $this->tmp_path;
-        }
-
-        $this->handle = cms_fopen_text_read($open_path, $this->charset, false/*no lock needed on our temp file*/, 'rb', $default_charset);
-
-        if ($format === null) {
-            // Detect format...
-
-            $pos = ftell($this->handle);
-            $first_line = fgets($this->handle);
-            fseek($this->handle, $pos, SEEK_SET);
-
-            if ($first_line === false) {
-                $this->format = self::FORMAT_CSV;
-            } else {
-                $this->format = (strpos($first_line, "\t") !== false) ? self::FORMAT_TSV : ((substr_count($first_line, ',') >= substr_count($first_line, ';')) ? self::FORMAT_CSV : self::FORMAT_SCSV);
-            }
-        } else {
-            $this->format = $format;
-        }
-
-        parent::__construct($path, $filename, $algorithm, $trim, $default_charset);
-
-        $this->start_pos = ftell($this->handle);
-    }
-
-    /**
-     * Rewind to return first record again.
-     */
-    public function rewind()
-    {
-        if ($this->handle === null) {
-            fatal_exit(do_lang_tempcode('INTERNAL_ERROR', escape_html('eb4170bd0fa3556687d51eec24b83faf')));
-        }
-
-        fseek($this->start_pos, SEEK_SET);
-    }
-
-    /**
-     * Read spreadsheet row.
-     *
-     * @return ~array Row (false: error)
-     */
-    protected function _read_row()
-    {
-        if ($this->handle === null) {
-            fatal_exit(do_lang_tempcode('INTERNAL_ERROR', escape_html('8f1d859db26a5a53958fc453581a7735')));
-        }
-
-        switch ($this->format) {
-            case self::FORMAT_CSV:
-                $delimiter = ',';
-                break;
-            case self::FORMAT_TSV:
-                $delimiter = "\t";
-                break;
-            case self::FORMAT_SCSV:
-                $delimiter = ';';
-                break;
-            default:
-                fatal_exit(do_lang_tempcode('INTERNAL_ERROR', escape_html('4e1d846dc26856ed823d232546b40127')));
-        }
-
-        $ret = $this->getcsv_record($this->handle, $this->charset, $delimiter);
-        if ($ret === [null]) {
-            return $this->_read_row();
-        }
-        return $ret;
-    }
-
-    /**
-     * Get a CSV record, equivalent to PHP's fgetcsv. However, we don't use fgetcsv because:
-     * 1) We need to do character set conversions efficiently for whole file lines
-     * 2) fgetcsv (and str_getcsv) depends on locales, which are not thread-safe in PHP so cannot be reliably set correctly
-     *
-     * @param  resource $handle The file
-     * @param  string $charset The character set
-     * @param  string $delimiter The delimiter
-     * @return ~array Row (false: error)
-     */
-    protected function getcsv_record($handle, string $charset, string $delimiter)
-    {
-        $line = cms_fgets($this->handle, $this->charset);
-        if ($line === false) {
-            return false;
-        }
-
-        $arr = [];
-        $next_val = '';
-
-        $in_enclosure = false;
-        $i = 0;
-        $len = strlen($line);
-        while (true) {
-            $c = substr($line, $i, 1);
-            if ($in_enclosure) {
-                if ($i == $len - 1) {
-                    $line_extension = cms_fgets($this->handle, $this->charset);
-                    if ($line_extension === false) {
-                        if ($c != '"') { // Non-closed enclosure
-                            $next_val .= $c;
-                        }
-                        $arr[] = $next_val;
-                        break;
-                    }
-
-                    $line .= $line_extension;
-                    $len += strlen($line_extension);
-                }
-
-                if ($c == '"') {
-                    $c_next = substr($line, $i + 1, 1);
-                    if ($c_next == '"') {
-                        $i++; // Escaped "
-                    } else {
-                        $in_enclosure = false;
-                        if ($i == $len - 1) {
-                            break;
-                        } else {
-                            $i++;
-                            continue;
-                        }
-                    }
-                }
-
-                $next_val .= $c;
-                $i++;
-            } else {
-                if ($i == $len - 1) {
-                    if ($c != "\n") {
-                        $next_val .= $c;
-                    }
-
-                    if ((empty($arr)) && (empty($next_val))) {
-                        $arr[] = null; // Weird, but this is what PHP does in fgetcsv and we're trying to emulate behaviour
-                    } else {
-                        $arr[] = $next_val;
-                    }
-                    break;
-                }
-
-                if (($c == '"') && ($next_val == '')) {
-                    $in_enclosure = true;
-                    $i++;
-                    continue;
-                }
-
-                if ($c == $delimiter) {
-                    $arr[] = $next_val;
-                    $next_val = '';
-                    $i++;
-                    continue;
-                }
-
-                $next_val .= $c;
-                $i++;
-            }
-        }
-
-        return $arr;
-    }
-
-    /**
-     * Standard destructor.
-     */
-    public function __destruct()
-    {
-        $this->close();
-    }
-
-    /**
-     * Close down the spreadsheet file handle, for when we're done.
-     */
-    public function close()
-    {
-        if ($this->handle !== null) {
-            fclose($this->handle);
-            $this->handle = null;
-            if ($this->tmp_path !== null) {
-                unlink($this->tmp_path);
-                $this->tmp_path = null;
-            }
-        }
-    }
 }

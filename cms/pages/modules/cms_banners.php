@@ -35,7 +35,7 @@ require_code('crud_module');
 /**
  * Module page class.
  */
-class Module_cms_banners extends Standard_crud_module
+class Module_cms_banners extends Source_standard_crud_module
 {
     protected $lang_type = 'BANNER';
     protected $view_entry_point = '_SEARCH:banners:view:source=_ID';
@@ -66,7 +66,7 @@ class Module_cms_banners extends Standard_crud_module
             return null;
         }
 
-        $this->cat_crud_module = class_exists('Mx_cms_banners_cat') ? new Mx_cms_banners_cat() : new Module_cms_banners_cat();
+        $this->cat_crud_module = object_factory('Module_cms_banners_cat');
 
         if ($member_id === null) {
             $member_id = get_member();
@@ -114,7 +114,7 @@ class Module_cms_banners extends Standard_crud_module
 
         require_lang('banners');
 
-        $this->cat_crud_module = class_exists('Mx_cms_banners_cat') ? new Mx_cms_banners_cat() : new Module_cms_banners_cat();
+        $this->cat_crud_module = object_factory('Module_cms_banners_cat');
 
         $type = get_param_string('type', 'browse');
 
@@ -644,8 +644,8 @@ class Module_cms_banners extends Standard_crud_module
 
         $outfile_path = null;
         require_code('files_spreadsheets_write');
-        $filename = 'banners.' . spreadsheet_write_default();
-        $sheet_writer = spreadsheet_open_write($outfile_path, $filename);
+        $filename = 'banners.' . Source_spreadsheet_writer::spreadsheet_write_default();
+        $sheet_writer = Source_spreadsheet_writer::spreadsheet_open_write($outfile_path, $filename);
 
         foreach ($rows as $row) {
             $spreadsheet_row = [];
@@ -767,7 +767,7 @@ class Module_cms_banners extends Standard_crud_module
 /**
  * Module page class.
  */
-class Module_cms_banners_cat extends Standard_crud_module
+class Module_cms_banners_cat extends Source_standard_crud_module
 {
     protected $lang_type = 'BANNER_TYPE';
     protected $select_name = 'BANNER_TYPE';

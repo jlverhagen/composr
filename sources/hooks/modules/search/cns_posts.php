@@ -128,6 +128,12 @@ class Hook_search_cns_posts extends FieldsSearchHook
      */
     public function index_for_search(?int $since = null, ?int &$total_singular_ngram_tokens = null, ?array &$statistics_map = null)
     {
+        if (!addon_installed('search')) {
+            return;
+        }
+
+        require_code('fast_custom_index');
+
         $engine = new Fast_custom_index();
 
         $index_table = 'f_posts_fulltext_index';
@@ -271,7 +277,10 @@ class Hook_search_cns_posts extends FieldsSearchHook
         $permissions_module = 'forums';
         $db = $GLOBALS['FORUM_DB'];
         $index_table = 'f_posts_fulltext_index';
-        if (can_use_fast_custom_index('cns_posts', $db, $index_table, $search_query, Fast_custom_index::active_search_has_special_filtering() || $cutoff !== null || $author != '' || ($search_under != '-1' && $search_under != '!') || get_param_integer('option_tick_cns_posts_starter', 0) == 1)) {
+        if (addon_installed('search')) {
+            require_code('fast_custom_index');
+        }
+        if ((addon_installed('search')) && can_use_fast_custom_index('cns_posts', $db, $index_table, $search_query, Fast_custom_index::active_search_has_special_filtering() || $cutoff !== null || $author != '' || ($search_under != '-1' && $search_under != '!') || get_param_integer('option_tick_cns_posts_starter', 0) == 1)) {
             // This search hook implements the fast custom index, which we use where possible...
 
             $table = 'f_posts r';

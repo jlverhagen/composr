@@ -33,7 +33,7 @@
 /**
  * Hook class.
  */
-class Hook_admin_stats_cns_members extends CMSStatsProvider
+class Hook_admin_stats_cns_members extends Source_hook_stats_provider
 {
     protected $default_age_brackets;
 
@@ -74,18 +74,18 @@ class Hook_admin_stats_cns_members extends CMSStatsProvider
                 'label' => do_lang_tempcode('JOINING'),
                 'category' => 'conversions',
                 'filters' => [
-                    'members__day_range' => new CMSStatsDayRangeFilter('members__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
-                    'members__country' => has_geolocation_data() ? new CMSStatsCountryFilter('members__country', do_lang_tempcode('VISITOR_COUNTRY')) : null,
+                    'members__day_range' => new Source_stats_filter_day_range('members__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
+                    'members__country' => has_geolocation_data() ? new Source_stats_filter_country('members__country', do_lang_tempcode('VISITOR_COUNTRY')) : null,
                 ],
-                'pivot' => new CMSStatsDatePivot('members__pivot', $this->get_date_pivots(!$for_kpi)),
+                'pivot' => new Source_stats_filter_date_pivot('members__pivot', $this->get_date_pivots(!$for_kpi)),
                 'support_kpis' => self::KPI_HIGH_IS_GOOD,
             ],
             'demographics' => [
                 'label' => do_lang_tempcode('AGE_RANGE_JOIN'),
                 'category' => 'audience_demographics',
                 'filters' => [
-                    'demographics__day_range' => new CMSStatsDayRangeFilter('demographics__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
-                    'demographics__age_brackets' => new CMSStatsTextFilter('demographics__age_brackets', do_lang_tempcode('AGE_RANGE'), implode(',', $this->default_age_brackets)),
+                    'demographics__day_range' => new Source_stats_filter_day_range('demographics__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
+                    'demographics__age_brackets' => new Source_stats_filter_text('demographics__age_brackets', do_lang_tempcode('AGE_RANGE'), implode(',', $this->default_age_brackets)),
                 ],
                 'pivot' => null,
             ],
@@ -93,7 +93,7 @@ class Hook_admin_stats_cns_members extends CMSStatsProvider
                 'label' => do_lang_tempcode('AGE_RANGE'),
                 'category' => 'audience_demographics',
                 'filters' => [
-                    'demographics_overall__age_brackets' => new CMSStatsTextFilter('demographics_overall__age_brackets', do_lang_tempcode('AGE_RANGE'), implode(',', $this->default_age_brackets)),
+                    'demographics_overall__age_brackets' => new Source_stats_filter_text('demographics_overall__age_brackets', do_lang_tempcode('AGE_RANGE'), implode(',', $this->default_age_brackets)),
                 ],
                 'pivot' => null,
             ],

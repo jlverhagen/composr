@@ -129,8 +129,8 @@ class Hook_cron_calendar_reminders
                                 $GLOBALS['_EVENT_TIMESTAMP'] = array_key_exists(0, $recurrences) ? usertime_to_utctime($recurrences[0][0]) : cms_mktime($_start_hour, $_start_minute, 0, $job['e_start_month'], $start_day_of_month, $job['e_start_year']);
 
                                 // Commandr code
-                                require_code('commandr');
-                                $temp = new Virtual_shell($job_text);
+                                require_code('commandr_virtual_shell');
+                                $temp = object_factory('Source_virtual_shell', false, [$job_text]);
                                 $output = $temp->output_html(true);
                                 if (is_object($output)) {
                                     echo $output->evaluate();
@@ -152,7 +152,7 @@ class Hook_cron_calendar_reminders
                     $url = $_url->evaluate();
                     $subject_line = do_lang('EVENT_REMINDER_SUBJECT', $title, null, null, get_lang($job['n_member_id']));
                     $message_raw = do_notification_lang('EVENT_REMINDER_CONTENT', comcode_escape($date), comcode_escape($url), get_translated_text($job['e_content']), get_lang($job['n_member_id']));
-                    dispatch_notification('calendar_reminder', strval($job['e_type']), $subject_line, $message_raw, [$job['n_member_id']], A_FROM_SYSTEM_PRIVILEGED);
+                    Source_notification_dispatcher::dispatch_notification('calendar_reminder', strval($job['e_type']), $subject_line, $message_raw, [$job['n_member_id']], A_FROM_SYSTEM_PRIVILEGED);
                 }
 
                 // Recreate job for when next reminder due (if appropriate)

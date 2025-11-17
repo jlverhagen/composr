@@ -33,7 +33,7 @@
 /**
  * Hook class.
  */
-class Hook_content_meta_aware_wiki_page extends Hook_CMA
+class Hook_content_meta_aware_wiki_page extends Source_hook_CMA
 {
     /**
      * Get content type details.
@@ -71,7 +71,7 @@ class Hook_content_meta_aware_wiki_page extends Hook_CMA
 
             'title_field' => 'title',
             'title_field_dereference' => true,
-            'description_field' => ['the_description', 'CALL: generate_wiki_page_entry_description'],
+            'description_field' => ['the_description', 'CALL: Hook_content_meta_aware_wiki_page::generate_wiki_page_entry_description'],
             'description_field_dereference' => true,
             'description_field_supports_comcode' => true,
             'image_field' => null,
@@ -160,38 +160,37 @@ class Hook_content_meta_aware_wiki_page extends Hook_CMA
     {
         return 'choose_wiki_page';
     }
-}
 
+    /**
+     * Find an entry description.
+     *
+     * @param  array $row Database row of entry
+     * @param  integer $render_type A FIELD_RENDER_* constant
+     * @param  boolean $resource_fs_style Whether to use the content API as resource-fs requires (may be slightly different)
+     * @return ?mixed Content description (string or Tempcode, depending on $render_type) (null: could not generate)
+     */
+    public static function generate_wiki_page_entry_description(array $row, int $render_type = 1, bool $resource_fs_style = false)
+    {
+        if (!addon_installed('wiki')) {
+            return null;
+        }
 
-/**
- * Find an entry description.
- *
- * @param  array $row Database row of entry
- * @param  integer $render_type A FIELD_RENDER_* constant
- * @param  boolean $resource_fs_style Whether to use the content API as resource-fs requires (may be slightly different)
- * @return ?mixed Content description (string or Tempcode, depending on $render_type) (null: could not generate)
- */
-function generate_wiki_page_entry_description(array $row, int $render_type = 1, bool $resource_fs_style = false)
-{
-    if (!addon_installed('wiki')) {
-        return null;
+        $ret = get_translated_text($row['the_description']);
+
+        // FUDGE: Wiki+ page descriptions may be unreasonably long
+        if (strlen($ret) > 200) {
+            return '';
+        }
+
+        switch ($render_type) {
+            case FIELD_RENDER_COMCODE:
+                return $ret;
+
+            case FIELD_RENDER_HTML:
+                $just_row = db_map_restrict($row, ['id', 'the_description']);
+                return get_translated_tempcode('wiki_pages', $just_row, 'the_description');
+        }
+
+        return strip_comcode($ret);
     }
-
-    $ret = get_translated_text($row['the_description']);
-
-    // FUDGE: Wiki+ page descriptions may be unreasonably long
-    if (strlen($ret) > 200) {
-        return '';
-    }
-
-    switch ($render_type) {
-        case FIELD_RENDER_COMCODE:
-            return $ret;
-
-        case FIELD_RENDER_HTML:
-            $just_row = db_map_restrict($row, ['id', 'the_description']);
-            return get_translated_tempcode('wiki_pages', $just_row, 'the_description');
-    }
-
-    return strip_comcode($ret);
 }

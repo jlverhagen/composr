@@ -282,7 +282,7 @@ Here is an example of a page:
 
 These scenarios present PayPal donation buttons, with slightly different text. Perhaps the second will perform better, but only split testing will show us for sure.
 
-[tt]{$_GET,version,1}[/tt] means "retrieve the [tt]version[/tt] URL parameter, and if it is not set then return a default of [tt]1[/tt] for us" (i.e. the default is [tt]version=1[/tt]).
+[tt]{\$_GET,version,1}[/tt] means "retrieve the [tt]version[/tt] URL parameter, and if it is not set then return a default of [tt]1[/tt] for us" (i.e. the default is [tt]version=1[/tt]).
 
 You'll need to create the [tt]thankyou[/tt] page also. There are no special instructions, it will just be a regular page.
 
@@ -330,8 +330,8 @@ The Composr code change is pretty simple. The code from the previous step would 
 [/semihtml]
 [/code]
 
-We used [tt]{$SET_RAND,1,2}[/tt] to choose the number [tt]1[/tt] or [tt]2[/tt] on a 1:1 ratio.
-If we were doing multivariate testing with 3 versions, we could do [tt]{$SET_RAND,1,2,3}[/tt], for a 1:1:1 ratio.
+We used [tt]{\$SET_RAND,1,2}[/tt] to choose the number [tt]1[/tt] or [tt]2[/tt] on a 1:1 ratio.
+If we were doing multivariate testing with 3 versions, we could do [tt]{\$SET_RAND,1,2,3}[/tt], for a 1:1:1 ratio.
 
 We put this chosen number into a Tempcode variable using [tt]SET[/tt], then retrieved it with the [tt]GET[/tt] symbol. Note how it is now [tt]GET[/tt] (retrieve a Tempcode variable) not [tt]_GET[/tt] like before (retrieve a URL parameter).
 

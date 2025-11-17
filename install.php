@@ -806,7 +806,7 @@ function step_4() : object
 
     require_code('database');
     require_code('database/' . $db_type);
-    $GLOBALS['DB_DRIVER'] = object_factory('Database_Static_' . $db_type, false, [$table_prefix]);
+    $GLOBALS['DB_DRIVER'] = object_factory('Source_database_static_' . $db_type, false, [$table_prefix]);
 
     // Probing
 
@@ -815,7 +815,7 @@ function step_4() : object
     // Our forum is
     $forum_type = post_param_string('forum_type');
     require_code('forum/' . $forum_type);
-    $GLOBALS['FORUM_DRIVER'] = object_factory('Forum_driver_' . filter_naughty_harsh($forum_type));
+    $GLOBALS['FORUM_DRIVER'] = object_factory('Source_forum_driver_' . filter_naughty_harsh($forum_type));
     $GLOBALS['FORUM_DRIVER']->MEMBER_ROWS_CACHED = [];
 
     // Try and grab ourselves forum details
@@ -1474,7 +1474,7 @@ function include_cns()
     $SITE_INFO['db_forums_user'] = $SITE_INFO['db_site_user'];
     $SITE_INFO['db_forums_password'] = $SITE_INFO['db_site_password'];
     $SITE_INFO['cns_table_prefix'] = array_key_exists('table_prefix', $SITE_INFO) ? $SITE_INFO['table_prefix'] : get_default_table_prefix();
-    $GLOBALS['FORUM_DRIVER'] = object_factory('Forum_driver_cns');
+    $GLOBALS['FORUM_DRIVER'] = object_factory('Source_forum_driver_cns');
     $GLOBALS['FORUM_DB'] = $GLOBALS['SITE_DB'];
     $GLOBALS['FORUM_DRIVER']->db = $GLOBALS['SITE_DB'];
     $GLOBALS['FORUM_DRIVER']->MEMBER_ROWS_CACHED = [];
@@ -1754,7 +1754,7 @@ function step_5_ftp() : array
         if (!is_suexec_like()) {
             // Chmod
             $chmodding_errors = false;
-            $chmod_array = get_chmod_array();
+            $chmod_array = Source_permissions_scanner::get_chmod_array();
             foreach ($chmod_array as $chmod) {
                 if ((file_exists($chmod)) && (!@ftp_site($conn, 'CHMOD 0777 ' . $chmod))) {
                     $chmodding_errors = true;
@@ -1797,7 +1797,7 @@ function step_5_checks_a() : object
     $log->attach(do_template('INSTALLER_DONE_SOMETHING', ['_GUID' => '48b15e3e8486e5654563a7c3b5e6af58', 'SOMETHING' => do_lang_tempcode('GOOD_PATH')]));
 
     // Check permissions (after extraction known to have happened)
-    list(, , $paths) = scan_permissions(false, false, null, null, CMSPermissionsScanner::RESULT_TYPE_ERROR_MISSING);
+    list(, , $paths) = Source_permissions_scanner::scan_permissions(false, false, null, null, Source_permissions_scanner::RESULT_TYPE_ERROR_MISSING);
     foreach ($paths as $path) {
         intelligent_write_error($path);
     }
@@ -2234,7 +2234,7 @@ function step_5_core() : object
     $GLOBALS['SITE_DB']->create_index('translate', '#tsearch', ['text_original'], null, true);
     $GLOBALS['SITE_DB']->create_index('translate', 'importance_level', ['importance_level']);
     if (strpos(get_db_type(), 'mysql') !== false) {
-        // Only MySQL has these prefix indexes https://composr.app/tracker/view.php?id=4909
+        // Only MySQL has these prefix indexes https://composr.app/catalogues/entry/tracker-4909.htm
         $GLOBALS['SITE_DB']->create_index('translate', 'equiv_lang', ['text_original(4)']); // Make finding particular strings easier, but this is not a common operation
         $GLOBALS['SITE_DB']->create_index('translate', 'decache', ['text_parsed(2)']); // Makes Comcode cache emptying a little faster, but this is not a common operation
     }
@@ -2525,7 +2525,7 @@ function big_installation_common()
 
     $forum_type = get_forum_type();
     require_code('forum/' . $forum_type);
-    $GLOBALS['FORUM_DRIVER'] = object_factory('Forum_driver_' . filter_naughty_harsh($forum_type));
+    $GLOBALS['FORUM_DRIVER'] = object_factory('Source_forum_driver_' . filter_naughty_harsh($forum_type));
     if ($forum_type != 'none') {
         $GLOBALS['FORUM_DRIVER']->db = new DatabaseConnector(get_db_forums(), get_db_forums_host(), get_db_forums_user(), get_db_forums_password(), $GLOBALS['FORUM_DRIVER']->get_drivered_table_prefix());
     }

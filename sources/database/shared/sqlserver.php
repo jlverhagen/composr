@@ -35,7 +35,7 @@
  *
  * @package core_database_drivers
  */
-abstract class Database_super_sqlserver extends DatabaseDriver
+abstract class Source_database_super_sqlserver extends Source_database_driver
 {
     protected $table_prefix;
 

@@ -341,7 +341,6 @@ function scan_modularisation($only_populate_data = false, $stricter_checking = f
                 'buildr/',
                 'aps/',
                 'mobiquo/',
-                'tracker/',
                 'exports/',
                 'data_custom/firewall_rules.txt', // bundled as-is
                 'data_custom/errorlog.php', // bundled as blank

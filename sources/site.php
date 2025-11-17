@@ -355,7 +355,7 @@ function breadcrumbs(bool $show_self = true) : object
 
     // Substitutions
     if ((addon_installed('breadcrumbs')) && (function_exists('xml_parser_create'))) {
-        // We may need to add in the final label so load_breadcrumb_substitutions can see and match on it; we will then pop that final label knowing that load_breadcrumb_substitutions altered the BREADCRUMB_SET_SELF global if it needed to
+        // We may need to add in the final label so Source_breadcrumb_substitution_loader::load_breadcrumb_substitutions can see and match on it; we will then pop that final label knowing that load_breadcrumb_substitutions altered the BREADCRUMB_SET_SELF global if it needed to
         require_code('breadcrumbs');
         $needs_pop = false;
         if (($GLOBALS['BREADCRUMB_SET_SELF'] !== null) || ($GLOBALS['DISPLAYED_TITLE'] !== null)) {
@@ -366,7 +366,7 @@ function breadcrumbs(bool $show_self = true) : object
                 $needs_pop = true;
             }
         }
-        $BREADCRUMB_SET_PARENTS = load_breadcrumb_substitutions($BREADCRUMB_SET_PARENTS);
+        $BREADCRUMB_SET_PARENTS = Source_breadcrumb_substitution_loader::load_breadcrumb_substitutions($BREADCRUMB_SET_PARENTS);
         if ($needs_pop) {
             array_pop($BREADCRUMB_SET_PARENTS);
         }
@@ -1203,7 +1203,7 @@ function do_site()
             $current_username = $GLOBALS['FORUM_DRIVER']->get_username(get_member());
             $subject = do_lang('AFA_NOTIFICATION_MAIL_SUBJECT', $current_username, get_site_name(), get_ip_address());
             $mail = do_notification_lang('AFA_NOTIFICATION_MAIL', comcode_escape(get_site_name()), comcode_escape($current_username), comcode_escape(get_ip_address()));
-            dispatch_notification('core_staff:adminzone_dashboard_accessed', null, $subject, $mail);
+            Source_notification_dispatcher::dispatch_notification('core_staff:adminzone_dashboard_accessed', null, $subject, $mail);
         }
 
         // Send very basic software details to homesite if enabled
@@ -1518,7 +1518,7 @@ function request_page(string $codename, bool $required, ?string $zone = null, ?s
     }
 
     // Run hooks, if any exist
-    $hooks = find_all_hook_obs('systems', 'upon_page_load', 'Hook_upon_page_load');
+    $hooks = find_all_hook_obs('systems', 'upon_page_load', 'Hook_upon_page_load_');
     foreach ($hooks as $ob) {
         $ob->run($codename, $required, $zone, $page_type, $being_included, $details);
     }

@@ -111,7 +111,7 @@ function upgrade_script()
         case 'check_perms':
             echo '<h2>' . do_lang('UPGRADER_CHECK_PERMISSIONS') . '</h2>';
             require_code('file_permissions_check');
-            list($messages) = scan_permissions(false, false, null, null, CMSPermissionsScanner::RESULT_TYPE_SUGGESTION_EXCESSIVE);
+            list($messages) = Source_permissions_scanner::scan_permissions(false, false, null, null, Source_permissions_scanner::RESULT_TYPE_SUGGESTION_EXCESSIVE);
             if (empty($messages)) {
                 echo '<p>' . do_lang('NO_ACTION_REQUIRED') . '</p>';
             } else {
@@ -124,7 +124,7 @@ function upgrade_script()
         case 'fix_perms':
             echo '<h2>' . do_lang('UPGRADER_FIX_PERMISSIONS') . '</h2>';
             require_code('file_permissions_check');
-            list(, $commands) = scan_permissions(false, true, null, null, CMSPermissionsScanner::RESULT_TYPE_SUGGESTION_EXCESSIVE);
+            list(, $commands) = Source_permissions_scanner::scan_permissions(false, true, null, null, Source_permissions_scanner::RESULT_TYPE_SUGGESTION_EXCESSIVE);
             if (empty($commands)) {
                 echo '<p>' . do_lang('NO_ACTION_REQUIRED') . '</p>';
             } else {

@@ -538,7 +538,7 @@ class Module_admin_shopping
             attach_message(do_lang_tempcode('NO_NOTE_GUEST'), 'warn');
         } else {
             require_code('notifications');
-            dispatch_notification('order_dispatched', null, do_lang('ORDER_DISPATCHED_MAIL_SUBJECT', get_site_name(), strval($order_id), null, get_lang($order_details['member_id'])), $message, [$order_details['member_id']], A_FROM_SYSTEM_PRIVILEGED);
+            Source_notification_dispatcher::dispatch_notification('order_dispatched', null, do_lang('ORDER_DISPATCHED_MAIL_SUBJECT', get_site_name(), strval($order_id), null, get_lang($order_details['member_id'])), $message, [$order_details['member_id']], A_FROM_SYSTEM_PRIVILEGED);
         }
     }
 

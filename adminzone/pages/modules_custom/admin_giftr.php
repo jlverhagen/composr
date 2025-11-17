@@ -29,7 +29,7 @@ require_code('crud_module');
 /**
  * Module page class.
  */
-class Module_admin_giftr extends Standard_crud_module
+class Module_admin_giftr extends Source_standard_crud_module
 {
     protected $lang_type = 'GIFT';
     protected $select_name = 'NAME';

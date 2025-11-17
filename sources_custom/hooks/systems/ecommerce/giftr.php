@@ -226,11 +226,11 @@ class Hook_ecommerce_giftr
 
                     $body = do_notification_lang('GIFT_EXPLANATION_MAIL', comcode_escape($sender_displayname), comcode_escape($gift_name), [$sender_url, $gift_image_url, $gift_message, $private_topic_url, comcode_escape($sender_username)], get_lang($to_member_id));
 
-                    dispatch_notification('gift', null, $subject, $body, [$to_member_id], $from_member_id, ['use_real_from' => true]);
+                    Source_notification_dispatcher::dispatch_notification('gift', null, $subject, $body, [$to_member_id], $from_member_id, ['use_real_from' => true]);
                 } else {
                     $body = do_notification_lang('GIFT_EXPLANATION_ANONYMOUS_MAIL', comcode_escape($gift_name), $gift_image_url, $gift_message, get_lang($to_member_id));
 
-                    dispatch_notification('gift', null, $subject, $body, [$to_member_id], A_FROM_SYSTEM_UNPRIVILEGED);
+                    Source_notification_dispatcher::dispatch_notification('gift', null, $subject, $body, [$to_member_id], A_FROM_SYSTEM_UNPRIVILEGED);
                 }
             } else {
                 warn_exit(do_lang_tempcode('MISSING_RESOURCE'));

@@ -37,23 +37,25 @@
 require_code('database/shared/sqlserver');
 
 /**
- * Standard code module initialisation function.
- *
- * @ignore
- */
-function init__database__sqlserver_odbc()
-{
-    cms_ini_set('odbc.defaultlrl', '20M');
-}
-
-/**
  * Database driver class.
  *
  * @package core_database_drivers
  */
-class Database_Static_sqlserver_odbc extends Database_super_sqlserver
+class Source_database_static_sqlserver_odbc extends Source_database_super_sqlserver
 {
     protected $cache_db = [];
+
+    /**
+     * Set up the database driver.
+     *
+     * @param  string $table_prefix Table prefix
+     */
+    public function __construct(string $table_prefix)
+    {
+        parent::__construct($table_prefix);
+
+        cms_ini_set('odbc.defaultlrl', '20M');
+    }
 
     /**
      * Get a database connection. This function shouldn't be used by you, as a connection to the database is established automatically.

@@ -31,26 +31,24 @@
  */
 
 /**
- * Standard code module initialisation function.
- *
- * @ignore
- */
-function init__cns_forum_email_integration()
-{
-    require_lang('cns');
-    require_lang('cns_mailinglists');
-    require_code('cns_forums2');
-}
-
-/**
  * Forum e-mail integration class.
  *
  * @package cns_forum
  */
-class ForumEmailIntegration extends EmailIntegration
+class Source_forum_email_integration extends Source_email_integration
 {
     protected $forum_id = null;
     protected $forum_row = null;
+
+    /**
+     * Construct the class, loading in required APIs and language files.
+     */
+    public function __construct()
+    {
+        require_lang('cns');
+        require_lang('cns_mailinglists');
+        require_code('cns_forums2');
+    }
 
     /**
      * Set what forum we're currently dealing with.

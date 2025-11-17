@@ -350,7 +350,7 @@ class Hook_ecommerce_custom
         $subject = do_lang('MAIL_REQUEST_CUSTOM', comcode_escape($c_title), null, null, get_site_default_lang());
         $username = $GLOBALS['FORUM_DRIVER']->get_username($member_id);
         $body = do_notification_lang('MAIL_REQUEST_CUSTOM_BODY', comcode_escape($c_title), $username, null, get_site_default_lang());
-        dispatch_notification('ecom_product_request_custom', 'custom' . strval($custom_product_id) . '_' . strval($sale_id), $subject, $body, null, null, ['create_ticket' => true, 'use_real_from' => true]);
+        Source_notification_dispatcher::dispatch_notification('ecom_product_request_custom', 'custom' . strval($custom_product_id) . '_' . strval($sale_id), $subject, $body, null, null, ['create_ticket' => true, 'use_real_from' => true]);
 
         // E-mail member (we don't do a notification as we want to know for sure it will be received; plus avoid bloat in the notification UI)
         require_code('mail');

@@ -29,7 +29,7 @@ require_code('crud_module');
 /**
  * Module page class.
  */
-class Module_cms_tutorials extends Standard_crud_module
+class Module_cms_tutorials extends Source_standard_crud_module
 {
     protected $lang_type = 'TUTORIAL';
     protected $special_edit_frontend = true;
@@ -377,7 +377,7 @@ class Module_cms_tutorials extends Standard_crud_module
         require_code('notifications');
         $subject = 'New tutorial added, ' . $title;
         $mail = 'A new tutorial, [url="' . $title . '"]' . $url . '[/url], has been added by ' . $username . '.';
-        dispatch_notification('tutorial_added', null, $subject, $mail);
+        Source_notification_dispatcher::dispatch_notification('tutorial_added', null, $subject, $mail);
 
         require_code('caches');
         delete_cache_entry('tutorials');

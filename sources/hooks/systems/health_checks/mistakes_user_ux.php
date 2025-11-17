@@ -33,7 +33,7 @@
 /**
  * Hook class.
  */
-class Hook_health_check_mistakes_user_ux extends Hook_Health_Check
+class Hook_health_check_mistakes_user_ux extends Source_hook_health_check
 {
     protected $category_label = 'User-experience for mistakes';
 

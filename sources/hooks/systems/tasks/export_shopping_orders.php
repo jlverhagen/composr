@@ -98,12 +98,12 @@ class Hook_task_export_shopping_orders
 
         require_code('files_spreadsheets_write');
         if ($file_type === null) {
-            $file_type = spreadsheet_write_default();
+            $file_type = Source_spreadsheet_writer::spreadsheet_write_default();
         }
         $filename .= '.' . $file_type;
 
         $outfile_path = null;
-        $sheet_writer = spreadsheet_open_write($outfile_path, $filename);
+        $sheet_writer = Source_spreadsheet_writer::spreadsheet_open_write($outfile_path, $filename);
 
         $max = 500;
         $start = 0;

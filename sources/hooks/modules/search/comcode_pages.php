@@ -79,6 +79,12 @@ class Hook_search_comcode_pages extends FieldsSearchHook
      */
     public function index_for_search(?int $since = null, ?int &$total_singular_ngram_tokens = null, ?array &$statistics_map = null)
     {
+        if (!addon_installed('search')) {
+            return;
+        }
+
+        require_code('fast_custom_index');
+
         $engine = new Fast_custom_index();
 
         $index_table = 'cpages_fulltext_index';
@@ -205,7 +211,10 @@ class Hook_search_comcode_pages extends FieldsSearchHook
         // Calculate and perform query
         $db = $GLOBALS['SITE_DB'];
         $index_table = 'cpages_fulltext_index';
-        $fast_custom_index = can_use_fast_custom_index('comcode_pages', $db, $index_table, $search_query, Fast_custom_index::active_search_has_special_filtering() || $cutoff !== null || $author != '' || ($search_under != '-1' && $search_under != '!'));
+        if (addon_installed('search')) {
+            require_code('fast_custom_index');
+        }
+        $fast_custom_index = (addon_installed('search') && can_use_fast_custom_index('comcode_pages', $db, $index_table, $search_query, Fast_custom_index::active_search_has_special_filtering() || $cutoff !== null || $author != '' || ($search_under != '-1' && $search_under != '!')));
         if ($fast_custom_index) {
             // This search hook implements the fast custom index, which we use where possible...
 

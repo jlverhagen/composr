@@ -218,7 +218,7 @@ Block tips:
 Comcode tips:
  - Comcode tabs can take a page-link rather than normal Comcode contents, for the tab to open up via AJAX (don't use this on the default tab though, as that won't work).
  - If you make very heavy use of large and complex tooltips then you may want to consider loading these via AJAX. This will require some fairly advanced coding skills, but it may be worth doing. Look at the [tt]COMCODE_MEMBER.tpl[/tt] template for an example of AJAX tooltip code.
- - You can add [tt]{$,page hint: Quick Cache}[/tt] into Comcode pages to enable the equivalent of quick block caching for that page.
+ - You can add [tt]{\$,page hint: Quick Cache}[/tt] into Comcode pages to enable the equivalent of quick block caching for that page.
 
 Miscellaneous tips:
  - Serve pre-compressed CSS and JS files, by uncommenting lines in [tt]themes/*/templates_cached/.htaccess[/tt] (Apache only); it is commented by default as there are problems on some servers (especially Windows)
@@ -695,7 +695,7 @@ A proper load balancer is better than Round-Robin DNS as it can detect when serv
 
 Some people with very ambitious goals want to have multiple servers dotted around the world, able to operate in isolation to each other for maximum redundancy and performance. Priority-based geo-DNS resolution would be used for request routing.
 
-Composr can not currently support this, as ID numbers would conflict if database servers are not kept in strict sync with each other. We hope in a future version we can make changes for it to be possible (see https://composr.app/tracker/view.php?id=3147). 
+Composr can not currently support this, as ID numbers would conflict if database servers are not kept in strict sync with each other. We hope in a future version we can make changes for it to be possible (see https://composr.app/catalogues/entry/tracker-3147.htm). 
 
 [title="4"]Platform notes[/title]
 

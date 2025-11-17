@@ -154,12 +154,15 @@ function catalogue_query_select_count($catalogue_name, $where = [], $filters = '
 abstract class CMS_API_catalogue_object extends CMS_API_object
 {
     public $field_refs = [];
+    protected $catalogue;
 
-    public function __construct($entity_id, $missing_ok = false)
+    public function __construct($catalogue, $entity_id, $missing_ok = false)
     {
         if (!addon_installed('catalogues')) {
             return;
         }
+
+        $this->catalogue = $catalogue;
 
         static $capi_catalogue_object_cache = [];
         if (!isset($capi_catalogue_object_cache[$entity_id])) {

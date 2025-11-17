@@ -39,7 +39,7 @@ For other language packs you can copy this file to the obvious new name. This is
  *
  * @package core
  */
-class LangFilter_EN extends LangFilter
+class Source_lang_filter_EN extends Source_lang_filter
 {
     protected $vowels;
     protected $make_uncle_sam_happy = null;

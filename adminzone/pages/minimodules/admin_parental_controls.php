@@ -74,7 +74,7 @@ if ($type == 'save') {
 $revision_loaded = null;
 if (addon_installed('actionlog')) {
     require_code('revisions_engine_files');
-    $revision_engine = new RevisionEngineFiles();
+    $revision_engine = object_factory('Source_revisions_engine_files');
     $directory = 'data_custom/xml_config';
 
     // Log a revision if we are saving
@@ -105,7 +105,7 @@ if ($type == 'save') {
 
     // This will display validation errors and parse the new XML into the cache
     require_code('cns_parental_controls');
-    load_parental_control_settings(true);
+    object_factory('Source_parental_controls', false, [true], false);
 
     attach_message(do_lang_tempcode('SUCCESS'));
 }

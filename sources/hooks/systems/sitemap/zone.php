@@ -33,7 +33,7 @@
 /**
  * Hook class.
  */
-class Hook_sitemap_zone extends Hook_sitemap_base
+class Hook_sitemap_zone extends Source_hook_sitemap_base
 {
     /**
      * Get the permission page that nodes matching $page_link in this hook are tied to.

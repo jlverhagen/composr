@@ -35,7 +35,7 @@ require_code('crud_module');
 /**
  * Module page class.
  */
-class Module_admin_newsletter extends Standard_crud_module
+class Module_admin_newsletter extends Source_standard_crud_module
 {
     protected $lang_type = 'NEWSLETTER';
     protected $select_name = 'TITLE';
@@ -341,7 +341,7 @@ class Module_admin_newsletter extends Standard_crud_module
                 $fields->attach(form_input_list(do_lang_tempcode('NEWSLETTER'), '', 'id', $newsletters, null, true));
             }
             require_code('files_spreadsheets_read');
-            $fields->attach(form_input_upload(do_lang_tempcode('UPLOAD'), do_lang_tempcode('DESCRIPTION_UPLOAD_SPREADSHEET_2'), 'file', true, null, null, true, spreadsheet_read_file_types()));
+            $fields->attach(form_input_upload(do_lang_tempcode('UPLOAD'), do_lang_tempcode('DESCRIPTION_UPLOAD_SPREADSHEET_2'), 'file', true, null, null, true, Source_spreadsheet_reader::spreadsheet_read_file_types()));
             $l = new Tempcode();
             $l->attach(form_input_list_entry('0', !$subscribe, do_lang_tempcode('NEWSLETTER_UNSUBSCRIBE')));
             $l->attach(form_input_list_entry('1', $subscribe, do_lang_tempcode('NEWSLETTER_SUBSCRIBE')));
@@ -371,7 +371,7 @@ class Module_admin_newsletter extends Standard_crud_module
         $target_path = get_temporary_upload_path('file');
 
         require_code('files_spreadsheets_read');
-        if (!is_spreadsheet_readable($_FILES['file']['name'])) {
+        if (!Source_spreadsheet_reader::is_spreadsheet_readable($_FILES['file']['name'])) {
             unlink($target_path);
             sync_file($target_path);
             warn_exit(do_lang_tempcode('UNKNOWN_FORMAT', escape_html(get_file_extension($_FILES['file']['name']))));
@@ -1118,7 +1118,7 @@ class Module_admin_newsletter extends Standard_crud_module
         }
         if ($spreadsheet_data === null) {
             require_code('files_spreadsheets_read');
-            $fields->attach(form_input_upload(do_lang_tempcode('UPLOAD'), do_lang_tempcode('DESCRIPTION_UPLOAD_SPREADSHEET'), 'file', false, null, null, true, spreadsheet_read_file_types()));
+            $fields->attach(form_input_upload(do_lang_tempcode('UPLOAD'), do_lang_tempcode('DESCRIPTION_UPLOAD_SPREADSHEET'), 'file', false, null, null, true, Source_spreadsheet_reader::spreadsheet_read_file_types()));
         }
 
         handle_max_file_size($hidden);
@@ -1272,7 +1272,7 @@ class Module_admin_newsletter extends Standard_crud_module
 
                 $__spreadsheet_data = [];
                 require_code('files_spreadsheets_read');
-                $sheet_reader = spreadsheet_open_read($tmp_name, $_FILES['file']['name'], CMS_Spreadsheet_Reader::ALGORITHM_RAW);
+                $sheet_reader = Source_spreadsheet_reader::spreadsheet_open_read($tmp_name, $_FILES['file']['name'], Source_spreadsheet_reader::ALGORITHM_RAW);
                 while (($spreadsheet_line = $sheet_reader->read_row()) !== false) {
                     $__spreadsheet_data[] = $spreadsheet_line;
                 }

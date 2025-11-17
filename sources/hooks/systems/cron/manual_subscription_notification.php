@@ -109,7 +109,7 @@ class Hook_cron_manual_subscription_notification
                                 $subject = do_lang('MANUAL_SUBSCRIPTION_NOTIFICATION_MAIL_SUBJECT', $member_name, $expiry_date, [$item_name]);
                                 $mail = do_notification_lang('MANUAL_SUBSCRIPTION_NOTIFICATION_MAIL', comcode_escape($member_profile_url), comcode_escape($cancel_url->evaluate()), [strval($manual_subscription_expiry_notice), comcode_escape($member_name), comcode_escape($expiry_date), comcode_escape($item_name)]);
 
-                                dispatch_notification('paid_subscription_messages', null, $subject, $mail);
+                                Source_notification_dispatcher::dispatch_notification('paid_subscription_messages', null, $subject, $mail);
                             }
                         }
                     }

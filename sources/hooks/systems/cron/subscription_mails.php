@@ -106,7 +106,7 @@ class Hook_cron_subscription_mails
                     // Send notification
                     if ($send) {
                         require_code('notifications');
-                        dispatch_notification('paid_subscription_messages', null, get_translated_text($mail['m_subject']), get_translated_text($mail['m_body']), [$subscriber]);
+                        Source_notification_dispatcher::dispatch_notification('paid_subscription_messages', null, get_translated_text($mail['m_subject']), get_translated_text($mail['m_body']), [$subscriber]);
                     }
                 }
             }

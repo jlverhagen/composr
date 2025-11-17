@@ -35,7 +35,7 @@ require_code('crud_module');
 /**
  * Module page class.
  */
-class Module_admin_leader_board extends Standard_crud_module
+class Module_admin_leader_board extends Source_standard_crud_module
 {
     protected $lang_type = 'LEADER_BOARD';
     protected $select_name = 'TITLE';

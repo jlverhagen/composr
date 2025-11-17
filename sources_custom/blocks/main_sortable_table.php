@@ -70,7 +70,7 @@ class Block_main_sortable_table
     /**
      * Find caching details for the block.
      *
-     * @return ?array Map of cache details (cache_on and ttl) (null: block is disabled).
+     * @return ?array Map of cache details (cache_on and ttl) (null: do not cache).
      */
     public function caching_environment() : ?array
     {
@@ -152,7 +152,7 @@ PHP;
             require_code('files_spreadsheets_read');
 
             // Find/validate path
-            if (!is_spreadsheet_readable($file)) {
+            if (!Source_spreadsheet_reader::is_spreadsheet_readable($file)) {
                 return do_template('RED_ALERT', ['_GUID' => 'bd164caaf23e58579ad89c1a5c034786', 'TEXT' => 'We only accept spreadsheet files, for security reasons.']);
             }
             $path = get_custom_file_base() . '/uploads/website_specific/' . filter_naughty($file);
@@ -167,7 +167,7 @@ PHP;
 
             // Load data
             $i = 0;
-            $sheet_reader = spreadsheet_open_read($path, null, CMS_Spreadsheet_Reader::ALGORITHM_RAW);
+            $sheet_reader = Source_spreadsheet_reader::spreadsheet_open_read($path, null, Source_spreadsheet_reader::ALGORITHM_RAW);
             $full_header_row = null;
             while (($row = $sheet_reader->read_row()) !== false) {
                 // Process out the ignore value

@@ -60,7 +60,7 @@ class Block_main_staff_checklist
     /**
      * Find caching details for the block.
      *
-     * @return ?array Map of cache details (cache_on and ttl) (null: block is disabled)
+     * @return ?array Map of cache details (cache_on and ttl) (null: do not cache)
      */
     public function caching_environment() : ?array
     {
@@ -234,36 +234,36 @@ PHP;
 
         return $tpl;
     }
-}
 
-/**
- * Work out when an action should happen, and last happened.
- *
- * @param  ?integer $seconds_ago The number of seconds ago since it last happened (null: never happened) OR If $recur_hours is null then the number of seconds until it happens (null: won't happen)
- * @param  ?integer $recur_hours It should be done every this many hours (null: never happened)
- * @return array A pair: Tempcode to display, and the number of seconds to go until the action should happen
- */
-function staff_checklist_time_ago_and_due(?int $seconds_ago, ?int $recur_hours = null) : array
-{
-    if ($recur_hours === null) { // None recurring
-        $seconds_to_go = $seconds_ago; // Actually, if only one parameter given, meaning is different
-        $seconds_ago = null;
-        if ($seconds_to_go === null) {
-            return [do_lang_tempcode('DUE_NOT'), 1000000];
+    /**
+     * Work out when an action should happen, and last happened.
+     *
+     * @param  ?integer $seconds_ago The number of seconds ago since it last happened (null: never happened) OR If $recur_hours is null then the number of seconds until it happens (null: won't happen)
+     * @param  ?integer $recur_hours It should be done every this many hours (null: never happened)
+     * @return array A pair: Tempcode to display, and the number of seconds to go until the action should happen
+     */
+    public static function staff_checklist_time_ago_and_due(?int $seconds_ago, ?int $recur_hours = null) : array
+    {
+        if ($recur_hours === null) { // None recurring
+            $seconds_to_go = $seconds_ago; // Actually, if only one parameter given, meaning is different
+            $seconds_ago = null;
+            if ($seconds_to_go === null) {
+                return [do_lang_tempcode('DUE_NOT'), 1000000];
+            }
+        } else { // Recurring
+            if ($seconds_ago === null) {
+                return [do_lang_tempcode('DUE_NOW'), 0]; // Due for first time now
+            } else {
+                $seconds_to_go = $recur_hours * 60 * 60 - $seconds_ago;
+            }
         }
-    } else { // Recurring
-        if ($seconds_ago === null) {
-            return [do_lang_tempcode('DUE_NOW'), 0]; // Due for first time now
-        } else {
-            $seconds_to_go = $recur_hours * 60 * 60 - $seconds_ago;
-        }
-    }
 
-    if ($seconds_to_go == 0) {
-        return [do_lang_tempcode('DUE_NOW'), 0]; // Due for first time now (this is a special encoding for non-recurring tasks that still need doing on some form of schedule and need doing for first time now)
+        if ($seconds_to_go == 0) {
+            return [do_lang_tempcode('DUE_NOW'), 0]; // Due for first time now (this is a special encoding for non-recurring tasks that still need doing on some form of schedule and need doing for first time now)
+        }
+        if ($seconds_to_go > 0) {
+            return [do_lang_tempcode('DUE_TIME', ($seconds_ago === null) ? do_lang_tempcode('NA_EM') : make_string_tempcode(escape_html(display_time_period($seconds_ago))), make_string_tempcode(escape_html(display_time_period($seconds_to_go)))), $seconds_to_go];
+        }
+        return [do_lang_tempcode('DUE_TIME_AGO', ($seconds_ago === null) ? do_lang_tempcode('NA_EM') : make_string_tempcode(escape_html(display_time_period($seconds_ago))), make_string_tempcode(escape_html(display_time_period(-$seconds_to_go)))), $seconds_to_go];
     }
-    if ($seconds_to_go > 0) {
-        return [do_lang_tempcode('DUE_TIME', ($seconds_ago === null) ? do_lang_tempcode('NA_EM') : make_string_tempcode(escape_html(display_time_period($seconds_ago))), make_string_tempcode(escape_html(display_time_period($seconds_to_go)))), $seconds_to_go];
-    }
-    return [do_lang_tempcode('DUE_TIME_AGO', ($seconds_ago === null) ? do_lang_tempcode('NA_EM') : make_string_tempcode(escape_html(display_time_period($seconds_ago))), make_string_tempcode(escape_html(display_time_period(-$seconds_to_go)))), $seconds_to_go];
 }

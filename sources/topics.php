@@ -52,7 +52,7 @@ The non-threaded cns_forum view has its own rendering.
  *
  * @package core_feedback_features
  */
-class CMS_Topic
+class Source_topic
 {
     // Settable...
     //Influences comment form

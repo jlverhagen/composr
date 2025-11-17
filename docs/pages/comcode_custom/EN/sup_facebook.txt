@@ -149,7 +149,7 @@ You can consider having both Facebook comments, and native Composr comments, but
 
 The Facebook comments block will only work if placed somewhere where Guest access is allowed, as it relies on Open Graph to gather details of the page it is placed on (Open Graph is described later in this tutorial).
 
-You can either place this block manually within Comcode, similar to the standard Composr [tt]main_comments[/tt] block -- or, you can modify Composr templates to place this block instead of the default comments. For example, in [tt]DOWNLOAD_SCREEN.tpl[/tt] you can change [tt]{COMMENT_DETAILS}[/tt] to [tt]{$BLOCK,block=main_facebook_comments}[/tt], so that Facebook comments are used for downloads, rather than native Composr comments.
+You can either place this block manually within Comcode, similar to the standard Composr [tt]main_comments[/tt] block -- or, you can modify Composr templates to place this block instead of the default comments. For example, in [tt]DOWNLOAD_SCREEN.tpl[/tt] you can change [tt]{COMMENT_DETAILS}[/tt] to [tt]{\$BLOCK,block=main_facebook_comments}[/tt], so that Facebook comments are used for downloads, rather than native Composr comments.
 
 [title="2"]Social sharing[/title]
 

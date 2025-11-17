@@ -53,7 +53,7 @@ function upgrader_mysql_repair_screen() : string
     }
 
     require_code('database_repair');
-    return '<h2>' . do_lang('MYSQL_REPAIR') . '</h2>' . static_evaluate_tempcode(database_repair_inbuilt());
+    return '<h2>' . do_lang('MYSQL_REPAIR') . '</h2>' . static_evaluate_tempcode(Source_database_repair::database_repair_inbuilt());
 }
 
 /**
@@ -72,7 +72,7 @@ function upgrader_criticise_mysql_fields_screen() : string
     $out .= '<p>' . do_lang('DESCRIPTION_CORRECT_MYSQL_SCHEMA_ISSUES') . '</p>';
 
     require_code('database_repair');
-    $out .= static_evaluate_tempcode(database_repair_wrap());
+    $out .= static_evaluate_tempcode(Source_database_repair::database_repair_wrap());
 
     return $out;
 }

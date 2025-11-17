@@ -813,9 +813,6 @@ function should_ignore_file(string $path, int $bitmask = 0) : bool
     }
 
     if (($bitmask & IGNORE_FLOATING) != 0) {
-        if (preg_match('#^tracker/uploads(/|$)#i', $path) != 0) {
-            return true; // Mantis upload files
-        }
         /* LEGACY: demonstratr
         if (preg_match('#^uploads/website_specific/([^/]*)/demonstratr/servers(/|$)#i', $path) != 0) {
             return true;

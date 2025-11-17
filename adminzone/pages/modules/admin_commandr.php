@@ -177,7 +177,8 @@ class Module_admin_commandr
         $command = post_param_string('commandr_command', '');
         if ($command != '') {
             // We've had a normal form submission
-            $temp = new Virtual_shell($command);
+            require_code('commandr_virtual_shell');
+            $temp = object_factory('Source_virtual_shell', false, [$command]);
             $commands = $temp->output_html();
         } else {
             $commands = new Tempcode();

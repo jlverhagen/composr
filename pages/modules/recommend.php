@@ -294,7 +294,7 @@ class Module_recommend
                 $help_url = $_help_url->evaluate();
 
                 require_code('files_spreadsheets_read');
-                $field_set->attach(form_input_upload(do_lang_tempcode('UPLOAD'), do_lang_tempcode('DESCRIPTION_UPLOAD_SPREADSHEET_FILE', escape_html($help_url)), 'upload', false, null, null, false, spreadsheet_read_file_types()));
+                $field_set->attach(form_input_upload(do_lang_tempcode('UPLOAD'), do_lang_tempcode('DESCRIPTION_UPLOAD_SPREADSHEET_FILE', escape_html($help_url)), 'upload', false, null, null, false, Source_spreadsheet_reader::spreadsheet_read_file_types()));
 
                 $fields->attach(alternate_fields_set__end($set_name, $set_title, '', $field_set, $required));
             } else {
@@ -482,11 +482,11 @@ class Module_recommend
                     warn_exit($upload_error_message);
                 }
 
-                if (is_spreadsheet_readable($_FILES['upload']['tmp_name'])) {
+                if (Source_spreadsheet_reader::is_spreadsheet_readable($_FILES['upload']['tmp_name'])) {
                     $possible_email_fields = ['E-mail', 'Email', 'E-mail address', 'Email address', 'Primary Email'];
                     $possible_name_fields = ['Name', 'Forename', 'First Name', 'Display Name', 'First'];
 
-                    $sheet_reader = spreadsheet_open_read($_FILES['upload']['tmp_name'], $_FILES['upload']['name'], CMS_Spreadsheet_Reader::ALGORITHM_RAW);
+                    $sheet_reader = Source_spreadsheet_reader::spreadsheet_open_read($_FILES['upload']['tmp_name'], $_FILES['upload']['name'], Source_spreadsheet_reader::ALGORITHM_RAW);
 
                     $spreadsheet_header_line_fields = $sheet_reader->read_row();
 

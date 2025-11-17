@@ -35,7 +35,7 @@
  *
  * @package commandr
  */
-abstract class Resource_fs_base
+abstract class Source_resource_fs_base
 {
     /*
     FINDING INFORMATION ABOUT HOOK STRUCTURE
@@ -2693,7 +2693,7 @@ abstract class Resource_fs_base
         $old = cms_extend_time_limit(TIME_LIMIT_EXTEND__MODEST);
         $start_time = microtime(true);
 
-        cms_profile_start_for('Resource_fs_base->listing');
+        cms_profile_start_for('Source_resource_fs_base->listing');
 
         // Find folders
         foreach ($folder_types as $resource_type) {
@@ -2719,7 +2719,7 @@ abstract class Resource_fs_base
                 $cached_listings[$resource_type][$cat_id] = [];
             }
 
-            cms_profile_start_for('Resource_fs_base->listing find folders in ' . $resource_type);
+            cms_profile_start_for('Source_resource_fs_base->listing find folders in ' . $resource_type);
 
             $_cat_id = ($relationship['cat_field_numeric'] ? (($cat_id == '') ? null : intval($cat_id)) : $cat_id);
 
@@ -2760,11 +2760,11 @@ abstract class Resource_fs_base
             $absolute_max = 5000; // reasonable limit
             $memory_limit = php_return_bytes(ini_get('memory_limit'));
             do {
-                cms_profile_start_for('Resource_fs_base->listing find folders iteration');
+                cms_profile_start_for('Source_resource_fs_base->listing find folders iteration');
 
                 // Running low on remaining memory or time
                 if ((($memory_limit - memory_get_usage()) < (1024 * 1024 * 16)) || ((microtime(true) - $start_time) >= 26.0)) {
-                    cms_profile_end_for('Resource_fs_base->listing find folders iteration', 'Out of time or memory');
+                    cms_profile_end_for('Source_resource_fs_base->listing find folders iteration', 'Out of time or memory');
                     break;
                 }
 
@@ -2797,10 +2797,10 @@ abstract class Resource_fs_base
 
                 $start += $max;
 
-                cms_profile_end_for('Resource_fs_base->listing find folders iteration', 'Found ' . integer_format(count($child_folders)) . ' folders');
+                cms_profile_end_for('Source_resource_fs_base->listing find folders iteration', 'Found ' . integer_format(count($child_folders)) . ' folders');
             } while ((count($child_folders) > 0) && ($start < $absolute_max));
 
-            cms_profile_end_for('Resource_fs_base->listing resource ' . $resource_type);
+            cms_profile_end_for('Source_resource_fs_base->listing resource ' . $resource_type);
         }
 
         // Find files
@@ -2827,7 +2827,7 @@ abstract class Resource_fs_base
                 $cached_listings[$resource_type][$cat_id] = [];
             }
 
-            cms_profile_start_for('Resource_fs_base->listing find files in ' . $resource_type);
+            cms_profile_start_for('Source_resource_fs_base->listing find files in ' . $resource_type);
 
             $where = [];
             if ($this->folder_resource_type !== null) {
@@ -2843,11 +2843,11 @@ abstract class Resource_fs_base
             $absolute_max = 5000; // reasonable limit
             $memory_limit = php_return_bytes(ini_get('memory_limit'));
             do {
-                cms_profile_start_for('Resource_fs_base->listing find files iteration');
+                cms_profile_start_for('Source_resource_fs_base->listing find files iteration');
 
                 // Running low on remaining memory or time
                 if ((($memory_limit - memory_get_usage()) < (1024 * 1024 * 16)) || ((microtime(true) - $start_time) >= 26.0)) {
-                    cms_profile_end_for('Resource_fs_base->listing find files iteration', 'Out of time or memory');
+                    cms_profile_end_for('Source_resource_fs_base->listing find files iteration', 'Out of time or memory');
                     break;
                 }
 
@@ -2883,10 +2883,10 @@ abstract class Resource_fs_base
 
                 $start += $max;
 
-                cms_profile_end_for('Resource_fs_base->listing find files iteration', 'Found ' . integer_format(count($files)) . ' files');
+                cms_profile_end_for('Source_resource_fs_base->listing find files iteration', 'Found ' . integer_format(count($files)) . ' files');
             } while ((count($files) > 0) && ($start < $absolute_max));
 
-            cms_profile_end_for('Resource_fs_base->listing find files in ' . $resource_type);
+            cms_profile_end_for('Source_resource_fs_base->listing find files in ' . $resource_type);
         }
 
         if ($cat_id != '') { // File for editing the folder's own properties
@@ -2920,7 +2920,7 @@ abstract class Resource_fs_base
             }
         }
 
-        cms_profile_end_for('Resource_fs_base->listing');
+        cms_profile_end_for('Source_resource_fs_base->listing');
 
         return $listing;
     }

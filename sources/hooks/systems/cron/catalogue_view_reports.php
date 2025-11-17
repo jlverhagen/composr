@@ -166,7 +166,7 @@ class Hook_cron_catalogue_view_reports
                     }
 
                     // Send actual notification
-                    dispatch_notification('catalogue_view_reports__' . $catalogue['c_name'], null, $subject_line, $mail, [$member_id], A_FROM_SYSTEM_PRIVILEGED);
+                    Source_notification_dispatcher::dispatch_notification('catalogue_view_reports__' . $catalogue['c_name'], null, $subject_line, $mail, [$member_id], A_FROM_SYSTEM_PRIVILEGED);
                 }
 
                 $start += 2000;

@@ -33,7 +33,7 @@
 /**
  * Hook class.
  */
-class Hook_admin_stats_transactions extends CMSStatsProvider
+class Hook_admin_stats_transactions extends Source_hook_stats_provider
 {
     /**
      * Find metadata about stats graphs that are provided by this stats hook.
@@ -65,20 +65,20 @@ class Hook_admin_stats_transactions extends CMSStatsProvider
                 'label' => do_lang_tempcode('TRANSACTIONS'),
                 'category' => 'economic_activity',
                 'filters' => [
-                    'transaction_quantity__day_range' => new CMSStatsDayRangeFilter('transaction_quantity__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
-                    'transaction_quantity__product_name' => new CMSStatsListFilter('transaction_quantity__product_name', do_lang_tempcode('PRODUCT'), $type_codes),
+                    'transaction_quantity__day_range' => new Source_stats_filter_day_range('transaction_quantity__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
+                    'transaction_quantity__product_name' => new Source_stats_filter_list('transaction_quantity__product_name', do_lang_tempcode('PRODUCT'), $type_codes),
                 ],
-                'pivot' => new CMSStatsDatePivot('transaction_quantity__pivot', $this->get_date_pivots(!$for_kpi)),
+                'pivot' => new Source_stats_filter_date_pivot('transaction_quantity__pivot', $this->get_date_pivots(!$for_kpi)),
                 'support_kpis' => self::KPI_HIGH_IS_GOOD,
             ],
             'transaction_income' => [
                 'label' => do_lang_tempcode('INCOME'),
                 'category' => 'economic_activity',
                 'filters' => [
-                    'transaction_income__day_range' => new CMSStatsDayRangeFilter('transaction_income__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
-                    'transaction_income__product_name' => new CMSStatsListFilter('transaction_income__product_name', do_lang_tempcode('PRODUCT'), $type_codes),
+                    'transaction_income__day_range' => new Source_stats_filter_day_range('transaction_income__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
+                    'transaction_income__product_name' => new Source_stats_filter_list('transaction_income__product_name', do_lang_tempcode('PRODUCT'), $type_codes),
                 ],
-                'pivot' => new CMSStatsDatePivot('transaction_income__pivot', $this->get_date_pivots(!$for_kpi)),
+                'pivot' => new Source_stats_filter_date_pivot('transaction_income__pivot', $this->get_date_pivots(!$for_kpi)),
                 'support_kpis' => self::KPI_HIGH_IS_GOOD,
             ],
         ];

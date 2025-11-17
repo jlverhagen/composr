@@ -283,7 +283,7 @@ function wiki_edit_post(int $post_id, string $message, int $validated, ?int $mem
     $log_id = log_it('WIKI_EDIT_POST', strval($post_id), strval($page_id), true);
     if (addon_installed('actionlog')) {
         require_code('revisions_engine_database');
-        $revision_engine = new RevisionEngineDatabase();
+        $revision_engine = object_factory('Source_revisions_engine_database');
         $revision_engine->add_revision(
             'wiki_post',
             strval($post_id),
@@ -356,7 +356,7 @@ function wiki_delete_post(int $post_id, ?int $member_id = null)
     $log_id = log_it('WIKI_DELETE_POST', strval($post_id), strval($page_id), true);
     if (addon_installed('actionlog')) {
         require_code('revisions_engine_database');
-        $revision_engine = new RevisionEngineDatabase();
+        $revision_engine = object_factory('Source_revisions_engine_database');
         $revision_engine->add_revision(
             'wiki_post',
             strval($post_id),
@@ -520,7 +520,7 @@ function wiki_edit_page(int $page_id, string $title, string $description, string
     $log_id = log_it('WIKI_EDIT_PAGE', strval($page_id), get_translated_text($_title), true);
     if (addon_installed('actionlog')) {
         require_code('revisions_engine_database');
-        $revision_engine = new RevisionEngineDatabase();
+        $revision_engine = object_factory('Source_revisions_engine_database');
         $revision_engine->add_revision(
             'wiki_page',
             strval($page_id),
@@ -628,7 +628,7 @@ function wiki_delete_page(int $page_id)
     $log_id = log_it('WIKI_DELETE_PAGE', strval($page_id), get_translated_text($_title), true);
     if (addon_installed('actionlog')) {
         require_code('revisions_engine_database');
-        $revision_engine = new RevisionEngineDatabase();
+        $revision_engine = object_factory('Source_revisions_engine_database');
         $revision_engine->add_revision(
             'wiki_page',
             strval($page_id),
@@ -1054,7 +1054,7 @@ function dispatch_wiki_post_notification(int $post_id, string $type)
     $subject = do_lang($type . '_WIKI_POST_SUBJECT', $page_name, $their_displayname, $their_username, get_site_default_lang());
     $message_raw = do_notification_lang($type . '_WIKI_POST_BODY', comcode_escape($their_displayname), comcode_escape($page_name), [comcode_escape($view_url), $_the_message, strval(get_member()), comcode_escape($their_username)], get_site_default_lang());
 
-    dispatch_notification('wiki', strval($page_id), $subject, $message_raw);
+    Source_notification_dispatcher::dispatch_notification('wiki', strval($page_id), $subject, $message_raw);
 }
 
 /**
@@ -1081,5 +1081,5 @@ function dispatch_wiki_page_notification(int $page_id, string $type)
     $subject = do_lang($type . '_WIKI_PAGE_SUBJECT', $page_name, $their_displayname, $their_username, get_site_default_lang());
     $message_raw = do_notification_lang($type . '_WIKI_PAGE_BODY', comcode_escape($their_displayname), comcode_escape($page_name), [comcode_escape($view_url), $_the_message, comcode_escape($their_username)], get_site_default_lang());
 
-    dispatch_notification('wiki', strval($page_id), $subject, $message_raw);
+    Source_notification_dispatcher::dispatch_notification('wiki', strval($page_id), $subject, $message_raw);
 }

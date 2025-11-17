@@ -75,23 +75,11 @@ Other features
 */
 
 /**
- * Standard code module initialisation function.
- *
- * @ignore
- */
-function init__decision_tree()
-{
-    if (addon_installed('captcha')) {
-        require_code('captcha');
-    }
-}
-
-/**
  * Provide multi-screen (multi-form) decision trees.
  *
  * @package core
  */
-class DecisionTree
+class Source_decision_tree
 {
     private $decision_tree;
     private $default_screen;
@@ -105,6 +93,10 @@ class DecisionTree
     public function __construct(array $decision_tree, string $default_screen = 'start')
     {
         require_lang('decision_tree');
+
+        if (addon_installed('captcha')) {
+            require_code('captcha');
+        }
 
         $this->decision_tree = $decision_tree;
 

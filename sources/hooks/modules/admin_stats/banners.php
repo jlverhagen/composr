@@ -33,7 +33,7 @@
 /**
  * Hook class.
  */
-class Hook_admin_stats_banners extends CMSStatsProvider
+class Hook_admin_stats_banners extends Source_hook_stats_provider
 {
     /**
      * Find metadata about stats graphs that are provided by this stats hook.
@@ -62,11 +62,11 @@ class Hook_admin_stats_banners extends CMSStatsProvider
                 'label' => do_lang_tempcode('BANNER_CLICKS'),
                 'category' => 'economic_activity',
                 'filters' => [
-                    'banner_clicks__day_range' => new CMSStatsDayRangeFilter('banner_clicks__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
-                    'banner_clicks__banner' => new CMSStatsListFilter('banner_clicks__banner', do_lang_tempcode('BANNER'), $banners),
-                    'banner_clicks__country' => has_geolocation_data() ? new CMSStatsCountryFilter('banner_clicks__country', do_lang_tempcode('VISITOR_COUNTRY')) : null,
+                    'banner_clicks__day_range' => new Source_stats_filter_day_range('banner_clicks__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
+                    'banner_clicks__banner' => new Source_stats_filter_list('banner_clicks__banner', do_lang_tempcode('BANNER'), $banners),
+                    'banner_clicks__country' => has_geolocation_data() ? new Source_stats_filter_country('banner_clicks__country', do_lang_tempcode('VISITOR_COUNTRY')) : null,
                 ],
-                'pivot' => new CMSStatsDatePivot('banner_clicks__pivot', $this->get_date_pivots(!$for_kpi)),
+                'pivot' => new Source_stats_filter_date_pivot('banner_clicks__pivot', $this->get_date_pivots(!$for_kpi)),
                 'support_kpis' => self::KPI_HIGH_IS_GOOD,
             ],
         ];

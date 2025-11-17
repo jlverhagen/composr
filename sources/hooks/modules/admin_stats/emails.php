@@ -33,7 +33,7 @@
 /**
  * Hook class.
  */
-class Hook_admin_stats_emails extends CMSStatsProvider
+class Hook_admin_stats_emails extends Source_hook_stats_provider
 {
     /**
      * Find metadata about stats graphs that are provided by this stats hook.
@@ -51,17 +51,17 @@ class Hook_admin_stats_emails extends CMSStatsProvider
                 'label' => do_lang_tempcode('EMAILS_SENT'),
                 'category' => 'conversions',
                 'filters' => [
-                    'emails_sent__day_range' => new CMSStatsDayRangeFilter('emails_sent__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
+                    'emails_sent__day_range' => new Source_stats_filter_day_range('emails_sent__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
                 ],
-                'pivot' => new CMSStatsDatePivot('emails_sent__pivot', $this->get_date_pivots(!$for_kpi)),
+                'pivot' => new Source_stats_filter_date_pivot('emails_sent__pivot', $this->get_date_pivots(!$for_kpi)),
             ],
             'unsubscribed_emails' => [
                 'label' => do_lang_tempcode('UNSUBSCRIBED_EMAILS'),
                 'category' => 'conversions',
                 'filters' => [
-                    'unsubscribed_emails__day_range' => new CMSStatsDayRangeFilter('unsubscribed_emails__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
+                    'unsubscribed_emails__day_range' => new Source_stats_filter_day_range('unsubscribed_emails__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
                 ],
-                'pivot' => new CMSStatsDatePivot('unsubscribed_emails__pivot', $this->get_date_pivots(!$for_kpi)),
+                'pivot' => new Source_stats_filter_date_pivot('unsubscribed_emails__pivot', $this->get_date_pivots(!$for_kpi)),
             ],
         ];
     }

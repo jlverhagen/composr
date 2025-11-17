@@ -592,7 +592,7 @@ function get_field_restrict_property(string $property, string $field, ?string $p
         $type = get_param_string('type', post_param_string('type', 'browse'));
     }
 
-    $restrictions = load_field_restrictions($page, $type);
+    $restrictions = Source_field_restriction_loader::load_field_restrictions($page, $type);
     foreach ($restrictions as $_r => $_restrictions) {
         $_r_exp = explode(',', $_r);
         foreach ($_r_exp as $__r) {
@@ -734,8 +734,8 @@ function form_input_url($pretty_name, $description, string $name, ?string $defau
     $default = filter_form_field_default($name, $default);
     $required = filter_form_field_required($name, $required);
 
-    require_code('urls_simplifier');
-    $coder_ob = new HarmlessURLCoder();
+    require_code('urls_coder');
+    $coder_ob = new Source_URL_coder();
     $_default = ($default === null) ? '' : $coder_ob->decode($default);
 
     $autocomplete = _get_autocomplete_attribute_value($name, $autocomplete);
@@ -1555,7 +1555,7 @@ function form_input_tick($pretty_name, $description, string $name, bool $ticked,
  */
 function form_input_various_ticks(array $options, $description, ?int $_tabindex = null, $_pretty_name = '', bool $simple_style = false, ?string $custom_name = null, $custom_value = null) : object
 {
-    if (empty($options)) {
+    if (empty($options) && ($custom_name === null)) {
         return new Tempcode();
     }
 
@@ -1574,7 +1574,7 @@ function form_input_various_ticks(array $options, $description, ?int $_tabindex 
 
     $input = new Tempcode();
 
-    if (count($options[0]) != 3) {
+    if (empty($options) || count($options[0]) != 3) {
         $options = [[$options, null, new Tempcode()]];
     }
     foreach ($options as $_option) {
@@ -3067,7 +3067,7 @@ function _form_input(string $name, $pretty_name, $description, object $input, bo
 function _get_autocomplete_attribute_value(string $name, $provided_autocomplete) : ?string
 {
     $autocomplete_field_names = [
-        // Keys ([name] attribute values) as agreed upon by "#0003470: Change our approach to autofill" https://composr.app/tracker/view.php?id=3470
+        // Keys ([name] attribute values) as agreed upon by "#0003470: Change our approach to autofill" https://composr.app/catalogues/entry/tracker-3470.htm
         // Values ([autocomplete] attribute values) from https://html.spec.whatwg.org/multipage/form-control-infrastructure.html#autofill-field
         'username'   => 'username',
         'password'   => 'current-password',

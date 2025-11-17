@@ -50,7 +50,7 @@
  *
  * @package search
  */
-class LangTokeniser_EN
+class Source_lang_tokeniser_EN
 {
     /* Querying */
 

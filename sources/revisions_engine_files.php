@@ -31,10 +31,10 @@
  */
 
 /*
-RevisionsEngineDatabase is normally used, but for some very special actions RevisionEngineFiles will be used instead.
+Source_revisions_engine_database is normally used, but for some very special actions Source_revisions_engine_files will be used instead.
 This only works for some pre-specified actions that are hard-coded into this class: EDIT_TEMPLATE, etc.
 
-RevisionsEngineDatabase and RevisionEngineFiles are not API-compatible but are designed to work similarly.
+Source_revisions_engine_database and Source_revisions_engine_files are not API-compatible but are designed to work similarly.
 */
 
 /**
@@ -42,7 +42,7 @@ RevisionsEngineDatabase and RevisionEngineFiles are not API-compatible but are d
  *
  * @package actionlog
  */
-class RevisionEngineFiles
+class Source_revisions_engine_files
 {
     /**
      * Find whether revisions are enabled for the current user.

@@ -933,7 +933,7 @@ class Module_admin_cns_members
         $fields = new Tempcode();
         handle_max_file_size($hidden);
         require_code('files_spreadsheets_read');
-        $fields->attach(form_input_upload(do_lang_tempcode('UPLOAD'), do_lang_tempcode('DESCRIPTION_IMPORT_SPREADSHEET'), 'file', true, null, null, true, spreadsheet_read_file_types()));
+        $fields->attach(form_input_upload(do_lang_tempcode('UPLOAD'), do_lang_tempcode('DESCRIPTION_IMPORT_SPREADSHEET'), 'file', true, null, null, true, Source_spreadsheet_reader::spreadsheet_read_file_types()));
         $fields->attach(form_input_line(do_lang_tempcode('DEFAULT_PASSWORD'), do_lang_tempcode('DESCRIPTION_DEFAULT_PASSWORD'), 'default_password', '', false));
         $fields->attach(form_input_tick(do_lang_tempcode('FORCE_TEMPORARY_PASSWORD'), do_lang_tempcode('DESCRIPTION_FORCE_TEMPORARY_PASSWORD'), 'temporary_password', false));
 
@@ -976,7 +976,7 @@ class Module_admin_cns_members
         $target_path = get_temporary_upload_path('file');
 
         require_code('files_spreadsheets_read');
-        if (!is_spreadsheet_readable($_FILES['file']['name'])) {
+        if (!Source_spreadsheet_reader::is_spreadsheet_readable($_FILES['file']['name'])) {
             unlink($target_path);
             sync_file($target_path);
             warn_exit(do_lang_tempcode('UNKNOWN_FORMAT', escape_html(get_file_extension($_FILES['file']['name']))));

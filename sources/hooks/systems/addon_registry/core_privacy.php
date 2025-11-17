@@ -182,6 +182,7 @@ class Hook_addon_registry_core_privacy
             'sources/hooks/systems/tasks/privacy_download.php',
             'sources/hooks/systems/tasks/privacy_purge.php',
             'sources/privacy.php',
+            'sources/privacy_hook.php',
             'sources/telemetry.php',
             'sources_custom/hooks/systems/logs/.htaccess',
             'sources_custom/hooks/systems/logs/index.html',

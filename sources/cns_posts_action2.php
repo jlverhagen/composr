@@ -152,7 +152,7 @@ function cns_member_handle_promotion(?int $member_id = null)
                 require_lang('cns');
                 $subject = do_lang('RANK_PROMOTED_MAIL_SUBJECT', cns_get_group_name($_p), null, null, get_lang($member_id));
                 $mail = do_notification_lang('RANK_PROMOTED_MAIL', comcode_escape(cns_get_group_name($_p)), null, null, get_lang($member_id));
-                dispatch_notification('cns_group_status', null, $subject, $mail, [$member_id], A_FROM_SYSTEM_PRIVILEGED);
+                Source_notification_dispatcher::dispatch_notification('cns_group_status', null, $subject, $mail, [$member_id], A_FROM_SYSTEM_PRIVILEGED);
 
                 // Carefully update run-time caching
                 global $USERS_GROUPS_CACHE;
@@ -186,7 +186,7 @@ function cns_member_handle_promotion(?int $member_id = null)
                     require_lang('cns');
                     $subject = do_lang('RANK_PROMOTED_APPROVAL_MAIL_SUBJECT', cns_get_group_name($_p), null, null, get_lang($member_id));
                     $mail = do_notification_lang('RANK_PROMOTED_APPROVAL_MAIL', comcode_escape(cns_get_group_name($_p)), null, null, get_lang($member_id));
-                    dispatch_notification('cns_rank_promoted', null, $subject, $mail, [$member_id], A_FROM_SYSTEM_PRIVILEGED);
+                    Source_notification_dispatcher::dispatch_notification('cns_rank_promoted', null, $subject, $mail, [$member_id], A_FROM_SYSTEM_PRIVILEGED);
 
                     // Dispatch notification to usergroup leader and staff
                     $group_info = $GLOBALS['FORUM_DB']->query_select('f_groups', ['g_name', 'g_group_lead_member'], ['id' => $_p], '', 1);
@@ -200,11 +200,11 @@ function cns_member_handle_promotion(?int $member_id = null)
                         $leader_username = $GLOBALS['CNS_DRIVER']->get_member_row_field($leader_id, 'm_username');
                         $mail = do_notification_lang('GROUP_PROMOTION_REQUEST_MAIL', comcode_escape($member_to_approve_profile), comcode_escape($member_to_approve_username), [comcode_escape($url), comcode_escape($group_name), comcode_escape($leader_username)], get_lang($leader_id));
                         $subject = do_lang('GROUP_PROMOTION_REQUEST_MAIL_SUBJECT', null, null, null, get_lang($leader_id));
-                        dispatch_notification('cns_group_join_request', null, $subject, $mail, [$leader_id], A_FROM_SYSTEM_PRIVILEGED);
+                        Source_notification_dispatcher::dispatch_notification('cns_group_join_request', null, $subject, $mail, [$leader_id], A_FROM_SYSTEM_PRIVILEGED);
                     }
                     $mail = do_notification_lang('GROUP_PROMOTION_REQUEST_MAIL', comcode_escape($member_to_approve_profile), comcode_escape($member_to_approve_username), [comcode_escape($url), comcode_escape($group_name), (($leader_id !== null) ? comcode_escape($leader_username) : do_lang('NA'))], get_site_default_lang());
                     $subject = do_lang('GROUP_PROMOTION_REQUEST_MAIL_SUBJECT', null, null, null, get_site_default_lang());
-                    dispatch_notification('cns_group_join_request_staff', null, $subject, $mail, null, A_FROM_SYSTEM_PRIVILEGED, ['use_real_from' => true]);
+                    Source_notification_dispatcher::dispatch_notification('cns_group_join_request_staff', null, $subject, $mail, null, A_FROM_SYSTEM_PRIVILEGED, ['use_real_from' => true]);
                 }
             }
         }
@@ -292,7 +292,7 @@ function cns_send_topic_notification(string $url, int $topic_id, int $post_id, ?
         ];
     }
 
-    dispatch_notification('cns_topic', strval($topic_id), $subject, $mail, (empty($limit_to) && !$is_pt) ? null : $limit_to, $sender_member_id, ['no_notify_for__notification_code' => $no_notify_for__notification_code, 'no_notify_for__code_category' => $no_notify_for__code_category, 'extra' => $extra]);
+    Source_notification_dispatcher::dispatch_notification('cns_topic', strval($topic_id), $subject, $mail, (empty($limit_to) && !$is_pt) ? null : $limit_to, $sender_member_id, ['no_notify_for__notification_code' => $no_notify_for__notification_code, 'no_notify_for__code_category' => $no_notify_for__code_category, 'extra' => $extra]);
 }
 
 /**

@@ -40,8 +40,8 @@ class rss_test_set extends cms_test_case
     {
         $rssfeed = get_file_base() . '/_tests/assets/xml/rss.cms';
         $atomfeed = get_file_base() . '/_tests/assets/xml/atom.cms';
-        $rss = new CMS_RSS($rssfeed, true);
-        $atom = new CMS_RSS($atomfeed, true);
+        $rss = object_factory('Source_RSS', false, [$rssfeed, true]);
+        $atom = object_factory('Source_RSS', false, [$atomfeed, true]);
         $rsstitle = $rss->gleamed_items[0]['title'];
         $atomtitle = $atom->gleamed_items[0]['title'];
         $this->assertTrue('Item Example' == $rsstitle);

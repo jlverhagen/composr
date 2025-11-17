@@ -35,7 +35,7 @@
  *
  * @package core_themeing
  */
-abstract class CSSCleanup
+abstract class Source_CSS_cleanup
 {
     protected $theme = 'default';
     protected $css_files = [];
@@ -143,7 +143,7 @@ abstract class CSSCleanup
  *
  * @package core_themeing
  */
-class DirSimplify extends CSSCleanup
+class Source_dir_simplify extends Source_CSS_cleanup
 {
     protected $selectors = [];
 
@@ -178,7 +178,7 @@ class DirSimplify extends CSSCleanup
  *
  * @package core_themeing
  */
-class EmToPx extends CSSCleanup
+class Source_em_to_px extends Source_CSS_cleanup
 {
     protected $selectors = [];
 

@@ -33,7 +33,7 @@ class commandr_command_lang_strings_test_set extends cms_test_case
     {
         require_code('commandr');
         require_code('commandr_fs');
-        $fs = new Commandr_fs();
+        $fs = object_factory('Source_commandr_fs');
         $hooks = find_all_hook_obs('systems', 'commandr_commands', 'Hook_commandr_command_');
         foreach ($hooks as $hook => $ob) {
             if ($hook == 'help') {

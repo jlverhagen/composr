@@ -46,7 +46,7 @@ class lang_tokeniser_test_set extends cms_test_case
     public function testLangTokeniser()
     {
         require_code('lang_tokeniser_' . fallback_lang());
-        $tokeniser = object_factory('LangTokeniser_' . fallback_lang());
+        $tokeniser = object_factory('Source_lang_tokeniser_' . fallback_lang());
 
         // Querying...
 

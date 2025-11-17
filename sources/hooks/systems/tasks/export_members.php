@@ -96,11 +96,11 @@ class Hook_task_export_members
 
         require_code('files_spreadsheets_write');
         if ($file_type === null) {
-            $file_type = spreadsheet_write_default();
+            $file_type = Source_spreadsheet_writer::spreadsheet_write_default();
         }
         $filename = 'members-' . date('Y-m-d') . '.' . $file_type;
         $outfile_path = null;
-        $sheet_writer = spreadsheet_open_write($outfile_path, $filename, CMS_Spreadsheet_Writer::ALGORITHM_RAW);
+        $sheet_writer = Source_spreadsheet_writer::spreadsheet_open_write($outfile_path, $filename, Source_spreadsheet_writer::ALGORITHM_RAW);
 
         $fields = ['id', 'm_username', 'm_email_address', 'm_last_visit_time', 'm_cache_num_posts'];
         if (has_privilege(get_member(), 'assume_any_member')) {

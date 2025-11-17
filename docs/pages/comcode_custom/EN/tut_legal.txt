@@ -59,7 +59,7 @@ To meet GDPR you also need to consider:
 
 The extent of your precautions will likely depend on the nature of personal data you hold (GDPR says: "shall implement appropriate technical and organisational measures to ensure a level of security appropriate to the risk"). However, basic provisions are required for any website due to the storage of user IP addresses.
 
-There is a "Do Not Track" HTTP that many web browsers allow their users to enable. If you want to support the header, then you can do so using the [tt]{$DO_NOT_TRACK_REQUESTED}[/tt] symbol (Composr does not have implementation for it by default).
+There is a "Do Not Track" HTTP that many web browsers allow their users to enable. If you want to support the header, then you can do so using the [tt]{\$DO_NOT_TRACK_REQUESTED}[/tt] symbol (Composr does not have implementation for it by default).
 
 To meet Californian law a privacy policy must:
  - State what you do with a "Do Not Track" HTTP header (Composr does nothing out of the box, mainly because we do not do cross-site tracking, and also because the standard is not well-adopted)

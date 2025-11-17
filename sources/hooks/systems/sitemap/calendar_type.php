@@ -33,7 +33,7 @@
 /**
  * Hook class.
  */
-class Hook_sitemap_calendar_type extends Hook_sitemap_content
+class Hook_sitemap_calendar_type extends Source_hook_sitemap_content
 {
     protected $content_type = 'calendar_type';
     protected $screen_type = 'browse';

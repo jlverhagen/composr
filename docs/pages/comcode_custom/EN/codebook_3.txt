@@ -956,7 +956,7 @@ Considerations for design and themeing:
  - If you are adding new functionality and write new templates, it is best to save these into the default theme's [tt]templates_custom[/tt]/[tt]javascript_custom[/tt]/[tt]xml_custom[/tt]/[tt]text_custom[/tt]/[tt]css_custom[/tt] directories, so that your functionality works on all themes. If you are overriding default theme templates/CSS, it is then that you save them into your site's theme. A similar rule applies for custom images.
 
 Take particular care with Comcode pages:
- - If for some reason you don't want the WYSIWYG editor to run for a page (e.g. if it has a Google ad on, that can cause the editor to malfunction) then include the following hint in it: [tt]{$,page hint: no_wysiwyg}[/tt]
+ - If for some reason you don't want the WYSIWYG editor to run for a page (e.g. if it has a Google ad on, that can cause the editor to malfunction) then include the following hint in it: [tt]{\$,page hint: no_wysiwyg}[/tt]
  - Remember when uploading to a live site that you do not want to overwrite customised Comcode pages, or other files that may have since been changed. Be careful what you upload, and keep backups.
 
 It's overkill to apply the full range of Composr coding standards if you're writing PHP code for use on just one website. You shouldn't get into bad habits by skipping any of the conventions but some of our standards are particularly time consuming to meet, and in particular the following time savers can be applied:

@@ -852,7 +852,7 @@ function _chat_post_message_ajax(int $room_id, string $message, string $font, st
                         $username2 = $GLOBALS['FORUM_DRIVER']->get_username($allow);
                         $message = do_notification_lang('IM_INVITED_MESSAGE', get_timezoned_date_time(time()), $username, [$lobby_url, $username2, $message, strval($allow)], get_lang($allow));
 
-                        dispatch_notification('im_invited', null, $subject, $message, [$allow], $room_row['room_owner'], ['priority' => 1]);
+                        Source_notification_dispatcher::dispatch_notification('im_invited', null, $subject, $message, [$allow], $room_row['room_owner'], ['priority' => 1]);
                     }
                 }
             }
@@ -1261,7 +1261,7 @@ function chat_get_room_content(?int $room_id, array $_rooms, ?int $max_messages 
         $subject = do_lang('MEC_NOTIFICATION_MAIL_SUBJECT', get_site_name(), $their_username, $room_name, $room_language);
         $room_url = build_url(['page' => 'chat', 'type' => 'room', 'id' => $room_id], $zone, [], false, false, true);
         $mail = do_notification_lang('MEC_NOTIFICATION_MAIL', comcode_escape(get_site_name()), comcode_escape($their_username), [comcode_escape($room_name), $room_url->evaluate()], $room_language);
-        dispatch_notification('chat:member_entered_chatroom', strval($room_id), $subject, $mail);
+        Source_notification_dispatcher::dispatch_notification('chat:member_entered_chatroom', strval($room_id), $subject, $mail);
     }
 
     // Load all the room content from the db for one room and replace emoticons and banned words etc.

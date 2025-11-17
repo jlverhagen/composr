@@ -33,7 +33,7 @@
 /**
  * Hook class.
  */
-class Hook_admin_stats_cns_forum extends CMSStatsProvider
+class Hook_admin_stats_cns_forum extends Source_hook_stats_provider
 {
     /**
      * Find metadata about stats categories that are defined by this stats hook.
@@ -76,45 +76,45 @@ class Hook_admin_stats_cns_forum extends CMSStatsProvider
                 'label' => do_lang_tempcode('FORUM_TOPICS'),
                 'category' => 'forum',
                 'filters' => [
-                    'public_topics__day_range' => new CMSStatsDayRangeFilter('public_topics__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
+                    'public_topics__day_range' => new Source_stats_filter_day_range('public_topics__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
                 ],
-                'pivot' => new CMSStatsDatePivot('public_topics__pivot', $this->get_date_pivots(!$for_kpi)),
+                'pivot' => new Source_stats_filter_date_pivot('public_topics__pivot', $this->get_date_pivots(!$for_kpi)),
                 'support_kpis' => self::KPI_HIGH_IS_GOOD,
             ],
             'public_posts' => [
                 'label' => do_lang_tempcode('FORUM_POSTS'),
                 'category' => 'forum',
                 'filters' => [
-                    'public_posts__day_range' => new CMSStatsDayRangeFilter('public_posts__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
+                    'public_posts__day_range' => new Source_stats_filter_day_range('public_posts__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
                 ],
-                'pivot' => new CMSStatsDatePivot('public_posts__pivot', $this->get_date_pivots(!$for_kpi)),
+                'pivot' => new Source_stats_filter_date_pivot('public_posts__pivot', $this->get_date_pivots(!$for_kpi)),
                 'support_kpis' => self::KPI_HIGH_IS_GOOD,
             ],
             'topic_poll_votes' => [
                 'label' => do_lang_tempcode('TOPIC_POLL_VOTES'),
                 'category' => 'forum',
                 'filters' => [
-                    'topic_poll_votes__day_range' => new CMSStatsDayRangeFilter('topic_poll_votes__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
+                    'topic_poll_votes__day_range' => new Source_stats_filter_day_range('topic_poll_votes__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
                 ],
-                'pivot' => new CMSStatsDatePivot('topic_poll_votes__pivot', $this->get_date_pivots(!$for_kpi)),
+                'pivot' => new Source_stats_filter_date_pivot('topic_poll_votes__pivot', $this->get_date_pivots(!$for_kpi)),
                 'support_kpis' => self::KPI_HIGH_IS_GOOD,
             ],
             'private_topics' => [
                 'label' => do_lang_tempcode('PRIVATE_TOPICS'),
                 'category' => 'inter_member_engagement',
                 'filters' => [
-                    'private_topics__day_range' => new CMSStatsDayRangeFilter('private_topics__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
+                    'private_topics__day_range' => new Source_stats_filter_day_range('private_topics__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
                 ],
-                'pivot' => new CMSStatsDatePivot('private_topics__pivot', $this->get_date_pivots(!$for_kpi)),
+                'pivot' => new Source_stats_filter_date_pivot('private_topics__pivot', $this->get_date_pivots(!$for_kpi)),
                 'support_kpis' => self::KPI_HIGH_IS_GOOD,
             ],
             'private_posts' => [
                 'label' => do_lang_tempcode('PRIVATE_POSTS'),
                 'category' => 'inter_member_engagement',
                 'filters' => [
-                    'private_posts__day_range' => new CMSStatsDayRangeFilter('private_posts__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
+                    'private_posts__day_range' => new Source_stats_filter_day_range('private_posts__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
                 ],
-                'pivot' => new CMSStatsDatePivot('private_posts__pivot', $this->get_date_pivots(!$for_kpi)),
+                'pivot' => new Source_stats_filter_date_pivot('private_posts__pivot', $this->get_date_pivots(!$for_kpi)),
                 'support_kpis' => self::KPI_HIGH_IS_GOOD,
             ],
         ];

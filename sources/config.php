@@ -58,6 +58,10 @@ function init__config()
             }
         }
 
+        if (function_exists('persistent_cache_init')) {
+            persistent_cache_init();
+        }
+
         if ($PERSISTENT_CACHE === null) {
             // Load values from the smart cache if we can
             $VALUE_OPTIONS_CACHE = [];

@@ -33,123 +33,11 @@
  */
 
 /**
- * Load all breadcrumb substitutions and return them.
- *
- * @param  array $segments The default breadcrumb segments
- * @return array The adjusted breadcrumb segments
- */
-function load_breadcrumb_substitutions(array $segments) : array
-{
-    // Works by going through in left-to-right order, doing multiple sweeps until no more substitutions can be made.
-    // Only one substitution per rule is allowed.
-
-    static $substitutions = null;
-    if ($substitutions === null) {
-        $substitutions = persistent_cache_get('BREADCRUMBS_CACHE_' . user_lang());
-    }
-    if ($substitutions === null) {
-        $data = is_file(get_custom_file_base() . '/data_custom/xml_config/breadcrumbs.xml') ? cms_file_get_contents_safe(get_custom_file_base() . '/data_custom/xml_config/breadcrumbs.xml', FILE_READ_LOCK | FILE_READ_BOM) : false;
-        if ($data === false) {
-            $data = is_file(get_file_base() . '/data/xml_config/breadcrumbs.xml') ? cms_file_get_contents_safe(get_file_base() . '/data/xml_config/breadcrumbs.xml', FILE_READ_LOCK | FILE_READ_BOM) : false;
-        }
-        if ($data === false) {
-            $data = '';
-        }
-
-        if (trim($data) == '') {
-            persistent_cache_set('BREADCRUMBS_CACHE_' . user_lang(), []);
-
-            return $segments;
-        }
-
-        $loader = new Breadcrumb_substitution_loader();
-        $substitutions = $loader->go($data);
-
-        persistent_cache_set('BREADCRUMBS_CACHE_' . user_lang(), $substitutions);
-    }
-
-    $segments_new = [];
-    $done_one = false;
-    $final = false;
-    foreach ($segments as $i => $segment) { // Loop by active breadcrumb segments
-        $include_self = true;
-
-        if (!$done_one && $segment[0] !== '') {
-            if ($segment[0] === null) {
-                list($segment_zone, $segment_attributes, $segment_hash) = [null, null, null]; // active page
-            } else {
-                list($segment_zone, $segment_attributes, $segment_hash) = page_link_decode($segment[0]);
-            }
-
-            foreach ($substitutions as $j => $substitution_details) { // Loop by substitutions
-                if ($substitution_details !== null) {
-                    list($substitution_match_key, $substitution_label, $substitution_links, $substitution_include_self, $substitution_final) = $substitution_details;
-
-                    if ($segment[0] === null) {
-                        $does_match = match_key_match($substitution_match_key, false);
-                    } else {
-                        if (($substitution_match_key[0][0] == 'site') && ($segment_zone == '') || ($substitution_match_key[0][0] == '') && ($segment_zone == 'site')) {
-                            // Special handling, we don't want single public zone option (single_public_zone) to be too "smart" and apply a rule intended for when that option is off
-                            continue;
-                        }
-
-                        $does_match = isset($segment_attributes['page']) && match_key_match($substitution_match_key, false, $segment_attributes, $segment_zone, $segment_attributes['page']);
-                    }
-
-                    if ($does_match) {
-                        if (!$done_one) {
-                            // New stem found
-                            $segments_new_bak = $segments_new;
-                            $segments_new = [];
-                            foreach ($substitution_links as $new_segment) {
-                                if ((empty($new_segment[0])) && (empty($new_segment[1]))) { // <link /> indicating to keep existing links on tail, possibly new links on head
-                                    $segments_new = array_merge($segments_new, $segments_new_bak);
-                                } else {
-                                    $segments_new[] = $new_segment;
-                                }
-                            }
-
-                            $done_one = true;
-                        }
-
-                        if ($substitution_label !== null) {
-                            if ($segment[0] === null) { // New label for active page specified here?
-                                $GLOBALS['BREADCRUMB_SET_SELF'] = $substitution_label;
-                            } elseif (!isset($segments[$i + 1])) { // New label for last segment specified here?
-                                $segment[1] = $substitution_label;
-                            }
-                        }
-
-                        $substitutions[$j] = null; // Stop loops when recursing
-
-                        if ($substitution_final) {
-                            $final = true;
-                        }
-
-                        $include_self = $substitution_include_self;
-                    }
-                }
-            }
-        }
-
-        if ($include_self) {
-            $segments_new[] = $segment;
-        }
-    }
-
-    if (($done_one) && (!$final)) {
-        return load_breadcrumb_substitutions($segments_new); // Try a new sweep
-    }
-
-    return $segments_new;
-}
-
-/**
  * Breadcrumb composition class.
  *
  * @package breadcrumbs
  */
-class Breadcrumb_substitution_loader
+class Source_breadcrumb_substitution_loader
 {
     // Used during parsing
     private $tag_stack;
@@ -158,6 +46,118 @@ class Breadcrumb_substitution_loader
     private $substitution_current_links;
     private $substitutions; // Output
     private $substitution_current_match_key;
+
+    /**
+     * Load all breadcrumb substitutions and return them.
+     *
+     * @param  array $segments The default breadcrumb segments
+     * @return array The adjusted breadcrumb segments
+     */
+    public static function load_breadcrumb_substitutions(array $segments) : array
+    {
+        // Works by going through in left-to-right order, doing multiple sweeps until no more substitutions can be made.
+        // Only one substitution per rule is allowed.
+
+        static $substitutions = null;
+        if ($substitutions === null) {
+            $substitutions = persistent_cache_get('BREADCRUMBS_CACHE_' . user_lang());
+        }
+        if ($substitutions === null) {
+            $data = is_file(get_custom_file_base() . '/data_custom/xml_config/breadcrumbs.xml') ? cms_file_get_contents_safe(get_custom_file_base() . '/data_custom/xml_config/breadcrumbs.xml', FILE_READ_LOCK | FILE_READ_BOM) : false;
+            if ($data === false) {
+                $data = is_file(get_file_base() . '/data/xml_config/breadcrumbs.xml') ? cms_file_get_contents_safe(get_file_base() . '/data/xml_config/breadcrumbs.xml', FILE_READ_LOCK | FILE_READ_BOM) : false;
+            }
+            if ($data === false) {
+                $data = '';
+            }
+
+            if (trim($data) == '') {
+                persistent_cache_set('BREADCRUMBS_CACHE_' . user_lang(), []);
+
+                return $segments;
+            }
+
+            $loader = object_factory('Source_breadcrumb_substitution_loader');
+            $substitutions = $loader->go($data);
+
+            persistent_cache_set('BREADCRUMBS_CACHE_' . user_lang(), $substitutions);
+        }
+
+        $segments_new = [];
+        $done_one = false;
+        $final = false;
+        foreach ($segments as $i => $segment) { // Loop by active breadcrumb segments
+            $include_self = true;
+
+            if (!$done_one && $segment[0] !== '') {
+                if ($segment[0] === null) {
+                    list($segment_zone, $segment_attributes, $segment_hash) = [null, null, null]; // active page
+                } else {
+                    list($segment_zone, $segment_attributes, $segment_hash) = page_link_decode($segment[0]);
+                }
+
+                foreach ($substitutions as $j => $substitution_details) { // Loop by substitutions
+                    if ($substitution_details !== null) {
+                        list($substitution_match_key, $substitution_label, $substitution_links, $substitution_include_self, $substitution_final) = $substitution_details;
+
+                        if ($segment[0] === null) {
+                            $does_match = match_key_match($substitution_match_key, false);
+                        } else {
+                            if (($substitution_match_key[0][0] == 'site') && ($segment_zone == '') || ($substitution_match_key[0][0] == '') && ($segment_zone == 'site')) {
+                                // Special handling, we don't want single public zone option (single_public_zone) to be too "smart" and apply a rule intended for when that option is off
+                                continue;
+                            }
+
+                            $does_match = isset($segment_attributes['page']) && match_key_match($substitution_match_key, false, $segment_attributes, $segment_zone, $segment_attributes['page']);
+                        }
+
+                        if ($does_match) {
+                            if (!$done_one) {
+                                // New stem found
+                                $segments_new_bak = $segments_new;
+                                $segments_new = [];
+                                foreach ($substitution_links as $new_segment) {
+                                    if ((empty($new_segment[0])) && (empty($new_segment[1]))) { // <link /> indicating to keep existing links on tail, possibly new links on head
+                                        $segments_new = array_merge($segments_new, $segments_new_bak);
+                                    } else {
+                                        $segments_new[] = $new_segment;
+                                    }
+                                }
+
+                                $done_one = true;
+                            }
+
+                            if ($substitution_label !== null) {
+                                if ($segment[0] === null) { // New label for active page specified here?
+                                    $GLOBALS['BREADCRUMB_SET_SELF'] = $substitution_label;
+                                } elseif (!isset($segments[$i + 1])) { // New label for last segment specified here?
+                                    $segment[1] = $substitution_label;
+                                }
+                            }
+
+                            $substitutions[$j] = null; // Stop loops when recursing
+
+                            if ($substitution_final) {
+                                $final = true;
+                            }
+
+                            $include_self = $substitution_include_self;
+                        }
+                    }
+                }
+            }
+
+            if ($include_self) {
+                $segments_new[] = $segment;
+            }
+        }
+
+        if (($done_one) && (!$final)) {
+            return Source_breadcrumb_substitution_loader::load_breadcrumb_substitutions($segments_new); // Try a new sweep
+        }
+
+        return $segments_new;
+    }
 
     /**
      * Run the loader, to load up field-restrictions from the XML file.

@@ -367,7 +367,7 @@ function send_ticket_email(string $ticket_id, string $title, string $post, $tick
                 }
                 require_code('mail_integration');
                 require_code('tickets_email_integration');
-                $email_ob = new TicketsEmailIntegration();
+                $email_ob = object_factory('Source_tickets_email_integration');
                 $email_ob->outgoing_message($ticket_id, $ticket_url, $ticket_type_name, $title, $post, $uid, $uid_displayname, $uid_email, $staff_displayname);
             } elseif (!is_guest($uid)) {
                 $uid_lang = get_lang($uid);
@@ -394,7 +394,7 @@ function send_ticket_email(string $ticket_id, string $title, string $post, $tick
                     $uid_lang
                 );
 
-                dispatch_notification(
+                Source_notification_dispatcher::dispatch_notification(
                     'ticket_reply',
                     ($ticket_type_id === null) ? '' : strval($ticket_type_id),
                     $subject,
@@ -440,7 +440,7 @@ function send_ticket_email(string $ticket_id, string $title, string $post, $tick
             }
         }
 
-        dispatch_notification(
+        Source_notification_dispatcher::dispatch_notification(
             $new_ticket ? 'ticket_new_staff' : 'ticket_reply_staff',
             strval($ticket_type_id),
             $subject,
@@ -455,7 +455,7 @@ function send_ticket_email(string $ticket_id, string $title, string $post, $tick
             if ((get_option('ticket_mail_on') == '1') && (cron_installed()) && (function_exists('imap_open')) && ($new_ticket) && ($auto_created)) {
                 require_code('mail_integration');
                 require_code('tickets_email_integration');
-                $email_ob = new TicketsEmailIntegration();
+                $email_ob = object_factory('Source_tickets_email_integration');
                 $email_ob->outgoing_message($ticket_id, $ticket_url, $ticket_type_name, $title, $post, $uid, $uid_displayname, $uid_email, '', true);
             } else {
                 require_code('mail');
@@ -487,7 +487,7 @@ function send_ticket_email(string $ticket_id, string $title, string $post, $tick
             get_site_default_lang()
         );
 
-        dispatch_notification(
+        Source_notification_dispatcher::dispatch_notification(
             'ticket_assigned_staff',
             $ticket_id,
             $subject,

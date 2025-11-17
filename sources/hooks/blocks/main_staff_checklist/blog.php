@@ -89,7 +89,7 @@ class Hook_checklist_blog
         $config_url = config_option_url('blog_update_time');
 
         $url = build_url(['page' => 'cms_blogs', 'type' => 'add'], get_module_zone('cms_blogs'));
-        list($info, $seconds_due_in) = staff_checklist_time_ago_and_due($seconds_ago, $limit_hours);
+        list($info, $seconds_due_in) = Block_main_staff_checklist::staff_checklist_time_ago_and_due($seconds_ago, $limit_hours);
         $tpl = do_template('BLOCK_MAIN_STAFF_CHECKLIST_ITEM', [
             '_GUID' => 'a75d4a165aa5e16ad3aa06d2e0bab5db',
             'CONFIG_URL' => $config_url,

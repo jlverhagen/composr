@@ -71,7 +71,7 @@ class Hook_cron_tickets_email_integration
     {
         require_code('mail_integration');
         require_code('tickets_email_integration');
-        $email_ob = new TicketsEmailIntegration();
+        $email_ob = object_factory('Source_tickets_email_integration');
         $email_ob->incoming_scan();
     }
 }

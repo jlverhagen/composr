@@ -53,7 +53,7 @@ class Hook_task_import_members
         require_code('fields');
 
         require_code('hooks/systems/tasks/export_members');
-        $download_ob = new Hook_task_export_members();
+        $download_ob = object_factory('Hook_task_export_members', false, [], true);
 
         push_query_limiting(false);
 
@@ -84,7 +84,7 @@ class Hook_task_import_members
         $_spreadsheet_data = [];
 
         require_code('files_spreadsheets_read');
-        $sheet_reader = spreadsheet_open_read($path, $filename);
+        $sheet_reader = Source_spreadsheet_reader::spreadsheet_open_read($path, $filename);
         while (($line = $sheet_reader->read_row()) !== false) {
             task_log($this, 'Importing member row', $done);
 

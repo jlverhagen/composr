@@ -33,7 +33,7 @@
 /**
  * Hook class.
  */
-class Hook_content_meta_aware_catalogue_entry extends Hook_CMA
+class Hook_content_meta_aware_catalogue_entry extends Source_hook_CMA
 {
     /**
      * Get content type details.
@@ -54,8 +54,8 @@ class Hook_content_meta_aware_catalogue_entry extends Hook_CMA
 
             'content_type_label' => 'catalogues:CATALOGUE_ENTRY',
             'content_type_universal_label' => 'Catalogue entry',
-            'content_type_label_override' => 'CALL: generate_catalogue_entry_content_type_label',
-            'content_type_universal_label_override' => 'CALL: generate_catalogue_entry_content_type_universal_label',
+            'content_type_label_override' => 'CALL: Hook_content_meta_aware_catalogue_entry::generate_catalogue_entry_content_type_label',
+            'content_type_universal_label_override' => 'CALL: Hook_content_meta_aware_catalogue_entry::generate_catalogue_entry_content_type_universal_label',
 
             'db' => $GLOBALS['SITE_DB'],
             'extra_where_sql' => 'r.c_name NOT LIKE \'' . db_encode_like('\_%') . '\'',
@@ -73,13 +73,13 @@ class Hook_content_meta_aware_catalogue_entry extends Hook_CMA
             'parent_spec__field_name' => 'id',
             'category_is_string' => (get_value('disable_cat_cat_perms') === '1') ? true : [true, false],
 
-            'title_field' => ['id', 'c_name', 'CALL: generate_catalogue_entry_title'],
+            'title_field' => ['id', 'c_name', 'CALL: Hook_content_meta_aware_catalogue_entry::generate_catalogue_entry_title'],
             'title_field_dereference' => false,
             'title_field_post' => 'field_0',
             'description_field' => null,
             'description_field_dereference' => null,
             'description_field_supports_comcode' => null,
-            'image_field' => ['id', 'c_name', 'CALL: generate_catalogue_entry_image_url'],
+            'image_field' => ['id', 'c_name', 'CALL: Hook_content_meta_aware_catalogue_entry::generate_catalogue_entry_image_url'],
             'image_field_is_theme_image' => false,
             'alternate_icon_theme_image' => null,
 
@@ -198,185 +198,185 @@ class Hook_content_meta_aware_catalogue_entry extends Hook_CMA
     {
         return 'choose_catalogue_entry';
     }
-}
 
-/**
- * Find an entry title.
- *
- * @param  array $row Database row of entry
- * @param  integer $render_type A FIELD_RENDER_* constant
- * @param  boolean $resource_fs_style Whether to use the content API as resource-fs requires (may be slightly different)
- * @return ?mixed Content title (string or Tempcode, depending on $render_type) (null: could not generate)
- */
-function generate_catalogue_entry_title(array $row, int $render_type = 1, bool $resource_fs_style = false)
-{
-    if (!addon_installed('catalogues')) {
-        return null;
+    /**
+     * Find an entry title.
+     *
+     * @param  array $row Database row of entry
+     * @param  integer $render_type A FIELD_RENDER_* constant
+     * @param  boolean $resource_fs_style Whether to use the content API as resource-fs requires (may be slightly different)
+     * @return ?mixed Content title (string or Tempcode, depending on $render_type) (null: could not generate)
+     */
+    public static function generate_catalogue_entry_title(array $row, int $render_type = 1, bool $resource_fs_style = false)
+    {
+        if (!addon_installed('catalogues')) {
+            return null;
+        }
+
+        $catalogue_name = $row['c_name'];
+        $fields = null;
+
+        $unique_key_num = 0;
+        if ($resource_fs_style) {
+            $fields = $GLOBALS['SITE_DB']->query_select('catalogue_fields', ['*'], ['c_name' => $catalogue_name], 'ORDER BY cf_order,' . $GLOBALS['SITE_DB']->translate_field_ref('cf_name'));
+            foreach ($fields as $i => $f) {
+                if ($f['cf_type'] == 'codename') {
+                    $unique_key_num = $i;
+                    break;
+                }
+            }
+        }
+
+        require_code('catalogues');
+
+        $field_values = get_catalogue_entry_field_values($catalogue_name, $row['id'], [$unique_key_num], $fields);
+        if (!isset($field_values[$unique_key_num])) {
+            return null;
+        }
+        $field = $field_values[$unique_key_num];
+
+        $val = $field['cf_default'];
+        $val_is_escaped = false;
+        if (array_key_exists('effective_value_pure', $field)) {
+            $val = $field['effective_value_pure'];
+        } elseif (array_key_exists('effective_value', $field)) {
+            $val = $field['effective_value'];
+        }
+
+        if (array_key_exists('effective_value', $field)) { // Implies Comcode was involved
+            $val_is_escaped = true;
+        }
+
+        switch ($render_type) {
+            case FIELD_RENDER_COMCODE:
+                if ($val_is_escaped) {
+                    return $val;
+                }
+                return comcode_escape($val);
+
+            case FIELD_RENDER_HTML:
+                if (is_object($val)) {
+                    return $val;
+                }
+                return make_string_tempcode(escape_html($val));
+        }
+
+        // FIELD_RENDER_PLAIN:
+        if (is_object($val)) {
+            return strip_html($val->evaluate());
+        }
+        return $val;
     }
 
-    $catalogue_name = $row['c_name'];
-    $fields = null;
+    /**
+     * Find an entry image.
+     *
+     * @param  array $row Database row of entry
+     * @return URLPATH The image URL (blank: none)
+     */
+    public static function generate_catalogue_entry_image_url(array $row) : string
+    {
+        if (!addon_installed('catalogues')) {
+            return '';
+        }
 
-    $unique_key_num = 0;
-    if ($resource_fs_style) {
-        $fields = $GLOBALS['SITE_DB']->query_select('catalogue_fields', ['*'], ['c_name' => $catalogue_name], 'ORDER BY cf_order,' . $GLOBALS['SITE_DB']->translate_field_ref('cf_name'));
+        require_code('catalogues');
+
+        $unique_key_num = null;
+        $field_type = null;
+
+        $catalogue_name = $row['c_name'];
+
+        global $CAT_FIELDS_CACHE;
+        if (array_key_exists($catalogue_name, $CAT_FIELDS_CACHE)) {
+            $fields = $CAT_FIELDS_CACHE[$catalogue_name];
+        } else {
+            $fields = $GLOBALS['SITE_DB']->query_select('catalogue_fields', ['*'], ['c_name' => $catalogue_name], 'ORDER BY cf_order,' . $GLOBALS['SITE_DB']->translate_field_ref('cf_name'));
+            $CAT_FIELDS_CACHE[$catalogue_name] = $fields;
+        }
         foreach ($fields as $i => $f) {
-            if ($f['cf_type'] == 'codename') {
+            if (in_array($f['cf_type'], ['picture', 'theme_image', 'picture_multi'])) {
                 $unique_key_num = $i;
+                $field_type = $f['cf_type'];
                 break;
             }
         }
-    }
 
-    require_code('catalogues');
-
-    $field_values = get_catalogue_entry_field_values($catalogue_name, $row['id'], [$unique_key_num], $fields);
-    if (!isset($field_values[$unique_key_num])) {
-        return null;
-    }
-    $field = $field_values[$unique_key_num];
-
-    $val = $field['cf_default'];
-    $val_is_escaped = false;
-    if (array_key_exists('effective_value_pure', $field)) {
-        $val = $field['effective_value_pure'];
-    } elseif (array_key_exists('effective_value', $field)) {
-        $val = $field['effective_value'];
-    }
-
-    if (array_key_exists('effective_value', $field)) { // Implies Comcode was involved
-        $val_is_escaped = true;
-    }
-
-    switch ($render_type) {
-        case FIELD_RENDER_COMCODE:
-            if ($val_is_escaped) {
-                return $val;
-            }
-            return comcode_escape($val);
-
-        case FIELD_RENDER_HTML:
-            if (is_object($val)) {
-                return $val;
-            }
-            return make_string_tempcode(escape_html($val));
-    }
-
-    // FIELD_RENDER_PLAIN:
-    if (is_object($val)) {
-        return strip_html($val->evaluate());
-    }
-    return $val;
-}
-
-/**
- * Find an entry image.
- *
- * @param  array $row Database row of entry
- * @return URLPATH The image URL (blank: none)
- */
-function generate_catalogue_entry_image_url(array $row) : string
-{
-    if (!addon_installed('catalogues')) {
-        return '';
-    }
-
-    require_code('catalogues');
-
-    $unique_key_num = null;
-    $field_type = null;
-
-    $catalogue_name = $row['c_name'];
-
-    global $CAT_FIELDS_CACHE;
-    if (array_key_exists($catalogue_name, $CAT_FIELDS_CACHE)) {
-        $fields = $CAT_FIELDS_CACHE[$catalogue_name];
-    } else {
-        $fields = $GLOBALS['SITE_DB']->query_select('catalogue_fields', ['*'], ['c_name' => $catalogue_name], 'ORDER BY cf_order,' . $GLOBALS['SITE_DB']->translate_field_ref('cf_name'));
-        $CAT_FIELDS_CACHE[$catalogue_name] = $fields;
-    }
-    foreach ($fields as $i => $f) {
-        if (in_array($f['cf_type'], ['picture', 'theme_image', 'picture_multi'])) {
-            $unique_key_num = $i;
-            $field_type = $f['cf_type'];
-            break;
+        if ($unique_key_num === null) {
+            return '';
         }
+
+        $field_values = get_catalogue_entry_field_values($catalogue_name, $row['id'], [$unique_key_num], $fields);
+        $field = $field_values[$unique_key_num];
+        if (empty($field)) {
+            return '';
+        }
+
+        switch ($field_type) {
+            case 'picture':
+                $value = $field['effective_value_pure'];
+                if (url_is_local($value)) {
+                    $value = get_custom_base_url() . '/' . $value;
+                }
+                break;
+
+            case 'theme_image':
+                $value = find_theme_image($field['effective_value_pure'], true);
+                break;
+
+            case 'picture_multi':
+                $_value = explode("\n", $field['effective_value_pure']);
+                $value = $_value[0];
+                if (url_is_local($value)) {
+                    $value = get_custom_base_url() . '/' . $value;
+                }
+                break;
+        }
+
+        return $value;
     }
 
-    if ($unique_key_num === null) {
-        return '';
+    /**
+     * Find an entry content-type language string label.
+     *
+     * @param  array $row Database row of entry
+     * @return Tempcode Label
+     */
+    public static function generate_catalogue_entry_content_type_label(array $row) : object
+    {
+        if (!addon_installed('catalogues')) {
+            return new Tempcode();
+        }
+
+        if (!array_key_exists('c_name', $row)) {
+            return do_lang_tempcode('catalogues:CATALOGUE_ENTRY');
+        }
+
+        require_code('catalogues');
+
+        $catalogue = load_catalogue_row($row['c_name']);
+        return do_lang_tempcode('catalogues:CATALOGUE_GENERIC', escape_html(get_translated_text($catalogue['c_title'])));
     }
 
-    $field_values = get_catalogue_entry_field_values($catalogue_name, $row['id'], [$unique_key_num], $fields);
-    $field = $field_values[$unique_key_num];
-    if (empty($field)) {
-        return '';
+    /**
+     * Find an entry content-type universal label (doesn't depend on language pack).
+     *
+     * @param  array $row Database row of entry
+     * @return string Label
+     */
+    public static function generate_catalogue_entry_content_type_universal_label(array $row) : string
+    {
+        if (!addon_installed('catalogues')) {
+            return 'Catalogue entry';
+        }
+
+        if (!array_key_exists('c_name', $row)) {
+            return 'Catalogue entry';
+        }
+
+        require_code('catalogues');
+
+        $catalogue = load_catalogue_row($row['c_name']);
+        return get_translated_text($catalogue['c_title']) . ' entry';
     }
-
-    switch ($field_type) {
-        case 'picture':
-            $value = $field['effective_value_pure'];
-            if (url_is_local($value)) {
-                $value = get_custom_base_url() . '/' . $value;
-            }
-            break;
-
-        case 'theme_image':
-            $value = find_theme_image($field['effective_value_pure'], true);
-            break;
-
-        case 'picture_multi':
-            $_value = explode("\n", $field['effective_value_pure']);
-            $value = $_value[0];
-            if (url_is_local($value)) {
-                $value = get_custom_base_url() . '/' . $value;
-            }
-            break;
-    }
-
-    return $value;
-}
-
-/**
- * Find an entry content-type language string label.
- *
- * @param  array $row Database row of entry
- * @return Tempcode Label
- */
-function generate_catalogue_entry_content_type_label(array $row) : object
-{
-    if (!addon_installed('catalogues')) {
-        return new Tempcode();
-    }
-
-    if (!array_key_exists('c_name', $row)) {
-        return do_lang_tempcode('catalogues:CATALOGUE_ENTRY');
-    }
-
-    require_code('catalogues');
-
-    $catalogue = load_catalogue_row($row['c_name']);
-    return do_lang_tempcode('catalogues:CATALOGUE_GENERIC', escape_html(get_translated_text($catalogue['c_title'])));
-}
-
-/**
- * Find an entry content-type universal label (doesn't depend on language pack).
- *
- * @param  array $row Database row of entry
- * @return string Label
- */
-function generate_catalogue_entry_content_type_universal_label(array $row) : string
-{
-    if (!addon_installed('catalogues')) {
-        return 'Catalogue entry';
-    }
-
-    if (!array_key_exists('c_name', $row)) {
-        return 'Catalogue entry';
-    }
-
-    require_code('catalogues');
-
-    $catalogue = load_catalogue_row($row['c_name']);
-    return get_translated_text($catalogue['c_title']) . ' entry';
 }

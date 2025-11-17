@@ -1086,7 +1086,7 @@ function cns_upgrade() : bool
         $GLOBALS['FORUM_DB'] = $GLOBALS['SITE_DB'];
 
         require_code('forum/cns');
-        $GLOBALS['FORUM_DRIVER'] = object_factory('Forum_driver_cns');
+        $GLOBALS['FORUM_DRIVER'] = object_factory('Source_forum_driver_cns');
         $GLOBALS['FORUM_DRIVER']->db = $GLOBALS['SITE_DB'];
 
         require_code('cns_install');

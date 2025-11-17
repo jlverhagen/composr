@@ -33,7 +33,7 @@
 /**
  * Hook class.
  */
-class Hook_admin_stats_downloads extends CMSStatsProvider
+class Hook_admin_stats_downloads extends Source_hook_stats_provider
 {
     /**
      * Find metadata about stats graphs that are provided by this stats hook.
@@ -56,10 +56,10 @@ class Hook_admin_stats_downloads extends CMSStatsProvider
                 'label' => do_lang_tempcode('COUNT_DOWNLOADS'),
                 'category' => 'feedback_and_engagement',
                 'filters' => [
-                    'downloads__day_range' => new CMSStatsDayRangeFilter('downloads__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
-                    'downloads__country' => has_geolocation_data() ? new CMSStatsCountryFilter('downloads__country', do_lang_tempcode('VISITOR_COUNTRY')) : null,
+                    'downloads__day_range' => new Source_stats_filter_day_range('downloads__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
+                    'downloads__country' => has_geolocation_data() ? new Source_stats_filter_country('downloads__country', do_lang_tempcode('VISITOR_COUNTRY')) : null,
                 ],
-                'pivot' => new CMSStatsDatePivot('downloads__pivot', $this->get_date_pivots(!$for_kpi)),
+                'pivot' => new Source_stats_filter_date_pivot('downloads__pivot', $this->get_date_pivots(!$for_kpi)),
                 'support_kpis' => self::KPI_HIGH_IS_GOOD,
             ],
         ];
