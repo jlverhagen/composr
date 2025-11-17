@@ -37,7 +37,7 @@
  */
 function init__caches()
 {
-    require_code('Self_learning_cache');
+    require_code('self_learning_cache');
 
     global $BLOCK_CACHE_ON_CACHE;
     $BLOCK_CACHE_ON_CACHE = null;
