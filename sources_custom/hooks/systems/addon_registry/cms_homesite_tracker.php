@@ -484,16 +484,24 @@ class Hook_addon_registry_cms_homesite_tracker
                         continue;
                     }
 
+                    $steps_to_reproduce = '';
+                    foreach (explode("\n", $bug_info[0]['steps_to_reproduce']) as $i => $step_to_reproduce) {
+                        if ($i > 0) {
+                            $steps_to_reproduce .= "\n";
+                        }
+                        $steps_to_reproduce .= $step_to_reproduce . '{$,page hint: render_raw}';
+                    }
+
                     $ids = create_tracker_issue(
                         $row['version'],
                         $row['summary'],
                         isset($severity_map[$row['severity']]) ? $severity_map[$row['severity']] : 'feature',
-                        $bug_info[0]['description'],
-                        $bug_info[0]['additional_information'],
+                        $bug_info[0]['description'] . '{$,page hint: render_raw}',
+                        $bug_info[0]['additional_information'] . '{$,page hint: render_raw}',
                         $category_info[0]['name'],
                         isset($project_map[$row['project_id']]) ? $project_map[$row['project_id']] : $project_map[1],
                         (($row['handler_id'] != 0) && (!is_guest($row['handler_id']))) ? $row['handler_id'] : null,
-                        $bug_info[0]['steps_to_reproduce'],
+                        $steps_to_reproduce,
                         isset($resolution_map[$row['resolution']]) ? $resolution_map[$row['resolution']] : 'completed',
                         $row['date_submitted'],
                         $row['reporter_id'],

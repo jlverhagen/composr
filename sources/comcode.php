@@ -239,8 +239,17 @@ function comcode_to_tempcode(string $comcode, ?int $source_member = null, bool $
         // Strip all page-hint markers from the text so they are not rendered
         $text = preg_replace('#\{\$,page hint:[^}]*\}#', '', $comcode);
 
-        // Entity-encode the entire text so nothing is processed (including HTML by the browser)
-        $ret = make_string_tempcode(escape_html($text));
+        // Entity-encode the entire text so nothing is processed except line breaks and paragraphs
+        $text = str_replace("\n", '<br />', escape_html($text));
+        $to_process = [
+            htmlspecialchars('<br />', ENT_QUOTES | ENT_SUBSTITUTE) => '<br />',
+            htmlspecialchars('<p>', ENT_QUOTES | ENT_SUBSTITUTE) => '<p>',
+            htmlspecialchars('</p>', ENT_QUOTES | ENT_SUBSTITUTE) => '</p>',
+        ];
+        $text = str_replace(array_keys($to_process), array_values($to_process), $text);
+
+        $ret = make_string_tempcode($text);
+
         if ($may_cache) {
             $cache[$source_member][$as_admin][$comcode] = $ret;
         }
@@ -309,7 +318,12 @@ function strip_comcode(string $in, bool $for_extract = false, array $tags_to_pre
         return $done[$sz];
     }
 
-    $input_text = $text;
+    // If the render_raw hint is provided, then we want the text to render exactly as-is; do no stripping (except to remove the hint)
+    if (strpos($in, '{$,page hint: render_raw}') !== false) {
+        $text = str_replace('{$,page hint: render_raw}', '', $in);
+        $done[$sz] = $text;
+        return $done[$sz];
+    }
 
     $matches = [];
     if (preg_match('#^(\[semihtml\])?([\w\-\(\) \.,:;/"\'\!\?]*)(\[/semihtml\])?$#', $text, $matches) != 0) {
