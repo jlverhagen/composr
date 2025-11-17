@@ -666,7 +666,7 @@ function autogenerate_new_url_moniker(array $ob_info, array $url_parts, string $
  * @param  ID_TEXT $type Screen type code
  * @param  ID_TEXT $id Resource ID
  * @param  ID_TEXT $zone The URL zone name (only used for Comcode Page URL monikers)
- * @param  string $moniker_src String from which a moniker will be chosen (may not be blank)
+ * @param  string $moniker_src String from which a moniker will be chosen (must not be blank if $moniker is not set)
  * @param  boolean $is_new Whether we are sure this is a new moniker (makes things more efficient, saves a query)
  * @param  ?string $moniker Actual moniker to use (null: generate from $moniker_src). Usually this is left null.
  * @return string The chosen moniker

@@ -1213,28 +1213,20 @@ function load_moniker_hooks()
             return;
         }
 
-        $no_monikers_in = [ // FUDGE: Optimisation, not ideal! But it saves file loading and memory
-            'author' => true,
-            'banner' => true,
-            'banner_type' => true,
-            'calendar_type' => true,
-            'catalogue' => true,
-            'post' => true,
-            'wiki_page' => true,
-            'wiki_post' => true,
-        ];
-
         require_code('content');
 
         $CONTENT_OBS = [];
         $hooks = find_all_hooks('systems', 'content_meta_aware');
         foreach ($hooks as $hook => $sources_dir) {
-            if (isset($no_monikers_in[$hook])) {
-                continue;
-            }
-
             $path = get_file_base() . '/' . $sources_dir . '/hooks/systems/content_meta_aware/' . $hook . '.php';
             $info_function = extract_module_functions($path, ['info'], [], false, 'Hook_content_meta_aware_' . $hook);
+
+            // Can't find it? Fall back to getting the object instead (more memory intensive)
+            if (($info_function[0] === null) && function_exists('get_hook_ob')) {
+                $ob = get_hook_ob('systems', 'content_meta_aware', $hook, 'Hook_content_meta_aware_');
+                $info_function[0] = [[$ob, 'info'], []];
+            }
+
             if ($info_function[0] !== null) {
                 $ob_info = is_array($info_function[0]) ? call_user_func_array($info_function[0][0], $info_function[0][1]) : cms_eval($info_function[0], $path);
 
@@ -1252,6 +1244,8 @@ function load_moniker_hooks()
                     require_code('hooks/systems/content_meta_aware/' . $hook);
                 }
             }
+
+            unset($ob);
         }
 
         if (function_exists('persistent_cache_set')) {
@@ -1292,7 +1286,7 @@ function find_id_moniker(array $url_parts, string $zone, bool $search_redirects 
         if (($page != DEFAULT_ZONE_PAGE_NAME) && (@is_file(get_file_base() . '/' . $zone . '/pages/modules/' . $page . '.php'))) { // Wasteful of resources
             return null;
         }
-        if (($zone == '') && (get_option('single_public_zone') == '1')) {
+        if (($page != DEFAULT_ZONE_PAGE_NAME) && ($zone == '') && (get_option('single_public_zone') == '1')) {
             if (@is_file(get_file_base() . '/site/pages/modules/' . $page . '.php')) { // Wasteful of resources
                 return null;
             }
@@ -1341,6 +1335,10 @@ function find_id_moniker(array $url_parts, string $zone, bool $search_redirects 
     }
     $ob_info = isset($CONTENT_OBS[$looking_for]) ? $CONTENT_OBS[$looking_for] : null;
     if ($ob_info === null) {
+        if ($page == 'catalogues') {
+            var_dump($CONTENT_OBS);
+            exit();
+        }
         return null;
     }
 

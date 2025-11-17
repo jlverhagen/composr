@@ -54,7 +54,7 @@ function escrow_create_sponsorship(int $bug_id, int $amount, ?int $creating_memb
     }
 
     $reason = 'Sponsored issue #' . strval($bug_id);
-    $agreement = 'This escrow shall be considered satisfied when [url="tracker issue #' . strval($bug_id) . '"]' . get_base_url() . '/tracker/view.php?id=' . strval($bug_id) . '[/url] has been resolved. The resolving member will receive the points escrowed. Should the issue be closed / not implemented, the escrow shall be considered cancelled and all points refunded.';
+    $agreement = 'This escrow shall be considered satisfied when [url="tracker issue #' . strval($bug_id) . '"]' . get_base_url() . '/catalogues/entry/tracker-' . strval($bug_id) . '.htm[/url] has been resolved. The resolving member will receive the points escrowed. Should the issue be closed / not implemented, the escrow shall be considered cancelled and all points refunded.';
 
     return escrow_points($creating_member, null, $amount, $reason, $agreement, null, 'tracker_issue', strval($bug_id));
 }

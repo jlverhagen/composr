@@ -445,7 +445,7 @@ class Module_admin_push_bugfix
             // Make tracker issue
             $tracker_id = $this->create_tracker_issue($version_dotted, $tracker_title, $tracker_message, $tracker_additional, $tracker_severity, $tracker_category, $tracker_project);
             if ($tracker_id !== null) {
-                $tracker_url = $REMOTE_BASE_URL . '/tracker/view.php?id=' . strval($tracker_id);
+                $tracker_url = $REMOTE_BASE_URL . '/catalogues/entry/tracker-' . strval($tracker_id) . '.htm';
                 $done[do_lang('PUSH_BUGFIX_CREATED_ISSUE')] = $tracker_url;
             } else {
                 $tracker_url = null;
@@ -456,7 +456,7 @@ class Module_admin_push_bugfix
             $tracker_comment_message = do_lang('PUSH_BUGFIX_TRACKER_COMMENT_MESSAGE', escape_html($tracker_title), escape_html($tracker_message), escape_html($tracker_additional));
             $tracker_post_id = $this->create_tracker_post($tracker_id, $tracker_comment_message, $version_dotted, $tracker_severity, $tracker_category, $tracker_project);
             if ($tracker_post_id !== null) {
-                $tracker_url = $REMOTE_BASE_URL . '/tracker/view.php?id=' . strval($tracker_id);
+                $tracker_url = $REMOTE_BASE_URL . '/catalogues/entry/tracker-' . strval($tracker_id) . '.htm';
                 $done[do_lang('PUSH_BUGFIX_RESPONDED_TO_TRACKER_ISSUE')] = $tracker_url;
             } else {
                 $tracker_url = null;

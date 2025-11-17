@@ -106,7 +106,7 @@ class __debrand_epic_test_set extends cms_test_case
             '/composr\.app/i' => [
                 '/' . preg_quote('define(\'DEFAULT_BRAND_URL\', \'https://composr.app\');', '/') . '/i', // Defining default brand URL
                 '/website_specific\/composr\.app\//', // TODO: #5720
-                '/' . preg_quote('https://composr.app/tracker/view.php?id=3470', '/') . '/', // Tracker issue in a comment
+                '/' . preg_quote('https://composr.app/catalogues/entry/tracker-3470.htm', '/') . '/', // Tracker issue in a comment
             ],
         ];
 

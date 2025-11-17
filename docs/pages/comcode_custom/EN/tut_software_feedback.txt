@@ -18,7 +18,7 @@ This might mean making a bug report, or logging a feature suggestion -- if somet
 
 [title="3"]The Report Issue Wizard[/title]
 
-The easiest way to report a bug or feature is to use our [page="site:report-issue"]report issue wizard[/page]. The wizard will ask you questions specific to your selections. The wizard will then create a tracker issue for you (a catalogue entry in our special tracker catalogue) and provide you a link so you can upload files / screenshots or post comments on it.
+The easiest way to report a bug or feature is to use our [page="_SEARCH:report-issue"]report issue wizard[/page]. The wizard will ask you questions specific to your selections. The wizard will then create a tracker issue for you (a catalogue entry in our special tracker catalogue) and provide you a link so you can upload files / screenshots or post comments on it.
 
 [title="3"]What to expect[/title]
 
@@ -79,7 +79,7 @@ This automatic reporting mechanism [b]should not[/b] be considered a substitute 
 
 [title="3"]Where to post[/title]
 
-The "correct" place is the [url="tracker"]https://composr.app/tracker/[/url] or through our [page="site:report-issue"]report issue wizard[/page].
+The "correct" place is the [url="tracker"]https://composr.app/tracker/[/url] or through our [page="_SEARCH:report-issue"]report issue wizard[/page].
 
 You could informally post an issue on the forum. But the developers don't promise to check the forum (and they may tell you to report your issue on the tracker anyway). The issue tracker is the best way for developers to keep issues organised. So it is highly recommended you post there.
 
@@ -407,12 +407,12 @@ Usually this is more of an issue of a specific configuration of Composr looking 
 
 [media width="100" thumb="0" float="right" framed="0"]themes/default/images/icons/status/inform.svg[/media]
 This is best shown by example. The developers got some very vague feedback, mentioned in passing in our chatroom. It was not mentioned, but we were able to guess that this related to some display issues on the Composr demo, and analysis (read: second guessing) led to some bug reports, that the developers could then resolve:
- - https://composr.app/tracker/view.php?id=1169
- - https://composr.app/tracker/view.php?id=1170
- - https://composr.app/tracker/view.php?id=1171
- - https://composr.app/tracker/view.php?id=1172
- - https://composr.app/tracker/view.php?id=1173
- - https://composr.app/tracker/view.php?id=1175
+ - https://composr.app/catalogues/entry/tracker-1169.htm
+ - https://composr.app/catalogues/entry/tracker-1170.htm
+ - https://composr.app/catalogues/entry/tracker-1171.htm
+ - https://composr.app/catalogues/entry/tracker-1172.htm
+ - https://composr.app/catalogues/entry/tracker-1173.htm
+ - https://composr.app/catalogues/entry/tracker-1175.htm
 
 This is exactly what the developers would like people to do directly. Isolate specific issues, then report them to us. We can then expedite the fixing of such issues very easily.
 

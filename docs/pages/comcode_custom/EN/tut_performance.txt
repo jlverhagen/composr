@@ -695,7 +695,7 @@ A proper load balancer is better than Round-Robin DNS as it can detect when serv
 
 Some people with very ambitious goals want to have multiple servers dotted around the world, able to operate in isolation to each other for maximum redundancy and performance. Priority-based geo-DNS resolution would be used for request routing.
 
-Composr can not currently support this, as ID numbers would conflict if database servers are not kept in strict sync with each other. We hope in a future version we can make changes for it to be possible (see https://composr.app/tracker/view.php?id=3147). 
+Composr can not currently support this, as ID numbers would conflict if database servers are not kept in strict sync with each other. We hope in a future version we can make changes for it to be possible (see https://composr.app/catalogues/entry/tracker-3147.htm). 
 
 [title="4"]Platform notes[/title]
 

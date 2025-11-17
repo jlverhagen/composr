@@ -125,7 +125,7 @@ if ($type == 'submit') {
     $decision_tree = [
         'submit' => [
             'title' => 'Issue Submitted',
-            'text' => 'Thank you for submitting an issue! Your issue is [url="#' . strval($tracker_id[1]) . '"]' . $BASE_URL . '/tracker/issue/' . strval($tracker_id[1]) . '.htm[/url] on the tracker. You can click the issue number to be directed to it. Be sure to save or bookmark the page for future reference.' . "\n\n" . 'If you have any screenshots or relevant files to attach to the issue (such as errors and stack traces), you can do so in a follow-up comment on the issue.',
+            'text' => 'Thank you for submitting an issue! Your issue is [url="#' . strval($tracker_id[1]) . '"]' . $BASE_URL . '/catalogues/entry/tracker-' . strval($tracker_id[1]) . '.htm[/url] on the tracker. You can click the issue number to be directed to it. Be sure to save or bookmark the page for future reference.' . "\n\n" . 'If you have any screenshots or relevant files to attach to the issue (such as errors and stack traces), you can do so in a follow-up comment on the issue.',
         ]
     ];
 

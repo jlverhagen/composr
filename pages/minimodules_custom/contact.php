@@ -113,7 +113,7 @@ $decision_tree = [
             //    Parameter             Value                                   Target
             ['service_type',  'Go to the community chatroom',              build_url(['page' => 'chat'], get_module_zone('chat'))],
             ['service_type',  'Go to the community forum',                 build_url(['page' => ''], 'forum')],
-            ['service_type',  'Report an issue or request a feature',      build_url(['page' => 'report-issue'], '')],
+            ['service_type',  'Report an issue or request a feature',      build_url(['page' => 'report_issue'], get_module_zone('report_issue'))],
             ['service_type',  'Send some general feedback',                build_url(['page' => 'tickets', 'type' => 'ticket', 'ticket_type' => 'Feedback'], get_module_zone('tickets'))],
             ['service_type',  'Contribute Composr code / implement a tracker issue',                   'contribute_code'],
             ['service_type',  'Submit a non-bundled addon or theme',       'addon'],

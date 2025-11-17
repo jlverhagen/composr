@@ -144,17 +144,17 @@ class Hook_addon_registry_cms_homesite_tracker
             'requires' => [
                 //'tickets',
                 //'ecommerce',
-                'points',
+                //'points',
                 //'Conversr',
                 //'core_all_icons',
                 'cms_homesite',
-                'PHP 7.4',
-                'MySQL',
             ],
             'recommends' => [
                 'stats',
                 'cms_release_build',
                 'composr_tutorials',
+                'tickets',
+                'points',
             ],
             'conflicts_with' => [],
             'previously_in_addon' => ['composr_homesite_support_credits'],
@@ -637,7 +637,7 @@ class Hook_addon_registry_cms_homesite_tracker
                 $start += $max;
             } while (count($rows) > 0);
 
-            // TODO step 8: Migrate tags
+            // step 8: Migrate tags
             $rows = $GLOBALS['SITE_DB']->query('SELECT `id`,`name` FROM mantis_tag_table');
             $tags = collapse_2d_complexity('id', 'name', $rows);
 

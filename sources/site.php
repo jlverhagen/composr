@@ -1518,7 +1518,7 @@ function request_page(string $codename, bool $required, ?string $zone = null, ?s
     }
 
     // Run hooks, if any exist
-    $hooks = find_all_hook_obs('systems', 'upon_page_load', 'Hook_upon_page_load');
+    $hooks = find_all_hook_obs('systems', 'upon_page_load', 'Hook_upon_page_load_');
     foreach ($hooks as $ob) {
         $ob->run($codename, $required, $zone, $page_type, $being_included, $details);
     }
