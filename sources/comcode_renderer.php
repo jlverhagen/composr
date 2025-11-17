@@ -454,6 +454,11 @@ function comcode_parse_error_exit(bool $preparse_mode, array $_message, int $pos
             }
         }
         if ($name === null) {
+            if (get_mass_import_mode()) {
+                $out = do_template('COMCODE_CRITICAL_PARSE_ERROR', ['_GUID' => 'TODO', 'LINE' => strval($line), 'MESSAGE' => $message, 'SOURCE' => $comcode]); // Won't parse, but we can't help it, so we will skip on
+                return $out;
+            }
+
             warn_exit(do_lang_tempcode('COMCODE_ERROR', $message, escape_html(strval($line))));
         }
     }
