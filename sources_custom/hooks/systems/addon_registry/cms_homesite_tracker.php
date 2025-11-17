@@ -484,24 +484,16 @@ class Hook_addon_registry_cms_homesite_tracker
                         continue;
                     }
 
-                    $steps_to_reproduce = '';
-                    foreach (explode("\n", $bug_info[0]['steps_to_reproduce']) as $i => $step_to_reproduce) {
-                        if ($i > 0) {
-                            $steps_to_reproduce .= "\n";
-                        }
-                        $steps_to_reproduce .= escape_html(comcode_escape($step_to_reproduce));
-                    }
-
                     $ids = create_tracker_issue(
                         $row['version'],
-                        escape_html(comcode_escape($row['summary'])),
+                        $row['summary'],
                         isset($severity_map[$row['severity']]) ? $severity_map[$row['severity']] : 'feature',
-                        escape_html(comcode_escape($bug_info[0]['description'])),
-                        escape_html(comcode_escape($bug_info[0]['additional_information'])),
+                        $bug_info[0]['description'],
+                        $bug_info[0]['additional_information'],
                         $category_info[0]['name'],
                         isset($project_map[$row['project_id']]) ? $project_map[$row['project_id']] : $project_map[1],
                         (($row['handler_id'] != 0) && (!is_guest($row['handler_id']))) ? $row['handler_id'] : null,
-                        $steps_to_reproduce,
+                        $bug_info[0]['steps_to_reproduce'],
                         isset($resolution_map[$row['resolution']]) ? $resolution_map[$row['resolution']] : 'completed',
                         $row['date_submitted'],
                         $row['reporter_id'],
