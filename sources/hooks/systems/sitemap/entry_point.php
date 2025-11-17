@@ -93,7 +93,7 @@ class Hook_sitemap_entry_point extends Source_hook_sitemap_base
         if ($details !== false) {
             $path = end($details);
             if ($details[0] == 'MODULES' || $details[0] == 'MODULES_CUSTOM') {
-                $functions = extract_module_functions(get_file_base() . '/' . $path, ['get_entry_points', 'get_wrapper_icon'], [
+                $functions = extract_class_functions(get_file_base() . '/' . $path, ['get_entry_points', 'get_wrapper_icon'], [
                     false, // $check_perms
                     $this->get_member($options), // $member_id
                     !$search_mode, // $support_crosslinks
@@ -187,7 +187,7 @@ class Hook_sitemap_entry_point extends Source_hook_sitemap_base
             $entry_point = $entry_points['_SEARCH:cms_catalogues:add_catalogue:_' . $content_type];
         } else {
             if ($row === null) {
-                $functions = extract_module_functions(get_file_base() . '/' . $path, ['get_entry_points', 'get_wrapper_icon'], [
+                $functions = extract_class_functions(get_file_base() . '/' . $path, ['get_entry_points', 'get_wrapper_icon'], [
                     $check_perms, // $check_perms
                     $this->get_member($options), // $member_id
                     false, //$support_crosslinks   Must be false so that things known to be cross-linked from elsewhere are not skipped

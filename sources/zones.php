@@ -1667,21 +1667,25 @@ function find_all_modules(string $zone) : array
 }
 
 /**
- * Extract code to execute the requested functions with the requested parameters from the module at the given path.
- * We used to actually load up the module, but it ate all our RAM when we did!
+ * Extract code to execute the requested functions with the requested parameters from the class at the given path.
+ * This is much more efficient than constructing a bunch of classes to execute specific functions on them.
+ * This function automatically handles class overrides when $path is a custom file.
+ * This does not work on the Source_standard_crud_module class; extract from the specific module instead.
+ * This does not work on classes that require parameters in their construct.
  *
- * @param  PATH $path The path to the module (or any PHP file with a class)
+ * @param  PATH $path The path to the PHP file with a class
  * @param  array $functions Array of functions to be executing
- * @param  array $params A list of parameters to pass to our functions
- * @param  boolean $prefer_direct_code_call Whether to do this "properly" (via proper OOP), which will consume more memory; it may have to recurse and do this anyway if it sees references to a parent class
- * @param  ?string $class_name Class name to use (null: autodetect, which is a little slower)
+ * @param  array $params A list of parameters to pass to each of our functions
+ * @param  boolean $prefer_direct_code_call Whether to do this "properly" (via proper OOP), which will consume more memory; it may have to recurse and do this anyway if it sees references to a parent or overridden class
+ * @param  ?string $class_name Class name to use; use full prefix and not the override "x" prefix (null: use the first defined class)
  * @return array A list of pieces of code to do the equivalent of executing the requested functions with the requested parameters
  */
-function extract_module_functions(string $path, array $functions, array $params = [], bool $prefer_direct_code_call = false, ?string $class_name = null) : array
+function extract_class_functions(string $path, array $functions, array $params = [], bool $prefer_direct_code_call = false, ?string $class_name = null) : array
 {
     global $SITE_INFO;
     $prefer_direct_code_call = $prefer_direct_code_call || ((isset($SITE_INFO['prefer_direct_code_call'])) && ($SITE_INFO['prefer_direct_code_call'] === '1'));
     if ($prefer_direct_code_call) {
+        // TODO: Put $CLASS_CACHE in persistent cache?
         global $CLASS_CACHE;
         if (isset($CLASS_CACHE[$path])) {
             $new_classes = $CLASS_CACHE[$path];
@@ -1689,11 +1693,14 @@ function extract_module_functions(string $path, array $functions, array $params 
             if ($class_name === null) {
                 $classes_before = get_declared_classes();
             }
+
             $require_path = preg_replace('#^' . preg_quote(get_file_base()) . '/#', '', preg_replace('#^' . preg_quote(get_file_base()) . '/((sources)|(sources_custom))/(.*)\.php#', '${4}', $path));
             require_code($require_path);
+
             if ($class_name === null) {
                 $classes_after = get_declared_classes();
             }
+
             if ($class_name === null) {
                 $new_classes = array_values(array_diff($classes_after, $classes_before));
                 if (count($new_classes) === 0) { // Ah, maybe this module already had require_code run for it
@@ -1708,6 +1715,7 @@ function extract_module_functions(string $path, array $functions, array $params 
             } else {
                 $new_classes = [$class_name];
             }
+
             $CLASS_CACHE[$path] = $new_classes;
         }
         if ((isset($new_classes[0])) && ($new_classes[0] === 'Source_standard_crud_module')) {
@@ -1716,16 +1724,35 @@ function extract_module_functions(string $path, array $functions, array $params 
         if ((isset($new_classes[0])) && ($new_classes[0] === 'Sx_standard_crud_module')) {
             array_shift($new_classes); // This is not the class we want
         }
+
+        $c = null;
+        $new_ob = null;
         if (isset($new_classes[0])) {
             $c = $new_classes[0];
-            $new_ob = new $c();
-        } else {
-            $new_ob = null;
+            $new_ob = object_factory($c, true, [], true);
         }
+
+        // Determine x-equivalent class if applicable
+        $alt_class = null;
+        $alt_ob = null;
+        if ($c !== null) {
+            $strip = strip_class_name($c);
+            if ($strip !== null) {
+                list($stripped, $prefix, $prefixes) = $strip;
+                if ($prefix === $prefixes[0]) {
+                    $alt_class = $prefixes[1] . $stripped;
+                    $alt_ob = object_factory($alt_class, true, [], true);
+                }
+            }
+        }
+
         $ret = [];
         foreach ($functions as $function) {
-            if (method_exists($new_ob, $function)) {
+            // Since we are using require_code, when a class override exists, the override will have the original name, and the original will have the "x" name. Prioritise "new_ob" which will either be the override, or the original if no override exists.
+            if ((is_object($new_ob)) && method_exists($new_ob, $function)) {
                 $ret[] = [[&$new_ob, $function], $params];
+            } elseif ((is_object($alt_ob)) && method_exists($alt_ob, $function)) {
+                $ret[] = [[&$alt_ob, $function], $params];
             } else {
                 $ret[] = null;
             }
@@ -1763,16 +1790,22 @@ function extract_module_functions(string $path, array $functions, array $params 
         }
 
         $file = cms_file_get_contents_safe($path, FILE_READ_UNIXIFIED_TEXT);
-        if ((strpos($path, '/modules_custom/') !== false) && (is_file(str_replace('/modules_custom/', '/modules/', $path))) && (strpos($file, "\nclass ") === false)) {
-            // Customised file is not a full class, so go to default file
-            $path = str_replace('/modules_custom/', '/modules/', $path);
-            $file = cms_file_get_contents_safe($path, FILE_READ_UNIXIFIED_TEXT);
+
+        foreach (['/modules_custom/' => '/modules/', '/sources_custom/' => '/sources/'] as $path_b => $path_replace) {
+            if ((strpos($path, $path_b) !== false) && (is_file(str_replace($path_b, $path_replace, $path))) && (strpos($file, "\nclass ") === false)) {
+                // Customised file likely does not have full classes; also include the original file
+                $path = str_replace($path_b, $path_replace, $path);
+                $file .= "\n" . '?' . '>' . "\n" . cms_file_get_contents_safe($path, FILE_READ_UNIXIFIED_TEXT);
+            }
         }
 
-        if (strpos($file, 'class Mx_') !== false) {
-            unset($file); // To save memory
+        // Special override classes; we have to prefer direct code call on this file if they exist
+        foreach (['Mx_', 'Sx_', 'Hx_', 'Bx_'] as $x_prefix) {
+            if (strpos($file, "\n" . 'class ' . $x_prefix) !== false) {
+                unset($file); // To save memory
 
-            return extract_module_functions($path, $functions, $params, true);
+                return extract_class_functions($path, $functions, $params, true, $class_name);
+            }
         }
     }
 
@@ -1787,7 +1820,7 @@ function extract_module_functions(string $path, array $functions, array $params 
         return array_fill(0, count($functions), null);
     }
     $pre = substr($file, 5, $pos - 5); // FUDGE. We assume any functions we need to pre-load precede any classes in the file
-    $pre = preg_replace('#(^|\n)function (\w+)\(.*#s', 'if (!function_exists(\'${1}\')) { ${0} }', $pre); // In case we end up extracting from this file more than once across multiple calls to extract_module_functions
+    $pre = preg_replace('#(^|\n)function (\w+)\(.*#s', 'if (!function_exists(\'${1}\')) { ${0} }', $pre); // In case we end up extracting from this file more than once across multiple calls to extract_class_functions
     if ($params !== null) {
         foreach ($params as $param) {
             if ($_params !== '') {
@@ -1830,8 +1863,9 @@ function extract_module_functions(string $path, array $functions, array $params 
             $new_func = str_replace('function ' . $function . '(', 'if (!function_exists(\'' . $function . $r . '\')) { function ' . $function . $r . '(', $func) . ' } return ' . filter_naughty_harsh($function) . $r . '(' . $_params . '); ';
             $out[] = $pre . "\n\n" . $new_func;
 
+            // We have to prefer direct code call if referencing the parent class in any way; we do not currently know the methods on the parent
             if ((strpos($new_func, 'parent::') !== false) || (strpos($new_func, '$this->') !== false)) {
-                return extract_module_functions($path, $functions, $params, true, $class_name);
+                return extract_class_functions($path, $functions, $params, true, $class_name);
             }
 
             $parse_error = false;
@@ -1845,8 +1879,9 @@ function extract_module_functions(string $path, array $functions, array $params 
                 $parse_error = true;
             }
 
+            // If we experience a parse error, then we need to try direct code calling
             if ($parse_error) {
-                return extract_module_functions($path, $functions, $params, true, $class_name);
+                return extract_class_functions($path, $functions, $params, true, $class_name);
             }
 
             $pre = ''; // Can only load that bit once

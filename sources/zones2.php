@@ -423,9 +423,9 @@ function upgrade_module(string $zone, string $module) : int
 
     $module_path = get_file_base() . '/' . _get_module_path($zone, $module);
 
-    $functions = extract_module_functions($module_path, ['info', 'install'], [$upgrade_from, $upgrade_from_hack]);
+    $functions = extract_class_functions($module_path, ['info', 'install'], [$upgrade_from, $upgrade_from_hack]);
     if (($functions[1] === null) && (strpos($module_path, '/modules_custom/') !== false)) {
-        $functions = extract_module_functions($module_path, ['info', 'install'], [$upgrade_from, $upgrade_from_hack]);
+        $functions = extract_class_functions($module_path, ['info', 'install'], [$upgrade_from, $upgrade_from_hack]);
     }
     if ($functions[0] === null) {
         $info = [];
@@ -505,9 +505,9 @@ function reinstall_module(string $zone, string $module) : bool
 
     $GLOBALS['SITE_DB']->query_delete('modules', ['module_the_name' => $module], '', 1);
 
-    $functions = extract_module_functions($module_path, ['info', 'install', 'uninstall']);
+    $functions = extract_class_functions($module_path, ['info', 'install', 'uninstall']);
     if (($functions[1] === null) && (strpos($module_path, '/modules_custom/') !== false)) {
-        $functions = extract_module_functions($module_path, ['info', 'install', 'uninstall']);
+        $functions = extract_class_functions($module_path, ['info', 'install', 'uninstall']);
     }
 
     // TODO: must be kept up to date via Source_standard_crud_module (but do not include min_cms_version nor max_cms_version, and addon should be NA)
@@ -603,9 +603,9 @@ function uninstall_module(string $zone, string $module)
     persistent_cache_delete('MODULES');
 
     if (file_exists($module_path)) {
-        $functions = extract_module_functions($module_path, ['uninstall']);
+        $functions = extract_class_functions($module_path, ['uninstall']);
         if (($functions[0] === null) && (strpos($module_path, '/modules_custom/') !== false)) {
-            $functions = extract_module_functions($module_path, ['uninstall']);
+            $functions = extract_class_functions($module_path, ['uninstall']);
         }
         if ($functions[0] === null) {
             return;
@@ -748,7 +748,7 @@ function upgrade_block(string $block) : int
 
     $block_path = _get_block_path($block);
 
-    $functions = extract_module_functions($block_path, ['info', 'install'], [$upgrade_from, $upgrade_from_hack]);
+    $functions = extract_class_functions($block_path, ['info', 'install'], [$upgrade_from, $upgrade_from_hack]);
     if ($functions[0] === null) {
         return 0;
     }
@@ -813,7 +813,7 @@ function reinstall_block(string $block) : bool
     require_code('files2');
     require_code('version');
 
-    $functions = extract_module_functions($block_path, ['info', 'install', 'uninstall']);
+    $functions = extract_class_functions($block_path, ['info', 'install', 'uninstall']);
     if ($functions[0] === null) {
         return false;
     }
@@ -885,7 +885,7 @@ function uninstall_block(string $block)
     $GLOBALS['SITE_DB']->query_delete('cache', ['cached_for' => $block]);
 
     if (file_exists($block_path)) {
-        $functions = extract_module_functions($block_path, ['uninstall']);
+        $functions = extract_class_functions($block_path, ['uninstall']);
         if ($functions[0] === null) {
             return;
         }
@@ -914,7 +914,7 @@ function extract_module_functions_page(string $zone, string $page, array $functi
 {
     $path = zone_black_magic_filterer(get_file_base() . '/' . filter_naughty_harsh($zone) . (($zone == '') ? '' : '/') . 'pages/modules_custom/' . filter_naughty_harsh($page) . '.php');
     if (file_exists($path)) {
-        $ret = extract_module_functions($path, $functions, $params);
+        $ret = extract_class_functions($path, $functions, $params);
         if (array_unique(array_values($ret)) != [null]) {
             return $ret;
         }
@@ -928,7 +928,7 @@ function extract_module_functions_page(string $zone, string $page, array $functi
         }
         return $ret;
     }
-    return extract_module_functions($path, $functions, $params);
+    return extract_class_functions($path, $functions, $params);
 }
 
 /**
@@ -939,7 +939,7 @@ function extract_module_functions_page(string $zone, string $page, array $functi
  */
 function extract_module_info(string $path) : ?array
 {
-    $functions = extract_module_functions($path, ['info']);
+    $functions = extract_class_functions($path, ['info']);
     if ($functions[0] === null) {
         return null;
     }

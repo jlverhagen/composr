@@ -187,7 +187,7 @@ abstract class Source_permissions_scanner
                 // Save memory compared to above commented code...
 
                 $path = get_file_base() . '/' . $place . '/hooks/systems/addon_registry/' . filter_naughty_harsh($hook) . '.php';
-                $_hook_bits = extract_module_functions($path, ['get_chmod_array']);
+                $_hook_bits = extract_class_functions($path, ['get_chmod_array']);
                 $_chmod = is_array($_hook_bits[0]) ? call_user_func_array($_hook_bits[0][0], $_hook_bits[0][1]) : cms_eval($_hook_bits[0], $path);
                 $chmod = array_merge($chmod, $_chmod);
             }

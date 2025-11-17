@@ -190,7 +190,7 @@ class Hook_sitemap_page extends Source_hook_sitemap_base
                         if (file_exists($path_addon)) {
                             require_lang('zones');
                             require_code('zones2');
-                            $functions = extract_module_functions($path_addon, ['get_description']);
+                            $functions = extract_class_functions($path_addon, ['get_description']);
                             $description = is_array($functions[0]) ? call_user_func_array($functions[0][0], $functions[0][1]) : cms_eval($functions[0], $path_addon);
                             $description = do_lang('FROM_ADDON', $package, $description);
                             $struct['description'] = comcode_to_tempcode($description);
@@ -245,7 +245,7 @@ class Hook_sitemap_page extends Source_hook_sitemap_base
             $use_page_groupings = (($options & SITEMAP_GEN_USE_PAGE_GROUPINGS) != 0);
             $use_page_groupings_be_deferential = (($options & SITEMAP_GEN_USE_PAGE_GROUPINGS) != 0) && (($options & SITEMAP_GEN_USE_PAGE_GROUPINGS_SUPPRESS) == 0);
 
-            $functions = extract_module_functions(get_file_base() . '/' . $path, ['get_entry_points', 'get_wrapper_icon'], [
+            $functions = extract_class_functions(get_file_base() . '/' . $path, ['get_entry_points', 'get_wrapper_icon'], [
                 $check_perms, // $check_perms
                 $this->get_member($options), // $member_id
                 $use_page_groupings, // $support_crosslinks

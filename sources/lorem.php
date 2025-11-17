@@ -1162,7 +1162,7 @@ function find_all_previews__by_screen() : array
     $hooks = find_all_hooks('systems', 'addon_registry');
     foreach ($hooks as $hook => $hook_dir) {
         $path = get_file_base() . '/' . $hook_dir . '/hooks/systems/addon_registry/' . filter_naughty_harsh($hook) . '.php';
-        $_hook_bits = extract_module_functions($path, ['tpl_previews', 'tpl_previews_extra'], [], false, 'Hook_addon_registry_' . $hook);
+        $_hook_bits = extract_class_functions($path, ['tpl_previews', 'tpl_previews_extra'], [], false, 'Hook_addon_registry_' . $hook);
 
         if (isset($_hook_bits[0])) {
             $previews = is_array($_hook_bits[0]) ? call_user_func_array($_hook_bits[0][0], $_hook_bits[0][1]) : cms_eval($_hook_bits[0], $path);

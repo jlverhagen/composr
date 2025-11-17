@@ -164,7 +164,7 @@ foreach (array_keys($hooks) as $hook) {
     if (!file_exists($path)) {
         $path = get_file_base() . '/sources/hooks/modules/admin_setupwizard/' . filter_naughty_harsh($hook) . '.php';
     }
-    $_hook_bits = extract_module_functions($path, ['get_current_settings']);
+    $_hook_bits = extract_class_functions($path, ['get_current_settings']);
     if ($_hook_bits[0] !== null) {
         if (is_array($_hook_bits[0])) {
             $settings = call_user_func_array($_hook_bits[0][0], $_hook_bits[0][1]);

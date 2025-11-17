@@ -768,7 +768,7 @@ function should_ignore_file(string $path, int $bitmask = 0) : bool
                 define('DEFAULT_ZONE_PAGE_NAME', 'home');
             }
             foreach ($hooks as $hook => $place) {
-                if (function_exists('extract_module_functions')) {
+                if (function_exists('extract_class_functions')) {
                     require_code('addons');
                     $hook_path = get_file_base() . '/' . $place . '/hooks/systems/addon_registry/' . filter_naughty_harsh($hook) . '.php';
                     $addon_info = read_addon_info($hook, false, null, null, $hook_path);

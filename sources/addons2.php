@@ -485,7 +485,7 @@ function find_addon_dependencies_on(string $addon_name) : array
             if (!$_found_hook) {
                 continue; // May have been uninstalled, find_all_hooks could have stale caching
             }
-            $_hook_bits = extract_module_functions($path, ['get_dependencies']);
+            $_hook_bits = extract_class_functions($path, ['get_dependencies']);
             if ($_hook_bits[0] === null) {
                 $dep = [];
             } else {
