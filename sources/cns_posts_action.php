@@ -80,12 +80,14 @@ function cns_check_post(string $post, ?int $topic_id = null, ?int $poster = null
     require_code('comcode_check');
     check_comcode($post, null, false, null, true);
 
-    if (strlen($post) == 0) {
-        warn_exit(do_lang_tempcode('cns:POST_TOO_SHORT'));
-    }
-    require_code('cns_groups');
-    if (strlen($post) > cns_get_member_best_group_property($poster, 'max_post_length_comcode')) {
-        warn_exit(make_string_tempcode(escape_html(do_lang('cns:POST_TOO_LONG'))));
+    if (!get_mass_import_mode()) {
+        if (strlen($post) == 0) {
+            warn_exit(do_lang_tempcode('cns:POST_TOO_SHORT'));
+        }
+        require_code('cns_groups');
+        if (strlen($post) > cns_get_member_best_group_property($poster, 'max_post_length_comcode')) {
+            warn_exit(make_string_tempcode(escape_html(do_lang('cns:POST_TOO_LONG'))));
+        }
     }
 
     if ($topic_id !== null) {
@@ -100,7 +102,9 @@ function cns_check_post(string $post, ?int $topic_id = null, ?int $poster = null
                 $last_posts[0]['p_posting_member'] = -1;
             }
             if (($last_posts[0]['p_posting_member'] == $poster) && (get_translated_text($last_posts[0]['p_post'], $GLOBALS['FORUM_DB']) == $post) && (get_param_integer('keep_debug_notifications', 0) != 1)) {
-                warn_exit(do_lang_tempcode('cns:DOUBLE_POST_PREVENTED'));
+                if (!get_mass_import_mode()) {
+                    warn_exit(do_lang_tempcode('cns:DOUBLE_POST_PREVENTED'));
+                }
             }
         }
 
