@@ -191,7 +191,7 @@ If you do not want Comcode conversion, you can either:[list="1"]
 [/code]
 [/list]
 
-[title="2"]Problem areas, and turning the editor off[/title]
+[title="2"]Problem areas: turning the editor off[/title]
 
 Sometimes WYSIWYG editing is more trouble than it's worth. When particularly complex layouts are produced, or code pasted from documents, it can still result messy and slow code; especially when content is long. This is particularly bad for websites that favour very high web standards (such as perfect WCAG accessibility), which will always need to have a degree of hand-coding in them, to maintain those high standards.
 
@@ -203,6 +203,15 @@ For these situations it is best to simply turn the WYSIWYG editor off. You can d
 [/code]
 
 If you turn off the WYSIWYG editor when editing something, Composr may actually add this automatically. You may notice then that the enable/disable button disappears from alongside that field. This is to stop other content editors going in, and then accidentally corrupting carefully constructed Comcode via WYSIWYG.
+
+[title="2"]Problem areas: raw text that might have HTML/Comcode/Tempcode[/title]
+
+If you want to render some text raw, that-is no Comcode or Tempcode processing is performed on it, and everything is entity-encoded so that browsers do not process anything that looks like HTML, then you can use the [tt]render_raw[/tt] page hint.
+
+To do this, you can tick (check) the "Render as raw text" box on the WYSIWYG editor. Or, put the following page hint comment in the text:
+[code="Tempcode"]
+{$,page hint: render_raw}
+[/code]
 
 [title="2"]CKEditor skins (advanced)[/title]
 

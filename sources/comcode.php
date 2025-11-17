@@ -234,6 +234,19 @@ function comcode_to_tempcode(string $comcode, ?int $source_member = null, bool $
         return $ret;
     }
 
+    // Are we requesting for raw rendering on this Comcode?
+    if (strpos($comcode, '{$,page hint: render_raw}') !== false) {
+        // Strip all page-hint markers from the text so they are not rendered
+        $text = preg_replace('#\{\$,page hint:[^}]*\}#', '', $comcode);
+
+        // Entity-encode the entire text so nothing is processed (including HTML by the browser)
+        $ret = make_string_tempcode(escape_html($text));
+        if ($may_cache) {
+            $cache[$source_member][$as_admin][$comcode] = $ret;
+        }
+        return $ret;
+    }
+
     // Optimised code path (still has to support emoticons though, as those are arbitrary)
     $possible_attachments = (!empty($_FILES));
     foreach ($_POST as $key => $value) {

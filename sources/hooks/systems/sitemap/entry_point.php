@@ -98,7 +98,7 @@ class Hook_sitemap_entry_point extends Source_hook_sitemap_base
                     $this->get_member($options), // $member_id
                     !$search_mode, // $support_crosslinks
                     !$search_mode // $be_deferential
-                ]);
+                ], true); // TODO: temporarily bypassing duplicate function error by doing a direct call
                 if ($functions[0] !== null) {
                     $entry_points = is_array($functions[0]) ? call_user_func_array($functions[0][0], $functions[0][1]) : eval($functions[0]);
                     if ($entry_points === null) {
