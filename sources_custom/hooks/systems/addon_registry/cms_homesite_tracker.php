@@ -419,6 +419,7 @@ class Hook_addon_registry_cms_homesite_tracker
             require_code('files2');
             require_code('cms_homesite_tracker');
             require_code('uploads');
+            require_code('comcode');
 
             require_lang('catalogues');
             require_lang('tracker');
@@ -458,8 +459,13 @@ class Hook_addon_registry_cms_homesite_tracker
             $severity_map = [
                 10 => 'feature',
                 20 => 'trivial',
+                30 => 'trivial', // Guess
+                40 => 'trivial', // Guess
                 50 => 'minor',
                 60 => 'major',
+                70 => 'major', // Guess
+                80 => 'major', // Guess
+                90 => 'security', // Guess
                 95 => 'security',
             ];
 
@@ -476,17 +482,25 @@ class Hook_addon_registry_cms_homesite_tracker
                         continue;
                     }
 
+                    $steps_to_reproduce = '';
+                    foreach (explode("\n", $bug_info[0]['steps_to_reproduce']) as $i => $step_to_reproduce) {
+                        if ($i > 0) {
+                            $steps_to_reproduce .= "\n";
+                        }
+                        $steps_to_reproduce .= html_to_comcode($step_to_reproduce);
+                    }
+
                     $ids = create_tracker_issue(
                         $row['version'],
-                        $row['summary'],
-                        $severity_map[$row['severity']],
-                        $bug_info[0]['description'],
-                        $bug_info[0]['additional_information'],
+                        comcode_escape(html_to_comcode($row['summary'])),
+                        isset($severity_map[$row['severity']]) ? $severity_map[$row['severity']] : 'feature',
+                        html_to_comcode($bug_info[0]['description']),
+                        html_to_comcode($bug_info[0]['additional_information']),
                         $category_info[0]['name'],
-                        $project_map[$row['project_id']],
+                        isset($project_map[$row['project_id']]) ? $project_map[$row['project_id']] : $project_map[1],
                         (($row['handler_id'] != 0) && (!is_guest($row['handler_id']))) ? $row['handler_id'] : null,
-                        $bug_info[0]['steps_to_reproduce'],
-                        $resolution_map[$row['resolution']],
+                        $steps_to_reproduce,
+                        isset($resolution_map[$row['resolution']]) ? $resolution_map[$row['resolution']] : 'completed',
                         $row['date_submitted'],
                         $row['reporter_id'],
                         $row['id']
