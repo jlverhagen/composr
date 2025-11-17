@@ -33,7 +33,7 @@
 /**
  * Hook class.
  */
-class Hook_content_meta_aware_news extends Hook_CMA
+class Hook_content_meta_aware_news extends Source_hook_CMA
 {
     /**
      * Get content type details.
@@ -74,7 +74,7 @@ class Hook_content_meta_aware_news extends Hook_CMA
             'description_field' => 'news',
             'description_field_dereference' => true,
             'description_field_supports_comcode' => true,
-            'image_field' => ['news_image_url', 'news_category', 'CALL: generate_news_image_url'],
+            'image_field' => ['news_image_url', 'news_category', 'CALL: Hook_content_meta_aware_news::generate_news_image_url'],
             'image_field_is_theme_image' => false,
             'alternate_icon_theme_image' => null,
 
@@ -161,29 +161,29 @@ class Hook_content_meta_aware_news extends Hook_CMA
 
         return create_selection_list_news(($id === null) ? null : intval($id));
     }
-}
 
-/**
- * Find an entry image.
- *
- * @param  array $row Database row of entry
- * @return string The image URL
- */
-function generate_news_image_url(array $row) : string
-{
-    if (!addon_installed('news')) {
-        return '';
-    }
-
-    if ($row['news_image_url'] != '') {
-        $ret = $row['news_image_url'];
-        if (url_is_local($ret)) {
-            $ret = get_custom_base_url() . '/' . $ret;
+    /**
+     * Find an entry image.
+     *
+     * @param  array $row Database row of entry
+     * @return string The image URL
+     */
+    public static function generate_news_image_url(array $row) : string
+    {
+        if (!addon_installed('news')) {
+            return '';
         }
-        return $ret;
-    }
 
-    require_code('news');
-    $news_cat_row = get_news_cat_row($row['news_category']);
-    return get_news_category_image_url($news_cat_row['nc_img']);
+        if ($row['news_image_url'] != '') {
+            $ret = $row['news_image_url'];
+            if (url_is_local($ret)) {
+                $ret = get_custom_base_url() . '/' . $ret;
+            }
+            return $ret;
+        }
+
+        require_code('news');
+        $news_cat_row = get_news_cat_row($row['news_category']);
+        return get_news_category_image_url($news_cat_row['nc_img']);
+    }
 }

@@ -96,7 +96,7 @@ class _backups_test_set extends cms_test_case
         $password = (isset($SITE_INFO['mysql_root_password'])) ? $SITE_INFO['mysql_root_password'] : get_db_site_password();
 
         require_code('database/' . get_db_type());
-        $db_driver = object_factory('Database_Static_' . get_db_type(), false, [$table_prefix]);
+        $db_driver = object_factory('Source_database_static_' . get_db_type(), false, [$table_prefix]);
 
         if ($can_use_own_db) {
             $db = new DatabaseConnector(get_db_site(), get_db_site_host(), $username, $password, $table_prefix, false, $db_driver); // Use site DB for actual connection because our test DB might not yet exist

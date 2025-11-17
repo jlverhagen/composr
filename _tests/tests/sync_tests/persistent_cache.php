@@ -37,8 +37,8 @@ class persistent_cache_test_set extends cms_test_case
             global $PERSISTENT_CACHE;
             $cache = $PERSISTENT_CACHE;
         } else {
-            require_code('persistent_caching/filesystem');
-            $cache = new Persistent_caching_filesystem();
+            require_code('hooks/systems/persistent_caching/filesystem');
+            $cache = new Hook_persistent_cache_filesystem();
         }
 
         // Test value lifetimes

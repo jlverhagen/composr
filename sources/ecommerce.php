@@ -2002,7 +2002,7 @@ function send_transaction_mails(string $txn_id, string $item_name, bool $shipped
         $_body = do_notification_template('ECOM_PAYMENT_SENT_MAIL', $parameter_map, get_lang($member_id), false, null, '.txt', 'text');
         $body = $_body->evaluate(get_lang($member_id));
 
-        dispatch_notification('payment_received', null, $subject, $body, [$member_id], A_FROM_SYSTEM_PRIVILEGED);
+        Source_notification_dispatcher::dispatch_notification('payment_received', null, $subject, $body, [$member_id], A_FROM_SYSTEM_PRIVILEGED);
     }
 
     // Send completed notification to staff...
@@ -2012,7 +2012,7 @@ function send_transaction_mails(string $txn_id, string $item_name, bool $shipped
     $_body = do_notification_template('ECOM_PAYMENT_RECEIVED_MAIL', $parameter_map, get_site_default_lang(), false, null, '.txt', 'text');
     $body = $_body->evaluate(get_site_default_lang());
 
-    dispatch_notification('payment_received_staff', null, $subject, $body, null, A_FROM_SYSTEM_PRIVILEGED);
+    Source_notification_dispatcher::dispatch_notification('payment_received_staff', null, $subject, $body, null, A_FROM_SYSTEM_PRIVILEGED);
 }
 
 /**

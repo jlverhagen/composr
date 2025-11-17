@@ -35,7 +35,7 @@ require_code('crud_module');
 /**
  * Module page class.
  */
-class Module_cms_calendar extends Standard_crud_module
+class Module_cms_calendar extends Source_standard_crud_module
 {
     protected $lang_type = 'CALENDAR_EVENT';
     protected $select_name = 'TITLE';
@@ -73,7 +73,7 @@ class Module_cms_calendar extends Standard_crud_module
             return null;
         }
 
-        $this->cat_crud_module = class_exists('Mx_cms_calendar_cat') ? new Mx_cms_calendar_cat() : new Module_cms_calendar_cat();
+        $this->cat_crud_module = object_factory('Module_cms_calendar_cat');
 
         $ret = [
             'browse' => ['MANAGE_CALENDARS', 'menu/rich_content/calendar'],
@@ -145,7 +145,7 @@ class Module_cms_calendar extends Standard_crud_module
             return $error_msg;
         }
 
-        $this->cat_crud_module = class_exists('Mx_cms_calendar_cat') ? new Mx_cms_calendar_cat() : new Module_cms_calendar_cat();
+        $this->cat_crud_module = object_factory('Module_cms_calendar_cat');
 
         $type = get_param_string('type', 'browse');
 
@@ -1489,7 +1489,7 @@ class Module_cms_calendar extends Standard_crud_module
 /**
  * Module page class.
  */
-class Module_cms_calendar_cat extends Standard_crud_module
+class Module_cms_calendar_cat extends Source_standard_crud_module
 {
     protected $lang_type = 'EVENT_TYPE';
     protected $select_name = 'EVENT_TYPE';

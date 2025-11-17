@@ -781,11 +781,7 @@ function load_module_page(string $string, string $codename) : object
     }
 
     require_code(filter_naughty($string));
-    if (class_exists('Mx_' . filter_naughty_harsh($codename))) {
-        $object = object_factory('Mx_' . filter_naughty_harsh($codename), false, [], true);
-    } else {
-        $object = object_factory('Module_' . filter_naughty_harsh($codename), false, [], true);
-    }
+    $object = object_factory('Module_' . filter_naughty_harsh($codename), false, [], true);
 
     _check_module_installation_status($object, $codename);
 
@@ -981,16 +977,17 @@ function _get_module_path(string $zone, string $module) : string
  * @param  ID_TEXT $type The type of hook
  * @param  ID_TEXT $subtype The hook sub-type to find hook implementations for (e.g. the name of a module)
  * @param  string $classname_prefix The hook class-name prefix, the classes are named {$classname_prefix}{$hook}
+ * @param  boolean $cache Whether to avoid constructing duplicate hook classes
  * @return array A map of hook implementation name to hook object
  */
-function find_all_hook_obs(string $type, string $subtype, string $classname_prefix) : array
+function find_all_hook_obs(string $type, string $subtype, string $classname_prefix, bool $cache = true) : array
 {
     $hooks = find_all_hooks($type, $subtype);
     ksort($hooks);
     foreach ($hooks as $hook => $hook_dir) {
         require_code('hooks/' . $type . '/' . $subtype . '/' . $hook, false, $hook_dir == 'sources_custom');
 
-        $ob = object_factory(class_exists(str_replace('Hook_', 'Hx_', $classname_prefix) . $hook) ? (str_replace('Hook_', 'Hx_', $classname_prefix) . $hook) : ($classname_prefix . $hook), true, [], true);
+        $ob = object_factory(($classname_prefix . $hook), true, [], $cache);
         if ($ob !== null) {
             $hooks[$hook] = $ob;
         } else {
@@ -1713,10 +1710,10 @@ function extract_module_functions(string $path, array $functions, array $params 
             }
             $CLASS_CACHE[$path] = $new_classes;
         }
-        if ((isset($new_classes[0])) && ($new_classes[0] === 'Standard_crud_module')) {
+        if ((isset($new_classes[0])) && ($new_classes[0] === 'Source_standard_crud_module')) {
             array_shift($new_classes); // This is not the class we want
         }
-        if ((isset($new_classes[0])) && ($new_classes[0] === 'non_overridden__Standard_crud_module')) {
+        if ((isset($new_classes[0])) && ($new_classes[0] === 'Sx_standard_crud_module')) {
             array_shift($new_classes); // This is not the class we want
         }
         if (isset($new_classes[0])) {

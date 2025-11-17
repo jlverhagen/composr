@@ -6,4 +6,4 @@ Basically we appreciate those who report security issues, and respect their righ
 
 Issues will be fixed as soon as possible depending on the availability of core developers. Whether issues will or will not be disclosed directly by the core developers (prior to a patch being released) depends on context (basically what we think is best for users based on the situation).
 
-To report an issue, submit to [the tracker](https://composr.app/report-issue.htm).
+To report an issue, submit to [the tracker](https://composr.app/tracker/report-issue.htm).

@@ -35,7 +35,7 @@ require_code('crud_module');
 /**
  * Module page class.
  */
-class Module_admin_custom_comcode extends Standard_crud_module
+class Module_admin_custom_comcode extends Source_standard_crud_module
 {
     protected $table_prefix = 'tag_';
     protected $array_key = 'tag_tag';

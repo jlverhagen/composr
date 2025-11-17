@@ -64,9 +64,9 @@ function export_menu_spreadsheet(?string $file_path = null)
 
     require_code('files_spreadsheets_write');
     if ($file_path === null) {
-        $file_path = get_custom_file_base() . '/uploads/website_specific/cms_menu_items.' . spreadsheet_write_default();
+        $file_path = get_custom_file_base() . '/uploads/website_specific/cms_menu_items.' . Source_spreadsheet_writer::spreadsheet_write_default();
     }
-    make_spreadsheet($file_path, $data);
+    Source_spreadsheet_writer::make_spreadsheet($file_path, $data);
 }
 
 /**
@@ -88,10 +88,10 @@ function import_menu_spreadsheet(?string $file_path = null, ?string $filename = 
 
     if ($file_path === null) {
         require_code('files_spreadsheets_write');
-        $file_path = get_custom_file_base() . '/uploads/website_specific/cms_menu_items.' . spreadsheet_write_default();
+        $file_path = get_custom_file_base() . '/uploads/website_specific/cms_menu_items.' . Source_spreadsheet_writer::spreadsheet_write_default();
     }
     require_code('files_spreadsheets_read');
-    $sheet_reader = spreadsheet_open_read($file_path, $filename);
+    $sheet_reader = Source_spreadsheet_reader::spreadsheet_open_read($file_path, $filename);
     while (($record = $sheet_reader->read_row()) !== false) {
         $id = ($record['id'] == '' || $record['id'] == 'NULL') ? null : intval($record['id']);
         $menu_id = $record['i_menu'];

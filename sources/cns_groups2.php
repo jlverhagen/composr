@@ -103,7 +103,7 @@ function cns_get_group_members_raw_count(int $group_id, bool $include_primaries 
  * @param  boolean $include_not_validated_members Whether to include those members who are not validated as site members at all yet (parameter currently ignored)
  * @param  ?integer $max Return up to this many entries for primary members and this many entries for secondary members and all LDAP members (null: no limit, only use no limit if querying very restricted usergroups!)
  * @param  integer $start Return primary members after this offset and secondary members after this offset
- * @return array The list
+ * @return array The list, or a map if $non_validated is specified
  */
 function cns_get_group_members_raw(int $group_id, bool $include_primaries = true, bool $non_validated = false, bool $include_secondaries = true, bool $include_not_validated_members = true, ?int $max = null, int $start = 0) : array
 {

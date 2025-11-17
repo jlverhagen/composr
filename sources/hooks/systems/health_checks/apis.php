@@ -33,7 +33,7 @@
 /**
  * Hook class.
  */
-class Hook_health_check_apis extends Hook_Health_Check
+class Hook_health_check_apis extends Source_hook_health_check
 {
     protected $category_label = 'API connections';
 
@@ -254,7 +254,7 @@ class Hook_health_check_apis extends Hook_Health_Check
         }
 
         require_code('broken_urls');
-        $ob = new BrokenURLScanner();
+        $ob = object_factory('Source_broken_url_scanner', false, [], true);
         try {
             $urls = $ob->enumerate_moz_backlinks([$url], 1);
             $this->assertTrue((($use_test_data_for_pass === null) || (count($urls) > 0)), 'Error trying to retrieve backlinks');

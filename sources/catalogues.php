@@ -1306,7 +1306,7 @@ function _get_catalogue_entry_field(int $field_id, $entry_id, string $type = 'sh
 
     // Pre-caching of whole entry
     static $catalogue_entry_cache = [];
-    if ((!isset($catalogue_entry_cache[$entry_id])) || (class_exists('Resource_fs_base')/*Implies resource-fs import*/)) {
+    if ((!isset($catalogue_entry_cache[$entry_id])) || (class_exists('Source_resource_fs_base')/*Implies resource-fs import*/)) {
         $catalogue_entry_cache[$entry_id] = [];
 
         $only_fields_sql = '';
@@ -1400,7 +1400,7 @@ function _get_catalogue_entry_field(int $field_id, $entry_id, string $type = 'sh
 
         $value = isset($catalogue_entry_cache[$entry_id][$field_id]) ? $catalogue_entry_cache[$entry_id][$field_id] : null;
 
-        if (class_exists('Resource_fs_base')) {
+        if (class_exists('Source_resource_fs_base')) {
             $catalogue_entry_cache = [];
         }
     } else {
@@ -1720,13 +1720,11 @@ function get_catalogue_entries_tree(string $catalogue_name, ?int $submitter = nu
         return [];
     }
 
+    require_code('content');
+
     // Put our title onto our breadcrumbs
     if ($title === null) {
-        $_title = $GLOBALS['SITE_DB']->query_select_value_if_there('catalogue_categories', 'cc_title', ['id' => $category_id]);
-        if ($_title === null) {
-            return [];
-        }
-        $title = get_translated_text($_title);
+        list($title) = content_get_details('catalogue_category', strval($category_id));
     }
     $breadcrumbs .= $title;
 
@@ -1760,9 +1758,7 @@ function get_catalogue_entries_tree(string $catalogue_name, ?int $submitter = nu
             continue;
         }
 
-        $entry_fields = get_catalogue_entry_field_values($catalogue_name, $row['id'], [0]);
-        $name = $entry_fields[0]['effective_value_pure']; // 'Name' is value of first field
-
+        list($name) = content_get_details('catalogue_entry', strval($row['id']));
         $children[0]['entries'][$row['id']] = $name;
     }
     cms_mb_asort($children[0]['entries'], SORT_NATURAL | SORT_FLAG_CASE);
@@ -1775,7 +1771,7 @@ function get_catalogue_entries_tree(string $catalogue_name, ?int $submitter = nu
     if ($levels !== 0) {
         foreach ($rows as $child) {
             $child_id = $child['id'];
-            $child_title = get_translated_text($child['cc_title']);
+            list($child_title) = content_get_details('catalogue_category', strval($child['id']));
             $child_breadcrumbs = $breadcrumbs;
 
             $child_children = get_catalogue_entries_tree($catalogue_name, $submitter, $child_id, $child_breadcrumbs, $child_title, ($levels === null) ? null : ($levels - 1), $editable_filter);
@@ -1895,6 +1891,7 @@ function render_catalogue_entry_screen(int $id) : object
     }
 
     require_code('images');
+    require_code('content');
     require_css('catalogues');
     require_lang('catalogues');
 
@@ -1972,15 +1969,13 @@ function render_catalogue_entry_screen(int $id) : object
     $map['EDIT_DATE'] = ($entry['ce_edit_date'] === null) ? '' : get_timezoned_date_time_tempcode($entry['ce_edit_date']);
     $map['EDIT_DATE_RAW'] = ($entry['ce_edit_date'] === null) ? '' : strval($entry['ce_edit_date']);
     $map['VIEWS'] = integer_format($entry['ce_views']);
-    $title_to_use = do_lang_tempcode($catalogue_name . '__CATALOGUE_ENTRY', $map['FIELD_0']);
-    $title_to_use_2 = do_lang($catalogue_name . '__CATALOGUE_ENTRY', $map['FIELD_0_PLAIN'], null, null, null, false);
+
+    list($title) = content_get_details('catalogue_entry', strval($id));
+    $title_to_use = do_lang_tempcode($catalogue_name . '__CATALOGUE_ENTRY', escape_html($title));
+    $title_to_use_2 = do_lang($catalogue_name . '__CATALOGUE_ENTRY', comcode_escape($title), null, null, null, false);
     if ($title_to_use_2 === null) {
-        $title_to_use = do_lang_tempcode('DEFAULT__CATALOGUE_ENTRY', make_fractionable_editable('catalogue_entry', $id, is_object($map['FIELD_0']) ? $map['FIELD_0'] : make_string_tempcode($map['FIELD_0'])));
-        $title_to_use_2 = do_lang('DEFAULT__CATALOGUE_ENTRY', is_object($map['FIELD_0']) ? $map['FIELD_0']->evaluate() : $map['FIELD_0']);
-        $len = strlen(trim(strip_html($title_to_use_2)));
-        if (($len > 20) || ($len < 3)) { // We revert to raw ID if it appeared the rendered one was not strippable back from HTML to text; raw ID is possibly cryptic unfortunately
-            $title_to_use_2 = do_lang('DEFAULT__CATALOGUE_ENTRY', $map['FIELD_0_PLAIN']);
-        }
+        $title_to_use = do_lang_tempcode('DEFAULT__CATALOGUE_ENTRY', escape_html($title));
+        $title_to_use_2 = do_lang('DEFAULT__CATALOGUE_ENTRY', comcode_escape($title));
     }
     if ((get_value('disable_awards_in_titles') !== '1') && (addon_installed('awards'))) {
         require_code('awards');
@@ -1992,9 +1987,6 @@ function render_catalogue_entry_screen(int $id) : object
     $map['SUBMITTER'] = strval($entry['ce_submitter']);
 
     require_code('content2');
-    if (is_object($title_to_use_2)) {
-        $title_to_use_2 = $title_to_use_2->evaluate();
-    }
     seo_meta_load_for('catalogue_entry', strval($id), strip_html($title_to_use_2));
 
     $map['CATEGORY_TITLE'] = get_translated_text($category['cc_title']);

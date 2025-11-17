@@ -238,7 +238,7 @@ class Module_admin_revisions
         }
 
         require_code('revisions_engine_database');
-        $revision_engine = new RevisionEngineDatabase();
+        $revision_engine = object_factory('Source_revisions_engine_database');
         return $revision_engine->ui_revisions_browser($this->title, $_header_row, ($resource_types === null) ? null : explode(',', $resource_types), $row_renderer, $resource_id, $category_id, $member_id, null, true);
     }
 
@@ -351,12 +351,12 @@ class Module_admin_revisions
 
         if ($revision_type == 'database') {
             require_code('revisions_engine_database');
-            $revision_engine_database = new RevisionEngineDatabase();
+            $revision_engine_database = object_factory('Source_revisions_engine_database');
 
             $revision_engine_database->delete_revision($id);
         } else {
             require_code('revisions_engine_files');
-            $revision_engine_files = new RevisionEngineFiles();
+            $revision_engine_files = object_factory('Source_revisions_engine_files');
 
             list($directory, $filename_id, $ext) = unserialize($revision_type);
 

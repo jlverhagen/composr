@@ -33,7 +33,7 @@
 /**
  * Hook class.
  */
-class Hook_privacy_awards extends Hook_privacy_base
+class Hook_privacy_awards extends Source_hook_privacy_base
 {
     /**
      * Find privacy details.

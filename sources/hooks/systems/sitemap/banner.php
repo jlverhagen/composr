@@ -33,7 +33,7 @@
 /**
  * Hook class.
  */
-class Hook_sitemap_banner extends Hook_sitemap_content
+class Hook_sitemap_banner extends Source_hook_sitemap_content
 {
     protected $content_type = 'banner';
     protected $screen_type = 'view';

@@ -161,6 +161,7 @@ class Hook_addon_registry_core_database_drivers
             'sources/database/sqlserver.php',
             'sources/database/sqlserver_odbc.php',
             'sources/database/xml.php',
+            'sources/database_driver.php',
             'sources/hooks/systems/addon_registry/core_database_drivers.php',
             'sources/hooks/systems/cron/oracle.php',
         ];

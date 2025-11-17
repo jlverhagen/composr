@@ -31,43 +31,59 @@
  */
 
 /**
- * Standard code module initialisation function.
- *
- * @ignore
- */
-function init__forum__cns()
-{
-    global $LDAP_CONNECTION;
-    $LDAP_CONNECTION = null;
-    global $EMOTICON_LEVELS;
-    $EMOTICON_LEVELS = null;
-    global $FLOOD_CONTROL_ONCE;
-    $FLOOD_CONTROL_ONCE = false;
-    global $SENT_OUT_VALIDATE_NOTICE;
-    $SENT_OUT_VALIDATE_NOTICE = false;
-    global $LAST_POST_ID, $LAST_TOPIC_ID;
-    /** The ID of the last post inserted.
-     *
-     * @global ?integer $LAST_POST_ID
-     */
-    $LAST_POST_ID = null;
-    /** The ID of the last topic inserted.
-     *
-     * @global ?integer $LAST_TOPIC_ID
-     */
-    $LAST_TOPIC_ID = null;
-    global $TOPIC_IDENTIFIERS_TO_IDS_CACHE, $TOPIC_IS_THREADED_CACHE;
-    $TOPIC_IDENTIFIERS_TO_IDS_CACHE = [];
-    $TOPIC_IS_THREADED_CACHE = [];
-}
-
-/**
  * Forum driver class.
  *
  * @package core_forum_drivers
  */
-class Forum_driver_cns extends Forum_driver_base
+class Source_forum_driver_cns extends Source_forum_driver_base
 {
+    /**
+     * Initialise unset globals.
+     */
+    public function __construct()
+    {
+        parent::__construct();
+
+        global $LDAP_CONNECTION;
+        if (!isset($LDAP_CONNECTION)) {
+            $LDAP_CONNECTION = null;
+        }
+        global $EMOTICON_LEVELS;
+        if (!isset($EMOTICON_LEVELS)) {
+            $EMOTICON_LEVELS = null;
+        }
+        global $FLOOD_CONTROL_ONCE;
+        if (!isset($FLOOD_CONTROL_ONCE)) {
+            $FLOOD_CONTROL_ONCE = false;
+        }
+        global $SENT_OUT_VALIDATE_NOTICE;
+        if (!isset($SENT_OUT_VALIDATE_NOTICE)) {
+            $SENT_OUT_VALIDATE_NOTICE = false;
+        }
+        global $LAST_POST_ID, $LAST_TOPIC_ID;
+        if (!isset($LAST_POST_ID)) {
+            /** The ID of the last post inserted.
+             *
+             * @global ?integer $LAST_POST_ID
+             */
+            $LAST_POST_ID = null;
+        }
+        if (!isset($LAST_TOPIC_ID)) {
+            /** The ID of the last topic inserted.
+             *
+             * @global ?integer $LAST_TOPIC_ID
+             */
+            $LAST_TOPIC_ID = null;
+        }
+        global $TOPIC_IDENTIFIERS_TO_IDS_CACHE, $TOPIC_IS_THREADED_CACHE;
+        if (!isset($TOPIC_IDENTIFIERS_TO_IDS_CACHE)) {
+            $TOPIC_IDENTIFIERS_TO_IDS_CACHE = [];
+        }
+        if (!isset($TOPIC_IS_THREADED_CACHE)) {
+            $TOPIC_IS_THREADED_CACHE = [];
+        }
+    }
+
     /**
      * Run whatever initialisation code we need to run. Not used within minikernel (i.e. installer).
      */
@@ -1727,7 +1743,7 @@ class Forum_driver_cns extends Forum_driver_base
                     require_code('failure_spammers');
                     add_ip_ban($ip, do_lang('SPAM_REPORT_SITE_FLOODING'));
                     require_code('notifications');
-                    dispatch_notification('core_staff:auto_ban', null, do_lang('AUTO_BAN_SUBJECT', $ip, null, null, get_site_default_lang()), do_notification_lang('AUTO_BAN_DOS_MESSAGE', $ip, integer_format($count_threshold, 0), integer_format($time_threshold), get_site_default_lang()), null, A_FROM_SYSTEM_PRIVILEGED);
+                    Source_notification_dispatcher::dispatch_notification('core_staff:auto_ban', null, do_lang('AUTO_BAN_SUBJECT', $ip, null, null, get_site_default_lang()), do_notification_lang('AUTO_BAN_DOS_MESSAGE', $ip, integer_format($count_threshold, 0), integer_format($time_threshold), get_site_default_lang()), null, A_FROM_SYSTEM_PRIVILEGED);
                     syndicate_spammer_report($ip, is_guest() ? '' : $GLOBALS['FORUM_DRIVER']->get_username(get_member()), $GLOBALS['FORUM_DRIVER']->get_member_email_address(get_member()), do_lang('SPAM_REPORT_SITE_FLOODING'));
                 }
                 if (!function_exists('require_lang')) {

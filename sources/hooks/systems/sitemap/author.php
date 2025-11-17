@@ -33,7 +33,7 @@
 /**
  * Hook class.
  */
-class Hook_sitemap_author extends Hook_sitemap_content
+class Hook_sitemap_author extends Source_hook_sitemap_content
 {
     protected $content_type = 'author';
     protected $screen_type = 'browse';

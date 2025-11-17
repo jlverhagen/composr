@@ -27,7 +27,7 @@
 /**
  * Hook class.
  */
-class Hook_health_check_cloudinary extends Hook_Health_Check
+class Hook_health_check_cloudinary extends Source_hook_health_check
 {
     protected $category_label = 'API connections';
 

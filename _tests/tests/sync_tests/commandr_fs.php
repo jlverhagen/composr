@@ -49,7 +49,7 @@ class commandr_fs_test_set extends cms_test_case
             return;
         }
 
-        $ob = new Commandr_fs();
+        $ob = object_factory('Source_commandr_fs');
 
         // Check top-level 'var' works
         $var_files = $ob->listing(['var']);
@@ -61,7 +61,7 @@ class commandr_fs_test_set extends cms_test_case
 
             $_path = get_file_base() . '/' . $dir . '/hooks/systems/commandr_fs/' . $commandr_fs_hook . '.php';
             $c = cms_file_get_contents_safe($_path, FILE_READ_LOCK);
-            if (strpos($c, ' extends Resource_fs_base') !== false) {
+            if (strpos($c, ' extends Source_resource_fs_base') !== false) {
                 if (get_forum_type() != 'cns') {
                     if (in_array($commandr_fs_hook, ['forums', 'groups'])) {
                         continue;
@@ -167,7 +167,7 @@ class commandr_fs_test_set extends cms_test_case
 
             $path = get_file_base() . '/' . $dir . '/hooks/systems/commandr_fs/' . $commandr_fs_hook . '.php';
             $c = cms_file_get_contents_safe($path, FILE_READ_LOCK);
-            if (strpos($c, ' extends Resource_fs_base') !== false) {
+            if (strpos($c, ' extends Source_resource_fs_base') !== false) {
                 $this->assertTrue(array_key_exists($commandr_fs_hook, $referenced_in_cma), 'Resource-fs hook not referenced: ' . $commandr_fs_hook);
             }
         }
@@ -176,7 +176,7 @@ class commandr_fs_test_set extends cms_test_case
     // This test will test the commandr_fs_extended_config hooks are working properly, as well as the config option read/write in general.
     public function testEtcDir()
     {
-        $ob = new Commandr_fs();
+        $ob = object_factory('Source_commandr_fs');
         $files = $ob->listing(['etc']);
 
         if (($this->only !== null) && ($this->only != 'testEtcDir') && (!array_key_exists('_' . $this->only . 's.cms', $files[1]))) {

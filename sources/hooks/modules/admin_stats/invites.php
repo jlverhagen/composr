@@ -33,7 +33,7 @@
 /**
  * Hook class.
  */
-class Hook_admin_stats_invites extends CMSStatsProvider
+class Hook_admin_stats_invites extends Source_hook_stats_provider
 {
     /**
      * Find metadata about stats graphs that are provided by this stats hook.
@@ -54,9 +54,9 @@ class Hook_admin_stats_invites extends CMSStatsProvider
             'label' => do_lang_tempcode((get_option('is_on_invites') === '1') ? 'INVITATIONS_MADE' : 'RECOMMENDATIONS_MADE'),
             'category' => 'referrers_and_referrals',
             'filters' => [
-                'invites_sent__day_range' => new CMSStatsDayRangeFilter('invites_sent__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
+                'invites_sent__day_range' => new Source_stats_filter_day_range('invites_sent__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
             ],
-            'pivot' => new CMSStatsDatePivot('invites_sent__pivot', $this->get_date_pivots(!$for_kpi)),
+            'pivot' => new Source_stats_filter_date_pivot('invites_sent__pivot', $this->get_date_pivots(!$for_kpi)),
             'support_kpis' => self::KPI_HIGH_IS_GOOD,
         ];
         if ((get_option('is_on_invites') === '1') && (get_forum_type() == 'cns')) {
@@ -64,9 +64,9 @@ class Hook_admin_stats_invites extends CMSStatsProvider
                 'label' => do_lang_tempcode('INVITATIONS_ACCEPTED'),
                 'category' => 'referrers_and_referrals',
                 'filters' => [
-                    'invites_taken__day_range' => new CMSStatsDayRangeFilter('invites_taken__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
+                    'invites_taken__day_range' => new Source_stats_filter_day_range('invites_taken__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
                 ],
-                'pivot' => new CMSStatsDatePivot('invites_taken__pivot', $this->get_date_pivots(!$for_kpi)),
+                'pivot' => new Source_stats_filter_date_pivot('invites_taken__pivot', $this->get_date_pivots(!$for_kpi)),
                 'support_kpis' => self::KPI_HIGH_IS_GOOD,
             ];
         }

@@ -71,7 +71,7 @@ class xml_sitemaps_test_set extends cms_test_case
 
             // Simple XML validation
             require_code('xml');
-            $tmp = new CMS_simple_xml_reader($c);
+            $tmp = object_factory('Source_simple_xml_reader', false, [$c]);
 
             /* Bots apparently being blocked on here now
             $url = 'https://ipullrank.com/tools/map-broker/index.php';

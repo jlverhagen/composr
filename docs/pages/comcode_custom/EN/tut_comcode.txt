@@ -111,7 +111,7 @@ Comcode is primarily written and laid out as plain-text. Special tags (and other
 [*] [b][concept]Wiki+[/concept] page links[/b] can be placed by typing [tt][[pagename-goes-here]][/tt], or [tt][[pagename-goes-here#anchor]][/tt].
 [*] [b]Table[/b] syntax (described in separate section below).
 [*] [b]List[/b] syntax (described in separate section below).
-[*] [b][concept]Tempcode[/concept][/b] symbols and directives may be used, such as [tt]{$USERNAME}[/tt] to display the username of the current user (described in the [page="_SEARCH:tut_tempcode"]Tempcode programming[/page] tutorial).
+[*] [b][concept]Tempcode[/concept][/b] symbols and directives may be used, such as [tt]{\$USERNAME}[/tt] to display the username of the current user (described in the [page="_SEARCH:tut_tempcode"]Tempcode programming[/page] tutorial).
 [*] Certain [b]shortcuts[/b] may be used, such as [tt](c)[/tt] for (c) (described in separate section).
 [/list]
 
@@ -346,8 +346,8 @@ Symbols and directives from [concept]Tempcode[/concept] may also be used in Comc
 It is rare that you will want to include these as they are primarily designed for usage from templates. However, sometimes they can be useful.
 
 Symbols let you:
-1) Insert certain individual bits of dynamic data (for example, [tt]{$USERNAME}[/tt] to get the current user's username).
-2) Run some calculations (for example, [tt]{$ADD,1,2}[/tt] produces 3).
+1) Insert certain individual bits of dynamic data (for example, [tt]{\$USERNAME}[/tt] to get the current user's username).
+2) Run some calculations (for example, [tt]{\$ADD,1,2}[/tt] produces 3).
 
 Directives let you do logic tests (for example, [tt]{+START,IF,{$IS_ADMIN}}You are admin{+END}[/tt]) and programming loops.
 

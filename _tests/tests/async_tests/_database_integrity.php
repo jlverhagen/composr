@@ -46,7 +46,7 @@ class _database_integrity_test_set extends cms_test_case
     public function testNoErrors()
     {
         if (strpos(get_db_type(), 'mysql') !== false) {
-            $ob = new DatabaseRepair();
+            $ob = new Source_database_repair();
             list($phase, $sql) = $ob->search_for_database_issues();
             $this->assertTrue($phase == 2);
             if ($phase == 2) {

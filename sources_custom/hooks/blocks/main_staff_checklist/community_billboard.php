@@ -69,7 +69,7 @@ class Hook_checklist_community_billboard
 
         $url = build_url(['page' => 'admin_community_billboard', 'type' => 'browse'], get_module_zone('admin_community_billboard'));
         $num_queue = $this->get_num_community_billboard_queue();
-        list($info, $seconds_due_in) = staff_checklist_time_ago_and_due($seconds_due_in);
+        list($info, $seconds_due_in) = Block_main_staff_checklist::staff_checklist_time_ago_and_due($seconds_due_in);
         $info->attach(do_lang_tempcode('NUM_QUEUE', escape_html(integer_format($num_queue, 0))));
         $tpl = do_template('BLOCK_MAIN_STAFF_CHECKLIST_ITEM', [
             '_GUID' => '820e0e3cd80754dc7dfd9a0d05a43ec0',

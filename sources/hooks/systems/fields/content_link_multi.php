@@ -45,7 +45,7 @@ class Hook_fields_content_link_multi
         $hooks = find_all_hooks('systems', 'content_meta_aware');
         $ret = [];
         foreach (array_keys($hooks) as $hook) {
-            if ($hook != 'catalogue_entry'/*got a better field hook specifically for catalogue entries*/) {
+            if ($hook != 'catalogue_entry'/*got a better field hook specifically for catalogue entries (reference)*/) {
                 $ret['ax_' . $hook] = do_lang_tempcode('FIELD_TYPE_content_link_multi_x', escape_html($hook));
             }
         }
@@ -164,16 +164,28 @@ class Hook_fields_content_link_multi
      * @param  string $_cf_name The field name
      * @param  string $_cf_description The field description
      * @param  array $field The field details
-     * @param  ?string $actual_value The actual current value of the field (null: none)
+     * @param  ?string $actual_value The actual current value of the field, or default value if not set (null: none, and no default value set)
      * @param  boolean $new Whether this is for a new entry
      * @return ?Tempcode The Tempcode for the input field (null: skip the field - it's not input)
      */
     public function get_field_inputter(string $_cf_name, string $_cf_description, array $field, ?string $actual_value, bool $new) : ?object
     {
+        if ($actual_value === null) {
+            $actual_value = ''; // Plug anomaly due to unusual corruption
+        }
+
         $options = [];
         $type = substr($field['cf_type'], 3);
 
         $input_name = @cms_empty_safe($field['cf_input_name']) ? ('field_' . strval($field['id'])) : $field['cf_input_name'];
+
+        $edit_only = option_value_from_field_array($field, 'edit_only', '0');
+        if (($field['cf_required'] == 1) && ($actual_value === null)) {
+            $edit_only = '0';
+        }
+        if (($edit_only != '0') && $new) {
+            return form_input_hidden($input_name, $actual_value);
+        }
 
         // Nice tree list selection
         if ((is_file(get_file_base() . '/sources/hooks/systems/ajax_tree/choose_' . $type . '.php')) || (is_file(get_file_base() . '/sources_custom/hooks/systems/ajax_tree/choose_' . $type . '.php'))) {

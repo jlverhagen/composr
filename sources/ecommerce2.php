@@ -262,7 +262,7 @@ function delete_usergroup_subscription(int $id, string $uhoh_mail = '')
     }
     if ($uhoh_mail != '') {
         require_code('notifications');
-        dispatch_notification('paid_subscription_messages', null, do_lang('PAID_SUBSCRIPTION_ENDED', null, null, null, get_site_default_lang()), $uhoh_mail, $to_members);
+        Source_notification_dispatcher::dispatch_notification('paid_subscription_messages', null, do_lang('PAID_SUBSCRIPTION_ENDED', null, null, null, get_site_default_lang()), $uhoh_mail, $to_members);
     }
 
     $_title = $myrow['s_title'];

@@ -1,0 +1,2 @@
+# Allows dev redirect rule to kick in and shift back to proper URL for module
+allow from all

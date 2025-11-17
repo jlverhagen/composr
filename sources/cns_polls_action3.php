@@ -64,7 +64,7 @@ function cns_get_default_poll_options(?int $forum_id = null) : array
         return $default_options;
     }
 
-    $parsed = new CMS_simple_xml_reader($forum['f_poll_default_options_xml']);
+    $parsed = object_factory('Source_simple_xml_reader', false, [$forum['f_poll_default_options_xml']]);
     list($root_tag, $root_attributes, , $this_children) = $parsed->gleamed;
 
     // Skip if defaultPollOptions is not the root tag.
@@ -283,7 +283,7 @@ function cns_validate_default_poll_options_xml(string $xml = '') : ?object
     require_code('xml');
     require_lang('cns_polls');
 
-    $parsed = new CMS_simple_xml_reader($xml);
+    $parsed = object_factory('Source_simple_xml_reader', false, [$xml]);
     list($root_tag, $root_attributes, , $this_children) = $parsed->gleamed;
 
     // Check for invalid root tag

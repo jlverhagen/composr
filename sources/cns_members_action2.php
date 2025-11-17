@@ -850,7 +850,7 @@ function cns_get_member_fields_settings(bool $mini_mode = true, string $special_
             // Banning
             if (($member_id !== null) && ($member_id != get_member())) {// Can't ban someone new, and can't ban yourself
                 require_code('input_filter');
-                list(, $reasoned_bans) = load_advanced_banning();
+                list(, $reasoned_bans) = Source_advanced_banning_loader::load_advanced_banning();
                 if (empty($reasoned_bans)) {
                     $fields->attach(form_input_tick(do_lang_tempcode('BANNED'), do_lang_tempcode('DESCRIPTION_MEMBER_BANNED'), 'is_perm_banned', $is_perm_banned != '0'));
                 } else {
@@ -1490,7 +1490,7 @@ function cns_edit_member(int $member_id, ?string $username = null, ?string $pass
 
         $subject = do_lang('STAFF_SECURITY_ASPECT_CHANGED_SUBJECT', comcode_escape($old_username), comcode_escape($current_username), [get_site_name()], get_site_default_lang());
         $mail = do_notification_lang('STAFF_SECURITY_ASPECT_CHANGED_BODY', comcode_escape($old_username), comcode_escape($current_username), [comcode_escape(get_site_name()), comcode_escape($sensitive_changes), comcode_escape($part_b)], get_site_default_lang());
-        dispatch_notification('cns_profile_high_impact_edit', null, $subject, $mail, null, get_member(), ['use_real_from' => true]);
+        Source_notification_dispatcher::dispatch_notification('cns_profile_high_impact_edit', null, $subject, $mail, null, get_member(), ['use_real_from' => true]);
     }
 
     delete_value('cns_newest_member_id');
@@ -1623,7 +1623,7 @@ function cns_delete_member(int $member_id, ?int $member_id_deleting = null)
     require_code('notifications');
     require_lang('cns');
     $message = do_notification_lang('MEMBER_DELETED_MAIL', comcode_escape($username), comcode_escape($by_username));
-    dispatch_notification('cns_member_deleted', null, do_lang('MEMBER_DELETED_SUBJECT', comcode_escape($username)), $message, null, $member_id_deleting);
+    Source_notification_dispatcher::dispatch_notification('cns_member_deleted', null, do_lang('MEMBER_DELETED_SUBJECT', comcode_escape($username)), $message, null, $member_id_deleting);
 
     if ((addon_installed('commandr')) && (!running_script('install')) && (!get_mass_import_mode())) {
         require_code('resource_fs');
@@ -2188,7 +2188,7 @@ function cns_member_choose_signature(string $new_signature, ?int $member_id = nu
     require_code('notifications');
     $subject = do_lang('CHOOSE_SIGNATURE_SUBJECT', $GLOBALS['FORUM_DRIVER']->get_username($member_id, true), $GLOBALS['FORUM_DRIVER']->get_username($member_id), null, get_lang($member_id));
     $body = do_notification_lang('CHOOSE_SIGNATURE_BODY', $new_signature, $GLOBALS['FORUM_DRIVER']->get_username($member_id), $GLOBALS['FORUM_DRIVER']->get_username($member_id, true), get_lang($member_id));
-    dispatch_notification('cns_profile_high_impact_edit', null, $subject, $body, null, get_member(), ['use_real_from' => true]);
+    Source_notification_dispatcher::dispatch_notification('cns_profile_high_impact_edit', null, $subject, $body, null, get_member(), ['use_real_from' => true]);
 
     // Decache from run-time cache
     unset($GLOBALS['FORUM_DRIVER']->MEMBER_ROWS_CACHED[$member_id]);
@@ -2252,7 +2252,7 @@ function cns_member_choose_avatar(string $avatar_url, ?int $member_id = null)
             require_code('notifications');
             $subject = do_lang('CHOOSE_AVATAR_SUBJECT', $GLOBALS['FORUM_DRIVER']->get_username($member_id, true), $GLOBALS['FORUM_DRIVER']->get_username($member_id), null, get_lang($member_id));
             $body = do_notification_lang('CHOOSE_AVATAR_BODY', $stub . $avatar_url, $GLOBALS['FORUM_DRIVER']->get_username($member_id), $GLOBALS['FORUM_DRIVER']->get_username($member_id, true), get_lang($member_id));
-            dispatch_notification('cns_profile_high_impact_edit', null, $subject, $body, null, get_member(), ['use_real_from' => true]);
+            Source_notification_dispatcher::dispatch_notification('cns_profile_high_impact_edit', null, $subject, $body, null, get_member(), ['use_real_from' => true]);
         }
     }
 
@@ -2343,7 +2343,7 @@ function cns_member_choose_photo_concrete(string $url, ?int $member_id = null)
     require_code('notifications');
     $subject = do_lang('CHOOSE_PHOTO_SUBJECT', $GLOBALS['FORUM_DRIVER']->get_username($member_id, true), $GLOBALS['FORUM_DRIVER']->get_username($member_id), null, get_lang($member_id));
     $body = do_notification_lang('CHOOSE_PHOTO_BODY', $url, $GLOBALS['FORUM_DRIVER']->get_username($member_id), [$GLOBALS['FORUM_DRIVER']->get_username($member_id, true)], get_lang($member_id));
-    dispatch_notification('cns_profile_high_impact_edit', null, $subject, $body, null, get_member(), ['use_real_from' => true]);
+    Source_notification_dispatcher::dispatch_notification('cns_profile_high_impact_edit', null, $subject, $body, null, get_member(), ['use_real_from' => true]);
 
     // If Avatars addon not installed, use photo for it
     if (!addon_installed('cns_avatars')) {
@@ -2868,7 +2868,7 @@ function cns_can_edit_birthday(?int $member_id) : bool
 
     // Parental controls
     require_code('cns_parental_controls');
-    $pc = load_parental_control_settings();
+    $pc = object_factory('Source_parental_controls', false, [false], true);
     if ($pc->get_attribute('lock_dob') !== null) {
         if ($member_id === null) {
             return false;
@@ -2910,7 +2910,7 @@ function cns_can_edit_timezone(?int $member_id) : bool
 
     // Parental controls
     require_code('cns_parental_controls');
-    $pc = load_parental_control_settings();
+    $pc = object_factory('Source_parental_controls', false, [false], true);
     if ($pc->get_attribute('lock_timezone') !== null) {
         return false;
     }
@@ -2933,7 +2933,7 @@ function cns_can_edit_region(?int $member_id) : bool
 
     // Parental controls
     require_code('cns_parental_controls');
-    $pc = load_parental_control_settings();
+    $pc = object_factory('Source_parental_controls', false, [false], true);
     if ($pc->get_attribute('lock_region') !== null) {
         return false;
     }

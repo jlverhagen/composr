@@ -33,7 +33,7 @@
 /**
  * Hook class.
  */
-class Hook_content_meta_aware_group extends Hook_CMA
+class Hook_content_meta_aware_group extends Source_hook_CMA
 {
     /**
      * Get content type details.

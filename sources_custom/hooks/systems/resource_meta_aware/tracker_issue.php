@@ -27,7 +27,7 @@
 /**
  * Hook class.
  */
-class Hook_resource_meta_aware_tracker_issue extends Hook_CMA
+class Hook_resource_meta_aware_tracker_issue extends Source_hook_CMA
 {
     /**
      * Get content type details.
@@ -48,7 +48,7 @@ class Hook_resource_meta_aware_tracker_issue extends Hook_CMA
 
         // We have to make a custom db connection since the issue tracker uses a different prefix
         require_code('database/' . get_db_type());
-        $db_driver = object_factory('Database_Static_' . get_db_type(), false, ['mantis_']);
+        $db_driver = object_factory('Source_database_static_' . get_db_type(), false, ['mantis_']);
         $db = new DatabaseConnector(get_db_site(), get_db_site_host(), get_db_site_user(), get_db_site_password(), 'mantis_', false, $db_driver);
 
         return [

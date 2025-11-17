@@ -165,7 +165,7 @@ class Hook_cron_downloads_followup_email
 
                 // Send actual notification
                 require_code('notifications');
-                dispatch_notification('downloads_followup_email', '', $subject_line, $message, [$member_id], A_FROM_SYSTEM_PRIVILEGED);
+                Source_notification_dispatcher::dispatch_notification('downloads_followup_email', '', $subject_line, $message, [$member_id], A_FROM_SYSTEM_PRIVILEGED);
             }
 
             $start += $max;

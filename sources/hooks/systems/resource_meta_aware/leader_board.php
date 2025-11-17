@@ -33,7 +33,7 @@
 /**
  * Hook class.
  */
-class Hook_resource_meta_aware_leader_board extends Hook_CMA
+class Hook_resource_meta_aware_leader_board extends Source_hook_CMA
 {
     /**
      * Get content type details.

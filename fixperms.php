@@ -140,7 +140,7 @@ if (function_exists('require_code')) {
 if ($trial) {
     echo "Running in trial mode...\n\n";
 
-    list(, , $found_any_issue) = scan_permissions(true, false, $web_username, $has_ftp_loopback_for_write, $minimum_level);
+    list(, , $found_any_issue) = Source_permissions_scanner::scan_permissions(true, false, $web_username, $has_ftp_loopback_for_write, $minimum_level);
 
     if (!$found_any_issue) {
         echo "No issues found\n";
@@ -150,11 +150,11 @@ if ($trial) {
     if ((file_exists(__DIR__ . '/git-hooks')) && (file_exists(__DIR__ . '/.git'))) {
         echo "0/2 Setting up Git hooks to run correctly\n";
 
-        echo execute_nicely('git config core.hooksPath git-hooks');
-        echo execute_nicely('git config core.fileMode false');
+        echo Source_permissions_scanner::execute_nicely('git config core.hooksPath git-hooks');
+        echo Source_permissions_scanner::execute_nicely('git config core.fileMode false');
 
         if (strpos(PHP_OS, 'WIN') === false) {
-            $ob = new CMSPermissionsScannerLinux();
+            $ob = new Source_permissions_scanner_Linux();
             $ob->generate_chmod_command('git-hooks/*', 0100, '+');
         }
     }
@@ -171,7 +171,7 @@ if ($trial) {
     }
 
     // Change permissions
-    scan_permissions($verbose, true, $web_username, $has_ftp_loopback_for_write, $minimum_level);
+    Source_permissions_scanner::scan_permissions($verbose, true, $web_username, $has_ftp_loopback_for_write, $minimum_level);
     echo "2/2 Fixed permissions of strewn files\n";
 }
 

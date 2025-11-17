@@ -18,7 +18,7 @@ This might mean making a bug report, or logging a feature suggestion -- if somet
 
 [title="3"]The Report Issue Wizard[/title]
 
-The easiest way to report a bug or feature is to use our [page="site:report-issue"]report issue wizard[/page]. The wizard will ask you questions specific to your selections so you are not overwhelmed by the Mantis bug tracker interface. The wizard will then create a tracker issue for you and provide you a link so you can upload files / screenshots or post comments on it.
+The easiest way to report a bug or feature is to use our [page="_SEARCH:report-issue"]report issue wizard[/page]. The wizard will ask you questions specific to your selections. The wizard will then create a tracker issue for you (a catalogue entry in our special tracker catalogue) and provide you a link so you can upload files / screenshots or post comments on it.
 
 [title="3"]What to expect[/title]
 
@@ -46,7 +46,7 @@ What to include on your report:
  - [b]Use concise and specific language in the title / subject[/b]. The title / subject is what shows up on change logs for new releases of Composr. It's also what shows up when viewing issues as a list on the tracker. So simply saying "Issue with the downloads page" will confuse anyone who reads the change log, or developers who want to quickly know what each issue is about. Instead, be specific, such as "Opening the downloads page triggers a critical error: undefined function points_balance". Keep this short and specific; no more than a sentence.
  - [b]Describe your problem[/b]. If the problem is at all complex it may also help if you can give precise [b]steps to reproduce the problem[/b]. That said, we are a huge fan of [url="ShareX"]https://getsharex.com[/url], and often simply spending a few minutes recording a video means you won't need to type much explanation and your problem will be more easily understood without ambiguity or language problems.
  - If you think there is any chance that the problem only happens on some browsers (e.g. some kind of layout problem or JavaScript problem), [b]report which browser you are using[/b] in the Additional Information section (e.g. Mozilla Firefox 58). Generally you can find this in your browser's settings / about section.
- - State [b]which Composr version you are running[/b]. You are usually prompted for this in Mantis as 'Product Version'. The wizard also asks you for this. It helps us immensely to know what version you are running. And it categorises your issue so others running the same version can easily find it.
+ - State [b]which Composr version you are running[/b]. It helps us immensely to know what version you are running. And it categorises your issue so others running the same version can easily find it.
  - If you get an error message, copy and paste the [b]error message[/b]. The developers need to know precisely what it said, without paraphrasing or typos.
  - If you see a stack trace, or are invited to generate one, include that [b]full stack trace[/b]. Often stack traces are extremely useful. You should scan over the stack trace first though to make sure there isn't anything in there you wouldn't be happy sharing (such as your website URL, full file paths, or potentially passwords or sensitive text). If you find anything you do not want to share, simply censor it out of the report. Or, you can post your stack trace on the issue separately as a 'private' comment. Don't expect the developers to censor things for you; they don't have the time for that.
  - Mention [b]anything else that you might think potentially relevant to the situation[/b]. For example, if you have disabled JavaScript, made relevant changes to Composr settings, or are browsing on a phone, or have installed hotfixes in related areas of the code, or if you're on a really new version of PHP. We can't list everything that might be relevant here, and that's the point (don't consider the aforementioned examples a checklist): if something that is likely to be relevant comes to mind, include it.
@@ -79,7 +79,7 @@ This automatic reporting mechanism [b]should not[/b] be considered a substitute 
 
 [title="3"]Where to post[/title]
 
-The "correct" place is the [url="tracker"]https://composr.app/tracker/[/url] or through our [page="site:report-issue"]report issue wizard[/page].
+The "correct" place is the [url="tracker"]https://composr.app/tracker/[/url] or through our [page="_SEARCH:report-issue"]report issue wizard[/page].
 
 You could informally post an issue on the forum. But the developers don't promise to check the forum (and they may tell you to report your issue on the tracker anyway). The issue tracker is the best way for developers to keep issues organised. So it is highly recommended you post there.
 
@@ -407,12 +407,12 @@ Usually this is more of an issue of a specific configuration of Composr looking 
 
 [media width="100" thumb="0" float="right" framed="0"]themes/default/images/icons/status/inform.svg[/media]
 This is best shown by example. The developers got some very vague feedback, mentioned in passing in our chatroom. It was not mentioned, but we were able to guess that this related to some display issues on the Composr demo, and analysis (read: second guessing) led to some bug reports, that the developers could then resolve:
- - https://composr.app/tracker/view.php?id=1169
- - https://composr.app/tracker/view.php?id=1170
- - https://composr.app/tracker/view.php?id=1171
- - https://composr.app/tracker/view.php?id=1172
- - https://composr.app/tracker/view.php?id=1173
- - https://composr.app/tracker/view.php?id=1175
+ - https://composr.app/catalogues/entry/tracker-1169.htm
+ - https://composr.app/catalogues/entry/tracker-1170.htm
+ - https://composr.app/catalogues/entry/tracker-1171.htm
+ - https://composr.app/catalogues/entry/tracker-1172.htm
+ - https://composr.app/catalogues/entry/tracker-1173.htm
+ - https://composr.app/catalogues/entry/tracker-1175.htm
 
 This is exactly what the developers would like people to do directly. Isolate specific issues, then report them to us. We can then expedite the fixing of such issues very easily.
 

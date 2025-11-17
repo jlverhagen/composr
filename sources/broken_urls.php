@@ -35,7 +35,7 @@
  *
  * @package core_cleanup_tools
  */
-class BrokenURLScanner
+class Source_broken_url_scanner
 {
     /**
      * Scan URL fields for URLs.

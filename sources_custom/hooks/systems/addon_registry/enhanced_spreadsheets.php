@@ -171,11 +171,9 @@ Note the old-style Excel format ([tt].xls[/tt]) is intentionally not supported b
     public function get_file_list() : array
     {
         return [
-            'sources_custom/files_spreadsheets_read.php',
-            'sources_custom/files_spreadsheets_read__spout.php',
-            'sources_custom/files_spreadsheets_write.php',
-            'sources_custom/files_spreadsheets_write__spout.php',
             'sources_custom/hooks/systems/addon_registry/enhanced_spreadsheets.php',
+            'sources_custom/hooks/systems/spreadsheet_reader/enhanced_spreadsheets.php',
+            'sources_custom/hooks/systems/spreadsheet_writer/enhanced_spreadsheets.php',
             'sources_custom/openspout/.htaccess',
             'sources_custom/openspout/LICENSE',
             'sources_custom/openspout/LICENSE-for-cc42c1d',

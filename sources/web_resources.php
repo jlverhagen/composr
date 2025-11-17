@@ -663,3 +663,150 @@ function inject_web_resources_context_to_comcode(string &$message_raw)
 
     $message_raw = $css_comcode . $javascript_comcode . $message_raw;
 }
+
+/**
+ * Filter out any CSS selector blocks from the given CSS if they definitely do not affect the given (X)HTML.
+ * While this is a clever algorithm, it isn't so clever as to actually try and match each selector against a DOM tree. If any segment of a compound selector matches, match is assumed.
+ *
+ * @param  ID_TEXT $c CSS file
+ * @param  ?ID_TEXT $theme Theme (null: default)
+ * @param  string $context (X) HTML context under which CSS is filtered
+ * @return string Filtered CSS
+ */
+function filter_css(string $c, ?string $theme, string $context) : string
+{
+    if (($theme === null)) {
+        $theme = $GLOBALS['FORUM_DRIVER']->get_theme();
+    }
+
+    // Reduce input parameters to critical components, and cache on - saves a lot of time if multiple e-mails sent by script
+    static $cache = [];
+    $simple_sig = preg_replace('#\s+(?!class)(?!id)[\w\-]+="[^"<>]*"#', '', preg_replace('#[^<>]*(<[^<>]+>)[^<>]*#s', '${1}', $context));
+    $simple_sig .= $c . $theme;
+    if (isset($cache[$simple_sig])) {
+        return $cache[$simple_sig];
+    }
+
+    $_css = do_template($c, [], user_lang(), true/*can't fail on this error because it could be an e-mail from queue, with different addon state*/, null, '.css', 'css', $theme);
+    $css = $_css->evaluate();
+
+    if ($c == 'email') {
+        return $css; // No filtering for this file
+    }
+
+    // Find out all our IDs
+    $ids = [];
+    $matches = [];
+    $count = preg_match_all('#\sid=["\']([^"\']*)["\']#', $context, $matches);
+    for ($i = 0; $i < $count; $i++) {
+        $ids[$matches[1][$i]] = true;
+    }
+
+    // Find out all our classes
+    $classes = [];
+    $count = preg_match_all('#\sclass=["\']([^"\']*)["\']#', $context, $matches);
+    for ($i = 0; $i < $count; $i++) {
+        if ($matches[1][$i] == '') {
+            continue;
+        }
+        $classes = array_merge($classes, preg_split('#\s+#', $matches[1][$i], -1, PREG_SPLIT_NO_EMPTY));
+    }
+    $classes = array_flip($classes);
+
+    // Find all our XHTML tags
+    $tags = [
+        'html' => true,
+        'body' => true,
+    ];
+    $count = preg_match_all('#<(\w+)([^\w])#', $context, $matches);
+    for ($i = 0; $i < $count; $i++) {
+        $tags[$matches[1][$i]] = true;
+    }
+
+    // Strip comments from CSS. This optimises, and also avoids us needing to do a sophisticated parse
+    $css = preg_replace('#/\*.*\*/#Us', '', $css);
+
+    // Strip all media rules, we don't support parsing it, and e-mails will not be that complex
+    $middle_regexp = '[^\{\}]*' . '\{[^\{\}]*\}' . '[^\{\}]*';
+    $css = preg_replace('#@media[^\{\}]*\{(' . $middle_regexp . ')*\}#s', '', $css);
+
+    // Find and process each CSS selector block
+    $stack = [];
+    $css_new = '';
+    $last_pos = 0;
+    do {
+        $pos1 = strpos($css, '{', $last_pos);
+        $pos2 = strpos($css, '}', $last_pos);
+        if (($pos1 === false) && ($pos2 === false)) {
+            break;
+        }
+
+        if (($pos1 === false) || (($pos2 !== false) && ($pos2 < $pos1))) {
+            if (!empty($stack)) {
+                $start = array_pop($stack);
+                if (empty($stack)) { // We've finished a top-level section
+                    $real_start = strrpos(substr($css, 0, $start), '}');
+                    $real_start = ($real_start === false) ? 0 : ($real_start + 1);
+                    $selectors = explode(',', trim(substr($css, $real_start, $start - $real_start)));
+                    $applies = false;
+                    foreach ($selectors as $selector) {
+                        $selector = trim($selector);
+
+                        if (strpos($selector, '::selection') !== false) {
+                            continue;
+                        }
+                        if (strpos($selector, 'a[href^="mailto:"]') !== false) {
+                            continue;
+                        }
+                        if (strpos($selector, 'a[target="_blank"]') !== false) {
+                            continue;
+                        }
+
+                        $matches = [];
+
+                        // ID selectors
+                        $num_matches = preg_match_all('#\#(\w+)#', $selector, $matches);
+                        for ($i = 0; $i < $num_matches; $i++) {
+                            if (!isset($ids[$matches[1][$i]])) {
+                                continue 2;
+                            }
+                        }
+
+                        // Class name selectors
+                        $num_matches = preg_match_all('#\.(\w+)#', $selector, $matches);
+                        for ($i = 0; $i < $num_matches; $i++) {
+                            if (!isset($classes[$matches[1][$i]])) {
+                                continue 2;
+                            }
+                        }
+
+                        // Tag selectors
+                        $num_matches = preg_match_all('#(^|\s|>)(\w+)#', $selector, $matches);
+                        for ($i = 0; $i < $num_matches; $i++) {
+                            if (!isset($tags[$matches[2][$i]])) {
+                                continue 2;
+                            }
+                        }
+
+                        $applies = true;
+                        break;
+                    }
+                    if ($applies) {
+                        $css_new .= trim(substr($css, $real_start, $pos2 - $real_start + 1)) . "\n\n"; // Append section
+                    }
+                }
+            } else {
+                //return $css; // Parsing error, extra close
+                // But actually it's best we let it continue on
+            }
+            $last_pos = $pos2 + 1;
+        } else {
+            array_push($stack, $pos1);
+            $last_pos = $pos1 + 1;
+        }
+    } while (true);
+
+    $cache[$simple_sig] = $css_new;
+
+    return $css_new;
+}

@@ -33,7 +33,7 @@
 /**
  * Hook class.
  */
-class Hook_admin_stats_content extends CMSStatsProvider
+class Hook_admin_stats_content extends Source_hook_stats_provider
 {
     /**
      * Find metadata about stats graphs that are provided by this stats hook.
@@ -48,7 +48,7 @@ class Hook_admin_stats_content extends CMSStatsProvider
                 'label' => do_lang_tempcode('CONTENT_VIEWS'),
                 'category' => 'hits',
                 'filters' => [
-                    'content_views__content_type' => new CMSStatsListFilter('content_views__content_type', do_lang_tempcode('CONTENT_TYPE'), $this->find_all_content_types()),
+                    'content_views__content_type' => new Source_stats_filter_list('content_views__content_type', do_lang_tempcode('CONTENT_TYPE'), $this->find_all_content_types()),
                 ],
                 'pivot' => null,
             ],
@@ -56,7 +56,7 @@ class Hook_admin_stats_content extends CMSStatsProvider
                 'label' => do_lang_tempcode('CONTENT_VIEWS_PER_CONTENT_DAY'),
                 'category' => 'hits',
                 'filters' => [
-                    'content_views__content_type' => new CMSStatsListFilter('content_views__content_type', do_lang_tempcode('CONTENT_TYPE'), $this->find_all_content_types()),
+                    'content_views__content_type' => new Source_stats_filter_list('content_views__content_type', do_lang_tempcode('CONTENT_TYPE'), $this->find_all_content_types()),
                 ],
                 'pivot' => null,
             ],

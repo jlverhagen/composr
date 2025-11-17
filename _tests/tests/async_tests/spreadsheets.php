@@ -53,7 +53,7 @@ class spreadsheets_test_set extends cms_test_case
 
         $this->expected = [];
 
-        $this->expected[CMS_Spreadsheet_Reader::ALGORITHM_RAW] = [
+        $this->expected[Source_spreadsheet_reader::ALGORITHM_RAW] = [
             ['A', 'B', 'C'],
             ['A1', 'B1', 'C,"1'],
             ['A2', 'B2', 'C"2'],
@@ -61,14 +61,14 @@ class spreadsheets_test_set extends cms_test_case
             ['A4', '', ''],
         ];
 
-        $this->expected[CMS_Spreadsheet_Reader::ALGORITHM_UNNAMED_FIELDS] = [
+        $this->expected[Source_spreadsheet_reader::ALGORITHM_UNNAMED_FIELDS] = [
             ['A1', 'B1', 'C,"1'],
             ['A2', 'B2', 'C"2'],
             ['', '', "C3\nC3"],
             ['A4', '', ''],
         ];
 
-        $this->expected[CMS_Spreadsheet_Reader::ALGORITHM_NAMED_FIELDS] = [
+        $this->expected[Source_spreadsheet_reader::ALGORITHM_NAMED_FIELDS] = [
             ['A' => 'A1', 'B' => 'B1', 'C' => 'C,"1'],
             ['A' => 'A2', 'B' => 'B2', 'C' => 'C"2'],
             ['A' => '', 'B' => '', 'C' => "C3\nC3"],
@@ -91,9 +91,9 @@ class spreadsheets_test_set extends cms_test_case
         $exts = [];
         foreach ($this->files as $file) {
             foreach ($this->expected as $algorithm => $expected) {
-                $this->assertTrue(is_spreadsheet_readable($file));
+                $this->assertTrue(Source_spreadsheet_reader::is_spreadsheet_readable($file));
 
-                $sheet_reader = spreadsheet_open_read(get_file_base() . '/_tests/assets/spreadsheets/' . $file, $file, $algorithm);
+                $sheet_reader = Source_spreadsheet_reader::spreadsheet_open_read(get_file_base() . '/_tests/assets/spreadsheets/' . $file, $file, $algorithm);
                 $rows = [];
                 while (($row = $sheet_reader->read_row()) !== false) {
                     $rows[] = $row;
@@ -113,9 +113,9 @@ class spreadsheets_test_set extends cms_test_case
             }
         }
 
-        $this->assertTrue(!is_spreadsheet_readable('foo.bar'));
+        $this->assertTrue(!Source_spreadsheet_reader::is_spreadsheet_readable('foo.bar'));
 
-        $_exts = explode(',', spreadsheet_read_file_types());
+        $_exts = explode(',', Source_spreadsheet_reader::spreadsheet_read_file_types());
         sort($_exts);
         ksort($exts);
         $this->assertTrue($_exts == array_keys($exts), 'Not all file extensions covered');
@@ -134,23 +134,23 @@ class spreadsheets_test_set extends cms_test_case
         }
 
         foreach ($this->expected as $algorithm => $expected) {
-            if ($algorithm == CMS_Spreadsheet_Reader::ALGORITHM_UNNAMED_FIELDS) {
+            if ($algorithm == Source_spreadsheet_reader::ALGORITHM_UNNAMED_FIELDS) {
                 continue; // Not supported for write
             }
 
             foreach ($this->files as $file) {
-                $this->assertTrue(is_spreadsheet_writable($file));
+                $this->assertTrue(Source_spreadsheet_writer::is_spreadsheet_writable($file));
 
                 // Write out
                 $path = null; // Will be written by reference
-                $sheet_writer = spreadsheet_open_write($path, $file, $algorithm);
+                $sheet_writer = Source_spreadsheet_writer::spreadsheet_open_write($path, $file, $algorithm);
                 foreach ($expected as $row) {
                     $sheet_writer->write_row($row);
                 }
                 $sheet_writer->close();
 
                 // Read back in and compare
-                $sheet_reader = spreadsheet_open_read($path, $file, $algorithm);
+                $sheet_reader = Source_spreadsheet_reader::spreadsheet_open_read($path, $file, $algorithm);
                 $rows = [];
                 while (($row = $sheet_reader->read_row()) !== false) {
                     $rows[] = $row;
@@ -167,12 +167,12 @@ class spreadsheets_test_set extends cms_test_case
             }
         }
 
-        $this->assertTrue(!is_spreadsheet_writable('foo.bar'));
+        $this->assertTrue(!Source_spreadsheet_writer::is_spreadsheet_writable('foo.bar'));
 
         if (addon_installed('enhanced_spreadsheets')) {
-            $this->assertTrue(spreadsheet_write_default() == 'ods');
+            $this->assertTrue(Source_spreadsheet_writer::spreadsheet_write_default() == 'ods');
         } else {
-            $this->assertTrue(spreadsheet_write_default() == 'csv');
+            $this->assertTrue(Source_spreadsheet_writer::spreadsheet_write_default() == 'csv');
         }
     }
 }

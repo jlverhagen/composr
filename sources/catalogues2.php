@@ -502,6 +502,9 @@ function actual_delete_catalogue(string $name)
 
     update_catalogue_content_ref('catalogue', $name, '');
 
+    require_code('notifications');
+    delete_all_notifications_on('catalogue_entry__' . $name, null);
+
     log_it('DELETE_CATALOGUE', $name, $__title);
 
     if ((addon_installed('commandr')) && (!running_script('install')) && (!get_mass_import_mode())) {
@@ -1028,6 +1031,9 @@ function actual_delete_catalogue_category(int $id, bool $deleting_all = false)
     require_code('uploads2');
     clean_empty_upload_directories('uploads/repimages');
 
+    require_code('notifications');
+    delete_all_notifications_on('catalogue_entry__' . $myrow['c_name'], strval($id));
+
     log_it('DELETE_CATALOGUE_CATEGORY', strval($id), $_title);
 
     delete_cache_entry('main_cc_embed');
@@ -1212,7 +1218,7 @@ function actual_add_catalogue_entry(int $category_id, int $validated, string $no
             $subject = do_lang('CATALOGUE_ENTRY_NOTIFICATION_MAIL_SUBJECT', get_site_name(), strip_comcode($title), [$catalogue_title]);
             $self_url = build_url(['page' => 'catalogues', 'type' => 'entry', 'id' => $id], get_module_zone('catalogues'), [], false, false, true);
             $mail = do_notification_lang('CATALOGUE_ENTRY_NOTIFICATION_MAIL', comcode_escape(get_site_name()), comcode_escape(strip_comcode($title)), [comcode_escape($self_url->evaluate()), comcode_escape($catalogue_title)]);
-            dispatch_notification('catalogue_entry__' . $catalogue_name, strval($category_id), $subject, $mail, $privacy_limits);
+            Source_notification_dispatcher::dispatch_notification('catalogue_entry__' . $catalogue_name, strval($category_id), $subject, $mail, $privacy_limits);
         }
 
         log_it('ADD_CATALOGUE_ENTRY', strval($id), $title);
@@ -1422,7 +1428,7 @@ function actual_edit_catalogue_entry(int $id, int $category_id, int $validated, 
             require_code('notifications');
             $subject = do_lang('CATALOGUE_ENTRY_NOTIFICATION_MAIL_SUBJECT', get_site_name(), strip_comcode($title), [$catalogue_title]);
             $mail = do_notification_lang('CATALOGUE_ENTRY_NOTIFICATION_MAIL', comcode_escape(get_site_name()), comcode_escape(strip_comcode($title)), [comcode_escape($self_url->evaluate()), comcode_escape($catalogue_title)]);
-            dispatch_notification('catalogue_entry__' . $catalogue_name, strval($category_id), $subject, $mail, $privacy_limits);
+            Source_notification_dispatcher::dispatch_notification('catalogue_entry__' . $catalogue_name, strval($category_id), $subject, $mail, $privacy_limits);
         }
     }
 
@@ -1546,7 +1552,7 @@ function actual_delete_catalogue_entry(int $id)
     }
 
     if (addon_installed('search')) {
-        require_code('database_search');
+        require_code('fast_custom_index');
         Fast_custom_index::delete_from_index($GLOBALS['SITE_DB'], 'ce_fulltext_index', ['i_catalogue_entry_id' => $id]);
     }
 

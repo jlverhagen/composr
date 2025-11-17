@@ -819,7 +819,7 @@ function save_comcode_page(string $zone, string $new_file, ?string $lang = null,
         if ($file_changed) {
             if (addon_installed('actionlog')) {
                 require_code('revisions_engine_files');
-                $revision_engine = new RevisionEngineFiles();
+                $revision_engine = object_factory('Source_revisions_engine_files');
                 list(, , $existing_path) = find_comcode_page($lang, $file, $zone);
                 if ($existing_path != '') {
                     $revision_engine->add_revision(dirname($full_path), $new_file, 'txt', cms_file_get_contents_safe($existing_path, FILE_READ_LOCK | FILE_READ_BOM), filemtime($existing_path));
@@ -977,7 +977,7 @@ function delete_cms_page(string $zone, string $page, string $type = 'comcode_cus
         if (substr($type, 0, 7) == 'comcode') {
             if (addon_installed('actionlog')) {
                 require_code('revisions_engine_files');
-                $revision_engine = new RevisionEngineFiles();
+                $revision_engine = object_factory('Source_revisions_engine_files');
                 list(, , $existing_path) = find_comcode_page(($only_lang === null) ? user_lang() : $only_lang, $page, $zone);
                 if ($existing_path != '') {
                     $revision_engine->add_revision(dirname($existing_path), $page, 'txt', cms_file_get_contents_safe($existing_path, FILE_READ_LOCK | FILE_READ_BOM), filemtime($existing_path));
@@ -985,7 +985,7 @@ function delete_cms_page(string $zone, string $page, string $type = 'comcode_cus
             }
 
             if (addon_installed('search')) {
-                require_code('database_search');
+                require_code('fast_custom_index');
                 Fast_custom_index::delete_from_index($GLOBALS['SITE_DB'], 'cpages_fulltext_index', ['i_zone_name' => $zone, 'i_page_name' => $page]);
             }
         }

@@ -73,7 +73,7 @@ class Hook_endpoint_misc_contact_us
         require_lang('tickets');
         $notification_subject = do_lang('CONTACT_US_NOTIFICATION_SUBJECT', $title, null, null, get_site_default_lang());
         $notification_message = do_lang('CONTACT_US_NOTIFICATION_MESSAGE', comcode_escape(get_site_name()), comcode_escape($GLOBALS['FORUM_DRIVER']->get_username(get_member())), [$post, comcode_escape($category)], get_site_default_lang());
-        dispatch_notification('ticket_reply', $type . '_' . $id, $notification_subject, $notification_message, null, null, ['create_ticket' => true]);
+        Source_notification_dispatcher::dispatch_notification('ticket_reply', $type . '_' . $id, $notification_subject, $notification_message, null, null, ['create_ticket' => true]);
 
         // Send standard confirmation e-mail to current user
         if ($email_from != '' && get_option('message_received_emails') == '1') {

@@ -47,7 +47,7 @@ class Hook_task_find_broken_urls
         require_lang('cleanup');
         require_code('broken_urls');
 
-        $url_scanner = new BrokenURLScanner();
+        $url_scanner = object_factory('Source_broken_url_scanner');
 
         $i = 0;
         foreach ($urls as $url => &$url_bits) {

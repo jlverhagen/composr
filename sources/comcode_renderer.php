@@ -2202,7 +2202,7 @@ function _do_tags_comcode(string $tag, array $attributes, $embed, bool $comcode_
                 }
             }
 
-            if ((!is_numeric($id)) && (substr($id, 0, 4) != 'new_')) { // New attachments: embedded attachments (base64)
+            if ((!is_numeric($id)) && (substr($id, 0, 4) != 'new_') && (substr($id, 0, 5) != 'post_')) { // New attachments: embedded attachments (base64)
                 $file = base64_decode(str_replace("\n", '', $id));
                 if ($file === false) {
                     $temp_tpl = do_template('WARNING_BOX', ['_GUID' => '422658aee3c0eea77ad85d8621af742b', 'WARNING' => do_lang_tempcode('comcode:CORRUPT_ATTACHMENT')]);
@@ -2229,10 +2229,10 @@ function _do_tags_comcode(string $tag, array $attributes, $embed, bool $comcode_
                 if ($db->is_forum_db()) {
                     $url = get_custom_base_url() . '/' . $url;
                 }
-            } elseif (!is_numeric($id)) { // New attachments: uploads
-                if (substr($id, 0, 4) == 'new_') {
-                    disable_php_memory_limit(); // In case needs lots of RAM for thumbnail generation
+            } elseif (!is_numeric($id)) { // New attachments: uploads or POST URLs
+                disable_php_memory_limit(); // In case needs lots of RAM for thumbnail generation
 
+                if (substr($id, 0, 4) == 'new_') { // Uploaded as a file
                     // Get/test ID
                     $_id = substr($id, 4);
                     if (!is_numeric($_id)) {
@@ -2256,14 +2256,39 @@ function _do_tags_comcode(string $tag, array $attributes, $embed, bool $comcode_
                         return new Tempcode();
                     }
                     $_size = $_FILES['file' . $_id]['size'];
-                    $original_filename = $_FILES['file' . $_id]['name'];
+                    $original_filename = array_key_exists('filename', $attributes) ? $attributes['filename'] : $_FILES['file' . $_id]['name'];
+                } elseif (substr($id, 0, 5) == 'post_') { // URL provided as a POST parameter
+                    // Get/test ID
+                    $_id = substr($id, 5);
+                    if (!is_numeric($_id)) {
+                        $temp_tpl = do_template('WARNING_BOX', ['_GUID' => 'TODO', 'WARNING' => do_lang_tempcode('comcode:INVALID_ATTACHMENT')]);
+                        break;
+                    }
 
-                    require_code('upload_syndication');
-                    $urls[0] = handle_upload_syndication('file' . $_id, '', array_key_exists('description', $attributes) ? $attributes['description'] : '', $urls[0], $original_filename, true);
+                    // Grab actual file
+                    require_code('uploads');
+                    require_code('images');
+                    $enforce_type = CMS_UPLOAD_ANYTHING;
+                    if (((empty($attributes['type'])) || ($attributes['type'] == 'image_websafe')) && (array_key_exists('file' . $_id, $_POST)) && (is_image($_POST['file' . $_id], IMAGE_CRITERIA_GD_READ | IMAGE_CRITERIA_GD_WRITE))) {
+                        $enforce_type = CMS_UPLOAD_IMAGE; // Images cleanup pipeline
+                    }
+                    reset_images_cleanup_pipeline_settings();
+                    $urls = get_url('file' . $_id, '', 'uploads/attachments', OBFUSCATE_BIN_SUFFIX, $enforce_type, ((!array_key_exists('thumb', $attributes)) || ($attributes['thumb'] != '0')) && ($attributes['thumb_url'] == ''), '', '', true, false, true, true, $source_member);
+                    reset_images_cleanup_pipeline_settings();
+                    if ($urls[0] == '') {
+                        //warn_exit(do_lang_tempcode('ERROR_UPLOADING'));  Can't do this, because this might not be post-calculated if something went wrong once
+                        return new Tempcode();
+                    }
+
+                    $_size = filesize($urls[0]);
+                    $original_filename = array_key_exists('filename', $attributes) ? $attributes['filename'] : $urls[2];
                 } else { // Should not get here
                     $temp_tpl = do_template('WARNING_BOX', ['_GUID' => 'f7c0ead08bf7e19f3b78a536c755d6a5', 'WARNING' => do_lang_tempcode('comcode:INVALID_ATTACHMENT')]);
                     break;
                 }
+
+                require_code('upload_syndication');
+                $urls[0] = handle_upload_syndication('file' . $_id, '', array_key_exists('description', $attributes) ? $attributes['description'] : '', $urls[0], $original_filename, true);
 
                 // If it did not work
                 if ($urls[0] == '') {

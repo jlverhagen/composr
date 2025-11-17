@@ -88,7 +88,7 @@ class Hook_checklist_health_check
             }
         }
 
-        list($info, $seconds_due_in) = staff_checklist_time_ago_and_due($seconds_ago, $limit_hours);
+        list($info, $seconds_due_in) = Block_main_staff_checklist::staff_checklist_time_ago_and_due($seconds_ago, $limit_hours);
 
         require_code('config2');
         $config_url = config_option_url('hc_cron_sections_to_run');

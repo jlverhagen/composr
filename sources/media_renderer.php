@@ -37,6 +37,8 @@
  */
 function init__media_renderer()
 {
+    require_code('media_renderer_fallback');
+
     if (!defined('MEDIA_RECOG_PRECEDENCE_SUPER')) {
         define('MEDIA_RECOG_PRECEDENCE_SUPER', 50);
         define('MEDIA_RECOG_PRECEDENCE_HIGH', 40);
@@ -416,64 +418,4 @@ function _create_media_template_parameters($url, array $attributes, bool $as_adm
         'NUM_DOWNLOADS' => array_key_exists('num_downloads', $attributes) ? $attributes['num_downloads'] : null,
         'DESCRIPTION' => comcode_to_tempcode($attributes['description'], $source_member, $as_admin),
     ];
-}
-
-/**
- * A media renderer coded to fall-back to a simple image if we have low-fi mode turned on.
- *
- * @package core_rich_media
- */
-abstract class Media_renderer_with_fallback
-{
-    /**
-     * If we are rendering in low-fi, result to simple image fall-back.
-     *
-     * @param  mixed $url URL to render
-     * @param  mixed $url_safe URL to render (no sessions etc)
-     * @param  array $attributes Attributes (e.g. width, height, length)
-     * @param  boolean $as_admin Whether there are admin privileges, to render dangerous media types
-     * @param  ?MEMBER $source_member Member to run as (null: current member)
-     * @param  ?mixed $click_url URL to route clicks through to (null: no special URL)
-     * @return ?Tempcode Rendered version (null: do not render)
-     */
-    public function fallback_render($url, $url_safe, array $attributes, bool $as_admin, ?int $source_member, $click_url = null) : ?object
-    {
-        if ((peek_media_mode() & MEDIA_LOWFI) != 0) {
-            // Work out where to direct links to
-            if (empty($attributes['click_url'])) {
-                if (!empty($GLOBALS['TEMPCODE_SETGET']['comcode__current_linking_context'])) {
-                    // Tempcode has specified
-                    $attributes['click_url'] = $GLOBALS['TEMPCODE_SETGET']['comcode__current_linking_context'];
-                    if ($attributes['click_url'] == '-') {
-                        // Special notation indicating to not use a link, i.e. an explicit "no link"
-                        $attributes['click_url'] = '';
-                    }
-                } else {
-                    // Natural link
-                    if ($click_url !== null) {
-                        $attributes['click_url'] = $click_url;
-                    }
-                    // Else: no link
-                }
-            }
-
-            // Thumbnail?
-            if (method_exists($this, 'get_video_thumbnail')) {
-                $test = $this->get_video_thumbnail($url);
-                if ($test !== null) {
-                    $url = $test;
-                    $url_safe = $test;
-                    $attributes['thumb'] = '0'; // Don't re-thumbnail
-                }
-            }
-
-            // Render as image
-            require_code('hooks/systems/media_rendering/image_websafe');
-            $ob = new Hook_media_rendering_image_websafe();
-            $attributes['framed'] = '0';
-            return $ob->render($url, $url_safe, $attributes, $as_admin, $source_member);
-        }
-
-        return null;
-    }
 }

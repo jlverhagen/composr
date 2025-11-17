@@ -33,7 +33,7 @@
 /**
  * Hook class.
  */
-class Hook_sitemap_forum extends Hook_sitemap_content
+class Hook_sitemap_forum extends Source_hook_sitemap_content
 {
     protected $content_type = 'forum';
     protected $screen_type = 'browse';
@@ -131,7 +131,7 @@ class Hook_sitemap_forum extends Hook_sitemap_content
             // Special case, we put out hard-coded vforums entry-points...
 
             require_code('hooks/systems/sitemap/entry_point');
-            $entry_point_ob = new Hook_sitemap_entry_point();
+            $entry_point_ob = object_factory('Hook_sitemap_entry_point', false, [], true);
 
             $vforums_zone = get_module_zone('vforums');
             $topicview_zone = get_module_zone('topicview');

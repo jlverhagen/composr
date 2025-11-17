@@ -31,27 +31,11 @@
  */
 
 /**
- * Standard code module initialisation function.
- *
- * @ignore
- */
-function init__commandr_fs()
-{
-    if (!defined('COMMANDR_FS_FILE')) {
-        define('COMMANDR_FS_FILE', 0);
-        define('COMMANDR_FS_DIR', 1);
-    }
-
-    global $COMMANDR_FS_LISTING_CACHE;
-    $COMMANDR_FS_LISTING_CACHE = [];
-}
-
-/**
  * Virtual filesystems.
  *
  * @package commandr
  */
-class Commandr_fs
+class Source_commandr_fs
 {
     public $commandr_fs;
     public $pwd;
@@ -63,6 +47,16 @@ class Commandr_fs
      */
     public function __construct()
     {
+        if (!defined('COMMANDR_FS_FILE')) {
+            define('COMMANDR_FS_FILE', 0);
+            define('COMMANDR_FS_DIR', 1);
+        }
+
+        global $COMMANDR_FS_LISTING_CACHE;
+        if (!isset($COMMANDR_FS_LISTING_CACHE)) {
+            $COMMANDR_FS_LISTING_CACHE = [];
+        }
+
         // Initialise a new virtual filesystem; setup the vfs array, and fetch the pwd from a cookie
 
         /*

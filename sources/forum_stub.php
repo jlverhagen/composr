@@ -31,37 +31,32 @@
  */
 
 /**
- * Standard code module initialisation function.
- *
- * @ignore
- */
-function init__forum_stub()
-{
-    if (!defined('USERNAME_GUEST_AS_DEFAULT')) {
-        define('USERNAME_GUEST_AS_DEFAULT', 1);
-        define('USERNAME_DEFAULT_DELETED', 2);
-        define('USERNAME_DEFAULT_NULL', 4);
-        define('USERNAME_DEFAULT_ID_RAW', 8);
-        define('USERNAME_DEFAULT_ID_TIDY', 16);
-        define('USERNAME_DEFAULT_BLANK', 32);
-        define('USERNAME_DEFAULT_ERROR', 64);
-    }
-
-    require_code('users');
-}
-
-/**
  * Forum Driver base class.
  *
  * @package core
  */
-abstract class Forum_driver_base
+abstract class Source_forum_driver_base
 {
     public $db;
 
     public $MEMBER_ROWS_CACHED = [];
 
     public $EMOTICON_CACHE = null;
+
+    public function __construct()
+    {
+        if (!defined('USERNAME_GUEST_AS_DEFAULT')) {
+            define('USERNAME_GUEST_AS_DEFAULT', 1);
+            define('USERNAME_DEFAULT_DELETED', 2);
+            define('USERNAME_DEFAULT_NULL', 4);
+            define('USERNAME_DEFAULT_ID_RAW', 8);
+            define('USERNAME_DEFAULT_ID_TIDY', 16);
+            define('USERNAME_DEFAULT_BLANK', 32);
+            define('USERNAME_DEFAULT_ERROR', 64);
+        }
+
+        require_code('users');
+    }
 
     /**
      * Run whatever initialisation code we need to run. Not used within minikernel (i.e. installer).

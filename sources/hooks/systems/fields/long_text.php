@@ -114,7 +114,7 @@ class Hook_fields_long_text
      * @param  string $_cf_name The field name
      * @param  string $_cf_description The field description
      * @param  array $field The field details
-     * @param  ?string $actual_value The actual current value of the field (null: none)
+     * @param  ?string $actual_value The actual current value of the field, or default value if not set (null: none, and no default value set)
      * @param  boolean $new Whether this is for a new entry
      * @return ?Tempcode The Tempcode for the input field (null: skip the field - it's not input)
      */
@@ -124,13 +124,21 @@ class Hook_fields_long_text
             $actual_value = ''; // Plug anomaly due to unusual corruption
         }
 
+        $input_name = @cms_empty_safe($field['cf_input_name']) ? ('field_' . strval($field['id'])) : $field['cf_input_name'];
+
+        $edit_only = option_value_from_field_array($field, 'edit_only', '0');
+        if (($field['cf_required'] == 1) && ($actual_value == '')) {
+            $edit_only = '0';
+        }
+        if (($edit_only != '0') && $new) {
+            return form_input_hidden($input_name, $actual_value);
+        }
+
         $wordwrap = (option_value_from_field_array($field, 'wordwrap', 'on') == 'on');
 
         $input_size = max(1, intval(option_value_from_field_array($field, 'input_size', '9')));
 
         $widget = option_value_from_field_array($field, 'widget', '');
-
-        $input_name = @cms_empty_safe($field['cf_input_name']) ? ('field_' . strval($field['id'])) : $field['cf_input_name'];
 
         if ($widget == 'huge') {
             return form_input_huge($_cf_name, $_cf_description, $input_name, $actual_value, $field['cf_required'] == 1, null, $input_size, '', !$wordwrap);

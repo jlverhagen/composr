@@ -35,7 +35,7 @@ require_code('crud_module');
 /**
  * Module page class.
  */
-class Module_warnings extends Standard_crud_module
+class Module_warnings extends Source_standard_crud_module
 {
     public $lang_type = 'WARNING';
     public $select_name = 'SUBMITTER';

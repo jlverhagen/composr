@@ -144,7 +144,7 @@ class Block_main_contact_us
                 $user_metadata_path = save_user_metadata();
                 $attachments[$user_metadata_path] = 'user_metadata.txt';
             }
-            dispatch_notification('ticket_reply', $type . '_' . $id, $notification_subject, $notification_message, null, null, ['create_ticket' => true, 'attachments' => $attachments]);
+            Source_notification_dispatcher::dispatch_notification('ticket_reply', $type . '_' . $id, $notification_subject, $notification_message, null, null, ['create_ticket' => true, 'attachments' => $attachments]);
 
             // Send standard confirmation e-mail to current user
             if ($from_email != '' && get_option('message_received_emails') == '1') {

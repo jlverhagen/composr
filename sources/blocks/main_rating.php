@@ -58,7 +58,7 @@ class Block_main_rating
     /**
      * Find caching details for the block.
      *
-     * @return ?array Map of cache details (cache_on and ttl) (null: block is disabled)
+     * @return ?array Map of cache details (cache_on and ttl) (null: do not cache)
      */
     /*
     public function caching_environment() // We can't cache this block, because it needs to execute in order to allow commenting

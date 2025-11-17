@@ -41,7 +41,7 @@ For: php_oci8.dll
  *
  * @package core_database_drivers
  */
-class Database_Static_oracle extends DatabaseDriver
+class Source_database_static_oracle extends Source_database_driver
 {
     protected $cache_db = [];
 

@@ -73,7 +73,7 @@ The sixth parameter may be given the value of this [tt]SUPPORTS_FRACTIONAL_EDITA
 The symbol takes the following parameters:
  - The first parameter [required] is the same page-link as the third parameter to the directive. This is used to check zone and page access to the edit page.
  - The second parameter [required] is for further checks. In the below example I'm seeing if the current user is the content's original submitter.
-E.g. [tt]{$SUPPORTS_FRACTIONAL_EDITABLE,cms:cms_example:_edit:12,{$EQ,{SUBMITTER},{$MEMBER}}}[/tt]
+E.g. [tt]{\$SUPPORTS_FRACTIONAL_EDITABLE,cms:cms_example:_edit:12,{$EQ,{SUBMITTER},{$MEMBER}}}[/tt]
 
 [title="3"]Edit widgets[/title]
 

@@ -53,11 +53,6 @@ class database_unsupported_sql_test_set extends cms_test_case
             // Exceptions...
             if (in_array($path, [
                 'rootkit_detection.php',
-                'tracker/bug_sponsorship_list_view_inc.php',
-                'tracker/core/authentication_api.php',
-                'tracker/core/news_api.php',
-                'tracker/vendor/adodb/adodb-php/drivers/adodb-ibase.inc.php',
-                'tracker/vendor/adodb/adodb-php/drivers/adodb-postgres64.inc.php',
                 'sources/database_repair.php',
                 'sources/database/oracle.php',
                 'sources/database/shared/sqlserver.php',

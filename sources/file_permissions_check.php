@@ -35,273 +35,11 @@
 // Everything in this file should run without the software having bootstrapped, although it will run better if it has
 
 /**
- * Execute a shell command, returning full output, with a guaranteed line break if not blank.
- *
- * @param  string $command Command to run
- * @return string Command output
- */
-function execute_nicely(string $command) : string
-{
-    $ret = @trim(shell_exec($command . ' 2>&1'));
-    if ($ret != '') {
-        $ret .= "\n";
-    }
-    return $ret;
-}
-
-/**
- * Scan permissions. Software-specific wrapper for the CMSPermissionsScanner* classes.
- *
- * @param  boolean $live_output Whether to produce live output of issues
- * @param  boolean $live_commands Whether to run commands live
- * @param  ?string $web_username Username or User ID (null: try and auto-detect, failing that assume suEXEC-style)
- * @param  ?boolean $has_ftp_loopback_for_write Whether the system has the potential to 'get' write access on non-suEXEC-style servers by (for example) looping through FTP (null: default / auto-detect if possible)
- * @param  integer $minimum_level Minimum RESULT_TYPE_* level
- * @return array A tuple: Messages to show, Commands to run, Paths with issues, Whether any issues were found
- */
-function scan_permissions(bool $live_output = false, bool $live_commands = false, ?string $web_username = null, ?bool $has_ftp_loopback_for_write = null, int $minimum_level = 3) : array
-{
-    $sensitive_paths = [
-        '_config.php',
-        'exports/backups/[^/]*\.tar(\.gz)?',
-        'exports/file_backups/_config.php\.\d+',
-    ];
-
-    $skip_paths = [ // For performance, often lots of files on dev machines
-        '_tests/screens_tested',
-        'exports/builds',
-        'uploads/website_specific/cms',
-        'uploads/website_specific/test',
-    ];
-
-    $chmod_array = get_chmod_array();
-    $chmod_paths = [];
-    foreach ($chmod_array as $chmod) {
-        $chmod = preg_quote($chmod, '#');
-        $chmod = str_replace('\*\*', '[^/\.]*', $chmod); // Wildcarded directories
-        $chmod = str_replace('\*', '[^/]*', $chmod); // Wildcarded files
-        $chmod_paths[] = $chmod;
-    }
-
-    if ($has_ftp_loopback_for_write === null) {
-        $has_ftp_loopback_for_write = ((function_exists('ftp_ssl_connect')) || (function_exists('ftp_connect'))) && ((!function_exists('get_value')) || (get_value('uses_ftp') !== '0'));
-    }
-
-    if (($minimum_level >= CMSPermissionsScanner::RESULT_TYPE_ERROR_MISSING) && (!$live_commands) && ($web_username === null)) {
-        $ob = new CMSPermissionsScannerSimplified();
-    } elseif (strpos(PHP_OS, 'WIN') !== false) {
-        $ob = new CMSPermissionsScannerWindows();
-    } else {
-        $ob = new CMSPermissionsScannerLinux();
-    }
-
-    $ob->set_path_patterns($sensitive_paths, $chmod_paths, null, $skip_paths);
-
-    $ob->set_live_output($live_output);
-    $ob->set_live_commands($live_commands);
-
-    if ($web_username !== null) {
-        $ob->set_web_username($web_username);
-    }
-
-    $ob->set_minimum_level($minimum_level);
-
-    $ob->set_has_ftp_loopback_for_write($has_ftp_loopback_for_write);
-
-    $subdir = '';
-
-    if (function_exists('get_file_base')) {
-        $stub = get_file_base() . (($subdir == '') ? '' : '/');
-    } else {
-        $stub = dirname(__DIR__) . (($subdir == '') ? '' : '/');
-    }
-
-    $found_any_issue = false;
-
-    $messages = [];
-    $commands = [];
-    $_paths = [];
-
-    list($_messages, $_commands) = $ob->process_directory($stub . $subdir, $subdir, null, true, $_paths, $found_any_issue);
-    $messages = array_merge($messages, $_messages);
-    $commands = array_merge($commands, $_commands);
-
-    if ((function_exists('get_file_base')) && (get_file_base() != get_custom_file_base())) {
-        list($_messages, $_commands) = $ob->process_directory(get_custom_file_base() . (($subdir == '') ? '' : '/') . $subdir, $subdir, null, true, $_paths, $found_any_issue);
-        $messages = array_merge($messages, $_messages);
-        $commands = array_merge($commands, $_commands);
-    }
-
-    $paths = array_keys($_paths);
-
-    return [$messages, $commands, $paths, $found_any_issue];
-}
-
-/**
- * Get the list of folders/files that need CHmodding for write access.
- * Caution: this does not support contentious overrides on addon registry hooks.
- *
- * @param  boolean $runtime Include folders/files that are created dynamically
- * @param  boolean $check_custom Whether to consider and prioritise sources_custom hooks
- * @return array The list of paths; ** represents directory-wildcards
- */
-function get_chmod_array(bool $runtime = true, bool $check_custom = true) : array
-{
-    $chmod = [];
-
-    if (function_exists('find_all_hooks')) {
-        $hooks = find_all_hooks('systems', 'addon_registry', $check_custom);
-        foreach ($hooks as $hook => $place) {
-            /*require_code('hooks/systems/addon_registry/' . filter_naughty_harsh($hook));
-            $object = object_factory('Hook_addon_registry_' . filter_naughty_harsh($hook));
-            $chmod = array_merge($chmod, $object->get_chmod_array());*/
-
-            // Save memory compared to above commented code...
-
-            $path = get_file_base() . '/' . $place . '/hooks/systems/addon_registry/' . filter_naughty_harsh($hook) . '.php';
-            $_hook_bits = extract_module_functions($path, ['get_chmod_array']);
-            $_chmod = is_array($_hook_bits[0]) ? call_user_func_array($_hook_bits[0][0], $_hook_bits[0][1]) : cms_eval($_hook_bits[0], $path);
-            $chmod = array_merge($chmod, $_chmod);
-        }
-    } else { // Manually scan hooks using PHP
-        if ($check_custom) {
-            // sources_custom should be first in case of overrides
-            $base_dirs = [__DIR__ . '/../sources_custom/hooks/systems/addon_registry', __DIR__ . '/../sources/hooks/systems/addon_registry'];
-        } else {
-            $base_dirs = [__DIR__ . '/../sources/hooks/systems/addon_registry'];
-        }
-
-        $hooks_processed = [];
-        foreach ($base_dirs as $base_dir) {
-            $files = scandir($base_dir);
-            foreach ($files as $file) {
-                $path_parts = pathinfo($file);
-                if (!isset($path_parts['extension']) || (strtolower($path_parts['extension']) != 'php')) { // Skip non-PHP files
-                    continue;
-                }
-
-                $hook_name = strtolower($path_parts['filename']);
-                if (array_key_exists($hook_name, $hooks_processed)) { // If we already processed the hook (e.g. override), don't process it again
-                    continue;
-                }
-
-                require_once $base_dir . '/' . $file;
-                $class = 'Hook_addon_registry_' . $hook_name;
-                $object = new $class();
-
-                if (method_exists($object, 'get_chmod_array')) {
-                    $chmod = array_merge($chmod, $object->get_chmod_array());
-                    $hooks_processed[] = $hook_name;
-                }
-            }
-        }
-    }
-
-    if ($runtime) {
-        $chmod = array_merge(
-            $chmod,
-            [
-                '_compiled/**/*.php',
-                'adminzone/pages/comcode_custom/**/*.txt',
-                'adminzone/pages/html_custom/**/*.htm',
-                'caches/http/*.bin',
-                'caches/lang/**/*.lcd',
-                'caches/lang/*.lcd',
-                'caches/persistent/*.gcd',
-                'caches/self_learning/*.gcd',
-                'caches/static/*',
-                'cms/pages/comcode_custom/**/*.txt',
-                'cms/pages/html_custom/**/*.htm',
-                'data_custom/modules/web_notifications/*.bin',
-                'data_custom/sitemaps/*',
-                'data_custom/spelling/personal_dicts/*',
-                'data_custom/xml_config/*.xml',
-                'exports/**/*.tar',
-                'imports/**/*.tar',
-                'lang_custom/**/*.ini',
-                'pages/comcode_custom/**/*.txt',
-                'pages/html_custom/**/*.htm',
-                'site/pages/comcode_custom/**/*.txt',
-                'site/pages/html_custom/**/*.htm',
-                'temp/*',
-                'text_custom/**/*.txt',
-                'text_custom/*.txt',
-                'themes/**/css_custom/*.css',
-                'themes/**/images_custom/*',
-                'themes/**/javascript_custom/*.js',
-                'themes/**/templates_cached/**/*',
-                'themes/**/templates_custom/*.tpl',
-                'themes/**/text_custom/*.txt',
-                'themes/**/xml_custom/*.xml',
-                'themes/**/theme.ini',
-                'uploads/attachments/*',
-                'uploads/attachments_thumbs/*',
-                'uploads/auto_thumbs/*',
-                'uploads/repimages/*',
-                'uploads/website_specific/*',
-            ]
-        );
-    }
-
-    $chmod = array_merge(
-        $chmod,
-        [
-            '_config.php',
-            '_compiled',
-            'adminzone/pages/comcode_custom/**',
-            'adminzone/pages/html_custom/**',
-            'caches/http',
-            'caches/lang',
-            'caches/lang/**',
-            'caches/persistent',
-            'caches/self_learning',
-            'caches/static',
-            'cms/pages/comcode_custom/**',
-            'cms/pages/html_custom/**',
-            'data_custom/errorlog.php',
-            'data_custom/firewall_rules.txt',
-            'data_custom/modules/web_notifications',
-            'data_custom/sitemaps',
-            'data_custom/spelling/personal_dicts',
-            'data_custom/xml_config',
-            'exports/**',
-            'imports/**',
-            'lang_custom',
-            'lang_custom/**',
-            'pages/comcode_custom/**',
-            'pages/html_custom/**',
-            'site/pages/comcode_custom/**',
-            'site/pages/html_custom/**',
-            'temp',
-            'text_custom',
-            'text_custom/**',
-            'themes',
-            'themes/**/css_custom',
-            'themes/**/images_custom',
-            'themes/**/javascript_custom',
-            'themes/map.ini',
-            'themes/**/templates_cached/**',
-            'themes/**/templates_custom',
-            'themes/**/text_custom',
-            'themes/**/xml_custom',
-            'uploads/attachments',
-            'uploads/attachments_thumbs',
-            'uploads/auto_thumbs',
-            'uploads/incoming',
-            'uploads/repimages',
-            'uploads/website_specific',
-        ]
-    );
-
-    return $chmod;
-}
-
-/**
  * Check/fix permissions, base class.
  *
  * @package cms_permissions_scanner
  */
-abstract class CMSPermissionsScanner
+abstract class Source_permissions_scanner
 {
     // Constants...
 
@@ -323,6 +61,268 @@ abstract class CMSPermissionsScanner
     protected $minimum_level = 1;
     protected $live_output = false;
     protected $live_commands = false;
+
+    /**
+     * Execute a shell command, returning full output, with a guaranteed line break if not blank.
+     *
+     * @param  string $command Command to run
+     * @return string Command output
+     */
+    public static function execute_nicely(string $command) : string
+    {
+        $ret = @trim(shell_exec($command . ' 2>&1'));
+        if ($ret != '') {
+            $ret .= "\n";
+        }
+        return $ret;
+    }
+
+    /**
+     * Scan permissions. Software-specific wrapper for the Source_permissions_scanner* classes.
+     *
+     * @param  boolean $live_output Whether to produce live output of issues
+     * @param  boolean $live_commands Whether to run commands live
+     * @param  ?string $web_username Username or User ID (null: try and auto-detect, failing that assume suEXEC-style)
+     * @param  ?boolean $has_ftp_loopback_for_write Whether the system has the potential to 'get' write access on non-suEXEC-style servers by (for example) looping through FTP (null: default / auto-detect if possible)
+     * @param  integer $minimum_level Minimum RESULT_TYPE_* level
+     * @return array A tuple: Messages to show, Commands to run, Paths with issues, Whether any issues were found
+     */
+    public static function scan_permissions(bool $live_output = false, bool $live_commands = false, ?string $web_username = null, ?bool $has_ftp_loopback_for_write = null, int $minimum_level = 3) : array
+    {
+        $sensitive_paths = [
+            '_config.php',
+            'exports/backups/[^/]*\.tar(\.gz)?',
+            'exports/file_backups/_config.php\.\d+',
+        ];
+
+        $skip_paths = [ // For performance, often lots of files on dev machines
+            '_tests/screens_tested',
+            'exports/builds',
+            'uploads/website_specific/cms',
+            'uploads/website_specific/test',
+        ];
+
+        $chmod_array = Source_permissions_scanner::get_chmod_array();
+        $chmod_paths = [];
+        foreach ($chmod_array as $chmod) {
+            $chmod = preg_quote($chmod, '#');
+            $chmod = str_replace('\*\*', '[^/\.]*', $chmod); // Wildcarded directories
+            $chmod = str_replace('\*', '[^/]*', $chmod); // Wildcarded files
+            $chmod_paths[] = $chmod;
+        }
+
+        if ($has_ftp_loopback_for_write === null) {
+            $has_ftp_loopback_for_write = ((function_exists('ftp_ssl_connect')) || (function_exists('ftp_connect'))) && ((!function_exists('get_value')) || (get_value('uses_ftp') !== '0'));
+        }
+
+        if (($minimum_level >= Source_permissions_scanner::RESULT_TYPE_ERROR_MISSING) && (!$live_commands) && ($web_username === null)) {
+            $ob = new Source_permissions_scanner_Simplified();
+        } elseif (strpos(PHP_OS, 'WIN') !== false) {
+            $ob = new Source_permissions_scanner_Windows();
+        } else {
+            $ob = new Source_permissions_scanner_Linux();
+        }
+
+        $ob->set_path_patterns($sensitive_paths, $chmod_paths, null, $skip_paths);
+
+        $ob->set_live_output($live_output);
+        $ob->set_live_commands($live_commands);
+
+        if ($web_username !== null) {
+            $ob->set_web_username($web_username);
+        }
+
+        $ob->set_minimum_level($minimum_level);
+
+        $ob->set_has_ftp_loopback_for_write($has_ftp_loopback_for_write);
+
+        $subdir = '';
+
+        if (function_exists('get_file_base')) {
+            $stub = get_file_base() . (($subdir == '') ? '' : '/');
+        } else {
+            $stub = dirname(__DIR__) . (($subdir == '') ? '' : '/');
+        }
+
+        $found_any_issue = false;
+
+        $messages = [];
+        $commands = [];
+        $_paths = [];
+
+        list($_messages, $_commands) = $ob->process_directory($stub . $subdir, $subdir, null, true, $_paths, $found_any_issue);
+        $messages = array_merge($messages, $_messages);
+        $commands = array_merge($commands, $_commands);
+
+        if ((function_exists('get_file_base')) && (get_file_base() != get_custom_file_base())) {
+            list($_messages, $_commands) = $ob->process_directory(get_custom_file_base() . (($subdir == '') ? '' : '/') . $subdir, $subdir, null, true, $_paths, $found_any_issue);
+            $messages = array_merge($messages, $_messages);
+            $commands = array_merge($commands, $_commands);
+        }
+
+        $paths = array_keys($_paths);
+
+        return [$messages, $commands, $paths, $found_any_issue];
+    }
+
+    /**
+     * Get the list of folders/files that need CHmodding for write access.
+     * Caution: this does not support contentious overrides on addon registry hooks.
+     *
+     * @param  boolean $runtime Include folders/files that are created dynamically
+     * @param  boolean $check_custom Whether to consider and prioritise sources_custom hooks
+     * @return array The list of paths; ** represents directory-wildcards
+     */
+    public static function get_chmod_array(bool $runtime = true, bool $check_custom = true) : array
+    {
+        $chmod = [];
+
+        if (function_exists('find_all_hooks')) {
+            $hooks = find_all_hooks('systems', 'addon_registry', $check_custom);
+            foreach ($hooks as $hook => $place) {
+                /*require_code('hooks/systems/addon_registry/' . filter_naughty_harsh($hook));
+                $object = object_factory('Hook_addon_registry_' . filter_naughty_harsh($hook));
+                $chmod = array_merge($chmod, $object->get_chmod_array());*/
+
+                // Save memory compared to above commented code...
+
+                $path = get_file_base() . '/' . $place . '/hooks/systems/addon_registry/' . filter_naughty_harsh($hook) . '.php';
+                $_hook_bits = extract_module_functions($path, ['get_chmod_array']);
+                $_chmod = is_array($_hook_bits[0]) ? call_user_func_array($_hook_bits[0][0], $_hook_bits[0][1]) : cms_eval($_hook_bits[0], $path);
+                $chmod = array_merge($chmod, $_chmod);
+            }
+        } else { // Manually scan hooks using PHP
+            if ($check_custom) {
+                // sources_custom should be first in case of overrides
+                $base_dirs = [__DIR__ . '/../sources_custom/hooks/systems/addon_registry', __DIR__ . '/../sources/hooks/systems/addon_registry'];
+            } else {
+                $base_dirs = [__DIR__ . '/../sources/hooks/systems/addon_registry'];
+            }
+
+            $hooks_processed = [];
+            foreach ($base_dirs as $base_dir) {
+                $files = scandir($base_dir);
+                foreach ($files as $file) {
+                    $path_parts = pathinfo($file);
+                    if (!isset($path_parts['extension']) || (strtolower($path_parts['extension']) != 'php')) { // Skip non-PHP files
+                        continue;
+                    }
+
+                    $hook_name = strtolower($path_parts['filename']);
+                    if (array_key_exists($hook_name, $hooks_processed)) { // If we already processed the hook (e.g. override), don't process it again
+                        continue;
+                    }
+
+                    require_once $base_dir . '/' . $file;
+                    $class = 'Hook_addon_registry_' . $hook_name;
+                    $object = new $class();
+
+                    if (method_exists($object, 'get_chmod_array')) {
+                        $chmod = array_merge($chmod, $object->get_chmod_array());
+                        $hooks_processed[] = $hook_name;
+                    }
+                }
+            }
+        }
+
+        if ($runtime) {
+            $chmod = array_merge(
+                $chmod,
+                [
+                    '_compiled/**/*.php',
+                    'adminzone/pages/comcode_custom/**/*.txt',
+                    'adminzone/pages/html_custom/**/*.htm',
+                    'caches/http/*.bin',
+                    'caches/lang/**/*.lcd',
+                    'caches/lang/*.lcd',
+                    'caches/persistent/*.gcd',
+                    'caches/self_learning/*.gcd',
+                    'caches/static/*',
+                    'cms/pages/comcode_custom/**/*.txt',
+                    'cms/pages/html_custom/**/*.htm',
+                    'data_custom/modules/web_notifications/*.bin',
+                    'data_custom/sitemaps/*',
+                    'data_custom/spelling/personal_dicts/*',
+                    'data_custom/xml_config/*.xml',
+                    'exports/**/*.tar',
+                    'imports/**/*.tar',
+                    'lang_custom/**/*.ini',
+                    'pages/comcode_custom/**/*.txt',
+                    'pages/html_custom/**/*.htm',
+                    'site/pages/comcode_custom/**/*.txt',
+                    'site/pages/html_custom/**/*.htm',
+                    'temp/*',
+                    'text_custom/**/*.txt',
+                    'text_custom/*.txt',
+                    'themes/**/css_custom/*.css',
+                    'themes/**/images_custom/*',
+                    'themes/**/javascript_custom/*.js',
+                    'themes/**/templates_cached/**/*',
+                    'themes/**/templates_custom/*.tpl',
+                    'themes/**/text_custom/*.txt',
+                    'themes/**/xml_custom/*.xml',
+                    'themes/**/theme.ini',
+                    'uploads/attachments/*',
+                    'uploads/attachments_thumbs/*',
+                    'uploads/auto_thumbs/*',
+                    'uploads/repimages/*',
+                    'uploads/website_specific/*',
+                ]
+            );
+        }
+
+        $chmod = array_merge(
+            $chmod,
+            [
+                '_config.php',
+                '_compiled',
+                'adminzone/pages/comcode_custom/**',
+                'adminzone/pages/html_custom/**',
+                'caches/http',
+                'caches/lang',
+                'caches/lang/**',
+                'caches/persistent',
+                'caches/self_learning',
+                'caches/static',
+                'cms/pages/comcode_custom/**',
+                'cms/pages/html_custom/**',
+                'data_custom/errorlog.php',
+                'data_custom/firewall_rules.txt',
+                'data_custom/modules/web_notifications',
+                'data_custom/sitemaps',
+                'data_custom/spelling/personal_dicts',
+                'data_custom/xml_config',
+                'exports/**',
+                'imports/**',
+                'lang_custom',
+                'lang_custom/**',
+                'pages/comcode_custom/**',
+                'pages/html_custom/**',
+                'site/pages/comcode_custom/**',
+                'site/pages/html_custom/**',
+                'temp',
+                'text_custom',
+                'text_custom/**',
+                'themes',
+                'themes/**/css_custom',
+                'themes/**/images_custom',
+                'themes/**/javascript_custom',
+                'themes/map.ini',
+                'themes/**/templates_cached/**',
+                'themes/**/templates_custom',
+                'themes/**/text_custom',
+                'themes/**/xml_custom',
+                'uploads/attachments',
+                'uploads/attachments_thumbs',
+                'uploads/auto_thumbs',
+                'uploads/incoming',
+                'uploads/repimages',
+                'uploads/website_specific',
+            ]
+        );
+
+        return $chmod;
+    }
 
     // Code...
 
@@ -521,7 +521,7 @@ abstract class CMSPermissionsScanner
  *
  * @package cms_permissions_scanner
  */
-class CMSPermissionsScannerSimplified extends CMSPermissionsScanner
+class Source_permissions_scanner_Simplified extends Source_permissions_scanner
 {
     protected const BITMASK_PERMISSIONS_READ = 1;
     protected const BITMASK_PERMISSIONS_WRITE = 2;
@@ -712,7 +712,7 @@ class CMSPermissionsScannerSimplified extends CMSPermissionsScanner
  *
  * @package cms_permissions_scanner
  */
-class CMSPermissionsScannerLinux extends CMSPermissionsScanner
+class Source_permissions_scanner_Linux extends Source_permissions_scanner
 {
     // Constants...
 
@@ -1194,7 +1194,7 @@ class CMSPermissionsScannerLinux extends CMSPermissionsScanner
         if ($this->live_commands) {
             foreach ($commands as $command) {
                 if (substr($command, 0, 6) != 'chmod ') {
-                    echo execute_nicely($command);
+                    echo Source_permissions_scanner::execute_nicely($command);
                 }
             }
             if ($new_file_perms != $file_perms) {
@@ -1402,7 +1402,7 @@ class CMSPermissionsScannerLinux extends CMSPermissionsScanner
  *
  * @package cms_permissions_scanner
  */
-class CMSPermissionsScannerWindows extends CMSPermissionsScanner
+class Source_permissions_scanner_Windows extends Source_permissions_scanner
 {
     // Constants...
 
@@ -1848,7 +1848,7 @@ class CMSPermissionsScannerWindows extends CMSPermissionsScanner
 
         if ($this->live_commands) {
             foreach ($commands as $command) {
-                echo execute_nicely($command);
+                echo Source_permissions_scanner::execute_nicely($command);
             }
         }
 

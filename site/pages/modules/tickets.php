@@ -651,7 +651,7 @@ class Module_tickets
             // Render posts...
 
             require_code('topics');
-            $renderer = new CMS_Topic();
+            $renderer = object_factory('Source_topic');
             $renderer->set_rendering_context('tickets');
             $renderer->inject_posts_for_scoring_algorithm($ticket_posts);
             $renderer->topic_id = $topic_id;
@@ -1297,7 +1297,7 @@ class Module_tickets
             $subject = do_lang('SUBJECT_TICKET_REROUTED', $title, $username, [$ticket_type_name_new, $ticket_type_name_old]);
             $message = do_notification_lang('BODY_TICKET_REROUTED', comcode_escape($title), comcode_escape($username), [comcode_escape($ticket_type_name_new), comcode_escape($ticket_type_name_old)]);
 
-            dispatch_notification(
+            Source_notification_dispatcher::dispatch_notification(
                 'ticket_new_staff',
                 strval($ticket_type),
                 $subject,
@@ -1404,7 +1404,7 @@ class Module_tickets
             ],
             get_site_default_lang()
         );
-        dispatch_notification(
+        Source_notification_dispatcher::dispatch_notification(
             'ticket_assigned_staff',
             $to,
             $subject,
@@ -1475,7 +1475,7 @@ class Module_tickets
             ],
             get_site_default_lang()
         );
-        dispatch_notification(
+        Source_notification_dispatcher::dispatch_notification(
             'ticket_assigned_staff',
             $ticket_id,
             $subject,
@@ -1530,7 +1530,7 @@ class Module_tickets
             ],
             get_site_default_lang()
         );
-        dispatch_notification(
+        Source_notification_dispatcher::dispatch_notification(
             'ticket_assigned_staff',
             $ticket_id,
             $subject,

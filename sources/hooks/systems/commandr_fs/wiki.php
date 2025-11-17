@@ -35,7 +35,7 @@ require_code('resource_fs');
 /**
  * Hook class.
  */
-class Hook_commandr_fs_wiki extends Resource_fs_base
+class Hook_commandr_fs_wiki extends Source_resource_fs_base
 {
     public $folder_resource_type = 'wiki_page';
     public $file_resource_type = 'wiki_post';

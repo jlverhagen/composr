@@ -27,7 +27,7 @@
 /**
  * Hook class.
  */
-class Hook_admin_stats_cms_homesite extends CMSStatsProvider
+class Hook_admin_stats_cms_homesite extends Source_hook_stats_provider
 {
     /**
      * Find metadata about stats categories that are defined by this stats hook.
@@ -67,10 +67,10 @@ class Hook_admin_stats_cms_homesite extends CMSStatsProvider
             'label' => do_lang_tempcode('CMS_SITE_ERRORS'),
             'category' => 'cms_homesite',
             'filters' => [
-                'relayed_errors__day_range' => new CMSStatsDayRangeFilter('relayed_errors__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
-                'relayed_errors__resolved' => new CMSStatsTickFilter('relayed_errors__resolved', do_lang_tempcode('RESOLVED'), true),
+                'relayed_errors__day_range' => new Source_stats_filter_day_range('relayed_errors__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
+                'relayed_errors__resolved' => new Source_stats_filter_tick('relayed_errors__resolved', do_lang_tempcode('RESOLVED'), true),
             ],
-            'pivot' => new CMSStatsDatePivot('relayed_errors__pivot', $this->get_date_pivots(!$for_kpi)),
+            'pivot' => new Source_stats_filter_date_pivot('relayed_errors__pivot', $this->get_date_pivots(!$for_kpi)),
             'support_kpis' => null,
         ];
 
@@ -86,10 +86,10 @@ class Hook_admin_stats_cms_homesite extends CMSStatsProvider
                 'label' => do_lang_tempcode('TRACKER_ISSUE_ACTIVITY'),
                 'category' => 'cms_homesite',
                 'filters' => [
-                    'tracker_issue_activity__day_range' => new CMSStatsDayRangeFilter('tracker_issue_activity__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
-                    'tracker_issue_activity__type' => new CMSStatsListFilter('tracker_issue_activity__type', do_lang_tempcode('TRACKER_ISSUE_STATUS'), $tracker_issue_types),
+                    'tracker_issue_activity__day_range' => new Source_stats_filter_day_range('tracker_issue_activity__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
+                    'tracker_issue_activity__type' => new Source_stats_filter_list('tracker_issue_activity__type', do_lang_tempcode('TRACKER_ISSUE_STATUS'), $tracker_issue_types),
                 ],
-                'pivot' => new CMSStatsDatePivot('tracker_issue_activity__pivot', $this->get_date_pivots(!$for_kpi)),
+                'pivot' => new Source_stats_filter_date_pivot('tracker_issue_activity__pivot', $this->get_date_pivots(!$for_kpi)),
                 'support_kpis' => self::KPI_HIGH_IS_GOOD,
             ];
 
@@ -106,10 +106,10 @@ class Hook_admin_stats_cms_homesite extends CMSStatsProvider
                 'label' => do_lang_tempcode('TRACKER_ISSUES'),
                 'category' => 'cms_homesite',
                 'filters' => [
-                    'tracker_issues__day_range' => new CMSStatsDayRangeFilter('tracker_issues__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
-                    'tracker_issues__type' => new CMSStatsListFilter('tracker_issues__type', do_lang_tempcode('TRACKER_ISSUE_CATEGORY'), $categories),
+                    'tracker_issues__day_range' => new Source_stats_filter_day_range('tracker_issues__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
+                    'tracker_issues__type' => new Source_stats_filter_list('tracker_issues__type', do_lang_tempcode('TRACKER_ISSUE_CATEGORY'), $categories),
                 ],
-                'pivot' => new CMSStatsDatePivot('tracker_issues__pivot', $this->get_date_pivots(!$for_kpi)),
+                'pivot' => new Source_stats_filter_date_pivot('tracker_issues__pivot', $this->get_date_pivots(!$for_kpi)),
                 'support_kpis' => self::KPI_HIGH_IS_GOOD,
             ];
         }

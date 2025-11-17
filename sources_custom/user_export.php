@@ -59,7 +59,7 @@ function do_user_export($to_file = true)
 
     $outfile_path = USER_EXPORT_PATH;
     require_code('files_spreadsheets_write');
-    $sheet_writer = spreadsheet_open_write($outfile_path);
+    $sheet_writer = Source_spreadsheet_writer::spreadsheet_open_write($outfile_path);
 
     global $USER_EXPORT_WANTED;
     $sheet_writer->write_row(array_values($USER_EXPORT_WANTED));

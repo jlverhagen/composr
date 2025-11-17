@@ -62,7 +62,7 @@ function assign_referral_awards($referee, $trigger)
     $referrer_rows = $GLOBALS['FORUM_DB']->query_select('f_invites', ['i_invite_member', 'i_time'], ['i_email_address' => $referee_email], 'ORDER BY i_time', 1);
     if (!array_key_exists(0, $referrer_rows)) { // Was not actually a referral, member joined site on own accord
         if ((isset($ini_file['global']['notify_if_join_but_no_referral'])) && ($ini_file['global']['notify_if_join_but_no_referral'] == '1')) {
-            dispatch_notification(
+            Source_notification_dispatcher::dispatch_notification(
                 'referral_staff',
                 null,
                 do_lang(
@@ -208,7 +208,7 @@ function _assign_referral_awards(
                             comcode_escape($referrer_displayname),
                         ]
                     );
-                    dispatch_notification(
+                    Source_notification_dispatcher::dispatch_notification(
                         'referral_staff',
                         null,
                         $subject,
@@ -250,7 +250,7 @@ function _assign_referral_awards(
                             comcode_escape($referrer_displayname),
                         ]
                     );
-                    dispatch_notification(
+                    Source_notification_dispatcher::dispatch_notification(
                         'referral_staff',
                         null,
                         $subject,
@@ -293,7 +293,7 @@ function _assign_referral_awards(
                         comcode_escape($referrer_displayname),
                     ]
                 );
-                dispatch_notification(
+                Source_notification_dispatcher::dispatch_notification(
                     'referral',
                     null,
                     $subject,
@@ -338,7 +338,7 @@ function _assign_referral_awards(
                         comcode_escape($referrer_displayname),
                     ]
                 );
-                dispatch_notification(
+                Source_notification_dispatcher::dispatch_notification(
                     'referral_staff',
                     null,
                     $subject,
@@ -378,7 +378,7 @@ function _assign_referral_awards(
                         comcode_escape($referrer_displayname),
                     ]
                 );
-                dispatch_notification(
+                Source_notification_dispatcher::dispatch_notification(
                     'referral',
                     null,
                     $subject,
@@ -539,8 +539,8 @@ function referrer_report_script($ret = false)
 
         $outfile_path = null;
         require_code('files_spreadsheets_write');
-        $filename = (($member_id === null) ? get_site_name() : $GLOBALS['FORUM_DRIVER']->get_username($member_id)) . ' referrals.' . spreadsheet_write_default();
-        $sheet_writer = spreadsheet_open_write($outfile_path, $filename);
+        $filename = (($member_id === null) ? get_site_name() : $GLOBALS['FORUM_DRIVER']->get_username($member_id)) . ' referrals.' . Source_spreadsheet_writer::spreadsheet_write_default();
+        $sheet_writer = Source_spreadsheet_writer::spreadsheet_open_write($outfile_path, $filename);
     } else {
         $data = [];
     }

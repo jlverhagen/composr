@@ -155,8 +155,8 @@ class Hook_media_rendering_hyperlink
             if (!empty($attributes['filename'])) {
                 $link_captions_title = $attributes['filename'];
             } else {
-                require_code('urls_simplifier');
-                $coder_ob = new HarmlessURLCoder();
+                require_code('urls_coder');
+                $coder_ob = new Source_URL_coder();
                 $link_captions_title = $coder_ob->decode($_url_safe);
             }
         }

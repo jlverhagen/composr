@@ -24,7 +24,7 @@
 	<hackattack codename="DODGY_GET_HACK" risk_score="10" /><!-- Very unlikely, but possible, a suspicious GET parameter could be a false-positive -->
 	<hackattack codename="EVIL_POSTED_FORM_HACK" risk_score="20" /><!-- Posts from external websites without the CSRF token on behalf of a member are almost always hacks -->
 	<hackattack codename="VOTE_CHEAT" risk_score="5" /><!-- An attempt at giving an invalid rating is almost always intentional, but this is a low-damage attack -->
-	<hackattack codename="SCRIPT_UPLOAD_HACK" risk_score="30" /><!-- Could be innocent but this is an extremely dangerous hack attack as scripts can be executed server-side -->
+	<hackattack codename="SCRIPT_UPLOAD_HACK" risk_score="20" /><!-- Could be innocent but this is an extremely dangerous hack attack as scripts can be executed server-side -->
 	<hackattack codename="ASCII_ENTITY_URL_HACK" risk_score="8" /><!-- Putting entity-encoded HTML in a Comcode html block; usually innocent but could be used to try bypassing filters -->
 	<hackattack codename="SCRIPT_URL_HACK" risk_score="20" /><!-- Almost definitely a hack attack as an attempt was made to inject script into a URL via Comcode -->
 	<hackattack codename="SCRIPT_URL_HACK_2" risk_score="20" /><!-- Almost definitely a hack attack as an attempt was made to inject script into a URL -->

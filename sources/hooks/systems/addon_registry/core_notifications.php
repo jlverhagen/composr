@@ -173,6 +173,8 @@ class Hook_addon_registry_core_notifications
             'sources/hooks/systems/symbols/NOTIFICATIONS_AVAILABLE.php',
             'sources/hooks/systems/symbols/NOTIFICATIONS_ENABLED.php',
             'sources/hooks/systems/tasks/dispatch_notification.php',
+            'sources/notification_dispatcher.php',
+            'sources/notification_hook.php',
             'sources/notification_poller.php',
             'sources/notifications.php',
             'sources/notifications2.php',

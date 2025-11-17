@@ -33,7 +33,7 @@
 /**
  * Hook class.
  */
-class Hook_health_check_email_newsletter extends Hook_Health_Check
+class Hook_health_check_email_newsletter extends Source_hook_health_check
 {
     protected $category_label = 'Newsletter';
 

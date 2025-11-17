@@ -225,6 +225,6 @@ The documentation and tools on the Composr website may be out of date between Co
 For the latest resources, see our repositories and work tools:
  - [url="GitLab"]{$CMS_REPOS_URL}[/url] (contains Composr, automated tests, all unbundled addons and support tools)
  - [url="GitHub"]{$CMS_REPOS_URL_MIRROR}[/url]
- - [url="Tracker"]{$BRAND_BASE_URL}/tracker/my_view_page.php[/url]
+ - [url="Tracker"]{$BRAND_BASE_URL}/tracker[/url]
 
 {$SET,tutorial_tags,Development,PHP,testing_platform,expert}{$SET,tutorial_add_date,Jan 2006}{$SET,tutorial_summary,The programmer's guide for Composr development. Contents and Introduction.}[block]main_tutorial_rating[/block]

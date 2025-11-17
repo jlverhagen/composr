@@ -33,7 +33,7 @@
 /**
  * Hook class.
  */
-class Hook_admin_stats_searches extends CMSStatsProvider
+class Hook_admin_stats_searches extends Source_hook_stats_provider
 {
     /**
      * Find metadata about stats graphs that are provided by this stats hook.
@@ -54,8 +54,8 @@ class Hook_admin_stats_searches extends CMSStatsProvider
                 'label' => do_lang_tempcode('SEARCHES'),
                 'category' => 'search_traffic',
                 'filters' => [
-                    'internal_searches__day_range' => new CMSStatsDayRangeFilter('internal_searches__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
-                    'internal_searches__term' => new CMSStatsTextFilter('internal_searches__term', do_lang_tempcode('SEARCH')),
+                    'internal_searches__day_range' => new Source_stats_filter_day_range('internal_searches__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
+                    'internal_searches__term' => new Source_stats_filter_text('internal_searches__term', do_lang_tempcode('SEARCH')),
                 ],
                 'pivot' => null,
             ],
@@ -63,8 +63,8 @@ class Hook_admin_stats_searches extends CMSStatsProvider
                 'label' => do_lang_tempcode('KEYWORDS'),
                 'category' => 'search_traffic',
                 'filters' => [
-                    'internal_keywords__day_range' => new CMSStatsDayRangeFilter('internal_keywords__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
-                    'internal_searches__term' => new CMSStatsTextFilter('internal_searches__term', do_lang_tempcode('KEYWORD')),
+                    'internal_keywords__day_range' => new Source_stats_filter_day_range('internal_keywords__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
+                    'internal_searches__term' => new Source_stats_filter_text('internal_searches__term', do_lang_tempcode('KEYWORD')),
                 ],
                 'pivot' => null,
             ],

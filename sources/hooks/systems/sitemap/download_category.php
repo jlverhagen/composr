@@ -33,7 +33,7 @@
 /**
  * Hook class.
  */
-class Hook_sitemap_download_category extends Hook_sitemap_content
+class Hook_sitemap_download_category extends Source_hook_sitemap_content
 {
     protected $content_type = 'download_category';
     protected $screen_type = 'browse';

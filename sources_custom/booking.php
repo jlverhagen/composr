@@ -509,7 +509,7 @@ function send_booking_emails(array $request)
     $subject = do_lang('SUBJECT_BOOKING_CONFIRM', get_site_name());
     $body = static_evaluate_tempcode($receipt);
     if (get_option('member_booking_only') == '1') {
-        dispatch_notification('booking_customer', null, $subject, $body, [get_member()], A_FROM_SYSTEM_PRIVILEGED);
+        Source_notification_dispatcher::dispatch_notification('booking_customer', null, $subject, $body, [get_member()], A_FROM_SYSTEM_PRIVILEGED);
     } else {
         require_code('mail');
         dispatch_mail($subject, $body, '', [$customer_email], $customer_name);
@@ -529,7 +529,7 @@ function send_booking_emails(array $request)
         ],
         get_site_default_lang()
     );
-    dispatch_notification('booking_inform_staff', null, $subject, static_evaluate_tempcode($notice), null, null, ['priority' => 2]);
+    Source_notification_dispatcher::dispatch_notification('booking_inform_staff', null, $subject, static_evaluate_tempcode($notice), null, null, ['priority' => 2]);
 }
 
 /**

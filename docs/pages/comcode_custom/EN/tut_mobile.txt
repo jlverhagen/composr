@@ -68,7 +68,7 @@ Any regular expression will work, this is just an example. Composr recognises a 
 
 [title="2"]Mobile mode themeing[/title]
 
-You can use the Tempcode [tt]{$MOBILE}[/tt] and [tt]{$DESKTOP}[/tt] symbols to make changes based on what mode things are running in:
+You can use the Tempcode [tt]{\$MOBILE}[/tt] and [tt]{\$DESKTOP}[/tt] symbols to make changes based on what mode things are running in:
 [code="Tempcode"]
 {+START,IF,{$MOBILE}}
 This shows to mobile devices.
@@ -121,7 +121,7 @@ And the following running opposite, making mobile better for desktop:
  - Make any [tt]<details>[/tt]/[tt]<summary>[/tt] elements with a [tt]only-on-mobile[/tt] class turn into regular [tt]div[/tt]s on desktop
 
 You can also tick (check) the "Mobile-friendly conversion" setting under a posting field editor for that Comcode to automatically be wrapped within a [tt]MAKE_MOBILE[/tt] directive. This may be a bit friendlier to content editors as it is less intrusive within the editor.
-Or finally, you can add [tt]{$,page hint: make_mobile}[/tt] anywhere within the Comcode, which is the code equivalent to the above setting (and your only choice if the Comcode is not in a posting field editor).
+Or finally, you can add [tt]{\$,page hint: make_mobile}[/tt] anywhere within the Comcode, which is the code equivalent to the above setting (and your only choice if the Comcode is not in a posting field editor).
 
 [title="2"]Using responsive design techniques directly[/title]
 

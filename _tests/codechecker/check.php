@@ -1419,7 +1419,7 @@ function check_variable($variable, $reference = false, $function_guard = '')
 
             // Special rule for $GLOBALS['FORUM_DRIVER']
             if (($variable[1] == 'GLOBALS') && ($variable[2][1][1][0] == 'STRING') && ($variable[2][1][1][1] == 'FORUM_DRIVER')) {
-                $type = 'Forum_driver_base';
+                $type = 'Source_forum_driver_base';
             }
 
             ensure_type(['object', 'resource'], $type, $variable[3], 'Variable must be an object due to dereferencing');
@@ -1492,7 +1492,7 @@ function check_method_call($c, $c_pos, $function_guard = '')
             // $GLOBALS['FORUM_DRIVER']
             if (($variable[1] == 'GLOBALS') && (substr($variable[2][1][1][0], -3) == 'LITERAL') && ($variable[2][1][1][1] == 'FORUM_DRIVER')) {
                 $method = $variable[2][2][1][1];
-                $class = 'Forum_driver_base';
+                $class = 'Source_forum_driver_base';
                 return actual_check_method($class, $method, $params, $c_pos, $function_guard);
             }
         }
@@ -1731,9 +1731,9 @@ function check_call($c, $c_pos, $class = null, $function_guard = '', $show_missi
             }
         }
     }
-    if (($potential === null) && ($class == 'Forum_driver_base')) {
-        // Composr specific: Special checks for Forum_driver_cns (normative), which may be detected as Forum_driver_base
-        $class = 'Forum_driver_cns';
+    if (($potential === null) && ($class == 'Source_forum_driver_base')) {
+        // Composr specific: Special checks for Source_forum_driver_cns (normative), which may be detected as Source_forum_driver_base
+        $class = 'Source_forum_driver_cns';
         if (isset($FUNCTION_SIGNATURES[$class]['functions'][$function])) {
             $potential = $FUNCTION_SIGNATURES[$class]['functions'][$function];
         } else {

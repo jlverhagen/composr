@@ -58,7 +58,7 @@ class mail_test_set extends cms_test_case
                     require_code('notifications');
                     set_mass_import_mode();
                     $_GET['keep_debug_notifications'] = '1';
-                    dispatch_notification('error_occurred', '', 'test', 'test', [get_member()], get_member(), ['attachments' => $attachments]);
+                    Source_notification_dispatcher::dispatch_notification('error_occurred', '', 'test', 'test', [get_member()], get_member(), ['attachments' => $attachments]);
                     break;
             }
 

@@ -159,7 +159,7 @@ class installer_test_set extends cms_test_case
 
         if ($can_use_own_db) {
             require_code('database/' . get_db_type());
-            $db_driver = object_factory('Database_Static_' . get_db_type(), false, [$table_prefix]);
+            $db_driver = object_factory('Source_database_static_' . get_db_type(), false, [$table_prefix]);
             $db = new DatabaseConnector(get_db_site(), get_db_site_host(), $username, $password, $table_prefix, false, $db_driver); // Use site DB for actual connection because our test DB might not yet exist
             $db->query('CREATE DATABASE IF NOT EXISTS ' . $database, null, 0, true); // Suppress errors as the database might already exist
         } else {

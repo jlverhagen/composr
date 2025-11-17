@@ -91,7 +91,7 @@ class Hook_commandr_command_continue_import
 
             if (get_forum_type() != 'cns') {
                 require_code('forum/cns');
-                $GLOBALS['CNS_DRIVER'] = new Forum_driver_cns();
+                $GLOBALS['CNS_DRIVER'] = object_factory('Source_forum_driver_cns', false, [], true);
                 $GLOBALS['CNS_DRIVER']->db = $GLOBALS['SITE_DB'];
                 $GLOBALS['CNS_DRIVER']->MEMBER_ROWS_CACHED = [];
             }

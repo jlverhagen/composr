@@ -33,7 +33,7 @@
 /**
  * Hook class.
  */
-class Hook_admin_stats_actionlogs extends CMSStatsProvider
+class Hook_admin_stats_actionlogs extends Source_hook_stats_provider
 {
     /**
      * Find metadata about stats graphs that are provided by this stats hook.
@@ -91,29 +91,29 @@ class Hook_admin_stats_actionlogs extends CMSStatsProvider
                 'label' => do_lang_tempcode('STATS_ACTIONLOG_GROWTH'),
                 'category' => 'content_growth',
                 'filters' => [
-                    'actionlog_growth__day_range' => new CMSStatsDayRangeFilter('actionlog_growth__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
-                    'actionlog_growth__the_type' => new CMSStatsListFilter('actionlog_growth__the_type', do_lang_tempcode('ACTION'), $_action_type_list_growth),
+                    'actionlog_growth__day_range' => new Source_stats_filter_day_range('actionlog_growth__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
+                    'actionlog_growth__the_type' => new Source_stats_filter_list('actionlog_growth__the_type', do_lang_tempcode('ACTION'), $_action_type_list_growth),
                 ],
-                'pivot' => new CMSStatsDatePivot('actionlog_growth__pivot', $this->get_date_pivots(!$for_kpi)),
+                'pivot' => new Source_stats_filter_date_pivot('actionlog_growth__pivot', $this->get_date_pivots(!$for_kpi)),
                 'support_kpis' => self::KPI_HIGH_IS_GOOD,
             ],
             'actionlog_activity' => [
                 'label' => do_lang_tempcode('STATS_ACTIONLOG_ACTIVITY'),
                 'category' => 'feedback_and_engagement',
                 'filters' => [
-                    'actionlog_activity__day_range' => new CMSStatsDayRangeFilter('actionlog_activity__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
-                    'actionlog_activity__the_type' => new CMSStatsListFilter('actionlog_activity__the_type', do_lang_tempcode('ACTION'), $_action_type_list_activity),
+                    'actionlog_activity__day_range' => new Source_stats_filter_day_range('actionlog_activity__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
+                    'actionlog_activity__the_type' => new Source_stats_filter_list('actionlog_activity__the_type', do_lang_tempcode('ACTION'), $_action_type_list_activity),
                 ],
-                'pivot' => new CMSStatsDatePivot('actionlog_activity__pivot', $this->get_date_pivots(!$for_kpi)),
+                'pivot' => new Source_stats_filter_date_pivot('actionlog_activity__pivot', $this->get_date_pivots(!$for_kpi)),
                 'support_kpis' => self::KPI_HIGH_IS_GOOD,
             ],
             'actionlog_adminzone' => [
                 'label' => do_lang_tempcode('STATS_ACTIONLOG_ADMINZONE'),
                 'category' => 'security',
                 'filters' => [
-                    'actionlog_adminzone__day_range' => new CMSStatsDayRangeFilter('actionlog_adminzone__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
+                    'actionlog_adminzone__day_range' => new Source_stats_filter_day_range('actionlog_adminzone__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
                 ],
-                'pivot' => new CMSStatsDatePivot('actionlog_adminzone__pivot', $this->get_date_pivots(!$for_kpi)),
+                'pivot' => new Source_stats_filter_date_pivot('actionlog_adminzone__pivot', $this->get_date_pivots(!$for_kpi)),
                 'support_kpis' => self::KPI_LOW_IS_GOOD,
             ],
         ];

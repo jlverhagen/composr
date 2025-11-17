@@ -58,12 +58,12 @@ class Block_side_rss
     /**
      * Find caching details for the block.
      *
-     * @return ?array Map of cache details (cache_on and ttl) (null: block is disabled)
+     * @return ?array Map of cache details (cache_on and ttl) (null: do not cache)
      */
     public function caching_environment() : ?array
     {
         $info = [];
-        $info['cache_on'] = ['block_side_rss__cache_on'];
+        $info['cache_on'] = ['Block_side_rss::block_side_rss__cache_on'];
         $info['ttl'] = intval(get_option('rss_update_time'));
         return $info;
     }
@@ -101,7 +101,7 @@ class Block_side_rss
         $ticker = (array_key_exists('ticker', $map)) && ($map['ticker'] == '1');
 
         require_code('rss');
-        $rss = new CMS_RSS($url);
+        $rss = object_factory('Source_RSS', false, [$url], true);
         if ($rss->error !== null) {
             $GLOBALS['DO_NOT_CACHE_THIS'] = true;
             require_code('failure');
@@ -201,22 +201,22 @@ class Block_side_rss
             'CONTENT' => $content,
         ]);
     }
-}
 
-/**
- * Find the cache signature for the block.
- *
- * @param  array $map The block parameters
- * @return array The cache signature
- */
-function block_side_rss__cache_on(array $map) : array
-{
-    if (!addon_installed('syndication_blocks')) {
-        return [];
-    }
-    if (!addon_installed('news')) {
-        return [];
-    }
+    /**
+     * Find the cache signature for the block.
+     *
+     * @param  array $map The block parameters
+     * @return array The cache signature
+     */
+    public static function block_side_rss__cache_on(array $map) : array
+    {
+        if (!addon_installed('syndication_blocks')) {
+            return [];
+        }
+        if (!addon_installed('news')) {
+            return [];
+        }
 
-    return [cron_installed(true) ? null : $GLOBALS['FORUM_DRIVER']->is_staff(get_member()), array_key_exists('max_entries', $map) ? intval($map['max_entries']) : 10, array_key_exists('title', $map) ? $map['title'] : '', array_key_exists('copyright', $map) ? $map['copyright'] : '', array_key_exists('param', $map) ? $map['param'] : ''];
+        return [cron_installed(true) ? null : $GLOBALS['FORUM_DRIVER']->is_staff(get_member()), array_key_exists('max_entries', $map) ? intval($map['max_entries']) : 10, array_key_exists('title', $map) ? $map['title'] : '', array_key_exists('copyright', $map) ? $map['copyright'] : '', array_key_exists('param', $map) ? $map['param'] : ''];
+    }
 }

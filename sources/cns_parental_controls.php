@@ -33,7 +33,7 @@
 /*EXTRA FUNCTIONS: simplexml_.**/
 
 /*
-    Each control could/should have the following private functions in the Parental_controls_loader class:
+    Each control could/should have the following private functions in the Source_parental_controls class:
     - pcv__* (required): A validation function to validate the XML for this specific control (global parameters are already checked) and to return parsed data
     - pcc__* (required): The execution function to process the control (base age and region filters have already been applied)
     - pcppp__* (optional but recommended): Generate 'positive' Privacy Policy entries for this control based on the configuration
@@ -41,37 +41,11 @@
 */
 
 /**
- * Standard initialisation for parental controls code.
- *
- * @ignore
- */
-function init__cns_parental_controls()
-{
-    require_lang('cns');
-}
-
-/**
- * Initialise the parental control settings (or simply return the class if already initialised).
- *
- * @param  boolean $show_errors Whether to attach validation errors as messages
- * @return object The parental control class
- */
-function load_parental_control_settings(bool $show_errors = false) : object
-{
-    static $parental_controls = [];
-    if (!isset($parental_controls[$show_errors])) {
-        $parental_controls[$show_errors] = new Parental_controls_loader($show_errors);
-    }
-
-    return $parental_controls[$show_errors];
-}
-
-/**
  * Parental control settings loader.
  *
  * @package core_cns
  */
-class Parental_controls_loader
+class Source_parental_controls
 {
     private $options = []; // Base options (parsed)
     private $show_errors = false; // Whether to show parse errors
@@ -86,6 +60,7 @@ class Parental_controls_loader
      */
     public function __construct(bool $show_errors = false)
     {
+        require_lang('cns');
         require_code('global3');
 
         $this->show_errors = $show_errors;

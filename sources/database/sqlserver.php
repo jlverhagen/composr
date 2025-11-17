@@ -43,7 +43,7 @@ require_code('database/shared/sqlserver');
  *
  * @package core_database_drivers
  */
-class Database_Static_sqlserver extends Database_super_sqlserver
+class Source_database_static_sqlserver extends Source_database_super_sqlserver
 {
     protected $cache_db = [];
 

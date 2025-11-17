@@ -33,28 +33,6 @@
 /*EXTRA FUNCTIONS: levenshtein*/
 
 /**
- * Calculate Levenshtein distance between two strings, but work past the PHP function's character limit.
- *
- * @param  string $a First string
- * @param  string $b Second string
- * @return integer Distance
- */
-function fake_levenshtein(string $a, string $b) : int
-{
-    // Some stripping, for performance, and because white space doesn't matter so much in HTML anyway
-    $a = cms_preg_replace_safe('#\s#', '', $a);
-    $b = cms_preg_replace_safe('#\s#', '', $b);
-
-    $a_len = strlen($a);
-    $b_len = strlen($b);
-    if (($a_len < 255) && ($b_len < 255)) {
-        return levenshtein($a, $b);
-    }
-    $percent = 0.0;
-    return max($a_len, $b_len) - similar_text($a, $b, $percent);
-}
-
-/**
  * @license    http://opensource.org/licenses/cpal_1.0 Common Public Attribution License
  * @copyright  Christopher Graham
  * @package    import
@@ -65,6 +43,28 @@ function fake_levenshtein(string $a, string $b) : int
  */
 class Hook_import_html_site
 {
+    /**
+     * Calculate Levenshtein distance between two strings, but work past the PHP function's character limit.
+     *
+     * @param  string $a First string
+     * @param  string $b Second string
+     * @return integer Distance
+     */
+    public static function fake_levenshtein(string $a, string $b) : int
+    {
+        // Some stripping, for performance, and because white space doesn't matter so much in HTML anyway
+        $a = cms_preg_replace_safe('#\s#', '', $a);
+        $b = cms_preg_replace_safe('#\s#', '', $b);
+
+        $a_len = strlen($a);
+        $b_len = strlen($b);
+        if (($a_len < 255) && ($b_len < 255)) {
+            return levenshtein($a, $b);
+        }
+        $percent = 0.0;
+        return max($a_len, $b_len) - similar_text($a, $b, $percent);
+    }
+
     /**
      * Standard importer hook info function.
      *
@@ -250,7 +250,7 @@ class Hook_import_html_site
                                     } else {
                                         $up_to_other_file = substr($other_file, $next_pos - (strlen($reference_file) - strlen($other_file)));
                                     }
-                                    $lv = fake_levenshtein($up_to, $up_to_other_file);
+                                    $lv = Hook_import_html_site::fake_levenshtein($up_to, $up_to_other_file);
                                     if ($template_wanted == 'HEADER') {
                                         $ratio = floatval($lv) * 3 - floatval($next_pos + 1 /* +1 stops divides by zero */); // We want this number to be as small as possible. We have multiplied the levenshtein distance because we care about that more than length (this number reached by experimentation); HTML has a low entropy which this number is fighting against.
                                     } else {
@@ -640,7 +640,7 @@ class Hook_import_html_site
                 }
             }
             $lev = null;
-            //$lev = fake_levenshtein($backwards ? substr($subject, -$i) : substr($subject, 0, $i), $to_strip);    For efficiency the next loop has a more intelligent searching algorithm, to narrow down on the peak
+            //$lev = Hook_import_html_site::fake_levenshtein($backwards ? substr($subject, -$i) : substr($subject, 0, $i), $to_strip);    For efficiency the next loop has a more intelligent searching algorithm, to narrow down on the peak
             $positions[] = [$i, $lev];
         }
 
@@ -654,12 +654,12 @@ class Hook_import_html_site
 
             // Take the 3/8 point of the search list, and find it's levenshtein distance
             if ($positions[$point_a][1] === null) {
-                $positions[$point_a][1] = fake_levenshtein($backwards ? substr($subject, -$positions[$point_a][0]) : substr($subject, 0, $positions[$point_a][0]), $to_strip);
+                $positions[$point_a][1] = Hook_import_html_site::fake_levenshtein($backwards ? substr($subject, -$positions[$point_a][0]) : substr($subject, 0, $positions[$point_a][0]), $to_strip);
             }
 
             // Take the 5/8 point of the search list, and find it's levenshtein distance
             if ($positions[$point_b][1] === null) {
-                $positions[$point_b][1] = fake_levenshtein($backwards ? substr($subject, -$positions[$point_b][0]) : substr($subject, 0, $positions[$point_b][0]), $to_strip);
+                $positions[$point_b][1] = Hook_import_html_site::fake_levenshtein($backwards ? substr($subject, -$positions[$point_b][0]) : substr($subject, 0, $positions[$point_b][0]), $to_strip);
             }
             // If the 3/8 point has a higher or equal levenshtein  distance, throw away everything to the left of the 3/8 point
             if ($positions[$point_a][1] >= $positions[$point_b][1]) {
@@ -674,7 +674,7 @@ class Hook_import_html_site
         foreach ($positions as $p) {
             list($i, $lev) = $p;
             if ($lev === null) {
-                $lev = fake_levenshtein(substr($subject, 0, $i), $to_strip);
+                $lev = Hook_import_html_site::fake_levenshtein(substr($subject, 0, $i), $to_strip);
             }
 
             if (($best === null) || ($lev < $best)) {

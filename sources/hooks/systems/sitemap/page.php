@@ -33,7 +33,7 @@
 /**
  * Hook class.
  */
-class Hook_sitemap_page extends Hook_sitemap_base
+class Hook_sitemap_page extends Source_hook_sitemap_base
 {
     /**
      * Find if a page-link will be covered by this node.

@@ -713,7 +713,7 @@ function generate_svg_sprite(string $theme, bool $monochrome, bool $userland) : 
     $output .= '<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">' . "\n";
 
     foreach ($icon_paths as $icon_name => $icon_path) {
-        $xml = new CMS_simple_xml_reader(cms_file_get_contents_safe($icon_path, FILE_READ_LOCK | FILE_READ_BOM));
+        $xml = object_factory('Source_simple_xml_reader', false, [cms_file_get_contents_safe($icon_path, FILE_READ_LOCK | FILE_READ_BOM)]);
         if (isset($xml->gleamed[1]['viewBox'])) {
             $view_box = $xml->gleamed[1]['viewBox'];
         } else {

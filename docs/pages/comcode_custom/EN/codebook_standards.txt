@@ -292,12 +292,46 @@ Use short array syntax
 | If you have split an array or JavaScript object initialiser across multi-lines, use a trailing comma. This means every array element has a comma after it. The advantages are it looks more symmetrical and it is less likely to conflict in revision control should the array be extended with further elements.
 |-
 | [size="0.8"]{$INC,cs_count,1})[/size]
-Align functions precisely in code
+Align functions and classes precisely in code
 | Modularity: So Composr code-overriding can work on it
 | Composr development +
 | Automated test [tt]sync_tests/override_issues[/tt]
-| Functions must not be indented in code, and methods must be indented by exactly 4 spaces. There must be exactly one space after the [tt]function[/tt] keyword and no tabs. Braces must go on the next line with the same indentation as the function and the closing brace must match too. The contents of the function must be 4 spaces deeper.
-These rules are very standard, but if broken then code-overriding may not work correctly because Composr assumes them while doing efficient function-level overriding (there is no full PHP parser involved).
+| Functions and classes must not be indented in code, and methods must be indented by exactly 4 spaces. There must be exactly one space after the [tt]function[/tt] keyword and no tabs. Braces must go on the next line with the same indentation as the function and the closing brace must match too. The contents of the function must be 4 spaces deeper.
+These rules are very standard (mostly PSR-12), but if broken then code-overriding may not work correctly because Composr assumes them while doing efficient function-level overriding (there is no full PHP parser involved; this adds a significant memory overhead).
+|-
+| [size="0.8"]{$INC,cs_count,1})[/size]
+Do not mix class and global function definitions together in the same file
+| Modularity: So Composr code-overriding can work on it
+| Composr development +
+| Automated test [tt]sync_tests/override_issues[/tt]
+| Files should not define both classes and global functions together; they should define one or the other. This is because files containing class overrides require that we specify [tt]/*FORCE_ORIGINAL_LOAD_FIRST*/[/tt] at the top of the file so we load the original file first and apply special class renaming. But this breaks global function overrides. Furthermore, doing the reverse (not specifying the line and loading the custom file first) when trying to override a class will throw a PHP error (the extended class is not defined yet).
+Alternatively, you can merge global functions into class methods if their operations relate to the class; define it as a public static function. You cannot do this for [tt]init__*[/tt] functions.
+Alternatively, for [tt]init__*[/tt] global functions, you might be able to put the logic in the class [tt]__construct[/tt] (and remove the function) providing none of the class' static functions need it. If you cannot, then it is best to refactor the classes into a separate file, and use [tt]require_code[/tt] for the new file(s) in the [tt]init__*[/tt] function.
+|-
+| [size="0.8"]{$INC,cs_count,1})[/size]
+All software classes should begin with the correct applicable prefix
+| Consistency; Modularity: So Composr code-overriding can work on it
+| Composr development +
+| Automated test [tt]sync_tests/override_issues[/tt]
+| All class names used in the software should start with one of the following prefixes; this ensures developers can later override these classes:
+[list]
+[*][tt]Hook_[/tt] (or overridden equivalent [tt]Hx_ extends Hook_[/tt])
+Hook classes (in files within the hooks directories of sources) should use this prefix so they are available in the hooks APIs.
+[*][tt]Block_[/tt] (or overridden equivalent [tt]Bx_ extends Block_[/tt])
+Block classes (in files within the blocks directories of sources) should use this prefix so they are available in the blocks APIs.
+[*][tt]Module_[/tt] (or overridden equivalent [tt]Mx_ extends Module_[/tt])
+Module classes (in files within the modules directories of zones) should use this prefix so they are available in the module APIs.
+[*][tt]Source_[/tt] (or overridden equivalent [tt]Sx_ extends Source_[/tt])
+All other classes which can be overridden (e.g., in APIs within the sources directories) should use this prefix.
+[/list]
+|-
+| [size="0.8"]{$INC,cs_count,1})[/size]
+Use [tt]object_factory[/tt] when constructing classes
+| Modularity: So Composr code-overriding can work on it
+| Composr development +
+| Automated test [tt]sync_tests/override_issues[/tt]
+| Classes which start with the special prefixes of [tt]Hook_[/tt], [tt]Module_[/tt], [tt]Block_[/tt], or [tt]Source_[/tt] should be constructed using [tt]object_factory[/tt] and not [tt]new ...[/tt]. It supports advanced functionality such as making sure we do not construct duplicate classes (unless the parameters are different).
+Note that [tt]Tempcode[/tt] and [tt]CMSException[/tt] should not be used with object_factory.
 |-
 | [size="0.8"]{$INC,cs_count,1})[/size]
 [color="red"]Pass URLs properly[/color]
@@ -2071,7 +2105,7 @@ Use [tt]BETA_CSS_PROPERTY[/tt] instead of vendor prefixing
 | Future proofing
 | Composr development +
 | Automated test [tt]async_tests/css_beta[/tt]
-| Rather than setting up multiple vendor prefixes for CSS properties that need them, use the [tt]{$BETA_CSS_PROPERTY,...}[/tt] symbol around just one normal call to the CSS property as it would ideally be written in the future. This allows PHP code to automatically add vendor prefixing and make dynamic modifications should there be some kind of standards change in the future. Don't mark stuff beta if it works unprefixed on all supported browsers.
+| Rather than setting up multiple vendor prefixes for CSS properties that need them, use the [tt]{\$BETA_CSS_PROPERTY,...}[/tt] symbol around just one normal call to the CSS property as it would ideally be written in the future. This allows PHP code to automatically add vendor prefixing and make dynamic modifications should there be some kind of standards change in the future. Don't mark stuff beta if it works unprefixed on all supported browsers.
 |}
 
 [title="4"]JavaScript[/title]
@@ -2194,7 +2228,7 @@ Be careful with global functions and variables
 | Stability
 | Product development only
 | Automated test [tt]async_tests/js_standards[/tt]
-| Calls to [tt]{$IMG}[/tt] must be wrapped with [tt]$util.srl()[/tt]. This is because they need to be turned from absolute URLs to relative URLs, just in case a JavaScript file is cached under HTTP but used under HTTPS (it would generate a security error).
+| Calls to [tt]{\$IMG}[/tt] must be wrapped with [tt]$util.srl()[/tt]. This is because they need to be turned from absolute URLs to relative URLs, just in case a JavaScript file is cached under HTTP but used under HTTPS (it would generate a security error).
 |-
 | [size="0.8"]{$INC,cs_count,1})[/size]
 [color="red"]Use relative base URLs[/color]
@@ -2208,14 +2242,14 @@ Be careful with global functions and variables
 | Stability
 | Product development only
 | Manually
-| Use [tt]{$FIND_SCRIPT_NOHTTP}[/tt] not [tt]{$FIND_SCRIPT}[/tt], just in case a JavaScript file is cached under HTTP but used under HTTPS (it would generate a security error) -- or if the JavaScript is working across multiple domains (another potential security error). When Composr runs on multiple domains all URLs will work on all domains, with the exception of page URLs.
+| Use [tt]{\$FIND_SCRIPT_NOHTTP}[/tt] not [tt]{\$FIND_SCRIPT}[/tt], just in case a JavaScript file is cached under HTTP but used under HTTPS (it would generate a security error) -- or if the JavaScript is working across multiple domains (another potential security error). When Composr runs on multiple domains all URLs will work on all domains, with the exception of page URLs.
 |-
 | [size="0.8"]{$INC,cs_count,1})[/size]
 [color="red"]Do not encode page-links directly in JavaScript files[/color]
 | Stability
 | Product development only
 | Automated test [tt]async_tests/js_standards[/tt]
-| Use of [tt]{$PAGE_LINK}[/tt] will encode [tt]keep_[/tt] parameters, including potential session IDs. It must therefore be passed into JavaScript via an HTML [tt]data-[/tt] attribute, or you must generate with the [tt]{$PAGE_LINK}[/tt] parameter to avoid [tt]keep_[/tt] parameters and manually attach them using [tt]$cms.keep()[/tt] (being very careful on whether the existing URL does or doesn't have a [tt]?[/tt] in already, which may vary by URL scheme).
+| Use of [tt]{\$PAGE_LINK}[/tt] will encode [tt]keep_[/tt] parameters, including potential session IDs. It must therefore be passed into JavaScript via an HTML [tt]data-[/tt] attribute, or you must generate with the [tt]{\$PAGE_LINK}[/tt] parameter to avoid [tt]keep_[/tt] parameters and manually attach them using [tt]$cms.keep()[/tt] (being very careful on whether the existing URL does or doesn't have a [tt]?[/tt] in already, which may vary by URL scheme).
 |-
 | [size="0.8"]{$INC,cs_count,1})[/size]
 [color="red"]Do not break bfcache[/color]
@@ -2309,7 +2343,7 @@ Compress images and strip gamma from PNG files
 | Performance
 | Composr development +
 | Manually
-| If an image is referenced in the CSS and used very commonly, consider using [tt]{$IMG_INLINE,...}[/tt] so that it loads without any additional HTTP request.
+| If an image is referenced in the CSS and used very commonly, consider using [tt]{\$IMG_INLINE,...}[/tt] so that it loads without any additional HTTP request.
 |-
 | [size="0.8"]{$INC,cs_count,1})[/size]
 [color="red"]Supply hi-dpi images as appropriate[/color]

@@ -33,7 +33,7 @@
 /**
  * Hook class.
  */
-class Hook_notification_ticket_new_staff extends Hook_Notification
+class Hook_notification_ticket_new_staff extends Source_hook_notification
 {
     /**
      * Find the initial setting that members have for a notification code (only applies to the member_could_potentially_enable members).

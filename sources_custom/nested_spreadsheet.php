@@ -62,11 +62,11 @@ function get_nested_spreadsheet_structure() : array
         $dh = @opendir(get_custom_file_base() . '/private_data');
         if ($dh !== false) {
             while (($spreadsheet_filename = readdir($dh)) !== false) {
-                if (is_spreadsheet_readable($spreadsheet_filename)) {
+                if (Source_spreadsheet_reader::is_spreadsheet_readable($spreadsheet_filename)) {
                     continue;
                 }
 
-                $sheet_reader = spreadsheet_open_read(get_file_base() . '/private_data/' . $spreadsheet_filename, null, CMS_Spreadsheet_Reader::ALGORITHM_UNNAMED_FIELDS);
+                $sheet_reader = Source_spreadsheet_reader::spreadsheet_open_read(get_file_base() . '/private_data/' . $spreadsheet_filename, null, Source_spreadsheet_reader::ALGORITHM_UNNAMED_FIELDS);
 
                 $header_row = $sheet_reader->read_row();
 
@@ -111,7 +111,7 @@ function get_nested_spreadsheet_structure() : array
             $_value = explode('|', $custom_field['cf_default']); // $_value will come up as file|heading(optional)|order(optional)
             $spreadsheet_filename = $_value[0];
 
-            if (is_spreadsheet_readable($spreadsheet_filename)) {
+            if (Source_spreadsheet_reader::is_spreadsheet_readable($spreadsheet_filename)) {
                 if (!isset($_value[1])) {
                     $_value[1] = null;
                 }

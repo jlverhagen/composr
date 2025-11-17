@@ -172,7 +172,7 @@ set_value \'mail_encryption\' \'tls\'
         return [
             'sources_custom/hooks/systems/addon_registry/better_mail.php',
             'sources_custom/hooks/systems/health_checks/email.php',
-            'sources_custom/mail.php',
+            'sources_custom/hooks/systems/mail_dispatchers/better_mail.php',
             'sources_custom/swift_mailer/.htaccess',
             'sources_custom/swift_mailer/composer.json',
             'sources_custom/swift_mailer/composer.lock',

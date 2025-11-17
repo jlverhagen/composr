@@ -35,7 +35,7 @@ require_code('crud_module');
 /**
  * Module page class.
  */
-class Module_cms_quiz extends Standard_crud_module
+class Module_cms_quiz extends Source_standard_crud_module
 {
     protected $lang_type = 'QUIZ';
     protected $select_name = 'NAME';

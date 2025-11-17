@@ -32,7 +32,7 @@ class maintenance_codes_test_set extends cms_test_case
     public function testMaintenanceSheetStructure()
     {
         require_code('files_spreadsheets_read');
-        $sheet_reader = spreadsheet_open_read(get_file_base() . '/data/maintenance_status.csv', null, CMS_Spreadsheet_Reader::ALGORITHM_RAW);
+        $sheet_reader = Source_spreadsheet_reader::spreadsheet_open_read(get_file_base() . '/data/maintenance_status.csv', null, Source_spreadsheet_reader::ALGORITHM_RAW);
 
         $line = 1;
         while (($row = $sheet_reader->read_row()) !== false) {
@@ -55,7 +55,7 @@ class maintenance_codes_test_set extends cms_test_case
 
         $codenames = [];
         require_code('files_spreadsheets_read');
-        $sheet_reader = spreadsheet_open_read(get_file_base() . '/data/maintenance_status.csv');
+        $sheet_reader = Source_spreadsheet_reader::spreadsheet_open_read(get_file_base() . '/data/maintenance_status.csv');
         while (($row = $sheet_reader->read_row()) !== false) {
             $codename = $row['Codename'];
             $codenames[$codename] = true;
@@ -120,7 +120,7 @@ class maintenance_codes_test_set extends cms_test_case
             }
 
             require_code('files_spreadsheets_read');
-            $sheet_reader = spreadsheet_open_read(get_file_base() . '/data/maintenance_status.csv');
+            $sheet_reader = Source_spreadsheet_reader::spreadsheet_open_read(get_file_base() . '/data/maintenance_status.csv');
             while (($row = $sheet_reader->read_row()) !== false) {
                 $matches = [];
                 if (preg_match('#(\w+) Health Check([^s]|$)#', $row['Testing automation'], $matches) != 0) {
@@ -139,7 +139,7 @@ class maintenance_codes_test_set extends cms_test_case
         // Test maintenance sheet...
 
         require_code('files_spreadsheets_read');
-        $sheet_reader = spreadsheet_open_read(get_file_base() . '/data/maintenance_status.csv');
+        $sheet_reader = Source_spreadsheet_reader::spreadsheet_open_read(get_file_base() . '/data/maintenance_status.csv');
         while (($row = $sheet_reader->read_row()) !== false) {
             // Disallow plural
             $this->assertTrue((strpos($row['Testing automation'], 'automated tests') === false), 'You should list each test individually as \'directory/test automated test\' in ' . $row['Codename']);

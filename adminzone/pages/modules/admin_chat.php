@@ -35,7 +35,7 @@ require_code('crud_module');
 /**
  * Module page class.
  */
-class Module_admin_chat extends Standard_crud_module
+class Module_admin_chat extends Source_standard_crud_module
 {
     protected $lang_type = 'CHATROOM';
     protected $select_name = 'NAME';

@@ -110,6 +110,12 @@ class Hook_search_catalogue_entries extends FieldsSearchHook
      */
     public function index_for_search(?int $since = null, ?int &$total_singular_ngram_tokens = null, ?array &$statistics_map = null)
     {
+        if (!addon_installed('search')) {
+            return;
+        }
+
+        require_code('fast_custom_index');
+
         $engine = new Fast_custom_index();
 
         $index_table = 'ce_fulltext_index';
@@ -270,7 +276,10 @@ class Hook_search_catalogue_entries extends FieldsSearchHook
         $permissions_module = 'forums';
         $db = $GLOBALS['SITE_DB'];
         $index_table = 'ce_fulltext_index';
-        if (can_use_fast_custom_index('catalogue_entries', $db, $index_table, $search_query, Fast_custom_index::active_search_has_special_filtering() || $cutoff !== null || $author != '' || ($search_under != '-1' && $search_under != '!'))) {
+        if (addon_installed('search')) {
+            require_code('fast_custom_index');
+        }
+        if ((addon_installed('search')) && can_use_fast_custom_index('catalogue_entries', $db, $index_table, $search_query, Fast_custom_index::active_search_has_special_filtering() || $cutoff !== null || $author != '' || ($search_under != '-1' && $search_under != '!'))) {
             // This search hook implements the fast custom index, which we use where possible...
 
             $table = 'catalogue_entries r';

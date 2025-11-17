@@ -114,18 +114,29 @@ class Hook_fields_ip_address
      * @param  string $_cf_name The field name
      * @param  string $_cf_description The field description
      * @param  array $field The field details
-     * @param  ?string $actual_value The actual current value of the field (null: none)
+     * @param  ?string $actual_value The actual current value of the field, or default value if not set (null: none, and no default value set)
      * @param  boolean $new Whether this is for a new entry
      * @return ?Tempcode The Tempcode for the input field (null: skip the field - it's not input)
      */
     public function get_field_inputter(string $_cf_name, string $_cf_description, array $field, ?string $actual_value, bool $new) : ?object
     {
+        $default = option_value_from_field_array($field, 'default', $field['cf_default']);
+
         if ($actual_value === null) {
             $actual_value = ''; // Plug anomaly due to unusual corruption
         }
-        $default = option_value_from_field_array($field, 'default', $field['cf_default']);
         if (($default == '!') && ($actual_value == '')) {
             $actual_value = get_ip_address();
+        }
+
+        $input_name = @cms_empty_safe($field['cf_input_name']) ? ('field_' . strval($field['id'])) : $field['cf_input_name'];
+
+        $edit_only = option_value_from_field_array($field, 'edit_only', '0');
+        if (($field['cf_required'] == 1) && ($actual_value == '')) {
+            $edit_only = '0';
+        }
+        if (($edit_only != '0') && $new) {
+            return form_input_hidden($input_name, $actual_value);
         }
 
         $type = 'text';
@@ -133,7 +144,6 @@ class Hook_fields_ip_address
         $_maxlength = option_value_from_field_array($field, 'maxlength', '');
         $maxlength = ($_maxlength == '') ? null : intval($_maxlength);
 
-        $input_name = @cms_empty_safe($field['cf_input_name']) ? ('field_' . strval($field['id'])) : $field['cf_input_name'];
         $autocomplete = ($new && !empty($field['cf_autofill_type'])) ? (($field['cf_autofill_hint'] ? ($field['cf_autofill_hint'] . ' ') : '') . $field['cf_autofill_type']) : null;
 
         return form_input_line($_cf_name, $_cf_description, $input_name, $actual_value, $field['cf_required'] == 1, null, $maxlength, $type, null, null, null, null, $autocomplete);

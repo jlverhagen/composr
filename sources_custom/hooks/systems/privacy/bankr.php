@@ -27,7 +27,7 @@
 /**
  * Hook class.
  */
-class Hook_privacy_bankr extends Hook_privacy_base
+class Hook_privacy_bankr extends Source_hook_privacy_base
 {
     /**
      * Find privacy details.

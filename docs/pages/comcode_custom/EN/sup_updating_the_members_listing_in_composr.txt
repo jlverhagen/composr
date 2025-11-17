@@ -30,7 +30,7 @@ If you don't like to write Tempcode, you can: create a test Comcode page, turn o
 [code="Tempcode"]
 {$COMCODE,[block display_mode="boxes"]main_members[/block]}
 [/code]
-(i.e. using the [tt]{$COMCODE,....}[/tt] symbol to wrap up your regular Comcode)
+(i.e. using the [tt]{\$COMCODE,....}[/tt] symbol to wrap up your regular Comcode)
 
 [title="2"]Changing the layout of the member boxes[/title]
 

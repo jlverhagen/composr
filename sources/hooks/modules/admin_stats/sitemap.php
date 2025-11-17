@@ -33,7 +33,7 @@
 /**
  * Hook class.
  */
-class Hook_admin_stats_sitemap extends CMSStatsProvider
+class Hook_admin_stats_sitemap extends Source_hook_stats_provider
 {
     /**
      * Find metadata about stats graphs that are provided by this stats hook.
@@ -50,10 +50,10 @@ class Hook_admin_stats_sitemap extends CMSStatsProvider
                 'label' => do_lang_tempcode('SITEMAP'),
                 'category' => 'content_growth',
                 'filters' => [
-                    'sitemap_growth__day_range' => new CMSStatsDayRangeFilter('sitemap_growth__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
-                    'sitemap_growth__page_link' => new CMSStatsTextFilter('sitemap_growth__page_link', do_lang_tempcode('PAGE_LINK')),
+                    'sitemap_growth__day_range' => new Source_stats_filter_day_range('sitemap_growth__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
+                    'sitemap_growth__page_link' => new Source_stats_filter_text('sitemap_growth__page_link', do_lang_tempcode('PAGE_LINK')),
                 ],
-                'pivot' => new CMSStatsDatePivot('sitemap_growth__pivot', $this->get_date_pivots(!$for_kpi)),
+                'pivot' => new Source_stats_filter_date_pivot('sitemap_growth__pivot', $this->get_date_pivots(!$for_kpi)),
                 'support_kpis' => self::KPI_HIGH_IS_GOOD,
             ],
         ];

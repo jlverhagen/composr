@@ -316,7 +316,7 @@ function cns_vote_in_poll(int $poll_id, array $votes, ?int $member_id = null, ?a
         $subject = do_lang('POLL_VOTE_MAIL_SUBJECT', $username, $answer, [$poll_title, $topic_title, $topic_url], get_lang($member_id));
         $mail = do_lang('POLL_VOTE_MAIL_BODY', $username, $answer, [$poll_title, $topic_title, $topic_url], get_lang($member_id));
         require_code('notifications');
-        dispatch_notification('cns_topic', strval($topic_id), $subject, $mail);
+        Source_notification_dispatcher::dispatch_notification('cns_topic', strval($topic_id), $subject, $mail);
     }
 }
 

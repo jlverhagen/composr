@@ -39,6 +39,8 @@
  */
 function init__lang()
 {
+    require_code('lang_filter');
+
     global $COMCODE_LANG_STRING_CACHE;
     $COMCODE_LANG_STRING_CACHE = [];
 
@@ -98,11 +100,11 @@ function init__lang()
     require_code('lang_filter_' . fallback_lang());
     if (((is_file(get_file_base() . '/sources/lang_filter_' . $lang_stripped . '.php')) || (is_file(get_file_base() . '/sources_custom/lang_filter_' . $lang_stripped . '.php'))) && (!in_safe_mode())) {
         require_code('lang_filter_' . filter_naughty_harsh($lang_stripped, true));
-        $LANG_FILTER_OB = object_factory('LangFilter_' . filter_naughty_harsh($lang_stripped, true));
+        $LANG_FILTER_OB = object_factory('Source_lang_filter_' . filter_naughty_harsh($lang_stripped, true));
     } else {
-        /*$LANG_FILTER_OB = new LangFilter(); Actually it's better to just fall back to the English one, rather than an empty one*/
+        /*$LANG_FILTER_OB = object_factory('Source_lang_filter'); Actually it's better to just fall back to the English one, rather than an empty one*/
 
-        $LANG_FILTER_OB = object_factory('LangFilter_' . fallback_lang());
+        $LANG_FILTER_OB = object_factory('Source_lang_filter_' . fallback_lang());
     }
     lang_load_runtime_processing();
 
@@ -1482,40 +1484,5 @@ function table_id_locking_end(object $db, ?int $id, bool $lock, string $table = 
         if (strpos(get_db_type(), 'mysql') !== false) {
             $db->query('UNLOCK TABLES', null, 0, true); // Suppress errors in case access denied
         }
-    }
-}
-
-/**
- * Do filtering for a language pack. This is the base class that doesn't actually do anything.
- *
- * @package core
- */
-class LangFilter
-{
-    /**
-     * Do a compile-time filter.
-     *
-     * @param  ?string $key Language string codename (null: not a language string)
-     * @param  string $value String value
-     * @param  ?LANGUAGE_NAME $lang Language (null: current language)
-     * @return string The suffix
-     */
-    public function compile_time(?string $key, string $value, ?string $lang = null) : string
-    {
-        return $value;
-    }
-
-    /**
-     * Do a run-time filter. Only happens for strings marked for processing with a flag.
-     *
-     * @param  string $key Language string codename
-     * @param  string $value Language string value
-     * @param  string $flag Flag value assigned to the string
-     * @param  array $parameters The parameters
-     * @return string The suffix
-     */
-    public function run_time(string $key, string $value, string $flag, array $parameters) : string
-    {
-        return $value;
     }
 }

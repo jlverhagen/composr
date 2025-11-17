@@ -362,11 +362,11 @@ function cns_member_ask_join_group(int $group_id, ?int $member_id = null)
         if ($leader_id !== null) {
             $mail = do_notification_lang('GROUP_JOIN_REQUEST_MAIL', comcode_escape($their_username), comcode_escape($group_name), [$url], get_lang($leader_id));
             $subject = do_lang('GROUP_JOIN_REQUEST_MAIL_SUBJECT', null, null, null, get_lang($leader_id));
-            dispatch_notification('cns_group_join_request', null, $subject, $mail, [$leader_id]);
+            Source_notification_dispatcher::dispatch_notification('cns_group_join_request', null, $subject, $mail, [$leader_id]);
         } else {
             $mail = do_notification_lang('GROUP_JOIN_REQUEST_MAIL', comcode_escape($their_username), comcode_escape($group_name), [$url], get_site_default_lang());
             $subject = do_lang('GROUP_JOIN_REQUEST_MAIL_SUBJECT', null, null, null, get_site_default_lang());
-            dispatch_notification('cns_group_join_request_staff', null, $subject, $mail, null, get_member(), ['use_real_from' => true]);
+            Source_notification_dispatcher::dispatch_notification('cns_group_join_request_staff', null, $subject, $mail, null, get_member(), ['use_real_from' => true]);
         }
     }
 }
@@ -458,7 +458,7 @@ function cns_add_member_to_secondary_group(int $member_id, int $id, int $validat
         $subject = do_lang('MJG_NOTIFICATION_MAIL_SUBJECT', get_site_name(), $username, $group_name);
         $group_url = build_url(['page' => 'groups', 'type' => 'view', 'id' => $id], get_module_zone('groups'), [], false, false, true);
         $mail = do_notification_lang('MJG_NOTIFICATION_MAIL', comcode_escape(get_site_name()), comcode_escape($username), [comcode_escape($group_name), $group_url->evaluate(), comcode_escape($displayname)]);
-        dispatch_notification('cns_member_joined_group', strval($id), $subject, $mail);
+        Source_notification_dispatcher::dispatch_notification('cns_member_joined_group', strval($id), $subject, $mail);
     }
 
     if ($validated == 1) {
@@ -559,7 +559,7 @@ function cns_member_validate_into_group(int $group_id, int $prospective_member_i
         $subject = do_lang('GROUP_DECLINED_MAIL_SUBJECT', $name, null, null, get_lang($prospective_member_id));
     }
 
-    dispatch_notification('cns_group_status', null, $subject, $mail, [$prospective_member_id]);
+    Source_notification_dispatcher::dispatch_notification('cns_group_status', null, $subject, $mail, [$prospective_member_id]);
 }
 
 /**

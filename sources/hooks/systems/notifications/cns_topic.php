@@ -33,7 +33,7 @@
 /**
  * Hook class.
  */
-class Hook_notification_cns_topic extends Hook_Notification
+class Hook_notification_cns_topic extends Source_hook_notification
 {
     public $handle_mailing_list = false;
     public $mailing_list_members = [];

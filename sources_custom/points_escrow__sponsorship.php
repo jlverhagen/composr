@@ -54,7 +54,7 @@ function escrow_create_sponsorship(int $bug_id, int $amount, ?int $creating_memb
     }
 
     $reason = 'Sponsored issue #' . strval($bug_id);
-    $agreement = 'This escrow shall be considered satisfied when [url="tracker issue #' . strval($bug_id) . '"]' . get_base_url() . '/tracker/view.php?id=' . strval($bug_id) . '[/url] has been resolved. The resolving member will receive the points escrowed. Should the issue be closed / not implemented, the escrow shall be considered cancelled and all points refunded.';
+    $agreement = 'This escrow shall be considered satisfied when [url="tracker issue #' . strval($bug_id) . '"]' . get_base_url() . '/catalogues/entry/tracker-' . strval($bug_id) . '.htm[/url] has been resolved. The resolving member will receive the points escrowed. Should the issue be closed / not implemented, the escrow shall be considered cancelled and all points refunded.';
 
     return escrow_points($creating_member, null, $amount, $reason, $agreement, null, 'tracker_issue', strval($bug_id));
 }
@@ -145,6 +145,7 @@ function escrow_cancel_all_sponsorships(int $bug_id, string $reason) : array
 
 /**
  * Complete all escrows / sponsorships tied to an issue, and credit a recipient with the points.
+ * TODO: Just use complete_all_escrows_by_content
  *
  * @param  AUTO_LINK $bug_id The issue on which to complete all sponsorships
  * @param  ?MEMBER $recipient The member receiving all the points (null: the handler user)

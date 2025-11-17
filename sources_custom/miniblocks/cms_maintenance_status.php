@@ -33,7 +33,7 @@ if (!addon_installed('cms_homesite')) {
 $nonbundled_addons = isset($map['include_non_bundled']) ? cms_strtolower_ascii($map['include_non_bundled']) : 'exclude';
 
 require_code('files_spreadsheets_read');
-$sheet_reader = spreadsheet_open_read(get_file_base() . '/data/maintenance_status.csv', null, CMS_Spreadsheet_Reader::ALGORITHM_RAW);
+$sheet_reader = Source_spreadsheet_reader::spreadsheet_open_read(get_file_base() . '/data/maintenance_status.csv', null, Source_spreadsheet_reader::ALGORITHM_RAW);
 
 $header_row = $sheet_reader->read_row(); // Header row
 unset($header_row[0]);

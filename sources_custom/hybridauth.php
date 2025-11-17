@@ -130,7 +130,7 @@ function enumerate_hybridauth_providers($alternate_config = null)
         set_throw_errors(true);
     }
     try {
-        $parsed = new CMS_simple_xml_reader($xml_contents);
+        $parsed = object_factory('Source_simple_xml_reader', false, [$xml_contents]);
         list(, , , $root_children) = $parsed->gleamed;
     } catch (CMSException $e) {
         if (running_script('index')) {

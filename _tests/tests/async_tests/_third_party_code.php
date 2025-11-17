@@ -39,14 +39,14 @@ class _third_party_code_test_set extends cms_test_case
         require_code('files_spreadsheets_read');
 
         $this->third_party_code = [];
-        $sheet_reader = spreadsheet_open_read(get_file_base() . '/data_custom/third_party_code.csv');
+        $sheet_reader = Source_spreadsheet_reader::spreadsheet_open_read(get_file_base() . '/data_custom/third_party_code.csv');
         while (($row = $sheet_reader->read_row()) !== false) {
             $this->third_party_code[] = $row;
         }
         $sheet_reader->close();
 
         $this->third_party_apis = [];
-        $sheet_reader = spreadsheet_open_read(get_file_base() . '/data_custom/third_party_apis.csv');
+        $sheet_reader = Source_spreadsheet_reader::spreadsheet_open_read(get_file_base() . '/data_custom/third_party_apis.csv');
         while (($row = $sheet_reader->read_row()) !== false) {
             $this->third_party_apis[] = $row;
         }
@@ -167,7 +167,7 @@ class _third_party_code_test_set extends cms_test_case
 
         $codenames = [];
         require_code('files_spreadsheets_read');
-        $sheet_reader = spreadsheet_open_read(get_file_base() . '/data/maintenance_status.csv');
+        $sheet_reader = Source_spreadsheet_reader::spreadsheet_open_read(get_file_base() . '/data/maintenance_status.csv');
         while (($row = $sheet_reader->read_row()) !== false) {
             $codename = $row['Codename'];
             $codenames[$codename] = true;

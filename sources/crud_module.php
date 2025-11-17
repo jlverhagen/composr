@@ -35,7 +35,7 @@
  *
  * @package core
  */
-abstract class Standard_crud_module
+abstract class Source_standard_crud_module
 {
     protected $module_type;
     protected $redirect_type = null;

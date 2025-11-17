@@ -26,6 +26,8 @@
 
 i_solemnly_declare(I_UNDERSTAND_SQL_INJECTION | I_UNDERSTAND_XSS | I_UNDERSTAND_PATH_INJECTION);
 
+return do_template('RED_ALERT', ['_GUID' => 'TODO', 'TEXT' => 'Disabled for the moment']); // TODO
+
 if (!addon_installed('cms_homesite_tracker')) {
     return do_template('RED_ALERT', ['_GUID' => '4d671f3291e8548fac9d6c9f3e632634', 'TEXT' => do_lang_tempcode('MISSING_ADDON', escape_html('cms_homesite_tracker'))]);
 }
@@ -210,7 +212,7 @@ foreach ($_issues as $issue) {
         'VOTE_URL' => get_base_url() . '/tracker/bug_monitor_add.php?bug_id=' . strval($issue['id']),
         'UNVOTE_URL' => get_base_url() . '/tracker/bug_monitor_delete.php?bug_id=' . strval($issue['id']),
 
-        'FULL_URL' => get_base_url() . '/tracker/view.php?id=' . strval($issue['id']),
+        'FULL_URL' => get_base_url() . '/catalogues/entry/tracker-' . strval($issue['id']) . '.htm',
     ];
 }
 

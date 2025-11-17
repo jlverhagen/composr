@@ -66,7 +66,7 @@ function member_field_is_required(?int $member_id, string $field_class, $current
     ];
     if (in_array($field_class, $requires_pc)) {
         require_code('cns_parental_controls');
-        $pc = load_parental_control_settings();
+        $pc = object_factory('Source_parental_controls', false, [false], true);
 
         switch ($field_class) {
             case 'dob':

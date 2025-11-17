@@ -39,7 +39,7 @@
  *
  * @package core_database_drivers
  */
-class Database_Static_postgresql extends DatabaseDriver
+class Source_database_static_postgresql extends Source_database_driver
 {
     protected $cache_db = [];
 

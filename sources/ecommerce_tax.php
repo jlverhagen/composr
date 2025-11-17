@@ -444,7 +444,7 @@ function send_invoice_notification(int $member_id, int $id, bool $fulfilled = fa
     $body = do_notification_template($fulfilled ? 'ECOM_INVOICE_FULFILLED_MAIL' : 'ECOM_INVOICE_MAIL', [
         'INVOICE' => escape_html_in_comcode($invoice),
     ], get_lang($member_id), false, null, '.txt', 'text');
-    dispatch_notification('invoice', null, $subject, $body->evaluate(get_lang($member_id)), [$member_id], A_FROM_SYSTEM_PRIVILEGED);
+    Source_notification_dispatcher::dispatch_notification('invoice', null, $subject, $body->evaluate(get_lang($member_id)), [$member_id], A_FROM_SYSTEM_PRIVILEGED);
 }
 
 /**

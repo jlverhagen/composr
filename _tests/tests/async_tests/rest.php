@@ -47,7 +47,7 @@ class rest_test_set extends cms_test_case
 
         // This is needed for the default news categories to be discovered in the alternative_ids table
         require_code('commandr_fs');
-        $fs = new Commandr_fs();
+        $fs = object_factory('Source_commandr_fs');
         $fs->listing(['var', 'news']);
 
         if ($this->path === null) {

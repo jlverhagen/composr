@@ -94,7 +94,7 @@ function search_test_script()
     require_code('search');
     require_code('database_search');
     require_code('hooks/modules/search/cns_posts');
-    $ob = new Hook_search_cns_posts();
+    $ob = object_factory('Hook_search_cns_posts');
     $info = $ob->info();
 
     $row_header = [

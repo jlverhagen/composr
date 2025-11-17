@@ -58,13 +58,13 @@ class Block_menu
     /**
      * Find caching details for the block.
      *
-     * @return ?array Map of cache details (cache_on and ttl) (null: block is disabled)
+     * @return ?array Map of cache details (cache_on and ttl) (null: do not cache)
      */
     public function caching_environment() : ?array
     {
         /* Ideally we would not cache as we would need to cache for all screens due to context sensitive link display (either you're here or match key filtering). However in most cases that only happens per page, so we will cache per page -- and people can turn off caching via the standard block parameter for that if needed.*/
         $info = [];
-        $info['cache_on'] = ['block_menu__cache_on'];
+        $info['cache_on'] = ['Block_menu::block_menu__cache_on'];
         $info['special_cache_flags'] = CACHE_AGAINST_BOT_STATUS | CACHE_AGAINST_PERMISSIVE_GROUPS;
         $info['ttl'] = 60 * 24 * 140;
         return $info;
@@ -136,55 +136,55 @@ class Block_menu
 
         return $content;
     }
-}
 
-/**
- * Find the cache signature for the block.
- *
- * @param  array $map The block parameters
- * @return array The cache signature
- */
-function block_menu__cache_on(array $map) : array
-{
-    /*
-    Menu caching is problematic. "Is active" caching theoretically would need doing against each URL.
-     (or to use JavaScript, or Tempcode pre-processing, to implement that -- but that would be messy)
-    We therefore assume that menu links are maximally distinguished by zone&page&type parameters.
-     (special case -- catalogue index screens are also distinguished by ID, as catalogues vary a lot)
+    /**
+     * Find the cache signature for the block.
+     *
+     * @param  array $map The block parameters
+     * @return array The cache signature
+     */
+    public static function block_menu__cache_on(array $map) : array
+    {
+        /*
+        Menu caching is problematic. "Is active" caching theoretically would need doing against each URL.
+        (or to use JavaScript, or Tempcode pre-processing, to implement that -- but that would be messy)
+        We therefore assume that menu links are maximally distinguished by zone&page&type parameters.
+        (special case -- catalogue index screens are also distinguished by ID, as catalogues vary a lot)
 
-    There is a simple workaround if our assumptions don't hold up. Just turn off caching for the
-    particular menu block instance. cache="0". It won't hurt very much, menus are relatively fast,
-    except for large drop-down sets.
-    */
+        There is a simple workaround if our assumptions don't hold up. Just turn off caching for the
+        particular menu block instance. cache="0". It won't hurt very much, menus are relatively fast,
+        except for large drop-down sets.
+        */
 
-    $menu = isset($map['param']) ? $map['param'] : '';
+        $menu = isset($map['param']) ? $map['param'] : '';
 
-    require_code('permissions');
-    $show_edit_link = ((substr($menu, 0, 1) != '_') && (substr($menu, 0, 3) != '!!!') && (has_actual_page_access(get_member(), 'admin_menus')));
+        require_code('permissions');
+        $show_edit_link = ((substr($menu, 0, 1) != '_') && (substr($menu, 0, 3) != '!!!') && (has_actual_page_access(get_member(), 'admin_menus')));
 
-    $javascript_highlighting = ((isset($map['javascript_highlighting']) ? $map['javascript_highlighting'] : '1') == '1');
+        $javascript_highlighting = ((isset($map['javascript_highlighting']) ? $map['javascript_highlighting'] : '1') == '1');
 
-    $ret = [
-        has_keep_parameters(),
-        $show_edit_link,
-        $menu,
-        isset($map['type']) ? $map['type'] : 'embossed',
-        isset($map['title']) ? $map['title'] : '',
-        ((isset($map['silent_failure']) ? $map['silent_failure'] : '0') == '1'),
-        empty($map['tray_status']) ? 'tray_closed' : $map['tray_status'],
-    ];
+        $ret = [
+            has_keep_parameters(),
+            $show_edit_link,
+            $menu,
+            isset($map['type']) ? $map['type'] : 'embossed',
+            isset($map['title']) ? $map['title'] : '',
+            ((isset($map['silent_failure']) ? $map['silent_failure'] : '0') == '1'),
+            empty($map['tray_status']) ? 'tray_closed' : $map['tray_status'],
+        ];
 
-    if (!$javascript_highlighting) {
-        $page = get_page_name();
-        $url_type = get_param_string('type', 'browse');
+        if (!$javascript_highlighting) {
+            $page = get_page_name();
+            $url_type = get_param_string('type', 'browse');
 
-        $ret = array_merge($ret, [
-            get_zone_name(),
-            $page,
-            $url_type,
-            ($page == 'catalogues' && $url_type == 'index') ? get_param_string('id', '') : '', // Catalogues need a little extra work to distinguish them
-        ]);
+            $ret = array_merge($ret, [
+                get_zone_name(),
+                $page,
+                $url_type,
+                ($page == 'catalogues' && $url_type == 'index') ? get_param_string('id', '') : '', // Catalogues need a little extra work to distinguish them
+            ]);
+        }
+
+        return $ret;
     }
-
-    return $ret;
 }

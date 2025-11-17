@@ -756,7 +756,16 @@ function cms_publish_release(string $version_dotted, bool $is_old_tree, bool $is
 
     $issues_found = [];
 
+    // LEGACY: old Mantis URLs
+    // TODO: remove with the release of v11
     $regexp = '#' . preg_quote(get_brand_base_url(), '#') . '/tracker/view\.php\?id=(\d+)#';
+    $matches = [];
+    $num_matches = preg_match_all($regexp, $changes, $matches);
+    for ($i = 0; $i < $num_matches; $i++) {
+        $issues_found[] = intval($matches[1][$i]);
+    }
+
+    $regexp = '#' . preg_quote(get_brand_base_url(), '#') . '\/catalogues\/entry\/tracker\-(\d+)\.htm#';
     $matches = [];
     $num_matches = preg_match_all($regexp, $changes, $matches);
     for ($i = 0; $i < $num_matches; $i++) {

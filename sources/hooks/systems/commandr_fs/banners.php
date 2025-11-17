@@ -35,7 +35,7 @@ require_code('resource_fs');
 /**
  * Hook class.
  */
-class Hook_commandr_fs_banners extends Resource_fs_base
+class Hook_commandr_fs_banners extends Source_resource_fs_base
 {
     public $folder_resource_type = 'banner_type';
     public $file_resource_type = 'banner';

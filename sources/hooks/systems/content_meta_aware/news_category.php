@@ -33,7 +33,7 @@
 /**
  * Hook class.
  */
-class Hook_content_meta_aware_news_category extends Hook_CMA
+class Hook_content_meta_aware_news_category extends Source_hook_CMA
 {
     /**
      * Get content type details.
@@ -74,7 +74,7 @@ class Hook_content_meta_aware_news_category extends Hook_CMA
             'description_field' => null,
             'description_field_dereference' => true,
             'description_field_supports_comcode' => true,
-            'image_field' => ['nc_img', 'CALL: generate_news_category_image_url'],
+            'image_field' => ['nc_img', 'CALL: Hook_content_meta_aware_news_category::generate_news_category_image_url'],
             'image_field_is_theme_image' => false,
             'alternate_icon_theme_image' => null,
 
@@ -196,20 +196,20 @@ class Hook_content_meta_aware_news_category extends Hook_CMA
 
         return create_selection_list_news_categories(($id === null) ? null : intval($id));
     }
-}
 
-/**
- * Find an entry image.
- *
- * @param  array $row Database row of entry
- * @return string The image URL
- */
-function generate_news_category_image_url(array $row) : string
-{
-    if (!addon_installed('news')) {
-        return '';
+    /**
+     * Find an entry image.
+     *
+     * @param  array $row Database row of entry
+     * @return string The image URL
+     */
+    public static function generate_news_category_image_url(array $row) : string
+    {
+        if (!addon_installed('news')) {
+            return '';
+        }
+
+        require_code('news');
+        return get_news_category_image_url($row['nc_img']);
     }
-
-    require_code('news');
-    return get_news_category_image_url($row['nc_img']);
 }

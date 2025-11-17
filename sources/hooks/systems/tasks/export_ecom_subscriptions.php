@@ -97,11 +97,11 @@ class Hook_task_export_ecom_subscriptions
         // Prepare the file
         require_code('files_spreadsheets_write');
         if ($file_type === null) {
-            $file_type = spreadsheet_write_default();
+            $file_type = Source_spreadsheet_writer::spreadsheet_write_default();
         }
         $filename = 'subscriptions_' . strval(time()) . $end_filename . '.' . $file_type;
         $outfile_path = null;
-        $sheet_writer = spreadsheet_open_write($outfile_path, $filename);
+        $sheet_writer = Source_spreadsheet_writer::spreadsheet_open_write($outfile_path, $filename);
 
 
         $end .= ' ORDER BY s_time DESC';

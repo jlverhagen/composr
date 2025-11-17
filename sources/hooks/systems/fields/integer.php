@@ -152,7 +152,7 @@ class Hook_fields_integer
      * @param  string $_cf_name The field name
      * @param  string $_cf_description The field description
      * @param  array $field The field details
-     * @param  ?string $actual_value The actual current value of the field (null: none)
+     * @param  ?string $actual_value The actual current value of the field, or default value if not set (null: none, and no default value set)
      * @param  boolean $new Whether this is for a new entry
      * @return ?Tempcode The Tempcode for the input field (null: skip the field - it's not input)
      */
@@ -168,7 +168,20 @@ class Hook_fields_integer
             $actual_value = null;
         }
 
+        if ($actual_value === null) {
+            $actual_value = ''; // Plug anomaly due to unusual corruption
+        }
+
         $input_name = @cms_empty_safe($field['cf_input_name']) ? ('field_' . strval($field['id'])) : $field['cf_input_name'];
+
+        $edit_only = option_value_from_field_array($field, 'edit_only', '0');
+        if (($field['cf_required'] == 1) && ($actual_value == '')) {
+            $edit_only = '0';
+        }
+        if (($edit_only != '0') && $new) {
+            return form_input_hidden($input_name, $actual_value);
+        }
+
         $autocomplete = ($new && !empty($field['cf_autofill_type'])) ? (($field['cf_autofill_hint'] ? ($field['cf_autofill_hint'] . ' ') : '') . $field['cf_autofill_type']) : null;
         return form_input_integer($_cf_name, $_cf_description, $input_name, (($actual_value === null) || ($actual_value === '')) ? null : intval($actual_value), $field['cf_required'] == 1, null, null, $autocomplete);
     }
@@ -215,20 +228,13 @@ class Hook_fields_integer
      */
     public function get_field_auto_increment(int $field_id, string $default = '') : ?string
     {
-        // Get most recent value, to start with- we will iterate forward on it
-        $_value = $GLOBALS['SITE_DB']->query_select('catalogue_efv_integer', ['cv_value', 'ce_id'], ['cf_id' => $field_id], 'ORDER BY ce_id DESC', 1);
-        if (array_key_exists(0, $_value)) {
-            $value = $_value[0]['cv_value'];
-        } else {
-            $value = (is_integer($default)) ? (intval($default) - 1) : db_get_first_id();
+        // We use one more than the current max value
+        $value = $GLOBALS['SITE_DB']->query_select_value_if_there('catalogue_efv_integer', 'MAX(cv_value)', ['cf_id' => $field_id], '');
+        if ($value === null) {
+            $value = (is_integer($default)) ? (intval($default) - 1) : (db_get_first_id() - 1);
         }
 
-        $test = null;
-        do {
-            $value++;
-
-            $test = $GLOBALS['SITE_DB']->query_select_value_if_there('catalogue_efv_integer', 'ce_id', ['cv_value' => $value, 'cf_id' => $field_id]);
-        } while ($test !== null);
+        $value++;
 
         return strval($value);
     }

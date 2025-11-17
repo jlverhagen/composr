@@ -880,7 +880,7 @@ function calendar_matches(int $auth_member_id, int $member_id, bool $restrict, ?
                 require_code('files');
                 cms_file_put_contents_safe($temp_file_path, $http_response->data, FILE_WRITE_BOM, $http_response->charset);
 
-                $rss = new CMS_RSS($temp_file_path, true);
+                $rss = object_factory('Source_RSS', false, [$temp_file_path, true], true);
 
                 $content = new Tempcode();
                 foreach ($rss->gleamed_items as $item) {

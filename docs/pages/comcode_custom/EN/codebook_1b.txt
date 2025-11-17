@@ -388,7 +388,7 @@ For theme images, we use [tt]find_theme_image[/tt].
 
 For entry-point scripts we use [tt]find_script[/tt] to locate the script.
 
-For other URLs we typically will prepend [tt]get_base_url() . '/'[/tt] to turn a relative URL into an absolute URL. Or in templates, prepend [tt]{$BASE_URL*}/[/tt].
+For other URLs we typically will prepend [tt]get_base_url() . '/'[/tt] to turn a relative URL into an absolute URL. Or in templates, prepend [tt]{\$BASE_URL*}/[/tt].
 
 [title="4"]URL monikers[/title]
 
@@ -416,7 +416,7 @@ There are a number of different functions we use for encoding/decoding URLs:
  - [tt]urlencode[/tt] / [tt]urldecode[/tt] -- PHP function for URL encoding specifically for GET parameters. It's the same as [tt]rawurlencode[/tt] except spaces become [tt]+[/tt] rather than [tt]%20[/tt].
  - [tt]cms_urlencode[/tt] / [tt]cms_rawurlencode[/tt] / [tt]cms_urldecode[/tt] -- A layer around [tt]urlencode[/tt] / [tt]rawurlencode[/tt] / [tt]urldecode[/tt] that provides software-specific encoding that stops Apache's [tt]mod_rewrite[/tt] from corrupting certain special characters during its "smart" processing.
  - [tt]cms_rawurlrecode[/tt] -- Shortens URLs that are too long for the database (255 character limit) by intelligently cheating in our encoding. The URLs are technically non-compliant but will work.
- - [tt]HarmlessURLCoder[/tt] -- Simplifies/desimplifies URLs, trading human-readability for non-compliance, and handling Punycode (if the [tt]intl[/tt] PHP extension is available). Similar to what browsers do in their address bars. It is a non-destructive operation that doesn't allow for double encoding or double decoding. Non-latin characters in URLs encoded with HarmlessURLCoder are much easier to understand.
+ - [tt]Source_URL_coder[/tt] -- Simplifies/desimplifies URLs, trading human-readability for non-compliance, and handling Punycode (if the [tt]intl[/tt] PHP extension is available). Similar to what browsers do in their address bars. It is a non-destructive operation that doesn't allow for double encoding or double decoding. Non-latin characters in URLs encoded with Source_URL_coder are much easier to understand.
 
 [title="4"]Unicode (utf-8)[/title]
 
@@ -428,7 +428,7 @@ Here is our Unicode-support status on various kinds of URL-related ID:
  - Filenames: Unicode may be used, except on Windows servers with PHP version 7.2 or lower[staff_note]LEGACY[/staff_note]; transliteration will be used if it was enabled for monikers
  - Directory names: Transliteration will be used, as Unicode directory names are more problematic than Unicode filenames
 
-However, the Unicode will get heavily percent-encoded for the URLs generated (unless [tt]HarmlessURLCoder[/tt] or [tt]cms_rawurlrecode[/tt] is active), because non-ASCII characters are not permitted in URLs.
+However, the Unicode will get heavily percent-encoded for the URLs generated (unless [tt]Source_URL_coder[/tt] or [tt]cms_rawurlrecode[/tt] is active), because non-ASCII characters are not permitted in URLs.
 
 [title="3"]Breadcrumbs[/title]
 
@@ -532,7 +532,7 @@ To do this:
 2) Pass in the name of the Custom Profile Field as [tt]<your-chosen-name>[/tt] (e.g. [tt]example[/tt]). It will be stored with an [tt]cms_[/tt] prefix, which indicates it is a system field.
 3) Conversr-only. Define a language string [tt]SPECIAL_CPF__cms_<your-chosen-name>[/tt] that contains the true human-readable name. You can define this in your own language file.
 4) Conversr-only. Write a new [tt]systems/cns_cpf_filter[/tt] hook. If you want your field to be editable, you need to include it as a key in the returned array of the [tt]to_enable[/tt] function (see existing hooks for examples). You can use one hook file for lots of fields. Your function should [tt]require_lang[/tt] the language file you defined your strings in.
-Retrieve your field using the [tt]get_cms_cpf[/tt] function, or in templates with the [tt]{$CPF_VALUE}[/tt] symbol, omitting the [tt]cms_[/tt] prefix (i.e. just use the name you set).
+Retrieve your field using the [tt]get_cms_cpf[/tt] function, or in templates with the [tt]{\$CPF_VALUE}[/tt] symbol, omitting the [tt]cms_[/tt] prefix (i.e. just use the name you set).
 
 Conversr stores the data in two tables (you should not need to know this, but it may be useful if you are manually checking the database during the debugging process):
 1) [tt]f_custom_fields[/tt] -- this stores the field definitions, one field definition per row. Think of it being like a schema.
@@ -1087,7 +1087,7 @@ Most Composr create/edit/delete interfaces are done via an CRUD module, as this 
 
 There are lots of CRUD module's to look at as examples in the CMS zone. This section describes how they work in general terms.
 
-Each CRUD module extends the 'Standard_crud_module' base class. This class has many internal methods that abstract the interface and actualisation functions of the CRUD functionality, and it actually takes hold of the whole CRUD process, limiting the burden on us just to defining a few special methods/properties. We inherit from the CRUD class in our module to use its functionality. To do this it must first require up that class, just before the module is defined:
+Each CRUD module extends the 'Source_standard_crud_module' base class. This class has many internal methods that abstract the interface and actualisation functions of the CRUD functionality, and it actually takes hold of the whole CRUD process, limiting the burden on us just to defining a few special methods/properties. We inherit from the CRUD class in our module to use its functionality. To do this it must first require up that class, just before the module is defined:
 [code="PHP"]
 require_code('crud_module');
 [/code]

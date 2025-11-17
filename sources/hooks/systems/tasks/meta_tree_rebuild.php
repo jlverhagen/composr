@@ -43,7 +43,7 @@ class Hook_task_meta_tree_rebuild
     public function run() : ?array
     {
         require_code('themes_meta_tree');
-        $meta_tree_builder = new Meta_tree_builder();
+        $meta_tree_builder = object_factory('Source_meta_tree_builder');
         $meta_tree_builder->refresh(null, null, [$this, 'log']);
 
         return null;

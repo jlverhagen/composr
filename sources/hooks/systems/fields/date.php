@@ -210,12 +210,26 @@ class Hook_fields_date
      * @param  string $_cf_name The field name
      * @param  string $_cf_description The field description
      * @param  array $field The field details
-     * @param  ?string $actual_value The actual current value of the field (null: none)
+     * @param  ?string $actual_value The actual current value of the field, or default value if not set (null: none, and no default value set)
      * @param  boolean $new Whether this is for a new entry
      * @return ?Tempcode The Tempcode for the input field (null: skip the field - it's not input)
      */
     public function get_field_inputter(string $_cf_name, string $_cf_description, array $field, ?string $actual_value, bool $new) : ?object
     {
+        if ($actual_value === null) {
+            $actual_value = ''; // Plug anomaly due to unusual corruption
+        }
+
+        $input_name = @cms_empty_safe($field['cf_input_name']) ? ('field_' . strval($field['id'])) : $field['cf_input_name'];
+
+        $edit_only = option_value_from_field_array($field, 'edit_only', '0');
+        if (($field['cf_required'] == 1) && ($actual_value == '')) {
+            $edit_only = '0';
+        }
+        if (($edit_only != '0') && $new) {
+            return form_input_hidden($input_name, $actual_value);
+        }
+
         $time = mixed();
 
         if (empty($actual_value)) {
@@ -239,7 +253,6 @@ class Hook_fields_date
         $max_year = $this->find_year_range_limiter($field, 'max_year');
         $years_to_show = $max_year - $min_year;
 
-        $input_name = @cms_empty_safe($field['cf_input_name']) ? ('field_' . strval($field['id'])) : $field['cf_input_name'];
         $autocomplete = ($new && !empty($field['cf_autofill_type'])) ? (($field['cf_autofill_hint'] ? ($field['cf_autofill_hint'] . ' ') : '') . $field['cf_autofill_type']) : null;
 
         return form_input_date($_cf_name, $_cf_description, $input_name, $field['cf_required'] == 1, ($field['cf_required'] == 0) && ($actual_value == ''), false, $time, $years_to_show, $min_year, null, true, null, false, $autocomplete);

@@ -176,6 +176,7 @@ class Hook_addon_registry_health_check
             'data/xml_config/page_errors.xml',
             'lang/EN/health_check.ini',
             'sources/health_check.php',
+            'sources/health_check_hook.php',
             'sources/hooks/blocks/main_staff_checklist/health_check.php',
             'sources/hooks/systems/actionlog/health_check.php',
             'sources/hooks/systems/addon_registry/health_check.php',

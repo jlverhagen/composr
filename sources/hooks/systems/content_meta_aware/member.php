@@ -33,7 +33,7 @@
 /**
  * Hook class.
  */
-class Hook_content_meta_aware_member extends Hook_CMA
+class Hook_content_meta_aware_member extends Source_hook_CMA
 {
     /**
      * Get content type details.
@@ -76,7 +76,7 @@ class Hook_content_meta_aware_member extends Hook_CMA
             'description_field' => 'm_title',
             'description_field_dereference' => false,
             'description_field_supports_comcode' => false,
-            'image_field' => ['m_avatar_url', 'm_photo_url', 'CALL: generate_member_entry_image_url'],
+            'image_field' => ['m_avatar_url', 'm_photo_url', 'CALL: Hook_content_meta_aware_member::generate_member_entry_image_url'],
             'image_field_is_theme_image' => false,
             'alternate_icon_theme_image' => null,
 
@@ -172,23 +172,23 @@ class Hook_content_meta_aware_member extends Hook_CMA
 
         return render_member_box($row['id'], false, true, [], $give_context, $guid);
     }
-}
 
-/**
- * Find an entry image.
- *
- * @param  array $row Database row of entry
- * @return URLPATH The image URL (blank: none)
- */
-function generate_member_entry_image_url(array $row) : string
-{
-    if (!has_privilege(get_member(), 'view_member_photos')) {
-        if (!addon_installed('cns_member_avatars')) {
-            return '';
+    /**
+     * Find an entry image.
+     *
+     * @param  array $row Database row of entry
+     * @return URLPATH The image URL (blank: none)
+     */
+    public static function generate_member_entry_image_url(array $row) : string
+    {
+        if (!has_privilege(get_member(), 'view_member_photos')) {
+            if (!addon_installed('cns_member_avatars')) {
+                return '';
+            }
+            $field = 'm_avatar_url';
+            return $GLOBALS['FORUM_DRIVER']->get_member_avatar_url($row['id']);
         }
-        $field = 'm_avatar_url';
-        return $GLOBALS['FORUM_DRIVER']->get_member_avatar_url($row['id']);
-    }
 
-    return $GLOBALS['FORUM_DRIVER']->get_member_photo_url($row['id']);
+        return $GLOBALS['FORUM_DRIVER']->get_member_photo_url($row['id']);
+    }
 }

@@ -33,7 +33,7 @@
 /**
  * Hook class.
  */
-class Hook_content_meta_aware_quiz extends Hook_CMA
+class Hook_content_meta_aware_quiz extends Source_hook_CMA
 {
     /**
      * Get content type details.
@@ -53,8 +53,8 @@ class Hook_content_meta_aware_quiz extends Hook_CMA
 
             'content_type_label' => 'quiz:QUIZ',
             'content_type_universal_label' => 'Quiz',
-            'content_type_label_override' => 'CALL: generate_quiz_content_type_label',
-            'content_type_universal_label_override' => 'CALL: generate_quiz_content_type_universal_label',
+            'content_type_label_override' => 'CALL: Hook_content_meta_aware_quiz::generate_quiz_content_type_label',
+            'content_type_universal_label_override' => 'CALL: Hook_content_meta_aware_quiz::generate_quiz_content_type_universal_label',
 
             'db' => $GLOBALS['SITE_DB'],
             'table' => 'quizzes',
@@ -181,54 +181,54 @@ class Hook_content_meta_aware_quiz extends Hook_CMA
 
         return render_quiz_box($row, $zone, $give_context, $guid);
     }
-}
 
-/**
- * Find an entry content-type language string label.
- *
- * @param  array $row Database row of entry
- * @return Tempcode Label
- */
-function generate_quiz_content_type_label(array $row) : object
-{
-    if (!addon_installed('quizzes')) {
-        return new Tempcode();
+    /**
+     * Find an entry content-type language string label.
+     *
+     * @param  array $row Database row of entry
+     * @return Tempcode Label
+     */
+    public static function generate_quiz_content_type_label(array $row) : object
+    {
+        if (!addon_installed('quizzes')) {
+            return new Tempcode();
+        }
+
+        if (!array_key_exists('q_type', $row)) {
+            return do_lang_tempcode('quiz:QUIZ');
+        }
+        return do_lang_tempcode('quiz:' . $row['q_type']);
     }
 
-    if (!array_key_exists('q_type', $row)) {
-        return do_lang_tempcode('quiz:QUIZ');
-    }
-    return do_lang_tempcode('quiz:' . $row['q_type']);
-}
+    /**
+     * Find an entry content-type universal label (doesn't depend on language pack).
+     *
+     * @param  array $row Database row of entry
+     * @return string Label
+     */
+    public static function generate_quiz_content_type_universal_label(array $row) : string
+    {
+        if (!addon_installed('quizzes')) {
+            return 'Quiz';
+        }
 
-/**
- * Find an entry content-type universal label (doesn't depend on language pack).
- *
- * @param  array $row Database row of entry
- * @return string Label
- */
-function generate_quiz_content_type_universal_label(array $row) : string
-{
-    if (!addon_installed('quizzes')) {
-        return 'Quiz';
-    }
+        $type = 'Quiz';
+        if (!array_key_exists('q_type', $row)) {
+            return $type;
+        }
+        switch ($row['q_type']) {
+            case 'COMPETITION':
+                $type = 'Competition';
+                break;
 
-    $type = 'Quiz';
-    if (!array_key_exists('q_type', $row)) {
+            case 'SURVEY':
+                $type = 'Survey';
+                break;
+
+            case 'TEST':
+                $type = 'Test';
+                break;
+        }
         return $type;
     }
-    switch ($row['q_type']) {
-        case 'COMPETITION':
-            $type = 'Competition';
-            break;
-
-        case 'SURVEY':
-            $type = 'Survey';
-            break;
-
-        case 'TEST':
-            $type = 'Test';
-            break;
-    }
-    return $type;
 }

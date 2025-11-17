@@ -82,7 +82,7 @@ class chmod_consistency_test_set extends cms_test_case
                 $c_stripped = $c;
 
                 $slash = $windows_slashes ? '\\' : '/';
-                $chmod_array = get_chmod_array($runtime_too, false);
+                $chmod_array = Source_permissions_scanner::get_chmod_array($runtime_too, false);
                 foreach ($chmod_array as $item) {
                     $path = get_file_base() . '/' . $item;
 

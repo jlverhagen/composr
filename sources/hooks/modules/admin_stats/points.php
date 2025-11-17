@@ -33,7 +33,7 @@
 /**
  * Hook class.
  */
-class Hook_admin_stats_points extends CMSStatsProvider
+class Hook_admin_stats_points extends Source_hook_stats_provider
 {
     /**
      * Find metadata about stats graphs that are provided by this stats hook.
@@ -54,45 +54,45 @@ class Hook_admin_stats_points extends CMSStatsProvider
                 'label' => do_lang_tempcode('POINTS_SENT'),
                 'category' => 'inter_member_engagement',
                 'filters' => [
-                    'points_sent__day_range' => new CMSStatsDayRangeFilter('points_sent__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
+                    'points_sent__day_range' => new Source_stats_filter_day_range('points_sent__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
                 ],
-                'pivot' => new CMSStatsDatePivot('points_sent__pivot', $this->get_date_pivots(!$for_kpi)),
+                'pivot' => new Source_stats_filter_date_pivot('points_sent__pivot', $this->get_date_pivots(!$for_kpi)),
                 'support_kpis' => self::KPI_HIGH_IS_GOOD,
             ],
             'points_transacted' => [
                 'label' => do_lang_tempcode('POINTS_AGGREGATE_ROWS'),
                 'category' => 'economic_activity',
                 'filters' => [
-                    'points_sent__day_range' => new CMSStatsDayRangeFilter('points_transacted__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
+                    'points_sent__day_range' => new Source_stats_filter_day_range('points_transacted__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
                 ],
-                'pivot' => new CMSStatsDatePivot('points_transacted__pivot', $this->get_date_pivots(!$for_kpi)),
+                'pivot' => new Source_stats_filter_date_pivot('points_transacted__pivot', $this->get_date_pivots(!$for_kpi)),
                 'support_kpis' => self::KPI_HIGH_IS_GOOD,
             ],
             'points_spent' => [
                 'label' => do_lang_tempcode('POINTS_SPENT'),
                 'category' => 'economic_activity',
                 'filters' => [
-                    'points_spent__day_range' => new CMSStatsDayRangeFilter('points_spent__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
+                    'points_spent__day_range' => new Source_stats_filter_day_range('points_spent__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
                 ],
-                'pivot' => new CMSStatsDatePivot('points_spent__pivot', $this->get_date_pivots(!$for_kpi)),
+                'pivot' => new Source_stats_filter_date_pivot('points_spent__pivot', $this->get_date_pivots(!$for_kpi)),
                 'support_kpis' => self::KPI_HIGH_IS_GOOD,
             ],
             'points_received' => [
                 'label' => do_lang_tempcode('POINTS_RECEIVED'),
                 'category' => 'economic_activity',
                 'filters' => [
-                    'points_received__day_range' => new CMSStatsDayRangeFilter('points_received__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
+                    'points_received__day_range' => new Source_stats_filter_day_range('points_received__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
                 ],
-                'pivot' => new CMSStatsDatePivot('points_received__pivot', $this->get_date_pivots(!$for_kpi)),
+                'pivot' => new Source_stats_filter_date_pivot('points_received__pivot', $this->get_date_pivots(!$for_kpi)),
                 'support_kpis' => self::KPI_HIGH_IS_GOOD,
             ],
             'gift_points_used' => [
                 'label' => do_lang_tempcode('GIFT_POINTS_USED'),
                 'category' => 'economic_activity',
                 'filters' => [
-                    'gift_points_used__day_range' => new CMSStatsDayRangeFilter('gift_points_used__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
+                    'gift_points_used__day_range' => new Source_stats_filter_day_range('gift_points_used__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
                 ],
-                'pivot' => new CMSStatsDatePivot('gift_points_used__pivot', $this->get_date_pivots(!$for_kpi)),
+                'pivot' => new Source_stats_filter_date_pivot('gift_points_used__pivot', $this->get_date_pivots(!$for_kpi)),
                 'support_kpis' => self::KPI_HIGH_IS_GOOD,
             ],
         ];

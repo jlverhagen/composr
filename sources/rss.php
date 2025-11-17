@@ -33,22 +33,11 @@
  */
 
 /**
- * Used to turn plain-text links into real links.
- *
- * @param  array $matches The matches
- * @return string The replacement
- */
-function extract_plain_links(array $matches) : string
-{
-    return '<a href="' . @html_entity_decode($matches[0], ENT_QUOTES) . '">' . $matches[0] . '</a>';
-}
-
-/**
  * RSS loader.
  *
  * @package core
  */
-class CMS_RSS
+class Source_RSS
 {
     // Used during parsing
     public $type;
@@ -64,6 +53,91 @@ class CMS_RSS
     public $feed_url;
 
     public $error;
+
+    /**
+     * Convert an ISO date into a timestamp.
+     *
+     * @param  string $date The ISO date
+     * @return array If only one element, it contains the timestamp. Otherwise it is a pair: (string format, timestamp)
+     */
+    public static function cleanup_date(string $date) : array
+    {
+        require_code('temporal');
+
+        $remap_month = ['Jan' => 1, 'Feb' => 2, 'Mar' => 3, 'Apr' => 4, 'May' => 5, 'Jun' => 6, 'Jul' => 7, 'Aug' => 8, 'Sep' => 9, 'Oct' => 10, 'Nov' => 11, 'Dec' => 12];
+        $matches = [];
+        if (preg_match('#(\d*) (' . implode('|', array_keys($remap_month)) . ') (\d\d\d\d) (\d*):(\d\d):(\d\d) (GMT|UTC)?([+-]?\w*)#', $date, $matches) != 0) {
+            $hour = intval($matches[4]);
+            $minute = intval($matches[5]);
+            $second = intval($matches[6]);
+            $month = $remap_month[$matches[2]];
+            $day = intval($matches[1]);
+            if ($day == 0) {
+                $day = 1;
+            }
+            $year = intval($matches[3]);
+            $timestamp = cms_gmmktime($hour, $minute, $second, $month, $day, $year);
+            $their_dif = 0; // Assume GMT
+            if (is_numeric($matches[8])) {
+                $their_dif = intval($matches[8]);
+                if (abs($their_dif) > 30) {
+                    $their_dif = intval(floor(floatval($their_dif) / 100.0)) + ($their_dif % 100) / 60;
+                }
+            }
+
+            $timestamp -= $their_dif * 60 * 60;
+            return [get_timezoned_date_time($timestamp), $timestamp];
+        }
+        if (preg_match('#(\d\d\d\d)-(\d\d)-(\d\d)T(\d\d):(\d\d):(\d\d)Z#', $date, $matches) != 0) {
+            $hour = intval($matches[4]);
+            $minute = intval($matches[5]);
+            $second = intval($matches[6]);
+            $month = intval($matches[2]);
+            $day = intval($matches[3]);
+            $year = intval($matches[1]);
+
+            $timestamp = cms_gmmktime($hour, $minute, $second, $month, $day, $year);
+            return [get_timezoned_date_time($timestamp), $timestamp];
+        }
+        if (preg_match('#(\d\d\d\d)-(\d\d)-(\d\d)T(\d\d):(\d\d):(\d\d)([\+\-]\d\d):(\d\d)#', $date, $matches) != 0) {
+            $hour = intval($matches[4]);
+            $minute = intval($matches[5]);
+            $second = intval($matches[6]);
+            $month = intval($matches[2]);
+            $day = intval($matches[3]);
+            $year = intval($matches[1]);
+
+            $timestamp = cms_gmmktime($hour, $minute, $second, $month, $day, $year);
+            $timestamp += intval($matches[7]) * 60 * 60 + intval($matches[8]) * 60;
+            return [get_timezoned_date_time($timestamp), $timestamp];
+        }
+        if (preg_match('#(\d+?) (\D\D\D) (\d\d\d\d) (\d\d):(\d\d):(\d\d) ([\+\-]\d\d)(\d\d)#', $date, $matches) != 0) {
+            $hour = intval($matches[4]);
+            $minute = intval($matches[5]);
+            $second = intval($matches[6]);
+            $month = intval($matches[2]);
+            $month_remap = ['Jan' => 1, 'Feb' => 2, 'Mar' => 3, 'Apr' => 4, 'May' => 5, 'Jun' => 6, 'Jul' => 7, 'Aug' => 8, 'Sep' => 9, 'Oct' => 10, 'Nov' => 11, 'Dec' => 12];
+            $month = $month_remap[$month];
+            $day = intval($matches[1]);
+            $year = intval($matches[3]);
+
+            $timestamp = cms_gmmktime($hour, $minute, $second, $month, $day, $year);
+            $timestamp -= intval($matches[7]) * 60 * 60 + intval($matches[8]) * 60;
+            return [get_timezoned_date_time($timestamp), $timestamp];
+        }
+        return [$date];
+    }
+
+    /**
+     * Used to turn plain-text links into real links.
+     *
+     * @param  array $matches The matches
+     * @return string The replacement
+     */
+    public static function extract_plain_links(array $matches) : string
+    {
+        return '<a href="' . @html_entity_decode($matches[0], ENT_QUOTES) . '">' . $matches[0] . '</a>';
+    }
 
     /**
      * Constructs the RSS reader: downloads the URL and parses it. Check $error after constructing.
@@ -388,7 +462,7 @@ class CMS_RSS
                                 break;
                             case 'COPYRIGHT':
                                 if (strpos($data, '(C)') !== false) { // Not HTML -> convert
-                                    $data2 = preg_replace_callback('(http://[^, \)]+[^\. ])', 'extract_plain_links', escape_html($data));
+                                    $data2 = preg_replace_callback('(http://[^, \)]+[^\. ])', 'Source_RSS::extract_plain_links', escape_html($data));
                                     $data2 = str_replace('(C)', '&copy;', $data2);
                                 } else {
                                     $data2 = $data;
@@ -439,7 +513,7 @@ class CMS_RSS
                                 $current_item['category'] = $data;
                                 break;
                             case 'HTTP://PURL.ORG/DC/ELEMENTS/1.1/:DATE':
-                                $a = cleanup_date($data);
+                                $a = Source_RSS::cleanup_date($data);
                                 $current_item['add_date'] = $a[0];
                                 if (array_key_exists(1, $a)) {
                                     $current_item['clean_add_date'] = $a[1];
@@ -521,7 +595,7 @@ class CMS_RSS
                                 }
                                 break;
                             case 'PUBDATE':
-                                $a = cleanup_date($data);
+                                $a = Source_RSS::cleanup_date($data);
                                 $current_item['add_date'] = $a[0];
                                 if (array_key_exists(1, $a)) {
                                     $current_item['clean_add_date'] = $a[1];
@@ -666,14 +740,14 @@ class CMS_RSS
                                 }
                                 break;
                             case $prefix . 'UPDATED':
-                                $a = cleanup_date($data);
+                                $a = Source_RSS::cleanup_date($data);
                                 $current_item['edit_date'] = $a[0];
                                 if (array_key_exists(1, $a)) {
                                     $current_item['clean_edit_date'] = $a[1];
                                 }
                                 break;
                             case $prefix . 'MODIFIED':
-                                $a = cleanup_date($data);
+                                $a = Source_RSS::cleanup_date($data);
                                 $current_item['edit_date'] = $a[0];
                                 if (array_key_exists(1, $a)) {
                                     $current_item['clean_edit_date'] = $a[1];
@@ -727,7 +801,7 @@ class CMS_RSS
                                 break;
                             case $prefix . 'MODIFIED':
                             case $prefix . 'UPDATED':
-                                $a = cleanup_date($data);
+                                $a = Source_RSS::cleanup_date($data);
                                 $current_item['edit_date'] = $a[0];
                                 if (array_key_exists(1, $a)) {
                                     $current_item['clean_edit_date'] = $a[1];
@@ -735,7 +809,7 @@ class CMS_RSS
                                 break;
                             case $prefix . 'PUBLISHED':
                             case $prefix . 'ISSUED':
-                                $a = cleanup_date($data);
+                                $a = Source_RSS::cleanup_date($data);
                                 $current_item['add_date'] = $a[0];
                                 if (array_key_exists(1, $a)) {
                                     $current_item['clean_add_date'] = $a[1];
@@ -801,78 +875,4 @@ class CMS_RSS
                 break;
         }
     }
-}
-
-/**
- * Convert an ISO date into a timestamp.
- *
- * @param  string $date The ISO date
- * @return array If only one element, it contains the timestamp. Otherwise it is a pair: (string format, timestamp)
- */
-function cleanup_date(string $date) : array
-{
-    require_code('temporal');
-
-    $remap_month = ['Jan' => 1, 'Feb' => 2, 'Mar' => 3, 'Apr' => 4, 'May' => 5, 'Jun' => 6, 'Jul' => 7, 'Aug' => 8, 'Sep' => 9, 'Oct' => 10, 'Nov' => 11, 'Dec' => 12];
-    $matches = [];
-    if (preg_match('#(\d*) (' . implode('|', array_keys($remap_month)) . ') (\d\d\d\d) (\d*):(\d\d):(\d\d) (GMT|UTC)?([+-]?\w*)#', $date, $matches) != 0) {
-        $hour = intval($matches[4]);
-        $minute = intval($matches[5]);
-        $second = intval($matches[6]);
-        $month = $remap_month[$matches[2]];
-        $day = intval($matches[1]);
-        if ($day == 0) {
-            $day = 1;
-        }
-        $year = intval($matches[3]);
-        $timestamp = cms_gmmktime($hour, $minute, $second, $month, $day, $year);
-        $their_dif = 0; // Assume GMT
-        if (is_numeric($matches[8])) {
-            $their_dif = intval($matches[8]);
-            if (abs($their_dif) > 30) {
-                $their_dif = intval(floor(floatval($their_dif) / 100.0)) + ($their_dif % 100) / 60;
-            }
-        }
-
-        $timestamp -= $their_dif * 60 * 60;
-        return [get_timezoned_date_time($timestamp), $timestamp];
-    }
-    if (preg_match('#(\d\d\d\d)-(\d\d)-(\d\d)T(\d\d):(\d\d):(\d\d)Z#', $date, $matches) != 0) {
-        $hour = intval($matches[4]);
-        $minute = intval($matches[5]);
-        $second = intval($matches[6]);
-        $month = intval($matches[2]);
-        $day = intval($matches[3]);
-        $year = intval($matches[1]);
-
-        $timestamp = cms_gmmktime($hour, $minute, $second, $month, $day, $year);
-        return [get_timezoned_date_time($timestamp), $timestamp];
-    }
-    if (preg_match('#(\d\d\d\d)-(\d\d)-(\d\d)T(\d\d):(\d\d):(\d\d)([\+\-]\d\d):(\d\d)#', $date, $matches) != 0) {
-        $hour = intval($matches[4]);
-        $minute = intval($matches[5]);
-        $second = intval($matches[6]);
-        $month = intval($matches[2]);
-        $day = intval($matches[3]);
-        $year = intval($matches[1]);
-
-        $timestamp = cms_gmmktime($hour, $minute, $second, $month, $day, $year);
-        $timestamp += intval($matches[7]) * 60 * 60 + intval($matches[8]) * 60;
-        return [get_timezoned_date_time($timestamp), $timestamp];
-    }
-    if (preg_match('#(\d+?) (\D\D\D) (\d\d\d\d) (\d\d):(\d\d):(\d\d) ([\+\-]\d\d)(\d\d)#', $date, $matches) != 0) {
-        $hour = intval($matches[4]);
-        $minute = intval($matches[5]);
-        $second = intval($matches[6]);
-        $month = intval($matches[2]);
-        $month_remap = ['Jan' => 1, 'Feb' => 2, 'Mar' => 3, 'Apr' => 4, 'May' => 5, 'Jun' => 6, 'Jul' => 7, 'Aug' => 8, 'Sep' => 9, 'Oct' => 10, 'Nov' => 11, 'Dec' => 12];
-        $month = $month_remap[$month];
-        $day = intval($matches[1]);
-        $year = intval($matches[3]);
-
-        $timestamp = cms_gmmktime($hour, $minute, $second, $month, $day, $year);
-        $timestamp -= intval($matches[7]) * 60 * 60 + intval($matches[8]) * 60;
-        return [get_timezoned_date_time($timestamp), $timestamp];
-    }
-    return [$date];
 }

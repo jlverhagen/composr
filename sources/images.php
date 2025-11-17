@@ -399,10 +399,22 @@ function ensure_thumbnail(string $full_url, string $thumb_url, string $thumb_dir
  */
 function convert_image(string $from, string &$to, ?int $width, ?int $height, ?int $box_size = null, bool $exit_on_error = true, ?string $ext2 = null, bool $using_path = false, bool $only_make_smaller = true, ?array $thumb_options = null) : string
 {
+    static $thumbnail_cache = [];
+    $serial = serialize([$from, $to, $width, $height, $box_size, $ext2, $using_path, $only_make_smaller, $thumb_options]);
+    if (isset($thumbnail_cache[$serial])) {
+        return $thumbnail_cache[$serial];
+    }
+
+    check_for_infinite_loop('convert_image', [$from, $to, $width, $height, $box_size, $ext2, $using_path, $only_make_smaller, $thumb_options], 5);
+
     require_code('images2');
+
     cms_profile_start_for('convert_image');
     $ret = _convert_image($from, $to, $width, $height, $box_size, $exit_on_error, $ext2, $using_path, $only_make_smaller, $thumb_options);
     cms_profile_end_for('convert_image', $from);
+
+    $thumbnail_cache[$serial] = $ret;
+
     return $ret;
 }
 

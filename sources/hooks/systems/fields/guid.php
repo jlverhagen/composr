@@ -77,10 +77,7 @@ class Hook_fields_guid
      */
     public function get_field_value_row_bits(?array $field, ?bool $required = null, ?string $default = null) : array
     {
-        if (empty($default)) { // We need to calculate a default even if not required, because the defaults are programmatic
-            $default = $this->get_field_guid();
-        }
-        return ['short_unescaped', $default, 'short'];
+        return ['short_unescaped', '00000000-0000-0000-0000-000000000000', 'short'];
     }
 
     /**
@@ -118,7 +115,7 @@ class Hook_fields_guid
      * @param  string $_cf_name The field name
      * @param  string $_cf_description The field description
      * @param  array $field The field details
-     * @param  ?string $actual_value The actual current value of the field (null: none)
+     * @param  ?string $actual_value The actual current value of the field, or default value if not set (null: none, and no default value set)
      * @param  boolean $new Whether this is for a new entry
      * @return ?Tempcode The Tempcode for the input field (null: skip the field - it's not input)
      */
@@ -129,10 +126,12 @@ class Hook_fields_guid
         }
 
         if ($actual_value === null) {
-            $actual_value = ''; // Plug anomaly due to unusual corruption
+            $actual_value = '00000000-0000-0000-0000-000000000000'; // Plug anomaly due to unusual corruption
         }
+
         $input_name = @cms_empty_safe($field['cf_input_name']) ? ('field_' . strval($field['id'])) : $field['cf_input_name'];
-        return form_input_codename($_cf_name, $_cf_description, $input_name, $actual_value, $field['cf_required'] == 1);
+
+        return form_input_hidden($input_name, $actual_value);
     }
 
     /**
@@ -149,14 +148,18 @@ class Hook_fields_guid
         $id = $field['id'];
         $tmp_name = 'field_' . strval($id);
         if (!$editing) {
-            return $this->get_field_guid();
+            return $this->get_field_guid($field['id']);
         }
 
         // Codename validation (minus URL stripping) since GUID is essentially a codename field
         require_code('type_sanitisation');
         $value = post_param_string($tmp_name, $editing ? STRING_MAGIC_NULL : '');
+        if (($value == '') || ($value == '00000000-0000-0000-0000-000000000000')) {
+            return $this->get_field_guid($field['id']);
+        }
         if (($value != '') && ($value != STRING_MAGIC_NULL)) {
-            if (!is_alphanumeric($value, true)) {
+            require_code('global4');
+            if (!looks_like_guid($value)) {
                 warn_exit(do_lang_tempcode('BAD_GUID'));
             }
         }
@@ -166,12 +169,25 @@ class Hook_fields_guid
     /**
      * Get a GUID.
      *
+     * @param  AUTO_LINK $field_id The field ID
      * @return string The GUID
      */
-    public function get_field_guid() : string
+    public function get_field_guid(int $field_id) : string
     {
-        require_code('global4');
-        return generate_guid();
+        require_code('crypt');
+
+        if (!addon_installed('catalogues')) {
+            return get_secure_random_v4_guid();
+        }
+
+        $test = null;
+        $value = '00000000-0000-0000-0000-000000000000';
+        do {
+            $value = get_secure_random_v4_guid();
+            $test = $GLOBALS['SITE_DB']->query_select_value_if_there('catalogue_efv_short', 'ce_id', ['cv_value' => $value, 'cf_id' => $field_id]);
+        } while ($test !== null);
+
+        return $value;
     }
 
     /**

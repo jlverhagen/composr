@@ -247,7 +247,7 @@ The following types of alert (hack-attack codenames) are defined in the system:
  - [tt]EVIL_POSTED_FORM_MISMATCHED_TOKEN_HACK[/tt], The user supplied a CSRF token that belongs to another user when submitting a form; this is almost always a case of a stolen CSRF token (and thus this will invalidate the token), but in rare cases can happen if logging out before submitting a form.
  - [tt]EVIL_POSTED_FORM_EXPIRED_TOKEN_HACK[/tt], The user submitted a form with a CSRF token which was explicitly marked expired in the database; usually not malicious and often a cause of accidentally submitting a form twice
  - [tt]VOTE_CHEAT[/tt], The user tried to vote outside the allowed range of options (e.g. 11 or -2). I can think of no way this could be done accidentally
- - [tt]SCRIPT_UPLOAD_HACK[/tt], The user tried to upload a PHP script. This may well be innocent (if they are uploading a saved web-page with [tt].php[/tt] in the URL for example, or if they are uploading a script they expect people to be able to download in raw form). But we do not allow it regardless because an uploaded PHP script could be executed server-side (either on the site server or on a server of a user who downloaded it).
+ - [tt]SCRIPT_UPLOAD_HACK[/tt], The user tried to upload a dangerous file (something that could be executed server-side or that could override server configuration). This may well be innocent (if they are uploading a saved web-page with [tt].php[/tt] in the URL for example, or if they are uploading a script or executable file they expect people to be able to download in raw form). But we do not allow it regardless because it could be executed server-side (either on the site server or on a server of a user who downloaded it).
  - [tt]ASCII_ENTITY_URL_HACK[/tt], The user introduced HTML into a Comcode HTML tag that used ASCII-encoded entities. This is likely to be innocent, but is blocked because it can be used to trick JavaScript filtration
  - [tt]SCRIPT_URL_HACK[/tt] / [tt]SCRIPT_URL_HACK_2[/tt], This is highly likely to be a hack attempt, as a user explicitly specified a URL which was code and not a real URL
  - [tt]BLACKHOLE_SPAM_HACK[/tt], This is a blocked spam attempt where a bot filled in a hidden field they should not have filled in -- Almost always malicious, and is detected early by the antispam system
@@ -483,7 +483,7 @@ There is no clear risk.
 | No limitations implemented in Composr
 (webmasters could not realistically meet these CSP limitations)
 |}
-* Nonces are configurable in HTML/templates via placing [tt]{$CSP_NONCE_HTML}[/tt] in the opening tag. An XSS hacker has no way to know the nonce (it is cryptographically generated on the server side), so can't inject script/style requiring it. At the current time nonces are only supported in CSP by script and CSS files, but the W3C is discussing changing this.
+* Nonces are configurable in HTML/templates via placing [tt]{\$CSP_NONCE_HTML}[/tt] in the opening tag. An XSS hacker has no way to know the nonce (it is cryptographically generated on the server side), so can't inject script/style requiring it. At the current time nonces are only supported in CSP by script and CSS files, but the W3C is discussing changing this.
 
 Note that the "Trusted partner sites" configuration options automatically include "www." if not specified.
 
@@ -539,7 +539,7 @@ It is important that you don't use a public domain name, or give people access t
 
 We recommend the 'Enforce IP addresses for sessions' option is left enabled. If you are on some kind of network such as TOR where your IP address may randomly change, we advise to not use this when administering Composr -- it will greatly reduce your security. If you have an ISP where your IP address changes very frequently, you may want to consider a more reliable ISP.
 
-For a break-down of the risk of disabling this option, see [url="this tracker discussion"]{$BRAND_BASE_URL}/tracker/view.php?id=708[/url].
+For a break-down of the risk of disabling this option, see [url="this tracker discussion"]{$BRAND_BASE_URL}/catalogues/entry/tracker-708.htm[/url].
 
 [title="2"]Techniques for increasing security further[/title]
 

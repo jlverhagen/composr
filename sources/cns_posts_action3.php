@@ -202,7 +202,7 @@ function cns_edit_post(int $post_id, ?int $validated, string $title, string $pos
 
         if ($can_log_revision) {
             require_code('revisions_engine_database');
-            $revision_engine = new RevisionEngineDatabase(true);
+            $revision_engine = object_factory('Source_revisions_engine_database', false, [true]);
             $revision_engine->add_revision(
                 'post',
                 strval($post_id),
@@ -356,7 +356,7 @@ function cns_delete_posts_topic(int $topic_id, array $posts, string $reason = ''
     if ((addon_installed('actionlog')) && ($save_revision) && (addon_installed('cns_forum'))) {
         require_code('revisions_engine_database');
         foreach ($_postdetails as $post) {
-            $revision_engine = new RevisionEngineDatabase(true);
+            $revision_engine = object_factory('Source_revisions_engine_database', false, [true]);
             $revision_engine->add_revision(
                 'post',
                 strval($post['id']),
@@ -433,7 +433,7 @@ function cns_delete_posts_topic(int $topic_id, array $posts, string $reason = ''
     }
 
     if (addon_installed('search')) {
-        require_code('database_search');
+        require_code('fast_custom_index');
         foreach ($_postdetails as $post) {
             if ($forum_id === null) {
                 Fast_custom_index::delete_from_index($GLOBALS['FORUM_DB'], 'f_pposts_fulltext_index', ['i_post_id' => $post['id']]);
@@ -571,7 +571,7 @@ function cns_move_posts(int $from_topic_id, ?int $to_topic_id, array $posts, str
     // Update caching
     if (addon_installed('actionlog')) {
         require_code('revisions_engine_database');
-        $revision_engine = new RevisionEngineDatabase();
+        $revision_engine = object_factory('Source_revisions_engine_database');
         foreach ($posts as $post) {
             $revision_engine->recategorise_old_revisions('post', strval($post), strval($to_topic_id));
         }

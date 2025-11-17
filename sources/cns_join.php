@@ -175,7 +175,7 @@ function cns_join_actual(string $declarations_made = '', bool $captcha_if_enable
 
     // Load parental controls
     require_code('cns_parental_controls');
-    $pc = load_parental_control_settings();
+    $pc = object_factory('Source_parental_controls', false, [false], true);
 
     // Read in data
 
@@ -448,7 +448,7 @@ function cns_join_actual(string $declarations_made = '', bool $captcha_if_enable
         $_validation_url = build_url(['page' => 'members', 'type' => 'view', 'id' => $member_id, 'validated' => 1], get_module_zone('members'), [], false, false, true, 'tab--edit');
         $validation_url = $_validation_url->evaluate();
         $message = do_notification_lang('VALIDATE_NEW_MEMBER_MAIL', comcode_escape($username), comcode_escape($validation_url), comcode_escape(strval($member_id)), get_site_default_lang());
-        dispatch_notification('cns_member_needs_validation', null, do_lang('VALIDATE_NEW_MEMBER_SUBJECT', $username, null, null, get_site_default_lang()), $message, null, A_FROM_SYSTEM_PRIVILEGED);
+        Source_notification_dispatcher::dispatch_notification('cns_member_needs_validation', null, do_lang('VALIDATE_NEW_MEMBER_SUBJECT', $username, null, null, get_site_default_lang()), $message, null, A_FROM_SYSTEM_PRIVILEGED);
     }
 
     // Send new member notification
@@ -456,7 +456,7 @@ function cns_join_actual(string $declarations_made = '', bool $captcha_if_enable
     $_member_url = build_url(['page' => 'members', 'type' => 'view', 'id' => $member_id], get_module_zone('members'), [], false, false, true);
     $member_url = $_member_url->evaluate();
     $message = do_notification_lang('NEW_MEMBER_NOTIFICATION_MAIL', comcode_escape($username), comcode_escape(get_site_name()), [comcode_escape($member_url), comcode_escape(strval($member_id))], get_site_default_lang());
-    dispatch_notification('cns_new_member', null, do_lang('NEW_MEMBER_NOTIFICATION_MAIL_SUBJECT', $username, get_site_name(), null, get_site_default_lang()), $message, null, A_FROM_SYSTEM_PRIVILEGED);
+    Source_notification_dispatcher::dispatch_notification('cns_new_member', null, do_lang('NEW_MEMBER_NOTIFICATION_MAIL_SUBJECT', $username, get_site_name(), null, get_site_default_lang()), $message, null, A_FROM_SYSTEM_PRIVILEGED);
 
     // Intro post
     if ($intro_message_if_enabled && addon_installed('cns_forum')) {

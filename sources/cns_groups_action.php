@@ -161,7 +161,7 @@ function cns_make_group(string $name, int $is_default = 0, int $is_super_admin =
         $subject = do_lang('NEW_CLUB_NOTIFICATION_MAIL_SUBJECT', get_site_name(), $name);
         $view_url = build_url(['page' => 'groups', 'type' => 'view', 'id' => $group_id], get_module_zone('groups'), [], false, false, true);
         $mail = do_notification_lang('NEW_CLUB_NOTIFICATION_MAIL', get_site_name(), comcode_escape($name), [comcode_escape($view_url->evaluate())]);
-        dispatch_notification('cns_club', null, $subject, $mail);
+        Source_notification_dispatcher::dispatch_notification('cns_club', null, $subject, $mail);
     }
 
     persistent_cache_delete('GROUPS_COUNT');

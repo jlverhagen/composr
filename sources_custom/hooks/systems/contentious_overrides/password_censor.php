@@ -20,7 +20,7 @@ class Hook_contentious_overrides_password_censor
 {
     public function compile_included_code($path, $codename, &$code)
     {
-        if (($codename != 'notifications') || (strpos($path, 'sources_custom/') !== false)) {
+        if (($codename != 'notification_dispatcher') || (strpos($path, 'sources_custom/') !== false)) {
             return;
         }
 
@@ -37,7 +37,7 @@ class Hook_contentious_overrides_password_censor
         insert_code_before__by_command(
             $code,
             'dispatch_notification',
-            "\$dispatcher = new Notification_dispatcher",
+            "\$dispatcher = object_factory('Source_notification_dispatcher',",
             "
             if (
                 // Existing private topic?

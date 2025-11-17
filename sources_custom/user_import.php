@@ -60,7 +60,7 @@ function do_user_import()
     }
 
     require_code('files_spreadsheets_read');
-    $sheet_reader = spreadsheet_open_read(get_custom_file_base() . '/' . USER_IMPORT_TEMP_PATH, null, CMS_Spreadsheet_Reader::ALGORITHM_RAW);
+    $sheet_reader = Source_spreadsheet_reader::spreadsheet_open_read(get_custom_file_base() . '/' . USER_IMPORT_TEMP_PATH, null, Source_spreadsheet_reader::ALGORITHM_RAW);
 
     require_code('cns_members_action');
     require_code('cns_members_action2');

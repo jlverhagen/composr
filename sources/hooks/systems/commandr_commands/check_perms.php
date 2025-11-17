@@ -50,7 +50,7 @@ class Hook_commandr_command_check_perms
         }
 
         require_code('file_permissions_check');
-        list($messages) = scan_permissions(false, false, null, null, CMSPermissionsScanner::RESULT_TYPE_SUGGESTION_EXCESSIVE);
+        list($messages) = Source_permissions_scanner::scan_permissions(false, false, null, null, Source_permissions_scanner::RESULT_TYPE_SUGGESTION_EXCESSIVE);
 
         if (empty($messages)) {
             $result = do_lang('NO_ACTION_REQUIRED');
