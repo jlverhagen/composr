@@ -111,6 +111,8 @@ function create_tracker_issue(string $version, string $tracker_title, string $tr
     }
 
     require_code('catalogues2');
+    require_code('content2');
+
     require_lang('tracker');
 
     // Map field names to catalogue field IDs
@@ -137,8 +139,26 @@ function create_tracker_issue(string $version, string $tracker_title, string $tr
         $field_map[do_lang('IDENTIFIER')] => ($identifier === null) ? '' : strval($identifier),
     ];
 
+    // We only want to use title in SEO because everything else could contain garbage text (example code) or sensitive information
+    list($imp, $description) = _seo_meta_find_data([$tracker_title], $tracker_title);
+
     // Create the issue (which also triggers form handler hooks to do additional maintenance)
-    $entry_id = actual_add_catalogue_entry($tracker_category, 1, do_lang('TRACKER_ISSUE_AUTOMATIC'), 1, 1, 0, $map, $add_time, $submitter);
+    $entry_id = actual_add_catalogue_entry(
+        $tracker_category,
+        1,
+        do_lang('TRACKER_ISSUE_AUTOMATIC'),
+        1,
+        1,
+        0,
+        $map,
+        $add_time,
+        $submitter,
+        null,
+        0,
+        null,
+        $imp,
+        $description
+    );
 
     // Now we need to get the tracker issue ID
     $fields = $GLOBALS['SITE_DB']->query_select('catalogue_fields', ['id'], ['c_name' => 'tracker', $GLOBALS['SITE_DB']->translate_field_ref('cf_name') => do_lang('IDENTIFIER')]);
