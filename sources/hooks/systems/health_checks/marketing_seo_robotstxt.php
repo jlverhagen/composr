@@ -283,6 +283,9 @@ class Hook_health_check_marketing_seo_robotstxt extends Source_hook_health_check
         }
 
         $url_path = cms_parse_url_safe($url, PHP_URL_PATH);
+        if ($url_path === false) {
+            return false;
+        }
 
         $best_precedence = 0;
         $allowed = true;

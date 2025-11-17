@@ -46,7 +46,11 @@ class Hook_http_downloader_filesystem extends Source_HTTP_downloader
      */
     public function may_run_for(string $url, array $options = []) : int
     {
-        $this->url_parts = @cms_parse_url_safe(normalise_idn_url($url));
+        $this->url_parts = cms_parse_url_safe(normalise_idn_url($url));
+        if ($this->url_parts === false) {
+            return Source_HTTP_downloader::RUN_PRIORITY_NO;
+        }
+
         $this->read_in_options($options);
 
         $faux = function_exists('get_value') ? get_value('http_faux_loopback') : null;
@@ -72,6 +76,10 @@ class Hook_http_downloader_filesystem extends Source_HTTP_downloader
     protected function _run(string $url, array $options)
     {
         $parsed = cms_parse_url_safe(normalise_idn_url($url));
+        if ($parsed === false) {
+            return null;
+        }
+
         $parsed_base_url = cms_parse_url_safe(get_custom_base_url());
         $file_base = get_custom_file_base();
 

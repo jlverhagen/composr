@@ -362,6 +362,10 @@ class Hook_media_rendering_oembed extends Source_media_renderer_with_fallback
                 if ($endpoint !== null) {
                     $url_details = cms_parse_url_safe(normalise_idn_url($url));
                     $url_details2 = cms_parse_url_safe(normalise_idn_url($endpoint));
+                    if (($url_details === false) || ($url_details2 === false)) {
+                        return null;
+                    }
+
                     $safelist = explode("\n", get_option('oembed_html_safelist'));
                     if ((!in_array($url_details['host'], $safelist)) && (!in_array($url_details2['host'], $safelist)) && (!in_array(preg_replace('#^www\.#', '', $url_details['host']), $safelist))) {
                         /* We could do this but it's not perfect, it still has some level of trust

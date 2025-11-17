@@ -46,7 +46,11 @@ class Hook_http_downloader_sockets extends Source_HTTP_downloader
      */
     public function may_run_for(string $url, array $options = []) : int
     {
-        $this->url_parts = @cms_parse_url_safe(normalise_idn_url($url));
+        $this->url_parts = cms_parse_url_safe(normalise_idn_url($url));
+        if ($this->url_parts === false) {
+            return Source_HTTP_downloader::RUN_PRIORITY_NO;
+        }
+
         $this->read_in_options($options);
 
         if (isset($this->url_parts['scheme']) && (!GOOGLE_APPENGINE) && (php_function_allowed('fsockopen'))) {

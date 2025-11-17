@@ -493,6 +493,9 @@ class Module_admin_redirects
             $from = get_base_url() . '/' . $from;
             if (url_is_local($to)) {
                 $path = cms_parse_url_safe(get_base_url(), PHP_URL_PATH);
+                if ($path === false) {
+                    warn_exit(do_lang_tempcode('INTERNAL_ERROR', escape_html('TODO'))); // TODO: use proper URL error
+                }
                 $to = get_base_url() . $path . (($path == '') ? '/' : '') . $to;
             }
 

@@ -278,7 +278,7 @@ function _qualify_url(string $url, string $url_base, bool $base_is_full_url) : s
     if (($url != '') && ($url[0] != '{') && ($url[0] != '#') && (substr($url, 0, 5) != 'data:') && (substr($url, 0, 7) != 'mailto:') && (substr($url, 0, strlen($mto)) != $mto)) {
         if (url_is_local($url)) {
             if ($url[0] == '/') {
-                $parsed = @cms_parse_url_safe($url_base);
+                $parsed = cms_parse_url_safe($url_base);
                 if ($parsed === false) {
                     return '';
                 }
@@ -439,7 +439,7 @@ function _url_to_page_link(string $url, bool $abs_only = false, bool $perfect_on
     }
 
     // Parse the URL
-    $parsed_url = @cms_parse_url_safe($url);
+    $parsed_url = cms_parse_url_safe($url);
     if ($parsed_url === false) {
         require_code('site');
         attach_message(do_lang_tempcode('HTTP_DOWNLOAD_BAD_URL', escape_html($url)), 'warn', false, true);

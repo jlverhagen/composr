@@ -487,15 +487,15 @@ class Hook_addon_registry_cms_homesite_tracker
                         if ($i > 0) {
                             $steps_to_reproduce .= "\n";
                         }
-                        $steps_to_reproduce .= html_to_comcode($step_to_reproduce);
+                        $steps_to_reproduce .= escape_html(comcode_escape($step_to_reproduce));
                     }
 
                     $ids = create_tracker_issue(
                         $row['version'],
-                        comcode_escape(html_to_comcode($row['summary'])),
+                        escape_html(comcode_escape($row['summary'])),
                         isset($severity_map[$row['severity']]) ? $severity_map[$row['severity']] : 'feature',
-                        html_to_comcode($bug_info[0]['description']),
-                        html_to_comcode($bug_info[0]['additional_information']),
+                        escape_html(comcode_escape($bug_info[0]['description'])),
+                        escape_html(comcode_escape($bug_info[0]['additional_information'])),
                         $category_info[0]['name'],
                         isset($project_map[$row['project_id']]) ? $project_map[$row['project_id']] : $project_map[1],
                         (($row['handler_id'] != 0) && (!is_guest($row['handler_id']))) ? $row['handler_id'] : null,

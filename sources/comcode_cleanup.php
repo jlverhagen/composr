@@ -154,52 +154,58 @@ function download_associated_media(string &$text)
  */
 function _download_associated_media(string &$text, string $old_url)
 {
-    if (!is_our_server(cms_parse_url_safe($old_url, PHP_URL_HOST))) {
-        require_code('crypt');
-        $temp_filename = get_secure_random_string();
-        $temp_dir = get_custom_file_base() . '/uploads/external_media';
-        if (!file_exists($temp_dir)) {
-            require_code('files2');
-            make_missing_directory($temp_dir);
-        }
-        $temp_path = $temp_dir . '/' . $temp_filename;
-
-        $write_to_file = fopen($temp_path, 'wb');
-        $http_result = cms_http_request($old_url, ['write_to_file' => $write_to_file]);
-        if ($http_result->data === null) {
-            @unlink($temp_path);
-            return;
-        }
-
-        $mapping = [
-            'image/png' => 'png',
-            'image/gif' => 'png',
-            'image/jpeg' => 'png',
-            'video/mp4' => 'mp4',
-            'video/ogg' => 'ogv',
-            'video/webm' => 'webm',
-            'video/mpeg' => 'mp3',
-            'audio/ogg' => 'ogg',
-        ];
-        if (!isset($mapping[$http_result->download_mime_type])) {
-            @unlink($temp_path);
-            return;
-        }
-
-        $new_filename = preg_replace('#\..*#', '', basename($http_result->filename));
-        if ($new_filename == '') {
-            require_code('crypt');
-            $new_filename = get_secure_random_string();
-        }
-        $new_filename .= '.' . $mapping[$http_result->download_mime_type];
-        require_code('urls2');
-        list($new_path, $new_url) = find_unique_path('uploads/external_media', $new_filename);
-
-        rename($temp_path, $new_path);
-        fix_permissions($new_path);
-        sync_file($new_path);
-
-        $new_url = get_custom_base_url() . '/' . $new_url;
-        $text = str_replace($old_url, $new_url, $text);
+    $parsed_url = cms_parse_url_safe($old_url, PHP_URL_HOST);
+    if ($parsed_url === false) {
+        return;
     }
+    if (is_our_server($parsed_url)) {
+        return;
+    }
+
+    require_code('crypt');
+    $temp_filename = get_secure_random_string();
+    $temp_dir = get_custom_file_base() . '/uploads/external_media';
+    if (!file_exists($temp_dir)) {
+        require_code('files2');
+        make_missing_directory($temp_dir);
+    }
+    $temp_path = $temp_dir . '/' . $temp_filename;
+
+    $write_to_file = fopen($temp_path, 'wb');
+    $http_result = cms_http_request($old_url, ['write_to_file' => $write_to_file]);
+    if ($http_result->data === null) {
+        @unlink($temp_path);
+        return;
+    }
+
+    $mapping = [
+        'image/png' => 'png',
+        'image/gif' => 'png',
+        'image/jpeg' => 'png',
+        'video/mp4' => 'mp4',
+        'video/ogg' => 'ogv',
+        'video/webm' => 'webm',
+        'video/mpeg' => 'mp3',
+        'audio/ogg' => 'ogg',
+    ];
+    if (!isset($mapping[$http_result->download_mime_type])) {
+        @unlink($temp_path);
+        return;
+    }
+
+    $new_filename = preg_replace('#\..*#', '', basename($http_result->filename));
+    if ($new_filename == '') {
+        require_code('crypt');
+        $new_filename = get_secure_random_string();
+    }
+    $new_filename .= '.' . $mapping[$http_result->download_mime_type];
+    require_code('urls2');
+    list($new_path, $new_url) = find_unique_path('uploads/external_media', $new_filename);
+
+    rename($temp_path, $new_path);
+    fix_permissions($new_path);
+    sync_file($new_path);
+
+    $new_url = get_custom_base_url() . '/' . $new_url;
+    $text = str_replace($old_url, $new_url, $text);
 }

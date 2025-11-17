@@ -84,9 +84,11 @@ class Source_URL_coder
     {
         if ((function_exists('idn_to_utf8')) && (strpos($str, '://') !== false) && (get_charset() == 'utf-8')) {
             $domain = cms_parse_url_safe($str, PHP_URL_HOST);
-            $_domain = @/*LEGACY @ to remove awkward temporary INTL_IDNA_VARIANT_2003 deprecation message that exists until PHP 7.4*/idn_to_utf8($domain);
-            if ($_domain !== false) {
-                $str = preg_replace('#(^.*://)' . preg_quote($domain, '#') . '(.*$)#U', '$1' . $_domain . '$2', $str);
+            if ($domain !== false) {
+                $_domain = @idn_to_utf8($domain); // LEGACY: @ to remove awkward temporary INTL_IDNA_VARIANT_2003 deprecation message that exists until PHP 7.4
+                if ($_domain !== false) {
+                    $str = preg_replace('#(^.*://)' . preg_quote($domain, '#') . '(.*$)#U', '$1' . $_domain . '$2', $str);
+                }
             }
         }
 
