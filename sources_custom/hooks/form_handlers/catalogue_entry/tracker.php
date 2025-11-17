@@ -70,8 +70,6 @@ class Hook_form_handlers_catalogue_entry_tracker
         require_code('urls2');
         suggest_new_idmoniker_for('catalogues', 'entry', strval($id), '', '', false, 'tracker-' . strval($tracker_id));
 
-        exit('WORKS');
-
         // Even though the UI does not allow setting status immediately, we might have immediately set it to Completed in the API, so we need to award points if so.
         if (addon_installed('points') && (get_mass_import_mode() === false)) {
             $status_field = $GLOBALS['SITE_DB']->query_select_value_if_there('catalogue_fields', 'id', ['c_name' => $catalogue_name, 'cf_name' => do_lang('STATUS')]);
