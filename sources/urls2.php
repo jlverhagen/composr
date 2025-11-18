@@ -1029,7 +1029,7 @@ function find_unique_path(string $subdir, ?string $filename = null, bool $lock_i
 {
     if ($filename === null) {
         require_code('crypt');
-        $filename = get_secure_random_string() . '.bin';
+        $filename = get_secure_random_string(32, CRYPT_BASE32) . '.bin';
     }
 
     $ext = get_file_extension($filename);
