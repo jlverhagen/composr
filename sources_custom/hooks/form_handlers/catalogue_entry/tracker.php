@@ -66,19 +66,25 @@ class Hook_form_handlers_catalogue_entry_tracker
         }
         $tracker_id = intval($map[$id_field]);
 
+        // Auto-monitor comments for the submitter of the issue
+        require_code('notifications');
+        set_notifications('comment_posted', 'catalogue_entry_' . strval($id));
+
         // We want tracker issue URL monikers to be based on the issue identifier and not to include the category
         require_code('urls2');
         suggest_new_idmoniker_for('catalogues', 'entry', strval($id), '', '', false, 'tracker-' . strval($tracker_id));
 
         // Even though the UI does not allow setting status immediately, we might have immediately set it to Completed in the API, so we need to award points if so.
         if (addon_installed('points') && (get_mass_import_mode() === false)) {
+            require_code('points');
+            require_code('points_escrow');
+
             $status_field = $GLOBALS['SITE_DB']->query_select_value_if_there('catalogue_fields', 'id', ['c_name' => $catalogue_name, 'cf_name' => do_lang('STATUS')]);
             $handler_field = $GLOBALS['SITE_DB']->query_select_value_if_there('catalogue_fields', 'id', ['c_name' => $catalogue_name, 'cf_name' => do_lang('HANDLER')]);
             if ($status_field !== null) {
                 $handler = (isset($map[$handler_field]) && !empty($map[$handler_field])) ? intval($map[$handler_field]) : null;
                 if (isset($map[$status_field]) && !empty($map[$status_field]) && ($map[$status_field] == 'completed')) {
                     // Tracker points (we don't process sponsorships because an immediately-added issue would never have a sponsorship)
-                    require_code('cms_homesite_tracker');
                     award_tracker_points($tracker_id, $id, $submitter, $handler);
                 }
             }
@@ -134,7 +140,7 @@ class Hook_form_handlers_catalogue_entry_tracker
             false,
             false,
             'System message - Issue updated',
-            'The details or status of this tracker issue were updated.',
+            'The details or status of this tracker issue were updated by ' . $GLOBALS['FORUM_DRIVER']->get_username(get_member()),
             null,
             $GLOBALS['FORUM_DRIVER']->get_guest_id(),
             false
@@ -143,6 +149,9 @@ class Hook_form_handlers_catalogue_entry_tracker
         // Handle points awarding (or revoking) and sponsorships
         if (addon_installed('points')) {
             require_code('cms_homesite_tracker');
+            require_code('points');
+            require_code('points_escrow');
+
             require_lang('tracker');
 
             $tracker_id = intval($map[$id_field]);
@@ -181,7 +190,6 @@ class Hook_form_handlers_catalogue_entry_tracker
 
                 // Sponsorships
                 if (($handler !== null) && (!is_guest($handler))) {
-                    require_code('points_escrow');
                     complete_all_escrows_by_content($handler, 'catalogue_entry', strval($id));
                 }
             }
@@ -215,6 +223,7 @@ class Hook_form_handlers_catalogue_entry_tracker
         if (addon_installed('points')) {
             require_code('cms_homesite_tracker');
             require_code('points_escrow');
+            require_code('points');
 
             reverse_tracker_points($id);
             cancel_all_escrows_by_content('catalogue_entry', strval($id), do_lang('DELETED'));
