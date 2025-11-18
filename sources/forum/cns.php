@@ -1092,6 +1092,8 @@ class Source_forum_driver_cns extends Source_forum_driver_base
             return '';
         }
 
+        require_code('urls');
+
         $pic = $this->get_member_row_field($member_id, 'm_photo_url');
 
         if ($pic === null) {
