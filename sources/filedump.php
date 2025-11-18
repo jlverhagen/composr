@@ -273,13 +273,13 @@ function check_filedump_uploaded(array $file) : ?object
  * Add a filedump file to the system, moving in the file and adding a description to the database.
  *
  * @param  string $subpath Whether it is being stored under uploads/filedump
- * @param  string $filename The filename
+ * @param  string $filename The filename, passed by reference
  * @param  string $tmp_path The temporary file path
  * @param  string $description The description
  * @param  ?boolean $plupload_based Whether this is a Plupload or similar (i.e. from a faked $_FILES-array-row) (null: work out from environment)
  * @param  boolean $check_permissions Check access permissions
  * @param  ?ID_TEXT $conflict_action Specify what should be done if a file with the same name already exists (null: return as a conflict error)
- * @set overwrite ignore
+ * @set overwrite leave_alone rename
  * @return array Map: Information about the status of the filedump add
  */
 function add_filedump_file(string $subpath, string &$filename, string $tmp_path, string $description = '', ?bool $plupload_based = null, bool $check_permissions = true, ?string $conflict_action = null) : array

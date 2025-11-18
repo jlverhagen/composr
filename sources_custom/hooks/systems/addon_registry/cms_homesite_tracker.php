@@ -238,7 +238,7 @@ class Hook_addon_registry_cms_homesite_tracker
      */
     public function install(?float $upgrade_major_minor = null, ?int $upgrade_patch = null)
     {
-        return; // TODO: not safe to run this automatically
+        //return; // TODO: not safe to run this automatically
 
         if (($upgrade_major_minor === null) || version_compare(float_to_raw_string($upgrade_major_minor, 1) . '.' . strval($upgrade_patch), '11.0.3', '<')) { // 11.beta9
             // DO NOT FORGET TO RENAME TRACKER/UPLOADS TO TRACKER_LEGACY/UPLOADS BEFORE GIT PULL
@@ -426,6 +426,9 @@ class Hook_addon_registry_cms_homesite_tracker
             require_code('uploads');
             require_code('comcode');
             require_code('comcode_renderer');
+            if (addon_installed('filedump')) {
+                require_code('filedump');
+            }
 
             require_lang('catalogues');
             require_lang('tracker');
@@ -565,10 +568,9 @@ class Hook_addon_registry_cms_homesite_tracker
                 $start += $max;
             } while (count($rows) > 0);
 
-            // step 7: Migrate bug notes (and attachments) as comments
+            // step 7: Migrate bug notes as comments
             $identifier_field = $GLOBALS['SITE_DB']->query_select_value('catalogue_fields', 'id', ['c_name' => 'tracker', $GLOBALS['SITE_DB']->translate_field_ref('cf_name') => do_lang('IDENTIFIER')]);
             $title_field = $GLOBALS['SITE_DB']->query_select_value('catalogue_fields', 'id', ['c_name' => 'tracker', $GLOBALS['SITE_DB']->translate_field_ref('cf_name') => do_lang('TITLE')]);
-            $hotfix_field = $GLOBALS['SITE_DB']->query_select_value('catalogue_fields', 'id', ['c_name' => 'tracker', $GLOBALS['SITE_DB']->translate_field_ref('cf_name') => do_lang('HOTFIXES')]);
 
             $start = 0;
             $max = 100;
@@ -598,85 +600,6 @@ class Hook_addon_registry_cms_homesite_tracker
                         continue;
                     }
 
-                    // Attachments
-                    $files = $GLOBALS['SITE_DB']->query_parameterised('SELECT `id`,`diskfile`,`filename`,`filesize`,`user_id`,`description`,`file_type` FROM mantis_bug_file_table WHERE bugnote_id={id}', ['id' => $row['id']]);
-                    foreach ($files as $i => $file) {
-                        $relativepath = 'tracker_legacy/uploads/' . $file['diskfile'];
-                        $realpath = get_file_base() . '/tracker_legacy/uploads/' . $file['diskfile'];
-                        if (!is_file($realpath)) {
-                            continue;
-                        }
-
-                        // We must rename to the actual file name so extension checks work correctly
-                        if ($file['diskfile'] != $file['filename']) {
-                            @copy($realpath, get_file_base() . '/tracker_legacy/uploads/' . $file['filename']);
-                            $relativepath = 'tracker_legacy/uploads/' . $file['filename'];
-                            $realpath = get_file_base() . '/tracker_legacy/uploads/' . $file['filename'];
-                            if (!is_file($realpath)) {
-                                continue;
-                            }
-                        }
-
-                        // Check the file extension; we must do this outside of Comcode renderer as we have a different way of checking Mantis files
-                        $fake_path = $relativepath;
-                        if (!check_extension($fake_path, false, null, true, $file['user_id'])) {
-                            continue;
-                        }
-
-                        // Actually, this is a hotfix. Add to the hotfix field instead of attaching it.
-                        if ((strpos($file['filename'], 'hotfix-') === 0) && (substr($file['filename'], -4) === '.tar')) {
-                            $_POST['hotfix_' . strval($i)] = get_base_url() . '/' . $relativepath; // FUDGE
-
-                            $temp = get_url('hotfix_' . strval($i), '', 'uploads/catalogues', OBFUSCATE_LEAVE_SUFFIX, CMS_UPLOAD_ANYTHING, false, '', '', true, true);
-                            if ($temp[0] == '') {
-                                continue;
-                            }
-
-                            $field_value = $temp[0] . '::' . $file['filename'];
-
-                            $old_hotfix = $GLOBALS['SITE_DB']->query_select_value_if_there('catalogue_efv_long', 'cv_value', ['cf_id' => $hotfix_field, 'ce_id' => $entry_id]);
-                            if ($old_hotfix === null) {
-                                $GLOBALS['SITE_DB']->query_insert('catalogue_efv_long', ['cf_id' => $hotfix_field, 'ce_id' => $entry_id, 'cv_value' => $field_value]);
-                            } else {
-                                $GLOBALS['SITE_DB']->query_update('catalogue_efv_long', ['cv_value' => $old_hotfix . "\n" . $field_value], ['cf_id' => $hotfix_field, 'ce_id' => $entry_id]);
-                            }
-
-                            reorganise_uploads__catalogue_entries(['ce_id' => $entry_id], true);
-                            continue;
-                        }
-
-                        // FUDGE: We have to render migrated bug notes raw, so we cannot use the attachments Comcode tag
-                        $_POST['file' . strval($i)] = get_base_url() . '/' . $relativepath;
-                        $comcode = '[attachment thumb="1" description="' . comcode_escape($file['description']) . '" filename="' . comcode_escape($file['filename']) . '"]post_' . strval($i) . '[/attachment]';
-                        $embed = new Tempcode();
-                        $embed->attach('post_' . strval($i));
-                        $result = _do_tags_comcode(
-                            'attachment',
-                            [
-                                'thumb' => '1',
-                                'description' => comcode_escape($file['description']),
-                                'filename' => comcode_escape($file['filename']),
-                            ],
-                            $embed,
-                            false,
-                            strval(mt_rand(0, mt_getrandmax())),
-                            0,
-                            $row['reporter_id'],
-                            true, // Bypass limits as this is an import
-                            $GLOBALS['SITE_DB'],
-                            $comcode,
-                            false,
-                            false,
-                            [],
-                            null,
-                            false,
-                            false,
-                            false
-                        );
-
-                        $text .= "\n\n" . strip_comcode(html_to_comcode($result->evaluate()));
-                    }
-
                     actualise_post_comment(
                         true,
                         'catalogue_entry',
@@ -700,7 +623,10 @@ class Hook_addon_registry_cms_homesite_tracker
                 $start += $max;
             } while (count($rows) > 0);
 
-            // step 8: Migrate orphaned bug files as their own comments
+            // step 8: Migrate bug files as their own comments
+            if (addon_installed('filedump')) {
+                make_missing_directory(get_custom_file_base() . '/uploads/filedump/tracker_legacy');
+            }
             $identifier_field = $GLOBALS['SITE_DB']->query_select_value('catalogue_fields', 'id', ['c_name' => 'tracker', $GLOBALS['SITE_DB']->translate_field_ref('cf_name') => do_lang('IDENTIFIER')]);
             $title_field = $GLOBALS['SITE_DB']->query_select_value('catalogue_fields', 'id', ['c_name' => 'tracker', $GLOBALS['SITE_DB']->translate_field_ref('cf_name') => do_lang('TITLE')]);
             $hotfix_field = $GLOBALS['SITE_DB']->query_select_value('catalogue_fields', 'id', ['c_name' => 'tracker', $GLOBALS['SITE_DB']->translate_field_ref('cf_name') => do_lang('HOTFIXES')]);
@@ -709,7 +635,7 @@ class Hook_addon_registry_cms_homesite_tracker
             $max = 100;
             $files = [];
             do {
-                $files = $GLOBALS['SITE_DB']->query('SELECT * FROM mantis_bug_file_table WHERE bugnote_id=0', $max, $start);
+                $files = $GLOBALS['SITE_DB']->query('SELECT * FROM mantis_bug_file_table', $max, $start);
                 foreach ($files as $i => $file) {
                     $relativepath = 'tracker_legacy/uploads/' . $file['diskfile'];
                     $realpath = get_file_base() . '/tracker_legacy/uploads/' . $file['diskfile'];
@@ -743,7 +669,7 @@ class Hook_addon_registry_cms_homesite_tracker
                         $title = do_lang('NA');
                     }
 
-                    // Actually, this is a hotfix. Add to the hotfix field instead of attaching it.
+                    // Actually, this is a hotfix. Add to the hotfix field instead of as a media file comment.
                     if ((strpos($file['filename'], 'hotfix-') === 0) && (substr($file['filename'], -4) === '.tar')) {
                         $_POST['hotfix_' . strval($i)] = get_base_url() . '/' . $relativepath; // FUDGE
 
@@ -765,8 +691,15 @@ class Hook_addon_registry_cms_homesite_tracker
                         continue;
                     }
 
-                    $_POST['file' . strval($i)] = get_base_url() . '/' . $relativepath;
-                    $text = '[attachment thumb="1" description="' . comcode_escape($file['description']) . '" filename="' . comcode_escape($file['filename']) . '"]post_' . strval($i) . '[/attachment]';
+                    // Prefer media file, else use an attachment
+                    if (addon_installed('filedump')) {
+                        $filename = $file['filename'];
+                        add_filedump_file('tracker_legacy/', $filename, $realpath, $file['description'], false, false, 'rename');
+                        $text = '[media]' . $relativepath . '[/media]';
+                    } else {
+                        $_POST['file' . strval($i)] = get_base_url() . '/' . $relativepath;
+                        $text = '[attachment thumb="1" description="' . comcode_escape($file['description']) . '" filename="' . comcode_escape($file['filename']) . '"]post_' . strval($i) . '[/attachment]';
+                    }
 
                     actualise_post_comment(
                         true,
