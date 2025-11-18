@@ -532,8 +532,11 @@ function find_user_metadata(bool $include_referer = true, ?int $member_id = null
                 //$h[$l_session_id] = $myrow['session_id'];
             }
 
-            if (($myrow['referer_url'] != '') && (($advanced) || (/*external referer*/@cms_parse_url_safe($myrow['referer_url'], PHP_URL_HOST) != get_base_url_hostname()))) {
-                $h[$l_referer] = $myrow['referer_url'];
+            if ($myrow['referer_url'] != '') {
+                $parsed_url = cms_parse_url_safe($myrow['referer_url'], PHP_URL_HOST);
+                if (($parsed_url !== false) && (($advanced) || ($parsed_url != get_base_url_hostname()))) {
+                    $h[$l_referer] = $myrow['referer_url'];
+                }
             }
 
             $h[$l_tracking_code] = $myrow['tracking_code'];

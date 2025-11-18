@@ -309,10 +309,13 @@ class Hook_fields_picture_multi
     /**
      * The field is being deleted, so delete any necessary data.
      *
-     * @param  mixed $value Current field value
+     * @param  ?array $value Current field value (null: field does not exist on the record being deleted)
      */
-    public function cleanup($value)
+    public function cleanup(?array $value)
     {
+        if (!is_array($value)) {
+            return;
+        }
         if ($value['cv_value'] != '') {
             $files = explode("\n", $value['cv_value']);
             foreach ($files as $path) {

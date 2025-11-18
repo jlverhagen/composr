@@ -224,9 +224,13 @@ function compile_template(string $data, string $template_name, string $theme, st
                 $opener_params = array_merge($current_level_params, [$current_level_data]);
                 $__first_param = array_shift($opener_params);
                 if (count($__first_param) !== 1) {
-                    warn_exit(do_lang_tempcode('COMPLEX_FIRST_PARAMETER'), false, true);
+                    if (!$tolerate_errors) {
+                        warn_exit(do_lang_tempcode('COMPLEX_FIRST_PARAMETER'), false, true);
+                    }
+                    $_first_param = '';
+                } else {
+                    $_first_param = $__first_param[0];
                 }
-                $_first_param = $__first_param[0];
 
                 if (($bits[$i - 1] === '') && (empty($current_level_data))) {
                     $new_line = '""';

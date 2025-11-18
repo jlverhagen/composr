@@ -75,8 +75,15 @@ class Hook_media_rendering_code
      */
     public function recognises_url(string $url) : int
     {
+        $_url = cms_parse_url_safe($url, PHP_URL_HOST);
+
+        // Invalid URL
+        if ($_url === false) {
+            return MEDIA_RECOG_PRECEDENCE_NONE;
+        }
+
         // Won't link to local URLs
-        if (@is_local_machine(cms_parse_url_safe($url, PHP_URL_HOST))) {
+        if (@is_local_machine($_url)) {
             return MEDIA_RECOG_PRECEDENCE_NONE;
         }
 
@@ -104,7 +111,11 @@ class Hook_media_rendering_code
         if (url_is_local($url)) {
             $url = get_custom_base_url() . '/' . $url;
         }
+
         $file_contents = http_get_contents($url, ['convert_to_internal_encoding' => true, 'trigger_error' => false, 'byte_limit' => 1024 * 1024 * 20/*reasonable limit*/]);
+        if ($file_contents === null) {
+            $file_contents = '';
+        }
 
         require_code('files');
         require_code('comcode_renderer');

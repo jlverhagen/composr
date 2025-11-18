@@ -557,9 +557,9 @@ function cns_get_custom_fields_member(int $member_id) : array
  * Get the primary of a member (supports consulting of LDAP).
  *
  * @param  MEMBER $member_id The member
- * @return GROUP The primary
+ * @return ?GROUP The primary group (null: member not found)
  */
-function cns_get_member_primary_group(int $member_id) : int
+function cns_get_member_primary_group(int $member_id) : ?int
 {
     global $PRIMARY_GROUP_MEMBERS_CACHE;
     if (isset($PRIMARY_GROUP_MEMBERS_CACHE[$member_id])) {

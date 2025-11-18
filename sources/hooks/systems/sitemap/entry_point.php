@@ -93,12 +93,12 @@ class Hook_sitemap_entry_point extends Source_hook_sitemap_base
         if ($details !== false) {
             $path = end($details);
             if ($details[0] == 'MODULES' || $details[0] == 'MODULES_CUSTOM') {
-                $functions = extract_module_functions(get_file_base() . '/' . $path, ['get_entry_points', 'get_wrapper_icon'], [
+                $functions = extract_class_functions(get_file_base() . '/' . $path, ['get_entry_points', 'get_wrapper_icon'], [
                     false, // $check_perms
                     $this->get_member($options), // $member_id
                     !$search_mode, // $support_crosslinks
                     !$search_mode // $be_deferential
-                ]);
+                ], true); // TODO: temporarily bypassing duplicate function error by doing a direct call
                 if ($functions[0] !== null) {
                     $entry_points = is_array($functions[0]) ? call_user_func_array($functions[0][0], $functions[0][1]) : eval($functions[0]);
                     if ($entry_points === null) {
@@ -187,7 +187,7 @@ class Hook_sitemap_entry_point extends Source_hook_sitemap_base
             $entry_point = $entry_points['_SEARCH:cms_catalogues:add_catalogue:_' . $content_type];
         } else {
             if ($row === null) {
-                $functions = extract_module_functions(get_file_base() . '/' . $path, ['get_entry_points', 'get_wrapper_icon'], [
+                $functions = extract_class_functions(get_file_base() . '/' . $path, ['get_entry_points', 'get_wrapper_icon'], [
                     $check_perms, // $check_perms
                     $this->get_member($options), // $member_id
                     false, //$support_crosslinks   Must be false so that things known to be cross-linked from elsewhere are not skipped

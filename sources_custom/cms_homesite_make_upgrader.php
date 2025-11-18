@@ -362,7 +362,7 @@ function _find_helper(string $new_base_path)
         if (substr($file, -4) == '.php') {
             $hook = basename($file, '.php');
 
-            $_hook_bits = extract_module_functions($path . '/' . $file, ['get_file_list']);
+            $_hook_bits = extract_class_functions($path . '/' . $file, ['get_file_list']);
             if ($_hook_bits[0] !== null) {
                 $file_list = is_array($_hook_bits[0]) ? call_user_func_array($_hook_bits[0][0], $_hook_bits[0][1]) : cms_eval($_hook_bits[0], $path . '/' . $file);
             } else {

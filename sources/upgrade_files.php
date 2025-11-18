@@ -285,7 +285,7 @@ function _upgrader_file_upgrade_screen() : string
         $d_directory = get_directory_contents(get_file_base() . '/sources/hooks/systems/addon_registry', 'sources/hooks/systems/addon_registry', IGNORE_ACCESS_CONTROLLERS, false, true, ['php']);
         $d_directory = array_merge($d_directory, get_directory_contents(get_file_base() . '/sources_custom/hooks/systems/addon_registry', 'sources_custom/hooks/systems/addon_registry', IGNORE_ACCESS_CONTROLLERS, false, true, ['php']));
         foreach ($d_directory as $upgrade_file2) {
-            $wanted_functions = extract_module_functions($upgrade_file2, ['get_file_list']);
+            $wanted_functions = extract_class_functions($upgrade_file2, ['get_file_list']);
             $files = [];
             if ($wanted_functions[0] !== null) {
                 $files = is_array($wanted_functions[0]) ? call_user_func_array($wanted_functions[0][0], $wanted_functions[0][1]) : cms_eval($wanted_functions[0], $upgrade_file2, false);
@@ -309,7 +309,7 @@ function _upgrader_file_upgrade_screen() : string
 
         // Extract file temporarily so we can extract functions from it
         afm_make_file('exports/upgrade/' . $upgrade_file['path'], $file_data['data'], ($file_data['mode'] & 0002) != 0);
-        $wanted_functions = extract_module_functions(get_file_base() . '/exports/upgrade/' . $upgrade_file['path'], ['get_dependencies', 'get_min_cms_version', 'get_file_list']);
+        $wanted_functions = extract_class_functions(get_file_base() . '/exports/upgrade/' . $upgrade_file['path'], ['get_dependencies', 'get_min_cms_version', 'get_file_list']);
 
         if ($wanted_functions[2] !== null) {
             $addon_contents[basename($upgrade_file['path'], '.php')] = is_array($wanted_functions[2]) ? call_user_func_array($wanted_functions[2][0], $wanted_functions[2][1]) : cms_eval($wanted_functions[2], get_file_base() . '/exports/upgrade/' . $upgrade_file['path'], false);

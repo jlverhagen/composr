@@ -1219,13 +1219,7 @@ function load_moniker_hooks()
         $hooks = find_all_hooks('systems', 'content_meta_aware');
         foreach ($hooks as $hook => $sources_dir) {
             $path = get_file_base() . '/' . $sources_dir . '/hooks/systems/content_meta_aware/' . $hook . '.php';
-            $info_function = extract_module_functions($path, ['info'], [], false, 'Hook_content_meta_aware_' . $hook);
-
-            // Can't find it? Fall back to getting the object instead (more memory intensive)
-            if (($info_function[0] === null) && function_exists('get_hook_ob')) {
-                $ob = get_hook_ob('systems', 'content_meta_aware', $hook, 'Hook_content_meta_aware_');
-                $info_function[0] = [[$ob, 'info'], []];
-            }
+            $info_function = extract_class_functions($path, ['info'], [], false, 'Hook_content_meta_aware_' . $hook);
 
             if ($info_function[0] !== null) {
                 $ob_info = is_array($info_function[0]) ? call_user_func_array($info_function[0][0], $info_function[0][1]) : cms_eval($info_function[0], $path);

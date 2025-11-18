@@ -80,12 +80,19 @@ class Hook_media_rendering_hyperlink
      */
     public function recognises_url(string $url) : int
     {
-        // Won't link to local URLs
-        if (@is_local_machine(cms_parse_url_safe($url, PHP_URL_HOST))) {
+        $_url = cms_parse_url_safe($url, PHP_URL_HOST);
+
+        // Invalid URL
+        if ($_url === false) {
             return MEDIA_RECOG_PRECEDENCE_NONE;
         }
 
-        return MEDIA_RECOG_PRECEDENCE_LOW;
+        // Won't link to local URLs
+        if (@is_local_machine($_url)) {
+            return MEDIA_RECOG_PRECEDENCE_NONE;
+        }
+
+        return MEDIA_RECOG_PRECEDENCE_TRIVIAL;
     }
 
     /**

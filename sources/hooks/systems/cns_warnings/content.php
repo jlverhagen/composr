@@ -142,7 +142,7 @@ class Hook_cns_warnings_content
                         $spam_url = $matches[1][$i];
                         if (!url_is_local($spam_url)) {
                             $domain = cms_parse_url_safe(normalise_idn_url($spam_url), PHP_URL_HOST);
-                            if (($domain != get_domain()) && (!empty($domain))) {
+                            if ((!empty($domain)) && ($domain != get_domain())) {
                                 if (!isset($spam_urls[$domain])) {
                                     require_code('mail');
                                     $ip = cms_gethostbyname($domain);

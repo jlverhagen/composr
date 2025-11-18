@@ -139,7 +139,7 @@ function adminzone_extended_breadcrumbs() : array
         }
         foreach ($hooks as $hook => $sources_dir) {
             $path = get_file_base() . '/' . $sources_dir . '/hooks/systems/page_groupings/' . $hook . '.php';
-            $run_function = extract_module_functions($path, ['run']);
+            $run_function = extract_class_functions($path, ['run']);
             if ($run_function[0] !== null) {
                 $info = is_array($run_function[0]) ? call_user_func_array($run_function[0][0], $run_function[0][1]) : cms_eval($run_function[0], $path);
 

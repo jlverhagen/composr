@@ -454,6 +454,11 @@ function comcode_parse_error_exit(bool $preparse_mode, array $_message, int $pos
             }
         }
         if ($name === null) {
+            if (get_mass_import_mode()) {
+                $out = do_template('COMCODE_CRITICAL_PARSE_ERROR', ['_GUID' => 'TODO', 'LINE' => strval($line), 'MESSAGE' => $message, 'SOURCE' => $comcode]); // Won't parse, but we can't help it, so we will skip on
+                return $out;
+            }
+
             warn_exit(do_lang_tempcode('COMCODE_ERROR', $message, escape_html(strval($line))));
         }
     }
@@ -649,7 +654,7 @@ function comcode_safelisted(string $tag, int $marker, string $comcode) : bool
  * @param  MEMBER $source_member The member who is responsible for this Comcode
  * @param  boolean $as_admin Whether to check as arbitrary admin
  * @param  ?object $db The database connector to use (null: none; only do this for very simple Comcode)
- * @param  string $comcode The whole chunk of Comcode
+ * @param  string $comcode The whole chunk of Comcode; passed by reference
  * @param  boolean $structure_sweep Whether this is only a structure sweep
  * @param  boolean $semiparse_mode Whether we are in semi-parse-mode (some tags might convert differently)
  * @param  array $highlight_bits A list of words to highlight
@@ -1815,7 +1820,7 @@ function _do_tags_comcode(string $tag, array $attributes, $embed, bool $comcode_
             $url = check_naughty_javascript_url($source_member, $url, $as_admin);
 
             // More URL tidying
-            $local = (url_is_local($url)) || (cms_parse_url_safe($url, PHP_URL_HOST) == get_base_url_hostname());
+            $local = (url_is_local($url)) || (cms_parse_url_safe($url, PHP_URL_HOST) === get_base_url_hostname());
             $given_url = $url;
             if (($url != '') && ($url[0] != '#')) {
                 if (substr($url, 0, 1) == '/') {
@@ -1850,7 +1855,7 @@ function _do_tags_comcode(string $tag, array $attributes, $embed, bool $comcode_
             } else {
                 $rel = [];
             }
-            if ((!$as_admin) && (!has_privilege($source_member, 'search_engine_links')) && (@cms_parse_url_safe($url_full, PHP_URL_HOST) != cms_parse_url_safe(get_base_url(), PHP_URL_HOST))) {
+            if ((!$as_admin) && (!has_privilege($source_member, 'search_engine_links')) && (cms_parse_url_safe($url_full, PHP_URL_HOST) !== cms_parse_url_safe(get_base_url(), PHP_URL_HOST))) {
                 $rel['nofollow'] = true;
             }
             if (!$comcode_dangerous) {
@@ -2273,7 +2278,7 @@ function _do_tags_comcode(string $tag, array $attributes, $embed, bool $comcode_
                         $enforce_type = CMS_UPLOAD_IMAGE; // Images cleanup pipeline
                     }
                     reset_images_cleanup_pipeline_settings();
-                    $urls = get_url('file' . $_id, '', 'uploads/attachments', OBFUSCATE_BIN_SUFFIX, $enforce_type, ((!array_key_exists('thumb', $attributes)) || ($attributes['thumb'] != '0')) && ($attributes['thumb_url'] == ''), '', '', true, false, true, true, $source_member);
+                    $urls = get_url('file' . $_id, '', 'uploads/attachments', OBFUSCATE_BIN_SUFFIX, $enforce_type, ((!array_key_exists('thumb', $attributes)) || ($attributes['thumb'] != '0')) && ($attributes['thumb_url'] == ''), '', '', true, true, true, true, $source_member);
                     reset_images_cleanup_pipeline_settings();
                     if ($urls[0] == '') {
                         //warn_exit(do_lang_tempcode('ERROR_UPLOADING'));  Can't do this, because this might not be post-calculated if something went wrong once

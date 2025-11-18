@@ -290,7 +290,11 @@ function ping_sitemap_xml(string $url, bool $trigger_error = false) : string
     $out = '';
     if (get_option('auto_submit_sitemap') == '1') {
         $ping = true;
-        $local = is_local_machine(cms_parse_url_safe($url, PHP_URL_HOST));
+        $_url = cms_parse_url_safe($url, PHP_URL_HOST);
+        if ($_url === false) {
+            warn_exit(do_lang_tempcode('INTERNAL_ERROR', escape_html('TODO')));
+        }
+        $local = is_local_machine($_url);
         if (($ping) && (get_option('site_closed') == '0') && (!$local)) {
             // Submit to search engines
             $hook_obs = find_all_hook_obs('systems', 'sitemap_ping', 'Hook_sitemap_ping_');

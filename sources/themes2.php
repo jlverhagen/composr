@@ -97,6 +97,10 @@ function autoprobe_cdns() : string
 
     $base_url = get_base_url();
     $parsed = cms_parse_url_safe($base_url);
+    if ($parsed === false) {
+        return '';
+    }
+
     $domain_name = $parsed['host'];
 
     if (is_local_machine()) {

@@ -30,7 +30,7 @@
  * @package    core
  */
 
-/*EXTRA FUNCTIONS: shell_exec|imagefilledrectangle*/
+/*EXTRA FUNCTIONS: shell_exec|imagefilledrectangle|finfo_open|finfo_close|finfo_buffer*/
 
 /**
  * (Helper for ensure_thumbnail).
@@ -380,6 +380,41 @@ function _convert_image(string $from, string &$to, ?int $width, ?int $height, ?i
         return $from;
     }
 
+    // Try to detect the original image type from the file contents (in case the extension was obfuscated)
+    $detected_ext = null;
+    if ($from_file !== false) {
+        // Try GD first
+        $mime = null;
+        if (function_exists('getimagesizefromstring')) {
+            $details = @getimagesizefromstring($from_file);
+            if ($details !== false) {
+                if (isset($details['mime'])) {
+                    $mime = $details['mime'];
+                    $detected_ext = get_file_extension(null, $mime);
+                }
+            }
+        }
+
+        // Try finfo
+        if (($detected_ext == '') && function_exists('finfo_open')) {
+            $fi = @finfo_open(FILEINFO_MIME_TYPE);
+            if ($fi !== false) {
+                $mime = @finfo_buffer($fi, $from_file);
+                if (is_string($mime)) {
+                    $detected_ext = get_file_extension(null, $mime);
+                }
+                @finfo_close($fi);
+            }
+        }
+    }
+
+    // If the detected type is SVG, pass-through like other SVG cases
+    if ($detected_ext === 'svg') {
+        cms_set_time_limit($old_limit);
+        cms_profile_end_for('_convert_image', 'SVG pass-through (detected)');
+        return $from;
+    }
+
     $source = cms_imagecreatefromstring($from_file, $ext);
     if ($source === false) {
         if ($exit_on_error) {
@@ -684,6 +719,14 @@ function _convert_image(string $from, string &$to, ?int $width, ?int $height, ?i
             }
         }
     }
+
+    // If we still have an unknown/invalid extension (e.g. .bin), use the detected one from content sniffing
+    if (($ext2 === null) || ($ext2 == '') || ($ext2 == 'bin')) {
+        if (($detected_ext !== null) && ($detected_ext != '')) {
+            $ext2 = $detected_ext;
+        }
+    }
+
     // If we've got transparency then we have to save as PNG
     if (($thumb_options !== null) && (isset($using_alpha)) && ($using_alpha) || ($ext2 == '')) {
         $ext2 = 'png';

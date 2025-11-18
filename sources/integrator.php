@@ -52,7 +52,10 @@ function reprocess_url(string $url, string $operation_base_url) : string
     $val = null;
 
     // Cookie relaying from client through to server
-    $url_bits = @cms_parse_url_safe(normalise_idn_url($url)) or warn_exit(do_lang_tempcode('HTTP_DOWNLOAD_NO_SERVER', escape_html($url)), false, true);
+    $url_bits = cms_parse_url_safe(normalise_idn_url($url)) or warn_exit(do_lang_tempcode('HTTP_DOWNLOAD_NO_SERVER', escape_html($url)), false, true);
+    if ($url_bits === false) {
+        return '';
+    }
     $cookies_relayed = null;
     if (!array_key_exists('host', $url_bits)) {
         $url_bits['host'] = get_base_url_hostname();

@@ -610,6 +610,10 @@ function cms_fsock_request(string $payload, string $url, ?int &$error_code = nul
     require_code('encryption');
 
     $hostname = cms_parse_url_safe($url, PHP_URL_HOST);
+    if ($hostname === false) {
+        return null; // NB: If any other calls would return false, this would have returned false
+    }
+
     $fsock_hostname = $hostname;
     $port = cms_parse_url_safe($url, PHP_URL_PORT);
     if (is_encryption_available() && cms_parse_url_safe($url, PHP_URL_SCHEME) == 'https') {

@@ -168,7 +168,7 @@ abstract class Source_HTTP_downloader
 
         // Work out what we'll be connecting to...
 
-        $this->url_parts = @cms_parse_url_safe(normalise_idn_url($url));
+        $this->url_parts = cms_parse_url_safe(normalise_idn_url($url));
         if (($this->url_parts === false) || (!isset($this->url_parts['host'])) || (!isset($this->url_parts['scheme']))) {
             if ($this->trigger_error) {
                 warn_exit(do_lang_tempcode('HTTP_DOWNLOAD_BAD_URL', escape_html($url)), false, true);

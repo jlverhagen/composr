@@ -410,8 +410,8 @@ class Source_broken_url_scanner
 
                 if ($continuing) {
                     if (get_option('moz_paid') == '0') {
-                        if (php_function_allowed('usleep')) {
-                            usleep(10000000); // 10 seconds between requests
+                        if (php_function_allowed('sleep')) {
+                            sleep(10); // 10 seconds between requests
                         }
                     }
                 }

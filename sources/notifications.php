@@ -74,7 +74,9 @@ function init__notifications()
     $NOTIFICATION_LOCKDOWN_CACHE = [];
 
     global $NOTIFICATIONS_ON;
-    $NOTIFICATIONS_ON = true;
+    if (!isset($NOTIFICATIONS_ON)) {
+        $NOTIFICATIONS_ON = true;
+    }
 
     global $LAST_NOTIFICATION_LANG_CALL, $LAST_NOTIFICATION_TEMPLATE_CALL;
     $LAST_NOTIFICATION_LANG_CALL = null;

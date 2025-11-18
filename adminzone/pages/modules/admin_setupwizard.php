@@ -285,7 +285,7 @@ class Module_admin_setupwizard
                     $path = get_file_base() . '/sources/hooks/modules/admin_setupwizard_installprofiles/' . filter_naughty_harsh($hook) . '.php';
                 }
                 if (file_exists($path)) {
-                    $_hook_bits = extract_module_functions($path, ['info']);
+                    $_hook_bits = extract_class_functions($path, ['info']);
                     $installprofile = is_array($_hook_bits[0]) ? call_user_func_array($_hook_bits[0][0], $_hook_bits[0][1]) : cms_eval($_hook_bits[0], $path);
                     if ($installprofile !== null) {
                         $installprofiles->attach(form_input_list_entry($hook . '__' . $theme, get_param_string('id', '') == $hook . '__' . $theme, do_lang('INSTALLPROFILE_WITH_THEME', $installprofile['title'], $theme_title)));
@@ -302,7 +302,7 @@ class Module_admin_setupwizard
             if (!file_exists($path)) {
                 $path = get_file_base() . '/sources/hooks/modules/admin_setupwizard_installprofiles/' . filter_naughty_harsh($hook) . '.php';
             }
-            $_hook_bits = extract_module_functions($path, ['info']);
+            $_hook_bits = extract_class_functions($path, ['info']);
             $installprofile = is_array($_hook_bits[0]) ? call_user_func_array($_hook_bits[0][0], $_hook_bits[0][1]) : cms_eval($_hook_bits[0], $path);
             if ($installprofile !== null) {
                 $installprofiles->attach(form_input_list_entry($hook, get_param_string('id', '') == $hook, $installprofile['title']));
@@ -740,7 +740,7 @@ class Module_admin_setupwizard
             if (!file_exists($path)) {
                 $path = get_file_base() . '/sources/hooks/modules/admin_setupwizard_installprofiles/' . filter_naughty_harsh($installprofile) . '.php';
             }
-            $_hook_bits = extract_module_functions($path, ['field_defaults']);
+            $_hook_bits = extract_class_functions($path, ['field_defaults']);
             $field_defaults = is_array($_hook_bits[0]) ? call_user_func_array($_hook_bits[0][0], $_hook_bits[0][1]) : cms_eval($_hook_bits[0], $path);
         } else {
             $field_defaults = [];
@@ -1389,7 +1389,7 @@ class Module_admin_setupwizard
                     if (!file_exists($path)) {
                         $path = get_file_base() . '/sources/hooks/modules/admin_setupwizard/' . filter_naughty_harsh($hook) . '.php';
                     }
-                    $_hook_bits = extract_module_functions($path, ['set_fields']);
+                    $_hook_bits = extract_class_functions($path, ['set_fields']);
                     if (is_array($_hook_bits[0])) {
                         call_user_func_array($_hook_bits[0][0], $_hook_bits[0][1]);
                     } elseif ($_hook_bits[0] !== null) {

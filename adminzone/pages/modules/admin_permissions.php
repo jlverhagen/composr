@@ -1291,7 +1291,7 @@ class Module_admin_permissions
 
             foreach ($all_modules as $module => $module_type) {
                 $path = zone_black_magic_filterer(get_file_base() . '/' . $zone . (($zone == '') ? '' : '/') . 'pages/' . $module_type . '/' . $module . '.php');
-                $functions = extract_module_functions($path, ['get_privilege_overrides']);
+                $functions = extract_class_functions($path, ['get_privilege_overrides']);
                 if ($functions[0] !== null) {
                     $overrides = is_array($functions[0]) ? call_user_func_array($functions[0][0], $functions[0][1]) : cms_eval($functions[0], $path);
                     foreach (array_keys($overrides) as $override) {
