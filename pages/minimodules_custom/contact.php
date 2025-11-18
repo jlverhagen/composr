@@ -33,6 +33,10 @@ if (!addon_installed__messaged('cms_homesite', $error_msg)) {
 
 require_code('locations');
 
+if (addon_installed('captcha')) {
+    require_code('captcha');
+}
+
 $disclaimer = 'It is your responsibility to ensure confidence in the chosen provider. The Composr core team does the matching service as a part of the Composr CMS stewardship role and don\'t charge a commission for the service &ndash; so are not in any way commercially responsible for the implementation, or for developer training. We do encourage third-party companies to give back to the Composr CMS project by contributing code improvements made for projects, and we do often make ourselves available to the developer for implementation of certain parts of a referred project.' . "\n\n" . 'Be aware that third-party developers have no special control over the core team\'s development and maintenance priorities.';
 
 $extra_support_inform = [];

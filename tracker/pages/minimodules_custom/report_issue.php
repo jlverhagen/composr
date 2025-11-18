@@ -40,6 +40,10 @@ require_code('cms_homesite_tracker');
 require_code('cms_homesite');
 require_lang('decision_tree');
 
+if (addon_installed('captcha')) {
+    require_code('captcha');
+}
+
 global $BASE_URL;
 $BASE_URL = get_custom_base_url();
 
