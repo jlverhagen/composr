@@ -2278,7 +2278,7 @@ function _do_tags_comcode(string $tag, array $attributes, $embed, bool $comcode_
                         $enforce_type = CMS_UPLOAD_IMAGE; // Images cleanup pipeline
                     }
                     reset_images_cleanup_pipeline_settings();
-                    $urls = get_url('file' . $_id, '', 'uploads/attachments', OBFUSCATE_BIN_SUFFIX, $enforce_type, ((!array_key_exists('thumb', $attributes)) || ($attributes['thumb'] != '0')) && ($attributes['thumb_url'] == ''), '', '', true, false, true, true, $source_member);
+                    $urls = get_url('file' . $_id, '', 'uploads/attachments', OBFUSCATE_BIN_SUFFIX, $enforce_type, ((!array_key_exists('thumb', $attributes)) || ($attributes['thumb'] != '0')) && ($attributes['thumb_url'] == ''), '', '', true, true, true, true, $source_member);
                     reset_images_cleanup_pipeline_settings();
                     if ($urls[0] == '') {
                         //warn_exit(do_lang_tempcode('ERROR_UPLOADING'));  Can't do this, because this might not be post-calculated if something went wrong once
