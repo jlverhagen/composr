@@ -241,6 +241,7 @@ class Hook_addon_registry_cms_homesite_tracker
         return; // TODO: not safe to run this automatically
 
         if (($upgrade_major_minor === null) || version_compare(float_to_raw_string($upgrade_major_minor, 1) . '.' . strval($upgrade_patch), '11.0.3', '<')) { // 11.beta9
+            // DO NOT FORGET TO RENAME TRACKER/UPLOADS TO TRACKER_LEGACY/UPLOADS BEFORE GIT PULL
             require_lang('catalogues');
             require_lang('tracker');
             require_lang('addons');
