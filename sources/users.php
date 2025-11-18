@@ -1037,6 +1037,11 @@ function session_expiration_script()
 {
     prepare_backend_response('text/plain');
 
+    if (is_guest(null, true)) {
+        echo '';
+        return;
+    }
+
     global $SESSION_CACHE;
 
     $old_session = get_session_id();
