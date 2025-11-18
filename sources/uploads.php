@@ -481,7 +481,7 @@ function get_url(string $specify_name, string $attach_name, string $upload_folde
     }
     $is_uploaded = ($attach_name != '') && (array_key_exists($attach_name, $filearrays)) && ((is_uploaded_file($filearrays[$attach_name]['tmp_name'])) || ($plupload_uploaded));
     if ($is_uploaded) { // If we uploaded
-        if (!has_privilege($member_id, 'exceed_filesize_limit')) {
+        if ((!get_mass_import_mode()) && !has_privilege($member_id, 'exceed_filesize_limit')) {
             if ($filearrays[$attach_name]['size'] > $max_size) {
                 if ($accept_errors) {
                     attach_message(do_lang_tempcode('FILE_TOO_BIG', escape_html(integer_format($max_size)), escape_html($filearrays[$attach_name]['name'])), 'warn');
@@ -566,7 +566,7 @@ function get_url(string $specify_name, string $attach_name, string $upload_folde
 
                 $place = $upload_folder_full . '/' . shorten_urlencoded_filename($filename);
             }
-            if (!has_privilege($member_id, 'exceed_filesize_limit')) {
+            if (!get_mass_import_mode() && !has_privilege($member_id, 'exceed_filesize_limit')) {
                 $max_size = intval(get_option('max_download_size')) * 1024;
                 if (strlen($file) > $max_size) {
                     if ($accept_errors) {
