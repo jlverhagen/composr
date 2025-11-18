@@ -309,7 +309,10 @@ function _cms_http_request(string $url, array $options = []) : object
     sort_maps_by($priorities, '!priority');
     foreach ($priorities as $priority) {
         if ((isset($priority['priority'])) && ($priority['priority'] >= 2) && (isset($hooks[$priority['hook']]))) {
-            return $hooks[$priority['hook']];
+            $test = $hooks[$priority['hook']]->run($url, $options);
+            if ($test !== false) {
+                return $hooks[$priority['hook']];
+            }
         }
     }
 
