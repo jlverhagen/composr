@@ -375,7 +375,7 @@ function get_upload_error_message(array $file_upload, bool $should_get_something
  * @param  boolean $make_thumbnail Make a thumbnail (this only makes sense, if it is an image)
  * @param  ID_TEXT $thumb_specify_name The name of the POST parameter storing the thumb URL. As before
  * @param  ID_TEXT $thumb_attach_name The name of the HTTP file parameter storing the thumb upload. As before
- * @param  boolean $copy_to_server Whether to copy a URL (if a URL) to the server, and return a local reference
+ * @param  boolean $copy_to_server Whether to copy the file to the upload folder, and return a local reference, if the file is a URL or its path is not located in $upload_folder
  * @param  boolean $accept_errors Whether to accept upload errors
  * @param  boolean $should_get_something Whether to give a (deferred?) error if no file was given at all
  * @param  boolean $only_make_smaller Whether to apply a 'never make the image bigger' rule for thumbnail creation (would affect very small images)
@@ -509,7 +509,7 @@ function get_url(string $specify_name, string $attach_name, string $upload_folde
                 $is_image = true; // Must be an image if it got to here. Maybe came from oEmbed and not having an image extension.
             }
         }
-        if (($copy_to_server) && (!url_is_local($url[0]))) {
+        if (($copy_to_server) && ((strpos($url[0], $upload_folder) === false) || (strpos($url[0], '://') !== false))) {
             $path2 = cms_tempnam();
             $tmpfile = fopen($path2, 'wb');
 
