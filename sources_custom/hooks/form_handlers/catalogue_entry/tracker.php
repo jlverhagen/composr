@@ -119,6 +119,27 @@ class Hook_form_handlers_catalogue_entry_tracker
             return;
         }
 
+        // TODO: Make this more robust
+        require_code('feedback');
+        actualise_post_comment(
+            ($allow_comments != 0),
+            'catalogue_entry',
+            strval($id),
+            build_url(['page' => 'catalogues', 'type' => 'entry', 'id' => $id], get_module_zone('catalogues')),
+            '',
+            null,
+            false,
+            1,
+            true,
+            false,
+            false,
+            'System message - Issue updated',
+            'The details or status of this tracker issue were updated.',
+            null,
+            $GLOBALS['FORUM_DRIVER']->get_guest_id(),
+            false
+        );
+
         // Handle points awarding (or revoking) and sponsorships
         if (addon_installed('points')) {
             require_code('cms_homesite_tracker');
