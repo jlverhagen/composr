@@ -238,6 +238,8 @@ class Hook_addon_registry_cms_homesite_tracker
      */
     public function install(?float $upgrade_major_minor = null, ?int $upgrade_patch = null)
     {
+        return; // TODO: not safe to run this automatically
+
         if (($upgrade_major_minor === null) || version_compare(float_to_raw_string($upgrade_major_minor, 1) . '.' . strval($upgrade_patch), '11.0.3', '<')) { // 11.beta9
             require_lang('catalogues');
             require_lang('tracker');
