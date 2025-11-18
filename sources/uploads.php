@@ -643,10 +643,12 @@ function get_url(string $specify_name, string $attach_name, string $upload_folde
             list($place, , $thumb_filename) = find_unique_path($thumb_folder, $thumb_filename);
             $url_full = url_is_local($url[0]) ? (get_custom_base_url() . '/' . $url[0]) : $url[0];
 
-            $thumb = convert_image($url_full, $place, null, null, intval(get_option('thumb_width')), true, null, false, $only_make_smaller);
+            $thumb = convert_image($url_full, $place, null, null, intval(get_option('thumb_width')), !$accept_errors, null, false, $only_make_smaller);
         }
 
-        $out[1] = $thumb;
+        if ($thumb !== null) {
+            $out[1] = $thumb;
+        }
     } elseif ($make_thumbnail) {
         if ((array_key_exists($thumb_attach_name, $filearrays)) && ((is_uploaded_file($filearrays[$thumb_attach_name]['tmp_name'])) || ($plupload_uploaded_thumb))) { // If we uploaded
             if ($filearrays[$thumb_attach_name]['size'] > get_max_image_size(false)) {
