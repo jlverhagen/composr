@@ -238,7 +238,7 @@ class Hook_addon_registry_cms_homesite_tracker
      */
     public function install(?float $upgrade_major_minor = null, ?int $upgrade_patch = null)
     {
-        return; // TODO: not safe to run this automatically
+        //return; // TODO: not safe to run this automatically
 
         if (($upgrade_major_minor === null) || version_compare(float_to_raw_string($upgrade_major_minor, 1) . '.' . strval($upgrade_patch), '11.0.3', '<')) { // 11.beta9
             // DO NOT FORGET TO RENAME TRACKER/UPLOADS TO TRACKER_LEGACY/UPLOADS BEFORE GIT PULL
@@ -314,20 +314,20 @@ class Hook_addon_registry_cms_homesite_tracker
             // Step 3: create the fields.
             $fields = [
                 // Name, description, type, defines order, required, visible, options, sensitive, put in category / search, sortable, default (language string)
-                ['IDENTIFIER', 'DESCRIPTION_TRACKER_CATALOGUE_IDENTIFIER', 'tracker_id', 1, 1, 1, '', 0, 1, 0, ''],
+                ['IDENTIFIER', 'DESCRIPTION_TRACKER_CATALOGUE_IDENTIFIER', 'tracker_id', 1, 1, 1, '', 0, 1, 1, ''],
                 ['ISSUE_TYPE', 'DESCRIPTION_TRACKER_CATALOGUE_ISSUE_TYPE', 'list', 0, 1, 1, 'display_val=on', 0, 1, 1, 'TRACKER_CATALOGUE_ISSUE_TYPE_DEFAULT'],
                 ['TITLE', 'DESCRIPTION_TRACKER_CATALOGUE_TITLE', 'short_text', 0, 1, 1, 'input_size=56', 0, 1, 0, ''],
                 ['STATUS', 'DESCRIPTION_TRACKER_CATALOGUE_STATUS', 'list', 0, 1, 1, 'display_val=on,edit_only=1', 0, 1, 1, 'TRACKER_CATALOGUE_STATUS_DEFAULT'],
-                ['ISSUE_TAGS', 'DESCRIPTION_TRACKER_CATALOGUE_TAGS', 'list_multi', 0, 0, 1, 'custom_values=multiple,edit_only=1,widget=vertical_checkboxes', 0, 0, 1, ''],
+                ['ISSUE_TAGS', 'DESCRIPTION_TRACKER_CATALOGUE_TAGS', 'list_multi', 0, 0, 1, 'custom_values=multiple,edit_only=1,widget=vertical_checkboxes', 0, 0, 0, ''],
                 ['HANDLER', 'DESCRIPTION_TRACKER_CATALOGUE_HANDLER', 'member', 0, 0, 1, 'edit_only=1', 0, 0, 0, ''],
-                ['VERSION', 'DESCRIPTION_TRACKER_CATALOGUE_VERSION', 'version', 0, 0, 1, '', 0, 0, 1, ''],
+                ['VERSION', 'DESCRIPTION_TRACKER_CATALOGUE_VERSION', 'version', 0, 0, 1, '', 0, 0, 0, ''],
                 ['ADDON', 'DESCRIPTION_TRACKER_CATALOGUE_ADDON', 'addon', 0, 0, 1, 'auto_sort=on', 0, 0, 1, ''],
                 ['DESCRIPTION', 'DESCRIPTION_TRACKER_CATALOGUE_DESCRIPTION', 'long_trans', 0, 1, 1, '', 1, 0, 0, ''],
                 ['STEPS_TO_REPRODUCE', 'DESCRIPTION_TRACKER_CATALOGUE_STEPS_TO_REPRODUCE', 'short_trans_multi', 0, 0, 1, '', 1, 0, 0, ''],
                 ['ADDITIONAL_INFORMATION', 'DESCRIPTION_TRACKER_CATALOGUE_ADDITIONAL_INFORMATION', 'long_trans', 0, 0, 1, '', 1, 0, 0, ''],
                 ['RELATED_TO', 'DESCRIPTION_TRACKER_CATALOGUE_RELATED_TO', 'cx_tracker', 0, 0, 1, 'edit_only=1', 0, 0, 0, ''],
                 ['IS_FUNDED', 'DESCRIPTION_TRACKER_CATALOGUE_IS_FUNDED', 'tick', 0, 1, 1, 'edit_only=1', 0, 1, 1, 'TRACKER_CATALOGUE_IS_FUNDED_DEFAULT'],
-                ['RELEASED_IN_VERSION', 'DESCRIPTION_TRACKER_CATALOGUE_RELEASED_IN_VERSION', 'version', 0, 0, 1, 'edit_only=1', 0, 0, 1, ''],
+                ['RELEASED_IN_VERSION', 'DESCRIPTION_TRACKER_CATALOGUE_RELEASED_IN_VERSION', 'version', 0, 0, 1, 'edit_only=1', 0, 0, 0, ''],
                 ['HOTFIXES', 'DESCRIPTION_TRACKER_CATALOGUE_HOTFIXES', 'upload_multi', 0, 0, 1, 'edit_only=1', 0, 0, 0, ''],
                 ['COMMITS', 'DESCRIPTION_TRACKER_CATALOGUE_COMMITS', 'url_multi', 0, 0, 1, 'edit_only=1', 0, 0, 0, ''],
             ];
@@ -577,6 +577,7 @@ class Hook_addon_registry_cms_homesite_tracker
             // step 7: Migrate bug notes as comments
             $identifier_field = $GLOBALS['SITE_DB']->query_select_value('catalogue_fields', 'id', ['c_name' => 'tracker', $GLOBALS['SITE_DB']->translate_field_ref('cf_name') => do_lang('IDENTIFIER')]);
             $title_field = $GLOBALS['SITE_DB']->query_select_value('catalogue_fields', 'id', ['c_name' => 'tracker', $GLOBALS['SITE_DB']->translate_field_ref('cf_name') => do_lang('TITLE')]);
+            $commit_field = $GLOBALS['SITE_DB']->query_select_value('catalogue_fields', 'id', ['c_name' => 'tracker', $GLOBALS['SITE_DB']->translate_field_ref('cf_name') => do_lang('COMMITS')]);
 
             $start = 0;
             $max = 100;
@@ -603,6 +604,29 @@ class Hook_addon_registry_cms_homesite_tracker
 
                     // Skip automated messages about using the wizard
                     if (strpos($text, 'Automated message: This issue was created using the Report Issue Wizard on the homesite.') !== false) {
+                        continue;
+                    }
+
+                    // Actually, this is a commit message; put URL in the commit field instead of making a comment
+                    $matches = [];
+                    if (preg_match('#^Fixed\sin\sGit\scommit\s[a-fA-F0-9]*\s\(([^\)\s]*)#', $text, $matches) > 0) {
+                        $new_field = false;
+                        $current_commits = $GLOBALS['SITE_DB']->query_select_value_if_there('catalogue_efv_long', 'cv_value', ['cf_id' => $commit_field, 'ce_id' => $source_entry]);
+                        if ($current_commits === null) {
+                            $current_commits = '';
+                            $new_field = true;
+                        } elseif (trim($current_commits != '')) {
+                            $current_commits .= "\n";
+                        }
+
+                        $current_commits .= $matches[1];
+
+                        if ($new_field) {
+                            $GLOBALS['SITE_DB']->query_insert('catalogue_efv_long', ['cf_id' => $commit_field, 'ce_id' => $entry_id, 'cv_value' => strval($current_commits)]);
+                        } else {
+                            $GLOBALS['SITE_DB']->query_update('catalogue_efv_long', ['cv_value' => strval($current_commits)], ['cf_id' => $commit_field, 'ce_id' => $entry_id]);
+                        }
+
                         continue;
                     }
 
