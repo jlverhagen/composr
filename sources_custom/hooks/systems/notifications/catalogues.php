@@ -45,4 +45,20 @@ class Hx_notification_catalogues extends Hook_notification_catalogues
 
         return parent::get_initial_setting($notification_code, $category, $member_id);
     }
+
+    /**
+     * Find a bitmask of settings (e-mail, SMS, etc) a notification code supports for listening on.
+     *
+     * @param  ID_TEXT $notification_code Notification code
+     * @return integer Allowed settings
+     */
+    public function allowed_settings(string $notification_code) : int
+    {
+        // For security, do not allow notifications on the tracker catalogue except for staff
+        if (($notification_code == 'catalogue_entry__tracker') && !$GLOBALS['FORUM_DRIVER']->is_staff(get_member())) {
+            return A_NA;
+        }
+
+        return parent::allowed_settings($notification_code);
+    }
 }
