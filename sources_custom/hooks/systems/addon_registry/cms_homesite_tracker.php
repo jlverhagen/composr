@@ -238,10 +238,15 @@ class Hook_addon_registry_cms_homesite_tracker
      */
     public function install(?float $upgrade_major_minor = null, ?int $upgrade_patch = null)
     {
-        return; // TODO: not safe to run this automatically
+        //return; // TODO: not safe to run this automatically
 
         if (($upgrade_major_minor === null) || version_compare(float_to_raw_string($upgrade_major_minor, 1) . '.' . strval($upgrade_patch), '11.0.3', '<')) { // 11.beta9
             // DO NOT FORGET TO RENAME TRACKER/UPLOADS TO TRACKER_LEGACY/UPLOADS BEFORE GIT PULL
+
+            // Make sure our new tracker zone is present in htaccess
+            require_code('zones2');
+            sync_htaccess_with_zones();
+
             require_lang('catalogues');
             require_lang('tracker');
             require_lang('addons');
@@ -309,20 +314,20 @@ class Hook_addon_registry_cms_homesite_tracker
             // Step 3: create the fields.
             $fields = [
                 // Name, description, type, defines order, required, visible, options, sensitive, put in category / search, sortable, default (language string)
-                ['IDENTIFIER', 'DESCRIPTION_TRACKER_CATALOGUE_IDENTIFIER', 'tracker_id', 1, 1, 1, '', 0, 1, 0, ''],
+                ['IDENTIFIER', 'DESCRIPTION_TRACKER_CATALOGUE_IDENTIFIER', 'tracker_id', 1, 1, 1, '', 0, 1, 1, ''],
                 ['ISSUE_TYPE', 'DESCRIPTION_TRACKER_CATALOGUE_ISSUE_TYPE', 'list', 0, 1, 1, 'display_val=on', 0, 1, 1, 'TRACKER_CATALOGUE_ISSUE_TYPE_DEFAULT'],
                 ['TITLE', 'DESCRIPTION_TRACKER_CATALOGUE_TITLE', 'short_text', 0, 1, 1, 'input_size=56', 0, 1, 0, ''],
                 ['STATUS', 'DESCRIPTION_TRACKER_CATALOGUE_STATUS', 'list', 0, 1, 1, 'display_val=on,edit_only=1', 0, 1, 1, 'TRACKER_CATALOGUE_STATUS_DEFAULT'],
-                ['ISSUE_TAGS', 'DESCRIPTION_TRACKER_CATALOGUE_TAGS', 'list_multi', 0, 0, 1, 'custom_values=multiple,edit_only=1,widget=vertical_checkboxes', 0, 0, 1, ''],
+                ['ISSUE_TAGS', 'DESCRIPTION_TRACKER_CATALOGUE_TAGS', 'list_multi', 0, 0, 1, 'custom_values=multiple,edit_only=1,widget=vertical_checkboxes', 0, 0, 0, ''],
                 ['HANDLER', 'DESCRIPTION_TRACKER_CATALOGUE_HANDLER', 'member', 0, 0, 1, 'edit_only=1', 0, 0, 0, ''],
-                ['VERSION', 'DESCRIPTION_TRACKER_CATALOGUE_VERSION', 'version', 0, 0, 1, '', 0, 0, 1, ''],
+                ['VERSION', 'DESCRIPTION_TRACKER_CATALOGUE_VERSION', 'version', 0, 0, 1, '', 0, 0, 0, ''],
                 ['ADDON', 'DESCRIPTION_TRACKER_CATALOGUE_ADDON', 'addon', 0, 0, 1, 'auto_sort=on', 0, 0, 1, ''],
                 ['DESCRIPTION', 'DESCRIPTION_TRACKER_CATALOGUE_DESCRIPTION', 'long_trans', 0, 1, 1, '', 1, 0, 0, ''],
                 ['STEPS_TO_REPRODUCE', 'DESCRIPTION_TRACKER_CATALOGUE_STEPS_TO_REPRODUCE', 'short_trans_multi', 0, 0, 1, '', 1, 0, 0, ''],
                 ['ADDITIONAL_INFORMATION', 'DESCRIPTION_TRACKER_CATALOGUE_ADDITIONAL_INFORMATION', 'long_trans', 0, 0, 1, '', 1, 0, 0, ''],
                 ['RELATED_TO', 'DESCRIPTION_TRACKER_CATALOGUE_RELATED_TO', 'cx_tracker', 0, 0, 1, 'edit_only=1', 0, 0, 0, ''],
                 ['IS_FUNDED', 'DESCRIPTION_TRACKER_CATALOGUE_IS_FUNDED', 'tick', 0, 1, 1, 'edit_only=1', 0, 1, 1, 'TRACKER_CATALOGUE_IS_FUNDED_DEFAULT'],
-                ['RELEASED_IN_VERSION', 'DESCRIPTION_TRACKER_CATALOGUE_RELEASED_IN_VERSION', 'version', 0, 0, 1, 'edit_only=1', 0, 0, 1, ''],
+                ['RELEASED_IN_VERSION', 'DESCRIPTION_TRACKER_CATALOGUE_RELEASED_IN_VERSION', 'version', 0, 0, 1, 'edit_only=1', 0, 0, 0, ''],
                 ['HOTFIXES', 'DESCRIPTION_TRACKER_CATALOGUE_HOTFIXES', 'upload_multi', 0, 0, 1, 'edit_only=1', 0, 0, 0, ''],
                 ['COMMITS', 'DESCRIPTION_TRACKER_CATALOGUE_COMMITS', 'url_multi', 0, 0, 1, 'edit_only=1', 0, 0, 0, ''],
             ];
@@ -426,6 +431,10 @@ class Hook_addon_registry_cms_homesite_tracker
             require_code('uploads');
             require_code('comcode');
             require_code('comcode_renderer');
+            require_code('notifications');
+            if (addon_installed('filedump')) {
+                require_code('filedump');
+            }
 
             require_lang('catalogues');
             require_lang('tracker');
@@ -565,10 +574,10 @@ class Hook_addon_registry_cms_homesite_tracker
                 $start += $max;
             } while (count($rows) > 0);
 
-            // step 7: Migrate bug notes (and attachments) as comments
+            // step 7: Migrate bug notes as comments
             $identifier_field = $GLOBALS['SITE_DB']->query_select_value('catalogue_fields', 'id', ['c_name' => 'tracker', $GLOBALS['SITE_DB']->translate_field_ref('cf_name') => do_lang('IDENTIFIER')]);
             $title_field = $GLOBALS['SITE_DB']->query_select_value('catalogue_fields', 'id', ['c_name' => 'tracker', $GLOBALS['SITE_DB']->translate_field_ref('cf_name') => do_lang('TITLE')]);
-            $hotfix_field = $GLOBALS['SITE_DB']->query_select_value('catalogue_fields', 'id', ['c_name' => 'tracker', $GLOBALS['SITE_DB']->translate_field_ref('cf_name') => do_lang('HOTFIXES')]);
+            $commit_field = $GLOBALS['SITE_DB']->query_select_value('catalogue_fields', 'id', ['c_name' => 'tracker', $GLOBALS['SITE_DB']->translate_field_ref('cf_name') => do_lang('COMMITS')]);
 
             $start = 0;
             $max = 100;
@@ -598,83 +607,27 @@ class Hook_addon_registry_cms_homesite_tracker
                         continue;
                     }
 
-                    // Attachments
-                    $files = $GLOBALS['SITE_DB']->query_parameterised('SELECT `id`,`diskfile`,`filename`,`filesize`,`user_id`,`description`,`file_type` FROM mantis_bug_file_table WHERE bugnote_id={id}', ['id' => $row['id']]);
-                    foreach ($files as $i => $file) {
-                        $relativepath = 'tracker_legacy/uploads/' . $file['diskfile'];
-                        $realpath = get_file_base() . '/tracker_legacy/uploads/' . $file['diskfile'];
-                        if (!is_file($realpath)) {
-                            continue;
+                    // Actually, this is a commit message; put URL in the commit field instead of making a comment
+                    $matches = [];
+                    if (preg_match('#^Fixed\s+in\s+Git\s+commit\s+[a-fA-F0-9]+\s+\(([^)\s]+).*?\)#i', $text, $matches) > 0) {
+                        $new_field = false;
+                        $current_commits = $GLOBALS['SITE_DB']->query_select_value_if_there('catalogue_efv_long', 'cv_value', ['cf_id' => $commit_field, 'ce_id' => $entry_id]);
+                        if ($current_commits === null) {
+                            $current_commits = '';
+                            $new_field = true;
+                        } elseif (trim($current_commits != '')) {
+                            $current_commits .= "\n";
                         }
 
-                        // We must rename to the actual file name so extension checks work correctly
-                        if ($file['diskfile'] != $file['filename']) {
-                            @copy($realpath, get_file_base() . '/tracker_legacy/uploads/' . $file['filename']);
-                            $relativepath = 'tracker_legacy/uploads/' . $file['filename'];
-                            $realpath = get_file_base() . '/tracker_legacy/uploads/' . $file['filename'];
-                            if (!is_file($realpath)) {
-                                continue;
-                            }
+                        $current_commits .= $matches[1];
+
+                        if ($new_field) {
+                            $GLOBALS['SITE_DB']->query_insert('catalogue_efv_long', ['cf_id' => $commit_field, 'ce_id' => $entry_id, 'cv_value' => strval($current_commits)]);
+                        } else {
+                            $GLOBALS['SITE_DB']->query_update('catalogue_efv_long', ['cv_value' => strval($current_commits)], ['cf_id' => $commit_field, 'ce_id' => $entry_id]);
                         }
 
-                        // Check the file extension; we must do this outside of Comcode renderer as we have a different way of checking Mantis files
-                        $fake_path = $relativepath;
-                        if (!check_extension($fake_path, false, null, true, $file['user_id'])) {
-                            continue;
-                        }
-
-                        // Actually, this is a hotfix. Add to the hotfix field instead of attaching it.
-                        if ((strpos($file['filename'], 'hotfix-') === 0) && (substr($file['filename'], -4) === '.tar')) {
-                            $_POST['hotfix_' . strval($i)] = get_base_url() . '/' . $relativepath; // FUDGE
-
-                            $temp = get_url('hotfix_' . strval($i), '', 'uploads/catalogues', OBFUSCATE_LEAVE_SUFFIX, CMS_UPLOAD_ANYTHING, false, '', '', true, true);
-                            if ($temp[0] == '') {
-                                continue;
-                            }
-
-                            $field_value = $temp[0] . '::' . $file['filename'];
-
-                            $old_hotfix = $GLOBALS['SITE_DB']->query_select_value_if_there('catalogue_efv_long', 'cv_value', ['cf_id' => $hotfix_field, 'ce_id' => $entry_id]);
-                            if ($old_hotfix === null) {
-                                $GLOBALS['SITE_DB']->query_insert('catalogue_efv_long', ['cf_id' => $hotfix_field, 'ce_id' => $entry_id, 'cv_value' => $field_value]);
-                            } else {
-                                $GLOBALS['SITE_DB']->query_update('catalogue_efv_long', ['cv_value' => $old_hotfix . "\n" . $field_value], ['cf_id' => $hotfix_field, 'ce_id' => $entry_id]);
-                            }
-
-                            reorganise_uploads__catalogue_entries(['ce_id' => $entry_id], true);
-                            continue;
-                        }
-
-                        // FUDGE: We have to render migrated bug notes raw, so we cannot use the attachments Comcode tag
-                        $_POST['file' . strval($i)] = get_base_url() . '/' . $relativepath;
-                        $comcode = '[attachment thumb="1" description="' . comcode_escape($file['description']) . '" filename="' . comcode_escape($file['filename']) . '"]post_' . strval($i) . '[/attachment]';
-                        $embed = new Tempcode();
-                        $embed->attach('post_' . strval($i));
-                        $result = _do_tags_comcode(
-                            'attachment',
-                            [
-                                'thumb' => '1',
-                                'description' => comcode_escape($file['description']),
-                                'filename' => comcode_escape($file['filename']),
-                            ],
-                            $embed,
-                            false,
-                            strval(mt_rand(0, mt_getrandmax())),
-                            0,
-                            $row['reporter_id'],
-                            true, // Bypass limits as this is an import
-                            $GLOBALS['SITE_DB'],
-                            $comcode,
-                            false,
-                            false,
-                            [],
-                            null,
-                            false,
-                            false,
-                            false
-                        );
-
-                        $text .= "\n\n" . strip_comcode(html_to_comcode($result->evaluate()));
+                        continue;
                     }
 
                     actualise_post_comment(
@@ -700,7 +653,7 @@ class Hook_addon_registry_cms_homesite_tracker
                 $start += $max;
             } while (count($rows) > 0);
 
-            // step 8: Migrate orphaned bug files as their own comments
+            // step 8: Migrate bug files as their own comments
             $identifier_field = $GLOBALS['SITE_DB']->query_select_value('catalogue_fields', 'id', ['c_name' => 'tracker', $GLOBALS['SITE_DB']->translate_field_ref('cf_name') => do_lang('IDENTIFIER')]);
             $title_field = $GLOBALS['SITE_DB']->query_select_value('catalogue_fields', 'id', ['c_name' => 'tracker', $GLOBALS['SITE_DB']->translate_field_ref('cf_name') => do_lang('TITLE')]);
             $hotfix_field = $GLOBALS['SITE_DB']->query_select_value('catalogue_fields', 'id', ['c_name' => 'tracker', $GLOBALS['SITE_DB']->translate_field_ref('cf_name') => do_lang('HOTFIXES')]);
@@ -709,10 +662,11 @@ class Hook_addon_registry_cms_homesite_tracker
             $max = 100;
             $files = [];
             do {
-                $files = $GLOBALS['SITE_DB']->query('SELECT * FROM mantis_bug_file_table WHERE bugnote_id=0', $max, $start);
+                $files = $GLOBALS['SITE_DB']->query('SELECT * FROM mantis_bug_file_table', $max, $start);
                 foreach ($files as $i => $file) {
+                    $filename = $file['diskfile'];
                     $relativepath = 'tracker_legacy/uploads/' . $file['diskfile'];
-                    $realpath = get_file_base() . '/tracker_legacy/uploads/' . $file['diskfile'];
+                    $realpath = get_custom_file_base() . '/tracker_legacy/uploads/' . $file['diskfile'];
                     if (!is_file($realpath)) {
                         continue;
                     }
@@ -720,8 +674,9 @@ class Hook_addon_registry_cms_homesite_tracker
                     // We must rename to the actual file name so extension checks work correctly
                     if ($file['diskfile'] != $file['filename']) {
                         @copy($realpath, get_file_base() . '/tracker_legacy/uploads/' . $file['filename']);
+                        $filename = $file['filename'];
                         $relativepath = 'tracker_legacy/uploads/' . $file['filename'];
-                        $realpath = get_file_base() . '/tracker_legacy/uploads/' . $file['filename'];
+                        $realpath = get_custom_file_base() . '/tracker_legacy/uploads/' . $file['filename'];
                         if (!is_file($realpath)) {
                             continue;
                         }
@@ -743,7 +698,7 @@ class Hook_addon_registry_cms_homesite_tracker
                         $title = do_lang('NA');
                     }
 
-                    // Actually, this is a hotfix. Add to the hotfix field instead of attaching it.
+                    // Actually, this is a hotfix. Add to the hotfix field instead of as a media file comment.
                     if ((strpos($file['filename'], 'hotfix-') === 0) && (substr($file['filename'], -4) === '.tar')) {
                         $_POST['hotfix_' . strval($i)] = get_base_url() . '/' . $relativepath; // FUDGE
 
@@ -765,8 +720,14 @@ class Hook_addon_registry_cms_homesite_tracker
                         continue;
                     }
 
-                    $_POST['file' . strval($i)] = get_base_url() . '/' . $relativepath;
-                    $text = '[attachment thumb="1" description="' . comcode_escape($file['description']) . '" filename="' . comcode_escape($file['filename']) . '"]post_' . strval($i) . '[/attachment]';
+                    // Prefer media file, else use an attachment
+                    if (addon_installed('filedump')) {
+                        add_filedump_file('/tracker_legacy/', $filename, $realpath, $file['description'], false, false, 'rename');
+                        $text = '[media]uploads/filedump/tracker_legacy/' . $filename . '[/media]';
+                    } else {
+                        $_POST['file' . strval($i)] = get_base_url() . '/' . $relativepath;
+                        $text = '[attachment thumb="1" description="' . comcode_escape($file['description']) . '" filename="' . comcode_escape($file['filename']) . '"]post_' . strval($i) . '[/attachment]';
+                    }
 
                     actualise_post_comment(
                         true,
@@ -830,6 +791,26 @@ class Hook_addon_registry_cms_homesite_tracker
 
                 $start += $max;
             } while (count($rows) > 0);
+
+            // step 10: Migrate monitoring (as comment_posted notifications)
+            $identifier_field = $GLOBALS['SITE_DB']->query_select_value('catalogue_fields', 'id', ['c_name' => 'tracker', $GLOBALS['SITE_DB']->translate_field_ref('cf_name') => do_lang('IDENTIFIER')]);
+            $start = 0;
+            $max = 100;
+            $rows = [];
+            do {
+                $rows = $GLOBALS['SITE_DB']->query('SELECT * FROM mantis_bug_monitor_table', $max, $start);
+                foreach ($rows as $row) {
+                    $source_entry = $GLOBALS['SITE_DB']->query_select_value_if_there('catalogue_efv_integer', 'ce_id', ['cf_id' => $identifier_field, 'cv_value' => $row['bug_id']]);
+                    if ($source_entry === null) {
+                        continue;
+                    }
+
+                    set_notifications('comment_posted', 'catalogue_entry_' . strval($source_entry), $row['user_id']);
+                }
+
+                $start += $max;
+            } while (count($rows) > 0);
+
 
             $NOTIFICATIONS_ON = true;
             set_mass_import_mode(false);

@@ -391,6 +391,8 @@ class Source_forum_driver_ipb3 extends Source_forum_driver_base
      */
     public function get_member_photo_url(int $member_id, bool $full = false) : string
     {
+        require_code('urls');
+
         $pic = $this->db->query_select_value_if_there('member_extra', 'photo_location', ['id' => $member_id]);
         if ($pic === null) {
             $pic = '';

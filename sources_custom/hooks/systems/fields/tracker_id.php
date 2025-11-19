@@ -84,7 +84,7 @@ class Hook_fields_tracker_id extends Hook_fields_integer
      */
     public function inputted_to_field_value(bool $editing, array $field, ?string $upload_dir = 'uploads/catalogues', ?array $old_value = null) : ?string
     {
-        if ($old_value !== null) {
+        if (($old_value !== null) && (is_numeric($old_value['cv_value']))) {
             return strval($old_value['cv_value']);
         }
 

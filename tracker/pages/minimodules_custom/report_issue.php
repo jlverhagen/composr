@@ -39,6 +39,7 @@ require_code('decision_tree');
 require_code('cms_homesite_tracker');
 require_code('cms_homesite');
 require_lang('decision_tree');
+require_lang('tracker');
 
 if (addon_installed('captcha')) {
     require_code('captcha');
@@ -52,21 +53,34 @@ $type = get_param_string('type', 'browse');
 if ($type == 'submit') {
     require_code('version2');
 
-    // Required
     $_category = post_param_string('category');
     $_severity = explode(':', post_param_string('severity'));
     $severity = $_severity[0];
     $summary = post_param_string('summary');
     $description = post_param_string('description');
 
-    // Optional
     $addon = post_param_string('addon', 'core');
     $version = get_version_dotted__from_anything(post_param_string('version', ''));
-    $steps_to_reproduce = post_param_string('steps_to_reproduce', '');
     $additional_information = post_param_string('additional_information', '');
     $search = post_param_integer('search', 0);
     $search_tutorials = post_param_integer('search_tutorials', 0);
     $remote_access = post_param_integer('remote_access', 0);
+
+    $steps_to_reproduce = '';
+    foreach ($_POST as $key => $value) {
+        if (strpos($key, 'steps_to_reproduce_') !== 0) {
+            continue;
+        }
+
+        if (trim($value) == '') {
+            continue;
+        }
+
+        if (trim($steps_to_reproduce) != '') {
+            $steps_to_reproduce .= "\n";
+        }
+        $steps_to_reproduce .= post_param_string($key);
+    }
 
     // Map category values from the form to their category title language string code
     $categories = [
@@ -79,18 +93,6 @@ if ($type == 'submit') {
 
     // Get category
     $category = $GLOBALS['SITE_DB']->query_select_value('catalogue_categories', 'id', ['c_name' => 'tracker', $GLOBALS['SITE_DB']->translate_field_ref('cc_title') => do_lang($categories[$_category])]);
-
-    // Map severities to their integer value
-    $severities = [
-        'Feature-request' => 10,
-        'Trivial-bug' => 20,
-        'Minor-bug' => 50,
-        'Major-bug' => 60,
-        'Security-hole' => 95
-    ];
-
-    // Set security reports to private
-    $view_state = ($severities[$severity] == 95) ? 50 : 10;
 
     // Add confirmation tick boxes if applicable
     if ($search == 1) {
@@ -138,12 +140,12 @@ if ($type == 'submit') {
     $decision_tree = [
         'start' => [
             'title' => 'Report an Issue or Feature / Suggestion',
-            'text' => 'Thank you for taking the time to report an issue or a feature / suggestion for ' . brand_name() . '. Your feedback is what helps improve the software and make it the best software it can be for everyone. This wizard will guide you through the process of making an issue. If you prefer, you can make an issue directly on the tracker at ' . $BASE_URL . '/tracker/ instead. This wizard aims to simplify the process by asking questions specific to your selections.' . "\n\n" . 'Please refer to the relevant section of the [page="docs:tut-software-feedback"]providing feedback tutorial[/page] for guidance on making an effective report / issue. At any time, click the question mark next to a field for guidance on what to fill out.',
+            'text' => 'Thank you for taking the time to report an issue or a feature / suggestion for ' . brand_name() . '. Your feedback is what helps improve the software and make it the best software it can be for everyone. This wizard will guide you through the process of making an issue. If you prefer, you can make an issue (entry) directly in the tracker catalogue. This wizard aims to simplify the process by asking questions specific to your selections.' . "\n\n" . 'Please refer to the relevant section of the [page="docs:tut-software-feedback"]providing feedback tutorial[/page] for guidance on making an effective report / issue. At any time, click the question mark next to a field for guidance on what to fill out.',
             'form_method' => 'POST',
             'questions' => [
                 'search' => [
                     'label' => 'Searched the tracker for existing issues?',
-                    'description' => 'Did you already search the tracker to see if your issue was already reported by someone else? You can do so from your Admin Zone dashboard in the version block (there is a link to view reported issues), or at ' . $BASE_URL . '/tracker? We encourage you do so, but we do not require it especially if the interface is overwhelming.',
+                    'description' => 'Did you already search the tracker to see if your issue was already reported by someone else? You can do so from your Admin Zone dashboard in the version block (there is a link to view reported issues), or at ' . $BASE_URL . '/tracker . We encourage you do so, but we do not require it especially if the interface is overwhelming.',
                     'type' => 'tick',
                     'default' => '',
                     'options' => '',
@@ -193,7 +195,6 @@ if ($type == 'submit') {
                     'description' => 'Choose the relevant addon for this issue. If you do not know, you can make a best guess; developers can always correct this later.',
                     'type' => 'addon',
                     'default' => '',
-                    'default_list' => '',
                     'options' => '',
                     'required' => true,
                 ],
@@ -328,6 +329,9 @@ if ($type == 'submit') {
             'inform' => [
                 'An issue will be created after you proceed from this screen. You can then include relevant uploads / files in a follow-up comment on the issue.'
             ],
+            'notice' => [
+                'You should put error messages or copied text in a \[code\] tag (or post as a screenshot later) to ensure the Comcode and Tempcode does not get processed.',
+            ],
             'warn' => [
                 'Do not ever submit account credentials or other secrets or keys in an issue.'
             ],
@@ -344,7 +348,7 @@ if ($type == 'submit') {
                 'description' => [
                     'label' => 'Describe your feature / request',
                     'description' => 'Elaborate your feature / request in more details here. What would you like to see implemented? How should it be implemented? What should it do? etc.',
-                    'type' => 'long_text',
+                    'type' => 'long_trans',
                     'default' => '',
                     'options' => '',
                     'required' => true,
@@ -352,14 +356,14 @@ if ($type == 'submit') {
                 'additional_information' => [
                     'label' => 'How will this benefit the software? + Additional Info',
                     'description' => 'Please provide any additional information about your request here. For example, you can elaborate on why you believe this feature / request will improve the overall ' . brand_name() . ' software for everyone.',
-                    'type' => 'long_text',
+                    'type' => 'long_trans',
                     'default' => '',
                     'options' => '',
                     'required' => true,
                 ],
             ],
             'needs_captcha' => ((addon_installed('captcha')) && (get_option('captcha_on_feedback') == '1') && (use_captcha())),
-            'next' => build_url(['page' => '_SELF', 'type' => 'submit']),
+            'next' => build_url(['page' => 'report_issue', 'type' => 'submit'], get_module_zone('report_issue')),
         ],
 
         'bug' => [
@@ -372,8 +376,11 @@ if ($type == 'submit') {
             'inform' => [
                 'An issue will be created after you proceed from this screen. You can then include relevant uploads / files in a follow-up comment on the issue.'
             ],
+            'notice' => [
+                'You should put error messages or copied text in a \[code\] tag (or post as a screenshot later) to ensure the Comcode and Tempcode does not get processed.',
+            ],
             'warn' => [
-                'Do not ever submit account credentials or other secrets or keys in an issue.'
+                'Do not ever submit account credentials or other secrets or keys in an issue.',
             ],
             'form_method' => 'POST',
             'questions' => [
@@ -388,7 +395,7 @@ if ($type == 'submit') {
                 'description' => [
                     'label' => 'Explain the bug / issue',
                     'description' => 'Elaborate on the bug / issue in more details here. What did you attempt to do? What did you expect to happen? What actually happened? What error messages did you get?',
-                    'type' => 'long_text',
+                    'type' => 'long_trans',
                     'default' => '',
                     'options' => '',
                     'required' => true,
@@ -404,7 +411,7 @@ if ($type == 'submit') {
                 'additional_information' => [
                     'label' => 'Additional Info / Workarounds / Server Environment',
                     'description' => 'Please provide any additional information about the bug / issue here. For example, you can provide relevant non-sensitive details about your server environment... PHP version, web server and version, RAM/CPU, etc (not relevant if reporting a homesite issue). Or if you found a workaround, you can mention it here.',
-                    'type' => 'long_text',
+                    'type' => 'long_trans',
                     'default' => '',
                     'options' => '',
                     'required' => false,
@@ -419,7 +426,7 @@ if ($type == 'submit') {
                 ],
             ],
             'needs_captcha' => ((addon_installed('captcha')) && (get_option('captcha_on_feedback') == '1') && (use_captcha())),
-            'next' => build_url(['page' => '_SELF', 'type' => 'submit']),
+            'next' => build_url(['page' => 'report_issue', 'type' => 'submit'], get_module_zone('report_issue')),
         ],
 
         'security' => [
@@ -433,11 +440,12 @@ if ($type == 'submit') {
                 'An issue will be created after you proceed from this screen. You can then include relevant uploads / files in a follow-up comment on the issue.'
             ],
             'notice' => [
-                'Security issues will be reported to the tracker privately; only you (assuming you are logged in) and the core developers will see the issue.'
+                'Security issues will be reported to the tracker privately; only the staff can view security issues. You will be notified when your issue is resolved or if the developers need more information.',
+                'You should put error messages or copied text in a \[code\] tag (or post as a screenshot later) to ensure the Comcode and Tempcode does not get processed.',
             ],
             'warn' => [
                 'Please follow responsible practices for disclosing security vulnerabilities, located at ' . $BASE_URL . '/docs/tut-software-feedback.htm#title__46 . Do not publicly disclose the vulnerability anywhere until a confirmed patch has been released by the Core Development Team.',
-                'Do not ever submit account credentials or other secrets or keys in an issue.'
+                'Do not ever submit account credentials or other secrets or keys in an issue.',
             ],
             'form_method' => 'POST',
             'questions' => [
@@ -452,7 +460,7 @@ if ($type == 'submit') {
                 'description' => [
                     'label' => 'Explain the vulnerability',
                     'description' => 'Elaborate on the security vulnerability in more details here. What did you attempt to do? What did you expect to happen? What actually happened? What error messages did you get? How did the vulnerability affect the stability of your site?',
-                    'type' => 'long_text',
+                    'type' => 'long_trans',
                     'default' => '',
                     'options' => '',
                     'required' => true,
@@ -468,7 +476,7 @@ if ($type == 'submit') {
                 'additional_information' => [
                     'label' => 'Additional Info / Workarounds / Server Environment',
                     'description' => 'Please provide any additional information about the vulnerability here. For example, you can provide relevant non-sensitive details about your server environment... PHP version, web server and version, RAM/CPU, etc (not relevant if reporting a vulnerability with the homesite). Or you can provide workarounds to negate the security hole until it is patched.',
-                    'type' => 'long_text',
+                    'type' => 'long_trans',
                     'default' => '',
                     'options' => '',
                     'required' => false,
@@ -483,7 +491,7 @@ if ($type == 'submit') {
                 ],
             ],
             'needs_captcha' => ((addon_installed('captcha')) && (get_option('captcha_on_feedback') == '1') && (use_captcha())),
-            'next' => build_url(['page' => '_SELF', 'type' => 'submit']),
+            'next' => build_url(['page' => 'report_issue', 'type' => 'submit'], get_module_zone('report_issue')),
         ],
 
         'doc_issue' => [
@@ -527,6 +535,9 @@ if ($type == 'submit') {
                 'Did you know? You can create your own off-site tutorials and link them to the tutorial index. Just go to ' . $BASE_URL . '/docs/tutorials.htm and scroll down to "Need better information?"',
                 'An issue will be created after you proceed from this screen. You can then include relevant uploads / files in a follow-up comment on the issue.'
             ],
+            'notice' => [
+                'You should put error messages or copied text in a \[code\] tag (or post as a screenshot later) to ensure the Comcode and Tempcode does not get processed.',
+            ],
             'warn' => [
                 'Do not ever submit account credentials or other secrets or keys in an issue.'
             ],
@@ -551,7 +562,7 @@ if ($type == 'submit') {
                 'description' => [
                     'label' => 'Description of Tutorial / Additions',
                     'description' => 'Elaborate on what information you would like to see in this new tutorial.',
-                    'type' => 'long_text',
+                    'type' => 'long_trans',
                     'default' => '',
                     'options' => '',
                     'required' => true,
@@ -559,14 +570,14 @@ if ($type == 'submit') {
                 'additional_information' => [
                     'label' => 'How will this benefit the community?',
                     'description' => 'Please let us know why you feel this new tutorial will benefit the ' . brand_name() . ' community at large (why it should be an official tutorial instead of one you can make yourself off-site and add via off-site links).',
-                    'type' => 'long_text',
+                    'type' => 'long_trans',
                     'default' => '',
                     'options' => '',
                     'required' => true,
                 ],
             ],
             'needs_captcha' => ((addon_installed('captcha')) && (get_option('captcha_on_feedback') == '1') && (use_captcha())),
-            'next' => build_url(['page' => '_SELF', 'type' => 'submit']),
+            'next' => build_url(['page' => 'report_issue', 'type' => 'submit'], get_module_zone('report_issue')),
         ],
 
         'doc_fix' => [
@@ -578,6 +589,9 @@ if ($type == 'submit') {
             'text' => 'Step 3 of 3: I will now ask you a few questions about your tutorial issue. If you need help understanding what to put in a field, click the ? icon.',
             'inform' => [
                 'An issue will be created after you proceed from this screen. You can then include relevant uploads / files in a follow-up comment on the issue.'
+            ],
+            'notice' => [
+                'You should put error messages or copied text in a \[code\] tag (or post as a screenshot later) to ensure the Comcode and Tempcode does not get processed.',
             ],
             'warn' => [
                 'Do not ever submit account credentials or other secrets or keys in an issue.'
@@ -595,7 +609,7 @@ if ($type == 'submit') {
                 'description' => [
                     'label' => 'Explain the tutorial error(s) and their corrections',
                     'description' => 'Explain what error(s) you found in the tutorial and to what they should be corrected (if you can find the correct information).',
-                    'type' => 'long_text',
+                    'type' => 'long_trans',
                     'default' => '',
                     'options' => '',
                     'required' => true,
@@ -603,14 +617,14 @@ if ($type == 'submit') {
                 'additional_information' => [
                     'label' => 'Additional Information',
                     'description' => 'Please provide any additional information you have pertaining to this issue, if applicable.',
-                    'type' => 'long_text',
+                    'type' => 'long_trans',
                     'default' => '',
                     'options' => '',
                     'required' => false,
                 ],
             ],
             'needs_captcha' => ((addon_installed('captcha')) && (get_option('captcha_on_feedback') == '1') && (use_captcha())),
-            'next' => build_url(['page' => '_SELF', 'type' => 'submit']),
+            'next' => build_url(['page' => 'report_issue', 'type' => 'submit'], get_module_zone('report_issue')),
         ],
     ];
 
