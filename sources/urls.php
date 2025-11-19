@@ -1329,10 +1329,6 @@ function find_id_moniker(array $url_parts, string $zone, bool $search_redirects 
     }
     $ob_info = isset($CONTENT_OBS[$looking_for]) ? $CONTENT_OBS[$looking_for] : null;
     if ($ob_info === null) {
-        if ($page == 'catalogues') {
-            var_dump($CONTENT_OBS);
-            exit();
-        }
         return null;
     }
 
