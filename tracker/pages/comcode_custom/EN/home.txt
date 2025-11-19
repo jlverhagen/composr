@@ -1,0 +1,18 @@
+﻿[title]{$BRAND_NAME} Issue Tracker[/title]
+
+Welcome to the issue tracker! Here, you can view reported software issues.
+
+All users are encouraged to [page="_SEARCH:report_issue"]report software issues or suggestions[/page] to the tracker. You will be awarded points for each issue you report that gets completed by someone.
+
+Developers are encouraged to go through the tracker and implement issues. You will receive points for issues you implement. Prioritise issues in the following order:
+ - Security issues
+ - Major issues
+ - Minor issues
+ - Trivial issues
+ - Feature requests
+  - Be aware this requires you create a measure for voting, and you achieve a simple majority, before implementing into core code. This is not necessary for non-bundled addons.
+
+Please read our [page="docs:tut-software-feedback"]providing feedback tutorial[/page] page before [page="_SEARCH:report_issue"]reporting an issue[/page].
+
+[b]Viewing of tracker issues on this page is not currently implemented[/b]. Please [page="_SEARCH:catalogues:index:tracker"]click here to view the catalogue of issues[/page].
+
