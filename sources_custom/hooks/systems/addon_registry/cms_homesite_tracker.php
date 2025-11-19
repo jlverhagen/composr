@@ -624,9 +624,6 @@ class Hook_addon_registry_cms_homesite_tracker
             } while (count($rows) > 0);
 
             // step 8: Migrate bug files as their own comments
-            if (addon_installed('filedump')) {
-                make_missing_directory(get_custom_file_base() . '/uploads/filedump/tracker_legacy');
-            }
             $identifier_field = $GLOBALS['SITE_DB']->query_select_value('catalogue_fields', 'id', ['c_name' => 'tracker', $GLOBALS['SITE_DB']->translate_field_ref('cf_name') => do_lang('IDENTIFIER')]);
             $title_field = $GLOBALS['SITE_DB']->query_select_value('catalogue_fields', 'id', ['c_name' => 'tracker', $GLOBALS['SITE_DB']->translate_field_ref('cf_name') => do_lang('TITLE')]);
             $hotfix_field = $GLOBALS['SITE_DB']->query_select_value('catalogue_fields', 'id', ['c_name' => 'tracker', $GLOBALS['SITE_DB']->translate_field_ref('cf_name') => do_lang('HOTFIXES')]);
@@ -638,7 +635,7 @@ class Hook_addon_registry_cms_homesite_tracker
                 $files = $GLOBALS['SITE_DB']->query('SELECT * FROM mantis_bug_file_table', $max, $start);
                 foreach ($files as $i => $file) {
                     $relativepath = 'tracker_legacy/uploads/' . $file['diskfile'];
-                    $realpath = get_file_base() . '/tracker_legacy/uploads/' . $file['diskfile'];
+                    $realpath = get_custom_file_base() . '/tracker_legacy/uploads/' . $file['diskfile'];
                     if (!is_file($realpath)) {
                         continue;
                     }
@@ -647,7 +644,7 @@ class Hook_addon_registry_cms_homesite_tracker
                     if ($file['diskfile'] != $file['filename']) {
                         @copy($realpath, get_file_base() . '/tracker_legacy/uploads/' . $file['filename']);
                         $relativepath = 'tracker_legacy/uploads/' . $file['filename'];
-                        $realpath = get_file_base() . '/tracker_legacy/uploads/' . $file['filename'];
+                        $realpath = get_custom_file_base() . '/tracker_legacy/uploads/' . $file['filename'];
                         if (!is_file($realpath)) {
                             continue;
                         }
@@ -694,7 +691,7 @@ class Hook_addon_registry_cms_homesite_tracker
                     // Prefer media file, else use an attachment
                     if (addon_installed('filedump')) {
                         $filename = $file['filename'];
-                        add_filedump_file('tracker_legacy/', $filename, $realpath, $file['description'], false, false, 'rename');
+                        add_filedump_file('/tracker_legacy/', $filename, $realpath, $file['description'], false, false, 'rename');
                         $text = '[media]' . $relativepath . '[/media]';
                     } else {
                         $_POST['file' . strval($i)] = get_base_url() . '/' . $relativepath;
