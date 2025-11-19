@@ -14,5 +14,12 @@ Developers are encouraged to go through the tracker and implement issues. You wi
 
 Please read our [page="docs:tut-software-feedback"]providing feedback tutorial[/page] page before [page="_SEARCH:report_issue"]reporting an issue[/page].
 
-[b]Viewing of tracker issues on this page is not currently implemented[/b]. Please [page="_SEARCH:catalogues:index:tracker"]click here to view the catalogue of issues[/page].
+[b][page="_SEARCH:catalogues:index:tracker"]Click here to view the full issue tracker catalogue[/page][/b].
 
+[b][page="_SEARCH:report-issue"]Click here to report an issue or suggestion[/page][/b].
+
+[block title="Search tracker issues" input_fields="content=Search for" limit_to="catalogue_entries" zone="_SEARCH" sort="relevance" days="-1" direction="DESC" only_titles="0" only_search_meta="0" extra="catalogue_name=tracker"]main_search[/block]
+
+[box="Open issues"]
+[block catalogue="tracker" sorting="1" max="10" start="0" pagination="1" as_guest="0" check="1" default_sort="0 DESC" filter="Status=open"]main_cc_embed[/block]
+[/box]
