@@ -53,21 +53,34 @@ $type = get_param_string('type', 'browse');
 if ($type == 'submit') {
     require_code('version2');
 
-    // Required
     $_category = post_param_string('category');
     $_severity = explode(':', post_param_string('severity'));
     $severity = $_severity[0];
     $summary = post_param_string('summary');
     $description = post_param_string('description');
 
-    // Optional
     $addon = post_param_string('addon', 'core');
     $version = get_version_dotted__from_anything(post_param_string('version', ''));
-    $steps_to_reproduce = post_param_string('steps_to_reproduce', '');
     $additional_information = post_param_string('additional_information', '');
     $search = post_param_integer('search', 0);
     $search_tutorials = post_param_integer('search_tutorials', 0);
     $remote_access = post_param_integer('remote_access', 0);
+
+    $steps_to_reproduce = '';
+    foreach ($_POST as $key => $value) {
+        if (strpos($key, 'steps_to_reproduce_') !== 0) {
+            continue;
+        }
+
+        if (trim($value) == '') {
+            continue;
+        }
+
+        if (trim($steps_to_reproduce) != '') {
+            $steps_to_reproduce .= "\n";
+        }
+        $steps_to_reproduce .= post_param_string($key);
+    }
 
     // Map category values from the form to their category title language string code
     $categories = [
