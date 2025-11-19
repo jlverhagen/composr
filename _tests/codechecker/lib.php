@@ -437,9 +437,11 @@ if (!function_exists('get_hook_ob')) {
      * @param  ID_TEXT $hook The name of the hook
      * @param  string $classname_prefix The hook class-name prefix, the classes are named {$classname_prefix}{$hook}
      * @param  boolean $fail_ok Whether to return null opposed to failing if the hook or its object does not exist
+     * @param  boolean $cache Whether to avoid constructing duplicate hooks
+     * @param  array $parameters Array of parameters to pass to the hook construct
      * @return ?object The hook implementation object (null: hook was not found and $fail_ok was true)
      */
-    function get_hook_ob(string $type, string $subtype, string $hook, string $classname_prefix, bool $fail_ok = false) : ?object
+    function get_hook_ob(string $type, string $subtype, string $hook, string $classname_prefix, bool $fail_ok = false, bool $cache = true, array $parameters = []) : ?object
     {
         if (!hook_exists($type, $subtype, $hook)) {
             if ($fail_ok) {
@@ -451,7 +453,7 @@ if (!function_exists('get_hook_ob')) {
 
         require_code('hooks/' . $type . '/' . $subtype . '/' . $hook);
 
-        $ob = object_factory(($classname_prefix . $hook), true, [], true);
+        $ob = object_factory(($classname_prefix . $hook), true, $parameters, $cache);
         if ((!$fail_ok) && ($ob === null)) {
             $error_message = 'Internal error: Could not construct class ' . ($classname_prefix . $hook);
             warn_exit($error_message);
