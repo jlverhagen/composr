@@ -426,6 +426,7 @@ class Hook_addon_registry_cms_homesite_tracker
             require_code('uploads');
             require_code('comcode');
             require_code('comcode_renderer');
+            require_code('notifications');
             if (addon_installed('filedump')) {
                 require_code('filedump');
             }
@@ -634,6 +635,7 @@ class Hook_addon_registry_cms_homesite_tracker
             do {
                 $files = $GLOBALS['SITE_DB']->query('SELECT * FROM mantis_bug_file_table', $max, $start);
                 foreach ($files as $i => $file) {
+                    $filename = $file['diskfile'];
                     $relativepath = 'tracker_legacy/uploads/' . $file['diskfile'];
                     $realpath = get_custom_file_base() . '/tracker_legacy/uploads/' . $file['diskfile'];
                     if (!is_file($realpath)) {
@@ -643,6 +645,7 @@ class Hook_addon_registry_cms_homesite_tracker
                     // We must rename to the actual file name so extension checks work correctly
                     if ($file['diskfile'] != $file['filename']) {
                         @copy($realpath, get_file_base() . '/tracker_legacy/uploads/' . $file['filename']);
+                        $filename = $file['filename'];
                         $relativepath = 'tracker_legacy/uploads/' . $file['filename'];
                         $realpath = get_custom_file_base() . '/tracker_legacy/uploads/' . $file['filename'];
                         if (!is_file($realpath)) {
@@ -690,9 +693,8 @@ class Hook_addon_registry_cms_homesite_tracker
 
                     // Prefer media file, else use an attachment
                     if (addon_installed('filedump')) {
-                        $filename = $file['filename'];
                         add_filedump_file('/tracker_legacy/', $filename, $realpath, $file['description'], false, false, 'rename');
-                        $text = '[media]' . $relativepath . '[/media]';
+                        $text = '[media]uploads/filedump/tracker_legacy/' . $filename . '[/media]';
                     } else {
                         $_POST['file' . strval($i)] = get_base_url() . '/' . $relativepath;
                         $text = '[attachment thumb="1" description="' . comcode_escape($file['description']) . '" filename="' . comcode_escape($file['filename']) . '"]post_' . strval($i) . '[/attachment]';
@@ -760,6 +762,26 @@ class Hook_addon_registry_cms_homesite_tracker
 
                 $start += $max;
             } while (count($rows) > 0);
+
+            // step 10: Migrate monitoring (as comment_posted notifications)
+            $identifier_field = $GLOBALS['SITE_DB']->query_select_value('catalogue_fields', 'id', ['c_name' => 'tracker', $GLOBALS['SITE_DB']->translate_field_ref('cf_name') => do_lang('IDENTIFIER')]);
+            $start = 0;
+            $max = 100;
+            $rows = [];
+            do {
+                $rows = $GLOBALS['SITE_DB']->query('SELECT * FROM mantis_bug_monitor_table', $max, $start);
+                foreach ($rows as $row) {
+                    $source_entry = $GLOBALS['SITE_DB']->query_select_value_if_there('catalogue_efv_integer', 'ce_id', ['cf_id' => $identifier_field, 'cv_value' => $row['bug_id']]);
+                    if ($source_entry === null) {
+                        continue;
+                    }
+
+                    set_notifications('comment_posted', 'catalogue_entry_' . strval($source_entry), $row['user_id']);
+                }
+
+                $start += $max;
+            } while (count($rows) > 0);
+
 
             $NOTIFICATIONS_ON = true;
             set_mass_import_mode(false);
