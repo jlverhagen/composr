@@ -69,6 +69,7 @@ class Block_main_cc_embed
         null
         :
         [
+            ((array_key_exists('catalogue', $map)) && ($map['catalogue'] != '')) ? intval($map['catalogue']) : null,
             array_key_exists('as_guest', $map) ? ($map['as_guest'] == '1') : false,
             get_param_integer($block_id . '_max',
             array_key_exists('max', $map) ? intval($map['max']) : 30),
@@ -76,7 +77,7 @@ class Block_main_cc_embed
             ((array_key_exists('pagination', $map) ? $map['pagination'] : '0') == '1'),
             ((array_key_exists('root', $map)) && ($map['root'] != '')) ? intval($map['root']) : null,
             ((array_key_exists('sorting', $map) ? $map['sorting'] : '0') == '1'),
-            array_key_exists('select', $map) ? $map['select'] : '',
+            ((array_key_exists('default_sort', $map)) && ($map['default_sort'] != '')) ? intval($map['default_sort']) : null,
             get_param_string($block_id . '_order', array_key_exists('sort', $map) ? $map['sort'] : ''),
             array_key_exists('display_type', $map) ? $map['display_type'] : get_param_string('keep_cat_display_type', ''),
             array_key_exists('template_set', $map) ? $map['template_set'] : '',
@@ -111,11 +112,15 @@ PHP;
         $check_perms = array_key_exists('check', $map) ? ($map['check'] == '1') : true;
 
         if (@cms_empty_safe($map['param'])) {
-            $_category_id = $GLOBALS['SITE_DB']->query_select('catalogue_entries', ['cc_id', 'COUNT(*) AS cnt'], [], 'GROUP BY cc_id ORDER BY cnt DESC', 1);
-            if (!empty($_category_id)) {
-                $category_id = $_category_id[0]['cc_id'];
+            if (@cms_empty_safe($map['catalogue'])) {
+                $_category_id = $GLOBALS['SITE_DB']->query_select('catalogue_entries', ['cc_id', 'COUNT(*) AS cnt'], [], 'GROUP BY cc_id ORDER BY cnt DESC', 1);
+                if (!empty($_category_id)) {
+                    $category_id = $_category_id[0]['cc_id'];
+                } else {
+                    $category_id = db_get_first_id();
+                }
             } else {
-                $category_id = db_get_first_id();
+                $category_id = null; // No limit
             }
         } else {
             $category_id = intval($map['param']);
@@ -134,20 +139,22 @@ PHP;
             $select = selectcode_to_sqlfragment($map['select'], 'r.id', 'catalogue_categories', 'cc_parent_id', 'cc_id', 'id');
         }
 
-        // Pick up details about category
-        $categories = $GLOBALS['SITE_DB']->query_select('catalogue_categories', ['*'], ['id' => $category_id], '', 1);
-        if (!array_key_exists(0, $categories)) {
-            return do_lang_tempcode('MISSING_RESOURCE', 'catalogue_category');
+        // Pick up details about category and catalogue
+        if ($category_id !== null) {
+            $categories = $GLOBALS['SITE_DB']->query_select('catalogue_categories', ['*'], ['id' => $category_id], '', 1);
+            if (!array_key_exists(0, $categories)) {
+                return do_lang_tempcode('MISSING_RESOURCE', 'catalogue_category');
+            }
+            $category = $categories[0];
+            $catalogue_name = $category['c_name'];
+        } else {
+            $catalogue_name = $map['catalogue'];
         }
-        $category = $categories[0];
-
-        // Pick up details about catalogue
-        $catalogue_name = $category['c_name'];
         $catalogue = load_catalogue_row($catalogue_name);
 
         $sort = get_param_string($block_id . '_order', array_key_exists('sort', $map) ? $map['sort'] : '');
         if ($sort == '') {
-            $sort = null;
+            $sort = array_key_exists('default_sort', $map) ? $map['default_sort'] : null;
         }
         $max = get_param_integer($block_id . '_max', array_key_exists('max', $map) ? intval($map['max']) : 30);
         $start = get_param_integer($block_id . '_start', array_key_exists('start', $map) ? intval($map['start']) : 0);
@@ -181,10 +188,17 @@ PHP;
             $display_type = get_param_integer('keep_cat_display_type', $catalogue['c_display_type']);
         }
 
+        $is_ecommerce = is_ecommerce_catalogue($catalogue_name, $catalogue);
+        if ($is_ecommerce) {
+            if (get_forum_type() != 'cns') {
+                return do_template('RED_ALERT', ['_GUID' => 'e477192e0a3455d2a95e698d8adbb529', 'TEXT' => do_lang_tempcode('NO_CNS')]);
+            }
+        }
+
         // Get entries
         $as_guest = array_key_exists('as_guest', $map) ? ($map['as_guest'] == '1') : false;
         $viewing_member_id = $as_guest ? $GLOBALS['FORUM_DRIVER']->get_guest_id() : null;
-        list($entry_buildup, $sorting, , $max_rows) = render_catalogue_category_entry_buildup(($select === null) ? $category_id : null, $catalogue_name, $catalogue, 'CATEGORY', $tpl_set, $max, $start, $select, $root, $display_type, true, null, $filter, $sort, $block_id . '_order', $viewing_member_id, $check_perms);
+        list($entry_buildup, $sorting, , $max_rows) = render_catalogue_category_entry_buildup((($select === null) && ($category_id !== null)) ? $category_id : null, $catalogue_name, $catalogue, 'CATEGORY', $tpl_set, $max, $start, $select, $root, $display_type, true, null, $filter, $sort, $block_id . '_order', $viewing_member_id, $check_perms);
 
         // Sorting and pagination
         if (!$do_sorting) {
@@ -210,13 +224,6 @@ PHP;
             case C_DT_GRID:
                 $display_type_str = 'GRID';
                 break;
-        }
-
-        $is_ecommerce = is_ecommerce_catalogue($catalogue_name, $catalogue);
-        if ($is_ecommerce) {
-            if (get_forum_type() != 'cns') {
-                return do_template('RED_ALERT', ['_GUID' => 'e477192e0a3455d2a95e698d8adbb529', 'TEXT' => do_lang_tempcode('NO_CNS')]);
-            }
         }
 
         $entry_buildup = apply_quick_caching($entry_buildup);
