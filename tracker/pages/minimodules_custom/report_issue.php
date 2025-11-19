@@ -195,7 +195,7 @@ if ($type == 'submit') {
                     'description' => 'Choose the relevant addon for this issue. If you do not know, you can make a best guess; developers can always correct this later.',
                     'type' => 'addon',
                     'default' => '',
-                    'options' => '',
+                    'options' => 'auto_sort=on',
                     'required' => true,
                 ],
                 'version' => [
@@ -248,7 +248,7 @@ if ($type == 'submit') {
                     'description' => 'Please choose the relevant non-bundled addon. For themes, and addons that are not listed on the homesite, leave this blank and specify the name in the summary (on the next step).',
                     'type' => 'addon',
                     'default' => '',
-                    'options' => '',
+                    'options' => 'auto_sort=on',
                     'required' => false,
                 ],
                 'version' => [
