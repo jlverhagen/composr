@@ -44,11 +44,15 @@
 		<link label="{!HOME}">:</link>
 	</substitution>
 
-	<substitution match_key="_WILD:catalogues:index:features:tree=0" final="true"> <!-- Skip catalogues list. -->
+	<!-- composr.app -->
+	<substitution match_key="_WILD:catalogues:index:features" final="true"> <!-- Skip catalogues list. -->
 		<link label="{!FEATURES}">:features</link>
 	</substitution>
-	<substitution match_key="_WILD:catalogues:index:partners:tree=0" final="true"> <!-- Skip catalogues list. -->
+	<substitution match_key="_WILD:catalogues:index:partners" final="true"> <!-- Skip catalogues list. -->
 		<link label="Composr Partners">:partners</link>
+	</substitution>
+	<substitution match_key="_WILD:catalogues:index:tracker" final="true"> <!-- Link to tracker zone -->
+		<link label="{!tracker:TRACKER_ISSUES}">tracker:</link>
 	</substitution>
 	
 	<!-- Simple catalogue links back to home page (most people don't want to expose catalogues technically as such) -->
