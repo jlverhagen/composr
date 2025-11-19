@@ -979,7 +979,7 @@ function actualise_post_comment(bool $allow_comments, string $feedback_type, str
         ((!$private) && ($post != '')) ? ($real_feedback_type . '_' . $content_id) : null,
 
         $time,
-        $submitter
+        null // We do not want members getting points for spacer posts
     );
 
     if (!is_integer($forum)) {
