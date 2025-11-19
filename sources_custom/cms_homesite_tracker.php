@@ -112,31 +112,45 @@ function create_tracker_issue(string $version, string $tracker_title, string $tr
 
     require_code('catalogues2');
     require_code('content2');
+    require_code('fields');
 
     require_lang('tracker');
+    require_lang('addons');
 
     // Map field names to catalogue field IDs
-    $fields = $GLOBALS['SITE_DB']->query_select('catalogue_fields', ['id', 'cf_name'], ['c_name' => 'tracker']);
+    $fields = $GLOBALS['SITE_DB']->query_select('catalogue_fields', ['*'], ['c_name' => 'tracker']);
     if (count($fields) == 0) {
         warn_exit(do_lang_tempcode('INTERNAL_ERROR', escape_html('TODO')));
     }
     $field_map = [];
     foreach ($fields as $field) {
-        $field_map[get_translated_text($field['cf_name'])] = $field['id'];
+        $field_map[get_translated_text($field['cf_name'])] = $field;
+    }
+
+    // These fields could be null passed in, but they cannot be null when creating the catalogue entry
+    if ($handler_id === null) {
+        $field = $field_map[do_lang('HANDLER')];
+        $object = get_fields_hook($field['cf_type']);
+        $handler_id = intval($object->inputted_to_field_value(false, $field, 'uploads/catalogues', null));
+    }
+    if ($identifier === null) {
+        $field = $field_map[do_lang('IDENTIFIER')];
+        $object = get_fields_hook($field['cf_type']);
+        $identifier = intval($object->inputted_to_field_value(false, $field, 'uploads/catalogues', null));
     }
 
     // Build our catalogue entry map
     $map = [
-        $field_map[do_lang('VERSION')] => $version,
-        $field_map[do_lang('TITLE')] => $tracker_title,
-        $field_map[do_lang('ISSUE_TYPE')] => $tracker_type,
-        $field_map[do_lang('DESCRIPTION')] => $tracker_description,
-        $field_map[do_lang('ADDITIONAL_INFORMATION')] => $tracker_additional,
-        $field_map[do_lang('ADDON')] => $tracker_addon,
-        $field_map[do_lang('HANDLER')] => ($handler_id === null) ? '' : strval($handler_id),
-        $field_map[do_lang('STEPS_TO_REPRODUCE')] => $steps_to_reproduce,
-        $field_map[do_lang('STATUS')] => $status,
-        $field_map[do_lang('IDENTIFIER')] => ($identifier === null) ? '' : strval($identifier),
+        $field_map[do_lang('VERSION')]['id'] => $version,
+        $field_map[do_lang('TITLE')]['id'] => $tracker_title,
+        $field_map[do_lang('ISSUE_TYPE')]['id'] => $tracker_type,
+        $field_map[do_lang('DESCRIPTION')]['id'] => $tracker_description,
+        $field_map[do_lang('ADDITIONAL_INFORMATION')]['id'] => $tracker_additional,
+        $field_map[do_lang('ADDON')]['id'] => $tracker_addon,
+        $field_map[do_lang('HANDLER')]['id'] => strval($handler_id),
+        $field_map[do_lang('STEPS_TO_REPRODUCE')]['id'] => $steps_to_reproduce,
+        $field_map[do_lang('STATUS')]['id'] => $status,
+        $field_map[do_lang('IDENTIFIER')]['id'] => strval($identifier),
     ];
 
     // We only want to use title in SEO because everything else could contain garbage text (example code) or sensitive information
@@ -160,17 +174,7 @@ function create_tracker_issue(string $version, string $tracker_title, string $tr
         $description
     );
 
-    // Now we need to get the tracker issue ID
-    $fields = $GLOBALS['SITE_DB']->query_select('catalogue_fields', ['id'], ['c_name' => 'tracker', $GLOBALS['SITE_DB']->translate_field_ref('cf_name') => do_lang('IDENTIFIER')]);
-    $values = get_catalogue_entry_field_values('tracker', $entry_id, collapse_1d_complexity('id', $fields));
-    $val = $values[0]['cf_default'];
-    if (array_key_exists('effective_value_pure', $values[0])) {
-        $val = $values[0]['effective_value_pure'];
-    } elseif (array_key_exists('effective_value', $values[0])) {
-        $val = $values[0]['effective_value'];
-    }
-
-    return [$entry_id, intval($val)];
+    return [$entry_id, $identifier];
 }
 
 /**
