@@ -18,7 +18,7 @@
 
     Supported parameters for this qualification:
     1) count            -- The number of tracker issues a member must create before this qualification is satisfied (not specified: 5)
-    2) handler          -- If 1, only count issues this member handled rather than reported; -1 only counts issues reported rather than handled (not specified: 0)
+    2) handler          -- If 1, only count issues this member handled rather than reported; -1 only counts issues reported rather than handled (not specified: 0; either reported or handled)
     3) resolved_only    -- If 1, then only count resolved tracker issues (ignored for issues which the member handled) (not specified: 1)
     4) days             -- Only consider issues submitted within this many days (or last updated within this many days for handlers) (not specified: no filter)
 */
@@ -69,6 +69,8 @@ class Hook_achievement_qualifications_tracker
             return null;
         }
 
+        require_lang('tracker');
+
         // Read in parameters
         $count_required = isset($params['count']) ? intval($params['count']) : 5;
         $handler = isset($params['handler']) ? $params['handler'] : '0';
@@ -76,36 +78,40 @@ class Hook_achievement_qualifications_tracker
         $days = isset($params['days']) ? intval($params['days']) : null;
 
         // Build query
-        $sql = 'SELECT COUNT(*) AS num_issues FROM mantis_bug_table';
+        $status_field = $GLOBALS['SITE_DB']->query_select_value('catalogue_fields', 'id', ['c_name' => 'tracker', $GLOBALS['SITE_DB']->translate_field_ref('cf_name') => do_lang('STATUS')]);
+        $handler_field = $GLOBALS['SITE_DB']->query_select_value('catalogue_fields', 'id', ['c_name' => 'tracker', $GLOBALS['SITE_DB']->translate_field_ref('cf_name') => do_lang('HANDLER')]);
+        $sql = 'SELECT COUNT(*) AS num_issues FROM {prefix}catalogue_entries e';
         $where = ' WHERE 1=1';
         $where_params = ['member_id' => $member_id];
         switch ($handler) {
             case '-1':
-                $where .= ' AND reporter_id={member_id}';
+                $where .= ' AND e.ce_submitter={member_id}';
                 if ($days !== null) {
                     $where_params['time_limit'] = time() - ($days * 24 * 60 * 60);
-                    $where .= ' AND date_submitted>={time_limit}';
+                    $where .= ' AND e.ce_add_date>={time_limit}';
                 }
                 break;
             case '0':
                 if ($days !== null) {
                     $where_params['time_limit'] = time() - ($days * 24 * 60 * 60);
-                    $where .= ' AND ((reporter_id={member_id} AND date_submitted>={time_limit}) OR (handler_id={member_id} AND last_updated>={time_limit}))';
-                } else {
-                    $where .= ' AND (reporter_id={member_id} OR handler_id={member_id})';
+                    $where .= ' AND e.ce_add_date>={time_limit}';
                 }
+                $where_params['handler_field'] = $handler_field;
+                $where .= ' AND (e.ce_submitter={member_id} OR EXISTS(SELECT 1 FROM {prefix}catalogue_efv_integer i WHERE i.ce_id=e.id AND i.cf_id={handler_field} AND i.cv_value={member_id}))';
                 break;
             case '1':
-                $where .= ' AND handler_id={member_id}';
+                $where_params['handler_field'] = $handler_field;
+                $where .= ' AND EXISTS(SELECT 1 FROM {prefix}catalogue_efv_integer i WHERE i.ce_id=e.id AND i.cf_id={handler_field} AND i.cv_value={member_id})';
                 if ($days !== null) {
                     $where_params['time_limit'] = time() - ($days * 24 * 60 * 60);
-                    $where .= ' AND last_updated>={time_limit}';
+                    $where .= ' AND e.ce_add_date>={time_limit}';
                 }
                 break;
         }
         if ($resolved_only) {
-            $where .= ' AND `status`={resolved}';
-            $where_params['resolved'] = 80;
+            $where_params['status_field'] = $status_field;
+            $where_params['status_value'] = 'completed';
+            $where .= ' AND EXISTS(SELECT 1 FROM {prefix}catalogue_efv_long i WHERE i.ce_id=e.id AND i.cf_id={status_field} AND i.cv_value={status_value})';
         }
 
         // Get results
