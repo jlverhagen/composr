@@ -1518,9 +1518,10 @@ function hook_exists(string $type, string $subtype, string $hook) : bool
  * @param  string $classname_prefix The hook class-name prefix, the classes are named {$classname_prefix}{$hook}
  * @param  boolean $fail_ok Whether to return null opposed to failing if the hook or its object does not exist
  * @param  boolean $cache Whether to avoid constructing duplicate hooks
+ * @param  array $parameters Array of parameters to pass to the hook construct
  * @return ?object The hook implementation object (null: hook was not found and $fail_ok was true)
  */
-function get_hook_ob(string $type, string $subtype, string $hook, string $classname_prefix, bool $fail_ok = false, bool $cache = true) : ?object
+function get_hook_ob(string $type, string $subtype, string $hook, string $classname_prefix, bool $fail_ok = false, bool $cache = true, array $parameters = []) : ?object
 {
     if (($fail_ok) && (!hook_exists($type, $subtype, $hook))) {
         return null;
@@ -1528,7 +1529,7 @@ function get_hook_ob(string $type, string $subtype, string $hook, string $classn
 
     require_code('hooks/' . $type . '/' . $subtype . '/' . $hook, !$fail_ok);
 
-    $ob = object_factory(($classname_prefix . $hook), true, [], $cache);
+    $ob = object_factory(($classname_prefix . $hook), true, $parameters, $cache);
     if ((!$fail_ok) && ($ob === null)) {
         $error_message = do_lang_tempcode('INTERNAL_ERROR', escape_html('f45146eaa359580bb0d10db80263e9c3'));
         if (function_exists('warn_exit')) {

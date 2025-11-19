@@ -151,7 +151,7 @@ function dispatch_mail(string $subject_line, string $message_raw, string $messag
 
     sort_maps_by($priorities, '!priority');
 
-    $dispatcher = get_hook_ob('systems', 'mail_dispatchers', $priorities[0]['dispatcher'], 'Hook_mail_dispatcher_');
+    $dispatcher = get_hook_ob('systems', 'mail_dispatchers', $priorities[0]['dispatcher'], 'Hook_mail_dispatcher_', false, false, [$advanced_parameters]);
 
     // Some basic validation, don't allow e-mailing with bad data - front-end validation should have stopped us getting to this point, so we don't need to show nice localised errors; privacy must be protected for any e-mail addresses
     $data_errors = [];
