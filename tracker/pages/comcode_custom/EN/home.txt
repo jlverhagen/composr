@@ -16,7 +16,7 @@ Please read our [page="docs:tut-software-feedback"]providing feedback tutorial[/
 
 [b][page="_SEARCH:catalogues:index:tracker"]Click here to view the full issue tracker catalogue[/page][/b].
 
-[b][page="_SEARCH:report-issue"]Click here to report an issue or suggestion[/page][/b].
+[b][page="_SEARCH:report_issue"]Click here to report an issue or suggestion[/page][/b].
 
 [block title="Search tracker issues" input_fields="content=Search for" limit_to="catalogue_entries" zone="_SEARCH" sort="relevance" days="-1" direction="DESC" only_titles="0" only_search_meta="0" extra="catalogue_name=tracker"]main_search[/block]
 
