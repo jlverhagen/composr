@@ -609,9 +609,9 @@ class Hook_addon_registry_cms_homesite_tracker
 
                     // Actually, this is a commit message; put URL in the commit field instead of making a comment
                     $matches = [];
-                    if (preg_match('#^Fixed\sin\sGit\scommit\s[a-fA-F0-9]*\s\(([^\)\s]*)#', $text, $matches) > 0) {
+                    if (preg_match('#^Fixed\s+in\s+Git\s+commit\s+[a-fA-F0-9]+\s+\(([^)\s]+).*?\)#i', $text, $matches) > 0) {
                         $new_field = false;
-                        $current_commits = $GLOBALS['SITE_DB']->query_select_value_if_there('catalogue_efv_long', 'cv_value', ['cf_id' => $commit_field, 'ce_id' => $source_entry]);
+                        $current_commits = $GLOBALS['SITE_DB']->query_select_value_if_there('catalogue_efv_long', 'cv_value', ['cf_id' => $commit_field, 'ce_id' => $entry_id]);
                         if ($current_commits === null) {
                             $current_commits = '';
                             $new_field = true;
