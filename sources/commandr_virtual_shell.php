@@ -768,7 +768,7 @@ class Source_virtual_shell
         $this->parsed_input[SECTION_PARAMETERS] = [];
         $this->parsed_input[SECTION_EXTRAS] = [];
 
-        $this->fs = object_factory('commandr_fs');
+        $this->fs = object_factory('Source_commandr_fs');
 
         // Start parsing with the command
         $this->_extract_command();
