@@ -359,6 +359,21 @@ function get_pts(?int $max = null, int $start = 0) : array
     $out = new Tempcode();
     foreach ($rows as $i => $topic) {
         $topic_url = build_url(['page' => 'topicview', 'id' => $topic['t_id']], get_module_zone('topicview'));
+
+        // TODO: More elegant validation on potentially null fields
+        if (!isset($topic['t_cache_last_time'])) {
+            continue;
+        }
+        if (!isset($topic['t_cache_last_member_id'])) {
+            continue;
+        }
+        if (!isset($topic['t_pt_from_member'])) {
+            continue;
+        }
+        if (!isset($topic['t_pt_to_member'])) {
+            continue;
+        }
+
         $title = $topic['t_cache_first_title'];
         $date = get_timezoned_date_time($topic['t_cache_last_time']);
         $num_posts = $topic['t_cache_num_posts'];

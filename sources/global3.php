@@ -6303,3 +6303,23 @@ function base64url_decode(string $data) : string
 
     return base64_decode($data);
 }
+
+/**
+ * LEGACY: Add the E_STRICT bitmask if our PHP version supports it.
+ *
+ * @param  integer $bitmask The bitmask we have without E_STRICT
+ * @param  boolean $remove_instead Whether we are removing E_STRICT instead of adding
+ * @return integer The bitmask we should use; it will have (or remove) E_STRICT if we support it
+ */
+function cms_E_STRICT(int $bitmask = 0, bool $remove_instead = false) : int
+{
+    if (version_compare(PHP_VERSION, '8.4.0', '<') && defined('E_STRICT')) { // LEGACY
+        if ($remove_instead) {
+            $bitmask &= ~E_STRICT;
+        } else {
+            $bitmask &= E_STRICT;
+        }
+    }
+
+    return $bitmask;
+}

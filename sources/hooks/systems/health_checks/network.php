@@ -97,7 +97,7 @@ class Hook_health_check_network extends Source_hook_health_check
         } else {
             $result = @json_decode($data, true);
         }
-        $this->assertTrue(($result !== null) && ($result['success'] === true), 'Could not access website externally from the software homesite, got error code ' . $result['response_data']['status']);
+        $this->assertTrue(($result !== null) && ($result['success'] === true), 'Could not access website externally from the software homesite, got error code ' . (isset($result['response_data']['status']) ? $result['response_data']['status'] : ' UNKNOWN'));
     }
 
     /**

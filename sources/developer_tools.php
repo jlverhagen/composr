@@ -161,9 +161,11 @@ function semi_dev_mode_startup()
 function destrictify(bool $db_too = false)
 {
     // Turn off strictness
+    require_code('global3');
+
     $GLOBALS['SCREEN_TEMPLATE_CALLED'] = '';
     $GLOBALS['TITLE_CALLED'] = true;
-    error_reporting(E_ALL & ~E_DEPRECATED & ~E_STRICT & ~E_NOTICE);
+    error_reporting(cms_E_STRICT(E_ALL & ~E_DEPRECATED & ~E_NOTICE, true));
     cms_extend_time_limit(TIME_LIMIT_EXTEND__MODEST);
     if (($db_too) && (is_object($GLOBALS['SITE_DB']->connection_read))) {
         $smq = $GLOBALS['SITE_DB']->strict_mode_query(false);
