@@ -74,40 +74,45 @@ class Hook_admin_stats_cms_homesite extends Source_hook_stats_provider
             'support_kpis' => null,
         ];
 
-        if (addon_installed('cms_homesite_tracker')) {
-            $tracker_issue_types = [
-                's_all' => do_lang('TRACKER_ISSUE_TYPE_all'),
-                's_10' => do_lang('TRACKER_ISSUE_TYPE_not_assigned'),
-                's_50' => do_lang('TRACKER_ISSUE_TYPE_assigned'),
-                's_80' => do_lang('TRACKER_ISSUE_TYPE_resolved'),
-                's_90' => do_lang('TRACKER_ISSUE_TYPE_closed'),
-            ];
+        if (addon_installed('cms_homesite_tracker') && addon_installed('catalogues')) {
+            require_code('addons2');
+
+            require_lang('tracker');
+            require_lang('addons');
+
+            // Get tracker issue statuses
+            $tracker_statuses = ['all' => do_lang('ALL')];
+            $statuses = explode('|', do_lang('TRACKER_CATALOGUE_STATUS_DEFAULT'));
+            foreach ($statuses as $status) {
+                $tracker_statuses[$status] = do_lang('TRACKER_CATALOGUE_STATUS_DEFAULT_' . $status);
+            }
+
             $ret['tracker_issue_activity'] = [
                 'label' => do_lang_tempcode('TRACKER_ISSUE_ACTIVITY'),
                 'category' => 'cms_homesite',
                 'filters' => [
                     'tracker_issue_activity__day_range' => new Source_stats_filter_day_range('tracker_issue_activity__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
-                    'tracker_issue_activity__type' => new Source_stats_filter_list('tracker_issue_activity__type', do_lang_tempcode('TRACKER_ISSUE_STATUS'), $tracker_issue_types),
+                    'tracker_issue_activity__status' => new Source_stats_filter_list('tracker_issue_activity__status', do_lang_tempcode('STATUS'), $tracker_statuses),
                 ],
                 'pivot' => new Source_stats_filter_date_pivot('tracker_issue_activity__pivot', $this->get_date_pivots(!$for_kpi)),
                 'support_kpis' => self::KPI_HIGH_IS_GOOD,
             ];
 
-            // Get tracker categories
-            $_categories = collapse_2d_complexity('id', 'name', $GLOBALS['SITE_DB']->query('SELECT id,name FROM mantis_category_table WHERE status=0 ORDER BY name'));
-            $categories = [];
-            $categories['c_all'] = do_lang('ALL');
-            foreach ($_categories as $id => $_category) {
-                $categories['c_' . strval($id)] = $_category;
+            // Get tracker addons
+            $available_addons = array_keys(find_available_addons(false, false, [], false, true));
+            $installed_addons = array_keys(find_installed_addons(false, false, false));
+            $_addons = array_unique(array_merge($available_addons, $installed_addons));
+            $addons = ['all' => do_lang('ALL')];
+            foreach ($_addons as $addon) {
+                $addons[$addon] = $addon;
             }
-            $categories = array_unique($categories);
 
             $ret['tracker_issues'] = [
                 'label' => do_lang_tempcode('TRACKER_ISSUES'),
                 'category' => 'cms_homesite',
                 'filters' => [
                     'tracker_issues__day_range' => new Source_stats_filter_day_range('tracker_issues__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
-                    'tracker_issues__type' => new Source_stats_filter_list('tracker_issues__type', do_lang_tempcode('TRACKER_ISSUE_CATEGORY'), $categories),
+                    'tracker_issues__addon' => new Source_stats_filter_list('tracker_issues__addon', do_lang_tempcode('ADDON'), $addons),
                 ],
                 'pivot' => new Source_stats_filter_date_pivot('tracker_issues__pivot', $this->get_date_pivots(!$for_kpi)),
                 'support_kpis' => self::KPI_HIGH_IS_GOOD,
@@ -171,38 +176,57 @@ class Hook_admin_stats_cms_homesite extends Source_hook_stats_provider
             $start += $max;
         } while (!empty($rows));
 
-        /* tracker issue activity */
+        /* tracker issue updates */
 
-        if (addon_installed('cms_homesite_tracker')) {
-            $max = 1000;
+        if (addon_installed('cms_homesite_tracker') && addon_installed('catalogues')) {
+            require_code('catalogues');
+
+            require_lang('tracker');
+            require_lang('addons');
+
+            $status_field = $GLOBALS['SITE_DB']->query_select_value('catalogue_fields', 'id', ['c_name' => 'tracker', $GLOBALS['SITE_DB']->translate_field_ref('cf_name') => do_lang('STATUS')]);
+            $addon_field = $GLOBALS['SITE_DB']->query_select_value('catalogue_fields', 'id', ['c_name' => 'tracker', $GLOBALS['SITE_DB']->translate_field_ref('cf_name') => do_lang('ADDON')]);
+
+            $max = 100;
             $start = 0;
 
-            $query = 'SELECT `status`,`last_updated` FROM mantis_bug_table WHERE ';
-            $query .= '`last_updated`>=' . strval($start_time) . ' AND ';
-            $query .= '`last_updated`<=' . strval($end_time);
-            $query .= ' ORDER BY `last_updated`';
+            $query = 'SELECT * FROM ' . $GLOBALS['SITE_DB']->get_table_prefix() . 'catalogue_entries WHERE ' . db_string_equal_to('c_name', 'tracker') . ' AND ';
+            $query .= db_function('COALESCE', ['`ce_edit_date`', '`ce_add_date`']) . '>=' . strval($start_time) . ' AND ';
+            $query .= db_function('COALESCE', ['`ce_edit_date`', '`ce_add_date`']) . '<=' . strval($end_time);
+            $query .= ' ORDER BY ' . db_function('COALESCE', ['`ce_edit_date`', '`ce_add_date`']);
             do {
                 $rows = $GLOBALS['SITE_DB']->query($query, $max, $start);
                 foreach ($rows as $row) {
-                    $timestamp = $row['last_updated'];
+                    $entry_fields = get_catalogue_entry_field_values('tracker', $row['id'], null, null, false);
+
+                    $timestamp = isset($row['ce_edit_date']) ? $row['ce_edit_date'] : $row['ce_add_date'];
                     $timestamp = tz_time($timestamp, $server_timezone);
 
-                    $status = strval($row['status']);
+                    $status = '';
+                    $addon = '';
+                    foreach ($entry_fields as $field_value) {
+                        if ($field_value['id'] == $status_field) {
+                            $status = strval($field_value['effective_value_pure']);
+                        }
+                        if ($field_value['id'] == $addon_field) {
+                            $addon = strval($field_value['effective_value_pure']);
+                        }
+                    }
 
                     foreach (array_keys($date_pivots) as $pivot) {
                         $pivot_interval = $this->calculate_date_pivot_interval($pivot, $timestamp);
                         $pivot_value = $this->calculate_date_pivot_value($pivot, $timestamp);
 
-                        if (!isset($data_buckets['tracker_issue_activity'][$pivot][$pivot_interval][$pivot_value]['s_' . strval($status)])) {
-                            $data_buckets['tracker_issue_activity'][$pivot][$pivot_interval][$pivot_value]['s_' . strval($status)] = 0;
+                        if (!isset($data_buckets['tracker_issue_activity'][$pivot][$pivot_interval][$pivot_value][$status])) {
+                            $data_buckets['tracker_issue_activity'][$pivot][$pivot_interval][$pivot_value][$status] = 0;
                         }
-                        $data_buckets['tracker_issue_activity'][$pivot][$pivot_interval][$pivot_value]['s_' . strval($status)]++;
+                        $data_buckets['tracker_issue_activity'][$pivot][$pivot_interval][$pivot_value][$status]++;
 
                         // For all
-                        if (!isset($data_buckets['tracker_issue_activity'][$pivot][$pivot_interval][$pivot_value]['s_all'])) {
-                            $data_buckets['tracker_issue_activity'][$pivot][$pivot_interval][$pivot_value]['s_all'] = 0;
+                        if (!isset($data_buckets['tracker_issue_activity'][$pivot][$pivot_interval][$pivot_value]['all'])) {
+                            $data_buckets['tracker_issue_activity'][$pivot][$pivot_interval][$pivot_value]['all'] = 0;
                         }
-                        $data_buckets['tracker_issue_activity'][$pivot][$pivot_interval][$pivot_value]['s_all']++;
+                        $data_buckets['tracker_issue_activity'][$pivot][$pivot_interval][$pivot_value]['all']++;
                     }
 
                     $this->dump_delta_if_necessary($data_buckets);
@@ -214,36 +238,55 @@ class Hook_admin_stats_cms_homesite extends Source_hook_stats_provider
 
         /* tracker issues */
 
-        if (addon_installed('cms_homesite_tracker')) {
-            $max = 1000;
+        if (addon_installed('cms_homesite_tracker') && addon_installed('catalogues')) {
+            require_code('catalogues');
+
+            require_lang('tracker');
+            require_lang('addons');
+
+            $status_field = $GLOBALS['SITE_DB']->query_select_value('catalogue_fields', 'id', ['c_name' => 'tracker', $GLOBALS['SITE_DB']->translate_field_ref('cf_name') => do_lang('STATUS')]);
+            $addon_field = $GLOBALS['SITE_DB']->query_select_value('catalogue_fields', 'id', ['c_name' => 'tracker', $GLOBALS['SITE_DB']->translate_field_ref('cf_name') => do_lang('ADDON')]);
+
+            $max = 100;
             $start = 0;
 
-            $query = 'SELECT `status`,`date_submitted`,`category_id` FROM mantis_bug_table WHERE ';
-            $query .= '`date_submitted`>=' . strval($start_time) . ' AND ';
-            $query .= '`date_submitted`<=' . strval($end_time);
-            $query .= ' ORDER BY `date_submitted`';
+            $query = 'SELECT * FROM ' . $GLOBALS['SITE_DB']->get_table_prefix() . 'catalogue_entries WHERE ' . db_string_equal_to('c_name', 'tracker') . ' AND ';
+            $query .= '`ce_add_date`>=' . strval($start_time) . ' AND ';
+            $query .= '`ce_add_date`<=' . strval($end_time);
+            $query .= ' ORDER BY `ce_add_date`';
             do {
                 $rows = $GLOBALS['SITE_DB']->query($query, $max, $start);
                 foreach ($rows as $row) {
-                    $timestamp = $row['date_submitted'];
+                    $entry_fields = get_catalogue_entry_field_values('tracker', $row['id'], null, null, false);
+
+                    $timestamp = $row['ce_add_date'];
                     $timestamp = tz_time($timestamp, $server_timezone);
 
-                    $category = strval($row['category_id']);
+                    $status = '';
+                    $addon = '';
+                    foreach ($entry_fields as $field_value) {
+                        if ($field_value['id'] == $status_field) {
+                            $status = strval($field_value['effective_value_pure']);
+                        }
+                        if ($field_value['id'] == $addon_field) {
+                            $addon = strval($field_value['effective_value_pure']);
+                        }
+                    }
 
                     foreach (array_keys($date_pivots) as $pivot) {
                         $pivot_interval = $this->calculate_date_pivot_interval($pivot, $timestamp);
                         $pivot_value = $this->calculate_date_pivot_value($pivot, $timestamp);
 
-                        if (!isset($data_buckets['tracker_issues'][$pivot][$pivot_interval][$pivot_value]['c_' . strval($category)])) {
-                            $data_buckets['tracker_issues'][$pivot][$pivot_interval][$pivot_value]['c_' . strval($category)] = 0;
+                        if (!isset($data_buckets['tracker_issues'][$pivot][$pivot_interval][$pivot_value][$addon])) {
+                            $data_buckets['tracker_issues'][$pivot][$pivot_interval][$pivot_value][$addon] = 0;
                         }
-                        $data_buckets['tracker_issues'][$pivot][$pivot_interval][$pivot_value]['c_' . strval($category)]++;
+                        $data_buckets['tracker_issues'][$pivot][$pivot_interval][$pivot_value][$addon]++;
 
                         // For all
-                        if (!isset($data_buckets['tracker_issues'][$pivot][$pivot_interval][$pivot_value]['c_all'])) {
-                            $data_buckets['tracker_issues'][$pivot][$pivot_interval][$pivot_value]['c_all'] = 0;
+                        if (!isset($data_buckets['tracker_issues'][$pivot][$pivot_interval][$pivot_value]['all'])) {
+                            $data_buckets['tracker_issues'][$pivot][$pivot_interval][$pivot_value]['all'] = 0;
                         }
-                        $data_buckets['tracker_issues'][$pivot][$pivot_interval][$pivot_value]['c_all']++;
+                        $data_buckets['tracker_issues'][$pivot][$pivot_interval][$pivot_value]['all']++;
                     }
 
                     $this->dump_delta_if_necessary($data_buckets);
@@ -316,7 +359,7 @@ class Hook_admin_stats_cms_homesite extends Source_hook_stats_provider
                             }
 
                             foreach ($__ as $type => $value) {
-                                if (($type != 's_all') && (!empty($filters[$bucket . '__type'])) && ($filters[$bucket . '__type'] != $type)) {
+                                if (($type != 'all') && (!empty($filters[$bucket . '__status'])) && ($filters[$bucket . '__status'] != $type)) {
                                     continue;
                                 }
 
@@ -350,7 +393,7 @@ class Hook_admin_stats_cms_homesite extends Source_hook_stats_provider
                             }
 
                             foreach ($__ as $category => $value) {
-                                if (($category != 'c_all') && (!empty($filters[$bucket . '__type'])) && ($filters[$bucket . '__type'] != $category)) {
+                                if (($category != 'all') && (!empty($filters[$bucket . '__addon'])) && ($filters[$bucket . '__addon'] != $category)) {
                                     continue;
                                 }
 

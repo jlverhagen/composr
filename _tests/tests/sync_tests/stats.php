@@ -35,6 +35,7 @@
 class stats_test_set extends cms_test_case
 {
     protected $dummy_data_added = [];
+    protected $tracker_issue = null;
     public function setUp()
     {
         parent::setUp();
@@ -158,6 +159,24 @@ class stats_test_set extends cms_test_case
 
         if (addon_installed('cms_homesite')) {
             $dummy_data['telemetry_errors'] = [[], ['e_resolved' => 0], ['e_resolved' => 1]];
+        }
+
+        if (addon_installed('cms_homesite_tracker') && addon_installed('catalogues')) {
+            require_code('catalogues');
+            require_code('cms_homesite_tracker');
+
+            require_lang('tracker');
+
+            $category = $GLOBALS['SITE_DB']->query_select_value('catalogue_categories', 'id', ['c_name' => 'tracker', $GLOBALS['SITE_DB']->translate_field_ref('cc_title') => do_lang('TRACKER_CATALOGUE_CATEGORY_1')]);
+            $this->tracker_issue = create_tracker_issue(
+                '1111',
+                'dummy issue',
+                'minor',
+                'dummy description',
+                'dummy additional',
+                'core',
+                $category
+            );
         }
 
         // Remove old preprocessed stats so we can force pre-processing again
@@ -354,6 +373,11 @@ class stats_test_set extends cms_test_case
                 require_code('tasks');
                 call_user_func_array__long_task(do_lang('points:POINTS_CACHE'), null, 'points_recalculate_cpf', [], true, true, false);
             }
+        }
+
+        if ($this->tracker_issue !== null) {
+            require_code('catalogues2');
+            actual_delete_catalogue_entry($this->tracker_issue[0]);
         }
 
         $server_timezone = get_server_timezone();
