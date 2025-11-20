@@ -543,13 +543,14 @@ function _url_to_page_link(string $url, bool $abs_only = false, bool $perfect_on
     $page = $attributes['page']; // Any incorrect dashing will be fixed inside process_url_monikers, if there's a moniker
 
     // Resolve monikers back to canonical URL parameters
+    require_code('site');
+
     $type = array_key_exists('type', $attributes) ? $attributes['type'] : null;
     $id = array_key_exists('id', $attributes) ? $attributes['id'] : null;
     if (!process_url_monikers(false, false, $page, $zone, $type, $id, false)) {
         $page = fix_page_name_dashing($zone, $attributes['page']); // Not via a moniker
     }
 
-    require_code('site');
     if (_request_page($page, $zone, null, fallback_lang()) === false) {
         return '';
     }
