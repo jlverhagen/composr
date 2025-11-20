@@ -1404,7 +1404,6 @@ function list_untouchable_third_party_directories() : array
         'themes/admin/templates_cached/EN',
         'themes/default/templates_cached/EN',
         'themes/_unnamed_/templates_cached/EN',
-        'tracker',
         'uploads/website_specific/test',
         'vendor',
     ];

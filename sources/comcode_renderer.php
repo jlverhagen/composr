@@ -455,7 +455,7 @@ function comcode_parse_error_exit(bool $preparse_mode, array $_message, int $pos
         }
         if ($name === null) {
             if (get_mass_import_mode()) {
-                $out = do_template('COMCODE_CRITICAL_PARSE_ERROR', ['_GUID' => 'TODO', 'LINE' => strval($line), 'MESSAGE' => $message, 'SOURCE' => $comcode]); // Won't parse, but we can't help it, so we will skip on
+                $out = do_template('COMCODE_CRITICAL_PARSE_ERROR', ['_GUID' => '6f1f1915693d5dfd8c726c448766b885', 'LINE' => strval($line), 'MESSAGE' => $message, 'SOURCE' => $comcode]); // Won't parse, but we can't help it, so we will skip on
                 return $out;
             }
 
@@ -2266,7 +2266,7 @@ function _do_tags_comcode(string $tag, array $attributes, $embed, bool $comcode_
                     // Get/test ID
                     $_id = substr($id, 5);
                     if (!is_numeric($_id)) {
-                        $temp_tpl = do_template('WARNING_BOX', ['_GUID' => 'TODO', 'WARNING' => do_lang_tempcode('comcode:INVALID_ATTACHMENT')]);
+                        $temp_tpl = do_template('WARNING_BOX', ['_GUID' => '8f5814db1e0c5e09ac2a5f455a459206', 'WARNING' => do_lang_tempcode('comcode:INVALID_ATTACHMENT')]);
                         break;
                     }
 

@@ -292,7 +292,7 @@ function ping_sitemap_xml(string $url, bool $trigger_error = false) : string
         $ping = true;
         $_url = cms_parse_url_safe($url, PHP_URL_HOST);
         if ($_url === false) {
-            warn_exit(do_lang_tempcode('INTERNAL_ERROR', escape_html('TODO')));
+            warn_exit(do_lang_tempcode('INTERNAL_ERROR', escape_html('9895f09c0a17577fa1c28efb36435029')));
         }
         $local = is_local_machine($_url);
         if (($ping) && (get_option('site_closed') == '0') && (!$local)) {

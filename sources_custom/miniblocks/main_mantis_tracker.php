@@ -26,7 +26,7 @@
 
 i_solemnly_declare(I_UNDERSTAND_SQL_INJECTION | I_UNDERSTAND_XSS | I_UNDERSTAND_PATH_INJECTION);
 
-return do_template('RED_ALERT', ['_GUID' => 'TODO', 'TEXT' => 'Disabled for the moment']); // TODO
+return do_template('RED_ALERT', ['_GUID' => '9a7ef6f5baeb56d4a413b8da4a80fa5c', 'TEXT' => 'Disabled for the moment']); // TODO
 
 if (!addon_installed('cms_homesite_tracker')) {
     return do_template('RED_ALERT', ['_GUID' => '4d671f3291e8548fac9d6c9f3e632634', 'TEXT' => do_lang_tempcode('MISSING_ADDON', escape_html('cms_homesite_tracker'))]);
