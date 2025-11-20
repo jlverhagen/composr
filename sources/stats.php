@@ -88,7 +88,7 @@ function tracked_redirect_script()
     $url = get_param_string('url', null, INPUT_FILTER_URL_GENERAL);
     $parsed_url = cms_parse_url_safe($url, PHP_URL_HOST);
     if ($parsed_url === false) {
-        fatal_exit(do_lang_tempcode('INTERNAL_ERROR', escape_html('TODO')));
+        fatal_exit(do_lang_tempcode('INTERNAL_ERROR', escape_html('e985bf67002d59f3b2dae45bdf988cd9')));
     }
 
     if (!is_our_server($parsed_url)) {

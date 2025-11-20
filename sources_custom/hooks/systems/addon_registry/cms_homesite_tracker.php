@@ -179,6 +179,68 @@ class Hook_addon_registry_cms_homesite_tracker
     public function get_file_list() : array
     {
         return [
+            'lang_custom/EN/tracker.ini',
+            'sources_custom/cms_homesite_tracker.php',
+            'sources_custom/hooks/endpoints/cms_homesite/tracker_categories.php',
+            'sources_custom/hooks/endpoints/cms_homesite/tracker_issues.php',
+            'sources_custom/hooks/endpoints/cms_homesite/tracker_posts.php',
+            'sources_custom/hooks/form_handlers/catalogue_entry/tracker.php',
+            'sources_custom/hooks/systems/addon_registry/cms_homesite_tracker.php',
+            'sources_custom/hooks/systems/content_meta_aware/catalogue_entry.php',
+            'sources_custom/hooks/systems/fields/addon.php',
+            'sources_custom/hooks/systems/fields/tracker_id.php',
+            'sources_custom/hooks/systems/fields/tracker_status.php',
+            'sources_custom/hooks/systems/fields/tracker_type.php',
+            'sources_custom/hooks/systems/fields/version.php',
+            'sources_custom/hooks/systems/notifications/catalogues.php',
+            'sources_custom/hooks/systems/notifications/cns_topic.php',
+            'sources_custom/hooks/systems/points/catalogue_entry__tracker_resolve.php',
+            'sources_custom/hooks/systems/points/catalogue_entry__tracker_resolved.php',
+            'sources_custom/hooks/systems/upon_page_load/cms_homesite_tracker.php',
+            'sources_custom/miniblocks/main_mantis_tracker.php',
+            'sources_custom/points_escrow__sponsorship.php',
+            'themes/default/css_custom/tracker.css',
+            'themes/default/images_custom/icons/tracker/easy.svg',
+            'themes/default/images_custom/icons/tracker/hard.svg',
+            'themes/default/images_custom/icons/tracker/index.html',
+            'themes/default/images_custom/icons/tracker/minus.svg',
+            'themes/default/images_custom/icons/tracker/plus.svg',
+            'themes/default/images_custom/icons_monochrome/tracker/easy.svg',
+            'themes/default/images_custom/icons_monochrome/tracker/hard.svg',
+            'themes/default/images_custom/icons_monochrome/tracker/index.html',
+            'themes/default/images_custom/icons_monochrome/tracker/minus.svg',
+            'themes/default/images_custom/icons_monochrome/tracker/plus.svg',
+            'themes/default/javascript_custom/cms_homesite_tracker.js',
+            'themes/default/templates_custom/BLOCK_MAIN_MANTIS_TRACKER.tpl',
+            'themes/default/templates_custom/CATALOGUE_tracker_ENTRY_SCREEN.tpl',
+            'themes/default/templates_custom/MANTIS_TRACKER.tpl',
+            'tracker/index.php',
+            'tracker/pages/.htaccess',
+            'tracker/pages/comcode/EN/.htaccess',
+            'tracker/pages/comcode/EN/index.html',
+            'tracker/pages/comcode/index.html',
+            'tracker/pages/comcode_custom/EN/.htaccess',
+            'tracker/pages/comcode_custom/EN/home.txt',
+            'tracker/pages/comcode_custom/EN/index.html',
+            'tracker/pages/comcode_custom/EN/panel_bottom.txt',
+            'tracker/pages/comcode_custom/index.html',
+            'tracker/pages/html/EN/.htaccess',
+            'tracker/pages/html/EN/index.html',
+            'tracker/pages/html/index.html',
+            'tracker/pages/html_custom/EN/.htaccess',
+            'tracker/pages/html_custom/EN/index.html',
+            'tracker/pages/html_custom/index.html',
+            'tracker/pages/index.html',
+            'tracker/pages/minimodules/.htaccess',
+            'tracker/pages/minimodules/index.html',
+            'tracker/pages/minimodules_custom/.htaccess',
+            'tracker/pages/minimodules_custom/index.html',
+            'tracker/pages/minimodules_custom/report_issue.php',
+            'tracker/pages/modules/.htaccess',
+            'tracker/pages/modules/index.html',
+            'tracker/pages/modules_custom/.htaccess',
+            'tracker/pages/modules_custom/index.html',
+            'tracker/view.php',
         ];
     }
 
@@ -529,7 +591,8 @@ class Hook_addon_registry_cms_homesite_tracker
                         $row['id']
                     );
 
-                    $GLOBALS['SITE_DB']->query_update('points_ledger', ['t_type' => 'catalogue_entry', 't_type_id' => strval($ids[0])], ['t_type' => 'tracker_issue', 't_type_id' => strval($row['id'])]);
+                    $GLOBALS['SITE_DB']->query_update('points_ledger', ['t_type' => 'catalogue_entry', 't_subtype' => 'tracker_resolve', 't_type_id' => strval($ids[0])], ['t_type' => 'tracker_issue', 't_subtype' => 'resolve', 't_type_id' => strval($row['id'])]);
+                    $GLOBALS['SITE_DB']->query_update('points_ledger', ['t_type' => 'catalogue_entry', 't_subtype' => 'tracker_resolved', 't_type_id' => strval($ids[0])], ['t_type' => 'tracker_issue', 't_subtype' => 'report_resolved', 't_type_id' => strval($row['id'])]);
                     $GLOBALS['SITE_DB']->query_update('escrow', ['content_type' => 'catalogue_entry', 'content_id' => strval($ids[0])], ['content_type' => 'tracker_issue', 'content_id' => strval($row['id'])]);
                 }
 

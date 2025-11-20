@@ -107,7 +107,7 @@ function get_tracker_issues(array $ids, ?string $version = null, ?string $previo
 function create_tracker_issue(string $version, string $tracker_title, string $tracker_type, string $tracker_description, string $tracker_additional, string $tracker_addon, int $tracker_category, ?int $handler_id = null, string $steps_to_reproduce = '', string $status = 'open', ?int $add_time = null, ?int $submitter = null, ?int $identifier = null) : array
 {
     if (!addon_installed('cms_homesite_tracker') || !addon_installed('catalogues')) {
-        warn_exit(do_lang_tempcode('INTERNAL_ERROR', escape_html('TODO')));
+        warn_exit(do_lang_tempcode('INTERNAL_ERROR', escape_html('d07ad2b1177b59b19b7f554da41284cc')));
     }
 
     require_code('catalogues2');
@@ -120,7 +120,7 @@ function create_tracker_issue(string $version, string $tracker_title, string $tr
     // Map field names to catalogue field IDs
     $fields = $GLOBALS['SITE_DB']->query_select('catalogue_fields', ['*'], ['c_name' => 'tracker']);
     if (count($fields) == 0) {
-        warn_exit(do_lang_tempcode('INTERNAL_ERROR', escape_html('TODO')));
+        warn_exit(do_lang_tempcode('INTERNAL_ERROR', escape_html('24b19fdc9688512abbec179b1bc94f04')));
     }
     $field_map = [];
     foreach ($fields as $field) {

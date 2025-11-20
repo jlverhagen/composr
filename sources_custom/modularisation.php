@@ -174,7 +174,7 @@ function scan_modularisation($only_populate_data = false, $stricter_checking = f
     $unput_files = []; // A map of non-existent packages to a list in them
     $ignore = IGNORE_CUSTOM_DIR_FLOATING_CONTENTS | IGNORE_UPLOADS | IGNORE_FLOATING | IGNORE_CUSTOM_ZONES | IGNORE_CUSTOM_THEMES | IGNORE_CUSTOM_LANGS | IGNORE_SHIPPED_VOLATILE | IGNORE_UNSHIPPED_VOLATILE | IGNORE_REVISION_FILES;
     if ($stricter_checking) {
-        $ignore = IGNORE_FLOATING | IGNORE_UPLOADS | IGNORE_CUSTOM_THEMES | IGNORE_CUSTOM_ZONES | IGNORE_UNSHIPPED_VOLATILE;
+        $ignore = IGNORE_FLOATING | IGNORE_UPLOADS | IGNORE_UNSHIPPED_VOLATILE;
     }
     $files = get_directory_contents(get_file_base(), '', $ignore);
     $forum_drivers = get_directory_contents(get_file_base() . '/sources/forum', '', 0, false, true, ['php']);

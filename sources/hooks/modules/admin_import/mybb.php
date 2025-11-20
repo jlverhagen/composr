@@ -490,7 +490,7 @@ class Hook_import_mybb
 
         $home_dir_parts = cms_parse_url_safe($homeurl);
         if ($home_dir_parts === false) {
-            warn_exit(do_lang_tempcode('INTERNAL_ERROR', escape_html('TODO')));
+            warn_exit(do_lang_tempcode('INTERNAL_ERROR', escape_html('2391c089b2ea5312b995c23b9b582f6a')));
         }
 
         $forum_dir = $_SERVER['DOCUMENT_ROOT'] . urldecode($home_dir_parts['path']);
@@ -884,7 +884,7 @@ class Hook_import_mybb
 
         $home_dir_parts = cms_parse_url_safe($homeurl);
         if ($home_dir_parts === false) {
-            warn_exit(do_lang_tempcode('INTERNAL_ERROR', escape_html('TODO')));
+            warn_exit(do_lang_tempcode('INTERNAL_ERROR', escape_html('06a0f7a406e057389adea33822eb73d0')));
         }
 
         $forum_dir = $_SERVER['DOCUMENT_ROOT'] . urldecode($home_dir_parts['path']);

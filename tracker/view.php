@@ -21,7 +21,7 @@
 /**
  * @license    http://opensource.org/licenses/cpal_1.0 Common Public Attribution License
  * @copyright  Christopher Graham
- * @package    core
+ * @package    cms_homesite_tracker
  */
 
 // This is the standard zone bootstrap file.
