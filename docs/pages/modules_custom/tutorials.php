@@ -198,7 +198,7 @@ class Module_tutorials
 
         $tags = list_tutorial_tags(true);
 
-        $tutorials = list_tutorials_by('likes', ($tag == '') ? null : $tag);
+        $tutorials = list_tutorials_by('recent', ($tag == '') ? null : $tag);
         $_tutorials = templatify_tutorial_list($tutorials);
 
         return do_template('TUTORIAL_INDEX_SCREEN', [
