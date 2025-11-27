@@ -50,7 +50,7 @@ Here are the top ~100 buzzwords that will help you understand what web designers
 		</tr>
 		<tr>
 			<td>ASP.NET</td>
-			<td>A programming language, similar to PHP.</td>
+			<td>A web programming language, similar to Visual Basic.</td>
 		</tr>
 		<tr>
 			<td>Avatar</td>
@@ -77,7 +77,7 @@ Here are the top ~100 buzzwords that will help you understand what web designers
 			<td>Originally this term referred to a standalone website consisting just of personal news updates. However the term is used more broadly and refers to a website or a part of a website where news updates are made.</td>
 		</tr>
 		<tr>
-			<td>Bot</td>
+			<td>Bot / crawler / spider</td>
 			<td>A computer program written to access web pages. Search engines use bots to index websites. Some hackers create malicious bots, designed to hack into web pages that aren't securely implemented.</td>
 		</tr>
 		<tr>
@@ -234,6 +234,10 @@ Here are the top ~100 buzzwords that will help you understand what web designers
 			<td>An operating system, the most popular one used on servers.</td>
 		</tr>
 		<tr>
+			<td>LLM</td>
+			<td>Large Language Model; a type of artificial intelligence where the AI is capable of understanding natural human language. These models often do more than make simple predictions. Given an input, an LLM can make a prediction, based on training data, of what the user most likely wants, and then deliver it. LLMs often also incorporate randomness (seeds) for artificial creativity. The most common example of this is a chat bot where the LLM responds to the user as if the LLM was another person. Advanced LLMs can also perform actions on behalf of the user, such as debugging and fixing code. These are often also called 'agents'.</td>
+		</tr>
+		<tr>
 			<td>Markup</td>
 			<td>A markup language is a way to add structure and meaning to content, in addition to the actual text. It binds things together and defines relationships, by adding special 'markup tags' around parts of the content</td>
 		</tr>
@@ -250,7 +254,7 @@ Here are the top ~100 buzzwords that will help you understand what web designers
 			<td>iPhone/iPad and Android smartphones and tablets support their own kinds of 'app'. These often mix web technologies with more traditional kinds of programming technology, and need to be specially coded. Mobile apps are extremely popular with users, but also quite costly to develop. Mobile website designs are a lower-cost (but lower quality) alternative, as code can usually be shared with the main desktop web design. iPhone and iPad run the iOS operating system.</td>
 		</tr>
 		<tr>
-			<td>Multivariate testing / split testing</td>
+			<td>Multivariate testing / split testing / AB testing</td>
 			<td>Testing multiple versions of a page by randomly directly visitors to different versions and then analysing which worked best to achieve some particular goals (or to put another way, which avoid undesirable drop-offs). For example, you may want to test out which of two different headlines produces the best result. The technique is quite costly as it involves ongoing tuning and analysis, but can have powerful results.</td>
 		</tr>
 		<tr>
@@ -307,7 +311,7 @@ Here are the top ~100 buzzwords that will help you understand what web designers
 		</tr>
 		<tr>
 			<td>Python</td>
-			<td>A programming language, similar to PHP.</td>
+			<td>A programming language that is popular among both web and application developers.</td>
 		</tr>
 		<tr>
 			<td>Rank</td>
@@ -334,6 +338,10 @@ Here are the top ~100 buzzwords that will help you understand what web designers
 			<td>A way for a website to provide a news feed, so that users may view the news in a separate newsreader, or so that other websites can syndicate your news.</td>
 		</tr>
 		<tr>
+			<td>Sandbox</td>
+			<td>An isolated and restricted environment created by a web browser or application client. By isolating, this prevents rogue sites and apps from affecting other parts of the system and makes it much harder for malware to infect anything outside of the sandbox.</td>
+		</tr>
+		<tr>
 			<td>Search Engine</td>
 			<td>A tool that trawls through the web, finding web pages and indexing their contents, so that you can then find pages by searching for key words. Bing, Google, and [url="DuckDuckGo"]https://duckduckgo.com/[/url] are search engines.</td>
 		</tr>
@@ -343,7 +351,7 @@ Here are the top ~100 buzzwords that will help you understand what web designers
 		</tr>
 		<tr>
 			<td>Server</td>
-			<td>A computer permanently switched on and connected to the Internet from which services, such as websites, can be delivered from.</td>
+			<td>A computer connected to the Internet from which services, such as websites, can be delivered from. Usually, they are permanently online.</td>
 		</tr>
 		<tr>
 			<td>Single Page Application (SPA)</td>
