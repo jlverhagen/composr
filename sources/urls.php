@@ -69,6 +69,8 @@ function init__urls()
     $CONTENT_OBS = null;
 
     global $SMART_CACHE, $LOADED_MONIKERS_CACHE;
+    // TODO: This might cause find_id_moniker to load thousands of monikers we do not need (e.g., catalogue entry screen); disabled to force loading monikers individually on demand.
+    /*
     if ($SMART_CACHE !== null) {
         $test = $SMART_CACHE->get('NEEDED_MONIKERS');
         if ($test === null) {
@@ -81,6 +83,8 @@ function init__urls()
             }
         }
     }
+    */
+    $LOADED_MONIKERS_CACHE = [];
 
     global $SELF_URL_CACHED;
     $SELF_URL_CACHED = null;

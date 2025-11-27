@@ -1319,6 +1319,16 @@ function get_translated_tempcode(string $table, array $row, string $field_name, 
  */
 function get_translated_text($entry, ?object $db = null, ?string $lang = null, bool $force = false) : ?string
 {
+    if ($entry === null) {
+        trigger_error(do_lang('NULL_CONTENT_LANG_STRING'), E_USER_WARNING);
+        return null;
+    }
+
+    if ($entry === 0) {
+        trigger_error(do_lang('ZERO_CONTENT_LANG_STRING'), E_USER_NOTICE);
+        return '';
+    }
+
     if (multi_lang_content() === false) {
         if (!is_string($entry)) { // Should have been a string when content translations are off
             trigger_error(do_lang('NOT_STRING_CONTENT_LANG_STRING'), E_USER_WARNING);
@@ -1330,16 +1340,6 @@ function get_translated_text($entry, ?object $db = null, ?string $lang = null, b
     if (is_string($entry)) { // Strings should have been returned before this point
         trigger_error(do_lang('NOT_INTEGER_CONTENT_LANG_STRING'), E_USER_WARNING);
         return $entry;
-    }
-
-    if ($entry === 0) {
-        trigger_error(do_lang('ZERO_CONTENT_LANG_STRING'), E_USER_NOTICE);
-        return '';
-    }
-
-    if ($entry === null) {
-        trigger_error(do_lang('NULL_CONTENT_LANG_STRING'), E_USER_WARNING);
-        return null;
     }
 
     if ($db === null) {
