@@ -30,7 +30,7 @@ Here are the top ~100 buzzwords that will help you understand what web designers
 		</tr>
 		<tr>
 			<td>AI</td>
-			<td>Artificial Intelligence; usually, these involve algorithms that follow a train/predict model. First, training data is fed into the algorithm. Then, the trained algorithm can be used to make predictions from a given input based on the trained data. For example, an AI to predict spam would be trained on known spam and non-spam (ham) data. Then, when someone submits content, the AI will predict how likely it is spam and how likely it is not spam.</td>
+			<td>Artificial Intelligence; usually, these involve algorithms that follow a train/predict model. First, training data is fed into the algorithm. Then, the trained algorithm can be used to make predictions from a given input based on the trained data. For example, an AI to predict spam would be trained on known spam and non-spam (ham) data. Then, when someone submits content, the AI will predict how likely it is spam and how likely it is not spam. An AI training set can be improved over time. For example, when a moderator deletes spam content, they can send the spam content to the AI for training as spam. Or, when someone submits legitimate content, the AI can train it as not spam after a period of time of not getting moderated. This improves the AI's prediction accuracy over time and can customise it according to the needs (or themes) of the site.</td>
 		</tr>
 		<tr>
 			<td>AJAX</td>
@@ -254,12 +254,16 @@ Here are the top ~100 buzzwords that will help you understand what web designers
 			<td>Testing multiple versions of a page by randomly directly visitors to different versions and then analysing which worked best to achieve some particular goals (or to put another way, which avoid undesirable drop-offs). For example, you may want to test out which of two different headlines produces the best result. The technique is quite costly as it involves ongoing tuning and analysis, but can have powerful results.</td>
 		</tr>
 		<tr>
-			<td>MySQL</td>
-			<td>The most common database software used for powering websites.</td>
+			<td>MySQL (or MariaDB)</td>
+			<td>The most common database softwares used for powering websites.</td>
 		</tr>
 		<tr>
 			<td>Navigation</td>
 			<td>The particular structure of menus and links used for finding your way around a website.</td>
+		</tr>
+		<tr>
+			<td>Nginx</td>
+			<td>Compared with Apache, this is a newer web server growing in popularity. Nginx is often used in place, or on top, of Apache, for its highly efficient cache and load balancing capabilities.</td>
 		</tr>
 		<tr>
 			<td>OAuth</td>
