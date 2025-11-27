@@ -87,7 +87,7 @@ function list_tutorials_by($criteria, $tag = null)
     switch ($criteria) {
         case 'pinned':
             $_tutorials = list_tutorials();
-            shuffle($_tutorials);
+            //shuffle($_tutorials);
 
             $tutorials = [];
             foreach ($_tutorials as $tutorial) {
@@ -100,43 +100,43 @@ function list_tutorials_by($criteria, $tag = null)
 
         case 'recent':
             $tutorials = list_tutorials();
-            shuffle($tutorials);
+            //shuffle($tutorials);
             sort_maps_by($tutorials, '!add_date');
             break;
 
         case 'likes':
             $tutorials = list_tutorials();
-            shuffle($tutorials);
+            //shuffle($tutorials);
             sort_maps_by($tutorials, '!likes');
             break;
 
         case 'likes_recent':
             $tutorials = list_tutorials();
-            shuffle($tutorials);
+            //shuffle($tutorials);
             sort_maps_by($tutorials, '!likes_recent');
             break;
 
         case 'rating':
             $tutorials = list_tutorials();
-            shuffle($tutorials);
+            //shuffle($tutorials);
             sort_maps_by($tutorials, '!rating');
             break;
 
         case 'rating_recent':
             $tutorials = list_tutorials();
-            shuffle($tutorials);
+            //shuffle($tutorials);
             sort_maps_by($tutorials, '!rating_recent');
             break;
 
         case 'views':
             $tutorials = list_tutorials();
-            shuffle($tutorials);
+            //shuffle($tutorials);
             sort_maps_by($tutorials, '!views');
             break;
 
         case 'title':
             $tutorials = list_tutorials();
-            shuffle($tutorials);
+            //shuffle($tutorials);
             sort_maps_by($tutorials, 'title', false, true);
             break;
     }
