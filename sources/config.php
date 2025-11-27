@@ -39,7 +39,7 @@ function init__config()
 {
     global $CONFIG_OPTIONS_CACHE, $CONFIG_OPTIONS_FULLY_LOADED, $VALUES_FULLY_LOADED, $SMART_CACHE, $PERSISTENT_CACHE;
     $CONFIG_OPTIONS_FULLY_LOADED = false;
-    $VALUES_FULLY_LOADED = false;
+    $VALUES_FULLY_LOADED = 0; // 0 = no, 1 = partial (smart cache), 2 = yes
 
     // $VALUE_OPTIONS_CACHE and $VALUE_OPTIONS_ELECTIVE_CACHE: unset key means unknown value; null value means we know explicitly it is not set
     global $VALUE_OPTIONS_CACHE, $VALUE_OPTIONS_ELECTIVE_CACHE, $IN_MINIKERNEL_VERSION;
@@ -62,32 +62,7 @@ function init__config()
             persistent_cache_init();
         }
 
-        if ($PERSISTENT_CACHE === null) {
-            // Load values from the smart cache if we can
-            $VALUE_OPTIONS_CACHE = [];
-            if ($SMART_CACHE !== null) {
-                $test = $SMART_CACHE->get('VALUE_OPTIONS');
-                if (is_array($test) && (count($test) > 0)) {
-                    // Actually, this will cause issues as different pages may have different records of the values
-                    //$VALUE_OPTIONS_CACHE = list_to_map('the_name', $test);
-
-                    if (count($test) >= 25) { // Safety limit to prevent long SQL queries
-                        $_value_options = $GLOBALS['SITE_DB']->query_select('values', ['*']);
-                        $VALUE_OPTIONS_CACHE = list_to_map('the_name', $_value_options);
-                    } else {
-                        $end = [];
-                        foreach ($test as $key => $value) {
-                            $end[] = '\'' . db_escape_string($key) . '\'';
-                        }
-
-                        $_value_options = $GLOBALS['SITE_DB']->query('SELECT * FROM ' . get_table_prefix() . 'values WHERE the_name IN (' . implode(',', $end) . ')');
-                        $VALUE_OPTIONS_CACHE = list_to_map('the_name', $_value_options);
-                    }
-                }
-            }
-        } else {
-            load_value_options();
-        }
+        $VALUE_OPTIONS_CACHE = []; // We will load this in later
     } else {
         $CONFIG_OPTIONS_CACHE = [];
         $VALUE_OPTIONS_CACHE = [];
@@ -185,22 +160,65 @@ function load_config_options()
 }
 
 /**
- * Load all value options (persistent cache).
+ * Load value options into the cache.
+ * If persistent cache is enabled, then all values will be loaded from/to the cache.
+ * Otherwise, if the smart cache is enabled, then we will load what we need.
  */
 function load_value_options()
 {
-    global $VALUE_OPTIONS_CACHE, $VALUES_FULLY_LOADED;
+    global $IN_MINIKERNEL_VERSION, $VALUE_OPTIONS_CACHE, $PERSISTENT_CACHE, $SMART_CACHE, $VALUES_FULLY_LOADED;
 
-    $VALUE_OPTIONS_CACHE = persistent_cache_get('VALUES');
-    if (!is_array($VALUE_OPTIONS_CACHE)) {
-        check_for_infinite_loop('load_value_options', [], 25);
-
-        $_value_options = $GLOBALS['SITE_DB']->query_select('values', ['*']);
-        $VALUE_OPTIONS_CACHE = list_to_map('the_name', $_value_options);
-        persistent_cache_set('VALUES', $VALUE_OPTIONS_CACHE);
+    if ($IN_MINIKERNEL_VERSION) {
+        return;
     }
 
-    $VALUES_FULLY_LOADED = true;
+    // Try persistent cache first (also try it if we already loaded partially from the smart cache)
+    if (($VALUES_FULLY_LOADED != 2) && ($PERSISTENT_CACHE !== null)) {
+        $VALUE_OPTIONS_CACHE = persistent_cache_get('VALUES');
+        if (!is_array($VALUE_OPTIONS_CACHE) || (count($VALUE_OPTIONS_CACHE) == 0)) {
+            check_for_infinite_loop('load_value_options', [], 25);
+
+            $_value_options = $GLOBALS['SITE_DB']->query_select('values', ['*']);
+            $VALUE_OPTIONS_CACHE = list_to_map('the_name', $_value_options);
+            persistent_cache_set('VALUES', $VALUE_OPTIONS_CACHE);
+        }
+
+        $VALUES_FULLY_LOADED = 2;
+        return;
+    }
+
+    // Next, try smart cache
+    if (($VALUES_FULLY_LOADED == 0) && ($SMART_CACHE !== null)) {
+        $test = $SMART_CACHE->get('VALUE_OPTIONS');
+        if (is_array($test) && (count($test) > 0)) {
+            // Actually, this will cause issues as different pages may have different records of the values; we need to re-load in the current value
+            //$VALUE_OPTIONS_CACHE = list_to_map('the_name', $test);
+
+            if (count($test) >= 25) { // Safety limit to prevent long SQL queries
+                $_value_options = $GLOBALS['SITE_DB']->query_select('values', ['*']);
+                $VALUE_OPTIONS_CACHE = list_to_map('the_name', $_value_options);
+                $VALUES_FULLY_LOADED = 2; // We loaded fully from the database
+            } else {
+                $end = [];
+                foreach ($test as $key => $value) {
+                    $end[] = '\'' . db_escape_string($key) . '\'';
+                }
+
+                $_value_options = $GLOBALS['SITE_DB']->query('SELECT * FROM ' . get_table_prefix() . 'values WHERE the_name IN (' . implode(',', $end) . ')');
+                $VALUE_OPTIONS_CACHE = list_to_map('the_name', $_value_options);
+                $VALUES_FULLY_LOADED = 1;
+            }
+
+            // Anything that we requested that was not found in the database should be set to null; that way, we don't query for them again.
+            foreach ($test as $key => $value) {
+                if (!isset($VALUE_OPTIONS_CACHE[$key])) {
+                    $VALUE_OPTIONS_CACHE[$key] = null;
+                }
+            }
+
+            return;
+        }
+    }
 }
 
 /**
@@ -540,7 +558,7 @@ function get_value(string $name, ?string $default = null, bool $elective_or_leng
             if (!isset($GLOBALS['SITE_DB'])) {
                 return $default;
             }
-            //check_for_infinite_loop('get_value', func_get_args(), 25); TODO: enable when we figure out why $VALUE_OPTIONS_CACHE is not working
+            //check_for_infinite_loop('get_value', func_get_args(), 25); TODO: enable when we figure out why $VALUE_OPTIONS_ELECTIVE_CACHE is not working
             $VALUE_OPTIONS_ELECTIVE_CACHE[$name] = $GLOBALS['SITE_DB']->query_select_value_if_there('values_elective', 'the_value', ['the_name' => $name], '', running_script('install') || running_script('upgrader'));
         }
         if ($VALUE_OPTIONS_ELECTIVE_CACHE[$name] === null) {
@@ -549,17 +567,17 @@ function get_value(string $name, ?string $default = null, bool $elective_or_leng
         return $VALUE_OPTIONS_ELECTIVE_CACHE[$name];
     }
 
-    global $IN_MINIKERNEL_VERSION, $VALUE_OPTIONS_CACHE, $SMART_CACHE, $VALUES_FULLY_LOADED;
+    global $VALUE_OPTIONS_CACHE, $VALUES_FULLY_LOADED;
 
-    // If not in minikernel, load up the value cache
-    if ((!$IN_MINIKERNEL_VERSION) && (!$VALUES_FULLY_LOADED)) {
+    // load up the value cache
+    if ($VALUES_FULLY_LOADED != 2) {
         load_value_options();
     }
 
     // First, check if the value already exists in cache and return it if so
     if (($VALUE_OPTIONS_CACHE !== null) && (array_key_exists($name, $VALUE_OPTIONS_CACHE))) {
         if ($VALUE_OPTIONS_CACHE[$name] === null) {
-            return $default;
+            return $default; // We already know this does not exist, so return the default and skip trying to later query for it
         }
         return $VALUE_OPTIONS_CACHE[$name]['the_value'];
     }
@@ -612,22 +630,20 @@ function _get_value(string $name, string $end = '') : ?string
         $VALUE_OPTIONS_CACHE = [];
     }
 
+    // Found the value?
     if ((is_array($value)) && array_key_exists(0, $value)) {
         $VALUE_OPTIONS_CACHE[$name] = $value[0];
-    } else {
-        $VALUE_OPTIONS_CACHE[$name] = null;
-    }
-    if ((is_array($value)) && array_key_exists(0, $value)) {
         if ($SMART_CACHE !== null) {
             $SMART_CACHE->append('VALUE_OPTIONS', $name, $value[0]);
         }
         return $value[0]['the_value'];
     }
 
+    // Did not find the value
+    $VALUE_OPTIONS_CACHE[$name] = null;
     if ($SMART_CACHE !== null) {
         $SMART_CACHE->append('VALUE_OPTIONS', $name, null);
     }
-
     return null;
 }
 
@@ -646,19 +662,19 @@ function get_value_newer_than(string $name, int $cutoff, bool $elective_or_lengt
         return $GLOBALS['SITE_DB']->query_value_if_there('SELECT the_value FROM ' . $GLOBALS['SITE_DB']->get_table_prefix() . 'values_elective WHERE date_and_time>' . strval($cutoff) . ' AND ' . db_string_equal_to('the_name', $name));
     }
 
-    global $VALUE_OPTIONS_CACHE, $SMART_CACHE, $IN_MINIKERNEL_VERSION, $VALUES_FULLY_LOADED;
+    global $VALUE_OPTIONS_CACHE, $VALUES_FULLY_LOADED;
 
     $cutoff -= mt_rand(0, 200); // Bit of scattering to stop locking issues if lots of requests hit this at once in the middle of a hit burst (whole table is read each page requests, and mysql will lock the table on set_value - causes horrible out-of-control buildups)
 
-    // If not in minikernel, load up the value cache
-    if ((!$IN_MINIKERNEL_VERSION) && (!$VALUES_FULLY_LOADED)) {
+    // load up the value cache
+    if ($VALUES_FULLY_LOADED != 2) {
         load_value_options();
     }
 
     // Try cache first
     if (($VALUE_OPTIONS_CACHE !== null) && array_key_exists($name, $VALUE_OPTIONS_CACHE)) {
         if ($VALUE_OPTIONS_CACHE[$name] === null) {
-            return null;
+            return null; // We already know this does not exist, so return the default and skip trying to later query for it
         }
         if ($VALUE_OPTIONS_CACHE[$name]['date_and_time'] > $cutoff) {
             return $VALUE_OPTIONS_CACHE[$name]['the_value'];

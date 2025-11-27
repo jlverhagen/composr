@@ -1900,7 +1900,7 @@ function addon_installed(string $addon_name, bool $check_hookless = false, bool 
 
         if (($answer) && ($disabled_scan)) {
             global $VALUES_FULLY_LOADED;
-            if (($VALUES_FULLY_LOADED) && (get_value('addon_disabled_' . $addon_name) === '1')) {
+            if (($VALUES_FULLY_LOADED == 2) && (get_value('addon_disabled_' . $addon_name) === '1')) {
                 $answer = false;
             }
         }
