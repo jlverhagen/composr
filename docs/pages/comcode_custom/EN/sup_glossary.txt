@@ -29,6 +29,10 @@ Here are the top ~100 buzzwords that will help you understand what web designers
 			<td>AdWords is Google's business program for paying money for the placement of adverts on Google searches and the websites of relevant AdSense customers.</td>
 		</tr>
 		<tr>
+			<td>AI</td>
+			<td>Artificial Intelligence; usually, these involve algorithms that follow a train/predict model. First, training data is fed into the algorithm. Then, the trained algorithm can be used to make predictions from a given input based on the trained data. For example, an AI to predict spam would be trained on known spam and non-spam (ham) data. Then, when someone submits content, the AI will predict how likely it is spam and how likely it is not spam.</td>
+		</tr>
+		<tr>
 			<td>AJAX</td>
 			<td>A technique for web pages to send background messages to the server (and receive responses/data) without the whole page having to be reloaded. An abbreviation of Asynchronous JavaScript and XML.</td>
 		</tr>
@@ -105,8 +109,12 @@ Here are the top ~100 buzzwords that will help you understand what web designers
 			<td>The Cloud' is an umbrella term for services delivered over the Internet where it is not fully defined where exactly the service comes from. It works via an intermediate broker service that will disseminate web page requests out to a number of possible actual web servers. This is useful for three main reasons: it allows complex or busy websites to function when the demand exceeds what a single server can do, it allows less complex or busy websites to easily share server resources with others, and it allows general purpose services (such as backup services) to be implemented in a very general way so that individual sites do not need individual maintenance. Cloud hosting is made available through VM (virtual machine) technology.</td>
 		</tr>
 		<tr>
-			<td>Composr</td>
+			<td>Composr CMS</td>
 			<td>The Open Source Content Management System developed by Christopher Graham and others.</td>
+		</tr>
+		<tr>
+			<td>Content Delivery Network (CDN)</td>
+			<td>A network of websites and servers, each containing copies of a site's static assets (e.g., media, CSS, JavaScript). When a request is made to the host site, that site may serve static assets from one or more CDNs instead of from the host server. This frees up disk space on the host server and helps with load balancing and bandwidth. It can also improve page speed as a CDN can be selected closest to the user's location (reducing latency).</td>
 		</tr>
 		<tr>
 			<td>Content Management System</td>
@@ -154,8 +162,8 @@ Here are the top ~100 buzzwords that will help you understand what web designers
 			<td>A fixed-width website is designed to have a particular width, often with a background showing at the edges if the web browser window is wider than this width. Sites that are not fixed-width are fluid. Most websites are fluid nowadays as it goes hand-in-hand with responsive design.</td>
 		</tr>
 		<tr>
-			<td>Flash</td>
-			<td>An Adobe technology for providing 'flashy' content on a web page. It works via a plugin and is not a W3C web standard. It is less commonly used now as HTML5 technologies provide many of the features that used to require Flash, and Flash doesn't work on the iPhone or iPad. Composr removed explicit support for Flash in version 11.</td>
+			<td>Framework</td>
+			<td>These are a set of (usually opinionated) tools to help developers make applications and websites faster. They contain standardised methods and often also include plugins (for easy integration of certain features) and a testing suite. They might also include SDKs or terminal clients. Usually, unlike Content Management Systems, frameworks are not out-of-the-box solutions (e.g., completed applications); they are simply tools to make building sites and applications more structured and maintainable.</td>
 		</tr>
 		<tr>
 			<td>Front-end</td>
@@ -290,6 +298,10 @@ Here are the top ~100 buzzwords that will help you understand what web designers
 			<td>A computer file format for images. PNG files are 100% accurate, and support partial transparency so that your website can have attractive blending.</td>
 		</tr>
 		<tr>
+			<td>Progressive Web Application (PWA)</td>
+			<td>These websites can be 'installed' to a user's device and work almost like a native application. They use device storage and cache to function offline, usually to a limited capacity.</td>
+		</tr>
+		<tr>
 			<td>Python</td>
 			<td>A programming language, similar to PHP.</td>
 		</tr>
@@ -310,6 +322,10 @@ Here are the top ~100 buzzwords that will help you understand what web designers
 			<td>A website technique for providing different layout rules for different screen sizes.</td>
 		</tr>
 		<tr>
+			<td>RESTful API</td>
+			<td>Representational State Transfer API. This is a widely-used standard for web applications to communicate with each other (particularly when data is involved). REST defines URL-based API routes to download or manipulate data. And HTTP requests pass in a 'method' to define what action to perform on the data, as well as a 'body' to specify the new attributes. Often, REST uses header-based authorization or oAuth to control who can do what.</td>
+		</tr>
+		<tr>
 			<td>RSS</td>
 			<td>A way for a website to provide a news feed, so that users may view the news in a separate newsreader, or so that other websites can syndicate your news.</td>
 		</tr>
@@ -324,6 +340,10 @@ Here are the top ~100 buzzwords that will help you understand what web designers
 		<tr>
 			<td>Server</td>
 			<td>A computer permanently switched on and connected to the Internet from which services, such as websites, can be delivered from.</td>
+		</tr>
+		<tr>
+			<td>Single Page Application (SPA)</td>
+			<td>Most traditional sites are multi-page, meaning each time you go to a different place on the site, its assets and contents are requested and downloaded (again). With single page applications, a website has a single page; its core assets and scripts are loaded, and AJAX or WebSocket requests is are used to dynamically download raw data and rewrite the DOM (page on the browser) accordingly with the new contents.</td>
 		</tr>
 		<tr>
 			<td>Slider</td>
@@ -358,8 +378,16 @@ Here are the top ~100 buzzwords that will help you understand what web designers
 			<td>Twitter is a social network focused on fast dissemination of small updates and news between and across networks of users.</td>
 		</tr>
 		<tr>
+			<td>UI</td>
+			<td>User Interface; how a website looks to the end user.</td>
+		</tr>
+		<tr>
 			<td>UML</td>
 			<td>Unified Modelling Language is a series of different kinds of diagram, used for formally specifying behaviours in advance of them being fully implemented in computer code.</td>
+		</tr>
+		<tr>
+			<td>UX</td>
+			<td>User Experience; how a website feels to the end user when they are interacting with it (e.g., is it intuitive?).</td>
 		</tr>
 		<tr>
 			<td>Usability</td>
