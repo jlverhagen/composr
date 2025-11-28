@@ -399,7 +399,7 @@ function handle_perceived_spammer_by_confidence(string $user_ip, float $confiden
 
     // Ban
     $spam_ban_threshold = intval(get_option('spam_ban_threshold'));
-    if (intval($confidence_level * 100.0) >= $spam_ban_threshold) {
+    if (($spam_ban_threshold > 0) && (intval($confidence_level * 100.0) >= $spam_ban_threshold)) {
         require_code('global3');
         require_code('failure');
         if ((!is_our_server($user_ip)) && (!is_unbannable_bot_dns($user_ip)) && (!is_unbannable_bot_ip($user_ip))) {
@@ -425,7 +425,7 @@ function handle_perceived_spammer_by_confidence(string $user_ip, float $confiden
     // Block
     if (!$page_level) {
         $spam_block_threshold = intval(get_option('spam_block_threshold'));
-        if (intval($confidence_level * 100.0) >= $spam_block_threshold) {
+        if (($spam_block_threshold > 0) && (intval($confidence_level * 100.0) >= $spam_block_threshold)) {
             require_code('notifications');
             $subject = do_lang('NOTIFICATION_SPAM_CHECK_BLOCK_SUBJECT_BLOCK', $user_ip, $blocked_by, float_format($confidence_level * 100.0), get_site_default_lang());
             $message = do_notification_lang('NOTIFICATION_SPAM_CHECK_BLOCK_BODY_BLOCK', $user_ip, $blocked_by, [float_format($confidence_level * 100.0), $additional_criteria], get_site_default_lang());
@@ -439,7 +439,7 @@ function handle_perceived_spammer_by_confidence(string $user_ip, float $confiden
 
     // Require approval
     $spam_approval_threshold = intval(get_option('spam_approval_threshold'));
-    if (intval($confidence_level * 100.0) >= $spam_approval_threshold) {
+    if (($spam_approval_threshold > 0) && (intval($confidence_level * 100.0) >= $spam_approval_threshold)) {
         global $SPAM_REMOVE_VALIDATION;
         $SPAM_REMOVE_VALIDATION = true;
 
