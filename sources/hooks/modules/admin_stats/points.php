@@ -103,9 +103,8 @@ class Hook_admin_stats_points extends Source_hook_stats_provider
      *
      * @param  TIME $start_time Start timestamp
      * @param  TIME $end_time End timestamp
-     * @param  array $data_buckets Map of data buckets; a map of bucket name to nested maps with the following maps in sequence: 'pivot', 'pivot interval', 'pivot value' (then further map data); passed by reference only with pre-filled zero data to later be merged
      */
-    public function preprocess_raw_data(int $start_time, int $end_time, array &$data_buckets)
+    public function preprocess_raw_data(int $start_time, int $end_time)
     {
         require_code('temporal');
 
@@ -134,45 +133,45 @@ class Hook_admin_stats_points extends Source_hook_stats_provider
                     $pivot_value = $this->calculate_date_pivot_value($pivot, $timestamp);
 
                     // All point transactions
-                    if (!isset($data_buckets['points_transacted'][$pivot][$pivot_interval][$pivot_value])) {
-                        $data_buckets['points_transacted'][$pivot][$pivot_interval][$pivot_value] = 0;
+                    if (!isset($this->data_buckets['points_transacted'][$pivot][$pivot_interval][$pivot_value])) {
+                        $this->data_buckets['points_transacted'][$pivot][$pivot_interval][$pivot_value] = 0;
                     }
-                    $data_buckets['points_transacted'][$pivot][$pivot_interval][$pivot_value] += ($row['amount_gift_points'] + $row['amount_points']);
+                    $this->data_buckets['points_transacted'][$pivot][$pivot_interval][$pivot_value] += ($row['amount_gift_points'] + $row['amount_points']);
 
                     // Points sent between members (including via escrow)
                     if ((!is_guest($row['sending_member']) && !is_guest($row['receiving_member'])) || ($row['t_type'] == 'points_escrow')) {
-                        if (!isset($data_buckets['points_sent'][$pivot][$pivot_interval][$pivot_value])) {
-                            $data_buckets['points_sent'][$pivot][$pivot_interval][$pivot_value] = 0;
+                        if (!isset($this->data_buckets['points_sent'][$pivot][$pivot_interval][$pivot_value])) {
+                            $this->data_buckets['points_sent'][$pivot][$pivot_interval][$pivot_value] = 0;
                         }
-                        $data_buckets['points_sent'][$pivot][$pivot_interval][$pivot_value] += ($row['amount_gift_points'] + $row['amount_points']);
+                        $this->data_buckets['points_sent'][$pivot][$pivot_interval][$pivot_value] += ($row['amount_gift_points'] + $row['amount_points']);
                     }
 
                     // Points spent (except charged by warnings)
                     if (is_guest($row['receiving_member']) && ($row['t_type'] != 'warning')) {
-                        if (!isset($data_buckets['points_spent'][$pivot][$pivot_interval][$pivot_value])) {
-                            $data_buckets['points_spent'][$pivot][$pivot_interval][$pivot_value] = 0;
+                        if (!isset($this->data_buckets['points_spent'][$pivot][$pivot_interval][$pivot_value])) {
+                            $this->data_buckets['points_spent'][$pivot][$pivot_interval][$pivot_value] = 0;
                         }
-                        $data_buckets['points_spent'][$pivot][$pivot_interval][$pivot_value] += ($row['amount_gift_points'] + $row['amount_points']);
+                        $this->data_buckets['points_spent'][$pivot][$pivot_interval][$pivot_value] += ($row['amount_gift_points'] + $row['amount_points']);
                     }
 
                     // Points received
                     if (!is_guest($row['receiving_member'])) {
-                        if (!isset($data_buckets['points_received'][$pivot][$pivot_interval][$pivot_value])) {
-                            $data_buckets['points_received'][$pivot][$pivot_interval][$pivot_value] = 0;
+                        if (!isset($this->data_buckets['points_received'][$pivot][$pivot_interval][$pivot_value])) {
+                            $this->data_buckets['points_received'][$pivot][$pivot_interval][$pivot_value] = 0;
                         }
-                        $data_buckets['points_received'][$pivot][$pivot_interval][$pivot_value] += ($row['amount_gift_points'] + $row['amount_points']);
+                        $this->data_buckets['points_received'][$pivot][$pivot_interval][$pivot_value] += ($row['amount_gift_points'] + $row['amount_points']);
                     }
 
                     // Gift points used
                     if (!is_guest($row['sending_member'])) {
-                        if (!isset($data_buckets['gift_points_used'][$pivot][$pivot_interval][$pivot_value])) {
-                            $data_buckets['gift_points_used'][$pivot][$pivot_interval][$pivot_value] = 0;
+                        if (!isset($this->data_buckets['gift_points_used'][$pivot][$pivot_interval][$pivot_value])) {
+                            $this->data_buckets['gift_points_used'][$pivot][$pivot_interval][$pivot_value] = 0;
                         }
-                        $data_buckets['gift_points_used'][$pivot][$pivot_interval][$pivot_value] += $row['amount_gift_points'];
+                        $this->data_buckets['gift_points_used'][$pivot][$pivot_interval][$pivot_value] += $row['amount_gift_points'];
                     }
                 }
 
-                $this->dump_delta_if_necessary($data_buckets);
+                $this->dump_data_buckets_if_necessary();
             }
 
             $start += $max;

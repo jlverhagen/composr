@@ -63,6 +63,9 @@ abstract class Source_hook_stats_base
  */
 abstract class Source_hook_stats_provider extends Source_hook_stats_base
 {
+    // $data_buckets uses a lot of memory. It is better to manage it as a class-level variable than to pass it by reference.
+    public $data_buckets = [];
+
     public const GRAPH_LINE_CHART = 1;
     public const GRAPH_PIE_CHART = 2;
     public const GRAPH_BAR_CHART = 3;
@@ -192,9 +195,8 @@ abstract class Source_hook_stats_provider extends Source_hook_stats_base
      *
      * @param  TIME $start_time Start timestamp
      * @param  TIME $end_time End timestamp
-     * @param  array $data_buckets Map of data buckets; a map of bucket name to nested maps with the following maps in sequence: 'day', 'pivot', 'pivot value' (then further map data) ; extended and returned by reference
      */
-    public function preprocess_raw_data(int $start_time, int $end_time, array &$data_buckets)
+    public function preprocess_raw_data(int $start_time, int $end_time)
     {
     }
 
@@ -204,9 +206,8 @@ abstract class Source_hook_stats_provider extends Source_hook_stats_base
      *
      * @param  TIME $start_time Start timestamp
      * @param  TIME $end_time End timestamp
-     * @param  array $data_buckets Map of data buckets; a map of bucket name to nested maps
      */
-    public function preprocess_raw_data_flat(int $start_time, int $end_time, array &$data_buckets)
+    public function preprocess_raw_data_flat(int $start_time, int $end_time)
     {
     }
 
@@ -555,23 +556,23 @@ abstract class Source_hook_stats_provider extends Source_hook_stats_base
      * Check if the data buckets is getting large, and if so, dump to the database delta and then reset.
      * This should regularly be used in stats hooks to avoid out of memory errors.
      *
-     * @param  array $data_buckets Our current data, passed by reference
      * @param  boolean $force Whether to forcefully dump regardless of size, e.g. we are finished processing data buckets
+     * @param  boolean $rebuild Whether to rebuild the delta array structure with the buckets for this hook
      */
-    public function dump_delta_if_necessary(array &$data_buckets, bool $force = false)
+    public function dump_data_buckets_if_necessary(bool $force = false, bool $rebuild = true)
     {
         // Check memory use
         require_code('files');
         $ml = php_return_bytes(ini_get('memory_limit'));
         $current_memory = memory_get_usage(false);
         $near_limit = (($ml > 0) && ($current_memory >= ($ml - (1024 * 1024 * 8)))); // within 8 MB of PHP memory limit
-        $large_bucket = (count($data_buckets, COUNT_RECURSIVE) >= 5000);
+        $large_bucket = (count($this->data_buckets, COUNT_RECURSIVE) >= 5000);
 
         $should_dump = ($force || $near_limit || $large_bucket);
 
         if ($should_dump) {
             // Dump what we have to the database
-            foreach ($data_buckets as $bucket => $_) {
+            foreach ($this->data_buckets as $bucket => $_) {
                 foreach ($_ as $pivot => $__) {
                     foreach ($__ as $pivot_interval => $___) {
                         foreach ($___ as $pivot_value => $data) {
@@ -587,20 +588,22 @@ abstract class Source_hook_stats_provider extends Source_hook_stats_base
                 }
             }
 
-            // Rebuild data structure (drop references to allow memory to be freed)
-            $data_buckets = [];
-            $info = $this->info();
-            if ($info === null) {
-                return;
-            }
-            foreach (array_keys($info) as $bucket) {
-                $data_buckets[$bucket] = [];
-            }
-
-            // Force garbage collection and free engine caches
+            // Garbage collect
+            $this->data_buckets = [];
             gc_collect_cycles();
             if (function_exists('gc_mem_caches')) {
                 @gc_mem_caches();
+            }
+
+            // Rebuild data structure
+            if ($rebuild) {
+                $info = $this->info();
+                if ($info === null) {
+                    return;
+                }
+                foreach (array_keys($info) as $bucket) {
+                    $this->data_buckets[$bucket] = [];
+                }
             }
         }
     }

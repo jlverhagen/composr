@@ -149,9 +149,8 @@ class Hook_admin_stats_events extends Source_hook_stats_provider
      *
      * @param  TIME $start_time Start timestamp
      * @param  TIME $end_time End timestamp
-     * @param  array $data_buckets Map of data buckets; a map of bucket name to nested maps with the following maps in sequence: 'pivot', 'pivot interval', 'pivot value' (then further map data); passed by reference only with pre-filled zero data to later be merged
      */
-    public function preprocess_raw_data(int $start_time, int $end_time, array &$data_buckets)
+    public function preprocess_raw_data(int $start_time, int $end_time)
     {
         cms_profile_start_for('Hook_admin_stats_events->preprocess_raw_data');
         require_code('temporal');
@@ -197,13 +196,13 @@ class Hook_admin_stats_events extends Source_hook_stats_provider
                     $pivot_interval = $this->calculate_date_pivot_interval($pivot, $timestamp);
                     $pivot_value = $this->calculate_date_pivot_value($pivot, $timestamp);
 
-                    if (!isset($data_buckets['events'][$pivot][$pivot_interval][$pivot_value][$event][$country_code])) {
-                        $data_buckets['events'][$pivot][$pivot_interval][$pivot_value][$event][$country_code] = 0;
+                    if (!isset($this->data_buckets['events'][$pivot][$pivot_interval][$pivot_value][$event][$country_code])) {
+                        $this->data_buckets['events'][$pivot][$pivot_interval][$pivot_value][$event][$country_code] = 0;
                     }
-                    $data_buckets['events'][$pivot][$pivot_interval][$pivot_value][$event][$country_code]++;
+                    $this->data_buckets['events'][$pivot][$pivot_interval][$pivot_value][$event][$country_code]++;
                 }
 
-                $this->dump_delta_if_necessary($data_buckets);
+                $this->dump_data_buckets_if_necessary();
             }
 
             cms_profile_start_for('Hook_admin_stats_events->preprocess_raw_data stats_events loop ' . strval($start));
@@ -266,13 +265,13 @@ class Hook_admin_stats_events extends Source_hook_stats_provider
                         $pivot_interval = $this->calculate_date_pivot_interval($pivot, $timestamp);
                         $pivot_value = $this->calculate_date_pivot_value($pivot, $timestamp);
 
-                        if (!isset($data_buckets['tracking_code_usage'][$pivot][$pivot_interval][$pivot_value][$tracking_code][$country_code])) {
-                            $data_buckets['tracking_code_usage'][$pivot][$pivot_interval][$pivot_value][$tracking_code][$country_code] = 0;
+                        if (!isset($this->data_buckets['tracking_code_usage'][$pivot][$pivot_interval][$pivot_value][$tracking_code][$country_code])) {
+                            $this->data_buckets['tracking_code_usage'][$pivot][$pivot_interval][$pivot_value][$tracking_code][$country_code] = 0;
                         }
-                        $data_buckets['tracking_code_usage'][$pivot][$pivot_interval][$pivot_value][$tracking_code][$country_code]++;
+                        $this->data_buckets['tracking_code_usage'][$pivot][$pivot_interval][$pivot_value][$tracking_code][$country_code]++;
                     }
 
-                    $this->dump_delta_if_necessary($data_buckets);
+                    $this->dump_data_buckets_if_necessary();
                 }
 
                 cms_profile_end_for('Hook_admin_stats_events->preprocess_raw_data stats loop ' . strval($start) . ' tracking codes ' . $session_id);
@@ -288,17 +287,17 @@ class Hook_admin_stats_events extends Source_hook_stats_provider
                         $pivot_interval = $this->calculate_date_pivot_interval($pivot, $timestamp);
                         $pivot_value = $this->calculate_date_pivot_value($pivot, $timestamp);
 
-                        if (!isset($data_buckets['conversion_rates'][$pivot][$pivot_interval][$pivot_value][$event])) {
-                            $data_buckets['conversion_rates'][$pivot][$pivot_interval][$pivot_value][$event] = [0, 0];
+                        if (!isset($this->data_buckets['conversion_rates'][$pivot][$pivot_interval][$pivot_value][$event])) {
+                            $this->data_buckets['conversion_rates'][$pivot][$pivot_interval][$pivot_value][$event] = [0, 0];
                         }
 
-                        $data_buckets['conversion_rates'][$pivot][$pivot_interval][$pivot_value][$event][0]++;
+                        $this->data_buckets['conversion_rates'][$pivot][$pivot_interval][$pivot_value][$event][0]++;
                         if (isset($events_for_session[$event])) {
-                            $data_buckets['conversion_rates'][$pivot][$pivot_interval][$pivot_value][$event][1]++;
+                            $this->data_buckets['conversion_rates'][$pivot][$pivot_interval][$pivot_value][$event][1]++;
                         }
                     }
 
-                    $this->dump_delta_if_necessary($data_buckets);
+                    $this->dump_data_buckets_if_necessary();
                 }
 
                 // Each combination of event tracking code wrt session
@@ -308,20 +307,20 @@ class Hook_admin_stats_events extends Source_hook_stats_provider
                             $pivot_interval = $this->calculate_date_pivot_interval($pivot, $timestamp);
                             $pivot_value = $this->calculate_date_pivot_value($pivot, $timestamp);
 
-                            $data_buckets['tracking_code_conversion_rates'][$pivot][$pivot_interval][$pivot_value][$session_id][$tracking_code] = []; // We need this as we need to know tracking codes with no events
+                            $this->data_buckets['tracking_code_conversion_rates'][$pivot][$pivot_interval][$pivot_value][$session_id][$tracking_code] = []; // We need this as we need to know tracking codes with no events
 
-                            if (!isset($data_buckets['tracking_code_conversion_rates'][$pivot][$pivot_interval][$pivot_value][$session_id][$tracking_code][$event])) {
-                                $data_buckets['tracking_code_conversion_rates'][$pivot][$pivot_interval][$pivot_value][$session_id][$tracking_code][$event] = [0, 0];
+                            if (!isset($this->data_buckets['tracking_code_conversion_rates'][$pivot][$pivot_interval][$pivot_value][$session_id][$tracking_code][$event])) {
+                                $this->data_buckets['tracking_code_conversion_rates'][$pivot][$pivot_interval][$pivot_value][$session_id][$tracking_code][$event] = [0, 0];
                             }
 
-                            $data_buckets['tracking_code_conversion_rates'][$pivot][$pivot_interval][$pivot_value][$session_id][$tracking_code][$event][0]++;
+                            $this->data_buckets['tracking_code_conversion_rates'][$pivot][$pivot_interval][$pivot_value][$session_id][$tracking_code][$event][0]++;
                             if (isset($events_for_session[$event])) {
-                                $data_buckets['tracking_code_conversion_rates'][$pivot][$pivot_interval][$pivot_value][$session_id][$tracking_code][$event][1]++;
+                                $this->data_buckets['tracking_code_conversion_rates'][$pivot][$pivot_interval][$pivot_value][$session_id][$tracking_code][$event][1]++;
                             }
                         }
                     }
 
-                    $this->dump_delta_if_necessary($data_buckets);
+                    $this->dump_data_buckets_if_necessary();
                 }
 
                 cms_profile_end_for('Hook_admin_stats_events->preprocess_raw_data stats loop ' . strval($start) . ' events ' . $session_id);

@@ -77,9 +77,8 @@ class Hook_admin_stats_banners extends Source_hook_stats_provider
      *
      * @param  TIME $start_time Start timestamp
      * @param  TIME $end_time End timestamp
-     * @param  array $data_buckets Map of data buckets; a map of bucket name to nested maps with the following maps in sequence: 'pivot', 'pivot interval', 'pivot value' (then further map data); passed by reference only with pre-filled zero data to later be merged
      */
-    public function preprocess_raw_data(int $start_time, int $end_time, array &$data_buckets)
+    public function preprocess_raw_data(int $start_time, int $end_time)
     {
         require_code('locations');
         require_code('temporal');
@@ -112,13 +111,13 @@ class Hook_admin_stats_banners extends Source_hook_stats_provider
                     $pivot_interval = $this->calculate_date_pivot_interval($pivot, $timestamp);
                     $pivot_value = $this->calculate_date_pivot_value($pivot, $timestamp);
 
-                    if (!isset($data_buckets['banner_clicks'][$pivot][$pivot_interval][$pivot_value][$banner][$country])) {
-                        $data_buckets['banner_clicks'][$pivot][$pivot_interval][$pivot_value][$banner][$country] = 0;
+                    if (!isset($this->data_buckets['banner_clicks'][$pivot][$pivot_interval][$pivot_value][$banner][$country])) {
+                        $this->data_buckets['banner_clicks'][$pivot][$pivot_interval][$pivot_value][$banner][$country] = 0;
                     }
-                    $data_buckets['banner_clicks'][$pivot][$pivot_interval][$pivot_value][$banner][$country]++;
+                    $this->data_buckets['banner_clicks'][$pivot][$pivot_interval][$pivot_value][$banner][$country]++;
                 }
 
-                $this->dump_delta_if_necessary($data_buckets);
+                $this->dump_data_buckets_if_necessary();
             }
 
             $start += $max;

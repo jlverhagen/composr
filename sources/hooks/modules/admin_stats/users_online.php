@@ -62,9 +62,8 @@ class Hook_admin_stats_users_online extends Source_hook_stats_provider
      *
      * @param  TIME $start_time Start timestamp
      * @param  TIME $end_time End timestamp
-     * @param  array $data_buckets Map of data buckets; a map of bucket name to nested maps
      */
-    public function preprocess_raw_data_flat(int $start_time, int $end_time, array &$data_buckets)
+    public function preprocess_raw_data_flat(int $start_time, int $end_time)
     {
         // Optimisation: as this always calculates full statistics, do not always calculate
         if (($end_time < (time() - (60 * 60 * 24))) || (mt_rand(0, 29) != 0)) {
@@ -86,7 +85,7 @@ class Hook_admin_stats_users_online extends Source_hook_stats_provider
                 $timestamp = tz_time($timestamp, $server_timezone);
                 $date_interval = to_epoch_interval_index($timestamp, 'days');
 
-                $data_buckets['users_online'][$date_interval] = $row['peak'];
+                $this->data_buckets['users_online'][$date_interval] = $row['peak'];
             }
 
             $start += $max;

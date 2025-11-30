@@ -825,9 +825,10 @@ function preprocess_raw_data_for(string $hook_name, int $start_time = 0, ?int $e
 
     cms_profile_start_for('preprocess_raw_data_for::' . $hook_name . '->preprocess_raw_data');
 
-    $data_buckets = [];
+    // Build delta structure
+    $hook_ob->data_buckets = [];
     foreach (array_keys($info) as $bucket) {
-        $data_buckets[$bucket] = [];
+        $hook_ob->data_buckets[$bucket] = [];
     }
 
     // Preprocess new data...
@@ -836,13 +837,11 @@ function preprocess_raw_data_for(string $hook_name, int $start_time = 0, ?int $e
 
     $old = cms_extend_time_limit($extend_time);
 
-    $hook_ob->preprocess_raw_data($start_time, $end_time, $data_buckets);
+    $hook_ob->preprocess_raw_data($start_time, $end_time);
 
     // Dump final delta data...
 
-    $hook_ob->dump_delta_if_necessary($data_buckets, true);
-
-    unset($data_buckets);
+    $hook_ob->dump_data_buckets_if_necessary(true, false);
 
     cms_set_time_limit($old);
 
@@ -856,26 +855,26 @@ function preprocess_raw_data_for(string $hook_name, int $start_time = 0, ?int $e
 
     // First we need to load up any data we already processed for any days within the time range, so anything new will MERGE into that...
 
-    $data_buckets_flat = [];
+    $hook_ob->data_buckets = [];
     foreach (array_keys($info) as $bucket) {
         $p_data = $GLOBALS['SITE_DB']->query_select_value_if_there('stats_preprocessed_flat', 'p_data', [
             'p_bucket' => $bucket,
         ]);
         if ($p_data !== null) {
-            $data_buckets_flat[$bucket] = @unserialize($p_data);
-            if ($data_buckets_flat[$bucket] === false) {
-                $data_buckets_flat[$bucket] = [];
+            $hook_ob->data_buckets[$bucket] = @unserialize($p_data);
+            if ($hook_ob->data_buckets[$bucket] === false) {
+                $hook_ob->data_buckets[$bucket] = [];
             }
         }
     }
 
     // Preprocess new data...
 
-    $hook_ob->preprocess_raw_data_flat($start_time, $end_time, $data_buckets_flat);
+    $hook_ob->preprocess_raw_data_flat($start_time, $end_time);
 
     // Re-save into the database...
 
-    foreach ($data_buckets_flat as $bucket => $data) {
+    foreach ($hook_ob->data_buckets as $bucket => $data) {
         $GLOBALS['SITE_DB']->query_insert_or_replace('stats_preprocessed_flat', [
             'p_data' => serialize($data),
         ], [
@@ -883,7 +882,7 @@ function preprocess_raw_data_for(string $hook_name, int $start_time = 0, ?int $e
         ]);
     }
 
-    unset($data_buckets_flat);
+    $hook_ob->data_buckets = [];
 
     cms_set_time_limit($old);
 

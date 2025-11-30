@@ -408,9 +408,8 @@ class Hook_admin_stats_views extends Source_hook_stats_provider
      *
      * @param  TIME $start_time Start timestamp
      * @param  TIME $end_time End timestamp
-     * @param  array $data_buckets Map of data buckets; a map of bucket name to nested maps with the following maps in sequence: 'pivot', 'pivot interval', 'pivot value' (then further map data); passed by reference only with pre-filled zero data to later be merged
      */
-    public function preprocess_raw_data(int $start_time, int $end_time, array &$data_buckets)
+    public function preprocess_raw_data(int $start_time, int $end_time)
     {
         cms_profile_start_for('Hook_admin_stats_views->preprocess_raw_data');
 
@@ -533,73 +532,73 @@ class Hook_admin_stats_views extends Source_hook_stats_provider
 
                     // Hits...
 
-                    if (!isset($data_buckets['total_views'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$page_link])) {
-                        $data_buckets['total_views'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$page_link] = 0;
+                    if (!isset($this->data_buckets['total_views'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$page_link])) {
+                        $this->data_buckets['total_views'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$page_link] = 0;
                     }
-                    $data_buckets['total_views'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$page_link]++;
+                    $this->data_buckets['total_views'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$page_link]++;
 
-                    $data_buckets['total_unique_views'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$unique_identifier] = 1;
+                    $this->data_buckets['total_unique_views'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$unique_identifier] = 1;
 
                     if ($referrer_type != self::REFERRER_TYPE__INTERNAL) {
-                        if (!isset($data_buckets['total_referrals'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human])) {
-                            $data_buckets['total_referrals'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human] = 0;
+                        if (!isset($this->data_buckets['total_referrals'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human])) {
+                            $this->data_buckets['total_referrals'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human] = 0;
                         }
-                        $data_buckets['total_referrals'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human]++;
+                        $this->data_buckets['total_referrals'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human]++;
                     }
 
-                    if (!isset($data_buckets['popular_pages'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$page_link])) {
-                        $data_buckets['popular_pages'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$page_link] = 0;
+                    if (!isset($this->data_buckets['popular_pages'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$page_link])) {
+                        $this->data_buckets['popular_pages'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$page_link] = 0;
                     }
-                    $data_buckets['popular_pages'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$page_link]++;
+                    $this->data_buckets['popular_pages'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$page_link]++;
 
                     // User agents...
 
                     if ($os != '') {
-                        if (!isset($data_buckets['operating_systems'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$os])) {
-                            $data_buckets['operating_systems'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$os] = 0;
+                        if (!isset($this->data_buckets['operating_systems'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$os])) {
+                            $this->data_buckets['operating_systems'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$os] = 0;
                         }
-                        $data_buckets['operating_systems'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$os]++;
+                        $this->data_buckets['operating_systems'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$os]++;
                     }
                     if ($os_stripped != '') {
-                        if (!isset($data_buckets['operating_systems__stripped'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$os_stripped])) {
-                            $data_buckets['operating_systems__stripped'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$os_stripped] = 0;
+                        if (!isset($this->data_buckets['operating_systems__stripped'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$os_stripped])) {
+                            $this->data_buckets['operating_systems__stripped'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$os_stripped] = 0;
                         }
-                        $data_buckets['operating_systems__stripped'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$os_stripped]++;
+                        $this->data_buckets['operating_systems__stripped'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$os_stripped]++;
                     }
 
                     if ($web_browser != brand_name()) {
-                        if (!isset($data_buckets['web_browsers'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$web_browser])) {
-                            $data_buckets['web_browsers'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$web_browser] = 0;
+                        if (!isset($this->data_buckets['web_browsers'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$web_browser])) {
+                            $this->data_buckets['web_browsers'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$web_browser] = 0;
                         }
-                        $data_buckets['web_browsers'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$web_browser]++;
-                        if (!isset($data_buckets['web_browsers__stripped'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$web_browser_stripped])) {
-                            $data_buckets['web_browsers__stripped'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$web_browser_stripped] = 0;
+                        $this->data_buckets['web_browsers'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$web_browser]++;
+                        if (!isset($this->data_buckets['web_browsers__stripped'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$web_browser_stripped])) {
+                            $this->data_buckets['web_browsers__stripped'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$web_browser_stripped] = 0;
                         }
-                        $data_buckets['web_browsers__stripped'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$web_browser_stripped]++;
+                        $this->data_buckets['web_browsers__stripped'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$web_browser_stripped]++;
 
-                        if (!isset($data_buckets['user_agent_types'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$user_agent_type])) {
-                            $data_buckets['user_agent_types'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$user_agent_type] = 0;
+                        if (!isset($this->data_buckets['user_agent_types'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$user_agent_type])) {
+                            $this->data_buckets['user_agent_types'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$user_agent_type] = 0;
                         }
-                        $data_buckets['user_agent_types'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$user_agent_type]++;
+                        $this->data_buckets['user_agent_types'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$user_agent_type]++;
                     }
 
                     // Referrers...
 
                     if ($referrer_type != self::REFERRER_TYPE__INTERNAL) {
-                        if (!isset($data_buckets['referrer_urls'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$referrer_url])) {
-                            $data_buckets['referrer_urls'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$referrer_url] = 0;
+                        if (!isset($this->data_buckets['referrer_urls'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$referrer_url])) {
+                            $this->data_buckets['referrer_urls'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$referrer_url] = 0;
                         }
-                        $data_buckets['referrer_urls'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$referrer_url]++;
-                        if (!isset($data_buckets['referrer_domains'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$referrer_domain])) {
-                            $data_buckets['referrer_domains'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$referrer_domain] = 0;
+                        $this->data_buckets['referrer_urls'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$referrer_url]++;
+                        if (!isset($this->data_buckets['referrer_domains'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$referrer_domain])) {
+                            $this->data_buckets['referrer_domains'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$referrer_domain] = 0;
                         }
-                        $data_buckets['referrer_domains'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$referrer_domain]++;
+                        $this->data_buckets['referrer_domains'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$referrer_domain]++;
                     }
 
-                    if (!isset($data_buckets['referrer_type'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$referrer_type])) {
-                        $data_buckets['referrer_type'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$referrer_type] = 0;
+                    if (!isset($this->data_buckets['referrer_type'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$referrer_type])) {
+                        $this->data_buckets['referrer_type'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$referrer_type] = 0;
                     }
-                    $data_buckets['referrer_type'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$referrer_type]++;
+                    $this->data_buckets['referrer_type'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$referrer_type]++;
 
                     // Speed...
 
@@ -607,42 +606,42 @@ class Hook_admin_stats_views extends Source_hook_stats_provider
 
                     // Build up our distribution (in the Gaussian sense) of page speeds
                     $speed_bracket = $this->find_value_bracket($this->speed_brackets, $page_speed);
-                    if (!isset($data_buckets['load_times_spread'][$pivot][$pivot_interval][$pivot_value][$speed_bracket])) {
-                        $data_buckets['load_times_spread'][$pivot][$pivot_interval][$pivot_value][$speed_bracket] = 0;
+                    if (!isset($this->data_buckets['load_times_spread'][$pivot][$pivot_interval][$pivot_value][$speed_bracket])) {
+                        $this->data_buckets['load_times_spread'][$pivot][$pivot_interval][$pivot_value][$speed_bracket] = 0;
                     }
-                    $data_buckets['load_times_spread'][$pivot][$pivot_interval][$pivot_value][$speed_bracket]++;
+                    $this->data_buckets['load_times_spread'][$pivot][$pivot_interval][$pivot_value][$speed_bracket]++;
 
                     // Build in speed of this hit to its particular page for its particular month -- gives us an idea about what are our slow and fast pages
-                    if (!isset($data_buckets['page_average_speeds'][$pivot][$pivot_interval][$pivot_value][$page_link])) {
-                        $data_buckets['page_average_speeds'][$pivot][$pivot_interval][$pivot_value][$page_link] = [0, 0];
+                    if (!isset($this->data_buckets['page_average_speeds'][$pivot][$pivot_interval][$pivot_value][$page_link])) {
+                        $this->data_buckets['page_average_speeds'][$pivot][$pivot_interval][$pivot_value][$page_link] = [0, 0];
                     }
-                    $data_buckets['page_average_speeds'][$pivot][$pivot_interval][$pivot_value][$page_link][0] += $page_speed;
-                    $data_buckets['page_average_speeds'][$pivot][$pivot_interval][$pivot_value][$page_link][1]++;
+                    $this->data_buckets['page_average_speeds'][$pivot][$pivot_interval][$pivot_value][$page_link][0] += $page_speed;
+                    $this->data_buckets['page_average_speeds'][$pivot][$pivot_interval][$pivot_value][$page_link][1]++;
 
                     // Build in speed of this hit to its particular page for its particular month - but pivoted e.g. by hour of day, day of week, etc -- gives us an idea about peak times
-                    if (!isset($data_buckets['average_page_speed'][$pivot][$pivot_interval][$pivot_value][$page_link])) {
-                        $data_buckets['average_page_speed'][$pivot][$pivot_interval][$pivot_value][$page_link] = [0, 0];
+                    if (!isset($this->data_buckets['average_page_speed'][$pivot][$pivot_interval][$pivot_value][$page_link])) {
+                        $this->data_buckets['average_page_speed'][$pivot][$pivot_interval][$pivot_value][$page_link] = [0, 0];
                     }
-                    $data_buckets['average_page_speed'][$pivot][$pivot_interval][$pivot_value][$page_link][0] += $page_speed;
-                    $data_buckets['average_page_speed'][$pivot][$pivot_interval][$pivot_value][$page_link][1]++;
+                    $this->data_buckets['average_page_speed'][$pivot][$pivot_interval][$pivot_value][$page_link][0] += $page_speed;
+                    $this->data_buckets['average_page_speed'][$pivot][$pivot_interval][$pivot_value][$page_link][1]++;
 
                     // Languages and countries...
 
                     $language = preg_replace('#[\-_].*$#', '', $row['requested_language']);
-                    if (!isset($data_buckets['requested_languages'][$pivot][$pivot_interval][$pivot_value][$is_real_human][$language])) {
-                        $data_buckets['requested_languages'][$pivot][$pivot_interval][$pivot_value][$is_real_human][$language] = 0;
+                    if (!isset($this->data_buckets['requested_languages'][$pivot][$pivot_interval][$pivot_value][$is_real_human][$language])) {
+                        $this->data_buckets['requested_languages'][$pivot][$pivot_interval][$pivot_value][$is_real_human][$language] = 0;
                     }
-                    $data_buckets['requested_languages'][$pivot][$pivot_interval][$pivot_value][$is_real_human][$language]++;
+                    $this->data_buckets['requested_languages'][$pivot][$pivot_interval][$pivot_value][$is_real_human][$language]++;
 
                     if (has_geolocation_data()) {
-                        if (!isset($data_buckets['countries'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human])) {
-                            $data_buckets['countries'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human] = 0;
+                        if (!isset($this->data_buckets['countries'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human])) {
+                            $this->data_buckets['countries'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human] = 0;
                         }
-                        $data_buckets['countries'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human]++;
+                        $this->data_buckets['countries'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human]++;
                     }
                 }
 
-                $this->dump_delta_if_necessary($data_buckets);
+                $this->dump_data_buckets_if_necessary();
             }
 
             cms_profile_end_for('Hook_admin_stats_views->preprocess_raw_data (group ' . integer_format($start) . ')');
@@ -705,48 +704,48 @@ class Hook_admin_stats_views extends Source_hook_stats_provider
                 $pivot_interval = $this->calculate_date_pivot_interval($pivot, $timestamp);
                 $pivot_value = $this->calculate_date_pivot_value($pivot, $timestamp);
 
-                if (!isset($data_buckets['session_bounce_rates'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$page_link])) {
-                    $data_buckets['session_bounce_rates'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$page_link] = [0, 0];
+                if (!isset($this->data_buckets['session_bounce_rates'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$page_link])) {
+                    $this->data_buckets['session_bounce_rates'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$page_link] = [0, 0];
                 }
                 if ($is_bounce) {
-                    $data_buckets['session_bounce_rates'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$page_link][0]++;
+                    $this->data_buckets['session_bounce_rates'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$page_link][0]++;
                 }
-                $data_buckets['session_bounce_rates'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$page_link][1]++;
+                $this->data_buckets['session_bounce_rates'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$page_link][1]++;
 
-                if (!isset($data_buckets['average_session_duration'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human])) {
-                    $data_buckets['average_session_duration'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human] = [0, 0];
+                if (!isset($this->data_buckets['average_session_duration'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human])) {
+                    $this->data_buckets['average_session_duration'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human] = [0, 0];
                 }
-                $data_buckets['average_session_duration'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][0] += $session_duration;
-                $data_buckets['average_session_duration'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][1]++;
+                $this->data_buckets['average_session_duration'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][0] += $session_duration;
+                $this->data_buckets['average_session_duration'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][1]++;
 
-                if (!isset($data_buckets['average_session_total_views'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human])) {
-                    $data_buckets['average_session_total_views'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human] = [0, 0];
+                if (!isset($this->data_buckets['average_session_total_views'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human])) {
+                    $this->data_buckets['average_session_total_views'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human] = [0, 0];
                 }
-                $data_buckets['average_session_total_views'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][0] += $total_views;
-                $data_buckets['average_session_total_views'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][1]++;
+                $this->data_buckets['average_session_total_views'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][0] += $total_views;
+                $this->data_buckets['average_session_total_views'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][1]++;
 
-                if (!isset($data_buckets['session_entry_pages'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$first_page_link])) {
-                    $data_buckets['session_entry_pages'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$first_page_link] = 0;
+                if (!isset($this->data_buckets['session_entry_pages'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$first_page_link])) {
+                    $this->data_buckets['session_entry_pages'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$first_page_link] = 0;
                 }
-                $data_buckets['session_entry_pages'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$first_page_link]++;
+                $this->data_buckets['session_entry_pages'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$first_page_link]++;
 
-                if (!isset($data_buckets['session_exit_pages'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$last_page_link])) {
-                    $data_buckets['session_exit_pages'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$last_page_link] = 0;
+                if (!isset($this->data_buckets['session_exit_pages'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$last_page_link])) {
+                    $this->data_buckets['session_exit_pages'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$last_page_link] = 0;
                 }
-                $data_buckets['session_exit_pages'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$last_page_link]++;
+                $this->data_buckets['session_exit_pages'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$last_page_link]++;
 
                 $session_duration_bracket = $this->find_value_bracket($this->session_duration_brackets, $session_duration);
-                if (!isset($data_buckets['session_durations'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$session_duration_bracket])) {
-                    $data_buckets['session_durations'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$session_duration_bracket] = 0;
+                if (!isset($this->data_buckets['session_durations'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$session_duration_bracket])) {
+                    $this->data_buckets['session_durations'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$session_duration_bracket] = 0;
                 }
-                $data_buckets['session_durations'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$session_duration_bracket]++;
+                $this->data_buckets['session_durations'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$session_duration_bracket]++;
 
-                if (!isset($data_buckets['session_total_views'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$total_views])) {
-                    $data_buckets['session_total_views'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$total_views] = 0;
+                if (!isset($this->data_buckets['session_total_views'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$total_views])) {
+                    $this->data_buckets['session_total_views'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$total_views] = 0;
                 }
-                $data_buckets['session_total_views'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$total_views]++;
+                $this->data_buckets['session_total_views'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$total_views]++;
 
-                $this->dump_delta_if_necessary($data_buckets);
+                $this->dump_data_buckets_if_necessary();
             }
         }
         cms_profile_end_for('Hook_admin_stats_views->preprocess_raw_data (session behaviours)');
