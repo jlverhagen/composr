@@ -450,6 +450,11 @@ When there are deltas in the database, the system scheduler will merge what it c
 
 This two-step process helps ensure that sites large and small do not get bogged down by statistics processing. This is not a fool-proof strategy; very large sites may experience very slow updating of statistics graphs or even out-of-memory errors in rare circumstances. At that point, you have grown to the point that you should probably consider off-loading your analytics to a third-party service instead.
 
+You may also notice, under the Admin Zone > Audit > Low-level logging > System scheduler hooks, that 'Stats preprocessing' will alternate between running every minute and running every 15 minutes. In normal operation, it will run every 15 minutes instead of every minute because it uses a lot of memory and database queries. However, under any of the following circumstances, it will run every minute until none of these circumstances apply anymore:
+ - The latest pre-processed stats are over an hour ago (it needs to catch up)
+ - During the previous run, it stopped early because it approached close to the PHP memory limit
+ - During the previous run, it stopped early because it was running for more than 15 seconds
+
 Why do we do pre-computed data processing? There are a number of reasons:
 1) We can not hold onto raw data forever, due to GDPR (EU privacy legislation), yet we want to be able to see statistics going as far back as possible.
 2) Some graphs require fairly complicated computations that should not be performed in real-time (for example doing geolocation of users, or tracing behaviour across user sessions).
