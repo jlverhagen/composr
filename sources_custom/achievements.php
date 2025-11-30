@@ -370,10 +370,10 @@ class Achievements_loader
                 }
             }
         }
-        $rows = $GLOBALS['SITE_DB']->query_select('achievements_progress', ['id', 'ap_qualification_hash'], []);
+        $rows = $GLOBALS['SITE_DB']->query_select('achievements_progress', ['DISTINCT ap_qualification_hash'], []);
         foreach ($rows as $row) {
             if (!in_array($row['ap_qualification_hash'], $hashes)) {
-                $GLOBALS['SITE_DB']->query_delete('achievements_progress', ['id' => $row['id']]);
+                $GLOBALS['SITE_DB']->query_delete('achievements_progress', ['ap_qualification_hash' => $row['ap_qualification_hash']]);
             }
         }
     }

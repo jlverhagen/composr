@@ -134,9 +134,8 @@ class Hook_admin_stats_cns_members extends Source_hook_stats_provider
      *
      * @param  TIME $start_time Start timestamp
      * @param  TIME $end_time End timestamp
-     * @param  array $data_buckets Map of data buckets; a map of bucket name to nested maps with the following maps in sequence: 'pivot', 'pivot interval', 'pivot value' (then further map data); passed by reference only with pre-filled zero data to later be merged
      */
-    public function preprocess_raw_data(int $start_time, int $end_time, array &$data_buckets)
+    public function preprocess_raw_data(int $start_time, int $end_time)
     {
         require_code('locations');
         require_code('temporal');
@@ -167,10 +166,10 @@ class Hook_admin_stats_cns_members extends Source_hook_stats_provider
                     $pivot_interval = $this->calculate_date_pivot_interval($pivot, $timestamp);
                     $pivot_value = $this->calculate_date_pivot_value($pivot, $timestamp);
 
-                    if (!isset($data_buckets['members'][$pivot][$pivot_interval][$pivot_value][$country])) {
-                        $data_buckets['members'][$pivot][$pivot_interval][$pivot_value][$country] = 0;
+                    if (!isset($this->data_buckets['members'][$pivot][$pivot_interval][$pivot_value][$country])) {
+                        $this->data_buckets['members'][$pivot][$pivot_interval][$pivot_value][$country] = 0;
                     }
-                    $data_buckets['members'][$pivot][$pivot_interval][$pivot_value][$country]++;
+                    $this->data_buckets['members'][$pivot][$pivot_interval][$pivot_value][$country]++;
 
                     if ($row['m_dob_year'] !== null) {
                         $age = intval(date('Y')) - $row['m_dob_year'];
@@ -178,14 +177,14 @@ class Hook_admin_stats_cns_members extends Source_hook_stats_provider
                             $age--;
                         }
 
-                        if (!isset($data_buckets['demographics'][$pivot][$pivot_interval][$pivot_value][$age])) {
-                            $data_buckets['demographics'][$pivot][$pivot_interval][$pivot_value][$age] = 0;
+                        if (!isset($this->data_buckets['demographics'][$pivot][$pivot_interval][$pivot_value][$age])) {
+                            $this->data_buckets['demographics'][$pivot][$pivot_interval][$pivot_value][$age] = 0;
                         }
-                        $data_buckets['demographics'][$pivot][$pivot_interval][$pivot_value][$age]++;
+                        $this->data_buckets['demographics'][$pivot][$pivot_interval][$pivot_value][$age]++;
                     }
                 }
 
-                $this->dump_delta_if_necessary($data_buckets);
+                $this->dump_data_buckets_if_necessary();
             }
 
             $start += $max;
@@ -198,9 +197,8 @@ class Hook_admin_stats_cns_members extends Source_hook_stats_provider
      *
      * @param  TIME $start_time Start timestamp
      * @param  TIME $end_time End timestamp
-     * @param  array $data_buckets Map of data buckets; a map of bucket name to nested maps
      */
-    public function preprocess_raw_data_flat(int $start_time, int $end_time, array &$data_buckets)
+    public function preprocess_raw_data_flat(int $start_time, int $end_time)
     {
         // Optimisation: as this always calculates full statistics, do not always calculate
         if (($end_time < (time() - (60 * 60 * 24))) || (mt_rand(0, 29) != 0)) {
@@ -225,20 +223,20 @@ class Hook_admin_stats_cns_members extends Source_hook_stats_provider
 
                 $visits = $row['m_total_sessions'];
                 if ($visits > 0) {
-                    $data_buckets['top_members_by_visits'][$username] = $visits;
+                    $this->data_buckets['top_members_by_visits'][$username] = $visits;
                 }
 
                 if (addon_installed('cns_forum')) {
                     $posts = $row['m_cache_num_posts'];
                     if ($posts > 0) {
-                        $data_buckets['top_members_by_forum_posts'][$username] = $posts;
+                        $this->data_buckets['top_members_by_forum_posts'][$username] = $posts;
                     }
                 }
 
                 if (addon_installed('points')) {
                     $points = points_rank($member_id);
                     if ($points > 100) { // Hard-coded minimum
-                        $data_buckets['top_members_by_points'][$username] = $points;
+                        $this->data_buckets['top_members_by_points'][$username] = $points;
                     }
                 }
 
@@ -248,10 +246,10 @@ class Hook_admin_stats_cns_members extends Source_hook_stats_provider
                         $age--;
                     }
 
-                    if (!isset($data_buckets['demographics_overall'][$age])) {
-                        $data_buckets['demographics_overall'][$age] = 0;
+                    if (!isset($this->data_buckets['demographics_overall'][$age])) {
+                        $this->data_buckets['demographics_overall'][$age] = 0;
                     }
-                    $data_buckets['demographics_overall'][$age]++;
+                    $this->data_buckets['demographics_overall'][$age]++;
                 }
             }
 

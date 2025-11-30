@@ -69,9 +69,8 @@ class Hook_admin_stats_content extends Source_hook_stats_provider
      *
      * @param  TIME $start_time Start timestamp
      * @param  TIME $end_time End timestamp
-     * @param  array $data_buckets Map of data buckets; a map of bucket name to nested maps
      */
-    public function preprocess_raw_data_flat(int $start_time, int $end_time, array &$data_buckets)
+    public function preprocess_raw_data_flat(int $start_time, int $end_time)
     {
         // Optimisation: as this always calculates full statistics, do not always calculate
         if (($end_time < (time() - (60 * 60 * 24))) || (mt_rand(0, 29) != 0)) {
@@ -80,8 +79,8 @@ class Hook_admin_stats_content extends Source_hook_stats_provider
 
         $limit_per_content_type = 100;
 
-        $data_buckets['content_views'] = [];
-        $data_buckets['content_views_per_content_day'] = [];
+        $this->data_buckets['content_views'] = [];
+        $this->data_buckets['content_views_per_content_day'] = [];
 
         require_code('content');
         $cma_hooks = find_all_hook_obs('systems', 'content_meta_aware', 'Hook_content_meta_aware_');
@@ -101,13 +100,13 @@ class Hook_admin_stats_content extends Source_hook_stats_provider
                     $id = $hook_ob->get_id_string($row);
                     $views = $row[$views_field];
 
-                    $data_buckets['content_views'][$content_type][$title . ' (' . $hook_ob->get_id_string($row) . ')'] = $views;
+                    $this->data_buckets['content_views'][$content_type][$title . ' (' . $hook_ob->get_id_string($row) . ')'] = $views;
 
                     if ($add_time_field !== null) {
                         $add_time = $row[$add_time_field];
                         if ($add_time !== null) {
                             $days = floatval(time() - $add_time + 1/*prevent divide by zero errors*/) / floatval(60 * 60 * 24);
-                            $data_buckets['content_views_per_content_day'][$content_type][$title . ' (' . $id . ')'] = floatval($views) / $days;
+                            $this->data_buckets['content_views_per_content_day'][$content_type][$title . ' (' . $id . ')'] = floatval($views) / $days;
                         }
                     }
                 }
