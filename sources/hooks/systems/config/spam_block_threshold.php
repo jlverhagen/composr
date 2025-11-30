@@ -64,6 +64,6 @@ class Hook_config_spam_block_threshold
      */
     public function get_default() : ?string
     {
-        return '60';
+        return '0'; // We run under the principle that automatic moderation should not take direct action by default
     }
 }
