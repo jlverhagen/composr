@@ -105,6 +105,9 @@ function init__minikernel()
     global $CSP_ENABLED;
     $CSP_ENABLED = false;
 
+    global $CURRENT_SHARE_USER;
+    $CURRENT_SHARE_USER = null;
+
     set_error_handler('cms_error_handler');
     if (function_exists('register_shutdown_function')) {
         register_shutdown_function('catch_fatal_errors');
