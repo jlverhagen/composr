@@ -5070,6 +5070,19 @@ function cal_days_in_month(int $calendar, int $month, int $year) : int
     return 0;
 }
 
+/**
+ * Filter or validate some data.
+ *
+ * @param  mixed $value The data to filter or validate
+ * @param  integer $filter A FILTER_* flag to determine how to filter or validate $value
+ * @param  mixed $options An array or constant specifying specific options for this filter
+ * @return mixed The filtered value (false: failure, or validation failed) (null: failure, or validation failed, and FILTER_NULL_ON_FAILURE was specified)
+ */
+function filter_var($value, int $filter = FILTER_DEFAULT, $options = 0)
+{
+    return '';
+}
+
 /*
 
 Various things are disabled for various reasons. You may use them, if you use php_function_allowed

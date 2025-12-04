@@ -74,5 +74,10 @@ function is_valid_email_address(string $string) : bool
         return false;
     }
 
-    return (preg_match('#^[\w\.\-\+]+@[\w\.\-]+$#D', $string) != 0); // Put "\.[a-zA-Z0-9_\-]+" before $ to ensure a two+ part domain
+    //return (preg_match('#^[\w\.\-\+]+@[\w\.\-]+$#D', $string) != 0); // Put "\.[a-zA-Z0-9_\-]+" before $ to ensure a two+ part domain
+    if (!filter_var($string, FILTER_VALIDATE_EMAIL)) {
+        return false;
+    }
+
+    return true;
 }
