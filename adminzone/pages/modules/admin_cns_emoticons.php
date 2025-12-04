@@ -309,7 +309,7 @@ class Module_admin_cns_emoticons extends Source_standard_crud_module
             'e_is_special' => 0,
         ]);
 
-        Self_learning_cache::erase_smart_cache();
+        Source_self_learning_cache::erase_smart_cache();
     }
 
     /**

@@ -100,8 +100,10 @@ function upgrade_sharedinstall_sites(int $from = 0)
         _general_db_init();
 
         // Reset DB
-        $GLOBALS['SITE_DB'] = new DatabaseConnector(get_db_site(), get_db_site_host(), get_db_site_user(), get_db_site_password(), get_table_prefix());
+        $GLOBALS['SITE_DB'] = object_factory('Source_database_connector', false, [get_db_site(), get_db_site_host(), get_db_site_user(), get_db_site_password(), get_table_prefix()]);
+        /** @global Source_database_connector $SITE_DB */
         $GLOBALS['FORUM_DB'] = $GLOBALS['SITE_DB'];
+        /** @global Source_database_connector $FORUM_DB */
 
         // NB: File path will be ok
 

@@ -1409,12 +1409,12 @@ function check_variable($variable, $reference = false, $function_guard = '')
         } elseif ($next[0] == 'DEREFERENCE') {
             // Special rule for 'this->db'
             if (($variable[1] == 'this') && ($variable[2][1][1] == 'db') && ((!isset($variable[2][2][0])) || ($variable[2][2][0] != 'DEREFERENCE'))) {
-                $type = 'DatabaseConnector';
+                $type = 'Source_database_connector';
             }
 
             // Special rule for $GLOBALS['?_DB']
             if (($variable[1] == 'GLOBALS') && ($variable[2][1][1][0] == 'STRING') && (substr($variable[2][1][1][1], -3) == '_DB') && ((!isset($variable[2][2][2][0])) || ($variable[2][2][2][0] != 'DEREFERENCE'))) {
-                $type = 'DatabaseConnector';
+                $type = 'Source_database_connector';
             }
 
             // Special rule for $GLOBALS['FORUM_DRIVER']
@@ -1478,14 +1478,14 @@ function check_method_call($c, $c_pos, $function_guard = '')
             // $this->db
             if (($variable[1] == 'this') && ($variable[2][1][1] == 'db') && ((!isset($variable[2][2][0])) || ($variable[2][2][0] != 'DEREFERENCE'))) {
                 $method = $variable[2][2][1][1];
-                $class = 'DatabaseConnector';
+                $class = 'Source_database_connector';
                 return actual_check_method($class, $method, $params, $c_pos, $function_guard);
             }
 
             // $GLOBALS['?_DB']
             if (($variable[1] == 'GLOBALS') && (substr($variable[2][1][1][0], -3) == 'LITERAL') && (substr($variable[2][1][1][1], -3) == '_DB') && ((!isset($variable[2][2][2][0])) || ($variable[2][2][2][0] != 'DEREFERENCE'))) {
                 $method = $variable[2][2][1][1];
-                $class = 'DatabaseConnector';
+                $class = 'Source_database_connector';
                 return actual_check_method($class, $method, $params, $c_pos, $function_guard);
             }
 
@@ -1680,7 +1680,7 @@ function check_call($c, $c_pos, $class = null, $function_guard = '', $show_missi
     $found = false;
 
     // Composr specific: Special checks for database calls
-    if ($class == 'DatabaseConnector') {
+    if ($class == 'Source_database_connector') {
         if ((count($params) >= 2) && ($params[0][0][0] == 'LITERAL')) {
             $table = $params[0][0][1][1];
             if (in_array($function, ['query_insert'])) {

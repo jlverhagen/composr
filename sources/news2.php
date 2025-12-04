@@ -776,7 +776,7 @@ function _get_wordpress_db_data() : array
     }
 
     // Create database connector
-    $db = new DatabaseConnector($db_name, $host_name, $db_user, $db_passwrod, $db_table_prefix);
+    $db = object_factory('Source_database_connector', false, [$db_name, $host_name, $db_user, $db_passwrod, $db_table_prefix]);
 
     $data = [];
 

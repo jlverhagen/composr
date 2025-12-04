@@ -57,7 +57,7 @@ class Hook_spreadsheet_reader_csv
      */
     public function spreadsheet_open_read(string $path, ?string $filename = null, int $algorithm = 3, bool $trim = true, ?string $default_charset = '') : ?object
     {
-        return new CMS_CSV_Reader($path, $filename, $algorithm, $trim, $default_charset);
+        return object_factory('Source_spreadsheet_reader_cms_csv', false, [$path, $filename, $algorithm, $trim, $default_charset], true);
     }
 }
 
@@ -66,7 +66,7 @@ class Hook_spreadsheet_reader_csv
  *
  * @package core
  */
-class CMS_CSV_Reader extends Source_spreadsheet_reader
+class Source_spreadsheet_reader_cms_csv extends Source_spreadsheet_reader
 {
     protected const FORMAT_CSV = 1; // Comma
     protected const FORMAT_TSV = 2; // Tab

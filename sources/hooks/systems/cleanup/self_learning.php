@@ -63,7 +63,7 @@ class Hook_cleanup_self_learning
      */
     public function run() : object
     {
-        Self_learning_cache::erase_smart_cache();
+        Source_self_learning_cache::erase_smart_cache();
 
         return new Tempcode();
     }

@@ -35,7 +35,7 @@
  *
  * @package search
  */
-abstract class FieldsSearchHook
+abstract class Source_hook_search_base
 {
     /**
      * Get a list of extra sort fields.

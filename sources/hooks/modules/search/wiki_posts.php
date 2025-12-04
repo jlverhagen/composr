@@ -33,7 +33,7 @@
 /**
  * Hook class.
  */
-class Hook_search_wiki_posts extends FieldsSearchHook
+class Hook_search_wiki_posts extends Source_hook_search_base
 {
     /**
      * Find details for this search hook.

@@ -27,7 +27,7 @@
 /**
  * Hook class.
  */
-class Hook_search_tutorials_external extends FieldsSearchHook
+class Hook_search_tutorials_external extends Source_hook_search_base
 {
     /**
      * Find details for this search hook.

@@ -87,7 +87,7 @@ class Hook_commandr_command_continue_import
 
             $object = get_hook_ob('modules', 'admin_import', filter_naughty_harsh($importer), 'Hook_import_');
 
-            $import_source = ($db_name === null) ? null : new DatabaseConnector($db_name, $db_host, $db_user, $db_password, $db_table_prefix);
+            $import_source = ($db_name === null) ? null : object_factory('Source_database_connector', false, [$db_name, $db_host, $db_user, $db_password, $db_table_prefix]);
 
             if (get_forum_type() != 'cns') {
                 require_code('forum/cns');

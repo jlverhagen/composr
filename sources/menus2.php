@@ -444,7 +444,7 @@ function delete_menu(string $menu_id)
             if (function_exists('persistent_cache_delete')) {
                 persistent_cache_delete('OPTIONS');
             }
-            Self_learning_cache::erase_smart_cache();
+            Source_self_learning_cache::erase_smart_cache();
             erase_cached_templates(false, ['GLOBAL_HTML_WRAP']); // Config option saves into templates
         }
 

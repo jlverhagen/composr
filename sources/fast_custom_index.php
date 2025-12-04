@@ -36,7 +36,7 @@
  *
  * @package search
  */
-class Fast_custom_index
+class Source_fast_custom_index
 {
     // Querying...
 
@@ -625,7 +625,7 @@ class Fast_custom_index
 
         static $max_ngram_size = null;
         if ($max_ngram_size === null) {
-            $max_ngram_size = Fast_custom_index::max_ngram_size($lang);
+            $max_ngram_size = Source_fast_custom_index::max_ngram_size($lang);
         }
 
         $tokeniser = self::get_tokeniser($lang);

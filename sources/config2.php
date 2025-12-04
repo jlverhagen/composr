@@ -500,8 +500,8 @@ function set_option(string $name, string $value, int $will_be_formally_set = 1, 
     if (function_exists('persistent_cache_delete')) {
         persistent_cache_delete('OPTIONS');
     }
-    if (class_exists('Self_learning_cache')) {
-        Self_learning_cache::erase_smart_cache();
+    if (class_exists('Source_self_learning_cache')) {
+        Source_self_learning_cache::erase_smart_cache();
     }
     if (!empty($details['public'])) { // Need to clear all templates utilising $PUBLIC_CONFIG_OPTIONS_JSON
         erase_cached_templates(false, ['_cms', 'global']);

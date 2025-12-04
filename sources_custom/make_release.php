@@ -1259,7 +1259,7 @@ function make_install_sql()
     }
 
     // Get database connector
-    $db = new DatabaseConnector($database, get_db_site_host(), $username, $password, $table_prefix);
+    $db = object_factory('Source_database_connector', false, [$database, get_db_site_host(), $username, $password, $table_prefix]);
 
     // Remove caching
     require_code('database_relations');

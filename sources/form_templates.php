@@ -735,7 +735,7 @@ function form_input_url($pretty_name, $description, string $name, ?string $defau
     $required = filter_form_field_required($name, $required);
 
     require_code('urls_coder');
-    $coder_ob = new Source_URL_coder();
+    $coder_ob = object_factory('Source_URL_coder', false, [], true);
     $_default = ($default === null) ? '' : $coder_ob->decode($default);
 
     $autocomplete = _get_autocomplete_attribute_value($name, $autocomplete);

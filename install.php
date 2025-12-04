@@ -1388,7 +1388,7 @@ function step_5() : object
 
     // Give warning if setting up a multi-site-network to a bad database
     if (($_POST['db_forums'] != $_POST['db_site']) && (get_forum_type() == 'cns')) {
-        $tmp2 = new DatabaseConnector(post_param_string('db_forums', false, INPUT_FILTER_POST_IDENTIFIER), post_param_string('db_forums_host', false, INPUT_FILTER_POST_IDENTIFIER), post_param_string('db_forums_user', false, INPUT_FILTER_POST_IDENTIFIER), post_param_string('db_forums_password', false, INPUT_FILTER_PASSWORD), post_param_string('cns_table_prefix', false, INPUT_FILTER_POST_IDENTIFIER));
+        $tmp2 = object_factory('Source_database_connector', false, [post_param_string('db_forums', false, INPUT_FILTER_POST_IDENTIFIER), post_param_string('db_forums_host', false, INPUT_FILTER_POST_IDENTIFIER), post_param_string('db_forums_user', false, INPUT_FILTER_POST_IDENTIFIER), post_param_string('db_forums_password', false, INPUT_FILTER_PASSWORD), post_param_string('cns_table_prefix', false, INPUT_FILTER_POST_IDENTIFIER)]);
         if (!$tmp2->table_exists('db_meta', true)) {
             warn_exit(do_lang_tempcode('MSN_FORUM_DB_NOT_CNS_ALREADY'));
         }
@@ -2128,9 +2128,9 @@ function step_5_uninstall() : object
     require_all_core_cms_code();
 
     // Verify database
-    $sitedb = new DatabaseConnector(trim(post_param_string('db_site')), trim(post_param_string('db_site_host')), trim(post_param_string('db_site_user')), trim(post_param_string('db_site_password')), trim(post_param_string('table_prefix')));
+    $sitedb = object_factory('Source_database_connector', false, [trim(post_param_string('db_site')), trim(post_param_string('db_site_host')), trim(post_param_string('db_site_user')), trim(post_param_string('db_site_password')), trim(post_param_string('table_prefix'))]);
     if (post_param_string('forum_type') != 'none') {
-        $forumdb = new DatabaseConnector(get_db_forums(), get_db_forums_host(), get_db_forums_user(), get_db_forums_password(), trim(array_key_exists('table_prefix', $_POST) ? $_POST['table_prefix'] : get_default_table_prefix()));
+        $forumdb = object_factory('Source_database_connector', false, [get_db_forums(), get_db_forums_host(), get_db_forums_user(), get_db_forums_password(), trim(array_key_exists('table_prefix', $_POST) ? $_POST['table_prefix'] : get_default_table_prefix())]);
     }
     $log->attach(do_template('INSTALLER_DONE_SOMETHING', ['_GUID' => 'dae0677246aa2f1394b90c3739490ff7', 'SOMETHING' => do_lang_tempcode('DATABASE_VALID', 'Composr')]));
 
@@ -2527,7 +2527,7 @@ function big_installation_common()
     require_code('forum/' . $forum_type);
     $GLOBALS['FORUM_DRIVER'] = object_factory('Source_forum_driver_' . filter_naughty_harsh($forum_type));
     if ($forum_type != 'none') {
-        $GLOBALS['FORUM_DRIVER']->db = new DatabaseConnector(get_db_forums(), get_db_forums_host(), get_db_forums_user(), get_db_forums_password(), $GLOBALS['FORUM_DRIVER']->get_drivered_table_prefix());
+        $GLOBALS['FORUM_DRIVER']->db = object_factory('Source_database_connector', false, [get_db_forums(), get_db_forums_host(), get_db_forums_user(), get_db_forums_password(), $GLOBALS['FORUM_DRIVER']->get_drivered_table_prefix()]);
     }
     $GLOBALS['FORUM_DRIVER']->MEMBER_ROWS_CACHED = [];
     $GLOBALS['FORUM_DB'] = &$GLOBALS['FORUM_DRIVER']->db;
@@ -3067,9 +3067,9 @@ function handle_self_referencing_embedment()
                 $SITE_INFO['db_type'] = post_param_string('db_type', false, INPUT_FILTER_POST_IDENTIFIER);
                 require_code('database');
                 if (post_param_string('db_site', '', INPUT_FILTER_POST_IDENTIFIER) == '') {
-                    $db = new DatabaseConnector(post_param_string('db_forums', false, INPUT_FILTER_POST_IDENTIFIER), post_param_string('db_forums_host', false, INPUT_FILTER_POST_IDENTIFIER), post_param_string('db_forums_user', false, INPUT_FILTER_POST_IDENTIFIER), post_param_string('db_forums_password', false, INPUT_FILTER_PASSWORD), '', true);
+                    $db = object_factory('Source_database_connector', false, [post_param_string('db_forums', false, INPUT_FILTER_POST_IDENTIFIER), post_param_string('db_forums_host', false, INPUT_FILTER_POST_IDENTIFIER), post_param_string('db_forums_user', false, INPUT_FILTER_POST_IDENTIFIER), post_param_string('db_forums_password', false, INPUT_FILTER_PASSWORD), '', true]);
                 } else {
-                    $db = new DatabaseConnector(post_param_string('db_site', false, INPUT_FILTER_POST_IDENTIFIER), post_param_string('db_site_host', false, INPUT_FILTER_POST_IDENTIFIER), post_param_string('db_site_user', false, INPUT_FILTER_POST_IDENTIFIER), post_param_string('db_site_password', false, INPUT_FILTER_PASSWORD), '', true);
+                    $db = object_factory('Source_database_connector', false, [post_param_string('db_site', false, INPUT_FILTER_POST_IDENTIFIER), post_param_string('db_site_host', false, INPUT_FILTER_POST_IDENTIFIER), post_param_string('db_site_user', false, INPUT_FILTER_POST_IDENTIFIER), post_param_string('db_site_password', false, INPUT_FILTER_PASSWORD), '', true]);
                 }
                 $db->ensure_connected();
                 exit();
@@ -3612,7 +3612,7 @@ function confirm_db_credentials(bool $return_connection = false)
     if (($post_db_user == 'root') && (!file_exists(get_file_base() . '/.git'))) {
         warn_exit(do_lang_tempcode('NO_ROOT_DB_WITHOUT_GIT'));
     }
-    $tmp = new DatabaseConnector($post_db_site, $post_db_host, $post_db_user, $post_db_password, $table_prefix);
+    $tmp = object_factory('Source_database_connector', false, [$post_db_site, $post_db_host, $post_db_user, $post_db_password, $table_prefix]);
 
     // Check max allowed packet if mySQLi
     if (strpos($post_db_type, 'mysql') !== false) {

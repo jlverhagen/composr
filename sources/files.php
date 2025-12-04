@@ -138,7 +138,7 @@ function cms_fgets($myfile, ?string $charset)
 {
     $line = fgets($myfile);
     if ($line !== false) {
-        $line = rtrim($line, "\r"); // In case it is in Windows format (effectively this is /s/\r\n/\n/). We don't consider Classic Mac format, as only Microsoft Excel Mac does this now, and we handle that in CMS_CSV_Reader
+        $line = rtrim($line, "\r"); // In case it is in Windows format (effectively this is /s/\r\n/\n/). We don't consider Classic Mac format, as only Microsoft Excel Mac does this now, and we handle that in Source_spreadsheet_reader_cms_csv
 
         if ($charset == 'utf-8') {
             // Fix any bad unicode

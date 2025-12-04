@@ -33,7 +33,7 @@
 /**
  * Hook class.
  */
-class Hook_search_catalogue_entries extends FieldsSearchHook
+class Hook_search_catalogue_entries extends Source_hook_search_base
 {
     /**
      * Find details for this search hook.
@@ -116,7 +116,7 @@ class Hook_search_catalogue_entries extends FieldsSearchHook
 
         require_code('fast_custom_index');
 
-        $engine = new Fast_custom_index();
+        $engine = object_factory('Source_fast_custom_index', false, [], true);
 
         $index_table = 'ce_fulltext_index';
         $clean_scan = ($GLOBALS['SITE_DB']->query_select_value_if_there($index_table, 'i_ngram') === null);
@@ -279,7 +279,7 @@ class Hook_search_catalogue_entries extends FieldsSearchHook
         if (addon_installed('search')) {
             require_code('fast_custom_index');
         }
-        if ((addon_installed('search')) && can_use_fast_custom_index('catalogue_entries', $db, $index_table, $search_query, Fast_custom_index::active_search_has_special_filtering() || $cutoff !== null || $author != '' || ($search_under != '-1' && $search_under != '!'))) {
+        if ((addon_installed('search')) && can_use_fast_custom_index('catalogue_entries', $db, $index_table, $search_query, Source_fast_custom_index::active_search_has_special_filtering() || $cutoff !== null || $author != '' || ($search_under != '-1' && $search_under != '!'))) {
             // This search hook implements the fast custom index, which we use where possible...
 
             $table = 'catalogue_entries r';
@@ -338,10 +338,10 @@ class Hook_search_catalogue_entries extends FieldsSearchHook
                 $where_clause .= $privacy_where;
             }
 
-            $engine = new Fast_custom_index();
+            $engine = object_factory('Source_fast_custom_index', false, [], true);
 
             $catalogue_name = get_param_string('catalogue_name', '');
-            if (($catalogue_name != '') && (Fast_custom_index::active_search_has_special_filtering()) || ($remapped_orderer == 'b_cv_value') || (strpos($remapped_orderer, '.') !== false)) {
+            if (($catalogue_name != '') && (Source_fast_custom_index::active_search_has_special_filtering()) || ($remapped_orderer == 'b_cv_value') || (strpos($remapped_orderer, '.') !== false)) {
                 $trans_fields = [];
                 $nontrans_fields = [];
                 list($sup_table, $_where_clause, $where_clause_2, $trans_fields, $nontrans_fields) = $this->_get_search_parameterisation_advanced($catalogue_name);

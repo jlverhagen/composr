@@ -37,7 +37,7 @@
  *
  * @package core_fields
  */
-abstract class ListFieldHook
+abstract class Source_hook_fields_list_base
 {
     /**
      * Get field list.

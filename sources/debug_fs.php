@@ -74,7 +74,7 @@ function enable_debug_fs()
     $FILE_BASE = 'debugfs://' . $FILE_BASE;
 
     @stream_wrapper_unregister('debugfs');
-    stream_wrapper_register('debugfs', 'DebugFsStreamWrapper');
+    stream_wrapper_register('debugfs', 'Source_debug_fs_stream_wrapper');
 }
 
 /**

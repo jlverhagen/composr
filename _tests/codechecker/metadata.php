@@ -510,6 +510,6 @@ function load_php_metadetails()
         'cms_parse_ini_file_fast', 'deldir_contents',
         'include', 'include_once', 'require', 'require_once',
         'escapeshellarg', 'escapeshellcmd', 'exec', 'passthru', 'proc_open', 'shell_exec', 'system',
-        'DatabaseConnector.query', 'DatabaseConnector._query', 'DatabaseConnector.query_value_if_there',
+        'Source_database_connector.query', 'Source_database_connector._query', 'Source_database_connector.query_value_if_there',
      ];
 }

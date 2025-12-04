@@ -99,7 +99,7 @@ class _backups_test_set extends cms_test_case
         $db_driver = object_factory('Source_database_static_' . get_db_type(), false, [$table_prefix]);
 
         if ($can_use_own_db) {
-            $db = new DatabaseConnector(get_db_site(), get_db_site_host(), $username, $password, $table_prefix, false, $db_driver); // Use site DB for actual connection because our test DB might not yet exist
+            $db = object_factory('Source_database_connector', false, [get_db_site(), get_db_site_host(), $username, $password, $table_prefix, false, $db_driver]); // Use site DB for actual connection because our test DB might not yet exist
             $db->query('CREATE DATABASE IF NOT EXISTS ' . $database, null, 0, true); // Suppress errors as the database might already exist
             unset($db);
         }
@@ -137,7 +137,7 @@ $SITE_INFO[\'table_prefix\'] = \'' . $table_prefix . '\';
         }
 
         // Now determine errors in expected row counts
-        $db = new DatabaseConnector($database, get_db_site_host(), $username, $password, $table_prefix, false, $db_driver);
+        $db = object_factory('Source_database_connector', false, [$database, get_db_site_host(), $username, $password, $table_prefix, false, $db_driver]);
 
         $has_db_meta = !$db->table_exists('db_meta', true);
         if ($has_db_meta === null) {

@@ -522,7 +522,7 @@ class Module_admin_import
         }
 
         // Test import source is good
-        $import_source = ($db_name === null) ? null : new DatabaseConnector($db_name, $db_host, $db_user, $db_password, $db_table_prefix);
+        $import_source = ($db_name === null) ? null : object_factory('Source_database_connector', false, [$db_name, $db_host, $db_user, $db_password, $db_table_prefix]);
         unset($import_source);
 
         // Save data from choose_session2 step
@@ -720,7 +720,7 @@ class Module_admin_import
         $parts_done = collapse_2d_complexity('imp_id', 'imp_session', $GLOBALS['SITE_DB']->query_select('import_parts_done', ['imp_id', 'imp_session'], ['imp_session' => get_session_id()]));
 
         // Load database connection
-        $import_source = ($db_name === null) ? null : new DatabaseConnector($db_name, $db_host, $db_user, $db_password, $db_table_prefix);
+        $import_source = ($db_name === null) ? null : object_factory('Source_database_connector', false, [$db_name, $db_host, $db_user, $db_password, $db_table_prefix]);
 
         // Some preliminary tests
         $happy = get_param_integer('happy', 0);

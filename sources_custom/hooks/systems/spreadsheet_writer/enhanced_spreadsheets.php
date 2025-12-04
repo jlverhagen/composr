@@ -84,7 +84,7 @@ class Hook_spreadsheet_writer_enhanced_spreadsheets
             return null;
         }
 
-        return new CMS_CSV_Writer_OpenSpout($path, $filename, $algorithm, $charset);
+        return object_factory('Source_spreadsheet_writer_openspout', false, [$path, $filename, $algorithm, $charset], true);
     }
 }
 
@@ -93,7 +93,7 @@ class Hook_spreadsheet_writer_enhanced_spreadsheets
  *
  * @package enhanced_spreadsheets
  */
-class CMS_CSV_Writer_OpenSpout extends Source_spreadsheet_writer
+class Source_spreadsheet_writer_openspout extends Source_spreadsheet_writer
 {
     protected $writer = null;
 

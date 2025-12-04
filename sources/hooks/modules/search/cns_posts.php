@@ -33,7 +33,7 @@
 /**
  * Hook class.
  */
-class Hook_search_cns_posts extends FieldsSearchHook
+class Hook_search_cns_posts extends Source_hook_search_base
 {
     /**
      * Find details for this search hook.
@@ -134,7 +134,7 @@ class Hook_search_cns_posts extends FieldsSearchHook
 
         require_code('fast_custom_index');
 
-        $engine = new Fast_custom_index();
+        $engine = object_factory('Source_fast_custom_index', false, [], true);
 
         $index_table = 'f_posts_fulltext_index';
         $clean_scan = ($GLOBALS['FORUM_DB']->query_select_value_if_there($index_table, 'i_ngram') === null);
@@ -280,7 +280,7 @@ class Hook_search_cns_posts extends FieldsSearchHook
         if (addon_installed('search')) {
             require_code('fast_custom_index');
         }
-        if ((addon_installed('search')) && can_use_fast_custom_index('cns_posts', $db, $index_table, $search_query, Fast_custom_index::active_search_has_special_filtering() || $cutoff !== null || $author != '' || ($search_under != '-1' && $search_under != '!') || get_param_integer('option_tick_cns_posts_starter', 0) == 1)) {
+        if ((addon_installed('search')) && can_use_fast_custom_index('cns_posts', $db, $index_table, $search_query, Source_fast_custom_index::active_search_has_special_filtering() || $cutoff !== null || $author != '' || ($search_under != '-1' && $search_under != '!') || get_param_integer('option_tick_cns_posts_starter', 0) == 1)) {
             // This search hook implements the fast custom index, which we use where possible...
 
             $table = 'f_posts r';
@@ -353,9 +353,9 @@ class Hook_search_cns_posts extends FieldsSearchHook
                 $where_clause .= 'p_validated=1';
             }
 
-            $engine = new Fast_custom_index();
+            $engine = object_factory('Source_fast_custom_index', false, [], true);
 
-            if (Fast_custom_index::active_search_has_special_filtering()) {
+            if (Source_fast_custom_index::active_search_has_special_filtering()) {
                 $trans_fields = [];
                 $nontrans_fields = [];
                 $this->_get_search_parameterisation_advanced_for_content_type('_post', $table, $where_clause, $trans_fields, $nontrans_fields);

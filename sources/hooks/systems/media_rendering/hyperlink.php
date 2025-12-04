@@ -163,7 +163,7 @@ class Hook_media_rendering_hyperlink
                 $link_captions_title = $attributes['filename'];
             } else {
                 require_code('urls_coder');
-                $coder_ob = new Source_URL_coder();
+                $coder_ob = object_factory('Source_URL_coder', false, [], true);
                 $link_captions_title = $coder_ob->decode($_url_safe);
             }
         }

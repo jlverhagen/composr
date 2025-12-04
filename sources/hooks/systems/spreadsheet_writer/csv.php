@@ -56,7 +56,7 @@ class Hook_spreadsheet_writer_csv
      */
     public function spreadsheet_open_write(?string &$path, ?string $filename = null, int $algorithm = 3, ?string $charset = '') : ?object
     {
-        return new CMS_CSV_Writer($path, $filename, $algorithm, $charset);
+        return object_factory('Source_spreadsheet_writer_cms_csv', false, [$path, $filename, $algorithm, $charset], true);
     }
 }
 
@@ -65,7 +65,7 @@ class Hook_spreadsheet_writer_csv
  *
  * @package core
  */
-class CMS_CSV_Writer extends Source_spreadsheet_writer
+class Source_spreadsheet_writer_cms_csv extends Source_spreadsheet_writer
 {
     protected const FORMAT_CSV = 1; // Comma
     protected const FORMAT_TSV = 2; // Tab

@@ -198,7 +198,7 @@ function actual_add_theme(string $name, bool $include_themeini = true)
         $start += 100;
     } while (!empty($theme_images));
 
-    Self_learning_cache::erase_smart_cache();
+    Source_self_learning_cache::erase_smart_cache();
 
     require_lang('themes');
     log_it('ADD_THEME', $name);
@@ -336,7 +336,7 @@ function actual_copy_theme(string $theme, string $to, array $theme_images_to_ski
         $GLOBALS['SITE_DB']->query_insert('theme_images', $image, false, true); // errors suppressed in case already there
     }
 
-    Self_learning_cache::erase_smart_cache();
+    Source_self_learning_cache::erase_smart_cache();
 
     require_lang('themes');
     log_it('COPY_THEME', $theme, $to);
@@ -431,7 +431,7 @@ function actual_add_theme_image(string $theme, string $lang, string $id, string 
     require_lang('themes');
     log_it('ADD_THEME_IMAGE', $id, $theme);
 
-    Self_learning_cache::erase_smart_cache();
+    Source_self_learning_cache::erase_smart_cache();
 }
 
 /**
@@ -490,7 +490,7 @@ function actual_edit_theme_image(string $old_id, string $theme, string $lang, st
     }
 
     if (!$quick) {
-        Self_learning_cache::erase_smart_cache();
+        Source_self_learning_cache::erase_smart_cache();
 
         require_code('caches3');
         erase_cached_templates(false, null, TEMPLATE_DECACHE_WITH_THEME_IMAGE); // Paths may have been cached
@@ -614,7 +614,7 @@ function regen_theme_images(string $theme, ?array $langs = null, ?string $target
         $THEME_IMAGES_SMART_CACHE_LOAD = 1;
     }
 
-    Self_learning_cache::erase_smart_cache();
+    Source_self_learning_cache::erase_smart_cache();
 }
 
 /**

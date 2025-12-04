@@ -40,7 +40,7 @@ class urls_simplifier_test_set extends cms_test_case
         require_code('uploads');
 
         require_code('urls_coder');
-        $this->ob = new Source_URL_coder();
+        $this->ob = object_factory('Source_URL_coder', false, [], true);
     }
 
     public function testRecode()

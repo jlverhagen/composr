@@ -1257,24 +1257,25 @@ function load_user_stuff()
             $SITE_INFO['forum_type'] = 'cns';
         }
         require_code('forum/' . $SITE_INFO['forum_type']);     // So we can at least get user details
+        /** @var class-string<Source_forum_driver_base> $class */
         $class = 'Source_forum_driver_' . filter_naughty_harsh($SITE_INFO['forum_type']);
         if (class_exists($class . '_sub')) {
             $class .= '_sub';
         }
         /** The active forum driver, through which member and forum interfacing should be done (apart from code that is explicitly only written as part of Conversr)
          *
-         * @global object $FORUM_DRIVER
+         * @global Source_forum_driver_base $FORUM_DRIVER
          */
         $FORUM_DRIVER = object_factory($class);
         if (($SITE_INFO['forum_type'] == 'cns') && (!is_on_multi_site_network()) && (!$GLOBALS['DEV_MODE'])) { // NB: In dev mode needs separating so we can properly test our boundaries
             $FORUM_DRIVER->db = &$SITE_DB;
         } elseif ($SITE_INFO['forum_type'] != 'none') {
-            $FORUM_DRIVER->db = new DatabaseConnector(get_db_forums(), get_db_forums_host(), get_db_forums_user(), get_db_forums_password(), $FORUM_DRIVER->get_drivered_table_prefix());
+            $FORUM_DRIVER->db = object_factory('Source_database_connector', false, [get_db_forums(), get_db_forums_host(), get_db_forums_user(), get_db_forums_password(), $FORUM_DRIVER->get_drivered_table_prefix()]);
         }
         $FORUM_DRIVER->MEMBER_ROWS_CACHED = [];
         /** The connector to the active forum database.
          *
-         * @global object $FORUM_DB
+         * @global Source_database_connector $FORUM_DB
          */
         $FORUM_DB = null;
         $GLOBALS['FORUM_DB'] = &$FORUM_DRIVER->db; // Done like this to workaround that PHP can't put a reference in a global'd variable

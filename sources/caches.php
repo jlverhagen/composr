@@ -87,7 +87,7 @@ function init__caches()
             $bucket_name .= '__' . get_param_string('id', '', INPUT_FILTER_NONE);
         }
     }
-    $SMART_CACHE = new Self_learning_cache($bucket_name);
+    $SMART_CACHE = object_factory('Source_self_learning_cache', false, [$bucket_name], true);
 
     // Some loading from the smart cache
     global $CSS_OUTPUT_STARTED_LIST, $JS_OUTPUT_STARTED_LIST;
