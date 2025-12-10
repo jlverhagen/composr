@@ -86,10 +86,25 @@ class Hook_endpoint_cms_homesite_tracker_issues
 
         switch ($type) {
             case 'add':
-                require_code('mantis');
-                $results = create_tracker_issue(post_param_string('version_dotted'), post_param_string('tracker_title'), post_param_string('tracker_message'), post_param_string('tracker_additional'), post_param_integer('tracker_severity'), post_param_integer('tracker_category'), post_param_integer('tracker_project'));
+                require_code('cms_homesite_tracker');
+                //$results = create_tracker_issue(post_param_string('version_dotted'), post_param_string('tracker_title'), post_param_string('tracker_message'), post_param_string('tracker_additional'), post_param_integer('tracker_severity'), post_param_integer('tracker_category'), post_param_integer('tracker_project'));
+
+                // TODO: Edit bugfix UI
+                $results = create_tracker_issue(
+                    post_param_string('tracker_version'),
+                    post_param_string('tracker_title'),
+                    post_param_string('tracker_type'),
+                    post_param_string('tracker_description'),
+                    post_param_string('tracker_additional'),
+                    post_param_string('tracker_addon'),
+                    post_param_integer('tracker_category'),
+                    null,
+                    post_param_string('tracker_steps_to_reproduce'),
+                );
+
                 return [
-                    'id' => $results,
+                    'catalogue_entry_id' => $results[0],
+                    'id' => $results[1],
                 ];
 
             case 'edit':
@@ -100,16 +115,22 @@ class Hook_endpoint_cms_homesite_tracker_issues
 
                 $close = post_param_integer('close', 0);
                 if ($close == 1) {
-                    require_code('mantis');
-                    resolve_tracker_issue(intval($id));
-                    $data['success'] = true;
+                    require_code('cms_homesite_tracker');
+                    $success = resolve_tracker_issue(intval($id));
+                    $data['success'] = $success;
+                }
+
+                $git_commit_url = post_param_integer('git_commit_url', null);
+                if ($git_commit_url !== null) {
+                    require_code('cms_homesite_tracker');
+                    $success = add_commit_to_tracker_issue(intval($id), $git_commit_url);
+                    $data['success'] = $success;
                 }
 
                 if (isset($_FILES['upload'])) {
-                    require_code('mantis');
-                    $file_id = upload_to_tracker_issue(intval($id), $_FILES['upload']);
-                    $data['upload'] = $file_id;
-                    $data['success'] = true;
+                    require_code('cms_homesite_tracker');
+                    $success = add_hotfix_to_tracker_issue(intval($id), 'upload');
+                    $data['success'] = $success;
                 }
 
                 return $data;

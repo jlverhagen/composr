@@ -38,6 +38,9 @@ class Hook_endpoint_cms_homesite_tracker_categories
      */
     public function info(?string $type, ?string $id) : ?array
     {
+        if (!addon_installed('catalogues')) {
+            return null;
+        }
         if (!addon_installed('cms_homesite')) {
             return null;
         }
@@ -60,9 +63,27 @@ class Hook_endpoint_cms_homesite_tracker_categories
     public function run(?string $type, ?string $id) : array
     {
         require_code('cms_homesite');
+        require_code('addons2');
+        require_lang('tracker');
 
-        $categories = collapse_2d_complexity('id', 'name', $GLOBALS['SITE_DB']->query('SELECT id,name FROM mantis_category_table WHERE status=0 ORDER BY name'));
-        $categories = array_unique($categories);
-        return $categories;
+        // Categories
+        $category_rows = $GLOBALS['SITE_DB']->query_select('catalogue_categories', ['id', 'cc_title'], ['c_name' => 'tracker']);
+        $categories = [];
+        foreach ($category_rows as $row) {
+            $categories[$row['id']] = get_translated_text($row['cc_title']);
+        }
+
+        // FUDGE: Severities
+        $severities = [];
+        foreach (['feature', 'trivial', 'minor', 'major', 'security'] as $severity) {
+            $severities[$severity] = do_lang('TRACKER_CATALOGUE_ISSUE_TYPE_DEFAULT_' . $severity);
+        }
+
+        // Addons
+        $available_addons = array_keys(find_available_addons(false, false, [], false, true));
+        $installed_addons = array_keys(find_installed_addons(false, false, false));
+        $addons = array_unique(array_merge($available_addons, $installed_addons));
+
+        return [$categories, $severities, $addons];
     }
 }

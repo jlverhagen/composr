@@ -102,8 +102,6 @@ class Module_admin_push_bugfix
     {
         i_solemnly_declare(I_UNDERSTAND_SQL_INJECTION | I_UNDERSTAND_XSS | I_UNDERSTAND_PATH_INJECTION);
 
-        warn_exit('Temporarily disabled; please update the tracker manually.'); // TODO
-
         $error_msg = new Tempcode();
         if (!addon_installed__messaged('cms_release_build', $error_msg)) {
             return $error_msg;
@@ -221,6 +219,7 @@ class Module_admin_push_bugfix
     public function step2() : object
     {
         require_code('form_templates');
+        require_lang('addons');
 
         cms_set_time_limit(TIME_LIMIT_EXTEND__MODEST);
 
@@ -247,34 +246,11 @@ class Module_admin_push_bugfix
             $files = array_keys($git_found);
         }
 
-        $projects = [
-            1 => 'Composr',
-            10 => 'Composr alpha bug reports',
-            8 => 'Composr build tools',
-            7 => 'Composr documentation',
-            5 => 'Composr downloadable themes',
-            9 => 'Composr testing platform',
-            3 => 'Composr website (composr.app)',
-            4 => 'Composr non-bundled addons',
-        ];
-        if (in_array(cms_version_branch_status(), [VERSION_ALPHA, VERSION_BETA])) {
-            $default_project_id = 10;
-        } else {
-            $default_project_id = 1;
-        }
-
-        $categories = $this->get_tracker_categories();
-        if ($categories === null) {
+        $_categories = $this->get_tracker_categories();
+        if ($_categories === null) {
             warn_exit(do_lang_tempcode('PUSH_BUGFIX_FAILED_TO_CONNECT', escape_html($REMOTE_BASE_URL)));
         }
-
-        $severity = [
-            10 => ['Feature-request', do_lang('PUSH_BUGFIX_ISSUE_SEVERITY_FEATURE')],
-            20 => ['Trivial-bug', do_lang('PUSH_BUGFIX_ISSUE_SEVERITY_TRIVIAL')],
-            50 => ['Minor-bug', do_lang('PUSH_BUGFIX_ISSUE_SEVERITY_MINOR')],
-            60 => ['Major-bug', do_lang('PUSH_BUGFIX_ISSUE_SEVERITY_MAJOR')],
-            95 => ['Security-hole', do_lang('PUSH_BUGFIX_SECURITY_PROTOCOL', escape_html($REMOTE_BASE_URL))],
-        ];
+        list($categories, $severities, $addons) = $_categories;
 
         $text = do_lang_tempcode('PUSH_BUGFIX_TEXT');
 
@@ -282,9 +258,8 @@ class Module_admin_push_bugfix
 
         // Description
         $fields->attach(do_template('FORM_SCREEN_FIELD_SPACER', ['_GUID' => '58ef93bddc7d2b92db5449855d706544', 'TITLE' => do_lang_tempcode('PUSH_BUGFIX_DESCRIPTION'), 'HELP' => do_lang_tempcode('DESCRIPTION_PUSH_BUGFIX_DESCRIPTION')]));
-        $fields->attach(form_input_line(do_lang_tempcode('PUSH_BUGFIX_ISSUE_SUMMARY'), do_lang_tempcode('DESCRIPTION_PUSH_BUGFIX_ISSUE_SUMMARY'), 'title', null, true));
-        $fields->attach(form_input_text(do_lang_tempcode('PUSH_BUGFIX_ISSUE_DESCRIPTION'), do_lang_tempcode('DESCRIPTION_PUSH_BUGFIX_ISSUE_DESCRIPTION'), 'notes', '', true));
-        $fields->attach(form_input_line(do_lang_tempcode('PUSH_BUGFIX_ISSUE_AFFECTS'), do_lang_tempcode('DESCRIPTION_PUSH_BUGFIX_ISSUE_AFFECTS'), 'affects', null, false));
+        $fields->attach(form_input_line(do_lang_tempcode('PUSH_BUGFIX_ISSUE_SUMMARY'), do_lang_tempcode('DESCRIPTION_PUSH_BUGFIX_ISSUE_SUMMARY'), 'tracker_title', null, true));
+        $fields->attach(form_input_text(do_lang_tempcode('PUSH_BUGFIX_ISSUE_DESCRIPTION'), do_lang_tempcode('DESCRIPTION_PUSH_BUGFIX_ISSUE_DESCRIPTION'), 'tracker_description', '', true));
 
         // Files
         if (!cms_empty_safe($files)) {
@@ -299,23 +274,22 @@ class Module_admin_push_bugfix
 
         // Classification
         $fields->attach(do_template('FORM_SCREEN_FIELD_SPACER', ['_GUID' => '8b1fa487f622ec2aca46b7ee87119312', 'TITLE' => do_lang_tempcode('PUSH_BUGFIX_CLASSIFICATION'), 'HELP' => do_lang_tempcode('DESCRIPTION_PUSH_BUGFIX_CLASSIFICATION')]));
-        $fields->attach(form_input_line(do_lang_tempcode('PUSH_BUGFIX_ISSUE_VERSION'), do_lang_tempcode('DESCRIPTION_PUSH_BUGFIX_ISSUE_VERSION'), 'version', $on_disk_version, true));
-        $project_fields = new Tempcode();
-        foreach ($projects as $project_id => $project_title) {
-            $project_fields->attach(form_input_list_entry(strval($project_id), ($project_id == $default_project_id), escape_html($project_title)));
-        }
-        $fields->attach(form_input_list(do_lang_tempcode('PUSH_BUGFIX_ISSUE_PROJECT'), do_lang_tempcode('DESCRIPTION_PUSH_BUGFIX_ISSUE_PROJECT'), 'project', $project_fields));
+        $fields->attach(form_input_line(do_lang_tempcode('PUSH_BUGFIX_ISSUE_VERSION'), do_lang_tempcode('DESCRIPTION_PUSH_BUGFIX_ISSUE_VERSION'), 'tracker_version', $on_disk_version, true));
         $category_fields = new Tempcode();
         foreach ($categories as $category_id => $category_title) {
-            $category_fields->attach(form_input_list_entry(escape_html(strval($category_id)), false, escape_html($category_title)));
+            $category_fields->attach(form_input_list_entry(strval($category_id), false, escape_html($category_title)));
         }
-        $fields->attach(form_input_list(do_lang_tempcode('PUSH_BUGFIX_ISSUE_CATEGORY'), do_lang_tempcode('DESCRIPTION_PUSH_BUGFIX_ISSUE_CATEGORY'), 'category', $category_fields));
+        $fields->attach(form_input_list(do_lang_tempcode('CATEGORY'), do_lang_tempcode('DESCRIPTION_PUSH_BUGFIX_ISSUE_CATEGORY'), 'tracker_category', $category_fields));
+        $addon_fields = new Tempcode();
+        foreach ($addons as $addon) {
+            $addon_fields->attach(form_input_list_entry(escape_html(strval($addon)), false, escape_html($addon)));
+        }
+        $fields->attach(form_input_list(do_lang_tempcode('ADDON'), do_lang_tempcode('DESCRIPTION_PUSH_BUGFIX_ISSUE_ADDON'), 'tracker_addon', $addon_fields));
         $severity_fields = new Tempcode();
-        foreach ($severity as $severity_id => $severity_info) {
-            list($severity_title, $severity_description) = $severity_info;
-            $severity_fields->attach(form_input_radio_entry('severity', escape_html(strval($severity_id)), false, escape_html($severity_title), null, protect_from_escaping($severity_description)));
+        foreach ($severities as $severity_code => $severity_title) {
+            $severity_fields->attach(form_input_radio_entry('tracker_type', escape_html($severity_code), false, escape_html($severity_title), null));
         }
-        $fields->attach(form_input_radio(do_lang_tempcode('PUSH_BUGFIX_ISSUE_SEVERITY'), do_lang_tempcode('DESCRIPTION_PUSH_BUGFIX_ISSUE_SEVERITY'), 'severity', $severity_fields, true));
+        $fields->attach(form_input_radio(do_lang_tempcode('PUSH_BUGFIX_ISSUE_SEVERITY'), do_lang_tempcode('DESCRIPTION_PUSH_BUGFIX_ISSUE_SEVERITY'), 'tracker_type', $severity_fields, true));
 
         // Post to
         $fields->attach(do_template('FORM_SCREEN_FIELD_SPACER', ['_GUID' => '7a5c24f3b9478a83d42ccaa40bb1611a', 'TITLE' => do_lang_tempcode('PUSH_BUGFIX_POST_TO'), 'HELP' => do_lang_tempcode('DESCRIPTION_PUSH_BUGFIX_POST_TO')]));
@@ -355,7 +329,6 @@ class Module_admin_push_bugfix
 
             'REMOTE_BASE_URL' => post_param_string('remote_base_url'),
             'GIT_FOUND' => $git_found,
-            'DEFAULT_PROJECT_ID' => strval($default_project_id),
         ]);
     }
 
@@ -386,10 +359,9 @@ class Module_admin_push_bugfix
 
         // Parse other inputs
         $submit_to = post_param_string('submit_to');
-        $version_dotted = post_param_string('version');
-        $title = post_param_string('title');
-        $notes = post_param_string('notes', '');
-        $affects = post_param_string('affects', '');
+        $version_dotted = post_param_string('tracker_version');
+        $title = post_param_string('tracker_title');
+        $notes = post_param_string('tracker_description', '');
 
         global $REMOTE_BASE_URL;
         $REMOTE_BASE_URL = ($submit_to == 'live') ? $REMOTE_BASE_URL : get_base_url();
@@ -433,17 +405,15 @@ class Module_admin_push_bugfix
         $tracker_id = post_param_integer('tracker_id', null);
         $tracker_title = $title;
         $tracker_message = $notes;
-        $tracker_project = post_param_integer('project');
-        $tracker_category = post_param_integer('category');
-        $tracker_severity = post_param_integer('severity');
+        $tracker_category = post_param_integer('tracker_category');
+        $tracker_addon = post_param_integer('tracker_addon');
+        $tracker_type = post_param_integer('tracker_type');
         $tracker_additional = '';
-        if ($affects != '') {
-            $tracker_additional = 'Affects: ' . $affects;
-        }
+
         $is_new_on_tracker = ($tracker_id === null);
         if ($is_new_on_tracker) {
             // Make tracker issue
-            $tracker_id = $this->create_tracker_issue($version_dotted, $tracker_title, $tracker_message, $tracker_additional, $tracker_severity, $tracker_category, $tracker_project);
+            $tracker_id = $this->create_tracker_issue($version_dotted, $tracker_title, $tracker_message, $tracker_additional, $tracker_type, $tracker_addon, $tracker_category);
             if ($tracker_id !== null) {
                 $tracker_url = $REMOTE_BASE_URL . '/catalogues/entry/tracker-' . strval($tracker_id) . '.htm';
                 $done[do_lang('PUSH_BUGFIX_CREATED_ISSUE')] = $tracker_url;
@@ -454,7 +424,7 @@ class Module_admin_push_bugfix
         } else {
             // Make tracker comment
             $tracker_comment_message = do_lang('PUSH_BUGFIX_TRACKER_COMMENT_MESSAGE', escape_html($tracker_title), escape_html($tracker_message), escape_html($tracker_additional));
-            $tracker_post_id = $this->create_tracker_post($tracker_id, $tracker_comment_message, $version_dotted, $tracker_severity, $tracker_category, $tracker_project);
+            $tracker_post_id = $this->create_tracker_comment($tracker_id, $tracker_comment_message, $version_dotted, $tracker_type, $tracker_addon, $tracker_category);
             if ($tracker_post_id !== null) {
                 $tracker_url = $REMOTE_BASE_URL . '/catalogues/entry/tracker-' . strval($tracker_id) . '.htm';
                 $done[do_lang('PUSH_BUGFIX_RESPONDED_TO_TRACKER_ISSUE')] = $tracker_url;
@@ -469,9 +439,9 @@ class Module_admin_push_bugfix
         $git_url = CMS_REPOS_URL . '/commit/' . $git_commit_id;
         if ($git_commit_id == '') {
             if ($tracker_id !== null) {
-                if ($tracker_severity == 95) {
+                if ($tracker_type == 'security') {
                     $git_commit_message = do_lang('PUSH_BUGFIX_GIT_MESSAGE_SECURITY_FIX', strval($tracker_id), escape_html($title));
-                } elseif ($tracker_severity > 10) {
+                } elseif ($tracker_type != 'feature') {
                     $git_commit_message = do_lang('PUSH_BUGFIX_GIT_MESSAGE_FIX', strval($tracker_id), escape_html($title));
                 } else {
                     $git_commit_message = do_lang('PUSH_BUGFIX_GIT_MESSAGE_IMPLEMENT', strval($tracker_id), escape_html($title));
@@ -489,16 +459,28 @@ class Module_admin_push_bugfix
         }
 
         // Make tracker comment with fix link
+        /*
         $tracker_comment_message = '';
-        if ($git_commit_id !== null) {
+        if ($git_commit_id != '') {
             $tracker_comment_message .= do_lang('PUSH_BUGFIX_TRACKER_COMMENT_MESSAGE_GIT', escape_html($git_commit_id), escape_html($git_url));
             if ($tracker_id !== null) {
-                $update_post_id = $this->create_tracker_post($tracker_id, $tracker_comment_message);
+                $update_post_id = $this->create_tracker_comment($tracker_id, $tracker_comment_message);
                 if ($update_post_id !== null) {
                     $done[do_lang('PUSH_BUGFIX_TRACKER_UPDATE_POST')] = null;
                 } else {
                     $done[do_lang('PUSH_BUGFIX_TRACKER_UPDATE_POST_FAILED')] = null;
                 }
+            }
+        }
+        */
+
+        // Add the commit link to the issue
+        if ($git_commit_id != '') {
+            $commit_success = $this->add_commit_to_tracker_issue($tracker_id, $git_url);
+            if ($commit_success) {
+                $done[do_lang('PUSH_BUGFIX_ADD_COMMIT')] = null;
+            } else {
+                $done[do_lang('PUSH_BUGFIX_ADD_COMMIT_FAILED')] = null;
             }
         }
 
@@ -626,10 +608,8 @@ class Module_admin_push_bugfix
         $done = [];
 
         // A TAR of fixed files is uploaded to the tracker issue (correct relative file paths intact)
-        $file_id = $this->upload_to_tracker_issue($tracker_id, $this->create_hotfix_tar($tracker_id, $fixed_files));
-        if ($file_id !== null) {
-            $tracker_comment_message = do_lang('PUSH_BUGFIX_TRACKER_COMMENT_HOTFIX');
-            $tracker_post_id = $this->create_tracker_post($tracker_id, $tracker_comment_message);
+        $success = $this->upload_to_tracker_issue($tracker_id, $this->create_hotfix_tar($tracker_id, $fixed_files));
+        if ($success) {
             $done[do_lang('PUSH_BUGFIX_UPLOADED_HOTFIX')] = null;
         } else {
             $done[do_lang('PUSH_BUGFIX_UPLOADED_HOTFIX_FAILED')] = null;
@@ -761,11 +741,11 @@ class Module_admin_push_bugfix
      * @param  string $tracker_message The description of the issue
      * @param  string $tracker_additional The additional details of the issue
      * @param  integer $tracker_severity The Mantis severity level of this issue
+     * @param  ID_TEXT $tracker_addon The addon for this issue
      * @param  integer $tracker_category The category ID for this issue
-     * @param  integer $tracker_project The project ID for this issue
      * @return ?AUTO_LINK The ID of the new tracker issue (null: error)
      */
-    protected function create_tracker_issue(string $version_dotted, string $tracker_title, string $tracker_message, string $tracker_additional, int $tracker_severity, int $tracker_category, int $tracker_project) : ?int
+    protected function create_tracker_issue(string $version_dotted, string $tracker_title, string $tracker_message, string $tracker_additional, int $tracker_severity, string $tracker_addon, int $tracker_category) : ?int
     {
         if (get_param_integer('keep_testing', 0) == 1) {
             return 123;
@@ -777,8 +757,8 @@ class Module_admin_push_bugfix
             'tracker_message' => $tracker_message,
             'tracker_additional' => $tracker_additional,
             'tracker_severity' => $tracker_severity,
+            'tracker_addon' => $tracker_addon,
             'tracker_category' => $tracker_category,
-            'tracker_project' => $tracker_project
         ];
 
         $result = $this->make_call('tracker_issues', $post);
@@ -796,11 +776,11 @@ class Module_admin_push_bugfix
      * @param  string $tracker_comment_message The comment to post
      * @param  ?string $version_dotted The software version for this issue (null: do not change)
      * @param  ?integer $tracker_severity The Mantis severity level for the issue (null: do not change)
+     * @param  ?ID_TEXT $tracker_addon The addon of this tracker issue (null: do not change)
      * @param  ?integer $tracker_category The category ID for this tracker issue (null: do not change)
-     * @param  ?integer $tracker_project The project ID of this tracker issue (null: do not change)
      * @return ?AUTO_LINK The comment ID (null: error)
      */
-    protected function create_tracker_post(int $tracker_id, string $tracker_comment_message, ?string $version_dotted = null, ?int $tracker_severity = null, ?int $tracker_category = null, ?int $tracker_project = null) : ?int
+    protected function create_tracker_comment(int $tracker_id, string $tracker_comment_message, ?string $version_dotted = null, ?int $tracker_severity = null, ?string $tracker_addon = null, ?int $tracker_category = null) : ?int
     {
         if (get_param_integer('keep_testing', 0) == 1) {
             return 123;
@@ -809,10 +789,10 @@ class Module_admin_push_bugfix
         $post = [
             'tracker_id' => $tracker_id,
             'tracker_comment_message' => $tracker_comment_message,
-            'version_dotted' => $version_dotted,
+            'tracker_version' => $version_dotted,
             'tracker_severity' => $tracker_severity,
+            'tracker_addon' => $tracker_addon,
             'tracker_category' => $tracker_category,
-            'tracker_project' => $tracker_project
         ];
 
         $result = $this->make_call('tracker_posts', $post);
@@ -828,12 +808,12 @@ class Module_admin_push_bugfix
      *
      * @param  AUTO_LINK $tracker_id The tracker issue ID
      * @param  PATH $tar_path The path to the TAR file to upload
-     * @return ?AUTO_LINK The resource ID (null: error)
+     * @return boolean Whether it was successful
      */
-    protected function upload_to_tracker_issue(int $tracker_id, string $tar_path) : ?int
+    protected function upload_to_tracker_issue(int $tracker_id, string $tar_path) : bool
     {
         if (get_param_integer('keep_testing', 0) == 1) {
-            return 123;
+            return true;
         }
 
         $put = [
@@ -843,13 +823,11 @@ class Module_admin_push_bugfix
 
         $result = $this->make_call('tracker_issues', $put, $tar_path);
         if (cms_empty_safe($result)) {
-            return null;
+            return false;
         }
 
-        if (!isset($result['upload'])) {
-            return null;
-        }
-        return intval($result['upload']);
+        // $result would be null if there was a failure, caught by cms_empty_safe
+        return true;
     }
 
     /**
@@ -867,6 +845,32 @@ class Module_admin_push_bugfix
         $put = [
             'PUT_id' => $tracker_id,
             'close' => 1
+        ];
+
+        $result = $this->make_call('tracker_issues', $put);
+        if (cms_empty_safe($result)) {
+            return false;
+        }
+
+        return $result['success'];
+    }
+
+    /**
+     * Close a tracker issue.
+     *
+     * @param  AUTO_LINK $tracker_id The issue ID on which to add a commit link
+     * @param  URLPATH $commit_url The commit URL
+     * @return boolean Whether it was closed successfully
+     */
+    protected function add_commit_to_tracker_issue(int $tracker_id, string $commit_url) : bool
+    {
+        if (get_param_integer('keep_testing', 0) == 1) {
+            return true;
+        }
+
+        $put = [
+            'PUT_id' => $tracker_id,
+            'git_commit_url' => $commit_url,
         ];
 
         $result = $this->make_call('tracker_issues', $put);

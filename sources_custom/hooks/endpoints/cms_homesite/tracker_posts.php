@@ -65,21 +65,23 @@ class Hook_endpoint_cms_homesite_tracker_posts
             case 'add':
                 $data = [];
 
-                require_code('mantis');
+                require_code('cms_homesite_tracker');
+
                 $tracker_id = post_param_integer('tracker_id');
                 $tracker_comment_message = post_param_string('tracker_comment_message');
 
                 // If these parameters were provided, then we are also updating the issue.
-                $version_dotted = post_param_string('version_dotted', null);
+                $version_dotted = post_param_string('tracker_version', null);
                 $tracker_severity = post_param_integer('tracker_severity', null);
+                $tracker_addon = post_param_integer('tracker_addon', null);
                 $tracker_category = post_param_integer('tracker_category', null);
-                $tracker_project = post_param_integer('tracker_project', null);
-                if (($version_dotted !== null) && ($tracker_severity !== null) && ($tracker_category !== null) && ($tracker_project !== null)) {
-                    update_tracker_issue($tracker_id, $version_dotted, $tracker_severity, $tracker_category, $tracker_project);
-                    $data['issue_updated'] = true;
+
+                if (($version_dotted !== null) && ($tracker_severity !== null) && ($tracker_category !== null) && ($tracker_addon !== null)) {
+                    $success = update_tracker_issue($tracker_id, $version_dotted, $tracker_severity, $tracker_addon, $tracker_category);
+                    $data['issue_updated'] = $success;
                 }
 
-                $data['id'] = create_tracker_post($tracker_id, $tracker_comment_message);
+                $data['success'] = create_tracker_comment($tracker_id, $tracker_comment_message);
                 return $data;
 
             default:

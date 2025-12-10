@@ -256,7 +256,6 @@ You may want to put them in your Git \'cmd\' directory, as that is in your path.
 
             'REMOTE_BASE_URL' => placeholder_url(),
             'GIT_FOUND' => placeholder_array(),
-            'DEFAULT_PROJECT_ID' => placeholder_number(),
         ]), null, '', true);
     }
 }
