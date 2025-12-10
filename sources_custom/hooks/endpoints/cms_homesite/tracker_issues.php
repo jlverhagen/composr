@@ -89,7 +89,6 @@ class Hook_endpoint_cms_homesite_tracker_issues
                 require_code('cms_homesite_tracker');
                 //$results = create_tracker_issue(post_param_string('version_dotted'), post_param_string('tracker_title'), post_param_string('tracker_message'), post_param_string('tracker_additional'), post_param_integer('tracker_severity'), post_param_integer('tracker_category'), post_param_integer('tracker_project'));
 
-                // TODO: Edit bugfix UI
                 $results = create_tracker_issue(
                     post_param_string('tracker_version'),
                     post_param_string('tracker_title'),
@@ -103,6 +102,7 @@ class Hook_endpoint_cms_homesite_tracker_issues
                 );
 
                 return [
+                    'success' => true,
                     'catalogue_entry_id' => $results[0],
                     'id' => $results[1],
                 ];

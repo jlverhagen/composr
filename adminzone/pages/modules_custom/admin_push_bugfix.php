@@ -406,8 +406,8 @@ class Module_admin_push_bugfix
         $tracker_title = $title;
         $tracker_message = $notes;
         $tracker_category = post_param_integer('tracker_category');
-        $tracker_addon = post_param_integer('tracker_addon');
-        $tracker_type = post_param_integer('tracker_type');
+        $tracker_addon = post_param_string('tracker_addon');
+        $tracker_type = post_param_string('tracker_type');
         $tracker_additional = '';
 
         $is_new_on_tracker = ($tracker_id === null);
@@ -424,8 +424,8 @@ class Module_admin_push_bugfix
         } else {
             // Make tracker comment
             $tracker_comment_message = do_lang('PUSH_BUGFIX_TRACKER_COMMENT_MESSAGE', escape_html($tracker_title), escape_html($tracker_message), escape_html($tracker_additional));
-            $tracker_post_id = $this->create_tracker_comment($tracker_id, $tracker_comment_message, $version_dotted, $tracker_type, $tracker_addon, $tracker_category);
-            if ($tracker_post_id !== null) {
+            $tracker_posted = $this->create_tracker_comment($tracker_id, $tracker_comment_message, $version_dotted, $tracker_type, $tracker_addon, $tracker_category);
+            if ($tracker_posted) {
                 $tracker_url = $REMOTE_BASE_URL . '/catalogues/entry/tracker-' . strval($tracker_id) . '.htm';
                 $done[do_lang('PUSH_BUGFIX_RESPONDED_TO_TRACKER_ISSUE')] = $tracker_url;
             } else {
@@ -475,7 +475,7 @@ class Module_admin_push_bugfix
         */
 
         // Add the commit link to the issue
-        if ($git_commit_id != '') {
+        if (($git_commit_id != '') && ($tracker_id !== null)) {
             $commit_success = $this->add_commit_to_tracker_issue($tracker_id, $git_url);
             if ($commit_success) {
                 $done[do_lang('PUSH_BUGFIX_ADD_COMMIT')] = null;
@@ -740,19 +740,19 @@ class Module_admin_push_bugfix
      * @param  string $tracker_title The title / summary of the issue
      * @param  string $tracker_message The description of the issue
      * @param  string $tracker_additional The additional details of the issue
-     * @param  integer $tracker_severity The Mantis severity level of this issue
+     * @param  ID_TEXT $tracker_severity The severity level of this issue
      * @param  ID_TEXT $tracker_addon The addon for this issue
      * @param  integer $tracker_category The category ID for this issue
      * @return ?AUTO_LINK The ID of the new tracker issue (null: error)
      */
-    protected function create_tracker_issue(string $version_dotted, string $tracker_title, string $tracker_message, string $tracker_additional, int $tracker_severity, string $tracker_addon, int $tracker_category) : ?int
+    protected function create_tracker_issue(string $version_dotted, string $tracker_title, string $tracker_message, string $tracker_additional, string $tracker_severity, string $tracker_addon, int $tracker_category) : ?int
     {
         if (get_param_integer('keep_testing', 0) == 1) {
             return 123;
         }
 
         $post = [
-            'version_dotted' => $version_dotted,
+            'tracker_version' => $version_dotted,
             'tracker_title' => $tracker_title,
             'tracker_message' => $tracker_message,
             'tracker_additional' => $tracker_additional,
@@ -775,15 +775,15 @@ class Module_admin_push_bugfix
      * @param  AUTO_LINK $tracker_id The ID of the tracker issue to comment
      * @param  string $tracker_comment_message The comment to post
      * @param  ?string $version_dotted The software version for this issue (null: do not change)
-     * @param  ?integer $tracker_severity The Mantis severity level for the issue (null: do not change)
+     * @param  ?ID_TEXT $tracker_severity The severity level for the issue (null: do not change)
      * @param  ?ID_TEXT $tracker_addon The addon of this tracker issue (null: do not change)
      * @param  ?integer $tracker_category The category ID for this tracker issue (null: do not change)
-     * @return ?AUTO_LINK The comment ID (null: error)
+     * @return boolean Whether it was successful
      */
-    protected function create_tracker_comment(int $tracker_id, string $tracker_comment_message, ?string $version_dotted = null, ?int $tracker_severity = null, ?string $tracker_addon = null, ?int $tracker_category = null) : ?int
+    protected function create_tracker_comment(int $tracker_id, string $tracker_comment_message, ?string $version_dotted = null, ?string $tracker_severity = null, ?string $tracker_addon = null, ?int $tracker_category = null) : bool
     {
         if (get_param_integer('keep_testing', 0) == 1) {
-            return 123;
+            return true;
         }
 
         $post = [
@@ -797,10 +797,10 @@ class Module_admin_push_bugfix
 
         $result = $this->make_call('tracker_posts', $post);
         if (cms_empty_safe($result)) {
-            return null;
+            return false;
         }
 
-        return intval($result['id']);
+        return $result['success'];
     }
 
     /**

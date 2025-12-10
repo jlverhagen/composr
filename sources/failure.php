@@ -432,12 +432,12 @@ function _warn_screen(object $title, $text, bool $provide_back = true, bool $sup
  */
 function _generic_exit($text, string $template, ?bool $support_match_key_messages = false, bool $log_error = false, ?int $http_status = null, ?object $title = null, ?string $image_url = null)
 {
-    if (($template == 'WARN_SCREEN') && ((current_fatalistic() > 0) || (running_script('commandr')))) {
-        _generic_exit($text, 'FATAL_SCREEN', false, $log_error, $http_status);
-    }
-
     if (throwing_errors()) {
         throw new CMSException($text);
+    }
+
+    if (($template == 'WARN_SCREEN') && ((current_fatalistic() > 0) || (running_script('commandr')))) {
+        _generic_exit($text, 'FATAL_SCREEN', false, $log_error, $http_status);
     }
 
     cms_ob_end_clean(); // Emergency output, potentially, so kill off any active buffer

@@ -1593,6 +1593,12 @@ function inform_exit($text, ?bool $support_match_key_messages = null)
  */
 function warn_exit($text, bool $support_match_key_messages = false, bool $log_error = false, ?int $http_status = 500, ?object $title = null, ?string $image_url = null)
 {
+    // TODO: debug
+    if (throwing_errors()) {
+        fatal_exit($text, $log_error, $http_status);
+        return;
+    }
+
     require_code('failure');
     suggest_fatalistic();
 
