@@ -763,45 +763,40 @@
         }(form)));
 
         // Load via local storage
-        var autosaveValue = $cms.readCookie(encodeURIComponent(getAutosaveUrlStem()), 'PERSONALIZATION');
-        if ((autosaveValue !== '') && (autosaveValue !== '0')) {
-            if (window.localStorage !== undefined) {
-                var fieldsToDo = {}, fieldsToDoCounter = 0, biggestLengthData = '';
-                var value;
-                var elementName, autosaveName;
-                for (var j = 0; j < form.elements.length; j++) {
-                    elementName = (form.elements[j].name === undefined) ? form.elements[0][j].name : form.elements[j].name;
-                    autosaveName = getAutosaveName(elementName);
-                    if (localStorage[autosaveName] !== undefined) {
-                        value = localStorage[autosaveName];
+        if (window.localStorage !== undefined) {
+            var fieldsToDo = {}, fieldsToDoCounter = 0, biggestLengthData = '';
+            var value;
+            var elementName, autosaveName;
+            for (var j = 0; j < form.elements.length; j++) {
+                elementName = (form.elements[j].name === undefined) ? form.elements[0][j].name : form.elements[j].name;
+                autosaveName = getAutosaveName(elementName);
+                if (localStorage[autosaveName] !== undefined) {
+                    value = localStorage[autosaveName];
 
-                        if (form.elements[j].value != null && form.elements[j].value.replace(/\s/g, '') === value.replace(/\s/g, '')) {
-                            continue;
-                        }
-
-                        fieldsToDo[elementName] = value;
-
-                        fieldsToDoCounter++;
-
-                        if (value.length > biggestLengthData.length) {// The longest is what we quote to the user as being restored
-                            biggestLengthData = value;
-                        }
-
-                        $util.inform('+ Has autosave for ' + elementName + ' (' + autosaveName + ')');
-                    } else {
-                        $util.inform('- Has no autosave for ' + elementName);
+                    if (form.elements[j].value != null && form.elements[j].value.replace(/\s/g, '') === value.replace(/\s/g, '')) {
+                        continue;
                     }
-                }
 
-                if ((fieldsToDoCounter !== 0) && (biggestLengthData.length > 25)) {
-                    _restoreFormAutosave(form, fieldsToDo, biggestLengthData);
-                    return; // If we had it locally, we won't let it continue on to try via AJAX
+                    fieldsToDo[elementName] = value;
+
+                    fieldsToDoCounter++;
+
+                    if (value.length > biggestLengthData.length) {// The longest is what we quote to the user as being restored
+                        biggestLengthData = value;
+                    }
+
+                    $util.inform('+ Has autosave for ' + elementName + ' (' + autosaveName + ')');
                 } else {
-                    $util.inform('No auto-save, fields found was ' + fieldsToDoCounter + ', largest length was ' + biggestLengthData.length);
+                    $util.inform('- Has no autosave for ' + elementName);
                 }
             }
-        } else {
-            $util.inform('Nothing in local storage');
+
+            if ((fieldsToDoCounter !== 0) && (biggestLengthData.length > 0)) {
+                _restoreFormAutosave(form, fieldsToDo, biggestLengthData);
+                return; // If we had it locally, we won't let it continue on to try via AJAX
+            } else {
+                $util.inform('No auto-save, fields found was ' + fieldsToDoCounter + ', largest length was ' + biggestLengthData.length);
+            }
         }
 
         // Load via AJAX (if issue happened on another machine, or if we do not support local storage)
@@ -827,7 +822,7 @@
 
                 event.preventDefault(); // Prevent browser save dialog
 
-                // Go through al fields to save
+                // Go through all fields to save
                 var post = '', foundValidatedField = false;
                 for (var i = 0; i < form.elements.length; i++) {
                     if (form.elements[i].name === 'validated') {
@@ -840,7 +835,7 @@
                     }
                 }
 
-                if (post !== '') {
+                if (post !== '') { // NB: populated through _handleFormSaving
                     document.body.style.cursor = 'wait';
 
                     // Save remotely
@@ -905,7 +900,7 @@
                 }
             }
 
-            if ((fieldsToDoCounter !== 0) && (biggestLengthData.length > 25)) {
+            if ((fieldsToDoCounter !== 0) && (biggestLengthData.length > 0)) {
                 _restoreFormAutosave(form, fieldsToDo, biggestLengthData);
             } else {
                 $util.inform('No auto-save, fields found was ' + fieldsToDoCounter + ', largest length was ' + biggestLengthData.length);
@@ -935,9 +930,6 @@
                     }
                 } else {
                     // Was asked to throw the autosave away...
-
-                    $cms.setCookie(encodeURIComponent(getAutosaveUrlStem()), '0', 'PERSONALIZATION', 0.167/*4 hours*/); // Mark as not wanting to restore from local storage
-
                     if (window.localStorage !== undefined) {
                         for (var key2 in fieldsToDo) {
                             if (typeof fieldsToDo[key2] !== 'string') {
@@ -950,6 +942,12 @@
                             }
                         }
                     }
+
+                    // Also remotely throw it away
+                    var url = '{$FIND_SCRIPT_NOHTTP;,autosave}?type=delete';
+                    url += '&the_page=' + encodeURIComponent($cms.getPageName());
+                    url += $cms.keep();
+                    $cms.doAjaxRequest(url);
                 }
             });
         }
@@ -1156,11 +1154,6 @@
         }
 
         function actuallyAutosave() {
-            // Mark it as saved, so the server can clear it out when we submit, signally local storage should get deleted too
-            if (!$cms.setCookie(encodeURIComponent(getAutosaveUrlStem()), '1', 'PERSONALIZATION', 0.167/*4 hours*/)) {
-                return;
-            }
-
             window.lastAutosave = thisDate;
 
             // Save locally
@@ -1169,9 +1162,21 @@
                     //$util.inform('Doing local storage auto-save for ' + elementName + ' (' + autosaveName + ')');
                 }
 
+                var autosaveIndex = window.localStorage.getItem('cms_autosaveindex');
+                if (autosaveIndex === null) {
+                    autosaveIndex = {};
+                } else {
+                    autosaveIndex = JSON.parse(autosaveIndex);
+                }
+
+                autosaveIndex[autosaveName] = thisDate.getTime() + (1000 * 60 * 60 * 24); // One day expiration
+
                 try {
                     window.localStorage.setItem(autosaveName, value);
-                } catch (e) {} // Could have NS_ERROR_DOM_QUOTA_REACHED
+                    window.localStorage.setItem('cms_autosaveindex', JSON.stringify(autosaveIndex));
+                } catch (e) {
+                    $util.warn('Unable to save autosave to localStorage; it may be full.');
+                } // Could have NS_ERROR_DOM_QUOTA_REACHED
             }
         }
 
@@ -1186,6 +1191,7 @@
 
     function getAutosaveUrlStem() {
         var name = 'cms_autosave_' + window.location.pathname;
+
         if ((window.location.search.indexOf('type=') !== -1) || (window.location.search.indexOf('page_link') !== -1)/*editing Comcode page*/) {
             name += window.location.search.replace(/[?&]redirect=.*/, '').replace(/[?&]keep_\w+=.*/, '').replace(/[?&]cat=.*/, '');
         }

@@ -182,8 +182,6 @@ class Hook_addon_registry_cms_homesite_tracker
             'lang_custom/EN/tracker.ini',
             'sources_custom/cms_homesite_tracker.php',
             'sources_custom/hooks/endpoints/cms_homesite/tracker_categories.php',
-            'sources_custom/hooks/endpoints/cms_homesite/tracker_issues.php',
-            'sources_custom/hooks/endpoints/cms_homesite/tracker_posts.php',
             'sources_custom/hooks/form_handlers/catalogue_entry/tracker.php',
             'sources_custom/hooks/systems/addon_registry/cms_homesite_tracker.php',
             'sources_custom/hooks/systems/content_meta_aware/catalogue_entry.php',

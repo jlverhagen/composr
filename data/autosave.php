@@ -70,8 +70,13 @@ require_once $FILE_BASE . '/sources/bootstrap.php';
 require_code__bootstrap('global');
 
 require_code('autosave');
-if (get_param_string('type') == 'store') {
-    store_autosave_script();
-} else {
-    retrieve_autosave_script();
+switch (get_param_string('type')) {
+    case 'store':
+        store_autosave_script();
+        break;
+    case 'delete':
+        delete_autosave_script();
+        break;
+    default:
+        retrieve_autosave_script();
 }

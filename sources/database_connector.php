@@ -35,7 +35,7 @@
  *
  * @package core
  */
-class DatabaseConnector
+class Source_database_connector
 {
     public $table_prefix;
     public $connection_read;

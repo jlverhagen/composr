@@ -82,7 +82,6 @@ function init__continuous_integration()
 
             // Not reasonable to run in pre-release versions
             ($status == VERSION_ALPHA || $status == VERSION_BETA) ? 'sync_tests/_copyright' : null,
-            ($status == VERSION_ALPHA || $status == VERSION_BETA) ? 'async_tests/tracker_categories' : null,
         ]);
 
         define('CI_COMMIT_QUEUE_PATH', get_custom_file_base() . '/data_custom/ci_queue.bin');

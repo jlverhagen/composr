@@ -99,7 +99,7 @@ function check_input_field_string(string $name, string &$val, ?bool $posted, int
     if (($filters & INPUT_FILTER_URL_RECODING) != 0) {
         // We should use compliant encoding
         require_code('urls_coder');
-        $coder_ob = new Source_URL_coder();
+        $coder_ob = object_factory('Source_URL_coder', false, [], true);
         $val = $coder_ob->encode($val);
     }
 

@@ -351,7 +351,7 @@ function actual_rename_zone_lite(string $zone, string $new_zone, bool $dont_both
     $ALL_ZONES_CACHE = null;
     $ALL_ZONES_TITLED_CACHE = null;
 
-    Self_learning_cache::erase_smart_cache();
+    Source_self_learning_cache::erase_smart_cache();
 }
 
 /**
@@ -986,7 +986,7 @@ function delete_cms_page(string $zone, string $page, string $type = 'comcode_cus
 
             if (addon_installed('search')) {
                 require_code('fast_custom_index');
-                Fast_custom_index::delete_from_index($GLOBALS['SITE_DB'], 'cpages_fulltext_index', ['i_zone_name' => $zone, 'i_page_name' => $page]);
+                Source_fast_custom_index::delete_from_index($GLOBALS['SITE_DB'], 'cpages_fulltext_index', ['i_zone_name' => $zone, 'i_page_name' => $page]);
             }
         }
 

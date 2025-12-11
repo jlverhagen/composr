@@ -65,8 +65,8 @@ function auto_decache(bool $changed_base_url)
     erase_cached_templates(!$changed_base_url);
     erase_comcode_cache();
     erase_cached_language();
-    if (class_exists('Self_learning_cache')) {
-        Self_learning_cache::erase_smart_cache();
+    if (class_exists('Source_self_learning_cache')) {
+        Source_self_learning_cache::erase_smart_cache();
     }
     erase_persistent_cache();
     if ($changed_base_url) {
@@ -290,8 +290,8 @@ function erase_cached_language()
     $LANGS_REQUESTED = $langs_requested_copy;
     require_all_open_lang_files();
 
-    if (class_exists('Self_learning_cache')) {
-        Self_learning_cache::erase_smart_cache();
+    if (class_exists('Source_self_learning_cache')) {
+        Source_self_learning_cache::erase_smart_cache();
     }
 
     cms_profile_end_for('erase_cached_language');
@@ -519,8 +519,8 @@ function erase_cached_templates(bool $preserve_some = false, ?array $only_templa
         delete_values($values);
     }
 
-    if ((class_exists('Self_learning_cache')) && ($raw_file_regexp === null) && ($only_templates === [])) {
-        Self_learning_cache::erase_smart_cache();
+    if ((class_exists('Source_self_learning_cache')) && ($raw_file_regexp === null) && ($only_templates === [])) {
+        Source_self_learning_cache::erase_smart_cache();
     }
 
     cms_profile_end_for('erase_cached_templates');
@@ -580,7 +580,7 @@ function erase_theme_images_cache()
 
     $GLOBALS['SITE_DB']->query('DELETE FROM ' . get_table_prefix() . 'theme_images WHERE url LIKE \'themes/%/images/%\'', null, 0, true/*LEGACY*/);
 
-    Self_learning_cache::erase_smart_cache();
+    Source_self_learning_cache::erase_smart_cache();
 
     require_code('themes2');
     $all_themes = find_all_themes();

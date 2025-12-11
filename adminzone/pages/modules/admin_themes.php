@@ -1193,7 +1193,7 @@ class Module_admin_themes
         }
 
         require_code('caches3');
-        Self_learning_cache::erase_smart_cache();
+        Source_self_learning_cache::erase_smart_cache();
         erase_cached_templates(false, null, TEMPLATE_DECACHE_WITH_THEME_IMAGE);
 
         return $this->do_next_manager($this->title, do_lang_tempcode('SUCCESS'), $theme, $lang, 'image', $id);
@@ -1356,7 +1356,7 @@ class Module_admin_themes
         }
 
         require_code('caches3');
-        Self_learning_cache::erase_smart_cache();
+        Source_self_learning_cache::erase_smart_cache();
         erase_cached_templates(false, null, TEMPLATE_DECACHE_WITH_THEME_IMAGE);
         persistent_cache_delete('IMAGE_DIMS');
 

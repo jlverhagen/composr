@@ -33,7 +33,7 @@
 /**
  * Hook class.
  */
-class Hook_fields_list_multi extends ListFieldHook
+class Hook_fields_list_multi extends Source_hook_fields_list_base
 {
     // ==============
     // Module: search

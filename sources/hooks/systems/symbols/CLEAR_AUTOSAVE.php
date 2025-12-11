@@ -27,44 +27,46 @@
 /**
  * @license    http://opensource.org/licenses/cpal_1.0 Common Public Attribution License
  * @copyright  Christopher Graham
- * @package    core_cleanup_tools
+ * @package    core
  */
 
 /**
  * Hook class.
  */
-class Hook_cleanup_self_learning
+class Hook_symbol_CLEAR_AUTOSAVE
 {
     /**
-     * Find details about this cleanup hook.
+     * Get information about this symbol.
      *
-     * @return ?array Map of cleanup hook info (null: hook is disabled)
+     * @return ?array Array of information (null: hook disabled)
      */
     public function info() : ?array
     {
-        global $SITE_INFO;
-        $is_on = (isset($SITE_INFO['self_learning_cache']) && $SITE_INFO['self_learning_cache'] == '1');
-        if (!$is_on) {
-            return null;
-        }
-
-        $info = [];
-        $info['title'] = do_lang_tempcode('SELF_LEARNING_CACHE');
-        $info['description'] = do_lang_tempcode('DESCRIPTION_SELF_LEARNING_CACHE');
-        $info['type'] = 'cache';
-
-        return $info;
+        return [
+            'compile' => SYMBOL_COMPILE_STATIC_NONE,
+        ];
     }
 
     /**
-     * Run the cleanup hook action.
+     * Run function for symbol hooks. Searches for tasks to perform.
      *
-     * @return Tempcode Results
+     * @param  array $param Symbol parameters
+     * @param  string $lang The language to evaluate this symbol in (some symbols refer to language elements)
+     * @param  array $escaped Array of escaping operations
+     * @return string Result
      */
-    public function run() : object
+    public function run(array $param, string $lang, array $escaped) : string
     {
-        Source_self_learning_cache::erase_smart_cache();
+        $value = '{}';
+        if ($GLOBALS['XSS_DETECT']) {
+            ocp_mark_as_escaped($value);
+        }
 
-        return new Tempcode();
+        global $CLEAR_AUTOSAVE;
+        if (isset($CLEAR_AUTOSAVE)) {
+            $value = json_encode($CLEAR_AUTOSAVE);
+        }
+
+        return $value;
     }
 }

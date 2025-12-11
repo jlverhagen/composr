@@ -81,9 +81,9 @@ function init__database()
     if ((!empty($SITE_INFO['db_site'])) || (!empty($SITE_INFO['db_site_user']))) {
         /** The connector to the active site database.
          *
-         * @global object $SITE_DB
+         * @global Source_database_connector $SITE_DB
          */
-        $SITE_DB = new DatabaseConnector(get_db_site(), get_db_site_host(), get_db_site_user(), get_db_site_password(), get_table_prefix());
+        $SITE_DB = object_factory('Source_database_connector', false, [get_db_site(), get_db_site_host(), get_db_site_user(), get_db_site_password(), get_table_prefix()]);
     }
 
     global $UPON_QUERY_HOOKS_CACHE;

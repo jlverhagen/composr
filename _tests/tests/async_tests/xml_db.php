@@ -37,7 +37,7 @@ class xml_db_test_set extends cms_test_case
 
         require_code('database/xml');
         $static = new Source_database_static_xml('cms_');
-        $this->db = new DatabaseConnector('test', 'localhost', 'root', '', 'cms_', false, $static);
+        $this->db = object_factory('Source_database_connector', false, ['test', 'localhost', 'root', '', 'cms_', false, $static]);
 
         $this->db->drop_table_if_exists('db_meta');
         $this->db->create_table('db_meta', [

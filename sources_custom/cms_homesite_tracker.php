@@ -26,6 +26,7 @@
 
 /**
  * Get rows of tracker issues from Mantis.
+ * TODO: implement for native tracker.
  *
  * @param  array $ids Array of tracker IDs to get
  * @param  ?ID_TEXT $version Limit to issues fixed in this version (null: do not limit)
@@ -178,246 +179,319 @@ function create_tracker_issue(string $version, string $tracker_title, string $tr
 }
 
 /**
- * Update details on a Mantis tracker issue (and set the handler to the current member).
+ * Update details on a tracker issue (and set the handler to the current member).
  *
  * @param  AUTO_LINK $tracker_id The tracker issue we are editing
  * @param  ?ID_TEXT $version The issue reported version (null: do not change)
- * @param  ?integer $tracker_severity The severity identifier (null: do not change)
- * @param  ?AUTO_LINK $tracker_category The category / addon (null: do not change)
- * @param  ?AUTO_LINK $tracker_project The issue project (null: do not change)
+ * @param  ?ID_TEXT $tracker_type The type (severity) identifier (null: do not change)
+ * @param  ?ID_TEXT $tracker_addon The addon (null: do not change)
+ * @param  ?AUTO_LINK $tracker_category The category (null: do not change)
  */
-function update_tracker_issue(int $tracker_id, ?string $version = null, ?int $tracker_severity = null, ?int $tracker_category = null, ?int $tracker_project = null)
+function update_tracker_issue(int $tracker_id, ?string $version = null, ?string $tracker_type = null, ?string $tracker_addon = null, ?int $tracker_category = null)
 {
-    ensure_version_exists_in_tracker($version);
+    $out = new Tempcode();
+    if (!addon_installed__messaged('cms_homesite_tracker', $out)) {
+        warn_exit($out);
+    }
+    if (!addon_installed__messaged('cms_homesite', $out)) {
+        warn_exit($out);
+    }
+    if (!addon_installed__messaged('catalogues', $out)) {
+        warn_exit($out);
+    }
 
-    $query = "
-        UPDATE
-        `mantis_bug_table`
-        SET
-    ";
-    if ($tracker_project !== null) {
-        $query .= "
-            `project_id`='" . db_escape_string(strval($tracker_project)) . "',
-        ";
+    require_code('catalogues');
+    require_code('catalogues2');
+    require_lang('tracker');
+
+    // Get catalogue field IDs
+    $identifier_field = $GLOBALS['SITE_DB']->query_select_value('catalogue_fields', 'id', ['c_name' => 'tracker', $GLOBALS['SITE_DB']->translate_field_ref('cf_name') => do_lang('IDENTIFIER')]);
+    $version_field = $GLOBALS['SITE_DB']->query_select_value('catalogue_fields', 'id', ['c_name' => 'tracker', $GLOBALS['SITE_DB']->translate_field_ref('cf_name') => do_lang('VERSION')]); // short
+    $type_field = $GLOBALS['SITE_DB']->query_select_value('catalogue_fields', 'id', ['c_name' => 'tracker', $GLOBALS['SITE_DB']->translate_field_ref('cf_name') => do_lang('ISSUE_TYPE')]); // short
+    $addon_field = $GLOBALS['SITE_DB']->query_select_value('catalogue_fields', 'id', ['c_name' => 'tracker', $GLOBALS['SITE_DB']->translate_field_ref('cf_name') => do_lang('ADDON')]); // short
+
+    // Get the catalogue entry ID
+    $entry_id = $GLOBALS['SITE_DB']->query_select_value_if_there('catalogue_efv_integer', 'cv_value', ['cf_id' => $identifier_field, 'ce_id' => $tracker_id]);
+    if ($entry_id === null) {
+        return false;
     }
-    if (true) {
-        $query .= "
-            `handler_id`='" . strval(get_member()) . "',
-        ";
+
+    $_entry_row = $GLOBALS['SITE_DB']->query_select('catalogue_entries', ['*'], ['id' => $entry_id], '', 1);
+    if (!array_key_exists(0, $_entry_row)) {
+        return false;
     }
-    if ($tracker_severity !== null) {
-        $query .= "
-            `severity`='" . db_escape_string(strval($tracker_severity)) . "',
-        ";
+    $entry_row = $_entry_row[0];
+
+    // Get its field values
+    $_current_map = get_catalogue_entry_field_values('tracker', $entry_id);
+    $current_map = [];
+    foreach ($_current_map as $map_item) {
+        $current_map[$map_item['id']] = $map_item['effective_value_pure'];
     }
+
+    // Apply edits
     if ($version !== null) {
-        $query .= "
-            `version`='" . db_escape_string($version) . "',
-        ";
+        $current_map[$version_field] = $version;
     }
-    if ($tracker_category !== null) {
-        $query .= "
-            `category_id`='" . db_escape_string(strval($tracker_category)) . "',
-        ";
+    if ($tracker_type !== null) {
+        $current_map[$type_field] = $tracker_type;
     }
-    $query .= "
-            `last_updated`='" . strval(time()) . "'
-        WHERE
-            id=" . strval($tracker_id);
-    $GLOBALS['SITE_DB']->_query(trim($query), null, 0, false, false, null, '', false);
+    if ($tracker_addon !== null) {
+        $current_map[$addon_field] = $tracker_addon;
+    }
+    if ($tracker_category === null) {
+        $tracker_category = $entry_row['cc_id'];
+    }
+
+    actual_edit_catalogue_entry($entry_id, $tracker_category, 1, '', 1, 1, 1, $current_map);
+
+    return true;
 }
 
 /**
- * Make sure the given version exists in Mantis.
- *
- * @param  ?ID_TEXT $version The version to check and create if it does not exist (null: do not check anything)
- */
-function ensure_version_exists_in_tracker(?string $version)
-{
-    if ($version === null) {
-        return;
-    }
-
-    if ($GLOBALS['SITE_DB']->query_value_if_there('SELECT version FROM mantis_project_version_table WHERE ' . db_string_equal_to('version', $version)) === null) {
-        $query = "
-            INSERT INTO
-            `mantis_project_version_table`
-            (
-                `project_id`,
-                `version`,
-                `description`,
-                `released`,
-                `obsolete`,
-                `date_order`
-            )
-            VALUES
-            (
-                    1,
-                    '" . db_escape_string($version) . "',
-                    '',
-                    1,
-                    0,
-                    " . strval(time()) . "
-            )
-        ";
-        $GLOBALS['SITE_DB']->_query($query, null, 0, true);
-    }
-}
-
-/**
- * Upload a file to a tracker issue in Mantis.
+ * Add a hotfix file to a tracker issue.
  *
  * @param  AUTO_LINK $tracker_id The tracker ID on which to upload a file
- * @param  mixed $upload The file resource to upload
- * @return AUTO The file ID
+ * @param  ID_TEXT $upload The name of the $_FILES uploaded
+ * @return boolean Whether it was successful
  */
-function upload_to_tracker_issue(int $tracker_id, $upload) : int
+function add_hotfix_to_tracker_issue(int $tracker_id, string $upload) : bool
 {
     $out = new Tempcode();
+    if (!addon_installed__messaged('cms_homesite_tracker', $out)) {
+        warn_exit($out);
+    }
     if (!addon_installed__messaged('cms_homesite', $out)) {
+        warn_exit($out);
+    }
+    if (!addon_installed__messaged('catalogues', $out)) {
         warn_exit($out);
     }
 
     require_code('cms_homesite');
+    require_code('catalogues');
+    require_code('catalogues2');
+    require_lang('tracker');
 
-    $disk_filename = md5(uniqid('', true));
-    $save_path = get_custom_file_base() . '/tracker/uploads/' . $disk_filename;
-    move_uploaded_file($upload['tmp_name'], $save_path);
-    fix_permissions($save_path);
-    sync_file($save_path);
+    // Get catalogue field IDs
+    $identifier_field = $GLOBALS['SITE_DB']->query_select_value('catalogue_fields', 'id', ['c_name' => 'tracker', $GLOBALS['SITE_DB']->translate_field_ref('cf_name') => do_lang('IDENTIFIER')]);
+    $hotfix_field = $GLOBALS['SITE_DB']->query_select_value('catalogue_fields', 'id', ['c_name' => 'tracker', $GLOBALS['SITE_DB']->translate_field_ref('cf_name') => do_lang('HOTFIXES')]);
 
-    $query = "
-        INSERT INTO
-        `mantis_bug_file_table`
-        (
-          `bug_id`,
-          `title`,
-          `description`,
-          `diskfile`,
-          `filename`,
-          `folder`,
-          `filesize`,
-          `file_type`,
-          `content`,
-          `date_added`,
-          `user_id`
-        )
-        VALUES
-        (
-            '" . strval($tracker_id) . "',
-            '',
-            '',
-            '" . $disk_filename . "',
-            '" . db_escape_string($upload['name']) . "',
-            '" . get_custom_file_base() . "/tracker/uploads/',
-            '" . strval($upload['size']) . "',
-            'application/octet-stream',
-            '',
-            '" . strval(time()) . "',
-            '" . strval(LEAD_DEVELOPER_MEMBER_ID) . "'
-        )
-    ";
+    // Get the catalogue entry
+    $entry_id = $GLOBALS['SITE_DB']->query_select_value_if_there('catalogue_efv_integer', 'cv_value', ['cf_id' => $identifier_field, 'ce_id' => $tracker_id]);
+    if ($entry_id === null) {
+        return false;
+    }
+    $_entry_row = $GLOBALS['SITE_DB']->query_select('catalogue_entries', ['*'], ['id' => $entry_id], '', 1);
+    if (!array_key_exists(0, $_entry_row)) {
+        return false;
+    }
+    $entry_row = $_entry_row[0];
 
-    return $GLOBALS['SITE_DB']->_query(trim($query), null, 0, false, true, null, '', false);
+    // Get its field values
+    $_current_map = get_catalogue_entry_field_values('tracker', $entry_id);
+    $current_map = [];
+    foreach ($_current_map as $map_item) {
+        $current_map[$map_item['id']] = $map_item['effective_value_pure'];
+    }
+
+    // Process upload
+    require_code('uploads');
+    list($url, $thumb_url, $original_url, $original_thumb) = get_url('', $upload, 'uploads/catalogues', OBFUSCATE_NEVER, CMS_UPLOAD_ANYTHING, false, '', '', true, false, true);
+
+    // Add hotfix to the field
+    if (trim($current_map[$hotfix_field]) != '') {
+        $current_map[$hotfix_field] .= "\n";
+    }
+    $current_map[$hotfix_field] .= $url . '::' . $original_url;
+
+    actual_edit_catalogue_entry($entry_id, $entry_row['cc_id'], 1, '', 1, 1, 1, $current_map);
+
+    return true;
 }
 
 /**
- * Create a bug note on a Mantis tracker issue.
+ * Create a comment on a tracker issue.
  *
- * @param  AUTO_LINK $tracker_id The tracker ID on which to post the note
+ * @param  integer $tracker_id The tracker ID on which to post the comment
  * @param  LONG_TEXT $tracker_comment_message The message to post
- * @return AUTO The bugnote ID
+ * @param  boolean $is_private Whether this comment should only be visible to staff
+ * @return boolean Whether we created the comment
  */
-function create_tracker_post(int $tracker_id, string $tracker_comment_message) : int
+function create_tracker_comment(int $tracker_id, string $tracker_comment_message, bool $is_private = false) : bool
 {
     $out = new Tempcode();
+    if (!addon_installed__messaged('cms_homesite_tracker', $out)) {
+        warn_exit($out);
+    }
     if (!addon_installed__messaged('cms_homesite', $out)) {
+        warn_exit($out);
+    }
+    if (!addon_installed__messaged('catalogues', $out)) {
         warn_exit($out);
     }
 
     require_code('cms_homesite');
+    require_code('feedback');
+    require_lang('tracker');
 
-    $query = "
-        INSERT INTO
-        `mantis_bugnote_text_table`
-        (
-          `note`
-        )
-        VALUES
-        (
-            '" . db_escape_string($tracker_comment_message) . "'
-        )
-    ";
-    $text_id = $GLOBALS['SITE_DB']->_query(trim($query), null, 0, false, true, null, '', false);
+    $identifier_field = $GLOBALS['SITE_DB']->query_select_value('catalogue_fields', 'id', ['c_name' => 'tracker', $GLOBALS['SITE_DB']->translate_field_ref('cf_name') => do_lang('IDENTIFIER')]);
+    $title_field = $GLOBALS['SITE_DB']->query_select_value('catalogue_fields', 'id', ['c_name' => 'tracker', $GLOBALS['SITE_DB']->translate_field_ref('cf_name') => do_lang('TITLE')]);
 
-    $monitors = $GLOBALS['SITE_DB']->query('SELECT user_id FROM mantis_bug_monitor_table WHERE bug_id=' . strval($tracker_id));
-    foreach ($monitors as $m) {
-        $to_name = $GLOBALS['FORUM_DRIVER']->get_username($m['user_id'], true, USERNAME_DEFAULT_NULL);
-        if ($to_name !== null) {
-            $to_email = $GLOBALS['FORUM_DRIVER']->get_member_email_address($m['user_id']);
-
-            $join_time = $GLOBALS['FORUM_DRIVER']->get_member_row_field($m['user_id'], 'm_join_time');
-
-            require_code('mail');
-            dispatch_mail('Tracker issue updated', 'A tracker issue you are monitoring has been updated (' . get_base_url() . '/tracker/view.php?id=' . strval($tracker_id) . ').', '', [$to_email], $to_name, '', '', ['require_recipient_valid_since' => $join_time]);
-        }
+    // Get the catalogue entry and its title
+    $entry_id = $GLOBALS['SITE_DB']->query_select_value_if_there('catalogue_efv_integer', 'cv_value', ['cf_id' => $identifier_field, 'ce_id' => $tracker_id]);
+    if ($entry_id === null) {
+        return false;
+    }
+    $title = $GLOBALS['SITE_DB']->query_select_value_if_there('catalogue_efv_short', 'cv_value', ['cf_id' => $title_field, 'ce_id' => $entry_id]);
+    if ($title === null) {
+        $title = do_lang('NA');
     }
 
-    $query = "
-        INSERT INTO
-        `mantis_bugnote_table`
-        (
-          `bug_id`,
-          `reporter_id`,
-          `bugnote_text_id`,
-          `view_state`,
-          `note_type`,
-          `note_attr`,
-          `time_tracking`,
-          `last_modified`,
-          `date_submitted`
-        )
-        VALUES
-        (
-            '" . strval($tracker_id) . "',
-            '" . strval(LEAD_DEVELOPER_MEMBER_ID) . "',
-            '" . strval($text_id) . "',
-            '10', /* Public */
-            '0',
-            '',
-            '0',
-            '" . strval(time()) . "',
-            '" . strval(time()) . "'
-        )
-    ";
-    return $GLOBALS['SITE_DB']->_query($query, null, 0, false, true, null, '', false);
+    actualise_post_comment(
+        true,
+        'catalogue_entry',
+        strval($entry_id),
+        build_url(['page' => 'catalogues', 'type' => 'entry', 'id' => $entry_id], get_module_zone('catalogues')),
+        '#' . strval($tracker_id) . ' - ' . $title,
+        null,
+        false,
+        1,
+        true,
+        false,
+        false,
+        '',
+        $tracker_comment_message,
+        time(),
+        get_member(),
+        $is_private,
+    );
+
+    return true;
 }
 
 /**
- * Mark a Mantis tracker issue as resolved, and award points where applicable.
+ * Mark a tracker issue as resolved.
  *
  * @param  AUTO_LINK $tracker_id The tracker issue to resolve
  * @param  ?MEMBER $handler The member who resolved the issue (null: current member)
+ * @return boolean Whether the action was successful
  */
-function resolve_tracker_issue(int $tracker_id, ?int $handler = null)
+function resolve_tracker_issue(int $tracker_id, ?int $handler = null) : bool
 {
+    $out = new Tempcode();
+    if (!addon_installed__messaged('cms_homesite_tracker', $out)) {
+        warn_exit($out);
+    }
+    if (!addon_installed__messaged('cms_homesite', $out)) {
+        warn_exit($out);
+    }
+    if (!addon_installed__messaged('catalogues', $out)) {
+        warn_exit($out);
+    }
+
+    require_code('catalogues');
+    require_code('catalogues2');
+    require_lang('tracker');
+
     if ($handler === null) {
         $handler = get_member();
     }
 
-    $GLOBALS['SITE_DB']->query('UPDATE mantis_bug_table SET resolution=20, status=80, handler_id=' . strval($handler) . ' WHERE id=' . strval($tracker_id));
+    // Get catalogue field IDs
+    $identifier_field = $GLOBALS['SITE_DB']->query_select_value('catalogue_fields', 'id', ['c_name' => 'tracker', $GLOBALS['SITE_DB']->translate_field_ref('cf_name') => do_lang('IDENTIFIER')]);
+    $status_field = $GLOBALS['SITE_DB']->query_select_value('catalogue_fields', 'id', ['c_name' => 'tracker', $GLOBALS['SITE_DB']->translate_field_ref('cf_name') => do_lang('STATUS')]);
+    $handler_field = $GLOBALS['SITE_DB']->query_select_value('catalogue_fields', 'id', ['c_name' => 'tracker', $GLOBALS['SITE_DB']->translate_field_ref('cf_name') => do_lang('HANDLER')]);
 
-    if (addon_installed('points')) {
-        if (addon_installed('cms_homesite')) {
-            require_code('points_escrow__sponsorship');
-            escrow_complete_all_sponsorships($tracker_id, $handler);
-        }
 
-        $reporter = $GLOBALS['SITE_DB']->query_value_if_there('SELECT reporter_id FROM mantis_bug_table WHERE id=' . strval($tracker_id));
-        if ($reporter !== null) {
-            award_tracker_points($tracker_id, $reporter, $handler);
-        }
+    // Get the catalogue entry ID
+    $entry_id = $GLOBALS['SITE_DB']->query_select_value_if_there('catalogue_efv_integer', 'cv_value', ['cf_id' => $identifier_field, 'ce_id' => $tracker_id]);
+    if ($entry_id === null) {
+        return false;
     }
+
+    $_entry_row = $GLOBALS['SITE_DB']->query_select('catalogue_entries', ['*'], ['id' => $entry_id], '', 1);
+    if (!array_key_exists(0, $_entry_row)) {
+        return false;
+    }
+    $entry_row = $_entry_row[0];
+
+    // Get its field values
+    $_current_map = get_catalogue_entry_field_values('tracker', $entry_id);
+    $current_map = [];
+    foreach ($_current_map as $map_item) {
+        $current_map[$map_item['id']] = $map_item['effective_value_pure'];
+    }
+
+    // Change the status to completed (but only if it is open)
+    if (($current_map[$status_field] != 'open') && ($current_map[$status_field] != 'information_needed')) {
+        return false;
+    }
+    $current_map[$status_field] = 'completed';
+
+    // Change the handler to the current member
+    $current_map[$handler_field] = $handler;
+
+    actual_edit_catalogue_entry($entry_id, $entry_row['cc_id'], 1, '', 1, 1, 1, $current_map);
+
+    return true;
+}
+
+/**
+ * Mark a tracker issue as resolved.
+ *
+ * @param  AUTO_LINK $tracker_id The tracker issue on which to add commit URL
+ * @param  URLPATH $commit_url URL to the commit
+ * @return boolean Whether the action was successful
+ */
+function add_commit_to_tracker_issue(int $tracker_id, string $commit_url) : bool
+{
+    $out = new Tempcode();
+    if (!addon_installed__messaged('cms_homesite_tracker', $out)) {
+        warn_exit($out);
+    }
+    if (!addon_installed__messaged('cms_homesite', $out)) {
+        warn_exit($out);
+    }
+    if (!addon_installed__messaged('catalogues', $out)) {
+        warn_exit($out);
+    }
+
+    require_code('catalogues');
+    require_code('catalogues2');
+    require_lang('tracker');
+
+    // Get catalogue field IDs
+    $identifier_field = $GLOBALS['SITE_DB']->query_select_value('catalogue_fields', 'id', ['c_name' => 'tracker', $GLOBALS['SITE_DB']->translate_field_ref('cf_name') => do_lang('IDENTIFIER')]);
+    $commits_field = $GLOBALS['SITE_DB']->query_select_value('catalogue_fields', 'id', ['c_name' => 'tracker', $GLOBALS['SITE_DB']->translate_field_ref('cf_name') => do_lang('COMMITS')]);
+
+    // Get the catalogue entry
+    $entry_id = $GLOBALS['SITE_DB']->query_select_value_if_there('catalogue_efv_integer', 'cv_value', ['cf_id' => $identifier_field, 'ce_id' => $tracker_id]);
+    if ($entry_id === null) {
+        return false;
+    }
+    $_entry_row = $GLOBALS['SITE_DB']->query_select('catalogue_entries', ['*'], ['id' => $entry_id], '', 1);
+    if (!array_key_exists(0, $_entry_row)) {
+        return false;
+    }
+    $entry_row = $_entry_row[0];
+
+    // Get its field values
+    $_current_map = get_catalogue_entry_field_values('tracker', $entry_id);
+    $current_map = [];
+    foreach ($_current_map as $map_item) {
+        $current_map[$map_item['id']] = $map_item['effective_value_pure'];
+    }
+
+    // Add the new commit link to the issue
+    if (trim($current_map[$commits_field]) != '') {
+        $current_map[$commits_field] .= "\n";
+    }
+    $current_map[$commits_field] .= $commit_url;
+
+    actual_edit_catalogue_entry($entry_id, $entry_row['cc_id'], 1, '', 1, 1, 1, $current_map);
+
+    return true;
 }
 
 /**

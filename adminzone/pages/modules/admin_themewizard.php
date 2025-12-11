@@ -457,7 +457,7 @@ class Module_admin_themewizard
         set_option('header_classic_image', $background_theme_image);
         set_option('header_classic_text_colour', $colour);
 
-        Self_learning_cache::erase_smart_cache();
+        Source_self_learning_cache::erase_smart_cache();
 
         $message = do_lang_tempcode('LOGOWIZARD_3_DESCRIBE', escape_html($theme));
         return inform_screen($this->title, $message);

@@ -174,7 +174,7 @@ function can_use_fast_custom_index(string $hook, ?object $db = null, ?string $in
     require_code('fast_custom_index');
 
     if ($search_query !== null) {
-        $tokeniser = Fast_custom_index::get_tokeniser(user_lang());
+        $tokeniser = Source_fast_custom_index::get_tokeniser(user_lang());
         $ngrams = $tokeniser->query_to_search_tokens($search_query);
     }
 
@@ -184,7 +184,7 @@ function can_use_fast_custom_index(string $hook, ?object $db = null, ?string $in
         return false; // Blank queries not supported
     }
 
-    if (($search_query !== null) && (Fast_custom_index::max_ngram_size(user_lang()) <= 1)) {
+    if (($search_query !== null) && (Source_fast_custom_index::max_ngram_size(user_lang()) <= 1)) {
         if (array_unique(array_values($ngrams[0] + $ngrams[1] + $ngrams[2])) !== [true]) {
             return false; // Quoted text not supported in this configuration (because there are only singular ngrams being indexed)
         }

@@ -128,6 +128,16 @@ function endpoint_script()
 
         // Disabled hook; throw a generic not found error
         if ($info === null) {
+            $_log_file = get_custom_file_base() . '/data_custom/endpoints.log';
+            if (is_file($_log_file)) {
+                require_code('files');
+                $log_message = loggable_date() . ' NOT FOUND: ' . $rest_path . ' by IP address ' . get_ip_address() . "\n";
+                $log_file = cms_fopen_text_write($_log_file, true, 'ab');
+                fwrite($log_file, $log_message);
+                flock($log_file, LOCK_UN);
+                fclose($log_file);
+            }
+
             require_lang('critical_error');
             warn_exit(do_lang_tempcode('HTTP_DOWNLOAD_STATUS_NOT_FOUND', escape_html('/data/endpoint.php/' . $rest_path)));
         }
@@ -181,6 +191,22 @@ function endpoint_script()
         // Run the endpoint
         $result = $ob->run($type, $id);
 
+        // Log user errors
+        if (isset($result['error_details'])) {
+            cms_error_log('Endpoints: WARN ' . strip_html($result['error_details']) . ' (' . $rest_path . ')');
+            $_log_file = get_custom_file_base() . '/data_custom/endpoints.log';
+            if (is_file($_log_file)) {
+                require_code('files');
+                $log_message = loggable_date() . ' USER ERROR on endpoint ' . $rest_path . ' by IP address ' . get_ip_address() . "\n";
+                $log_message .= strip_html($result['error_details']);
+                $log_message .= "\n";
+                $log_file = cms_fopen_text_write($_log_file, true, 'ab');
+                fwrite($log_file, $log_message);
+                flock($log_file, LOCK_UN);
+                fclose($log_file);
+            }
+        }
+
         // Process into output structure
         if ($id === '_LEGACY_') { // LEGACY
             echo $result;
@@ -193,6 +219,7 @@ function endpoint_script()
         ];
     } catch (Exception $e) {
         // Log error
+        @error_log('Endpoints: ERROR ' . strip_html($e->getMessage()) . ' (' . $rest_path . ')');
         cms_error_log('Endpoints: ERROR ' . strip_html($e->getMessage()) . ' (' . $rest_path . ')');
         $_log_file = get_custom_file_base() . '/data_custom/endpoints.log';
         if (is_file($_log_file)) {

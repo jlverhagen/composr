@@ -37,7 +37,7 @@ function do_install_to($database, $username, $password, $table_prefix, $safe_mod
         } elseif ($username == 'root') {
             require_code('database/' . $db_type);
             $db_driver = object_factory('Source_database_static_' . $db_type, false, [$table_prefix]);
-            $db = new DatabaseConnector(get_db_site(), get_db_site_host(), $username, $password, $table_prefix, false, $db_driver);
+            $db = object_factory('Source_database_connector', false, [get_db_site(), get_db_site_host(), $username, $password, $table_prefix, false, $db_driver]);
             $db->query('CREATE DATABASE IF NOT EXISTS ' . $database, null, 0, true);
             unset($db);
         }

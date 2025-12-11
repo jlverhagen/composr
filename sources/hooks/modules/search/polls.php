@@ -33,7 +33,7 @@
 /**
  * Hook class.
  */
-class Hook_search_polls extends FieldsSearchHook
+class Hook_search_polls extends Source_hook_search_base
 {
     /**
      * Find details for this search hook.

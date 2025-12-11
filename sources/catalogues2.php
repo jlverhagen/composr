@@ -1259,7 +1259,7 @@ function actual_add_catalogue_entry(int $category_id, int $validated, string $no
  * Edit the specified catalogue entry.
  *
  * @param  AUTO_LINK $id The ID of the entry being edited
- * @param  AUTO_LINK $category_id The ID of the category that the entry is in
+ * @param  AUTO_LINK $category_id The ID of the category in which we want the entry to be located
  * @param  BINARY $validated Whether the entry has been validated
  * @param  LONG_TEXT $notes Hidden notes pertaining to the entry
  * @param  BINARY $allow_rating Whether the entry may be rated
@@ -1553,7 +1553,7 @@ function actual_delete_catalogue_entry(int $id)
 
     if (addon_installed('search')) {
         require_code('fast_custom_index');
-        Fast_custom_index::delete_from_index($GLOBALS['SITE_DB'], 'ce_fulltext_index', ['i_catalogue_entry_id' => $id]);
+        Source_fast_custom_index::delete_from_index($GLOBALS['SITE_DB'], 'ce_fulltext_index', ['i_catalogue_entry_id' => $id]);
     }
 
     if ((addon_installed('commandr')) && (!running_script('install')) && (!get_mass_import_mode())) {

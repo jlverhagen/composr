@@ -68,7 +68,7 @@ function external_db() : ?object
     $db_password = get_value('external_db_login__db_password', null, true);
 
     require_code('database/' . filter_naughty_harsh($db_type));
-    $db = new DatabaseConnector($db_name, $db_host, $db_user, $db_password, '', false, object_factory('Source_database_static_' . filter_naughty_harsh($db_type), false, ['']));
+    $db = object_factory('Source_database_connector', false, [$db_name, $db_host, $db_user, $db_password, '', false, object_factory('Source_database_static_' . filter_naughty_harsh($db_type), false, [''])]);
 
     return $db;
 }

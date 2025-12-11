@@ -875,7 +875,6 @@ We hope other users will appreciate your efforts and give you some points to rew
             '_tests/tests/async_tests/themeini_images.php',
             '_tests/tests/async_tests/themewizard_colours.php',
             '_tests/tests/async_tests/ticket_types.php',
-            '_tests/tests/async_tests/tracker_categories.php',
             '_tests/tests/async_tests/transliteration.php',
             '_tests/tests/async_tests/tutorial_image_consistency.php',
             '_tests/tests/async_tests/tutorial_nav_paths.php',

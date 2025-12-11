@@ -105,6 +105,9 @@ function init__minikernel()
     global $CSP_ENABLED;
     $CSP_ENABLED = false;
 
+    global $CURRENT_SHARE_USER;
+    $CURRENT_SHARE_USER = null;
+
     set_error_handler('cms_error_handler');
     if (function_exists('register_shutdown_function')) {
         register_shutdown_function('catch_fatal_errors');
@@ -481,6 +484,72 @@ function sync_file(string $filename)
 function php_function_allowed(string $function) : bool
 {
     return php_function_allowed__bootstrap($function);
+}
+
+/**
+ * Return a debugging back-trace of the current execution stack as plain text. Use this for debugging purposes in error logs.
+ *
+ * @return string The back-trace
+ */
+function get_text_trace() : string
+{
+    static $already_traced = false;
+    if ($already_traced) {
+        return '';
+    }
+
+    push_suppress_error_death(true);
+    $_trace = debug_backtrace();
+    $ret = '';
+    foreach ($_trace as $i => $stage) {
+        //if (in_array($stage['function'], ['get_html_trace', 'cms_error_handler', 'fatal_exit'])) continue;  Hinders more than helps
+        $ret .= '#' . strval($i) . ' ';
+
+        if (isset($stage['class'])) {
+            $ret .= $stage['class'];
+        }
+        if (isset($stage['type'])) {
+            $ret .= $stage['type'];
+        }
+        if (isset($stage['function'])) {
+            $ret .= $stage['function'];
+        }
+        if (isset($stage['file'])) {
+            $ret .= ' called at [' . $stage['file'];
+            if (isset($stage['line'])) {
+                $ret .= ':' . strval($stage['line']);
+            }
+            $ret .= ']';
+        }
+
+        if (isset($stage['args'])) {
+            foreach ($stage['args'] as $param) {
+                if (!((is_array($param)) && (array_key_exists('GLOBALS', $param)))) { // Some versions of PHP give the full environment as parameters. This will cause a recursive issue when outputting due to GLOBALS->ENV chaining.
+                    if ((is_object($param) && (is_a($param, 'Tempcode'))) || ($param === null)) {
+                        $param = gettype($param);
+                    } else {
+                        @ob_start();
+                        var_export($param);
+                        $param = ob_get_clean();
+                        if (!$param) {
+                            $param = '(Unknown)';
+                        }
+                    }
+                    if (strlen($param) >= 3000) {
+                        $param = '...';
+                    }
+
+                    $ret .= "\n" . ' => ' . $param;
+                }
+            }
+        }
+
+        $ret .= "\n";
+    }
+
+    //$already_traced = true;
+
+    return trim($ret);
 }
 
 /**

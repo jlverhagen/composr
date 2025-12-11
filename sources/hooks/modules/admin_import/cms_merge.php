@@ -2616,7 +2616,7 @@ class Hook_import_cms_merge
 
             i_timed_refresh();
         }
-        Self_learning_cache::erase_smart_cache();
+        Source_self_learning_cache::erase_smart_cache();
     }
 
     /**

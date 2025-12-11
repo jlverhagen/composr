@@ -79,7 +79,7 @@ class Hook_spreadsheet_reader_enhanced_spreadsheets
             return null;
         }
 
-        return new CMS_OpenSpout_Reader($path, $filename, $algorithm, $trim, $default_charset);
+        return object_factory('Source_spreadsheet_reader_openspout', false, [$path, $filename, $algorithm, $trim, $default_charset], true);
     }
 }
 
@@ -88,7 +88,7 @@ class Hook_spreadsheet_reader_enhanced_spreadsheets
  *
  * @package enhanced_spreadsheets
  */
-class CMS_OpenSpout_Reader extends Source_spreadsheet_reader
+class Source_spreadsheet_reader_openspout extends Source_spreadsheet_reader
 {
     protected $reader = null;
     protected $row_iterator = null;

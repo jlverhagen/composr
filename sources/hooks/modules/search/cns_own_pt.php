@@ -33,7 +33,7 @@
 /**
  * Hook class.
  */
-class Hook_search_cns_own_pt extends FieldsSearchHook
+class Hook_search_cns_own_pt extends Source_hook_search_base
 {
     /**
      * Find details for this search hook.
@@ -120,7 +120,7 @@ class Hook_search_cns_own_pt extends FieldsSearchHook
 
         require_code('fast_custom_index');
 
-        $engine = new Fast_custom_index();
+        $engine = object_factory('Source_fast_custom_index', false, [], true);
 
         $index_table = 'f_pposts_fulltext_index';
         $clean_scan = ($GLOBALS['FORUM_DB']->query_select_value_if_there($index_table, 'i_ngram') === null);
@@ -241,7 +241,7 @@ class Hook_search_cns_own_pt extends FieldsSearchHook
                 $where_clause .= 'p_validated=1';
             }
 
-            $engine = new Fast_custom_index();
+            $engine = object_factory('Source_fast_custom_index', false, [], true);
 
             $key_transfer_map = ['id' => 'i_post_id'];
             $rows = $engine->get_search_rows($db, $index_table, $db->get_table_prefix() . $table, $key_transfer_map, $where_clause, $extra_join_clause, $search_query, $only_search_meta, $only_titles, $max, $start, $remapped_orderer, $direction);

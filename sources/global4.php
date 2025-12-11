@@ -690,8 +690,10 @@ function _log_it(string $type, ?string $a = null, ?string $b = null, ?int $relat
     }
 
     // Tidy up auto-save
-    require_code('autosave');
-    clear_cms_autosave();
+    if ((strpos($type, 'ADD_') !== false) || (strpos($type, 'EDIT_') !== false)) {
+        require_code('autosave');
+        clear_cms_autosave();
+    }
 
     // Notification
     require_code('actionlog');

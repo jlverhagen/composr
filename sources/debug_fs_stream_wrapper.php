@@ -37,7 +37,7 @@
  *
  * @package core
  */
-class DebugFsStreamWrapper
+class Source_debug_fs_stream_wrapper
 {
     public $context = null;
 

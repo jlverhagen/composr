@@ -51,7 +51,7 @@
  *
  * @package core
  */
-class Self_learning_cache
+class Source_self_learning_cache
 {
     private $bucket_name = null;
     private $path = null;
@@ -323,7 +323,7 @@ class Self_learning_cache
      */
     public static function erase_smart_cache()
     {
-        if (!Self_learning_cache::is_on()) {
+        if (!Source_self_learning_cache::is_on()) {
             return;
         }
 

@@ -33,7 +33,7 @@
 /**
  * Hook class.
  */
-class Hook_search_comcode_pages extends FieldsSearchHook
+class Hook_search_comcode_pages extends Source_hook_search_base
 {
     /**
      * Find details for this search hook.
@@ -85,7 +85,7 @@ class Hook_search_comcode_pages extends FieldsSearchHook
 
         require_code('fast_custom_index');
 
-        $engine = new Fast_custom_index();
+        $engine = object_factory('Source_fast_custom_index', false, [], true);
 
         $index_table = 'cpages_fulltext_index';
         $clean_scan = ($GLOBALS['SITE_DB']->query_select_value_if_there($index_table, 'i_ngram') === null);
@@ -214,7 +214,7 @@ class Hook_search_comcode_pages extends FieldsSearchHook
         if (addon_installed('search')) {
             require_code('fast_custom_index');
         }
-        $fast_custom_index = (addon_installed('search') && can_use_fast_custom_index('comcode_pages', $db, $index_table, $search_query, Fast_custom_index::active_search_has_special_filtering() || $cutoff !== null || $author != '' || ($search_under != '-1' && $search_under != '!')));
+        $fast_custom_index = (addon_installed('search') && can_use_fast_custom_index('comcode_pages', $db, $index_table, $search_query, Source_fast_custom_index::active_search_has_special_filtering() || $cutoff !== null || $author != '' || ($search_under != '-1' && $search_under != '!')));
         if ($fast_custom_index) {
             // This search hook implements the fast custom index, which we use where possible...
 
@@ -268,9 +268,9 @@ class Hook_search_comcode_pages extends FieldsSearchHook
                 $where_clause .= 'EXISTS(SELECT * FROM ' . $GLOBALS['SITE_DB']->get_table_prefix() . 'group_zone_access z WHERE (z.zone_name=r.the_zone AND (' . str_replace('group_id', 'z.group_id', $g_or) . ')))';
             }
 
-            $engine = new Fast_custom_index();
+            $engine = object_factory('Source_fast_custom_index', false, [], true);
 
-            if (Fast_custom_index::active_search_has_special_filtering()) {
+            if (Source_fast_custom_index::active_search_has_special_filtering()) {
                 $trans_fields = [];
                 $nontrans_fields = [];
                 $this->_get_search_parameterisation_advanced_for_content_type('_comcode_page', $table, $where_clause, $trans_fields, $nontrans_fields, db_function('CONCAT', ['r.the_zone', 'r.the_page']));

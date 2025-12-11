@@ -213,8 +213,8 @@ class Hook_addon_registry_alternate_emoticons
             $GLOBALS['SITE_DB']->query('DELETE FROM ' . get_table_prefix() . 'theme_images WHERE url LIKE \'themes/%/images/cns_emoticons/%\'');
             $GLOBALS['SITE_DB']->query('DELETE FROM ' . get_table_prefix() . 'theme_images WHERE url LIKE \'themes/%/images//cns_emoticons/%\'');
 
-            if (class_exists('Self_learning_cache')) {
-                Self_learning_cache::erase_smart_cache();
+            if (class_exists('Source_self_learning_cache')) {
+                Source_self_learning_cache::erase_smart_cache();
             }
         }
     }

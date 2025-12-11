@@ -465,7 +465,7 @@ class Source_forum_driver_phpbb3 extends Source_forum_driver_base
             $PROBED_FORUM_CONFIG['sql_tbl_prefix'] = $table_prefix;
             $PROBED_FORUM_CONFIG['board_url'] = $base_url;
 
-            $tmp = new DatabaseConnector($dbname, $dbhost, $dbuser, $dbpasswd, $table_prefix, true);
+            $tmp = object_factory('Source_database_connector', false, [$dbname, $dbhost, $dbuser, $dbpasswd, $table_prefix, true]);
             $cookie_name = $tmp->query_select_value_if_there('config', 'config_value', ['config_name' => 'cookie_name'], '', true);
             if (!empty($cookie_name)) {
                 $PROBED_FORUM_CONFIG['cookie_member_id'] = $cookie_name . '_u';
@@ -746,7 +746,14 @@ class Source_forum_driver_phpbb3 extends Source_forum_driver_base
      */
     public function forum_id_from_name(string $forum_name) : ?int
     {
-        return is_numeric($forum_name) ? intval($forum_name) : $this->db->query_select_value_if_there('forums', 'forum_id', ['forum_name' => $forum_name]);
+        if (is_numeric($forum_name)) {
+            if (!isset($forum_name)) { // IDE says this could be unset; I have no idea why
+                return null;
+            }
+            return intval($forum_name);
+        }
+
+        return $this->db->query_select_value_if_there('forums', 'forum_id', ['forum_name' => $forum_name]);
     }
 
     /**
