@@ -86,6 +86,34 @@
 
             setInterval(sessionCheck, 30000); // TODO: make a config option
         }
+        var autosaveIndex = window.localStorage.getItem('cms_autosaveindex');
+        var parsedAutosaveIndex = {};
+        if (autosaveIndex !== null) {
+            parsedAutosaveIndex = JSON.parse(autosaveIndex);
+
+            // Clean expired autosave data
+            for (var [autosaveKey, autosaveExpiration] of Object.entries(parsedAutosaveIndex)) {
+                if (Date.now() >= autosaveExpiration) {
+                    window.localStorage.removeItem(autosaveKey);
+                    if ($cms.isDevMode()) {
+                        $util.inform('Removed expired autosave item ' + autosaveKey);
+                    }
+                }
+            };
+
+            // Remove autosave keys that are not needed anymore
+            for (var [pageName, autosaveClear] of Object.entries($cms.clearAutosave())) {
+                pageName = pageName.replace(/[\x00-\x2f\x3a-\x40\x5b-\x60\x7b-\x7f]/g, '_'); // eslint-disable-line no-control-regex
+                for (var [autosaveKey, autosaveExpiration] of Object.entries(parsedAutosaveIndex)) {
+                    if (autosaveKey.includes('_' + pageName + '_')) {
+                        window.localStorage.removeItem(autosaveKey);
+                        if ($cms.isDevMode()) {
+                            $util.inform('Removed autosave item ' + autosaveKey + ' because of a previously successful operation');
+                        }
+                    }
+                };
+            };
+        }
     });
 
     /**

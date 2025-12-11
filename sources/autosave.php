@@ -30,6 +30,12 @@
  * @package    core
  */
 
+function init__autosave()
+{
+    global $CLEAR_AUTOSAVE;
+    $CLEAR_AUTOSAVE = [];
+}
+
 /**
  * AJAX script to store an autosave.
  *
@@ -58,6 +64,26 @@ function store_autosave_script()
             'a_time' => $time,
         ]);
     }
+
+    cms_safe_exit_flow();
+}
+
+/**
+ * AJAX script to delete an autosave.
+ *
+ * @ignore
+ */
+function delete_autosave_script()
+{
+    require_code('input_filter_2');
+    if (get_value('disable_modsecurity_workaround') !== '1') {
+        modsecurity_workaround_enable();
+    }
+
+    prepare_backend_response('text/plain');
+
+    $page = get_param_string('the_page');
+    clear_cms_autosave($page);
 
     cms_safe_exit_flow();
 }
@@ -103,9 +129,11 @@ function retrieve_autosave_script()
 }
 
 /**
- * Declare that an action succeeded - delete safety autosave cookies.
+ * Declare that an action succeeded - delete safety autosave.
+ *
+ * @param  ?ID_TEXT $page The name of the page we succeeded (null: current page)
  */
-function clear_cms_autosave()
+function clear_cms_autosave(?string $page = null)
 {
     static $done_once = false;
     if ($done_once) {
@@ -116,22 +144,17 @@ function clear_cms_autosave()
         return;
     }
 
-    foreach (array_keys($_COOKIE) as $key) {
-        if (!is_string($key)) {
-            continue;
-        }
-
-        if (substr($key, 0, 13) == 'cms_autosave_') {
-            if (strpos($key, get_page_name()) !== false || strpos($key, str_replace('_', '-', get_page_name())) !== false) {
-                // Has to do both, due to inconsistencies with how PHP reads and sets cookies -- reading de-urlencodes (although not strictly needed), while setting does not urlencode; may differ between versions
-                cms_setcookie(urlencode($key), '', 'NON-ESSENTIAL', false, false, -14.0);
-                cms_setcookie($key, '', 'NON-ESSENTIAL', false, false, -14.0);
-            }
-        }
+    if ($page === null) {
+        $page = get_page_name();
     }
 
-    $sql = 'DELETE FROM ' . $GLOBALS['SITE_DB']->get_table_prefix() . 'autosave WHERE a_time<' . strval(time() - 60 * 60 * 24) . ' OR (a_member_id=' . strval(get_member()) . ' AND (a_key LIKE \'' . db_encode_like('%' . get_page_name() . '%') . '\'))';
+    global $CLEAR_AUTOSAVE;
+
+    // TODO: make specific to what we just did, if possible
+    $sql = 'DELETE FROM ' . $GLOBALS['SITE_DB']->get_table_prefix() . 'autosave WHERE a_time<' . strval(time() - 60 * 60 * 24) . ' OR (a_member_id=' . strval(get_member()) . ' AND (a_key LIKE \'' . db_encode_like('%' . $page . '%') . '\'))';
     $GLOBALS['SITE_DB']->query($sql);
+
+    $CLEAR_AUTOSAVE[get_page_name()] = true;
 
     $done_once = true;
 }
