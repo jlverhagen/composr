@@ -303,7 +303,7 @@ class Module_admin_make_release
     protected function generate_changelog() : string
     {
         // TODO
-        return 'TODO: Not implemented for the new issue tracker yet (actually, remove integration and just use Git)';
+        return 'TODO: needs fixed with the new issue tracker.';
 
         $new_version = $this->get_new_version();
         $previous_version = $this->get_previous_version();
