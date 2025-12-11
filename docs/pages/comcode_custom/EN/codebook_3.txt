@@ -1272,11 +1272,6 @@ This section is not designed as primary documentation for the tools. Those tools
 | Publish a Composr release on the website the module runs on (not usually run directly, linked to from [tt]adminzone:make_release[/tt]).
 | [tt]cms_homesite[/tt]
 | Composr module
-|-
-| [tt]adminzone:push_bugfix[/tt]
-| Push a bug fix to composr.app.
-| [tt]cms_release_build[/tt]
-| Composr module
 |}
 
 [title="3"]API services[/title]

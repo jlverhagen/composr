@@ -182,7 +182,6 @@ You may want to put them in your Git \'cmd\' directory, as that is in your path.
             'adminzone/pages/minimodules_custom/plug_guid.php',
             'adminzone/pages/modules_custom/admin_make_release.php',
             'adminzone/pages/modules_custom/admin_modularisation.php',
-            'adminzone/pages/modules_custom/admin_push_bugfix.php',
             'aps/.htaccess',
             'aps/APP-LIST.xml',
             'aps/APP-META.xml',
@@ -216,46 +215,7 @@ You may want to put them in your Git \'cmd\' directory, as that is in your path.
             'sources_custom/make_release.php',
             'sources_custom/modularisation.php',
             'sources_custom/modularisation2.php',
-            'themes/admin/javascript_custom/push_bugfix.js',
-            'themes/admin/templates_custom/ADMIN_PUSH_BUGFIX_STEP2.tpl',
             'themes/default/templates_custom/MAKE_RELEASE_STEP4_SCREEN.tpl',
         ];
-    }
-
-    /**
-     * Get mapping between template names and the method of this class that can render a preview of them.
-     *
-     * @return array The mapping
-     */
-    public function tpl_previews() : array
-    {
-        return [
-            'templates_custom/ADMIN_PUSH_BUGFIX_STEP2.tpl' => 'administrative__admin_push_bugfix_step2',
-        ];
-    }
-
-    /**
-     * Get a preview(s) of a (group of) template(s), as a full standalone piece of HTML in Tempcode format.
-     * Uses sources/lorem.php functions to place appropriate stock-text. Should not hard-code things, as the code is intended to be declarative.
-     * Assumptions: You can assume all Lang/CSS/JavaScript files in this addon have been pre-required.
-     *
-     * @return Tempcode Preview
-     */
-    public function tpl_preview__administrative__admin_push_bugfix_step2() : object
-    {
-        return lorem_globalise(do_lorem_template('ADMIN_PUSH_BUGFIX_STEP2', [
-            'GET' => false,
-            'SKIP_WEBSTANDARDS' => true,
-            'HIDDEN' => '',
-            'TITLE' => lorem_word(),
-            'TEXT' => lorem_paragraph_html(),
-            'SUBMIT_ICON' => 'buttons/proceed',
-            'SUBMIT_NAME' => do_lang_tempcode('PROCEED'),
-            'FIELDS' => placeholder_form(),
-            'URL' => placeholder_url(),
-
-            'REMOTE_BASE_URL' => placeholder_url(),
-            'GIT_FOUND' => placeholder_array(),
-        ]), null, '', true);
     }
 }
