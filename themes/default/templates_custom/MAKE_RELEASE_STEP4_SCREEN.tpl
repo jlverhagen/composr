@@ -81,9 +81,6 @@
 	{+END}
 
 	{+START,IF,{IS_SUBSTANTIAL}}{+START,IF,{$NOT,{IS_BLEEDING_EDGE}}}
-		{$,tracker}
-		<li>{!MAKE_RELEASE_STEP4_TRACKER,{TRACKER_URL*},{PROJECT_ID*}}</li>
-
 		{$,documentation}
 		<li>
 			{!MAKE_RELEASE_STEP4_DOCUMENTATION}

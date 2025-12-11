@@ -205,7 +205,6 @@ class Module_admin_make_release
         $git_url = CMS_REPOS_URL;
         $fields->attach(do_template('FORM_SCREEN_FIELD_SPACER', ['_GUID' => '6dc15cd17b0ca901ffe869ad91863ad4', 'TITLE' => do_lang_tempcode('MAKE_RELEASE_STEP1_URLS'), 'HELP' => do_lang_tempcode('DESCRIPTION_MAKE_RELEASE_STEP1_URLS')]));
         $fields->attach(form_input_url(do_lang_tempcode('MAKE_RELEASE_STEP1_TRACKER_URL'), do_lang_tempcode('DESCRIPTION_MAKE_RELEASE_STEP1_TRACKER_URL'), 'tracker_url', $tracker_url, true));
-        $fields->attach(form_input_integer(do_lang_tempcode('MAKE_RELEASE_STEP1_TRACKER_PROJECT'), do_lang_tempcode('DESCRIPTION_MAKE_RELEASE_STEP1_TRACKER_PROJECT'), 'project_id', 1, true));
         $fields->attach(form_input_url(do_lang_tempcode('MAKE_RELEASE_STEP1_MAKE_RELEASE_URL'), do_lang_tempcode('DESCRIPTION_MAKE_RELEASE_STEP1_MAKE_RELEASE_URL'), 'make_release_url', $make_release_url, true));
         $fields->attach(form_input_url(do_lang_tempcode('MAKE_RELEASE_STEP1_GIT_URL'), do_lang_tempcode('DESCRIPTION_MAKE_RELEASE_STEP1_GIT_URL'), 'git_url', $git_url, true));
         $fields->attach(form_input_url(do_lang_tempcode('MAKE_RELEASE_STEP1_PROFILE_URL'), do_lang_tempcode('DESCRIPTION_MAKE_RELEASE_STEP1_PROFILE_URL'), 'profile_url', $profile_url, true));
@@ -250,10 +249,12 @@ class Module_admin_make_release
 
         list(, , , , $general_number, $long_dotted_number_with_qualifier) = get_version_components__from_dotted($new_version);
 
-        // Update cms_version_time()
-        $pattern = '/function cms_version_time\(\) : int\s*{\s*return\s*(.*?)\;\s*}/s';
-        $replacement = "function cms_version_time() : int\n{\n    return " . strval(time()) . ";\n}";
-        $version_file = preg_replace($pattern, $replacement, $version_file);
+        // Update cms_version_time() but only if versions changed
+        if ($new_version !== $previous_version) {
+            $pattern = '/function cms_version_time\(\) : int\s*{\s*return\s*(.*?)\;\s*}/s';
+            $replacement = "function cms_version_time() : int\n{\n    return " . strval(time()) . ";\n}";
+            $version_file = preg_replace($pattern, $replacement, $version_file);
+        }
 
         // Update cms_version_time_db() if a database upgrade was marked required
         if (post_param_integer('db_upgrade', 0) != 0) {
@@ -307,96 +308,56 @@ class Module_admin_make_release
      */
     protected function generate_changelog() : string
     {
-        // TODO
-        return 'TODO: needs fixed with the new issue tracker.';
-
         $new_version = $this->get_new_version();
         $previous_version = $this->get_previous_version();
 
-        $git_authors = [];
-        $tracker_reporters = [];
-        $tracker_handlers = [];
+        $authors = [];
         $changes = new Tempcode();
         if ($previous_version !== null) {
             $_changes = shell_exec('git log --pretty=format:"%H :: %cn :: %s" HEAD...refs/tags/' . $previous_version);
             if (!is_string($_changes)) { // No changes found
                 return '';
             }
-            $discovered_tracker_issues = []; // List of issues referenced on Git to pull from Mantis
+
+            $tracker_issues = [];
             $__changes = [];
-            $dig_deep = false;
             foreach (explode("\n", $_changes) as $change) {
                 $parts = explode(' :: ', $change, 3);
                 if (count($parts) == 3) {
                     $change_label = $parts[2];
                     $git_id = $parts[0];
 
+                    if (!in_array($parts[1], $authors)) {
+                        $authors[] = $parts[1];
+                    }
+
                     $matches = [];
                     if (preg_match('#MANTIS-(\d+)#', $change_label, $matches) != 0) {
                         $tracker_id = $matches[1];
-                        if ($tracker_id != '0') {
-                            $discovered_tracker_issues[$tracker_id] = true;
-                        } else {
-                            $dig_deep = true; // Somehow an ID was zero, so we need to search tracker for what this may have been
-                        }
-                    } else {
-                        // In Git only
-                        $__changes[$git_id] = $change_label;
-                        if (!in_array($parts[1], $git_authors)) {
-                            $git_authors[] = $parts[1];
-                        }
-
-                        $regexp = '/^(Fixed MANTIS-\d+|Implementing MANTIS-\d+|Implemented MANTIS-\d+|Security fix for MANTIS-\d+|New build|Merge branch .*)/';
-                        if (preg_match($regexp, $change_label) == 0) {
-                            $dig_deep = true; // We want to search tracker for what this may have been
+                        if (!isset($tracker_issues[$tracker_id])) {
+                            $tracker_issues[$tracker_id] = $change_label;
                         }
                     }
+                    // NB: tracker issues might have been resolved through multiple commits; we want to list issue-specific commits as well
+                    $__changes[$git_id] = $change_label;
                 }
             }
 
-            $api_url = get_brand_base_url() . '/data/endpoint.php/cms_homesite/tracker_issues';
-            $_discovered_tracker_issues = implode(',', array_keys($discovered_tracker_issues));
-            $post = [
-                'discovered' => $_discovered_tracker_issues,
-                'new_version' => $new_version,
-                'previous_version' => $dig_deep ? $previous_version : null
-            ];
-            $_result = http_get_contents($api_url, ['post_params' => $post]);
-            $_tracker_issues = json_decode($_result, true);
-            $tracker_issues = $_tracker_issues['response_data'];
+            $tracker_url = post_param_string('tracker_url');
 
-            $new_version_parts = explode('.', $new_version);
-            $last = count($new_version_parts) - 1;
-            $new_version_parts[$last] = strval(intval($new_version_parts[$last]) - 1);
-            $new_version_previous = implode('.', $new_version_parts);
-
-            $tracker_url = post_param_string('tracker_url') . '/search.php?project_id=' . strval(post_param_integer('project_id'));
-            if (($new_version_parts[$last] >= 0) && (substr_count($new_version, '.') == 2)) {
-                $tracker_url .= '&product_version=' . urlencode($new_version_previous);
-            }
-
-            // Start populating changes
+            // Populate tracker issues
             if (($tracker_issues !== null) && (count($tracker_issues) > 0)) {
                 $changes->attach(do_lang_tempcode('CHANGELOG_HEADER_TRACKER', escape_html($tracker_url), escape_html($previous_version)));
                 ksort($tracker_issues); // Sort by tracker ID (usually results in oldest to newest sorting)
-                foreach ($tracker_issues as $key => $data) {
-                    list($summary, $reporter, $handler) = $data;
-                    if (strpos($summary, '[[All Projects] General]') === false) { // Only ones in the main Composr project
-                        $url = post_param_string('tracker_url') . '/view.php?id=' . substr($key, 1);
-                        $changes->attach("\n");
-                        $changes->attach(do_lang_tempcode('CHANGELOG_ITEM', comcode_escape(escape_html($summary)), escape_html($url)));
-                        if (($reporter) && !in_array($reporter, $tracker_reporters)) {
-                            $tracker_reporters[] = $reporter;
-                        }
-                        if (($handler) && !in_array($handler, $tracker_handlers)) {
-                            $tracker_handlers[] = $handler;
-                        }
-                    }
+                foreach ($tracker_issues as $tracker_id => $tracker_label) {
+                    $url = post_param_string('tracker_url') . '/view.php?id=' . strval($tracker_id);
+                    $changes->attach("\n");
+                    $changes->attach(do_lang_tempcode('CHANGELOG_ITEM', comcode_escape(escape_html($tracker_label)), escape_html($url)));
                 }
                 $changes->attach("\n\n");
             }
 
-            // Show Git-only commits
+            // Populate Git commits
             if (count($__changes) > 0) {
                 $git_url = post_param_string('git_url');
                 $changes->attach(do_lang_tempcode('CHANGELOG_HEADER_GIT', escape_html($git_url), escape_html($previous_version)));
@@ -413,31 +374,9 @@ class Module_admin_make_release
             }
 
             // Show contributors
-            if (count($tracker_handlers) > 0) {
-                $changes->attach(do_lang_tempcode('CHANGELOG_HEADER_TRACKER_HANDLERS'));
-                $base_member_url = post_param_string('profile_url');
-                foreach ($tracker_handlers as $handler) {
-                    $member_label = $handler;
-                    $member_url = $base_member_url . '/' . $handler . '.htm';
-                    $changes->attach("\n");
-                    $changes->attach(do_lang_tempcode('CHANGELOG_ITEM', escape_html($member_url), comcode_escape(escape_html($member_label))));
-                }
-                $changes->attach("\n\n");
-            }
-            if (count($tracker_reporters) > 0) {
-                $changes->attach(do_lang_tempcode('CHANGELOG_HEADER_TRACKER_REPORTERS'));
-                $base_member_url = post_param_string('profile_url');
-                foreach ($tracker_reporters as $reporter) {
-                    $member_label = $reporter;
-                    $member_url = $base_member_url . '/' . $reporter . '.htm';
-                    $changes->attach("\n");
-                    $changes->attach(do_lang_tempcode('CHANGELOG_ITEM', escape_html($member_url), comcode_escape(escape_html($member_label))));
-                }
-                $changes->attach("\n\n");
-            }
-            if (count($git_authors) > 0) {
+            if (count($authors) > 0) {
                 $changes->attach(do_lang_tempcode('CHANGELOG_HEADER_GIT_CONTRIBUTORS'));
-                foreach ($git_authors as $author) {
+                foreach ($authors as $author) {
                     $changes->attach("\n");
                     $changes->attach(do_lang_tempcode('CHANGELOG_ITEM_NOURL', comcode_escape(escape_html($author))));
                 }
@@ -748,7 +687,6 @@ class Module_admin_make_release
             'CHANGES' => post_param_string('changes', ''),
             'BRAND_DOMAIN' => cms_parse_url_safe(normalise_idn_url(get_brand_base_url()), PHP_URL_HOST),
             'TRACKER_URL' => post_param_string('tracker_url'),
-            'PROJECT_ID' => post_param_string('project_id'),
         ]);
     }
 }
