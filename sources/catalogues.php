@@ -1074,8 +1074,7 @@ function get_catalogue_entry_map(array $entry, ?array $catalogue = null, string 
             $entry['ce_submitter'],
             $self_url,
             $c_value,
-            find_overridden_comment_forum('catalogue_entry__' . $catalogue_name, strval($entry['cc_id'])),
-            $entry['ce_add_date']
+            find_overridden_comment_forum('catalogue_entry__' . $catalogue_name, strval($entry['cc_id']))
         );
     }
 

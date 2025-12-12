@@ -373,8 +373,7 @@ class Module_polls
             $myrow['submitter'],
             build_url(['page' => '_SELF', 'type' => 'view', 'id' => $id], '_SELF', [], false, false, true),
             $_title,
-            find_overridden_comment_forum('polls'),
-            $myrow['add_time']
+            find_overridden_comment_forum('polls')
         );
 
         // Management links
