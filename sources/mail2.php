@@ -359,7 +359,7 @@ function update_bounce_storage(string $host, int $port, ?string $type, string $f
  *
  * @param  string $host The server hostname
  * @param  integer $port The port
- * @param  string $type The protocol
+ * @param  ?string $type The protocol (null: use configured / autodetect)
  * @set imap imaps imaps_nocert pop3 pop3s pop3s_nocert
  * @param  string $folder The inbox identifier
  * @param  string $username The username
@@ -368,7 +368,7 @@ function update_bounce_storage(string $host, int $port, ?string $type, string $f
  * @param  boolean $fail_ok Whether to silently log on error instead of bailing (true: function will still return existing bounces previously detected)
  * @return array Bounces (a map between email address and details of the bounce)
  */
-function find_mail_bounces(string $host, int $port, string $type, string $folder, string $username, string $password, ?int $since = null, bool $fail_ok = false) : array
+function find_mail_bounces(string $host, int $port, ?string $type, string $folder, string $username, string $password, ?int $since = null, bool $fail_ok = false) : array
 {
     if ($since === null) {
         $since = time() - 60 * 60 * 24 * 7 * 8;
