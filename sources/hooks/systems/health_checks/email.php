@@ -30,7 +30,7 @@
  * @package    health_check
  */
 
-/*EXTRA FUNCTIONS: dns_get_record|imap_.+|error_log*/
+/*EXTRA FUNCTIONS: dns_get_record|error_log*/
 
 /**
  * Hook class.
@@ -592,11 +592,6 @@ class Hook_health_check_email extends Source_hook_health_check
             return;
         }
 
-        if (!php_function_allowed('imap_open')) {
-            $this->stateCheckSkipped('IMAP functionality not available');
-            return;
-        }
-
         $type = get_option('mail_server_type');
         $host = get_option('mail_server_host');
         $port = intval(get_option('mail_server_port'));
@@ -612,12 +607,13 @@ class Hook_health_check_email extends Source_hook_health_check
 
         require_code('mail');
         require_code('mail2');
+        require_code('imap');
         $server_spec = _imap_server_spec($host, $port, $type);
 
-        $mbox = @imap_open($server_spec . $folder, $username, $password);
+        $mbox = @imap2_open($server_spec . $folder, $username, $password);
         $this->assertTrue($mbox !== false, 'Cannot connect to IMAP server');
         if ($mbox !== false) {
-            imap_close($mbox);
+            imap2_close($mbox);
         }
     }
 
@@ -642,91 +638,88 @@ class Hook_health_check_email extends Source_hook_health_check
             return;
         }
 
-        if (php_function_allowed('imap_open')) {
-            require_code('mail');
-            require_code('mail2');
+        require_code('mail');
+        require_code('mail2');
+        require_code('imap');
 
-            if ($use_test_data_for_pass === null) {
-                $address = get_option('website_email');
+        if ($use_test_data_for_pass === null) {
+            $address = get_option('website_email');
 
-                $type = get_option('mail_server_type');
-                $host = get_option('mail_server_host');
-                $port = intval(get_option('mail_server_port'));
-                $folder = get_option('mail_folder');
+            $type = get_option('mail_server_type');
+            $host = get_option('mail_server_host');
+            $port = intval(get_option('mail_server_port'));
+            $folder = get_option('mail_folder');
 
-                $username = get_option('mail_username');
-                $password = get_option('mail_password');
-            } else {
-                $address = 'test@composr.app';
-
-                $type = 'imaps';
-                $host = 'ns100030.ip-147-135-1.us';
-                $port = 993;
-                $folder = 'INBOX';
-
-                $username = 'test@composr.app';
-                $password = '!qz09BwdsNJb1f9zn';
-            }
-
-            if (($address == '') || ($host == '') || ($username == '')) {
-                $this->stateCheckSkipped('Test e-mail account not fully configured');
-                return;
-            }
-
-            $uniq = uniqid('', true);
-            $subject = brand_name() . ' Self-Test (' . $uniq . ')';
-            dispatch_mail($subject, 'Test', '', [$address], null, '', '', ['bypass_queue' => true]);
-
-            $wait_time = intval(get_option('hc_mail_wait_time'));
-
-            $good = false;
-            $time_started = time();
-            $server_spec = _imap_server_spec($host, $port, $type);
-            $i = 0;
-            do {
-                if (php_function_allowed('sleep')) {
-                    sleep(3);
-                }
-
-                $mbox = @imap_open($server_spec . $folder, $username, $password, CL_EXPUNGE);
-                $ok = ($mbox !== false);
-                if ($i == 0) {
-                    $this->assertTrue($ok, 'Could not connect to IMAP server, [tt]' . $host . '[/tt]');
-                    if (!$ok) {
-                        return;
-                    }
-                }
-                if ($ok) {
-                    $list = imap_search($mbox, 'FROM "' . get_site_name() . '"');
-                    if ($list === false) {
-                        $list = [];
-                    }
-                    foreach ($list as $l) {
-                        $header = imap_headerinfo($mbox, $l);
-
-                        $_subject = $header->subject;
-
-                        if (strpos($_subject, $uniq) !== false) {
-                            $good = true;
-                        }
-
-                        if (strpos($_subject, brand_name() . ' Self-Test') !== false) {
-                            imap_delete($mbox, $l); // Auto-clean-up
-                        }
-                    }
-
-                    imap_close($mbox);
-                }
-
-                $time_taken = time() - $time_started;
-
-                $i++;
-            } while ((!$good) && ($time_taken < $wait_time) && ($ok));
-
-            $this->assertTrue($good, 'Did not receive test e-mail within ' . display_time_period($wait_time));
+            $username = get_option('mail_username');
+            $password = get_option('mail_password');
         } else {
-            $this->stateCheckSkipped('PHP [tt]imap_open[/tt] function not available');
+            $address = 'test@composr.app';
+
+            $type = 'imaps';
+            $host = 'ns100030.ip-147-135-1.us';
+            $port = 993;
+            $folder = 'INBOX';
+
+            $username = 'test@composr.app';
+            $password = '!qz09BwdsNJb1f9zn';
         }
+
+        if (($address == '') || ($host == '') || ($username == '')) {
+            $this->stateCheckSkipped('Test e-mail account not fully configured');
+            return;
+        }
+
+        $uniq = uniqid('', true);
+        $subject = brand_name() . ' Self-Test (' . $uniq . ')';
+        dispatch_mail($subject, 'Test', '', [$address], null, '', '', ['bypass_queue' => true]);
+
+        $wait_time = intval(get_option('hc_mail_wait_time'));
+
+        $good = false;
+        $time_started = time();
+        $server_spec = _imap_server_spec($host, $port, $type);
+        $i = 0;
+        do {
+            if (php_function_allowed('sleep')) {
+                sleep(3);
+            }
+
+            $mbox = @imap2_open($server_spec . $folder, $username, $password, CL_EXPUNGE);
+            $ok = ($mbox !== false);
+            if ($i == 0) {
+                $this->assertTrue($ok, 'Could not connect to IMAP server, [tt]' . $host . '[/tt]');
+                if (!$ok) {
+                    return;
+                }
+            }
+            if ($ok) {
+                $list = imap2_search($mbox, 'FROM "' . get_site_name() . '"');
+                if ($list === false) {
+                    $list = [];
+                }
+                foreach ($list as $l) {
+                    $header = imap2_headerinfo($mbox, $l);
+
+                    $_subject = $header->subject;
+
+                    if (strpos($_subject, $uniq) !== false) {
+                        $good = true;
+                    }
+
+                    if (strpos($_subject, brand_name() . ' Self-Test') !== false) {
+                        imap2_delete($mbox, $l); // Auto-clean-up
+                    }
+                }
+
+                imap2_close($mbox);
+            }
+
+            $time_taken = time() - $time_started;
+
+            $i++;
+        } while ((!$good) && ($time_taken < $wait_time) && ($ok));
+
+        $this->assertTrue($good, 'Did not receive test e-mail within ' . display_time_period($wait_time));
     }
 
     /**

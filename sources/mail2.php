@@ -163,10 +163,10 @@ function find_mail_folders(string $host, int $port, ?string $type, string $usern
     require_code('imap');
 
     $server_spec = _imap_server_spec($host, $port, $type);
-    $mbox = @imap_open($server_spec . 'INBOX', $username, $password);
+    $mbox = @imap2_open($server_spec . 'INBOX', $username, $password);
     if ($mbox === false) {
-        $error = imap_last_error();
-        imap_errors(); // Works-around weird PHP bug where "Retrying PLAIN authentication after [AUTHENTICATIONFAILED] Authentication failed. (errflg=1) in Unknown on line 0" may get spit out into any stream (even the backup log)
+        $error = imap2_last_error();
+        imap2_errors(); // Works-around weird PHP bug where "Retrying PLAIN authentication after [AUTHENTICATIONFAILED] Authentication failed. (errflg=1) in Unknown on line 0" may get spit out into any stream (even the backup log)
 
         $full_error = do_lang_tempcode('IMAP_ERROR', $error);
         if ($fail_ok) {
@@ -176,7 +176,7 @@ function find_mail_folders(string $host, int $port, ?string $type, string $usern
         }
         warn_exit($full_error, false, true);
     }
-    $_folders = imap_list($mbox, $server_spec, '*');
+    $_folders = imap2_list($mbox, $server_spec, '*');
 
     $folders = [];
     foreach ($_folders as $folder) {
@@ -188,7 +188,7 @@ function find_mail_folders(string $host, int $port, ?string $type, string $usern
         $folders['INBOX'] = 'INBOX';
     }
 
-    imap_close($mbox);
+    imap2_close($mbox);
 
     return $folders;
 }
@@ -287,7 +287,7 @@ function is_mail_bounced(string $email, ?string $host = null, ?int $port = null,
         $password = get_option('mail_password');
     }
 
-    if ($password == '' || (!function_exists('imap_open'))) {
+    if ($password == '') {
         return null; // Not configured, so cannot proceed
     }
 
@@ -417,10 +417,10 @@ function _find_mail_bounces(string $host, int $port, ?string $type, string $fold
     disable_php_memory_limit(); // In case of a huge number
 
     $server_spec = _imap_server_spec($host, $port, $type);
-    $mbox = @imap_open($server_spec . $folder, $username, $password);
+    $mbox = @imap2_open($server_spec . $folder, $username, $password);
     if ($mbox === false) {
-        $error = imap_last_error();
-        imap_errors(); // Works-around weird PHP bug where "Retrying PLAIN authentication after [AUTHENTICATIONFAILED] Authentication failed. (errflg=1) in Unknown on line 0" may get spit out into any stream (even the backup log)
+        $error = imap2_last_error();
+        imap2_errors(); // Works-around weird PHP bug where "Retrying PLAIN authentication after [AUTHENTICATIONFAILED] Authentication failed. (errflg=1) in Unknown on line 0" may get spit out into any stream (even the backup log)
 
         $full_error = do_lang_tempcode('IMAP_ERROR', $error);
         if ($fail_ok) {
@@ -437,15 +437,15 @@ function _find_mail_bounces(string $host, int $port, ?string $type, string $fold
     if ($since !== null) {
         $filter .= ' SINCE "' . gmdate('j-M-Y', $since - 60 * 60 * 24) . '"';
     }
-    $messages = imap_search($mbox, $filter);
+    $messages = imap2_search($mbox, $filter);
     if ($messages === false) {
         $messages = [];
     }
     sort($messages); // Date order, approximately
     $num = 0;
     foreach ($messages as $val) {
-        $body = imap_body($mbox, $val);
-        $header = imap_fetchheader($mbox, $val);
+        $body = imap2_body($mbox, $val);
+        $header = imap2_fetchheader($mbox, $val);
 
         $is_bounce =
             // Proper failure header
@@ -477,7 +477,7 @@ function _find_mail_bounces(string $host, int $port, ?string $type, string $fold
 
         if ($is_bounce || !$bounces_only) {
             if (strpos($header, 'X-Failed-Recipients') !== false) { // Best way
-                $overview = imap_headerinfo($mbox, $val);
+                $overview = imap2_headerinfo($mbox, $val);
 
                 $matches2 = [];
                 preg_match('#X-Failed-Recipients:\s*([^\"\n<>@]+@[^\n<>@]+)#', $header, $matches2);
@@ -486,7 +486,7 @@ function _find_mail_bounces(string $host, int $port, ?string $type, string $fold
                     $out[$email] = [$overview->subject, $is_bounce, strtotime($overview->date), $body];
                 }
             } else {
-                $overview = imap_headerinfo($mbox, $val);
+                $overview = imap2_headerinfo($mbox, $val);
 
                 $matches = [];
 
@@ -510,7 +510,7 @@ function _find_mail_bounces(string $host, int $port, ?string $type, string $fold
             }
         }
     }
-    imap_close($mbox);
+    imap2_close($mbox);
 
     return $out;
 }

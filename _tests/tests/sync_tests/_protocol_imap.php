@@ -60,23 +60,22 @@ class _protocol_imap_test_set extends cms_test_case
 
     public function setUp()
     {
-        require_code('imap');
-
         // Set to local IMAP server on test account
         $this->key_options = $this->load_key_options('mail_');
 
         // Create connection
         require_code('mail');
         require_code('mail2');
+        require_code('imap');
         list($mbox, $server_spec, $host, $username, $password, $port, $type) = $this->get_imap_connection();
         if ($mbox === false) {
-            $_errors = imap_errors();
+            $_errors = imap2_errors();
             $errors = ($_errors === false) ? 'Unknown error' : implode('; ', $_errors);
             $this->assertTrue(false, 'IMAP connection failed: ' . $errors);
             return;
         }
 
-        imap_close($mbox);
+        imap2_close($mbox);
 
         parent::setUp();
     }
@@ -98,7 +97,7 @@ class _protocol_imap_test_set extends cms_test_case
 
         $server_spec = _imap_server_spec($host, $port, $type);
 
-        $mbox = imap_open($server_spec, $username, $password);
+        $mbox = imap2_open($server_spec, $username, $password);
 
         return [$mbox, $server_spec, $host, $username, $password, $port, $type];
     }
@@ -116,9 +115,9 @@ class _protocol_imap_test_set extends cms_test_case
         $test_folder = 'INBOX.test';
         $folders = find_mail_folders($host, $port, $type, $username, $password);
         if (!in_array(in_array('INBOX.test', $folders) || in_array('test', $folders), $folders)) {
-            $mailbox_exists = imap_createmailbox($mbox, $test_folder);
+            $mailbox_exists = imap2_createmailbox($mbox, $test_folder);
 
-            $_errors = imap_errors();
+            $_errors = imap2_errors();
             $errors = ($_errors === false) ? 'Unknown error' : implode('; ', $_errors);
 
             $this->assertTrue($mailbox_exists, 'Failed to create test folder: ' . $errors);
@@ -132,7 +131,7 @@ class _protocol_imap_test_set extends cms_test_case
             $this->assertTrue(in_array('INBOX.test', $folders) || in_array('test', $folders));
 
             // Clean up
-            imap_deletemailbox($mbox, $test_folder);
+            imap2_deletemailbox($mbox, $test_folder);
         }
 
         if (get_option('mail_server_host') == 'localhost') {
@@ -150,7 +149,7 @@ class _protocol_imap_test_set extends cms_test_case
             }
         }
 
-        imap_close($mbox);
+        imap2_close($mbox);
 
         // There are "Unexpected resource left open of type, stream" errors due to something deep in some Composer package
     }

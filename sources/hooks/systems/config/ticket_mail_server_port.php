@@ -66,10 +66,6 @@ class Hook_config_ticket_mail_server_port
      */
     public function get_default() : ?string
     {
-        if (!function_exists('imap_open')) {
-            return null;
-        }
-
         if (!addon_installed('tickets')) {
             return null;
         }

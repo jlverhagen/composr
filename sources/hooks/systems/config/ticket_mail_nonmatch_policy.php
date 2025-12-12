@@ -70,10 +70,6 @@ class Hook_config_ticket_mail_nonmatch_policy
             return null;
         }
 
-        if (!function_exists('imap_open')) {
-            return null;
-        }
-
         return 'block';
     }
 }

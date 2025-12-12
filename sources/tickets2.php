@@ -361,7 +361,7 @@ function send_ticket_email(string $ticket_id, string $title, string $post, $tick
             $staff_displayname = $GLOBALS['FORUM_DRIVER']->get_username($new_poster, true);
             $staff_username = $GLOBALS['FORUM_DRIVER']->get_username($new_poster);
 
-            if ((get_option('ticket_mail_on') == '1') && (cron_installed()) && (function_exists('imap_open'))) {
+            if ((get_option('ticket_mail_on') == '1') && (cron_installed())) {
                 if ($uid_email == '') {
                     $uid_email = $GLOBALS['FORUM_DRIVER']->get_member_email_address($uid);
                 }
@@ -452,7 +452,7 @@ function send_ticket_email(string $ticket_id, string $title, string $post, $tick
 
         // ALSO: Tell member that their message was received
         if (($uid_email != '') && (get_option('message_received_emails') == '1')) {
-            if ((get_option('ticket_mail_on') == '1') && (cron_installed()) && (function_exists('imap_open')) && ($new_ticket) && ($auto_created)) {
+            if ((get_option('ticket_mail_on') == '1') && (cron_installed()) && ($new_ticket) && ($auto_created)) {
                 require_code('mail_integration');
                 require_code('tickets_email_integration');
                 $email_ob = object_factory('Source_tickets_email_integration');

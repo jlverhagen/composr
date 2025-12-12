@@ -131,7 +131,7 @@ The [tt]main_contact_us[/tt] block is a simplified front-end for the creation of
 There is an option to allow people to e-mail in to the support ticket system.
 
 This requires:
-1) The PHP IMAP extension to be installed
+1) Javanile IMAP library (bundled through the [tt]core_imap[/tt] addon)
 2) The PHP [tt]mail[/tt] command must work (on most servers this means a local SMTP server must be running [which can just relay to another if you wish]; on Windows it means the PHP SMTP settings must be correctly configured)
 3) The system scheduler must be running (Cron)
 

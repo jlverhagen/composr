@@ -64,10 +64,6 @@ class Hook_config_mail_username
      */
     public function get_default() : ?string
     {
-        if (!function_exists('imap_open')) {
-            return null;
-        }
-
         $website_email = get_option('website_email');
         return preg_replace('#@.*$#', '', $website_email);
     }

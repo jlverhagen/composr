@@ -64,10 +64,6 @@ class Hook_config_mail_server
      */
     public function get_default() : ?string
     {
-        if (!function_exists('imap_open')) {
-            return null;
-        }
-
         if (!addon_installed('ecommerce')) {
             return null;
         }
