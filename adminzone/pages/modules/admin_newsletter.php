@@ -528,9 +528,7 @@ class Module_admin_newsletter extends Source_standard_crud_module
      */
     public function bounce_filter_a() : object
     {
-        if (!function_exists('imap_open')) {
-            warn_exit(do_lang_tempcode('IMAP_NEEDED'));
-        }
+        require_code('imap');
 
         $fields = new Tempcode();
 

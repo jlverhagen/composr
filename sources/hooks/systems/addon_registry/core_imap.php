@@ -129,7 +129,7 @@ class Hook_addon_registry_core_imap
      */
     public function get_description() : string
     {
-        return 'This addon adds an actively-maintained drop-in replacement for the deprecated PHP IMAP extension by using javanile php-imap2. This also supports oAuth which the PHP IMAP extension does not.';
+        return 'The PHP IMAP extension is not properly maintained and experiences unexpected behaviour. It also does not support OAuth. For these reasons, Composr is bundled with the Javanile IMAP library and uses that for IMAP features instead of the PHP IMAP extension.';
     }
 
     /**

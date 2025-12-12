@@ -296,35 +296,34 @@ class Module_admin_cns_forums extends Source_standard_crud_module
         $fields->attach(form_input_tick(do_lang_tempcode('ALLOWS_ANONYMOUS_POSTS'), do_lang_tempcode('DESCRIPTION_ALLOWS_ANONYMOUS_POSTS'), 'allows_anonymous_posts', $allows_anonymous_posts == 1));
         $fields->attach(form_input_text(do_lang_tempcode('POLL_DEFAULT_OPTIONS_XML'), do_lang_tempcode('DESCRIPTION_POLL_DEFAULT_OPTIONS_XML'), 'poll_default_options_xml', $poll_default_options_xml, false, false));
 
-        if (function_exists('imap_open')) {
-            require_lang('config');
-            require_lang('cns_mailinglists');
+        require_code('imap');
+        require_lang('config');
+        require_lang('cns_mailinglists');
 
-            $fields->attach(do_template('FORM_SCREEN_FIELD_SPACER', ['_GUID' => 'ab47ed06695dc2cd99211772fe4c5643', 'SECTION_HIDDEN' => $mail_username == '', 'TITLE' => do_lang_tempcode('MAILING_LIST'), 'HELP' => do_lang_tempcode('DESCRIPTION_MAILING_LIST', is_maintained_description('email_integration', do_lang('_MAILING_LIST_SERVER')))]));
+        $fields->attach(do_template('FORM_SCREEN_FIELD_SPACER', ['_GUID' => 'ab47ed06695dc2cd99211772fe4c5643', 'SECTION_HIDDEN' => $mail_username == '', 'TITLE' => do_lang_tempcode('MAILING_LIST'), 'HELP' => do_lang_tempcode('DESCRIPTION_MAILING_LIST', is_maintained_description('email_integration', do_lang('_MAILING_LIST_SERVER')))]));
 
-            $fields->attach(form_input_email(do_lang_tempcode('EMAIL_ADDRESS'), do_lang_tempcode('CONFIG_OPTION_website_email'), 'mail_email_address', $mail_email_address, false));
-            $mail_server_types = new Tempcode();
-            foreach (['', 'imap', 'imaps', 'imaps_nocert', 'imapt', 'imapt_nocert', 'pop3', 'pop3s', 'pop3s_nocert', 'pop3t', 'pop3t_nocert'] as $_mail_server_type) {
-                $mail_server_types->attach(form_input_list_entry($_mail_server_type, $_mail_server_type == $mail_server_type));
-            }
-            $fields->attach(form_input_list(do_lang_tempcode('SERVER_TYPE'), do_lang_tempcode('CONFIG_OPTION_mail_server_type'), 'mail_server_type', $mail_server_types, null, false, false));
-
-            $fields->attach(form_input_line(do_lang_tempcode('HOST'), do_lang_tempcode('CONFIG_OPTION_mail_server_host'), 'mail_server_host', $mail_server_host, false));
-            $fields->attach(form_input_integer(do_lang_tempcode('PORT'), do_lang_tempcode('CONFIG_OPTION_mail_server_port'), 'mail_server_port', $mail_server_port, false));
-
-            $fields->attach(form_input_line(do_lang_tempcode('MAIL_FOLDER'), do_lang_tempcode('CONFIG_OPTION_mail_folder'), 'mail_folder', $mail_folder, false));
-
-            $fields->attach(form_input_line(do_lang_tempcode('USERNAME'), do_lang_tempcode('CONFIG_OPTION_mail_username'), 'mail_username', $mail_username, false));
-            $fields->attach(form_input_line(do_lang_tempcode('PASSWORD'), do_lang_tempcode('CONFIG_OPTION_mail_password'), 'mail_password', $mail_password, false));
-
-            $mail_non_match_policies = new Tempcode();
-            foreach (['block', 'post_as_guest', 'create_account'] as $_mail_nonmatch_policy) {
-                $mail_non_match_policies->attach(form_input_list_entry($_mail_nonmatch_policy, $_mail_nonmatch_policy == $mail_nonmatch_policy, do_lang_tempcode('MAIL_NONMATCH_POLICY_' . $_mail_nonmatch_policy)));
-            }
-            $fields->attach(form_input_list(do_lang_tempcode('MAIL_NONMATCH_POLICY'), do_lang_tempcode('DESCRIPTION_MAIL_NONMATCH_POLICY'), 'mail_nonmatch_policy', $mail_non_match_policies));
-
-            $fields->attach(form_input_tick(do_lang_tempcode('MAIL_UNCONFIRMED_NOTICE'), do_lang_tempcode('DESCRIPTION_MAIL_UNCONFIRMED_NOTICE'), 'mail_unconfirmed_notice', $mail_unconfirmed_notice == 1));
+        $fields->attach(form_input_email(do_lang_tempcode('EMAIL_ADDRESS'), do_lang_tempcode('CONFIG_OPTION_website_email'), 'mail_email_address', $mail_email_address, false));
+        $mail_server_types = new Tempcode();
+        foreach (['', 'imap', 'imaps', 'imaps_nocert', 'imapt', 'imapt_nocert', 'pop3', 'pop3s', 'pop3s_nocert', 'pop3t', 'pop3t_nocert'] as $_mail_server_type) {
+            $mail_server_types->attach(form_input_list_entry($_mail_server_type, $_mail_server_type == $mail_server_type));
         }
+        $fields->attach(form_input_list(do_lang_tempcode('SERVER_TYPE'), do_lang_tempcode('CONFIG_OPTION_mail_server_type'), 'mail_server_type', $mail_server_types, null, false, false));
+
+        $fields->attach(form_input_line(do_lang_tempcode('HOST'), do_lang_tempcode('CONFIG_OPTION_mail_server_host'), 'mail_server_host', $mail_server_host, false));
+        $fields->attach(form_input_integer(do_lang_tempcode('PORT'), do_lang_tempcode('CONFIG_OPTION_mail_server_port'), 'mail_server_port', $mail_server_port, false));
+
+        $fields->attach(form_input_line(do_lang_tempcode('MAIL_FOLDER'), do_lang_tempcode('CONFIG_OPTION_mail_folder'), 'mail_folder', $mail_folder, false));
+
+        $fields->attach(form_input_line(do_lang_tempcode('USERNAME'), do_lang_tempcode('CONFIG_OPTION_mail_username'), 'mail_username', $mail_username, false));
+        $fields->attach(form_input_line(do_lang_tempcode('PASSWORD'), do_lang_tempcode('CONFIG_OPTION_mail_password'), 'mail_password', $mail_password, false));
+
+        $mail_non_match_policies = new Tempcode();
+        foreach (['block', 'post_as_guest', 'create_account'] as $_mail_nonmatch_policy) {
+            $mail_non_match_policies->attach(form_input_list_entry($_mail_nonmatch_policy, $_mail_nonmatch_policy == $mail_nonmatch_policy, do_lang_tempcode('MAIL_NONMATCH_POLICY_' . $_mail_nonmatch_policy)));
+        }
+        $fields->attach(form_input_list(do_lang_tempcode('MAIL_NONMATCH_POLICY'), do_lang_tempcode('DESCRIPTION_MAIL_NONMATCH_POLICY'), 'mail_nonmatch_policy', $mail_non_match_policies));
+
+        $fields->attach(form_input_tick(do_lang_tempcode('MAIL_UNCONFIRMED_NOTICE'), do_lang_tempcode('DESCRIPTION_MAIL_UNCONFIRMED_NOTICE'), 'mail_unconfirmed_notice', $mail_unconfirmed_notice == 1));
 
         $fields->attach(metadata_get_fields('forum', ($id === null) ? null : strval($id)));
 

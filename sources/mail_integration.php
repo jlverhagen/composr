@@ -165,19 +165,19 @@ abstract class Source_email_integration
         $this->log_message('Starting an incoming e-mail scan on ' . $host . ' (' . $username . ')');
 
         $server_spec = _imap_server_spec($host, $port, $type);
-        $mbox = @imap_open($server_spec . $folder, $username, $password, CL_EXPUNGE);
+        $mbox = @imap2_open($server_spec . $folder, $username, $password, CL_EXPUNGE);
         if ($mbox !== false) {
             $this->log_message('Successfully opened server connection');
 
             $reprocess = (get_param_integer('test', 0) == 1 && $GLOBALS['FORUM_DRIVER']->is_super_admin(get_member()));
-            $list = imap_search($mbox, $reprocess ? '' : 'UNSEEN');
+            $list = imap2_search($mbox, $reprocess ? '' : 'UNSEEN');
             if ($list === false) {
                 $list = [];
             }
             foreach ($list as $l) {
-                $header = imap_headerinfo($mbox, $l);
-                $full_header = imap_fetchheader($mbox, $l);
-                imap_clearflag_full($mbox, $l, '\\Seen'); // Clear this, as otherwise it is a real pain to debug (have to keep manually marking unread)
+                $header = imap2_headerinfo($mbox, $l);
+                $full_header = imap2_fetchheader($mbox, $l);
+                imap2_clearflag_full($mbox, $l, '\\Seen'); // Clear this, as otherwise it is a real pain to debug (have to keep manually marking unread)
 
                 $subject = $header->subject;
                 $this->strip_system_code($subject, self::STRIP_SUBJECT);
@@ -196,14 +196,14 @@ abstract class Source_email_integration
                 $attachment_size_total = 0;
                 $_body_text = $this->_imap_get_part($mbox, $l, 'TEXT/PLAIN', $attachments, $attachment_size_total, $input_charset);
                 $_body_html = $this->_imap_get_part($mbox, $l, 'TEXT/HTML', $attachments, $attachment_size_total, $input_charset);
-                imap_clearflag_full($mbox, $l, '\\Seen'); // Clear this, as otherwise it is a real pain to debug (have to keep manually marking unread)
+                imap2_clearflag_full($mbox, $l, '\\Seen'); // Clear this, as otherwise it is a real pain to debug (have to keep manually marking unread)
                 if (($_body_text === null) && ($_body_html === null)) {
                     $this->log_message('Could not find a plain text or HTML body');
-                    imap_setflag_full($mbox, $l, '\\Seen');
+                    imap2_setflag_full($mbox, $l, '\\Seen');
                     continue;
                 }
                 $this->_imap_get_part($mbox, $l, 'APPLICATION/OCTET-STREAM', $attachments, $attachment_size_total, $input_charset);
-                imap_clearflag_full($mbox, $l, '\\Seen'); // Clear this, as otherwise it is a real pain to debug (have to keep manually marking unread)
+                imap2_clearflag_full($mbox, $l, '\\Seen'); // Clear this, as otherwise it is a real pain to debug (have to keep manually marking unread)
 
                 // Find from details (preferencing Reply-To)
                 $from_email = null;
@@ -242,28 +242,28 @@ abstract class Source_email_integration
                     $this->log_message('E-mail was considered non-human');
                 }
 
-                imap_setflag_full($mbox, $l, '\\Seen');
+                imap2_setflag_full($mbox, $l, '\\Seen');
             }
 
             // Cleanup
             $mail_delete_after = get_option('mail_delete_after');
             if (($mail_delete_after != '') && ($mail_delete_after != '0')) {
                 $cutoff = time() - 60 * 60 * 24 * intval($mail_delete_after);
-                $list = imap_search($mbox, 'SEEN BEFORE "' . date('j-M-Y', $cutoff) . '"');
+                $list = imap2_search($mbox, 'SEEN BEFORE "' . date('j-M-Y', $cutoff) . '"');
                 if ($list === false) {
                     $list = [];
                 }
                 foreach ($list as $l) {
                     if ((!empty($header->udate)) && ($header->udate < $cutoff)) {
-                        imap_delete($mbox, $l);
+                        imap2_delete($mbox, $l);
                     }
                 }
             }
 
-            imap_close($mbox, CL_EXPUNGE);
+            imap2_close($mbox, CL_EXPUNGE);
         } else {
-            $error = imap_last_error();
-            imap_errors(); // Works-around weird PHP bug where "Retrying PLAIN authentication after [AUTHENTICATIONFAILED] Authentication failed. (errflg=1) in Unknown on line 0" may get spit out into any stream (even the backup log)
+            $error = imap2_last_error();
+            imap2_errors(); // Works-around weird PHP bug where "Retrying PLAIN authentication after [AUTHENTICATIONFAILED] Authentication failed. (errflg=1) in Unknown on line 0" may get spit out into any stream (even the backup log)
 
             $this->log_message('Failed to open server connection (' . $error . ')');
 
@@ -388,8 +388,10 @@ abstract class Source_email_integration
      */
     protected function _imap_get_part($stream, int $msg_number, string $needed_mime_type, array &$attachments, int &$attachment_size_total, string $input_charset, ?object $structure = null, string $part_number = '') : ?string
     {
+        require_code('imap');
+
         if ($structure === null) {
-            $structure = imap_fetchstructure($stream, $msg_number);
+            $structure = imap2_fetchstructure($stream, $msg_number);
         }
 
         $qualifier_exp =  ' - msg=' . strval($msg_number) . '; part=' . $part_number . ' - while looking for ' . $needed_mime_type;
@@ -448,11 +450,11 @@ abstract class Source_email_integration
                 }
 
                 // Read in data
-                $data = imap_fetchbody($stream, $msg_number, $part_number);
+                $data = imap2_fetchbody($stream, $msg_number, $part_number);
                 if ($structure->encoding == 3) {
-                    $data = imap_base64($data);
+                    $data = imap2_base64($data);
                 } elseif ($structure->encoding == 4) {
-                    $data = imap_qprint($data);
+                    $data = imap2_qprint($data);
                 }
 
                 $attachments[$filename] = [
@@ -491,16 +493,16 @@ abstract class Source_email_integration
             if ($part_number == '') {
                 $part_number = '1';
             }
-            $data = imap_fetchbody($stream, $msg_number, $part_number);
+            $data = imap2_fetchbody($stream, $msg_number, $part_number);
 
             if ($structure->encoding == 3) {
-                $data = imap_base64($data);
+                $data = imap2_base64($data);
             } elseif ($structure->encoding == 4) {
-                $data = imap_qprint($data);
+                $data = imap2_qprint($data);
             }
 
             // Handle character set
-            $full_header = imap_fetchmime($stream, $msg_number, $part_number);
+            $full_header = imap2_fetchmime($stream, $msg_number, $part_number);
             $matches = [];
             if (preg_match('#^Content-(Type|Disposition):.*;\s*charset=([\s\w\-]+)$#im', $full_header, $matches) != 0) {
                 $input_charset = trim($matches[2], " \t\"'");
@@ -971,7 +973,8 @@ abstract class Source_email_integration
      */
     protected function get_email_address_from_header(string $header) : ?array
     {
-        $addresses = imap_rfc822_parse_adrlist($header, get_domain());
+        require_code('imap');
+        $addresses = imap2_rfc822_parse_adrlist($header, get_domain());
         if (empty($addresses)) {
             return null;
         }

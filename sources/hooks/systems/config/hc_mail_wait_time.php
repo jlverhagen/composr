@@ -68,10 +68,6 @@ class Hook_config_hc_mail_wait_time
             return null;
         }
 
-        if (!function_exists('imap_open')) {
-            return null;
-        }
-
         return '120';
     }
 }

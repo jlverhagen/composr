@@ -243,7 +243,7 @@ Access this from under Admin Zone > Tools > Newsletter > Bounce filter.
 
 The removal process also removes the "allow staff e-mails" setting from members who have a matching e-mail address.
 
-For this tool to work, you must have the PHP IMAP extension on your server.
+This tool utilises the Javanile IMAP library bundled with Composr.
 
 You should manually move anything sent to your website e-mail address that looks like a bounce e-mail into a new bounces folder, and then run the tool upon that folder:
 1) Go to Admin Zone > Tools > Newsletter.
