@@ -155,9 +155,10 @@ function _imap_server_spec(string $host, int $port, ?string $type = null) : stri
  * @set imap imaps imaps_nocert pop3 pop3s pop3s_nocert
  * @param  string $username The username
  * @param  string $password The password
- * @return array Map of folders (codenames to display labels)
+ * @param  boolean $fail_ok Whether we should return null instead of bailing on error
+ * @return ?array Map of folders (codenames to display labels) (null: error)
  */
-function find_mail_folders(string $host, int $port, ?string $type, string $username, string $password) : array
+function find_mail_folders(string $host, int $port, ?string $type, string $username, string $password, bool $fail_ok = false) : ?array
 {
     require_code('imap');
 
@@ -166,7 +167,14 @@ function find_mail_folders(string $host, int $port, ?string $type, string $usern
     if ($mbox === false) {
         $error = imap_last_error();
         imap_errors(); // Works-around weird PHP bug where "Retrying PLAIN authentication after [AUTHENTICATIONFAILED] Authentication failed. (errflg=1) in Unknown on line 0" may get spit out into any stream (even the backup log)
-        warn_exit(do_lang_tempcode('IMAP_ERROR', $error));
+
+        $full_error = do_lang_tempcode('IMAP_ERROR', $error);
+        if ($fail_ok) {
+            require_code('failure');
+            cms_error_log($full_error);
+            return null;
+        }
+        warn_exit($full_error, false, true);
     }
     $_folders = imap_list($mbox, $server_spec, '*');
 
@@ -235,7 +243,7 @@ function can_email_address(string $email_address, ?string $host = null, ?int $po
     }
 
     // Condition: we must not have had a bounce from this address in the last 8 weeks
-    $bounced_time = is_mail_bounced($email_address, $host, $port, $folder, $username, $password);
+    $bounced_time = is_mail_bounced($email_address, $host, $port, $type, $folder, $username, $password, true);
     if (($bounced_time !== null) && (time() - (60 * 60 * 24 * 7 * 8)) <= $bounced_time) {
         return false;
     }
@@ -254,9 +262,10 @@ function can_email_address(string $email_address, ?string $host = null, ?int $po
  * @param  ?string $folder The inbox identifier (null: use configured)
  * @param  ?string $username The username (null: use configured)
  * @param  ?string $password The password (null: use configured)
- * @return ?TIME Last bounce time (null: not bounced)
+ * @param  boolean $fail_ok Whether to silently log on error instead of bailing
+ * @return ?TIME Last bounce time (null: not bounced, or we do not have bounce checks configured)
  */
-function is_mail_bounced(string $email, ?string $host = null, ?int $port = null, ?string $type = null, ?string $folder = null, ?string $username = null, ?string $password = null) : ?int
+function is_mail_bounced(string $email, ?string $host = null, ?int $port = null, ?string $type = null, ?string $folder = null, ?string $username = null, ?string $password = null, bool $fail_ok = false) : ?int
 {
     if ($email == '') {
         return null;
@@ -282,13 +291,16 @@ function is_mail_bounced(string $email, ?string $host = null, ?int $port = null,
         return null; // Not configured, so cannot proceed
     }
 
-    static $update_since = null;
-    if ($update_since === null) {
-        $update_since = $GLOBALS['SITE_DB']->query_select_value_if_there('email_bounces', 'MAX(b_time)');
+    // Check for bounces; if we have one, return its timestamp (we always get the lastest bounce)
+    $bounces = find_mail_bounces($host, $port, $type, $folder, $username, $password, null, $fail_ok);
+    foreach ($bounces as $bounce_email => $bounce_details) {
+        if ($bounce_email != $email) {
+            continue;
+        }
+        return $bounce_details[2];
     }
-    update_bounce_storage($host, $port, $type, $folder, $username, $password, $update_since);
 
-    return $GLOBALS['SITE_DB']->query_select_value_if_there('email_bounces', 'MAX(b_time)', ['b_email_address' => $email]);
+    return null;
 }
 
 /**
@@ -302,8 +314,9 @@ function is_mail_bounced(string $email, ?string $host = null, ?int $port = null,
  * @param  string $username The username
  * @param  string $password The password
  * @param  ?TIME $since Only find bounces since this date (null: 8 weeks ago). This is approximate, we will actually look from a bit further back to compensate for possible timezone differences
+ * @param  boolean $fail_ok Whether to silently exit and log on error instead of bailing
  */
-function update_bounce_storage(string $host, int $port, ?string $type, string $folder, string $username, string $password, ?int $since = null)
+function update_bounce_storage(string $host, int $port, ?string $type, string $folder, string $username, string $password, ?int $since = null, bool $fail_ok = false)
 {
     if ($since === null) {
         $since = time() - 60 * 60 * 24 * 7 * 8;
@@ -318,7 +331,11 @@ function update_bounce_storage(string $host, int $port, ?string $type, string $f
         $done_in_session = true;
     }
 
-    $bounces = _find_mail_bounces($host, $port, $type, $folder, $username, $password, true, $since);
+    $bounces = _find_mail_bounces($host, $port, $type, $folder, $username, $password, true, $since, $fail_ok);
+    if ($bounces === null) {
+        return;
+    }
+
     foreach ($bounces as $email => $_details) {
         list($subject, $is_bounce, $time, $body) = $_details;
 
@@ -348,9 +365,10 @@ function update_bounce_storage(string $host, int $port, ?string $type, string $f
  * @param  string $username The username
  * @param  string $password The password
  * @param  ?TIME $since Only find bounces since this date (null: 8 weeks ago). This is approximate, we will actually look from a bit further back to compensate for possible timezone differences
+ * @param  boolean $fail_ok Whether to silently log on error instead of bailing (true: function will still return existing bounces previously detected)
  * @return array Bounces (a map between email address and details of the bounce)
  */
-function find_mail_bounces(string $host, int $port, string $type, string $folder, string $username, string $password, ?int $since = null) : array
+function find_mail_bounces(string $host, int $port, string $type, string $folder, string $username, string $password, ?int $since = null, bool $fail_ok = false) : array
 {
     if ($since === null) {
         $since = time() - 60 * 60 * 24 * 7 * 8;
@@ -364,7 +382,7 @@ function find_mail_bounces(string $host, int $port, string $type, string $folder
         $_since = null;
     }
 
-    update_bounce_storage($host, $port, $type, $folder, $username, $password, $_since);
+    update_bounce_storage($host, $port, $type, $folder, $username, $password, $_since, $fail_ok);
 
     $_ret = $GLOBALS['SITE_DB']->query_select('email_bounces', ['b_email_address', 'b_subject', 'b_time', 'b_body'], [], 'ORDER BY b_time');
     $ret = [];
@@ -386,11 +404,12 @@ function find_mail_bounces(string $host, int $port, string $type, string $folder
  * @param  string $password The password
  * @param  boolean $bounces_only Only find bounces (otherwise will find anything)
  * @param  ?TIME $since Only find bounces since this date (null: no limit). This is approximate, we will actually look from a bit further back to compensate for possible timezone differences
- * @return array Bounces (a map between email address and details of the bounce)
+ * @param  boolean $fail_ok Whether to return null instead of bailing on error
+ * @return ?array Bounces (a map between email address and details of the bounce) (null: error)
  *
  * @ignore
  */
-function _find_mail_bounces(string $host, int $port, ?string $type, string $folder, string $username, string $password, bool $bounces_only = true, ?int $since = null) : array
+function _find_mail_bounces(string $host, int $port, ?string $type, string $folder, string $username, string $password, bool $bounces_only = true, ?int $since = null, bool $fail_ok = false) : ?array
 {
     require_code('imap');
     require_code('type_sanitisation');
@@ -402,7 +421,14 @@ function _find_mail_bounces(string $host, int $port, ?string $type, string $fold
     if ($mbox === false) {
         $error = imap_last_error();
         imap_errors(); // Works-around weird PHP bug where "Retrying PLAIN authentication after [AUTHENTICATIONFAILED] Authentication failed. (errflg=1) in Unknown on line 0" may get spit out into any stream (even the backup log)
-        warn_exit(do_lang_tempcode('IMAP_ERROR', $error), false, true);
+
+        $full_error = do_lang_tempcode('IMAP_ERROR', $error);
+        if ($fail_ok) {
+            require_code('failure');
+            cms_error_log($full_error);
+            return null;
+        }
+        warn_exit($full_error, false, true);
     }
 
     $out = [];

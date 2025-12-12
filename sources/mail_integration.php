@@ -268,7 +268,8 @@ abstract class Source_email_integration
             $this->log_message('Failed to open server connection (' . $error . ')');
 
             if (!is_cli()) {
-                warn_exit(do_lang_tempcode('IMAP_ERROR', $error), false, true);
+                require_code('failure');
+                cms_error_log(do_lang_tempcode('IMAP_ERROR', $error));
             }
         }
 
