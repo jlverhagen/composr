@@ -162,7 +162,7 @@ function get_details_behind_feedback_code(string $feedback_type, string $content
  * @param  mixed $content_url URL to view the content
  * @param  SHORT_TEXT $content_title Content title
  * @param  ?string $forum Forum to post comments in (null: site-wide default)
- * @param  ?TIME $time Time of comment topic (null: now)
+ * @param  ?TIME $time Time of comment, and the comment topic if it does not yet exist (null: now)
  * @return array Tuple: Rating details, Comment details, Trackback details
  */
 function embed_feedback_systems(string $feedback_type, string $content_id, int $allow_rating, int $allow_comments, int $allow_trackbacks, int $validated, ?int $submitter, $content_url, string $content_title, ?string $forum, ?int $time = null) : array

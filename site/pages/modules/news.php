@@ -708,8 +708,7 @@ class Module_news
             $myrow['submitter'],
             build_url($self_url_map, '_SELF', [], false, false, true),
             get_translated_text($myrow['title']),
-            find_overridden_comment_forum('news', strval($myrow['news_category'])),
-            $myrow['date_and_time']
+            find_overridden_comment_forum('news', strval($myrow['news_category']))
         );
 
         // Load details

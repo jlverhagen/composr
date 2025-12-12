@@ -652,8 +652,7 @@ class Module_galleries
             null,
             build_url(['page' => '_SELF'], '_SELF', [], true, false, true),
             $title_to_use_2,
-            find_overridden_comment_forum('galleries', $cat),
-            $myrow['add_date']
+            find_overridden_comment_forum('galleries', $cat)
         );
 
         // Sorting
@@ -1259,8 +1258,7 @@ class Module_galleries
                     $row['submitter'],
                     $content_url,
                     $content_title,
-                    $forum,
-                    $row['add_date']
+                    $forum
                 );
             }
 
@@ -1364,8 +1362,7 @@ class Module_galleries
             $myrow['submitter'],
             build_url(['page' => '_SELF', 'type' => 'image', 'id' => $id], '_SELF', [], false, false, true),
             (get_translated_text($myrow['title']) == '') ? do_lang('VIEW_IMAGE_IN', $true_category_name) : get_translated_text($myrow['title']),
-            find_overridden_comment_forum('images', $cat),
-            $myrow['add_date']
+            find_overridden_comment_forum('images', $cat)
         );
 
         // Description
@@ -1487,8 +1484,7 @@ class Module_galleries
             $myrow['submitter'],
             build_url(['page' => '_SELF', 'type' => 'video', 'id' => $id], '_SELF', [], false, false, true),
             (get_translated_text($myrow['title']) == '') ? do_lang('VIEW_VIDEO_IN', $true_category_name) : get_translated_text($myrow['title']),
-            find_overridden_comment_forum('videos', $cat),
-            $myrow['add_date']
+            find_overridden_comment_forum('videos', $cat)
         );
 
         // Description
