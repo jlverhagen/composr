@@ -86,14 +86,14 @@ class Module_admin_make_release
             return $error_msg;
         }
 
+        require_lang('cms_release_build');
+
         // We must be running from Git to use this tool
         if (!is_dir(get_file_base() . '/.git')) {
             warn_exit(do_lang_tempcode('MAKE_RELEASE_REQUIRES_GIT'));
         }
 
         $type = get_param_string('type', 'step1');
-
-        require_lang('cms_release_build');
 
         switch ($type) {
             case 'step1':

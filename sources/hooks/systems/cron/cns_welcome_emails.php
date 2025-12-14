@@ -40,8 +40,6 @@ class Hook_cron_cns_welcome_emails
     protected $member_sets_to_send_to;
     protected $time_now;
 
-    protected const INITIAL_BACK_TIME = 24 * 60 * 60 * 7; // Don't send for really old members, 7 day initial window is reasonable
-
     /**
      * Get info from this hook.
      *
@@ -71,8 +69,15 @@ class Hook_cron_cns_welcome_emails
 
             $this->time_now = time();
 
+            // Find the welcome mail with the longest time period
+            $initial_time = $GLOBALS['FORUM_DB']->query_select_value_if_there('f_welcome_emails', 'MAX(w_send_after_hours)');
+            if ($initial_time === null) {
+                $initial_time = 0;
+            }
+
+            // Do not send welcome e-mails to really old members if we never ran this before
             if ($last_run === null) {
-                $last_run = $this->time_now - self::INITIAL_BACK_TIME;
+                $last_run = $this->time_now - (60 * 60 * $initial_time);
             }
 
             $this->member_sets_to_send_to = [];
