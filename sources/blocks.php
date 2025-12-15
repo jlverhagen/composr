@@ -69,3 +69,27 @@ function block_signature_check(array $allowed, array $used) : bool
 
     return true;
 }
+
+/**
+ * Return a list of URL parameters that should be skipped in internalised AJAX URLs as they can lead to recursion or other bugs.
+ *
+ * @return array List of parameters that should be skipped
+ */
+function get_ajax_params_to_skip() : array
+{
+    return [
+        'zone',
+        'page',
+        'type',
+        'id',
+        'raw',
+        'cache',
+        'auth_key',
+        'block_map',
+        'block_map_sup',
+        'snippet',
+        'utheme',
+        'ajax',
+        'self_url',
+    ];
+}

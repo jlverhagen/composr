@@ -100,8 +100,18 @@ class Hook_snippet_block
         $self_url = get_param_string('self_url', null, INPUT_FILTER_URL_GENERAL);
         if ($self_url !== null) {
             list($zone, $attributes) = page_link_decode(url_to_page_link($self_url));
+
+            // Filter out recursive URL parameters
+            $new_get = [];
+            foreach ($attributes as $attribute => $attribute_value) {
+                if (in_array($attribute, get_ajax_params_to_skip())) {
+                    continue;
+                }
+                $new_get[$attribute] = $attribute_value;
+            }
+
             list($old_get, $old_zone, $old_current_script) = set_execution_context(
-                $attributes,
+                $new_get,
                 $zone,
                 'index',
                 false,
