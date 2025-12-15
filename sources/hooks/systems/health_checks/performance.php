@@ -176,14 +176,33 @@ class Hook_health_check_performance extends Source_hook_health_check
         require_code('files');
         require_code('developer_tools');
 
-        $data = cms_http_request($url, ['cookies' => ['cc_cookie' => get_cookie_consent_for_testing(['NON_ESSENTIAL']), 'last_visit' => '0']]);
+        // Test 1: has_cookies is being set and is equal to 1
+        $data = cms_http_request($url, ['cookies' => ['cc_cookie' => get_cookie_consent_for_testing()]]);
         if ((strpos($data->message, '4') === 0) || (strpos($data->message, '5') === 0)) {
-            $this->stateCheckSkipped('URL [url="' . $url . '"]' . $url . '[/url] returned error.');
+            $this->stateCheckSkipped('URL [url="' . $url . '"]' . $url . '[/url] returned error (test 1).');
             return;
         }
+        $ok = true;
+        if (!isset($data->new_cookies['has_cookies'])) {
+            $ok = false;
+        } elseif ($data->new_cookies['has_cookies']['value'] != '1') {
+            $ok = false;
+        }
+        $this->assertTrue($ok, 'Cookies are not being set.');
 
-        $this->assertTrue(isset($data->new_cookies['has_cookies']), 'Did not detect cookies getting set.');
-        $this->assertTrue(!isset($data->new_cookies['last_visit']), 'Cookie consent is not properly preventing cookies from getting set when a user denies them.');
+        // Test 2: Cookie consent is rejected and has_cookies is either not set or deleted
+        $data = cms_http_request($url, ['cookies' => ['cc_cookie' => get_cookie_consent_for_testing(['ESSENTIAL'])]]);
+        if ((strpos($data->message, '4') === 0) || (strpos($data->message, '5') === 0)) {
+            $this->stateCheckSkipped('URL [url="' . $url . '"]' . $url . '[/url] returned error (test 2).');
+            return;
+        }
+        $ok = false;
+        if (!isset($data->new_cookies['has_cookies'])) {
+            $ok = true;
+        } elseif ($data->new_cookies['has_cookies']['value'] == 'deleted') {
+            $ok = true;
+        }
+        $this->assertTrue($ok, 'Cookie consent is not preventing cookies from being set when a user rejects them.');
     }
 
     /**
