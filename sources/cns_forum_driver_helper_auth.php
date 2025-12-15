@@ -41,13 +41,14 @@ function cns_create_login_cookie(int $member_id)
     cms_setcookie(get_member_cookie(), strval($member_id), 'PERSONALIZATION', false, true);
 
     // Password
-    $login_key = $GLOBALS['FORUM_DRIVER']->get_member_row_field($member_id, 'm_login_key_hash');
-    if ($login_key == '') {
-        require_code('crypt');
-        $login_key = get_secure_random_string(32, CRYPT_BASE64); // Needs to be long and complex as it's like a password
-        $login_key_hash = ratchet_hash($login_key, get_site_salt() . '_' . get_pass_cookie());
-        $GLOBALS['FORUM_DB']->query_update('f_members', ['m_login_key_hash' => $login_key_hash], ['id' => $member_id], '', 1);
+    require_code('crypt');
+    $member_salt = $GLOBALS['FORUM_DRIVER']->get_member_row_field($member_id, 'm_pass_salt');
+    if ($member_salt == '') {
+        $member_salt = get_site_salt();
     }
+    $login_key = get_secure_random_string(32, CRYPT_BASE64); // Needs to be long and complex as it's like a password
+    $login_key_hash = ratchet_hash($login_key, $member_salt);
+    $GLOBALS['FORUM_DB']->query_update('f_members', ['m_login_key_hash' => $login_key_hash], ['id' => $member_id], '', 1);
     cms_setcookie(get_pass_cookie(), $login_key, 'PERSONALIZATION', false, true);
 }
 
@@ -227,7 +228,11 @@ function cns_authorise_login(object $this_ref, ?string $username, ?int $member_i
                 case 'bcrypt_temporary':
                 case 'bcrypt_expired':
                     require_code('crypt');
-                    if (($row['m_login_key_hash'] == '') || (!ratchet_hash_verify($password_mixed, get_site_salt() . '_' . get_pass_cookie(), $row['m_login_key_hash']))) {
+                    $member_salt = $GLOBALS['FORUM_DRIVER']->get_member_row_field($member_id, 'm_pass_salt');
+                    if ($member_salt == '') {
+                        $member_salt = get_site_salt();
+                    }
+                    if (($row['m_login_key_hash'] == '') || (!ratchet_hash_verify($password_mixed, $member_salt, $row['m_login_key_hash']))) {
                         cms_setcookie(get_member_cookie(), '', 'PERSONALIZATION', false, true, -14.0);
                         cms_setcookie(get_pass_cookie(), '', 'PERSONALIZATION', false, true, -14.0);
                         require_code('tempcode'); // This can be incidental even in fast AJAX scripts, if an old invalid cookie is present, so we need Tempcode for do_lang_tempcode
