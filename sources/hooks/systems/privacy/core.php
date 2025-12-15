@@ -108,12 +108,6 @@ class Hook_privacy_core extends Source_hook_privacy_base
                     'session' => false,
                     'httponly' => true,
                 ],
-                'cms_autosave_*' => [
-                    'category' => 'NON-ESSENTIAL',
-                    'reason' => do_lang_tempcode('COOKIE_autosave'),
-                    'session' => false,
-                    'httponly' => false,
-                ],
                 'tray_*' => [ // TODO: deprecated?
                     'category' => 'PERSONALIZATION',
                     'reason' => do_lang_tempcode('COOKIE_trays_tray'),
