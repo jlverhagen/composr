@@ -174,41 +174,16 @@ class Hook_health_check_performance extends Source_hook_health_check
 
         require_code('global4');
         require_code('files');
+        require_code('developer_tools');
 
-        $headers = @cms_get_headers($url, 1);
-        if ($headers === false) {
-            $this->stateCheckSkipped('Could not find headers for URL [url="' . $url . '"]' . $url . '[/url]');
+        $data = cms_http_request($url, ['cookies' => ['cc_cookie' => get_cookie_consent_for_testing(['NON_ESSENTIAL']), 'last_visit' => '0']]);
+        if ((strpos($data->message, '4') === 0) || (strpos($data->message, '5') === 0)) {
+            $this->stateCheckSkipped('URL [url="' . $url . '"]' . $url . '[/url] returned error.');
             return;
         }
 
-        $found_has_cookies_cookie = false;
-        foreach ($headers as $key => $vals) {
-            if (!is_string($key)) {
-                continue;
-            }
-
-            if (cms_strtolower_ascii($key) == cms_strtolower_ascii('Set-Cookie')) {
-                if (is_string($vals)) {
-                    $vals = [$vals];
-                }
-
-                foreach ($vals as $val) {
-                    if (preg_match('#^has_cookies=1;#', $val) != 0) {
-                        $found_has_cookies_cookie = true;
-                    }
-
-                    // Large cookies set
-                    $_val = preg_replace('#^.*=#U', '', preg_replace('#; .*$#s', '', $val));
-                    $this->assertTrue(strlen($_val) < 100, 'Large cookie @ ' . clean_file_size(strlen($_val)));
-                }
-
-                // Too many cookies set
-                $this->assertTrue(count($vals) < 8, 'Many cookies are being set which is bad for performance @ ' . integer_format(count($vals)) . ' cookies');
-            }
-        }
-
-        // Site cookies not set
-        $this->assertTrue($found_has_cookies_cookie, 'Cookies not being properly set');
+        $this->assertTrue(isset($data->new_cookies['has_cookies']), 'Did not detect cookies getting set.');
+        $this->assertTrue(!isset($data->new_cookies['last_visit']), 'Cookie consent is not properly preventing cookies from getting set when a user denies them.');
     }
 
     /**

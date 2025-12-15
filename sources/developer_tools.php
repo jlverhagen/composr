@@ -604,3 +604,24 @@ function make_dummy_db_row(string $table, bool $allow_null = true, array $forced
 
     return $primary_map;
 }
+
+/**
+ * Get a default cc_cookie for use in cookie tests.
+ *
+ * @param  array $exclude Array of categories we should exclude; this is to test user rejection
+ * @return string The cc_cookie data in JSON format
+ */
+function get_cookie_consent_for_testing(array $exclude = []) : string
+{
+    $data = [
+        'categories' => array_diff([
+            'ESSENTIAL',
+            'PERSONALIZATION',
+            'MARKETING',
+            'ANALYTICS',
+            'NON-ESSENTIAL',
+        ], $exclude),
+    ];
+
+    return json_encode($data);
+}
