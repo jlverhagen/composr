@@ -1048,20 +1048,20 @@ This section is not designed as primary documentation for the tools. Those tools
 | [tt]meta_toolkit[/tt]
 | Command-line via PHP interpreter
 |-
-| [tt]db_export.sh[/tt]
+| [tt]db_export.php[/tt]
 | Export the live database to an SQL dump.
 | [tt]helper_scripts[/tt]
-| Command-line via Bash
+| Command-line via PHP interpreter
 |-
-| [tt]db_import.sh[/tt]
+| [tt]db_import.php[/tt]
 | Import an SQL dump to the live database.
 | [tt]helper_scripts[/tt]
-| Command-line via Bash
+| Command-line via PHP interpreter
 |-
-| [tt]db_init.sh[/tt]
+| [tt]db_init.php[/tt]
 | Create an empty database as specified by [tt]_config.php[/tt].
 | [tt]helper_scripts[/tt]
-| Command-line via Bash
+| Command-line via PHP interpreter
 |-
 | [tt]adminzone:tar_dump[/tt]
 | Save the live website into a TAR file.

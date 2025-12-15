@@ -685,6 +685,8 @@ function get_sql_dump($out_file, bool $include_drops = false, bool $include_data
             }
         }
 
+        // TODO: foreign key constraints when we support them
+
         // Data
         if ($include_data) {
             $start = 0;
