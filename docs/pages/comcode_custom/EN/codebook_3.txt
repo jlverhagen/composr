@@ -1048,20 +1048,20 @@ This section is not designed as primary documentation for the tools. Those tools
 | [tt]meta_toolkit[/tt]
 | Command-line via PHP interpreter
 |-
-| [tt]db_export.sh[/tt]
+| [tt]db_export.php[/tt]
 | Export the live database to an SQL dump.
 | [tt]helper_scripts[/tt]
-| Command-line via Bash
+| Command-line via PHP interpreter
 |-
-| [tt]db_import.sh[/tt]
+| [tt]db_import.php[/tt]
 | Import an SQL dump to the live database.
 | [tt]helper_scripts[/tt]
-| Command-line via Bash
+| Command-line via PHP interpreter
 |-
-| [tt]db_init.sh[/tt]
+| [tt]db_init.php[/tt]
 | Create an empty database as specified by [tt]_config.php[/tt].
 | [tt]helper_scripts[/tt]
-| Command-line via Bash
+| Command-line via PHP interpreter
 |-
 | [tt]adminzone:tar_dump[/tt]
 | Save the live website into a TAR file.
@@ -1272,6 +1272,12 @@ This section is not designed as primary documentation for the tools. Those tools
 | Publish a Composr release on the website the module runs on (not usually run directly, linked to from [tt]adminzone:make_release[/tt]).
 | [tt]cms_homesite[/tt]
 | Composr module
+|-
+| [tt]adminzone:make_hotfix[/tt]
+| Generate a hotfix TAR archive from specified git commits to upload to the issue tracker.
+| [tt]cms_release_build[/tt]
+| Composr module
+
 |}
 
 [title="3"]API services[/title]
