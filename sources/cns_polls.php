@@ -141,11 +141,8 @@ function cns_may_delete_poll_by(?int $forum_id, int $poll_owner, ?int $member_id
 function cns_poll_get_results(int $poll_id, bool $request_results = true, ?array $request_voters = null, ?int $answer_id = null) : ?array
 {
     // SQL injection prevention on $request_voters[1] ($order_by)
-    $acceptable_orders = ['pv_date_time ASC', 'pv_date_time DESC', 'pv_member_id ASC', 'pv_member_id DESC', 'pv_answer_id ASC', 'pv_answer_id DESC', 'pv_cache_voting_power ASC', 'pv_cache_voting_power DESC'];
-    if ($request_voters !== null && array_key_exists(1, $request_voters) && array_search($request_voters[1], $acceptable_orders) === false) {
-        log_hack_attack_and_exit('ORDERBY_HACK');
-        warn_exit(do_lang_tempcode('INTERNAL_ERROR', escape_html('dad9818c2e0a574bb2020e8af7b28c2f')));
-    }
+    $acceptable_orders = ['pv_date_time', 'pv_member_id', 'pv_answer_id', 'pv_cache_voting_power'];
+    process_sorting_params(null, $request_voters[1], $acceptable_orders);
 
     $poll_info = $GLOBALS['FORUM_DB']->query_select('f_polls', ['*'], ['id' => $poll_id], '', 1);
     if (!array_key_exists(0, $poll_info)) {

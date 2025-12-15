@@ -84,10 +84,8 @@ class Hook_members_quiz
             'q_time ASC' => 'OLDEST_RESULTS_FIRST',
             'q_time DESC' => 'NEWEST_RESULTS_FIRST',
         ];
-        if (!array_key_exists($order, $_selectors)) {
-            log_hack_attack_and_exit('ORDERBY_HACK');
-            warn_exit(do_lang_tempcode('INTERNAL_ERROR', escape_html('5c716d5eea045f50bbccc91e08ed945f')));
-        }
+        list($sql_sort, $sort_order, $sortable) = process_sorting_params(null, $order, ['q_name', 'q_time']);
+
         $selectors = new Tempcode();
         foreach ($_selectors as $selector_value => $selector_name) {
             $selected = ($order == $selector_value);

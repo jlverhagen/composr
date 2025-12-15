@@ -360,15 +360,8 @@ class Source_revisions_engine_files
         $max = get_param_integer('revisions_max', 5);
 
         $sortables = ['r_time' => do_lang_tempcode('DATE')];
-        $test = explode(' ', get_param_string('revisions_sort', 'r_time DESC', INPUT_FILTER_GET_COMPLEX), 2);
-        if (count($test) == 1) {
-            $test[1] = 'DESC';
-        }
-        list($sortable, $sort_order) = $test;
-        if (((cms_strtoupper_ascii($sort_order) != 'ASC') && (cms_strtoupper_ascii($sort_order) != 'DESC')) || (!array_key_exists($sortable, $sortables))) {
-            log_hack_attack_and_exit('ORDERBY_HACK');
-            warn_exit(do_lang_tempcode('INTERNAL_ERROR', escape_html('6f67a7c56a2c55ccb5f12290237df910')));
-        }
+        $current_ordering = get_param_string('revisions_sort', 'r_time DESC', INPUT_FILTER_GET_COMPLEX);
+        list($sql_sort, $sort_order, $sortable) = process_sorting_params(null, $current_ordering, array_keys($sortables));
 
         $max_rows = $this->total_revisions($directory, $filename_id, $ext);
 

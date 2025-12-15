@@ -479,6 +479,8 @@ class Module_search
 
         $author = get_param_string('author', '');
         $author_id = ($author != '') ? $GLOBALS['FORUM_DRIVER']->get_member_from_username($author) : null;
+
+        // TODO: use process_sorting_params
         $sort = get_param_string('sort', 'relevance');
         $direction = get_param_string('direction', 'DESC');
         if (!in_array(cms_strtoupper_ascii($direction), ['ASC', 'DESC'])) {

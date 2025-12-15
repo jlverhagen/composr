@@ -271,15 +271,8 @@ class Module_admin_points
             $sortables['amount_gift_points'] = do_lang_tempcode('GIFT_POINTS');
         }
         $sortables['amount_points'] = do_lang_tempcode('POINTS');
-        $test = explode(' ', get_param_string('ledger_sort', 'date_and_time DESC', INPUT_FILTER_GET_COMPLEX), 2);
-        if (count($test) == 1) {
-            $test[1] = 'DESC';
-        }
-        list($sortable, $sort_order) = $test;
-        if (((cms_strtoupper_ascii($sort_order) != 'ASC') && (cms_strtoupper_ascii($sort_order) != 'DESC')) || (!array_key_exists($sortable, $sortables))) {
-            log_hack_attack_and_exit('ORDERBY_HACK');
-            warn_exit(do_lang_tempcode('INTERNAL_ERROR', escape_html('0d98ad45c9025d8281e9c9659d3c808c')));
-        }
+        $current_ordering = get_param_string('ledger_sort', 'date_and_time DESC', INPUT_FILTER_GET_COMPLEX);
+        list($sql_sort, $sort_order, $sortable) = process_sorting_params(null, $current_ordering, array_keys($sortables));
 
         $rows = $GLOBALS['SITE_DB']->query_select('points_ledger r', ['*'], $where, $end . ' ORDER BY r.' . $sortable . ' ' . $sort_order, $max, $start);
         $result_entries = new Tempcode();

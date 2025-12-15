@@ -147,10 +147,7 @@ function find_page_stats_for(int $member_id, string $ip, int $start = 0, int $ma
     require_lang('zones');
 
     $sortables = ['date_and_time' => do_lang_tempcode('DATE'), 'page_link' => do_lang_tempcode('PAGE_LINK')];
-    if (((cms_strtoupper_ascii($sort_order) != 'ASC') && (cms_strtoupper_ascii($sort_order) != 'DESC')) || (!array_key_exists($sortable, $sortables))) {
-        log_hack_attack_and_exit('ORDERBY_HACK');
-        warn_exit(do_lang_tempcode('INTERNAL_ERROR', escape_html('7577cd4a99325591b2c28f029ba50b68')));
-    }
+    list($sql_sort, $sort_order, $sortable) = process_sorting_params(null, $sortable . ' ' . $sort_order, array_keys($sortables));
 
     $query = '';
     if (!is_guest($member_id)) {
@@ -220,15 +217,8 @@ function find_security_alerts(array $where = [], string $end = '') : array
     $max = get_param_integer('alert_max', 25);
 
     $sortables = ['date_and_time' => do_lang_tempcode('DATE_TIME'), 'risk_score' => do_lang_tempcode('RISK'), 'ip' => do_lang_tempcode('IP_ADDRESS')];
-    $test = explode(' ', get_param_string('alert_sort', 'date_and_time DESC', INPUT_FILTER_GET_COMPLEX));
-    if (count($test) == 1) {
-        $test[1] = 'DESC';
-    }
-    list($sortable, $sort_order) = $test;
-    if (((cms_strtoupper_ascii($sort_order) != 'ASC') && (cms_strtoupper_ascii($sort_order) != 'DESC')) || (!array_key_exists($sortable, $sortables))) {
-        log_hack_attack_and_exit('ORDERBY_HACK');
-        warn_exit(do_lang_tempcode('INTERNAL_ERROR', escape_html('815d3f3eb1595ca8b4f1ba9998ef3e99')));
-    }
+    $current_ordering = get_param_string('alert_sort', 'date_and_time DESC', INPUT_FILTER_GET_COMPLEX);
+    list($sql_sort, $sort_order, $sortable) = process_sorting_params(null, $current_ordering, array_keys($sortables));
 
     $_fields = [do_lang_tempcode('FROM'), do_lang_tempcode('DATE_TIME'), do_lang_tempcode('RISK'), do_lang_tempcode('IP_ADDRESS'), do_lang_tempcode('REASON'), new Tempcode()];
     $header_row = results_header_row($_fields, $sortables, 'alert_sort', $sortable . ' ' . $sort_order);

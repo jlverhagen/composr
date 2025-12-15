@@ -264,16 +264,8 @@ class Module_admin_shopping
             'total_price' => do_lang_tempcode('PRICE'),
             'order_status' => do_lang_tempcode('STATUS'),
         ];
-
-        $query_sort = explode(' ', get_param_string('sort', 'add_date ASC', INPUT_FILTER_GET_COMPLEX), 2);
-        if (count($query_sort) == 1) {
-            $query_sort[] = 'ASC';
-        }
-        list($sortable, $sort_order) = $query_sort;
-        if (((cms_strtoupper_ascii($sort_order) != 'ASC') && (cms_strtoupper_ascii($sort_order) != 'DESC')) || (!array_key_exists($sortable, $sortables))) {
-            log_hack_attack_and_exit('ORDERBY_HACK');
-            warn_exit(do_lang_tempcode('INTERNAL_ERROR', escape_html('748c83ee82d8525590994864e584ed5d')));
-        }
+        $current_ordering = get_param_string('sort', 'add_date DESC', INPUT_FILTER_GET_COMPLEX);
+        list($sql_sort, $sort_order, $sortable) = process_sorting_params(null, $current_ordering, array_keys($sortables));
 
         $filtercode = [
             'add_date<add_date_op><add_date>',

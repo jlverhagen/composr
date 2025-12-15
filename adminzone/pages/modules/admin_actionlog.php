@@ -248,15 +248,8 @@ class Module_admin_actionlog
         $start = get_param_integer('start', 0);
         $max = get_param_integer('max', 50);
         $sortables = ['date_and_time' => do_lang_tempcode('DATE_TIME'), 'the_type' => do_lang_tempcode('ACTION')];
-        $test = explode(' ', get_param_string('sort', 'date_and_time DESC', INPUT_FILTER_GET_COMPLEX), 2);
-        if (count($test) == 1) {
-            $test[1] = 'DESC';
-        }
-        list($sortable, $sort_order) = $test;
-        if (((cms_strtoupper_ascii($sort_order) != 'ASC') && (cms_strtoupper_ascii($sort_order) != 'DESC')) || (!array_key_exists($sortable, $sortables))) {
-            log_hack_attack_and_exit('ORDERBY_HACK');
-            warn_exit(do_lang_tempcode('INTERNAL_ERROR', escape_html('c10954e000e5502e8588bbf14a4eda2a')));
-        }
+        $current_ordering = get_param_string('sort', 'date_and_time DESC', INPUT_FILTER_GET_COMPLEX);
+        list($sql_sort, $sort_order, $sortable) = process_sorting_params(null, $current_ordering, array_keys($sortables));
 
         require_code('templates_results_table');
         $field_titles = [

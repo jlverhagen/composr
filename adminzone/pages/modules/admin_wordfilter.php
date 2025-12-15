@@ -386,16 +386,12 @@ class Module_admin_wordfilter extends Source_standard_crud_module
         require_code('wordfilter');
 
         $current_ordering = get_param_string('sort', 'word ASC', INPUT_FILTER_GET_COMPLEX);
-        list($sortable, $sort_order) = explode(' ', $current_ordering, 2);
         $sortables = [
             'word' => do_lang_tempcode('WORD'),
             'w_replacement' => do_lang_tempcode('REPLACEMENT'),
             'w_match_type' => do_lang_tempcode('MATCH_TYPE'),
         ];
-        if (((cms_strtoupper_ascii($sort_order) != 'ASC') && (cms_strtoupper_ascii($sort_order) != 'DESC')) || (!array_key_exists($sortable, $sortables))) {
-            log_hack_attack_and_exit('ORDERBY_HACK');
-            warn_exit(do_lang_tempcode('INTERNAL_ERROR', escape_html('f12e0e813aa25e908ef6b9714854cf7b')));
-        }
+        list($sql_sort, $sort_order, $sortable) = process_sorting_params(null, $current_ordering, array_keys($sortables));
 
         $columns = [];
         $columns[] = do_lang_tempcode('WORD');

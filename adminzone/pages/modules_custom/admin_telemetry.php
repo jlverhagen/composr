@@ -252,15 +252,8 @@ class Module_admin_telemetry
             'count_members' => do_lang_tempcode('CMS_COUNT_MEMBERS'),
             'count_daily_hits' => do_lang_tempcode('CMS_HITS_24_HRS'),
         ];
-        $test = explode(' ', get_param_string('sort', 'date_and_time DESC', INPUT_FILTER_GET_COMPLEX), 2);
-        if (count($test) == 1) {
-            $test[1] = 'DESC';
-        }
-        list($sortable, $sort_order) = $test;
-        if (((cms_strtoupper_ascii($sort_order) != 'ASC') && (cms_strtoupper_ascii($sort_order) != 'DESC')) || (!array_key_exists($sortable, $sortables))) {
-            log_hack_attack_and_exit('ORDERBY_HACK');
-            warn_exit(do_lang_tempcode('INTERNAL_ERROR', escape_html('b84fffc6982b588da34b4a6c6ffb7b9f')));
-        }
+        $current_ordering = get_param_string('sort', 'date_and_time DESC', INPUT_FILTER_GET_COMPLEX);
+        list($sql_sort, $sort_order, $sortable) = process_sorting_params(null, $current_ordering, array_keys($sortables));
         $order_by = ' ORDER BY ' . $sortable . ' ' . $sort_order;
 
         $select = 'r.id AS id,r.website_url AS website_url,r.website_name AS website_name,r.software_version AS website_version,r.may_feature AS website_may_feature,r.website_installed AS website_installed,MAX(s.date_and_time) AS date_and_time,MAX(s.count_members) AS count_members,MAX(s.count_daily_hits) AS count_daily_hits';
@@ -390,15 +383,8 @@ class Module_admin_telemetry
             'e_version' => do_lang_tempcode('VERSION'),
             'e_error_count' => do_lang_tempcode('TIMES_REPORTED'),
         ];
-        $test = explode(' ', get_param_string('sort', 'e_last_date_and_time DESC', INPUT_FILTER_GET_COMPLEX), 2);
-        if (count($test) == 1) {
-            $test[1] = 'DESC';
-        }
-        list($sortable, $sort_order) = $test;
-        if (((cms_strtoupper_ascii($sort_order) != 'ASC') && (cms_strtoupper_ascii($sort_order) != 'DESC')) || (!array_key_exists($sortable, $sortables))) {
-            log_hack_attack_and_exit('ORDERBY_HACK');
-            warn_exit(do_lang_tempcode('INTERNAL_ERROR', escape_html('cb54eb251ad058d0935c226b42440407')));
-        }
+        $current_ordering = get_param_string('sort', 'e_last_date_and_time DESC', INPUT_FILTER_GET_COMPLEX);
+        list($sql_sort, $sort_order, $sortable) = process_sorting_params(null, $current_ordering, array_keys($sortables));
         $select = 'SELECT r.*,s.website_url AS website_url,s.website_name AS website_name';
         $rows = $GLOBALS['SITE_DB']->query($select . ' FROM ' . get_table_prefix() . 'telemetry_errors r LEFT JOIN ' . get_table_prefix() . 'telemetry_sites s ON r.e_site=s.id WHERE 1=1' . $end . ' ORDER BY ' . $sortable . ' ' . $sort_order, $max, $start);
 
@@ -657,15 +643,8 @@ class Module_admin_telemetry
             'id' => do_lang_tempcode('IDENTIFIER'),
             'ignore_string' => do_lang_tempcode('TELEMETRY_IGNORE_STRING'),
         ];
-        $test = explode(' ', get_param_string('sort', 'id DESC', INPUT_FILTER_GET_COMPLEX), 2);
-        if (count($test) == 1) {
-            $test[1] = 'DESC';
-        }
-        list($sortable, $sort_order) = $test;
-        if (((cms_strtoupper_ascii($sort_order) != 'ASC') && (cms_strtoupper_ascii($sort_order) != 'DESC')) || (!array_key_exists($sortable, $sortables))) {
-            log_hack_attack_and_exit('ORDERBY_HACK');
-            warn_exit(do_lang_tempcode('INTERNAL_ERROR', escape_html('5bf811d6f2bc5838948b270b574d5a4e')));
-        }
+        $current_ordering = get_param_string('sort', 'id DESC', INPUT_FILTER_GET_COMPLEX);
+        list($sql_sort, $sort_order, $sortable) = process_sorting_params(null, $current_ordering, array_keys($sortables));
         $rows = $GLOBALS['SITE_DB']->query_select('telemetry_errors_ignore', ['*'], [], ' ORDER BY ' . $sortable . ' ' . $sort_order, $max, $start);
 
         // Build results table

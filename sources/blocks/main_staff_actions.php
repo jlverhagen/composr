@@ -154,15 +154,8 @@ PHP;
             'date_and_time' => [do_lang_tempcode('TIME'), 'DESC'],
             'frequency' => [do_lang_tempcode('POPULARITY'), 'DESC'],
         ];
-        $test = explode(' ', $sort, 2);
-        if (count($test) == 1) {
-            $test[1] = 'DESC';
-        }
-        list($sortable, $sort_order) = $test;
-        if (((cms_strtoupper_ascii($sort_order) != 'ASC') && (cms_strtoupper_ascii($sort_order) != 'DESC')) || (!array_key_exists($sortable, $sortables))) {
-            log_hack_attack_and_exit('ORDERBY_HACK');
-            return do_template('RED_ALERT', ['_GUID' => 'aab7559b9806537a985dd2310123d5ea', 'TEXT' => do_lang_tempcode('INTERNAL_ERROR', escape_html('e847133fd264525e864923dfb5830504'))]);
-        }
+        $current_ordering = get_param_string('sort', 'date_and_time DESC', INPUT_FILTER_GET_COMPLEX);
+        list($sql_sort, $sort_order, $sortable) = process_sorting_params(null, $current_ordering, array_keys($sortables), false);
         inform_non_canonical_parameter('sa_sort');
 
         require_code('templates_results_table');

@@ -329,6 +329,7 @@ function render_catalogue_category_entry_buildup(?int $category_id, string $cata
 
         if ((!empty($order_by_high_level)) && (strpos($order_by_high_level, ' ') !== false/*if false probably some bot probing URLs -- sorting always has a space between sorter and direction*/)) {
             // Find order by URL parameter
+            // TODO: use process_sorting_params
             list($order_by, $direction) = explode(' ', $order_by_high_level);
             if (($direction != 'ASC') && ($direction != 'DESC')) {
                 log_hack_attack_and_exit('ORDERBY_HACK');

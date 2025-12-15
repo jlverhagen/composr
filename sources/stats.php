@@ -446,15 +446,11 @@ function stats_generate_results_table(string $graph_name, array $filters = [], $
     $y_axis_label = $graph_final_details['y_axis_label'];
 
     $current_ordering = get_param_string($graph_name . '_sort', (!empty($graph_final_details['low_first'])) ? 'y ASC' : 'y DESC', INPUT_FILTER_GET_COMPLEX);
-    list($sortable, $sort_order) = explode(' ', $current_ordering, 2);
     $sortables = [
         'x' => $x_axis_label,
         'y' => $y_axis_label,
     ];
-    if (((cms_strtoupper_ascii($sort_order) != 'ASC') && (cms_strtoupper_ascii($sort_order) != 'DESC')) || (!array_key_exists($sortable, $sortables))) {
-        log_hack_attack_and_exit('ORDERBY_HACK');
-        warn_exit(do_lang_tempcode('INTERNAL_ERROR', escape_html('2c1b9b7e47c7594f8731e3c7f6d255f8')));
-    }
+    list($sql_sort, $sort_order, $sortable) = process_sorting_params(null, $current_ordering, array_keys($sortables));
 
     $columns = [];
     $columns[] = $x_axis_label;
