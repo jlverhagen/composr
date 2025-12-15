@@ -6107,10 +6107,10 @@ function _sanitise_error_msg(string $text) : string
  * Validate the given URL sorting parameters and transform them into usable information.
  * This should be used on all sortables interfaces.
  *
- * @param  ?ID_TEXT $content_type The content type on which we are sorting (null: none / do a very basic check)
+ * @param  ?ID_TEXT $content_type The content type on which we are sorting (null: none; assumes $url_sort/$allowed_sorts are SQL fields)
  * @param  string $url_sort The URL sort string
- * @param  ?array $allowed_sorts List of allowed sort types (null: default set for the content type; cannot be null if $content_type is null)
- * @param  boolean $strict_error Provide a hack-attack error on invalid input
+ * @param  ?array $allowed_sorts List of allowed sort types (null: use default set for the content type; cannot be null if $content_type is null)
+ * @param  boolean $strict_error Provide a hack-attack error on invalid input (false: invalid sort will result in falling back to a valid sort)
  * @return array A tuple: The SQL-style sort order, The sort direction, the sort type based on the URL sort string
  */
 function process_sorting_params(?string $content_type, string $url_sort, ?array $allowed_sorts = null, bool $strict_error = true) : array
@@ -6125,11 +6125,18 @@ function process_sorting_params(?string $content_type, string $url_sort, ?array 
             $parts[] = 'DESC';
         }
 
-        if (((cms_strtoupper_ascii($parts[1]) != 'ASC') && (cms_strtoupper_ascii($parts[1]) != 'DESC')) || (!in_array($parts[0], $allowed_sorts))) {
+        if (!in_array($parts[0], $allowed_sorts)) {
             if ($strict_error === true) {
                 log_hack_attack_and_exit('ORDERBY_HACK', $url_sort);
             }
-            warn_exit(do_lang_tempcode('INTERNAL_ERROR', escape_html('TODO')));
+            $parts[0] = $allowed_sorts[0];
+        }
+
+        if ((cms_strtoupper_ascii($parts[1]) != 'ASC') && (cms_strtoupper_ascii($parts[1]) != 'DESC')) {
+            if ($strict_error === true) {
+                log_hack_attack_and_exit('ORDERBY_HACK', $url_sort);
+            }
+            $parts[1] = 'DESC';
         }
 
         return [$parts[0] . ' ' . cms_strtoupper_ascii($parts[1]), cms_strtoupper_ascii($parts[1]), $parts[0]];
