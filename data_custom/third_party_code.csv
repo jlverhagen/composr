@@ -28,7 +28,7 @@ MediaElement.js,,https://github.com/mediaelement/mediaelement,Yes,Yes,Re-sync re
 modalwindow.js,,,No,Yes,No action,N/A,N/A,N/A,N/A,N/A,Original website dead; consider replacing with another library (perhaps Bootstrap's implementation)
 Modernizr,,https://modernizr.com/,No,Yes,Re-sync regularly,21st Feb 2024,3.6.0,N/A,N/A,N/A,
 OpenSpout,,https://github.com/openspout/openspout,Yes,No,Re-sync regularly,12th Oct 2024,4.26.0,PHP 8.2+,spreadsheets,N/A,"Replace all files in openspout and install the composer package (remove all require-dev packages)"
-Orestbida CookieConsent,,https://github.com/orestbida/cookieconsent,Yes,Yes,Re-sync regularly,5st Aug 2025,3.1.0,,N/A,N/A,"Re-sync regularly; use the UMD dist JavaScript file; update cookie_consent_override.css"
+Orestbida CookieConsent,,https://github.com/orestbida/cookieconsent,Yes,Yes,Re-sync regularly,5st Aug 2025,3.1.0,,N/A,Cookies,"Re-sync regularly; use the UMD dist JavaScript file; update cookie_consent_override.css"
 PDF.js,,https://github.com/mozilla/pdf.js,Yes,No,Re-sync regularly,21st Feb 2024,4.0.379,IE11+,N/A,N/A,Disable print/download buttons each time in viewer.html. Don't include web/compressed.tracemonkey-pldi-09.pdf
 PHP,php,https://github.com/php,Yes,N/A,"Maintain our github fork, re-sync if our origin version is no longer meeting our minimum requirements",20th Oct 2020,8.0.0 RC2,N/A,N/A,N/A,
 PHP ISO Codes,php_isocodes,https://github.com/sokil/php-isocodes,Yes,Yes,Re-sync regularly,28th Feb 2025,4.2.1,PHP 7.1+,N/A,N/A,"Use sokil/php-isocodes and sokil/php-isocodes-db-only; update using PHP Composer in sources/isocodes"
@@ -48,5 +48,5 @@ Twitter class,,https://github.com/tijsverkoyen/TwitterOAuth,No,No,No action,N/A,
 Unslider,,https://github.com/idiot/unslider,No,No,No action,31st Mar 2020,N/A,IE9+,N/A,N/A,"Library is not maintained, but there are some embedded jQuery libraries that needed updated for the newest jQuery - and that's now done."
 xsl_mopup.js,,,No,Yes,"Remove when Firefox doesn't need it, unlikely to happen",N/A,N/A,N/A,N/A,N/A,
 Web Font Loader,,https://github.com/typekit/webfontloader,No,Yes,Re-sync regularly,21st Feb 2024,1.6.28,N/A,N/A,N/A,
-php-imap2,php_imap2,https://github.com/javanile/php-imap2,Yes,Yes,Re-sync regularly,21st Feb 2024,0.1.10,PHP 7.0+,_protocol_imap,N/A,
+php-imap2,php_imap2,https://github.com/javanile/php-imap2,Yes,Yes,Re-sync regularly,21st Feb 2024,0.1.10,PHP 7.0+,_protocol_imap,IMAP login,
 Pace.js,,https://codebyzach.github.io/pace/,Yes,Yes,Re-sync regularly,2nd Jan 2025,1.2.4,N/A,N/A,N/A,"Add a 'use strict' in pace.js if not already there. Also download the 'Flat Top' theme CSS and save as 'pace.css'; replace background with Tempcode $GET,seed; move z-index from '.pace .pace-progress' to '.pace'"
