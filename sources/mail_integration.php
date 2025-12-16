@@ -278,7 +278,7 @@ abstract class Source_email_integration
 
             if (!is_cli()) {
                 require_code('failure');
-                cms_error_log(do_lang_tempcode('IMAP_ERROR', $error));
+                cms_error_log('IMAP: WARNING ' . $error);
             }
         }
 
