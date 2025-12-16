@@ -242,15 +242,8 @@ class Module_admin_security
         $max = get_param_integer('failed_max', 25);
 
         $sortables = ['date_and_time' => do_lang_tempcode('DATE_TIME'), 'ip' => do_lang_tempcode('IP_ADDRESS')];
-        $test = explode(' ', get_param_string('failed_sort', 'date_and_time DESC', INPUT_FILTER_GET_COMPLEX));
-        if (count($test) == 1) {
-            $test[1] = 'DESC';
-        }
-        list($_sortable, $sort_order) = $test;
-        if (((cms_strtoupper_ascii($sort_order) != 'ASC') && (cms_strtoupper_ascii($sort_order) != 'DESC')) || (!array_key_exists($_sortable, $sortables))) {
-            log_hack_attack_and_exit('ORDERBY_HACK');
-            warn_exit(do_lang_tempcode('INTERNAL_ERROR', escape_html('72c3c2beee885d2fafd97b8581f537e5')));
-        }
+        $current_ordering = get_param_string('failed_sort', 'date_and_time DESC', INPUT_FILTER_GET_COMPLEX);
+        list($sql_sort, $sort_order, $_sortable) = process_sorting_params(null, $current_ordering, array_keys($sortables));
 
         // Prepare Filtercode
         require_code('filtercode');

@@ -368,15 +368,8 @@ class Source_revisions_engine_database
         $max = get_param_integer('revisions_max', 25);
 
         $sortables = ['log_time' => do_lang_tempcode('DATE')];
-        $test = explode(' ', get_param_string('revisions_sort', 'log_time DESC', INPUT_FILTER_GET_COMPLEX), 2);
-        if (count($test) == 1) {
-            $test[1] = 'DESC';
-        }
-        list($sortable, $sort_order) = $test;
-        if (((cms_strtoupper_ascii($sort_order) != 'ASC') && (cms_strtoupper_ascii($sort_order) != 'DESC')) || (!array_key_exists($sortable, $sortables))) {
-            log_hack_attack_and_exit('ORDERBY_HACK');
-            warn_exit(do_lang_tempcode('INTERNAL_ERROR', escape_html('6706f9cacb0852578f9bb10f4dfee0c2')));
-        }
+        $current_ordering = get_param_string('revisions_sort', 'log_time DESC', INPUT_FILTER_GET_COMPLEX);
+        list($sql_sort, $sort_order, $sortable) = process_sorting_params(null, $current_ordering, array_keys($sortables));
 
         $max_rows = $this->total_revisions($resource_types, $resource_id, $category_id, $member_id);
         $revisions = $this->find_revisions($resource_types, $resource_id, $category_id, $member_id, null, $max, $start);
@@ -489,15 +482,8 @@ class Source_revisions_engine_database
         $max = get_param_integer('revisions_max', 5);
 
         $sortables = ['log_time' => do_lang_tempcode('DATE')];
-        $test = explode(' ', get_param_string('revisions_sort', 'log_time DESC', INPUT_FILTER_GET_COMPLEX), 2);
-        if (count($test) == 1) {
-            $test[1] = 'DESC';
-        }
-        list($sortable, $sort_order) = $test;
-        if (((cms_strtoupper_ascii($sort_order) != 'ASC') && (cms_strtoupper_ascii($sort_order) != 'DESC')) || (!array_key_exists($sortable, $sortables))) {
-            log_hack_attack_and_exit('ORDERBY_HACK');
-            warn_exit(do_lang_tempcode('INTERNAL_ERROR', escape_html('022e7aa28be650a3871c01c3ca4a5b77')));
-        }
+        $current_ordering = get_param_string('revisions_sort', 'log_time DESC', INPUT_FILTER_GET_COMPLEX);
+        list($sql_sort, $sort_order, $sortable) = process_sorting_params(null, $current_ordering, array_keys($sortables));
 
         $max_rows = $this->total_revisions([$resource_type], $resource_id);
 

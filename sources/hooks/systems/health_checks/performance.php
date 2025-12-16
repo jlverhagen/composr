@@ -174,41 +174,35 @@ class Hook_health_check_performance extends Source_hook_health_check
 
         require_code('global4');
         require_code('files');
+        require_code('developer_tools');
 
-        $headers = @cms_get_headers($url, 1);
-        if ($headers === false) {
-            $this->stateCheckSkipped('Could not find headers for URL [url="' . $url . '"]' . $url . '[/url]');
+        // Test 1: has_cookies is being set and is equal to 1
+        $data = cms_http_request($url, ['cookies' => ['cc_cookie' => get_cookie_consent_for_testing()]]);
+        if ((strpos($data->message, '4') === 0) || (strpos($data->message, '5') === 0)) {
+            $this->stateCheckSkipped('URL [url="' . $url . '"]' . $url . '[/url] returned error (test 1).');
             return;
         }
-
-        $found_has_cookies_cookie = false;
-        foreach ($headers as $key => $vals) {
-            if (!is_string($key)) {
-                continue;
-            }
-
-            if (cms_strtolower_ascii($key) == cms_strtolower_ascii('Set-Cookie')) {
-                if (is_string($vals)) {
-                    $vals = [$vals];
-                }
-
-                foreach ($vals as $val) {
-                    if (preg_match('#^has_cookies=1;#', $val) != 0) {
-                        $found_has_cookies_cookie = true;
-                    }
-
-                    // Large cookies set
-                    $_val = preg_replace('#^.*=#U', '', preg_replace('#; .*$#s', '', $val));
-                    $this->assertTrue(strlen($_val) < 100, 'Large cookie @ ' . clean_file_size(strlen($_val)));
-                }
-
-                // Too many cookies set
-                $this->assertTrue(count($vals) < 8, 'Many cookies are being set which is bad for performance @ ' . integer_format(count($vals)) . ' cookies');
-            }
+        $ok = true;
+        if (!isset($data->new_cookies['has_cookies'])) {
+            $ok = false;
+        } elseif ($data->new_cookies['has_cookies']['value'] != '1') {
+            $ok = false;
         }
+        $this->assertTrue($ok, 'Cookies are not being set.');
 
-        // Site cookies not set
-        $this->assertTrue($found_has_cookies_cookie, 'Cookies not being properly set');
+        // Test 2: Cookie consent is rejected and has_cookies is either not set or deleted
+        $data = cms_http_request($url, ['cookies' => ['cc_cookie' => get_cookie_consent_for_testing(['ESSENTIAL'])]]);
+        if ((strpos($data->message, '4') === 0) || (strpos($data->message, '5') === 0)) {
+            $this->stateCheckSkipped('URL [url="' . $url . '"]' . $url . '[/url] returned error (test 2).');
+            return;
+        }
+        $ok = false;
+        if (!isset($data->new_cookies['has_cookies'])) {
+            $ok = true;
+        } elseif ($data->new_cookies['has_cookies']['value'] == 'deleted') {
+            $ok = true;
+        }
+        $this->assertTrue($ok, 'Cookie consent is not preventing cookies from being set when a user rejects them.');
     }
 
     /**

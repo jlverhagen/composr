@@ -522,18 +522,11 @@ class Module_banners
             require_code('templates_results_table');
 
             $current_ordering = get_param_string('sort', 'month ASC', INPUT_FILTER_GET_COMPLEX);
-            if (strpos($current_ordering, ' ') === false) {
-                warn_exit(do_lang_tempcode('INTERNAL_ERROR', escape_html('369894bd146f56ddb72bf32abfea74e7')));
-            }
-            list($sortable, $sort_order) = explode(' ', $current_ordering, 2);
             $sortables = [
                 'day' => do_lang_tempcode('DAY'),
                 'month' => do_lang_tempcode('MONTH'),
             ];
-            if (((cms_strtoupper_ascii($sort_order) != 'ASC') && (cms_strtoupper_ascii($sort_order) != 'DESC')) || (!array_key_exists($sortable, $sortables))) {
-                log_hack_attack_and_exit('ORDERBY_HACK');
-                warn_exit(do_lang_tempcode('INTERNAL_ERROR', escape_html('b360702a7c145c89b3d424b697e35650')));
-            }
+            list($sql_sort, $sort_order, $sortable) = process_sorting_params(null, $current_ordering, array_keys($sortables));
 
             $hr = [
                 do_lang_tempcode('DATE'),

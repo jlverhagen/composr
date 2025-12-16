@@ -241,10 +241,6 @@ class Module_cms_booking extends Source_standard_crud_module
         require_code('templates_results_table');
 
         $current_ordering = get_param_string('sort', 'sort_order ASC', INPUT_FILTER_GET_COMPLEX);
-        if (strpos($current_ordering, ' ') === false) {
-            warn_exit(do_lang_tempcode('INTERNAL_ERROR', escape_html('7f82589a39755299a3bdc37b42321d61')));
-        }
-        list($sortable, $sort_order) = explode(' ', $current_ordering, 2);
         $sortables = [
             'title' => do_lang_tempcode('TITLE'),
             'categorisation' => do_lang_tempcode('BOOKABLE_CATEGORISATION'),
@@ -252,10 +248,7 @@ class Module_cms_booking extends Source_standard_crud_module
             'sort_order' => do_lang_tempcode('SORT_ORDER'),
             'enabled' => do_lang_tempcode('ENABLED'),
         ];
-        if (((cms_strtoupper_ascii($sort_order) != 'ASC') && (cms_strtoupper_ascii($sort_order) != 'DESC')) || (!array_key_exists($sortable, $sortables))) {
-            log_hack_attack_and_exit('ORDERBY_HACK');
-            warn_exit(do_lang_tempcode('INTERNAL_ERROR', escape_html('94d9fe91eb33522797a06b25aa92d287')));
-        }
+        list($sql_sort, $sort_order, $sortable) = process_sorting_params(null, $current_ordering, array_keys($sortables));
 
         $fh = [];
         $fh[] = do_lang_tempcode('TITLE');
@@ -503,19 +496,12 @@ class Module_cms_booking_supplements extends Source_standard_crud_module
         require_code('templates_results_table');
 
         $current_ordering = get_param_string('sort', 'sort_order ASC', INPUT_FILTER_GET_COMPLEX);
-        if (strpos($current_ordering, ' ') === false) {
-            warn_exit(do_lang_tempcode('INTERNAL_ERROR', escape_html('e50609f873c959e48149d3583c65c7c8')));
-        }
-        list($sortable, $sort_order) = explode(' ', $current_ordering, 2);
         $sortables = [
             'title' => do_lang_tempcode('TITLE'),
             'price' => do_lang_tempcode('PRICE'),
             'sort_order' => do_lang_tempcode('SORT_ORDER'),
         ];
-        if (((cms_strtoupper_ascii($sort_order) != 'ASC') && (cms_strtoupper_ascii($sort_order) != 'DESC')) || (!array_key_exists($sortable, $sortables))) {
-            log_hack_attack_and_exit('ORDERBY_HACK');
-            warn_exit(do_lang_tempcode('INTERNAL_ERROR', escape_html('c343af8bb50857499eae653fcf5bcb28')));
-        }
+        list($sql_sort, $sort_order, $sortable) = process_sorting_params(null, $current_ordering, array_keys($sortables));
 
         $fh = [];
         $fh[] = do_lang_tempcode('TITLE');
@@ -705,17 +691,10 @@ class Module_cms_booking_blacks extends Source_standard_crud_module
         require_code('templates_results_table');
 
         $current_ordering = get_param_string('sort', 'blacked_from_year,blacked_from_month,blacked_from_day ASC', INPUT_FILTER_GET_COMPLEX);
-        if (strpos($current_ordering, ' ') === false) {
-            warn_exit(do_lang_tempcode('INTERNAL_ERROR', escape_html('4cbd37a1cad95f16802d24e681724863')));
-        }
-        list($sortable, $sort_order) = explode(' ', $current_ordering, 2);
         $sortables = [
             'blacked_from_year,blacked_from_month,blacked_from_day' => do_lang_tempcode('DATE'),
         ];
-        if (((cms_strtoupper_ascii($sort_order) != 'ASC') && (cms_strtoupper_ascii($sort_order) != 'DESC')) || (!array_key_exists($sortable, $sortables))) {
-            log_hack_attack_and_exit('ORDERBY_HACK');
-            warn_exit(do_lang_tempcode('INTERNAL_ERROR', escape_html('5d297a79287c5ab9bcbcb3968f71924d')));
-        }
+        list($sql_sort, $sort_order, $sortable) = process_sorting_params(null, $current_ordering, array_keys($sortables));
 
         $fh = [];
         $fh[] = do_lang_tempcode('FROM');
@@ -977,6 +956,7 @@ class Module_cms_booking_bookings extends Source_standard_crud_module
 
         require_code('templates_results_table');
 
+        // TODO: use process_sorting_params
         $current_ordering = get_param_string('sort', 'b_year DESC,b_month DESC,b_day DESC', INPUT_FILTER_GET_COMPLEX);
         list(, $sortable, $sort_order) = preg_split('#(.*) (ASC|DESC)#', $current_ordering, 2, PREG_SPLIT_DELIM_CAPTURE);
         $sortables = [

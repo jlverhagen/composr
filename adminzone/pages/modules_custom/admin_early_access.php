@@ -457,15 +457,8 @@ class Module_admin_early_access extends Source_standard_crud_module
             'c_num_views_allowed' => do_lang_tempcode('NUM_VIEWS_ALLOWED'),
             'c_creation_time' => do_lang_tempcode('DATE_TIME')
         ];
-        $test = explode(' ', get_param_string('early_access_sort', 'c_creation_time DESC', INPUT_FILTER_GET_COMPLEX), 2);
-        if (count($test) == 1) {
-            $test[1] = 'DESC';
-        }
-        list($sortable, $sort_order) = $test;
-        if (((cms_strtoupper_ascii($sort_order) != 'ASC') && (cms_strtoupper_ascii($sort_order) != 'DESC')) || (!array_key_exists($sortable, $sortables))) {
-            log_hack_attack_and_exit('ORDERBY_HACK');
-            warn_exit(do_lang_tempcode('INTERNAL_ERROR', escape_html('9333df6115ba5c0fbf3e25244f158398')));
-        }
+        $current_ordering = get_param_string('early_access_sort', 'c_creation_time DESC', INPUT_FILTER_GET_COMPLEX);
+        list($sql_sort, $sort_order, $sortable) = process_sorting_params(null, $current_ordering, array_keys($sortables));
 
         $max_rows = $GLOBALS['SITE_DB']->get_table_count_approx('early_access_codes');
         $rows = $GLOBALS['SITE_DB']->query_select('early_access_codes', ['*'], [], '', $max, $start);

@@ -202,20 +202,13 @@ class Module_admin_community_billboard extends Source_standard_crud_module
         require_code('templates_results_table');
 
         $current_ordering = get_param_string('sort', 'the_message ASC', INPUT_FILTER_GET_COMPLEX);
-        if (strpos($current_ordering, ' ') === false) {
-            warn_exit(do_lang_tempcode('INTERNAL_ERROR', escape_html('0c291cd541c6560c878126b4b78cf762')));
-        }
-        list($sortable, $sort_order) = explode(' ', $current_ordering, 2);
         $sortables = [
             'the_message' => do_lang_tempcode('MESSAGE'),
             'days' => do_lang_tempcode('DAYS_ORDERED'),
             'order_time' => do_lang_tempcode('ORDER_DATE'),
             'member_id' => do_lang_tempcode('metadata:OWNER'),
         ];
-        if (((cms_strtoupper_ascii($sort_order) != 'ASC') && (cms_strtoupper_ascii($sort_order) != 'DESC')) || (!array_key_exists($sortable, $sortables))) {
-            log_hack_attack_and_exit('ORDERBY_HACK');
-            warn_exit(do_lang_tempcode('INTERNAL_ERROR', escape_html('423d04c0003951549938f1e9f9742fb2')));
-        }
+        list($sql_sort, $sort_order, $sortable) = process_sorting_params(null, $current_ordering, array_keys($sortables));
 
         // Prepare Filtercode
         require_code('filtercode');

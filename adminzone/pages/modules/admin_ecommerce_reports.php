@@ -679,15 +679,8 @@ class Module_admin_ecommerce_reports
         $start = get_param_integer('start', 0);
         $max = get_param_integer('max', 50);
         $sortables = ['t_time' => do_lang_tempcode('DATE'), 't_price' => do_lang_tempcode('PRICE')];
-        $test = explode(' ', get_param_string('sort', 't_time DESC', INPUT_FILTER_GET_COMPLEX), 2);
-        if (count($test) == 1) {
-            $test[1] = 'DESC';
-        }
-        list($sortable, $sort_order) = $test;
-        if (((cms_strtoupper_ascii($sort_order) != 'ASC') && (cms_strtoupper_ascii($sort_order) != 'DESC')) || (!array_key_exists($sortable, $sortables))) {
-            log_hack_attack_and_exit('ORDERBY_HACK');
-            warn_exit(do_lang_tempcode('INTERNAL_ERROR', escape_html('f03a34c67382573793f5f4e128ce4ae7')));
-        }
+        $current_ordering = get_param_string('sort', 't_time DESC', INPUT_FILTER_GET_COMPLEX);
+        list($sql_sort, $sort_order, $sortable) = process_sorting_params(null, $current_ordering, array_keys($sortables));
 
         // Prepare Filtercode
         require_code('filtercode');
@@ -1182,15 +1175,8 @@ class Module_admin_ecommerce_reports
 
         // Sorting
         $sortables = ['s_type_code' => do_lang('PRODUCT'), 's_state' => do_lang('STATUS'), 's_time' => do_lang('DATE_TIME')];
-        $test = explode(' ', get_param_string('sort', 's_type_code ASC', INPUT_FILTER_GET_COMPLEX), 2);
-        if (count($test) == 1) {
-            $test[1] = 'DESC';
-        }
-        list($sortable, $sort_order) = $test;
-        if (((cms_strtoupper_ascii($sort_order) != 'ASC') && (cms_strtoupper_ascii($sort_order) != 'DESC')) || (!array_key_exists($sortable, $sortables))) {
-            log_hack_attack_and_exit('ORDERBY_HACK');
-            warn_exit(do_lang_tempcode('INTERNAL_ERROR', escape_html('c10e06066afb571f92a1c5145f443fba')));
-        }
+        $current_ordering = get_param_string('sort', 's_type_code ASC', INPUT_FILTER_GET_COMPLEX);
+        list($sql_sort, $sort_order, $sortable) = process_sorting_params(null, $current_ordering, array_keys($sortables));
 
         // Prepare Filtercode
         require_code('filtercode');

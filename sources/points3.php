@@ -156,15 +156,8 @@ function points_profile(int $member_id_of, ?int $member_id_viewing) : object
         $start = get_param_integer('a_start_' . $type, 0);
         $max = get_param_integer('a_max_' . $type, intval(get_option('point_logs_per_page')));
         $sortables = ['count' => do_lang('TRANSACTIONS'), 'points' => do_lang('POINTS')];
-        $test = explode(' ', get_param_string('a_sort_' . $type, 'points DESC', INPUT_FILTER_GET_COMPLEX));
-        if (count($test) == 1) {
-            $test[1] = 'DESC';
-        }
-        list($sortable, $sort_order) = $test;
-        if (((cms_strtoupper_ascii($sort_order) != 'ASC') && (cms_strtoupper_ascii($sort_order) != 'DESC')) || (!array_key_exists($sortable, $sortables))) {
-            log_hack_attack_and_exit('ORDERBY_HACK');
-            warn_exit(do_lang_tempcode('INTERNAL_ERROR', escape_html('75a9c3e19bb956e7bd791c20e851cd69')));
-        }
+        $current_ordering = get_param_string('a_sort_' . $type, 'points DESC', INPUT_FILTER_GET_COMPLEX);
+        list($sql_sort, $sort_order, $sortable) = process_sorting_params(null, $current_ordering, array_keys($sortables));
 
         $out = new Tempcode();
         $transactions_header = protect_from_escaping(do_template('HELP_ICON_PHRASE', [
@@ -435,15 +428,8 @@ function points_get_transactions_screen(string $type, int $member_id_of, int $me
     $start = get_param_integer('ledger_start_' . $type, 0);
     $max = get_param_integer('ledger_max_' . $type, intval(get_option('point_logs_per_page')));
     $sortables = ['date_and_time' => do_lang_tempcode('DATE'), 'amount' => do_lang_tempcode('AMOUNT')];
-    $test = explode(' ', get_param_string('ledger_sort_' . $type, 'date_and_time DESC', INPUT_FILTER_GET_COMPLEX));
-    if (count($test) == 1) {
-        $test[1] = 'DESC';
-    }
-    list($sortable, $sort_order) = $test;
-    if (((cms_strtoupper_ascii($sort_order) != 'ASC') && (cms_strtoupper_ascii($sort_order) != 'DESC')) || (!array_key_exists($sortable, $sortables))) {
-        log_hack_attack_and_exit('ORDERBY_HACK');
-        warn_exit(do_lang_tempcode('INTERNAL_ERROR', escape_html('e97c7572d8c45789a102ecc8e819efa8')));
-    }
+    $current_ordering = get_param_string('ledger_sort_' . $type, 'date_and_time DESC', INPUT_FILTER_GET_COMPLEX);
+    list($sql_sort, $sort_order, $sortable) = process_sorting_params(null, $current_ordering, array_keys($sortables));
 
     list($max_rows, $rows) = points_get_transactions($type, $member_id_of, $member_id_viewing, $max, $start, $sortable, $sort_order, null, false, $skip_low_impact);
     if ($max_rows == 0) {

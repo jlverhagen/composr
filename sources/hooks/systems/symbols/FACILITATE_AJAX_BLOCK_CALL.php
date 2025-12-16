@@ -66,6 +66,7 @@ class Hook_symbol_FACILITATE_AJAX_BLOCK_CALL
             $auth_key = '';
 
             require_code('blocks');
+
             $map = comma_list_str_to_arr($param[0]);
             $_block_constraints = block_params_to_block_signature($map);
             if (isset($param[1])) {
@@ -106,7 +107,10 @@ class Hook_symbol_FACILITATE_AJAX_BLOCK_CALL
             }
 
             $keep = symbol_tempcode('KEEP');
-            $self_url_encoded = static_evaluate_tempcode(protect_url_parameter(get_self_url(true)));
+
+
+            $self_url = get_self_url(true, false, array_fill_keys(get_ajax_params_to_skip(), null));
+            $self_url_encoded = static_evaluate_tempcode(protect_url_parameter($self_url));
             $value = find_script('snippet') . '?snippet=block&self_url=' . urlencode($self_url_encoded) . '&block_map=' . urlencode($param[0]) . $keep->evaluate();
             if (get_param_string('utheme', null) !== null) {
                 $value .= '&utheme=' . urlencode($GLOBALS['FORUM_DRIVER']->get_theme());

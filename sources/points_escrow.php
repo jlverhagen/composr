@@ -66,15 +66,8 @@ function points_get_escrow(int $member_id_of, int $member_id_viewing) : object
     $start = get_param_integer('escrow_start', 0);
     $max = get_param_integer('escrow_max', intval(get_option('point_logs_per_page')));
     $sortables = ['date_and_time' => do_lang_tempcode('DATE'), 'amount' => do_lang_tempcode('AMOUNT')];
-    $test = explode(' ', get_param_string('escrow_sort', 'date_and_time DESC', INPUT_FILTER_GET_COMPLEX));
-    if (count($test) == 1) {
-        $test[1] = 'DESC';
-    }
-    list($sortable, $sort_order) = $test;
-    if (((cms_strtoupper_ascii($sort_order) != 'ASC') && (cms_strtoupper_ascii($sort_order) != 'DESC')) || (!array_key_exists($sortable, $sortables))) {
-        log_hack_attack_and_exit('ORDERBY_HACK');
-        warn_exit(do_lang_tempcode('INTERNAL_ERROR', escape_html('138c2e4028d95bb09ef432596a482263')));
-    }
+    $current_ordering = get_param_string('escrow_sort', 'date_and_time DESC', INPUT_FILTER_GET_COMPLEX);
+    list($sql_sort, $sort_order, $sortable) = process_sorting_params(null, $current_ordering, array_keys($sortables));
 
     if (($member_id_of == $member_id_viewing) || (has_privilege($member_id_viewing, 'moderate_points_escrow'))) {
         $where = ' AND (sending_member=' . strval($member_id_of) . ' OR receiving_member=' . strval($member_id_of) . ')';
@@ -143,15 +136,8 @@ function escrow_get_logs(int $id) : object
     $start = get_param_integer('start', 0);
     $max = get_param_integer('max', 50);
     $sortables = ['date_and_time' => do_lang_tempcode('DATE')];
-    $test = explode(' ', get_param_string('sort', 'date_and_time DESC', INPUT_FILTER_GET_COMPLEX));
-    if (count($test) == 1) {
-        $test[1] = 'DESC';
-    }
-    list($sortable, $sort_order) = $test;
-    if (((cms_strtoupper_ascii($sort_order) != 'ASC') && (cms_strtoupper_ascii($sort_order) != 'DESC')) || (!array_key_exists($sortable, $sortables))) {
-        log_hack_attack_and_exit('ORDERBY_HACK');
-        warn_exit(do_lang_tempcode('INTERNAL_ERROR', escape_html('bc7d5345d5d551f580f6275abee70d2d')));
-    }
+    $current_ordering = get_param_string('sort', 'date_and_time DESC', INPUT_FILTER_GET_COMPLEX);
+    list($sql_sort, $sort_order, $sortable) = process_sorting_params(null, $current_ordering, array_keys($sortables));
 
     $max_rows = $GLOBALS['SITE_DB']->query_select_value('escrow_logs', 'COUNT(*)', ['escrow_id' => $id]);
     if ($max_rows == 0) {

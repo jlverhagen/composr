@@ -9,7 +9,7 @@
 	<hackattack codename="CAPTCHAFAIL" silent_to_user="true" risk_score="1" silent_to_staff_notifications="true" silent_to_staff_log="true" />
 
 	<!-- Common and almost always intentional spam; syndicate it as spam -->
-	<hackattack codename="BLACKHOLE_SPAM_HACK" silent_to_staff_notifications="true" silent_to_staff_log="true" syndicate_as_spammer="true" risk_score="10" />
+	<hackattack codename="BLACKHOLE_SPAM_HACK" silent_to_staff_notifications="true" silent_to_staff_log="true" syndicate_as_spammer="true" risk_score="20" />
 
 	<!-- These CSRF token hacks should add a little score but otherwise be silent to users and staff (can be common mistakes made by the user, but could also be a bot we want to prevent) -->
 	<hackattack codename="EVIL_POSTED_FORM_NO_TOKEN_HACK" silent_to_user="true" silent_to_staff_notifications="true" risk_score="2" />
@@ -21,7 +21,7 @@
 
 	<!-- Other hack attack codes without special parameters by default -->
 	<hackattack codename="BRUTEFORCE_LOGIN_HACK" risk_score="100" /><!-- Very high-scored, because we do not want to allow too much brute forcing (a hack attack is only triggered after so many attempts in so many minutes); also see brute_force_login_minutes and brute_force_threshold options -->
-	<hackattack codename="DODGY_GET_HACK" risk_score="10" /><!-- Very unlikely, but possible, a suspicious GET parameter could be a false-positive -->
+	<hackattack codename="DODGY_GET_HACK" risk_score="20" /><!-- Almost always malicious URL query parameters -->
 	<hackattack codename="EVIL_POSTED_FORM_HACK" risk_score="20" /><!-- Posts from external websites without the CSRF token on behalf of a member are almost always hacks -->
 	<hackattack codename="VOTE_CHEAT" risk_score="5" /><!-- An attempt at giving an invalid rating is almost always intentional, but this is a low-damage attack -->
 	<hackattack codename="SCRIPT_UPLOAD_HACK" risk_score="20" /><!-- Could be innocent but this is an extremely dangerous hack attack as scripts can be executed server-side -->
@@ -33,14 +33,14 @@
 	<hackattack codename="TICKET_OTHERS_HACK" risk_score="10" /><!-- Trying to access support tickets belonging to other members; normally always intentional but a member might have copied the wrong ID if another member for whatever reason shared their tickets -->
 	<hackattack codename="ORDERBY_HACK" risk_score="10" /><!-- Could be a bug / false positive, but also could be an SQL injection attack -->
 	<hackattack codename="BYPASS_VALIDATION_HACK" risk_score="5" /><!-- Trying to bypass validation is almost always intentional but is usually a low-risk attack -->
-	<hackattack codename="HEADER_SPLIT_HACK" risk_score="25" /><!-- A URL contained a new line; almost always a header-split attack attempt which are very dangerous -->
-	<hackattack codename="EVAL_HACK" risk_score="25" /><!-- Tried to put invalid characters in a strictly alphanumeric parameter to try and get something to eval; could be a bug but very likely to be a high-risk hack-attack -->
+	<hackattack codename="HEADER_SPLIT_HACK" risk_score="20" /><!-- A URL contained a new line; almost always a header-split attack attempt which are very dangerous -->
+	<hackattack codename="EVAL_HACK" risk_score="20" /><!-- Tried to put invalid characters in a strictly alphanumeric parameter to try and get something to eval; could be a bug but very likely to be a high-risk hack-attack -->
 	<hackattack codename="PATH_HACK" risk_score="10" /><!-- Almost certainly intentional (though slight chance it's a bug); trying to go to a different directory on the server -->
 	<hackattack codename="PHP_DOWNLOAD_INNOCENT" risk_score="100" /><!-- Should never happen and indicates the site was compromised; this should ideally auto-ban the IP in case they were the ones who did it -->
 	<hackattack codename="HACK_ATTACK_PASSWORD_CHANGE" risk_score="10" /><!-- Almost always an attempt to gain access to a member account -->
-	<hackattack codename="SQL_INJECTION_HACK" risk_score="20" /><!-- Tried to UNION something; definitely an SQL injection attack attempt -->
+	<hackattack codename="SQL_INJECTION_HACK" risk_score="30" /><!-- Tried to UNION something; definitely an SQL injection attack attempt -->
 	<hackattack codename="EVIL_POSTED_FORM_MISMATCHED_TOKEN_HACK" risk_score="10" /><!-- Used someone else's CSRF token; they probably stole it, but could happen if logging out before submission. -->
-	<hackattack codename="HACK_ATTACK" risk_score="10" /><!-- Generic hack-attacks, usually from non-bundled addons -->
+	<hackattack codename="HACK_ATTACK" /><!-- Generic hack-attacks, usually from non-bundled addons (generally, you should not specify any attributes on this) -->
 
 	<!-- See hack_ban_threshold option to set how much cumulative risk score until a ban happens -->
 </advancedBans>

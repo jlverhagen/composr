@@ -393,10 +393,6 @@ class Module_admin_ecommerce extends Source_standard_crud_module
         $db = get_db_for('f_usergroup_subs');
 
         $current_ordering = get_param_string('sort', 's_title ASC', INPUT_FILTER_GET_COMPLEX);
-        if (strpos($current_ordering, ' ') === false) {
-            warn_exit(do_lang_tempcode('INTERNAL_ERROR', escape_html('3cef57a4751a525cb4b056a8a6c8be69')));
-        }
-        list($sortable, $sort_order) = explode(' ', $current_ordering, 2);
         $sortables = [
             's_title' => do_lang_tempcode('TITLE'),
             's_price' => do_lang_tempcode('PRICE'),
@@ -404,10 +400,7 @@ class Module_admin_ecommerce extends Source_standard_crud_module
             's_group_id' => do_lang_tempcode('USERGROUP'),
             's_enabled' => do_lang('ENABLED'),
         ];
-        if (((cms_strtoupper_ascii($sort_order) != 'ASC') && (cms_strtoupper_ascii($sort_order) != 'DESC')) || (!array_key_exists($sortable, $sortables))) {
-            log_hack_attack_and_exit('ORDERBY_HACK');
-            warn_exit(do_lang_tempcode('INTERNAL_ERROR', escape_html('248964e1ce2d5cfd8440fb8c3ea50d5a')));
-        }
+        list($sql_sort, $sort_order, $sortable) = process_sorting_params(null, $current_ordering, array_keys($sortables));
 
         // Prepare Filtercode
         require_code('filtercode');

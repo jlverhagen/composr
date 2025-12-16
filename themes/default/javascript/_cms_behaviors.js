@@ -1026,7 +1026,7 @@
                     }
 
                     var newWindowUrl = $cms.pageUrl(),
-                        rgxSkipParams = /^(zone|page|type|id|raw|cache|auth_key|block_map|snippet|utheme|ajax)$/; // Params that shouldn't be added to the window URL
+                        rgxSkipParams = /^(zone|page|type|id|raw|cache|auth_key|block_map|snippet|utheme|ajax|self_url)$/; // Params that shouldn't be added to the window URL
                     $util.iterableToArray(targetUrl.searchParams.entries()).forEach(function (param) {
                         if (!rgxSkipParams.test(param[0])) {
                             newWindowUrl.searchParams.set(param[0], param[1]);

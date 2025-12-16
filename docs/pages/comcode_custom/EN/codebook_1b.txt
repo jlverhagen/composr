@@ -321,18 +321,11 @@ require_code('templates_results_table');
 
 // Read in current sorting, and apply security
 $current_ordering = get_param_string('sort', 'name ASC', INPUT_FILTER_GET_COMPLEX);
-if (strpos($current_ordering, ' ') === false) {
-    warn_exit(do_lang_tempcode('INTERNAL_ERROR', escape_html('unique-guid')));
-}
-list($sortable, $sort_order) = explode(' ', $current_ordering, 2); // Invalid parameter
 $sortables = array(
     'name' => do_lang_tempcode('CODENAME'),
     'add_date' => do_lang_tempcode('ADDED'),
 );
-if (((cms_strtoupper_ascii($sort_order) != 'ASC') && (cms_strtoupper_ascii($sort_order) != 'DESC')) || (!array_key_exists($sortable, $sortables))) {
-    log_hack_attack_and_exit('ORDERBY_HACK');
-	 warn_exit(do_lang_tempcode('INTERNAL_ERROR', escape_html('TODO')));
-}
+list($sql_sort, $sort_order, $sortable) = process_sorting_params(null, $current_ordering, array_keys($sortables));
 
 // Render header (with support for sorting within the header)
 $hr = array(

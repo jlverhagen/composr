@@ -4070,6 +4070,7 @@ function has_cookies() : bool // Will fail on users first visit, but then will c
  * Get whether the current user explicitly allowed cookies in the cookie consent notice.
  *
  * @param  ID_TEXT $category The cookie category to check
+ * @set ESSENTIAL NON-ESSENTIAL PERSONALIZATION ANALYTICS MARKETING
  * @return boolean Whether cookies were allowed
  */
 function allowed_cookies(string $category = 'ESSENTIAL') : bool
@@ -5651,6 +5652,7 @@ function statistical_update_model(string $table, int $view_count) : int
  * @param  string $name The name of the cookie
  * @param  string $value The value to store in the cookie (blank: delete the cookie)
  * @param  ID_TEXT $category The cookie consent category of this cookie
+ * @set ESSENTIAL NON-ESSENTIAL PERSONALIZATION ANALYTICS MARKETING
  * @param  boolean $session Whether it is a session cookie (gets removed once the browser window closes)
  * @param  boolean $httponly Whether the cookie should not be readable by JavaScript
  * @param  ?float $days Days to store; not applicable for session cookies unless expiring it (null: default) (-14: expire the cookie)
@@ -5857,7 +5859,6 @@ function erase_rejected_cookies()
     if (!isset($_COOKIE['cc_cookie'])) {
         return;
     }
-
     $cookie_consent_data_parsed = urldecode($_COOKIE['cc_cookie']);
     $cookie_consent_data = @json_decode($cookie_consent_data_parsed, true);
     if ($cookie_consent_data === false) {
@@ -6106,16 +6107,42 @@ function _sanitise_error_msg(string $text) : string
  * Validate the given URL sorting parameters and transform them into usable information.
  * This should be used on all sortables interfaces.
  *
- * @param  ID_TEXT $content_type The content type on which we are sorting
+ * @param  ?ID_TEXT $content_type The content type on which we are sorting (null: none; assumes $url_sort/$allowed_sorts are SQL fields)
  * @param  string $url_sort The URL sort string
- * @param  ?array $allowed_sorts List of allowed sort types (null: default set for the content type)
- * @param  boolean $strict_error Provide a hack-attack error on invalid input
+ * @param  ?array $allowed_sorts List of allowed sort types (null: use default set for the content type; cannot be null if $content_type is null)
+ * @param  boolean $strict_error Provide a hack-attack error on invalid input (false: invalid sort will result in falling back to a valid sort)
  * @return array A tuple: The SQL-style sort order, The sort direction, the sort type based on the URL sort string
  */
-function process_sorting_params(string $content_type, string $url_sort, ?array $allowed_sorts = null, bool $strict_error = true) : array
+function process_sorting_params(?string $content_type, string $url_sort, ?array $allowed_sorts = null, bool $strict_error = true) : array
 {
-    require_code('content');
+    if ($content_type === null) {
+        if ($allowed_sorts === null) {
+            warn_exit(do_lang_tempcode('INTERNAL_ERROR', escape_html('TODO')));
+        }
 
+        $parts = explode(' ', $url_sort, 2);
+        if (count($parts) == 1) {
+            $parts[] = 'DESC';
+        }
+
+        if (!in_array($parts[0], $allowed_sorts)) {
+            if ($strict_error === true) {
+                log_hack_attack_and_exit('ORDERBY_HACK', $url_sort);
+            }
+            $parts[0] = $allowed_sorts[0];
+        }
+
+        if ((cms_strtoupper_ascii($parts[1]) != 'ASC') && (cms_strtoupper_ascii($parts[1]) != 'DESC')) {
+            if ($strict_error === true) {
+                log_hack_attack_and_exit('ORDERBY_HACK', $url_sort);
+            }
+            $parts[1] = 'DESC';
+        }
+
+        return [$parts[0] . ' ' . cms_strtoupper_ascii($parts[1]), cms_strtoupper_ascii($parts[1]), $parts[0]];
+    }
+
+    require_code('content');
     $object = get_content_object($content_type);
     $info = $object->info();
     if ($info === null) {

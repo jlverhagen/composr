@@ -502,6 +502,7 @@ class Module_downloads
         $description = get_translated_tempcode('download_categories', $category, 'the_description');
 
         // Sorting
+        // TODO: use process_sorting_params
         $sort = get_param_string('sort', get_option('downloads_default_sort_order'), INPUT_FILTER_GET_COMPLEX);
         if ((cms_strtoupper_ascii($sort) != cms_strtoupper_ascii('title ASC')) && (cms_strtoupper_ascii($sort) != cms_strtoupper_ascii('title DESC'))
             && (cms_strtoupper_ascii($sort) != cms_strtoupper_ascii('file_size ASC')) && (cms_strtoupper_ascii($sort) != cms_strtoupper_ascii('file_size DESC'))
