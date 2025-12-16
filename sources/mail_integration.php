@@ -165,7 +165,16 @@ abstract class Source_email_integration
         $this->log_message('Starting an incoming e-mail scan on ' . $host . ' (' . $username . ')');
 
         $server_spec = _imap_server_spec($host, $port, $type);
-        $mbox = @imap2_open($server_spec . $folder, $username, $password, CL_EXPUNGE);
+
+        require_code('failure');
+        set_throw_errors(true);
+        try {
+            $mbox = imap2_open($server_spec . $folder, $username, $password, CL_EXPUNGE);
+        } catch (Exception $e) {
+            $mbox = false;
+        }
+        set_throw_errors(false);
+
         if ($mbox !== false) {
             $this->log_message('Successfully opened server connection');
 

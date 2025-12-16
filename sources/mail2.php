@@ -163,7 +163,16 @@ function find_mail_folders(string $host, int $port, ?string $type, string $usern
     require_code('imap');
 
     $server_spec = _imap_server_spec($host, $port, $type);
-    $mbox = @imap2_open($server_spec . 'INBOX', $username, $password);
+
+    require_code('failure');
+    set_throw_errors(true);
+    try {
+        $mbox = imap2_open($server_spec . 'INBOX', $username, $password);
+    } catch (Exception $e) {
+        $mbox = false;
+    }
+    set_throw_errors(false);
+
     if ($mbox === false) {
         $error = imap2_last_error();
         imap2_errors(); // Works-around weird PHP bug where "Retrying PLAIN authentication after [AUTHENTICATIONFAILED] Authentication failed. (errflg=1) in Unknown on line 0" may get spit out into any stream (even the backup log)
@@ -417,7 +426,16 @@ function _find_mail_bounces(string $host, int $port, ?string $type, string $fold
     disable_php_memory_limit(); // In case of a huge number
 
     $server_spec = _imap_server_spec($host, $port, $type);
-    $mbox = @imap2_open($server_spec . $folder, $username, $password);
+
+    require_code('failure');
+    set_throw_errors(true);
+    try {
+        $mbox = imap2_open($server_spec . $folder, $username, $password);
+    } catch (Exception $e) {
+        $mbox = false;
+    }
+    set_throw_errors(false);
+
     if ($mbox === false) {
         $error = imap2_last_error();
         imap2_errors(); // Works-around weird PHP bug where "Retrying PLAIN authentication after [AUTHENTICATIONFAILED] Authentication failed. (errflg=1) in Unknown on line 0" may get spit out into any stream (even the backup log)
