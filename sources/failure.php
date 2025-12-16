@@ -41,7 +41,7 @@ function init__failure()
     $DONE_ONE_WEB_SERVICE = false;
 
     global $THROWING_ERRORS;
-    $THROWING_ERRORS = false;
+    $THROWING_ERRORS = [];
 
     if (!defined('MAX_STACK_TRACE_VALUE_LENGTH')) {
         define('MAX_STACK_TRACE_VALUE_LENGTH', (current_fatalistic() == 2) ? 10000 : 300);
@@ -1470,7 +1470,7 @@ function die_html_trace(string $message)
  */
 function put_value_in_stack_trace($value) : string
 {
-    set_throw_errors(true);
+    push_throw_errors(true);
     try {
         if ($value === null) {
             $_value = gettype($value);
@@ -1511,7 +1511,7 @@ function put_value_in_stack_trace($value) : string
     } catch (Exception $e) { // Can happen for SimpleXMLElement or PDO
         $_value = '...';
     }
-    set_throw_errors(false);
+    pop_throw_errors();
 
     global $SITE_INFO;
     $site_info_keys = ['db_site_password', 'db_forums_password', 'maintenance_password', 'master_password', 'admin_password', 'mysql_root_password'];
@@ -1856,10 +1856,10 @@ function banned_exit(?string $reasoned_ban = null)
  *
  * @param  boolean $_throwing_errors Whether we should throw errors
  */
-function set_throw_errors(bool $_throwing_errors = true)
+function push_throw_errors(bool $_throwing_errors = true)
 {
     global $THROWING_ERRORS;
-    $THROWING_ERRORS = $_throwing_errors;
+    $THROWING_ERRORS[] = $_throwing_errors;
 }
 
 /**
@@ -1870,5 +1870,14 @@ function set_throw_errors(bool $_throwing_errors = true)
 function throwing_errors() : bool
 {
     global $THROWING_ERRORS;
-    return $THROWING_ERRORS;
+    return array_peek($THROWING_ERRORS);
+}
+
+/**
+ * Go back to the previous setting for throwing errors.
+ */
+function pop_throw_errors()
+{
+    global $THROWING_ERRORS;
+    array_pop($THROWING_ERRORS);
 }

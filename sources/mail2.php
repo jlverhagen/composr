@@ -165,13 +165,13 @@ function find_mail_folders(string $host, int $port, ?string $type, string $usern
     $server_spec = _imap_server_spec($host, $port, $type);
 
     require_code('failure');
-    set_throw_errors(true);
+    push_throw_errors(true);
     try {
         $mbox = imap2_open($server_spec . 'INBOX', $username, $password);
     } catch (Exception $e) {
         $mbox = false;
     }
-    set_throw_errors(false);
+    pop_throw_errors();
 
     if ($mbox === false) {
         $error = imap2_last_error();
@@ -428,13 +428,13 @@ function _find_mail_bounces(string $host, int $port, ?string $type, string $fold
     $server_spec = _imap_server_spec($host, $port, $type);
 
     require_code('failure');
-    set_throw_errors(true);
+    push_throw_errors(true);
     try {
         $mbox = imap2_open($server_spec . $folder, $username, $password);
     } catch (Exception $e) {
         $mbox = false;
     }
-    set_throw_errors(false);
+    pop_throw_errors();
 
     if ($mbox === false) {
         $error = imap2_last_error();

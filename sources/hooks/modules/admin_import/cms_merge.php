@@ -1636,7 +1636,7 @@ class Hook_import_cms_merge
                 require_code('failure');
 
                 // We could get some Comcode errors during the import process. We can't turn that off. So just catch and attach errors.
-                set_throw_errors(true);
+                push_throw_errors(true);
                 try {
                     $id_new = add_news($this->get_lang_string($db, $row['title']), $this->get_lang_string($db, $row['news']), $row['author'], $row['validated'], $row['allow_rating'], $row['allow_comments'], $row['allow_trackbacks'], $row['notes'], $this->get_lang_string($db, $row['news_article']), $main_news_category, $news_category, $row['date_and_time'], $submitter, $row['news_views'], $row['edit_date'], $id, $row['news_image_url'], '', '', $regions);
                 } catch (Exception $e) {
@@ -1644,7 +1644,7 @@ class Hook_import_cms_merge
                     import_id_remap_put('news', strval($row['id']), -1);
                     continue;
                 }
-                set_throw_errors(false);
+                pop_throw_errors();
 
                 $this->_import_content_privacy($db, 'news', strval($row['id']), strval($id_new));
 

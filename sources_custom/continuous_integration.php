@@ -97,7 +97,7 @@ function init__continuous_integration()
 // e.g. To process queue http://localhost/composr/data_custom/continuous_integration.php?ci_password=test&ignore_lock=1&output=1
 function continuous_integration_script()
 {
-    set_throw_errors(true);
+    push_throw_errors(true);
 
     try {
         authenticate_ci_request();

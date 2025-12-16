@@ -127,7 +127,7 @@ function enumerate_hybridauth_providers($alternate_config = null)
     require_code('failure');
     $te = throwing_errors();
     if (!$te) {
-        set_throw_errors(true);
+        push_throw_errors(true);
     }
     try {
         $parsed = object_factory('Source_simple_xml_reader', false, [$xml_contents]);
@@ -140,7 +140,7 @@ function enumerate_hybridauth_providers($alternate_config = null)
         $root_children = [];
     }
     if (!$te) {
-        set_throw_errors(false);
+        pop_throw_errors();
     }
 
     // Go over XML data

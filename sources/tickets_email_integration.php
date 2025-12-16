@@ -258,7 +258,7 @@ class Source_tickets_email_integration extends Source_email_integration
             }
 
             // Catch exceptions during the ticket creation process so we can send a bounce e-mail.
-            set_throw_errors(true);
+            push_throw_errors(true);
             try {
                 // Create the ticket...
                 $ticket_url = ticket_add_post($new_ticket_id, $ticket_type_id, $subject, $body, false, $member_id);
@@ -269,7 +269,7 @@ class Source_tickets_email_integration extends Source_email_integration
                 $this->log_message('An error occurred: ' . $e->getMessage());
                 $this->send_bounce_email__error($subject, $e->getMessage(), $_body_text, $_body_html, $from_email, $email_bounce_to);
             }
-            set_throw_errors(false);
+            pop_throw_errors();
 
             if ($actually_posted) {
                 // Send e-mail (to staff)
@@ -284,7 +284,7 @@ class Source_tickets_email_integration extends Source_email_integration
             ]);
 
             // Catch exceptions during the ticket reply process so we can send a bounce e-mail.
-            set_throw_errors(true);
+            push_throw_errors(true);
             try {
                 // Add a ticket reply
                 $ticket_url = ticket_add_post($existing_ticket_id, $ticket_type_id, $subject, $body, false, $member_id);
@@ -302,7 +302,7 @@ class Source_tickets_email_integration extends Source_email_integration
                 $this->log_message('An error occurred: ' . $e->getMessage());
                 $this->send_bounce_email__error($subject, $e->getMessage(), $_body_text, $_body_html, $from_email, $email_bounce_to);
             }
-            set_throw_errors(false);
+            pop_throw_errors();
 
             if ($actually_posted) {
                 // Send e-mail (to staff & to confirm receipt to $member_id)

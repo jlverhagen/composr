@@ -40,7 +40,7 @@ class comcode_pages_test_set extends cms_test_case
         require_code('comcode_check');
         require_code('failure');
 
-        set_throw_errors(true);
+        push_throw_errors(true);
 
         if ($this->only === null) {
             $files = get_directory_contents(get_file_base(), '', IGNORE_ALIEN, true, true, ['txt']);
@@ -66,7 +66,7 @@ class comcode_pages_test_set extends cms_test_case
             }
         }
 
-        set_throw_errors(false);
+        pop_throw_errors();
     }
 
     public function testPageTitleDetection()

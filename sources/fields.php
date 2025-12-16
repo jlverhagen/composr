@@ -411,7 +411,7 @@ function get_fields_hook(string $type) : object
     // Try creating an object factory directly as a last resort
     require_code('failure');
     $path = 'hooks/systems/fields/' . filter_naughty($type);
-    set_throw_errors(true);
+    push_throw_errors(true);
     try {
         require_code($path);
         $ob = object_factory('Hook_fields_' . filter_naughty($type), false, [], true);
@@ -422,7 +422,7 @@ function get_fields_hook(string $type) : object
     } catch (CMSException $e) {
         $ob = null;
     }
-    set_throw_errors(false);
+    pop_throw_errors();
 
     // We got nothing; fall back to short_text
     if ($type == 'short_text') { // This should never happen where even short_text fails!

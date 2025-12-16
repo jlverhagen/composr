@@ -345,14 +345,14 @@ function cron_run(bool $force = false, bool $verbose = false, ?array $limit_hook
                 if ($verbose) {
                     $object->run($last_run);
                 } else {
-                    set_throw_errors(true);
+                    push_throw_errors(true);
                     try {
                         $object->run($last_run);
                     } catch (Exception $e) {
                         $last_error = $e->getMessage();
                         $last_error_trace = $e->getTraceAsString();
                     }
-                    set_throw_errors(false);
+                    pop_throw_errors();
                 }
                 $time_after = time();
                 $time_elapsed += ($time_after - $time_before);
