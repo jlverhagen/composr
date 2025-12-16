@@ -152,7 +152,7 @@ PHP;
         }
         $catalogue = load_catalogue_row($catalogue_name);
 
-        $sort = get_param_string($block_id . '_order', array_key_exists('sort', $map) ? $map['sort'] : '');
+        $sort = get_param_string($block_id . '_sort', array_key_exists('sort', $map) ? $map['sort'] : '');
         if ($sort == '') {
             $sort = array_key_exists('default_sort', $map) ? $map['default_sort'] : null;
         }
@@ -198,7 +198,7 @@ PHP;
         // Get entries
         $as_guest = array_key_exists('as_guest', $map) ? ($map['as_guest'] == '1') : false;
         $viewing_member_id = $as_guest ? $GLOBALS['FORUM_DRIVER']->get_guest_id() : null;
-        list($entry_buildup, $sorting, , $max_rows) = render_catalogue_category_entry_buildup((($select === null) && ($category_id !== null)) ? $category_id : null, $catalogue_name, $catalogue, 'CATEGORY', $tpl_set, $max, $start, $select, $root, $display_type, true, null, $filter, $sort, $block_id . '_order', $viewing_member_id, $check_perms);
+        list($entry_buildup, $sorting, , $max_rows) = render_catalogue_category_entry_buildup((($select === null) && ($category_id !== null)) ? $category_id : null, $catalogue_name, $catalogue, 'CATEGORY', $tpl_set, $max, $start, $select, $root, $display_type, true, null, $filter, $sort, $block_id . '_sort', $viewing_member_id, $check_perms);
 
         // Sorting and pagination
         if (!$do_sorting) {

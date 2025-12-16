@@ -77,7 +77,7 @@ class Hook_members_quiz
         require_code('quiz');
 
         // Sorting
-        $order = get_param_string('sort_quiz_results', 'q_time DESC', INPUT_FILTER_GET_COMPLEX);
+        $order = get_param_string('quiz_results_sort', 'q_time DESC', INPUT_FILTER_GET_COMPLEX);
         $_selectors = [
             'q_name ASC' => 'ALPHABETICAL_FORWARD',
             'q_name DESC' => 'ALPHABETICAL_BACKWARD',
@@ -91,8 +91,8 @@ class Hook_members_quiz
             $selected = ($order == $selector_value);
             $selectors->attach(do_template('PAGINATION_SORTER', ['_GUID' => '87b66fd533e5b2b185b00ed97c1d4c6b', 'SELECTED' => $selected, 'NAME' => do_lang_tempcode($selector_name), 'VALUE' => $selector_value]));
         }
-        $sort_url = get_self_url(false, false, ['sort_quiz_results' => null]);
-        $sorting = do_template('PAGINATION_SORT', ['_GUID' => '80b6bfaaf33fe0f455d57e9d940abf96', 'SORT' => 'sort_quiz_results', 'URL' => $sort_url, 'SELECTORS' => $selectors]);
+        $sort_url = get_self_url(false, false, ['quiz_results_sort' => null]);
+        $sorting = do_template('PAGINATION_SORT', ['_GUID' => '80b6bfaaf33fe0f455d57e9d940abf96', 'SORT' => 'quiz_results_sort', 'URL' => $sort_url, 'SELECTORS' => $selectors]);
 
         if ($order == 'q_name ASC' || $order == 'q_name DESC') {
             $order = str_replace('q_name', $GLOBALS['SITE_DB']->translate_field_ref('q_name'), $order);

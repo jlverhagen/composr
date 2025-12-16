@@ -167,6 +167,15 @@ function pagination(object $title, int $start, string $start_name, int $max, str
     inform_non_canonical_parameter($start_name);
     inform_non_canonical_parameter($start_name . '__keyed');
 
+    if ($GLOBALS['DEV_MODE'] && ($start_name != 'start') && (preg_match('#_start$#', $start_name) !== 1)) {
+        require_lang('critical_error');
+        attach_message(do_lang_tempcode('INVALID_PAGINATION_PARAM_NAME', escape_html($start_name), escape_html('pagination')), 'warn', false, true);
+    }
+    if ($GLOBALS['DEV_MODE'] && ($max_name != 'max') && (preg_match('#_max$#', $max_name) !== 1)) {
+        require_lang('critical_error');
+        attach_message(do_lang_tempcode('INVALID_PAGINATION_PARAM_NAME', escape_html($max_name), escape_html('pagination')), 'warn', false, true);
+    }
+
     if ($max_pagination_links === null) {
         $max_pagination_links = intval(get_option('max_pagination_links'));
     }

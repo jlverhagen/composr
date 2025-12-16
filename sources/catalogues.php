@@ -301,6 +301,11 @@ function count_catalogue_category_children(int $category_id) : array
  */
 function render_catalogue_category_entry_buildup(?int $category_id, string $catalogue_name, ?array $catalogue, string $view_type, string $tpl_set, ?int $max, int $start, $select, ?int $root, ?int $display_type = null, bool $do_sorting = true, ?array $entries = null, string $filter = '', ?string $order_by_high_level = null, string $ordering_param = 'sort', ?int $viewing_member_id = null, bool $check_perms = false) : array
 {
+    if ($GLOBALS['DEV_MODE'] && ($ordering_param != 'sort') && (preg_match('#_sort$#', $ordering_param) !== 1)) {
+        require_lang('critical_error');
+        attach_message(do_lang_tempcode('INVALID_PAGINATION_PARAM_NAME', escape_html($ordering_param), escape_html('render_catalogue_category_entry_buildup')), 'warn', false, true);
+    }
+
     if ($filter != '') {
         require_code('filtercode');
         $filtercode = parse_filtercode($filter);
