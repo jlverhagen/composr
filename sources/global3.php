@@ -1873,19 +1873,11 @@ function addon_installed(string $addon_name, bool $check_hookless = false, bool 
         } else {
             if (($answer) && ($deep_scan)) {
                 // Do a full scan to see if the addon is fully installed; check tables defined in database manifest
-                static $data = [];
-                if ($data === null) {
-                    require_code('zones');
-                    $hooks = find_all_hook_obs('systems', 'database_manifest', 'Hook_database_manifest_');
-                    foreach ($hooks as $addon => $ob) {
-                        if (!method_exists($ob, 'db_meta')) {
-                            continue;
-                        }
-                        $data[$addon] = $ob->db_meta();
-                    }
-                }
+                // NB: Must load all meta at once; we cannot load specific database_manifest hooks here or the software will break
+                require_code('database_relations');
+                $data = get_db_meta();
 
-                if (isset($data[$addon_name]) && array_key_exists('tables', $data[$addon_name])) {
+                if ((isset($data[$addon_name])) && ($data[$addon_name] !== null) && array_key_exists('tables', $data[$addon_name])) {
                     require_code('database');
                     foreach ($data[$addon_name]['tables'] as $table_name => $table_details) {
                         $db = get_db_for($table_name);

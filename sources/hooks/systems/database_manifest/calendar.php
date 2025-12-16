@@ -35,6 +35,23 @@
  */
 class Hook_database_manifest_calendar
 {
+    /**
+     * Determine how we should handle database tables for things like backups, automated testing, import/export, and migration.
+     *
+     * @return array Map of table names to their TABLE_PURPOSE constants
+     */
+    public function get_table_purpose_flags() : array
+    {
+        require_code('database_relations');
+
+        return [
+            'calendar_events' => TABLE_PURPOSE__NORMAL,
+            'calendar_interests' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__SUBDATA/*under f_members*/,
+            'calendar_jobs' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__MISC_NO_MERGE/*ephemeral*/ | TABLE_PURPOSE__SUBDATA/*under calendar_events*/,
+            'calendar_reminders' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__SUBDATA/*under calendar_events*/,
+            'calendar_types' => TABLE_PURPOSE__NORMAL,
+        ];
+    }
 
     /**
      * Database manifest for this addon.

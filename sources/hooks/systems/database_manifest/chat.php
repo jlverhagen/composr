@@ -35,6 +35,25 @@
  */
 class Hook_database_manifest_chat
 {
+    /**
+     * Determine how we should handle database tables for things like backups, automated testing, import/export, and migration.
+     *
+     * @return array Map of table names to their TABLE_PURPOSE constants
+     */
+    public function get_table_purpose_flags() : array
+    {
+        require_code('database_relations');
+
+        return [
+            'chat_active' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__NO_BACKUPS | TABLE_PURPOSE__FLUSHABLE,
+            'chat_blocking' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__SUBDATA/*under f_members*/,
+            'chat_events' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__NO_BACKUPS | TABLE_PURPOSE__FLUSHABLE,
+            'chat_friends' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__SUBDATA/*under f_members*/,
+            'chat_messages' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__FLUSHABLE_AGGRESSIVE | TABLE_PURPOSE__SUBDATA/*under chat_rooms*/ | TABLE_PURPOSE__MISC_NO_MERGE/*ephemeral*/,
+            'chat_rooms' => TABLE_PURPOSE__NORMAL,
+            'chat_sound_effects' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__SUBDATA/*under f_members*/,
+        ];
+    }
 
     /**
      * Database manifest for this addon.

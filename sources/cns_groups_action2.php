@@ -261,7 +261,7 @@ function cns_delete_group(int $group_id, ?int $target_group = null)
     if (addon_installed('ecommerce')) {
         $GLOBALS['FORUM_DB']->query_delete('f_usergroup_subs', ['s_group_id' => $group_id]);
     }
-    $GLOBALS['FORUM_DB']->query_delete('f_group_member_timeouts', ['group_id' => $group_id]);
+    $GLOBALS['SITE_DB']->query_delete('f_group_member_timeouts', ['group_id' => $group_id]);
 
     require_code('themes2');
     tidy_theme_img_code(null, $_group_info[0]['g_rank_image'], 'f_groups', 'g_rank_image', $GLOBALS['FORUM_DB']);

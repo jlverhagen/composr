@@ -35,6 +35,25 @@
  */
 class Hook_database_manifest_quizzes
 {
+    /**
+     * Determine how we should handle database tables for things like backups, automated testing, import/export, and migration.
+     *
+     * @return array Map of table names to their TABLE_PURPOSE constants
+     */
+    public function get_table_purpose_flags() : array
+    {
+        require_code('database_relations');
+
+        return [
+            'quiz_entries' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__SUBDATA/*under quizzes*/,
+            'quiz_entry_answer' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__SUBDATA/*under quizzes*/,
+            'quiz_member_last_visit' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__FLUSHABLE | TABLE_PURPOSE__SUBDATA/*under quizzes*/,
+            'quiz_question_answers' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__SUBDATA/*under quizzes*/,
+            'quiz_questions' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__SUBDATA/*under quizzes*/,
+            'quiz_winner' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__SUBDATA/*under quizzes*/,
+            'quizzes' => TABLE_PURPOSE__NORMAL,
+        ];
+    }
 
     /**
      * Database manifest for this addon.

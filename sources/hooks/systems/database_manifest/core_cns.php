@@ -35,6 +35,45 @@
  */
 class Hook_database_manifest_core_cns
 {
+    /**
+     * Determine how we should handle database tables for things like backups, automated testing, import/export, and migration.
+     *
+     * @return array Map of table names to their TABLE_PURPOSE constants
+     */
+    public function get_table_purpose_flags() : array
+    {
+        require_code('database_relations');
+
+        return [
+            'f_custom_fields' => TABLE_PURPOSE__NORMAL,
+            'f_emoticons' => TABLE_PURPOSE__NORMAL,
+            'f_forum_groupings' => TABLE_PURPOSE__NORMAL,
+            'f_forum_intro_ip' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__FLUSHABLE | TABLE_PURPOSE__SUBDATA/*under f_forums*/,
+            'f_forum_intro_member' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__FLUSHABLE | TABLE_PURPOSE__SUBDATA/*under f_forums*/,
+            'f_forums' => TABLE_PURPOSE__NORMAL,
+            'f_group_approvals' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__FLUSHABLE_AGGRESSIVE | TABLE_PURPOSE__SUBDATA/*under f_groups*/ | TABLE_PURPOSE__MISC_NO_MERGE/*cyclic-dependency*/,
+            'f_group_join_log' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__FLUSHABLE | TABLE_PURPOSE__SUBDATA/*under f_groups*/,
+            'f_group_members' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__SUBDATA/*under f_members*/,
+            'f_groups' => TABLE_PURPOSE__NORMAL,
+            'f_invites' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__FLUSHABLE_AGGRESSIVE,
+            'f_member_cpf_perms' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__SUBDATA/*under f_members*/,
+            'f_member_custom_fields' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__SUBDATA/*under f_members*/,
+            'f_member_known_login_ips' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__FLUSHABLE_AGGRESSIVE | TABLE_PURPOSE__SUBDATA/*under f_members*/,
+            'f_members' => TABLE_PURPOSE__NORMAL,
+            'f_moderator_logs' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__FLUSHABLE_AGGRESSIVE | TABLE_PURPOSE__MISC_NO_MERGE/*too-site-tied*/,
+            'f_password_history' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__FLUSHABLE | TABLE_PURPOSE__SUBDATA/*under f_members*/,
+            'f_poll_answers' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__SUBDATA/*under f_topics*/,
+            'f_poll_votes' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__SUBDATA/*under f_topics*/,
+            'f_polls' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__SUBDATA/*f_topics*/,
+            'f_post_templates' => TABLE_PURPOSE__NORMAL,
+            'f_posts' => TABLE_PURPOSE__NORMAL,
+            'f_posts_fulltext_index' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__FLUSHABLE,
+            'f_pposts_fulltext_index' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__FLUSHABLE,
+            'f_read_logs' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__FLUSHABLE | TABLE_PURPOSE__SUBDATA/*under f_members*/,
+            'f_special_pt_access' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__SUBDATA/*under f_topics*/,
+            'f_topics' => TABLE_PURPOSE__NORMAL,
+        ];
+    }
 
     /**
      * Database manifest for this addon.

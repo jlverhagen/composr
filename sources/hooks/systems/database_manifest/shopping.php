@@ -35,6 +35,22 @@
  */
 class Hook_database_manifest_shopping
 {
+    /**
+     * Determine how we should handle database tables for things like backups, automated testing, import/export, and migration.
+     *
+     * @return array Map of table names to their TABLE_PURPOSE constants
+     */
+    public function get_table_purpose_flags() : array
+    {
+        require_code('database_relations');
+
+        return [
+            'shopping_cart' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__FLUSHABLE_AGGRESSIVE | TABLE_PURPOSE__MISC_NO_MERGE/*too-site-tied*/,
+            'shopping_logging' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__FLUSHABLE,
+            'shopping_orders' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__FLUSHABLE_AGGRESSIVE | TABLE_PURPOSE__MISC_NO_MERGE/*too-site-tied*/,
+            'shopping_order_details' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__FLUSHABLE_AGGRESSIVE | TABLE_PURPOSE__MISC_NO_MERGE/*too-site-tied*/ | TABLE_PURPOSE__SUBDATA/*under shopping_orders*/,
+        ];
+    }
 
     /**
      * Database manifest for this addon.

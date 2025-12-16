@@ -71,7 +71,7 @@ class Hook_cron_subscription_mails
     {
         require_code('ecommerce_subscriptions');
         $_subscribers_1 = collapse_1d_complexity('s_member_id', $GLOBALS['SITE_DB']->query_select('ecom_subscriptions', ['DISTINCT s_member_id']));
-        $_subscribers_2 = collapse_1d_complexity('member_id', $GLOBALS['FORUM_DB']->query_select('f_group_member_timeouts', ['DISTINCT member_id']));
+        $_subscribers_2 = collapse_1d_complexity('member_id', $GLOBALS['SITE_DB']->query_select('f_group_member_timeouts', ['DISTINCT member_id']));
         $_subscribers = array_merge($_subscribers_1, $_subscribers_2);
         $subscribers = [];
         foreach ($_subscribers as $subscriber) {

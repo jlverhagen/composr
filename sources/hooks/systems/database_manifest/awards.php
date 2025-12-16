@@ -35,6 +35,20 @@
  */
 class Hook_database_manifest_awards
 {
+    /**
+     * Determine how we should handle database tables for things like backups, automated testing, import/export, and migration.
+     *
+     * @return array Map of table names to their TABLE_PURPOSE constants
+     */
+    public function get_table_purpose_flags() : array
+    {
+        require_code('database_relations');
+
+        return [
+            'award_archive' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__SUBDATA/*under award_types*/,
+            'award_types' => TABLE_PURPOSE__NORMAL,
+        ];
+    }
 
     /**
      * Database manifest for this addon.

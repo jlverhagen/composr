@@ -4049,7 +4049,7 @@ class Hook_import_cms_merge
                 if ($group_id === null) {
                     continue;
                 }
-                $GLOBALS['FORUM_DB']->query_insert('f_group_member_timeouts', ['member_id' => $member_id, 'group_id' => $group_id, 'timeout' => $row['timeout']], false, true); // Allow errors in case row exists
+                $GLOBALS['SITE_DB']->query_insert('f_group_member_timeouts', ['member_id' => $member_id, 'group_id' => $group_id, 'timeout' => $row['timeout']], false, true); // Allow errors in case row exists
             }
             import_id_remap_put('group_member_timeouts', strval(0), 0);
         }

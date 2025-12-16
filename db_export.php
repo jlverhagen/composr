@@ -83,15 +83,17 @@ foreach ($must_be_set as $key) {
 print('Loading up database metadata...' . "\n");
 
 require_code('database_relations');
-$all_tables = get_table_purpose_flags();
+$all_tables_hooks = get_table_purpose_flags();
 $tables_with_data = [];
 $tables_no_data = [];
 
-foreach ($all_tables as $table => $flags) {
-    if (table_has_purpose_flag($table, TABLE_PURPOSE__NO_BACKUPS)) {
-        $tables_no_data[] = $table;
-    } else {
-        $tables_with_data[] = $table;
+foreach ($all_tables_hooks as $hook => $all_tables) {
+    foreach ($all_tables as $table => $flags) {
+        if (table_has_purpose_flag($table, TABLE_PURPOSE__NO_BACKUPS)) {
+            $tables_no_data[] = $table;
+        } else {
+            $tables_with_data[] = $table;
+        }
     }
 }
 

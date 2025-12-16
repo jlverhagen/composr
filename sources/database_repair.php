@@ -261,44 +261,15 @@ class Source_database_repair
             ];
         }
 
-        // Load expected database metadata from addon_registry hook db_meta() methods
-        // TODO: clean up
+        // Load expected database metadata
+        require_code('database_relations');
+        $full_meta = get_db_meta();
         $data = [
-            'tables' => [],
-            'indices' => [],
-            'foreign_keys' => [],
-            'privileges' => [],
+            'tables' => collapse_1d_complexity('tables', $full_meta),
+            'indices' => collapse_1d_complexity('indices', $full_meta),
+            'foreign_keys' => collapse_1d_complexity('foreign_keys', $full_meta),
+            'privileges' => collapse_1d_complexity('privileges', $full_meta),
         ];
-        require_code('zones');
-        $hooks = find_all_hook_obs('systems', 'database_manifest', 'Hook_database_manifest_');
-        foreach ($hooks as $hook) {
-            if (!method_exists($hook, 'db_meta')) {
-                continue;
-            }
-
-            $meta = $hook->db_meta();
-
-            if (isset($meta['tables']) && is_array($meta['tables'])) {
-                foreach ($meta['tables'] as $k => $v) {
-                    $data['tables'][$k] = $v;
-                }
-            }
-            if (isset($meta['indices']) && is_array($meta['indices'])) {
-                foreach ($meta['indices'] as $k => $v) {
-                    $data['indices'][$k] = $v;
-                }
-            }
-            if (isset($meta['foreign_keys']) && is_array($meta['foreign_keys'])) {
-                foreach ($meta['foreign_keys'] as $k => $v) {
-                    $data['foreign_keys'][$k] = $v;
-                }
-            }
-            if (isset($meta['privileges']) && is_array($meta['privileges'])) {
-                foreach ($meta['privileges'] as $k => $v) {
-                    $data['privileges'][$k] = $v;
-                }
-            }
-        }
 
         $expected_tables = [];
         foreach ($data['tables'] as $table_name => $table) {

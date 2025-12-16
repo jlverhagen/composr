@@ -201,7 +201,6 @@ You may want to put them in your Git \'cmd\' directory, as that is in your path.
             'aps/test/TEST-META.xml',
             'aps/test/composrIDEtest.xml',
             'aps/test/index.html',
-            'data_custom/build_db_meta_file.php',
             'data_custom/build_rewrite_rules.php',
             'data_custom/builds/index.html',
             'data_custom/builds/readme.txt',

@@ -29,6 +29,26 @@
  */
 class Hook_database_manifest_booking
 {
+    /**
+     * Determine how we should handle database tables for things like backups, automated testing, import/export, and migration.
+     *
+     * @return array Map of table names to their TABLE_PURPOSE constants
+     */
+    public function get_table_purpose_flags() : array
+    {
+        require_code('database_relations');
+
+        return [
+            'bookable' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__NON_BUNDLED,
+            'bookable_blacked' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__NON_BUNDLED,
+            'bookable_blacked_for' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__NON_BUNDLED | TABLE_PURPOSE__SUBDATA/*under bookable*/,
+            'bookable_codes' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__NON_BUNDLED | TABLE_PURPOSE__SUBDATA/*under bookable*/,
+            'bookable_supplement' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__NON_BUNDLED,
+            'bookable_supplement_for' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__NON_BUNDLED | TABLE_PURPOSE__SUBDATA/*under bookable*/,
+            'booking' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__NON_BUNDLED,
+            'booking_supplement' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__NON_BUNDLED,
+        ];
+    }
 
     /**
      * Database manifest for this addon.

@@ -505,7 +505,7 @@ function cleanup()
     cms_extend_time_limit(TIME_LIMIT_EXTEND__CRAWL);
 
     require_code('database_relations');
-    $table_purposes = get_table_purpose_flags();
+    $table_purposes_hooks = get_table_purpose_flags();
 
     require_code('files');
 
@@ -519,9 +519,11 @@ function cleanup()
         deldir_contents(get_custom_file_base() . '/uploads/incoming_uploads', true);
         deldir_contents(get_custom_file_base() . '/uploads/auto_thumbs', true);
         deldir_contents(get_custom_file_base() . '/uploads/captcha', true);
-        foreach ($table_purposes as $table => $purpose) {
-            if ((table_has_purpose_flag($table, TABLE_PURPOSE__FLUSHABLE)) && ($GLOBALS['SITE_DB']->table_exists($table))) {
-                $GLOBALS['SITE_DB']->query_delete($table);
+        foreach ($table_purposes_hooks as $hook => $table_purposes) {
+            foreach ($table_purposes as $table => $purpose) {
+                if ((table_has_purpose_flag($table, TABLE_PURPOSE__FLUSHABLE)) && ($GLOBALS['SITE_DB']->table_exists($table))) {
+                    $GLOBALS['SITE_DB']->query_delete($table);
+                }
             }
         }
 
@@ -538,9 +540,11 @@ function cleanup()
     }
 
     if ($aggressive_cleanup) {
-        foreach ($table_purposes as $table => $purpose) {
-            if ((table_has_purpose_flag($table, TABLE_PURPOSE__FLUSHABLE_AGGRESSIVE)) && ($GLOBALS['SITE_DB']->table_exists($table))) {
-                $GLOBALS['SITE_DB']->query_delete($table);
+        foreach ($table_purposes_hooks as $hook => $table_purposes) {
+            foreach ($table_purposes as $table => $purpose) {
+                if ((table_has_purpose_flag($table, TABLE_PURPOSE__FLUSHABLE_AGGRESSIVE)) && ($GLOBALS['SITE_DB']->table_exists($table))) {
+                    $GLOBALS['SITE_DB']->query_delete($table);
+                }
             }
         }
     }

@@ -35,6 +35,32 @@
  */
 class Hook_database_manifest_catalogues
 {
+    /**
+     * Determine how we should handle database tables for things like backups, automated testing, import/export, and migration.
+     *
+     * @return array Map of table names to their TABLE_PURPOSE constants
+     */
+    public function get_table_purpose_flags() : array
+    {
+        require_code('database_relations');
+
+        return [
+            'catalogue_cat_treecache' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__NO_BACKUPS | TABLE_PURPOSE__FLUSHABLE | TABLE_PURPOSE__SUBDATA/*under catalogues*/,
+            'catalogue_categories' => TABLE_PURPOSE__NORMAL,
+            'catalogue_childcountcache' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__NO_BACKUPS | TABLE_PURPOSE__FLUSHABLE | TABLE_PURPOSE__SUBDATA/*under catalogues*/,
+            'catalogue_efv_float' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__SUBDATA/*under catalogue_entries*/,
+            'catalogue_efv_integer' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__SUBDATA/*under catalogue_entries*/,
+            'catalogue_efv_long' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__SUBDATA/*under catalogue_entries*/,
+            'catalogue_efv_long_trans' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__SUBDATA/*under catalogue_entries*/,
+            'catalogue_efv_short' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__SUBDATA/*under catalogue_entries*/,
+            'catalogue_efv_short_trans' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__SUBDATA/*under catalogue_entries*/,
+            'catalogue_entries' => TABLE_PURPOSE__NORMAL,
+            'catalogue_entry_linkage' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__SUBDATA/*under <content>*/,
+            'catalogue_fields' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__SUBDATA/*under catalogues*/,
+            'catalogues' => TABLE_PURPOSE__NORMAL,
+            'ce_fulltext_index' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__FLUSHABLE,
+        ];
+    }
 
     /**
      * Database manifest for this addon.

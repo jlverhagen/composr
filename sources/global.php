@@ -409,7 +409,7 @@ function compile_included_code(string $orig_path, string $codename, bool $light_
     }
 
     // Run contentious overrides (but not on themselves)
-    if ((function_exists('find_all_hook_obs')) && (strpos($codename, 'sources_custom/hooks/systems/contentious_overrides') !== 0)) {
+    if ((function_exists('find_all_hook_obs')) && (strpos($codename, 'hooks/systems/contentious_overrides') !== 0)) {
         $override_hooks = find_all_hook_obs('systems', 'contentious_overrides', 'Hook_contentious_overrides_');
         foreach ($override_hooks as $hook_ob) {
             if (method_exists($hook_ob, 'compile_included_code')) {
@@ -1530,12 +1530,12 @@ function get_hook_ob(string $type, string $subtype, string $hook, string $classn
 
     $ob = object_factory(($classname_prefix . $hook), true, $parameters, $cache);
     if ((!$fail_ok) && ($ob === null)) {
-        $error_message = do_lang_tempcode('INTERNAL_ERROR', escape_html('f45146eaa359580bb0d10db80263e9c3'));
-        if (function_exists('warn_exit')) {
+        if (function_exists('do_lang_tempcode') && function_exists('warn_exit')) {
+            $error_message = do_lang_tempcode('INTERNAL_ERROR', escape_html('f45146eaa359580bb0d10db80263e9c3'));
             warn_exit($error_message, false, true);
         } else {
             require_code('critical_errors');
-            critical_error('PASSON', $error_message);
+            critical_error('PASSON', 'Internal error f45146eaa359580bb0d10db80263e9c3');
         }
     }
 

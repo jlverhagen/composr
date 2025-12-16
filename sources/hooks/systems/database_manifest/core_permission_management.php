@@ -35,6 +35,21 @@
  */
 class Hook_database_manifest_core_permission_management
 {
+    /**
+     * Determine how we should handle database tables for things like backups, automated testing, import/export, and migration.
+     *
+     * @return array Map of table names to their TABLE_PURPOSE constants
+     */
+    public function get_table_purpose_flags() : array
+    {
+        require_code('database_relations');
+
+        return [
+            'match_key_messages' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__AS_COMMANDER_FS_EXTENDED_CONFIG,
+            'group_page_access' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__AS_COMMANDER_FS_EXTENDED_CONFIG,
+            'group_zone_access' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__SUBDATA/*under zones*/,
+        ];
+    }
 
     /**
      * Database manifest for this addon.

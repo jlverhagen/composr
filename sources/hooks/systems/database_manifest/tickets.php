@@ -35,6 +35,23 @@
  */
 class Hook_database_manifest_tickets
 {
+    /**
+     * Determine how we should handle database tables for things like backups, automated testing, import/export, and migration.
+     *
+     * @return array Map of table names to their TABLE_PURPOSE constants
+     */
+    public function get_table_purpose_flags() : array
+    {
+        require_code('database_relations');
+
+        return [
+            'reported_content' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__FLUSHABLE_AGGRESSIVE | TABLE_PURPOSE__SUBDATA/*under <content>*/,
+            'ticket_types' => TABLE_PURPOSE__NORMAL,
+            'ticket_extra_access' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__SUBDATA/*under f_topics*/,
+            'ticket_known_emailers' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__FLUSHABLE_AGGRESSIVE | TABLE_PURPOSE__SUBDATA/*under f_members*/,
+            'tickets' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__SUBDATA/*under f_topics*/,
+        ];
+    }
 
     /**
      * Database manifest for this addon.

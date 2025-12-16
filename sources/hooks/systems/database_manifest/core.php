@@ -35,6 +35,84 @@
  */
 class Hook_database_manifest_core
 {
+    /**
+     * Determine how we should handle database tables for things like backups, automated testing, import/export, and migration.
+     *
+     * @return array Map of table names to their TABLE_PURPOSE constants
+     */
+    public function get_table_purpose_flags() : array
+    {
+        require_code('database_relations');
+
+        return [
+            'alternative_ids' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__FLUSHABLE_AGGRESSIVE | TABLE_PURPOSE__SUBDATA/*under <content>*/,
+            'attachment_refs' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__SUBDATA/*under <content> (implied)*/,
+            'attachments' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__SUBDATA/*under <content> (special handling)*/,
+            'autosave' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__FLUSHABLE,
+            'blocks' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__AUTOGEN_STATIC,
+            'cache' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__NO_BACKUPS | TABLE_PURPOSE__FLUSHABLE,
+            'cache_on' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__NO_BACKUPS | TABLE_PURPOSE__FLUSHABLE | TABLE_PURPOSE__AUTOGEN_STATIC,
+            'cached_comcode_pages' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__NO_BACKUPS | TABLE_PURPOSE__FLUSHABLE,
+            'captchas' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__NO_BACKUPS | TABLE_PURPOSE__FLUSHABLE,
+            'comcode_pages' => TABLE_PURPOSE__NORMAL,
+            'config' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__NO_STAGING_COPY/*has-special-Commandr-fs-hook*/,
+            'content_privacy__members' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__SUBDATA/*under <content>*/,
+            'content_privacy' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__SUBDATA/*under <content>*/,
+            'content_regions' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__SUBDATA/*under <content>*/,
+            'cron_caching_requests' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__NO_BACKUPS | TABLE_PURPOSE__FLUSHABLE,
+            'cron_progression' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__FLUSHABLE_AGGRESSIVE | TABLE_PURPOSE__MISC_NO_MERGE/*too-site-tied*/,
+            'post_tokens' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__NO_BACKUPS | TABLE_PURPOSE__FLUSHABLE,
+            'db_meta' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__AUTOGEN_STATIC,
+            'db_meta_indices' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__AUTOGEN_STATIC,
+            'db_meta_foreign_keys' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__AUTOGEN_STATIC,
+            'digestives_consumed' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__FLUSHABLE | TABLE_PURPOSE__MISC_NO_MERGE/*ephemeral*/,
+            'digestives_tin' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__NO_BACKUPS | TABLE_PURPOSE__FLUSHABLE | TABLE_PURPOSE__MISC_NO_MERGE/*ephemeral*/,
+            'edit_pings' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__NO_BACKUPS | TABLE_PURPOSE__FLUSHABLE | TABLE_PURPOSE__SUBDATA/*under <content>*/,
+            'email_bounces' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__FLUSHABLE,
+            'f_group_member_timeouts' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__SUBDATA/*under f_members*/,
+            'failedlogins' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__FLUSHABLE,
+            'feature_lifetime_monitor' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__FLUSHABLE | TABLE_PURPOSE__MISC_NO_MERGE/*ephemeral*/,
+            'group_category_access' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__SUBDATA/*under <content>*/,
+            'group_privileges' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__AS_COMMANDER_FS_EXTENDED_CONFIG,
+            'incoming_uploads' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__NO_BACKUPS | TABLE_PURPOSE__FLUSHABLE,
+            'ip_country' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__NO_BACKUPS | TABLE_PURPOSE__FLUSHABLE | TABLE_PURPOSE__AUTOGEN_STATIC,
+            'daily_visits' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__FLUSHABLE,
+            'logged_mail_messages' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__FLUSHABLE,
+            'member_category_access' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__SUBDATA/*under <content>*/,
+            'member_page_access' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__AS_COMMANDER_FS_EXTENDED_CONFIG,
+            'member_privileges' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__AS_COMMANDER_FS_EXTENDED_CONFIG,
+            'member_tracking' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__FLUSHABLE | TABLE_PURPOSE__SUBDATA/*under <content>*/,
+            'member_zone_access' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__SUBDATA/*under zones*/,
+            'menu_items' => TABLE_PURPOSE__NORMAL,
+            'messages_to_render' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__NO_BACKUPS | TABLE_PURPOSE__FLUSHABLE,
+            'modules' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__AUTOGEN_STATIC,
+            'notifications_enabled' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__FLUSHABLE_AGGRESSIVE | TABLE_PURPOSE__SUBDATA/*under f_members*/,
+            'privilege_list' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__AUTOGEN_STATIC,
+            'rating' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__FLUSHABLE_AGGRESSIVE | TABLE_PURPOSE__SUBDATA/*under <content>*/,
+            'review_supplement' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__FLUSHABLE_AGGRESSIVE | TABLE_PURPOSE__SUBDATA/*under <content>*/,
+            'seo_meta' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__SUBDATA/*under <content>*/,
+            'seo_meta_keywords' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__SUBDATA/*under <content>*/,
+            'sessions' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__NO_BACKUPS | TABLE_PURPOSE__FLUSHABLE,
+            'sitemap_cache' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__NO_BACKUPS | TABLE_PURPOSE__FLUSHABLE,
+            'task_queue' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__FLUSHABLE | TABLE_PURPOSE__MISC_NO_MERGE/*ephemeral*/,
+            'temp_block_permissions' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__NO_BACKUPS | TABLE_PURPOSE__FLUSHABLE,
+            'trackbacks' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__FLUSHABLE_AGGRESSIVE | TABLE_PURPOSE__SUBDATA/*under <content>*/,
+            'translate' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__SUBDATA/*under <lots>*/,
+            'translation_cache' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__FLUSHABLE_AGGRESSIVE,
+            'tutorial_links' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__FLUSHABLE | TABLE_PURPOSE__AUTOGEN_STATIC,
+            'unbannable_ip' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__AS_COMMANDER_FS_EXTENDED_CONFIG,
+            'unsubscribed_emails' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__MISC_NO_MERGE/*too-site-tied*/,
+            'url_id_monikers' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__MISC_NO_MERGE/*too-site-tied*/ | TABLE_PURPOSE__SUBDATA/*under <content>*/,
+            'url_title_cache' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__NO_BACKUPS | TABLE_PURPOSE__FLUSHABLE,
+            'urls_checked' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__NO_BACKUPS | TABLE_PURPOSE__FLUSHABLE,
+            'values' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__MISC_NO_MERGE/*too-site-tied*/,
+            'values_elective' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__MISC_NO_MERGE/*too-site-tied*/,
+            'webstandards_checked_once' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__FLUSHABLE,
+            'zones' => TABLE_PURPOSE__NORMAL,
+            'cpages_fulltext_index' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__FLUSHABLE,
+            'ft_index_commonality' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__FLUSHABLE,
+        ];
+    }
 
     /**
      * Database manifest for this addon.

@@ -35,6 +35,17 @@
  */
 class Hook_database_manifest_core_upgrader
 {
+    /**
+     * Determine how we should handle database tables for things like backups, automated testing, import/export, and migration.
+     *
+     * @return array Map of table names to their TABLE_PURPOSE constants
+     */
+    public function get_table_purpose_flags() : array
+    {
+        require_code('database_relations');
+
+        return [];
+    }
 
     /**
      * Database manifest for this addon.
@@ -253,6 +264,22 @@ class Hook_database_manifest_core_upgrader
                     'from_table' => 'f_topics',
                     'from_field' => 't_poll_id',
                     'to_table' => 'f_polls',
+                    'to_field' => 'id',
+                    'special_values' => [],
+                ],
+                'f_warnings__w_topic_id||f_topics__id' => [
+                    'addon' => 'core_upgrader',
+                    'from_table' => 'f_warnings',
+                    'from_field' => 'w_topic_id',
+                    'to_table' => 'f_topics',
+                    'to_field' => 'id',
+                    'special_values' => [],
+                ],
+                'f_warnings_punitive__p_warning_id||f_warnings__id' => [
+                    'addon' => 'core_upgrader',
+                    'from_table' => 'f_warnings_punitive',
+                    'from_field' => 'p_warning_id',
+                    'to_table' => 'f_warnings',
                     'to_field' => 'id',
                     'special_values' => [],
                 ],

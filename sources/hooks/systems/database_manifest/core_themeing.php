@@ -35,6 +35,21 @@
  */
 class Hook_database_manifest_core_themeing
 {
+    /**
+     * Determine how we should handle database tables for things like backups, automated testing, import/export, and migration.
+     *
+     * @return array Map of table names to their TABLE_PURPOSE constants
+     */
+    public function get_table_purpose_flags() : array
+    {
+        require_code('database_relations');
+
+        return [
+            'theme_images' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__NO_STAGING_COPY/*as can deal in files*/,
+            'theme_screen_tree' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__FLUSHABLE,
+            'theme_template_relations' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__FLUSHABLE,
+        ];
+    }
 
     /**
      * Database manifest for this addon.

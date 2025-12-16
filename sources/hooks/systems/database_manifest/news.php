@@ -35,6 +35,22 @@
  */
 class Hook_database_manifest_news
 {
+    /**
+     * Determine how we should handle database tables for things like backups, automated testing, import/export, and migration.
+     *
+     * @return array Map of table names to their TABLE_PURPOSE constants
+     */
+    public function get_table_purpose_flags() : array
+    {
+        require_code('database_relations');
+
+        return [
+            'news' => TABLE_PURPOSE__NORMAL,
+            'news_categories' => TABLE_PURPOSE__NORMAL,
+            'news_category_entries' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__SUBDATA/*under news*/,
+            'news_rss_cloud' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__FLUSHABLE_AGGRESSIVE | TABLE_PURPOSE__MISC_NO_MERGE/*too-site-tied*/ | TABLE_PURPOSE__SUBDATA/*under news*/,
+        ];
+    }
 
     /**
      * Database manifest for this addon.

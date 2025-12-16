@@ -30,10 +30,6 @@
  * @package    core
  */
 
-/*
-REMEMBER to keep db_export.sh updated too
-*/
-
 /**
  * Standard code module initialisation function.
  *
@@ -43,14 +39,14 @@ function init__database_relations()
 {
     if (!defined('TABLE_PURPOSE__NORMAL')) {
         define('TABLE_PURPOSE__NORMAL', 0);
-        define('TABLE_PURPOSE__NO_BACKUPS', 1); // For some reason we do not backup this
-        define('TABLE_PURPOSE__FLUSHABLE', 2); // Flushable because the contents is not HUGELY important. Should not be routinely flushed. Logs, chats, etc - not member settings, etc. Think: "stuff to do before opening a new site that has just gone through testing"
+        define('TABLE_PURPOSE__NO_BACKUPS', 1); // Do not backup this table
+        define('TABLE_PURPOSE__FLUSHABLE', 2); // Flushable because the contents is not HUGELY important. Should not be routinely flushed. Think: "stuff to do before opening a new site that has just gone through testing"
         define('TABLE_PURPOSE__FLUSHABLE_AGGRESSIVE', 4); // Flushable if we're being extra aggressive. Don't set if already has FLUSHABLE set
         define('TABLE_PURPOSE__NO_STAGING_COPY', 8); // For some special reason we don't copy this between staging to live. Don't set if already has FLUSHABLE set
-        define('TABLE_PURPOSE__NON_BUNDLED', 16); // Non-bundled. Do not apply this to anything defined in this core file. Applies only to non-bundled tables injected via an override to this file
-        define('TABLE_PURPOSE__AUTOGEN_STATIC', 32); // Contents is auto-generated/meta and essentially static, not for merging between sites
+        define('TABLE_PURPOSE__NON_BUNDLED', 16); // Table belongs to a non-bundled addon
+        define('TABLE_PURPOSE__AUTOGEN_STATIC', 32); // Contents are auto-generated, not for merging between sites
         define('TABLE_PURPOSE__MISC_NO_MERGE', 64); // Should not be merged between sites for other unspecified reasons
-        define('TABLE_PURPOSE__SUBDATA', 128); // Data which is subsumed under other data when doing a transfer and has some importance but is totally meaningless when taken on its own
+        define('TABLE_PURPOSE__SUBDATA', 128); // Table data is considered a subset of another table; its data is meaningless without the parent(s)
         define('TABLE_PURPOSE__AS_COMMANDER_FS_EXTENDED_CONFIG', 256); // We won't give the table full handling somewhere under a Resource-fs hook, we'll have a Commandr-fs extended config hook instead
         // -
         define('TABLE_PURPOSE__NOT_KNOWN', 512);
@@ -58,243 +54,31 @@ function init__database_relations()
 }
 
 /**
- * Find how tables might be ignored for backups etc.
- * This is mainly used for building automated tests that make sure things are consistently implemented.
+ * Determine how we should handle database tables for things like backups, automated testing, import/export, and migration.
+ * This function gets purpose flags for all defined tables in a memory-efficient way. If you want specific tables, then you should use the database_manifest hooks.
  *
- * @return array List of tables and their status regarding being ignored for backups etc
+ * @return array Map of database_manifest hooks to a map of table names to TABLE_PURPOSE flags
  */
 function get_table_purpose_flags() : array
 {
-    // TODO: Migrate to hooks
-    return [ // If you change TABLE_PURPOSE__NO_BACKUPS on any of these, you should probably also edit the performance_bloat testTableSize health check
-        'addons' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__AUTOGEN_STATIC,
-        'addons_dependencies' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__AUTOGEN_STATIC | TABLE_PURPOSE__SUBDATA/*under addons*/,
-        'addons_files' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__AUTOGEN_STATIC | TABLE_PURPOSE__SUBDATA/*under addons*/,
-        'actionlogs' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__FLUSHABLE_AGGRESSIVE | TABLE_PURPOSE__MISC_NO_MERGE/*too-site-tied*/,
-        'aggregate_type_instances' => TABLE_PURPOSE__NORMAL,
-        'alternative_ids' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__FLUSHABLE_AGGRESSIVE | TABLE_PURPOSE__SUBDATA/*under <content>*/,
-        'attachment_refs' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__SUBDATA/*under <content> (implied)*/,
-        'attachments' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__SUBDATA/*under <content> (special handling)*/,
-        'authors' => TABLE_PURPOSE__NORMAL,
-        'autosave' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__FLUSHABLE,
-        'award_archive' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__SUBDATA/*under award_types*/,
-        'award_types' => TABLE_PURPOSE__NORMAL,
-        'banned_ip' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__FLUSHABLE_AGGRESSIVE,
-        'banner_clicks' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__FLUSHABLE | TABLE_PURPOSE__SUBDATA/*under banners*/,
-        'banner_types' => TABLE_PURPOSE__NORMAL,
-        'banners' => TABLE_PURPOSE__NORMAL,
-        'banners_types' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__SUBDATA/*under banners*/,
-        'blocks' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__AUTOGEN_STATIC,
-        'cache' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__NO_BACKUPS | TABLE_PURPOSE__FLUSHABLE,
-        'cache_on' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__NO_BACKUPS | TABLE_PURPOSE__FLUSHABLE | TABLE_PURPOSE__AUTOGEN_STATIC,
-        'cached_comcode_pages' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__NO_BACKUPS | TABLE_PURPOSE__FLUSHABLE,
-        'calendar_events' => TABLE_PURPOSE__NORMAL,
-        'calendar_interests' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__SUBDATA/*under f_members*/,
-        'calendar_jobs' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__MISC_NO_MERGE/*ephemeral*/ | TABLE_PURPOSE__SUBDATA/*under calendar_events*/,
-        'calendar_reminders' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__SUBDATA/*under calendar_events*/,
-        'calendar_types' => TABLE_PURPOSE__NORMAL,
-        'captchas' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__NO_BACKUPS | TABLE_PURPOSE__FLUSHABLE,
-        'catalogue_cat_treecache' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__NO_BACKUPS | TABLE_PURPOSE__FLUSHABLE | TABLE_PURPOSE__SUBDATA/*under catalogues*/,
-        'catalogue_categories' => TABLE_PURPOSE__NORMAL,
-        'catalogue_childcountcache' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__NO_BACKUPS | TABLE_PURPOSE__FLUSHABLE | TABLE_PURPOSE__SUBDATA/*under catalogues*/,
-        'catalogue_efv_float' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__SUBDATA/*under catalogue_entries*/,
-        'catalogue_efv_integer' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__SUBDATA/*under catalogue_entries*/,
-        'catalogue_efv_long' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__SUBDATA/*under catalogue_entries*/,
-        'catalogue_efv_long_trans' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__SUBDATA/*under catalogue_entries*/,
-        'catalogue_efv_short' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__SUBDATA/*under catalogue_entries*/,
-        'catalogue_efv_short_trans' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__SUBDATA/*under catalogue_entries*/,
-        'catalogue_entries' => TABLE_PURPOSE__NORMAL,
-        'catalogue_entry_linkage' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__SUBDATA/*under <content>*/,
-        'catalogue_fields' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__SUBDATA/*under catalogues*/,
-        'catalogues' => TABLE_PURPOSE__NORMAL,
-        'chat_active' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__NO_BACKUPS | TABLE_PURPOSE__FLUSHABLE,
-        'chat_blocking' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__SUBDATA/*under f_members*/,
-        'chat_events' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__NO_BACKUPS | TABLE_PURPOSE__FLUSHABLE,
-        'chat_friends' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__SUBDATA/*under f_members*/,
-        'chat_messages' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__FLUSHABLE_AGGRESSIVE | TABLE_PURPOSE__SUBDATA/*under chat_rooms*/ | TABLE_PURPOSE__MISC_NO_MERGE/*ephemeral*/,
-        'chat_rooms' => TABLE_PURPOSE__NORMAL,
-        'chat_sound_effects' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__SUBDATA/*under f_members*/,
-        'comcode_pages' => TABLE_PURPOSE__NORMAL,
-        'config' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__NO_STAGING_COPY/*has-special-Commandr-fs-hook*/,
-        'content_privacy__members' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__SUBDATA/*under <content>*/,
-        'content_privacy' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__SUBDATA/*under <content>*/,
-        'content_regions' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__SUBDATA/*under <content>*/,
-        'content_reviews' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__SUBDATA/*under <content>*/,
-        'cron_caching_requests' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__NO_BACKUPS | TABLE_PURPOSE__FLUSHABLE,
-        'cron_progression' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__FLUSHABLE_AGGRESSIVE | TABLE_PURPOSE__MISC_NO_MERGE/*too-site-tied*/,
-        'post_tokens' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__NO_BACKUPS | TABLE_PURPOSE__FLUSHABLE,
-        'custom_comcode' => TABLE_PURPOSE__NORMAL,
-        'staff_checklist_cus_tasks' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__AS_COMMANDER_FS_EXTENDED_CONFIG,
-        'db_meta' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__AUTOGEN_STATIC,
-        'db_meta_indices' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__AUTOGEN_STATIC,
-        'digestives_consumed' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__FLUSHABLE | TABLE_PURPOSE__MISC_NO_MERGE/*ephemeral*/,
-        'digestives_tin' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__NO_BACKUPS | TABLE_PURPOSE__FLUSHABLE | TABLE_PURPOSE__MISC_NO_MERGE/*ephemeral*/,
-        'download_categories' => TABLE_PURPOSE__NORMAL,
-        'download_downloads' => TABLE_PURPOSE__NORMAL,
-        'download_licences' => TABLE_PURPOSE__NORMAL,
-        'download_logging' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__FLUSHABLE | TABLE_PURPOSE__SUBDATA/*under download_downloads*/,
-        'edit_pings' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__NO_BACKUPS | TABLE_PURPOSE__FLUSHABLE | TABLE_PURPOSE__SUBDATA/*under <content>*/,
-        'email_bounces' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__FLUSHABLE,
-        'escrow' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__SUBDATA/*under f_members and points_ledger*/,
-        'escrow_logs' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__FLUSHABLE_AGGRESSIVE | TABLE_PURPOSE__SUBDATA/*under escrow*/,
-        'f_custom_fields' => TABLE_PURPOSE__NORMAL,
-        'f_emoticons' => TABLE_PURPOSE__NORMAL,
-        'f_forum_groupings' => TABLE_PURPOSE__NORMAL,
-        'f_forum_intro_ip' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__FLUSHABLE | TABLE_PURPOSE__SUBDATA/*under f_forums*/,
-        'f_forum_intro_member' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__FLUSHABLE | TABLE_PURPOSE__SUBDATA/*under f_forums*/,
-        'f_forums' => TABLE_PURPOSE__NORMAL,
-        'f_group_approvals' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__FLUSHABLE_AGGRESSIVE | TABLE_PURPOSE__SUBDATA/*under f_groups*/ | TABLE_PURPOSE__MISC_NO_MERGE/*cyclic-dependency*/,
-        'f_group_join_log' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__FLUSHABLE | TABLE_PURPOSE__SUBDATA/*under f_groups*/,
-        'f_group_member_timeouts' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__SUBDATA/*under f_members*/,
-        'f_group_members' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__SUBDATA/*under f_members*/,
-        'f_groups' => TABLE_PURPOSE__NORMAL,
-        'f_invites' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__FLUSHABLE_AGGRESSIVE,
-        'f_member_cpf_perms' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__SUBDATA/*under f_members*/,
-        'f_member_custom_fields' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__SUBDATA/*under f_members*/,
-        'f_member_known_login_ips' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__FLUSHABLE_AGGRESSIVE | TABLE_PURPOSE__SUBDATA/*under f_members*/,
-        'f_members' => TABLE_PURPOSE__NORMAL,
-        'f_moderator_logs' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__FLUSHABLE_AGGRESSIVE | TABLE_PURPOSE__MISC_NO_MERGE/*too-site-tied*/,
-        'f_multi_moderations' => TABLE_PURPOSE__NORMAL,
-        'f_password_history' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__FLUSHABLE | TABLE_PURPOSE__SUBDATA/*under f_members*/,
-        'f_poll_answers' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__SUBDATA/*under f_topics*/,
-        'f_poll_votes' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__SUBDATA/*under f_topics*/,
-        'f_polls' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__SUBDATA/*f_topics*/,
-        'f_post_templates' => TABLE_PURPOSE__NORMAL,
-        'f_posts' => TABLE_PURPOSE__NORMAL,
-        'f_read_logs' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__FLUSHABLE | TABLE_PURPOSE__SUBDATA/*under f_members*/,
-        'f_saved_warnings' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__FLUSHABLE_AGGRESSIVE,
-        'f_special_pt_access' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__SUBDATA/*under f_topics*/,
-        'f_topics' => TABLE_PURPOSE__NORMAL,
-        'f_usergroup_sub_mails' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__SUBDATA/*under f_usergroup_subs*/,
-        'f_usergroup_subs' => TABLE_PURPOSE__NORMAL,
-        'f_warnings' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__SUBDATA/*under f_members*/,
-        'f_warnings_punitive' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__SUBDATA/*under f_warnings*/,
-        'f_welcome_emails' => TABLE_PURPOSE__NORMAL,
-        'failedlogins' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__FLUSHABLE,
-        'feature_lifetime_monitor' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__FLUSHABLE | TABLE_PURPOSE__MISC_NO_MERGE/*ephemeral*/,
-        'filedump' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__SUBDATA/*subsumed within filedump hook when it finds files*/,
-        'galleries' => TABLE_PURPOSE__NORMAL,
-        'group_category_access' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__SUBDATA/*under <content>*/,
-        'group_page_access' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__AS_COMMANDER_FS_EXTENDED_CONFIG,
-        'group_privileges' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__AS_COMMANDER_FS_EXTENDED_CONFIG,
-        'group_zone_access' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__SUBDATA/*under zones*/,
-        'hackattack' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__FLUSHABLE,
-        'images' => TABLE_PURPOSE__NORMAL,
-        'import_id_remap' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__FLUSHABLE | TABLE_PURPOSE__SUBDATA/*under import_session*/,
-        'import_parts_done' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__FLUSHABLE | TABLE_PURPOSE__SUBDATA/*under import_session*/,
-        'import_session' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__FLUSHABLE,
-        'incoming_uploads' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__NO_BACKUPS | TABLE_PURPOSE__FLUSHABLE,
-        'ecom_invoices' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__FLUSHABLE_AGGRESSIVE | TABLE_PURPOSE__SUBDATA/*under f_members*/,
-        'ip_country' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__NO_BACKUPS | TABLE_PURPOSE__FLUSHABLE | TABLE_PURPOSE__AUTOGEN_STATIC,
-        'leader_board' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__FLUSHABLE_AGGRESSIVE,
-        'leader_boards' => TABLE_PURPOSE__NORMAL,
-        'leader_boards_groups' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__SUBDATA,
-        'daily_visits' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__FLUSHABLE,
-        'logged_mail_messages' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__FLUSHABLE,
-        'match_key_messages' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__AS_COMMANDER_FS_EXTENDED_CONFIG,
-        'member_category_access' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__SUBDATA/*under <content>*/,
-        'member_page_access' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__AS_COMMANDER_FS_EXTENDED_CONFIG,
-        'member_privileges' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__AS_COMMANDER_FS_EXTENDED_CONFIG,
-        'member_tracking' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__FLUSHABLE | TABLE_PURPOSE__SUBDATA/*under <content>*/,
-        'member_zone_access' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__SUBDATA/*under zones*/,
-        'menu_items' => TABLE_PURPOSE__NORMAL,
-        'messages_to_render' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__NO_BACKUPS | TABLE_PURPOSE__FLUSHABLE,
-        'modules' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__AUTOGEN_STATIC,
-        'news' => TABLE_PURPOSE__NORMAL,
-        'news_categories' => TABLE_PURPOSE__NORMAL,
-        'news_category_entries' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__SUBDATA/*under news*/,
-        'news_rss_cloud' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__FLUSHABLE_AGGRESSIVE | TABLE_PURPOSE__MISC_NO_MERGE/*too-site-tied*/ | TABLE_PURPOSE__SUBDATA/*under news*/,
-        'newsletter_archive' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__SUBDATA/*under newsletters*/,
-        'newsletter_drip_send' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__FLUSHABLE,
-        'newsletter_periodic' => TABLE_PURPOSE__NORMAL,
-        'newsletter_subscribe' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__SUBDATA/*under newsletters*/,
-        'newsletter_subscribers' => TABLE_PURPOSE__NORMAL,
-        'newsletters' => TABLE_PURPOSE__NORMAL,
-        'notification_lockdown' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__AS_COMMANDER_FS_EXTENDED_CONFIG,
-        'notifications_enabled' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__FLUSHABLE_AGGRESSIVE | TABLE_PURPOSE__SUBDATA/*under f_members*/,
-        'points_ledger' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__FLUSHABLE_AGGRESSIVE | TABLE_PURPOSE__SUBDATA/*under f_members*/,
-        'poll' => TABLE_PURPOSE__NORMAL,
-        'poll_votes' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__SUBDATA/*under poll*/,
-        'ecom_prods_prices' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__AS_COMMANDER_FS_EXTENDED_CONFIG,
-        'privilege_list' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__AUTOGEN_STATIC,
-        'ecom_prods_custom' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__AS_COMMANDER_FS_EXTENDED_CONFIG,
-        'ecom_prods_permissions' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__AS_COMMANDER_FS_EXTENDED_CONFIG,
-        'quiz_entries' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__SUBDATA/*under quizzes*/,
-        'quiz_entry_answer' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__SUBDATA/*under quizzes*/,
-        'quiz_member_last_visit' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__FLUSHABLE | TABLE_PURPOSE__SUBDATA/*under quizzes*/,
-        'quiz_question_answers' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__SUBDATA/*under quizzes*/,
-        'quiz_questions' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__SUBDATA/*under quizzes*/,
-        'quiz_winner' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__SUBDATA/*under quizzes*/,
-        'quizzes' => TABLE_PURPOSE__NORMAL,
-        'rating' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__FLUSHABLE_AGGRESSIVE | TABLE_PURPOSE__SUBDATA/*under <content>*/,
-        'redirects' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__AS_COMMANDER_FS_EXTENDED_CONFIG,
-        'review_supplement' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__FLUSHABLE_AGGRESSIVE | TABLE_PURPOSE__SUBDATA/*under <content>*/,
-        'revisions' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__FLUSHABLE | TABLE_PURPOSE__SUBDATA/*under <lots>*/,
-        'ecom_sales' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__FLUSHABLE_AGGRESSIVE,
-        'searches_logged' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__FLUSHABLE,
-        'seo_meta' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__SUBDATA/*under <content>*/,
-        'seo_meta_keywords' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__SUBDATA/*under <content>*/,
-        'sessions' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__NO_BACKUPS | TABLE_PURPOSE__FLUSHABLE,
-        'shopping_cart' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__FLUSHABLE_AGGRESSIVE | TABLE_PURPOSE__MISC_NO_MERGE/*too-site-tied*/,
-        'shopping_logging' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__FLUSHABLE,
-        'shopping_orders' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__FLUSHABLE_AGGRESSIVE | TABLE_PURPOSE__MISC_NO_MERGE/*too-site-tied*/,
-        'site_messages' => TABLE_PURPOSE__NORMAL,
-        'site_messages_pages' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__SUBDATA/*under site_messages*/,
-        'site_messages_groups' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__SUBDATA/*under site_messages*/,
-        'ecom_trans_addresses' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__FLUSHABLE_AGGRESSIVE | TABLE_PURPOSE__MISC_NO_MERGE/*too-site-tied*/ | TABLE_PURPOSE__SUBDATA/*under shopping_orders*/,
-        'shopping_order_details' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__FLUSHABLE_AGGRESSIVE | TABLE_PURPOSE__MISC_NO_MERGE/*too-site-tied*/ | TABLE_PURPOSE__SUBDATA/*under shopping_orders*/,
-        'sitemap_cache' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__NO_BACKUPS | TABLE_PURPOSE__FLUSHABLE,
-        'sms_log' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__FLUSHABLE,
-        'staff_tips_dismissed' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__FLUSHABLE,
-        'staff_links' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__AS_COMMANDER_FS_EXTENDED_CONFIG,
-        'stats' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__NO_BACKUPS | TABLE_PURPOSE__FLUSHABLE,
-        'stats_events' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__NO_BACKUPS | TABLE_PURPOSE__FLUSHABLE,
-        'stats_preprocessed' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__FLUSHABLE_AGGRESSIVE,
-        'stats_preprocessed_flat' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__FLUSHABLE_AGGRESSIVE,
-        'stats_kpis' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__FLUSHABLE_AGGRESSIVE,
-        'stats_known_events' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__FLUSHABLE_AGGRESSIVE,
-        'stats_known_tracking' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__FLUSHABLE_AGGRESSIVE,
-        'stats_known_links' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__FLUSHABLE_AGGRESSIVE,
-        'stats_link_tracker' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__NO_BACKUPS | TABLE_PURPOSE__FLUSHABLE,
-        'ecom_subscriptions' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__FLUSHABLE_AGGRESSIVE | TABLE_PURPOSE__SUBDATA/*under f_members*/,
-        'task_queue' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__FLUSHABLE | TABLE_PURPOSE__MISC_NO_MERGE/*ephemeral*/,
-        'temp_block_permissions' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__NO_BACKUPS | TABLE_PURPOSE__FLUSHABLE,
-        'theme_images' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__NO_STAGING_COPY/*as can deal in files*/,
-        'theme_screen_tree' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__FLUSHABLE,
-        'theme_template_relations' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__FLUSHABLE,
-        'ticket_extra_access' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__SUBDATA/*under f_topics*/,
-        'ticket_known_emailers' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__FLUSHABLE_AGGRESSIVE | TABLE_PURPOSE__SUBDATA/*under f_members*/,
-        'ticket_types' => TABLE_PURPOSE__NORMAL,
-        'tickets' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__SUBDATA/*under f_topics*/,
-        'trackbacks' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__FLUSHABLE_AGGRESSIVE | TABLE_PURPOSE__SUBDATA/*under <content>*/,
-        'ecom_trans_expecting' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__FLUSHABLE_AGGRESSIVE | TABLE_PURPOSE__MISC_NO_MERGE/*too-site-tied*/,
-        'ecom_transactions' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__FLUSHABLE_AGGRESSIVE,
-        'translate' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__SUBDATA/*under <lots>*/,
-        'tutorial_links' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__FLUSHABLE | TABLE_PURPOSE__AUTOGEN_STATIC,
-        'unbannable_ip' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__AS_COMMANDER_FS_EXTENDED_CONFIG,
-        'unsubscribed_emails' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__MISC_NO_MERGE/*too-site-tied*/,
-        'url_id_monikers' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__MISC_NO_MERGE/*too-site-tied*/ | TABLE_PURPOSE__SUBDATA/*under <content>*/,
-        'url_title_cache' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__NO_BACKUPS | TABLE_PURPOSE__FLUSHABLE,
-        'urls_checked' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__NO_BACKUPS | TABLE_PURPOSE__FLUSHABLE,
-        'usersonline_track' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__FLUSHABLE,
-        'usersubmitban_member' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__FLUSHABLE_AGGRESSIVE | TABLE_PURPOSE__SUBDATA/*under f_members*/,
-        'values' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__MISC_NO_MERGE/*too-site-tied*/,
-        'values_elective' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__MISC_NO_MERGE/*too-site-tied*/,
-        'video_transcoding' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__MISC_NO_MERGE/*too-site-tied*/,
-        'videos' => TABLE_PURPOSE__NORMAL,
-        'webstandards_checked_once' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__FLUSHABLE,
-        'wiki_children' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__SUBDATA/*under wiki_pages*/,
-        'wiki_pages' => TABLE_PURPOSE__NORMAL,
-        'wiki_posts' => TABLE_PURPOSE__NORMAL,
-        'wordfilter' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__AS_COMMANDER_FS_EXTENDED_CONFIG,
-        'zones' => TABLE_PURPOSE__NORMAL,
-        'ecom_sales_expecting' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__FLUSHABLE_AGGRESSIVE | TABLE_PURPOSE__MISC_NO_MERGE/*too-site-tied*/,
-        'ce_fulltext_index' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__FLUSHABLE,
-        'cpages_fulltext_index' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__FLUSHABLE,
-        'f_posts_fulltext_index' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__FLUSHABLE,
-        'f_pposts_fulltext_index' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__FLUSHABLE,
-        'ft_index_commonality' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__FLUSHABLE,
-    ];
+    require_code('zones');
+
+    static $ret = [];
+    if (count($ret) > 0) {
+        return $ret;
+    }
+
+    $hooks = find_all_hooks('systems', 'database_manifest');
+    foreach ($hooks as $hook => $sources_dir) {
+        $path = get_custom_file_base() . '/' . $sources_dir . '/hooks/systems/database_manifest/' . $hook . '.php';
+        $db_manifest = extract_class_functions($path, ['get_table_purpose_flags'], [], false, 'Hook_database_manifest_' . $hook);
+        if ($db_manifest[0] !== null) {
+            $ret[$hook] = is_array($db_manifest[0]) ? call_user_func_array($db_manifest[0][0], $db_manifest[0][1]) : cms_eval($db_manifest[0], $path);
+        }
+        unset($db_manifest);
+    }
+
+    return $ret;
 }
 
 /**
@@ -306,17 +90,47 @@ function get_table_purpose_flags() : array
  */
 function table_has_purpose_flag(string $table, int $flag) : bool
 {
-    static $flags = null;
-    if ($flags === null) {
-        $flags = get_table_purpose_flags();
+    static $hook_flags = null;
+
+    if ($hook_flags === null) {
+        $hook_flags = get_table_purpose_flags();
     }
 
-    if (!isset($flags[$table])) {
-        return ($flag & TABLE_PURPOSE__NOT_KNOWN) != 0;
+    foreach ($hook_flags as $hook => $flags) {
+        if (isset($flags[$table])) {
+            $real_flag = $flags[$table];
+            return ($real_flag & $flag) != 0;
+        }
     }
 
-    $real_flag = $flags[$table];
-    return ($real_flag & $flag) != 0;
+    return (($flag & TABLE_PURPOSE__NOT_KNOWN) != 0);
+}
+
+/**
+ * Get the database meta/manifest from all addons in a memory-efficient way.
+ *
+ * @return array A map of database_manifest hook to the database meta
+ */
+function get_db_meta() : array
+{
+    require_code('zones');
+
+    static $ret = [];
+    if (count($ret) > 0) {
+        return $ret;
+    }
+
+    $hooks = find_all_hooks('systems', 'database_manifest');
+    foreach ($hooks as $hook => $sources_dir) {
+        $path = get_custom_file_base() . '/' . $sources_dir . '/hooks/systems/database_manifest/' . $hook . '.php';
+        $db_manifest = extract_class_functions($path, ['db_meta'], [], false, 'Hook_database_manifest_' . $hook);
+        if ($db_manifest[0] !== null) {
+            $ret[$hook] = is_array($db_manifest[0]) ? call_user_func_array($db_manifest[0][0], $db_manifest[0][1]) : cms_eval($db_manifest[0], $path);
+        }
+        unset($db_manifest);
+    }
+
+    return $ret;
 }
 
 /**

@@ -35,6 +35,22 @@
  */
 class Hook_database_manifest_banners
 {
+    /**
+     * Determine how we should handle database tables for things like backups, automated testing, import/export, and migration.
+     *
+     * @return array Map of table names to their TABLE_PURPOSE constants
+     */
+    public function get_table_purpose_flags() : array
+    {
+        require_code('database_relations');
+
+        return [
+            'banner_clicks' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__FLUSHABLE | TABLE_PURPOSE__SUBDATA/*under banners*/,
+            'banner_types' => TABLE_PURPOSE__NORMAL,
+            'banners' => TABLE_PURPOSE__NORMAL,
+            'banners_types' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__SUBDATA/*under banners*/,
+        ];
+    }
 
     /**
      * Database manifest for this addon.
