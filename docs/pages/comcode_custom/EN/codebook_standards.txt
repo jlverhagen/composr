@@ -401,7 +401,7 @@ Do not use braces around the file path for [tt]require[/tt] / [tt]require_once[/
 | Stability: so obscure sorting works (e.g. the [tt]main_multi_content[/tt] block)
 | All development
 | Manually
-| When sorting resources which have a resource or content hook, use the [tt]process_sorting_params[/tt] function to parse and validate sorting. Relevant content and resource hooks should define all sortable fields not already defined by [tt]handle_abstract_sorting[/tt] (or if they must override the default SQL) in their [tt]additional_sort_fields[/tt] property. These fields should be defined as a map of sortable name to its custom sorting SQL (null: key is the name of the field, and we want to sort directly on that) (direction is suffixed automatically) (field names for the relevant table should start with [tt]r.[/tt]). Value can also be a map of ASC and DESC to define different custom SQL for ASC versus DESC sorting (you will need to explicitly define the direction in the values in this case), or to leave blank if a module handles the sorting itself. One of the values returned from [tt]process_sorting_params[/tt] is the SQL sorting query which can be used directly in a CRUD module's [tt]get_entry_rows[/tt]. If using it directly on a query, and the query does not map the resource table to [tt]r[/tt], then you will need to do [tt]str_replace('r.', '', $sql_sort)[/tt] on the sorting SQL query when putting it on the [tt]end[/tt] parameter (do not forget '[tt]ORDER BY [/tt]' before it!).
+| When sorting things (and sorting is specified in the URL), use the [tt]process_sorting_params[/tt] function to parse and validate sorting. Relevant content and resource hooks should define all sortable fields not already defined by [tt]handle_abstract_sorting[/tt] (or if they must override the default SQL) in their [tt]additional_sort_fields[/tt] property. These fields should be defined as a map of sortable name to its custom sorting SQL (null: key is the name of the field, and we want to sort directly on that) (direction is suffixed automatically) (field names for the relevant table should start with [tt]r.[/tt]). Value can also be a map of ASC and DESC to define different custom SQL for ASC versus DESC sorting (you will need to explicitly define the direction in the values in this case), or to leave blank if a module handles the sorting itself. One of the values returned from [tt]process_sorting_params[/tt] is the SQL sorting query which can be used directly in a CRUD module's [tt]get_entry_rows[/tt]. If using it directly on a query, and the query does not map the resource table to [tt]r[/tt], then you will need to do [tt]str_replace('r.', '', $sql_sort)[/tt] on the sorting SQL query when putting it on the [tt]end[/tt] parameter (do not forget '[tt]ORDER BY [/tt]' before it!).
 |-
 | [size="0.8"]{$INC,cs_count,1})[/size]
 [color="red"]Never use SQL queries as names of sortables[/color]
@@ -416,6 +416,13 @@ Do not use braces around the file path for [tt]require[/tt] / [tt]require_once[/
 | All development
 | Manually
 | Don't forget to paginate your browse screens using Composr's [tt]pagination[/tt] or back/next system.
+|-
+| [size="0.8"]{$INC,cs_count,1})[/size]
+[color="red"]Use correct URL parameter names for pagination and sorting[/color]
+| Stability: so obscure sorting works (e.g. the [tt]main_multi_content[/tt] block)
+| All development
+| Manually; development mode will warn you with an attached message of violations
+| When using pagination, use the correct URL parameter names. For defining the ID of the first result on the page, use [tt]start[/tt] or [tt]*_start[/tt]. For defining the maximum number of entries on the page, use [tt]max[/tt] or [tt]_max[/tt]. For defining the method of sorting used, use [tt]sort[/tt] or [tt]*_sort[/tt]. Not following this convention may break AJAX pagination as we have server-side logic to ensure these parameters do not recursively get duplicated in the AJAX URL.
 |-
 | [size="0.8"]{$INC,cs_count,1})[/size]
 [color="red"]Consider performance[/color]

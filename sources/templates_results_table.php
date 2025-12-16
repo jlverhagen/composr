@@ -309,6 +309,11 @@ function results_sorter(array $sortables, ?string $sortable = null, ?string $sor
 {
     require_code('templates_pagination'); // Required because INCREMENTAL_ID_GENERATOR defined there
 
+    if ($GLOBALS['DEV_MODE'] && ($sort_name != 'sort') && (preg_match('#_sort$#', $sort_name) !== 1)) {
+        require_lang('critical_error');
+        attach_message(do_lang_tempcode('INVALID_PAGINATION_PARAM_NAME', escape_html($sort_name), escape_html('results_sorter')), 'warn', false, true);
+    }
+
     $selectors = new Tempcode();
     foreach ($sortables as $_sortable => $text) {
         if (is_array($text)) {
