@@ -180,7 +180,7 @@ function find_mail_folders(string $host, int $port, ?string $type, string $usern
         $full_error = do_lang_tempcode('IMAP_ERROR', $error);
         if ($fail_ok) {
             require_code('failure');
-            cms_error_log($full_error);
+            cms_error_log('IMAP: WARNING ' . $error);
             return null;
         }
         warn_exit($full_error, false, true);
@@ -443,7 +443,7 @@ function _find_mail_bounces(string $host, int $port, ?string $type, string $fold
         $full_error = do_lang_tempcode('IMAP_ERROR', $error);
         if ($fail_ok) {
             require_code('failure');
-            cms_error_log($full_error);
+            cms_error_log('IMAP: WARNING ' . $error);
             return null;
         }
         warn_exit($full_error, false, true);
