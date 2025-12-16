@@ -6117,7 +6117,7 @@ function process_sorting_params(?string $content_type, string $url_sort, ?array 
 {
     if ($content_type === null) {
         if ($allowed_sorts === null) {
-            warn_exit(do_lang_tempcode('INTERNAL_ERROR', escape_html('TODO')));
+            warn_exit(do_lang_tempcode('INTERNAL_ERROR', escape_html('9ab1ae918e9257128ceb84f221a807b1')));
         }
 
         $parts = explode(' ', $url_sort, 2);

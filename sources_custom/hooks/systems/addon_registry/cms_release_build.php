@@ -180,6 +180,7 @@ You may want to put them in your Git \'cmd\' directory, as that is in your path.
             '.vscode/settings.json',
             '_config.php.template',
             'adminzone/pages/minimodules_custom/plug_guid.php',
+            'adminzone/pages/modules_custom/admin_make_hotfix.php',
             'adminzone/pages/modules_custom/admin_make_release.php',
             'adminzone/pages/modules_custom/admin_modularisation.php',
             'aps/.htaccess',
