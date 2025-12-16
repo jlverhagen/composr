@@ -105,7 +105,7 @@ class Hook_snippet_block
             $new_get = [];
             foreach ($attributes as $attribute => $attribute_value) {
                 // Skip parameters that may lead to recursion or other bugs
-                if (in_array($attribute, get_ajax_params_to_skip())) {
+                if (should_skip_param_ajax($attribute)) {
                     continue;
                 }
 

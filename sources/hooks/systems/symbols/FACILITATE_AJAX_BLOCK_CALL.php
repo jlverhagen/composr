@@ -66,6 +66,7 @@ class Hook_symbol_FACILITATE_AJAX_BLOCK_CALL
             $auth_key = '';
 
             require_code('blocks');
+            require_code('urls');
 
             $map = comma_list_str_to_arr($param[0]);
             $_block_constraints = block_params_to_block_signature($map);
@@ -108,8 +109,17 @@ class Hook_symbol_FACILITATE_AJAX_BLOCK_CALL
 
             $keep = symbol_tempcode('KEEP');
 
+            // Build self_url but ignore problematic parameters
+            list($c_zone, $c_attributes) = page_link_decode(url_to_page_link(get_self_url(true)));
+            $attributes = [];
+            foreach ($c_attributes as $attribute => $attribute_value) {
+                if (should_skip_param_ajax($attribute)) {
+                    continue;
+                }
+                $attributes[$attribute] = $attribute_value;
+            }
 
-            $self_url = get_self_url(true, false, array_fill_keys(get_ajax_params_to_skip(), null));
+            $self_url = build_url($attributes, $c_zone);
             $self_url_encoded = static_evaluate_tempcode(protect_url_parameter($self_url));
             $value = find_script('snippet') . '?snippet=block&self_url=' . urlencode($self_url_encoded) . '&block_map=' . urlencode($param[0]) . $keep->evaluate();
             if (get_param_string('utheme', null) !== null) {
