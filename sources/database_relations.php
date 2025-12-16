@@ -372,8 +372,25 @@ function find_all_tables(object $db) : array
         }
         $tables[$field['m_table']][$field['m_name']] = $field['m_type'];
     }
-    $tables['db_meta'] = ['m_table' => '*ID_TEXT', 'm_name' => '*ID_TEXT', 'm_type' => 'ID_TEXT'];
-    $tables['db_meta_indices'] = ['i_table' => '*ID_TEXT', 'i_name' => '*ID_TEXT', 'i_fields' => '*ID_TEXT'];
+
+    // FUDGE: these tables are not included in db_meta
+    $tables['db_meta'] = [
+        'm_table' => '*ID_TEXT',
+        'm_name' => '*ID_TEXT',
+        'm_type' => 'ID_TEXT',
+    ];
+    $tables['db_meta_indices'] = [
+        'i_table' => '*ID_TEXT',
+        'i_name' => '*ID_TEXT',
+        'i_fields' => '*ID_TEXT',
+    ];
+    $tables['db_meta_foreign_keys'] = [
+        'from_table' => '*ID_TEXT',
+        'from_field' => '*ID_TEXT',
+        'to_table' => 'ID_TEXT',
+        'to_field' => 'ID_TEXT',
+        'special_values' => 'SERIAL',
+    ];
 
     ksort($tables);
 
