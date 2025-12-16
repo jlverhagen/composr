@@ -71,13 +71,14 @@ function block_signature_check(array $allowed, array $used) : bool
 }
 
 /**
- * Return a list of URL parameters that should be skipped in internalised AJAX URLs as they can lead to recursion or other bugs.
+ * Determine if the given URL parameter used in an AJAXified call should be skipped to prevent recursion or other bugs.
  *
- * @return array List of parameters that should be skipped
+ * @param  ID_TEXT $param Name of the URL parameter
+ * @return boolean Whether it should be skipped
  */
-function get_ajax_params_to_skip() : array
+function should_skip_param_ajax(string $param) : bool
 {
-    return [
+    $skip_exact = [
         'zone',
         'page',
         'type',
@@ -91,5 +92,24 @@ function get_ajax_params_to_skip() : array
         'utheme',
         'ajax',
         'self_url',
+        'start',
+        'max',
+        'sort',
     ];
+    if (in_array($param, $skip_exact)) {
+        return true;
+    }
+
+    $skip_suffixes = [
+        '_start',
+        '_max',
+        '_sort',
+    ];
+    foreach ($skip_suffixes as $skip_suffix) {
+        if (preg_match('#' . preg_quote($skip_suffix, '#') . '$#', $param) === 1) {
+            return true;
+        }
+    }
+
+    return false;
 }
