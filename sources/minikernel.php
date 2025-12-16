@@ -1862,7 +1862,11 @@ function push_throw_errors(bool $_throwing_errors = true)
 function throwing_errors() : bool
 {
     global $THROWING_ERRORS;
-    return array_peek($THROWING_ERRORS);
+    $ret = array_peek($THROWING_ERRORS);
+    if ($ret === null) {
+        $ret = false;
+    }
+    return $ret;
 }
 
 /**

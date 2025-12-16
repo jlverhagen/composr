@@ -2442,7 +2442,7 @@ function fix_page_name_dashing(string $zone, string $page) : string
  *
  * @param  array $array The stack to peek in
  * @param  integer $depth_down The depth into the stack we are peaking
- * @return mixed The result of the peeking
+ * @return mixed The result of the peeking; use caution because this function may return null for an actual value or if no elements exist
  */
 function array_peek(array $array, int $depth_down = 1)
 {
