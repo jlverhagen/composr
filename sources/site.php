@@ -2401,7 +2401,7 @@ function log_stats(?string $page_link, int $pg_time)
 
     // We want to suppress DB errors for logging stats but still log/relay the error
     require_code('failure');
-    set_throw_errors(true);
+    push_throw_errors(true);
 
     try {
         $GLOBALS['SITE_DB']->query_insert('stats', [
@@ -2422,7 +2422,7 @@ function log_stats(?string $page_link, int $pg_time)
         // cms_error_log(brand_name() . ' database: WARNING ' . $e->getMessage()); // DB already logs it
     }
 
-    set_throw_errors(false);
+    pop_throw_errors();
 
     /*
         NB: We cannot always assume the scheduler is running, so randomly clear the stats if it hasn't in the last hour.

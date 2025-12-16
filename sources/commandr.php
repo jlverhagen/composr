@@ -120,7 +120,7 @@ function commandr_script()
         fclose($stdout);
     } else {
         require_code('failure');
-        set_throw_errors();
+        push_throw_errors(true);
         try {
             $temp = object_factory('Source_virtual_shell', false, [$command]);
             $temp->output_xml();

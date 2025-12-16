@@ -358,27 +358,27 @@ class Tempcode
                     }
 
                     require_code(\'failure\');
-                    set_throw_errors(true);
+                    push_throw_errors(true);
                     try {
                         eval($tmp->code_to_preexecute);
                     }
                     catch (Error $e) {
                         tempcode_error($e, $tmp->code_to_preexecute);
                     }
-                    set_throw_errors(false);
+                    pop_throw_errors();
 
                     $GLOBALS[\'CACHE_TEMPLATES\']=$tmp2;
                     unset($tmp);
                 } else {
                     require_code(\'failure\');
-                    set_throw_errors(true);
+                    push_throw_errors(true);
                     try {
                         eval($result[4]);
                     }
                     catch (Error $e) {
                         tempcode_error($e, $result[4]);
                     }
-                    set_throw_errors(false);
+                    pop_throw_errors();
 
                     unset($result);
                 }
@@ -444,13 +444,13 @@ class Tempcode
         }
 
         require_code('failure');
-        set_throw_errors(true);
+        push_throw_errors(true);
         try {
             $result = eval($raw_data);
         } catch (Error $e) {
             tempcode_error($e, $raw_data);
         }
-        set_throw_errors(false);
+        pop_throw_errors();
 
         if ($result === false) {
             if ($allow_failure) {
@@ -725,13 +725,13 @@ class Tempcode
                 $seq_part_0 = $seq_part[0];
                 if (!isset($tpl_funcs[$seq_part_0])) {
                     require_code('failure');
-                    set_throw_errors(true);
+                    push_throw_errors(true);
                     try {
                         eval($this->code_to_preexecute[$seq_part_0]);
                     } catch (Error $e) {
                         tempcode_error($e, $this->code_to_preexecute[$seq_part_0]);
                     }
-                    set_throw_errors(false);
+                    pop_throw_errors();
                 }
 
                 if (is_callable($tpl_funcs[$seq_part_0])) {
@@ -740,13 +740,13 @@ class Tempcode
                     $parameters = $seq_part[1];
 
                     require_code('failure');
-                    set_throw_errors(true);
+                    push_throw_errors(true);
                     try {
                         eval($tpl_funcs[$seq_part_0]);
                     } catch (Error $e) {
                         tempcode_error($e, $tpl_funcs[$seq_part_0]);
                     }
-                    set_throw_errors(false);
+                    pop_throw_errors();
                 }
 
                 if ((($first_of_long) || ($MEMORY_OVER_SPEED)) && (ob_get_length() > 0)) { // We only quick exit on the first iteration, as we know we likely didn't spend much time getting to it- anything more and we finish so that we can cache for later use by evaluate/evaluate_echo
@@ -842,13 +842,13 @@ class Tempcode
                 $seq_part_0 = $seq_part[0];
                 if (!isset($tpl_funcs[$seq_part_0])) {
                     require_code('failure');
-                    set_throw_errors(true);
+                    push_throw_errors(true);
                     try {
                         eval($this->code_to_preexecute[$seq_part_0]);
                     } catch (Error $e) {
                         tempcode_error($e, $this->code_to_preexecute[$seq_part_0]);
                     }
-                    set_throw_errors(false);
+                    pop_throw_errors();
                 }
 
                 if (is_callable($tpl_funcs[$seq_part_0])) {
@@ -856,13 +856,13 @@ class Tempcode
                 } else {
                     $parameters = $seq_part[1];
                     require_code('failure');
-                    set_throw_errors(true);
+                    push_throw_errors(true);
                     try {
                         eval($tpl_funcs[$seq_part_0]);
                     } catch (Error $e) {
                         tempcode_error($e, $tpl_funcs[$seq_part_0]);
                     }
-                    set_throw_errors(false);
+                    pop_throw_errors();
                 }
             }
         }
@@ -943,13 +943,13 @@ class Tempcode
                 $seq_part_0 = $seq_part[0];
                 if (!isset($tpl_funcs[$seq_part_0])) {
                     require_code('failure');
-                    set_throw_errors(true);
+                    push_throw_errors(true);
                     try {
                         eval($this->code_to_preexecute[$seq_part_0]);
                     } catch (Error $e) {
                         tempcode_error($e, $this->code_to_preexecute[$seq_part_0]);
                     }
-                    set_throw_errors(false);
+                    pop_throw_errors();
                 }
 
                 if (is_callable($tpl_funcs[$seq_part_0])) {
@@ -957,13 +957,13 @@ class Tempcode
                 } else {
                     $parameters = $seq_part[1];
                     require_code('failure');
-                    set_throw_errors(true);
+                    push_throw_errors(true);
                     try {
                         eval($tpl_funcs[$seq_part_0]);
                     } catch (Error $e) {
                         tempcode_error($e, $tpl_funcs[$seq_part_0]);
                     }
-                    set_throw_errors(false);
+                    pop_throw_errors();
                 }
             }
         }

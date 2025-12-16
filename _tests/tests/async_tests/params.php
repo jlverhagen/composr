@@ -32,7 +32,7 @@ class params_test_set extends cms_test_case
     public function testPostParamInteger()
     {
         require_code('failure');
-        set_throw_errors(true);
+        push_throw_errors(true);
 
         $tests = [
             'ppi_number_no_default' => [
@@ -153,7 +153,7 @@ class params_test_set extends cms_test_case
     public function testGetParamInteger()
     {
         require_code('failure');
-        set_throw_errors(true);
+        push_throw_errors(true);
 
         $tests = [
             'gpi_number_no_default' => [
@@ -274,7 +274,7 @@ class params_test_set extends cms_test_case
     public function testEitherParamInteger()
     {
         require_code('failure');
-        set_throw_errors(true);
+        push_throw_errors(true);
 
         $tests = [
             'epi_number_no_default' => [
@@ -418,7 +418,7 @@ class params_test_set extends cms_test_case
     public function testPostParamString()
     {
         require_code('failure');
-        set_throw_errors(true);
+        push_throw_errors(true);
 
         $tests = [
             'pps_missing_no_default' => [
@@ -503,7 +503,7 @@ class params_test_set extends cms_test_case
     public function testGetParamString()
     {
         require_code('failure');
-        set_throw_errors(true);
+        push_throw_errors(true);
 
         $tests = [
             'gps_missing_no_default' => [
@@ -588,7 +588,7 @@ class params_test_set extends cms_test_case
     public function testEitherParamString()
     {
         require_code('failure');
-        set_throw_errors(true);
+        push_throw_errors(true);
 
         $tests = [
             'eps_missing_no_default' => [

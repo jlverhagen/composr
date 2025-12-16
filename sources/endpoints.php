@@ -120,7 +120,7 @@ function endpoint_script()
     }
 
     // Any errors from this point forth should be considered a REST error (rather than a general internal error) and communicated with the user / logged.
-    set_throw_errors(true);
+    push_throw_errors(true);
     try {
         // Get hook info
         $ob = get_hook_ob('endpoints', $hook_type, $hook, 'Hook_endpoint_' . $hook_type . '_');
@@ -258,7 +258,7 @@ function endpoint_script()
             'response_data' => [],
         ];
     }
-    set_throw_errors(false);
+    pop_throw_errors();
 
     // Output
     switch ($response_type) {

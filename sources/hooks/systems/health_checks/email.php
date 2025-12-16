@@ -611,13 +611,13 @@ class Hook_health_check_email extends Source_hook_health_check
         $server_spec = _imap_server_spec($host, $port, $type);
 
         require_code('failure');
-        set_throw_errors(true);
+        push_throw_errors(true);
         try {
             $mbox = imap2_open($server_spec . $folder, $username, $password);
         } catch (Exception $e) {
             $mbox = false;
         }
-        set_throw_errors(false);
+        pop_throw_errors();
 
         $this->assertTrue($mbox !== false, 'Cannot connect to IMAP server');
         if ($mbox !== false) {
@@ -693,13 +693,13 @@ class Hook_health_check_email extends Source_hook_health_check
             }
 
             require_code('failure');
-            set_throw_errors(true);
+            push_throw_errors(true);
             try {
                 $mbox = imap2_open($server_spec . $folder, $username, $password, CL_EXPUNGE);
             } catch (Exception $e) {
                 $mbox = false;
             }
-            set_throw_errors(false);
+            pop_throw_errors();
 
             $ok = ($mbox !== false);
             if ($i == 0) {

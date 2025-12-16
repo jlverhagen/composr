@@ -92,7 +92,7 @@ class upgrader_test_set extends cms_test_case
         require_code('failure');
         require_code('global3');
 
-        set_throw_errors(true);
+        push_throw_errors(true);
 
         try {
             $files_previous_path = get_file_base() . '/data/files_previous.bin';
@@ -124,7 +124,7 @@ class upgrader_test_set extends cms_test_case
             $this->assertTrue(false, 'data/files.bin is missing or corrupt. You may need to generate / make this release again.');
         }
 
-        set_throw_errors(false);
+        pop_throw_errors();
     }
 
     public function testMakePersonalUpgraderNoAddonsDefined()

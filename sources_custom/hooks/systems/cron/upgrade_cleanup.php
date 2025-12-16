@@ -82,7 +82,7 @@ class Hook_cron_upgrade_cleanup
 
         $files_to_clean_up = 0;
         if (is_dir($build_path)) {
-            //set_throw_errors(true);
+            //push_throw_errors(true);
             try {
                 $cutoff_time = time() - (30 * 24 * 60 * 60); // 30 days ago
 
@@ -112,7 +112,7 @@ class Hook_cron_upgrade_cleanup
             } catch (Exception $e) {
                 // $files_to_clean_up will remain its current count.
             }
-            //set_throw_errors(false);
+            //pop_throw_errors();
         }
 
         return $files_to_clean_up;

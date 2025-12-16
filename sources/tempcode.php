@@ -379,13 +379,13 @@ function closure_eval(string $code, array $parameters) : string
     }
 
     require_code('failure');
-    set_throw_errors(true);
+    push_throw_errors(true);
     try {
         $ret = eval($code);
     } catch (Error $e) {
         tempcode_error($e, $code);
     }
-    set_throw_errors(false);
+    pop_throw_errors();
 
     if (!is_string($ret)) {
         $ret = @strval($ret);
@@ -1704,13 +1704,13 @@ function recall_named_function(string $id, string $parameters, string $code)
     if (!isset($GLOBALS[$k])) {
         $code = 'return function (' . $parameters . ') { $cl = user_lang(); ' . $code . ' };';
         require_code('failure');
-        set_throw_errors(true);
+        push_throw_errors(true);
         try {
             $GLOBALS[$k] = eval($code);
         } catch (Error $e) {
             tempcode_error($e, $code);
         }
-        set_throw_errors(false);
+        pop_throw_errors();
     }
     return $GLOBALS[$k];
 }

@@ -34,7 +34,7 @@ class addon_hook_quality_test_set extends cms_test_case
         require_code('comcode_check');
         require_code('failure');
 
-        set_throw_errors(true);
+        push_throw_errors(true);
 
         $addons = find_all_hook_obs('systems', 'addon_registry', 'Hook_addon_registry_');
         foreach ($addons as $addon_name => $ob) {
@@ -59,6 +59,6 @@ class addon_hook_quality_test_set extends cms_test_case
             }
         }
 
-        set_throw_errors(false);
+        pop_throw_errors();
     }
 }

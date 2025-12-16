@@ -1388,8 +1388,8 @@ function cms_error_handler(int $errno, string $errstr, string $errfile, int $err
             case E_COMPILE_ERROR:
             case E_ERROR:
             case E_PARSE:
-                if (function_exists('set_throw_errors')) {
-                    set_throw_errors(false);
+                if (function_exists('push_throw_errors')) {
+                    push_throw_errors(false);
                 }
                 $type = 'error';
                 $_type = 'ERROR';

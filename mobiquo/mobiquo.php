@@ -124,7 +124,7 @@ if ((is_file(TAPATALK_LOG)) && (cms_is_writable(TAPATALK_LOG))) {
 }
 
 require_code('failure');
-set_throw_errors();
+push_throw_errors(true);
 
 $MOBIQUO_SERVER->dispatch_request();
 

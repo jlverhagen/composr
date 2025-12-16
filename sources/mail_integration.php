@@ -167,13 +167,13 @@ abstract class Source_email_integration
         $server_spec = _imap_server_spec($host, $port, $type);
 
         require_code('failure');
-        set_throw_errors(true);
+        push_throw_errors(true);
         try {
             $mbox = imap2_open($server_spec . $folder, $username, $password, CL_EXPUNGE);
         } catch (Exception $e) {
             $mbox = false;
         }
-        set_throw_errors(false);
+        pop_throw_errors();
 
         if ($mbox !== false) {
             $this->log_message('Successfully opened server connection');

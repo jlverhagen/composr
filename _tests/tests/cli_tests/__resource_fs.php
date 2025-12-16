@@ -156,14 +156,14 @@ class __resource_fs_test_set extends cms_test_case
                 $folder_resource_type_1 = is_array($ob->folder_resource_type) ? $ob->folder_resource_type[0] : $ob->folder_resource_type;
 
                 // Cleanup if run this before. Probably will product errors, but string-based IDs stick around on crashing and a new add would use a variant ID, so we need to try this.
-                set_throw_errors(true);
+                push_throw_errors(true);
                 try {
                     $_path = $ob->folder_convert_id_to_filename($folder_resource_type_1, $this->name_to_use);
                     $ob->folder_delete($this->name_to_use, $_path);
                 } catch (Exception $e) {
                 } catch (Error $e) {
                 }
-                set_throw_errors(false);
+                pop_throw_errors();
 
                 $result = $ob->folder_add($this->name_to_use, $path, []);
                 $this->assertTrue($result !== false, 'Failed to folder_add ' . $commandr_fs_hook);
@@ -176,13 +176,13 @@ class __resource_fs_test_set extends cms_test_case
             }
 
             // Cleanup if run this before. Probably will product errors, but string-based IDs stick around on crashing and a new add would use a variant ID, so we need to try this.
-            set_throw_errors(true);
+            push_throw_errors(true);
             try {
                 $ob->file_delete($this->name_to_use . '_c.' . RESOURCE_FS_DEFAULT_EXTENSION, $path);
             } catch (Exception $e) {
             } catch (Error $e) {
             }
-            set_throw_errors(false);
+            pop_throw_errors();
 
             $result = $ob->file_add($this->name_to_use . '_c.' . RESOURCE_FS_DEFAULT_EXTENSION, $path, []);
             destrictify();
@@ -394,7 +394,7 @@ class __resource_fs_test_set extends cms_test_case
                 $result = $ob->folder_delete(basename($path), (strpos($path, '/') === false) ? '' : dirname($path));
                 $this->assertTrue($result !== false, 'Failed to folder_delete ' . $commandr_fs_hook . ' (' . $path . ')');
 
-                set_throw_errors(true);
+                push_throw_errors(true);
                 try {
                     if (strpos($path, '/') !== false) {
                         $_path = dirname($path);
@@ -404,7 +404,7 @@ class __resource_fs_test_set extends cms_test_case
                 } catch (Exception $e) {
                 } catch (Error $e) {
                 }
-                set_throw_errors(false);
+                pop_throw_errors();
             }
 
             cms_set_time_limit($old_limit);

@@ -130,7 +130,7 @@ function init__minikernel()
     $DISABLED_MEMORY_LIMIT = false;
 
     global $THROWING_ERRORS;
-    $THROWING_ERRORS = false;
+    $THROWING_ERRORS = [];
 }
 
 /**
@@ -1848,10 +1848,10 @@ function cms_flush_safe()
  *
  * @param  boolean $_throwing_errors Whether we should throw errors
  */
-function set_throw_errors(bool $_throwing_errors = true)
+function push_throw_errors(bool $_throwing_errors = true)
 {
     global $THROWING_ERRORS;
-    $THROWING_ERRORS = $_throwing_errors;
+    $THROWING_ERRORS[] = $_throwing_errors;
 }
 
 /**
@@ -1862,8 +1862,18 @@ function set_throw_errors(bool $_throwing_errors = true)
 function throwing_errors() : bool
 {
     global $THROWING_ERRORS;
-    return $THROWING_ERRORS;
+    return array_peek($THROWING_ERRORS);
 }
+
+/**
+ * Go back to the previous setting for throwing errors.
+ */
+function pop_throw_errors()
+{
+    global $THROWING_ERRORS;
+    array_pop($THROWING_ERRORS);
+}
+
 
 /**
  * Check if a given hook exists.

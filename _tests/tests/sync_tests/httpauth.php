@@ -56,7 +56,7 @@ class httpauth_test_set extends cms_test_case
         if ($this->debug) {
             require_code('failure');
 
-            set_throw_errors(true);
+            push_throw_errors(true);
             try {
                 $data = http_get_contents($url->evaluate(), ['convert_to_internal_encoding' => true, 'timeout' => 20.0, 'auth' => [$username, ''], 'trigger_error' => true]);
             } catch (Exception $e) {
@@ -65,7 +65,7 @@ class httpauth_test_set extends cms_test_case
                 set_option('httpauth_is_enabled', '0');
                 $GLOBALS['FORUM_DB']->query_update('f_members', ['m_pass_hash_salted' => $old_pwd, 'm_password_compat_scheme' => $old_scheme, 'm_email_address' => $old_email], ['m_username' => $username]);
             }
-            set_throw_errors(false);
+            pop_throw_errors();
 
             $this->dump($data, 'OUTPUT');
         } else {
