@@ -1,5 +1,5 @@
 {
-    "php.version": "8.4",
+    "php.version": "8.5",
     "php.files.exclude": {
         "**/_compiled": true,
         "**/exports": true
