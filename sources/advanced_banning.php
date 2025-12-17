@@ -121,7 +121,7 @@ class Source_advanced_banning_loader
             attach_message('advanced_banning.xml: ' . $err_msg, 'warn', false, true);
             return [[], [], []];
         }
-        @xml_parser_free($xml_parser);
+        unset($xml_parser);
 
         return [$this->automatic_rules, $this->reasoned_bans, $this->hackattack_specifiers];
     }

@@ -117,9 +117,7 @@ function encrypt_data(string $data, ?string &$error_msg = null) : string
         $output .= $encrypted;
     }
 
-    if (function_exists('openssl_free_key')) {
-        @openssl_free_key($key); // LEGACY (deprecated in PHP 8)
-    }
+    unset($key);
 
     return '(Encrypted!)' . base64_encode($output);
 }
@@ -210,9 +208,7 @@ function decrypt_data(string $data, string $passphrase, ?string &$error_msg = nu
         return $decrypted;
     }
 
-    if (function_exists('openssl_free_key')) {
-        @openssl_free_key($key); // LEGACY (deprecated in PHP 8)
-    }
+    unset($key);
 
     return $decrypted;
 }

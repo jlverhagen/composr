@@ -1554,7 +1554,7 @@ function _watermark_corner($source, string $watermark_url, int $x, int $y)
             $y = imagesy($source) - imagesy($watermark);
         }
         imagecopy($source, $watermark, $x, $y, 0, 0, imagesx($watermark), imagesy($watermark));
-        imagedestroy($watermark);
+        unset($watermark);
     }
 }
 

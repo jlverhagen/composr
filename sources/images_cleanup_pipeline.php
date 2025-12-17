@@ -232,7 +232,7 @@ function handle_images_cleanup_pipeline(string $path, ?string $filename = null, 
     }
 
     // Clean up
-    imagedestroy($image);
+    unset($image);
 }
 
 /**
@@ -328,7 +328,7 @@ function adjust_pic_orientation($image, $exif) : array
 
             if ($deg != 0) {
                 $dest = imagerotate($image, floatval($deg), 0);
-                imagedestroy($image);
+                unset($image);
                 $image = $dest;
             }
 
@@ -350,7 +350,7 @@ function adjust_pic_orientation($image, $exif) : array
                 }
 
                 if (imagecopyresampled($dest, $image, 0, 0, $src_x, $src_y, $width, $height, $src_width, $src_height)) {
-                    imagedestroy($image);
+                    unset($image);
                     $image = $dest;
                 }
             }
@@ -397,7 +397,7 @@ function adjust_pic_size($image, int $maximum_dimension) : array
 
     imagecopyresampled($dest, $image, 0, 0, 0, 0, $_width, $_height, $width, $height);
 
-    imagedestroy($image);
+    unset($image);
     $image = $dest;
 
     return [$image, true];
@@ -614,7 +614,7 @@ function png_compress(string $path, bool $lossy = false)
         if (function_exists('imagepalettetotruecolor')) {
             imagepalettetotruecolor($img);
         } else {
-            imagedestroy($img);
+            unset($img);
             return;
         }
     }
@@ -631,7 +631,7 @@ function png_compress(string $path, bool $lossy = false)
                 $has_alpha = true;
                 if ($parsed_colour['alpha'] != 0) {
                     // Blended alpha, cannot handle as anything other than a proper 32-bit PNG
-                    imagedestroy($img);
+                    unset($img);
                     return;
                 }
             }
@@ -669,7 +669,7 @@ function png_compress(string $path, bool $lossy = false)
                 }
 
                 // Return
-                imagedestroy($img);
+                unset($img);
                 return;
             }
         }
@@ -711,5 +711,5 @@ function png_compress(string $path, bool $lossy = false)
     fix_permissions($path);
     sync_file($path);
 
-    imagedestroy($img);
+    unset($img);
 }

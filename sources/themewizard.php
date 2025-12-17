@@ -425,7 +425,7 @@ function generate_themewizard_theme(string $theme_name, string $source_theme, st
                         cms_file_put_contents_safe($save_path, $image);
                     } else {
                         cms_imagesave($image, $save_path) or intelligent_write_error($save_path);
-                        imagedestroy($image);
+                        unset($image);
                     }
 
                     // Update database
@@ -560,7 +560,7 @@ function themewizard_script()
                 header('Content-Type: image/svg+xml');
             } else {
                 cms_imagesave($image, $saveat, 'png') or intelligent_write_error($saveat);
-                imagedestroy($image);
+                unset($image);
 
                 cms_ob_end_clean();
 
@@ -1891,15 +1891,15 @@ function generate_logo(string $name, ?string $font_choice = null, ?string $colou
         // Make the canvas transparent
         imagefill($im_canvas, 0, 0, imagecolorallocatealpha($im_canvas, 0, 0, 0, 127));
 
-        imagedestroy($im_default_logo);
+        unset($im_default_logo);
     } elseif ($logo_type === 'standalone') {
         $im_background = _generate_logo_get_image($background_theme_image, $theme);
         // Based on 'background' image, but must be the size of 'standalone' image...
         $im_standalone = _generate_logo_get_image('logo/standalone_logo', $theme);
         $im_canvas = imagecreatetruecolor(imagesx($im_standalone), imagesy($im_standalone));
         imagecopy($im_canvas, $im_background, 0, 0, 0, 0, imagesx($im_standalone), imagesy($im_standalone));
-        imagedestroy($im_background);
-        imagedestroy($im_standalone);
+        unset($im_background);
+        unset($im_standalone);
     } elseif (($logo_type === 'small') || ($logo_type === 'small_white')) {
         $small_logo_width = imagesx($im_logo) + $font_width + 20;
         $small_logo_height = imagesy($im_logo);
@@ -1938,7 +1938,7 @@ function generate_logo(string $name, ?string $font_choice = null, ?string $colou
 
     // Add logo onto the canvas
     imagecopy($im_canvas, $im_logo, intval($logowizard_details['logo_x_offset']), intval($logowizard_details['logo_y_offset']), 0, 0, imagesx($im_logo), imagesy($im_logo));
-    imagedestroy($im_logo);
+    unset($im_logo);
 
     // Set user configured color
     $text_colour = cms_imagecolorallocate($im_canvas, hexdec(substr($colour, 0, 2)), hexdec(substr($colour, 2, 2)), hexdec(substr($colour, 4, 2)));
@@ -2003,7 +2003,7 @@ function generate_logo(string $name, ?string $font_choice = null, ?string $colou
         }
 
         imagepng($im_canvas);
-        imagedestroy($im_canvas);
+        unset($im_canvas);
 
         exit();
     }

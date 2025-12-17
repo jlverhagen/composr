@@ -105,7 +105,7 @@ class http_timeouts_test_set extends cms_test_case
         curl_setopt($ch, CURLOPT_LOW_SPEED_LIMIT, 1);
         curl_setopt($ch, CURLOPT_LOW_SPEED_TIME, intval(ceil($timeout)));
         $result = curl_exec($ch);
-        curl_close($ch);
+        unset($ch);
 
         if (is_string($result) && $this->debug) {
             $this->dump(substr($result, 0, 1000), 'CURL Result (first 1,000 characters)');

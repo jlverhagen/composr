@@ -1338,15 +1338,6 @@ function imagecolorsforindex($image, int $color) : array
 }
 
 /**
- * Destroy an image resource.
- *
- * @param  resource $image The image handle
- */
-function imagedestroy($image)
-{
-}
-
-/**
  * Flood fill.
  *
  * @param  resource $image The image handle

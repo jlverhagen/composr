@@ -77,7 +77,7 @@ class Hook_preview_themewizard_image
             $mime_type = 'image/svg+xml';
         } else {
             cms_imagesave($image, $saveat, 'png') or intelligent_write_error($saveat);
-            imagedestroy($image);
+            unset($image);
 
             cms_ob_end_clean();
 

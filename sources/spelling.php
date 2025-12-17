@@ -250,7 +250,7 @@ function run_spellcheck__words(array $words, ?string $lang = null, bool $skip_kn
                     }
                 }
             }
-            //enchant_broker_free($broker); Seems to crash on some PHP versions
+            unset($broker);
             break;
 
         case 'mock':
@@ -445,7 +445,7 @@ function spellchecker_shutdown()
                 break;
 
             case 'enchant':
-                enchant_broker_free($spell_link[0]);
+                unset($spell_link[0]);
                 break;
         }
     }
@@ -571,7 +571,7 @@ function add_spellchecker_words(array $words)
                     enchant_dict_add_to_personal($personal_dict, $word); // LEGACY
                 }
             }
-            //enchant_broker_free($broker); Seems to crash on some PHP versions
+            unset($broker);
 
             break;
     }
