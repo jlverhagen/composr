@@ -1550,7 +1550,9 @@ Use terminology with consistency
 | Technical debt
 | Product development only
 | Manually, Automated test to limit [tt].ini[/tt] file size ([tt]lang_ini_size[/tt]
-| If phrases are not general to the rest of Composr, then put them in a language file that can be individually included by a module.
+| [tt]global.ini[/tt] is loaded on every page load. You should only put phrases in here that are both general to Composr and are used frequently.
+ - If a phrase is general to Composr and used in multiple addons, but it is not used frequently, then put it in [tt]global2.ini[/tt]. This file will be loaded automatically by Composr when it thinks it needs it.
+ - If a phrase is specific to an addon, then put it in its own [tt]ini[/tt] file (and require the language file in when you need to use it).
 |-
 | [size="0.8"]{$INC,cs_count,1})[/size]
 Most lang strings support HTML, some do not: be aware
