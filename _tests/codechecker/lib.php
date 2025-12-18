@@ -361,7 +361,7 @@ function do_lang_tempcode($x, $a = '', $b = '', $c = '')
 {
     global $PARSED;
     if (!isset($PARSED)) {
-        $temp = file_get_contents(__DIR__ . '/../../lang_custom/EN/phpdoc.ini') . file_get_contents(__DIR__ . '/../../lang/EN/webstandards.ini') . file_get_contents(__DIR__ . '/../../lang/EN/global.ini');
+        $temp = file_get_contents(__DIR__ . '/../../lang_custom/EN/phpdoc.ini') . file_get_contents(__DIR__ . '/../../lang/EN/webstandards.ini') . file_get_contents(__DIR__ . '/../../lang/EN/global.ini') . file_get_contents(__DIR__ . '/../../lang/EN/global2.ini');
         $temp_2 = explode("\n", $temp);
         $PARSED = [];
         foreach ($temp_2 as $p) {

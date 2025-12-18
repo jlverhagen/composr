@@ -1244,7 +1244,7 @@ function do_lang__phpdoc(string $x, string $a = '', string $b = '', string $c = 
 {
     global $PHPDOC_LANG_PARSED;
     if (!isset($PHPDOC_LANG_PARSED)) {
-        $temp = file_get_contents(__DIR__ . '/../lang_custom/EN/phpdoc.ini') . file_get_contents(__DIR__ . '/../lang/EN/webstandards.ini') . file_get_contents(__DIR__ . '/../lang/EN/global.ini');
+        $temp = file_get_contents(__DIR__ . '/../lang_custom/EN/phpdoc.ini') . file_get_contents(__DIR__ . '/../lang/EN/webstandards.ini') . file_get_contents(__DIR__ . '/../lang/EN/global.ini') . file_get_contents(__DIR__ . '/../lang/EN/global2.ini');
         $temp_2 = explode("\n", $temp);
         $PHPDOC_LANG_PARSED = [];
         foreach ($temp_2 as $p) {

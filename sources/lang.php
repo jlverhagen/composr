@@ -76,7 +76,7 @@ function init__lang()
     $REQUIRED_ALL_LANG = [];
 
     // Lazy loading code: learning algorithm to cache strings against different pages without loading all, unless we get a cache miss in the page's pool
-    global $PAGE_CACHE_LANG_LOADED, $PAGE_CACHE_LAZY_LOAD, $PAGE_CACHE_LANGS_REQUESTED, $SMART_CACHE;
+    global $PAGE_CACHE_LANG_LOADED, $PAGE_CACHE_LAZY_LOAD, $PAGE_CACHE_LANGS_REQUESTED, $SMART_CACHE, $PAGE_CACHE_GLOBAL2_LANG_STRINGS;
     $PAGE_CACHE_LANG_LOADED = [];
     $PAGE_CACHE_LAZY_LOAD = false;
     $PAGE_CACHE_LANGS_REQUESTED = [];
@@ -716,6 +716,7 @@ function require_all_open_lang_files(?string $lang = null)
     foreach (array_keys($langs_requested_copy) as $toload) {
         require_lang($toload, $lang, null, true);
     }
+
     // Block caching might have hidden that we loaded these
     require_lang('global', $lang, null, true);
     require_lang('critical_error', $lang, null, true);
@@ -750,7 +751,7 @@ function protect_from_escaping($in) : object
  */
 function _do_lang(string $codename, $parameter1 = null, $parameter2 = null, $parameter3 = null, ?string $lang = null, bool $require_result = true)
 {
-    global $LANGUAGE_STRINGS_CACHE, $USER_LANG_CACHED, $RECORD_LANG_STRINGS, $XSS_DETECT, $PAGE_CACHE_LANG_LOADED, $PAGE_CACHE_LAZY_LOAD, $SMART_CACHE, $PAGE_CACHE_LANGS_REQUESTED, $LANG_REQUESTED_LANG, $LANG_FILTER_OB, $LANG_RUNTIME_PROCESSING;
+    global $LANGUAGE_STRINGS_CACHE, $USER_LANG_CACHED, $RECORD_LANG_STRINGS, $XSS_DETECT, $PAGE_CACHE_LANG_LOADED, $PAGE_CACHE_LAZY_LOAD, $SMART_CACHE, $PAGE_CACHE_LANGS_REQUESTED, $LANG_REQUESTED_LANG, $LANG_FILTER_OB, $LANG_RUNTIME_PROCESSING, $PAGE_CACHE_GLOBAL2_LANG_STRINGS;
 
     if ($lang === null) {
         $lang = ($USER_LANG_CACHED === null) ? user_lang() : $USER_LANG_CACHED;
@@ -806,6 +807,28 @@ function _do_lang(string $codename, $parameter1 = null, $parameter2 = null, $par
         }
 
         require_all_open_lang_files($lang);
+    }
+
+    // It might be a language string located in global2; let's load it up at this point unless we know from the past that this string is not in global2
+    if ((!$there) && (!isset($LANG_REQUESTED_LANG[$lang]['global2'])) && (!isset($PAGE_CACHE_GLOBAL2_LANG_STRINGS[$codename]))) {
+        require_code('caches');
+        require_code('caches2');
+        $skip_global2 = get_cache_entry('global2_strings', serialize([$codename]), CACHE_AGAINST_NOTHING_SPECIAL, (60 * 24 * 30));
+
+        if ($skip_global2 !== 1) {
+            require_lang('global2', $lang);
+
+            $ret = _do_lang($codename, $parameter1, $parameter2, $parameter3, $lang, false);
+            if ($ret !== null) {
+                if ($skip_global2 === null) {
+                    set_cache_entry('global2_strings', (60 * 24 * 30), serialize([$codename]), 0, CACHE_AGAINST_NOTHING_SPECIAL);
+                }
+                return $ret;
+            }
+            if ($skip_global2 === null) {
+                set_cache_entry('global2_strings', (60 * 24 * 30), serialize([$codename]), 1, CACHE_AGAINST_NOTHING_SPECIAL);
+            }
+        }
     }
 
     if ($lang === 'xxx') {
