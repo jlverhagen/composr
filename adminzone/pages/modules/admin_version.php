@@ -185,13 +185,6 @@ class Module_admin_version
             $GLOBALS['SITE_DB']->create_index('trackbacks', 'trackback_for_id', ['trackback_for_id']);
             $GLOBALS['SITE_DB']->create_index('trackbacks', 'trackback_time', ['trackback_time']);
 
-            $GLOBALS['SITE_DB']->create_table('captchas', [
-                'si_session_id' => '*ID_TEXT',
-                'si_time' => 'TIME',
-                'si_code' => 'ID_TEXT',
-            ]);
-            $GLOBALS['SITE_DB']->create_index('captchas', 'si_time', ['si_time']);
-
             $GLOBALS['SITE_DB']->create_table('member_tracking', [
                 'mt_member_id' => '*MEMBER',
                 'mt_cache_username' => 'ID_TEXT',
@@ -807,8 +800,6 @@ class Module_admin_version
             }
             $GLOBALS['SITE_DB']->create_index('url_id_monikers', 'uim_monrev', ['m_moniker_reversed']);
 
-            $GLOBALS['SITE_DB']->alter_table_field('captchas', 'si_session_id', '*ID_TEXT');
-            $GLOBALS['SITE_DB']->alter_table_field('captchas', 'si_code', 'ID_TEXT');
             $GLOBALS['SITE_DB']->alter_table_field('messages_to_render', 'r_session_id', 'ID_TEXT');
             $GLOBALS['SITE_DB']->alter_table_field('temp_block_permissions', 'p_session_id', 'ID_TEXT');
 

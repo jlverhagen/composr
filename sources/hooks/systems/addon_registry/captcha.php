@@ -342,4 +342,35 @@ class Hook_addon_registry_captcha
         return lorem_globalise(do_lorem_template('CAPTCHA_LOOSE', [
         ]), null, '', true);
     }
+
+    /**
+     * Uninstall the addon.
+     */
+    public function uninstall()
+    {
+        $GLOBALS['SITE_DB']->drop_table_if_exists('captchas');
+    }
+
+    /**
+     * Install the addon.
+     *
+     * @param  ?float $upgrade_major_minor From what major/minor version we are upgrading (null: new install)
+     * @param  ?integer $upgrade_patch From what patch version of $upgrade_major_minor we are upgrading (null: new install)
+     */
+    public function install(?float $upgrade_major_minor = null, ?int $upgrade_patch = null)
+    {
+        if ($upgrade_major_minor === null) {
+            $GLOBALS['SITE_DB']->create_table('captchas', [
+                'si_session_id' => '*ID_TEXT',
+                'si_time' => 'TIME',
+                'si_code' => 'ID_TEXT',
+            ]);
+            $GLOBALS['SITE_DB']->create_index('captchas', 'si_time', ['si_time']);
+        }
+
+        if (($upgrade_major_minor !== null) && version_compare('11', float_to_raw_string($upgrade_major_minor, 1) . '.' . strval($upgrade_patch), '>')) {
+            $GLOBALS['SITE_DB']->alter_table_field('captchas', 'si_session_id', '*ID_TEXT');
+            $GLOBALS['SITE_DB']->alter_table_field('captchas', 'si_code', 'ID_TEXT');
+        }
+    }
 }
