@@ -36,7 +36,7 @@ Non-bundled addons are credited in the blocks/modules/registry-hooks for the add
 ## Third Party Materials ##
 
 This product includes:
- - Resources:
+- Resources:
   - Emoticons and avatars, created by Dave Buckley (licensed as per Composr, mentioned here for crediting purposes only)
   - Flag images from https://github.com/hjnilsson/country-flags (flags are generally not copyrightable)
   - Noto fonts (SIL Open Font License)
@@ -44,10 +44,10 @@ This product includes:
   - Sound effects (Copyright 2008 bns <banasio@o2.pl>, Creative Commons Attribution License)
   - Country IP address database (Creative Commons Attribution 4.0, by DB-IP.com)
   - Hero-slider background images (CC0 "No Rights Reserved" license from pixabay.com)
-   - https://pixabay.com/photos/bastei-bridge-saxon-switzerland-3014467/
-   - https://pixabay.com/photos/salt-creek-falls-waterfall-landmark-2315471/
-   - https://pixabay.com/photos/rustic-cabin-mountains-landscape-945421/
- - Backend code used under licence:
+    - https://pixabay.com/photos/bastei-bridge-saxon-switzerland-3014467/
+    - https://pixabay.com/photos/salt-creek-falls-waterfall-landmark-2315471/
+    - https://pixabay.com/photos/rustic-cabin-mountains-landscape-945421/
+- Backend code used under licence:
   - Text_Diff (LGPL licence, Core Developement Team modifications also therefore are also licensed under the LGPL)
   - FirePHP (BSD-like licence)
   - SabreDAV (BSD-like licence)
@@ -65,7 +65,7 @@ This product includes:
   - HMAC calculation code (public domain by Lance Rushing)
   - php-mail-signature (LGPL licence)
   - CRC-24 (MIT licence)
- - Frontend code used under licence:
+- Frontend code used under licence:
   - jQuery (MIT licence)
   - jQuery-UI (MIT licence)
   - Spectrum, a JS color selection widget (MIT licence)
@@ -97,7 +97,7 @@ This product includes:
   - Bootstrap slider (MIT licence)
   - Web Font Loader (Apache licence)
   - Toastify (MIT licence)
- - Smaller front-end polyfills:
+  - Smaller front-end polyfills:
   - Web Animations (Google, Apache licence)
   - URL Search parameters (WebReflection, BSD-like licence)
   - RequireJS (jQuery Foundation and others, MIT licence)
