@@ -9,17 +9,21 @@ A sense of who is making contributions can be seen from the [GitLab Contributors
 
 A sense of who is prominent in the community can seen from the [community stars page](https://composr.app/stars.htm). This is auto-generated based on community points.
 
-Developers (e.g. the "Core Development Team") include:
-- Allen Ellis
-- Chris Graham
-- Chris Warburton
-- Jack Franklin
-- Jason Verhagen
-- Kamen Blaginov
-- Patrick Schmalstig*
-- Philip Withnall
-- Robbie Goacher
-- Salman Abbas
+The current Core Development Team consists of these developers:
+ - Chris Graham
+ - Patrick Schmalstig*
+
+*Actively developing Composr CMS right now
+
+Former Core Development Team members include the following:
+ - Allen Ellis
+ - Chris Warburton
+ - Jack Franklin
+ - Jason Verhagen
+ - Kamen Blaginov
+ - Philip Withnall
+ - Robbie Goacher
+ - Salman Abbas
 
 *This developer is still active among the Core Development Team as of this writing.
 
