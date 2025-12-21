@@ -29,6 +29,22 @@
  */
 class Hook_database_manifest_cms_homesite
 {
+    /**
+     * Determine how we should handle database tables for things like backups, automated testing, import/export, and migration.
+     *
+     * @return array Map of table names to their TABLE_PURPOSE constants
+     */
+    public function get_table_purpose_flags() : array
+    {
+        require_code('database_relations');
+
+        return [
+            'telemetry_errors' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__NON_BUNDLED | TABLE_PURPOSE__NO_BACKUPS | TABLE_PURPOSE__MISC_NO_MERGE | TABLE_PURPOSE__FLUSHABLE,
+            'telemetry_errors_ignore' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__NON_BUNDLED,
+            'telemetry_sites' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__NON_BUNDLED | TABLE_PURPOSE__FLUSHABLE,
+            'telemetry_stats' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__NON_BUNDLED | TABLE_PURPOSE__FLUSHABLE,
+        ];
+    }
 
     /**
      * Database manifest for this addon.

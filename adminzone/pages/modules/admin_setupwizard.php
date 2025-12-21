@@ -1179,7 +1179,7 @@ class Module_admin_setupwizard
                         }
                         cms_imagesave($logo, get_custom_file_base() . '/' . $path) or intelligent_write_error($path);
                         actual_edit_theme_image('logo/' . $logo_output_theme_image, $logo_save_theme, get_site_default_lang(), 'logo/' . $logo_output_theme_image, $path, true);
-                        imagedestroy($logo);
+                        unset($logo);
                     }
                 }
             }

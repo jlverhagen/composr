@@ -75,7 +75,7 @@ class Hook_cdn_transfer_cloudinary
      * @param  string $id ID (returned by reference)
      * @return ?URLPATH URL on syndicated server (null: did not syndicate)
      */
-    public function transfer_upload(string $path, string $upload_folder, string $filename, int $obfuscate = 0, bool $accept_errors = false, string &$id = null) : ?string
+    public function transfer_upload(string $path, string $upload_folder, string $filename, int $obfuscate = 0, bool $accept_errors = false, ?string &$id = null) : ?string
     {
         $dirs = explode("\n", get_option('cloudinary_transfer_directories'));
         if (!in_array($upload_folder, $dirs)) {

@@ -35,6 +35,22 @@
  */
 class Hook_database_manifest_galleries
 {
+    /**
+     * Determine how we should handle database tables for things like backups, automated testing, import/export, and migration.
+     *
+     * @return array Map of table names to their TABLE_PURPOSE constants
+     */
+    public function get_table_purpose_flags() : array
+    {
+        require_code('database_relations');
+
+        return [
+            'galleries' => TABLE_PURPOSE__NORMAL,
+            'images' => TABLE_PURPOSE__NORMAL,
+            'video_transcoding' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__MISC_NO_MERGE/*too-site-tied*/,
+            'videos' => TABLE_PURPOSE__NORMAL,
+        ];
+    }
 
     /**
      * Database manifest for this addon.

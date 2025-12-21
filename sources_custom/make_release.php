@@ -843,10 +843,6 @@ function make_files_manifest() // Builds files.bin, the Composr file manifest (u
 
 function make_database_manifest() // Builds database_manifest, which is used for database integrity checks
 {
-    if (!addon_installed('meta_toolkit')) {
-        warn_exit(do_lang_tempcode('MISSING_ADDON', escape_html('meta_toolkit')));
-    }
-
     require_code('database_relations');
 
     push_db_scope_check(false);

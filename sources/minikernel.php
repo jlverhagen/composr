@@ -792,7 +792,7 @@ function cms_error_handler(int $errno, string $errstr, string $errfile, int $err
  * @param  ?MEMBER $member_id Member ID to check (null: current user)
  * @return boolean Whether the current member is a guest
  */
-function is_guest(int $member_id = null) : bool
+function is_guest(?int $member_id = null) : bool
 {
     return true;
 }

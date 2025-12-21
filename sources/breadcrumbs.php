@@ -195,7 +195,7 @@ class Source_breadcrumb_substitution_loader
             attach_message('breadcrumbs.xml: ' . $err_msg, 'warn', false, true);
             return [];
         }
-        @xml_parser_free($xml_parser);
+        unset($xml_parser);
 
         return $this->substitutions;
     }

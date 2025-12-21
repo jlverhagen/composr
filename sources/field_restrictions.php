@@ -124,7 +124,7 @@ class Source_field_restriction_loader
             attach_message('fields.xml: ' . $err_msg, 'warn', false, true);
             return [];
         }
-        @xml_parser_free($xml_parser);
+        unset($xml_parser);
 
         return $this->field_restrictions;
     }

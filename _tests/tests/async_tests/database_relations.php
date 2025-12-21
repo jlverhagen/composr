@@ -33,22 +33,40 @@ class database_relations_test_set extends cms_test_case
     {
         parent::setUp();
 
-        require_code('database_relations');
-    }
+        raise_php_memory_limit();
+        cms_extend_time_limit(TIME_LIMIT_EXTEND__SLUGGISH);
 
+        require_code('database_relations');
+
+        static $generated_manifest = false;
+        if ($generated_manifest === false) {
+            if (!addon_installed('cms_release_build')) {
+                $this->assertTrue(false, 'This test requires the cms_release_build addon which is not installed.');
+                return;
+            }
+
+            require_code('make_release');
+            make_database_manifest(); // This also essentially tests to make sure we have all hooks defined and db_meta methods defined
+            $generated_manifest = true;
+        }
+    }
     public function testTablePurposesDefined()
     {
         $table_purposes = get_table_purpose_flags();
+        $db_meta = get_db_meta();
 
-        $all_tables = $GLOBALS['SITE_DB']->query_select('db_meta', ['DISTINCT m_table']);
-        foreach ($all_tables as $_table) {
-            $table = $_table['m_table'];
+        // FUDGE: these are not included in the manifest, so we need to fudge them in because we still require purpose flags for them
+        $db_meta['core']['tables'] = array_merge_recursive($db_meta['core']['tables'], ['db_meta' => [], 'db_meta_indices' => [], 'db_meta_foreign_keys' => []]);
 
-            if (in_array($table, ['testy_test_test', 'testy_test_test_2', 'temp_test', 'temp_test_linked'])) {
-                continue;
+        foreach ($db_meta as $hook => $meta) {
+            foreach ($meta['tables'] as $table => $table_info) {
+                $this->assertTrue(array_key_exists($table, $table_purposes[$hook]), 'The database_manifest hook ' . $hook . ' defines table ' . $table . ' in the manifest, but it is missing a purpose flags definition.');
             }
-
-            $this->assertTrue(array_key_exists($table, $table_purposes), 'Table purposes not described: ' . $table);
+        }
+        foreach ($table_purposes as $hook => $definition) {
+            foreach ($definition as $table => $flags) {
+                $this->assertTrue(array_key_exists($table, $db_meta[$hook]['tables']), 'The database_manifest hook ' . $hook . ' defines purpose flags for table ' . $table . ', but this table does not exist in the manifest (it might be orphaned or defined in another hook).');
+            }
         }
     }
 

@@ -23,7 +23,7 @@ A good backup strategy will automatically and regularly backup all, or all chang
 
 [surround]
 [media width="150" description="Locating the backup facility from the dashboard" float="left"]data_custom/images/docs/tut_backup/backup_1.png[/media]
-The backup addon provided by Composr is a system where the website makes a backup of itself when instructed to do so. You may set up the addon to perform backups on a schedule, or activate them yourself manually.
+The backup addon provided by Composr is a system where the website makes a backup of itself when instructed to do so. You may set up the addon to perform backups on a schedule (if the system scheduler is enabled and working), or activate them yourself manually.
 
 Depending on the options that are specified by the user (which will be discussed later), the site will put a copy of every single file and folder stored within the Composr installation directory into a [tt].tar[/tt] file, as well as a copy of the database.
 
@@ -108,6 +108,55 @@ Most webhosting control panels come with a backup feature that runs as 'system s
 
 Database backups are normally in the form of a '.sql' file, that is essentially a collection of database queries that re-create your database in a similar vein to how it would be built when in actual usage. You should test database backups made with your chosen backup settings actually restore properly, as they are not always reliable (although I have observed they have improved in recent years).
 If you only wish to backup a database, then for those who have access to phpMyAdmin, there is a powerful 'export' feature available in it.
+
+[title="3"]Comparison of strategies[/title]
+
+There are pros and cons depending on the strategy that you use. I will outline them in the below table:
+{|
+! Method
+! Pros
+! Cons
+|-
+| Composr's backups addon
+| [list]
+[*]Available if you do not have a server backup solution
+[*]Backs up both files and the database
+[*]Properly manages volatile data (e.g., database and file caches are not backed up)
+[*]Restore script can restore the backup and correctly set file permissions
+[/list]
+| [list]
+[*]Inefficient as it uses PHP
+[*]Not as stable as a backup solution on the server level, especially since the database is backed up as a chunked PHP file instead of an SQL file (to be used with the special restore script included with the backup)
+[*]Likely to fail on large sites
+[/list]
+|-
+| [tt]db_export.php[/tt] and [tt]db_import.php[/tt] (through the [tt]helper_scripts[/tt] addon)
+| [list]
+[*]Available if you do not have a server backup solution
+[*]Easy to automate
+[*]Exports as a proper SQL file dump
+[*]Properly manages volatile data (e.g., caches are not backed up)
+[/list]
+| [list]
+[*]Inefficient as it uses PHP
+[*]Only backs up the database
+[*]Not as stable as a backup solution on the server level
+[*]Likely to fail on large sites
+[/list]
+|-
+| A backup solution on your server
+| [list]
+[*]The most stable option
+[*]Typically backs up both files and the database
+[*]Usually easiest to restore
+[/list]
+| [list]
+[*]Web hosts may impose limits on backup tools
+[*]Database backups likely contain volatile data such as old caches (server backup tools usually do not know which tables are volatile in Composr)
+[*]File backups may contain old caches as well unless you can explicitly exclude cache directories
+[*]Files might not be set to the correct permissions; you may need to run the fix permissions tools in the upgrader
+[/list]
+|}
 
 [title="2"]File permissions[/title]
 

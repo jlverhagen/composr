@@ -93,7 +93,7 @@ class Source_simple_xml_reader
             warn_exit($err_msg, false, true);
         }
 
-        @xml_parser_free($xml_parser);
+        unset($xml_parser);
     }
 
     /**

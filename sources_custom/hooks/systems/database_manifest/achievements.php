@@ -29,6 +29,20 @@
  */
 class Hook_database_manifest_achievements
 {
+    /**
+     * Determine how we should handle database tables for things like backups, automated testing, import/export, and migration.
+     *
+     * @return array Map of table names to their TABLE_PURPOSE constants
+     */
+    public function get_table_purpose_flags() : array
+    {
+        require_code('database_relations');
+
+        return [
+            'achievements_earned' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__AUTOGEN_STATIC | TABLE_PURPOSE__NON_BUNDLED,
+            'achievements_progress' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__AUTOGEN_STATIC | TABLE_PURPOSE__FLUSHABLE_AGGRESSIVE | TABLE_PURPOSE__NON_BUNDLED,
+        ];
+    }
 
     /**
      * Database manifest for this addon.

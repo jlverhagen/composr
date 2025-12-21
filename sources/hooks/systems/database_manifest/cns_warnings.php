@@ -35,6 +35,21 @@
  */
 class Hook_database_manifest_cns_warnings
 {
+    /**
+     * Determine how we should handle database tables for things like backups, automated testing, import/export, and migration.
+     *
+     * @return array Map of table names to their TABLE_PURPOSE constants
+     */
+    public function get_table_purpose_flags() : array
+    {
+        require_code('database_relations');
+
+        return [
+            'f_saved_warnings' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__FLUSHABLE_AGGRESSIVE,
+            'f_warnings' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__SUBDATA/*under f_members*/,
+            'f_warnings_punitive' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__SUBDATA/*under f_warnings*/,
+        ];
+    }
 
     /**
      * Database manifest for this addon.
@@ -111,24 +126,7 @@ class Hook_database_manifest_cns_warnings
                     'is_full_text' => false,
                 ],
             ],
-            'foreign_keys' => [
-                'f_warnings__w_topic_id||f_topics__id' => [
-                    'addon' => 'cns_warnings',
-                    'from_table' => 'f_warnings',
-                    'from_field' => 'w_topic_id',
-                    'to_table' => 'f_topics',
-                    'to_field' => 'id',
-                    'special_values' => [],
-                ],
-                'f_warnings_punitive__p_warning_id||f_warnings__id' => [
-                    'addon' => 'cns_warnings',
-                    'from_table' => 'f_warnings_punitive',
-                    'from_field' => 'p_warning_id',
-                    'to_table' => 'f_warnings',
-                    'to_field' => 'id',
-                    'special_values' => [],
-                ],
-            ],
+            'foreign_keys' => [],
             'privileges' => [
                 'see_warnings' => [
                     'addon' => 'cns_warnings',

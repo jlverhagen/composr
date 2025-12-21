@@ -35,6 +35,22 @@
  */
 class Hook_database_manifest_downloads
 {
+    /**
+     * Determine how we should handle database tables for things like backups, automated testing, import/export, and migration.
+     *
+     * @return array Map of table names to their TABLE_PURPOSE constants
+     */
+    public function get_table_purpose_flags() : array
+    {
+        require_code('database_relations');
+
+        return [
+            'download_categories' => TABLE_PURPOSE__NORMAL,
+            'download_downloads' => TABLE_PURPOSE__NORMAL,
+            'download_licences' => TABLE_PURPOSE__NORMAL,
+            'download_logging' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__FLUSHABLE | TABLE_PURPOSE__SUBDATA/*under download_downloads*/,
+        ];
+    }
 
     /**
      * Database manifest for this addon.

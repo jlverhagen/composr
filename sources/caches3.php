@@ -283,6 +283,10 @@ function erase_cached_language()
         }
     }
 
+    // Clear global2 cache
+    require_code('caches');
+    delete_cache_entry('global2_strings');
+
     // Re-initialise language stuff
     global $LANGS_REQUESTED;
     $langs_requested_copy = $LANGS_REQUESTED;

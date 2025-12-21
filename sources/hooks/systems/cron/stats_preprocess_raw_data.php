@@ -73,8 +73,19 @@ class Hook_cron_stats_preprocess_raw_data
      */
     public function run()
     {
-        // Prevent dog-piling
+        $catching_up = get_value('stats_catching_up', null, true);
+
+        // Prevent dog-piling if the scheduler runs again before we finish
         set_value('stats_catching_up', '0', true);
+
+        // Determine maximum time that we will spend running this hook
+        $max_time = 5;
+        if (is_cli()) {
+            $max_time = 15;
+            if ($catching_up) {
+                $max_time = 30;
+            }
+        }
 
         $start_time = null;
 
@@ -101,14 +112,14 @@ class Hook_cron_stats_preprocess_raw_data
         $doing_deltas = ($pending_deltas > 0);
 
         if ($doing_deltas) {
-            stats_merge_deltas();
+            stats_merge_deltas($max_time);
         }
 
         // Memory and time check
         $ml = php_return_bytes(ini_get('memory_limit'));
         $current_memory = memory_get_usage(false);
         $near_limit = (($ml > 0) && ($current_memory >= ($ml - (1024 * 1024 * 8)))); // within 8 MB of PHP memory limit
-        if (($near_limit) || ((time() - $hook_start) >= 15)) {
+        if (($near_limit) || ((time() - $hook_start) >= $max_time)) {
             set_value('stats_catching_up', '1', true);
             pop_query_limiting();
             return;
@@ -155,7 +166,7 @@ class Hook_cron_stats_preprocess_raw_data
             $ml = php_return_bytes(ini_get('memory_limit'));
             $current_memory = memory_get_usage(false);
             $near_limit = (($ml > 0) && ($current_memory >= ($ml - (1024 * 1024 * 8)))); // within 8 MB of PHP memory limit
-            if (($near_limit) || ((time() - $hook_start) >= 15)) {
+            if (($near_limit) || ((time() - $hook_start) >= $max_time)) {
                 $catching_up = true;
                 break;
             }

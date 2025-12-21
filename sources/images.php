@@ -208,7 +208,7 @@ function cms_getimagesizefromstring(string $data, ?string $ext = null)
             $sx = imagesx($img_res);
             $sy = imagesy($img_res);
 
-            imagedestroy($img_res);
+            unset($img_res);
 
             return [max(1, $sx), max(1, $sy)];
         }

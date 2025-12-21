@@ -29,6 +29,25 @@
  */
 class Hook_database_manifest_composr_tutorials
 {
+    /**
+     * Determine how we should handle database tables for things like backups, automated testing, import/export, and migration.
+     *
+     * @return array Map of table names to their TABLE_PURPOSE constants
+     */
+    public function get_table_purpose_flags() : array
+    {
+        require_code('database_relations');
+
+        return [
+            'api_classes' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__NON_BUNDLED | TABLE_PURPOSE__FLUSHABLE,
+            'api_function_params' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__NON_BUNDLED | TABLE_PURPOSE__FLUSHABLE | TABLE_PURPOSE__SUBDATA/*under api_functions*/,
+            'api_functions' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__NON_BUNDLED | TABLE_PURPOSE__FLUSHABLE | TABLE_PURPOSE__SUBDATA/*under api_classes*/,
+            'api_functions_fulltext_index' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__NON_BUNDLED | TABLE_PURPOSE__FLUSHABLE,
+            'tutorials_external' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__NON_BUNDLED,
+            'tutorials_external_tags' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__NON_BUNDLED | TABLE_PURPOSE__SUBDATA/*under tutorials_external*/,
+            'tutorials_internal' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__NON_BUNDLED | TABLE_PURPOSE__FLUSHABLE | TABLE_PURPOSE__AUTOGEN_STATIC,
+        ];
+    }
 
     /**
      * Database manifest for this addon.

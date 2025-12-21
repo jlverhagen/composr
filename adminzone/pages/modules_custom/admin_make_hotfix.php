@@ -164,7 +164,7 @@ class Module_admin_make_hotfix
         list($warning_details, $ping_url) = handle_conflict_resolution(false, false);
 
         return do_template('FORM_SCREEN', [
-            '_GUID' => 'TODO',
+            '_GUID' => 'f6c4d5ebfb27560fa2afd58bc868e6c9',
             'GET' => false,
             'SKIP_WEBSTANDARDS' => true,
             'HIDDEN' => new Tempcode(),

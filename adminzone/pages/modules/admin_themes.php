@@ -1421,7 +1421,7 @@ class Module_admin_themes
             file_put_contents($place, $img);
         } else {
             cms_imagesave($img, $place, 'png') or intelligent_write_error($place);
-            imagedestroy($img);
+            unset($img);
         }
         actual_edit_theme_image($id, $theme, $lang, $id, $url, true);
 

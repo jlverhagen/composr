@@ -242,7 +242,7 @@ class Module_admin_early_access extends Source_standard_crud_module
      * @param  ?integer $views_allowed The maximum number of views permitted for this access code (null: no limit, or we are adding a new record)
      * @return array Array of fields, hidden
      */
-    public function get_form_fields(string $access_code = null, string $label = '', string $trigger_access = '', array $content = [], ?int $date_from = null, ?int $date_to = null, ?int $views_allowed = null) : array
+    public function get_form_fields(?string $access_code = null, string $label = '', string $trigger_access = '', array $content = [], ?int $date_from = null, ?int $date_to = null, ?int $views_allowed = null) : array
     {
         require_code('form_templates');
         require_code('content');

@@ -211,6 +211,7 @@ class Hook_addon_registry_cms_homesite_tracker
             'themes/default/javascript_custom/cms_homesite_tracker.js',
             'themes/default/templates_custom/BLOCK_MAIN_MANTIS_TRACKER.tpl',
             'themes/default/templates_custom/CATALOGUE_tracker_ENTRY_SCREEN.tpl',
+            'themes/default/templates_custom/CATALOGUE_tracker_FIELDMAP_ENTRY_FIELD.tpl',
             'themes/default/templates_custom/MANTIS_TRACKER.tpl',
             'tracker/index.php',
             'tracker/pages/.htaccess',

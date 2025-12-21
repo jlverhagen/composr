@@ -266,7 +266,7 @@ class Source_RSS
                 $err_msg = xml_error_string($err_code) . ' [#' . strval($err_code) . ' @ ' . strval(xml_get_current_line_number($xml_parser)) . ']';
                 $this->error = do_lang('RSS_XML_ERROR', $err_msg);
             }
-            @xml_parser_free($xml_parser);
+            unset($xml_parser);
 
             $new_items = [];
             foreach ($this->gleamed_items as $i) {

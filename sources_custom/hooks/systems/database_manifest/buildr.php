@@ -29,6 +29,28 @@
  */
 class Hook_database_manifest_buildr
 {
+    /**
+     * Determine how we should handle database tables for things like backups, automated testing, import/export, and migration.
+     *
+     * @return array Map of table names to their TABLE_PURPOSE constants
+     */
+    public function get_table_purpose_flags() : array
+    {
+        require_code('database_relations');
+
+        return [
+            'w_attempts' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__NON_BUNDLED | TABLE_PURPOSE__FLUSHABLE_AGGRESSIVE,
+            'w_inventory' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__NON_BUNDLED | TABLE_PURPOSE__FLUSHABLE_AGGRESSIVE,
+            'w_itemdef' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__NON_BUNDLED,
+            'w_items' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__NON_BUNDLED | TABLE_PURPOSE__FLUSHABLE_AGGRESSIVE,
+            'w_members' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__NON_BUNDLED | TABLE_PURPOSE__FLUSHABLE_AGGRESSIVE,
+            'w_messages' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__NON_BUNDLED | TABLE_PURPOSE__FLUSHABLE,
+            'w_portals' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__NON_BUNDLED,
+            'w_realms' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__NON_BUNDLED,
+            'w_rooms' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__NON_BUNDLED,
+            'w_travelhistory' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__NON_BUNDLED | TABLE_PURPOSE__FLUSHABLE_AGGRESSIVE,
+        ];
+    }
 
     /**
      * Database manifest for this addon.

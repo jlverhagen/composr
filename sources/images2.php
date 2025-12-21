@@ -403,7 +403,7 @@ function _convert_image(string $from, string &$to, ?int $width, ?int $height, ?i
                 if (is_string($mime)) {
                     $detected_ext = get_file_extension(null, $mime);
                 }
-                @finfo_close($fi);
+                unset($fi);
             }
         }
     }
@@ -483,7 +483,7 @@ function _convert_image(string $from, string &$to, ?int $width, ?int $height, ?i
             if (!$reorientated) {
                 // We can just escape, nothing to do...
 
-                imagedestroy($source);
+                unset($source);
 
                 if (($using_path) && ($from == $to)) {
                     cms_set_time_limit($old_limit);
@@ -617,7 +617,7 @@ function _convert_image(string $from, string &$to, ?int $width, ?int $height, ?i
                 }
 
                 // Destroy the temporary image
-                imagedestroy($temp_img);
+                unset($temp_img);
             }
 
             // Now we need to work out how much padding we're giving, and where
@@ -679,7 +679,7 @@ function _convert_image(string $from, string &$to, ?int $width, ?int $height, ?i
 
     if (($_width == $sx) && ($_height == $sy) && ($dest_x == 0) && ($dest_y == 0) && (!$reorientated)) {
         // We can just escape, nothing to do...
-        imagedestroy($source);
+        unset($source);
 
         if (($using_path) && ($from == $to)) {
             cms_set_time_limit($old_limit);
@@ -706,7 +706,7 @@ function _convert_image(string $from, string &$to, ?int $width, ?int $height, ?i
     imagecopyresampled($dest, $source, $dest_x, $dest_y, $source_x, $source_y, $_width, $_height, $copy_width, $copy_height);
 
     // Clean up
-    imagedestroy($source);
+    unset($source);
 
     // Save...
 
@@ -763,7 +763,7 @@ function _convert_image(string $from, string &$to, ?int $width, ?int $height, ?i
     }
 
     // Clean up
-    imagedestroy($dest);
+    unset($dest);
 
     fix_permissions($to);
     sync_file($to);
@@ -931,7 +931,7 @@ function remove_white_edges($source)
     }
 
     if (imagecopyresampled($dest, $source, 0, 0, $remove_from_left, $remove_from_top, $target_width, $target_height, $target_width, $target_height)) {
-        imagedestroy($source);
+        unset($source);
         $source = $dest;
     }
 

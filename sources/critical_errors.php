@@ -226,7 +226,11 @@ if (!function_exists('critical_error')) {
         }
 
         require_code('failure');
-        $full_trace = get_text_trace();
+        if (function_exists('get_text_trace')) {
+            $full_trace = get_text_trace();
+        } else {
+            $full_trace = '';
+        }
 
         if ($display_trace) {
             $_trace = debug_backtrace();

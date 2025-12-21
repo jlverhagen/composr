@@ -129,7 +129,7 @@ function captcha_script()
         </body>
         </html>
         ';
-        imagedestroy($img);
+        unset($img);
         cms_safe_exit_flow();
         return;
     }
@@ -137,7 +137,7 @@ function captcha_script()
     // Output as a PNG
     header('Content-Type: image/png');
     imagepng($img);
-    imagedestroy($img);
+    unset($img);
     cms_safe_exit_flow();
 }
 

@@ -545,8 +545,8 @@ abstract class Source_email_integration
      * @param  string $mail_nonmatch_policy Non-match policy
      * @set post_as_guest create_account block
      * @param  string $subject Subject line
-     * @param  ?string $_body_text E-mail body in text format (null: not present)
-     * @param  ?string $_body_html E-mail body in HTML format (null: not present)
+     * @param  ?string $_body_text E-mail body in text format (null: not present; $_body_html must not be null)
+     * @param  ?string $_body_html E-mail body in HTML format (null: not present; $_body_text must not be null)
      * @return ?MEMBER The member ID (null: none)
      */
     protected function handle_missing_member(string $from_email, string $email_bounce_to, string $mail_nonmatch_policy, string $subject, ?string $_body_text, ?string $_body_html) : ?int
@@ -558,12 +558,20 @@ abstract class Source_email_integration
         // Pre-checks to make sure our operation is actually possible
         switch ($mail_nonmatch_policy) {
             case 'create_account':
+                // Make a unique username from the e-mail address
+                require_code('cns_members_action2');
+                $_username = preg_replace('#@.*$#', '', $from_email);
+                $username = process_username_discriminator($_username);
+                // No break
+            case 'post_as_guest':
+                // Conversr check
                 if (get_forum_type() != 'cns') {
                     $mail_nonmatch_policy = 'block';
                     $this->log_message('Not using Conversr; will use block policy instead.');
                     break;
                 }
 
+                // Valid e-mail check
                 require_code('type_sanitisation');
                 if (!is_valid_email_address($from_email)) {
                     $mail_nonmatch_policy = 'block';
@@ -571,20 +579,17 @@ abstract class Source_email_integration
                     break;
                 }
 
-                $i = 1;
-                $_username = preg_replace('#@.*$#', '', $from_email);
-                $username = $_username;
-                while ($GLOBALS['FORUM_DB']->query_select_value_if_there('f_members', 'id', ['m_username' => $username]) !== null) {
-                    $username = $_username . strval($i);
-                    $i++;
-
-                    if ($i >= 1000) {
-                        $mail_nonmatch_policy = 'block';
-                        $this->log_message('Tried to make a username based on the sender e-mail address, but could not. Using block policy instead.');
-                        break;
-                    }
+                // Bounce and unsubscribe check
+                require_code('mail2');
+                if (!can_email_address($from_email)) {
+                    $mail_nonmatch_policy = 'block';
+                    $this->log_message('The e-mail address of the sender is unsubscribed or bounced; will use block policy instead.');
+                    break;
                 }
 
+                // Blocklist check (exits with an error if on a blocklist)
+                require_code('antispam');
+                check_for_spam(null, $from_email, false);
                 break;
         }
 
@@ -600,6 +605,10 @@ abstract class Source_email_integration
 
                 require_code('cns_members_action');
                 $member_id = cns_make_member($username, $password, $from_email);
+
+                if (($_body_html === null) && ($_body_text === null)) {
+                    warn_exit(do_lang_tempcode('INTERNAL_ERROR', escape_html('TODO')));
+                }
 
                 if ($_body_html === null) {
                     $body = $this->email_comcode_from_text($_body_text);
@@ -953,6 +962,8 @@ abstract class Source_email_integration
             'Delivery Status Notification',
             'Delivery Notification',
             'Returned mail',
+            'Undelivered mail',
+            'Returned to sender',
             'Undeliverable message',
             'Mail delivery failed',
             'Failure Notice',
@@ -966,7 +977,7 @@ abstract class Source_email_integration
                 (($_body_text !== null) && (stripos($_body_text, $j) !== false)) ||
                 (($_body_html !== null) && (stripos($_body_html, $j) !== false))
             ) {
-                $this->log_message('Considered non-human due to: recognised automated subject line');
+                $this->log_message('Considered non-human due to: recognised bounce mail subject line');
 
                 return true;
             }

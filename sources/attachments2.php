@@ -216,7 +216,7 @@ function _handle_data_url_attachments(string &$comcode, string $type, string $id
                     require_code('urls2');
                     list($new_path, $new_url, $new_filename) = find_unique_path('uploads/attachments', null, true);
                     cms_imagesave($image, $new_path) or intelligent_write_error($new_path);
-                    imagedestroy($image);
+                    unset($image);
 
                     // Images cleanup pipeline
                     require_code('images_cleanup_pipeline');

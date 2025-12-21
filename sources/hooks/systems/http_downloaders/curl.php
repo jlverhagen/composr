@@ -234,7 +234,7 @@ class Hook_http_downloader_curl extends Source_HTTP_downloader
             // Error
             $error = curl_error($ch);
             $curl_errno = curl_errno($ch);
-            curl_close($ch);
+            unset($ch);
 
             // Try again on a partial file error if we did not exceed our attempts remaining
             if (($curl_errno == CURLE_PARTIAL_FILE) && ($this->attempts_remaining > 0)) {
@@ -280,7 +280,7 @@ class Hook_http_downloader_curl extends Source_HTTP_downloader
             $this->download_mime_type = substr($this->download_mime_type, 0, strpos($this->download_mime_type, ';'));
         }
 
-        curl_close($ch);
+        unset($ch);
 
         // Process HTTP status
         switch ((substr($this->message, 0, 1) == '2') ? '200' : $this->message) {
