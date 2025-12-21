@@ -144,7 +144,7 @@ We require:
  - A minimum of PHP version 7.2, however:
   - We strongly discourage hosting anything that is [url="not officially supported by the PHP developers"]https://www.php.net/supported-versions.php[/url].
   - Forum drivers may require a newer version of PHP if the forum software itself does.
- - A maximum of PHP 8.3 (this is what we have tested up to, although newer minor versions usually do work or are quickly fixed to work).
+ - A maximum of PHP 8.5 (this is what we have tested up to, although newer minor versions usually do work or are quickly fixed to work).
  - The following PHP extensions:
   - GD2 ([tt]gd[/tt]), including PNG and JPEG support (GD is used by PHP for image generation, e.g. to generate thumbnails).
   - MySQL extension ([tt]mysqli[/tt] or [tt]pdo_mysql[/tt])
@@ -171,8 +171,7 @@ We require:
  - MySQL version 5.5.3 (&dagger;) or higher (although we have not tested the software beyond version 8.2).
  - At least 25MB of database storage space (which should be available on any reputable webhost).
   - You may need a substantially larger amount of database space for sites utilising content translations, using the software's fulltext search, or heavily utilising content (e.g. social communities or catalogue-heavy sites).
- - The [tt]max_allowed_packet[/tt] server system setting must be at least [tt]4M[/tt] (this became the default in MySQL 5.6).
-  - Consider using [tt]8M[/tt] instead if you plan to use web or PT notifications for error messages with stack traces.
+ - The [tt]max_allowed_packet[/tt] server system setting must be at least [tt]32M[/tt].
 
 (&dagger;) MySQL 5.5.3 introduces the utf8mb4 character set, which is required to store emojis. The installer assumes you will install with this support available, but upgrades from older versions may work in anything from MySQL 4.1+ if the database is kept in [tt]latin1[/tt] via having [tt]$SITE_INFO['database_charset'] = 'latin1';[/tt] in [tt]_config.php[/tt]. This compatibility will not be guaranteed, but as webhosts have been very slow to upgrade MySQL installations we will informally try and maintain it.
 
@@ -339,7 +338,7 @@ In the config file it will look something like this (example for setting [tt]max
 [code="Bash"]
 [mysqld]
 ...
-max_allowed_packet = 16M
+max_allowed_packet = 32M
 ...
 [/code]
 
@@ -397,8 +396,8 @@ The rest of this section will deal with the specifics of the [tt]max_allowed_pac
 
 [tt]max_allowed_packet[/tt] exists as separate server-side and client-side settings; this is totally different from the concept of server and session variables (which are both server-side) and should not be confused.
 
-[tt]max_allowed_packet[/tt] defaults to 1MB server-side on MySQL 5.5.3 (and it goes up to 64MB on MySQL 8) if not configured at all (i.e. this is the hard-coded default). Most webhosts will have a higher default value. Composr defines a higher minimum requirement of 16MB (due to sometimes needing to save large items like mail and Comcode page caches).
-[tt]max_allowed_packet[/tt]'s session variable exists but is read-only. Attempts to change it will give an error message. You therefore must configure the server variable correctly.
+[tt]max_allowed_packet[/tt] defaults to 4MB server-side on MySQL 5.5.3 (and it goes up to 64MB on MySQL 8) if not configured at all (i.e. this is the hard-coded default). Most webhosts will have a higher default value. Composr defines a higher minimum requirement of 32MB (due to sometimes needing to save large items like mail, statistics, and Comcode page caches).
+[tt]max_allowed_packet[/tt]'s session variable exists but is read-only. Attempts to change it will give an error message. You therefore must configure the server variable manually and correctly.
 Only MySQL users with the [tt]SUPER[/tt] privilege may set the server variable. Typically only the [tt]root[/tt] user has this.
 
 [tt]max_allowed_packet[/tt] defaults to 1GB client-side (e.g. PHP), except in official client applications like [tt]mysql[/tt] (16MB) and [tt]mysqldump[/tt] (24MB) (which may be configured in the MySQL configuration, the client configuration sections).
