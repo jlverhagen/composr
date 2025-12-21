@@ -558,6 +558,12 @@ abstract class Source_email_integration
         // Pre-checks to make sure our operation is actually possible
         switch ($mail_nonmatch_policy) {
             case 'create_account':
+                // Make a unique username from the e-mail address
+                require_code('cns_members_action2');
+                $_username = preg_replace('#@.*$#', '', $from_email);
+                $username = process_username_discriminator($_username);
+                // No break
+            case 'post_as_guest':
                 // Conversr check
                 if (get_forum_type() != 'cns') {
                     $mail_nonmatch_policy = 'block';
@@ -584,12 +590,6 @@ abstract class Source_email_integration
                 // Blocklist check (exits with an error if on a blocklist)
                 require_code('antispam');
                 check_for_spam(null, $from_email, false);
-
-                // Make a unique username from the e-mail address
-                require_code('cns_members_action2');
-                $_username = preg_replace('#@.*$#', '', $from_email);
-                $username = process_username_discriminator($_username);
-
                 break;
         }
 
