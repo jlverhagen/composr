@@ -1836,6 +1836,13 @@ function object_factory(string $class, bool $failure_ok = false, array $paramete
 {
     static $class_objects = [];
 
+    if (!class_exists($class)) {
+        if ($failure_ok) {
+            return null;
+        }
+        fatal_exit(escape_html('Missing class: ' . $class));
+    }
+
     if ($cache) {
         $hash = hash('sha256', serialize($parameters));
         if (!isset($class_objects[$class][$hash]) || !is_object($class_objects[$class][$hash])) {
