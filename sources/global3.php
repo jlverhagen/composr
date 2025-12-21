@@ -204,11 +204,11 @@ function init__global3()
     if (!defined('CMS_MIN_SUPPORTED_PHP')) {
         // System requirements
         define('CMS_MIN_SUPPORTED_PHP', '7.2'); // LEGACY: Also needs editing in install.php, tut_webhosting.txt, restore.php.pre
-        define('CMS_MAX_SUPPORTED_PHP', '8.3'); // LEGACY: Also needs editing in tut_webhosting.txt
+        define('CMS_MAX_SUPPORTED_PHP', '8.5'); // LEGACY: Also needs editing in tut_webhosting.txt
         define('CMS_MIN_SUPPORTED_MYSQL_MARIADB', '5.5.3'); // LEGACY: also maintain in tut_webhosting.txt
-        define('CMS_MAX_SUPPORTED_MARIADB', '10.11');
+        define('CMS_MAX_SUPPORTED_MARIADB', '11.4');
         define('CMS_MAX_SUPPORTED_MYSQL', '8.2');
-        define('CMS_MYSQL_MIN_MAX_ALLOWED_PACKET', (1024 * 1024 * 16));
+        define('CMS_MYSQL_MIN_MAX_ALLOWED_PACKET', (1024 * 1024 * 32));
         define('CMS_MIN_DISK_SPACE', (250 * 1024 * 1024));
     }
 
