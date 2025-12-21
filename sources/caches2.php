@@ -156,6 +156,11 @@ function request_via_cron(string $codename, array $map, int $special_cache_flags
  */
 function set_cache_entry(string $codename, int $ttl, string $cache_identifier, $cache, int $special_cache_flags = CACHE_AGAINST_DEFAULT, array $_langs_required = [], array $_javascripts_required = [], array $_csss_required = [], bool $tempcode = false, ?int $staff_status = null, ?int $member_id = null, ?string $groups = null, ?int $is_bot = null, ?string $timezone = null, ?string $theme = null, ?string $lang = null)
 {
+    global $IN_MINIKERNEL_VERSION;
+    if ($IN_MINIKERNEL_VERSION) {
+        return;
+    }
+
     get_cache_signature_details($special_cache_flags, $staff_status, $member_id, $groups, $is_bot, $timezone, $theme, $lang);
 
     global $KEEP_MARKERS, $SHOW_EDIT_LINKS, $INJECT_HIDDEN_TEMPLATE_NAMES;

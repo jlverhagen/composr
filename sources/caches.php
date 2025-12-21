@@ -30,6 +30,8 @@
  * @package    core
  */
 
+// This file should NOT be loaded up when in minikernel
+
 /**
  * Standard code module initialisation function.
  *
@@ -45,7 +47,7 @@ function init__caches()
     global $ALLOW_DOUBLE_DECACHE;
     $ALLOW_DOUBLE_DECACHE = false;
 
-    if (!defined('CACHE_AGAINST_NOTHING_SPECIAL')) {
+    if (!defined('CACHE_AGAINST_NOTHING_SPECIAL')) { // NB: must also be edited in minikernel
         // These are ways we might enhance block caching with standardised (queryable) additional caching restraints
         define('CACHE_AGAINST_NOTHING_SPECIAL', 0);
         // -

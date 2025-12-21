@@ -84,6 +84,20 @@ function init__minikernel()
         define('INPUT_FILTER_PASSWORD', INPUT_FILTER_TRIMMED);
     }
 
+    // caches.php
+    if (!defined('CACHE_AGAINST_NOTHING_SPECIAL')) {
+        // These are ways we might enhance block caching with standardised (queryable) additional caching restraints
+        define('CACHE_AGAINST_NOTHING_SPECIAL', 0);
+        // -
+        define('CACHE_AGAINST_STAFF_STATUS', 1);
+        define('CACHE_AGAINST_MEMBER', 2);
+        define('CACHE_AGAINST_PERMISSIVE_GROUPS', 4);
+        define('CACHE_AGAINST_BOT_STATUS', 8);
+        define('CACHE_AGAINST_TIMEZONE', 16);
+        // -
+        define('CACHE_AGAINST_DEFAULT', CACHE_AGAINST_BOT_STATUS | CACHE_AGAINST_TIMEZONE);
+    }
+
     fixup_bad_php_env_vars_pre();
     fixup_bad_php_env_vars();
 
@@ -143,7 +157,7 @@ function init__minikernel()
 function require_code(string $codename)
 {
     // The minikernel should never load these in because we either already loaded them or are using our own reduced API
-    $bad_scripts = ['bootstrap', 'minikernel', 'global', 'global2', 'users', 'mail', 'failure'];
+    $bad_scripts = ['bootstrap', 'minikernel', 'global', 'global2', 'users', 'mail', 'failure', 'caches'];
     if (in_array($codename, $bad_scripts)) {
         return;
     }
@@ -1941,4 +1955,53 @@ function current_script() : string
     $script_name = $_SERVER['SCRIPT_NAME'];
     $stripped_current_url = basename($script_name);
     return substr($stripped_current_url, 0, strpos($stripped_current_url, '.'));
+}
+
+/**
+ * Find the cached result of what is named by codename and the further constraints.
+ * This always returns null in minikernel.
+ *
+ * @param  ID_TEXT $codename The codename to check for caching
+ * @param  LONG_TEXT $cache_identifier The further restraints (a serialized map)
+ * @param  integer $special_cache_flags Special cache flags
+ * @param  integer $ttl The TTL for the cache entry in minutes. Defaults to a very big ttl
+ * @param  boolean $tempcode Whether we are caching Tempcode (needs special care)
+ * @param  boolean $caching_via_cron Whether to defer caching to the system scheduler. Note that this option only works if the block's defined cache signature depends only on $map (timezone and bot-type are automatically considered)
+ * @param  array $map Parameters to call up block with if we have to defer caching
+ * @return ?mixed The cached result (null: no cached result)
+ */
+function get_cache_entry(string $codename, string $cache_identifier, int $special_cache_flags = CACHE_AGAINST_DEFAULT, int $ttl = 10000, bool $tempcode = false, bool $caching_via_cron = false, array $map = [])
+{
+    return null;
+}
+
+/**
+ * Fill in cache signature details from the environment, based on $special_cache_flags.
+ * This does nothing in minikernel.
+ *
+ * @param  ?integer $special_cache_flags Special cache flags (null: none)
+ * @param  ?BINARY $staff_status Staff status to limit to (null: Get from environment)
+ * @param  ?MEMBER $member_id Member to limit to (null: Get from environment)
+ * @param  ?SHORT_TEXT $groups Sorted permissive usergroup list to limit to (null: Get from environment)
+ * @param  ?BINARY $is_bot Bot status to limit to (null: Get from environment)
+ * @param  ?MINIID_TEXT $timezone Timezone to limit to (null: Get from environment)
+ * @param  ?ID_TEXT $theme The theme this is being cached for (null: Get from environment)
+ * @param  ?LANGUAGE_NAME $lang The language this is being cached for (null: Get from environment)
+ */
+function get_cache_signature_details(?int $special_cache_flags, ?int &$staff_status, ?int &$member_id, ?string &$groups, ?int &$is_bot, ?string &$timezone, ?string &$theme, ?string &$lang)
+{
+    return;
+}
+
+/**
+ * Remove an item from the general cache (most commonly used for blocks).
+ * This does nothing in minikernel.
+ *
+ * @param  mixed $cached_for The type of what we are caching (e.g. block name) (ID_TEXT or an array of ID_TEXT, the array may be pairs re-specifying $identifier)
+ * @param  ?array $identifier A map of identifying characteristics (null: no identifying characteristics, decache all OR $cached_for is an array)
+ * @param  ?MEMBER $member_id Member to only decache for (null: no limit)
+ */
+function delete_cache_entry($cached_for, ?array $identifier = null, ?int $member_id = null)
+{
+    return;
 }
