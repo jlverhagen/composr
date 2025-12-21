@@ -102,7 +102,7 @@ class Source_database_static_sqlserver extends Source_database_super_sqlserver
      *
      * @param  string $query The complete SQL query
      * @param  mixed $connection The DB connection
-     * @param  ?integer $max The maximum number of rows to affect (null: no limit)
+     * @param  ?integer $max The maximum number of rows to affect; negative number is number of maximum bytes to return (null: no limit)
      * @param  integer $start The start row to affect
      * @param  boolean $fail_ok Whether to output an error on failure
      * @param  boolean $get_insert_id Whether to get the autoincrement ID created for an insert query
@@ -111,9 +111,16 @@ class Source_database_static_sqlserver extends Source_database_super_sqlserver
      */
     public function query(string $query, $connection, ?int $max = null, int $start = 0, bool $fail_ok = false, bool $get_insert_id = false, bool $save_as_volatile = false)
     {
+        $max_bytes = null;
+        if (($max !== null) && $max < 0) {
+            $max_bytes = abs($max);
+            $max = null;
+        }
+
         if ($max === 0) {
             return [];
         }
+
         $this->apply_sql_limit_clause($query, $max, $start);
 
         $this->rewrite_to_unicode_syntax($query);
@@ -145,7 +152,7 @@ class Source_database_static_sqlserver extends Source_database_super_sqlserver
         }
 
         if (((cms_strtoupper_ascii(substr(ltrim($query), 0, 7)) == 'SELECT ') || (cms_strtoupper_ascii(substr(ltrim($query), 0, 8)) == '(SELECT ')) && ($results !== false) && ($results !== true)) {
-            return $this->get_query_rows($results, $query, $start);
+            return $this->get_query_rows($results, $query, $start, $max_bytes);
         }
 
         if ($get_insert_id) {
@@ -170,13 +177,23 @@ class Source_database_static_sqlserver extends Source_database_super_sqlserver
      * @param  resource $results The query result pointer
      * @param  string $query The complete SQL query (useful for debugging)
      * @param  integer $start Where to start reading from
+     * @param  ?integer $max_bytes Do not return more than this many bytes of data (null: no limit)
      * @return array A list of row maps
      */
-    protected function get_query_rows($results, string $query, int $start) : array
+    protected function get_query_rows($results, string $query, int $start, ?int $max_bytes = null) : array
     {
         $out = [];
 
+        $total_bytes = 0;
         while (($row = sqlsrv_fetch_array($results, SQLSRV_FETCH_ASSOC)) !== null) {
+            if ($max_bytes !== null) {
+                $total_bytes += strlen(serialize($row));
+                if ($total_bytes > $max_bytes) {
+                    $row = null;
+                    break;
+                }
+            }
+
             $out[] = $row;
         }
 

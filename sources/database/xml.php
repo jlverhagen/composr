@@ -587,6 +587,10 @@ class Source_database_static_xml extends Source_database_driver
      */
     public function apply_sql_limit_clause(string &$query, ?int $max = null, int $start = 0)
     {
+        if ($max < 0) {
+            $max = null;
+        }
+
         if (($max !== null) && ($start != 0)) {
             $query .= ' LIMIT ' . strval($start) . ',' . strval($max);
         } elseif ($max !== null) {
@@ -602,7 +606,7 @@ class Source_database_static_xml extends Source_database_driver
      *
      * @param  string $query The complete SQL query
      * @param  mixed $db The DB connection
-     * @param  ?integer $max The maximum number of rows to affect (null: no limit)
+     * @param  ?integer $max The maximum number of rows to affect; negative number is number of maximum bytes to return (null: no limit)
      * @param  integer $start The start row to affect
      * @param  boolean $fail_ok Whether to not output an error on some kind of run-time failure (parse errors and clear programming errors are always fatal)
      * @param  boolean $get_insert_id Whether to get the autoincrement ID created for an insert query
@@ -612,6 +616,12 @@ class Source_database_static_xml extends Source_database_driver
     public function query(string $query, $db, ?int $max = null, int $start = 0, bool $fail_ok = false, bool $get_insert_id = false, bool $save_as_volatile = false)
     {
         global $DELIMITERS_FLIPPED, $DELIMITERS, $SYMBOL_DELIMITER;
+
+        $max_bytes = null;
+        if (($max !== null) && $max < 0) {
+            $max_bytes = abs($max);
+            $max = null;
+        }
 
         // LEXING STAGE
         // ------------
