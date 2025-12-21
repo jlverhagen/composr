@@ -315,7 +315,7 @@ class Source_database_connector
      * @param  array $select The SELECT map
      * @param  array $where_map The WHERE map [will all be ANDed together]
      * @param  string $end Something to tack onto the end of the SQL query
-     * @param  ?integer $max The maximum number of rows to select (null: get all)
+     * @param  ?integer $max The maximum number of rows to affect; negative number is number of maximum bytes to return (null: no limit)
      * @param  integer $start The starting row to select
      * @param  boolean $fail_ok Whether to allow failure (outputting a message instead of exiting completely)
      * @param  ?array $lang_fields Extra language fields to join in for cache pre-filling / Tempcode, perhaps via the find_lang_fields function. You only need to send this if you are doing a JOIN and carefully craft your query so table field names won't conflict (null: auto-detect, if not a join)
@@ -421,7 +421,7 @@ class Source_database_connector
      *
      * @param  string $query The complete parameter-ready SQL query
      * @param  array $parameters The query parameters (a map)
-     * @param  ?integer $max The maximum number of rows to affect (null: no limit)
+     * @param  ?integer $max The maximum number of rows to affect; negative number is number of maximum bytes to return (null: no limit)
      * @param  integer $start The start row to affect
      * @param  boolean $fail_ok Whether to output an error on failure
      * @param  boolean $skip_safety_check Whether to skip the query safety check
@@ -531,7 +531,7 @@ class Source_database_connector
      * This should rarely ever be used; other functions like query_select are available. Additionally, for complex queries, it is still better to use query_parameterised as it handles escaping.
      *
      * @param  string $query The complete SQL query
-     * @param  ?integer $max The maximum number of rows to affect (null: no limit)
+     * @param  ?integer $max The maximum number of rows to affect; negative number is number of maximum bytes to return (null: no limit)
      * @param  integer $start The start row to affect
      * @param  boolean $fail_ok Whether to output an error on failure
      * @param  boolean $skip_safety_check Whether to skip the query safety check
@@ -618,7 +618,7 @@ class Source_database_connector
      * This function is a very basic query executor. It shouldn't usually be used by you, as there are specialised abstracted versions available.
      *
      * @param  string $query The complete SQL query
-     * @param  ?integer $max The maximum number of rows to affect (null: no limit)
+     * @param  ?integer $max The maximum number of rows to affect; negative number is number of maximum bytes to return (null: no limit)
      * @param  integer $start The start row to affect
      * @param  boolean $fail_ok Whether to output an error on failure
      * @param  boolean $get_insert_id Whether to get an insert ID
@@ -740,9 +740,6 @@ class Source_database_connector
         if ($start < 0) {
             $start = 0;
         }
-        if ($max < 0) {
-            $max = 1;
-        }
 
         if ($QUERY_LOG) {
             $before = microtime(true);
@@ -762,9 +759,9 @@ class Source_database_connector
             $query .= '/* ' . get_session_id() . ' */'; // Identify query to session, for accurate de-duping
 
             $real_query = $query;
-            if (($max !== null) && ($start != 0)) {
+            if (($max !== null) && ($start != 0) && ($max > 0)) {
                 $real_query .= ' LIMIT ' . strval($start) . ',' . strval($max);
-            } elseif ($max !== null) {
+            } elseif (($max !== null) && ($max > 0)) {
                 $real_query .= ' LIMIT ' . strval($max);
             } elseif ($start != 0) {
                 $real_query .= ' LIMIT ' . strval($start) . ',30000000';
@@ -798,7 +795,19 @@ class Source_database_connector
         $ret = $this->driver->query($query, $connection, $max, $start, $fail_ok, $get_insert_id, false, $save_as_volatile);
         if ($QUERY_LOG) {
             $after = microtime(true);
-            $text = ($max !== null) ? ($query . ' (' . strval($start) . '-' . strval($start + $max) . ')') : $query;
+
+            $text = $query;
+            if ($start > 0) {
+                $text .= ' (start ' . strval($start) . ')';
+            }
+            if ($max !== null) {
+                if ($max < 0) {
+                    $text .= ' (limit ' . strval($max) . ' bytes)';
+                } else {
+                    $text .= ' (limit ' . strval($max) . ' rows)';
+                }
+            }
+
             $out = ['time' => ($after - $before), 'text' => $text, 'rows' => is_array($ret) ? count($ret) : null];
             $QUERY_LIST[] = $out;
         }

@@ -131,6 +131,10 @@ class Source_database_static_oracle extends Source_database_driver
      */
     public function apply_sql_limit_clause(string &$query, ?int $max = null, int $start = 0)
     {
+        if ($max < 0) {
+            $max = null;
+        }
+
         if (($start != 0) && ($max !== null) && (cms_strtoupper_ascii(substr(ltrim($query), 0, 7)) == 'SELECT ') || (cms_strtoupper_ascii(substr(ltrim($query), 0, 8)) == '(SELECT ')) {
             $old_query = $query;
             $pos = stripos($old_query, 'FROM ');
@@ -176,7 +180,7 @@ class Source_database_static_oracle extends Source_database_driver
      *
      * @param  string $query The complete SQL query
      * @param  mixed $connection The DB connection
-     * @param  ?integer $max The maximum number of rows to affect (null: no limit)
+     * @param  ?integer $max The maximum number of rows to affect; negative number is number of maximum bytes to return (null: no limit)
      * @param  integer $start The start row to affect
      * @param  boolean $fail_ok Whether to output an error on failure
      * @param  boolean $get_insert_id Whether to get the autoincrement ID created for an insert query
@@ -185,6 +189,12 @@ class Source_database_static_oracle extends Source_database_driver
      */
     public function query(string $query, $connection, ?int $max = null, int $start = 0, bool $fail_ok = false, bool $get_insert_id = false, bool $save_as_volatile = false)
     {
+        $max_bytes = null;
+        if (($max !== null) && $max < 0) {
+            $max_bytes = abs($max);
+            $max = null;
+        }
+
         $this->apply_sql_limit_clause($query, $max, $start);
 
         $stmt = ociparse($connection, $query);
@@ -207,7 +217,7 @@ class Source_database_static_oracle extends Source_database_driver
         }
 
         if (($results !== true) && ((cms_strtoupper_ascii(substr(ltrim($query), 0, 7)) == 'SELECT ') || (cms_strtoupper_ascii(substr(ltrim($query), 0, 8)) == '(SELECT ')) && ($results !== false)) {
-            return $this->get_query_rows($stmt, $query, $start);
+            return $this->get_query_rows($stmt, $query, $start, $max_bytes);
         }
 
         if ($get_insert_id) {
@@ -233,9 +243,10 @@ class Source_database_static_oracle extends Source_database_driver
      * @param  resource $results The query result pointer
      * @param  string $query The complete SQL query (useful for debugging)
      * @param  integer $start Where to start reading from
+     * @param  ?integer $max_bytes Do not return more than this many bytes of data (null: no limit)
      * @return array A list of row maps
      */
-    protected function get_query_rows($results, string $query, int $start) : array
+    protected function get_query_rows($results, string $query, int $start, ?int $max_bytes = null) : array
     {
         $out = [];
         $i = 0;
@@ -247,6 +258,7 @@ class Source_database_static_oracle extends Source_database_driver
             $types[$x] = ocicolumntype($results, $x);
             $names[$x] = cms_strtolower_ascii(ocicolumnname($results, $x));
         }
+        $total_bytes = 0;
         while (ocifetch($results)) {
             if ($i >= $start) {
                 $newrow = [];
@@ -276,6 +288,13 @@ class Source_database_static_oracle extends Source_database_driver
                             $v = '';
                         }
                         $newrow[$name] = $v;
+                    }
+                }
+
+                if ($max_bytes !== null) {
+                    $total_bytes += strlen(serialize($newrow));
+                    if ($total_bytes > $max_bytes) {
+                        break;
                     }
                 }
 

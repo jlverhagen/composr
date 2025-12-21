@@ -82,7 +82,7 @@ abstract class Source_database_driver
      *
      * @param  string $query The complete SQL query
      * @param  mixed $connection The DB connection
-     * @param  ?integer $max The maximum number of rows to affect (null: no limit)
+     * @param  ?integer $max The maximum number of rows to affect; negative number is number of maximum bytes to return (null: no limit)
      * @param  integer $start The start row to affect
      * @param  boolean $fail_ok Whether to output an error on failure
      * @param  boolean $get_insert_id Whether to get the autoincrement ID created for an insert query

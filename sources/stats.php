@@ -908,60 +908,105 @@ function stats_merge_deltas(int $time_limit = 15)
     $ml = php_return_bytes(ini_get('memory_limit'));
     $current_memory = memory_get_usage(false);
     $near_limit = (($ml > 0) && ($current_memory >= ($ml - (1024 * 1024 * 8)))); // within 8 MB of PHP memory limit
+    $r_start = 0;
+
+    $max_bytes = (1024 * 1024 * 32);
+    if (($ml > 0) && (($ml - $current_memory) < ($max_bytes * 2))) {
+        $max_bytes = ($ml - $current_memory) / 2;
+    }
 
     while ((!$near_limit) && ((time() - $start) < $time_limit)) { // Time and memory checks
-        // Not ideal to process one at a time, but some rows can be several MBs, so we need to avoid out of memory issues
-        $row = $GLOBALS['SITE_DB']->query_select('stats_preprocessed_delta', ['*'], [], ' ORDER BY id', 1);
-        if (!array_key_exists(0, $row)) { // No more to do
+        $rows = $GLOBALS['SITE_DB']->query_select('stats_preprocessed_delta', ['*'], [], ' ORDER BY id', 0 - $max_bytes, $r_start);
+        if (!array_key_exists(0, $rows)) { // No more to do
             break;
         }
 
-        $stats_row = $GLOBALS['SITE_DB']->query_select('stats_preprocessed', ['*'], [
-            'p_bucket' => $row[0]['p_bucket'],
-            'p_pivot' => $row[0]['p_pivot'],
-            'p_pivot_interval' => $row[0]['p_pivot_interval'],
-            'p_pivot_value' => $row[0]['p_pivot_value'],
-        ], '', 1);
+        $r_start += count($rows);
 
-        if (!array_key_exists(0, $stats_row)) {
-            $GLOBALS['SITE_DB']->query_insert('stats_preprocessed', [
-                'p_bucket' => $row[0]['p_bucket'],
-                'p_pivot' => $row[0]['p_pivot'],
-                'p_pivot_interval' => $row[0]['p_pivot_interval'],
-                'p_pivot_value' => $row[0]['p_pivot_value'],
-                'p_data' => $row[0]['p_data'],
-            ]);
-        } else {
-            $row_u = @unserialize($row[0]['p_data']);
-            if ($row_u === false) {
-                warn_exit(do_lang_tempcode('INTERNAL_ERROR', escape_html('67b35ad8e6935ab8b8f76f5734789f72')), escape_html('TODO'));
+        // Group rows so we can process multiple deltas for the same stats row at once
+        $groups = [];
+        foreach ($rows as $i => $row) {
+            $group_key = $row['p_bucket'] . '___' . $row['p_pivot'] . '___' . strval($row['p_pivot_interval']) . '___' . $row['p_pivot_value'];
+            if (!isset($groups[$group_key])) {
+                $groups[$group_key] = [
+                    'p_bucket' => $row['p_bucket'],
+                    'p_pivot' => $row['p_pivot'],
+                    'p_pivot_interval' => $row['p_pivot_interval'],
+                    'p_pivot_value' => $row['p_pivot_value'],
+                    'i' => [],
+                    'ids' => [],
+                ];
             }
-
-            $stats_row_u = @unserialize($stats_row[0]['p_data']);
-            if ($stats_row_u === false) {
-                warn_exit(do_lang_tempcode('INTERNAL_ERROR', escape_html('df243edab1d45299b9d8b79f6de6d357')), escape_html('TODO'));
-            }
-
-            stats_deep_merge($stats_row_u, $row_u);
-
-            $GLOBALS['SITE_DB']->query_update('stats_preprocessed', ['p_data' => serialize($stats_row_u)], [
-                'p_bucket' => $row[0]['p_bucket'],
-                'p_pivot' => $row[0]['p_pivot'],
-                'p_pivot_interval' => $row[0]['p_pivot_interval'],
-                'p_pivot_value' => $row[0]['p_pivot_value'],
-            ]);
+            $groups[$group_key]['i'][] = $i;
+            $groups[$group_key]['ids'][] = $row['id'];
         }
 
-        $GLOBALS['SITE_DB']->query_delete('stats_preprocessed_delta', ['id' => $row[0]['id']]);
+        foreach ($groups as $group) {
+            $stats_row = $GLOBALS['SITE_DB']->query_select('stats_preprocessed', ['*'], [
+                'p_bucket' => $group['p_bucket'],
+                'p_pivot' => $group['p_pivot'],
+                'p_pivot_interval' => $group['p_pivot_interval'],
+                'p_pivot_value' => $group['p_pivot_value'],
+            ], '', 1);
 
-        unset($row);
-        unset($row_u);
-        unset($stats_row);
-        unset($stats_row_u);
-        unset($merged_data);
+            $stats_row_u = null;
+            if (array_key_exists(0, $stats_row)) {
+                $stats_row_u = @unserialize($stats_row[0]['p_data']);
+                if ($stats_row_u === false) {
+                    warn_exit(do_lang_tempcode('INTERNAL_ERROR', escape_html('df243edab1d45299b9d8b79f6de6d357')), escape_html('TODO'));
+                }
+            }
+
+            foreach ($group['i'] as $row_i) {
+                $row_u = @unserialize($rows[$row_i]['p_data']);
+                if ($row_u === false) {
+                    warn_exit(do_lang_tempcode('INTERNAL_ERROR', escape_html('67b35ad8e6935ab8b8f76f5734789f72')), escape_html('TODO'));
+                }
+
+                if ($stats_row_u === null) {
+                    $stats_row_u = $row_u;
+                } else {
+                    stats_deep_merge($stats_row_u, $row_u);
+                }
+            }
+
+            if (!array_key_exists(0, $stats_row)) {
+                $GLOBALS['SITE_DB']->query_insert('stats_preprocessed', [
+                    'p_bucket' => $group['p_bucket'],
+                    'p_pivot' => $group['p_pivot'],
+                    'p_pivot_interval' => $group['p_pivot_interval'],
+                    'p_pivot_value' => $group['p_pivot_value'],
+                    'p_data' => serialize($stats_row_u),
+                ]);
+            } else {
+                $GLOBALS['SITE_DB']->query_update('stats_preprocessed', ['p_data' => serialize($stats_row_u)], [
+                    'p_bucket' => $group['p_bucket'],
+                    'p_pivot' => $group['p_pivot'],
+                    'p_pivot_interval' => $group['p_pivot_interval'],
+                    'p_pivot_value' => $group['p_pivot_value'],
+                ]);
+            }
+
+            $GLOBALS['SITE_DB']->query('DELETE FROM ' . get_table_prefix() . 'stats_preprocessed_delta WHERE id IN (' . implode(',', array_map('strval', $group['ids'])) . ')');
+
+            $current_memory = memory_get_usage(false);
+            $near_limit = (($ml > 0) && ($current_memory >= ($ml - (1024 * 1024 * 8)))); // within 8 MB of PHP memory limit
+            if ($near_limit || ((time() - $start) >= $time_limit)) {
+                break;
+            }
+        }
+
+        unset($rows);
+        unset($groups);
 
         $current_memory = memory_get_usage(false);
         $near_limit = (($ml > 0) && ($current_memory >= ($ml - (1024 * 1024 * 8)))); // within 8 MB of PHP memory limit
+        $r_start = 0;
+
+        $max_bytes = (1024 * 1024 * 32);
+        if (($ml > 0) && (($ml - $current_memory) < ($max_bytes * 2))) {
+            $max_bytes = ($ml - $current_memory) / 2;
+        }
     }
 
     cms_set_time_limit($old);

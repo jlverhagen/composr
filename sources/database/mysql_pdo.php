@@ -117,7 +117,7 @@ class Source_database_static_mysql_pdo extends Source_database_super_mysql
      *
      * @param  string $query The complete SQL query
      * @param  mixed $connection The DB connection
-     * @param  ?integer $max The maximum number of rows to affect (null: no limit)
+     * @param  ?integer $max The maximum number of rows to affect; negative number is number of maximum bytes to return (null: no limit)
      * @param  integer $start The start row to affect
      * @param  boolean $fail_ok Whether to output an error on failure
      * @param  boolean $get_insert_id Whether to get the autoincrement ID created for an insert query
@@ -128,6 +128,12 @@ class Source_database_static_mysql_pdo extends Source_database_super_mysql
     {
         if (!$this->query_may_run($query, $connection, $get_insert_id)) {
             return null;
+        }
+
+        $max_bytes = null;
+        if (($max !== null) && $max < 0) {
+            $max_bytes = abs($max);
+            $max = null;
         }
 
         if ($this->version === null) {
@@ -158,7 +164,7 @@ class Source_database_static_mysql_pdo extends Source_database_super_mysql
 
         $sub = substr(ltrim($query), 0, 4);
         if (($results !== true) && (($sub === '(SEL') || ($sub === 'SELE') || ($sub === 'sele') || ($sub === 'CHEC') || ($sub === 'EXPL') || ($sub === 'REPA') || ($sub === 'DESC') || ($sub === 'SHOW')) && ($results !== false)) {
-            return $this->get_query_rows($results, $query, $start);
+            return $this->get_query_rows($results, $query, $start, $max_bytes);
         }
 
         if ($get_insert_id) {
@@ -183,9 +189,10 @@ class Source_database_static_mysql_pdo extends Source_database_super_mysql
      * @param  object $results The query result pointer
      * @param  string $query The complete SQL query (useful for debugging)
      * @param  integer $start Where to start reading from
+     * @param  ?integer $max_bytes Do not return more than this many bytes of data (null: no limit)
      * @return array A list of row maps
      */
-    protected function get_query_rows(object $results, string $query, int $start) : array
+    protected function get_query_rows(object $results, string $query, int $start, ?int $max_bytes = null) : array
     {
         $names = [];
         $types = [];
@@ -198,7 +205,16 @@ class Source_database_static_mysql_pdo extends Source_database_super_mysql
 
         $out = [];
         $newrow = [];
+        $total_bytes = 0;
         while (($row = $results->fetch(PDO::FETCH_NUM)) !== false) {
+            if ($max_bytes !== null) {
+                $total_bytes += strlen(serialize($row));
+                if ($total_bytes > $max_bytes) {
+                    $row = null;
+                    break;
+                }
+            }
+
             foreach ($row as $j => $v) {
                 $name = $names[$j];
                 $type = $types[$j];

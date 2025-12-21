@@ -117,9 +117,16 @@ class Source_database_static_sqlserver_odbc extends Source_database_super_sqlser
      */
     public function query(string $query, $connection, ?int $max = null, int $start = 0, bool $fail_ok = false, bool $get_insert_id = false, bool $save_as_volatile = false)
     {
+        $max_bytes = null;
+        if (($max !== null) && $max < 0) {
+            $max_bytes = abs($max);
+            $max = null;
+        }
+
         if ($max === 0) {
             return [];
         }
+
         $this->apply_sql_limit_clause($query, $max, $start);
 
         $this->rewrite_to_unicode_syntax($query);
@@ -152,7 +159,7 @@ class Source_database_static_sqlserver_odbc extends Source_database_super_sqlser
 
         $sub = substr(ltrim($query), 0, 4);
         if (((cms_strtoupper_ascii(substr(ltrim($query), 0, 7)) == 'SELECT ') || (cms_strtoupper_ascii(substr(ltrim($query), 0, 8)) == '(SELECT ')) && ($results !== false) && ($results !== true)) {
-            return $this->get_query_rows($results, $query, $start);
+            return $this->get_query_rows($results, $query, $start, $max_bytes);
         }
 
         if ($get_insert_id) {
@@ -177,9 +184,10 @@ class Source_database_static_sqlserver_odbc extends Source_database_super_sqlser
      * @param  resource $results The query result pointer
      * @param  string $query The complete SQL query (useful for debugging)
      * @param  integer $start Where to start reading from
+     * @param  ?integer $max_bytes Do not return more than this many bytes of data (null: no limit)
      * @return array A list of row maps
      */
-    protected function get_query_rows($results, string $query, int $start) : array
+    protected function get_query_rows($results, string $query, int $start, ?int $max_bytes = null) : array
     {
         $out = [];
         if ($start === null) {
@@ -195,6 +203,7 @@ class Source_database_static_sqlserver_odbc extends Source_database_super_sqlser
             $names[$x] = cms_strtolower_ascii(odbc_field_name($results, $x));
         }
 
+        $total_bytes = 0;
         while (odbc_fetch_row($results, $start + $i + 1)) {
             $newrow = [];
 
@@ -214,6 +223,13 @@ class Source_database_static_sqlserver_odbc extends Source_database_super_sqlser
                     $newrow[$name] = floatval($v);
                 } else {
                     $newrow[$name] = $v;
+                }
+            }
+
+            if ($max_bytes !== null) {
+                $total_bytes += strlen(serialize($newrow));
+                if ($total_bytes > $max_bytes) {
+                    break;
                 }
             }
 

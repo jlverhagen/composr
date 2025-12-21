@@ -58,6 +58,10 @@ abstract class Source_database_super_sqlserver extends Source_database_driver
      */
     public function apply_sql_limit_clause(string &$query, ?int $max = null, int $start = 0)
     {
+        if ($max < 0) {
+            $max = null;
+        }
+
         if ($max !== null) {
             $_max = $max;
             $_max += $start;

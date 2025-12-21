@@ -81,6 +81,10 @@ abstract class Source_database_super_mysql extends Source_database_driver
      */
     public function apply_sql_limit_clause(string &$query, ?int $max = null, int $start = 0)
     {
+        if ($max < 0) {
+            $max = null;
+        }
+
         if (($max !== null) && ($start != 0)) {
             $query .= ' LIMIT ' . strval($start) . ',' . strval($max);
         } elseif ($max !== null) {
