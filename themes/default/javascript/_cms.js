@@ -233,7 +233,7 @@
      * @method
      * @returns {array}
      */
-    $cms.clearAutosave = $util.constant(JSON.parse(symbols.CLEAR_AUTOSAVE));
+    $cms.clearAutosave = $util.constant($cms.inMinikernelVersion() ? {} : JSON.parse(symbols.CLEAR_AUTOSAVE));
 
     var configOptionsJson = JSON.parse('{$PUBLIC_CONFIG_OPTIONS_JSON;}');
     /**
