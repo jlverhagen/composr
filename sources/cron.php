@@ -230,6 +230,14 @@ function cron_run(bool $force = false, bool $verbose = false, ?array $limit_hook
         delete_cache_entry('main_staff_checklist');
     }
 
+    $safety_limit = 5; // default; probably running from web requests
+    if (get_option('enable_web_request_scheduler') != '1') {
+        $safety_limit = 25; // Probably running as a Cron-called web request (we subtract 5 seconds as rounding happens)
+    }
+    if (is_cli()) {
+        $safety_limit = 50; // Probably running from the command prompt (we subtract 10 seconds as rounding happens)
+    }
+
     $time_elapsed = 0;
     do {
         // Logging of timings
@@ -436,9 +444,9 @@ function cron_run(bool $force = false, bool $verbose = false, ?array $limit_hook
                 }
             }
 
-            // Safety limit (20 seconds as Cron, 8 seconds as web request)
-            if (($time_elapsed >= 20) || ((get_option('enable_web_request_scheduler') == '1') && ($time_elapsed >= 8))) {
-                $log_message = loggable_date() . ' SAFETY LIMIT; ending early to prevent server timeout' . "\n";
+            // Safety limit
+            if ($time_elapsed >= $safety_limit) {
+                $log_message = loggable_date() . ' SAFETY LIMIT; ending early to prevent server timeout or overload' . "\n";
                 if ($verbose) {
                     $ret .= $log_message;
                     if ($echo_out) {
