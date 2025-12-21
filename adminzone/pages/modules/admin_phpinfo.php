@@ -166,6 +166,7 @@ class Module_admin_phpinfo
 
         $out .= '<p><strong>Estimated MD5 uniqid operations per second</strong> (CPU speed): ' . escape_html(float_format(calculate_performance_score())) . '</p>';
 
+        // TODO: Move to sources/database/
         if (strpos(get_db_type(), 'mysql') !== false) {
             $mysql_version = $GLOBALS['SITE_DB']->query_value_if_there('SELECT version()');
             $out .= '<p><strong>MySQL version</strong>: ' . $mysql_version . '</p>';
@@ -196,6 +197,7 @@ class Module_admin_phpinfo
             }
         }
 
+        // TODO: Move to sources/database/
         if (function_exists('pg_version') && get_db_type() == 'postgresql') {
             $postgresql_version = @pg_version($GLOBALS['SITE_DB']->connection_read);
             if ($postgresql_version !== false) {
@@ -205,6 +207,7 @@ class Module_admin_phpinfo
             }
         }
 
+        // TODO: Move to sources/database/
         if (strpos(get_db_type(), 'sqlserver') !== false) {
             $sqlserver_version = $GLOBALS['SITE_DB']->query('SELECT @@version AS version');
             if (isset($sqlserver_version[0]['version'])) {

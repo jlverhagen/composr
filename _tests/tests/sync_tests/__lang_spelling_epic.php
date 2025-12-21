@@ -2347,6 +2347,7 @@ class __lang_spelling_epic_test_set extends cms_test_case
             'pos',
             'postgres',
             'postgresql',
+            'sqlite',
             'postmeta',
             'postsize',
             'pps',

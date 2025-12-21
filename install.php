@@ -713,8 +713,8 @@ function step_3() : object
             continue;
         }
 
+        // TODO: move to database sources
         $selected = false;
-
         if (($database == 'mysql') && (!function_exists('mysql_connect'))) {
             continue;
         }
@@ -746,6 +746,9 @@ function step_3() : object
             continue;
         }
         if (($database == 'sqlserver_odbc') && (!function_exists('odbc_connect'))) {
+            continue;
+        }
+        if (($database == 'sqlite3') && (!class_exists('SQLite3'))) {
             continue;
         }
 

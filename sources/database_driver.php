@@ -555,7 +555,7 @@ abstract class Source_database_driver
      */
     public function is_flat_file_simple() : bool
     {
-        return false;
+        return true;
     }
 
     /**
@@ -818,6 +818,7 @@ abstract class Source_database_driver
                     case 'mysql_pdo':
                         return 'IF(' . implode(',', $args) . ')';
 
+                    case 'sqlite3':
                     case 'postgresql':
                         return 'CASE WHEN ' . $args[0] . ' THEN ' . $args[1] . ' ELSE ' . $args[2] . ' END';
                 }
@@ -895,6 +896,7 @@ abstract class Source_database_driver
                     fatal_exit(do_lang_tempcode('INTERNAL_ERROR', escape_html('c5a7b0170f7e5671af8becd4e52154a5')));
                 }
                 switch (get_db_type()) {
+                    case 'sqlite3':
                     case 'postgresql':
                         $function = 'RANDOM';
                         break;
@@ -957,6 +959,7 @@ abstract class Source_database_driver
                     fatal_exit(do_lang_tempcode('INTERNAL_ERROR', escape_html('54c4d9a73bc55a5187015a8905f6e966')));
                 }
                 switch (get_db_type()) {
+                    case 'sqlite3':
                     case 'postgresql':
                     case 'sqlserver':
                     case 'sqlserver_odbc':
@@ -965,6 +968,8 @@ abstract class Source_database_driver
                 break;
 
             case 'ABS':
+                switch (get_db_type()) {
+                }
                 break;
 
             case 'MD5':
@@ -972,6 +977,7 @@ abstract class Source_database_driver
                     fatal_exit(do_lang_tempcode('INTERNAL_ERROR', escape_html('e7ada32f648a5860b04989d32ca095fa')));
                 }
                 switch (get_db_type()) {
+                    //case 'sqlite3': (NB: We register an MD5 function in the SQLite driver)
                     case 'oracle':
                         return 'STANDARD_HASH(' . $args[0] . ',\'MD5\')';
                     case 'postgresql':
@@ -989,6 +995,7 @@ abstract class Source_database_driver
                     fatal_exit(do_lang_tempcode('INTERNAL_ERROR', escape_html('d4b887dc20665c838d69ac3a3db73785')));
                 }
                 switch (get_db_type()) {
+                    case 'sqlite3': // Not supported in < 3.35.0 (2021)
                     case 'db2':
                         return null;
                 }
@@ -1012,6 +1019,7 @@ abstract class Source_database_driver
                     case 'mysql':
                     case 'mysqli':
                     case 'mysql_pdo':
+                    case 'sqlite3':
                     default:
                         return '(SELECT GROUP_CONCAT(' . $args[0] . ') FROM ' . $args[1] . ')';
                 }

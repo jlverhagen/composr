@@ -1,0 +1,37 @@
+[title sub="Written by Patrick Schmalstig"]Composr Tutorial: Using SQLite with Composr[/title]
+
+[media float="right" framed="0"]data_custom/images/docs/tut_sqlite3/sqlite3_logo.jpg[/media]
+This tutorial provides some advice targeted towards SQLite.
+
+Composr has internal 'support' for many different database backends and is intentionally written with a combination of simple common-denominator SQL and use of an abstraction API. However, officially, only MySQL is supported due to the significant effort testing across new versions of Composr and the database backends involved. Different database systems vary in all kinds of surprising and subtle ways. Those wanting to do extra testing and bug fixing can put fixes back into the mainline version of Composr if they choose to.
+Composr functionality that only works on MySQL can be identified by looking at the [url="Composr feature tracker"]https://composr.app/catalogues/entry/tracker-4909.htm[/url].
+
+[contents]decimal,lower-alpha[/contents]
+
+[title="2"]Installing with SQLite[/title]
+SQLite is a free and open source flat-file database library. PHP has a native extension, [tt]sqlite3[/tt], to use it. All you have to do is enable this extension and install your Composr site while selecting SQLite3 as your driver. Because SQLite uses flat files, you do not have to install database servers. Composr will create your database under [tt]data_custom/sqlitedb/[/tt]. This makes SQLite a great option for those who have limited to no support for database services from their web host. It is also great for use with basic Composr sites.
+
+[title="2"]Stability[/title]
+When used with its default settings, SQLite is very stable. It is ACID-compliant and highly resistant to corruption.
+
+Be aware that SQLite does not have strict data type checking. It is theoretically possible, for example, to save a string in an integer field. Composr has its own software-level type checking. So in most cases, this should not be an issue.
+
+[title="2"]Security[/title]
+SQLite is only as secure as the database file(s). Unlike most database servers, SQLite does not have user accounts to control access or privileges to the database. Therefore, assume that anyone who can read the database file can read the contents, and anyone who can write to the file can write to anything in the database. Also, be aware that the contents are not encrypted; if someone downloads your database file, then they can browse the contents using any SQLite browsing tool.
+
+[title="2"]Scalability[/title]
+We do not recommend using SQLite for sites beyond simple complexity or light traffic. While SQLite has very fast read speeds, it has slow write speeds. And only one write operation can be performed on the database as a whole at a time.
+
+[title="2"]Upgrade limitations[/title]
+SQLite does not support modifications to the database schema; entire tables have to be re-created when a field is renamed, or its type or primary key changed. Due to the complexity, Composr does not currently support these operations. You may experience issues after upgrading between versions of Composr when changes to the database schema are necessary (the upgrader cannot currently apply them to your site if you are running SQLite).
+
+[concepts
+ 1_key="SQLite" 1_value="An Open Source flat file database server"
+]Concepts[/concepts]
+
+[title="2"]See also[/title]
+
+ - https://sqlite.org (SQLite home page)
+ - https://sqlitebrowser.org (Front-end browser for SQLite)
+
+{$SET,tutorial_tags,core_database_drivers,Installation,expert}{$SET,tutorial_add_date,December 2025}{$SET,tutorial_summary,A quick guide on using SQLite with Composr.}[block]main_tutorial_rating[/block]

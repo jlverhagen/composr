@@ -148,7 +148,7 @@ function require_lang_compile(string $codename, ?string $lang, ?string $type, st
                     fatal_exit($error_msg);
                 }
             } else {
-                critical_error('CRIT_LANG');
+                critical_error('CRIT_LANG', escape_html($codename));
             }
         }
     }

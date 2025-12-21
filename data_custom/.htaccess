@@ -1,14 +1,15 @@
 <Files "errorlog.php">
-Order Allow,Deny
-Deny from all
+Require all denied
 </Files>
 
 <Files "*.log">
-Order Allow,Deny
-Deny from all
+Require all denied
 </Files>
 
 <Files "*.xml">
-Order Allow,Deny
-Deny from all
+Require all denied
+</Files>
+
+<Files "*.sqlite">
+Require all denied
 </Files>
