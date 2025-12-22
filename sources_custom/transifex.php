@@ -694,13 +694,34 @@ class Hook_addon_registry_language_{$lang}
     }
 
     /**
-     * Get the version of the software this addon is for.
+     * Get the current version of this addon (usually software major, software minor, addon build).
+     * Put the comment "// addon_version_auto_update" to the right of the return if you want release tools to automatically update this according to software version and find_addon_effective_md5.
      *
-     * @return float Version number
+     * @return SHORT_TEXT Version number
      */
-    public function get_version() : float
+    public function get_version() : string
     {
-        return cms_version_number();
+        return '11.0.0'; // addon_version_auto_update
+    }
+
+    /**
+     * Get the minimum required version of the website software needed to use this addon.
+     *
+     * @return float Minimum required website software version
+     */
+    public function get_min_cms_version() : float
+    {
+        return 11.0;
+    }
+
+    /**
+     * Get the maximum compatible version of the website software to use this addon.
+     *
+     * @return ?float Maximum compatible website software version (null: no maximum version currently)
+     */
+    public function get_max_cms_version() : ?float
+    {
+        return 11.9;
     }
 
     /**

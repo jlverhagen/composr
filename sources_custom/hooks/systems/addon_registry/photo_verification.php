@@ -45,9 +45,9 @@ class Hook_addon_registry_photo_verification
      *
      * @return float Version number
      */
-    public function get_version() : float
+    public function get_version() : string
     {
-        return cms_version_number();
+        return '11.0.0'; // addon_version_auto_update
     }
 
     /**
