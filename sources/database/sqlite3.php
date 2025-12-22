@@ -101,6 +101,8 @@ class Source_database_static_sqlite3 extends Source_database_driver
             make_missing_directory(dirname($path));
         }
 
+        require_code('failure');
+
         push_throw_errors(true);
         try {
             $db_link = new SQLite3($path);
@@ -456,7 +458,7 @@ class Source_database_static_sqlite3 extends Source_database_driver
 
             $db_type = isset($type_remap[$type]) ? $type_remap[$type] : $type;
 
-            if ($name === $auto_field && count($keys) <= 1) {
+            if ($name === $auto_field) {
                 $_fields .= '    ' . $name . ' INTEGER PRIMARY KEY AUTOINCREMENT,' . "\n";
             } else {
                 $_fields .= '    ' . $name . ' ' . $db_type;
@@ -474,7 +476,7 @@ class Source_database_static_sqlite3 extends Source_database_driver
         }
 
         if (!empty($real_keys)) {
-            $query = 'CREATE TABLE ' . $table_name . ' (' . "\n" . $_fields . '    PRIMARY KEY (' . implode(', ', $real_keys) . ")\n)";
+            $query = 'CREATE TABLE ' . $table_name . ' (' . "\n" . $_fields . '    UNIQUE(' . implode(', ', $real_keys) . ")\n)";
         } else {
             $query = 'CREATE TABLE ' . $table_name . ' (' . "\n" . rtrim($_fields, ",\n") . "\n)";
         }
