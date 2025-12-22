@@ -41,7 +41,7 @@ class Block_main_activity_feed
         $info['organisation'] = 'Composr';
         $info['hacked_by'] = null;
         $info['hack_version'] = null;
-        $info['version'] = 2;
+        $info['version'] = 3;
         $info['update_require_upgrade'] = true;
         $info['locked'] = false;
         $info['min_cms_version'] = 11.0;
@@ -71,9 +71,9 @@ class Block_main_activity_feed
         if ($upgrade_from === null) {
             $GLOBALS['SITE_DB']->create_table('activities', [
                 'id' => '*AUTO',
-                'a_member_id' => '*MEMBER',
+                'a_member_id' => 'MEMBER',
                 'a_also_involving' => '?MEMBER',
-                'a_language_string_code' => '*ID_TEXT',
+                'a_language_string_code' => 'ID_TEXT',
                 'a_label_1' => 'SHORT_TEXT',
                 'a_label_2' => 'SHORT_TEXT',
                 'a_label_3' => 'SHORT_TEXT',
@@ -102,6 +102,12 @@ class Block_main_activity_feed
             $GLOBALS['SITE_DB']->alter_table_field('activities', 'a_pagelink_3', 'SHORT_TEXT', 'a_page_link_3');
 
             $GLOBALS['SITE_DB']->query('UPDATE ' . get_table_prefix() . 'activities SET a_language_string_code=' . db_function('REPLACE', ['a_language_string_code', '\'ocf:\'', '\'cns:\'']) . ' WHERE a_language_string_code LIKE \'ocf:%\'');
+        }
+
+        if (($upgrade_from !== null) && ($upgrade_from < 3)) { // LEGACY: 11 beta9
+            // Remove UNIQUE constraints that should not have been present
+            $GLOBALS['SITE_DB']->alter_table_field('activities', 'a_member_id', 'MEMBER');
+            $GLOBALS['SITE_DB']->alter_table_field('activities', 'a_language_string_code', 'ID_TEXT');
         }
     }
 
