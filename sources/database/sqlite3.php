@@ -677,6 +677,7 @@ class Source_database_static_sqlite3 extends Source_database_driver
                 return 'CASE WHEN ' . $args[0] . ' THEN ' . $args[1] . ' ELSE ' . $args[2] . ' END';
             case 'RAND':
                 $function = 'RANDOM';
+                break;
             case 'MOD':
                 return $args[0] . ' % ' . $args[1];
             case 'CONCAT':

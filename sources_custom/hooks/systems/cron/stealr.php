@@ -217,7 +217,7 @@ class Hook_cron_stealr
 
         if ($victor_member_id !== null) {
             // Give STOLEN points
-            points_credit_member($victor_member_id, do_lang('STEALR_GAVE_YOU', $points_to_steal, integer_format($points_to_steal, 0)), $points_to_steal, 0, null);
+            points_credit_member($victor_member_id, do_lang('STEALR_GAVE_YOU', strval($points_to_steal), integer_format($points_to_steal, 0)), $points_to_steal, 0, null);
 
             // Create private topic to message about it...
 
