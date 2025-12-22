@@ -85,7 +85,7 @@ class Hook_cron_health_check
             require_code('notifications');
             $subject = do_lang('HEALTH_CHECK_SUBJECT_' . ($has_fails ? 'fail' : 'misc'));
             $message = do_lang('HEALTH_CHECK_BODY', $results->evaluate());
-            Source_notification_dispatcher::dispatch_notification('error_occurred', $has_fails ? 'health_check_failed' : 'health_check_passed', $subject, $message, null, A_FROM_SYSTEM_PRIVILEGED, ['priority' => $has_fails ? 1 : 4]);
+            Source_notification_dispatcher::dispatch_notification('error_occurred', $has_fails ? 'health_check_failed' : 'health_check_passed', $subject, $message, null, A_FROM_SYSTEM_PRIVILEGED, ['priority' => $has_fails ? 1 : 5]);
         }
     }
 }

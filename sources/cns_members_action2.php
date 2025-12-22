@@ -1667,7 +1667,7 @@ function cns_ban_member(int $member_id, string $reasoned_ban = '1', bool $automa
 
     require_lang('cns');
     $mail = do_lang('BAN_MEMBER_MAIL', $username, get_site_name(), [], get_lang($member_id));
-    dispatch_mail(do_lang('BAN_MEMBER_MAIL_SUBJECT', null, null, null, get_lang($member_id)), $mail, '', [$email_address], $username, '', '', ['priority' => 2, 'require_recipient_valid_since' => $join_time]);
+    dispatch_mail(do_lang('BAN_MEMBER_MAIL_SUBJECT', null, null, null, get_lang($member_id)), $mail, '', [$email_address], $username, '', '', ['priority' => 1, 'require_recipient_valid_since' => $join_time]);
 
     delete_cache_entry('main_members');
 
@@ -1697,7 +1697,7 @@ function cns_unban_member(int $member_id)
 
     require_lang('cns');
     $mail = do_lang('UNBAN_MEMBER_MAIL', $username, get_site_name(), [], get_lang($member_id));
-    dispatch_mail(do_lang('UNBAN_MEMBER_MAIL_SUBJECT', null, null, null, get_lang($member_id)), $mail, '', [$email_address], $username, '', '', ['priority' => 2, 'require_recipient_valid_since' => $join_time]);
+    dispatch_mail(do_lang('UNBAN_MEMBER_MAIL_SUBJECT', null, null, null, get_lang($member_id)), $mail, '', [$email_address], $username, '', '', ['priority' => 1, 'require_recipient_valid_since' => $join_time]);
 
     delete_cache_entry('main_members');
 

@@ -69,7 +69,7 @@ class Hook_commandr_command_test_mail
             return ['', '', '', 'no_email_output==1'];
         }
 
-        $mail_ob = dispatch_mail('Testing', 'Testing', '', [$to_email], 'Tester', '', '', ['priority' => 1, 'bypass_queue' => true]);
+        $mail_ob = dispatch_mail('Testing', 'Testing', '', [$to_email], 'Tester', '', '', ['priority' => 2, 'bypass_queue' => true]);
         return ['', '', $mail_ob->log, ''];
     }
 }
