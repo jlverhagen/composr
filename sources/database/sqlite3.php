@@ -293,6 +293,12 @@ class Source_database_static_sqlite3 extends Source_database_driver
      */
     public function query(string $query, $connection, ?int $max = null, int $start = 0, bool $fail_ok = false, bool $get_insert_id = false, bool $save_as_volatile = false)
     {
+        static $attempts = [];
+        $hash = md5($query);
+        if (!isset($attempts[$hash])) {
+            $attempts[$hash] = 0;
+        }
+
         if (substr($query, 0, 17) === '!!!MIGRATE_FIELD:') {
             return $this->do_field_migration($query, $connection);
         }
@@ -308,9 +314,18 @@ class Source_database_static_sqlite3 extends Source_database_driver
 
         $this->apply_sql_limit_clause($query, $max, $start);
 
-        $results = @$connection->query($query);
+        // SQLite has DB-level locking
+        do {
+            $err = '';
+            $results = @$connection->query($query);
+            if ($results === false) {
+                $attempts[$hash]++;
+                $err = $connection->lastErrorMsg();
+                usleep(mt_rand(100000, 200000));
+            }
+        } while (($results === false) && ($attempts[$hash] < 25) && (cms_strtolower_ascii($err) == 'database is locked'));
+
         if (($results === false) && (!$fail_ok)) {
-            $err = $connection->lastErrorMsg();
             $this->handle_failed_query($query, $err, $connection);
             return null;
         }

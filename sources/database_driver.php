@@ -926,6 +926,7 @@ abstract class Source_database_driver
                 switch (get_db_type()) {
                     case 'sqlserver':
                     case 'sqlserver_odbc':
+                    case 'sqlite3':
                         $ret = '(SELECT MIN(X) FROM (';
                         foreach ($args as $i => $arg) {
                             if ($i != 0) {
@@ -942,6 +943,7 @@ abstract class Source_database_driver
                 switch (get_db_type()) {
                     case 'sqlserver':
                     case 'sqlserver_odbc':
+                    case 'sqlite3':
                         $ret = '(SELECT MAX(X) FROM (';
                         foreach ($args as $i => $arg) {
                             if ($i != 0) {
