@@ -23,3 +23,7 @@ Please read our [page="docs:tut-software-feedback"]providing feedback tutorial[/
 [box="Open issues"]
 [block catalogue="tracker" sorting="1" max="10" start="0" pagination="1" as_guest="0" check="1" default_sort="0 DESC" filter="Status=open"]main_cc_embed[/block]
 [/box]
+
+[box="Completed issues"]
+[block catalogue="tracker" sorting="1" max="10" start="0" pagination="1" as_guest="0" check="1" default_sort="0 DESC" filter="Status=completed"]main_cc_embed[/block]
+[/box]
