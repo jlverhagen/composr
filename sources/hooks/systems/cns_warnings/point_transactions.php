@@ -205,7 +205,7 @@ class Hook_cns_warnings_point_transactions
                     'p_hook' => 'point_transactions',
                     'p_action' => '_PUNITIVE_REVERSE_POINTS_TRANSACTION',
                     'p_param_a' => strval($row['id']),
-                    'p_param_b' => $pretty_name->evaluate(),
+                    'p_param_b' => cms_mb_substr($pretty_name->evaluate(), 0, 250),
                     'p_reversed' => 0,
                 ]);
 

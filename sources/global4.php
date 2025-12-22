@@ -602,7 +602,7 @@ function set_related_warning_id(?int $warning_id)
  * Log an action.
  *
  * @param  ID_TEXT $type The type of activity just carried out (a language string codename)
- * @param  ?SHORT_TEXT $a The most important parameter of the activity (e.g. ID) (null: none)
+ * @param  ?ID_TEXT $a The most important parameter of the activity (e.g. ID) (null: none)
  * @param  ?SHORT_TEXT $b A secondary (perhaps, human readable) parameter of the activity (e.g. caption) (null: none)
  * @param  ?integer $related_warning_id The related warning ID (null: none)
  * @return ?AUTO_LINK Log ID (null: did not save a log)
@@ -663,7 +663,7 @@ function _log_it(string $type, ?string $a = null, ?string $b = null, ?int $relat
         $log_id = $GLOBALS['SITE_DB']->query_insert('actionlogs', [
             'the_type' => $type,
             'param_a' => ($a === null) ? '' : cms_mb_substr($a, 0, 80),
-            'param_b' => ($b === null) ? '' : cms_mb_substr($b, 0, 80),
+            'param_b' => ($b === null) ? '' : cms_mb_substr($b, 0, 200),
             'date_and_time' => time(),
             'member_id' => get_member(),
             'warning_id' => $related_warning_id,
@@ -675,7 +675,7 @@ function _log_it(string $type, ?string $a = null, ?string $b = null, ?int $relat
             $log_id = $GLOBALS['SITE_DB']->query_insert('actionlogs', [
                 'the_type' => $type,
                 'param_a' => ($a === null) ? '' : cms_mb_substr($a, 0, 80),
-                'param_b' => ($b === null) ? '' : cms_mb_substr($b, 0, 80),
+                'param_b' => ($b === null) ? '' : cms_mb_substr($b, 0, 200),
                 'date_and_time' => time(),
                 'member_id' => get_member(),
                 'ip' => $ip,
@@ -725,7 +725,7 @@ function _log_it(string $type, ?string $a = null, ?string $b = null, ?int $relat
  * Find if an action already logged.
  *
  * @param  ID_TEXT $type The type of activity just carried out (a language string codename)
- * @param  ?SHORT_TEXT $a The most important parameter of the activity (e.g. ID) (null: none)
+ * @param  ?ID_TEXT $a The most important parameter of the activity (e.g. ID) (null: none)
  * @param  ?SHORT_TEXT $b A secondary (perhaps, human readable) parameter of the activity (e.g. caption) (null: none)
  * @return boolean Whether it is
  * @ignore

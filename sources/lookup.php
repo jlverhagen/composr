@@ -474,9 +474,9 @@ function find_user_metadata(bool $include_referer = true, ?int $member_id = null
             $sql = 'SELECT ' . $select . ' FROM ' . $tp . 'stats a JOIN (' . $inner_sql . ') b ON a.page_link=b.page_link AND a.date_and_time=b.date_and_time WHERE ' . $where;
         }
 
-        $pages = $GLOBALS['SITE_DB']->query($sql . ' ORDER BY date_and_time DESC', 50);
+        $pages = $GLOBALS['SITE_DB']->query($sql . ' ORDER BY a.date_and_time DESC', 50);
         if (count($pages) == 50) { // We have more than 50, so we'll place in the bottom 50 too
-            $pages2 = $GLOBALS['SITE_DB']->query($sql . ' ORDER BY date_and_time ASC', 50);
+            $pages2 = $GLOBALS['SITE_DB']->query($sql . ' ORDER BY a.date_and_time ASC', 50);
             $pages = array_merge($pages, [null], array_reverse($pages2));
         }
 

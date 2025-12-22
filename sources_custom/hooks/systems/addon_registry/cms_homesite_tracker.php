@@ -299,142 +299,41 @@ class Hook_addon_registry_cms_homesite_tracker
      */
     public function install(?float $upgrade_major_minor = null, ?int $upgrade_patch = null)
     {
-        return; // TODO: not safe to run this automatically
-
         if (($upgrade_major_minor === null) || version_compare(float_to_raw_string($upgrade_major_minor, 1) . '.' . strval($upgrade_patch), '11.0.3', '<')) { // 11.beta9
-            // DO NOT FORGET TO RENAME TRACKER/UPLOADS TO TRACKER_LEGACY/UPLOADS BEFORE GIT PULL
+            if ($GLOBALS['SITE_DB']->query_select_value_if_there('catalogues', 'c_name', ['c_name' => 'tracker']) === null) {
+                // Make sure our new tracker zone is present in htaccess
+                require_code('zones2');
+                sync_htaccess_with_zones();
 
-            // Make sure our new tracker zone is present in htaccess
-            require_code('zones2');
-            sync_htaccess_with_zones();
+                require_lang('catalogues');
+                require_lang('tracker');
+                require_lang('addons');
+                require_code('permissions2');
+                require_code('catalogues');
+                require_code('catalogues2');
+                require_code('lang3');
+                require_code('cns_groups');
 
-            require_lang('catalogues');
-            require_lang('tracker');
-            require_lang('addons');
-            require_code('permissions2');
-            require_code('catalogues');
-            require_code('catalogues2');
-            require_code('lang3');
-            require_code('cns_groups');
+                $admin_groups = $GLOBALS['FORUM_DRIVER']->get_super_admin_groups();
+                $mod_groups = $GLOBALS['FORUM_DRIVER']->get_moderator_groups();
+                $probation_groups = [get_probation_group()];
+                $guest_groups = [$GLOBALS['FORUM_DRIVER']->get_guest_id()];
+                $groups = array_diff(array_keys($GLOBALS['FORUM_DRIVER']->get_usergroup_list(false, true, true)), $guest_groups); // Never include guests
+                $non_staff_groups = array_diff($groups, $admin_groups, $mod_groups);
 
-            $admin_groups = $GLOBALS['FORUM_DRIVER']->get_super_admin_groups();
-            $mod_groups = $GLOBALS['FORUM_DRIVER']->get_moderator_groups();
-            $probation_groups = [get_probation_group()];
-            $guest_groups = [$GLOBALS['FORUM_DRIVER']->get_guest_id()];
-            $groups = array_diff(array_keys($GLOBALS['FORUM_DRIVER']->get_usergroup_list(false, true, true)), $guest_groups); // Never include guests
-            $non_staff_groups = array_diff($groups, $admin_groups, $mod_groups);
-
-            // Step 1: Create the tracker catalogue.
-            actual_add_catalogue(
-                'tracker',
-                lang_code_to_default_content('c_title', 'TRACKER', false, 2),
-                lang_code_to_default_content('c_description', 'DESCRIPTION_TRACKER_CATALOGUE', true, 3),
-                C_DT_TABULAR,
-                0,
-                do_lang('TRACKER_CATALOGUE_NOTES'),
-                0 // Points are assigned when an issue gets resolved
-            );
-
-            // Step 2. Set catalogue permissions.
-            set_global_category_access('catalogues_catalogue', 'tracker');
-
-            foreach ($non_staff_groups as $group) {
-                // However we must reject the ability to edit own entries except for staff
-                $GLOBALS['SITE_DB']->query_insert('group_privileges', [
-                    'group_id' => $group,
-                    'privilege' => 'edit_own_midrange_content',
-                    'the_page' => '',
-                    'module_the_name' => 'catalogues_catalogue',
-                    'category_name' => 'tracker',
-                    'the_value' => 0,
-                ]);
-
-                // However we must reject the ability to delete own entries except for staff
-                $GLOBALS['SITE_DB']->query_insert('group_privileges', [
-                    'group_id' => $group,
-                    'privilege' => 'delete_own_midrange_content',
-                    'the_page' => '',
-                    'module_the_name' => 'catalogues_catalogue',
-                    'category_name' => 'tracker',
-                    'the_value' => 0,
-                ]);
-            }
-
-            foreach (array_diff($groups, $probation_groups) as $group) {
-                // However we must allow bypassing validation (except for probation) so anyone can quickly report issues
-                $GLOBALS['SITE_DB']->query_insert('group_privileges', [
-                    'group_id' => $group,
-                    'privilege' => 'bypass_validation_midrange_content',
-                    'the_page' => '',
-                    'module_the_name' => 'catalogues_catalogue',
-                    'category_name' => 'tracker',
-                    'the_value' => 1,
-                ]);
-            }
-
-            // Step 3: create the fields.
-            $fields = [
-                // Name, description, type, defines order, required, visible, options, sensitive, put in category / search, sortable, default (language string)
-                ['IDENTIFIER', 'DESCRIPTION_TRACKER_CATALOGUE_IDENTIFIER', 'tracker_id', 1, 1, 1, '', 0, 1, 1, ''],
-                ['ISSUE_TYPE', 'DESCRIPTION_TRACKER_CATALOGUE_ISSUE_TYPE', 'tracker_type', 0, 1, 1, 'display_val=on', 0, 1, 1, 'TRACKER_CATALOGUE_ISSUE_TYPE_DEFAULT'],
-                ['TITLE', 'DESCRIPTION_TRACKER_CATALOGUE_TITLE', 'short_text', 0, 1, 1, 'input_size=56', 0, 1, 0, ''],
-                ['STATUS', 'DESCRIPTION_TRACKER_CATALOGUE_STATUS', 'tracker_status', 0, 1, 1, 'display_val=on,edit_only=1', 0, 1, 1, 'TRACKER_CATALOGUE_STATUS_DEFAULT'],
-                ['ISSUE_TAGS', 'DESCRIPTION_TRACKER_CATALOGUE_TAGS', 'list_multi', 0, 0, 1, 'custom_values=multiple,edit_only=1,widget=vertical_checkboxes,auto_sort=both', 0, 0, 0, ''],
-                ['HANDLER', 'DESCRIPTION_TRACKER_CATALOGUE_HANDLER', 'member', 0, 0, 1, 'edit_only=1', 0, 0, 0, ''],
-                ['VERSION', 'DESCRIPTION_TRACKER_CATALOGUE_VERSION', 'version', 0, 0, 1, '', 0, 0, 0, ''],
-                ['ADDON', 'DESCRIPTION_TRACKER_CATALOGUE_ADDON', 'addon', 0, 0, 1, 'auto_sort=on', 0, 0, 1, ''],
-                ['DESCRIPTION', 'DESCRIPTION_TRACKER_CATALOGUE_DESCRIPTION', 'long_trans', 0, 1, 1, '', 1, 0, 0, ''],
-                ['STEPS_TO_REPRODUCE', 'DESCRIPTION_TRACKER_CATALOGUE_STEPS_TO_REPRODUCE', 'short_trans_multi', 0, 0, 1, '', 1, 0, 0, ''],
-                ['ADDITIONAL_INFORMATION', 'DESCRIPTION_TRACKER_CATALOGUE_ADDITIONAL_INFORMATION', 'long_trans', 0, 0, 1, '', 1, 0, 0, ''],
-                ['RELATED_TO', 'DESCRIPTION_TRACKER_CATALOGUE_RELATED_TO', 'cx_tracker', 0, 0, 1, 'edit_only=1', 0, 0, 0, ''],
-                ['IS_FUNDED', 'DESCRIPTION_TRACKER_CATALOGUE_IS_FUNDED', 'tick', 0, 1, 1, 'edit_only=1', 0, 1, 1, 'TRACKER_CATALOGUE_IS_FUNDED_DEFAULT'],
-                ['RELEASED_IN_VERSION', 'DESCRIPTION_TRACKER_CATALOGUE_RELEASED_IN_VERSION', 'version', 0, 0, 1, 'edit_only=1', 0, 0, 0, ''],
-                ['HOTFIXES', 'DESCRIPTION_TRACKER_CATALOGUE_HOTFIXES', 'upload_multi', 0, 0, 1, 'edit_only=1', 0, 0, 0, ''],
-                ['COMMITS', 'DESCRIPTION_TRACKER_CATALOGUE_COMMITS', 'url_multi', 0, 0, 1, 'edit_only=1', 0, 0, 0, ''],
-            ];
-            foreach ($fields as $i => $field) {
-                $default = '';
-
-                // Values for default can be mapped by additional language strings
-                if ($field[10] != '') {
-                    $values = explode('|', do_lang($field[10]));
-                    foreach ($values as $j => $value) {
-                        if ($j > 0) {
-                            $default .= '|';
-                        }
-
-                        $default .= $value;
-                        $remap = do_lang($field[10] . '_' . filter_naughty_harsh($value, true), null, null, null, null, false);
-                        if ($remap !== null) {
-                            $default .= '=' . $remap;
-                        }
-                    }
-                }
-
-                actual_add_catalogue_field(
-                    'tracker', // $c_name
-                    lang_code_to_default_content('cf_name', $field[0], false, 2), // $name
-                    lang_code_to_default_content('cf_description', $field[1], false, 3), // $description
-                    $field[2], // $type
-                    $i, // $order
-                    $field[3], // $defines_order
-                    $field[5], // $visible
-                    $field[7], // $sensitive
-                    $default, // $default
-                    $field[4], // $required
-                    $field[9],
-                    1,
+                // Step 1: Create the tracker catalogue.
+                actual_add_catalogue(
+                    'tracker',
+                    lang_code_to_default_content('c_title', 'TRACKER', false, 2),
+                    lang_code_to_default_content('c_description', 'DESCRIPTION_TRACKER_CATALOGUE', true, 3),
+                    C_DT_TABULAR,
                     0,
-                    $field[8], // $put_in_category
-                    $field[8], // $put_in_search
-                    $field[6] // $options
+                    do_lang('TRACKER_CATALOGUE_NOTES'),
+                    0 // Points are assigned when an issue gets resolved
                 );
-            }
 
-            // Step 4: Create the categories and their privileges
-            for ($i = 1; $i <= 6; $i++) {
-                $cat_id = actual_add_catalogue_category('tracker', lang_code_to_default_content('cc_title', 'TRACKER_CATALOGUE_CATEGORY_' . strval($i), false, 2), lang_code_to_default_content('cc_description', 'DESCRIPTION_TRACKER_CATALOGUE_CATEGORY_' . strval($i), true, 3), '', null, '');
-                set_global_category_access('catalogues_category', $cat_id);
+                // Step 2. Set catalogue permissions.
+                set_global_category_access('catalogues_catalogue', 'tracker');
 
                 foreach ($non_staff_groups as $group) {
                     // However we must reject the ability to edit own entries except for staff
@@ -442,8 +341,8 @@ class Hook_addon_registry_cms_homesite_tracker
                         'group_id' => $group,
                         'privilege' => 'edit_own_midrange_content',
                         'the_page' => '',
-                        'module_the_name' => 'catalogues_category',
-                        'category_name' => strval($cat_id),
+                        'module_the_name' => 'catalogues_catalogue',
+                        'category_name' => 'tracker',
                         'the_value' => 0,
                     ]);
 
@@ -452,8 +351,8 @@ class Hook_addon_registry_cms_homesite_tracker
                         'group_id' => $group,
                         'privilege' => 'delete_own_midrange_content',
                         'the_page' => '',
-                        'module_the_name' => 'catalogues_category',
-                        'category_name' => strval($cat_id),
+                        'module_the_name' => 'catalogues_catalogue',
+                        'category_name' => 'tracker',
                         'the_value' => 0,
                     ]);
                 }
@@ -464,15 +363,116 @@ class Hook_addon_registry_cms_homesite_tracker
                         'group_id' => $group,
                         'privilege' => 'bypass_validation_midrange_content',
                         'the_page' => '',
-                        'module_the_name' => 'catalogues_category',
-                        'category_name' => strval($cat_id),
+                        'module_the_name' => 'catalogues_catalogue',
+                        'category_name' => 'tracker',
                         'the_value' => 1,
                     ]);
+                }
+
+                // Step 3: create the fields.
+                $fields = [
+                    // Name, description, type, defines order, required, visible, options, sensitive, put in category / search, sortable, default (language string)
+                    ['IDENTIFIER', 'DESCRIPTION_TRACKER_CATALOGUE_IDENTIFIER', 'tracker_id', 1, 1, 1, '', 0, 1, 1, ''],
+                    ['ISSUE_TYPE', 'DESCRIPTION_TRACKER_CATALOGUE_ISSUE_TYPE', 'tracker_type', 0, 1, 1, 'display_val=on', 0, 1, 1, 'TRACKER_CATALOGUE_ISSUE_TYPE_DEFAULT'],
+                    ['TITLE', 'DESCRIPTION_TRACKER_CATALOGUE_TITLE', 'short_text', 0, 1, 1, 'input_size=56', 0, 1, 0, ''],
+                    ['STATUS', 'DESCRIPTION_TRACKER_CATALOGUE_STATUS', 'tracker_status', 0, 1, 1, 'display_val=on,edit_only=1', 0, 1, 1, 'TRACKER_CATALOGUE_STATUS_DEFAULT'],
+                    ['ISSUE_TAGS', 'DESCRIPTION_TRACKER_CATALOGUE_TAGS', 'list_multi', 0, 0, 1, 'custom_values=multiple,edit_only=1,widget=vertical_checkboxes,auto_sort=both', 0, 0, 0, ''],
+                    ['HANDLER', 'DESCRIPTION_TRACKER_CATALOGUE_HANDLER', 'member', 0, 0, 1, 'edit_only=1', 0, 0, 0, ''],
+                    ['VERSION', 'DESCRIPTION_TRACKER_CATALOGUE_VERSION', 'version', 0, 0, 1, '', 0, 0, 0, ''],
+                    ['ADDON', 'DESCRIPTION_TRACKER_CATALOGUE_ADDON', 'addon', 0, 0, 1, 'auto_sort=on', 0, 0, 1, ''],
+                    ['DESCRIPTION', 'DESCRIPTION_TRACKER_CATALOGUE_DESCRIPTION', 'long_trans', 0, 1, 1, '', 1, 0, 0, ''],
+                    ['STEPS_TO_REPRODUCE', 'DESCRIPTION_TRACKER_CATALOGUE_STEPS_TO_REPRODUCE', 'short_trans_multi', 0, 0, 1, '', 1, 0, 0, ''],
+                    ['ADDITIONAL_INFORMATION', 'DESCRIPTION_TRACKER_CATALOGUE_ADDITIONAL_INFORMATION', 'long_trans', 0, 0, 1, '', 1, 0, 0, ''],
+                    ['RELATED_TO', 'DESCRIPTION_TRACKER_CATALOGUE_RELATED_TO', 'cx_tracker', 0, 0, 1, 'edit_only=1', 0, 0, 0, ''],
+                    ['IS_FUNDED', 'DESCRIPTION_TRACKER_CATALOGUE_IS_FUNDED', 'tick', 0, 1, 1, 'edit_only=1', 0, 1, 1, 'TRACKER_CATALOGUE_IS_FUNDED_DEFAULT'],
+                    ['RELEASED_IN_VERSION', 'DESCRIPTION_TRACKER_CATALOGUE_RELEASED_IN_VERSION', 'version', 0, 0, 1, 'edit_only=1', 0, 0, 0, ''],
+                    ['HOTFIXES', 'DESCRIPTION_TRACKER_CATALOGUE_HOTFIXES', 'upload_multi', 0, 0, 1, 'edit_only=1', 0, 0, 0, ''],
+                    ['COMMITS', 'DESCRIPTION_TRACKER_CATALOGUE_COMMITS', 'url_multi', 0, 0, 1, 'edit_only=1', 0, 0, 0, ''],
+                ];
+                foreach ($fields as $i => $field) {
+                    $default = '';
+
+                    // Values for default can be mapped by additional language strings
+                    if ($field[10] != '') {
+                        $values = explode('|', do_lang($field[10]));
+                        foreach ($values as $j => $value) {
+                            if ($j > 0) {
+                                $default .= '|';
+                            }
+
+                            $default .= $value;
+                            $remap = do_lang($field[10] . '_' . filter_naughty_harsh($value, true), null, null, null, null, false);
+                            if ($remap !== null) {
+                                $default .= '=' . $remap;
+                            }
+                        }
+                    }
+
+                    actual_add_catalogue_field(
+                        'tracker', // $c_name
+                        lang_code_to_default_content('cf_name', $field[0], false, 2), // $name
+                        lang_code_to_default_content('cf_description', $field[1], false, 3), // $description
+                        $field[2], // $type
+                        $i, // $order
+                        $field[3], // $defines_order
+                        $field[5], // $visible
+                        $field[7], // $sensitive
+                        $default, // $default
+                        $field[4], // $required
+                        $field[9],
+                        1,
+                        0,
+                        $field[8], // $put_in_category
+                        $field[8], // $put_in_search
+                        $field[6] // $options
+                    );
+                }
+
+                // Step 4: Create the categories and their privileges
+                for ($i = 1; $i <= 6; $i++) {
+                    $cat_id = actual_add_catalogue_category('tracker', lang_code_to_default_content('cc_title', 'TRACKER_CATALOGUE_CATEGORY_' . strval($i), false, 2), lang_code_to_default_content('cc_description', 'DESCRIPTION_TRACKER_CATALOGUE_CATEGORY_' . strval($i), true, 3), '', null, '');
+                    set_global_category_access('catalogues_category', $cat_id);
+
+                    foreach ($non_staff_groups as $group) {
+                        // However we must reject the ability to edit own entries except for staff
+                        $GLOBALS['SITE_DB']->query_insert('group_privileges', [
+                            'group_id' => $group,
+                            'privilege' => 'edit_own_midrange_content',
+                            'the_page' => '',
+                            'module_the_name' => 'catalogues_category',
+                            'category_name' => strval($cat_id),
+                            'the_value' => 0,
+                        ]);
+
+                        // However we must reject the ability to delete own entries except for staff
+                        $GLOBALS['SITE_DB']->query_insert('group_privileges', [
+                            'group_id' => $group,
+                            'privilege' => 'delete_own_midrange_content',
+                            'the_page' => '',
+                            'module_the_name' => 'catalogues_category',
+                            'category_name' => strval($cat_id),
+                            'the_value' => 0,
+                        ]);
+                    }
+
+                    foreach (array_diff($groups, $probation_groups) as $group) {
+                        // However we must allow bypassing validation (except for probation) so anyone can quickly report issues
+                        $GLOBALS['SITE_DB']->query_insert('group_privileges', [
+                            'group_id' => $group,
+                            'privilege' => 'bypass_validation_midrange_content',
+                            'the_page' => '',
+                            'module_the_name' => 'catalogues_category',
+                            'category_name' => strval($cat_id),
+                            'the_value' => 1,
+                        ]);
+                    }
                 }
             }
         }
 
         if (($upgrade_major_minor !== null) && version_compare(float_to_raw_string($upgrade_major_minor, 1) . '.' . strval($upgrade_patch), '11.0.3', '<')) { // LEGACY: 11.beta9
+            return; // Not safe to run this automatically
+
             cms_extend_time_limit(TIME_LIMIT_EXTEND__CRAWL);
             raise_php_memory_limit();
 

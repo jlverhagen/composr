@@ -57,19 +57,19 @@ function init__database_helper()
         /*
         Source...
 
-        Limitation                                     Access    MySQL (InnoDB)      MySQL (MyISAM)    PostgreSQL    Oracle    DB2    Firebird    SQLite    CUBRID    Ingres    SQL Anywhere    Informix    FileMaker   SQL Server
+        Limitation                                     Access    MySQL (InnoDB)      MySQL (MyISAM)    PostgreSQL    Oracle    DB2    Firebird    SQLite3    CUBRID    Ingres    SQL Anywhere    Informix    FileMaker   SQL Server
 
-        Max table name length                          64        64                  64                63            128       128    63          /         254       256       128             128         100         128
-        Max field identifier length                    64        64                  64                63            128       128    63          /         254       256       128             128         100         128
-        Max index name length                          64        64                  64                63            128       128    63          /         254       256       128             128         100         128
-        Max fields in table                            255       1017                /                 1600          1000      8000   /           2000      /         1024      45000           32768       99          1024
-        Max indexes for table (excluding primary key)  32        64                  64                /             /         14900  200         /         /         125       4294967296      /           /           999
-        Max fields in index                            10        16                  16                32            32        120    /           2000      /         32        /               16          /           32
-        Max key size                                   /         3072                1000              /             /         32767  8000        /         /         /         /               797 (*3)    /           1700 (*4)
-        Max key size (primary keys)                    255       3072                1000              /             /         32767  8000        /         /         /         /               797 (*3)    /           1700 (*4)
-        Max key size (considering unicode)             /         3072                1000              /             /         32767  8000        /         /         /         /               797 (*3)    /           1700 (*4)
-        Max row field size                             /         65535 (*2)          65535             /             /         /      65536       /         /         /         /               32767       /           8060 (*5)
-        Best unicode ~varchar length                   4000      16377               65535             65535         65535     4046   32765       /         /         16000     32767           32739       /           4000
+        Max table name length                          64        64                  64                63            128       128    63          64         254       256       128             128         100         128
+        Max field identifier length                    64        64                  64                63            128       128    63          64         254       256       128             128         100         128
+        Max index name length                          64        64                  64                63            128       128    63          64         254       256       128             128         100         128
+        Max fields in table                            255       1017                /                 1600          1000      8000   /           2000       /         1024      45000           32768       99          1024
+        Max indexes for table (excluding primary key)  32        64                  64                /             /         14900  200         2000       /         125       4294967296      /           /           999
+        Max fields in index                            10        16                  16                32            32        120    /           64         /         32        /               16          /           32
+        Max key size                                   /         3072                1000              /             /         32767  8000        2000       /         /         /               797 (*3)    /           1700 (*4)
+        Max key size (primary keys)                    255       3072                1000              /             /         32767  8000        2000       /         /         /               797 (*3)    /           1700 (*4)
+        Max key size (considering unicode)             /         3072                1000              /             /         32767  8000        2000       /         /         /               797 (*3)    /           1700 (*4)
+        Max row field size                             /         65535 (*2)          65535             /             /         /      65536       1000000000 /         /         /               32767       /           8060 (*5)
+        Best unicode ~varchar length                   4000      16377               65535             65535         65535     4046   32765       1000000000 /         16000     32767           32739       /           4000
 
         *1 It is 767 in < 5.7, but that's so intolerably low when we consider Unicode that we cannot support it
         *2 ~8000 is defined as a limit but this doesn't count VARCHARs which use most of the space

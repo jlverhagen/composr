@@ -310,7 +310,7 @@ class Hook_cns_warnings_content
                             'p_hook' => 'content',
                             'p_action' => '_PUNITIVE_DELETE_POST',
                             'p_param_a' => $_post_id,
-                            'p_param_b' => $_p_title,
+                            'p_param_b' => cms_mb_substr($_p_title, 0, 250),
                             'p_reversed' => 0,
                         ]);
                         break;
@@ -329,7 +329,7 @@ class Hook_cns_warnings_content
                             'p_hook' => 'content',
                             'p_action' => '_PUNITIVE_DELETE_POST_AND_FOLLOWING',
                             'p_param_a' => $_post_id,
-                            'p_param_b' => $_p_title,
+                            'p_param_b' => cms_mb_substr($_p_title, 0, 250),
                             'p_reversed' => 0,
                         ]);
                         $punitive_messages[] = do_lang('PUNITIVE_DELETE_POST_AND_FOLLOWING', strval($p_title), null, null, null, false);
@@ -406,7 +406,7 @@ class Hook_cns_warnings_content
                             'p_hook' => 'content',
                             'p_action' => '_PUNITIVE_DELETE_CONTENT',
                             'p_param_a' => $content_type_title->evaluate(),
-                            'p_param_b' => $content_title,
+                            'p_param_b' => cms_mb_substr($content_title, 0, 250),
                             'p_reversed' => 0,
                         ]);
 

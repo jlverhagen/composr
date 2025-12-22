@@ -99,6 +99,13 @@ function strip_class_name(string $class) : ?array
 
 function object_factory($class, $failure_ok = false, $parameters = [], $cache = false)
 {
+    if (!class_exists($class)) {
+        if ($failure_ok) {
+            return null;
+        }
+        fatal_exit(escape_html('Missing class: ' . $class));
+    }
+
     static $class_objects = [];
 
     if ($cache) {

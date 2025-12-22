@@ -1454,6 +1454,10 @@ class Source_database_repair
      */
     private function add_fixup_query(string $query)
     {
+        if (strpos($query, '!!!') === 0) { // Special driver command; not to be run directly in SQL
+            $this->sql_fixup[hash('sha256', $query)/*De-duplicates*/] = '-- Internal driver function: ' . $query;
+        };
+
         $this->sql_fixup[hash('sha256', $query)/*De-duplicates*/] = $query . ';';
 
         if (current_fatalistic() > 0) {

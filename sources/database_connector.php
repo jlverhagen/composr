@@ -1271,7 +1271,11 @@ class Source_database_connector
 
         static $cached_meta_tables = [];
         if (!array_key_exists($this->connection_unique_identifier, $cached_meta_tables)) {
-            $cached_meta_tables[$this->connection_unique_identifier] = $this->query_select('db_meta', ['DISTINCT m_table']);
+            $db_meta = $this->query_select('db_meta', ['DISTINCT m_table'], [], '', null, 0, ($table_name == 'db_meta'));
+            if ($db_meta === null) {
+                return false;
+            }
+            $cached_meta_tables[$this->connection_unique_identifier] = $db_meta;
         }
         foreach ($cached_meta_tables[$this->connection_unique_identifier] as $row) {
             $this->table_exists_cache[$row['m_table']] = true;

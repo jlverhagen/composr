@@ -554,6 +554,7 @@ class Module_admin_addons
 
         // Show addons available for installation
         foreach ($addons_available_for_installation as $filename => $addon_info) {
+            $is_core_addon = (substr($addon_name, 0, 5) == 'core_' || ($addon_name == 'core'));
             $addon_name = $addon_info['name'];
 
             if (array_key_exists($addon_name, $addons_installed)) {
@@ -611,6 +612,7 @@ class Module_admin_addons
                 $addon_tpl = static_evaluate_tempcode(do_template('ADDON_SCREEN_ADDON', [
                     '_GUID' => 'cb61bdb9ce0cef5cd520440c5f62008f',
                     'UPDATED_ADDONS' => false,
+                    'CORE_ADDON' => $is_core_addon,
                     'DESCRIPTION' => $description,
                     'DESCRIPTION_PARSED' => comcode_to_tempcode($description),
                     'FILE_LIST' => $_file_list,

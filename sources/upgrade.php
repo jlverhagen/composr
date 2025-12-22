@@ -438,12 +438,14 @@ function upgrader_output_header()
     $charset = get_charset();
     $lang = user_lang();
     $dir = do_lang('dir');
+    $symbol_data = static_evaluate_tempcode(symbol_tempcode('SYMBOL_DATA_AS_JSON'));
 
     cms_ob_end_clean();
     echo <<<END
 <!DOCTYPE html>
     <html lang="{$lang}" dir="{$dir}">
     <head>
+        <meta id="cms-symbol-data" name="cms-symbol-data" content="{$symbol_data}" />
         <meta http-equiv="Content-Type" content="text/html; charset={$charset}" />
 
         <title>{$upgrader_title}</title>

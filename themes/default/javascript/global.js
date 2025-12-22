@@ -95,6 +95,7 @@
             for (var [autosaveKey, autosaveExpiration] of Object.entries(parsedAutosaveIndex)) {
                 if (Date.now() >= autosaveExpiration) {
                     window.localStorage.removeItem(autosaveKey);
+                    delete parsedAutosaveIndex[autosaveKey];
                     if ($cms.isDevMode()) {
                         $util.inform('Removed expired autosave item ' + autosaveKey);
                     }
@@ -107,12 +108,15 @@
                 for (var [autosaveKey, autosaveExpiration] of Object.entries(parsedAutosaveIndex)) {
                     if (autosaveKey.includes('_' + pageName + '_')) {
                         window.localStorage.removeItem(autosaveKey);
+                        delete parsedAutosaveIndex[autosaveKey];
                         if ($cms.isDevMode()) {
                             $util.inform('Removed autosave item ' + autosaveKey + ' because of a previously successful operation');
                         }
                     }
                 };
             };
+
+            window.localStorage.setItem('cms_autosaveindex', JSON.stringify(parsedAutosaveIndex));
         }
     });
 
