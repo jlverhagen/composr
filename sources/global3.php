@@ -3419,7 +3419,7 @@ function ip_apache_to_wild(string $ip) : string
  * Log an action.
  *
  * @param  ID_TEXT $type The type of activity just carried out (a language string codename)
- * @param  ?SHORT_TEXT $a The most important parameter of the activity (e.g. D) (null: none)
+ * @param  ?ID_TEXT $a The most important parameter of the activity (e.g. D) (null: none)
  * @param  ?SHORT_TEXT $b A secondary (perhaps, human readable) parameter of the activity (e.g. caption) (null: none)
  * @param  boolean $return_id Whether to return an ID to the log entry (forces immediate logging, rather than at script end)
  * @return ?AUTO_LINK Log ID (null: did not save a log)

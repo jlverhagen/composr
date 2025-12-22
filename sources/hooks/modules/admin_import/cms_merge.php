@@ -4899,8 +4899,8 @@ class Hook_import_cms_merge
                     'p_email_address' => $row['p_email_address'],
                     'p_hook' => $row['p_hook'],
                     'p_action' => $row['p_action'],
-                    'p_param_a' => ($p_param_a === null) ? '' : strval($p_param_a),
-                    'p_param_b' => ($p_param_b === null) ? '' : strval($p_param_b),
+                    'p_param_a' => ($p_param_a === null) ? '' : cms_mb_substr(strval($p_param_a), 0, 250),
+                    'p_param_b' => ($p_param_b === null) ? '' : cms_mb_substr(strval($p_param_b), 0, 250),
                     'p_reversed' => $row['p_reversed'],
                 ], true);
 
