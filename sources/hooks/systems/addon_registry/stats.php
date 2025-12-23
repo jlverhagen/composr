@@ -364,6 +364,7 @@ class Hook_addon_registry_stats
             'DESCRIPTION_SIDE' => '',
             'INPUT' => $field,
             'COMCODE' => '',
+            'EXTRA_CLASSES' => '',
         ]));
 
         return lorem_globalise(do_lorem_template('FORM', [

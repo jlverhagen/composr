@@ -64,6 +64,6 @@ class Hook_config_spam_heuristic_autonomous
      */
     public function get_default() : ?string
     {
-        return '"Times New Roman,\'Times New Roman,<font face=,mso-,MsoNormal';
+        return 'Times New Roman,<font face=,mso-,MsoNormal,Lorem ipsum';
     }
 }

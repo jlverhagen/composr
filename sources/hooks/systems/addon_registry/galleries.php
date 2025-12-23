@@ -552,6 +552,7 @@ class Hook_addon_registry_galleries
             'DESCRIPTION_SIDE' => '',
             'INPUT' => $input,
             'COMCODE' => new Tempcode(),
+            'EXTRA_CLASSES' => '',
         ]));
 
         $form = do_lorem_template('FORM', [

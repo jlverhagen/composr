@@ -641,6 +641,7 @@ function is_posted_code_alien(string $data) : bool
     // FUDGE: Ideally this would be configured in advanced_banning.xml, but it would be excessive to make it configurable given there's some logic involved
     if (
         ((strpos($data, '[url=http://') !== false) ||
+        (strpos($data, '[url=https://') !== false) ||
         (preg_match('#\[link(\s|\]|=)#', $data) != 0)) ||
         ((strpos($data, ' href="') !== false) && (strpos($data, '[html') === false) && (strpos($data, '[semihtml') === false) && (strpos($data, '__is_wysiwyg') === false))
     ) {

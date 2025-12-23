@@ -11,10 +11,10 @@
 	<!-- Common and almost always intentional spam; syndicate it as spam -->
 	<hackattack codename="BLACKHOLE_SPAM_HACK" silent_to_staff_notifications="true" silent_to_staff_log="true" syndicate_as_spammer="true" risk_score="20" />
 
-	<!-- These CSRF token hacks should add a little score but otherwise be silent to users and staff (can be common mistakes made by the user, but could also be a bot we want to prevent) -->
-	<hackattack codename="EVIL_POSTED_FORM_NO_TOKEN_HACK" silent_to_user="true" silent_to_staff_notifications="true" risk_score="2" />
-	<hackattack codename="EVIL_POSTED_FORM_UNKNOWN_TOKEN_HACK" silent_to_user="true" silent_to_staff_notifications="true" risk_score="3" />
-	<hackattack codename="EVIL_POSTED_FORM_EXPIRED_TOKEN_HACK" silent_to_user="true" silent_to_staff_notifications="true" risk_score="2" />
+	<!-- These CSRF token hacks should add a little score but otherwise be silent to staff (can be common mistakes made by the user, but could also be a bot we want to prevent) -->
+	<hackattack codename="EVIL_POSTED_FORM_NO_TOKEN_HACK" silent_to_staff_notifications="true" risk_score="2" />
+	<hackattack codename="EVIL_POSTED_FORM_UNKNOWN_TOKEN_HACK" silent_to_staff_notifications="true" risk_score="3" />
+	<hackattack codename="EVIL_POSTED_FORM_EXPIRED_TOKEN_HACK" silent_to_staff_notifications="true" risk_score="2" />
 
 	<!-- For users we use our standard resource missing error message, but we want to prevent scraping of sensitive resources so we still want to add a small score for it -->
 	<hackattack codename="SENSITIVE_RESOURCE_HACK" risk_score="2" silent_to_staff_notifications="true" silent_to_user="true" />
@@ -22,6 +22,7 @@
 	<!-- Other hack attack codes without special parameters by default -->
 	<hackattack codename="BRUTEFORCE_LOGIN_HACK" risk_score="100" /><!-- Very high-scored, because we do not want to allow too much brute forcing (a hack attack is only triggered after so many attempts in so many minutes); also see brute_force_login_minutes and brute_force_threshold options -->
 	<hackattack codename="DODGY_GET_HACK" risk_score="20" /><!-- Almost always malicious URL query parameters -->
+	<hackattack codename="DODGY_POST_HACK" risk_score="20" /><!-- Almost always Remote Code Execution or injection attempts -->
 	<hackattack codename="EVIL_POSTED_FORM_HACK" risk_score="20" /><!-- Posts from external websites without the CSRF token on behalf of a member are almost always hacks -->
 	<hackattack codename="VOTE_CHEAT" risk_score="5" /><!-- An attempt at giving an invalid rating is almost always intentional, but this is a low-damage attack -->
 	<hackattack codename="SCRIPT_UPLOAD_HACK" risk_score="20" /><!-- Could be innocent but this is an extremely dangerous hack attack as scripts can be executed server-side -->

@@ -64,6 +64,6 @@ class Hook_config_spam_heuristic_repetition
      */
     public function get_default() : ?string
     {
-        return '72'; // 3 days
+        return '72'; // hours
     }
 }

@@ -166,7 +166,8 @@ function check_input_field_string(string $name, string &$val, ?bool $posted, int
 /**
  * Check a posted field isn't part of a malicious attack (we do more checks for post fields than get fields).
  *  - CSRF attacks via referer checking
- *  - advanced ban checking
+ *  - Advanced ban checking
+ *  - Dodgy patterns
  *
  * @param  string $name The name of the parameter
  * @param  string $val The value retrieved
@@ -176,14 +177,32 @@ function check_posted_field(string $name, string $val, int $filters)
 {
     $evil = false;
 
+    // Phrases resulting in automatic banning
+    list($automatic_rules) = Source_advanced_banning_loader::load_advanced_banning();
+    foreach ($automatic_rules as $trigger => $details) {
+        if (strpos($val, $trigger) !== false) {
+            if ($details['ip_ban']) {
+                require_code('failure');
+                add_ip_ban(get_ip_address(), 'automaticRule: ' . $trigger, null, true, true); // Forced because a staff member defined the rules
+                log_it('IP_BANNED', get_ip_address());
+            }
+
+            if (($details['member_ban']) && (function_exists('is_guest')) && (!is_guest()) && (get_forum_type() == 'cns')) {
+                require_code('cns_members_action2');
+                cns_ban_member(get_member(), ($details['reasoned_ban'] === null) ? '1' : $details['reasoned_ban'], true);
+
+                require_code('failure');
+                banned_exit($details['reasoned_ban']);
+            }
+        }
+    }
+
+    // CSRF from non-partner sites
     $referer = $_SERVER['HTTP_REFERER'];
     if ($referer == '') {
         $referer = $_SERVER['HTTP_ORIGIN'];
     }
-
     $is_true_referer = (substr($referer, 0, 7) === 'http://') || (substr($referer, 0, 8) === 'https://');
-
-    // CSRF from non-partner sites
     if (($_SERVER['REQUEST_METHOD'] === 'POST') && (!is_guest())) {
         if ($is_true_referer) {
             $canonical_referer_domain = strip_url_to_representative_domain($referer);
@@ -207,30 +226,35 @@ function check_posted_field(string $name, string $val, int $filters)
             }
         }
     }
-
-    // Phrases resulting in automatic banning
-    list($automatic_rules) = Source_advanced_banning_loader::load_advanced_banning();
-    foreach ($automatic_rules as $trigger => $details) {
-        if (strpos($val, $trigger) !== false) {
-            if ($details['ip_ban']) {
-                require_code('failure');
-                add_ip_ban(get_ip_address(), 'automaticRule: ' . $trigger, null, true, true); // Forced because a staff member defined the rules
-                log_it('IP_BANNED', get_ip_address());
-            }
-
-            if (($details['member_ban']) && (function_exists('is_guest')) && (!is_guest()) && (get_forum_type() == 'cns')) {
-                require_code('cns_members_action2');
-                cns_ban_member(get_member(), ($details['reasoned_ban'] === null) ? '1' : $details['reasoned_ban'], true);
-
-                require_code('failure');
-                banned_exit($details['reasoned_ban']);
-            }
-        }
-    }
-
     if ($evil) {
         $_POST = []; // To stop loops
         log_hack_attack_and_exit('EVIL_POSTED_FORM_HACK', $referer);
+        warn_exit(do_lang_tempcode('INTERNAL_ERROR'), escape_html('TODO'));
+    }
+
+    // General dodgy patterns
+    $patterns = [
+        '/\$[0-9]+:/', // References to internal objects
+        '/O:[0-9]+:"/', // Standard PHP Serialized Object pattern
+        '/__unserialize/', // Magic method exploitation
+        '/__destruct/', // Destruction-based POP chains
+        '/(^|;|`|&|\|)\s*(system|passthru|shell_exec|exec|proc_open|popen|eval|assert)\s*\(/i', // Command/Code execution
+        '/union\s+all\s+select/i', // SQL Injection
+        '/union\s+select/i', // SQL Injection
+        '/group_concat/i', // SQL Injection
+        '/load_file\s*\(/i', // SQL Injection
+        '/into\s+(outfile|dumpfile)/i', // SQL Injection
+        '/base64_decode\s*\(/i', // Obfuscated exploit detection
+        '/<\?php/i', // PHP code injection
+        '/phpinfo\s*\(/i', // PHP info leakage
+    ];
+    foreach ($patterns as $pattern) {
+        if (preg_match($pattern, $val) || preg_match($pattern, $name)) {
+            $_POST = []; // To stop loops
+            log_hack_attack_and_exit('DODGY_POST_HACK');
+            warn_exit(do_lang_tempcode('INTERNAL_ERROR'), escape_html('TODO'));
+            break;
+        }
     }
 }
 

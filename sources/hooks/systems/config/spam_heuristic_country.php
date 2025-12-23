@@ -64,6 +64,6 @@ class Hook_config_spam_heuristic_country
      */
     public function get_default() : ?string
     {
-        return ''; // Nigeria (NG) and India (IN) are common spam origins, but our default settings for all sites must not prejudice
+        return '';
     }
 }

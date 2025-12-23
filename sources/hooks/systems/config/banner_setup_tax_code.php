@@ -68,6 +68,6 @@ class Hook_config_banner_setup_tax_code
             return null;
         }
 
-        return (!addon_installed('banners')) ? null : '0%';
+        return (!addon_installed('banners')) ? null : '0.00%';
     }
 }

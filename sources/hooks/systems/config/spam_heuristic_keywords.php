@@ -64,6 +64,6 @@ class Hook_config_spam_heuristic_keywords
      */
     public function get_default() : ?string
     {
-        return 'cialis,xanax,viagra,apply now,double your income,work from home,extra income,enlargement,get out of debt,eliminate debt,online degree';
+        return 'viagra,cialis,casino,poker,slots,gambl,bitcoin,crypto,whatsapp,telegram,earn money,work from home,free trial,sweepstakes,lottery,winner,congratulations,luxury,enlargement,sexy,naked,nude';
     }
 }

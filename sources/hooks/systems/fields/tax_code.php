@@ -187,7 +187,7 @@ class Hook_fields_tax_code
                 $query = 'SELECT cv_value,count(cv_value) AS qty FROM ' . get_table_prefix() . 'catalogue_efv_short WHERE cf_id=' . strval($field['id']);
                 $query .= ' GROUP BY cv_value ORDER BY qty DESC';
                 $val = $GLOBALS['SITE_DB']->query_value_if_there($query); // We need the mode here, not the mean
-                $actual_value = ($val === null) ? '0.0' : $val;
+                $actual_value = ($val === null) ? '0.00' : $val;
             }
         }
         $input_name = @cms_empty_safe($field['cf_input_name']) ? ('field_' . strval($field['id'])) : $field['cf_input_name'];

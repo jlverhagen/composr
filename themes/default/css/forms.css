@@ -280,6 +280,16 @@ th.form-table-field-name a, /* Extra specificity to take precedence over th.de-t
 	*/
 }
 
+.form-table-field-name.warning, .form-table-field-input.warning, .fields-set-item.warning {
+	background-color: {$GET,light_warning_background_1} !important;
+	border-color: {$GET,warning_color} !important;
+}
+
+.form-table-field-name.success, .form-table-field-input.success, .fields-set-item.success {
+	background-color: {$GET,light_success_background_1} !important;
+	border-color: {$GET,success_color} !important;
+}
+
 /* Field sets */
 
 .innocuous-fieldset .preview {

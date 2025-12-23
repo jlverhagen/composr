@@ -68,6 +68,6 @@ class Hook_config_highlight_name_tax_code
             return null;
         }
 
-        return (get_forum_type() != 'cns') ? null : '0%';
+        return (get_forum_type() != 'cns') ? null : '0.00%';
     }
 }

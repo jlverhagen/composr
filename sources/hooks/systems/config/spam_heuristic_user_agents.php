@@ -64,6 +64,6 @@ class Hook_config_spam_heuristic_user_agents
      */
     public function get_default() : ?string
     {
-        return 'Perl,Bot,jakarta,libwww,lwp-trivial,curl,urllib,GT::WWW,Snoopy,MFC_Tear_Sample,HTTP::Lite,PHPCrawl,URI::Fetch,Zend_Http_Client,http client,PECL::HTTP,wget';
+        return 'AhrefsBot,SemrushBot,DotBot,MJ12bot,BLEXBot,PetalBot,python-requests,Go-http-client,Java/,libwww,Indy Library,PHPCrawl,PycURL,Scrapy,curl,Wget,HTTrack,HeadlessChrome,zgrab,Nmap,MegaIndex,Zoominfo,Censys,GuzzleHttp,axios,Mail.RU';
     }
 }

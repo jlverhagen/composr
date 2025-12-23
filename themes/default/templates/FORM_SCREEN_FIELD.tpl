@@ -4,7 +4,7 @@
 {$SET,unique_field_id,{$?,{$IS_EMPTY,{NAME*}},{$RAND},{NAME*}}}
 
 <tr id="form-table-field--{$GET*,unique_field_id}" class="field-input">
-	<th id="form-table-field-name--{$GET,unique_field_id}" class="form-table-field-name{+START,IF,{REQUIRED}} required{+END}">
+	<th id="form-table-field-name--{$GET,unique_field_id}" class="form-table-field-name{+START,IF_NON_EMPTY,{EXTRA_CLASSES}} {EXTRA_CLASSES*}{+END}{+START,IF,{REQUIRED}} required{+END}">
 		<span class="form-field-name field-name">
 			{$SET,show_label,{$AND,{$IS_NON_EMPTY,{NAME}},{$NOT,{SKIP_LABEL}}}}
 			{+START,IF,{$GET,show_label}}
@@ -26,7 +26,7 @@
 		{+END}{+END}
 	</th>
 
-	<td id="form-table-field-input--{$GET,unique_field_id}" class="form-table-field-input{+START,IF,{REQUIRED}} required{+END}" data-tpl="formScreenFieldInput" data-tpl-params="{+START,PARAMS_JSON,unique_field_id}{_*}{+END}">
+	<td id="form-table-field-input--{$GET,unique_field_id}" class="form-table-field-input{+START,IF_NON_EMPTY,{EXTRA_CLASSES}} {EXTRA_CLASSES*}{+END}{+START,IF,{REQUIRED}} required{+END}" data-tpl="formScreenFieldInput" data-tpl-params="{+START,PARAMS_JSON,unique_field_id}{_*}{+END}">
 		{+START,IF,{$NOT,{$_GET,overlay}}}
 			{COMCODE}
 		{+END}

@@ -78,6 +78,10 @@ function init__form_templates()
     global $FIELD_ENCAPSULATION_STACK;
     $FIELD_ENCAPSULATION_STACK = [FIELD_ENCAPSULATION_ROWS];
 
+    // Hack to add additional classes to form inputs; a map of input name to a string of classes
+    global $EXTRA_FORM_INPUT_CLASSES;
+    $EXTRA_FORM_INPUT_CLASSES = [];
+
     require_css('forms');
 
     if (function_exists('get_member')) {
@@ -3020,7 +3024,7 @@ function _form_input(string $name, $pretty_name, $description, object $input, bo
     $help_zone = get_comcode_zone('userguide_comcode', false);
     $_comcode = (($help_zone === null) || (!$comcode)) ? new Tempcode() : do_template('COMCODE_MESSAGE', ['_GUID' => '7668b8365e34b2484be7c2c271f82e79', 'NAME' => $name, 'W' => $w, 'URL' => build_url(['page' => 'userguide_comcode'], $help_zone)]);
 
-    global $DOING_ALTERNATE_FIELDS_SET, $SKIPPING_LABELS;
+    global $DOING_ALTERNATE_FIELDS_SET, $SKIPPING_LABELS, $EXTRA_FORM_INPUT_CLASSES;
     if ($DOING_ALTERNATE_FIELDS_SET !== null) {
         if ($DOING_ALTERNATE_FIELDS_SET == '') {
             return $input;
@@ -3037,6 +3041,7 @@ function _form_input(string $name, $pretty_name, $description, object $input, bo
             'DESCRIPTION_SIDE' => $description_side,
             'INPUT' => $input,
             'COMCODE' => $_comcode,
+            'EXTRA_CLASSES' => isset($EXTRA_FORM_INPUT_CLASSES[$name]) ? $EXTRA_FORM_INPUT_CLASSES[$name] : '',
         ]);
         return $tpl;
     }
@@ -3052,6 +3057,7 @@ function _form_input(string $name, $pretty_name, $description, object $input, bo
         'INPUT' => $input,
         'COMCODE' => $_comcode,
         'PATTERN_ERROR' => $pattern_error,
+        'EXTRA_CLASSES' => isset($EXTRA_FORM_INPUT_CLASSES[$name]) ? $EXTRA_FORM_INPUT_CLASSES[$name] : '',
     ]);
     $tpl = make_string_tempcode($tpl->evaluate());
     return $tpl;
