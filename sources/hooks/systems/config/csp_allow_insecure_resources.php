@@ -68,6 +68,6 @@ class Hook_config_csp_allow_insecure_resources
             return null;
         }
 
-        return '1';
+        return '0';
     }
 }
