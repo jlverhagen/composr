@@ -321,9 +321,9 @@ class Source_database_static_sqlite3 extends Source_database_driver
             if ($results === false) {
                 $attempts[$hash]++;
                 $err = $connection->lastErrorMsg();
-                usleep(mt_rand(100000, 200000));
+                usleep(mt_rand(25000, 100000));
             }
-        } while (($results === false) && ($attempts[$hash] < 25) && (cms_strtolower_ascii($err) == 'database is locked'));
+        } while (($results === false) && ($attempts[$hash] < 100) && (cms_strtolower_ascii($err) == 'database is locked'));
 
         if (($results === false) && (!$fail_ok)) {
             $this->handle_failed_query($query, $err, $connection);

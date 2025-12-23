@@ -2262,6 +2262,7 @@ function step_5_core() : object
         'c_value' => 'LONG_TEXT',
         'c_value_trans' => '?LONG_TRANS', // If it's a translatable/Comcode one, we store the language ID in here (or just a string if we don't have multi-lang-content enabled)
         'c_needs_dereference' => 'BINARY',
+        'c_default' => 'LONG_TEXT',
     ]);
     $email = post_param_string('email', '', INPUT_FILTER_POST_IDENTIFIER | INPUT_FILTER_EMAIL_ADDRESS);
     if ($email != '') {
@@ -2271,6 +2272,7 @@ function step_5_core() : object
             'c_value' => $email,
             'c_value_trans' => multi_lang_content() ? null : '',
             'c_needs_dereference' => 0,
+            'c_default' => '',
         ]);
         $GLOBALS['SITE_DB']->query_insert('config', [
             'c_name' => 'website_email',
@@ -2278,6 +2280,7 @@ function step_5_core() : object
             'c_value' => $email,
             'c_value_trans' => multi_lang_content() ? null : '',
             'c_needs_dereference' => 0,
+            'c_default' => '',
         ]);
     }
 

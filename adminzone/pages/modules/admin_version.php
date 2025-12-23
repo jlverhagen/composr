@@ -1399,6 +1399,10 @@ class Module_admin_version
             //$GLOBALS['SITE_DB']->create_foreign_key('url_id_monikers', 'm_resource_page', 'modules', 'module_the_name'); // Could be a Comcode page
         }
 
+        if (($upgrade_from !== null) && ($upgrade_from < 25)) { // LEGACY: 11.beta9
+            $GLOBALS['SITE_DB']->add_table_field('config', 'c_default', 'LONG_TEXT', '');
+        }
+
         // Ensure for every install / upgrade that the entry points for custom zones are updated to match the adminzone one
         // NB: This must always be last in the install function and must run for every install and upgrade
         require_code('zones');

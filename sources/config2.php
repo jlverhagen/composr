@@ -39,10 +39,15 @@
  */
 function get_config_option_input_name(string $name) : string
 {
-    if (strpos($name, 'login') === false && strpos($name, 'email') === false && strpos($name, 'user') === false && strpos($name, 'uname') === false && strpos($name, 'usr') === false && strpos($name, 'pass') === false && strpos($name, 'pwd') === false) {
+    require_code('form_templates');
+    $autocomplete = _get_autocomplete_attribute_value($name, null);
+
+    // No issue with this field
+    if ($autocomplete === null) {
         return 'option_' . $name;
     }
 
+    // Potential issue; use a partial MD5 hash
     $config_field_name = 'option_' . substr(md5($name), 0, 8);
     return $config_field_name;
 }
@@ -59,6 +64,8 @@ function get_config_option_input_name(string $name) : string
  */
 function build_config_inputter(string $name, array $details, ?string $current_value = null, bool $is_override = false, bool $include_group = false) : object
 {
+    global $EXTRA_FORM_INPUT_CLASSES;
+
     require_lang('config');
 
     if ($current_value === null) {
@@ -68,6 +75,20 @@ function build_config_inputter(string $name, array $details, ?string $current_va
     $default = get_default_option($name);
 
     $config_field_name = get_config_option_input_name($name);
+
+    // Highlight new options or options that had their default value changed
+    if (!$is_override) {
+        $default_db = $GLOBALS['SITE_DB']->query_select_value_if_there('config', 'c_default', ['c_name' => $name]);
+        $is_formally_set = $GLOBALS['SITE_DB']->query_select_value_if_there('config', 'c_set', ['c_name' => $name]);
+
+        if (($default_db === null) || ($is_formally_set === 0)) { // New option
+            $EXTRA_FORM_INPUT_CLASSES[$config_field_name] = 'success';
+            attach_message(do_lang_tempcode('CONFIG_OPTIONS_TO_REVIEW'), 'notice');
+        } elseif (($default !== null) && ($current_value !== null) && ($current_value !== $default) && ($default !== $default_db)) { // Changed option
+            $EXTRA_FORM_INPUT_CLASSES[$config_field_name] = 'warning';
+            attach_message(do_lang_tempcode('CONFIG_OPTIONS_TO_REVIEW'), 'notice');
+        }
+    }
 
     // Language strings
     if ($include_group) {
@@ -394,7 +415,7 @@ function _multi_lang() : bool
 }
 
 /**
- * Get the default value of a config option.
+ * Get the default value of a config option, as defined in the hook.
  *
  * @param  ID_TEXT $name The name of the option
  * @return ?SHORT_TEXT The value (null: disabled / no such option)
@@ -445,8 +466,10 @@ function set_option(string $name, string $value, int $will_be_formally_set = 1, 
 
     $needs_dereference = ($details['type'] == 'transtext' || $details['type'] == 'transline' || $details['type'] == 'comcodetext' || $details['type'] == 'comcodeline') ? 1 : 0;
 
+    $default_option = null;
     if ($will_be_formally_set == 1) {
         $previous_value = get_option($name);
+        $default_option = get_default_option($name);
     }
 
     if (!isset($CONFIG_OPTIONS_CACHE[$name])) {
@@ -456,6 +479,7 @@ function set_option(string $name, string $value, int $will_be_formally_set = 1, 
             'c_set' => $will_be_formally_set,
             'c_value' => $value,
             'c_needs_dereference' => $needs_dereference,
+            'c_default' => ($default_option !== null) ? $default_option : ''
         ];
         if ($needs_dereference == 1) {
             $map = insert_lang('c_value_trans', $value, 1) + $map;
@@ -478,6 +502,7 @@ function set_option(string $name, string $value, int $will_be_formally_set = 1, 
             'c_set' => $will_be_formally_set,
             'c_value' => $value,
             'c_needs_dereference' => $needs_dereference,
+            'c_default' => ($default_option !== null) ? $default_option : ''
         ];
         if ($needs_dereference == 1) { // Translated
             $current_value = multi_lang_content() ? $CONFIG_OPTIONS_CACHE[$name]['c_value_trans'] : $CONFIG_OPTIONS_CACHE[$name]['c_value'];

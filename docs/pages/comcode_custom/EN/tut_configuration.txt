@@ -187,8 +187,12 @@ This is described in more detail in the [page="_SEARCH:tut_notifications"]Notifi
 [title="2"]Editing configuration[/title]
 
 [surround]
+[media_set]
 [media width="150" description="The list of configuration sections" float="left"]data_custom/images/docs/tut_configuration/configuration.png[/media]
 [media width="150" description="The most important area of the configuration are the General options in Site options" float="right"]data_custom/images/docs/tut_configuration/configuration_actual.png[/media]
+[media width="150" description="After upgrading, options that need your attention are highlighted" float="left"]data_custom/images/docs/tut_configuration/option_changes.png[/media]
+[/media_set]
+
 You'll want to configure your configuration, at Admin Zone > Setup > Configuration.
 
 When you visit the full configuration page to fine tune your configuration, you will see that configuration options are split into a number of sections and subsections.
@@ -200,6 +204,11 @@ There are many more options in the main configuration, and the actual options av
 Repeat for all other sections you may want to edit.
 
 We don't list all the options in the documentation because they are often either obvious/self-describing, or too specialist to mention -- so it's a good idea to browse through to see what interests you.
+
+Also, be aware that when you upgrade Composr or install new addons, configuration options may be highlighted in green or yellow. This is to draw your attention:
+ - Green options are new, and you have never set them before.
+ - Yellow options had a change in their default values, and you are not using the default. You may want to click '?' to review the new default and decide if you want to use it.
+Once you click "save" on the page, all highlighted options will not be highlighted anymore in the future (unless one of the above conditions are met again). So be sure to review them.
 [/surround]
 
 [title="2"]Editing default Comcode pages[/title]

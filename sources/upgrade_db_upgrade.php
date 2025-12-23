@@ -875,6 +875,13 @@ function database_specific() : bool
         $done_something = true;
     }
 
+    // LEGACY: 11.beta9. Remove prior to v11 release.
+    if ((is_numeric($upgrade_from)) && (intval($upgrade_from) < 1766443819)) {
+        $GLOBALS['SITE_DB']->add_table_field('config', 'c_default', 'LONG_TEXT', '');
+
+        $done_something = true;
+    }
+
     return $done_something;
 }
 

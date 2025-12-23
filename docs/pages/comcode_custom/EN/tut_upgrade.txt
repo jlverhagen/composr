@@ -38,7 +38,7 @@ Be aware that a number of things can change significantly across releases. Make 
  - Occasionally features may be deprecated.
  - New features will be added, and that could possibly interfere with highly tuned layouts or site flows.
  - Minimum requirements may have changed, for example a newer version of PHP may be required as a baseline.
- - Non-bundled addons may no longer function.
+ - Non-bundled addons, or features listed on the Support > Maintenance status page of the homesite, may no longer function.
 At the same time, bear in mind that fixes to security holes are not always back-ported to older releases, especially if a newer feature/major version has been out for a while. So ideally you should not stick around on old versions too long. If you want to avoid upgrading but also need to keep your site secure, you should strongly consider getting a developers support so that you can be kept up-to-date manually.
 
 [title="2"]The upgrade process[/title]
@@ -78,6 +78,7 @@ Steps:
 [*] If you use an [tt].htaccess[/tt] file, comparing it with [tt]recommended.htaccess[/tt] (which may have changed) and merging in changes
 [*] clearing caches
 [*] re-opening your website
+[*] going through Setup > Configuration and looking for any new or changed configuration options (they will be highlighted in green or yellow)
 [/list]
 
 [title="2"]Browser cache[/title]
@@ -141,6 +142,7 @@ There are some extra features in the upgrader that aren't a part of the normal f
  - Correcting MySQL schema issues (this is intended for programmers-only, you are very unlikely to need it)
  - Fixing MySQL tables (this will try and fix some database tables; if the database has become very corrupt, you may need to use a tool such as phpMyAdmin to repair a database from outside Composr)
  - Clearing caches (okay, this is a part of the normal flow, but it is very useful even if not doing an upgrade because you don't need a working Admin Zone to do it)
+ - Fixing data integrity issues in the database (at the moment, this just deletes orphaned data from the database)
 
 [title="2"]Troubleshooting[/title]
 
