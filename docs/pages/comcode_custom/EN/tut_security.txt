@@ -241,6 +241,7 @@ Note that even if the hack-attack system failed in its job, this attack would ha
 
 The following types of alert (hack-attack codenames) are defined in the system:
  - [tt]DODGY_GET_HACK[/tt], A suspicious URL was given that includes characters looking like they may be there to do dodgy things. As URLs are generally clean of symbols, it is safe for Composr to detect dangerous looking ones, such as file system paths, new line characters, and HTML symbols
+ - [tt]DODGY_POST_HACK[/tt], A suspicious pattern was detected within POST data provided in the request. This is often an attempt at a Remote Code Execution (RCE) attack.
  - [tt]EVIL_POSTED_FORM_HACK[/tt], This may be due to a social engineering attack, where a logged in administrator has been tricked into filling in a form targeted to delete something from the website (CSRF)
  - [tt]EVIL_POSTED_FORM_NO_TOKEN_HACK[/tt], The user tried to submit a form without including a CSRF token (probably a bot, but this can also happen when the user uses the back button in their browser)
  - [tt]EVIL_POSTED_FORM_UNKNOWN_TOKEN_HACK[/tt], The user supplied a CSRF token when submitting a form which expired or otherwise does not exist in the database (could just as easily be expired tokens as it could be malicious)
