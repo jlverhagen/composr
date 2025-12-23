@@ -521,6 +521,7 @@ function set_option(string $name, string $value, int $will_be_formally_set = 1, 
     }
 
     // Clear caches
+    require_code('caches');
     require_code('caches3');
     if (function_exists('persistent_cache_delete')) {
         persistent_cache_delete('OPTIONS');
@@ -531,6 +532,7 @@ function set_option(string $name, string $value, int $will_be_formally_set = 1, 
     if (!empty($details['public'])) { // Need to clear all templates utilising $PUBLIC_CONFIG_OPTIONS_JSON
         erase_cached_templates(false, ['_cms', 'global']);
     }
+    delete_cache_entry('main_staff_checklist');
 
     if ($will_be_formally_set == 1) {
         if ($previous_value != $value) {

@@ -68,6 +68,6 @@ class Hook_config_topic_pin_tax_code
             return null;
         }
 
-        return has_no_forum() ? null : '0%';
+        return has_no_forum() ? null : '0.00%';
     }
 }
