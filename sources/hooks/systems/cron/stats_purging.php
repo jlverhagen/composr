@@ -68,6 +68,6 @@ class Hook_cron_stats_purging
             But we must have a scheduler hook for full GDPR compliance.
         */
         require_code('stats');
-        cleanup_stats();
+        cleanup_stats(2500);
     }
 }
