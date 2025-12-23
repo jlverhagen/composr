@@ -673,6 +673,7 @@ class Hook_addon_registry_core_cns
             'DESCRIPTION_SIDE' => '',
             'INPUT' => $input,
             'COMCODE' => '',
+            'EXTRA_CLASSES' => '',
         ]));
 
         $name = placeholder_random_id();
@@ -692,6 +693,7 @@ class Hook_addon_registry_core_cns
             'DESCRIPTION_SIDE' => '',
             'INPUT' => $input,
             'COMCODE' => '',
+            'EXTRA_CLASSES' => '',
         ]));
 
         $name = placeholder_random_id();
@@ -711,6 +713,7 @@ class Hook_addon_registry_core_cns
             'DESCRIPTION_SIDE' => '',
             'INPUT' => $input,
             'COMCODE' => '',
+            'EXTRA_CLASSES' => '',
         ]));
 
         $name = placeholder_random_id();
@@ -729,6 +732,7 @@ class Hook_addon_registry_core_cns
             'DESCRIPTION_SIDE' => '',
             'INPUT' => $input,
             'COMCODE' => '',
+            'EXTRA_CLASSES' => '',
         ]));
 
         $fields->attach(do_lorem_template('FORM_SCREEN_FIELD_SPACER', [
@@ -1290,6 +1294,7 @@ class Hook_addon_registry_core_cns
             'DESCRIPTION_SIDE' => '',
             'INPUT' => $input,
             'COMCODE' => '',
+            'EXTRA_CLASSES' => '',
         ]));
         $tabs2[] = [
             'TAB_TITLE' => lorem_phrase(),

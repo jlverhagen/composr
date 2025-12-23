@@ -969,6 +969,7 @@ class Hook_addon_registry_core_form_interfaces
             'DESCRIPTION_SIDE' => '',
             'INPUT' => $_input1,
             'COMCODE' => '',
+            'EXTRA_CLASSES' => '',
         ]);
         $_input2 = do_lorem_template('FORM_SCREEN_INPUT_URL', [
             'TABINDEX' => placeholder_number(),
@@ -986,6 +987,7 @@ class Hook_addon_registry_core_form_interfaces
             'DESCRIPTION_SIDE' => '',
             'INPUT' => $_input2,
             'COMCODE' => '',
+            'EXTRA_CLASSES' => '',
         ]);
         $inputs = new Tempcode();
         $inputs->attach($input1);
@@ -1006,6 +1008,7 @@ class Hook_addon_registry_core_form_interfaces
             'DESCRIPTION_SIDE' => '',
             'INPUT' => $fieldset,
             'COMCODE' => '',
+            'EXTRA_CLASSES' => '',
         ]));
 
         $name = placeholder_random_id();
@@ -1027,6 +1030,7 @@ class Hook_addon_registry_core_form_interfaces
             'DESCRIPTION_SIDE' => '',
             'INPUT' => $input,
             'COMCODE' => '',
+            'EXTRA_CLASSES' => '',
         ]));
 
         $name = placeholder_random_id();
@@ -1047,6 +1051,7 @@ class Hook_addon_registry_core_form_interfaces
             'DESCRIPTION_SIDE' => '',
             'INPUT' => $input,
             'COMCODE' => '',
+            'EXTRA_CLASSES' => '',
         ]));
 
         $name = placeholder_random_id();
@@ -1066,6 +1071,7 @@ class Hook_addon_registry_core_form_interfaces
             'DESCRIPTION_SIDE' => '',
             'INPUT' => $input,
             'COMCODE' => '',
+            'EXTRA_CLASSES' => '',
         ]));
 
         $fields->attach(do_lorem_template('FORM_SCREEN_FIELD_SPACER', [
@@ -1133,6 +1139,7 @@ class Hook_addon_registry_core_form_interfaces
             'DESCRIPTION_SIDE' => '',
             'INPUT' => $input,
             'COMCODE' => '',
+            'EXTRA_CLASSES' => '',
         ]));
 
         $name = placeholder_random_id();
@@ -1160,6 +1167,7 @@ class Hook_addon_registry_core_form_interfaces
             'DESCRIPTION_SIDE' => '',
             'INPUT' => $input,
             'COMCODE' => '',
+            'EXTRA_CLASSES' => '',
         ]));
 
         $fields->attach(do_lorem_template('FORM_SCREEN_INPUT_COLOUR', [
@@ -1197,6 +1205,7 @@ class Hook_addon_registry_core_form_interfaces
             'DESCRIPTION_SIDE' => '',
             'INPUT' => $input,
             'COMCODE' => '',
+            'EXTRA_CLASSES' => '',
         ]));
 
         $name = placeholder_random_id();
@@ -1229,6 +1238,7 @@ class Hook_addon_registry_core_form_interfaces
             'DESCRIPTION_SIDE' => '',
             'INPUT' => $input,
             'COMCODE' => '',
+            'EXTRA_CLASSES' => '',
         ]));
 
         $name = placeholder_random_id();
@@ -1255,6 +1265,7 @@ class Hook_addon_registry_core_form_interfaces
             'DESCRIPTION_SIDE' => '',
             'INPUT' => $input,
             'COMCODE' => '',
+            'EXTRA_CLASSES' => '',
         ]));
 
         $name = placeholder_random_id();
@@ -1273,6 +1284,7 @@ class Hook_addon_registry_core_form_interfaces
             'DESCRIPTION_SIDE' => '',
             'INPUT' => $input,
             'COMCODE' => '',
+            'EXTRA_CLASSES' => '',
         ]));
 
         $name = placeholder_random_id();
@@ -1291,6 +1303,7 @@ class Hook_addon_registry_core_form_interfaces
             'DESCRIPTION_SIDE' => '',
             'INPUT' => $input,
             'COMCODE' => '',
+            'EXTRA_CLASSES' => '',
         ]));
 
         $fields->attach(do_lorem_template('FORM_SCREEN_INPUT_HUGE', [
@@ -1406,6 +1419,7 @@ class Hook_addon_registry_core_form_interfaces
             'DESCRIPTION_SIDE' => '',
             'INPUT' => $input,
             'COMCODE' => '',
+            'EXTRA_CLASSES' => '',
         ]));
 
         $name = placeholder_random_id();
@@ -1425,6 +1439,7 @@ class Hook_addon_registry_core_form_interfaces
             'DESCRIPTION_SIDE' => '',
             'INPUT' => $input,
             'COMCODE' => '',
+            'EXTRA_CLASSES' => '',
         ]));
 
         $placeholder_line_multi = [];
@@ -1459,6 +1474,7 @@ class Hook_addon_registry_core_form_interfaces
             'DESCRIPTION_SIDE' => '',
             'INPUT' => $input,
             'COMCODE' => '',
+            'EXTRA_CLASSES' => '',
         ]));
 
         $input = new Tempcode();
@@ -1482,6 +1498,7 @@ class Hook_addon_registry_core_form_interfaces
             'DESCRIPTION_SIDE' => '',
             'INPUT' => $input,
             'COMCODE' => '',
+            'EXTRA_CLASSES' => '',
         ]));
 
         $name = placeholder_random_id();
@@ -1517,6 +1534,7 @@ class Hook_addon_registry_core_form_interfaces
             'DESCRIPTION_SIDE' => '',
             'INPUT' => $input,
             'COMCODE' => '',
+            'EXTRA_CLASSES' => '',
         ]));
 
         $name = placeholder_random_id();
@@ -1538,6 +1556,7 @@ class Hook_addon_registry_core_form_interfaces
             'DESCRIPTION_SIDE' => '',
             'INPUT' => $input,
             'COMCODE' => '',
+            'EXTRA_CLASSES' => '',
         ]));
 
         $name = placeholder_random_id();
@@ -1560,6 +1579,7 @@ class Hook_addon_registry_core_form_interfaces
             'DESCRIPTION_SIDE' => '',
             'INPUT' => $input,
             'COMCODE' => '',
+            'EXTRA_CLASSES' => '',
         ]));
 
         $name = placeholder_random_id();
@@ -1579,6 +1599,7 @@ class Hook_addon_registry_core_form_interfaces
             'DESCRIPTION_SIDE' => '',
             'INPUT' => $input,
             'COMCODE' => '',
+            'EXTRA_CLASSES' => '',
         ]));
 
         $name = placeholder_random_id();
@@ -1614,6 +1635,7 @@ class Hook_addon_registry_core_form_interfaces
             'DESCRIPTION_SIDE' => '',
             'INPUT' => $input,
             'COMCODE' => '',
+            'EXTRA_CLASSES' => '',
         ]));
 
         $name = placeholder_random_id();
@@ -1642,6 +1664,7 @@ class Hook_addon_registry_core_form_interfaces
             'DESCRIPTION_SIDE' => '',
             'INPUT' => $input,
             'COMCODE' => '',
+            'EXTRA_CLASSES' => '',
         ]));
 
         $name = placeholder_random_id();
@@ -1665,6 +1688,7 @@ class Hook_addon_registry_core_form_interfaces
             'DESCRIPTION_SIDE' => '',
             'INPUT' => $input,
             'COMCODE' => '',
+            'EXTRA_CLASSES' => '',
         ]));
 
         $name = placeholder_random_id();
@@ -1687,6 +1711,7 @@ class Hook_addon_registry_core_form_interfaces
             'DESCRIPTION_SIDE' => '',
             'INPUT' => $input,
             'COMCODE' => '',
+            'EXTRA_CLASSES' => '',
         ]));
 
         $name = placeholder_random_id();
@@ -1706,6 +1731,7 @@ class Hook_addon_registry_core_form_interfaces
             'DESCRIPTION_SIDE' => '',
             'INPUT' => $input,
             'COMCODE' => '',
+            'EXTRA_CLASSES' => '',
         ]));
 
         $name = placeholder_random_id();
@@ -1730,6 +1756,7 @@ class Hook_addon_registry_core_form_interfaces
             'DESCRIPTION_SIDE' => '',
             'INPUT' => $input,
             'COMCODE' => '',
+            'EXTRA_CLASSES' => '',
         ]));
 
         $name = placeholder_random_id();
@@ -1749,6 +1776,7 @@ class Hook_addon_registry_core_form_interfaces
             'DESCRIPTION_SIDE' => '',
             'INPUT' => $input,
             'COMCODE' => '',
+            'EXTRA_CLASSES' => '',
         ]));
 
         foreach ([true, false] as $simple_style) {
@@ -1817,6 +1845,7 @@ class Hook_addon_registry_core_form_interfaces
                 'DESCRIPTION_SIDE' => '',
                 'INPUT' => $input,
                 'COMCODE' => '',
+                'EXTRA_CLASSES' => '',
             ]));
         }
 
@@ -2018,6 +2047,7 @@ class Hook_addon_registry_core_form_interfaces
                 'DESCRIPTION_SIDE' => '',
                 'INPUT' => $input,
                 'COMCODE' => '',
+                'EXTRA_CLASSES' => '',
             ]));
         }
         $content = new Tempcode();
@@ -2064,6 +2094,7 @@ class Hook_addon_registry_core_form_interfaces
             'DESCRIPTION_SIDE' => '',
             'INPUT' => $input,
             'COMCODE' => '',
+            'EXTRA_CLASSES' => '',
         ]));
 
         $fields->attach(do_lorem_template('POSTING_FIELD', [
@@ -2325,6 +2356,7 @@ class Hook_addon_registry_core_form_interfaces
             'DESCRIPTION_SIDE' => '',
             'INPUT' => $input,
             'COMCODE' => '',
+            'EXTRA_CLASSES' => '',
         ]));
 
         $fields->attach(do_lorem_template('FORM_SCREEN_INPUT_PERMISSION_MATRIX_OUTER', [

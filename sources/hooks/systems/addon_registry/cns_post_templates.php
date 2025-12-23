@@ -208,6 +208,7 @@ class Hook_addon_registry_cns_post_templates
             'DESCRIPTION_SIDE' => '',
             'INPUT' => $input,
             'COMCODE' => '',
+            'EXTRA_CLASSES' => '',
         ]));
 
         return lorem_globalise(do_lorem_template('FORM_SCREEN', [

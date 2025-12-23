@@ -260,6 +260,7 @@ class Hook_addon_registry_captcha
             'DESCRIPTION_SIDE' => '',
             'INPUT' => $input,
             'COMCODE' => '',
+            'EXTRA_CLASSES' => '',
         ]);
 
         return lorem_globalise(do_lorem_template('FORM_SCREEN', [
@@ -315,6 +316,7 @@ class Hook_addon_registry_captcha
             'DESCRIPTION_SIDE' => '',
             'INPUT' => $input,
             'COMCODE' => '',
+            'EXTRA_CLASSES' => '',
         ]));
 
         $tpl = do_lorem_template('FORM', [
