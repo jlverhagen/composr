@@ -106,6 +106,8 @@ class db_correctness_test_set extends cms_test_case
             $this->_testGetTranslatedRef($path, $c);
             $this->_testTranslateFieldRef($path, $c);
             $this->_testTableIsLockedRef($path, $c);
+            $this->_testTableExistsRef($path, $c);
+            $this->_testFieldExistsRef($path, $c);
             $this->_testPreferIndexLockedRef($path, $c);
             $this->_testInsertLangRef($path, $c);
             $this->_testUpdateLangRef($path, $c);
@@ -117,6 +119,8 @@ class db_correctness_test_set extends cms_test_case
             $this->_testDropRef($path, $c);
             $this->_testCreateIndexRef($path, $c);
             $this->_testDeleteIndexRef($path, $c);
+            $this->_testCreateForeignKeyRef($path, $c);
+            $this->_testDeleteForeignKeyRef($path, $c);
             $this->_testJoinConsistency($path, $c);
             $this->_testForumDbForumDriverMixup($path, $c);
         }
@@ -190,6 +194,24 @@ class db_correctness_test_set extends cms_test_case
         $this->assertTrue(preg_match($bad_pattern, $c) == 0, 'Found ' . $bad_pattern . ' in ' . $path);
 
         $bad_pattern = '#' . preg_quote("\$GLOBALS['FORUM_DB']->table_is_locked('", '#') . '(' . $this->tables['site_regexp'] . ')' . preg_quote("')", '#') . '#';
+        $this->assertTrue(preg_match($bad_pattern, $c) == 0, 'Found ' . $bad_pattern . ' in ' . $path);
+    }
+
+    protected function _testTableExistsRef($path, $c)
+    {
+        $bad_pattern = '#' . preg_quote("\$GLOBALS['SITE_DB']->table_exists('", '#') . '(' . $this->tables['forum_regexp'] . ')' . preg_quote("')", '#') . '#';
+        $this->assertTrue(preg_match($bad_pattern, $c) == 0, 'Found ' . $bad_pattern . ' in ' . $path);
+
+        $bad_pattern = '#' . preg_quote("\$GLOBALS['FORUM_DB']->table_exists('", '#') . '(' . $this->tables['site_regexp'] . ')' . preg_quote("')", '#') . '#';
+        $this->assertTrue(preg_match($bad_pattern, $c) == 0, 'Found ' . $bad_pattern . ' in ' . $path);
+    }
+
+    protected function _testFieldExistsRef($path, $c)
+    {
+        $bad_pattern = '#' . preg_quote("\$GLOBALS['SITE_DB']->field_exists('", '#') . '(' . $this->tables['forum_regexp'] . ')' . preg_quote("')", '#') . '#';
+        $this->assertTrue(preg_match($bad_pattern, $c) == 0, 'Found ' . $bad_pattern . ' in ' . $path);
+
+        $bad_pattern = '#' . preg_quote("\$GLOBALS['FORUM_DB']->field_exists('", '#') . '(' . $this->tables['site_regexp'] . ')' . preg_quote("')", '#') . '#';
         $this->assertTrue(preg_match($bad_pattern, $c) == 0, 'Found ' . $bad_pattern . ' in ' . $path);
     }
 
@@ -346,6 +368,36 @@ class db_correctness_test_set extends cms_test_case
         $this->assertTrue(preg_match($bad_pattern, $c) == 0, 'Found ' . $bad_pattern . ' in ' . $path);
 
         $bad_pattern = '#' . preg_quote("\$GLOBALS['FORUM_DB']->delete_index_if_exists(\s*'", '#') . '(' . $this->tables['site_regexp'] . ')' . preg_quote("'", '#') . '#';
+        $this->assertTrue(preg_match($bad_pattern, $c) == 0, 'Found ' . $bad_pattern . ' in ' . $path);
+    }
+
+    protected function _testCreateForeignKeyRef($path, $c)
+    {
+        // Exceptions
+        if (in_array($path, [
+        ])) {
+            return;
+        }
+
+        $bad_pattern = '#' . preg_quote("\$GLOBALS['SITE_DB']->create_foreign_key(\s*'", '#') . '(' . $this->tables['forum_regexp'] . ')' . preg_quote("'", '#') . '#';
+        $this->assertTrue(preg_match($bad_pattern, $c) == 0, 'Found ' . $bad_pattern . ' in ' . $path);
+
+        $bad_pattern = '#' . preg_quote("\$GLOBALS['FORUM_DB']->create_foreign_key(\s*'", '#') . '(' . $this->tables['site_regexp'] . ')' . preg_quote("'", '#') . '#';
+        $this->assertTrue(preg_match($bad_pattern, $c) == 0, 'Found ' . $bad_pattern . ' in ' . $path);
+    }
+
+    protected function _testDeleteForeignKeyRef($path, $c)
+    {
+        // Exceptions
+        if (in_array($path, [
+        ])) {
+            return;
+        }
+
+        $bad_pattern = '#' . preg_quote("\$GLOBALS['SITE_DB']->delete_foreign_key(\s*'", '#') . '(' . $this->tables['forum_regexp'] . ')' . preg_quote("'", '#') . '#';
+        $this->assertTrue(preg_match($bad_pattern, $c) == 0, 'Found ' . $bad_pattern . ' in ' . $path);
+
+        $bad_pattern = '#' . preg_quote("\$GLOBALS['FORUM_DB']->delete_foreign_key(\s*'", '#') . '(' . $this->tables['site_regexp'] . ')' . preg_quote("'", '#') . '#';
         $this->assertTrue(preg_match($bad_pattern, $c) == 0, 'Found ' . $bad_pattern . ' in ' . $path);
     }
 
