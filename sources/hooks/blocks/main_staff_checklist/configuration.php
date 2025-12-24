@@ -42,6 +42,10 @@ class Hook_checklist_configuration
      */
     public function run() : array
     {
+        if (!$GLOBALS['SITE_DB']->field_exists('config', 'c_default')) { // LEGACY condition check: 11 beta9
+            return [];
+        }
+
         require_code('config');
         require_code('config2');
         require_code('zones');

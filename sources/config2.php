@@ -78,15 +78,17 @@ function build_config_inputter(string $name, array $details, ?string $current_va
 
     // Highlight new options or options that had their default value changed
     if (!$is_override) {
-        $default_db = $GLOBALS['SITE_DB']->query_select_value_if_there('config', 'c_default', ['c_name' => $name]);
-        $is_formally_set = $GLOBALS['SITE_DB']->query_select_value_if_there('config', 'c_set', ['c_name' => $name]);
+        if ($GLOBALS['SITE_DB']->field_exists('config', 'c_default')) { // LEGACY condition check: 11 beta9
+            $default_db = $GLOBALS['SITE_DB']->query_select_value_if_there('config', 'c_default', ['c_name' => $name]);
+            $is_formally_set = $GLOBALS['SITE_DB']->query_select_value_if_there('config', 'c_set', ['c_name' => $name]);
 
-        if (($default_db === null) || ($is_formally_set === 0)) { // New option
-            $EXTRA_FORM_INPUT_CLASSES[$config_field_name] = 'success';
-            attach_message(do_lang_tempcode('CONFIG_OPTIONS_TO_REVIEW'), 'notice');
-        } elseif (($default !== null) && ($current_value !== null) && ($current_value !== $default) && ($default !== $default_db)) { // Changed option
-            $EXTRA_FORM_INPUT_CLASSES[$config_field_name] = 'warning';
-            attach_message(do_lang_tempcode('CONFIG_OPTIONS_TO_REVIEW'), 'notice');
+            if (($default_db === null) || ($is_formally_set === 0)) { // New option
+                $EXTRA_FORM_INPUT_CLASSES[$config_field_name] = 'success';
+                attach_message(do_lang_tempcode('CONFIG_OPTIONS_TO_REVIEW'), 'notice');
+            } elseif (($default !== null) && ($current_value !== null) && ($current_value !== $default) && ($default !== $default_db)) { // Changed option
+                $EXTRA_FORM_INPUT_CLASSES[$config_field_name] = 'warning';
+                attach_message(do_lang_tempcode('CONFIG_OPTIONS_TO_REVIEW'), 'notice');
+            }
         }
     }
 
@@ -479,8 +481,10 @@ function set_option(string $name, string $value, int $will_be_formally_set = 1, 
             'c_set' => $will_be_formally_set,
             'c_value' => $value,
             'c_needs_dereference' => $needs_dereference,
-            'c_default' => ($default_option !== null) ? $default_option : ''
         ];
+        if ($GLOBALS['SITE_DB']->field_exists('config', 'c_default')) { // LEGACY condition check: 11 beta9
+            $map['c_default'] = ($default_option !== null) ? $default_option : '';
+        }
         if ($needs_dereference == 1) {
             $map = insert_lang('c_value_trans', $value, 1) + $map;
         } else {
@@ -502,8 +506,10 @@ function set_option(string $name, string $value, int $will_be_formally_set = 1, 
             'c_set' => $will_be_formally_set,
             'c_value' => $value,
             'c_needs_dereference' => $needs_dereference,
-            'c_default' => ($default_option !== null) ? $default_option : ''
         ];
+        if ($GLOBALS['SITE_DB']->field_exists('config', 'c_default')) { // LEGACY condition check: 11 beta9
+            $map['c_default'] = ($default_option !== null) ? $default_option : '';
+        }
         if ($needs_dereference == 1) { // Translated
             $current_value = multi_lang_content() ? $CONFIG_OPTIONS_CACHE[$name]['c_value_trans'] : $CONFIG_OPTIONS_CACHE[$name]['c_value'];
             if ($current_value === null) {
