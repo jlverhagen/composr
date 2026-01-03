@@ -793,8 +793,8 @@ class Module_admin_telemetry
         $start = 0;
         $max = 100;
         $count = 0;
-        $did_something = false;
         do {
+            $did_something = false;
             $rows = $GLOBALS['SITE_DB']->query_select('telemetry_errors', ['id', 'e_error_message', 'e_note'], ['e_resolved' => 0], '', $max, $start);
             foreach ($rows as $row) {
                 if (strpos($row['e_error_message'], $ignore_string) !== false) {
