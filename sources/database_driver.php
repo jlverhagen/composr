@@ -32,6 +32,7 @@
 
 /**
  * Base class for database drivers.
+ * NB: if you modify any methods on this class, then you must modify the sync_tests/db_correctness test.
  *
  * @package core_database_drivers
  */

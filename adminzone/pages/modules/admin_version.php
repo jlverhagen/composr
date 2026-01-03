@@ -1254,7 +1254,7 @@ class Module_admin_version
 
             $GLOBALS['SITE_DB']->create_table('daily_visits', [
                 'id' => '*AUTO',
-                'd_member_id' => '*MEMBER',
+                'd_member_id' => 'MEMBER',
                 'd_date_and_time' => 'TIME',
             ]);
 
@@ -1401,6 +1401,9 @@ class Module_admin_version
 
         if (($upgrade_from !== null) && ($upgrade_from < 25)) { // LEGACY: 11.beta9
             $GLOBALS['SITE_DB']->add_table_field('config', 'c_default', 'LONG_TEXT', '');
+
+            // Fix incorrect UNIQUE constraints
+            $GLOBALS['SITE_DB']->alter_table_field('daily_visits', 'd_member_id', 'MEMBER');
         }
 
         // Ensure for every install / upgrade that the entry points for custom zones are updated to match the adminzone one

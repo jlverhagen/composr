@@ -767,20 +767,22 @@ function log_stats_event(string $event)
 
 /**
  * Cleanup old stats.
+ *
+ * @param  integer $max The maximum number of rows to delete in each table
  */
-function cleanup_stats()
+function cleanup_stats(int $max = 250)
 {
     if (!$GLOBALS['SITE_DB']->table_is_locked('stats')) {
         $cutoff = strval(time() - 60 * 60 * 24 * intval(get_option('stats_store_time')));
 
         $where = 'date_and_time<' . $cutoff;
-        $GLOBALS['SITE_DB']->query('DELETE FROM ' . get_table_prefix() . 'stats WHERE ' . $where, 500/*to reduce lock times*/, 0, true); // Errors suppressed in case DB write access broken
+        $GLOBALS['SITE_DB']->query('DELETE FROM ' . get_table_prefix() . 'stats WHERE ' . $where, $max, 0, true); // Errors suppressed in case DB write access broken
 
         $where = 'e_date_and_time<' . $cutoff;
-        $GLOBALS['SITE_DB']->query('DELETE FROM ' . get_table_prefix() . 'stats_events WHERE ' . $where, 500/*to reduce lock times*/, 0, true); // Errors suppressed in case DB write access broken
+        $GLOBALS['SITE_DB']->query('DELETE FROM ' . get_table_prefix() . 'stats_events WHERE ' . $where, $max, 0, true); // Errors suppressed in case DB write access broken
 
         $where = 'c_date_and_time<' . $cutoff;
-        $GLOBALS['SITE_DB']->query('DELETE FROM ' . get_table_prefix() . 'stats_link_tracker WHERE ' . $where, 500/*to reduce lock times*/, 0, true); // Errors suppressed in case DB write access broken
+        $GLOBALS['SITE_DB']->query('DELETE FROM ' . get_table_prefix() . 'stats_link_tracker WHERE ' . $where, $max, 0, true); // Errors suppressed in case DB write access broken
     }
 }
 

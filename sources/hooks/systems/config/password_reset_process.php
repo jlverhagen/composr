@@ -64,6 +64,6 @@ class Hook_config_password_reset_process
      */
     public function get_default() : ?string
     {
-        return (get_forum_type() != 'cns') ? null : 'emailed';
+        return (get_forum_type() != 'cns') ? null : 'temporary';
     }
 }

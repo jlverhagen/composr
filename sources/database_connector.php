@@ -32,6 +32,7 @@
 
 /**
  * Database handling.
+ * NB: if you modify any methods on this class, then you must modify the sync_tests/db_correctness test.
  *
  * @package core
  */
@@ -47,6 +48,8 @@ class Source_database_connector
 
     public $table_exists_cache;
     public $table_exists_real_cache;
+    public $field_exists_cache;
+    public $field_exists_real_cache;
 
     public $driver;
 
@@ -72,6 +75,8 @@ class Source_database_connector
         $this->text_lookup_cache = [];
         $this->table_exists_cache = [];
         $this->table_exists_real_cache = [];
+        $this->field_exists_cache = [];
+        $this->field_exists_real_cache = [];
 
         $servers = explode(',', $db_host);
         if (count($servers) == 1) {
@@ -1282,6 +1287,43 @@ class Source_database_connector
         }
 
         return $this->table_exists_cache[$table_name];
+    }
+
+    /**
+     * Find out if a particular field exists on a database table.
+     *
+     * @param  ID_TEXT $table_name The name of the table
+     * @param  ID_TEXT $field_name The name of the field
+     * @param  boolean $really_only Whether we only want to check if the field actually exists and not just defined in db_meta
+     * @return boolean Whether it does
+     */
+    public function field_exists(string $table_name, string $field_name, bool $really_only = false) : bool
+    {
+        if ((isset($this->field_exists_real_cache[$table_name][$field_name])) && (($really_only) || (isset($this->field_exists_cache[$table_name][$field_name])))) {
+            return $this->field_exists_real_cache[$table_name][$field_name] && ($really_only || $this->field_exists_cache[$table_name][$field_name]);
+        }
+
+        $this->field_exists_real_cache[$table_name][$field_name] = false;
+        $this->field_exists_cache[$table_name][$field_name] = false;
+
+        if (!$this->table_exists($table_name, $really_only)) {
+            return false;
+        }
+
+        $column_row = $this->query_parameterised('SELECT {field_name} FROM information_schema.columns WHERE table_name={table_name} AND column_name={field_name}', ['table_name' => $table_name, 'field_name' => $field_name], 1, 0, true);
+        if (is_array($column_row) && array_key_exists(0, $column_row)) {
+            $this->field_exists_real_cache[$table_name][$field_name] = true;
+            if ($really_only) {
+                return true;
+            }
+        }
+
+        $db_meta = $this->query_select_value_if_there('db_meta', 'm_name', ['m_table' => $table_name, 'm_name' => $field_name], '', ($table_name == 'db_meta'));
+        if ($db_meta !== null) {
+            $this->field_exists_cache[$table_name][$field_name] = true;
+        }
+
+        return $this->field_exists_cache[$table_name][$field_name];
     }
 
     /**

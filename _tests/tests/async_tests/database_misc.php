@@ -619,4 +619,15 @@ class database_misc_test_set extends cms_test_case
         }
         // Otherwise we're probably testing via manual queries too, so need the table
     }
+
+    public function testValidUniqueConstraints()
+    {
+        $_has_auto = $GLOBALS['SITE_DB']->query_select('db_meta', ['m_table', 'm_name'], ['m_type' => '*AUTO']);
+        $has_auto = collapse_1d_complexity('m_table', $_has_auto);
+
+        $scan = $GLOBALS['SITE_DB']->query_select('db_meta', ['DISTINCT m_table'], []);
+        foreach ($scan as $row) {
+            $this->assertTrue(!isset($has_auto[$row['m_table']]), 'Table ' . $row['m_table'] . ' defines a UNIQUE constraint when it already has an *AUTO field.');
+        }
+    }
 }
