@@ -168,7 +168,6 @@ class Hook_addon_registry_stats
             'sources/hooks/systems/config/stats_store_time.php',
             'sources/hooks/systems/config/super_logging.php',
             'sources/hooks/systems/cron/stats_preprocess_raw_data.php',
-            'sources/hooks/systems/cron/stats_purging.php',
             'sources/hooks/systems/database_manifest/stats.php',
             'sources/hooks/systems/non_active_urls/stats.php',
             'sources/hooks/systems/notifications/kpis.php',

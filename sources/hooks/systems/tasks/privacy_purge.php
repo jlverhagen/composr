@@ -146,25 +146,48 @@ class Hook_task_privacy_purge
             return;
         }
 
-        $sql = 'SELECT * FROM ' . $db->get_table_prefix() . $table_name;
-        $sql .= $selection_sql;
-        $rows = $db->query($sql);
+        $selection_sql = str_replace(' WHERE', ' AND', $selection_sql);
 
-        foreach ($rows as $row) {
-            switch ($table_action) {
-                case PRIVACY_METHOD__ANONYMISE:
-                    $hook_ob->anonymise($table_name, $table_details, $row, $username, $ip_addresses, $member_id, $email_address, $others);
-                    break;
+        $start = 0;
+        $max = 100;
+        $checksum = '';
+        do {
+            unset($rows);
+            $rows = $db->query_select($table_name, ['*'], [], $selection_sql, $max, $start);
 
-                case PRIVACY_METHOD__DELETE:
-                    // Delete is only allowed on records which the individual owns; else, anonymise
-                    if ($hook_ob->is_owner($table_name, $table_details, $row, $member_id, $username)) {
-                        $hook_ob->delete($table_name, $table_details, $row);
-                    } else {
-                        $hook_ob->anonymise($table_name, $table_details, $row, $username, $ip_addresses, $member_id, $email_address, $others);
-                    }
-                    break;
+            // Is our result set the same (based on the last row)? If so, we need to go to the next one.
+            if (array_key_exists(0, $rows)) {
+                $_checksum = cms_base64_encode(serialize($rows[count($rows) - 1]), false, true);
+                if ($_checksum == $checksum) {
+                    $start += $max;
+                    continue;
+                }
+                $checksum = $_checksum;
             }
-        }
+
+            foreach ($rows as $row) {
+                switch ($table_action) {
+                    case PRIVACY_METHOD__ANONYMISE:
+                        $hook_ob->anonymise($table_name, $table_details, $row, $username, $ip_addresses, $member_id, $email_address, $others);
+                        break;
+
+                    case PRIVACY_METHOD__DELETE:
+                        // Delete is only allowed on records which the individual owns; else, anonymise
+                        if ($hook_ob->is_owner($table_name, $table_details, $row, $member_id, $username)) {
+                            $hook_ob->delete($table_name, $table_details, $row);
+                        } else {
+                            $hook_ob->anonymise($table_name, $table_details, $row, $username, $ip_addresses, $member_id, $email_address, $others);
+                        }
+                        break;
+                }
+            }
+
+            /*
+                Actually, we cannot do this; anonymise or delete might have deleted rows. We have to run this batch again to see if we have the same last row.
+                This is horribly inefficient, but it is the best we can do right now.
+                TODO: optimise this.
+            */
+            //$start += $max;
+        } while (count($rows) > 0);
     }
 }
