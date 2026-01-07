@@ -556,7 +556,7 @@ abstract class Source_database_driver
      */
     public function is_flat_file_simple() : bool
     {
-        return true;
+        return false;
     }
 
     /**
