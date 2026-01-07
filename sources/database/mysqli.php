@@ -180,7 +180,7 @@ class Source_database_static_mysqli extends Source_database_super_mysql
                 cms_ini_set('mysqli.reconnect', '1');
                 $this->reconnected_once = true;
                 @mysqli_query($db_link, 'SELECT 1'); // Implicit reconnect
-                $ret = $this->query($query, $connection, null/*already encoded*/, 0/*already encoded*/, $fail_ok, $get_insert_id);
+                $ret = $this->query($query, $connection, (($max_bytes === null) ? $max : -$max_bytes), $start, $fail_ok, $get_insert_id);
                 $this->reconnected_once = false;
                 return $ret;
             }

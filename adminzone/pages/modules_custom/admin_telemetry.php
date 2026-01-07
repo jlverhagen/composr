@@ -794,6 +794,7 @@ class Module_admin_telemetry
         $max = 100;
         $count = 0;
         do {
+            $did_something = false;
             $rows = $GLOBALS['SITE_DB']->query_select('telemetry_errors', ['id', 'e_error_message', 'e_note'], ['e_resolved' => 0], '', $max, $start);
             foreach ($rows as $row) {
                 if (strpos($row['e_error_message'], $ignore_string) !== false) {
@@ -801,11 +802,14 @@ class Module_admin_telemetry
                     $map = ['e_resolved' => 1];
                     $map += lang_remap_comcode('e_note', $row['e_note'], $resolve_message);
                     $GLOBALS['SITE_DB']->query_update('telemetry_errors', $map, ['id' => $row['id']]);
+                    $did_something = true;
                 }
             }
 
-            $start += $max;
-        } while (!empty($rows));
+            if (!$did_something) { // TODO: not efficient
+                $start += $max;
+            }
+        } while (count($rows) > 0);
 
         $url = build_url(['page' => '_SELF', 'type' => 'ignore_errors'], '_SELF');
         return redirect_screen($this->title, $url, do_lang_tempcode('TELEMETRY_IGNORE_ERRORS_SUCCESS', escape_html(integer_format($count))));

@@ -2425,10 +2425,10 @@ function log_stats(?string $page_link, int $pg_time)
     pop_throw_errors();
 
     /*
-        NB: We cannot always assume the scheduler is running, so randomly clear the stats if it hasn't in the last hour.
-        This, however, is not enough for GDPR compliance; we need the Cron as well.
+        NB: We cannot always assume the scheduler is running, so randomly clear the stats if the scheduler hasn't in the last hour.
+        This, however, is not enough for GDPR compliance; we need the scheduler (privacy_purging) as well.
     */
-    if (mt_rand(0, 100) == 1) {
+    if (mt_rand(0, 50) == 1) {
         $last_cron = get_value('last_cron');
         if (($last_cron === null) || (intval($last_cron) < time() - 60 * 60)) {
             cms_register_shutdown_function_safe(function () {

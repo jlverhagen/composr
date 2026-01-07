@@ -49,7 +49,7 @@ class Hook_cron_privacy_purging
     {
         return [
             'num_queued' => null,
-            'minutes_between_runs' => 60 * 24,
+            'minutes_between_runs' => 60 * 6, // stats table can get really big, really fast, on high-traffic sites
             'enabled_by_default' => true,
         ];
     }
@@ -62,6 +62,8 @@ class Hook_cron_privacy_purging
     public function run(?int $last_run)
     {
         disable_php_memory_limit();
+        $old = cms_extend_time_limit(TIME_LIMIT_EXTEND__SLUGGISH);
+        push_query_limiting(false);
 
         require_code('privacy');
 
@@ -77,6 +79,9 @@ class Hook_cron_privacy_purging
                 }
             }
         }
+
+        pop_query_limiting();
+        cms_set_time_limit($old);
     }
 
     /**
@@ -89,6 +94,8 @@ class Hook_cron_privacy_purging
      */
     protected function handle_for_table(object $hook_ob, string $table_name, array $table_details, int $table_action)
     {
+        cms_profile_start_for('Hook_cron_privacy_purging->handle_for_table ' . $table_name);
+
         $db = get_db_for($table_name);
 
         $selection_sql = $hook_ob->get_selection_sql($table_name, $table_details, $table_action, true);
@@ -96,20 +103,46 @@ class Hook_cron_privacy_purging
             return;
         }
 
-        $sql = 'SELECT * FROM ' . $db->get_table_prefix() . $table_name;
-        $sql .= $selection_sql;
-        $rows = $db->query($sql);
+        $selection_sql = str_replace(' WHERE', ' AND', $selection_sql);
 
-        foreach ($rows as $row) {
-            switch ($table_action) {
-                case PRIVACY_METHOD__ANONYMISE:
-                    $hook_ob->anonymise($table_name, $table_details, $row);
-                    break;
+        $order_sql = ' ORDER BY ' . $table_details['timestamp_field'] . ' ASC';
+        $start = 0;
+        $max = 100;
+        $checksum = '';
+        do {
+            unset($rows);
+            $rows = $db->query_select($table_name, ['*'], [], $selection_sql . $order_sql, $max, $start);
 
-                case PRIVACY_METHOD__DELETE:
-                    $hook_ob->delete($table_name, $table_details, $row);
-                    break;
+            // Is our result set the same (based on the last row)? If so, we need to go to the next one.
+            if (array_key_exists(0, $rows)) {
+                $_checksum = cms_base64_encode(serialize($rows[count($rows) - 1]), false, true);
+                if ($_checksum == $checksum) {
+                    $start += $max;
+                    continue;
+                }
+                $checksum = $_checksum;
             }
-        }
+
+            foreach ($rows as $row) {
+                switch ($table_action) {
+                    case PRIVACY_METHOD__ANONYMISE:
+                        $hook_ob->anonymise($table_name, $table_details, $row);
+                        break;
+
+                    case PRIVACY_METHOD__DELETE:
+                        $hook_ob->delete($table_name, $table_details, $row);
+                        break;
+                }
+            }
+
+            /*
+                Actually, we cannot do this; anonymise or delete might have deleted rows. We have to run this batch again to see if we have the same last row.
+                This is horribly inefficient, but it is the best we can do right now.
+                TODO: optimise this.
+            */
+            //$start += $max;
+        } while (count($rows) > 0);
+
+        cms_profile_end_for('Hook_cron_privacy_purging->handle_for_table ' . $table_name);
     }
 }

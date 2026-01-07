@@ -175,9 +175,14 @@ abstract class Source_hook_privacy_base
      */
     protected function get_field_metadata(string $table_name) : array
     {
+        static $field_meta = [];
+        if (isset($field_meta[$table_name])) {
+            return $field_meta[$table_name];
+        }
         $db = get_db_for($table_name);
         $fields = $db->query_select('db_meta', ['m_name', 'm_type'], ['m_table' => $table_name]);
-        return collapse_2d_complexity('m_name', 'm_type', $fields);
+        $field_meta[$table_name] = collapse_2d_complexity('m_name', 'm_type', $fields);
+        return $field_meta[$table_name];
     }
 
     /**
