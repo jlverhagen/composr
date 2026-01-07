@@ -99,9 +99,11 @@ function enumerate_hybridauth_providers($alternate_config = null)
     }
 
     // Imply some data from hidden options
+    $rows = $GLOBALS['SITE_DB']->query_parameterised('SELECT * FROM {prefix}values WHERE the_name LIKE \'' . db_encode_like('Hybridauth:%') . '\'', []);
+    $hybridauth_settings = collapse_2d_complexity('the_name', 'the_value', $rows);
     foreach ($all_available_providers as $provider) {
         foreach (['id', 'secret', 'team-id', 'key-id', 'key-file', 'key-content'] as $setting) {
-            $test = get_value('Hybridauth:' . $provider . ':' . $setting);
+            $test = isset($hybridauth_settings['Hybridauth:' . $provider . ':' . $setting]);
             if (!empty($test)) {
                 if (!isset($config_structure[$provider])) {
                     $config_structure[$provider] = [
@@ -111,7 +113,7 @@ function enumerate_hybridauth_providers($alternate_config = null)
                         'alternate_configs' => [],
                     ];
                 }
-                $config_structure[$provider]['keys-config'][$setting] = $test;
+                $config_structure[$provider]['keys-config'][$setting] = $hybridauth_settings['Hybridauth:' . $provider . ':' . $setting];
             }
         }
     }
