@@ -68,6 +68,16 @@ class Source_database_static_sqlite3 extends Source_database_driver
     }
 
     /**
+     * Determine whether the database is a flat file database, and thus not have a meaningful connect username and password.
+     *
+     * @return boolean Whether the database is a flat file database
+     */
+    public function is_flat_file_simple() : bool
+    {
+        return true;
+    }
+
+    /**
      * Get a database connection. This function shouldn't be used by you, as a connection to the database is established automatically.
      *
      * @param  boolean $persistent Whether to create a persistent connection

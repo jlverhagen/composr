@@ -1310,6 +1310,8 @@ class Source_database_connector
             return false;
         }
 
+        // TODO: does not work
+        /*
         $column_row = $this->query_parameterised('SELECT {field_name} FROM information_schema.columns WHERE table_name={table_name} AND column_name={field_name}', ['table_name' => $table_name, 'field_name' => $field_name], 1, 0, true);
         if (is_array($column_row) && array_key_exists(0, $column_row)) {
             $this->field_exists_real_cache[$table_name][$field_name] = true;
@@ -1317,6 +1319,8 @@ class Source_database_connector
                 return true;
             }
         }
+        */
+        $this->field_exists_real_cache[$table_name][$field_name] = true;
 
         $db_meta = $this->query_select_value_if_there('db_meta', 'm_name', ['m_table' => $table_name, 'm_name' => $field_name], '', ($table_name == 'db_meta'));
         if ($db_meta !== null) {

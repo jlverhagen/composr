@@ -1829,6 +1829,8 @@ function has_no_forum() : bool
  */
 function addon_installed(string $addon_name, bool $check_hookless = false, bool $deep_scan = true, bool $disabled_scan = true, bool $force_custom = false) : bool
 {
+    static $addons_disabled = null;
+
     global $ADDON_INSTALLED_CACHE;
     if (empty($ADDON_INSTALLED_CACHE)) {
         if (!in_safe_mode()) {
@@ -1891,8 +1893,12 @@ function addon_installed(string $addon_name, bool $check_hookless = false, bool 
         }
 
         if (($answer) && ($disabled_scan)) {
-            global $VALUES_FULLY_LOADED;
-            if (($VALUES_FULLY_LOADED == 2) && (get_value('addon_disabled_' . $addon_name) === '1')) {
+            if ($addons_disabled === null) {
+                $rows = $GLOBALS['SITE_DB']->query_parameterised('SELECT * FROM {prefix}values WHERE the_name LIKE \'' . db_encode_like('addon_disabled_%') . '\'', []);
+                $addons_disabled = collapse_2d_complexity('the_name', 'the_value', $rows);
+            }
+
+            if (isset($addons_disabled['addon_disabled_' . $addon_name])) {
                 $answer = false;
             }
         }
