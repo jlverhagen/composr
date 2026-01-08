@@ -801,3 +801,123 @@ END;
 </html>
 END;
 }
+
+/**
+ * Utility for checking if we are having problems sending e-mail to a given address.
+ *
+ * @ignore
+ */
+function mail_check_script()
+{
+    $email = post_param_string('email', null, INPUT_FILTER_EMAIL_ADDRESS);
+
+    require_code('templates');
+    require_code('tempcode');
+    require_code('form_templates');
+    require_lang('mail');
+    require_code('mail2');
+
+    $text = new Tempcode();
+
+    if ($email !== null) { // E-mail provided?
+        require_code('crypt');
+
+        $staff_address = obfuscate_email_address(get_option('staff_address'));
+        $can_mail = can_email_address($email);
+
+        if (!$can_mail) {
+            $tpl = do_lang_tempcode('MAIL_CHECK_FAILED', escape_html($email), protect_from_escaping($staff_address));
+            $tpl->handle_symbol_preprocessing();
+            $tpl->evaluate_echo();
+            return;
+        }
+
+        $tpl = do_lang_tempcode('MAIL_CHECK_SUCCESS', escape_html($email), protect_from_escaping($staff_address));
+        $tpl->handle_symbol_preprocessing();
+        $tpl->evaluate_echo();
+        return;
+    }
+
+    /* checking form */
+
+    $_title = do_lang('MAIL_CHECK_TOOL');
+    $title = get_screen_title('MAIL_CHECK_TOOL');
+
+    $body_text = do_lang_tempcode('MAIL_CHECK_TOOL_TEXT', escape_html(get_site_name()));
+    $text->attach($body_text);
+
+    $fields = new Tempcode();
+    $hidden = new Tempcode();
+
+    $fields->attach(form_input_email(do_lang_tempcode('YOUR_EMAIL_ADDRESS'), $body_text, 'email', $email, true));
+
+    $post_url = find_script('mail_check');
+
+    // Header
+    $charset = get_charset();
+    $lang = user_lang();
+    $dir = do_lang('dir');
+
+    cms_ob_end_clean();
+    echo <<<END
+<!DOCTYPE html>
+    <html lang="{$lang}" dir="{$dir}">
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset={$charset}" />
+
+        <title>{$_title}</title>
+        <link rel="icon" href="/favicon.ico" type="image/x-icon" />
+
+        <style>/*<![CDATA[*/
+END;
+    foreach (['_base', '_colours', 'global', 'forms'] as $css_file) {
+        $css_path = css_enforce($css_file, 'default');
+        if ($css_path != '') {
+            @print(cms_file_get_contents_safe($css_path, FILE_READ_LOCK | FILE_READ_BOM));
+        }
+    }
+    echo <<<END
+        </style>
+        <meta name="robots" content="noindex, nofollow" />
+    </head>
+    <body class="website-body"><div class="container-fluid"><div class="global-middle">
+END;
+
+    // Body
+    $tpl = do_template('FORM_SCREEN', [
+        '_GUID' => 'TODO',
+        'GET' => false,
+        'SKIP_WEBSTANDARDS' => true,
+        'HIDDEN' => $hidden,
+        'TITLE' => $title,
+        'TEXT' => $text,
+        'SUBMIT_ICON' => 'buttons/proceed',
+        'SUBMIT_NAME' => do_lang_tempcode('PROCEED'),
+        'FIELDS' => $fields,
+        'URL' => $post_url,
+    ]);
+    $tpl->handle_symbol_preprocessing();
+    $tpl->evaluate_echo();
+
+    // Footer
+    $tpl = do_template('HTML_HEAD_POLYFILLS', ['_GUID' => 'b11f458ef7d3dcc647e61a34eec0213c', 'FROM' => get_base_url() . '/data/polyfills']);
+    $tpl->handle_symbol_preprocessing();
+    $tpl->evaluate_echo();
+
+    $js_files = ['global', 'core_form_interfaces', 'checking'];
+    if (addon_installed('captcha')) {
+        $js_files[] = 'captcha';
+    }
+    foreach ($js_files as $js_file) {
+        $js_path = javascript_enforce($js_file, 'default');
+        if ($js_path != '') {
+            echo "<script nonce=\"" . $GLOBALS['CSP_NONCE'] . "\">";
+            @print(cms_file_get_contents_safe($js_path, FILE_READ_LOCK | FILE_READ_BOM));
+            echo '</script>';
+        }
+    }
+    echo <<<END
+    </div></div></body>
+</html>
+END;
+}

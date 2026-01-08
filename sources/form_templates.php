@@ -907,9 +907,10 @@ function form_input_group($pretty_name, $description, string $name, ?string $def
  * @param  boolean $required Whether this is a required input field
  * @param  ?integer $tabindex The tab index of the field (null: not specified)
  * @param  ~?mixed $autocomplete The autocomplete field name. (false: explicitly disable autocomplete) (null: no autocomplete attribute unless there's a default for this $name)
+ * @param  boolean $inform_mail_check Inform about the mail check tool to check if an e-mail address is blocklisted by the site
  * @return Tempcode The input field
  */
-function form_input_email($pretty_name, $description, string $name, ?string $default, bool $required, ?int $tabindex = null, $autocomplete = null) : object
+function form_input_email($pretty_name, $description, string $name, ?string $default, bool $required, ?int $tabindex = null, $autocomplete = null, bool $inform_mail_check = false) : object
 {
     if ($default === null) {
         $default = '';
@@ -930,6 +931,7 @@ function form_input_email($pretty_name, $description, string $name, ?string $def
         'NAME' => $name,
         'DEFAULT' => $default,
         'AUTOCOMPLETE' => $autocomplete,
+        'INFORM_MAIL_CHECK' => $inform_mail_check,
     ]);
     return _form_input($name, $pretty_name, $description, $input, $required, false, $tabindex);
 }

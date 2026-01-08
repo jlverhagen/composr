@@ -279,7 +279,7 @@ class Module_recommend
         }
 
         if (is_guest()) {
-            $fields->attach(form_input_email(do_lang_tempcode('FRIEND_EMAIL_ADDRESS'), '', 'email_address_0', array_key_exists(0, $already) ? $already[0] : '', true));
+            $fields->attach(form_input_email(do_lang_tempcode('FRIEND_EMAIL_ADDRESS'), '', 'email_address_0', array_key_exists(0, $already) ? $already[0] : '', true, null, null, true));
         } else {
             if (get_option('enable_spreadsheet_recommend') == '1') {
                 $set_name = 'people';

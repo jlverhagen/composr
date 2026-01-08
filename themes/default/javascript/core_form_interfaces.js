@@ -338,7 +338,7 @@
             if (el.parentNode.title !== undefined) {
                 el.parentNode.title = '';
             }
-            $cms.ui.activateTooltip(el, e, '{!PASSWORD_STRENGTH;^}', 'auto');
+            $cms.ui.activateTooltip(el, e, '{!_PASSWORD_STRENGTH;^}', 'auto');
         });
 
         $dom.on(container, 'change', '.js-input-change-check-password-strength', function (e, input) {

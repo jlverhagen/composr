@@ -591,7 +591,7 @@ function cns_get_member_fields_settings(bool $mini_mode = true, string $special_
 
         $email_address_required = member_field_is_required($member_id, 'email_address');
 
-        $fields->attach(form_input_email(do_lang_tempcode('EMAIL_ADDRESS'), $email_description, 'email', $email_address, $email_address_required));
+        $fields->attach(form_input_email(do_lang_tempcode('EMAIL_ADDRESS'), $email_description, 'email', $email_address, $email_address_required, null, null, true));
         if (($member_id === null) && ($email_address == '') && (get_option_with_overrides('email_confirm_join', $adjusted_config_options) == '1')) {
             $fields->attach(form_input_email(do_lang_tempcode('CONFIRM_EMAIL_ADDRESS'), '', 'email_address_confirm', '', $email_address_required));
         }

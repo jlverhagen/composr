@@ -337,6 +337,10 @@ th.form-table-field-name a, /* Extra specificity to take precedence over th.de-t
 	display: none;
 }
 
+.inform-mail-check {
+	float: right;
+}
+
 .password-strength-inner {
 	height: 1em;
 	width: 0;

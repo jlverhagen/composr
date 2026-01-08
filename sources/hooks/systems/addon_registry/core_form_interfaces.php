@@ -1274,6 +1274,7 @@ class Hook_addon_registry_core_form_interfaces
             'REQUIRED' => '',
             'NAME' => $name,
             'DEFAULT' => '',
+            'INFORM_MAIL_CHECK' => true,
         ]);
         $fields->attach(do_lorem_template('FORM_SCREEN_FIELD', [
             'REQUIRED' => true,
