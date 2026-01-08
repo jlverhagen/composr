@@ -390,7 +390,7 @@ class Module_newsletter
 
         // Build up the join form
         $fields = new Tempcode();
-        $fields->attach(form_input_email(do_lang_tempcode('EMAIL_ADDRESS'), do_lang_tempcode('DESCRIPTION_SUBSCRIBE_ADDRESS'), 'email', $their_email, true));
+        $fields->attach(form_input_email(do_lang_tempcode('EMAIL_ADDRESS'), do_lang_tempcode('DESCRIPTION_SUBSCRIBE_ADDRESS'), 'email', $their_email, true, null, null, true));
         $fields->attach(form_input_line(do_lang_tempcode('FORENAME'), '', 'forename', $forename, false));
         $fields->attach(form_input_line(do_lang_tempcode('SURNAME'), '', 'surname', $surname, false));
         $fields->attach(form_input_password(do_lang_tempcode('YOUR_PASSWORD'), do_lang_tempcode('DESCRIPTION_MAINTENANCE_PASSWORD'), 'password', false));

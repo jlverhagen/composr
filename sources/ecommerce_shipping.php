@@ -371,7 +371,7 @@ function get_shipping_contact_fields(string $shipping_email, string $shipping_ph
 {
     $fields = new Tempcode();
 
-    $fields->attach(form_input_email(do_lang_tempcode('EMAIL_ADDRESS'), '', 'shipping_email', $shipping_email, $require_all_details));
+    $fields->attach(form_input_email(do_lang_tempcode('EMAIL_ADDRESS'), '', 'shipping_email', $shipping_email, $require_all_details, null, null, true));
     $fields->attach(form_input_line(do_lang_tempcode('PHONE_NUMBER'), '', 'shipping_phone', $shipping_phone, $require_all_details));
 
     return $fields;

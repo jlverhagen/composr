@@ -246,7 +246,7 @@ function report_content_form_fields(object &$hidden) : object
 
     if (is_guest()) {
         // If the reporter is a guest user, ask for, but do not require, an e-mail address for further communication.
-        $field = form_input_email(do_lang('EMAIL_ADDRESS'), do_lang('DESCRIPTION_REPORT_EMAIL'), 'email', null, false, null);
+        $field = form_input_email(do_lang('EMAIL_ADDRESS'), do_lang('DESCRIPTION_REPORT_EMAIL'), 'email', null, false, null, null, true);
         $specialisation->attach($field);
     }
 

@@ -1111,7 +1111,7 @@ class Module_cms_booking_bookings extends Source_standard_crud_module
             $fields->attach(form_input_username(do_lang_tempcode('BOOKING_FOR'), do_lang_tempcode('DESCRIPTION_BOOKING_FOR', escape_html($member_directory_url->evaluate())), 'username', $GLOBALS['FORUM_DRIVER']->get_username($member_id), true, false));
         } else {
             $fields->attach(form_input_line(do_lang_tempcode('NAME'), '', 'customer_name', $details['customer_name'], true));
-            $fields->attach(form_input_email(do_lang_tempcode('EMAIL_ADDRESS'), '', 'customer_email', $details['customer_email'], true));
+            $fields->attach(form_input_email(do_lang_tempcode('EMAIL_ADDRESS'), '', 'customer_email', $details['customer_email'], true, null, null, true));
             $fields->attach(form_input_line(do_lang_tempcode('MOBILE_NUMBER'), '', 'customer_mobile', $details['customer_mobile'], false));
             $fields->attach(form_input_line(do_lang_tempcode('PHONE_NUMBER'), '', 'customer_phone', $details['customer_phone'], true));
         }

@@ -156,7 +156,7 @@ class Module_lost_password
         $set_title = do_lang_tempcode('ACCOUNT');
         $field_set = alternate_fields_set__start($set_name);
 
-        $field_set->attach(form_input_email(do_lang_tempcode('EMAIL_ADDRESS'), '', 'email', get_param_string('email', '', INPUT_FILTER_GET_IDENTIFIER), false));
+        $field_set->attach(form_input_email(do_lang_tempcode('EMAIL_ADDRESS'), '', 'email', get_param_string('email', '', INPUT_FILTER_GET_IDENTIFIER), false, null, null, true));
 
         $field_set->attach(form_input_line(do_lang_tempcode('USERNAME'), '', 'username', get_param_string('username', '', INPUT_FILTER_GET_IDENTIFIER), false));
         // form_input_username not used, so as to stop someone accidentally autocompleting to someone else's similar name - very possible for a person already known to be forgetful
