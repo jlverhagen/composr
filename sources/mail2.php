@@ -465,30 +465,43 @@ function _find_mail_bounces(string $host, int $port, ?string $type, string $fold
         $body = imap2_body($mbox, $val);
         $header = imap2_fetchheader($mbox, $val);
 
+        // TODO: This bounce logic will need regular review and updating
         $is_bounce =
             // Proper failure header
             (strpos($header, 'X-Failed-Recipients') !== false)
 
+            // Other common bounce headers
+            || (preg_match('#^Content-Type: report/delivery-status#mi', $header) !== 0)
+            || (preg_match('#^Content-Type: message/delivery-status#mi', $header) !== 0)
+            || (preg_match('#^Return-Path: <>\s*$#mi', $header) !== 0)
+            || (preg_match('#^From: (.*<)?(MAILER-DAEMON|postmaster)@#mi', $header) !== 0)
+
+            // Common bounce subjects
+            || (preg_match('#^Subject: (Undeliverable|Delivery Status Notification|Non-delivery report|Returned mail|Mail delivery failed|Postmaster Error|Mail System Error)#mi', $header) !== 0)
+
             // Failure message coming from our end
             || (strpos($body, 'Delivery to the following recipient failed permanently') !== false)
+            || (strpos($body, 'Delivery to the following recipients failed') !== false)
+            || (strpos($body, 'I\'m sorry to have to inform you that your message could not') !== false)
+            || (strpos($body, 'The following address(es) failed') !== false)
 
             // Plesk has its own way of alerting us
             || (strpos($body, 'Undelivered Mail Returned to Sender') !== false)
 
             // SMTP error codes (http://www.greenend.org.uk/rjk/tech/smtpreplies.html)
-            || (preg_match('#421 .* Service not available#', $body) != 0)
-            || (strpos($body, '450 Requested mail action not taken') !== false)
-            || (strpos($body, '451 Requested action aborted') !== false)
-            || (strpos($body, '452 Requested action not taken') !== false)
-            || (preg_match('#521 .* does not accept mail#', $body) != 0)
-            || (strpos($body, '530 Access denied') !== false)
-            || (strpos($body, '550 Requested action not taken') !== false)
-            || (strpos($body, '550 No such recipient') !== false)
-            || (strpos($body, '550 ') !== false) // Actually allow any 550's
-            || (strpos($body, '551 User not local') !== false)
-            || (strpos($body, '552 Requested mail action aborted') !== false)
-            || (strpos($body, '553 Requested action not taken') !== false)
-            || (strpos($body, '554 Transaction failed') !== false)
+            || (preg_match('#\s421\s.*Service not available#i', $body) !== 0)
+            || (preg_match('#\s450\sRequested mail action not taken#i', $body) !== 0)
+            || (preg_match('#\s451\sRequested action aborted#i', $body) !== 0)
+            || (preg_match('#\s452\sRequested action not taken#i', $body) !== 0)
+            || (preg_match('#\s521\s.*does not accept mail#i', $body) !== 0)
+            || (preg_match('#\s530\sAccess denied#i', $body) !== 0)
+            || (preg_match('#\s550\sRequested action not taken#i', $body) !== 0)
+            || (preg_match('#\s550\sNo such recipient#i', $body) !== 0)
+            || (preg_match('#\s550\s#', $body) !== 0) // Actually allow any 550's
+            || (preg_match('#\s551\sUser not local#i', $body) !== 0)
+            || (preg_match('#\s552\sRequested mail action aborted#i', $body) !== 0)
+            || (preg_match('#\s553\sRequested action not taken#i', $body) !== 0)
+            || (preg_match('#\s554\sTransaction failed#i', $body) !== 0)
 
             // Enhanced Mail System Status Codes (http://tools.ietf.org/html/rfc3463 / http://www.iana.org/assignments/smtp-enhanced-status-codes/smtp-enhanced-status-codes.xhtml)
             || (preg_match('#\s(4|5)\.\d+\.\d+\s#', $body) != 0);
@@ -512,7 +525,8 @@ function _find_mail_bounces(string $host, int $port, ?string $type, string $fold
                 // (message/content IDs look similar, avoid those, also avoid routine headers)
                 $_body = preg_replace('#"[^"]*" #', '', $body); // Strip out quoted name before e-mail address, to put e-mail address right after header so that our backreference assertions work
                 $_body = preg_replace('#: .* <([^"\n<>@]+@[^\n<>@]+)>#', ': <$1>', $_body); // Also strip unquoted names
-                $_body = preg_replace('#(Message-ID: |Content-ID: |Return-Path: |From: |Reply-To: |X-Sender: |X-Google-Original-From: )<([^"\n<>@]+@[^\n<>@]+)>#', '', $_body); // Also strip unwanted headers
+                $_body = preg_replace('#(Message-ID|Content-ID|Return-Path|From|Reply-To|X-Sender|X-Google-Original-From|To):[^\n]*<([^"\n<>@]+@[^\n<>@]+)>#i', '', $_body); // Also strip unwanted headers
+                $_body = preg_replace('#(Message-ID|Content-ID|Return-Path|From|Reply-To|X-Sender|X-Google-Original-From|To):[^\n]*\s([^"\n<>@]+@[^\n<>@]+)#i', '', $_body); // Also strip unwanted headers (without brackets)
                 $num_matches = preg_match_all('#<([^"\n<>@]+@[^\n<>@]+)>#i', $_body, $matches);
                 if ($num_matches == 0) {
                     $num_matches = preg_match_all('#([\w\.\-\+]+@[\w\.\-]+)#i', $_body, $matches); // Try less explicit but stricter formed e-mail addresses
