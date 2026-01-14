@@ -381,57 +381,9 @@ function static_cache(int $mode)
             cms_flush_safe();
 
             // Add to stats
-            if (addon_installed('stats')) {
-                require_code('caches');
-                require_code('database');
-                require_code('config');
-
-                load_user_stuff();
-
-                global $RELATIVE_PATH;
-                $page_link = $RELATIVE_PATH . ':' . str_replace('-', '_', get_param_string('page', DEFAULT_ZONE_PAGE_NAME));
-                $type = get_param_string('type', null);
-                if ($type !== null) {
-                    $page_link .= ':' . $type;
-                }
-                $id = get_param_string('id', null);
-                if ($id !== null) {
-                    if ($type === null) {
-                        $page_link .= ':id=' . $id;
-                    } else {
-                        $page_link .= ':' . $id;
-                    }
-                }
-                foreach ($_GET as $key => $val) {
-                    if (is_integer($key)) {
-                        $key = strval($key);
-                    }
-
-                    if (($key == 'page') || ($key == 'type') || ($key == 'id') || (is_array($val)) || (substr($key, 0, 5) == 'keep_')) {
-                        continue;
-                    }
-                    $pl_append = ':' . $key . '=' . $val;
-                    if (strlen($page_link) + strlen($pl_append) > 255) {
-                        break; // Too long
-                    }
-                    $page_link .= $pl_append;
-                }
-
-                $GLOBALS['SITE_DB']->query_insert('stats', [
-                    'date_and_time' => time(),
-                    'page_link' => $page_link,
-                    'post' => '',
-                    'referer_url' => cms_mb_substr($_SERVER['HTTP_REFERER'], 0, 255),
-                    'ip' => get_ip_address(),
-                    'member_id' => $GLOBALS['FORUM_DRIVER']->get_guest_id(),
-                    'session_id' => get_pseudo_session_id(),
-                    'browser' => cms_mb_substr(get_browser_string(), 0, 255),
-                    'operating_system' => cms_mb_substr(get_os_string(), 0, 255),
-                    'requested_language' => substr(preg_replace('#[,;].*$#', '', $_SERVER['HTTP_ACCEPT_LANGUAGE']), 0, 10),
-                    'milliseconds' => 0,
-                    'tracking_code' => cms_mb_substr(get_param_string('_t', ''), 0, 80),
-                ], false, true);
-            }
+            global $PAGE_START_TIME;
+            $page_generation_time = (microtime(true) - $PAGE_START_TIME) * 1000.0;
+            log_stats(null, $page_generation_time);
 
             exit();
         } else {
