@@ -1008,6 +1008,7 @@ function fixup_bad_php_env_vars_pre()
         'HTTP_X_FORWARDED_FOR',
         'HTTP_X_FORWARDED_PROTO',
         'HTTP_CF_CONNECTING_IP',
+        'HTTP_CF_IPCOUNTRY',
         'PHP_SELF',
         'QUERY_STRING',
         'REMOTE_ADDR',
@@ -1638,7 +1639,8 @@ if (!is_array($SITE_INFO) || (count($SITE_INFO) == 0) || (empty($SITE_INFO))) {
 }
 
 // Check if we might be proxying through Cloudflare (unsafe test as this does not check actual remote address against known Cloudflare IPs)
-global $MIGHT_BE_USING_CF, $CF_ORIGINAL_IP;
+global $MIGHT_BE_USING_CF, $CF_ORIGINAL_IP, $ACTUALLY_USING_CF;
+$ACTUALLY_USING_CF = false;
 $MIGHT_BE_USING_CF = isset($_SERVER['HTTP_CF_RAY']);
 
 // Make sure we have the correct IP address in REMOTE_ADDR. Note for Cloudflare checks, some webhosts might handle Cloudflare automatically, which prevents us from knowing the true REMOTE_ADDR of Cloudflare, thus we cannot compare it to trusted proxies.
@@ -1646,6 +1648,7 @@ if (!empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
     if (empty($SITE_INFO['trusted_proxies'])) {
         $trusted_proxies = '173.245.48.0/20,103.21.244.0/22,103.22.200.0/22,103.31.4.0/22,141.101.64.0/18,108.162.192.0/18,190.93.240.0/20,188.114.96.0/20,197.234.240.0/22,198.41.128.0/17,162.158.0.0/15,104.16.0.0/13,104.24.0.0/14,172.64.0.0/13,131.0.72.0/22,2400:cb00::/32,2606:4700::/32,2803:f800::/32,2405:b500::/32,2405:8100::/32,2a06:98c0::/29,2c0f:f248::/32';
         $might_be_cloudflare = true;
+        $ACTUALLY_USING_CF = true;
     } else {
         $trusted_proxies = $SITE_INFO['trusted_proxies'];
         $might_be_cloudflare = false;
@@ -1669,7 +1672,7 @@ if (!empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
     }
 }
 
-// Rate limiter, to stop aggressive bots
+// Rate limiter, to stop aggressive bots. Must be after Cloudflare / proxy processing.
 global $SITE_INFO;
 $rate_limiting = !empty($SITE_INFO['rate_limiting']);
 if ($rate_limiting) {

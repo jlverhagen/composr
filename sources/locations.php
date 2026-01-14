@@ -281,7 +281,7 @@ function get_country(?int $member_id = null) : ?string
 /**
  * Find the country an IP address long is located in.
  *
- * @param  ?IP $ip The IP to geolocate (null: current user's IP)
+ * @param  ?IP $ip The IP to geolocate (null: current user's IP; also, use Cloudflare's CF-IPCountry header if provided)
  * @return ?string The country initials (null: unknown)
  */
 function geolocate_ip(?string $ip = null) : ?string
@@ -289,6 +289,15 @@ function geolocate_ip(?string $ip = null) : ?string
     static $result = [];
 
     if ($ip === null) {
+        // Try Cloudflare's country header if specified
+        global $ACTUALLY_USING_CF;
+        if ($ACTUALLY_USING_CF) {
+            $cf_country = filter_input(INPUT_SERVER, 'HTTP_CF_IPCOUNTRY', FILTER_SANITIZE_STRING);
+            if (!empty($cf_country) && ($cf_country != 'XX')) {
+                return $cf_country;
+            }
+        }
+
         $ip = get_ip_address();
     }
 
