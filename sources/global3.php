@@ -6410,7 +6410,7 @@ function log_stats(?string $page_link, int $pg_time)
             'referer_url' => cms_mb_substr($_SERVER['HTTP_REFERER'], 0, 255),
             'ip' => $ip,
             'member_id' => $member_id,
-            'session_id' => get_pseudo_session_id(),
+            'session_id' => function_exists('get_pseudo_session_id') ? get_pseudo_session_id() : cms_base64_encode(get_ip_address(), true, true, true),
             'browser' => cms_mb_substr(get_browser_string(), 0, 255),
             'operating_system' => cms_mb_substr(get_os_string(), 0, 255),
             'requested_language' => substr(preg_replace('#[,;].*$#', '', $_SERVER['HTTP_ACCEPT_LANGUAGE']), 0, 10),
