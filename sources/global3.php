@@ -3944,6 +3944,7 @@ function get_bot_type(?string $agent = null) : ?string
 
     $agent = cms_strtolower_ascii($agent);
 
+    // TODO: Maintenance; update the list of common bots regularly
     global $BOT_MAP_CACHE, $SITE_INFO;
     if ($BOT_MAP_CACHE === null) {
         if (((!isset($SITE_INFO['no_extra_bots'])) || ($SITE_INFO['no_extra_bots'] != '1')) && (is_file(get_file_base() . '/text_custom/bots.txt'))) {
