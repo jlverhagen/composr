@@ -381,10 +381,9 @@ function static_cache(int $mode)
 
             // Inject correct nonce
             require_code('csp');
-            load_csp();
             global $CSP_NONCE;
-            $contents = preg_replace('#\snonce=\"\w*\"#', ' ' . csp_nonce_html(), $contents);
-            $contents = preg_replace('#' . preg_quote('<meta id="cms-nonce" name="cms-nonce" content="', '#') . '\w*\"#', '<meta id="cms-nonce" name="cms-nonce" content="' . (isset($CSP_NONCE) ? $CSP_NONCE : '') . '"', $contents);
+            $contents = preg_replace('#' . preg_quote('{$CSP_NONCE_HTML}', '#') . '#', ' ' . csp_nonce_html(), $contents);
+            $contents = preg_replace('#' . preg_quote('{$CSP_NONCE*}', '#') . '#', (isset($CSP_NONCE) ? $CSP_NONCE : ''), $contents);
 
             echo $contents;
             cms_flush_safe();
@@ -392,7 +391,7 @@ function static_cache(int $mode)
             // Add to stats
             global $PAGE_START_TIME;
             $page_generation_time = (microtime(true) - $PAGE_START_TIME) * 1000.0;
-            log_stats(null, $page_generation_time);
+            log_stats(null, intval($page_generation_time));
 
             exit();
         } else {

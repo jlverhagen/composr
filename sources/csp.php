@@ -140,7 +140,7 @@ function init__csp()
 /**
  * Load up CSP settings.
  *
- * @param  ?array $options Overrides for options; any non-set properties will result in no-change to the current CSP state or if for a new state CSP_VERY_STRICT (null: load full clean state from configuration)
+ * @param  ?array $options Overrides for options; any non-set properties will result in no-change to the current CSP state or if for a new state CSP_VERY_STRICT (null: load full clean state from configuration; also loads up configuration system if not yet loaded)
  * @param  ?MEMBER $enable_more_open_html_for Allow more open HTML for a particular member ID (null: no member). It still will use the HTML blocklist functionality (unless they have even higher access already), but will remove the more restrictive safelist functionality. Should only be used with CSP_PRETTY_STRICT/CSP_VERY_STRICT which will further decreasing the risk from dangerous HTML, even though the risk should be very low anyway due to the blocklist filter.
  */
 function load_csp(?array $options = null, ?int $enable_more_open_html_for = null)
@@ -155,6 +155,8 @@ function load_csp(?array $options = null, ?int $enable_more_open_html_for = null
     }
 
     if ($options === null) {
+        require_code('config');
+
         $configured_options = [ // Full clean state from configuration. Must be fully defined on CSP_VERY_STRICT too.
             'csp_enabled' => get_theme_option('csp_enabled'),
             'csp_exceptions' => get_option('csp_exceptions'),
