@@ -125,18 +125,15 @@ function dload_script()
     $myrow = $rows[0];
 
     // Permission
-    if (!has_category_access(get_member(), 'downloads', strval($myrow['category_id']))) {
+    if (!has_actual_page_access(get_member(), 'downloads', null, ['downloads', strval($myrow['category_id'])], 'download')) {
         $redirect_url = get_download_category_purchase_url($myrow['category_id']);
         if ($redirect_url !== null) {
             redirect_exit($redirect_url);
         }
 
-        access_denied('CATEGORY_ACCESS');
+        access_denied('PAGE_ACCESS');
     }
-    $may_download = has_privilege(get_member(), 'download', 'downloads', ['downloads', strval($myrow['category_id'])]);
-    if (!$may_download) {
-        access_denied('PRIVILEGE', 'download');
-    }
+
     if (addon_installed('content_privacy')) {
         require_code('content_privacy');
         check_privacy('download', strval($id));
