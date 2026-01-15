@@ -1362,7 +1362,7 @@ function save_static_caching($out, string $mime_type = 'text/html') : bool
 
     // Remove any sessions, nonce, etc
     $static_cache = preg_replace('#(&|&amp;|&amp;amp;|%3Aamp%3A|\?)?(keep_session|for_session|keep_devtest|keep_failover)(=|%3D)\w+#', '', $static_cache);
-    $static_cache = preg_replace('#\bnonce=\"\w*\"#', ' nonce=""', $static_cache);
+    $static_cache = preg_replace('#\snonce=\"\w*\"#', ' nonce=""', $static_cache);
     $static_cache = preg_replace('#' . preg_quote('<meta id="cms-nonce" name="cms-nonce" content="', '#') . '\w*\"#', '<meta id="cms-nonce" name="cms-nonce" content=""', $static_cache);
 
     // Add URL identifier
