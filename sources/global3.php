@@ -6389,7 +6389,14 @@ function log_stats(?string $page_link, int $pg_time)
 
     $ip = get_ip_address();
     global $IS_ACTUALLY;
-    $member_id = ($IS_ACTUALLY === null) ? get_member() : $IS_ACTUALLY;
+    $member_id = $IS_ACTUALLY;
+    if ($member_id === null) {
+        if (function_exists('get_member')) {
+            $member_id = get_member();
+        } else {
+            $member_id = 1; // TODO: should not be coded like this, but we cannot use the forum driver as this may be coming from static cache
+        }
+    }
 
     // We want to suppress DB errors for logging stats but still log/relay the error
     require_code('failure');
