@@ -164,7 +164,7 @@ function can_static_cache_request(bool $consider_failover_mode = false) : bool
 function static_cache_current_url() : string
 {
     $url = static_cache__get_self_url_easy();
-    $url = preg_replace('#(keep_session|for_session|keep_devtest|keep_failover)=\d+#', '', $url);
+    $url = preg_replace('#(&|&amp;|&amp;amp;|%3Aamp%3A|\?)?(keep_session|for_session|keep_devtest|keep_failover)(=|%3D)\w+#', '', $url);
     $url = str_replace('keep_su=Guest', '', $url);
     $url = preg_replace('#\?&+#', '?', $url);
     $url = preg_replace('#&+#', '&', $url);
@@ -205,6 +205,8 @@ function static_cache(int $mode)
     $client_support_brotli = (isset($_SERVER['HTTP_ACCEPT_ENCODING'])) && (strpos($_SERVER['HTTP_ACCEPT_ENCODING'], 'br') !== false);
     $client_support_gzip = (isset($_SERVER['HTTP_ACCEPT_ENCODING'])) && (strpos($_SERVER['HTTP_ACCEPT_ENCODING'], 'gzip') !== false);
     $client_support_compressed = ($client_support_brotli || $client_support_gzip) && (function_exists('php_function_allowed')) && (php_function_allowed('ini_set')/*If can disable default PHP compression*/);
+    $client_support_compressed = false; // TODO: not supported as it breaks nonce
+
     $server_support_brotli = false; // May be set later
     $server_support_gzip = false; // May be set later
 
@@ -377,61 +379,19 @@ function static_cache(int $mode)
                 $contents .= '<failover />';
             }
 
+            // Inject correct nonce
+            require_code('csp');
+            global $CSP_NONCE;
+            $contents = preg_replace('#\bnonce=\"\w*\"#', ' ' . csp_nonce_html(), $contents);
+            $contents = preg_replace('#' . preg_quote('<meta id="cms-nonce" name="cms-nonce" content="', '#') . '\w*\"#', '<meta id="cms-nonce" name="cms-nonce" content="' . (isset($CSP_NONCE) ? $CSP_NONCE : '') . '"', $contents);
+
             echo $contents;
             cms_flush_safe();
 
             // Add to stats
-            if (addon_installed('stats')) {
-                require_code('caches');
-                require_code('database');
-                require_code('config');
-
-                load_user_stuff();
-
-                global $RELATIVE_PATH;
-                $page_link = $RELATIVE_PATH . ':' . str_replace('-', '_', get_param_string('page', DEFAULT_ZONE_PAGE_NAME));
-                $type = get_param_string('type', null);
-                if ($type !== null) {
-                    $page_link .= ':' . $type;
-                }
-                $id = get_param_string('id', null);
-                if ($id !== null) {
-                    if ($type === null) {
-                        $page_link .= ':id=' . $id;
-                    } else {
-                        $page_link .= ':' . $id;
-                    }
-                }
-                foreach ($_GET as $key => $val) {
-                    if (is_integer($key)) {
-                        $key = strval($key);
-                    }
-
-                    if (($key == 'page') || ($key == 'type') || ($key == 'id') || (is_array($val)) || (substr($key, 0, 5) == 'keep_')) {
-                        continue;
-                    }
-                    $pl_append = ':' . $key . '=' . $val;
-                    if (strlen($page_link) + strlen($pl_append) > 255) {
-                        break; // Too long
-                    }
-                    $page_link .= $pl_append;
-                }
-
-                $GLOBALS['SITE_DB']->query_insert('stats', [
-                    'date_and_time' => time(),
-                    'page_link' => $page_link,
-                    'post' => '',
-                    'referer_url' => cms_mb_substr($_SERVER['HTTP_REFERER'], 0, 255),
-                    'ip' => get_ip_address(),
-                    'member_id' => $GLOBALS['FORUM_DRIVER']->get_guest_id(),
-                    'session_id' => get_pseudo_session_id(),
-                    'browser' => cms_mb_substr(get_browser_string(), 0, 255),
-                    'operating_system' => cms_mb_substr(get_os_string(), 0, 255),
-                    'requested_language' => substr(preg_replace('#[,;].*$#', '', $_SERVER['HTTP_ACCEPT_LANGUAGE']), 0, 10),
-                    'milliseconds' => 0,
-                    'tracking_code' => cms_mb_substr(get_param_string('_t', ''), 0, 80),
-                ], false, true);
-            }
+            global $PAGE_START_TIME;
+            $page_generation_time = (microtime(true) - $PAGE_START_TIME) * 1000.0;
+            log_stats(null, $page_generation_time);
 
             exit();
         } else {

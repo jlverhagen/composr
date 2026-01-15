@@ -1,0 +1,16 @@
+Return-Path: <>
+From: "Mail Delivery System" <MAILER-DAEMON@example.com>
+To: <staff@example.com>
+Subject: Mail delivery failed: returning message to sender
+Date: Wed, 8 Jan 2026 10:15:00 +0000
+Content-Type: text/plain; charset=UTF-8
+
+This message was created automatically by mail delivery software.
+
+A message that you sent could not be delivered to one or more of its
+recipients. This is a permanent error. The following address(es) failed:
+
+  someone@example.com
+    host mail.example.com [1.1.1.1]
+    SMTP error from remote mail server after RCPT TO:<someone@example.com>:
+    550 5.1.1 <someone@example.com>: Recipient address rejected: User unknown in virtual alias table

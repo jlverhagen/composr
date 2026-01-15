@@ -79,7 +79,6 @@ class Hook_symbol_SYMBOL_DATA_AS_JSON
             'LANG',
             'COUNTRY',
             'COOKIE_DATA_JSON',
-            'CSP_NONCE',
             'CLEAR_AUTOSAVE',
             'SEES_JAVASCRIPT_ERROR_ALERTS',
             'CAN_TRY_URL_SCHEMES',

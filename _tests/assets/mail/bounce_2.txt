@@ -1,0 +1,12 @@
+Return-Path: <postmaster@example.com>
+From: postmaster@example.com
+To: staff@example.com
+Subject: Delivery Status Notification (Failure)
+Date: Wed, 8 Jan 2026 10:10:00 +0000
+Content-Type: text/plain; charset=UTF-8
+
+This is an automatically generated Delivery Status Notification.
+
+Delivery to the following recipients failed.
+
+       other-user@example.com

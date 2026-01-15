@@ -107,6 +107,39 @@ function handle_failover_auto_switching(int $iteration = 0)
 
     $data = '';
 
+    if (!empty($SITE_INFO['failover_loadaverage_threshold'])) {
+        // Check loadaverage (Unix-like)
+        if (function_exists('sys_getloadavg')) {
+            $result = sys_getloadavg();
+            $load = $result[1];
+            if ($load >= floatval($SITE_INFO['failover_loadaverage_threshold'])) {
+                is_failing('slow server; load-average=' . number_format($load, 2));
+                return;
+            }
+        }
+
+        // Check loadaverage (Windows)
+        if (class_exists('COM')) {
+            $wmi = new COM('Winmgmts://');
+            $server = $wmi->execquery('SELECT LoadPercentage FROM Win32_Processor');
+            if (is_array($server)) {
+                $cpu_num = 0;
+                $load_total = 0;
+                foreach ($server as $cpu) {
+                    $cpu_num++;
+                    $load_total += $cpu->loadpercentage;
+                }
+                $load = round(floatval($load_total) / floatval($cpu_num));
+                if ($cpu_num != 0) {
+                    if ($load >= floatval($SITE_INFO['failover_loadaverage_threshold'])) {
+                        is_failing('load-average=' . number_format($load, 2));
+                        return;
+                    }
+                }
+            }
+        }
+    }
+
     // Check URLs
     if (!empty($SITE_INFO['failover_check_urls'])) {
         $context = stream_context_create([
@@ -144,6 +177,7 @@ function handle_failover_auto_switching(int $iteration = 0)
                 if ($data === false) {
                     if ($done_retries >= $max_retries) {
                         is_failing($full_url . ' (failed load / slow load)');
+                        return;
                     } else {
                         $done_retries++;
                         @usleep($time_between_retries * 1000000);
@@ -155,6 +189,7 @@ function handle_failover_auto_switching(int $iteration = 0)
                 if (strpos($http_response_header[0], '200') === false) {
                     if ($done_retries >= $max_retries) {
                         is_failing($full_url . ' (bad HTTP code; ' . $http_response_header[0] . ')');
+                        return;
                     } else {
                         $done_retries++;
                         @usleep($time_between_retries * 1000000);
@@ -167,6 +202,7 @@ function handle_failover_auto_switching(int $iteration = 0)
                 if ((strlen($data) < 500) && (preg_match('#<b>(\w+ error)</b>#', $data, $matches) != 0)) {
                     if ($done_retries >= $max_retries) {
                         is_failing($full_url . ' (' . $matches[1] . ')');
+                        return;
                     } else {
                         $done_retries++;
                         @usleep($time_between_retries * 1000000);
@@ -178,6 +214,7 @@ function handle_failover_auto_switching(int $iteration = 0)
                 if ((!empty($SITE_INFO['failover_loadtime_threshold'])) && ($time >= floatval($SITE_INFO['failover_loadtime_threshold']))) {
                     if ($done_retries >= $max_retries) {
                         is_failing($full_url . ' (slow load; ' . number_format($time, 2) . ' seconds)');
+                        return;
                     } else {
                         $done_retries++;
                         @usleep($time_between_retries * 1000000);
@@ -190,37 +227,6 @@ function handle_failover_auto_switching(int $iteration = 0)
         }
     }
 
-    if (!empty($SITE_INFO['failover_loadaverage_threshold'])) {
-        // Check loadaverage (Unix-like)
-        if (function_exists('sys_getloadavg')) {
-            $result = sys_getloadavg();
-            $load = $result[1];
-            if ($load >= floatval($SITE_INFO['failover_loadaverage_threshold'])) {
-                is_failing('slow server; load-average=' . number_format($load, 2));
-            }
-        }
-
-        // Check loadaverage (Windows)
-        if (class_exists('COM')) {
-            $wmi = new COM('Winmgmts://');
-            $server = $wmi->execquery('SELECT LoadPercentage FROM Win32_Processor');
-            if (is_array($server)) {
-                $cpu_num = 0;
-                $load_total = 0;
-                foreach ($server as $cpu) {
-                    $cpu_num++;
-                    $load_total += $cpu->loadpercentage;
-                }
-                $load = round(floatval($load_total) / floatval($cpu_num));
-                if ($cpu_num != 0) {
-                    if ($load >= floatval($SITE_INFO['failover_loadaverage_threshold'])) {
-                        is_failing('load-average=' . number_format($load, 2));
-                    }
-                }
-            }
-        }
-    }
-
     // If we got this far, no problems
     static $made_change_to_off = false;
     if ($SITE_INFO['failover_mode'] == 'auto_on') {
@@ -228,7 +234,7 @@ function handle_failover_auto_switching(int $iteration = 0)
         $made_change_to_off = true;
 
         $base_url = parse_url($SITE_INFO['base_url']);
-        $subject = 'Failover mode DEactivated for ' . $base_url['host'];
+        $subject = 'Failover mode deactivated for ' . $base_url['host'];
         $message = "Failover mode deactivated, the site is now back online.";
         send_failover_email($subject, $message);
     }
@@ -257,7 +263,7 @@ function is_failing(string $url)
 
         $base_url = parse_url($SITE_INFO['base_url']);
         $subject = 'Failover mode activated for ' . $base_url['host'];
-        $message = "Failover mode activated when running the following check:\n" . $url . "\n\nWhen the problem has been corrected it will automatically disable.\nIf this is a false alarm somehow you can force failover mode off manually by setting \$SITE_INFO['failover_mode']='off'; in _config.php\n\nYou xan force an immediate rescan from:\n{$scan_url}";
+        $message = "Failover mode activated when running the following check:\n" . $url . "\n\nWhen the problem has been corrected it will automatically disable.\nIf this is a false alarm somehow you can force failover mode off manually by setting \$SITE_INFO['failover_mode']='off'; in _config.php\n\nYou can force an immediate rescan from:\n{$scan_url}";
         send_failover_email($subject, $message);
     }
 

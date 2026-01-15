@@ -1,0 +1,10 @@
+Return-Path: <test@example.com>
+From: "Someone" <someone@example.com>
+To: <staff@example.com>
+Subject: Question about 550 codes
+Date: Wed, 8 Jan 2026 10:20:00 +0000
+Content-Type: text/plain; charset=UTF-8
+
+Hi, I keep getting a 550 error when I send to some addresses. Can you help?
+It says "550 Requested action not taken: mailbox unavailable".
+But this email itself is not a bounce!

@@ -1,0 +1,22 @@
+Return-Path: <>
+From: MAILER-DAEMON@example.com (Mail Delivery System)
+To: staff@example.com
+Subject: Undeliverable: Hello
+Date: Wed, 8 Jan 2026 10:05:00 +0000
+Content-Type: multipart/report; report-type=delivery-status; boundary="boundary"
+X-Failed-Recipients: user-failed@example.com
+
+--boundary
+Content-Type: text/plain; charset=UTF-8
+
+Delivery to the following recipient failed permanently:
+
+     user-failed@example.com
+
+Technical details of permanent failure:
+Google tried to deliver your message, but it was rejected by the server for the recipient domain example.com by mail.example.com. [1.2.3.4].
+
+The error that the other server returned was:
+550 5.1.1 The email account that you tried to reach does not exist. Please try double-checking the recipient's email address for typos or unnecessary spaces. Learn more at https://support.google.com/mail/?p=NoSuchUser
+
+--boundary--

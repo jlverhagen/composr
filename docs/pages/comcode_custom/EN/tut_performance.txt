@@ -544,7 +544,7 @@ It is common to put a high-performance web server between a dynamic website like
 
 If you are using a reverse proxy then it's important PHP sees the correct IP addresses of end-users, not your proxy server.
 You can solve this by setting the Composr [tt]trusted_proxies[/tt] installation option (edited via [tt]config_editor.php[/tt]).
-By default we place trust on Cloudflare IP ranges.
+By default we place trust on Cloudflare IP ranges. Note that if you set this option, then Composr will not process Cloudflare traffic correctly if you are using Cloudflare.
 
 [title="3"]mod_pagespeed / Cloudflare optimisations[/title]
 
@@ -555,7 +555,7 @@ The Cloudflare service (described in the above section) provides some of the sam
 [title="3"]Further advice[/title]
 
 Tips:
- - Sometimes you may be flooded with random traffic. For example, the chinese "great firewall" has been observed to randomly reroute traffic to avoid it reaching certain sites. If this happens, you may want to use a [tt].htaccess[/tt] file (Apache only) to spot undesired request patterns and terminate those requests.
+ - Sometimes you may be flooded with random traffic. For example, AI crawlers have been known to get very aggressive. If this happens, you may want to use a [tt].htaccess[/tt] file (Apache only) to spot undesired request patterns and terminate those requests.
  - Configure your TLS options appropriately; basically there is a trade-off between perfect privacy ("Perfect Forward Secrecy") and speed -- and TLS 1.3 offers good speed improvements.
  - Set up [tt]fail2ban[/tt] so that you aren't constantly having to log failed login attempts by hackers to SSH etc (this can be a big I/O performance hit).
  - You may want to use only systemd's journald, rather than rsyslogd; on some Linux system rsyslogd is configured to mirror entries written to journald, which can be very intensive due to the frequent reading in and out. journald is higher performance as it is an efficient binary format with a cursor feature.

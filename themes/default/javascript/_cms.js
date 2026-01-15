@@ -227,7 +227,7 @@
      * @method
      * @returns {string}
      */
-    $cms.getCspNonce = $util.constant(strVal(symbols.CSP_NONCE));
+    $cms.getCspNonce = $util.constant(strVal((!$cms.inMinikernelVersion() ? document.getElementById('cms-nonce').content : '')));
     /**
      * @memberof $cms
      * @method

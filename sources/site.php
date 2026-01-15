@@ -1360,8 +1360,10 @@ function save_static_caching($out, string $mime_type = 'text/html') : bool
         }
     }
 
-    // Remove any sessions etc
+    // Remove any sessions, nonce, etc
     $static_cache = preg_replace('#(&|&amp;|&amp;amp;|%3Aamp%3A|\?)?(keep_session|for_session|keep_devtest|keep_failover)(=|%3D)\w+#', '', $static_cache);
+    $static_cache = preg_replace('#\bnonce=\"\w*\"#', ' nonce=""', $static_cache);
+    $static_cache = preg_replace('#' . preg_quote('<meta id="cms-nonce" name="cms-nonce" content="', '#') . '\w*\"#', '<meta id="cms-nonce" name="cms-nonce" content=""', $static_cache);
 
     // Add URL identifier
     $static_cache .= "\n\n" . '<!-- Cached URL ' . htmlentities($url) . ' -->';
@@ -2359,90 +2361,4 @@ function comcode_breadcrumbs(string $the_page, string $the_zone, string $root = 
     // Further recursion
     $below = comcode_breadcrumbs($PT_PAIR_CACHE_CP[$the_page]['p_parent_page'], $the_zone, $root, true, $jumps + 1);
     return array_merge($below, $segments);
-}
-
-/**
- * Log statistics for the page view.
- *
- * @param  ?string $page_link Page link being viewed (null: work it out)
- * @param  integer $pg_time The time taken for page loading in milliseconds
- */
-function log_stats(?string $page_link, int $pg_time)
-{
-    if (!addon_installed('stats')) {
-        return;
-    }
-
-    if ((get_option('site_closed') != '0') && (get_option('stats_when_closed') == '0')) {
-        return;
-    }
-
-    $time = time();
-
-    if ($page_link === null) {
-        $page_link = get_current_page_link(true, 255);
-    }
-
-    if ((get_option('super_logging') == '1') && ($_SERVER['REQUEST_METHOD'] == 'POST')) {
-        $post2 = [];
-        foreach ($_POST as $key => $val) {
-            if (!is_password_field(strval($key))) {
-                $post2[$key] = $val;
-            }
-        }
-        $post = json_encode($post2);
-    } else {
-        $post = '';
-    }
-
-    $ip = get_ip_address();
-    global $IS_ACTUALLY;
-    $member_id = ($IS_ACTUALLY === null) ? get_member() : $IS_ACTUALLY;
-
-    // We want to suppress DB errors for logging stats but still log/relay the error
-    require_code('failure');
-    push_throw_errors(true);
-
-    try {
-        $GLOBALS['SITE_DB']->query_insert('stats', [
-            'date_and_time' => $time,
-            'page_link' => $page_link,
-            'post' => $post,
-            'referer_url' => cms_mb_substr($_SERVER['HTTP_REFERER'], 0, 255),
-            'ip' => $ip,
-            'member_id' => $member_id,
-            'session_id' => get_pseudo_session_id(),
-            'browser' => cms_mb_substr(get_browser_string(), 0, 255),
-            'operating_system' => cms_mb_substr(get_os_string(), 0, 255),
-            'requested_language' => substr(preg_replace('#[,;].*$#', '', $_SERVER['HTTP_ACCEPT_LANGUAGE']), 0, 10),
-            'milliseconds' => intval($pg_time),
-            'tracking_code' => cms_mb_substr(get_param_string('_t', ''), 0, 80),
-        ], false);
-    } catch (Exception $e) {
-        // cms_error_log(brand_name() . ' database: WARNING ' . $e->getMessage()); // DB already logs it
-    }
-
-    pop_throw_errors();
-
-    /*
-        NB: We cannot always assume the scheduler is running, so randomly clear the stats if the scheduler hasn't in the last hour.
-        This, however, is not enough for GDPR compliance; we need the scheduler (privacy_purging) as well.
-    */
-    if (mt_rand(0, 50) == 1) {
-        $last_cron = get_value('last_cron');
-        if (($last_cron === null) || (intval($last_cron) < time() - 60 * 60)) {
-            cms_register_shutdown_function_safe(function () {
-                require_code('stats');
-                cleanup_stats();
-            });
-        }
-    }
-
-    global $SITE_INFO;
-    if (isset($SITE_INFO['throttle_bandwidth_views_per_meg'])) {
-        $increment = statistical_update_model('values', intval(get_value('page_views')));
-        if ($increment != 0) {
-            set_value('page_views', strval(intval(get_value('page_views')) + 1), false, true);
-        }
-    }
 }

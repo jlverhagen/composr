@@ -38,6 +38,7 @@
 <link rel="baseurl" href="{$BASE_URL*}" />
 <link rel="sitemap" href="{$BASE_URL*}/data_custom/sitemaps/index.xml" />
 <meta id="cms-symbol-data" name="cms-symbol-data" content="{$SYMBOL_DATA_AS_JSON*}" />
+<meta id="cms-nonce" name="cms-nonce" content="{$CSP_NONCE*}" />
 {+START,COMMENT,Commented out by default to save bandwidth}
 	<meta name="GENERATOR" content="{$BRAND_NAME*}" />
 	<meta name="publisher" content="{$COPYRIGHT`}" />
