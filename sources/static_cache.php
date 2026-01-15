@@ -255,7 +255,7 @@ function static_cache(int $mode)
     $param_sets = [
         [
             'non_bot' => ($mode & STATIC_CACHE__FAST_SPIDER) == 0,
-            'no_js' => (!array_key_exists('has_js', $_COOKIE) && (get_option('detect_javascript') == '1')),
+            'no_js' => !array_key_exists('has_js', $_COOKIE), // NB: always used when detect_javascript is off; cannot check this option as config might not be loaded
             'mobile' => $is_mobile,
             'failover_mode' => $in_failover_mode,
         ],
