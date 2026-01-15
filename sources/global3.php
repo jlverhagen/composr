@@ -6362,8 +6362,10 @@ function log_stats(?string $page_link, int $pg_time)
         return;
     }
 
-    if ((get_option('site_closed') != '0') && (get_option('stats_when_closed') == '0')) {
-        return;
+    if (function_exists('get_option')) {
+        if ((get_option('site_closed') != '0') && (get_option('stats_when_closed') == '0')) {
+            return;
+        }
     }
 
     $time = time();
@@ -6373,7 +6375,7 @@ function log_stats(?string $page_link, int $pg_time)
         $page_link = get_current_page_link(true, 255);
     }
 
-    if ((get_option('super_logging') == '1') && ($_SERVER['REQUEST_METHOD'] == 'POST')) {
+    if (function_exists('get_option') && (get_option('super_logging') == '1') && ($_SERVER['REQUEST_METHOD'] == 'POST')) {
         $post2 = [];
         foreach ($_POST as $key => $val) {
             if (!is_password_field(strval($key))) {

@@ -731,7 +731,7 @@ function get_pseudo_session_id() : string
 {
     $session_id = get_session_id();
     if ($session_id == '') {
-        $session_id = get_ip_address();
+        $session_id = cms_base64_encode(get_ip_address(), true, true, true);
     }
     return $session_id;
 }
