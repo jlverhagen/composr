@@ -392,7 +392,7 @@ function static_cache(int $mode)
             // Add to stats
             global $PAGE_START_TIME;
             $page_generation_time = (microtime(true) - $PAGE_START_TIME) * 1000.0;
-            log_stats(null, $page_generation_time);
+            log_stats(null, intval($page_generation_time));
 
             exit();
         } else {
