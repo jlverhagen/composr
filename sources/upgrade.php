@@ -439,6 +439,7 @@ function upgrader_output_header()
     $lang = user_lang();
     $dir = do_lang('dir');
     $symbol_data = static_evaluate_tempcode(symbol_tempcode('SYMBOL_DATA_AS_JSON'));
+    $nonce = static_evaluate_tempcode(symbol_tempcode('CSP_NONCE'));
 
     cms_ob_end_clean();
     echo <<<END
@@ -446,6 +447,7 @@ function upgrader_output_header()
     <html lang="{$lang}" dir="{$dir}">
     <head>
         <meta id="cms-symbol-data" name="cms-symbol-data" content="{$symbol_data}" />
+        <meta id="cms-nonce" name="cms-nonce" content="{$nonce}" />
         <meta http-equiv="Content-Type" content="text/html; charset={$charset}" />
 
         <title>{$upgrader_title}</title>

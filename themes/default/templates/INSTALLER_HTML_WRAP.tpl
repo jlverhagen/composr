@@ -5,6 +5,7 @@
 <html lang="{$LCASE*,{$METADATA,lang}}"{$ATTR_DEFAULTED,dir,{!dir},ltr} data-view="Global" data-view-params="{+START,PARAMS_JSON,page_link_privacy}{_*}{+END}" class="in-minikernel-version">
 	<head>
 		<meta id="cms-symbol-data" name="cms-symbol-data" content="{$SYMBOL_DATA_AS_JSON*}" />
+		<meta id="cms-nonce" name="cms-nonce" content="{$CSP_NONCE*}" />
 		<meta http-equiv="Content-Type" content="text/html; charset={$CHARSET*}" />
 		<meta name="GENERATOR" content="Composr" />
 		<meta name="description" content="Composr installer" />

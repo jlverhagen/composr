@@ -164,7 +164,7 @@ function can_static_cache_request(bool $consider_failover_mode = false) : bool
 function static_cache_current_url() : string
 {
     $url = static_cache__get_self_url_easy();
-    $url = preg_replace('#(keep_session|for_session|keep_devtest|keep_failover)=\d+#', '', $url);
+    $url = preg_replace('#(&|&amp;|&amp;amp;|%3Aamp%3A|\?)?(keep_session|for_session|keep_devtest|keep_failover)(=|%3D)\w+#', '', $url);
     $url = str_replace('keep_su=Guest', '', $url);
     $url = preg_replace('#\?&+#', '?', $url);
     $url = preg_replace('#&+#', '&', $url);
@@ -205,6 +205,8 @@ function static_cache(int $mode)
     $client_support_brotli = (isset($_SERVER['HTTP_ACCEPT_ENCODING'])) && (strpos($_SERVER['HTTP_ACCEPT_ENCODING'], 'br') !== false);
     $client_support_gzip = (isset($_SERVER['HTTP_ACCEPT_ENCODING'])) && (strpos($_SERVER['HTTP_ACCEPT_ENCODING'], 'gzip') !== false);
     $client_support_compressed = ($client_support_brotli || $client_support_gzip) && (function_exists('php_function_allowed')) && (php_function_allowed('ini_set')/*If can disable default PHP compression*/);
+    $client_support_compressed = false; // TODO: not supported as it breaks nonce
+
     $server_support_brotli = false; // May be set later
     $server_support_gzip = false; // May be set later
 
@@ -376,6 +378,12 @@ function static_cache(int $mode)
                 $contents .= "\n\n" . '<!-- Served ' . htmlentities($fast_cache_path) . ' -->';
                 $contents .= '<failover />';
             }
+
+            // Inject correct nonce
+            require_code('csp');
+            global $CSP_NONCE;
+            $contents = preg_replace('#\bnonce=\"\w*\"#', ' ' . csp_nonce_html(), $contents);
+            $contents = preg_replace('#' . preg_quote('<meta id="cms-nonce" name="cms-nonce" content="', '#') . '\w*\"#', '<meta id="cms-nonce" name="cms-nonce" content="' . (isset($CSP_NONCE) ? $CSP_NONCE : '') . '"', $contents);
 
             echo $contents;
             cms_flush_safe();
