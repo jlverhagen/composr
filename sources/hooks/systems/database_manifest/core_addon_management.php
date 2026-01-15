@@ -52,6 +52,22 @@ class Hook_database_manifest_core_addon_management
     }
 
     /**
+     * Get a map of table descriptions.
+     *
+     * @return array Map of table descriptions
+     */
+    public function get_table_descriptions() : array
+    {
+        require_lang('addons');
+
+        return [
+            'addons' => do_lang('DB_MANIFEST_DESCRIPTION_addons'),
+            'addons_dependencies' => do_lang('DB_MANIFEST_DESCRIPTION_addons_dependencies'),
+            'addons_files' => do_lang('DB_MANIFEST_DESCRIPTION_addons_files'),
+        ];
+    }
+
+    /**
      * Database manifest for this addon.
      * This is automatically maintained by the software release tools if you are using it.
      *

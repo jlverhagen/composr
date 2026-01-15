@@ -63,6 +63,33 @@ class Hook_database_manifest_catalogues
     }
 
     /**
+     * Get a map of table descriptions.
+     *
+     * @return array Map of table descriptions
+     */
+    public function get_table_descriptions() : array
+    {
+        require_lang('catalogues');
+
+        return [
+            'catalogue_cat_treecache' => do_lang('DB_MANIFEST_DESCRIPTION_catalogue_cat_treecache'),
+            'catalogue_categories' => do_lang('DB_MANIFEST_DESCRIPTION_catalogue_categories'),
+            'catalogue_childcountcache' => do_lang('DB_MANIFEST_DESCRIPTION_catalogue_childcountcache'),
+            'catalogue_efv_float' => do_lang('DB_MANIFEST_DESCRIPTION_catalogue_efv_float'),
+            'catalogue_efv_integer' => do_lang('DB_MANIFEST_DESCRIPTION_catalogue_efv_integer'),
+            'catalogue_efv_long' => do_lang('DB_MANIFEST_DESCRIPTION_catalogue_efv_long'),
+            'catalogue_efv_long_trans' => do_lang('DB_MANIFEST_DESCRIPTION_catalogue_efv_long_trans'),
+            'catalogue_efv_short' => do_lang('DB_MANIFEST_DESCRIPTION_catalogue_efv_short'),
+            'catalogue_efv_short_trans' => do_lang('DB_MANIFEST_DESCRIPTION_catalogue_efv_short_trans'),
+            'catalogue_entry_linkage' => do_lang('DB_MANIFEST_DESCRIPTION_catalogue_entry_linkage'),
+            'catalogue_fields' => do_lang('DB_MANIFEST_DESCRIPTION_catalogue_fields'),
+            'catalogues' => do_lang('DB_MANIFEST_DESCRIPTION_catalogues'),
+            'ce_fulltext_index' => do_lang('DB_MANIFEST_DESCRIPTION_ce_fulltext_index'),
+            'catalogue_entries' => do_lang('DB_MANIFEST_DESCRIPTION_catalogue_entries'),
+        ];
+    }
+
+    /**
      * Database manifest for this addon.
      * This is automatically maintained by the software release tools if you are using it.
      *

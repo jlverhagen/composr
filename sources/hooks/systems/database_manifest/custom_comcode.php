@@ -50,6 +50,20 @@ class Hook_database_manifest_custom_comcode
     }
 
     /**
+     * Get a map of table descriptions.
+     *
+     * @return array Map of table descriptions
+     */
+    public function get_table_descriptions() : array
+    {
+        require_lang('comcode');
+
+        return [
+            'custom_comcode' => do_lang('DB_MANIFEST_DESCRIPTION_custom_comcode'),
+        ];
+    }
+
+    /**
      * Database manifest for this addon.
      * This is automatically maintained by the software release tools if you are using it.
      *

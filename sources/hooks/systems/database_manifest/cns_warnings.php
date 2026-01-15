@@ -52,6 +52,22 @@ class Hook_database_manifest_cns_warnings
     }
 
     /**
+     * Get a map of table descriptions.
+     *
+     * @return array Map of table descriptions
+     */
+    public function get_table_descriptions() : array
+    {
+        require_lang('cns_warnings');
+
+        return [
+            'f_saved_warnings' => do_lang('DB_MANIFEST_DESCRIPTION_f_saved_warnings'),
+            'f_warnings' => do_lang('DB_MANIFEST_DESCRIPTION_f_warnings'),
+            'f_warnings_punitive' => do_lang('DB_MANIFEST_DESCRIPTION_f_warnings_punitive'),
+        ];
+    }
+
+    /**
      * Database manifest for this addon.
      * This is automatically maintained by the software release tools if you are using it.
      *

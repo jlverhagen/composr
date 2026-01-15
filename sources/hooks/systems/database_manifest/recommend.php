@@ -44,9 +44,17 @@ class Hook_database_manifest_recommend
     {
         require_code('database_relations');
 
-        return [
+        return [];
+    }
 
-        ];
+    /**
+     * Get a map of table descriptions.
+     *
+     * @return array Map of table descriptions
+     */
+    public function get_table_descriptions() : array
+    {
+        return [];
     }
 
     /**

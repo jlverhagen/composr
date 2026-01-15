@@ -53,6 +53,24 @@ class Hook_database_manifest_core_adminzone_dashboard
     }
 
     /**
+     * Get a map of table descriptions.
+     *
+     * @return array Map of table descriptions
+     */
+    public function get_table_descriptions() : array
+    {
+        require_lang('staff_checklist');
+        require_lang('tips');
+
+        return [
+            'actionlogs' => do_lang('DB_MANIFEST_DESCRIPTION_actionlogs'),
+            'staff_tips_dismissed' => do_lang('DB_MANIFEST_DESCRIPTION_staff_tips_dismissed'),
+            'staff_links' => do_lang('DB_MANIFEST_DESCRIPTION_staff_links'),
+            'staff_checklist_cus_tasks' => do_lang('DB_MANIFEST_DESCRIPTION_staff_checklist_cus_tasks'),
+        ];
+    }
+
+    /**
      * Database manifest for this addon.
      * This is automatically maintained by the software release tools if you are using it.
      *

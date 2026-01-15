@@ -50,6 +50,20 @@ class Hook_database_manifest_aggregate_types
     }
 
     /**
+     * Get a map of table descriptions.
+     *
+     * @return array Map of table descriptions
+     */
+    public function get_table_descriptions() : array
+    {
+        require_lang('aggregate_types');
+
+        return [
+            'aggregate_type_instances' => do_lang('DB_MANIFEST_DESCRIPTION_aggregate_type_instances'),
+        ];
+    }
+
+    /**
      * Database manifest for this addon.
      * This is automatically maintained by the software release tools if you are using it.
      *

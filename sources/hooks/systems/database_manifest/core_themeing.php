@@ -52,6 +52,22 @@ class Hook_database_manifest_core_themeing
     }
 
     /**
+     * Get a map of table descriptions.
+     *
+     * @return array Map of table descriptions
+     */
+    public function get_table_descriptions() : array
+    {
+        require_lang('themes');
+
+        return [
+            'theme_images' => do_lang('DB_MANIFEST_DESCRIPTION_theme_images'),
+            'theme_screen_tree' => do_lang('DB_MANIFEST_DESCRIPTION_theme_screen_tree'),
+            'theme_template_relations' => do_lang('DB_MANIFEST_DESCRIPTION_theme_template_relations'),
+        ];
+    }
+
+    /**
      * Database manifest for this addon.
      * This is automatically maintained by the software release tools if you are using it.
      *

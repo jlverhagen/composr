@@ -50,6 +50,20 @@ class Hook_database_manifest_cns_multi_moderations
     }
 
     /**
+     * Get a map of table descriptions.
+     *
+     * @return array Map of table descriptions
+     */
+    public function get_table_descriptions() : array
+    {
+        require_lang('cns_multi_moderations');
+
+        return [
+            'f_multi_moderations' => do_lang('DB_MANIFEST_DESCRIPTION_f_multi_moderations'),
+        ];
+    }
+
+    /**
      * Database manifest for this addon.
      * This is automatically maintained by the software release tools if you are using it.
      *

@@ -56,6 +56,26 @@ class Hook_database_manifest_chat
     }
 
     /**
+     * Get a map of table descriptions.
+     *
+     * @return array Map of table descriptions
+     */
+    public function get_table_descriptions() : array
+    {
+        require_code('chat');
+
+        return [
+            'chat_active' => do_lang('DB_MANIFEST_DESCRIPTION_chat_active'),
+            'chat_events' => do_lang('DB_MANIFEST_DESCRIPTION_chat_events'),
+            'chat_blocking' => do_lang('DB_MANIFEST_DESCRIPTION_chat_blocking'),
+            'chat_friends' => do_lang('DB_MANIFEST_DESCRIPTION_chat_friends'),
+            'chat_messages' => do_lang('DB_MANIFEST_DESCRIPTION_chat_messages'),
+            'chat_rooms' => do_lang('DB_MANIFEST_DESCRIPTION_chat_rooms'),
+            'chat_sound_effects' => do_lang('DB_MANIFEST_DESCRIPTION_chat_sound_effects'),
+        ];
+    }
+
+    /**
      * Database manifest for this addon.
      * This is automatically maintained by the software release tools if you are using it.
      *

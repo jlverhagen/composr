@@ -76,6 +76,46 @@ class Hook_database_manifest_core_cns
     }
 
     /**
+     * Get a map of table descriptions.
+     *
+     * @return array Map of table descriptions
+     */
+    public function get_table_descriptions() : array
+    {
+        require_lang('cns');
+
+        return [
+            'f_custom_fields' => do_lang('DB_MANIFEST_DESCRIPTION_f_custom_fields'),
+            'f_emoticons' => do_lang('DB_MANIFEST_DESCRIPTION_emoticons'),
+            'f_forum_groupings' => do_lang('DB_MANIFEST_DESCRIPTION_f_forum_groupings'),
+            'f_forum_intro_ip' => do_lang('DB_MANIFEST_DESCRIPTION_f_forum_intro_ip'),
+            'f_forum_intro_member' => do_lang('DB_MANIFEST_DESCRIPTION_f_forum_intro_member'),
+            'f_forums' => do_lang('DB_MANIFEST_DESCRIPTION_f_forums'),
+            'f_group_approvals' => do_lang('DB_MANIFEST_DESCRIPTION_f_group_approvals'),
+            'f_group_join_log' => do_lang('DB_MANIFEST_DESCRIPTION_f_group_join_log'),
+            'f_group_members' => do_lang('DB_MANIFEST_DESCRIPTION_f_group_members'),
+            'f_groups' => do_lang('DB_MANIFEST_DESCRIPTION_f_groups'),
+            'f_invites' => do_lang('DB_MANIFEST_DESCRIPTION_f_invites'),
+            'f_member_cpf_perms' => do_lang('DB_MANIFEST_DESCRIPTION_f_member_cpf_perms'),
+            'f_member_custom_fields' => do_lang('DB_MANIFEST_DESCRIPTION_f_member_custom_fields'),
+            'f_member_known_login_ips' => do_lang('DB_MANIFEST_DESCRIPTION_f_member_known_login_ips'),
+            'f_members' => do_lang('DB_MANIFEST_DESCRIPTION_f_members'),
+            'f_moderator_logs' => do_lang('DB_MANIFEST_DESCRIPTION_f_moderator_logs'),
+            'f_password_history' => do_lang('DB_MANIFEST_DESCRIPTION_f_password_history'),
+            'f_poll_answers' => do_lang('DB_MANIFEST_DESCRIPTION_f_poll_answers'),
+            'f_poll_votes' => do_lang('DB_MANIFEST_DESCRIPTION_f_poll_votes'),
+            'f_polls' => do_lang('DB_MANIFEST_DESCRIPTION_f_polls'),
+            'f_post_templates' => do_lang('DB_MANIFEST_DESCRIPTION_f_post_templates'),
+            'f_posts' => do_lang('DB_MANIFEST_DESCRIPTION_f_posts'),
+            'f_posts_fulltext_index' => do_lang('DB_MANIFEST_DESCRIPTION_f_posts_fulltext_index'),
+            'f_pposts_fulltext_index' => do_lang('DB_MANIFEST_DESCRIPTION_f_pposts_fulltext_index'),
+            'f_read_logs' => do_lang('DB_MANIFEST_DESCRIPTION_f_read_logs'),
+            'f_special_pt_access' => do_lang('DB_MANIFEST_DESCRIPTION_f_special_pt_access'),
+            'f_topics' => do_lang('DB_MANIFEST_DESCRIPTION_f_topics'),
+        ];
+    }
+
+    /**
      * Database manifest for this addon.
      * This is automatically maintained by the software release tools if you are using it.
      *

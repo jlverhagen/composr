@@ -52,6 +52,22 @@ class Hook_database_manifest_core_permission_management
     }
 
     /**
+     * Get a map of table descriptions.
+     *
+     * @return array Map of table descriptions
+     */
+    public function get_table_descriptions() : array
+    {
+        require_lang('permissions');
+
+        return [
+            'match_key_messages' => do_lang('DB_MANIFEST_DESCRIPTION_match_key_messages'),
+            'group_page_access' => do_lang('DB_MANIFEST_DESCRIPTION_group_page_access'),
+            'group_zone_access' => do_lang('DB_MANIFEST_DESCRIPTION_group_zone_access'),
+        ];
+    }
+
+    /**
      * Database manifest for this addon.
      * This is automatically maintained by the software release tools if you are using it.
      *

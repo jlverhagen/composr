@@ -53,6 +53,23 @@ class Hook_database_manifest_downloads
     }
 
     /**
+     * Get a map of table descriptions.
+     *
+     * @return array Map of table descriptions
+     */
+    public function get_table_descriptions() : array
+    {
+        require_lang('downloads');
+
+        return [
+            'download_categories' => do_lang('DB_MANIFEST_DESCRIPTION_download_categories'),
+            'download_downloads' => do_lang('DB_MANIFEST_DESCRIPTION_download_downloads'),
+            'download_licences' => do_lang('DB_MANIFEST_DESCRIPTION_download_licences'),
+            'download_logging' => do_lang('DB_MANIFEST_DESCRIPTION_download_logging'),
+        ];
+    }
+
+    /**
      * Database manifest for this addon.
      * This is automatically maintained by the software release tools if you are using it.
      *

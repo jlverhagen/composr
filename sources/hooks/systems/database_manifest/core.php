@@ -53,7 +53,6 @@ class Hook_database_manifest_core
             'cache' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__NO_BACKUPS | TABLE_PURPOSE__FLUSHABLE,
             'cache_on' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__NO_BACKUPS | TABLE_PURPOSE__FLUSHABLE | TABLE_PURPOSE__AUTOGEN_STATIC,
             'cached_comcode_pages' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__NO_BACKUPS | TABLE_PURPOSE__FLUSHABLE,
-            'captchas' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__NO_BACKUPS | TABLE_PURPOSE__FLUSHABLE,
             'comcode_pages' => TABLE_PURPOSE__NORMAL,
             'config' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__NO_STAGING_COPY/*has-special-Commandr-fs-hook*/,
             'content_privacy__members' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__SUBDATA/*under <content>*/,
@@ -111,6 +110,99 @@ class Hook_database_manifest_core
             'zones' => TABLE_PURPOSE__NORMAL,
             'cpages_fulltext_index' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__FLUSHABLE,
             'ft_index_commonality' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__FLUSHABLE,
+        ];
+    }
+
+    /**
+     * Get a map of table descriptions.
+     *
+     * @return array Map of table descriptions
+     */
+    public function get_table_descriptions() : array
+    {
+        require_lang('metadata');
+        require_lang('blocks');
+        require_lang('comcode');
+        require_lang('config');
+        require_lang('global2');
+        require_lang('content_privacy');
+        require_lang('locations');
+        require_lang('notifications');
+        require_lang('javascript');
+        require_lang('group_member_timeouts');
+        require_lang('permissions');
+        require_lang('mail');
+        require_lang('menus');
+        require_lang('tasks');
+        require_lang('webstandards');
+        require_lang('zones');
+
+        return [
+            'alternative_ids' => do_lang('DB_MANIFEST_DESCRIPTION_alternative_ids'),
+            'attachment_refs' => do_lang('DB_MANIFEST_DESCRIPTION_attachment_refs'),
+            'attachments' => do_lang('DB_MANIFEST_DESCRIPTION_attachments'),
+            'autosave' => do_lang('DB_MANIFEST_DESCRIPTION_autosave'),
+            'blocks' => do_lang('DB_MANIFEST_DESCRIPTION_blocks'),
+            'cache' => do_lang('DB_MANIFEST_DESCRIPTION_cache'),
+            'cache_on' => do_lang('DB_MANIFEST_DESCRIPTION_cache_on'),
+            'cached_comcode_pages' => do_lang('DB_MANIFEST_DESCRIPTION_cached_comcode_pages'),
+            'comcode_pages' => do_lang('DB_MANIFEST_DESCRIPTION_comcode_pages'),
+            'config' => do_lang('DB_MANIFEST_DESCRIPTION_config'),
+            'content_privacy__members' => do_lang('DB_MANIFEST_DESCRIPTION_content_privacy__members'),
+            'content_privacy' => do_lang('DB_MANIFEST_DESCRIPTION_content_privacy'),
+            'content_regions' => do_lang('DB_MANIFEST_DESCRIPTION_content_regions'),
+            'cron_caching_requests' => do_lang('DB_MANIFEST_DESCRIPTION_cron_caching_requests'),
+            'cron_progression' => do_lang('DB_MANIFEST_DESCRIPTION_cron_progression'),
+            'post_tokens' => do_lang('DB_MANIFEST_DESCRIPTION_post_tokens'),
+            'db_meta' => do_lang('DB_MANIFEST_DESCRIPTION_db_meta'),
+            'db_meta_indices' => do_lang('DB_MANIFEST_DESCRIPTION_db_meta_indices'),
+            'db_meta_foreign_keys' => do_lang('DB_MANIFEST_DESCRIPTION_db_meta_foreign_keys'),
+            'digestives_consumed' => do_lang('DB_MANIFEST_DESCRIPTION_digestives_consumed'),
+            'digestives_tin' => do_lang('DB_MANIFEST_DESCRIPTION_digestives_tin'),
+            'edit_pings' => do_lang('DB_MANIFEST_DESCRIPTION_edit_pings'),
+            'email_bounces' => do_lang('DB_MANIFEST_DESCRIPTION_email_bounces'),
+            'f_group_member_timeouts' => do_lang('DB_MANIFEST_DESCRIPTION_f_group_member_timeouts'),
+            'failedlogins' => do_lang('DB_MANIFEST_DESCRIPTION_failedlogins'),
+            'feature_lifetime_monitor' => do_lang('DB_MANIFEST_DESCRIPTION_feature_lifetime_monitor'),
+            'group_category_access' => do_lang('DB_MANIFEST_DESCRIPTION_group_category_access'),
+            'group_privileges' => do_lang('DB_MANIFEST_DESCRIPTION_group_privileges'),
+            'incoming_uploads' => do_lang('DB_MANIFEST_DESCRIPTION_incoming_uploads'),
+            'ip_country' => do_lang('DB_MANIFEST_DESCRIPTION_ip_country'),
+            'daily_visits' => do_lang('DB_MANIFEST_DESCRIPTION_daily_visits'),
+            'logged_mail_messages' => do_lang('DB_MANIFEST_DESCRIPTION_logged_mail_messages'),
+            'member_category_access' => do_lang('DB_MANIFEST_DESCRIPTION_member_category_access'),
+            'member_page_access' => do_lang('DB_MANIFEST_DESCRIPTION_member_page_access'),
+            'member_privileges' => do_lang('DB_MANIFEST_DESCRIPTION_member_privileges'),
+            'member_tracking' => do_lang('DB_MANIFEST_DESCRIPTION_member_tracking'),
+            'member_zone_access' => do_lang('DB_MANIFEST_DESCRIPTION_member_zone_access'),
+            'menu_items' => do_lang('DB_MANIFEST_DESCRIPTION_menu_items'),
+            'messages_to_render' => do_lang('DB_MANIFEST_DESCRIPTION_messages_to_render'),
+            'modules' => do_lang('DB_MANIFEST_DESCRIPTION_modules'),
+            'notifications_enabled' => do_lang('DB_MANIFEST_DESCRIPTION_notifications_enabled'),
+            'privilege_list' => do_lang('DB_MANIFEST_DESCRIPTION_privilege_list'),
+            'rating' => do_lang('DB_MANIFEST_DESCRIPTION_rating'),
+            'review_supplement' => do_lang('DB_MANIFEST_DESCRIPTION_review_supplement'),
+            'seo_meta' => do_lang('DB_MANIFEST_DESCRIPTION_seo_meta'),
+            'seo_meta_keywords' => do_lang('DB_MANIFEST_DESCRIPTION_seo_meta_keywords'),
+            'sessions' => do_lang('DB_MANIFEST_DESCRIPTION_sessions'),
+            'sitemap_cache' => do_lang('DB_MANIFEST_DESCRIPTION_sitemap_cache'),
+            'task_queue' => do_lang('DB_MANIFEST_DESCRIPTION_task_queue'),
+            'temp_block_permissions' => do_lang('DB_MANIFEST_DESCRIPTION_temp_block_permissions'),
+            'trackbacks' => do_lang('DB_MANIFEST_DESCRIPTION_trackbacks'),
+            'translate' => do_lang('DB_MANIFEST_DESCRIPTION_translate'),
+            'translation_cache' => do_lang('DB_MANIFEST_DESCRIPTION_translation_cache'),
+            'tutorial_links' => do_lang('DB_MANIFEST_DESCRIPTION_tutorial_links'),
+            'unbannable_ip' => do_lang('DB_MANIFEST_DESCRIPTION_unbannable_ip'),
+            'unsubscribed_emails' => do_lang('DB_MANIFEST_DESCRIPTION_unsubscribed_emails'),
+            'url_id_monikers' => do_lang('DB_MANIFEST_DESCRIPTION_url_id_monikers'),
+            'url_title_cache' => do_lang('DB_MANIFEST_DESCRIPTION_url_title_cache'),
+            'urls_checked' => do_lang('DB_MANIFEST_DESCRIPTION_urls_checked'),
+            'values' => do_lang('DB_MANIFEST_DESCRIPTION_values'),
+            'values_elective' => do_lang('DB_MANIFEST_DESCRIPTION_values_elective'),
+            'webstandards_checked_once' => do_lang('DB_MANIFEST_DESCRIPTION_webstandards_checked_once'),
+            'zones' => do_lang('DB_MANIFEST_DESCRIPTION_zones'),
+            'cpages_fulltext_index' => do_lang('DB_MANIFEST_DESCRIPTION_cpages_fulltext_index'),
+            'ft_index_commonality' => do_lang('DB_MANIFEST_DESCRIPTION_ft_index_commonality'),
         ];
     }
 

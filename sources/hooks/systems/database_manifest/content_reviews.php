@@ -50,6 +50,20 @@ class Hook_database_manifest_content_reviews
     }
 
     /**
+     * Get a map of table descriptions.
+     *
+     * @return array Map of table descriptions
+     */
+    public function get_table_descriptions() : array
+    {
+        require_lang('content_reviews');
+
+        return [
+            'content_reviews' => do_lang('DB_MANIFEST_DESCRIPTION_content_reviews'),
+        ];
+    }
+
+    /**
      * Database manifest for this addon.
      * This is automatically maintained by the software release tools if you are using it.
      *

@@ -51,6 +51,21 @@ class Hook_database_manifest_awards
     }
 
     /**
+     * Get a map of table descriptions.
+     *
+     * @return array Map of table descriptions
+     */
+    public function get_table_descriptions() : array
+    {
+        require_lang('awards');
+
+        return [
+            'award_archive' => do_lang('DB_MANIFEST_DESCRIPTION_award_archive'),
+            'award_types' => do_lang('DB_MANIFEST_DESCRIPTION_award_types'),
+        ];
+    }
+
+    /**
      * Database manifest for this addon.
      * This is automatically maintained by the software release tools if you are using it.
      *

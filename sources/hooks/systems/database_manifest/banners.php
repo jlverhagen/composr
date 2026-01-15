@@ -53,6 +53,23 @@ class Hook_database_manifest_banners
     }
 
     /**
+     * Get a map of table descriptions.
+     *
+     * @return array Map of table descriptions
+     */
+    public function get_table_descriptions() : array
+    {
+        require_lang('banners');
+
+        return [
+            'banner_clicks' => do_lang('DB_MANIFEST_DESCRIPTION_banner_clicks'),
+            'banner_types' => do_lang('DB_MANIFEST_DESCRIPTION_banner_types'),
+            'banners' => do_lang('DB_MANIFEST_DESCRIPTION_banners'),
+            'banners_types' => do_lang('DB_MANIFEST_DESCRIPTION_banners_types'),
+        ];
+    }
+
+    /**
      * Database manifest for this addon.
      * This is automatically maintained by the software release tools if you are using it.
      *

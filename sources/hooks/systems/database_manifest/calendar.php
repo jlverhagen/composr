@@ -54,6 +54,24 @@ class Hook_database_manifest_calendar
     }
 
     /**
+     * Get a map of table descriptions.
+     *
+     * @return array Map of table descriptions
+     */
+    public function get_table_descriptions() : array
+    {
+        require_lang('calendar');
+
+        return [
+            'calendar_events' => do_lang('DB_MANIFEST_DESCRIPTION_calendar_events'),
+            'calendar_reminders' => do_lang('DB_MANIFEST_DESCRIPTION_calendar_reminders'),
+            'calendar_interests' => do_lang('DB_MANIFEST_DESCRIPTION_calendar_interests'),
+            'calendar_jobs' => do_lang('DB_MANIFEST_DESCRIPTION_calendar_jobs'),
+            'calendar_types' => do_lang('DB_MANIFEST_DESCRIPTION_calendar_types'),
+        ];
+    }
+
+    /**
      * Database manifest for this addon.
      * This is automatically maintained by the software release tools if you are using it.
      *
