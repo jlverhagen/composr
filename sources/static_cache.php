@@ -381,6 +381,7 @@ function static_cache(int $mode)
 
             // Inject correct nonce
             require_code('csp');
+            load_csp();
             global $CSP_NONCE;
             $contents = preg_replace('#\snonce=\"\w*\"#', ' ' . csp_nonce_html(), $contents);
             $contents = preg_replace('#' . preg_quote('<meta id="cms-nonce" name="cms-nonce" content="', '#') . '\w*\"#', '<meta id="cms-nonce" name="cms-nonce" content="' . (isset($CSP_NONCE) ? $CSP_NONCE : '') . '"', $contents);
