@@ -181,7 +181,6 @@ class stats_test_set extends cms_test_case
 
         // Remove old preprocessed stats so we can force pre-processing again
         $GLOBALS['SITE_DB']->query_delete('stats_preprocessed');
-        $GLOBALS['SITE_DB']->query_delete('stats_preprocessed_delta');
         $GLOBALS['SITE_DB']->query_delete('stats_preprocessed_flat');
 
         // Generate dummy data so we can process stats on them
@@ -221,7 +220,7 @@ class stats_test_set extends cms_test_case
             preprocess_raw_data_for($hook_name, $start_time, $end_time);
         }
 
-        $rows = $GLOBALS['SITE_DB']->query_select('stats_preprocessed_delta', ['DISTINCT p_bucket']);
+        $rows = $GLOBALS['SITE_DB']->query_select('stats_preprocessed', ['DISTINCT p_bucket']);
         foreach ($rows as $row) {
             $buckets_existing[] = $row['p_bucket'];
         }
@@ -253,7 +252,7 @@ class stats_test_set extends cms_test_case
             }
         }
 
-        $rows = $GLOBALS['SITE_DB']->query_select('stats_preprocessed_delta', ['p_bucket', 'p_pivot']);
+        $rows = $GLOBALS['SITE_DB']->query_select('stats_preprocessed', ['p_bucket', 'p_pivot']);
         foreach ($rows as $row) {
             $this->assertTrue(isset($bucket_hook[$row['p_bucket']]), 'Orphaned bucket in database: ' . $row['p_bucket']);
             if (isset($bucket_hook[$row['p_bucket']])) {
@@ -351,7 +350,6 @@ class stats_test_set extends cms_test_case
     {
         // Remove old preprocessed stats so we can force pre-processing again
         $GLOBALS['SITE_DB']->query_delete('stats_preprocessed');
-        $GLOBALS['SITE_DB']->query_delete('stats_preprocessed_delta');
         $GLOBALS['SITE_DB']->query_delete('stats_preprocessed_flat');
 
         // Delete dummy data

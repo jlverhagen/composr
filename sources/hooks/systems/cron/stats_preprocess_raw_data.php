@@ -107,24 +107,6 @@ class Hook_cron_stats_preprocess_raw_data
         push_query_limiting(false);
         disable_php_memory_limit();
 
-        // Determine if we are in need of processing deltas; these are done first
-        $pending_deltas = $GLOBALS['SITE_DB']->get_table_count_approx('stats_preprocessed_delta');
-        $doing_deltas = ($pending_deltas > 0);
-
-        if ($doing_deltas) {
-            stats_merge_deltas($max_time);
-        }
-
-        // Memory and time check
-        $ml = php_return_bytes(ini_get('memory_limit'));
-        $current_memory = memory_get_usage(false);
-        $near_limit = (($ml > 0) && ($current_memory >= ($ml - (1024 * 1024 * 8)))); // within 8 MB of PHP memory limit
-        if (($near_limit) || ((time() - $hook_start) >= $max_time)) {
-            set_value('stats_catching_up', '1', true);
-            pop_query_limiting();
-            return;
-        }
-
         cms_profile_start_for('Hook_cron_stats_preprocess_raw_data preprocess_raw_data_for');
 
         $catching_up = false;

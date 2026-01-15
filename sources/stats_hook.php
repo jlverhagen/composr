@@ -523,9 +523,10 @@ abstract class Source_hook_stats_provider extends Source_hook_stats_base
      * @param  ID_TEXT $bucket The bucket we are loading
      * @param  ID_TEXT $pivot The pivot at which we are viewing the graph (blank: graph does not support pivots, so use day_series data)
      * @param  array $filters Array of active filters
-     * @return array Standardised pivot data as 'pivot', 'pivot interval', 'pivot value', mapped to unserialised data
+     * @param  integer $start The starting row
+     * @return array Standardised pivot data as 'pivot', 'pivot interval', 'pivot value', mapped to associative array of key, limited to 100 key/value pairs
      */
-    protected function prepare_preprocessed_data_for_graph(string $bucket, string $pivot, array $filters) : array
+    protected function prepare_preprocessed_data_for_graph(string $bucket, string $pivot, array $filters, int $start = 0) : array
     {
         if ($pivot == '') {
             $pivot = 'day_series';
@@ -541,7 +542,7 @@ abstract class Source_hook_stats_provider extends Source_hook_stats_base
         $extra .= ' AND p_pivot_interval>=' . strval($range[0]);
         $extra .= ' AND p_pivot_interval<=' . strval($range[1]);
 
-        $data_rows = $GLOBALS['SITE_DB']->query_select('stats_preprocessed', ['p_pivot_interval', 'p_pivot_value', 'p_data'], $where, $extra);
+        $data_rows = $GLOBALS['SITE_DB']->query_select('stats_preprocessed', ['p_pivot_interval', 'p_pivot_value', 'p_data'], $where, $extra, 100, $start);
 
         $data = $this->fill_data_by_date_pivots($pivot, $range[0], $range[1]);
 
@@ -558,8 +559,9 @@ abstract class Source_hook_stats_provider extends Source_hook_stats_base
      *
      * @param  boolean $force Whether to forcefully dump regardless of size, e.g. we are finished processing data buckets
      * @param  boolean $rebuild Whether to rebuild the delta array structure with the buckets for this hook
+     * @param  boolean $flat Whether the data buckets are for the flat statistics data
      */
-    public function dump_data_buckets_if_necessary(bool $force = false, bool $rebuild = true)
+    public function dump_data_buckets_if_necessary(bool $force = false, bool $rebuild = true, $flat = false)
     {
         // Check memory use
         require_code('files');
@@ -572,17 +574,50 @@ abstract class Source_hook_stats_provider extends Source_hook_stats_base
 
         if ($should_dump) {
             // Dump what we have to the database
-            foreach ($this->data_buckets as $bucket => $_) {
-                foreach ($_ as $pivot => $__) {
-                    foreach ($__ as $pivot_interval => $___) {
-                        foreach ($___ as $pivot_value => $data) {
-                            $GLOBALS['SITE_DB']->query_insert('stats_preprocessed_delta', [
-                                'p_bucket' => $bucket,
-                                'p_pivot' => $pivot,
-                                'p_pivot_interval' => $pivot_interval,
-                                'p_pivot_value' => $pivot_value,
-                                'p_data' => serialize($data),
-                            ]);
+
+            if ($flat) {
+                foreach ($this->data_buckets as $bucket => $data) {
+                    $flattened = [];
+                    $this->flatten_data_buckets($flattened, $data);
+
+                    foreach ($flattened as $f_key => $f_value) {
+                        $GLOBALS['SITE_DB']->query_insert_or_replace('stats_preprocessed_flat', [
+                            'p_value' => $f_value,
+                        ], [
+                            'p_bucket' => $bucket,
+                            'p_key' => $f_key,
+                        ]);
+                    }
+
+                    unset($flattened);
+                }
+            } else {
+                foreach ($this->data_buckets as $bucket => $_) {
+                    foreach ($_ as $pivot => $__) {
+                        foreach ($__ as $pivot_interval => $___) {
+                            foreach ($___ as $pivot_value => $data) {
+                                $flattened = [];
+                                $this->flatten_data_buckets($flattened, $data);
+
+                                foreach ($flattened as $f_key => $f_value) {
+                                    $key_map = [
+                                        'p_bucket' => $bucket,
+                                        'p_pivot' => $pivot,
+                                        'p_pivot_interval' => $pivot_interval,
+                                        'p_pivot_value' => $pivot_value,
+                                        'p_key' => $f_key,
+                                    ];
+
+                                    $test = $GLOBALS['SITE_DB']->query_select_value_if_there('stats_preprocessed', 'p_value', $key_map);
+                                    if ($test === null) {
+                                        $GLOBALS['SITE_DB']->query_insert('stats_preprocessed', $key_map + ['p_value' => $f_value]);
+                                    } else {
+                                        $GLOBALS['SITE_DB']->query_parameterised('UPDATE {prefix}stats_preprocessed SET p_value={p_value} WHERE ' . db_string_equal_to('p_bucket', $bucket) . ' AND ' . db_string_equal_to('p_pivot', $pivot) . ' AND p_pivot_interval={pivot_interval} AND p_pivot_value={pivot_value} AND ' . db_string_equal_to('p_key', strval($f_key)), ['p_value' => $f_value, 'p_pivot_interval' => $pivot_interval, 'p_pivot_value' => $pivot_value]);
+                                    }
+                                }
+
+                                unset($flattened);
+                            }
                         }
                     }
                 }
@@ -606,6 +641,33 @@ abstract class Source_hook_stats_provider extends Source_hook_stats_base
                 }
             }
         }
+    }
+
+    /**
+     * Flatten a data bucket associative array into a single map.
+     * This takes every depth path in the array and generates a single key (using the || delimiter) mapped to its end value.
+     *
+     * @param  array $ret The flattened array, passed by reference
+     * @param  mixed $cur_structure The current working data; you would pass the array to be flattened here
+     * @param  integer $depth The current depth level of the array
+     * @param  array $cur_key A map of $depth to key name for the current structure
+     */
+    protected function flatten_data_buckets(array &$ret, $cur_structure, int $depth = 0, array $cur_key = [])
+    {
+        // Did we find the end of the line?
+        if (!is_array($cur_structure)) {
+            $ret[implode('||', $cur_key)] = $cur_structure;
+            unset($cur_key[$depth]);
+            return;
+        }
+
+        // Recurse over the array
+        foreach ($cur_structure as $i_key => $i_value) {
+            $cur_key[$depth] = $i_key;
+            $this->flatten_data_buckets($ret, $i_value, $depth + 1, $cur_key);
+        }
+
+        unset($cur_key[$depth]);
     }
 }
 

@@ -1442,6 +1442,7 @@ class Source_database_connector
 
     /**
      * Change the primary key of a table.
+     * Warning! Changing from a UNIQUE key constraint to an AUTO column is not possible; use add_auto_key instead.
      *
      * @param  ID_TEXT $table_name The name of the table to create the index on
      * @param  array $new_key A list of fields to put in the new key
