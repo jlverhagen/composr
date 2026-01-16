@@ -213,6 +213,7 @@ function static_cache(int $mode)
     if ((function_exists('is_mobile')) && (function_exists('get_option'))) {
         $is_mobile = is_mobile();
     } else {
+        // TODO: maintenance; list needs to be kept updated
         $user_agent = isset($_SERVER['HTTP_USER_AGENT']) ? $_SERVER['HTTP_USER_AGENT'] : '';
 
         // The set of browsers
