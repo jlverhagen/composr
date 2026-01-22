@@ -312,7 +312,7 @@ class Module_admin_early_access extends Source_standard_crud_module
     {
         $rows = $GLOBALS['SITE_DB']->query_select('early_access_codes', ['*'], ['c_access_code' => $id]);
         if (!array_key_exists(0, $rows)) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'early_access_code', escape_html($id)));
         }
         $myrow = $rows[0];
 
@@ -421,7 +421,7 @@ class Module_admin_early_access extends Source_standard_crud_module
     {
         $name = $GLOBALS['SITE_DB']->query_select_value_if_there('early_access_codes', 'c_access_code', ['c_access_code' => $id]);
         if ($name === null) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'early_access_code', escape_html($id)));
         }
 
         require_code('early_access2');

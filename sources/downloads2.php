@@ -48,7 +48,7 @@ function download_gateway_script()
     $id = get_param_integer('id');
     $result = $GLOBALS['SITE_DB']->query_select('download_downloads', ['name', 'url_redirect'], ['id' => $id], '', 1);
     if (!isset($result[0])) {
-        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'download'));
+        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'download', escape_html(strval($id))));
     }
 
     $name = $result[0]['name'];
@@ -110,7 +110,7 @@ function dload_script()
         $__id = get_param_string('id');
         $_id = find_id_via_guid($__id);
         if ($_id === null) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'download'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'download', escape_html($__id)));
         }
         $id = intval($_id);
     } else {
@@ -120,7 +120,7 @@ function dload_script()
     // Lookup
     $rows = $GLOBALS['SITE_DB']->query_select('download_downloads', ['*'], ['id' => $id], '', 1);
     if (!array_key_exists(0, $rows)) {
-        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'download'));
+        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'download', escape_html(strval($id))));
     }
     $myrow = $rows[0];
 
@@ -219,7 +219,7 @@ function dload_script()
 
     // Size, bandwidth
     if (!is_file($_full)) {
-        warn_exit(do_lang_tempcode('MISSING_RESOURCE'));
+        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'PATH', escape_html($_full)));
     }
     $size = filesize($_full);
     if ($got_before === null) {
@@ -422,7 +422,7 @@ function edit_download_category(int $category_id, string $category, ?int $parent
 
     $rows = $GLOBALS['SITE_DB']->query_select('download_categories', ['category', 'the_description'], ['id' => $category_id], '', 1);
     if (!array_key_exists(0, $rows)) {
-        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'download_category'));
+        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'download_category', escape_html(strval($category_id))));
     }
     $_category = $rows[0]['category'];
     $_description = $rows[0]['the_description'];
@@ -474,7 +474,7 @@ function delete_download_category(int $category_id)
 
     $rows = $GLOBALS['SITE_DB']->query_select('download_categories', ['category', 'the_description', 'parent_id'], ['id' => $category_id], '', 1);
     if (!array_key_exists(0, $rows)) {
-        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'download_category'));
+        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'download_category', escape_html(strval($category_id))));
     }
     $category = $rows[0]['category'];
     $description = $rows[0]['the_description'];
@@ -1171,7 +1171,7 @@ function edit_download(int $id, int $category_id, string $name, string $url, str
 
     $rows = $GLOBALS['SITE_DB']->query_select('download_downloads', ['name', 'the_description', 'additional_details', 'category_id'], ['id' => $id], '', 1);
     if (!array_key_exists(0, $rows)) {
-        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'download'));
+        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'download', escape_html(strval($id))));
     }
     $myrow = $rows[0];
 
@@ -1341,7 +1341,7 @@ function delete_download(int $id, bool $leave = false)
 {
     $rows = $GLOBALS['SITE_DB']->query_select('download_downloads', ['name', 'the_description', 'additional_details'], ['id' => $id], '', 1);
     if (!array_key_exists(0, $rows)) {
-        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'download'));
+        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'download', escape_html(strval($id))));
     }
     $myrow = $rows[0];
 
@@ -1432,7 +1432,7 @@ function edit_download_licence(int $id, string $title, string $text)
 {
     $rows = $GLOBALS['SITE_DB']->query_select('download_licences', ['l_title'], ['id' => $id], '', 1);
     if (!array_key_exists(0, $rows)) {
-        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'download_licence'));
+        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'download_licence', escape_html(strval($id))));
     }
 
     $GLOBALS['SITE_DB']->query_update('download_licences', ['l_title' => $title, 'l_text' => $text], ['id' => $id], '', 1);
@@ -1454,7 +1454,7 @@ function delete_download_licence(int $id)
 {
     $rows = $GLOBALS['SITE_DB']->query_select('download_licences', ['l_title'], ['id' => $id], '', 1);
     if (!array_key_exists(0, $rows)) {
-        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'download_licence'));
+        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'download_licence', escape_html(strval($id))));
     }
     $myrow = $rows[0];
 

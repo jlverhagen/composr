@@ -81,7 +81,7 @@ function edit_early_access_code(string $access_code, string $label, string $trig
 {
     $old_trigger_access = $GLOBALS['SITE_DB']->query_select_value_if_there('early_access_codes', 'c_trigger_access', ['c_access_code' => $access_code]);
     if ($old_trigger_access === null) {
-        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'early_access'));
+        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'early_access', escape_html(strval($access_code))));
     } elseif (($old_trigger_access != '') && ($old_trigger_access != $trigger_access)) {
         // Clean up low-level values set for this access code's trigger access tag, but only if we're changing it and the old tag is not used in another access code.
         // Actually we don't want to do this because it could cause content to no-longer be accessible once all their access codes were removed / changed.
@@ -126,7 +126,7 @@ function delete_early_access_code(string $access_code)
 {
     $old_trigger_access = $GLOBALS['SITE_DB']->query_select_value_if_there('early_access_codes', 'c_trigger_access', ['c_access_code' => $access_code]);
     if ($old_trigger_access === null) {
-        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'early_access'));
+        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'early_access', escape_html(strval($access_code))));
     } elseif ($old_trigger_access != '') {
         // Clean up low-level values set for this access code's trigger access tag, but only if the tag is not used in another access code.
         // Actually we don't want to do this because it could cause content to no-longer be accessible once all their access codes were removed / changed.

@@ -348,7 +348,7 @@ class Module_admin_cns_welcome_emails extends Source_standard_crud_module
     {
         $m = $GLOBALS['SITE_DB']->query_select('f_welcome_emails', ['*'], ['id' => intval($id)], '', 1);
         if (!array_key_exists(0, $m)) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'welcome_email', escape_html($id)));
         }
         $r = $m[0];
 

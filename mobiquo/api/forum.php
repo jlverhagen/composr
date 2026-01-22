@@ -313,7 +313,7 @@ function get_id_by_url_func($raw_params)
     $arr = get_id_by_url($params[0]);
 
     if ($arr === null) {
-        warn_exit(do_lang_tempcode('MISSING_RESOURCE'));
+        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'tapatalk_post', escape_html($params[0])));
     }
 
     $response = mobiquo_val([

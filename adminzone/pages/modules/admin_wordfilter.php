@@ -296,7 +296,7 @@ class Module_admin_wordfilter extends Source_standard_crud_module
     {
         $m = $GLOBALS['SITE_DB']->query_select('wordfilter', ['*'], ['id' => $id], '', 1);
         if (!array_key_exists(0, $m)) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'word'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'word', escape_html($id)));
         }
         $w = $m[0];
 

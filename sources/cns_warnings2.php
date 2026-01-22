@@ -104,7 +104,7 @@ function cns_edit_warning(int $warning_id, string $explanation, int $is_warning 
 
     $member_id = $GLOBALS['FORUM_DB']->query_select_value_if_there('f_warnings', 'w_member_id', ['id' => $warning_id]);
     if ($member_id === null) {
-        warn_exit(do_lang_tempcode('MISSING_RESOURCE'));
+        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'warning', escape_html(strval($warning_id))));
     }
 
     $GLOBALS['FORUM_DB']->query_update('f_warnings', ['w_explanation' => $explanation, 'w_is_warning' => $is_warning], ['id' => $warning_id], '', 1);
@@ -134,7 +134,7 @@ function cns_delete_warning(int $warning_id) : int
 
     $member_id = $GLOBALS['FORUM_DB']->query_select_value_if_there('f_warnings', 'w_member_id', ['id' => $warning_id]);
     if ($member_id === null) {
-        warn_exit(do_lang_tempcode('MISSING_RESOURCE'));
+        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'warning', escape_html(strval($warning_id))));
     }
 
     $GLOBALS['FORUM_DB']->query_delete('f_warnings', ['id' => $warning_id], '', 1);

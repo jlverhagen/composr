@@ -96,7 +96,7 @@ class Module_notifications
 
             $rows = $GLOBALS['SITE_DB']->query_select('digestives_tin', ['*'], ['id' => $id], '', 1);
             if (!array_key_exists(0, $rows)) {
-                warn_exit(do_lang_tempcode('MISSING_RESOURCE'));
+                warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'digestives_tin', escape_html(strval($id))));
             }
             $row = $rows[0];
 

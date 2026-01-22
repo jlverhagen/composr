@@ -102,7 +102,7 @@ function edit_site_message(int $id, string $title, string $message, string $type
     // Get previous message
     $_message = $GLOBALS['SITE_DB']->query_select_value_if_there('site_messages', 'm_message', ['id' => $id]);
     if ($_message === null) {
-        warn_exit(do_lang_tempcode('MISSING_RESOURCE'));
+        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'site_message', escape_html(strval($id))));
     }
 
     // Are we validating?
@@ -155,7 +155,7 @@ function delete_site_message(int $id)
     // Get title
     $title = $GLOBALS['SITE_DB']->query_select_value_if_there('site_messages', 'm_title', ['id' => $id]);
     if ($title === null) {
-        warn_exit(do_lang_tempcode('MISSING_RESOURCE'));
+        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'site_message', escape_html(strval($id))));
     }
 
     // Delete the record

@@ -466,7 +466,7 @@ class Module_admin_site_messaging
         if ($id !== null) {
             $_row = $GLOBALS['SITE_DB']->query_select('site_messages', ['*'], ['id' => $id]);
             if (($_row === null) || (!array_key_exists(0, $_row))) {
-                warn_exit(do_lang_tempcode('MISSING_RESOURCE'));
+                warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'site_message', escape_html(strval($id))));
             }
             $row = $_row[0];
 
@@ -522,7 +522,7 @@ class Module_admin_site_messaging
         if ($id !== null) {
             $test = $GLOBALS['SITE_DB']->query_select_value_if_there('site_messages', 'id', ['id' => $id]);
             if ($test === null) {
-                warn_exit(do_lang_tempcode('MISSING_RESOURCE'));
+                warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'site_message', escape_html(strval($id))));
             }
         }
 
@@ -575,7 +575,7 @@ class Module_admin_site_messaging
     {
         $_row = $GLOBALS['SITE_DB']->query_select('site_messages', ['*'], ['id' => $id]);
         if (($_row === null) || (!array_key_exists(0, $_row))) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'site_message', escape_html(strval($id))));
         }
         $row = $_row[0];
 

@@ -183,7 +183,7 @@ class Module_search
             $id = get_param_string('id', '');
             if ($id != '') { // Specific screen, prepare
                 if ((!is_file(get_file_base() . '/sources/hooks/modules/search/' . $id . '.php')) && (!is_file(get_file_base() . '/sources_custom/hooks/modules/search/' . $id . '.php'))) {
-                    warn_exit(do_lang_tempcode('MISSING_RESOURCE'));
+                    warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'hook', escape_html('modules/search/' . $id)));
                 }
 
                 $ob = get_hook_ob('modules', 'search', filter_naughty_harsh($id, true), 'Hook_search_');

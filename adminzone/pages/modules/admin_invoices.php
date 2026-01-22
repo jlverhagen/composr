@@ -494,7 +494,7 @@ class Module_admin_invoices
 
         $type_code = $GLOBALS['SITE_DB']->query_select_value_if_there('ecom_invoices', 'i_type_code', ['id' => $id]);
         if ($id === null) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'ecom_invoice', escape_html(strval($id))));
         }
 
         $GLOBALS['SITE_DB']->query_delete('ecom_invoices', ['id' => $id], '', 1);
@@ -512,9 +512,11 @@ class Module_admin_invoices
      */
     public function fulfil() : object
     {
-        $rows = $GLOBALS['SITE_DB']->query_select('ecom_invoices', ['id', 'i_state', 'i_member_id'], ['id' => get_param_integer('id')], '', 1);
+        $id = get_param_integer('id');
+
+        $rows = $GLOBALS['SITE_DB']->query_select('ecom_invoices', ['id', 'i_state', 'i_member_id'], ['id' => $id], '', 1);
         if (!array_key_exists(0, $rows)) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'ecom_invoice', escape_html(strval($id))));
         }
 
         $row = $rows[0];

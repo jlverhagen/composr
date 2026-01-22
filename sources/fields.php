@@ -82,7 +82,7 @@ function catalogue_file_script()
     }
     $_ev_check = $GLOBALS['SITE_DB']->query_select_value_if_there($table, $url_field, $where, '', true);
     if ($_ev_check === null) {
-        warn_exit(do_lang_tempcode('MISSING_RESOURCE'));
+        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'catalogue_entry', escape_html(strval($entry_id))));
     }
 
     $ev_checks = explode("\n", $_ev_check);
@@ -97,14 +97,14 @@ function catalogue_file_script()
         }
     }
     if ($ev_path === null) {
-        warn_exit(do_lang_tempcode('MISSING_RESOURCE', do_lang_tempcode('FILE')));
+        warn_exit(do_lang_tempcode('INTERNAL_ERROR', escape_html('TODO')));
     }
 
     // Prepare the file
     $_full_path = get_custom_file_base() . '/' . $ev_path;
     $_path_bits = explode('::', $_full_path);
     if (!file_exists($_path_bits[0])) {
-        warn_exit(do_lang_tempcode('MISSING_RESOURCE', do_lang_tempcode('FILE')));
+        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'PATH', escape_html($_path_bits[0])));
     }
     $_full = $_path_bits[0];
     $size = filesize($_full);

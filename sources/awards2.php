@@ -86,7 +86,7 @@ function edit_award_type(int $id, string $title, string $description, int $point
 {
     $_title = $GLOBALS['SITE_DB']->query_select_value_if_there('award_types', 'a_title', ['id' => $id]);
     if ($_title === null) {
-        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'award_type'));
+        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'award_type', escape_html(strval($id))));
     }
     $_description = $GLOBALS['SITE_DB']->query_select_value('award_types', 'a_description', ['id' => $id]);
     $map = [
@@ -117,7 +117,7 @@ function delete_award_type(int $id)
 {
     $_title = $GLOBALS['SITE_DB']->query_select_value_if_there('award_types', 'a_title', ['id' => $id]);
     if ($_title === null) {
-        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'award_type'));
+        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'award_type', escape_html(strval($id))));
     }
     $_description = $GLOBALS['SITE_DB']->query_select_value('award_types', 'a_description', ['id' => $id]);
     require_lang('awards');

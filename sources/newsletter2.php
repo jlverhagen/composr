@@ -318,7 +318,7 @@ function edit_newsletter(int $id, string $title, string $description)
     $rows = $GLOBALS['SITE_DB']->query_select('newsletters', ['*'], ['id' => $id], '', 1);
 
     if (!array_key_exists(0, $rows)) {
-        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'newsletter'));
+        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'newsletter', escape_html(strval($id))));
     }
 
     $myrow = $rows[0];
@@ -452,7 +452,7 @@ function edit_periodic_newsletter(int $id, string $subject, string $message, str
     $rows = $GLOBALS['SITE_DB']->query_select('newsletter_periodic', ['*'], ['id' => $id], '', 1);
 
     if (!array_key_exists(0, $rows)) {
-        warn_exit(do_lang_tempcode('MISSING_RESOURCE'));
+        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'newsletter_periodic', escape_html(strval($id))));
     }
 
     $map = [

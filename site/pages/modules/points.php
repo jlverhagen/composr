@@ -602,7 +602,7 @@ class Module_points
                 $member_id_viewing = get_member();
                 $_row = $GLOBALS['SITE_DB']->query_select('escrow', ['id', 'sending_member', 'receiving_member'], ['id' => $id], '', 1);
                 if (($_row === null) || !array_key_exists(0, $_row)) {
-                    warn_exit(do_lang_tempcode('MISSING_RESOURCE'));
+                    warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'escrow', escape_html(strval($id))));
                 }
                 $row = $_row[0];
 
@@ -1112,7 +1112,7 @@ class Module_points
 
         $_row = $GLOBALS['SITE_DB']->query_select('escrow', ['*'], ['id' => $id], '', 1);
         if (($_row === null) || !array_key_exists(0, $_row)) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'escrow', escape_html(strval($id))));
         }
         $row = $_row[0];
 
@@ -1225,7 +1225,7 @@ class Module_points
 
         $_row = $GLOBALS['SITE_DB']->query_select('escrow', ['*'], ['id' => $id], '', 1);
         if (($_row === null) || !array_key_exists(0, $_row)) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'escrow', escape_html(strval($id))));
         }
         $row = $_row[0];
 
@@ -1291,7 +1291,7 @@ class Module_points
 
         $_row = $GLOBALS['SITE_DB']->query_select('escrow', ['*'], ['id' => $id], '', 1);
         if (($_row === null) || !array_key_exists(0, $_row)) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'escrow', escape_html(strval($id))));
         }
         $row = $_row[0];
 
@@ -1370,7 +1370,7 @@ class Module_points
 
         $_row = $GLOBALS['SITE_DB']->query_select('escrow', ['*'], ['id' => $id], '', 1);
         if (($_row === null) || !array_key_exists(0, $_row)) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'escrow', escape_html(strval($id))));
         }
         $row = $_row[0];
 

@@ -72,7 +72,7 @@ $news_category = $GLOBALS['SITE_DB']->query_select_value_if_there('news_categori
 
 $news_id = $GLOBALS['SITE_DB']->query_select_value_if_there('news', 'id', ['news_category' => $news_category, $GLOBALS['SITE_DB']->translate_field_ref('title') => $news_title]);
 if ($news_id === null) {
-    warn_exit(do_lang_tempcode('MISSING_RESOURCE'));
+    warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'news', escape_html($news_category . ':' . $news_title)));
 }
 
 $news_url = build_url(['page' => 'news', 'type' => 'view', 'id' => $news_id], get_module_zone('news'));

@@ -70,7 +70,7 @@ class Hook_commandr_scheduled_publish_post
 
         $test = $GLOBALS['FORUM_DB']->query_select_value_if_there('f_topics', 'id', ['id' => $topic_id]);
         if ($test === null) {
-            return ['', '', do_lang('MISSING_RESOURCE'), ''];
+            return ['', '', do_lang('MISSING_RESOURCE', 'topic', escape_html(strval($topic_id))), ''];
         }
 
         require_code('cns_posts_action2');

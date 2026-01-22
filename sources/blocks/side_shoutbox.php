@@ -109,7 +109,7 @@ PHP;
 
         $room_check = $GLOBALS['SITE_DB']->query_select('chat_rooms', ['*'], ['id' => $room_id], '', 1);
         if (!array_key_exists(0, $room_check)) {
-            return do_template('RED_ALERT', ['_GUID' => '59141c01a6a95e9a9120cd2fac69d657', 'TEXT' => do_lang_tempcode('MISSING_RESOURCE', 'chat')]);
+            return do_template('RED_ALERT', ['_GUID' => '59141c01a6a95e9a9120cd2fac69d657', 'TEXT' => do_lang_tempcode('MISSING_RESOURCE', 'chat', escape_html(strval($room_id)))]);
         }
         require_code('chat');
         if (!check_chatroom_access($room_check[0], true)) {
@@ -138,7 +138,7 @@ PHP;
 
         $room_check = $GLOBALS['SITE_DB']->query_select('chat_rooms', ['*'], ['id' => $room_id], '', 1);
         if (!array_key_exists(0, $room_check)) {
-            return paragraph(do_lang_tempcode('MISSING_RESOURCE', 'chat'), '0okich7nm484clp00dph7yln7u69s037', 'nothing-here');
+            return paragraph(do_lang_tempcode('MISSING_RESOURCE', 'chat', escape_html(strval($room_id))), '0okich7nm484clp00dph7yln7u69s037', 'nothing-here');
         }
 
         // Did a message get sent last time?

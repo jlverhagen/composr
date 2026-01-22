@@ -45,7 +45,7 @@ function set_comment_forum_for(string $feedback_code, ?string $category_id, stri
     $_old_forum_id = $GLOBALS['FORUM_DRIVER']->forum_id_from_name($old_forum_id);
     $_forum_id = $GLOBALS['FORUM_DRIVER']->forum_id_from_name($forum_id);
     if ($_forum_id === null) {
-        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'forum'));
+        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'forum', escape_html(strval($forum_id))));
     }
 
     $default_comment_topic_forum = $GLOBALS['FORUM_DRIVER']->forum_id_from_name(get_option('comments_forum_name'));

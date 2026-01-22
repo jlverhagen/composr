@@ -65,12 +65,12 @@ class Hook_commandr_command_cpf_encrypt
 
         $_cpf_id = $parameters[0];
         if (preg_match('#^\d+$#', $_cpf_id) == 0) {
-            return ['', '', '', do_lang('_MISSING_RESOURCE', $_cpf_id, 'cpf')];
+            return ['', '', '', do_lang('MISSING_RESOURCE', 'cpf', $_cpf_id)];
         }
         $cpf_id = intval($_cpf_id);
         $cpf_type = $GLOBALS['FORUM_DB']->query_select_value_if_there('f_custom_fields', 'cf_type', ['id' => $cpf_id]);
         if ($cpf_type === null) {
-            return ['', '', '', do_lang('_MISSING_RESOURCE', $_cpf_id, 'cpf')];
+            return ['', '', '', do_lang('MISSING_RESOURCE', 'cpf', $_cpf_id)];
         }
         $encryptable = (strpos($cpf_type, '_text') !== false || strpos($cpf_type, '_trans') !== false || strpos($cpf_type, 'posting') !== false); // See also cpf_decrypt.php and core_cns.js
         if (!$encryptable) {

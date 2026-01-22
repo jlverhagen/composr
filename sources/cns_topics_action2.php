@@ -51,7 +51,7 @@ function cns_edit_topic(?int $topic_id, ?string $description = null, ?string $em
 {
     $info = $GLOBALS['FORUM_DB']->query_select('f_topics', ['*'], ['id' => $topic_id], '', 1);
     if (!array_key_exists(0, $info)) {
-        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'topic'));
+        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'topic', escape_html(strval($topic_id))));
     }
     $name = $info[0]['t_cache_first_title'];
     $forum_id = $info[0]['t_forum_id'];
@@ -197,7 +197,7 @@ function cns_delete_topic(int $topic_id, string $reason = '', ?int $post_target_
     // Info about source
     $info = $GLOBALS['FORUM_DB']->query_select('f_topics', ['*'], ['id' => $topic_id], '', 1);
     if (!array_key_exists(0, $info)) {
-        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'topic'));
+        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'topic', escape_html(strval($topic_id))));
     }
     $name = $info[0]['t_cache_first_title'];
     $poll_id = $info[0]['t_poll_id'];
@@ -215,7 +215,7 @@ function cns_delete_topic(int $topic_id, string $reason = '', ?int $post_target_
     if ($post_target_topic_id !== null) {
         $to = $GLOBALS['FORUM_DB']->query_select_value_if_there('f_topics', 't_forum_id', ['id' => $post_target_topic_id]);
         if ($to === null) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'topic'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'topic', escape_html(strval($post_target_topic_id))));
         }
     }
 
@@ -421,7 +421,7 @@ function cns_move_topics(int $from, int $to, ?array $topics = null, bool $check_
     } elseif (count($topics) == 1) { // Just one
         $topic_info = $GLOBALS['FORUM_DB']->query_select('f_topics', ['t_forum_id', 't_pt_from_member', 't_pt_to_member', 't_cache_first_title', 't_cache_num_posts', 't_validated'], ['id' => $topics[0]]);
         if (!array_key_exists(0, $topic_info)) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'topic'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'topic', escape_html(strval($topics[0]))));
         }
         if (($topic_info[0]['t_forum_id'] != $from) || (!cns_may_access_topic($topics[0], get_member(), $topic_info[0], false))) {
             access_denied('I_ERROR');
@@ -545,7 +545,7 @@ function cns_invite_to_pt(int $member_id, int $topic_id)
 {
     $topic_info = $GLOBALS['FORUM_DB']->query_select('f_topics', ['*'], ['id' => $topic_id], '', 1);
     if (!array_key_exists(0, $topic_info)) {
-        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'topic'));
+        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'topic', escape_html(strval($topic_id))));
     }
 
     if (($topic_info[0]['t_pt_from_member'] != get_member()) && ($topic_info[0]['t_pt_to_member'] != get_member()) && (!has_privilege(get_member(), 'view_other_pt'))) {
@@ -639,7 +639,7 @@ function handle_topic_ticket_reply(?int $forum_id, int $topic_id, string $topic_
         if (is_ticket_forum($forum_id)) {
             $topic_info = $GLOBALS['FORUM_DB']->query_select('f_topics', ['t_cache_first_title', 't_forum_id', 't_is_open', 't_description'], ['id' => $topic_id], '', 1);
             if (!array_key_exists(0, $topic_info)) {
-                warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'topic'));
+                warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'topic', escape_html(strval($topic_id))));
             }
 
             $topic_description = $topic_info[0]['t_description'];

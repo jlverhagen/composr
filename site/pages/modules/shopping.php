@@ -750,7 +750,7 @@ class Module_shopping
         if (!has_privilege(get_member(), 'assume_any_member')) {
             $member_id = $GLOBALS['SITE_DB']->query_select_value_if_there('shopping_orders', 'member_id', ['id' => $id]);
             if ($member_id === null) {
-                warn_exit(do_lang_tempcode('MISSING_RESOURCE'));
+                warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'shopping_order', escape_html(strval($id))));
             }
 
             if ($member_id != get_member()) {

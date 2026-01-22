@@ -404,7 +404,7 @@ class Module_admin_karma
 
         $_row = $GLOBALS['SITE_DB']->query_select('karma', ['*'], ['id' => $id], '', 1);
         if (($_row === null) || (!array_key_exists(0, $_row))) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'karma', escape_html(strval($id))));
         }
         $row = $_row[0];
         $reason = get_translated_tempcode('karma', $row, 'k_reason');
@@ -506,7 +506,7 @@ class Module_admin_karma
 
         $rows = $GLOBALS['SITE_DB']->query_select('karma', ['*'], ['id' => $id], '', 1);
         if (!array_key_exists(0, $rows)) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'karma', escape_html(strval($id))));
         }
         $myrow = $rows[0];
         $myreason = get_translated_text($myrow['k_reason']);
@@ -584,7 +584,7 @@ class Module_admin_karma
 
         $rows = $GLOBALS['SITE_DB']->query_select('karma', ['*'], ['id' => $id], '', 1);
         if (!array_key_exists(0, $rows)) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'karma', escape_html(strval($id))));
         }
 
         $myrow = $rows[0];
@@ -627,7 +627,7 @@ class Module_admin_karma
 
         $rows = $GLOBALS['SITE_DB']->query_select('karma', ['*'], ['id' => $id], '', 1);
         if (!array_key_exists(0, $rows)) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'karma', escape_html(strval($id))));
         }
 
         // Actually reverse karma

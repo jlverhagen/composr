@@ -76,7 +76,7 @@ function download_licence_script()
 
     $rows = $GLOBALS['SITE_DB']->query_select('download_licences', ['*'], ['id' => $id], '', 1);
     if (!array_key_exists(0, $rows)) {
-        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'download_licence'));
+        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'download_licence', escape_html(strval($id))));
     }
     $licence_title = $rows[0]['l_title'];
     $licence_text = $rows[0]['l_text'];
@@ -501,7 +501,7 @@ function get_download_category_tree(?int $category_id = null, ?string $breadcrum
     if ($category_info === null) {
         $_category_info = $GLOBALS['SITE_DB']->query_select('download_categories', ['*'], ['id' => $category_id], '', 1);
         if (!array_key_exists(0, $_category_info)) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'download_category'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'download_category', escape_html(strval($category_id))));
         }
         $category_info = $_category_info[0];
     }

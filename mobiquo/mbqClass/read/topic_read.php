@@ -137,7 +137,7 @@ class CMSTopicRead
                 return [
                     0,
                     [],
-                    do_lang('MISSING_RESOURCE', 'forum'),
+                    do_lang('MISSING_RESOURCE', 'forum', comcode_escape($forum_id)),
                     0,
                     0,
                     [

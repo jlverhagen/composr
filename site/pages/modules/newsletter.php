@@ -655,7 +655,7 @@ class Module_newsletter
         $email = get_param_string('email', false, INPUT_FILTER_GET_IDENTIFIER);
         $correct_confirm = $GLOBALS['SITE_DB']->query_select_value_if_there('newsletter_subscribers', 'code_confirm', ['email' => $email]);
         if ($correct_confirm === null) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'newsletter_subscriber', escape_html($email)));
         }
         if ($correct_confirm == $code_confirm) {
             $GLOBALS['SITE_DB']->query_update('newsletter_subscribers', ['code_confirm' => 0], ['email' => $email], '', 1);

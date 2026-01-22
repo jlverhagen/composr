@@ -152,12 +152,12 @@ function score_quiz(int $entry_id, ?int $quiz_id = null, ?array $quiz = null, ?a
         $quiz_id = $GLOBALS['SITE_DB']->query_select_value('quiz_entries', 'q_quiz_id', ['id' => $entry_id]);
     }
     if ($quiz_id === null) {
-        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'quiz'));
+        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'quiz_entry', escape_html(strval($entry_id))));
     }
 
     $quizzes = $GLOBALS['SITE_DB']->query_select('quizzes', ['*'], ['id' => $quiz_id], '', 1);
     if (!array_key_exists(0, $quizzes)) {
-        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'quiz'));
+        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'quiz', escape_html(strval($quiz_id))));
     }
     $quiz = $quizzes[0];
 

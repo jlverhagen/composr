@@ -130,7 +130,7 @@ class Module_admin_quiz
             $id = get_param_integer('id'); // entry ID
             $rows = $GLOBALS['SITE_DB']->query_select('quiz_entries', ['*'], ['id' => $id], '', 1);
             if (!array_key_exists(0, $rows)) {
-                warn_exit(do_lang_tempcode('MISSING_RESOURCE'));
+                warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'quiz_entry', escape_html(strval($id))));
             }
             $row = $rows[0];
 
@@ -592,7 +592,7 @@ class Module_admin_quiz
 
         $quizzes = $GLOBALS['SITE_DB']->query_select('quizzes', ['*'], ['id' => $row['q_quiz_id']], '', 1);
         if (!array_key_exists(0, $quizzes)) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'quiz'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'quiz', escape_html(strval($id))));
         }
         $quiz = $quizzes[0];
 

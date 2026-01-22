@@ -416,7 +416,7 @@ function edit_chatroom(int $id, string $welcome, string $room_name, ?int $room_o
 {
     $rows = $GLOBALS['SITE_DB']->query_select('chat_rooms', ['c_welcome', 'room_name', 'is_im'], ['id' => $id], '', 1);
     if (!array_key_exists(0, $rows)) {
-        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'chat'));
+        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'chat', escape_html(strval($id))));
     }
 
     $c_welcome = $rows[0]['c_welcome'];
@@ -458,7 +458,7 @@ function delete_chatroom(int $id)
 {
     $rows = $GLOBALS['SITE_DB']->query_select('chat_rooms', ['c_welcome', 'room_name', 'is_im'], ['id' => $id], '', 1);
     if (!array_key_exists(0, $rows)) {
-        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'chat'));
+        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'chat', escape_html(strval($id))));
     }
 
     delete_lang($rows[0]['c_welcome']);

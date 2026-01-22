@@ -610,7 +610,7 @@ class Module_purchase
                     $breadcrumbs = [];
                     list(, $product_object) = find_product_details($type_code);
                     if ($product_object === null) {
-                        warn_exit(do_lang_tempcode('MISSING_RESOURCE'));
+                        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'ecom_product_type_code', escape_html($type_code)));
                     }
                     $steps = get_product_purchase_steps($product_object, $type_code, true);
                     $step_at = 0;
@@ -1041,7 +1041,7 @@ class Module_purchase
         $text = new Tempcode();
         list($details, $product_object) = find_product_details($type_code);
         if ($product_object === null) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'ecom_product_type_code', escape_html($type_code)));
         }
 
         $test = $this->_check_availability($type_code);

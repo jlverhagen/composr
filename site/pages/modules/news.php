@@ -417,7 +417,7 @@ class Module_news
             // Load from database
             $rows = $GLOBALS['SITE_DB']->query_select('news', ['*'], ['id' => $id], '', 1);
             if (!array_key_exists(0, $rows)) {
-                return warn_screen(get_screen_title('NEWS'), do_lang_tempcode('MISSING_RESOURCE', 'news'));
+                return warn_screen(get_screen_title('NEWS'), do_lang_tempcode('MISSING_RESOURCE', 'news', escape_html(strval($id))));
             }
             $myrow = $rows[0];
 

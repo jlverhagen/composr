@@ -196,7 +196,7 @@ function render_member_box(int $member_id, bool $preview = false, bool $show_ava
     $member_info = cns_read_in_member_profile($member_id, $need, false, $preview);
 
     if ($member_info === null) {
-        return paragraph(do_lang_tempcode('MISSING_RESOURCE'), 'j5wlj4zc0l1lffaru0e76ue3j6sflq4q', 'nothing-here');
+        return paragraph(do_lang_tempcode('MISSING_RESOURCE', 'member', escape_html(strval($member_id))), 'j5wlj4zc0l1lffaru0e76ue3j6sflq4q', 'nothing-here');
     }
 
     $custom_fields = new Tempcode();

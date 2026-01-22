@@ -206,7 +206,7 @@ function attachments_script()
         $__id = get_param_string('id');
         $_id = find_id_via_guid($__id);
         if ($_id === null) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'attachment'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'attachment', escape_html($__id)));
         }
         $id = intval($_id);
     } else {
@@ -221,7 +221,7 @@ function attachments_script()
     // Lookup
     $rows = $db->query_select('attachments', ['*'], ['id' => $id], 'ORDER BY a_add_time DESC');
     if (!array_key_exists(0, $rows)) {
-        warn_exit(do_lang_tempcode('MISSING_RESOURCE', do_lang_tempcode('_ATTACHMENT')));
+        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'attachment', escape_html(strval($id))));
     }
     $myrow = $rows[0];
     if ($myrow['a_url'] == '') {
@@ -284,7 +284,7 @@ function attachments_script()
 
     $_full = get_custom_file_base() . '/' . rawurldecode($full);
     if (!file_exists($_full)) {
-        warn_exit(do_lang_tempcode('_MISSING_RESOURCE', 'url:' . escape_html($full))); // File is missing, we can't do anything
+        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'PATH', escape_html($_full))); // File is missing, we can't do anything
     }
     $size = filesize($_full);
 

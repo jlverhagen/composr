@@ -57,7 +57,7 @@ class Hook_commandr_command_find_id_via_guid
 
         $result = find_id_via_guid($parameters[0]);
         if ($result === null) {
-            return ['', '', '', do_lang('MISSING_RESOURCE')];
+            return ['', '', '', do_lang('MISSING_RESOURCE', 'resource_guid', escape_html($parameters[0]))];
         }
 
         return ['', '', $result, ''];

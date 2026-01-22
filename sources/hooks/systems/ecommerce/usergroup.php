@@ -169,7 +169,7 @@ class Hook_ecommerce_usergroup
 
         $sub = $db->query_select('f_usergroup_subs', ['*'], ['id' => $usergroup_subscription_id], '', 1);
         if (!array_key_exists(0, $sub)) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE', do_lang_tempcode('CUSTOM_PRODUCT_USERGROUP')));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'usergroup_subscription', escape_html(strval($usergroup_subscription_id))));
         }
 
         $ret = get_translated_tempcode('f_usergroup_subs', $sub[0], 's_description', $db);

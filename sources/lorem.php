@@ -1235,7 +1235,7 @@ function render_screen_preview(?string $hook, string $function, ?string $templat
     }
 
     if (!method_exists($ob, $function)) {
-        fatal_exit(do_lang_tempcode('MISSING_RESOURCE'));
+        fatal_exit(do_lang_tempcode('INTERNAL_ERROR', escape_html('TODO')));
     }
 
     // Set the screen title as the name of the template

@@ -110,7 +110,7 @@ class Hook_endpoint_content_commandr_fs
                         warn_exit(do_lang_tempcode('INTERNAL_ERROR', escape_html('0cc72b57ca065e6583239936470bb7ca')));
                     }
                 } else {
-                    warn_exit(do_lang_tempcode('_MISSING_RESOURCE', escape_html($id)));
+                    warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'commandr_fs', escape_html($type . '::' . $id)));
                 }
                 break;
 
@@ -121,7 +121,7 @@ class Hook_endpoint_content_commandr_fs
                         warn_exit(do_lang_tempcode('INTERNAL_ERROR', escape_html('0ddda529994553aba6ef0fb0cce374af')));
                     }
                 } else {
-                    warn_exit(do_lang_tempcode('_MISSING_RESOURCE', escape_html($id)));
+                    warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'commandr_fs', escape_html($type . '::' . $id)));
                 }
                 break;
 
@@ -133,7 +133,7 @@ class Hook_endpoint_content_commandr_fs
                         'resource_guid' => $id,
                     ], '', 1);
                     if (!array_key_exists(0, $details)) {
-                        warn_exit(do_lang_tempcode('MISSING_RESOURCE'));
+                        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'resource_guid', escape_html($id)));
                     }
                     $resource_type = $details[0]['resource_type'];
                     $resource_id = $details[0]['resource_id'];
@@ -142,7 +142,7 @@ class Hook_endpoint_content_commandr_fs
                 }
                 $id = find_commandr_fs_filename_via_id($resource_type, $resource_id, true);
                 if ($id === null) {
-                    warn_exit(do_lang_tempcode('MISSING_RESOURCE'));
+                    warn_exit(do_lang_tempcode('MISSING_RESOURCE', escape_html($resource_type), escape_html($resource_id)));
                 }
                 $fs_hook = convert_cms_type_codes('content_type', $resource_type, 'commandr_filesystem_hook');
                 $id = 'var/' . $fs_hook . '/' . $id;
@@ -172,7 +172,7 @@ class Hook_endpoint_content_commandr_fs
                         }
                     }
                 } else {
-                    warn_exit(do_lang_tempcode('_MISSING_RESOURCE', escape_html($id)));
+                    warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'commandr_fs', escape_html($type . '::' . $id)));
                 }
                 break;
 

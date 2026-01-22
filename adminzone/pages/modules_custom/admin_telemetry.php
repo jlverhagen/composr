@@ -506,7 +506,7 @@ class Module_admin_telemetry
     {
         $_row = $GLOBALS['SITE_DB']->query_select('telemetry_errors', ['*'], ['id' => $id], '', 1);
         if (($_row === null) || (!array_key_exists(0, $_row))) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'telemetry_error', escape_html(strval($id))));
         }
         $row = $_row[0];
 
@@ -571,7 +571,7 @@ class Module_admin_telemetry
     {
         $_row = $GLOBALS['SITE_DB']->query_select('telemetry_errors', ['*'], ['id' => $id], '', 1);
         if (($_row === null) || (!array_key_exists(0, $_row))) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'telemetry_error', escape_html(strval($id))));
         }
         $row = $_row[0];
 
@@ -613,7 +613,7 @@ class Module_admin_telemetry
     {
         $_row = $GLOBALS['SITE_DB']->query_select('telemetry_errors', ['*'], ['id' => $id], '', 1);
         if (($_row === null) || (!array_key_exists(0, $_row))) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'telemetry_error', escape_html(strval($id))));
         }
         $row = $_row[0];
 
@@ -723,7 +723,7 @@ class Module_admin_telemetry
         if ($id !== null) {
             $_row = $GLOBALS['SITE_DB']->query_select('telemetry_errors_ignore', ['*'], ['id' => $id], '', 1);
             if (($_row === null) || (!array_key_exists(0, $_row))) {
-                warn_exit(do_lang_tempcode('MISSING_RESOURCE'));
+                warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'telemetry_error_ignore', escape_html(strval($id))));
             }
             $row = $_row[0];
             $line = $row['ignore_string'];
@@ -771,7 +771,7 @@ class Module_admin_telemetry
         if ($id !== null) {
             $_row = $GLOBALS['SITE_DB']->query_select('telemetry_errors_ignore', ['*'], ['id' => $id], '', 1);
             if (($_row === null) || (!array_key_exists(0, $_row))) {
-                warn_exit(do_lang_tempcode('MISSING_RESOURCE'));
+                warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'telemetry_error_ignore', escape_html(strval($id))));
             }
             $row = $_row[0];
 
@@ -825,7 +825,7 @@ class Module_admin_telemetry
     {
         $_row = $GLOBALS['SITE_DB']->query_select('telemetry_errors_ignore', ['*'], ['id' => $id], '', 1);
         if (($_row === null) || (!array_key_exists(0, $_row))) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'telemetry_error_ignore', escape_html(strval($id))));
         }
         $row = $_row[0];
 

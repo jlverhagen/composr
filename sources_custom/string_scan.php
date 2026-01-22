@@ -11567,7 +11567,6 @@ function string_scan($lang, $do_guessing = false, $only_exists = true)
         _MAX_SIG_LENGTH_COMCODE
         _MEMBERS_VIEWING
         _MEMBER_NO_EXIST
-        _MISSING_RESOURCE
         _MOST_ACTIVE_FORUM
         _MOVE_TOPIC
         _MULTIPLE

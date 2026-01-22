@@ -258,7 +258,7 @@ function get_tutorial_metadata($tutorial_name, $db_row = null, $tags = null)
         if ($db_row === null) {
             $db_rows = $GLOBALS['SITE_DB']->query_select('tutorials_external t', ['t.*', tutorial_sql_rating('t.id'), tutorial_sql_rating_recent('t.id'), tutorial_sql_likes('t.id'), tutorial_sql_likes_recent('t.id')], ['id' => intval($tutorial_name)], '', 1);
             if (!isset($db_rows[0])) {
-                warn_exit(do_lang_tempcode('MISSING_RESOURCE'));
+                warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'tutorial_external', escape_html(strval($tutorial_name))));
             }
             $db_row = $db_rows[0];
         }

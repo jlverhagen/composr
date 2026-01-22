@@ -1280,7 +1280,7 @@ class Module_admin_ecommerce_reports
         $id = get_param_integer('subscription_id');
         $subscription = $GLOBALS['SITE_DB']->query_select('ecom_subscriptions', ['s_type_code', 's_member_id'], ['id' => $id], '', 1);
         if (!array_key_exists(0, $subscription)) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'ecom_subscription', escape_html(strval($id))));
         }
 
         list($details) = find_product_details($subscription[0]['s_type_code']);

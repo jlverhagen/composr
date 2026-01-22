@@ -459,7 +459,7 @@ class Hook_ecommerce_permission
 
         $rows = $GLOBALS['SITE_DB']->query_select('ecom_prods_permissions', ['*'], ['id' => $permission_product_id, 'p_enabled' => 1], '', 1);
         if (!array_key_exists(0, $rows)) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'ecom_permission_product', escape_html(strval($permission_product_id))));
         }
 
         $row = $rows[0];
@@ -492,7 +492,7 @@ class Hook_ecommerce_permission
 
                 $_download_category = $GLOBALS['SITE_DB']->query_select('download_categories', ['*'], ['id' => intval($row['p_category'])], '', 1);
                 if (!array_key_exists(0, $_download_category)) {
-                    warn_exit(do_lang_tempcode('MISSING_RESOURCE'));
+                    warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'download_category', escape_html(strval($row['p_category']))));
                 }
                 $download_category = $_download_category[0];
 

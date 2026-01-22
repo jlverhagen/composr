@@ -198,7 +198,7 @@ class Hook_cns_warnings_change_group
         require_code('cns_groups');
         $test = cns_get_group_name($changed_usergroup_from);
         if (($test === null) || ($test == '')) {
-            warn_exit(do_lang_tempcode('_MISSING_RESOURCE', escape_html(strval($changed_usergroup_from)), 'group'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'group', escape_html(strval($changed_usergroup_from))));
         }
 
         $GLOBALS['FORUM_DB']->query_update('f_members', ['m_primary_group' => $changed_usergroup_from], ['id' => $member_id], '', 1);

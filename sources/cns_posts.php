@@ -59,7 +59,7 @@ function has_post_access(int $post_id, ?int $member_id = null, ?array $post_deta
         $table_prefix = $GLOBALS['FORUM_DB']->get_table_prefix();
         $_post_details = $GLOBALS['FORUM_DB']->query_select('f_posts p JOIN ' . $table_prefix . 'f_topics t ON t.id=p.p_topic_id', ['*', 't.id AS topic_id', 'p.id AS post_id'], ['p.id' => $post_id], '', 1);
         if (!isset($_post_details[0])) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'post'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'post', escape_html(strval($post_id))));
         }
         $post_details = $_post_details[0];
     }

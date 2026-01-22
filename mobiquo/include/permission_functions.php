@@ -165,7 +165,7 @@ function can_reply_to_topic(int $topic_id, ?int $member_id = null, ?array $topic
     if ($topic_details === null) {
         $_topic_details = $GLOBALS['FORUM_DB']->query_select('f_topics t', ['*', 't.id AS topic_id'], ['t.id' => $topic_id], '', 1);
         if (!isset($_topic_details[0])) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'topic'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'topic', escape_html(strval($topic_id))));
         }
         $topic_details = $_topic_details[0];
     }
@@ -190,7 +190,7 @@ function can_edit(string $type, int $id, ?int $member_id = null, ?array $details
             if ($details === null) {
                 $_topic_details = $GLOBALS['FORUM_DB']->query_select('f_topics t', ['*', 't.id AS topic_id'], ['t.id' => $id], '', 1);
                 if (!isset($_topic_details[0])) {
-                    warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'topic'));
+                    warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'topic', escape_html(strval($id))));
                 }
                 $topic_details = $_topic_details[0];
             } else {
@@ -202,7 +202,7 @@ function can_edit(string $type, int $id, ?int $member_id = null, ?array $details
             if ($details === null) {
                 $_post_details = $GLOBALS['FORUM_DB']->query_select('f_posts p JOIN ' . $GLOBALS['FORUM_DB']->get_table_prefix() . 'f_topics t ON t.id=p.p_topic_id', ['*', 'p.id AS post_id'], ['p.id' => $id], '', 1);
                 if (!isset($_post_details[0])) {
-                    warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'post'));
+                    warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'post', escape_html(strval($id))));
                 }
                 $post_details = $_post_details[0];
             } else {
@@ -231,7 +231,7 @@ function can_delete(string $type, int $id, ?int $member_id = null, ?array $detai
             if ($details === null) {
                 $_topic_details = $GLOBALS['FORUM_DB']->query_select('f_topics t', ['t.*', 't.id AS topic_id'], ['t.id' => $id], '', 1);
                 if (!isset($_topic_details[0])) {
-                    warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'topic'));
+                    warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'topic', escape_html(strval($id))));
                 }
                 $topic_details = $_topic_details[0];
             } else {
@@ -243,7 +243,7 @@ function can_delete(string $type, int $id, ?int $member_id = null, ?array $detai
             if ($details === null) {
                 $_post_details = $GLOBALS['FORUM_DB']->query_select('f_posts p JOIN ' . $GLOBALS['FORUM_DB']->get_table_prefix() . 'f_topics t ON t.id=p.p_topic_id', ['*', 'p.id AS post_id'], ['p.id' => $id], '', 1);
                 if (!isset($_post_details[0])) {
-                    warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'post'));
+                    warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'post', escape_html(strval($id))));
                 }
                 $post_details = $_post_details[0];
             } else {
@@ -299,7 +299,7 @@ function can_approve(string $type, int $id, ?int $member_id = null, ?array $deta
             if ($details === null) {
                 $_topic_details = $GLOBALS['FORUM_DB']->query_select('f_topics t', ['*', 't.id AS topic_id'], ['t.id' => $id], '', 1);
                 if (!isset($_topic_details[0])) {
-                    warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'topic'));
+                    warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'topic', escape_html(strval($id))));
                 }
                 $topic_details = $_topic_details[0];
             } else {
@@ -312,7 +312,7 @@ function can_approve(string $type, int $id, ?int $member_id = null, ?array $deta
                 $table_prefix = $GLOBALS['FORUM_DB']->get_table_prefix();
                 $_post_details = $GLOBALS['FORUM_DB']->query_select('f_posts p JOIN ' . $table_prefix . 'f_topics t ON t.id=p.p_topic_id', ['*', 'p.id AS post_id', 't.id AS topic_id'], ['p.id' => $id], '', 1);
                 if (!isset($_post_details[0])) {
-                    warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'post'));
+                    warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'post', escape_html(strval($id))));
                 }
                 $post_details = $_post_details[0];
             } else {
@@ -363,7 +363,7 @@ function can_moderate_topic(int $topic_id, ?int $member_id = null, ?array $topic
     if ($topic_details === null) {
         $_topic_details = $GLOBALS['FORUM_DB']->query_select('f_topics t', ['*', 't.id AS topic_id'], ['t.id' => $topic_id], '', 1);
         if (!isset($_topic_details[0])) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'topic'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'topic', escape_html(strval($topic_id))));
         }
         $topic_details = $_topic_details[0];
     }
@@ -383,7 +383,7 @@ function can_moderate_post(int $post_id, ?int $member_id = null, ?array $post_de
     if ($post_details === null) {
         $_post_details = $GLOBALS['FORUM_DB']->query_select('f_posts p', ['*', 'p.id AS post_id'], ['p.id' => $post_id], '', 1);
         if (!isset($_post_details[0])) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'post'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'post', escape_html(strval($post_id))));
         }
         $post_details = $_post_details[0];
     }
@@ -403,7 +403,7 @@ function can_rename_topic(int $topic_id, ?int $member_id = null, ?array $topic_d
     if ($topic_details === null) {
         $_topic_details = $GLOBALS['FORUM_DB']->query_select('f_topics t', ['*', 't.id AS topic_id'], ['t.id' => $topic_id], '', 1);
         if (!isset($_topic_details[0])) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'topic'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'topic', escape_html(strval($topic_id))));
         }
         $topic_details = $_topic_details[0];
     }

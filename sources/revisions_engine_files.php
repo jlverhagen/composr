@@ -126,12 +126,12 @@ class Source_revisions_engine_files
     {
         $revisions = $this->find_revisions($directory, $filename_id, $ext, null, $id);
         if (!isset($revisions[0])) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'revision', escape_html($directory . '::' . $filename_id . $ext . '::' . strval($id))));
         }
 
         $revision_path = get_custom_file_base() . '/' . $directory . '/' . $filename_id . '.' . $ext . '.' . strval($revisions[0]['r_time']);
         if (!is_file($revision_path)) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'PATH', escape_html($revision_path)));
         }
         unlink($revision_path);
         sync_file($revision_path);

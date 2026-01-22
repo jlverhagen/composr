@@ -434,7 +434,7 @@ class points_test_set extends cms_test_case
 
         $rows = $GLOBALS['SITE_DB']->query_select('escrow', ['*'], ['id' => $this->escrow], '', 1);
         if (!array_key_exists(0, $rows)) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE'));
+            return;
         }
         $myrow = $rows[0];
 

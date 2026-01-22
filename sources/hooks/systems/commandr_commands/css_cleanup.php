@@ -71,7 +71,7 @@ class Hook_commandr_command_css_cleanup
                     break;
 
                 default:
-                    return ['', '', '', do_lang('MISSING_RESOURCE')];
+                    return ['', '', '', do_lang('INTERNAL_ERROR', comcode_escape('TODO'))];
             }
 
             $old_limit = cms_extend_time_limit(TIME_LIMIT_EXTEND__SLUGGISH);

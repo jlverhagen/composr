@@ -155,12 +155,12 @@ function cns_delete_poll(int $poll_id, string $reason = '', bool $check_perms = 
 
     $info = $GLOBALS['FORUM_DB']->query_select('f_polls', ['id'], ['id' => $poll_id], '', 1);
     if (!array_key_exists(0, $info)) {
-        warn_exit(do_lang_tempcode('MISSING_RESOURCE'));
+        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'topic_poll', escape_html(strval($poll_id))));
     }
 
     $topic_info = $GLOBALS['FORUM_DB']->query_select('f_topics', ['*'], ['t_poll_id' => $poll_id], '', 1);
     if (!array_key_exists(0, $topic_info)) {
-        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'topic'));
+        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'topic_poll', escape_html(strval($poll_id))));
     }
     if ($check_perms) {
         if (!cns_may_delete_poll_by($topic_info[0]['t_forum_id'], $topic_info[0]['t_cache_first_member_id'])) {
@@ -217,7 +217,7 @@ function cns_vote_in_poll(int $poll_id, array $votes, ?int $member_id = null, ?a
         $topic_info = $GLOBALS['FORUM_DB']->query_select('f_topics', ['id', 't_forum_id', 't_cache_first_title'], ['t_poll_id' => $poll_id], '', 1);
     }
     if (!array_key_exists(0, $topic_info)) {
-        warn_exit(do_lang_tempcode('MISSING_RESOURCE'));
+        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'topic_poll', escape_html(strval($poll_id))));
     }
     $topic_id = $topic_info[0]['id'];
     $topic_title = $topic_info[0]['t_cache_first_title'];
@@ -237,7 +237,7 @@ function cns_vote_in_poll(int $poll_id, array $votes, ?int $member_id = null, ?a
 
     $rows = $GLOBALS['FORUM_DB']->query_select('f_polls', ['po_is_open', 'po_minimum_selections', 'po_maximum_selections', 'po_requires_reply', 'po_question', 'po_is_private', 'po_closing_time', 'po_view_member_votes', 'po_guests_can_vote'], ['id' => $poll_id], '', 1);
     if (!array_key_exists(0, $rows)) {
-        warn_exit(do_lang_tempcode('MISSING_RESOURCE'));
+        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'topic_poll', escape_html(strval($poll_id))));
     }
 
     // Check their vote is valid
@@ -458,7 +458,7 @@ function cns_calculate_poll_voting_power(int $poll_id, bool $recalculate = false
     if ($row === null) {
         $_row = $GLOBALS['FORUM_DB']->query_select('f_polls', ['id', 'po_cache_voting_power'], ['id' => $poll_id], '', 1);
         if ($_row === null || !array_key_exists(0, $_row)) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'topic_poll', escape_html(strval($poll_id))));
         }
         $row = $_row[0];
     }
@@ -492,7 +492,7 @@ function cns_calculate_answer_voting_power(int $answer_id, bool $recalculate = f
     if ($row === null) {
         $_row = $GLOBALS['FORUM_DB']->query_select('f_poll_answers', ['id', 'pa_cache_voting_power'], ['id' => $answer_id], '', 1);
         if ($_row === null || !array_key_exists(0, $_row)) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'topic_poll_answer', escape_html(strval($answer_id))));
         }
         $row = $_row[0];
     }
@@ -526,7 +526,7 @@ function cns_calculate_vote_voting_power(int $vote_id, bool $recalculate = false
     if ($row === null) {
         $_row = $GLOBALS['FORUM_DB']->query_select('f_poll_votes', ['id', 'pv_revoked', 'pv_points_when_voted', 'pv_cache_voting_power'], ['id' => $vote_id], '', 1);
         if ($_row === null || !array_key_exists(0, $_row)) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'topic_poll_vote', escape_html(strval($vote_id))));
         }
         $row = $_row[0];
     }

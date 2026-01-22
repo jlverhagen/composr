@@ -332,7 +332,7 @@ class Module_admin_leader_board extends Source_standard_crud_module
     {
         $m = $GLOBALS['SITE_DB']->query_select('leader_boards', ['*'], ['id' => intval($id)], '', 1);
         if (!array_key_exists(0, $m)) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'leader_board'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'leader_board', escape_html($id)));
         }
         $r = $m[0];
 

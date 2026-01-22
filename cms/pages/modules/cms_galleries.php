@@ -388,7 +388,7 @@ class Module_cms_galleries extends Source_standard_crud_module
         if (substr($cat, 0, 7) != 'member_') {
             $test = $GLOBALS['SITE_DB']->query_select_value_if_there('galleries', 'name', ['name' => $cat]);
             if ($test === null) {
-                warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'gallery'));
+                warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'gallery', escape_html($cat)));
             }
         }
 
@@ -732,7 +732,7 @@ class Module_cms_galleries extends Source_standard_crud_module
                 }
                 return $limit;
             }
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'gallery'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'gallery', escape_html($cat)));
         }
         if (($gallery[0]['accept_images'] == 0) || ($gallery[0]['is_member_synched'] == 1)) {
             warn_exit(do_lang_tempcode(($gallery[0]['accept_images'] == 1) ? 'ERROR_NOT_ACCEPT_CONTAINER' : 'ERROR_NOT_ACCEPT_IMAGES', escape_html($cat)), false, false, 500, $this->title);
@@ -961,7 +961,7 @@ class Module_cms_galleries extends Source_standard_crud_module
     {
         $temp = $GLOBALS['SITE_DB']->query_select_value_if_there('images', 'cat', ['id' => intval($id)]);
         if ($temp === null) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'image'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'image', escape_html($id)));
         }
         return $temp;
     }
@@ -978,7 +978,7 @@ class Module_cms_galleries extends Source_standard_crud_module
 
         $rows = $GLOBALS['SITE_DB']->query_select('images', ['*'], ['id' => $id], '', 1);
         if (!array_key_exists(0, $rows)) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'image'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'image', escape_html($_id)));
         }
         $myrow = $rows[0];
         $description = get_translated_text($myrow['the_description']);
@@ -1321,7 +1321,7 @@ class Module_cms_galleries_alt extends Source_standard_crud_module
                 }
                 return $limit;
             }
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'gallery'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'gallery', escape_html($cat)));
         }
         if (($gallery[0]['accept_videos'] == 0) || ($gallery[0]['is_member_synched'] == 1)) {
             warn_exit(do_lang_tempcode(($gallery[0]['accept_videos'] == 1) ? 'ERROR_NOT_ACCEPT_CONTAINER' : 'ERROR_NOT_ACCEPT_VIDEOS', escape_html($cat)), false, false, 500, $this->title);
@@ -1560,7 +1560,7 @@ class Module_cms_galleries_alt extends Source_standard_crud_module
     {
         $temp = $GLOBALS['SITE_DB']->query_select_value_if_there('videos', 'cat', ['id' => intval($id)]);
         if ($temp === null) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'video'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'video', escape_html($id)));
         }
         return $temp;
     }
@@ -1577,7 +1577,7 @@ class Module_cms_galleries_alt extends Source_standard_crud_module
 
         $rows = $GLOBALS['SITE_DB']->query_select('videos', ['*'], ['id' => $id], '', 1);
         if (!array_key_exists(0, $rows)) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'video'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'video', escape_html($_id)));
         }
         $myrow = $rows[0];
         $description = get_translated_text($myrow['the_description']);
@@ -2062,7 +2062,7 @@ class Module_cms_galleries_cat extends Source_standard_crud_module
     {
         $rows = $GLOBALS['SITE_DB']->query_select('galleries', ['*'], ['name' => $id], '', 1);
         if (!array_key_exists(0, $rows)) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'gallery'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'gallery', escape_html($id)));
         }
         $myrow = $rows[0];
 

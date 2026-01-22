@@ -163,7 +163,7 @@ function messages_script()
         $room_id = post_param_integer('room_id');
         $room_check = $GLOBALS['SITE_DB']->query_select('chat_rooms', ['id', 'is_im', 'c_welcome', 'allow_list_groups', 'disallow_list_groups', 'allow_list', 'disallow_list', 'room_owner'], ['id' => $room_id], '', 1);
         if (!array_key_exists(0, $room_check)) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'chat'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'chat', escape_html(strval($room_id))));
         }
         $room_row = $room_check[0];
         if (!check_chatroom_access($room_row, true, null, true)) {
@@ -251,7 +251,7 @@ function messages_script()
         }
         $room_check = $GLOBALS['SITE_DB']->query_select('chat_rooms', ['id', 'is_im', 'c_welcome', 'allow_list_groups', 'disallow_list_groups', 'allow_list', 'disallow_list', 'room_owner'], ['id' => $room_id], '', 1);
         if (!array_key_exists(0, $room_check)) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'chat'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'chat', escape_html(strval($room_id))));
         }
         $room_row = $room_check[0];
         if (!check_chatroom_access($room_row, true, null, true)) {
@@ -453,7 +453,7 @@ function _chat_messages_script_ajax(int $room_id, bool $backlog = false, ?int $m
 
         if (!array_key_exists(0, $room_check)) {
             // This room doesn't exist
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'chat'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'chat', escape_html(strval($room_id))));
         }
         $room_row = $room_check[0];
         if (!check_chatroom_access($room_row, true)) {
@@ -743,7 +743,7 @@ function _chat_post_message_ajax(int $room_id, string $message, string $font, st
 
     if (!array_key_exists(0, $room_check)) {
         // This room doesn't exist
-        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'chat'));
+        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'chat', escape_html(strval($room_id))));
     }
     $room_row = $room_check[0];
     if (!check_chatroom_access($room_row, true)) {
@@ -1618,7 +1618,7 @@ function check_chatroom_access($room, bool $ret = false, ?int $member_id = null,
     if (!is_array($room)) {
         $_room = $GLOBALS['SITE_DB']->query_select('chat_rooms', ['id', 'is_im', 'allow_list_groups', 'disallow_list_groups', 'allow_list', 'disallow_list', 'room_owner'], ['id' => $room], '', 1);
         if (!array_key_exists(0, $_room)) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'chat'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'chat', escape_html(strval($room))));
         }
         $room = $_room[0];
     }

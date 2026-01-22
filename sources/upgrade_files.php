@@ -145,14 +145,14 @@ function _upgrader_file_upgrade_screen() : string
         if (substr($url, 0, strlen(get_base_url() . '/')) == get_base_url() . '/') {
             $upgrade_path = get_file_base() . '/' . rawurldecode(substr($url, strlen(get_base_url() . '/')));
             if (!is_file($upgrade_path)) {
-                warn_exit(do_lang_tempcode('MISSING_RESOURCE'));
+                warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'PATH', escape_html($upgrade_path)));
             }
             $original_filename = basename($upgrade_path);
             $retrieval_method = FILE_RETRIEVAL_LOCAL;
         } elseif (substr($url, 0, 1) == '/') {
             $upgrade_path = get_file_base() . rawurldecode($url);
             if (!is_file($upgrade_path)) {
-                warn_exit(do_lang_tempcode('MISSING_RESOURCE'));
+                warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'PATH', escape_html($upgrade_path)));
             }
             $original_filename = basename($upgrade_path);
             $retrieval_method = FILE_RETRIEVAL_LOCAL;

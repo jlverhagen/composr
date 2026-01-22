@@ -292,7 +292,7 @@ function read_addon_info(string $addon_name, bool $get_dependencies_on_this = fa
     }
 
     if ($row === null) {
-        warn_exit(do_lang_tempcode('MISSING_RESOURCE', do_lang_tempcode('addons:ADDON')));
+        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'addon', escape_html($addon_name)));
     }
 
     $addon_info = [

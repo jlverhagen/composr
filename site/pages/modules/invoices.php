@@ -309,7 +309,7 @@ class Module_invoices
 
         $rows = $GLOBALS['SITE_DB']->query_select('ecom_invoices', ['*'], ['id' => $id], '', 1);
         if (!array_key_exists(0, $rows)) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'ecom_invoice', escape_html(strval($id))));
         }
         $row = $rows[0];
         $type_code = $row['i_type_code'];

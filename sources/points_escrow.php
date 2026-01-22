@@ -307,7 +307,7 @@ function satisfy_escrow(int $id, int $member_id, ?array $row = null, bool $escro
     if ($row === null) {
         $_row = $GLOBALS['SITE_DB']->query_select('escrow', ['*'], ['id' => $id], '', 1);
         if ($_row === null || !array_key_exists(0, $_row)) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'escrow', escape_html(strval($id))));
         }
         $row = $_row[0];
     }
@@ -395,7 +395,7 @@ function _complete_escrow(array $row, ?int $amount = null, bool $escrow_log = tr
     if (($amount < $row['amount']) && ($row['original_points_ledger_id'] !== null)) {
         $_ledger = $GLOBALS['SITE_DB']->query_select('points_ledger', ['*'], ['id' => $row['original_points_ledger_id']], '', 1);
         if (($_ledger === null) || !array_key_exists(0, $_ledger)) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'points_ledger', escape_html(strval($row['original_points_ledger_id']))));
         }
 
         $ledger = $_ledger[0];
@@ -477,7 +477,7 @@ function cancel_escrow(int $id, int $member_id, string $reason, ?array $row = nu
     if ($row === null) {
         $_row = $GLOBALS['SITE_DB']->query_select('escrow', ['*'], ['id' => $id], '', 1);
         if ($_row === null || !array_key_exists(0, $_row)) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'escrow', escape_html(strval($id))));
         }
         $row = $_row[0];
     }
@@ -498,7 +498,7 @@ function cancel_escrow(int $id, int $member_id, string $reason, ?array $row = nu
         // Get the original points ledger
         $_ledger = $GLOBALS['SITE_DB']->query_select('points_ledger', ['*'], ['id' => $row['original_points_ledger_id']], '', 1);
         if ($_ledger === null || !array_key_exists(0, $_ledger)) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'points_ledger', escape_html(strval($row['original_points_ledger_id']))));
         }
         $ledger = $_ledger[0];
 
@@ -554,7 +554,7 @@ function dispute_escrow(int $id, int $member_id, string $reason, ?array $row = n
     if ($row === null) {
         $_row = $GLOBALS['SITE_DB']->query_select('escrow', ['*'], ['id' => $id], '', 1);
         if ($_row === null || !array_key_exists(0, $_row)) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'escrow', escape_html(strval($id))));
         }
         $row = $_row[0];
     }
@@ -606,7 +606,7 @@ function moderate_escrow(int $id, int $member_id, string $action, string $new_re
     if ($row === null) {
         $_row = $GLOBALS['SITE_DB']->query_select('escrow', ['*'], ['id' => $id], '', 1);
         if ($_row === null || !array_key_exists(0, $_row)) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'escrow', escape_html(strval($id))));
         }
         $row = $_row[0];
     }
@@ -762,7 +762,7 @@ function escrow_update_receiving_member(int $id, int $receiving_member)
 {
     $_row = $GLOBALS['SITE_DB']->query_select('escrow', ['*'], ['id' => $id], '', 1);
     if ($_row === null || !array_key_exists(0, $_row)) {
-        warn_exit(do_lang_tempcode('MISSING_RESOURCE'));
+        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'escrow', escape_html(strval($id))));
     }
     $row = $_row[0];
 

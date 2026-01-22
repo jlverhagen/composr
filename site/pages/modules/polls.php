@@ -271,7 +271,7 @@ class Module_polls
             // Load data
             $rows = $GLOBALS['SITE_DB']->query_select('poll', ['*'], ['id' => $id], '', 1);
             if (!array_key_exists(0, $rows)) {
-                return warn_screen($this->title, do_lang_tempcode('MISSING_RESOURCE', 'poll'));
+                return warn_screen($this->title, do_lang_tempcode('MISSING_RESOURCE', 'poll', escape_html(strval($id))));
             }
             $myrow = $rows[0];
             $_title = get_translated_text($myrow['question']);

@@ -148,7 +148,7 @@ function cns_edit_post(int $post_id, ?int $validated, string $title, string $pos
 
     $post_info = $GLOBALS['FORUM_DB']->query_select('f_posts', ['*'], ['id' => $post_id], '', 1);
     if (!array_key_exists(0, $post_info)) {
-        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'post'));
+        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'post', escape_html(strval($post_id))));
     }
     $_title = $post_info[0]['p_title'];
     $_post = $post_info[0]['p_post'];
@@ -308,7 +308,7 @@ function cns_delete_posts_topic(int $topic_id, array $posts, string $reason = ''
     // Info about source
     $info = $GLOBALS['FORUM_DB']->query_select('f_topics', ['t_forum_id', 't_pt_from_member', 't_pt_to_member'], ['id' => $topic_id], '', 1);
     if (!array_key_exists(0, $info)) {
-        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'topic'));
+        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'topic', escape_html(strval($topic_id))));
     }
     $forum_id = $info[0]['t_forum_id'];
 
@@ -486,7 +486,7 @@ function cns_move_posts(int $from_topic_id, ?int $to_topic_id, array $posts, str
     // Info about source
     $from_info = $GLOBALS['FORUM_DB']->query_select('f_topics', ['t_forum_id'], ['id' => $from_topic_id]);
     if (!array_key_exists(0, $from_info)) {
-        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'topic'));
+        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'topic', escape_html(strval($from_topic_id))));
     }
     $from_forum_id = $from_info[0]['t_forum_id'];
 
@@ -561,7 +561,7 @@ function cns_move_posts(int $from_topic_id, ?int $to_topic_id, array $posts, str
     // Info about destination
     $to_info = $GLOBALS['FORUM_DB']->query_select('f_topics', ['t_forum_id'], ['id' => $to_topic_id]);
     if (!array_key_exists(0, $to_info)) {
-        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'topic'));
+        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'topic', escape_html(strval($to_topic_id))));
     }
     $to_forum_id = $to_info[0]['t_forum_id'];
 

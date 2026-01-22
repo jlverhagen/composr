@@ -197,14 +197,14 @@ class Hook_ecommerce_classifieds
                 return ['', null]; // Default is blank
             }
 
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE')); // Can't do from the 'choose' screen, must be linked from classifieds module
+            warn_exit(do_lang_tempcode('INTERNAL_ERROR', escape_html('TODO'))); // Can't do from the 'choose' screen, must be linked from classifieds module
         }
 
         $matches = [];
         if (preg_match('#^CLASSIFIEDS_ADVERT_(\d+)$#', $type_code, $matches) != 0) {
             $entry_catalogue_name = $GLOBALS['SITE_DB']->query_select_value_if_there('catalogue_entries', 'c_name', ['id' => $entry_id]);
             if ($entry_catalogue_name === null) {
-                warn_exit(do_lang_tempcode('MISSING_RESOURCE'));
+                warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'catalogue_entry', escape_html(strval($entry_id))));
             }
 
             // Check this is a valid purchase for the product

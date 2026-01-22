@@ -96,7 +96,7 @@ function cns_edit_group(int $group_id, ?string $name, ?int $is_default, ?int $is
 
     $_group_info = $GLOBALS['FORUM_DB']->query_select('f_groups', ['g_name', 'g_title', 'g_rank_image'], ['id' => $group_id], '', 1);
     if (!array_key_exists(0, $_group_info)) {
-        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'group'));
+        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'group', escape_html(strval($group_id))));
     }
     $_name = $_group_info[0]['g_name'];
     $_title = $_group_info[0]['g_title'];
@@ -231,7 +231,7 @@ function cns_delete_group(int $group_id, ?int $target_group = null)
 
     $_group_info = $GLOBALS['FORUM_DB']->query_select('f_groups', ['g_name', 'g_title', 'g_rank_image'], ['id' => $group_id], '', 1);
     if (!array_key_exists(0, $_group_info)) {
-        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'group'));
+        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'group', escape_html(strval($group_id))));
     }
     $_name = $_group_info[0]['g_name'];
     $_title = $_group_info[0]['g_title'];
@@ -309,7 +309,7 @@ function cns_member_ask_join_group(int $group_id, ?int $member_id = null)
 
     $group_info = $GLOBALS['FORUM_DB']->query_select('f_groups', ['g_name', 'g_group_lead_member'], ['id' => $group_id], '', 1);
     if (!array_key_exists(0, $group_info)) {
-        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'group'));
+        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'group', escape_html(strval($group_id))));
     }
 
     if ($member_id === null) {
@@ -420,7 +420,7 @@ function cns_add_member_to_secondary_group(int $member_id, int $id, int $validat
 
     $test = $GLOBALS['FORUM_DB']->query_select_value_if_there('f_groups', 'g_is_presented_at_install', ['id' => $id]);
     if ($test === null) {
-        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'group'));
+        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'group', escape_html(strval($id))));
     }
 
     $username = $GLOBALS['FORUM_DRIVER']->get_username($member_id);
