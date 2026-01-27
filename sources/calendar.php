@@ -255,7 +255,7 @@ function find_periods_recurrence(string $timezone, int $do_timezone_conv, int $s
     $_start_minute = ($start_minute === null) ? find_timezone_start_minute_in_utc($timezone, $start_year, $start_month, $start_day, $start_monthly_spec_type) : $start_minute;
     $day_of_month = find_concrete_day_of_month($start_year, $start_month, $start_day, $start_monthly_spec_type, $_start_hour, $_start_minute, $timezone, $do_timezone_conv == 1);
     $dif_days = 0;
-    if ($end_day !== null) {
+    if (($end_year !== null) && ($end_month !== null) && ($end_day !== null)) {
         $_end_hour = ($end_hour === null) ? find_timezone_end_hour_in_utc($timezone, $end_year, $end_month, $end_day, $end_monthly_spec_type) : $end_hour;
         $_end_minute = ($end_minute === null) ? find_timezone_end_minute_in_utc($timezone, $end_year, $end_month, $end_day, $end_monthly_spec_type) : $end_minute;
         $end_day_of_month = find_concrete_day_of_month($end_year, $end_month, $end_day, $end_monthly_spec_type, $_end_hour, $_end_minute, $timezone, $do_timezone_conv == 1);
@@ -447,10 +447,8 @@ function find_periods_recurrence(string $timezone, int $do_timezone_conv, int $s
         }
 
         // Crossing a DST in our reference timezone? (as we store in UTC, which is DST-less, we need to specially accommodate for this)
-        if ($start_hour !== null) {
-            _compensate_for_dst_change($start_hour, $start_minute, $start_day, $start_month, $start_year, $timezone, $do_timezone_conv, $dif_day, $dif_month, $dif_year);
-        }
-        if ($end_day !== null) {
+        _compensate_for_dst_change($start_hour, $start_minute, $start_day, $start_month, $start_year, $timezone, $do_timezone_conv, $dif_day, $dif_month, $dif_year);
+        if (($end_year !== null) && ($end_month !== null) && ($end_day !== null)) {
             _compensate_for_dst_change($end_hour, $end_minute, $end_day, $end_month, $end_year, $timezone, $do_timezone_conv, $dif_day, $dif_month, $dif_year);
         }
 
