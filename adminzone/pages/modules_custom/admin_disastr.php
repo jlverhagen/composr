@@ -258,7 +258,7 @@ class Module_admin_disastr extends Source_standard_crud_module
 
         $rows = $GLOBALS['SITE_DB']->query_select('diseases', ['*'], ['id' => $id], '', 1);
         if (!isset($rows[0])) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'disease', escape_html(strval($id))));
         }
 
         $name = $rows[0]['name'];
@@ -347,7 +347,7 @@ class Module_admin_disastr extends Source_standard_crud_module
     {
         $rows = $GLOBALS['SITE_DB']->query_select('diseases', ['*'], ['id' => intval($id)]);
         if (!array_key_exists(0, $rows)) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'disease', escape_html($id)));
         }
         $myrow = $rows[0];
 
@@ -442,7 +442,7 @@ class Module_admin_disastr extends Source_standard_crud_module
         $name = $GLOBALS['SITE_DB']->query_select_value_if_there('diseases', 'name', ['id' => $id]);
 
         if ($name === null) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'disease', escape_html($_id)));
         }
 
         require_code('files2');

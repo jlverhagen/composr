@@ -322,7 +322,7 @@ function cns_forum_breadcrumbs($end_point_forum, $this_name = null, ?int $parent
     if ($this_name === null) {
         $_forum_details = $GLOBALS['FORUM_DB']->query_select('f_forums', ['f_name', 'f_parent_forum_id'], ['id' => $end_point_forum], '', 1);
         if (!array_key_exists(0, $_forum_details)) {
-            //warn_exit(do_lang_tempcode('_MISSING_RESOURCE', escape_html(strval($end_point_forum)), 'forum'));
+            //warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'forum', escape_html(strval($end_point_forum))));
             return [];
         }
         $forum_details = $_forum_details[0];

@@ -49,7 +49,7 @@ class CMSSocialWrite
         $table_prefix = $GLOBALS['FORUM_DB']->get_table_prefix();
         $post_rows = $GLOBALS['FORUM_DB']->query_select('f_posts p JOIN ' . $table_prefix . 'f_topics t ON t.id=p.p_topic_id', ['*', 'p.id AS post_id', 't.id AS topic_id'], ['p.id' => $post_id], '', 1);
         if (!isset($post_rows[0])) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'post'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'post', escape_html(strval($post_id))));
         }
 
         $user_id = $post_rows[0]['p_posting_member'];
@@ -143,7 +143,7 @@ class CMSSocialWrite
         $table_prefix = $GLOBALS['FORUM_DB']->get_table_prefix();
         $post_rows = $GLOBALS['FORUM_DB']->query_select('f_posts p JOIN ' . $table_prefix . 'f_topics t ON t.id=p.p_topic_id', ['*', 'p.id AS post_id', 't.id AS topic_id'], ['p.id' => $post_id], '', 1);
         if (!isset($post_rows[0])) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'post'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'post', escape_html(strval($post_id))));
         }
 
         $user_id = $post_rows[0]['p_posting_member'];

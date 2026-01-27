@@ -312,7 +312,7 @@ class Module_admin_zones
         // Zone editing stuff
         $rows = $GLOBALS['SITE_DB']->query_select('zones', ['*'], ['zone_name' => $id], '', 1);
         if (!array_key_exists(0, $rows)) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'zone'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'zone', escape_html($id)));
         }
         $row = $rows[0];
         $header_text = get_translated_text($row['zone_header_text'], null, $lang);
@@ -890,7 +890,7 @@ class Module_admin_zones
 
         $rows = $GLOBALS['SITE_DB']->query_select('zones', ['*'], ['zone_name' => $zone], '', 1);
         if (!array_key_exists(0, $rows)) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'zone'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'zone', escape_html($zone)));
         }
         $row = $rows[0];
 

@@ -114,7 +114,7 @@ PHP;
 
         $block_id = get_block_id($map);
 
-        $gallery_name = @cms_empty_safe($map['gallery_name']) ? 'homepage_hero_slider' : $map['gallery_name'];
+        $_gallery_name = @cms_empty_safe($map['gallery_name']) ? 'homepage_hero_slider' : $map['gallery_name'];
         $effect = !empty($map['effect']) ? $map['effect'] : 'slide'; // Valid values: 'fade' or 'slide'
         $fullscreen = !empty($map['fullscreen']);
         $show_indicators = !empty($map['show_indicators']);
@@ -124,16 +124,16 @@ PHP;
         $sort = !empty($map['sort']) ? $map['sort'] : 'title ASC';
 
         // Check if the gallery exists
-        $gallery_name = $GLOBALS['SITE_DB']->query_select_value_if_there('galleries', 'name', ['name' => $gallery_name]);
+        $gallery_name = $GLOBALS['SITE_DB']->query_select_value_if_there('galleries', 'name', ['name' => $_gallery_name]);
         if ($gallery_name === null) {
             // Maybe the user specified a gallery's full name instead of the codename?
-            $gallery_name = $GLOBALS['SITE_DB']->query_select_value_if_there('galleries', 'name', ['fullname' => $gallery_name]);
+            $gallery_name = $GLOBALS['SITE_DB']->query_select_value_if_there('galleries', 'name', ['fullname' => $_gallery_name]);
         }
         if ($gallery_name === null) {
             if ($blank_if_empty) {
                 return new Tempcode();
             } else {
-                return do_template('RED_ALERT', ['_GUID' => '19737ba0c9c84c36b92690b7c896040d', 'TEXT' => do_lang_tempcode('MISSING_RESOURCE', 'gallery')]);
+                return do_template('RED_ALERT', ['_GUID' => '19737ba0c9c84c36b92690b7c896040d', 'TEXT' => do_lang_tempcode('MISSING_RESOURCE', 'gallery', escape_html(strval($_gallery_name)))]);
             }
         }
 

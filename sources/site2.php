@@ -335,7 +335,7 @@ function page_not_found(string $page, string $zone) : object
 
     if (($_SERVER['HTTP_REFERER'] != '') && (get_value_newer_than('missing-page--' . $zone . ':' . $page, time() - 60 * 60 * 24 * 30) === null)) {
         require_code('failure');
-        relay_error_notification(do_lang('_MISSING_RESOURCE', $zone . ':' . $page, do_lang('PAGE')) . ' ' . do_lang('REFERRER', $_SERVER['HTTP_REFERER'], substr(get_browser_string(), 0, 255)), false, 'error_occurred_missing_page');
+        relay_error_notification(do_lang('MISSING_RESOURCE', 'page', comcode_escape($zone . ':' . $page)) . ' ' . do_lang('REFERRER', $_SERVER['HTTP_REFERER'], substr(get_browser_string(), 0, 255)), false, 'error_occurred_missing_page');
         set_value('missing-page--' . $zone . ':' . $page, '1', true);
     }
 

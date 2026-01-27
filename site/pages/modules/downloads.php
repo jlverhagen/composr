@@ -305,7 +305,7 @@ class Module_downloads
             // Get details
             $rows = $GLOBALS['SITE_DB']->query_select('download_categories', ['*'], ['id' => $category_id], '', 1);
             if (!array_key_exists(0, $rows)) {
-                return warn_screen(get_screen_title('DOWNLOAD_CATEGORY'), do_lang_tempcode('MISSING_RESOURCE', 'download_category'));
+                return warn_screen(get_screen_title('DOWNLOAD_CATEGORY'), do_lang_tempcode('MISSING_RESOURCE', 'download_category', escape_html(strval($category_id))));
             }
             $category = $rows[0];
 
@@ -358,7 +358,7 @@ class Module_downloads
             // Load from database
             $rows = $GLOBALS['SITE_DB']->query_select('download_downloads', ['*'], ['id' => $id], '', 1);
             if (!array_key_exists(0, $rows)) {
-                return warn_screen(get_screen_title('SECTION_DOWNLOADS'), do_lang_tempcode('MISSING_RESOURCE', 'download'));
+                return warn_screen(get_screen_title('SECTION_DOWNLOADS'), do_lang_tempcode('MISSING_RESOURCE', 'download', escape_html(strval($id))));
             }
             $myrow = $rows[0];
             inject_feed_url('?mode=downloads&select=' . strval($myrow['category_id']), do_lang('DOWNLOAD_CATEGORY'));

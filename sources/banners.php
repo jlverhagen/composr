@@ -139,7 +139,7 @@ function banners_script(bool $ret = false, ?string $type = null, ?string $dest =
         // Find the information about the dest
         $rows = $GLOBALS['SITE_DB']->query_select('banners', ['site_url', 'hits_to', 'campaign_remaining'], ['name' => $dest]);
         if (!array_key_exists(0, $rows)) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'banner'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'banner', escape_html($dest)));
         }
         $myrow = $rows[0];
         $url = $myrow['site_url'];

@@ -337,7 +337,7 @@ class Hook_ecommerce_custom
 
         $rows = $GLOBALS['SITE_DB']->query_select('ecom_prods_custom', ['*'], ['id' => $custom_product_id, 'c_enabled' => 1], '', 1);
         if (!array_key_exists(0, $rows)) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'ecom_custom_product', escape_html(strval($custom_product_id))));
         }
         $row = $rows[0];
 

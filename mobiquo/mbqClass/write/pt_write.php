@@ -174,7 +174,7 @@ class CMSPtWrite
 
         $topic_info = $GLOBALS['FORUM_DB']->query_select('f_topics', ['t_pt_from_member', 't_pt_to_member', 't_pt_from_category', 't_pt_to_category'], ['id' => $topic_id], '', 1);
         if (!array_key_exists(0, $topic_info)) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'topic'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'topic', escape_html(strval($topic_id))));
         }
 
         if ($topic_info[0]['t_pt_from_member'] == get_member()) {

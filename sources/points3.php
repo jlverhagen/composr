@@ -557,7 +557,7 @@ function transaction_reverse_screen(int $id, int $confirm, object $title) : ?obj
 
     $rows = $GLOBALS['SITE_DB']->query_select('points_ledger', ['*'], ['id' => $id], '', 1);
     if (!array_key_exists(0, $rows)) {
-        warn_exit(do_lang_tempcode('MISSING_RESOURCE'));
+        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'points_ledger', escape_html(strval($id))));
     }
     $myrow = $rows[0];
     $amount_points = $myrow['amount_points'];
@@ -611,7 +611,7 @@ function transaction_amend_screen(int $id, object $title, ?int $member_id_of = n
 
     $rows = $GLOBALS['SITE_DB']->query_select('points_ledger', ['*'], ['id' => $id], '', 1);
     if (!array_key_exists(0, $rows)) {
-        warn_exit(do_lang_tempcode('MISSING_RESOURCE'));
+        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'points_ledger', escape_html(strval($id))));
     }
     $myrow = $rows[0];
     $myreason = get_translated_text($myrow['reason']);

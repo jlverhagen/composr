@@ -179,7 +179,7 @@ class CMSAttachmentWrite
 
         $_post_comcode = $GLOBALS['FORUM_DB']->query_select_value_if_there('f_posts', 'p_post', ['id' => $post_id]);
         if ($_post_comcode === null) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'post'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'post', escape_html(strval($post_id))));
         }
         $post_comcode = get_translated_text($_post_comcode, $GLOBALS['FORUM_DB']);
         $post_comcode = preg_replace('#\n*\[attachment(_safe)?( [^\[\]]*)?\]' . strval($attachment_id) . '\[/attachment(_safe)?\]#U', '', $post_comcode);
@@ -189,7 +189,7 @@ class CMSAttachmentWrite
 
         $_attachment_info = $GLOBALS['FORUM_DB']->query_select('attachments', ['a_url', 'a_thumb_url', 'a_member_id'], ['id' => $attachment_id], '', 1);
         if (!array_key_exists(0, $_attachment_info)) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE', do_lang_tempcode('_ATTACHMENT')));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'attachment', escape_html(strval($attachment_id))));
         }
 
         $ref_where = ['a_id' => $attachment_id, 'r_referer_type' => $type];

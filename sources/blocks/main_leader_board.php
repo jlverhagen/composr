@@ -206,7 +206,7 @@ PHP;
         if (empty($boards)) {
             // Only error on a leader-board not existing if we explicitly requested one; otherwise just return blank
             if (array_key_exists('param', $map)) {
-                return do_template('RED_ALERT', ['_GUID' => '4c1a7f62c19ac80998fa1634454317bc', 'TEXT' => do_lang_tempcode('MISSING_RESOURCE', 'leader_board')]);
+                return do_template('RED_ALERT', ['_GUID' => '4c1a7f62c19ac80998fa1634454317bc', 'TEXT' => do_lang_tempcode('MISSING_RESOURCE', 'leader_board', escape_html(strval($map['param'])))]);
             }
             return new Tempcode();
         }

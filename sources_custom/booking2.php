@@ -81,7 +81,7 @@ function get_booking_request_from_db(array $booking_ids) : array
     foreach ($booking_ids as $booking_id) {
         $booking = $GLOBALS['SITE_DB']->query_select('booking', ['*'], ['id' => $booking_id], '', 1);
         if (!array_key_exists(0, $booking)) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'booking', escape_html(strval($booking_id))));
         }
 
         $supplements = $GLOBALS['SITE_DB']->query_select('booking_supplement', ['supplement_id', 'quantity', 'notes'], ['booking_id' => $booking_id]);
@@ -448,7 +448,7 @@ function edit_bookable(int $bookable_id, array $bookable_details, array $codes, 
 {
     $_old_bookable = $GLOBALS['SITE_DB']->query_select('bookable', ['*'], ['id' => $bookable_id], '', 1);
     if (!array_key_exists(0, $_old_bookable)) {
-        warn_exit(do_lang_tempcode('MISSING_RESOURCE'));
+        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'bookable', escape_html(strval($bookable_id))));
     }
 
     $title = $bookable_details['title'];
@@ -518,7 +518,7 @@ function delete_bookable(int $bookable_id)
 
     $_old_bookable = $GLOBALS['SITE_DB']->query_select('bookable', ['*'], ['id' => $bookable_id], '', 1);
     if (!array_key_exists(0, $_old_bookable)) {
-        warn_exit(do_lang_tempcode('MISSING_RESOURCE'));
+        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'bookable', escape_html(strval($bookable_id))));
     }
 
     $title = get_translated_text($_old_bookable[0]['title']);
@@ -587,7 +587,7 @@ function edit_bookable_supplement(int $supplement_id, array $details, array $boo
 
     $_old_supplement = $GLOBALS['SITE_DB']->query_select('bookable_supplement', ['*'], ['id' => $supplement_id], '', 1);
     if (!array_key_exists(0, $_old_supplement)) {
-        warn_exit(do_lang_tempcode('MISSING_RESOURCE'));
+        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'bookable_supplement', escape_html(strval($supplement_id))));
     }
 
     $_old_supplement[0] += lang_remap('title', $_old_supplement[0]['title'], $details['title']);
@@ -617,7 +617,7 @@ function delete_bookable_supplement(int $supplement_id)
 {
     $_old_supplement = $GLOBALS['SITE_DB']->query_select('bookable_supplement', ['*'], ['id' => $supplement_id], '', 1);
     if (!array_key_exists(0, $_old_supplement)) {
-        warn_exit(do_lang_tempcode('MISSING_RESOURCE'));
+        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'bookable_supplement', escape_html(strval($supplement_id))));
     }
 
     $title = get_translated_text($_old_supplement[0]['title']);
@@ -671,7 +671,7 @@ function edit_bookable_blacked(int $blacked_id, array $details, ?array $bookable
 
     $_old_blacked = $GLOBALS['SITE_DB']->query_select('bookable_blacked', ['*'], ['id' => $blacked_id], '', 1);
     if (!array_key_exists(0, $_old_blacked)) {
-        warn_exit(do_lang_tempcode('MISSING_RESOURCE'));
+        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'bookable_blacked', escape_html(strval($blacked_id))));
     }
 
     $_old_blacked[0] += lang_remap_comcode('blacked_explanation', $_old_blacked[0]['blacked_explanation'], $details['blacked_explanation']);
@@ -701,7 +701,7 @@ function delete_bookable_blacked(int $blacked_id)
 {
     $_old_blacked = $GLOBALS['SITE_DB']->query_select('bookable_blacked', ['*'], ['id' => $blacked_id], '', 1);
     if (!array_key_exists(0, $_old_blacked)) {
-        warn_exit(do_lang_tempcode('MISSING_RESOURCE'));
+        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'bookable_blacked', escape_html(strval($blacked_id))));
     }
 
     $blacked_explanation = get_translated_text($_old_blacked[0]['blacked_explanation']);

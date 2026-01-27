@@ -58,16 +58,17 @@ class Hook_commandr_command_untar
         }
 
         $path = $parameters[0];
+        $_path = get_custom_file_base() . '/' . $path;
 
-        if (!is_file(get_custom_file_base() . '/' . $path)) {
-            return ['', '', '', do_lang('MISSING_RESOURCE')];
+        if (!is_file($_path)) {
+            return ['', '', '', do_lang('MISSING_RESOURCE', 'PATH', escape_html($_path))];
         }
 
         disable_php_memory_limit();
 
         require_code('tar');
 
-        $myfile = tar_open(get_custom_file_base() . '/' . $path, 'rb');
+        $myfile = tar_open($_path, 'rb');
         tar_extract_to_folder($myfile, '');
         tar_close($myfile);
 

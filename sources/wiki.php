@@ -260,7 +260,7 @@ function wiki_edit_post(int $post_id, string $message, int $validated, ?int $mem
 
     $rows = $GLOBALS['SITE_DB']->query_select('wiki_posts', ['*'], ['id' => $post_id], '', 1);
     if (!array_key_exists(0, $rows)) {
-        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'wiki_post'));
+        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'wiki_post', escape_html(strval($post_id))));
     }
     $myrow = $rows[0];
     $original_poster = $myrow['member_id'];
@@ -346,7 +346,7 @@ function wiki_delete_post(int $post_id, ?int $member_id = null)
 
     $rows = $GLOBALS['SITE_DB']->query_select('wiki_posts', ['*'], ['id' => $post_id], '', 1);
     if (!array_key_exists(0, $rows)) {
-        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'wiki_post'));
+        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'wiki_post', escape_html(strval($post_id))));
     }
     $myrow = $rows[0];
     $original_poster = $myrow['member_id'];
@@ -511,7 +511,7 @@ function wiki_edit_page(int $page_id, string $title, string $description, string
 
     $pages = $GLOBALS['SITE_DB']->query_select('wiki_pages', ['*'], ['id' => $page_id], '', 1);
     if (!array_key_exists(0, $pages)) {
-        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'wiki_page'));
+        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'wiki_page', escape_html(strval($page_id))));
     }
     $page = $pages[0];
     $_description = $page['the_description'];
@@ -602,7 +602,7 @@ function wiki_delete_page(int $page_id)
     // Get page details
     $pages = $GLOBALS['SITE_DB']->query_select('wiki_pages', ['*'], ['id' => $page_id], '', 1);
     if (!array_key_exists(0, $pages)) {
-        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'wiki_page'));
+        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'wiki_page', escape_html(strval($page_id))));
     }
     $page = $pages[0];
     $_description = $page['the_description'];
@@ -690,7 +690,7 @@ function get_param_wiki_chain(string $parameter_name, ?string $default_value = n
             $url_moniker_where = ['m_resource_page' => 'wiki', 'm_moniker' => $part];
             $_id = $GLOBALS['SITE_DB']->query_select_value_if_there('url_id_monikers', 'm_resource_id', $url_moniker_where);
             if ($_id === null) {
-                warn_exit(do_lang_tempcode('MISSING_RESOURCE'));
+                warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'url_moniker', escape_html('wiki::browse::' . $part)));
             }
             $id = intval($_id);
         }
@@ -746,7 +746,7 @@ function wiki_breadcrumbs(string $chain, ?string $current_title = null, bool $fi
         } else {
             if ($current_title === null) {
                 $_current_title = $GLOBALS['SITE_DB']->query_select_value_if_there('wiki_pages', 'title', ['id' => $id]);
-                $current_title = ($_current_title === null) ? do_lang('MISSING_RESOURCE', 'wiki_page') : get_translated_text($_current_title);
+                $current_title = ($_current_title === null) ? do_lang('MISSING_RESOURCE', 'wiki_page', escape_html(strval($id))) : get_translated_text($_current_title);
             }
             if ($final_link) {
                 $segments[] = [$page_link, $current_title];
@@ -964,7 +964,7 @@ function get_wiki_page_tree(array &$wiki_seen, ?int $page_id = null, ?string $br
     if ($page_details === null) {
         $_page_details = $GLOBALS['SITE_DB']->query_select('wiki_pages', ['title'], ['id' => $page_id], '', 1);
         if (!array_key_exists(0, $_page_details)) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'wiki_page'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'wiki_page', escape_html(strval($page_id))));
         }
         $page_details = $_page_details[0];
     }

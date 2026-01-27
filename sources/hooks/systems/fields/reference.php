@@ -200,7 +200,7 @@ class Hook_fields_reference
             require_code('content');
             list($title) = content_get_details('catalogue_entry', $value);
             if ($title === null) {
-                warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'catalogue_entry'));
+                warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'catalogue_entry', escape_html($value)));
             }
         }
 

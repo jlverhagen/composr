@@ -485,7 +485,7 @@ class Module_admin_points
 
         $_row = $GLOBALS['SITE_DB']->query_select('points_ledger', ['*'], ['id' => $id], '', 1);
         if ($_row === null || !array_key_exists(0, $_row)) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'points_ledger', escape_html(strval($id))));
         }
         $row = $_row[0];
         $reason = get_translated_tempcode('points_ledger', $row, 'reason');

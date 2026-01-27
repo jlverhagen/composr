@@ -253,7 +253,7 @@ class Hook_fields_content_link_multi
                 // Skip content that does not exist
                 list($title) = content_get_details($type, $_value);
                 if ($title === null) {
-                    attach_message(do_lang_tempcode('MISSING_RESOURCE', escape_html($type)), 'warn');
+                    attach_message(do_lang_tempcode('MISSING_RESOURCE', escape_html($type), escape_html($_value)), 'warn');
                     continue;
                 }
 

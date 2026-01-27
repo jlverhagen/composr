@@ -358,7 +358,7 @@ function edit_menu_item(int $id, string $menu_id, int $order, ?int $parent, stri
 {
     $_caption = $GLOBALS['SITE_DB']->query_select_value_if_there('menu_items', 'i_caption', ['id' => $id]);
     if ($_caption === null) {
-        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'menu_item'));
+        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'menu_item', escape_html(strval($id))));
     }
     $_caption_long = $GLOBALS['SITE_DB']->query_select_value('menu_items', 'i_caption_long', ['id' => $id]);
 
@@ -395,7 +395,7 @@ function delete_menu_item(int $id)
 {
     $rows = $GLOBALS['SITE_DB']->query_select('menu_items', ['i_caption', 'i_caption_long', 'i_menu'], ['id' => $id], '', 1);
     if (!array_key_exists(0, $rows)) {
-        warn_exit(do_lang_tempcode('MISSING_RESOURCE'));
+        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'menu_item', escape_html(strval($id))));
     }
     $_caption = $rows[0]['i_caption'];
     $_caption_long = $rows[0]['i_caption_long'];

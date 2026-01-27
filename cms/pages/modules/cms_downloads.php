@@ -571,7 +571,7 @@ class Module_cms_downloads extends Source_standard_crud_module
     {
         $temp = $GLOBALS['SITE_DB']->query_select_value_if_there('download_downloads', 'category_id', ['id' => intval($id)]);
         if ($temp === null) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'download'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'download', escape_html($id)));
         }
         return strval($temp);
     }
@@ -588,7 +588,7 @@ class Module_cms_downloads extends Source_standard_crud_module
 
         $rows = $GLOBALS['SITE_DB']->query_select('download_downloads', ['*'], ['id' => $id], '', 1);
         if (!array_key_exists(0, $rows)) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'download'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'download', escape_html($_id)));
         }
         $myrow = $rows[0];
 
@@ -917,7 +917,7 @@ class Module_cms_downloads_alt extends Source_standard_crud_module
 
         $rows = $GLOBALS['SITE_DB']->query_select('download_licences', ['*'], ['id' => $id], '', 1);
         if (!array_key_exists(0, $rows)) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'download_licence'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'download_licence', escape_html($_id)));
         }
         $myrow = $rows[0];
 
@@ -1090,7 +1090,7 @@ class Module_cms_downloads_cat extends Source_standard_crud_module
 
         $rows = $GLOBALS['SITE_DB']->query_select('download_categories', ['*'], ['id' => $category_id], '', 1);
         if (!array_key_exists(0, $rows)) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'download_category'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'download_category', escape_html($id)));
         }
         $myrow = $rows[0];
 

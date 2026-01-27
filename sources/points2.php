@@ -483,7 +483,7 @@ function points_transaction_reverse(int $id, ?bool $send_notifications = true, b
         if ($fail_ok) {
             return null;
         }
-        warn_exit(do_lang_tempcode('MISSING_RESOURCE'));
+        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'points_ledger', escape_html(strval($id))));
     }
     $myrow = $rows[0];
 

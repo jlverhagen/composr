@@ -320,7 +320,7 @@ class Module_wiki
 
             // Display title
             if (!array_key_exists(0, $pages)) {
-                return warn_screen(get_screen_title('WIKI'), do_lang_tempcode('MISSING_RESOURCE', 'wiki_page'));
+                return warn_screen(get_screen_title('WIKI'), do_lang_tempcode('MISSING_RESOURCE', 'wiki_page', escape_html(strval($id))));
             }
             $page = $pages[0];
             $current_title = get_translated_text($page['title']);
@@ -1042,7 +1042,7 @@ class Module_wiki
         if ($mode == 'edit') {
             $rows = $GLOBALS['SITE_DB']->query_select('wiki_posts', ['*'], ['id' => $post_id], '', 1);
             if (!array_key_exists(0, $rows)) {
-                warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'wiki_post'));
+                warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'wiki_post', escape_html(strval($post_id))));
             }
             $myrow = $rows[0];
 
@@ -1246,7 +1246,7 @@ class Module_wiki
         } else {
             $rows = $GLOBALS['SITE_DB']->query_select('wiki_posts', ['*'], ['id' => $post_id], '', 1);
             if (!array_key_exists(0, $rows)) {
-                warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'wiki_post'));
+                warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'wiki_post', escape_html(strval($post_id))));
             }
             $myrow = $rows[0];
             if (!has_category_access(get_member(), 'wiki_page', strval($myrow['page_id']))) {

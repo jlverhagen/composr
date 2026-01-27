@@ -1084,7 +1084,7 @@ function edit_item_wrap_copy(int $member_id, string $name, int $price, int $not_
     // Fix infinity source thing... we can never make a non-infinite source into an infinite source
     $old_not_infinite = $GLOBALS['SITE_DB']->query_select_value_if_there('w_items', 'not_infinite', ['location_x' => $x, 'location_y' => $y, 'location_realm' => $realm, 'copy_owner' => $member, 'name' => $name]);
     if ($old_not_infinite === null) {
-        warn_exit(do_lang_tempcode('MISSING_RESOURCE'));
+        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'buildr_item', escape_html(strval($x) . '::' . strval($y) . '::' . strval($realm) . '::' . strval($member) . '::' . strval($name))));
     }
     if ($old_not_infinite == 1) {
         $not_infinite = 1;

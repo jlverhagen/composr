@@ -449,7 +449,7 @@ function edit_quiz(int $id, string $name, ?int $timeout, string $start_text, str
 {
     $rows = $GLOBALS['SITE_DB']->query_select('quizzes', ['*'], ['id' => $id], '', 1);
     if (!array_key_exists(0, $rows)) {
-        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'quiz'));
+        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'quiz', escape_html(strval($id))));
     }
     $_name = $rows[0]['q_name'];
     $_start_text = $rows[0]['q_start_text'];
@@ -536,7 +536,7 @@ function delete_quiz(int $id)
 {
     $rows = $GLOBALS['SITE_DB']->query_select('quizzes', ['*'], ['id' => $id], '', 1);
     if (!array_key_exists(0, $rows)) {
-        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'quiz'));
+        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'quiz', escape_html(strval($id))));
     }
     $_name = $rows[0]['q_name'];
     $_start_text = $rows[0]['q_start_text'];

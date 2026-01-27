@@ -314,7 +314,7 @@ class Module_subscriptions
         $id = get_param_integer('id');
         $payment_gateway = $GLOBALS['SITE_DB']->query_select_value_if_there('ecom_subscriptions', 's_payment_gateway', ['id' => $id]);
         if ($payment_gateway === null) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'ecom_subscription', escape_html(strval($id))));
         }
 
         if (!in_array($payment_gateway, ['', 'manual', 'points'])) {

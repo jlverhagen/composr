@@ -913,7 +913,8 @@ function process_url_monikers(bool $redirect_if_non_canonical = true, bool $env_
                     } else {
                         // Look up the moniker row
                         $table = 'url_id_monikers' . $GLOBALS['SITE_DB']->prefer_index('url_id_monikers', 'uim_moniker');
-                        $monikers = $GLOBALS['SITE_DB']->query_select($table, ['*'], ['m_resource_page' => $page, 'm_resource_type' => get_param_string('type', 'browse'), 'm_moniker' => $url_id]);
+                        $resource_type = get_param_string('type', 'browse');
+                        $monikers = $GLOBALS['SITE_DB']->query_select($table, ['*'], ['m_resource_page' => $page, 'm_resource_type' => $resource_type, 'm_moniker' => $url_id]);
                         if (!array_key_exists(0, $monikers)) { // Uh oh
                             // Assume that it wasn't a moniker after all
                             if (!$ob_info['id_field_numeric']) {
@@ -922,7 +923,7 @@ function process_url_monikers(bool $redirect_if_non_canonical = true, bool $env_
 
                             // Okay it was deleted or never existed then?! Just set to -1 as nothing will have that ID, and we'll get an error from the module when bootstrapping is fully finished
                             $_GET['id'] = '-1';
-                            warn_exit(do_lang_tempcode('MISSING_RESOURCE'));
+                            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'url_moniker', escape_html($page . '::' . $resource_type . '::' . $url_id)));
                         }
 
                         // Map back 'id'
@@ -1360,8 +1361,10 @@ function save_static_caching($out, string $mime_type = 'text/html') : bool
         }
     }
 
-    // Remove any sessions etc
+    // Remove any sessions, nonce, etc
     $static_cache = preg_replace('#(&|&amp;|&amp;amp;|%3Aamp%3A|\?)?(keep_session|for_session|keep_devtest|keep_failover)(=|%3D)\w+#', '', $static_cache);
+    $static_cache = preg_replace('#\snonce=\"\w*\"#', '{$CSP_NONCE_HTML}', $static_cache);
+    $static_cache = preg_replace('#' . preg_quote('<meta id="cms-nonce" name="cms-nonce" content="', '#') . '\w*\"#', '<meta id="cms-nonce" name="cms-nonce" content="{$CSP_NONCE*}"', $static_cache);
 
     // Add URL identifier
     $static_cache .= "\n\n" . '<!-- Cached URL ' . htmlentities($url) . ' -->';

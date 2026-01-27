@@ -60,7 +60,7 @@ class Hook_commandr_command_find_guid_via_id
 
         $result = find_guid_via_id($parameters[0], $parameters[1]);
         if ($result === null) {
-            return ['', '', '', do_lang('MISSING_RESOURCE')];
+            return ['', '', '', do_lang('MISSING_RESOURCE', escape_html($parameters[0]), escape_html($parameters[1]))];
         }
 
         return ['', '', $result, ''];

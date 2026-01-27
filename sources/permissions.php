@@ -127,7 +127,7 @@ function handle_permission_check_logging(int $member_id, string $op, array $para
         return;
     }
     $PERMISSIONS_ALREADY_LOGGED[$sz] = true;
-    if ($result) {
+    if ($result && (get_value('permission_log_success_too') !== '1')) {
         return;
     }
     require_code('permissions2');

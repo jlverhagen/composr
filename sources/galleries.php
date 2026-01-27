@@ -516,7 +516,7 @@ function get_member_id_from_gallery_name(string $gallery_name, ?array $row = nul
         if ($row === null) {
             $rows = $GLOBALS['SITE_DB']->query_select('galleries', ['g_owner'], ['name' => $gallery_name]);
             if (!isset($rows[0])) {
-                warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'gallery'));
+                warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'gallery', escape_html($gallery_name)));
             }
             $row = $rows[0];
         }
@@ -723,7 +723,7 @@ function get_gallery_tree(?string $gallery = 'root', string $breadcrumbs = '', ?
     if ($gallery_info === null) {
         $_gallery_info = $GLOBALS['SITE_DB']->query_select('galleries', ['fullname', 'is_member_synched', 'accept_images', 'accept_videos', 'parent_id'], ['name' => $gallery], '', 1);
         if (!array_key_exists(0, $_gallery_info)) {
-            warn_exit(do_lang_tempcode('_MISSING_RESOURCE', escape_html($gallery), 'gallery'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'gallery', escape_html($gallery)));
         }
         $gallery_info = $_gallery_info[0];
     }

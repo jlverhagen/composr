@@ -189,7 +189,7 @@ function add_to_cart(string $type_code, string $purchase_id = '', int $quantity 
     list($details, $product_object) = find_product_details($type_code);
 
     if ($product_object === null) {
-        warn_exit(do_lang_tempcode('MISSING_RESOURCE'));
+        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'ecom_product_type', escape_html($type_code)));
     }
 
     if ($product_object->is_available($type_code, get_member(), 1) != ECOMMERCE_PRODUCT_AVAILABLE) {
@@ -558,7 +558,7 @@ function make_cart_payment_button(int $order_id, string $currency, int $price_po
 
     $order_rows = $GLOBALS['SITE_DB']->query_select('shopping_orders', ['*'], ['id' => $order_id], '', 1);
     if (!array_key_exists(0, $order_rows)) {
-        warn_exit(do_lang_tempcode('MISSING_RESOURCE'));
+        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'shopping_order', escape_html(strval($order_id))));
     }
     $order_row = $order_rows[0];
 

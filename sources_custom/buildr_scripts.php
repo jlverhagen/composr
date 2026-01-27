@@ -50,7 +50,7 @@ function buildr_messages_script()
     $member_id = get_member();
     $rows = $GLOBALS['SITE_DB']->query_select('w_members', ['location_realm', 'location_x', 'location_y'], ['id' => $member_id], '', 1);
     if (!array_key_exists(0, $rows)) {
-        warn_exit(do_lang_tempcode('MISSING_RESOURCE'));
+        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'buildr_member', escape_html(strval($member_id))));
     }
     list($realm, $x, $y) = [$rows[0]['location_realm'], $rows[0]['location_x'], $rows[0]['location_y']];
 

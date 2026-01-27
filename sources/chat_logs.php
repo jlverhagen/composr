@@ -66,7 +66,7 @@ function chat_logs_script()
 
     $room_check = $GLOBALS['SITE_DB']->query_select('chat_rooms', ['id', 'is_im', 'allow_list', 'allow_list_groups', 'disallow_list', 'disallow_list_groups', 'room_owner'], ['id' => $room], '', 1);
     if (!array_key_exists(0, $room_check)) {
-        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'chat'));
+        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'chat', escape_html(strval($room))));
     }
     check_chatroom_access($room_check[0]);
 

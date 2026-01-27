@@ -211,7 +211,7 @@ function cns_make_post(int $topic_id, string $title, string $post, int $skip_sig
     if (($check_permissions || $update_caching || $send_notification)) {
         $info = $GLOBALS['FORUM_DB']->query_select('f_topics', ['t_is_open', 't_pt_from_member', 't_pt_to_member', 't_forum_id', 't_cache_last_member_id', 't_cache_first_title'], ['id' => $topic_id], '', 1);
         if (!array_key_exists(0, $info)) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'topic'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'topic', escape_html(strval($topic_id))));
         }
         $forum_id = $info[0]['t_forum_id'];
         $topic_title = $info[0]['t_cache_first_title'];

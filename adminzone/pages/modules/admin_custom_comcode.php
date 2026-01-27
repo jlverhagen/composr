@@ -349,7 +349,7 @@ class Module_admin_custom_comcode extends Source_standard_crud_module
     {
         $m = $GLOBALS['SITE_DB']->query_select('custom_comcode', ['*'], ['tag_tag' => $id], '', 1);
         if (!array_key_exists(0, $m)) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'custom_comcode_tag'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'custom_comcode_tag', escape_html($id)));
         }
         $r = $m[0];
 

@@ -164,7 +164,7 @@ function can_static_cache_request(bool $consider_failover_mode = false) : bool
 function static_cache_current_url() : string
 {
     $url = static_cache__get_self_url_easy();
-    $url = preg_replace('#(keep_session|for_session|keep_devtest|keep_failover)=\d+#', '', $url);
+    $url = preg_replace('#(&|&amp;|&amp;amp;|%3Aamp%3A|\?)?(keep_session|for_session|keep_devtest|keep_failover)(=|%3D)\w+#', '', $url);
     $url = str_replace('keep_su=Guest', '', $url);
     $url = preg_replace('#\?&+#', '?', $url);
     $url = preg_replace('#&+#', '&', $url);
@@ -205,12 +205,15 @@ function static_cache(int $mode)
     $client_support_brotli = (isset($_SERVER['HTTP_ACCEPT_ENCODING'])) && (strpos($_SERVER['HTTP_ACCEPT_ENCODING'], 'br') !== false);
     $client_support_gzip = (isset($_SERVER['HTTP_ACCEPT_ENCODING'])) && (strpos($_SERVER['HTTP_ACCEPT_ENCODING'], 'gzip') !== false);
     $client_support_compressed = ($client_support_brotli || $client_support_gzip) && (function_exists('php_function_allowed')) && (php_function_allowed('ini_set')/*If can disable default PHP compression*/);
+    $client_support_compressed = false; // TODO: not supported as it breaks nonce
+
     $server_support_brotli = false; // May be set later
     $server_support_gzip = false; // May be set later
 
     if ((function_exists('is_mobile')) && (function_exists('get_option'))) {
         $is_mobile = is_mobile();
     } else {
+        // TODO: maintenance; list needs to be kept updated
         $user_agent = isset($_SERVER['HTTP_USER_AGENT']) ? $_SERVER['HTTP_USER_AGENT'] : '';
 
         // The set of browsers
@@ -253,7 +256,7 @@ function static_cache(int $mode)
     $param_sets = [
         [
             'non_bot' => ($mode & STATIC_CACHE__FAST_SPIDER) == 0,
-            'no_js' => !array_key_exists('has_js', $_COOKIE),
+            'no_js' => !array_key_exists('has_js', $_COOKIE), // NB: always used when detect_javascript is off; cannot check this option as config might not be loaded
             'mobile' => $is_mobile,
             'failover_mode' => $in_failover_mode,
         ],
@@ -377,13 +380,19 @@ function static_cache(int $mode)
                 $contents .= '<failover />';
             }
 
+            // Inject correct nonce
+            require_code('csp');
+            global $CSP_NONCE;
+            $contents = preg_replace('#' . preg_quote('{$CSP_NONCE_HTML}', '#') . '#', ' ' . csp_nonce_html(), $contents);
+            $contents = preg_replace('#' . preg_quote('{$CSP_NONCE*}', '#') . '#', (isset($CSP_NONCE) ? $CSP_NONCE : ''), $contents);
+
             echo $contents;
             cms_flush_safe();
 
             // Add to stats
             global $PAGE_START_TIME;
             $page_generation_time = (microtime(true) - $PAGE_START_TIME) * 1000.0;
-            log_stats(null, $page_generation_time);
+            log_stats(null, intval($page_generation_time));
 
             exit();
         } else {

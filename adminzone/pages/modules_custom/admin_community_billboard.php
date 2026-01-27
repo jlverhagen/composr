@@ -311,7 +311,7 @@ class Module_admin_community_billboard extends Source_standard_crud_module
     {
         $rows = $GLOBALS['SITE_DB']->query_select('community_billboard', ['*'], ['id' => intval($id)]);
         if (!array_key_exists(0, $rows)) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'community_billboard', escape_html($id)));
         }
         $myrow = $rows[0];
         $date = get_timezoned_date_time($myrow['order_time']);

@@ -143,7 +143,7 @@ class CMSModerationWrite
         require_code('cns_posts_action3');
         $topic_id = $GLOBALS['FORUM_DB']->query_select_value_if_there('f_posts', 'p_topic_id', ['id' => $post_id]);
         if ($topic_id === null) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'post'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'post', escape_html(strval($post_id))));
         }
         cns_delete_posts_topic($topic_id, [$post_id], $reason); // NB: Checks perms implicitly
         return true;
@@ -277,7 +277,7 @@ class CMSModerationWrite
 
         $target_posts = $GLOBALS['FORUM_DB']->query_select('f_posts p', ['*', 'p.id AS post_id'], ['p.id' => $target_post_id], '', 1);
         if (!isset($target_posts[0])) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'post'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'post', escape_html(strval($target_post_id))));
         }
         $target_post = $target_posts[0];
 

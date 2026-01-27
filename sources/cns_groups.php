@@ -249,7 +249,7 @@ function cns_ensure_groups_cached($groups, bool $tolerant = false)
 
     if (!$tolerant) {
         if (count($extra_groups) < $expected_load_count) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'group'));
+            warn_exit(do_lang_tempcode('INTERNAL_ERROR', escape_html('TODO'))); // Cannot use MISSING_RESOURCE because we are not requesting one specific resource
         }
     }
 

@@ -385,7 +385,7 @@ class Module_calendar
             // Read row
             $rows = $GLOBALS['SITE_DB']->query_select('calendar_events e LEFT JOIN ' . $GLOBALS['SITE_DB']->get_table_prefix() . 'calendar_types t ON t.id=e.e_type', ['e.*', 't.t_title', 't.t_logo'], ['e.id' => $id], '', 1);
             if (!array_key_exists(0, $rows)) {
-                warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'event'));
+                warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'event', escape_html(strval($id))));
             }
             $event = $rows[0];
 
@@ -1808,7 +1808,7 @@ class Module_calendar
         check_privilege('view_calendar');
         $rows = $GLOBALS['SITE_DB']->query_select('calendar_events', ['*'], ['id' => $id], '', 1);
         if (!array_key_exists(0, $rows)) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'event'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'event', escape_html(strval($id))));
         }
         $event = $rows[0];
         if ($event['e_member_calendar'] !== get_member()) {

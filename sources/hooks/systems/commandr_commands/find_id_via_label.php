@@ -60,7 +60,7 @@ class Hook_commandr_command_find_id_via_label
 
         $result = find_id_via_label($parameters[0], $parameters[1], array_key_exists(2, $parameters) ? $parameters[2] : null);
         if ($result === null) {
-            return ['', '', '', do_lang('MISSING_RESOURCE')];
+            return ['', '', '', do_lang('MISSING_RESOURCE', 'resource_label', escape_html($parameters[0] . '::' . $parameters[1]))];
         }
 
         return ['', '', $result, ''];

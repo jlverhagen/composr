@@ -201,7 +201,7 @@ class Module_admin_sitemap
                 $page = substr($key, 6);
                 $page_details = _request_page($page, $zone, null, null, false);
                 if ($page_details === false) {
-                    warn_exit(do_lang_tempcode('MISSING_RESOURCE', do_lang_tempcode('PAGE')));
+                    warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'page', escape_html($page)));
                 }
                 $pages[$page] = cms_strtolower_ascii($page_details[0]);
             }
@@ -316,14 +316,16 @@ class Module_admin_sitemap
             $post_url = build_url(['page' => '_SELF', 'type' => get_param_string('type')], '_SELF', [], true);
             $hidden = build_keep_form_fields('', true);
 
-            $from = $GLOBALS['SITE_DB']->query_select_value_if_there('zones', 'zone_title', ['zone_name' => get_param_string('zone')]);
+            $from_zone = get_param_string('zone');
+            $from = $GLOBALS['SITE_DB']->query_select_value_if_there('zones', 'zone_title', ['zone_name' => $from_zone]);
             if ($from === null) {
-                warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'zone'));
+                warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'zone', escape_html($from_zone)));
             }
 
-            $to = $GLOBALS['SITE_DB']->query_select_value_if_there('zones', 'zone_title', ['zone_name' => get_param_string('destination_zone')]);
+            $to_zone = get_param_string('destination_zone');
+            $to = $GLOBALS['SITE_DB']->query_select_value_if_there('zones', 'zone_title', ['zone_name' => $to_zone]);
             if ($to === null) {
-                warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'zone'));
+                warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'zone', escape_html($to_zone)));
             }
 
             return do_template('CONFIRM_SCREEN', [
@@ -348,7 +350,7 @@ class Module_admin_sitemap
                 $page = substr($key, 6);
                 $page_details = _request_page($page, $zone, null, null, false);
                 if ($page_details === false) {
-                    warn_exit(do_lang_tempcode('MISSING_RESOURCE', do_lang_tempcode('PAGE')));
+                    warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'page', escape_html($page)));
                 }
                 $pages[$page] = cms_strtolower_ascii($page_details[0]);
             }

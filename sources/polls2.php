@@ -215,7 +215,7 @@ function edit_poll(int $id, string $question, string $a1, string $a2, string $a3
 
     $rows = $GLOBALS['SITE_DB']->query_select('poll', ['*'], ['id' => $id], '', 1);
     if (!array_key_exists(0, $rows)) {
-        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'poll'));
+        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'poll', escape_html(strval($id))));
     }
 
     log_it('EDIT_POLL', strval($id), $question);
@@ -303,7 +303,7 @@ function delete_poll(int $id)
 {
     $rows = $GLOBALS['SITE_DB']->query_select('poll', ['*'], ['id' => $id], '', 1);
     if (!array_key_exists(0, $rows)) {
-        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'poll'));
+        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'poll', escape_html(strval($id))));
     }
 
     persistent_cache_delete('POLL');

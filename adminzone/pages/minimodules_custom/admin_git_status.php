@@ -388,7 +388,7 @@ function git_render_preview_from_raw_data($path, $raw_data)
 function git_render_preview_from_path($path)
 {
     if (!is_file(get_custom_file_base() . '/' . $path)) {
-        return paragraph(do_lang_tempcode('MISSING_RESOURCE'), '', 'red_alert');
+        return paragraph(do_lang_tempcode('MISSING_RESOURCE', 'PATH', escape_html($path)), '', 'red_alert');
     }
 
     $url = get_custom_base_url() . '/' . str_replace('%2F', '/', rawurlencode($path));

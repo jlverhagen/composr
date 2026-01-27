@@ -101,7 +101,7 @@ function get_loc_details(int $member_id, bool $null_ok = false) : ?array
         if ($null_ok) {
             return null;
         }
-        warn_exit(do_lang_tempcode('MISSING_RESOURCE'));
+        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'buildr_member', escape_html(strval($member_id))));
     }
     return [$rows[0]['location_realm'], $rows[0]['location_x'], $rows[0]['location_y']];
 }

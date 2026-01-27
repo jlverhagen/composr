@@ -153,7 +153,7 @@ function delete_aggregate_type_instance(int $id, bool $delete_matches = false)
 {
     $aggregate_label = $GLOBALS['SITE_DB']->query_select_value_if_there('aggregate_type_instances', 'aggregate_label', ['id' => $id]);
     if ($aggregate_label === null) {
-        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'aggregate_type_instance'));
+        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'aggregate_type_instance', escape_html(strval($id))));
     }
     $aggregate_type = $GLOBALS['SITE_DB']->query_select_value_if_there('aggregate_type_instances', 'aggregate_type', ['id' => $id]);
 
@@ -465,7 +465,7 @@ function sync_aggregate_type_instance(int $id, ?string $aggregate_label = null, 
     if (($aggregate_label === null) || ($aggregate_type === null) || ($other_parameters === null)) {
         $instance_rows = $GLOBALS['SITE_DB']->query_select('aggregate_type_instances', ['*'], ['id' => $id], '', 1);
         if (!array_key_exists(0, $instance_rows)) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'aggregate_type_instance'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'aggregate_type_instance', escape_html(strval($id))));
         }
         $instance_row = $instance_rows[0];
         $aggregate_label = $instance_row['aggregate_label'];

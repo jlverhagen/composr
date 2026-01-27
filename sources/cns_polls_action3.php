@@ -52,7 +52,7 @@ function cns_get_default_poll_options(?int $forum_id = null) : array
 
     $_forum = $GLOBALS['FORUM_DB']->query_select('f_forums', ['*'], ['id' => $forum_id], '', 1);
     if (!array_key_exists(0, $_forum)) {
-        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'forum'));
+        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'forum', escape_html(strval($forum_id))));
     }
     $forum = $_forum[0];
 
@@ -185,7 +185,7 @@ function cns_validate_poll(int $topic_id, ?int $poll_id, array $answers, int &$i
     if ($poll_id !== null) {
         $_poll_info = $GLOBALS['FORUM_DB']->query_select('f_polls', ['po_is_open', 'po_minimum_selections', 'po_maximum_selections', 'po_requires_reply', 'po_question', 'po_is_private', 'po_closing_time', 'po_view_member_votes'], ['id' => $poll_id], '', 1);
         if (!array_key_exists(0, $_poll_info)) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'topic_poll', escape_html(strval($poll_id))));
         }
         $poll_info = $_poll_info[0];
     }
@@ -254,7 +254,7 @@ function cns_validate_poll(int $topic_id, ?int $poll_id, array $answers, int &$i
             } else { // Add votingPeriodHours to t_cache_first_time
                 $_topic_info = $GLOBALS['FORUM_DB']->query_select('f_topics', ['*'], ['id' => $topic_id], '', 1);
                 if (!array_key_exists(0, $_topic_info)) {
-                    warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'topic'));
+                    warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'topic', escape_html(strval($topic_id))));
                 }
                 $topic_info = $_topic_info[0];
 

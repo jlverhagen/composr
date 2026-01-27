@@ -305,7 +305,7 @@ function get_needed_fields(string $type_code, bool $force_extended = false, bool
     list($details, $product_object) = find_product_details($type_code);
 
     if ($details === null) {
-        warn_exit(do_lang_tempcode('MISSING_RESOURCE'));
+        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'ecom_product_type', escape_html($type_code)));
     }
 
     $fields = null;
@@ -1319,7 +1319,7 @@ function do_local_transaction(string $payment_gateway, object $payment_gateway_o
 
     $transaction_rows = $GLOBALS['SITE_DB']->query_select('ecom_trans_expecting', ['*'], ['id' => $trans_expecting_id], '', 1);
     if (!array_key_exists(0, $transaction_rows)) {
-        warn_exit(do_lang_tempcode('MISSING_RESOURCE'));
+        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'ecom_trans_expecting', escape_html(strval($trans_expecting_id))));
     }
     $transaction_row = $transaction_rows[0];
 
@@ -1672,7 +1672,7 @@ function handle_confirmed_transaction(?string $trans_expecting_id, ?string $txn_
     if (($found['type'] == PRODUCT_INVOICE) && ($expected_amount === null)) {
         $invoice_rows = $GLOBALS['SITE_DB']->query_select('ecom_invoices', ['*'], ['id' => intval($purchase_id)], '', 1);
         if (!array_key_exists(0, $invoice_rows)) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'ecom_invoice', escape_html($purchase_id)));
         }
         $expected_amount = $invoice_rows[0]['i_price'];
         $expected_tax_derivation = ($invoice_rows[0]['i_tax_derivation'] == '') ? [] : json_decode($invoice_rows[0]['i_tax_derivation'], true);
@@ -1687,7 +1687,7 @@ function handle_confirmed_transaction(?string $trans_expecting_id, ?string $txn_
     if (($found['type'] == PRODUCT_SUBSCRIPTION) && ($expected_amount === null)) {
         $subscription_rows = $GLOBALS['SITE_DB']->query_select('ecom_subscriptions', ['*'], ['id' => intval($purchase_id)], '', 1);
         if (!array_key_exists(0, $subscription_rows)) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'ecom_subscription', escape_html(strval($purchase_id))));
         }
         $expected_amount = $subscription_rows[0]['s_price'];
         $expected_tax_derivation = ($subscription_rows[0]['s_tax_derivation'] == '') ? [] : json_decode($subscription_rows[0]['s_tax_derivation'], true);
@@ -2125,7 +2125,7 @@ function get_transaction_row(string $txn_id, bool $missing_ok = false) : ?array
     $transaction_rows = $GLOBALS['SITE_DB']->query_select('ecom_transactions', ['*'], ['id' => $txn_id], '', 1);
     if (!array_key_exists(0, $transaction_rows)) {
         if (!$missing_ok) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'ecom_transaction', escape_html(strval($txn_id))));
         } else {
             return null;
         }
@@ -2403,7 +2403,7 @@ function display_invoice(int $id) : object
 
     $rows = $GLOBALS['SITE_DB']->query_select('ecom_invoices', ['*'], ['id' => $id], '', 1);
     if (!array_key_exists(0, $rows)) {
-        warn_exit(do_lang_tempcode('MISSING_RESOURCE'));
+        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'ecom_invoice', escape_html(strval($id))));
     }
     $row = $rows[0];
 

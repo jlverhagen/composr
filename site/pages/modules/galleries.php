@@ -400,7 +400,7 @@ class Module_galleries
                     }
                 }
                 if (!array_key_exists(0, $gallery_rows)) {
-                    return warn_screen(get_screen_title('ERROR_OCCURRED'), do_lang_tempcode('MISSING_RESOURCE', 'gallery'));
+                    return warn_screen(get_screen_title('ERROR_OCCURRED'), do_lang_tempcode('MISSING_RESOURCE', 'gallery', escape_html($cat)));
                 }
                 $myrow = $gallery_rows[0];
                 $myrow['is_member_synched'] = 0;
@@ -476,7 +476,7 @@ class Module_galleries
             // Pic up some info
             $rows = $GLOBALS['SITE_DB']->query_select($type . 's', ['*'], ['id' => $id], '', 1);
             if (!array_key_exists(0, $rows)) {
-                return warn_screen(get_screen_title('ERROR_OCCURRED'), do_lang_tempcode('MISSING_RESOURCE', $type));
+                return warn_screen(get_screen_title('ERROR_OCCURRED'), do_lang_tempcode('MISSING_RESOURCE', $type, escape_html(strval($id))));
             }
             $myrow = $rows[0];
             $cat = $myrow['cat'];
@@ -764,7 +764,7 @@ class Module_galleries
                     }
                     $rows = $GLOBALS['SITE_DB']->query_select('videos', ['*'], $map, '', 1);
                     if (!array_key_exists(0, $rows)) {
-                        attach_message(do_lang_tempcode('MISSING_RESOURCE', 'video'), 'warn');
+                        attach_message(do_lang_tempcode('MISSING_RESOURCE', 'video', escape_html(strval($probe_id))), 'warn');
                         break;
                     }
                     $row = $rows[0];
@@ -833,7 +833,7 @@ class Module_galleries
                     }
                     $rows = $GLOBALS['SITE_DB']->query_select('images', ['*'], $map, '', 1);
                     if (!array_key_exists(0, $rows)) {
-                        attach_message(do_lang_tempcode('MISSING_RESOURCE', 'image'), 'warn');
+                        attach_message(do_lang_tempcode('MISSING_RESOURCE', 'image', escape_html(strval($probe_id))), 'warn');
                         break;
                     }
                     $row = $rows[0];
@@ -1180,7 +1180,7 @@ class Module_galleries
         list($rows, $total_items) = content_rows_for_multi_type(['image', 'video'], $days, $extra_where, '', $url_sort . ' ' . $dir, 0, null, ['image' => $image_select, 'video' => $video_select], '', '', true, [], gallery_media_get_allowed_sorts());
 
         if (empty($rows)) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE', $probe_type));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', escape_html($probe_type), escape_html(strval($probe_id))));
         }
 
         $current_index = 0;

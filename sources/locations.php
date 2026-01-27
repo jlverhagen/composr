@@ -292,7 +292,7 @@ function geolocate_ip(?string $ip = null) : ?string
         // Try Cloudflare's country header if specified
         global $ACTUALLY_USING_CF;
         if ($ACTUALLY_USING_CF) {
-            $cf_country = filter_input(INPUT_SERVER, 'HTTP_CF_IPCOUNTRY', FILTER_SANITIZE_STRING);
+            $cf_country = htmlspecialchars($_SERVER['HTTP_CF_IPCOUNTRY']);
             if (!empty($cf_country) && ($cf_country != 'XX')) {
                 return $cf_country;
             }

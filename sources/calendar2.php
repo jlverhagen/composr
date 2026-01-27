@@ -277,7 +277,7 @@ function edit_calendar_event(int $id, ?int $type, string $recurrence, ?int $recu
 
     $rows = $GLOBALS['SITE_DB']->query_select('calendar_events', ['*'], ['id' => $id], '', 1);
     if (!array_key_exists(0, $rows)) {
-        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'event'));
+        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'event', escape_html(strval($id))));
     }
     $myrow = $rows[0];
 
@@ -446,7 +446,7 @@ function delete_calendar_event(int $id)
     $rows = $GLOBALS['SITE_DB']->query_select('calendar_events', ['*'], ['id' => $id], '', 1);
 
     if (!array_key_exists(0, $rows)) {
-        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'event'));
+        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'event', escape_html(strval($id))));
     }
 
     $myrow = $rows[0];
@@ -580,7 +580,7 @@ function edit_event_type(int $id, string $title, string $logo, string $external_
 {
     $rows = $GLOBALS['SITE_DB']->query_select('calendar_types', ['*'], ['id' => $id], '', 1);
     if (!array_key_exists(0, $rows)) {
-        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'calendar_type'));
+        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'calendar_type', escape_html(strval($id))));
     }
     $myrow = $rows[0];
 
@@ -618,7 +618,7 @@ function delete_event_type(int $id)
 {
     $rows = $GLOBALS['SITE_DB']->query_select('calendar_types', ['t_title', 't_logo'], ['id' => $id], '', 1);
     if (!array_key_exists(0, $rows)) {
-        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'calendar_type'));
+        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'calendar_type', escape_html(strval($id))));
     }
     $myrow = $rows[0];
 

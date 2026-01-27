@@ -446,7 +446,7 @@ class Module_admin_actionlog
         }
 
         if (!array_key_exists(0, $rows)) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'actionlog', escape_html(strval($id))));
         }
         $row = $rows[0];
 

@@ -113,7 +113,7 @@ class Module_groups
             $map = ((has_privilege(get_member(), 'see_hidden_groups')) || (in_array($id, $members_groups))) ? ['id' => $id] : ['id' => $id, 'g_hidden' => 0];
             $groups = $GLOBALS['FORUM_DB']->query_select('f_groups', ['*'], $map, '', 1);
             if (!array_key_exists(0, $groups)) {
-                warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'group'));
+                warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'group', escape_html(strval($id))));
             }
             $group = $groups[0];
 

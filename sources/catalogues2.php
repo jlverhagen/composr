@@ -104,7 +104,7 @@ function catalogue_to_tree(string $catalogue_name)
 {
     $_c_title = $GLOBALS['SITE_DB']->query_select_value_if_there('catalogues', 'c_title', ['c_name' => $catalogue_name]);
     if ($_c_title === null) {
-        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'catalogue'));
+        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'catalogue', escape_html($catalogue_name)));
     }
     $new_root = actual_add_catalogue_category($catalogue_name, get_translated_text($_c_title), '', '', null, '');
     $GLOBALS['SITE_DB']->query('UPDATE ' . get_table_prefix() . 'catalogue_categories SET cc_parent_id=' . strval($new_root) . ' WHERE id<>' . strval($new_root) . ' AND ' . db_string_equal_to('c_name', $catalogue_name));
@@ -380,7 +380,7 @@ function actual_edit_catalogue(string $old_name, string $name, string $title, st
 
     $rows = $GLOBALS['SITE_DB']->query_select('catalogues', ['c_description', 'c_title'], ['c_name' => $old_name], '', 1);
     if (!array_key_exists(0, $rows)) {
-        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'catalogue'));
+        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'catalogue', escape_html($old_name)));
     }
     $myrow = $rows[0];
     $_title = $myrow['c_title'];
@@ -459,7 +459,7 @@ function actual_delete_catalogue(string $name)
     // Delete lang
     $rows = $GLOBALS['SITE_DB']->query_select('catalogues', ['c_description', 'c_title'], ['c_name' => $name], '', 1);
     if (!array_key_exists(0, $rows)) {
-        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'catalogue'));
+        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'catalogue', escape_html($name)));
     }
     $myrow = $rows[0];
 
@@ -550,7 +550,7 @@ function actual_edit_catalogue_field(int $id, string $c_name, ?string $name, ?st
 {
     $rows = $GLOBALS['SITE_DB']->query_select('catalogue_fields', ['cf_description', 'cf_name', 'cf_type'], ['id' => $id], '', 1);
     if (!array_key_exists(0, $rows)) {
-        warn_exit(do_lang_tempcode('MISSING_RESOURCE'));
+        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'catalogue_field', escape_html(strval($id))));
     }
     $myrow = $rows[0];
     $_name = $myrow['cf_name'];
@@ -637,7 +637,7 @@ function actual_delete_catalogue_field(int $id)
 {
     $rows = $GLOBALS['SITE_DB']->query_select('catalogue_fields', ['cf_name', 'cf_description', 'cf_type'], ['id' => $id]);
     if (!array_key_exists(0, $rows)) {
-        warn_exit(do_lang_tempcode('MISSING_RESOURCE'));
+        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'catalogue_field', escape_html(strval($id))));
     }
     $myrow = $rows[0];
     delete_lang($myrow['cf_name']);
@@ -876,7 +876,7 @@ function actual_edit_catalogue_category(int $id, string $title, string $descript
 
     $rows = $GLOBALS['SITE_DB']->query_select('catalogue_categories', ['cc_description', 'cc_title', 'c_name'], ['id' => $id], '', 1);
     if (!array_key_exists(0, $rows)) {
-        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'catalogue_category'));
+        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'catalogue_category', escape_html(strval($id))));
     }
     $myrow = $rows[0];
     $_title = $myrow['cc_title'];
@@ -955,7 +955,7 @@ function actual_delete_catalogue_category(int $id, bool $deleting_all = false)
     // Info about our category
     $rows = $GLOBALS['SITE_DB']->query_select('catalogue_categories c LEFT JOIN ' . $GLOBALS['SITE_DB']->get_table_prefix() . 'catalogues x ON c.c_name=x.c_name', ['c_is_tree', 'c.c_name', 'cc_description', 'cc_title', 'cc_parent_id'], ['id' => $id], '', 1);
     if (!array_key_exists(0, $rows)) {
-        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'catalogue_category'));
+        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'catalogue_category', escape_html(strval($id))));
     }
     $myrow = $rows[0];
 
@@ -1287,7 +1287,7 @@ function actual_edit_catalogue_entry(int $id, int $category_id, int $validated, 
 
     $original_submitter = $GLOBALS['SITE_DB']->query_select_value_if_there('catalogue_entries', 'ce_submitter', ['id' => $id]);
     if ($original_submitter === null) {
-        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'catalogue_entry'));
+        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'catalogue_entry', escape_html(strval($id))));
     }
 
     $old_category_id = $GLOBALS['SITE_DB']->query_select_value('catalogue_entries', 'cc_id', ['id' => $id]);
@@ -1472,7 +1472,7 @@ function actual_delete_catalogue_entry(int $id)
 {
     $old_category_id = $GLOBALS['SITE_DB']->query_select_value_if_there('catalogue_entries', 'cc_id', ['id' => $id]);
     if ($old_category_id === null) {
-        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'catalogue_entry'));
+        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'catalogue_entry', escape_html(strval($id))));
     }
 
     $catalogue_name = $GLOBALS['SITE_DB']->query_select_value('catalogue_entries', 'c_name', ['id' => $id]);

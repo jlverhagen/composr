@@ -450,7 +450,7 @@ class Module_cms_banners extends Source_standard_crud_module
     {
         $rows = $GLOBALS['SITE_DB']->query_select('banners', ['*'], ['name' => $id], '', 1);
         if (!array_key_exists(0, $rows)) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'banner'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'banner', escape_html($id)));
         }
         $myrow = $rows[0];
 
@@ -545,7 +545,7 @@ class Module_cms_banners extends Source_standard_crud_module
 
         $orig_submitter = $GLOBALS['SITE_DB']->query_select_value_if_there('banners', 'submitter', ['name' => $id]);
         if ($orig_submitter === null) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'banner'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'banner', escape_html($id)));
         }
 
         $title_text = post_param_string('title_text', '');
@@ -924,9 +924,9 @@ class Module_cms_banners_cat extends Source_standard_crud_module
      */
     public function fill_in_edit_form(string $id)
     {
-        $m = $GLOBALS['SITE_DB']->query_select('banner_types', ['*'], ['id' => $id], '', 1);
+        $m = $GLOBALS['SITE_DB']->query_select('banner_types', ['*'], ['id' => $id/*NB: is ID_TEXT in the database*/], '', 1);
         if (!array_key_exists(0, $m)) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'banner_type'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'banner_type', escape_html($id)));
         }
         $r = $m[0];
 

@@ -72,7 +72,7 @@ function get_news_cat_row(int $id, bool $null_ok = false) : ?array
         if ($null_ok) {
             return null;
         }
-        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'news_category'));
+        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'news_category', escape_html(strval($id))));
     }
 
     return $rows[$id];

@@ -3,7 +3,7 @@
 
 	{$REQUIRE_CSS,messages}
 
-	{+START,IF,{$NEQ,{TEXT},{!MISSING_RESOURCE}}}
+	{+START,IF,{$EQ,{$SUBSTR_COUNT,{TEXT},{!MISSING_RESOURCE_SUBSTRING}},0}}
 		{+START,IF_PASSED,WEBSERVICE_RESULT}
 			<div class="box box---warn-screen"><div class="box-inner">
 				{TEXT*}
@@ -25,10 +25,10 @@
 			</div>
 		{+END}
 	{+END}
-	{+START,IF,{$EQ,{TEXT},{!MISSING_RESOURCE}}}
+	{+START,IF,{$NEQ,{$SUBSTR_COUNT,{TEXT},{!MISSING_RESOURCE_SUBSTRING}},0}}
 		{+START,INCLUDE,RED_ALERT}
 			ROLE=error
-			TEXT={!MISSING_RESOURCE}
+			TEXT={TEXT}
 		{+END}
 
 		<h2>{!SITEMAP}</h2>

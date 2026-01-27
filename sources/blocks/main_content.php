@@ -161,7 +161,7 @@ PHP;
             list(, $resource_page, $resource_type) = explode(':', $info['view_page_link_pattern']);
             $content_id = $info['db']->query_select_value_if_there('url_id_monikers', 'm_resource_id', ['m_resource_page' => $resource_page, 'm_resource_type' => $resource_type, 'm_moniker' => $content_id]);
             if ($content_id === null) {
-                return do_template('RED_ALERT', ['_GUID' => 'de3f6b102ce95e42879f51997fc218c9', 'TEXT' => do_lang_tempcode('MISSING_RESOURCE')]);
+                return do_template('RED_ALERT', ['_GUID' => 'de3f6b102ce95e42879f51997fc218c9', 'TEXT' => do_lang_tempcode('MISSING_RESOURCE', 'url_moniker', escape_html($resource_page . '::' . $resource_type . '::' . strval($content_id)))]);
             }
         }
 
@@ -185,7 +185,7 @@ PHP;
                 $result = request_page(array_key_exists(1, $bits) ? $bits[1] : get_comcode_zone($bits[0]), false, $bits[0], 'comcode_custom', true);
                 restore_output_state();
                 if ($result->is_empty()) {
-                    return do_template('RED_ALERT', ['_GUID' => '569404aebb825d11a5473b62f6446618', 'TEXT' => do_lang_tempcode('MISSING_RESOURCE')]);
+                    return do_template('RED_ALERT', ['_GUID' => '569404aebb825d11a5473b62f6446618', 'TEXT' => do_lang_tempcode('MISSING_RESOURCE', 'page', escape_html($content_id))]);
                 }
             }
 
@@ -206,7 +206,7 @@ PHP;
                 'BLOCK_ID' => $block_id,
                 'HIGH' => true,
                 'TITLE' => $title,
-                'MESSAGE' => do_lang_tempcode('MISSING_RESOURCE', $content_type),
+                'MESSAGE' => do_lang_tempcode('NO_ENTRIES'),
                 'ADD_NAME' => $object->content_language_string('ADD'),
                 'SUBMIT_URL' => $submit_url,
             ]);

@@ -339,7 +339,7 @@ class Module_admin_stats extends Source_standard_crud_module
             $categories = stats_find_graph_categories();
             $category_name = get_param_string('id');
             if (!isset($categories[$category_name])) {
-                warn_exit(do_lang_tempcode('MISSING_RESOURCE'));
+                warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'stats_category', escape_html($category_name)));
             }
             $this->title = get_screen_title($categories[$category_name]['label_lang_string']);
             $_graphs = stats_find_graphs_in_category($category_name);
@@ -780,7 +780,7 @@ class Module_admin_stats extends Source_standard_crud_module
     {
         $rows = $GLOBALS['SITE_DB']->query_select('stats_kpis', ['*'], ['id' => intval($id)], '', 1);
         if (!array_key_exists(0, $rows)) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'kpi'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'kpi', escape_html($id)));
         }
         $myrow = $rows[0];
 

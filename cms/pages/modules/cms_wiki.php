@@ -163,7 +163,7 @@ class Module_cms_wiki
 
             $pages = $GLOBALS['SITE_DB']->query_select('wiki_pages', ['*'], ['id' => $id], '', 1);
             if (!array_key_exists(0, $pages)) {
-                warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'wiki_page'));
+                warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'wiki_page', escape_html(strval($id))));
             }
             $page = $pages[0];
 
@@ -435,7 +435,7 @@ class Module_cms_wiki
 
         $pages = $GLOBALS['SITE_DB']->query_select('wiki_pages', ['*'], ['id' => $id], '', 1);
         if (!array_key_exists(0, $pages)) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'wiki_page'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'wiki_page', escape_html(strval($id))));
         }
         $page = $pages[0];
 

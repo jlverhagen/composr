@@ -498,7 +498,7 @@ function referrer_report_script($ret = false)
 
     $scheme_name = get_param_string('scheme', 'standard_scheme');
     if (!isset($ini_file[$scheme_name])) {
-        warn_exit(do_lang_tempcode('MISSING_RESOURCE'));
+        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'referral_scheme', escape_html(strval($scheme_name))));
     }
     $scheme = $ini_file[$scheme_name];
     $scheme['name'] = $scheme_name;

@@ -171,7 +171,7 @@ abstract class CMS_API_catalogue_object extends CMS_API_object
                 if ($missing_ok) {
                     return;
                 }
-                warn_exit(do_lang_tempcode('MISSING_RESOURCE'));
+                warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'catalogue_entry', escape_html(strval($entity_id))));
             }
             if ($rows[0]['c_name'] != $this->catalogue) {
                 warn_exit(do_lang_tempcode('INTERNAL_ERROR', escape_html('4e8f0737587c5f18a031a5b461b5ddf8')));
@@ -265,7 +265,7 @@ abstract class CMS_API_database_object extends CMS_API_object
         } else {
             $rows = $GLOBALS['SITE_DB']->query_select($this->table, ['*'], ['id' => $entity_id]);
             if (!isset($rows[0])) {
-                warn_exit(do_lang_tempcode('MISSING_RESOURCE'));
+                warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'catalogue_entry', escape_html(strval($entity_id))));
             }
             $this->properties = $rows[0];
 

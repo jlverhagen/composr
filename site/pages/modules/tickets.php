@@ -637,7 +637,7 @@ class Module_tickets
             $total_ticket_posts = 1; // Returned by reference
             $ticket_posts = get_ticket_posts($ticket_id, $forum, $topic_id, $total_ticket_posts, $start, $num_to_show_limit);
             if (empty($ticket_posts)) {
-                warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'ticket'));
+                warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'ticket', escape_html($ticket_id)));
             }
 
             $ticket_title = $ticket_posts[0]['title'];
@@ -1051,7 +1051,7 @@ class Module_tickets
 
         $details = get_ticket_meta_details($ticket_id);
         if ($details === null) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'ticket'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'ticket', escape_html($ticket_id)));
         }
         list(, $topic_id) = $details;
 
@@ -1375,7 +1375,7 @@ class Module_tickets
         $topic_id = 0; // Returned by reference
         $ticket_posts_all = get_ticket_posts($from, $forum, $topic_id);
         if (empty($ticket_posts_all)) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'ticket'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'ticket', escape_html($from)));
         }
         foreach ($ticket_posts_all as $comment) {
             $ticket_url = ticket_add_post($to, $ticket_type_id_to, $comment['title'], array_key_exists('message_comcode', $comment) ? $comment['message_comcode'] : $comment['message'], isset($comment['staff_only']) && $comment['staff_only'], $comment['member'], $comment['date']);

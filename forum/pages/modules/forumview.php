@@ -121,7 +121,7 @@ class Module_forumview
 
             $_forum_info = $GLOBALS['FORUM_DB']->query_select('f_forums', ['*'], ['id' => $id], '', 1, 0, false);
             if (!array_key_exists(0, $_forum_info)) {
-                warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'forum'));
+                warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'forum', escape_html(strval($id))));
             }
             $forum_info = $_forum_info[0];
 

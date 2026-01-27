@@ -876,7 +876,7 @@ class Module_cms_calendar extends Source_standard_crud_module
     {
         $temp = $GLOBALS['SITE_DB']->query_select_value_if_there('calendar_events', 'e_type', ['id' => intval($id)]);
         if ($temp === null) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'event'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'event', escape_html($id)));
         }
         return strval($temp);
     }
@@ -891,7 +891,7 @@ class Module_cms_calendar extends Source_standard_crud_module
     {
         $rows = $GLOBALS['SITE_DB']->query_select('calendar_events', ['*'], ['id' => intval($id)], '', 1);
         if (!array_key_exists(0, $rows)) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'event'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'event', escape_html($id)));
         }
         $myrow = $rows[0];
 
@@ -1117,7 +1117,7 @@ class Module_cms_calendar extends Source_standard_crud_module
 
         $rows = $GLOBALS['SITE_DB']->query_select('calendar_events', ['*'], ['id' => $id], '', 1);
         if (!array_key_exists(0, $rows)) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'event'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'event', escape_html($_id)));
         }
         $event = $rows[0];
 
@@ -1303,7 +1303,7 @@ class Module_cms_calendar extends Source_standard_crud_module
 
         $rows = $GLOBALS['SITE_DB']->query_select('calendar_events', ['*'], ['id' => $id], '', 1);
         if (!array_key_exists(0, $rows)) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'event'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'event', escape_html($_id)));
         }
         $event = $rows[0];
 
@@ -1622,7 +1622,7 @@ class Module_cms_calendar_cat extends Source_standard_crud_module
     {
         $m = $GLOBALS['SITE_DB']->query_select('calendar_types', ['*'], ['id' => intval($id)], '', 1);
         if (!array_key_exists(0, $m)) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'calendar_type'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'calendar_type', escape_html($id)));
         }
         $r = $m[0];
 
