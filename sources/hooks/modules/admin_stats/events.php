@@ -383,38 +383,32 @@ class Hook_admin_stats_events extends Source_hook_stats_provider
     public function generate_final_data(string $bucket, string $pivot, array $filters) : ?array
     {
         $data = [];
-        $_data = $this->prepare_preprocessed_data_for_graph($bucket, $pivot, $filters);
+        $range = $this->convert_day_range_filter_to_pair($pivot, $filters[$bucket . '__day_range']);
+        $data = $this->fill_data_by_date_pivots_for_graph($pivot, $range[0], $range[1]);
 
         switch ($bucket) {
             case 'events':
-                foreach ($_data as $_pivot => $__data) {
-                    foreach ($__data as $pivot_interval => $_) {
-                        foreach ($_ as $pivot_value => $__) {
-                            $pivot_value_nice = $this->make_date_pivot_value_nice($_pivot, $pivot_interval, $pivot_value);
-                            if (!isset($data[$pivot_value_nice])) {
-                                $data[$pivot_value_nice] = 0;
-                            }
+                $start = 0;
+                do {
+                    $rows = $this->get_preprocessed_data_for_graph($range, $bucket, $pivot, $filters, $start);
 
-                            if ($__ === null) {
-                                continue;
-                            }
-
-                            foreach ($__ as $event => $___) {
-                                if ((!empty($filters[$bucket . '__event'])) && ($filters[$bucket . '__event'] != $event)) {
-                                    continue;
-                                }
-
-                                foreach ($___ as $country => $value) {
-                                    if ((!empty($filters[$bucket . '__country'])) && ($filters[$bucket . '__country'] != $country)) {
-                                        continue;
-                                    }
-
-                                    $data[$pivot_value_nice] += $value;
-                                }
-                            }
+                    foreach ($rows as $row) {
+                        list($event, $country) = explode('||', $row['p_key']);
+                        if ((!empty($filters[$bucket . '__event'])) && ($filters[$bucket . '__event'] != $event)) {
+                            continue;
                         }
+                        if ((!empty($filters[$bucket . '__country'])) && ($filters[$bucket . '__country'] != $country)) {
+                            continue;
+                        }
+
+                        $pivot_value_nice = $this->make_date_pivot_value_nice($row['p_pivot'], $row['p_pivot_interval'], $row['p_pivot_value']);
+                        if (!isset($data[$pivot_value_nice])) {
+                            $data[$pivot_value_nice] = 0;
+                        }
+
+                        $data[$pivot_value_nice] += $row['p_value'];
                     }
-                }
+                } while (count($rows) > 0);
 
                 return [
                     'type' => null,
@@ -424,34 +418,27 @@ class Hook_admin_stats_events extends Source_hook_stats_provider
                 ];
 
             case 'tracking_code_usage':
-                foreach ($_data as $_pivot => $__data) {
-                    foreach ($__data as $pivot_interval => $_) {
-                        foreach ($_ as $pivot_value => $__) {
-                            $pivot_value_nice = $this->make_date_pivot_value_nice($_pivot, $pivot_interval, $pivot_value);
-                            if (!isset($data[$pivot_value_nice])) {
-                                $data[$pivot_value_nice] = 0;
-                            }
+                $start = 0;
+                do {
+                    $rows = $this->get_preprocessed_data_for_graph($range, $bucket, $pivot, $filters, $start);
 
-                            if ($__ === null) {
-                                continue;
-                            }
-
-                            foreach ($__ as $tracking_code => $___) {
-                                if ((!empty($filters[$bucket . '__tracking_code'])) && ($filters[$bucket . '__tracking_code'] != $tracking_code)) {
-                                    continue;
-                                }
-
-                                foreach ($___ as $country => $value) {
-                                    if ((!empty($filters[$bucket . '__country'])) && ($filters[$bucket . '__country'] != $country)) {
-                                        continue;
-                                    }
-
-                                    $data[$pivot_value_nice] += $value;
-                                }
-                            }
+                    foreach ($rows as $row) {
+                        list($tracking_code, $country) = explode('||', $row['p_key']);
+                        if ((!empty($filters[$bucket . '__tracking_code'])) && ($filters[$bucket . '__tracking_code'] != $tracking_code)) {
+                            continue;
                         }
+                        if ((!empty($filters[$bucket . '__country'])) && ($filters[$bucket . '__country'] != $country)) {
+                            continue;
+                        }
+
+                        $pivot_value_nice = $this->make_date_pivot_value_nice($row['p_pivot'], $row['p_pivot_interval'], $row['p_pivot_value']);
+                        if (!isset($data[$pivot_value_nice])) {
+                            $data[$pivot_value_nice] = 0;
+                        }
+
+                        $data[$pivot_value_nice] += $row['p_value'];
                     }
-                }
+                } while (count($rows) > 0);
 
                 return [
                     'type' => null,
@@ -461,34 +448,39 @@ class Hook_admin_stats_events extends Source_hook_stats_provider
                 ];
 
             case 'conversion_rates':
-                foreach ($_data as $_pivot => $__data) {
-                    foreach ($__data as $pivot_interval => $_) {
-                        foreach ($_ as $pivot_value => $__) {
-                            $pivot_value_nice = $this->make_date_pivot_value_nice($_pivot, $pivot_interval, $pivot_value);
-                            if (!isset($data[$pivot_value_nice])) {
-                                $data[$pivot_value_nice] = 0;
-                            }
+                /*
+                    NB: For this graph, we need both the number of conversions and sessions. However, each are stored in a separate database row.
+                    So, we need to keep track of these in $_data first. Then, after we finish getting everything from the database,
+                    we perform the actual calculation into $data.
+                */
+                $_data = [];
+                $start = 0;
+                do {
+                    $rows = $this->get_preprocessed_data_for_graph($range, $bucket, $pivot, $filters, $start);
 
-                            if ($__ === null) {
-                                continue;
-                            }
-
-                            $num_sessions = 0;
-                            $num_conversions = 0;
-                            foreach ($__ as $event => $___) {
-                                if ((!empty($filters[$bucket . '__event'])) && ($filters[$bucket . '__event'] != $event)) {
-                                    continue;
-                                }
-
-                                $num_sessions += $___[0];
-                                $num_conversions += $___[1];
-                            }
-
-                            // TODO: possibly buggy?
-                            if ($num_sessions > 0) {
-                                $data[$pivot_value_nice] = 100.0 * floatval($num_conversions) / floatval($num_sessions);
-                            }
+                    foreach ($rows as $row) {
+                        list($event, $conversion_or_session) = explode('||', $row['p_key']);
+                        if ((!empty($filters[$bucket . '__event'])) && ($filters[$bucket . '__event'] != $event)) {
+                            continue;
                         }
+
+                        $pivot_value_nice = $this->make_date_pivot_value_nice($row['p_pivot'], $row['p_pivot_interval'], $row['p_pivot_value']);
+                        if (!isset($_data[$pivot_value_nice])) {
+                            $_data[$pivot_value_nice] = [0, 0];
+                        }
+
+                        $_data[$pivot_value_nice][$conversion_or_session] += $row['p_value'];
+                    }
+                } while (count($rows) > 0);
+
+                foreach ($_data as $pivot_value_nice => $conversions_and_sessions) {
+                    list($num_sessions, $num_conversions) = $conversions_and_sessions;
+
+                    if (!isset($data[$pivot_value_nice])) {
+                        $data[$pivot_value_nice] = 0;
+                    }
+                    if ($num_sessions > 0) { // TODO: buggy?
+                        $data[$pivot_value_nice] = 100.0 * (floatval($num_conversions) / floatval($num_sessions));
                     }
                 }
 
@@ -500,43 +492,42 @@ class Hook_admin_stats_events extends Source_hook_stats_provider
                 ];
 
             case 'tracking_code_conversion_rates':
-                foreach ($_data as $_pivot => $__data) {
-                    foreach ($__data as $pivot_interval => $_) {
-                        foreach ($_ as $pivot_value => $__) {
-                            $pivot_value_nice = $this->make_date_pivot_value_nice($_pivot, $pivot_interval, $pivot_value);
-                            if (!isset($data[$pivot_value_nice])) {
-                                $data[$pivot_value_nice] = 0;
-                            }
+                /*
+                    NB: For this graph, we need both the number of conversions and sessions. However, each are stored in a separate database row.
+                    So, we need to keep track of these in $_data first. Then, after we finish getting everything from the database,
+                    we perform the actual calculation into $data.
+                */
+                $_data = [];
+                $start = 0;
+                do {
+                    $rows = $this->get_preprocessed_data_for_graph($range, $bucket, $pivot, $filters, $start);
 
-                            if ($__ === null) {
-                                continue;
-                            }
-
-                            $num_tracking_code_sessions = 0;
-                            $num_conversions = 0;
-                            foreach ($__ as $session_id => $___) {
-                                foreach ($___ as $tracking_code => $____) {
-                                    if ((!empty($filters[$bucket . '__tracking_code'])) && ($filters[$bucket . '__tracking_code'] != $tracking_code)) {
-                                        continue;
-                                    }
-
-                                    $has_conversion = false;
-                                    foreach ($____ as $event => $_____) {
-                                        if ((!empty($filters[$bucket . '__event'])) && ($filters[$bucket . '__event'] != $event)) {
-                                            continue;
-                                        }
-
-                                        $num_tracking_code_sessions += $_____[0];
-                                        $num_conversions += $_____[1];
-                                    }
-                                }
-                            }
-
-                            // TODO: possibly buggy?
-                            if ($num_tracking_code_sessions > 0) {
-                                $data[$pivot_value_nice] = 100.0 * floatval($num_conversions) / floatval($num_tracking_code_sessions);
-                            }
+                    foreach ($rows as $row) {
+                        list($session, $tracking_code, $event, $conversion_or_session) = explode('||', $row['p_key']);
+                        if ((!empty($filters[$bucket . '__tracking_code'])) && ($filters[$bucket . '__tracking_code'] != $tracking_code)) {
+                            continue;
                         }
+                        if ((!empty($filters[$bucket . '__event'])) && ($filters[$bucket . '__event'] != $event)) {
+                            continue;
+                        }
+
+                        $pivot_value_nice = $this->make_date_pivot_value_nice($row['p_pivot'], $row['p_pivot_interval'], $row['p_pivot_value']);
+                        if (!isset($_data[$pivot_value_nice])) {
+                            $_data[$pivot_value_nice] = [0, 0];
+                        }
+
+                        $_data[$pivot_value_nice][$conversion_or_session] += $row['p_value'];
+                    }
+                } while (count($rows) > 0);
+
+                foreach ($_data as $pivot_value_nice => $conversions_and_sessions) {
+                    list($num_sessions, $num_conversions) = $conversions_and_sessions;
+
+                    if (!isset($data[$pivot_value_nice])) {
+                        $data[$pivot_value_nice] = 0;
+                    }
+                    if ($num_sessions > 0) { // TODO: buggy?
+                        $data[$pivot_value_nice] = 100.0 * (floatval($num_conversions) / floatval($num_sessions));
                     }
                 }
 

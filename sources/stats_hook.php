@@ -387,6 +387,31 @@ abstract class Source_hook_stats_provider extends Source_hook_stats_base
     }
 
     /**
+     * Fill up an array with all standard date pivot values between a day range (used for generating graphs).
+     *
+     * @param  string $pivot Pivot type
+     * @param  integer $start The pivot interval at which we are starting
+     * @param  integer $end The pivot interval at which we are ending
+     * @return array Map of "nice" pivot interval to initial value of 0
+     */
+    public function fill_data_by_date_pivots_for_graph(string $pivot, int $start, int $end) : array
+    {
+        $ret = [];
+        $data = $this->fill_data_by_date_pivots($pivot, $start, $end);
+
+        foreach ($data as $_pivot => $__data) {
+            foreach ($__data as $pivot_interval => $_) {
+                foreach ($_ as $pivot_value => $__) {
+                    $pivot_value_nice = $this->make_date_pivot_value_nice($_pivot, $pivot_interval, $pivot_value);
+                    $ret[$pivot_value_nice] = 0;
+                }
+            }
+        }
+
+        return $ret;
+    }
+
+    /**
      * Convert a pivot interval filter array to a range pair if it only specifies one value.
      *
      * @param  ID_TEXT $pivot The pivot for which we are calculating the interval
@@ -517,40 +542,47 @@ abstract class Source_hook_stats_provider extends Source_hook_stats_base
     }
 
     /**
-     * Get base data for a pivot graph.
-     * This assumes '__day_range' is passed as a filter.
+     * Get stats data for a pivot graph in batches.
      *
+     * @param  ?array $range The graph time range from convert_day_range_filter_to_pair (null: we want flat data)
      * @param  ID_TEXT $bucket The bucket we are loading
-     * @param  ID_TEXT $pivot The pivot at which we are viewing the graph (blank: graph does not support pivots, so use day_series data)
+     * @param  ?ID_TEXT $pivot The pivot at which we are viewing the graph (blank: graph does not support pivots, so use day_series data) (null: we want flat data)
      * @param  array $filters Array of active filters
-     * @param  integer $start The starting row
-     * @return array Standardised pivot data as 'pivot', 'pivot interval', 'pivot value', mapped to associative array of key, limited to 100 key/value pairs
+     * @param  integer $start The starting row, passed by reference as we add 250 after each iteration
+     * @return array The database rows, limited to 250 per iteration
      */
-    protected function prepare_preprocessed_data_for_graph(string $bucket, string $pivot, array $filters, int $start = 0) : array
+    protected function get_preprocessed_data_for_graph(?array $range, string $bucket, ?string $pivot, array $filters, int &$start = 0) : array
     {
-        if ($pivot == '') {
+        if ($pivot === '') {
             $pivot = 'day_series';
         }
 
-        $range = $this->convert_day_range_filter_to_pair($pivot, $filters[$bucket . '__day_range']);
+        $max = 250;
 
         $where = [
             'p_bucket' => $bucket,
-            'p_pivot' => $pivot,
         ];
-        $extra = '';
-        $extra .= ' AND p_pivot_interval>=' . strval($range[0]);
-        $extra .= ' AND p_pivot_interval<=' . strval($range[1]);
-
-        $data_rows = $GLOBALS['SITE_DB']->query_select('stats_preprocessed', ['p_pivot_interval', 'p_pivot_value', 'p_data'], $where, $extra, 100, $start);
-
-        $data = $this->fill_data_by_date_pivots($pivot, $range[0], $range[1]);
-
-        foreach ($data_rows as $data_row) {
-            $data[$pivot][$data_row['p_pivot_interval']][$data_row['p_pivot_value']] = @unserialize($data_row['p_data']);
+        if ($pivot !== null) {
+            $where['p_pivot'] = $pivot;
         }
 
-        return $data;
+        $extra = '';
+
+        if ($range !== null) {
+            $extra .= ' AND p_pivot_interval>=' . strval($range[0]);
+            $extra .= ' AND p_pivot_interval<=' . strval($range[1]);
+        }
+
+        $table = 'stats_preprocessed';
+        if ($pivot === null) {
+            $table = 'stats_preprocessed_flat';
+        }
+
+        $rows = $GLOBALS['SITE_DB']->query_select($table, ['*'], $where, $extra, $max, $start);
+
+        $start += $max;
+
+        return $rows;
     }
 
     /**
@@ -612,7 +644,7 @@ abstract class Source_hook_stats_provider extends Source_hook_stats_base
                                     if ($test === null) {
                                         $GLOBALS['SITE_DB']->query_insert('stats_preprocessed', $key_map + ['p_value' => $f_value]);
                                     } else {
-                                        $GLOBALS['SITE_DB']->query_parameterised('UPDATE {prefix}stats_preprocessed SET p_value={p_value} WHERE ' . db_string_equal_to('p_bucket', $bucket) . ' AND ' . db_string_equal_to('p_pivot', $pivot) . ' AND p_pivot_interval={pivot_interval} AND p_pivot_value={pivot_value} AND ' . db_string_equal_to('p_key', strval($f_key)), ['p_value' => $f_value, 'p_pivot_interval' => $pivot_interval, 'p_pivot_value' => $pivot_value]);
+                                        $GLOBALS['SITE_DB']->query_parameterised('UPDATE {prefix}stats_preprocessed SET p_value={p_value} WHERE ' . db_string_equal_to('p_bucket', $bucket) . ' AND ' . db_string_equal_to('p_pivot', $pivot) . ' AND p_pivot_interval={p_pivot_interval} AND p_pivot_value={p_pivot_value} AND ' . db_string_equal_to('p_key', strval($f_key)), ['p_value' => $f_value, 'p_pivot_interval' => $pivot_interval, 'p_pivot_value' => $pivot_value]);
                                     }
                                 }
 

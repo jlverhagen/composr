@@ -128,17 +128,6 @@ class Hook_database_manifest_stats
                         'c_url' => 'URLPATH',
                     ],
                 ],
-                'stats_preprocessed_delta' => [
-                    'addon' => 'stats',
-                    'fields' => [
-                        'id' => '*AUTO',
-                        'p_bucket' => 'ID_TEXT',
-                        'p_pivot' => 'ID_TEXT',
-                        'p_pivot_interval' => 'INTEGER',
-                        'p_pivot_value' => 'INTEGER',
-                        'p_data' => 'LONG_TEXT',
-                    ],
-                ],
                 'stats_known_events' => [
                     'addon' => 'stats',
                     'fields' => [

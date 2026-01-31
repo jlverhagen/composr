@@ -143,27 +143,25 @@ class Hook_admin_stats_ratings extends Source_hook_stats_provider
                     5 => 0,
                 ];
 
-                $_data = $this->prepare_preprocessed_data_for_graph($bucket, $pivot, $filters);
+                $range = $this->convert_day_range_filter_to_pair($pivot, $filters[$bucket . '__day_range']);
 
-                foreach ($_data as $_pivot => $__data) {
-                    foreach ($__data as $pivot_interval => $_) {
-                        foreach ($_ as $pivot_value => $__) {
-                            if ($__ === null) {
-                                continue;
-                            }
+                $start = 0;
+                do {
+                    $rows = $this->get_preprocessed_data_for_graph($range, $bucket, $pivot, $filters, $start);
 
-                            foreach ($__ as $rating_for_type => $___)
-                            if ((!empty($filters[$bucket . '__rating_for_type'])) && ($filters[$bucket . '__rating_for_type'] != $rating_for_type)) {
-                                continue;
+                    foreach ($rows as $row) {
+                        list($rating_for_type, $rating) = explode('||', $row['p_key']);
+                        if ((!empty($filters[$bucket . '__rating_for_type'])) && (!simulated_wildcard_match($filters[$bucket . '__rating_for_type'], $rating_for_type, true))) {
+                            continue;
+                        }
 
-                                foreach ($___ as $rating => $num_ratings) {
-                                    $_rating = intval(round((floatval($rating) / 2.0)));
-                                    $data[$_rating] += $num_ratings;
-                                }
-                            }
+                        $_rating = intval(round((floatval($rating) / 2.0)));
+
+                        if (isset($data[$_rating])) {
+                            $data[$_rating] += $row['p_value'];
                         }
                     }
-                }
+                } while (count($rows) > 0);
 
                 return [
                     'type' => self::GRAPH_BAR_CHART,
@@ -173,40 +171,46 @@ class Hook_admin_stats_ratings extends Source_hook_stats_provider
                 ];
 
             case 'average_rating':
+                $_data = [];
                 $data = [];
-                $_data = $this->prepare_preprocessed_data_for_graph($bucket, $pivot, $filters);
 
-                foreach ($_data as $_pivot => $__data) {
-                    foreach ($__data as $pivot_interval => $_) {
-                        foreach ($_ as $pivot_value => $__) {
-                            $pivot_value_nice = $this->make_date_pivot_value_nice($_pivot, $pivot_interval, $pivot_value);
-                            if (!isset($data[$pivot_value_nice])) {
-                                $data[$pivot_value_nice] = 0;
-                            }
+                $range = $this->convert_day_range_filter_to_pair($pivot, $filters[$bucket . '__day_range']);
+                $data = $this->fill_data_by_date_pivots_for_graph($pivot, $range[0], $range[1]);
 
-                            if ($__ === null) {
-                                continue;
-                            }
+                /*
+                    NB: For this graph, we need both the aggregate rating and total number of rating. However, each are stored in a
+                    separate database row. So, we need to keep track of these in $_data first. Then, after we finish getting everything
+                    from the database, we perform the actual calculation into $data.
+                */
+                $start = 0;
+                do {
+                    $rows = $this->get_preprocessed_data_for_graph($range, $bucket, $pivot, $filters, $start);
 
-                            $aggregate_rating = 0;
-                            $total_ratings = 0;
-
-                            foreach ($__ as $rating_for_type => $___) {
-                                if ((!empty($filters[$bucket . '__rating_for_type'])) && ($filters[$bucket . '__rating_for_type'] != $rating_for_type)) {
-                                    continue;
-                                }
-
-                                $aggregate_rating += $___[0];
-                                $total_ratings += $___[1];
-                            }
-
-                            $data[$pivot_value_nice] = (floatval($aggregate_rating) / 2.0) / floatval($total_ratings);
+                    foreach ($rows as $row) {
+                        list($rating_for_type, $aggregate_or_count) = explode('||', $row['p_key']);
+                        if ((!empty($filters[$bucket . '__rating_for_type'])) && ($filters[$bucket . '__rating_for_type'] != $rating_for_type)) {
+                            continue;
                         }
-                    }
-                }
 
-                if (array_sum($data) == 0) {
-                    $data = [];
+                        $pivot_value_nice = $this->make_date_pivot_value_nice($row['p_pivot'], $row['p_pivot_interval'], $row['p_pivot_value']);
+                        if (!isset($_data[$pivot_value_nice])) {
+                            $_data[$pivot_value_nice] = [0, 0];
+                        }
+
+                        $_data[$pivot_value_nice][$aggregate_or_count] += $row['p_value'];
+                    }
+                } while (count($rows) > 0);
+
+                foreach ($_data as $pivot_value_nice => $aggregates_and_counts) {
+                    list($aggregate_rating, $total_ratings) = $aggregates_and_counts;
+
+                    if (!isset($data[$pivot_value_nice])) {
+                        $data[$pivot_value_nice] = 0;
+                    }
+
+                    if ($total_ratings != 0) {
+                        $data[$pivot_value_nice] = (floatval($aggregate_rating) / 2.0) / floatval($total_ratings);
+                    }
                 }
 
                 return [
