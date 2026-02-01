@@ -479,6 +479,11 @@ function show_banner(string $name, string $title_text, object $caption, string $
                         $direct_code = str_replace($matches[0][$i], $evaled, $direct_code);
                     }
                 }
+
+                // Add a nonce for script tags
+                require_code('csp');
+                $direct_code = str_replace('<script', '<script ' . csp_nonce_html(), $direct_code);
+
                 $content = make_string_tempcode($direct_code);
             } else {
                 $content = do_lang_tempcode('BANNER_HTML_NOT_RUN');
