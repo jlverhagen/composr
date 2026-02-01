@@ -118,7 +118,7 @@ class Hook_addon_registry_ezoic
      */
     public function get_description() : string
     {
-        return 'This addon enables the integration of Ezoic advertisements in your ' . brand_name() . ' site.';
+        return 'This addon enables the integration of Ezoic advertisements in your ' . brand_name() . ' site.' . "\n\n" . 'NOTE: extra steps are needed after you install. In Ezoic, you must go to EzoicAds > Ad Transparency, and click to set up Ads.txt. Once you get to step 3 (Redirection), in your website, go to Admin Zone > Audit > Low-level logging > System scheduler hooks, and enable the "Update ads.txt from Ezoic" hook (also, click the "Execute script" action, which should update your ads.txt file in the root directory). Then, in Ezoic, proceed through the rest of the configuration for Ads.txt.';
     }
 
     /**
