@@ -882,6 +882,34 @@ function database_specific() : bool
         $done_something = true;
     }
 
+    // LEGACY: 11.beta9. Remove prior to v11 release.
+    if ((is_numeric($upgrade_from)) && (intval($upgrade_from) < 1768323014)) {
+        $GLOBALS['SITE_DB']->drop_table_if_exists('stats_preprocessed');
+        $GLOBALS['SITE_DB']->drop_table_if_exists('stats_preprocessed_flat');
+        $GLOBALS['SITE_DB']->drop_table_if_exists('stats_preprocessed_delta');
+
+        $GLOBALS['SITE_DB']->create_table('stats_preprocessed', [
+            'id' => '*AUTO',
+            'p_bucket' => 'ID_TEXT',
+            'p_pivot' => 'ID_TEXT',
+            'p_pivot_interval' => 'INTEGER',
+            'p_pivot_value' => 'INTEGER',
+            'p_key' => 'SHORT_TEXT',
+            'p_value' => 'INTEGER',
+        ]);
+
+        $GLOBALS['SITE_DB']->create_table('stats_preprocessed_flat', [
+            'id' => '*AUTO',
+            'p_bucket' => 'ID_TEXT',
+            'p_key' => 'SHORT_TEXT',
+            'p_value' => 'INTEGER',
+        ]);
+
+        $GLOBALS['SITE_DB']->create_index('stats_preprocessed', 'pivotsearch', ['p_pivot', 'p_pivot_interval', 'p_pivot_value']);
+
+        $done_something = true;
+    }
+
     return $done_something;
 }
 

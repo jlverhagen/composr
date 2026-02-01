@@ -128,26 +128,24 @@ class Hook_admin_stats_content extends Source_hook_stats_provider
 
         $content_types = $this->find_all_content_types();
 
-        $where = [
-            'p_bucket' => $bucket,
-        ];
-        $_data = $GLOBALS['SITE_DB']->query_select_value_if_there('stats_preprocessed_flat', 'p_data', $where);
-        if ($_data !== null) {
-            $__data = @unserialize($_data);
-            if ($__data !== false) {
-                foreach ($__data as $content_type => $_) {
-                    if ((!empty($filters[$bucket . '__content_type'])) && ($filters[$bucket . '__content_type'] != $content_type)) {
-                        continue;
-                    }
+        $start = 0;
+        do {
+            $rows = $this->get_preprocessed_data_for_graph(null, $bucket, null, $filters, $start);
 
-                    $prefix = array_key_exists($content_type, $content_types) ? $content_types[$content_type] : $content_type;
-
-                    foreach ($_ as $title => $total) {
-                        $data[$prefix . ': ' . $title] = $total;
-                    }
+            foreach ($rows as $row) {
+                list($content_type, $title) = explode('||', $row['p_key']);
+                if ((!empty($filters[$bucket . '__content_type'])) && ($filters[$bucket . '__content_type'] != $content_type)) {
+                    continue;
                 }
+
+                $prefix = array_key_exists($content_type, $content_types) ? $content_types[$content_type] : $content_type;
+
+                if (!isset($data[$prefix . ': ' . $title])) {
+                    $data[$prefix . ': ' . $title] = 0;
+                }
+                $data[$prefix . ': ' . $title] += $row['p_value'];
             }
-        }
+        } while (count($rows) > 0);
 
         switch ($bucket) {
             case 'content_views':

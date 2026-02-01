@@ -189,24 +189,22 @@ class Hook_admin_stats_points extends Source_hook_stats_provider
     public function generate_final_data(string $bucket, string $pivot, array $filters) : ?array
     {
         $data = [];
-        $_data = $this->prepare_preprocessed_data_for_graph($bucket, $pivot, $filters);
+        $range = $this->convert_day_range_filter_to_pair($pivot, $filters[$bucket . '__day_range']);
+        $data = $this->fill_data_by_date_pivots_for_graph($pivot, $range[0], $range[1]);
 
-        foreach ($_data as $_pivot => $__data) {
-            foreach ($__data as $pivot_interval => $_) {
-                foreach ($_ as $pivot_value => $num_transactions) {
-                    $pivot_value_nice = $this->make_date_pivot_value_nice($_pivot, $pivot_interval, $pivot_value);
-                    if (!isset($data[$pivot_value_nice])) {
-                        $data[$pivot_value_nice] = 0;
-                    }
+        $start = 0;
+        do {
+            $rows = $this->get_preprocessed_data_for_graph($range, $bucket, $pivot, $filters, $start);
 
-                    if ($num_transactions === null) {
-                        continue;
-                    }
-
-                    $data[$pivot_value_nice] += $num_transactions;
+            foreach ($rows as $row) {
+                $pivot_value_nice = $this->make_date_pivot_value_nice($row['p_pivot'], $row['p_pivot_interval'], $row['p_pivot_value']);
+                if (!isset($data[$pivot_value_nice])) {
+                    $data[$pivot_value_nice] = 0;
                 }
+
+                $data[$pivot_value_nice] += $row['p_value'];
             }
-        }
+        } while (count($rows) > 0);
 
         switch($bucket) {
             case 'gift_points_used':

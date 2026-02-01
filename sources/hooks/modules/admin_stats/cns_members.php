@@ -221,6 +221,13 @@ class Hook_admin_stats_cns_members extends Source_hook_stats_provider
                 $member_id = $row['id'];
                 $username = $row['m_username'];
 
+                if(!isset($this->data_buckets['top_members_by_visits'][$username])) {
+                    $this->data_buckets['top_members_by_visits'][$username] = 0;
+                }
+                if(!isset($this->data_buckets['top_members_by_forum_posts'][$username])) {
+                    $this->data_buckets['top_members_by_forum_posts'][$username] = 0;
+                }
+
                 $visits = $row['m_total_sessions'];
                 if ($visits > 0) {
                     $this->data_buckets['top_members_by_visits'][$username] = $visits;
@@ -234,6 +241,10 @@ class Hook_admin_stats_cns_members extends Source_hook_stats_provider
                 }
 
                 if (addon_installed('points')) {
+                    if(!isset($this->data_buckets['top_members_by_points'][$username])) {
+                        $this->data_buckets['top_members_by_points'][$username] = 0;
+                    }
+
                     $points = points_rank($member_id);
                     if ($points > 100) { // Hard-coded minimum
                         $this->data_buckets['top_members_by_points'][$username] = $points;
@@ -270,30 +281,26 @@ class Hook_admin_stats_cns_members extends Source_hook_stats_provider
         switch ($bucket) {
             case 'members':
                 $data = [];
-                $_data = $this->prepare_preprocessed_data_for_graph($bucket, $pivot, $filters);
+                $range = $this->convert_day_range_filter_to_pair($pivot, $filters[$bucket . '__day_range']);
+                $data = $this->fill_data_by_date_pivots_for_graph($pivot, $range[0], $range[1]);
 
-                foreach ($_data as $_pivot => $__data) {
-                    foreach ($__data as $pivot_interval => $_) {
-                        foreach ($_ as $pivot_value => $__) {
-                            $pivot_value_nice = $this->make_date_pivot_value_nice($_pivot, $pivot_interval, $pivot_value);
-                            if (!isset($data[$pivot_value_nice])) {
-                                $data[$pivot_value_nice] = 0;
-                            }
+                $start = 0;
+                do {
+                    $rows = $this->get_preprocessed_data_for_graph($range, $bucket, $pivot, $filters, $start);
 
-                            if ($__ === null) {
-                                continue;
-                            }
-
-                            foreach ($__ as $country => $total_joins) {
-                                if ((!empty($filters[$bucket . '__country'])) && ($filters[$bucket . '__country'] != $country)) {
-                                    continue;
-                                }
-
-                                $data[$pivot_value_nice] += $total_joins;
-                            }
+                    foreach ($rows as $row) {
+                        if ((!empty($filters[$bucket . '__country'])) && ($filters[$bucket . '__country'] != $row['p_key'])) {
+                            continue;
                         }
+
+                        $pivot_value_nice = $this->make_date_pivot_value_nice($row['p_pivot'], $row['p_pivot_interval'], $row['p_pivot_value']);
+                        if (!isset($data[$pivot_value_nice])) {
+                            $data[$pivot_value_nice] = 0;
+                        }
+
+                        $data[$pivot_value_nice] += $row['p_value'];
                     }
-                }
+                } while (count($rows) > 0);
 
                 return [
                     'type' => null,
@@ -310,26 +317,21 @@ class Hook_admin_stats_cns_members extends Source_hook_stats_provider
                     $data[$bracket] = 0;
                 }
 
-                $_data = $this->prepare_preprocessed_data_for_graph($bucket, $pivot, $filters);
+                $range = $this->convert_day_range_filter_to_pair($pivot, $filters[$bucket . '__day_range']);
 
-                foreach ($_data as $_pivot => $__data) {
-                    foreach ($__data as $pivot_interval => $_) {
-                        foreach ($_ as $pivot_value => $__) {
-                            if ($__ === null) {
-                                continue;
-                            }
+                $start = 0;
+                do {
+                    $rows = $this->get_preprocessed_data_for_graph($range, $bucket, $pivot, $filters, $start);
 
-                            foreach ($__ as $age => $num_users) {
-                                $bracket = $this->find_value_bracket($age_brackets, $age);
-                                if ($bracket === null) {
-                                    $data[do_lang('OTHER')] += $num_users;
-                                } else {
-                                    $data[$bracket] += $num_users;
-                                }
-                            }
+                    foreach ($rows as $row) {
+                        $bracket = $this->find_value_bracket($age_brackets, intval($row['p_key']));
+                        if ($bracket === null) {
+                            $data[do_lang('OTHER')] += $row['p_value'];
+                        } else {
+                            $data[$bracket] += $row['p_value'];
                         }
                     }
-                }
+                } while (count($rows) > 0);
 
                 if (array_sum($data) == 0) {
                     $data = [];
@@ -345,15 +347,20 @@ class Hook_admin_stats_cns_members extends Source_hook_stats_provider
             case 'top_members_by_visits':
             case 'top_members_by_forum_posts':
             case 'top_members_by_points':
-                $_data = $GLOBALS['SITE_DB']->query_select_value_if_there('stats_preprocessed_flat', 'p_data', ['p_bucket' => $bucket]);
-                if ($_data !== null) {
-                    $data = @unserialize($_data);
-                    if ($data === false) {
-                        $data = [];
+                $data = [];
+
+                $start = 0;
+                do {
+                    $rows = $this->get_preprocessed_data_for_graph(null, $bucket, null, $filters, $start);
+
+                    foreach ($rows as $row) {
+                        if (!isset($data[$row['p_key']])) {
+                            $data[$row['p_key']] = 0;
+                        }
+
+                        $data[$row['p_key']] += $row['p_value'];
                     }
-                } else {
-                    $data = [];
-                }
+                } while (count($rows) > 0);
 
                 switch ($bucket) {
                     case 'top_members_by_visits':
@@ -388,24 +395,19 @@ class Hook_admin_stats_cns_members extends Source_hook_stats_provider
                     $data[$bracket] = 0;
                 }
 
-                $_data = $GLOBALS['SITE_DB']->query_select_value_if_there('stats_preprocessed_flat', 'p_data', ['p_bucket' => $bucket]);
-                if ($_data !== null) {
-                    $__data = @unserialize($_data);
-                    if ($__data === false) {
-                        $__data = [];
-                    }
-                } else {
-                    $__data = [];
-                }
+                $start = 0;
+                do {
+                    $rows = $this->get_preprocessed_data_for_graph(null, $bucket, null, $filters, $start);
 
-                foreach ($__data as $age => $num_users) {
-                    $bracket = $this->find_value_bracket($age_brackets, $age);
-                    if ($bracket === null) {
-                        $data[do_lang('OTHER')] += $num_users;
-                    } else {
-                        $data[$bracket] += $num_users;
+                    foreach ($rows as $row) {
+                        $bracket = $this->find_value_bracket($age_brackets, $row['p_key']);
+                        if ($bracket === null) {
+                            $data[do_lang('OTHER')] += $row['p_value'];
+                        } else {
+                            $data[$bracket] += $row['p_value'];
+                        }
                     }
-                }
+                } while (count($rows) > 0);
 
                 return [
                     'type' => self::GRAPH_BAR_CHART,

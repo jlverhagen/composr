@@ -170,22 +170,32 @@ class Module_admin_stats extends Source_standard_crud_module
             delete_value('stats__last_processed', true);
             delete_value('stats__last_day_processed', true);
             $GLOBALS['SITE_DB']->drop_table_if_exists('stats_preprocessed');
+            $GLOBALS['SITE_DB']->drop_table_if_exists('stats_preprocessed_flat');
+            $GLOBALS['SITE_DB']->drop_table_if_exists('stats_preprocessed_delta');
         }
 
-        if (($upgrade_from === null) || ($upgrade_from < 10)) { // LEGACY
+        if (($upgrade_from === null) || ($upgrade_from < 12)) { // LEGACY
             $GLOBALS['SITE_DB']->create_table('stats_preprocessed', [
-                'p_bucket' => '*ID_TEXT',
-                'p_pivot' => '*ID_TEXT',
-                'p_pivot_interval' => '*INTEGER',
-                'p_pivot_value' => '*INTEGER',
-                'p_data' => 'LONG_TEXT',
+                'id' => '*AUTO',
+                'p_bucket' => 'ID_TEXT',
+                'p_pivot' => 'ID_TEXT',
+                'p_pivot_interval' => 'INTEGER',
+                'p_pivot_value' => 'INTEGER',
+                'p_key' => 'SHORT_TEXT',
+                'p_value' => 'INTEGER',
             ]);
 
             $GLOBALS['SITE_DB']->create_table('stats_preprocessed_flat', [
-                'p_bucket' => '*ID_TEXT',
-                'p_data' => 'LONG_TEXT',
+                'id' => '*AUTO',
+                'p_bucket' => 'ID_TEXT',
+                'p_key' => 'SHORT_TEXT',
+                'p_value' => 'INTEGER',
             ]);
 
+            $GLOBALS['SITE_DB']->create_index('stats_preprocessed', 'pivotsearch', ['p_pivot', 'p_pivot_interval', 'p_pivot_value']);
+        }
+
+        if (($upgrade_from === null) || ($upgrade_from < 10)) { // LEGACY
             $GLOBALS['SITE_DB']->create_table('stats_events', [ // This table is not about tracking individual users, 'stats' does that - it's for trend analysis
                 'id' => '*AUTO',
                 'e_event' => 'ID_TEXT',
@@ -265,17 +275,6 @@ class Module_admin_stats extends Source_standard_crud_module
             $GLOBALS['SITE_DB']->create_index('stats_known_events', 'e_count_logged', ['e_count_logged']);
             $GLOBALS['SITE_DB']->create_index('stats_known_tracking', 't_count_logged', ['t_count_logged']);
             $GLOBALS['SITE_DB']->create_index('stats_known_links', 'l_count_logged', ['l_count_logged']);
-        }
-
-        if (($upgrade_from === null) || ($upgrade_from < 12)) { // LEGACY: 11.beta9
-            $GLOBALS['SITE_DB']->create_table('stats_preprocessed_delta', [
-                'id' => '*AUTO',
-                'p_bucket' => 'ID_TEXT',
-                'p_pivot' => 'ID_TEXT',
-                'p_pivot_interval' => 'INTEGER',
-                'p_pivot_value' => 'INTEGER',
-                'p_data' => 'LONG_TEXT',
-            ]);
         }
     }
 
