@@ -172,6 +172,7 @@ class Hook_addon_registry_ezoic
             'sources_custom/hooks/systems/cron/ezoic.php',
             'sources_custom/hooks/systems/startup/ezoic.php',
             'sources_custom/hooks/systems/trusted_sites/ezoic.php',
+            'sources_custom/hooks/systems/privacy/ezoic.php',
         ];
     }
 }

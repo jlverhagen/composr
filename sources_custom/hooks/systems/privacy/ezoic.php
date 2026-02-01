@@ -44,9 +44,12 @@ class Hook_privacy_ezoic extends Source_hook_privacy_base
 
         $ezoic_url = 'https://g.ezoic.net/privacy/' . get_base_url_hostname();
         $ezoic_data = cache_and_carry('cms_http_request', [$ezoic_url, []], (60 * 24));
-        $ezoic_pp = new Tempcode();
+        $ezoic_pp = null;
         if ((is_array($ezoic_data)) && ($ezoic_data[0] !== null) && ($ezoic_data[4] == '200')) {
-            $ezoic_pp->attach(strip_html($ezoic_data[0]));
+            require_code('comcode');
+            $comcode = html_to_comcode($ezoic_data[0]);
+            $comcode = str_replace(['[title="1"]', '[title]', '[title="2"]'], ['[title="3"]', '[title="3"]', '[title="3"]'], $comcode);
+            $ezoic_pp = comcode_to_tempcode($comcode);
         }
 
         return [
@@ -58,9 +61,9 @@ class Hook_privacy_ezoic extends Source_hook_privacy_base
             ],
 
             'positive' => [
-                ((!$ezoic_pp->is_empty()) ? [
+                (($ezoic_pp !== null) ? [
                     'heading' => do_lang('INFORMATION_DISCLOSURE'),
-                    'explanation' => $ezoic_pp,
+                    'explanation' => protect_from_escaping($ezoic_pp),
                 ] : []),
             ],
 
