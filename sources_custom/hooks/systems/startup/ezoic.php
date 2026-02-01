@@ -35,6 +35,13 @@ class Hook_startup_ezoic
             return;
         }
 
+        if (!allowed_cookies('MARKETING')) {
+            return;
+        }
+        if (!allowed_cookies('ANALYTICS')) {
+            return;
+        }
+
         if ((!$MICRO_AJAX_BOOTUP) && (!$MICRO_BOOTUP) && (running_script('index'))) {
             require_code('csp');
             $nonce_html = csp_nonce_html();
