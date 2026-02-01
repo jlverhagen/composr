@@ -48,7 +48,7 @@ class Hook_cron_ezoic
         return [
             'num_queued' => null,
             'minutes_between_runs' => (60 * 24),
-            'enabled_by_default' => true,
+            'enabled_by_default' => false,
         ];
     }
 
@@ -59,7 +59,7 @@ class Hook_cron_ezoic
      */
     public function run(?int $last_run)
     {
-        $data = http_get_contents('https://srv.adstxtmanager.com/19390/' . rawurlencode(get_base_url_hostname()), []);
+        $data = http_get_contents('https://srv.adstxtmanager.com/19390/' . get_base_url_hostname(), []);
         if ($data === null) {
             warn_exit(do_lang_tempcode('INTERNAL_ERROR', escape_html('TODO')));
         }
