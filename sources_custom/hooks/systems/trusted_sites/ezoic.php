@@ -50,8 +50,12 @@ class Hook_trusted_sites_ezoic
             return;
         }
 
-        $sites[] = 'cmp.gatekeeperconsent.com';
-        $sites[] = 'the.gatekeeperconsent.com';
-        $sites[] = 'www.ezojs.com';
+        $sites[] = '*.gatekeeperconsent.com';
+        $sites[] = 'ezojs.com';
+        $sites[] = '*.ezoic.net';
+        $sites[] = 'ezodn.com';
+        $sites[] = 'googlesyndication.com';
+        $sites[] = '*.id5-sync.com';
+        $sites[] = 'id5-sync.com';
     }
 }

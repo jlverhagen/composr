@@ -51,7 +51,7 @@ class Hook_trusted_sites_facebook_support
 
         if (get_option('facebook_appid') != '') {
             $sites[] = 'facebook.com';
-            $sites[] = 'connect.facebook.net';
+            $sites[] = '*.facebook.net';
         }
     }
 }
