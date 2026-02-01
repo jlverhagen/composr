@@ -277,7 +277,7 @@ class Module_admin_email_log
 
         $rows = $GLOBALS['SITE_DB']->query_select('logged_mail_messages', ['*'], ['id' => $id], '', 1);
         if (!array_key_exists(0, $rows)) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'mail', escape_html(strval($id))));
         }
         $row = $rows[0];
 
@@ -396,7 +396,7 @@ class Module_admin_email_log
 
         $rows = $GLOBALS['SITE_DB']->query_select('logged_mail_messages', ['*'], ['id' => $id], '', 1);
         if (!array_key_exists(0, $rows)) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'mail', escape_html(strval($id))));
         }
         $row = $rows[0];
 
@@ -409,7 +409,7 @@ class Module_admin_email_log
         $values = array_values($attachments);
 
         if (!array_key_exists($i, $keys)) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'mail_attachment', escape_html(strval($i))));
         }
 
         $path = $keys[$i];
@@ -447,7 +447,7 @@ class Module_admin_email_log
 
         $rows = $GLOBALS['SITE_DB']->query_select('logged_mail_messages', ['*'], ['id' => $id], '', 1);
         if (!array_key_exists(0, $rows)) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'mail', escape_html(strval($id))));
         }
         $row = $rows[0];
 
@@ -615,7 +615,7 @@ class Module_admin_email_log
                 if ($action == 'send') {
                     $rows = $GLOBALS['SITE_DB']->query_select('logged_mail_messages', ['*'], ['id' => $id], '', 1);
                     if (!array_key_exists(0, $rows)) {
-                        warn_exit(do_lang_tempcode('MISSING_RESOURCE'));
+                        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'mail', escape_html(strval($id))));
                     }
                     $row = $rows[0];
 

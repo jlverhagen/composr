@@ -221,7 +221,7 @@ class Module_tutorials
 
         $tutorial_rows = $GLOBALS['SITE_DB']->query_select('tutorials_external', ['*'], ['id' => $id], '', 1);
         if (!array_key_exists(0, $tutorial_rows)) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'tutorial'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'tutorials_external', escape_html(strval($id))));
         }
 
         $tutorial_row = $tutorial_rows[0];

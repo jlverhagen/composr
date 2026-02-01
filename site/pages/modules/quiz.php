@@ -299,7 +299,7 @@ class Module_quiz
 
             $quizzes = $GLOBALS['SITE_DB']->query_select('quizzes', ['*'], ['id' => $quiz_id], '', 1);
             if (!array_key_exists(0, $quizzes)) {
-                warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'quiz'));
+                warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'quiz', escape_html(strval($quiz_id))));
             }
             $quiz = $quizzes[0];
 
@@ -342,7 +342,7 @@ class Module_quiz
 
             $quizzes = $GLOBALS['SITE_DB']->query_select('quizzes', ['*'], ['id' => $quiz_id], '', 1);
             if (!array_key_exists(0, $quizzes)) {
-                warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'quiz'));
+                warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'quiz', escape_html(strval($quiz_id))));
             }
             $quiz = $quizzes[0];
             $this->enforcement_checks($quiz);

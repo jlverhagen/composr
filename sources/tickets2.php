@@ -73,7 +73,7 @@ function edit_ticket_type(int $ticket_type_id, ?string $ticket_type_name, int $g
 {
     $rows = $GLOBALS['SITE_DB']->query_select('ticket_types', ['*'], ['id' => $ticket_type_id], '', 1);
     if (!array_key_exists(0, $rows)) {
-        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'ticket_type'));
+        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'ticket_type', escape_html(strval($ticket_type_id))));
     }
 
     $old_ticket_type_name = $rows[0]['ticket_type_name'];
@@ -102,7 +102,7 @@ function delete_ticket_type(int $ticket_type_id)
 {
     $rows = $GLOBALS['SITE_DB']->query_select('ticket_types', ['*'], ['id' => $ticket_type_id], '', 1);
     if (!array_key_exists(0, $rows)) {
-        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'ticket_type'));
+        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'ticket_type', escape_html(strval($ticket_type_id))));
     }
 
     $GLOBALS['SITE_DB']->query_delete('group_category_access', ['module_the_name' => 'tickets', 'category_name' => strval($ticket_type_id)]);
@@ -521,7 +521,7 @@ function get_ticket_meta_details(string $ticket_id, bool $hard_error = true) : ?
     $ticket_posts = get_ticket_posts($ticket_id, $forum, $topic_id, $total_ticket_posts, 0, 1);
     if (empty($ticket_posts)) {
         if ($hard_error) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'ticket'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'ticket', escape_html(strval($ticket_id))));
         }
 
         return null;

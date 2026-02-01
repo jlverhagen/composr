@@ -278,9 +278,10 @@ abstract class Source_standard_crud_module
                         breadcrumb_set_parents(array_merge([['_SELF:_SELF:browse', do_lang_tempcode(($this->menu_label === null) ? 'MENU' : $this->menu_label)], ['_SELF:_SELF:' . substr($type, 1), do_lang_tempcode('CHOOSE')]], $BREADCRUMB_SET_PARENTS));
                     } else {
                         if (($this->catalogue) && (either_param_string('catalogue_name', '') != '')) {
-                            $_catalogue_title = $GLOBALS['SITE_DB']->query_select_value_if_there('catalogues', 'c_title', ['c_name' => either_param_string('catalogue_name')]);
+                            $catalogue_name = either_param_string('catalogue_name');
+                            $_catalogue_title = $GLOBALS['SITE_DB']->query_select_value_if_there('catalogues', 'c_title', ['c_name' => $catalogue_name]);
                             if ($_catalogue_title === null) {
-                                warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'catalogue'));
+                                warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'catalogue', escape_html(strval($catalogue_name))));
                             }
                             $catalogue_title = get_translated_text($_catalogue_title);
                             breadcrumb_set_parents(array_merge([['_SELF:_SELF:browse:catalogue_name=' . either_param_string('catalogue_name', ''), $catalogue_title]], $BREADCRUMB_SET_PARENTS));

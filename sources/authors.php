@@ -210,7 +210,7 @@ function delete_author(string $author)
 {
     $rows = $GLOBALS['SITE_DB']->query_select('authors', ['the_description', 'skills'], ['author' => $author], '', 1);
     if (!array_key_exists(0, $rows)) {
-        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'author'));
+        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'author', escape_html($author)));
     }
 
     require_code('attachments2');

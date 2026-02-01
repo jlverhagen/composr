@@ -124,7 +124,7 @@ class CMSPtRead
         $table_prefix = $GLOBALS['FORUM_DB']->get_table_prefix();
         $topic_details = $GLOBALS['FORUM_DB']->query_select('f_topics t JOIN ' . $table_prefix . 'f_posts p ON t.t_cache_first_post_id=p.id', ['*', 't.id AS topic_id', 'p.id AS post_id'], ['t.id' => $topic_id], '', 1);
         if (!isset($topic_details[0])) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'topic'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'topic', escape_html(strval($topic_id))));
         }
 
         if (!cns_may_access_topic($topic_id, null, $topic_details[0])) {

@@ -346,7 +346,7 @@ class Module_chat
 
             $room_check = $GLOBALS['SITE_DB']->query_select('chat_rooms', ['*'], ['id' => $room_id], '', 1);
             if (!array_key_exists(0, $room_check)) {
-                warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'chat'));
+                warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'chat', escape_html(strval($room_id))));
             }
             $this->room_row = $room_check[0];
             $this->room_name = $this->room_row['room_name'];

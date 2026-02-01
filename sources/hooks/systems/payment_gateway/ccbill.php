@@ -409,7 +409,7 @@ class Hook_payment_gateway_ccbill
             if ($silent_fail) {
                 return null;
             }
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'ecom_trans_expecting', escape_html(strval($trans_expecting_id))));
         }
         $transaction_row = $transaction_rows[0];
         $member_id = $transaction_row['e_member_id'];
@@ -531,7 +531,7 @@ class Hook_payment_gateway_ccbill
         $trans_expecting_id = get_param_string('customPurchaseId');
         $transaction_rows = $GLOBALS['SITE_DB']->query_select('ecom_trans_expecting', ['*'], ['id' => $trans_expecting_id], '', 1);
         if (!array_key_exists(0, $transaction_rows)) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'ecom_trans_expecting', escape_html(strval($trans_expecting_id))));
         }
         $transaction_row = $transaction_rows[0];
         $member_id = $transaction_row['e_member_id'];

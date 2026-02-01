@@ -139,7 +139,7 @@ function report_post_form(object $title, int $post_id, array $js_function_calls,
 
     $_post_info = $GLOBALS['FORUM_DB']->query_select('f_posts', ['*'], ['id' => $post_id], '', 1);
     if (!array_key_exists(0, $_post_info)) {
-        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'post'));
+        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'post', escape_html(strval($post_id))));
     }
     $post_info = $_post_info[0];
 
@@ -147,7 +147,7 @@ function report_post_form(object $title, int $post_id, array $js_function_calls,
 
     $_topic_info = $GLOBALS['FORUM_DB']->query_select('f_topics', ['*'], ['id' => $topic_id], '', 1);
     if (!array_key_exists(0, $_topic_info)) {
-        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'topic'));
+        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'topic', escape_html(strval($topic_id))));
     }
     $topic_info = $_topic_info[0];
 
@@ -366,7 +366,7 @@ function report_post(int $post_id, string $report_post, int $anonymous = 0, int 
     $table_prefix = $GLOBALS['FORUM_DB']->get_table_prefix();
     $_post_info = $GLOBALS['FORUM_DB']->query_select('f_posts p JOIN ' . $table_prefix . 'f_topics t on t.id=p.p_topic_id', ['*', 'p.id AS post_id', 't.id AS topic_id'], ['p.id' => $post_id], '', 1);
     if (!array_key_exists(0, $_post_info)) {
-        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'post'));
+        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'post', escape_html(strval($post_id))));
     }
     $post_info = $_post_info[0];
 

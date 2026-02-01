@@ -109,7 +109,7 @@ function run_cleanup_tools(?array $cleanup_tools = null) : object
 
                 log_it('CLEANUP_TOOLS', $hook);
             } else {
-                $messages->attach(paragraph(do_lang_tempcode('_MISSING_RESOURCE', escape_html($hook))));
+                $messages->attach(paragraph(do_lang_tempcode('MISSING_RESOURCE', 'hook', escape_html('systems/cleanup/' . $hook))));
             }
         }
     } else {

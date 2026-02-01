@@ -63,7 +63,7 @@ class Source_forum_email_integration extends Source_email_integration
         if ($forum_row === null) {
             $forum_rows = $GLOBALS['FORUM_DB']->query_select('f_forums', ['*'], ['id' => $forum_id], '', 1);
             if (!array_key_exists(0, $forum_rows)) {
-                warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'forum'));
+                warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'forum', escape_html(strval($forum_id))));
             }
             $this->forum_row = $forum_rows[0];
         } else {

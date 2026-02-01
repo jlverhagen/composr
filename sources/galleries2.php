@@ -969,7 +969,7 @@ function edit_image(int $id, string $title, string $cat, string $description, st
 
     $rows = $GLOBALS['SITE_DB']->query_select('images', ['title', 'the_description', 'cat'], ['id' => $id]);
     if (!array_key_exists(0, $rows)) {
-        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'image'));
+        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'image', escape_html(strval($id))));
     }
 
     $_title = $rows[0]['title'];
@@ -1104,7 +1104,7 @@ function delete_image(int $id, bool $delete_full = true)
 {
     $rows = $GLOBALS['SITE_DB']->query_select('images', ['title', 'the_description', 'cat'], ['id' => $id]);
     if (!array_key_exists(0, $rows)) {
-        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'image'));
+        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'image', escape_html(strval($id))));
     }
 
     $title = $rows[0]['title'];
@@ -1309,7 +1309,7 @@ function edit_video(int $id, string $title, string $cat, string $description, st
 
     $rows = $GLOBALS['SITE_DB']->query_select('videos', ['title', 'the_description', 'cat', 'url'], ['id' => $id]);
     if (!array_key_exists(0, $rows)) {
-        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'video'));
+        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'video', escape_html(strval($id))));
     }
 
     $_title = $rows[0]['title'];
@@ -1432,7 +1432,7 @@ function delete_video(int $id, bool $delete_full = true)
 {
     $rows = $GLOBALS['SITE_DB']->query_select('videos', ['title', 'the_description', 'cat'], ['id' => $id], '', 1);
     if (!array_key_exists(0, $rows)) {
-        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'video'));
+        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'video', escape_html(strval($id))));
     }
     $title = $rows[0]['title'];
     $description = $rows[0]['the_description'];
@@ -1708,7 +1708,7 @@ function edit_gallery(string $old_name, string $name, string $fullname, string $
 {
     $rows = $GLOBALS['SITE_DB']->query_select('galleries', ['*'], ['name' => $old_name], '', 1);
     if (!array_key_exists(0, $rows)) {
-        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'gallery'));
+        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'gallery', escape_html($old_name)));
     }
 
     require_code('urls2');
@@ -1772,7 +1772,7 @@ function edit_gallery(string $old_name, string $name, string $fullname, string $
 
     $rows = $GLOBALS['SITE_DB']->query_select('galleries', ['fullname', 'the_description'], ['name' => $old_name], '', 1);
     if (!array_key_exists(0, $rows)) {
-        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'gallery'));
+        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'gallery', escape_html($old_name)));
     }
     $myrow = $rows[0];
 
@@ -1874,7 +1874,7 @@ function delete_gallery(string $name)
 
     $rows = $GLOBALS['SITE_DB']->query_select('galleries', ['*'], ['name' => $name], '', 1);
     if (!array_key_exists(0, $rows)) {
-        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'gallery'));
+        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'gallery', escape_html($name)));
     }
 
     require_code('files2');

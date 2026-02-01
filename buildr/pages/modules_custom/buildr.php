@@ -899,9 +899,10 @@ class Module_buildr
             $name = post_param_string('item_name', '');
 
             if ($name == '') {
-                $rows = $GLOBALS['SITE_DB']->query_select('w_itemdef', ['*'], ['name' => either_param_string('item')], '', 1);
+                $item = either_param_string('item');
+                $rows = $GLOBALS['SITE_DB']->query_select('w_itemdef', ['*'], ['name' => $item], '', 1);
                 if (!array_key_exists(0, $rows)) {
-                    buildr_refresh_with_message(do_lang_tempcode('MISSING_RESOURCE'), 'warn');
+                    buildr_refresh_with_message(do_lang_tempcode('MISSING_RESOURCE', 'buildr_item', escape_html($item)), 'warn');
                 }
                 $row = $rows[0];
 
@@ -963,7 +964,7 @@ class Module_buildr
 
                 $rows = $GLOBALS['SITE_DB']->query_select('w_rooms', ['*'], ['location_x' => $x, 'location_y' => $y, 'location_realm' => $location_realm], '', 1);
                 if (!array_key_exists(0, $rows)) {
-                    buildr_refresh_with_message(do_lang_tempcode('MISSING_RESOURCE'), 'warn');
+                    buildr_refresh_with_message(do_lang_tempcode('MISSING_RESOURCE', 'buildr_room', escape_html(strval($location_realm) . ':' . strval($x) . ':' . strval($y))), 'warn');
                 }
                 $row = $rows[0];
 
@@ -1004,7 +1005,7 @@ class Module_buildr
 
                 $rows = $GLOBALS['SITE_DB']->query_select('w_realms', ['*'], ['id' => $realm], '', 1);
                 if (!array_key_exists(0, $rows)) {
-                    buildr_refresh_with_message(do_lang_tempcode('MISSING_RESOURCE'), 'warn');
+                    buildr_refresh_with_message(do_lang_tempcode('MISSING_RESOURCE', 'buildr_realm', escape_html(strval($realm))), 'warn');
                 }
                 $row = $rows[0];
 
@@ -1043,7 +1044,7 @@ class Module_buildr
 
                 $rows = $GLOBALS['SITE_DB']->query_select('w_portals', ['*'], ['start_location_x' => $x, 'start_location_y' => $y, 'start_location_realm' => $realm, 'end_location_realm' => $end_realm], '', 1);
                 if (!array_key_exists(0, $rows)) {
-                    buildr_refresh_with_message(do_lang_tempcode('MISSING_RESOURCE'), 'warn');
+                    buildr_refresh_with_message(do_lang_tempcode('MISSING_RESOURCE', 'buildr_portal', escape_html(strval($realm) . ':' . strval($x) . ':' . strval($y) . ':' . strval($end_realm))), 'warn');
                 }
                 $row = $rows[0];
 

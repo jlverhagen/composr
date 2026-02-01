@@ -76,7 +76,7 @@ function cns_delete_post_template(int $id)
 
     $title = $GLOBALS['FORUM_DB']->query_select_value_if_there('f_post_templates', 't_title', ['id' => $id]);
     if ($title === null) {
-        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'post_template'));
+        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'post_template', escape_html(strval($id))));
     }
 
     $GLOBALS['FORUM_DB']->query_delete('f_post_templates', ['id' => $id], '', 1);
@@ -152,7 +152,7 @@ function cns_edit_emoticon(string $old_code, string $code, string $theme_img_cod
 
     $old_theme_img_code = $GLOBALS['FORUM_DB']->query_select_value_if_there('f_emoticons', 'e_theme_img_code', ['e_code' => $old_code]);
     if ($old_theme_img_code === null) {
-        warn_exit(do_lang_tempcode('MISSING_RESOURCE'));
+        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'emoticon', escape_html($old_code)));
     }
 
     $GLOBALS['FORUM_DB']->query_update('f_emoticons', [
@@ -185,7 +185,7 @@ function cns_delete_emoticon(string $code)
 {
     $old_theme_img_code = $GLOBALS['FORUM_DB']->query_select_value_if_there('f_emoticons', 'e_theme_img_code', ['e_code' => $code]);
     if ($old_theme_img_code === null) {
-        warn_exit(do_lang_tempcode('MISSING_RESOURCE'));
+        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'emoticon', escape_html($code)));
     }
 
     $GLOBALS['FORUM_DB']->query_delete('f_emoticons', ['e_code' => $code], '', 1);
@@ -248,7 +248,7 @@ function cns_edit_welcome_email(int $id, string $name, string $subject, string $
 
     $_subject = $GLOBALS['SITE_DB']->query_select_value_if_there('f_welcome_emails', 'w_subject', ['id' => $id]);
     if ($_subject === null) {
-        warn_exit(do_lang_tempcode('MISSING_RESOURCE'));
+        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'welcome_email', escape_html(strval($id))));
     }
     $_text = $GLOBALS['SITE_DB']->query_select_value('f_welcome_emails', 'w_text', ['id' => $id]);
     $map = [
@@ -285,7 +285,7 @@ function cns_delete_welcome_email(int $id)
 
     $_subject = $GLOBALS['SITE_DB']->query_select_value_if_there('f_welcome_emails', 'w_subject', ['id' => $id]);
     if ($_subject === null) {
-        warn_exit(do_lang_tempcode('MISSING_RESOURCE'));
+        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'welcome_email', escape_html(strval($id))));
     }
     $_text = $GLOBALS['SITE_DB']->query_select_value('f_welcome_emails', 'w_text', ['id' => $id]);
 

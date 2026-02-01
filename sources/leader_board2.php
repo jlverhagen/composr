@@ -112,7 +112,7 @@ function edit_leader_board(int $id, string $title, ?string $board_type, int $mem
 {
     $_title = $GLOBALS['SITE_DB']->query_select_value_if_there('leader_boards', 'lb_title', ['id' => $id]);
     if ($_title === null) {
-        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'leader_board'));
+        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'leader_board', escape_html(strval($id))));
     }
 
     // Cannot have less than one member
@@ -168,7 +168,7 @@ function delete_leader_board(int $id)
 {
     $_title = $GLOBALS['SITE_DB']->query_select_value_if_there('leader_boards', 'lb_title', ['id' => $id]);
     if ($_title === null) {
-        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'leader_board'));
+        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'leader_board', escape_html(strval($id))));
     }
 
     $GLOBALS['SITE_DB']->query_delete('leader_boards', ['id' => $id], '', 1);

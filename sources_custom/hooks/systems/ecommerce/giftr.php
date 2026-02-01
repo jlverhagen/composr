@@ -233,7 +233,7 @@ class Hook_ecommerce_giftr
                     Source_notification_dispatcher::dispatch_notification('gift', null, $subject, $body, [$to_member_id], A_FROM_SYSTEM_UNPRIVILEGED);
                 }
             } else {
-                warn_exit(do_lang_tempcode('MISSING_RESOURCE'));
+                warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'gift', escape_html(strval($gift_id))));
             }
         } else {
             warn_exit(do_lang_tempcode('NO_MEMBER_SELECTED'));

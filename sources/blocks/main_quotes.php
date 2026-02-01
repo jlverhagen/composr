@@ -101,7 +101,7 @@ PHP;
 
         $path = _find_text_file_path($file, '');
         if ($path == '') {
-            return paragraph(do_lang_tempcode('_MISSING_RESOURCE', escape_html($file), escape_html(do_lang('FILE'))), 'ftfgf6cy5oe1lytmzs2wl9snblboow0m', 'nothing-here');
+            return paragraph(do_lang_tempcode('MISSING_RESOURCE', 'PATH', escape_html($file)), 'ftfgf6cy5oe1lytmzs2wl9snblboow0m', 'nothing-here');
         }
 
         if (!file_exists($path)) {

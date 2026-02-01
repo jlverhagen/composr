@@ -61,7 +61,7 @@ function tar_open(string $path, string $mode, bool $known_exists = false, ?strin
     }
     if ($myfile === false) {
         if (substr($mode, 0, 1) == 'r') {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE'), false, true);
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'PATH', escape_html($path)), false, true);
         } else {
             intelligent_write_error($path);
         }

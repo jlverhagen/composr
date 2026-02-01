@@ -83,7 +83,7 @@ function cns_delete_multi_moderation(int $id)
 
     $_name = $GLOBALS['FORUM_DB']->query_select_value_if_there('f_multi_moderations', 'mm_name', ['id' => $id]);
     if ($_name === null) {
-        warn_exit(do_lang_tempcode('MISSING_RESOURCE'));
+        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'multi_moderation', escape_html(strval($id))));
     }
     $name = get_translated_text($_name, $GLOBALS['FORUM_DB']);
     $GLOBALS['FORUM_DB']->query_delete('f_multi_moderations', ['id' => $id], '', 1);
@@ -118,7 +118,7 @@ function cns_perform_multi_moderation(int $id, int $topic_id, string $reason, st
 
     $topic_details = $GLOBALS['FORUM_DB']->query_select('f_topics', ['t_forum_id', 't_cache_first_title', 't_cache_first_post_id'], ['id' => $topic_id], '', 1);
     if (!array_key_exists(0, $topic_details)) {
-        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'multi_moderation'));
+        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'topic', escape_html(strval($topic_id))));
     }
     $from = $topic_details[0]['t_forum_id'];
     if (!cns_may_perform_multi_moderation($from)) {
@@ -127,7 +127,7 @@ function cns_perform_multi_moderation(int $id, int $topic_id, string $reason, st
 
     $mm = $GLOBALS['FORUM_DB']->query_select('f_multi_moderations', ['*'], ['id' => $id], '', 1);
     if (!array_key_exists(0, $mm)) {
-        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'multi_moderation'));
+        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'multi_moderation', escape_html(strval($id))));
     }
 
     require_code('selectcode');

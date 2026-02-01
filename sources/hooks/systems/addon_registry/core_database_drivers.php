@@ -158,6 +158,7 @@ class Hook_addon_registry_core_database_drivers
             'sources/database/shared/index.html',
             'sources/database/shared/mysql.php',
             'sources/database/shared/sqlserver.php',
+            'sources/database/sqlite3.php',
             'sources/database/sqlserver.php',
             'sources/database/sqlserver_odbc.php',
             'sources/database/xml.php',

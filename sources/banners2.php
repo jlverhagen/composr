@@ -313,7 +313,7 @@ function check_banner(string $title_text = '', string $direct_code = '', string 
     // Find banner type details
     $_banner_type_rows = $GLOBALS['SITE_DB']->query_select('banner_types', ['*'], ['id' => $b_type], '', 1);
     if (!array_key_exists(0, $_banner_type_rows)) {
-        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'banner_type'));
+        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'banner_type', escape_html(strval($b_type))));
     }
     $banner_type_row = $_banner_type_rows[0];
 
@@ -539,7 +539,7 @@ function edit_banner(string $old_name, string $name, string $imgurl, string $tit
 {
     $_caption = $GLOBALS['SITE_DB']->query_select_value_if_there('banners', 'caption', ['name' => $old_name]);
     if ($_caption === null) {
-        $_caption = do_lang_tempcode('MISSING_RESOURCE', 'banner');
+        $_caption = do_lang_tempcode('MISSING_RESOURCE', 'banner', escape_html($old_name));
     }
 
     if ($old_name != $name) {
@@ -642,7 +642,7 @@ function delete_banner(string $name)
 {
     $caption = $GLOBALS['SITE_DB']->query_select_value_if_there('banners', 'caption', ['name' => $name]);
     if ($caption === null) {
-        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'banner'));
+        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'banner', escape_html($name)));
     }
 
     if (addon_installed('catalogues')) {
@@ -737,7 +737,7 @@ function edit_banner_type(string $old_id, string $id, int $is_textual, int $imag
 {
     $rows = $GLOBALS['SITE_DB']->query_select('banner_types', ['id'], ['id' => $old_id], '', 1);
     if (!array_key_exists(0, $rows)) {
-        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'banner_type'));
+        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'banner_type', escape_html(strval($old_id))));
     }
 
     if ($old_id != $id) {
@@ -784,7 +784,7 @@ function delete_banner_type(string $id)
 {
     $rows = $GLOBALS['SITE_DB']->query_select('banner_types', ['id'], ['id' => $id], '', 1);
     if (!array_key_exists(0, $rows)) {
-        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'banner_type'));
+        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'banner_type', escape_html(strval($id))));
     }
 
     $GLOBALS['SITE_DB']->query_update('banners', ['b_type' => ''], ['b_type' => $id]);

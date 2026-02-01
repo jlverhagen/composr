@@ -593,7 +593,7 @@ class Module_api
         } else {
             $rows = $GLOBALS['SITE_DB']->query_select('api_classes', ['*'], ['c_name' => $class], ' ORDER BY c_name');
             if (count($rows) == 0) {
-                warn_exit(do_lang_tempcode('MISSING_RESOURCE', escape_html('api_classes')));
+                warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'api_class', escape_html($class)));
             }
 
             $class_definitions = [];
@@ -677,7 +677,7 @@ class Module_api
 
         $db_functions = $GLOBALS['SITE_DB']->query_select('api_functions', ['*'], ['class_name' => $class, 'f_name' => $function], ' ORDER BY f_name');
         if (count($db_functions) == 0) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE', escape_html('api_function')));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'api_function', escape_html($class . ':' . $function)));
         }
 
         $function_definitions = [];

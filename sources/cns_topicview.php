@@ -45,7 +45,7 @@ function find_post_id_url(int $post_id) : string
 
     $post_details = $GLOBALS['FORUM_DB']->query_select('f_posts', ['p_topic_id', 'p_time'], ['id' => $post_id]);
     if (empty($post_details)) {
-        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'post'));
+        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'post', escape_html(strval($post_id))));
     }
 
     $post_time = $post_details[0]['p_time'];
@@ -270,7 +270,7 @@ function cns_read_in_topic(?int $topic_id, int $start, int $max, bool $view_poll
         }
         $_topic_info = $GLOBALS['FORUM_DB']->query_select($table, $select, ['t.id' => $topic_id], '', 1);
         if (!array_key_exists(0, $_topic_info)) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'topic'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'topic', escape_html(strval($topic_id))));
         }
         $topic_info = $_topic_info[0];
 

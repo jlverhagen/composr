@@ -143,7 +143,7 @@ PHP;
         if ($category_id !== null) {
             $categories = $GLOBALS['SITE_DB']->query_select('catalogue_categories', ['*'], ['id' => $category_id], '', 1);
             if (!array_key_exists(0, $categories)) {
-                return do_lang_tempcode('MISSING_RESOURCE', 'catalogue_category');
+                return do_lang_tempcode('MISSING_RESOURCE', 'catalogue_category', escape_html(strval($category_id)));
             }
             $category = $categories[0];
             $catalogue_name = $category['c_name'];

@@ -101,7 +101,6 @@ class lang_html_safe_test_set extends cms_test_case
         $safelist = [
             // Checked are ok manually already
             'PERMISSION_CELL',
-            '_MISSING_RESOURCE',
             'TUTORIAL_ON_THIS',
             'NO_PHP_FTP',
             'NA_EM',

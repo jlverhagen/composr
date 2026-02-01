@@ -539,7 +539,7 @@ class Module_admin_cns_groups extends Source_standard_crud_module
     {
         $rows = $GLOBALS['FORUM_DB']->query_select('f_groups', ['*'], ['id' => intval($id)], '', 1);
         if (!array_key_exists(0, $rows)) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'group'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'group', escape_html($id)));
         }
         $myrow = $rows[0];
 

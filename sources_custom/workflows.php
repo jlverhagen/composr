@@ -158,20 +158,20 @@ function get_workflow_name(int $workflow_id) : string
 /**
  * Find out who submitted a piece of content from a workflow.
  *
- * @param  AUTO_LINK $content_id The workflow content ID
+ * @param  ?AUTO_LINK $content_id The workflow content ID (null: misuse)
  * @return ?MEMBER The submitter (null: if unknown)
  */
-function get_submitter_of_workflow_content(int $content_id) : ?int
+function get_submitter_of_workflow_content(?int $content_id) : ?int
 {
     // Exit on misuse
     if ($content_id === null) {
-        warn_exit(do_lang_tempcode('MISSING_RESOURCE'));
+        warn_exit(do_lang_tempcode('INTERNAL_ERROR', escape_html('TODO')));
     }
     // Find out the author straight from the workflow_content table
     $submitter = $GLOBALS['SITE_DB']->query_select('workflow_content', ['original_submitter'], ['id' => $content_id]);
     if (empty($submitter)) {
         // Exit if we can't find the given resource
-        warn_exit(do_lang_tempcode('_MISSING_RESOURCE', escape_html('workflow_content->' . strval($content_id))));
+        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'workflow_content', escape_html(strval($content_id))));
     }
     // Now extract the submitter (if there is one)
     return $submitter[0]['original_submitter'];
@@ -208,7 +208,7 @@ function get_workflow_form(int $workflow_content_id) : object
     // Check if this is a valid piece of content for a workflow
     $rows = $GLOBALS['SITE_DB']->query_select('workflow_content', ['*'], ['id' => $workflow_content_id], '', 1);
     if (empty($rows)) {
-        warn_exit(do_lang_tempcode('_MISSING_RESOURCE', escape_html(strval($workflow_content_id)), do_lang_tempcode('WORKFLOW')));
+        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'workflow_content', escape_html(strval($workflow_content_id))));
     }
 
     $row = $rows[0];
@@ -221,7 +221,7 @@ function get_workflow_form(int $workflow_content_id) : object
     // Make sure there are some points to approve
     $approval_points = get_all_approval_points($relevant_workflow);
     if (empty($approval_points)) {
-        warn_exit(do_lang_tempcode('_MISSING_RESOURCE', escape_html(strval($workflow_content_id)), do_lang_tempcode('WORKFLOW')));
+        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'workflow_content', escape_html(strval($workflow_content_id))));
     }
 
     /////////////////////////
@@ -493,7 +493,7 @@ function workflow_update_handler() : object
     // Grab the names of our workflow approval points
     $approval_points = get_all_approval_points($workflow_id);
     if (count($approval_points) == 0) {
-        warn_exit(do_lang_tempcode('_MISSING_RESOURCE', escape_html(strval($content_id)), do_lang_tempcode('WORKFLOW')));
+        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'workflow_content', escape_html(strval($content_id))));
     }
 
     // Find out which approvals have been given
@@ -629,7 +629,7 @@ function workflow_update_handler() : object
     // Grab lookup data from the workflows database
     $rows = $GLOBALS['SITE_DB']->query_select('workflow_content', ['content_type', 'content_id'], ['id' => $content_id], '', 1);
     if (empty($rows)) {
-        warn_exit(do_lang_tempcode('_MISSING_RESOURCE', escape_html('workflow_content->' . strval($content_id))));
+        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'workflow_content', escape_html(strval($content_id))));
     }
     $row = $rows[0];
 
@@ -655,7 +655,7 @@ function workflow_update_handler() : object
     // Make sure we've actually found something
     if (empty($content_rows)) {
         $content_id = $row['content_id'];
-        warn_exit(do_lang_tempcode('_MISSING_RESOURCE', escape_html($content_table . '->' . $content_id_field . '->' . $content_validated_field)));
+        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'workflow', escape_html($content_table . '::' . $content_id_field . '::' . $content_validated_field)));
     }
     $content_row = $content_rows[0];
 
@@ -756,7 +756,7 @@ function add_content_to_workflow(string $content_type = '', string $content_id =
     append_content_select_for_fields($select, $info, ['id']);
     if (empty($GLOBALS['SITE_DB']->query_select($content_table, $select, [$content_id_field => $info['id_field_numeric'] ? $content_id : intval($content_id)], '', 1))) {
         // This content doesn't exist, bail out
-        warn_exit(do_lang_tempcode('_MISSING_RESOURCE', escape_html($content_table . '/' . $content_id_field . '/' . $content_id)));
+        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'workflow', escape_html($content_table . '::' . $content_id_field . '::' . $content_id)));
     }
 
     // If we've made it this far then we have been asked to apply a valid workflow to a valid piece of content, so let's go ahead
@@ -810,13 +810,13 @@ function get_all_approval_points(int $workflow_id) : array
 /**
  * Gets an array of the group IDs allowed to approve the given point.
  *
- * @param  AUTO_LINK $approval_id The ID of the approval point
+ * @param  ?AUTO_LINK $approval_id The ID of the approval point (null: misuse)
  * @return array The IDs of the groups allowed to signoff on it
  */
-function get_usergroups_for_approval_point(int $approval_id) : array
+function get_usergroups_for_approval_point(?int $approval_id) : array
 {
     if ($approval_id === null) {
-        warn_exit(do_lang_tempcode('_MISSING_RESOURCE', 'null approval'));
+        warn_exit(do_lang_tempcode('INTERNAL_ERROR', escape_html('TODO')));
     }
     $groups = $GLOBALS['SITE_DB']->query_select('workflow_permissions', ['usergroup'], ['workflow_approval_point_id' => $approval_id]);
     $raw_names = [];

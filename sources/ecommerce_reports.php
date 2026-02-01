@@ -231,7 +231,7 @@ function build_order_details(object $title, int $id, object $text, bool $show_or
     // Collecting order details
     $order_rows = $GLOBALS['SITE_DB']->query_select('shopping_orders', ['*'], ['id' => $id], '', 1);
     if (!array_key_exists(0, $order_rows)) {
-        warn_exit(do_lang_tempcode('MISSING_RESOURCE'));
+        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'shopping_order', escape_html(strval($id))));
     }
     $order_row = $order_rows[0];
 

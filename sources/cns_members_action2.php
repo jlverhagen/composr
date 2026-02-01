@@ -1532,7 +1532,7 @@ function cns_delete_member(int $member_id, ?int $member_id_deleting = null)
 {
     $info = $GLOBALS['FORUM_DB']->query_select('f_members', ['id'], ['id' => $member_id], '', 1);
     if (!array_key_exists(0, $info)) {
-        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'member'));
+        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'member', escape_html(strval($member_id))));
     }
 
     if ($member_id_deleting === null) {
@@ -1806,7 +1806,7 @@ function cns_delete_custom_field(int $id)
 {
     $info = $GLOBALS['FORUM_DB']->query_select('f_custom_fields', ['cf_name', 'cf_description'], ['id' => $id], '', 1);
     if (!array_key_exists(0, $info)) {
-        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'cpf'));
+        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'cpf', escape_html(strval($id))));
     }
     $_name = $info[0]['cf_name'];
     $_description = $info[0]['cf_description'];

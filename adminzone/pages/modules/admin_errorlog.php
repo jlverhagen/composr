@@ -655,7 +655,7 @@ class Module_admin_errorlog
     protected function configure_cron_hook(string $hook, int $enabled) : object
     {
         if (!hook_exists('systems', 'cron', $hook)) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'hook', escape_html('systems/cron/' . $hook)));
         }
 
         // Update cron_progression table

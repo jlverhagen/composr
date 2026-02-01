@@ -647,7 +647,7 @@ class Module_warnings extends Source_standard_crud_module
     {
         $warning = $GLOBALS['FORUM_DB']->query_select('f_warnings', ['w_explanation', 'w_issuing_member', 'w_member_id', 'w_is_warning'], ['id' => intval($id)], '', 1);
         if (!array_key_exists(0, $warning)) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'warning', escape_html($id)));
         }
 
         return $this->get_form_fields(false, $warning[0]['w_explanation'], $warning[0]['w_is_warning'], $warning[0]['w_member_id']);
@@ -908,7 +908,7 @@ class Module_warnings extends Source_standard_crud_module
 
         $rows = $GLOBALS['FORUM_DB']->query_select('f_warnings', ['*'], ['id' => $id], '', 1);
         if (!array_key_exists(0, $rows)) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'warning', escape_html(strval($id))));
         }
 
         $row = $rows[0];
@@ -1041,7 +1041,7 @@ class Module_warnings extends Source_standard_crud_module
         // Grab our punitive action
         $rows = $GLOBALS['FORUM_DB']->query_select('f_warnings_punitive', ['*'], ['id' => $id]);
         if (!array_key_exists(0, $rows)) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'warning_punitive', escape_html(strval($id))));
         }
         $punitive_action = $rows[0];
 
@@ -1054,7 +1054,7 @@ class Module_warnings extends Source_standard_crud_module
         // Get the associated warning
         $rows = $GLOBALS['FORUM_DB']->query_select('f_warnings', ['*'], ['id' => $punitive_action['p_warning_id']]);
         if (!array_key_exists(0, $rows)) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'warning', escape_html(strval($punitive_action['p_warning_id']))));
         }
         $warning = $rows[0];
 

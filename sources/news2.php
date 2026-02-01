@@ -93,7 +93,7 @@ function edit_news_category(int $id, ?string $title, ?string $img, ?string $note
 {
     $rows = $GLOBALS['SITE_DB']->query_select('news_categories', ['nc_title', 'nc_img', 'notes'], ['id' => $id], '', 1);
     if (!array_key_exists(0, $rows)) {
-        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'news_category'));
+        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'news_category', escape_html(strval($id))));
     }
     $myrow = $rows[0];
 
@@ -166,7 +166,7 @@ function delete_news_category(int $id)
 {
     $rows = $GLOBALS['SITE_DB']->query_select('news_categories', ['nc_title', 'nc_img'], ['id' => $id], '', 1);
     if (!array_key_exists(0, $rows)) {
-        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'news_category'));
+        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'news_category', escape_html(strval($id))));
     }
     $myrow = $rows[0];
 
@@ -488,7 +488,7 @@ function edit_news(int $id, string $title, string $news, string $author, int $va
 
     $rows = $GLOBALS['SITE_DB']->query_select('news', ['*'], ['id' => $id], '', 1);
     if (!array_key_exists(0, $rows)) {
-        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'news'));
+        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'news', escape_html(strval($id))));
     }
 
     $_title = $rows[0]['title'];
@@ -659,7 +659,7 @@ function delete_news(int $id)
 {
     $rows = $GLOBALS['SITE_DB']->query_select('news', ['*'], ['id' => $id], '', 1);
     if (!array_key_exists(0, $rows)) {
-        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'news'));
+        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'news', escape_html(strval($id))));
     }
     $title = $rows[0]['title'];
     $news = $rows[0]['news'];
@@ -785,7 +785,7 @@ function _get_wordpress_db_data() : array
     do {
         $users = $db->query_select('users', ['*'], [], '', $max, $start, true);
         if ($users === null) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'user', 'all'));
         }
 
         foreach ($users as $user) {

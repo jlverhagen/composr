@@ -494,7 +494,7 @@ class Module_admin_ecommerce extends Source_standard_crud_module
 
         $m = $db->query_select('f_usergroup_subs', ['*'], ['id' => intval($id)], '', 1);
         if (!array_key_exists(0, $m)) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'usergroup_sub', escape_html($id)));
         }
         $r = $m[0];
 

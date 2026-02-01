@@ -447,7 +447,7 @@ class Module_topics
 
         $post_info = $GLOBALS['FORUM_DB']->query_select('f_posts', ['*'], ['id' => $posts[0]], '', 1);
         if (!array_key_exists(0, $post_info)) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'post'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'post', escape_html(strval($posts[0]))));
         }
         $topic_id = $post_info[0]['p_topic_id'];
         $forum_id = $post_info[0]['p_cache_forum_id'];
@@ -456,7 +456,7 @@ class Module_topics
 
         $_topic_info = $GLOBALS['FORUM_DB']->query_select('f_topics', ['*'], ['id' => $topic_id], '', 1);
         if (!array_key_exists(0, $_topic_info)) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'topic'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'topic', escape_html(strval($topic_id))));
         }
         $topic_info = $_topic_info[0];
         $this->handle_topic_breadcrumbs($topic_info['t_forum_id'], $topic_id, $topic_info['t_cache_first_title'], do_lang_tempcode('VALIDATE_POSTS'));
@@ -486,11 +486,11 @@ class Module_topics
 
         $topic_id = $GLOBALS['FORUM_DB']->query_select_value_if_there('f_posts', 'p_topic_id', ['id' => $posts[0]]);
         if ($topic_id === null) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'post'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'post', escape_html(strval($posts[0]))));
         }
         $_topic_info = $GLOBALS['FORUM_DB']->query_select('f_topics', ['*'], ['id' => $topic_id], '', 1);
         if (!array_key_exists(0, $_topic_info)) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'topic'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'topic', escape_html(strval($topic_id))));
         }
         $topic_info = $_topic_info[0];
         $this->handle_topic_breadcrumbs($topic_info['t_forum_id'], $topic_id, $topic_info['t_cache_first_title'], do_lang_tempcode('DELETE_POSTS'));
@@ -520,7 +520,7 @@ class Module_topics
 
         $topic_id = $GLOBALS['FORUM_DB']->query_select_value_if_there('f_posts', 'p_topic_id', ['id' => $posts[0]]);
         if ($topic_id === null) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'post'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'post', escape_html(strval($posts[0]))));
         }
         require_code('cns_posts_action');
         require_code('cns_posts_action2');
@@ -551,11 +551,11 @@ class Module_topics
 
         $topic_id = $GLOBALS['FORUM_DB']->query_select_value_if_there('f_posts', 'p_topic_id', ['id' => $posts[0]]);
         if ($topic_id === null) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'post'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'post', escape_html(strval($posts[0]))));
         }
         $_topic_info = $GLOBALS['FORUM_DB']->query_select('f_topics', ['*'], ['id' => $topic_id], '', 1);
         if (!array_key_exists(0, $_topic_info)) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'topic'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'topic', escape_html(strval($topic_id))));
         }
         $topic_info = $_topic_info[0];
         $this->handle_topic_breadcrumbs($topic_info['t_forum_id'], $topic_id, $topic_info['t_cache_first_title'], do_lang_tempcode('MOVE_POSTS'));
@@ -610,11 +610,11 @@ class Module_topics
 
         $topic_id = $GLOBALS['FORUM_DB']->query_select_value_if_there('f_posts', 'p_topic_id', ['id' => $posts[0]]);
         if ($topic_id === null) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'post'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'post', escape_html(strval($posts[0]))));
         }
         $_topic_info = $GLOBALS['FORUM_DB']->query_select('f_topics', ['*'], ['id' => $topic_id], '', 1);
         if (!array_key_exists(0, $_topic_info)) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'topic'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'topic', escape_html(strval($topic_id))));
         }
         $topic_info = $_topic_info[0];
         $this->handle_topic_breadcrumbs($topic_info['t_forum_id'], $topic_id, $topic_info['t_cache_first_title'], do_lang_tempcode('MOVE_POSTS'));
@@ -671,17 +671,18 @@ class Module_topics
                 }
             } else {
                 if (!is_numeric($_to_topic_id)) {
-                    $_to_topic_id = $GLOBALS['SITE_DB']->query_select_value_if_there('url_id_monikers', 'm_resource_id', ['m_resource_page' => 'topicview', 'm_resource_type' => 'browse', 'm_moniker' => urldecode($_to_topic_id)]);
-                    if ($_to_topic_id === null) {
-                        warn_exit(do_lang_tempcode('MISSING_RESOURCE'));
+                    $__to_topic_id = $GLOBALS['SITE_DB']->query_select_value_if_there('url_id_monikers', 'm_resource_id', ['m_resource_page' => 'topicview', 'm_resource_type' => 'browse', 'm_moniker' => urldecode($_to_topic_id)]);
+                    if ($__to_topic_id === null) {
+                        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'moniker', escape_html('topicview:browse:' . urldecode($_to_topic_id))));
                     }
+                    $_to_topic_id = $__to_topic_id;
                 }
                 $to_topic_id = intval($_to_topic_id);
             }
         }
         $from_topic_id = $GLOBALS['FORUM_DB']->query_select_value_if_there('f_posts', 'p_topic_id', ['id' => $posts[0]]);
         if ($from_topic_id === null) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'post'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'post', escape_html(strval($posts[0]))));
         }
         require_code('cns_posts_action');
         require_code('cns_posts_action2');
@@ -1055,7 +1056,7 @@ class Module_topics
         $title = get_screen_title('PERFORM_MULTI_MODERATION');
         $mm = $GLOBALS['FORUM_DB']->query_select('f_multi_moderations', ['*'], ['id' => $mm_id], '', 1);
         if (!array_key_exists(0, $mm)) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'multi_moderation'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'multi_moderation', escape_html(strval($mm_id))));
         }
         $_mm = $mm[0];
         $post_text = $_mm['mm_post_text'];
@@ -1164,7 +1165,7 @@ class Module_topics
 
         $id = $GLOBALS['FORUM_DB']->query_select_value_if_there('f_topics', 'id', ['id' => $topics[0]]);
         if ($id === null) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'forum'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'forum', escape_html(strval($topics[0]))));
         }
 
         $forum_id = $GLOBALS['FORUM_DB']->query_select_value('f_topics', 't_forum_id', ['id' => $topics[0]]);
@@ -1213,7 +1214,7 @@ class Module_topics
 
         $to = post_param_integer('to');
         $from = $GLOBALS['FORUM_DB']->query_select_value_if_there('f_topics', 't_forum_id', ['id' => $topics[0]]);
-        //if ($from === null) warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'topic'));  May be from private topics, so can't do this check
+        //if ($from === null) warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'topic', escape_html(strval($topics[0]))));  May be from private topics, so can't do this check
         require_code('cns_topics_action');
         require_code('cns_topics_action2');
         cns_move_topics($from, $to, $topics);
@@ -1235,7 +1236,7 @@ class Module_topics
         $topic_id = $topics[0];
         $_topic_info = $GLOBALS['FORUM_DB']->query_select('f_topics', ['*'], ['id' => $topic_id], '', 1);
         if (!array_key_exists(0, $_topic_info)) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'topic'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'topic', escape_html(strval($topic_id))));
         }
         $topic_info = $_topic_info[0];
         $this->handle_topic_breadcrumbs($topic_info['t_forum_id'], $topic_id, $topic_info['t_cache_first_title'], do_lang_tempcode('DELETE_TOPICS'));
@@ -1292,7 +1293,7 @@ class Module_topics
         $topic_id = $topics[0];
         $_topic_info = $GLOBALS['FORUM_DB']->query_select('f_topics', ['*'], ['id' => $topic_id], '', 1);
         if (!array_key_exists(0, $_topic_info)) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'topic'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'topic', escape_html(strval($topic_id))));
         }
         $topic_info = $_topic_info[0];
         //$this->handle_topic_breadcrumbs($topic_info['t_forum_id'], $topic_id, $topic_info['t_cache_first_title'], do_lang_tempcode('DELETE_TOPICS_AND_POSTS'));
@@ -1468,13 +1469,14 @@ class Module_topics
         $member_id = get_param_integer('whisper_to_member');
         $username = $GLOBALS['FORUM_DRIVER']->get_username($member_id);
 
-        $topic_id = $GLOBALS['FORUM_DB']->query_select_value_if_there('f_posts', 'p_topic_id', ['id' => get_param_integer('quote')]);
+        $quote = get_param_integer('quote');
+        $topic_id = $GLOBALS['FORUM_DB']->query_select_value_if_there('f_posts', 'p_topic_id', ['id' => $quote]);
         if ($topic_id === null) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'post'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'post', escape_html(strval($quote))));
         }
         $_topic_info = $GLOBALS['FORUM_DB']->query_select('f_topics', ['*'], ['id' => $topic_id], '', 1);
         if (!array_key_exists(0, $_topic_info)) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'topic'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'topic', escape_html(strval($topic_id))));
         }
         $topic_info = $_topic_info[0];
         $this->handle_topic_breadcrumbs($topic_info['t_forum_id'], $topic_id, $topic_info['t_cache_first_title'], do_lang_tempcode('WHISPER'));
@@ -1551,7 +1553,7 @@ class Module_topics
         foreach ($quotes as $quote) {
             $_postdetails = $GLOBALS['FORUM_DB']->query_select('f_posts', ['p_cache_forum_id', 'p_post', 'p_poster_name_if_guest', 'p_topic_id', 'p_whisper_to_member', 'p_posting_member', 'p_validated', 'p_ip_address'], ['id' => $quote], '', 1);
             if (!array_key_exists(0, $_postdetails)) {
-                warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'post'));
+                warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'post', escape_html(strval($quote))));
             }
             if ($_postdetails[0]['p_cache_forum_id'] !== null) {
                 if ((is_guest()) && ($_postdetails[0]['p_whisper_to_member'] !== null)) {
@@ -1566,7 +1568,7 @@ class Module_topics
 
             $_topic = $GLOBALS['FORUM_DB']->query_select('f_topics', ['t_pt_to_member', 't_pt_from_member', 't_cache_first_title'], ['id' => $_postdetails[0]['p_topic_id']], '', 1);
             if (!array_key_exists(0, $_topic)) {
-                warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'topic'));
+                warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'topic', escape_html(strval($_postdetails[0]['p_topic_id']))));
             }
 
             if (!cns_may_access_topic($_postdetails[0]['p_topic_id'])) {
@@ -1720,7 +1722,7 @@ class Module_topics
             $hidden_fields->attach(form_input_hidden('forum_id', strval($forum_id)));
             $_threaded = $GLOBALS['FORUM_DB']->query_select_value_if_there('f_forums', 'f_is_threaded', ['id' => $forum_id]);
             if ($_threaded === null) {
-                warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'forum'));
+                warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'forum', escape_html(strval($forum_id))));
             }
             $threaded = ($_threaded === 1);
         }
@@ -1879,7 +1881,7 @@ class Module_topics
         if (!$private_topic) {
             $forum_name = $GLOBALS['FORUM_DB']->query_select_value_if_there('f_forums', 'f_name', ['id' => $forum_id]);
             if ($forum_name === null) {
-                warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'forum'));
+                warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'forum', escape_html(strval($forum_id))));
             }
         }
         if ($private_topic) {
@@ -2006,7 +2008,7 @@ class Module_topics
 
         $_topic_info = $GLOBALS['FORUM_DB']->query_select('f_topics', ['*'], ['id' => $topic_id], '', 1);
         if (!array_key_exists(0, $_topic_info)) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'topic'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'topic', escape_html(strval($topic_id))));
         }
         $topic_info = $_topic_info[0];
         $forum_id = $topic_info['t_forum_id'];
@@ -2210,7 +2212,7 @@ class Module_topics
         } else {
             $poster_name_if_guest_parent = $GLOBALS['FORUM_DB']->query_select_value_if_there('f_posts', 'p_poster_name_if_guest', ['id' => $parent_id]);
             if ($poster_name_if_guest_parent === null) {
-                warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'post'));
+                warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'post', escape_html(strval($parent_id))));
             }
 
             $title = get_screen_title('_ADD_POST_UNDER', true, [escape_html($topic_title), escape_html($poster_name_if_guest_parent)]);
@@ -2459,7 +2461,7 @@ class Module_topics
 
             $_topic_info = $GLOBALS['FORUM_DB']->query_select('f_topics', ['t_cache_first_title', 't_forum_id', 't_is_open', 't_description'], ['id' => $topic_id], '', 1);
             if (!array_key_exists(0, $_topic_info)) {
-                warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'topic'));
+                warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'topic', escape_html(strval($topic_id))));
             }
             $topic_info = $_topic_info[0];
             $forum_id = $topic_info['t_forum_id'];
@@ -2700,7 +2702,7 @@ class Module_topics
 
         $id = $GLOBALS['FORUM_DB']->query_select_value_if_there('f_topics', 'id', ['id' => $topic_id]);
         if ($id === null) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'topic'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'topic', escape_html(strval($topic_id))));
         }
 
         $forum_id = $GLOBALS['FORUM_DB']->query_select_value_if_there('f_topics', 't_forum_id', ['id' => $topic_id]);
@@ -2729,7 +2731,7 @@ class Module_topics
 
         $id = $GLOBALS['FORUM_DB']->query_select_value_if_there('f_topics', 'id', ['id' => $topic_id]);
         if ($id === null) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'topic'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'topic', escape_html(strval($topic_id))));
         }
 
         $forum_id = $GLOBALS['FORUM_DB']->query_select_value('f_topics', 't_forum_id', ['id' => $topic_id]);
@@ -2752,11 +2754,11 @@ class Module_topics
         $post_id = get_param_integer('id');
         $topic_id = $GLOBALS['FORUM_DB']->query_select_value_if_there('f_posts', 'p_topic_id', ['id' => $post_id]);
         if ($topic_id === null) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'post'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'post', escape_html(strval($post_id))));
         }
         $_topic_info = $GLOBALS['FORUM_DB']->query_select('f_topics', ['*'], ['id' => $topic_id], '', 1);
         if (!array_key_exists(0, $_topic_info)) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'topic'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'topic', escape_html(strval($topic_id))));
         }
         $topic_info = $_topic_info[0];
 
@@ -2775,7 +2777,7 @@ class Module_topics
             $title = get_screen_title('DELETE_POST');
             $post_rows = $GLOBALS['FORUM_DB']->query_select('f_posts', ['p_ip_address', 'p_time'], ['id' => $post_id]);
             if (!array_key_exists(0, $post_rows)) {
-                warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'post'));
+                warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'post', escape_html(strval($post_id))));
             }
             $ip = $post_rows[0]['p_ip_address'];
             $time = $post_rows[0]['p_time'];
@@ -2843,7 +2845,7 @@ class Module_topics
         if ((has_privilege(get_member(), 'mass_delete_from_ip')) && (post_param_integer('post_all', 0) == 1)) {
             $post_rows = $GLOBALS['FORUM_DB']->query_select('f_posts', ['p_ip_address', 'p_time', 'p_topic_id'], ['id' => $post_id]);
             if (!array_key_exists(0, $post_rows)) {
-                warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'post'));
+                warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'post', escape_html(strval($post_id))));
             }
             $ip = $post_rows[0]['p_ip_address'];
             $time = $post_rows[0]['p_time'];
@@ -2900,7 +2902,7 @@ class Module_topics
 
         $topic_id = $GLOBALS['FORUM_DB']->query_select_value_if_there('f_posts', 'p_topic_id', ['id' => $post_id]);
         if ($topic_id === null) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'post'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'post', escape_html(strval($post_id))));
         }
         $_topic_info = $GLOBALS['FORUM_DB']->query_select('f_topics', ['t_cache_first_title', 't_cache_first_post_id', 't_forum_id'], ['id' => $topic_id], '', 1);
         $current_title = $_topic_info[0]['t_cache_first_title'];
@@ -2942,7 +2944,7 @@ class Module_topics
         $topic_id = get_param_integer('id'); // Yes, that's right -- we need to find the pollID from this, and will redirect back to given topic
         $_topic_info = $GLOBALS['FORUM_DB']->query_select('f_topics', ['*'], ['id' => $topic_id], '', 1);
         if (!array_key_exists(0, $_topic_info)) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'topic'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'topic', escape_html(strval($topic_id))));
         }
         $topic_info = $_topic_info[0];
         $poll_id = $topic_info['t_poll_id'];
@@ -3111,7 +3113,7 @@ class Module_topics
             } elseif ($topic_id !== null) { // If a topic ID was provided, add votingPeriodHours to t_cache_first_time (in case we are editing a poll)
                 $_topic_info = $GLOBALS['FORUM_DB']->query_select('f_topics', ['*'], ['id' => $topic_id], '', 1);
                 if (!array_key_exists(0, $_topic_info)) {
-                    warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'topic'));
+                    warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'topic', escape_html(strval($topic_id))));
                 }
                 $topic_info = $_topic_info[0];
 
@@ -3214,7 +3216,7 @@ class Module_topics
         if (!$adding_new_topic) {
             $_topic_info = $GLOBALS['FORUM_DB']->query_select('f_topics', ['*'], ['id' => $topic_id], '', 1);
             if (!array_key_exists(0, $_topic_info)) {
-                warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'topic'));
+                warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'topic', escape_html(strval($topic_id))));
             }
             $topic_info = $_topic_info[0];
             $this->handle_topic_breadcrumbs($topic_info['t_forum_id'], $topic_id, $topic_info['t_cache_first_title'], do_lang_tempcode('ADD_TOPIC_POLL'));
@@ -3268,7 +3270,7 @@ class Module_topics
 
             $_poll_row = $GLOBALS['FORUM_DB']->query_select('f_topics t LEFT JOIN ' . $GLOBALS['FORUM_DB']->get_table_prefix() . 'f_polls p ON t.t_poll_id=p.id', ['t_forum_id', 'p.*'], ['p.id' => $existing], '', 1);
             if (!array_key_exists(0, $_poll_row)) {
-                warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'topic'));
+                warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'topic_poll', escape_html(strval($existing))));
             }
             $row = $_poll_row[0];
 
@@ -3453,7 +3455,7 @@ class Module_topics
 
         $post_details = $GLOBALS['FORUM_DB']->query_select('f_posts', ['*'], ['id' => $post_id], '', 1);
         if (!array_key_exists(0, $post_details)) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'post'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'post', escape_html(strval($post_id))));
         }
 
         if (!has_privilege(get_member(), 'exceed_post_edit_time_limit')) {
@@ -3466,7 +3468,7 @@ class Module_topics
 
         $_topic_info = $GLOBALS['FORUM_DB']->query_select('f_topics', ['*'], ['id' => $post_details[0]['p_topic_id']], '', 1);
         if (!array_key_exists(0, $_topic_info)) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'topic'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'topic', escape_html(strval($post_details[0]['p_topic_id']))));
         }
         $topic_info = $_topic_info[0];
 
@@ -3636,7 +3638,7 @@ class Module_topics
 
         $post_details = $GLOBALS['FORUM_DB']->query_select('f_posts', ['*'], ['id' => $post_id], '', 1);
         if (!array_key_exists(0, $post_details)) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'post'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'post', escape_html(strval($post_id))));
         }
         $forum_id = $post_details[0]['p_cache_forum_id'];
 
@@ -3737,7 +3739,7 @@ class Module_topics
 
         $_topic_info = $GLOBALS['FORUM_DB']->query_select('f_topics', ['*'], ['id' => $topic_id], '', 1);
         if (!array_key_exists(0, $_topic_info)) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'topic'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'topic', escape_html(strval($topic_id))));
         }
         $topic_info = $_topic_info[0];
         $forum_id = $topic_info['t_forum_id'];
@@ -3888,7 +3890,7 @@ class Module_topics
 
         $_topic_info = $GLOBALS['FORUM_DB']->query_select('f_topics', ['*'], ['id' => $topic_id], '', 1);
         if (!array_key_exists(0, $_topic_info)) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'topic'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'topic', escape_html(strval($topic_id))));
         }
         $topic_info = $_topic_info[0];
         $this->handle_topic_breadcrumbs($topic_info['t_forum_id'], $topic_id, $topic_info['t_cache_first_title'], do_lang_tempcode('DELETE_TOPIC'));
@@ -4033,7 +4035,7 @@ class Module_topics
         $topic_id = get_param_integer('id');
         $poll_id = $GLOBALS['FORUM_DB']->query_select_value_if_there('f_topics', 't_poll_id', ['id' => $topic_id]);
         if ($poll_id === null) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'topic'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'topic', escape_html(strval($topic_id))));
         }
 
         $this->check_has_mod_access($topic_id);
@@ -4042,13 +4044,13 @@ class Module_topics
 
         $_poll_info = $GLOBALS['FORUM_DB']->query_select('f_polls', ['*'], ['id' => $poll_id], '', 1);
         if (!array_key_exists(0, $_poll_info)) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'topic_poll', escape_html(strval($poll_id))));
         }
         $poll_info = $_poll_info[0];
 
         $_topic_info = $GLOBALS['FORUM_DB']->query_select('f_topics', ['*'], ['id' => $topic_id], '', 1);
         if (!array_key_exists(0, $_topic_info)) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'topic'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'topic', escape_html(strval($topic_id))));
         }
         $topic_info = $_topic_info[0];
         $this->handle_topic_breadcrumbs($topic_info['t_forum_id'], $topic_id, $topic_info['t_cache_first_title'], do_lang_tempcode('EDIT_TOPIC_POLL'));
@@ -4112,7 +4114,7 @@ class Module_topics
         $poll_id = get_param_integer('id');
         $topic_id = $GLOBALS['FORUM_DB']->query_select_value_if_there('f_topics', 'id', ['t_poll_id' => $poll_id]);
         if ($topic_id === null) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'topic'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'topic_poll', escape_html(strval($poll_id))));
         }
 
         $question = post_param_string('question', STRING_MAGIC_NULL);
@@ -4168,7 +4170,7 @@ class Module_topics
         $topic_id = get_param_integer('id');
         $_topic_info = $GLOBALS['FORUM_DB']->query_select('f_topics', ['*'], ['id' => $topic_id], '', 1);
         if (!array_key_exists(0, $_topic_info)) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'topic'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'topic', escape_html(strval($topic_id))));
         }
         $topic_info = $_topic_info[0];
 
@@ -4192,7 +4194,7 @@ class Module_topics
         $topic_id = get_param_integer('id');
         $poll_id = $GLOBALS['FORUM_DB']->query_select_value_if_there('f_topics', 't_poll_id', ['id' => $topic_id]);
         if ($poll_id === null) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'topic'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'topic', escape_html(strval($topic_id))));
         }
 
         require_code('cns_polls_action');
@@ -4212,7 +4214,7 @@ class Module_topics
         $topic_id = get_param_integer('id');
         $_topic_info = $GLOBALS['FORUM_DB']->query_select('f_topics', ['t_forum_id', 't_cache_first_title'], ['id' => $topic_id], '', 1);
         if (!array_key_exists(0, $_topic_info)) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'topic'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'topic', escape_html(strval($topic_id))));
         }
         $topic_info = $_topic_info[0];
         $forum_id = $topic_info['t_forum_id'];
@@ -4369,7 +4371,7 @@ class Module_topics
 
         $_topic_info = $GLOBALS['FORUM_DB']->query_select('f_topics', ['*'], ['id' => $topic_id], '', 1);
         if (!array_key_exists(0, $_topic_info)) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'topic'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'topic', escape_html(strval($topic_id))));
         }
         $topic_info = $_topic_info[0];
         $topic_title = $topic_info['t_cache_first_title'];
@@ -4378,7 +4380,7 @@ class Module_topics
         $title = get_screen_title('_PERFORM_MULTI_MODERATION', true, [escape_html($topic_title)]);
         $mm = $GLOBALS['FORUM_DB']->query_select('f_multi_moderations', ['*'], ['id' => $mm_id], '', 1);
         if (!array_key_exists(0, $mm)) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'multi_moderation'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'multi_moderation', escape_html(strval($mm_id))));
         }
         $_mm = $mm[0];
         $post_text = $_mm['mm_post_text'];
@@ -4514,7 +4516,7 @@ class Module_topics
 
         $_topic_info = $GLOBALS['FORUM_DB']->query_select('f_topics', ['*'], ['id' => $topic_id], '', 1);
         if (!array_key_exists(0, $_topic_info)) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'topic'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'topic', escape_html(strval($topic_id))));
         }
         $topic_info = $_topic_info[0];
 
@@ -4553,7 +4555,7 @@ class Module_topics
         $topic_id = post_param_integer('id');
         $forum_id = $GLOBALS['FORUM_DB']->query_select_value_if_there('f_topics', 't_forum_id', ['id' => $topic_id]);
         if ($forum_id === null) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'topic'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'topic', escape_html(strval($topic_id))));
         }
 
         if (!cns_may_moderate_forum($forum_id, get_member())) {

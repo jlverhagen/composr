@@ -393,7 +393,7 @@ class Module_admin_aggregate_types extends Source_standard_crud_module
 
         $m = $GLOBALS['SITE_DB']->query_select('aggregate_type_instances', ['*'], ['id' => $id], '', 1);
         if (!array_key_exists(0, $m)) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'aggregate_type', escape_html(strval($id))));
         }
         $r = $m[0];
 

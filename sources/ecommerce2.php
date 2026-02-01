@@ -122,7 +122,7 @@ function edit_usergroup_subscription(int $id, string $title, string $description
 
     $rows = $db->query_select('f_usergroup_subs', ['*'], ['id' => $id], '', 1);
     if (!array_key_exists(0, $rows)) {
-        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'usergroup_subscription'));
+        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'usergroup_subscription', escape_html(strval($id))));
     }
     $myrow = $rows[0];
 
@@ -234,7 +234,7 @@ function delete_usergroup_subscription(int $id, string $uhoh_mail = '')
 
     $rows = $db->query_select('f_usergroup_subs', ['*'], ['id' => $id], '', 1);
     if (!array_key_exists(0, $rows)) {
-        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'usergroup_subscription'));
+        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'usergroup_subscription', escape_html(strval($id))));
     }
     $myrow = $rows[0];
     $new_group = $myrow['s_group_id'];

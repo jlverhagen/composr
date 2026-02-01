@@ -388,7 +388,7 @@ class Hook_payment_gateway_authorize
             if ($silent_fail) {
                 return null;
             }
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'ecom_trans_expecting', escape_html(strval($trans_expecting_id))));
         }
         $transaction_row = $transaction_rows[0];
 

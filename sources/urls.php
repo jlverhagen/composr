@@ -1083,7 +1083,7 @@ function page_link_decode(string $page_link) : array
 
         if (($GLOBALS['SEMI_DEV_MODE']) && ($zone_missing)) {
             require_code('site');
-            attach_message(do_lang_tempcode('_MISSING_RESOURCE', escape_html($zone), 'zone'), 'warn');
+            attach_message(do_lang_tempcode('MISSING_RESOURCE', 'zone', escape_html($zone), 'zone'), 'warn');
         }
     }
     unset($bits[0]);

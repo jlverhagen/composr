@@ -358,7 +358,7 @@ class Hook_ecommerce_catalogue_items
 
         $catalogues = $GLOBALS['SITE_DB']->query_select('catalogues', ['*'], ['c_name' => $catalogue_name], '', 1);
         if (!array_key_exists(0, $catalogues)) {
-            warn_exit(do_lang_tempcode('_MISSING_RESOURCE', escape_html($catalogue_name)));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'catalogue', escape_html($catalogue_name)));
         }
 
         $catalogue = $catalogues[0];
@@ -366,7 +366,7 @@ class Hook_ecommerce_catalogue_items
         $entries = $GLOBALS['SITE_DB']->query_select('catalogue_entries', ['*'], ['id' => intval($type_code)], '', 1);
 
         if (!array_key_exists(0, $entries)) {
-            return warn_screen(get_screen_title('CATALOGUES'), do_lang_tempcode('MISSING_RESOURCE', 'catalogue_entry'));
+            return warn_screen(get_screen_title('CATALOGUES'), do_lang_tempcode('MISSING_RESOURCE', 'catalogue_entry', escape_html(strval($type_code))));
         }
 
         $entry = $entries[0];

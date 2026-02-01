@@ -58,20 +58,18 @@ class Hook_trusted_sites_ecommerce
         if ((get_option('payment_gateway') == 'paypal') && (get_option('payment_gateway_username') != '')) {
             if (get_option('csp_on_forms') == '1') {
                 $sites[] = 'paypal.com';
-                $sites[] = 'sandbox.paypal.com';
-                $sites[] = 'ipnpb.paypal.com';
-                $sites[] = 'ipnpb.sandbox.paypal.com';
+                $sites[] = '*.paypal.com';
             }
         }
 
         if ((get_option('payment_gateway') == 'authorize') && (get_option('payment_gateway_username') != '')) {
             $sites[] = 'authorize.net';
-            $sites[] = 'test.authorize.net';
+            $sites[] = '*.authorize.net';
         }
 
         if ((get_option('payment_gateway') == 'ccbill') && (get_option('payment_gateway_username') != '')) {
             if (get_option('csp_on_forms') == '1') {
-                $sites[] = 'api.ccbill.com';
+                $sites[] = '*.ccbill.com';
             }
         }
     }

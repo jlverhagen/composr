@@ -579,7 +579,7 @@ class Module_admin_cns_multi_moderations extends Source_standard_crud_module
     {
         $m = $GLOBALS['FORUM_DB']->query_select('f_multi_moderations', ['*'], ['id' => intval($id)], '', 1);
         if (!array_key_exists(0, $m)) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'multi_moderation'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'multi_moderation', escape_html($id)));
         }
         $r = $m[0];
 

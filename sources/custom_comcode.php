@@ -121,7 +121,7 @@ function edit_custom_comcode_tag(string $old_tag, string $tag, string $title, st
 {
     $old = $GLOBALS['SITE_DB']->query_select('custom_comcode', ['tag_title', 'tag_description'], ['tag_tag' => $old_tag], '', 1);
     if (!array_key_exists(0, $old)) {
-        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'custom_comcode_tag'));
+        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'custom_comcode_tag', escape_html($old_tag)));
     }
     $_title = $old[0]['tag_title'];
     $_description = $old[0]['tag_description'];
@@ -182,7 +182,7 @@ function delete_custom_comcode_tag(string $tag)
 {
     $old = $GLOBALS['SITE_DB']->query_select('custom_comcode', ['tag_title', 'tag_description'], ['tag_tag' => $tag], '', 1);
     if (!array_key_exists(0, $old)) {
-        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'custom_comcode_tag'));
+        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'custom_comcode_tag', escape_html($tag)));
     }
     $_title = $old[0]['tag_title'];
     $_description = $old[0]['tag_description'];

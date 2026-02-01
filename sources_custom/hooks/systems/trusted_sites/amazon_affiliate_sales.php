@@ -49,7 +49,6 @@ class Hook_trusted_sites_amazon_affiliate_sales
             return;
         }
 
-        $sites[] = 'z-na.amazon-adsystem.com';
-        $sites[] = 'aax-us-east.amazon-adsystem.com';
+        $sites[] = '*.amazon-adsystem.com';
     }
 }

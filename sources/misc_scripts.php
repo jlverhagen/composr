@@ -322,7 +322,7 @@ function iframe_script()
     // Check permissions
     $zones = $GLOBALS['SITE_DB']->query_select('zones', ['*'], ['zone_name' => $zone], '', 1);
     if (!array_key_exists(0, $zones)) {
-        warn_exit(do_lang_tempcode('MISSING_RESOURCE'));
+        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'zone', escape_html($zone)));
     }
     if ($zones[0]['zone_require_session'] == 1) {
         set_no_clickjacking_csp();

@@ -52,7 +52,7 @@ function rules_script()
 
         $forum_rows = $GLOBALS['FORUM_DB']->query_select('f_forums', ['*'], ['id' => $id], '', 1);
         if (!array_key_exists(0, $forum_rows)) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'forum', escape_html(strval($id))));
         }
         $forum_row = $forum_rows[0];
 

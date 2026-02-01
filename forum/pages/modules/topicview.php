@@ -566,7 +566,7 @@ class Module_topicview
             $hash = null;
 
             if (($jump_post_id !== null) && (!$jump_post_found)) {
-                attach_message(do_lang_tempcode('_MISSING_RESOURCE', strval($jump_post_id), 'post'), 'warn');
+                attach_message(do_lang_tempcode('MISSING_RESOURCE', 'post', strval($jump_post_id)), 'warn');
             }
         } else { // Threaded
             $posts = $this->posts;

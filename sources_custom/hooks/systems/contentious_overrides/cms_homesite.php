@@ -60,7 +60,7 @@ class Hook_contentious_overrides_cms_homesite
                             \$_id = \$GLOBALS['SITE_DB']->query_select_value_if_there('download_categories', 'id', [\$GLOBALS['SITE_DB']->translate_field_ref('category') => \$id]);
                         }
                         if (\$_id === null) {
-                            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'download_category'));
+                            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'download_category', , escape_html(strval(\$id))));
                         }
                         \$id = strval(\$_id);
                     }"

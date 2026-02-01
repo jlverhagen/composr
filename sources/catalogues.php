@@ -67,7 +67,7 @@ function load_catalogue_row(string $catalogue_name, bool $fail_ok = false) : ?ar
             if ($fail_ok) {
                 return null;
             }
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'catalogue'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'catalogue', escape_html($catalogue_name)));
         }
         $catalogues_cache[$catalogue_name] = $catalogue_rows[0];
     }
@@ -1577,7 +1577,7 @@ function get_catalogue_category_tree(string $catalogue_name, ?int $category_id, 
     if (($category_details === null) && ($category_id !== null)) {
         $_category_details = $GLOBALS['SITE_DB']->query_select('catalogue_categories', ['cc_title'], ['id' => $category_id], '', 1);
         if (!array_key_exists(0, $_category_details)) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'catalogue_category'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'catalogue_category', escape_html(strval($category_id))));
         }
         $category_details = $_category_details[0];
     }
@@ -1589,7 +1589,7 @@ function get_catalogue_category_tree(string $catalogue_name, ?int $category_id, 
     $children = [];
     $is_tree = $GLOBALS['SITE_DB']->query_select_value_if_there('catalogues', 'c_is_tree', ['c_name' => $catalogue_name]);
     if ($is_tree === null) {
-        warn_exit(do_lang_tempcode('_MISSING_RESOURCE', escape_html($catalogue_name), 'catalogue'));
+        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'catalogue', escape_html($catalogue_name)));
     }
     if ($category_id !== null) {
         $children[0]['id'] = $category_id;
@@ -1902,7 +1902,7 @@ function render_catalogue_entry_screen(int $id) : object
 
     $entries = $GLOBALS['SITE_DB']->query_select('catalogue_entries', ['*'], ['id' => $id], '', 1);
     if (!array_key_exists(0, $entries)) {
-        return warn_screen(get_screen_title('CATALOGUES'), do_lang_tempcode('MISSING_RESOURCE', 'catalogue_entry'));
+        return warn_screen(get_screen_title('CATALOGUES'), do_lang_tempcode('MISSING_RESOURCE', 'catalogue_entry', escape_html(strval($id))));
     }
     $entry = $entries[0];
 

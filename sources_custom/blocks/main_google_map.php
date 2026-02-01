@@ -146,7 +146,7 @@ PHP;
         if ($catalogue_name != '') {
             $catalogue_row = load_catalogue_row($catalogue_name, true);
             if ($catalogue_row === null) {
-                return paragraph(do_lang_tempcode('_MISSING_RESOURCE', escape_html($catalogue_name), 'catalogue'), '0zyrq2x4iusrqcm33xmd38v6zl0mdo5q', 'nothing-here');
+                return paragraph(do_lang_tempcode('MISSING_RESOURCE', 'catalogue', escape_html($catalogue_name)), '0zyrq2x4iusrqcm33xmd38v6zl0mdo5q', 'nothing-here');
             }
         }
 

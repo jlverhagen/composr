@@ -369,7 +369,7 @@ class Module_cms_polls extends Source_standard_crud_module
     {
         $rows = $GLOBALS['SITE_DB']->query_select('poll', ['*'], ['id' => intval($id)]);
         if (!array_key_exists(0, $rows)) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'poll'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'poll', escape_html($id)));
         }
         $myrow = $rows[0];
 
@@ -467,7 +467,7 @@ class Module_cms_polls extends Source_standard_crud_module
     {
         $rows = $GLOBALS['SITE_DB']->query_select('poll', ['is_current', 'submitter', 'num_options'], ['id' => intval($id)], '', 1);
         if (!array_key_exists(0, $rows)) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'poll'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'poll', escape_html($id)));
         }
         $is_current = $rows[0]['is_current'];
         $submitter = $rows[0]['submitter'];
@@ -571,7 +571,7 @@ class Module_cms_polls extends Source_standard_crud_module
     {
         $rows = $GLOBALS['SITE_DB']->query_select('poll', ['is_current', 'submitter'], ['id' => intval($id)], '', 1);
         if (!array_key_exists(0, $rows)) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'poll'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'poll', escape_html($id)));
         }
         $is_current = $rows[0]['is_current'];
         $submitter = $rows[0]['submitter'];

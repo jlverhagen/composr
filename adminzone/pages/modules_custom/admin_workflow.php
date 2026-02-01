@@ -311,7 +311,7 @@ class Module_admin_workflow extends Source_standard_crud_module
         if ($id !== null) {
             $workflows = $GLOBALS['SITE_DB']->query_select('workflows', ['*'], ['id' => $id], '', 1);
             if (!array_key_exists(0, $workflows)) {
-                warn_exit(do_lang_tempcode('MISSING_RESOURCE'));
+                warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'workflow', escape_html(strval($id))));
             }
             $workflow = $workflows[0];
 
@@ -726,9 +726,9 @@ class Module_admin_workflow extends Source_standard_crud_module
      */
     public function delete_actualisation(string $id)
     {
-        $workflow_name = $GLOBALS['SITE_DB']->query_select_value_if_there('workflows', 'workflow_name', ['id' => $id]);
+        $workflow_name = $GLOBALS['SITE_DB']->query_select_value_if_there('workflows', 'workflow_name', ['id' => intval($id)]);
         if ($workflow_name === null) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'workflow', escape_html(strval($id))));
         }
 
         delete_workflow(intval($id));

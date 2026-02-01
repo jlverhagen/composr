@@ -687,7 +687,7 @@ class Module_admin_cns_customprofilefields extends Source_standard_crud_module
     {
         $rows = $GLOBALS['FORUM_DB']->query_select('f_custom_fields', ['*'], ['id' => intval($id)]);
         if (!array_key_exists(0, $rows)) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'cpf'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'cpf', escape_html($id)));
         }
         $myrow = $rows[0];
 

@@ -602,7 +602,7 @@ class Module_admin_lookup
 
         $rows = $GLOBALS['SITE_DB']->query_select('stats', ['*'], ['id' => $id]);
         if (!array_key_exists(0, $rows)) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'stats', escape_html(strval($id))));
         }
 
         $row = $rows[0];

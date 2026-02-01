@@ -86,12 +86,12 @@ class Block_main_catalogues_form
         if (@cms_empty_safe($map['param'])) {
             $catalogue_name = $GLOBALS['SITE_DB']->query_select_value_if_there('catalogue_categories', 'c_name', ['id' => db_get_first_id()]);
             if ($catalogue_name === null) {
-                return do_template('RED_ALERT', ['_GUID' => '9acd95ab5376b10fc915f37352660702', 'TEXT' => do_lang_tempcode('MISSING_RESOURCE', 'catalogue')]);
+                return do_template('RED_ALERT', ['_GUID' => '9acd95ab5376b10fc915f37352660702', 'TEXT' => do_lang_tempcode('MISSING_RESOURCE', 'catalogue_category', escape_html(strval(db_get_first_id())))]);
             }
         } else {
             $catalogue_name = $GLOBALS['SITE_DB']->query_select_value_if_there('catalogues', 'c_name', ['c_name' => $map['param']]);
             if ($catalogue_name === null) {
-                return do_template('RED_ALERT', ['_GUID' => 'c5cb67b3671126c856f09e9450b5a78f', 'TEXT' => do_lang_tempcode('MISSING_RESOURCE', 'catalogue')]);
+                return do_template('RED_ALERT', ['_GUID' => 'c5cb67b3671126c856f09e9450b5a78f', 'TEXT' => do_lang_tempcode('MISSING_RESOURCE', 'catalogue', escape_html($map['param']))]);
             }
         }
 

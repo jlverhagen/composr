@@ -217,7 +217,7 @@ function render_topic_to_tapatalk(int $topic_id, bool $return_html, ?int $start,
             1
         );
         if (!isset($_details[0])) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'topic'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'topic', escape_html(strval($topic_id))));
         }
         $details = $_details[0];
     }
@@ -473,7 +473,7 @@ function render_post_to_tapatalk(int $post_id, bool $return_html, ?array $post_r
         $table_prefix = $GLOBALS['FORUM_DB']->get_table_prefix();
         $post_rows = $GLOBALS['FORUM_DB']->query_select('f_posts p JOIN ' . $table_prefix . 'f_topics t ON t.id=p.p_topic_id', ['*', 'p.id AS post_id', 't.id AS topic_id'], ['p.id' => $post_id], '', 1);
         if (!isset($post_rows[0])) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'post'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'post', escape_html(strval($post_id))));
         }
 
         $post_row = $post_rows[0];

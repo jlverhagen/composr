@@ -848,7 +848,7 @@ class Module_catalogues
             // Get category
             $categories = $GLOBALS['SITE_DB']->query_select('catalogue_categories', ['*'], ['id' => $id], '', 1);
             if (!array_key_exists(0, $categories)) {
-                return warn_screen(get_screen_title('CATALOGUES'), do_lang_tempcode('MISSING_RESOURCE', 'catalogue_category'));
+                return warn_screen(get_screen_title('CATALOGUES'), do_lang_tempcode('MISSING_RESOURCE', 'catalogue_category', escape_html(strval($id))));
             }
             $category = $categories[0];
 
@@ -948,7 +948,7 @@ class Module_catalogues
 
             $categories = $GLOBALS['SITE_DB']->query_select('catalogue_categories', ['*'], ['id' => $id], '', 1);
             if (!array_key_exists(0, $categories)) {
-                return warn_screen(get_screen_title('CATALOGUES'), do_lang_tempcode('MISSING_RESOURCE', 'catalogue_category'));
+                return warn_screen(get_screen_title('CATALOGUES'), do_lang_tempcode('MISSING_RESOURCE', 'catalogue_category', escape_html(strval($id))));
             }
             $category = $categories[0];
 

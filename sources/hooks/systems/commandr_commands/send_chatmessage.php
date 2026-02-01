@@ -74,7 +74,7 @@ class Hook_commandr_command_send_chatmessage
         }
 
         if ($chatroom === null) {
-            return ['', '', '', do_lang('MISSING_RESOURCE')];
+            return ['', '', '', do_lang('MISSING_RESOURCE', 'chat', escape_html(strval($parameters[0])))];
         }
 
         chat_post_message($chatroom, $parameters[1], get_option('chat_default_post_font'), get_option('chat_default_post_colour'));

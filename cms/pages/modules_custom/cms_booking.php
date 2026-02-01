@@ -401,7 +401,7 @@ class Module_cms_booking extends Source_standard_crud_module
 
         $rows = $GLOBALS['SITE_DB']->query_select('bookable', ['*'], ['id' => intval($id)], '', 1);
         if (!array_key_exists(0, $rows)) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'bookable', escape_html($_id)));
         }
         $myrow = $rows[0];
 
@@ -598,7 +598,7 @@ class Module_cms_booking_supplements extends Source_standard_crud_module
 
         $rows = $GLOBALS['SITE_DB']->query_select('bookable_supplement', ['*'], ['id' => intval($id)], '', 1);
         if (!array_key_exists(0, $rows)) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'bookable_supplement', escape_html($_id)));
         }
         $myrow = $rows[0];
 
@@ -786,7 +786,7 @@ class Module_cms_booking_blacks extends Source_standard_crud_module
 
         $rows = $GLOBALS['SITE_DB']->query_select('bookable_blacked', ['*'], ['id' => intval($id)], '', 1);
         if (!array_key_exists(0, $rows)) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'bookable_blacked', escape_html($_id)));
         }
         $myrow = $rows[0];
 
@@ -1095,7 +1095,7 @@ class Module_cms_booking_bookings extends Source_standard_crud_module
 
         $_bookable = $GLOBALS['SITE_DB']->query_select('bookable', ['*'], ['id' => $details['bookable_id']], '', 1);
         if (!array_key_exists(0, $_bookable)) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'bookable', escape_html(strval($details['bookable_id']))));
         }
         $bookable = $_bookable[0];
 

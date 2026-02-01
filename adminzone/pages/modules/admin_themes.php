@@ -227,7 +227,7 @@ class Module_admin_themes
                 $url = substr($url, $pos);
                 $id = $GLOBALS['SITE_DB']->query_select_value_if_there('theme_images', 'id', ['url' => $url, 'theme' => $theme]);
                 if ($id === null) {
-                    warn_exit(do_lang_tempcode('MISSING_RESOURCE'));
+                    warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'theme_image', escape_html($theme . ':' . $url)));
                 }
             } else {
                 $id = get_param_string('id');
@@ -763,7 +763,7 @@ class Module_admin_themes
         // Theme date
         $date = $this->_get_theme_date($theme);
         if ($date === null) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'theme', escape_html($theme)));
         }
 
         require_javascript('core_themeing');
@@ -843,7 +843,7 @@ class Module_admin_themes
                 }
 
                 if (!file_exists(get_custom_file_base() . '/themes/' . $theme)) {
-                    warn_exit(do_lang_tempcode('MISSING_RESOURCE'));
+                    warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'PATH', escape_html('themes/' . $theme)));
                 }
 
                 actual_rename_theme($theme, $to);
@@ -1223,7 +1223,7 @@ class Module_admin_themes
             $url = $GLOBALS['SITE_DB']->query_select_value_if_there('theme_images', 'url', ['theme' => $theme, 'lang' => get_site_default_lang(), 'id' => $id]);
         }
         if ($url === null) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'theme_image', escape_html($theme . ':' . $id)));
         }
 
         set_short_title($id);

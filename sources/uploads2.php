@@ -172,7 +172,7 @@ function _reorganise_content_row_upload(array $row, string $content_type, string
     $current_disk_path = get_custom_file_base() . '/' . rawurldecode($current_upload_url);
     if (!is_file($current_disk_path)) {
         if (!$tolerate_errors) {
-            warn_exit(do_lang_tempcode('_MISSING_RESOURCE', escape_html($current_disk_path)));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'PATH', escape_html($current_disk_path)));
         }
 
         $REORGANISE_UPLOADS_ERRORMSGS[] = 'WARN: Missing file for ' . serialize($row);

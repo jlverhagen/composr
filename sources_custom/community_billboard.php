@@ -72,7 +72,7 @@ function edit_community_billboard_message(int $id, string $message, string $note
 {
     $_message = $GLOBALS['SITE_DB']->query_select_value_if_there('community_billboard', 'the_message', ['id' => $id]);
     if ($_message === null) {
-        warn_exit(do_lang_tempcode('MISSING_RESOURCE'));
+        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'community_billboard', escape_html(strval($id))));
     }
 
     log_it('EDIT_COMMUNITY_BILLBOARD', strval($id), $message);
@@ -98,7 +98,7 @@ function delete_community_billboard_message(int $id)
 {
     $message = $GLOBALS['SITE_DB']->query_select_value_if_there('community_billboard', 'the_message', ['id' => $id]);
     if ($message === null) {
-        warn_exit(do_lang_tempcode('MISSING_RESOURCE'));
+        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'community_billboard', escape_html(strval($id))));
     }
 
     $_message = get_translated_text($message);

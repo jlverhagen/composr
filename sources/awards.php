@@ -74,7 +74,7 @@ function give_award(int $award_id, string $content_id, ?int $time = null)
 
     $awards = $GLOBALS['SITE_DB']->query_select('award_types', ['*'], ['id' => $award_id], '', 1);
     if (!array_key_exists(0, $awards)) {
-        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'award_type'));
+        warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'award_type', escape_html(strval($award_id))));
     }
     $award_title = get_translated_text($awards[0]['a_title']);
     log_it('GIVE_AWARD', strval($award_id), $award_title);
@@ -90,7 +90,7 @@ function give_award(int $award_id, string $content_id, ?int $time = null)
         list($content_title, $member_id, , $content) = content_get_details($awards[0]['a_content_type'], $content_id);
 
         if ($content === null) {
-            warn_exit(do_lang_tempcode('_MISSING_RESOURCE', escape_html($awards[0]['a_content_type'] . ':' . $content_id), 'award_type'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', escape_html($awards[0]['a_content_type']), escape_html($content_id)));
         }
 
         // Check permissions for this

@@ -151,7 +151,7 @@ class Module_authors
             if (is_guest()) {
                 attach_to_screen_header('<meta name="robots" content="noindex" />'); // XHTMLXHTML
 
-                warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'author'));
+                warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'author', escape_html($author)));
             }
 
             $author = $GLOBALS['FORUM_DRIVER']->get_username(get_member());

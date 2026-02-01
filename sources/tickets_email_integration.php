@@ -292,7 +292,7 @@ class Source_tickets_email_integration extends Source_email_integration
                 // Check that a reply was actually created
                 $details = get_ticket_meta_details($existing_ticket_id);
                 if (empty($details)) {
-                    warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'ticket'), false, true);
+                    warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'ticket', escape_html(strval($existing_ticket_id))), false, true);
                 }
                 list($__title) = $details;
 

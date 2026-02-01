@@ -173,7 +173,7 @@ class Hook_cns_warnings_points
 
         $row = $GLOBALS['SITE_DB']->query_select('points_ledger', ['id', 'sending_member'], ['t_type' => 'warning', 't_subtype' => 'add', 't_type_id' => strval($id)]);
         if (!array_key_exists(0, $row)) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE'));
+            warn_exit(do_lang_tempcode('INTERNAL_ERROR', escape_html('TODO')));
         }
         $ledger = $row[0];
 

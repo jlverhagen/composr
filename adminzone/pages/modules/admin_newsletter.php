@@ -907,7 +907,7 @@ class Module_admin_newsletter extends Source_standard_crud_module
                 $periodic_id = intval(preg_replace('#^[^\d]+#', '', $periodic_action_raw));
                 $_defaults = $GLOBALS['SITE_DB']->query_select('newsletter_periodic', ['*'], ['id' => $periodic_id], '', 1);
                 if (!array_key_exists(0, $_defaults)) {
-                    warn_exit(do_lang_tempcode('MISSING_RESOURCE'));
+                    warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'newsletter_periodic', escape_html(strval($periodic_id))));
                 }
                 $defaults = $_defaults[0];
                 break;
@@ -970,7 +970,7 @@ class Module_admin_newsletter extends Source_standard_crud_module
                 $rows = $GLOBALS['SITE_DB']->query_select('news', ['*'], ['id' => $from_news], '', 1);
                 if (!array_key_exists(0, $rows)) {
                     require_lang('news');
-                    warn_exit(do_lang_tempcode('MISSING_RESOURCE'));
+                    warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'news', escape_html(strval($from_news))));
                 }
                 $myrow = $rows[0];
 
@@ -1540,7 +1540,7 @@ class Module_admin_newsletter extends Source_standard_crud_module
 
         $rows = $GLOBALS['SITE_DB']->query_select('newsletter_archive', ['*'], ['id' => $id], '', 1);
         if (!isset($rows[0])) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'newsletter_archive', escape_html(strval($id))));
         }
 
         $fields = [];
@@ -1703,7 +1703,7 @@ class Module_admin_newsletter extends Source_standard_crud_module
     {
         $m = $GLOBALS['SITE_DB']->query_select('newsletters', ['*'], ['id' => intval($id)], '', 1);
         if (!array_key_exists(0, $m)) {
-            warn_exit(do_lang_tempcode('MISSING_RESOURCE'));
+            warn_exit(do_lang_tempcode('MISSING_RESOURCE', 'newsletter', escape_html($id)));
         }
         $r = $m[0];
 
