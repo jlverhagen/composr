@@ -147,6 +147,7 @@ class Hook_addon_registry_core_configuration
             'adminzone/pages/modules/admin_oauth.php',
             'lang/EN/config.ini',
             'lang/EN/oauth.ini',
+            'sources/hooks/blocks/main_staff_checklist/configuration.php',
             'sources/hooks/systems/addon_registry/core_configuration.php',
             'sources/hooks/systems/config/.htaccess',
             'sources/hooks/systems/config/allow_audio_videos.php',

@@ -690,6 +690,7 @@ class Hook_addon_registry_core
             'data/installed.php',
             'data/keys/.htaccess',
             'data/keys/index.html',
+            'data/mail_check.php',
             'data/maintenance_status.csv',
             'data/modules/index.html',
             'data/page_link_redirect.php',

@@ -140,6 +140,7 @@ class Hook_addon_registry_ezoic
     {
         return [
             'requires' => [
+                'System scheduler',
             ],
             'recommends' => [
             ],
@@ -165,6 +166,12 @@ class Hook_addon_registry_ezoic
     public function get_file_list() : array
     {
         return [
+            'ads.txt',
+            'lang_custom/EN/ezoic.ini',
+            'sources_custom/hooks/systems/addon_registry/ezoic.php',
+            'sources_custom/hooks/systems/cron/ezoic.php',
+            'sources_custom/hooks/systems/startup/ezoic.php',
+            'sources_custom/hooks/systems/trusted_sites/ezoic.php',
         ];
     }
 }
