@@ -45,8 +45,8 @@ class Hx_trusted_sites_google_analytics extends Hook_trusted_sites_google_analyt
         }
 
         if ((get_option('ga_property_view_id') != '') && (get_option('google_apis_client_id') != '') && (get_option('google_apis_client_secret') != '')) {
-            $sites[] = 'apis.google.com';
-            $sites[] = 'stats.g.doubleclick.net';
+            $sites[] = '*.google.com';
+            $sites[] = '*.g.doubleclick.net';
             $sites[] = 'google-analytics.com';
         }
     }

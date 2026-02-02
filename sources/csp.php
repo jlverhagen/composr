@@ -222,24 +222,28 @@ function load_csp(?array $options = null, ?int $enable_more_open_html_for = null
 
     // Now build the CSP header clauses for sources...
 
-    $clauses = [];
+    $directives = [];
 
     $master_sources_list = _csp_extract_sources_list(2);
-    $descendants_sources_list = _csp_extract_sources_list(2, $csp_allowed_iframe_descendants);
-    $ancestors_sources_list = _csp_extract_sources_list(2, $csp_allowed_iframe_ancestors);
+
+    $_descendants_sources_list = _csp_extract_sources_list(2, $csp_allowed_iframe_descendants);
+    $descendants_sources_list = ($_descendants_sources_list === null) ? null : $_descendants_sources_list;
+
+    $_ancestors_sources_list = _csp_extract_sources_list(2, $csp_allowed_iframe_ancestors);
+    $ancestors_sources_list = ($_ancestors_sources_list === null) ? null : $_ancestors_sources_list;
 
     // default-src
     $_sources_list = $master_sources_list;
     $_sources_list[] = 'data:';
     $_sources_list[] = 'blob:';
-    $clauses[] = 'default-src ' . implode(' ', array_unique($_sources_list));
+    $directives['default-src'] = $_sources_list;
 
     // style-src (special rules)
     $_sources_list = $master_sources_list;
     $_sources_list[] = "*"; // Allow external stylesheets
     $_sources_list[] = "'unsafe-inline'"; // It's not feasible for us to remove all inline CSS
     //$_sources_list[] = "'nonce-{$CSP_NONCE}'"; Incompatible with unsafe-inline
-    $clauses[] = 'style-src ' . implode(' ', array_unique($_sources_list));
+    $directives['style-src'] = $_sources_list;
 
     // script-src (special rules)
     $_sources_list = $csp_allow_dyn_js ? $master_sources_list : [];
@@ -254,108 +258,95 @@ function load_csp(?array $options = null, ?int $enable_more_open_html_for = null
     if (!$csp_allow_dyn_js) {
         $_sources_list[] = "'strict-dynamic'"; // Actually this is an option not a true source
     }
-    $clauses[] = 'script-src ' . implode(' ', array_unique($_sources_list));
+    $directives['script-src'] = $_sources_list;
 
     // frame-src (special rules)
-    $_sources_list = $descendants_sources_list;
-    if ($_sources_list === null) {
-        $_sources_list = [];
-        $_sources_list[] = '*';
-    }
+    $_sources_list = ($descendants_sources_list === null) ? ['*'] : $descendants_sources_list;
     $_sources_list[] = "'nonce-{$CSP_NONCE}'"; // In case W3C start supporting it for iframe elements
-    $clauses[] = 'frame-src ' . implode(' ', array_unique($_sources_list));
+    $directives['frame-src'] = $_sources_list;
 
     // worker-src (only activated when explicitly defined)
     if ($csp_allow_workers) {
         $_sources_list = $master_sources_list;
         $_sources_list[] = 'data:';
         $_sources_list[] = 'blob:';
-        $clauses[] = 'worker-src ' . implode(' ', array_unique($_sources_list));
+        $directives['worker-src'] = $_sources_list;
     }
 
-    /* Same as default-src
-    // connect-src
-    $_sources_list = $master_sources_list;
-    $clauses[] = 'connect-src ' . implode(' ', $_sources_list);
-    */
-
     // font-src (unlimited with data/blob)
-    $_sources_list = [];
-    $_sources_list[] = '*';
-    $_sources_list[] = 'data:';
-    $_sources_list[] = 'blob:';
-    $clauses[] = 'font-src ' . implode(' ', array_unique($_sources_list));
+    $directives['font-src'] = ['*', 'data:', 'blob:'];
 
     // object-src (unlimited or none)
-    $_sources_list = [];
-    $_sources_list[] = $csp_allow_plugins ? '*' : "'none'";
-    $clauses[] = 'object-src ' . implode(' ', array_unique($_sources_list));
+    $directives['object-src'] = [$csp_allow_plugins ? '*' : "'none'"];
 
     // img-src (unlimited with data/blob)
-    $_sources_list = [];
-    $_sources_list[] = '*';
-    $_sources_list[] = 'data:';
-    $_sources_list[] = 'blob:';
-    $clauses[] = 'img-src ' . implode(' ', array_unique($_sources_list));
+    $directives['img-src'] = ['*', 'data:', 'blob:'];
 
     // media-src (unlimited with data/blob)
-    $_sources_list = [];
-    $_sources_list[] = '*';
-    $_sources_list[] = 'data:';
-    $_sources_list[] = 'blob:';
-    $clauses[] = 'media-src ' . implode(' ', array_unique($_sources_list));
+    $directives['media-src'] = ['*', 'data:', 'blob:'];
 
     // manifest-src (disabled)
-    $_sources_list = [];
-    $_sources_list[] = "'none'";
-    $clauses[] = 'manifest-src ' . implode(' ', array_unique($_sources_list));
+    $directives['manifest-src'] = ["'none'"];
 
     // Now build the CSP header clauses for other options...
 
     // base URL
-    $clauses[] = "base-uri 'self'";
+    $directives['base-uri'] = ["'self'"];
 
     // form-action
     if ($csp_on_forms) {
         $_sources_list = $master_sources_list;
     } else {
-        $_sources_list = [];
-        $_sources_list[] = '*';
+        $_sources_list = ['*'];
     }
-    $clauses[] = 'form-action ' . implode(' ', array_unique($_sources_list));
+    $directives['form-action'] = $_sources_list;
 
     // frame-ancestors
-    $_sources_list = $ancestors_sources_list;
-    if ($_sources_list === null) {
-        $_sources_list = [];
-        $_sources_list[] = '*';
+    $_sources_list = ($ancestors_sources_list === null) ? ['*'] : $ancestors_sources_list;
+    $directives['frame-ancestors'] = $_sources_list;
+
+    // Optimization: Omit fetch directives if same as default-src
+    $fetch_directives = [
+        'style-src', 'script-src', 'frame-src', 'worker-src',
+        'font-src', 'object-src', 'img-src', 'media-src', 'manifest-src'
+    ];
+    foreach ($fetch_directives as $directive) {
+        if (isset($directives[$directive]) && isset($directives['default-src'])) {
+            if ($directives[$directive] === $directives['default-src']) {
+                unset($directives[$directive]);
+            }
+        }
     }
-    $clauses[] = 'frame-ancestors ' . implode(' ', array_unique($_sources_list));
 
     // block-all-mixed-content
     if (!$csp_allow_insecure_resources) {
-        $clauses[] = 'block-all-mixed-content';
+        $directives['block-all-mixed-content'] = [];
     }
 
     // upgrade-insecure-requests
     if (whole_site_https()) {
-        $clauses[] = 'upgrade-insecure-requests';
+        $directives['upgrade-insecure-requests'] = [];
     }
 
     // report-uri
     if ((function_exists('get_option')) && (get_option('csp_report_issues') == '1')) {
-        $clauses[] = 'report-uri ' . find_script('csp_logging'); // Note 'report-uri' is deprecated in CSP 3, which is not implemented or finished at the time of writing
+        $directives['report-uri'] = [find_script('csp_logging')]; // Note 'report-uri' is deprecated in CSP 3, which is not implemented or finished at the time of writing
     }
 
     // Now build the CSP header...
 
     $header = '';
-    foreach ($clauses as $clause) {
+    foreach ($directives as $directive => $sources) {
         if ($header != '') {
             $header .= '; ';
         }
 
-        $header .= $clause;
+        $sources = _csp_optimize_list($sources);
+
+        $header .= $directive;
+        foreach (array_unique($sources) as $source) {
+            $header .= ' ' . $source;
+        }
     }
 
     // Output the CSP header...
@@ -370,6 +361,65 @@ function load_csp(?array $options = null, ?int $enable_more_open_html_for = null
         // Also COOP
         header('Cross-Origin-Opener-Policy: same-origin-allow-popups');
     }
+}
+
+/**
+ * Optimize a CSP sources list by removing redundancies.
+ *
+ * @param  array $sources List of sources
+ * @return array Optimized list of sources
+ *
+ * @ignore
+ */
+function _csp_optimize_list(array $sources) : array
+{
+    $sources = array_unique($sources);
+
+    // Check for redundancy when using the global '*' wildcard
+    if (in_array('*', $sources)) {
+        $new_sources = [];
+        foreach ($sources as $source) {
+            if ($source == '*') {
+                // Keep '*' itself
+                $new_sources[] = $source;
+            } elseif (strpos($source, "'") === 0 && $source !== "'self'") {
+                // Keep special keywords, but 'self' is redundant with '*'
+                $new_sources[] = $source;
+            } elseif ($source == 'data:' || $source == 'blob:' || $source == 'filesystem:') {
+                // Keep schemes that '*' doesn't cover
+                $new_sources[] = $source;
+            }
+        }
+        return $new_sources;
+    }
+
+    // Remove subdomains if a wildcard for the parent domain is present
+    $wildcards = [];
+    foreach ($sources as $source) {
+        if (strpos($source, '*.') === 0) {
+            $wildcards[] = substr($source, 2);
+        }
+    }
+
+    // Check for redundant subdomains of a wildcard
+    if (!empty($wildcards)) {
+        $new_sources = [];
+        foreach ($sources as $source) {
+            $redundant = false;
+            foreach ($wildcards as $wildcard) {
+                if (($source != ('*.' . $wildcard)) && (strlen($source) > (strlen($wildcard) + 1)) && (substr($source, -strlen($wildcard) - 1) == ('.' . $wildcard))) {
+                    $redundant = true;
+                    break;
+                }
+            }
+            if (!$redundant) {
+                $new_sources[] = $source;
+            }
+        }
+        $sources = $new_sources;
+    }
+
+    return $sources;
 }
 
 /**

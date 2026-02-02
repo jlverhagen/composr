@@ -43,6 +43,7 @@ class Hook_trusted_sites_core
     public function find_trusted_sites_1(array &$sites)
     {
         $sites[] = str_replace('www.', '', cms_parse_url_safe(get_brand_base_url(), PHP_URL_HOST));
+        $sites[] = cms_parse_url_safe(get_brand_base_url(), PHP_URL_HOST); // If the URL is 'www.', then we must include it in the CSP
 
         // Cookie Consent location services
         $sites[] = 'ipinfo.io';
@@ -56,11 +57,11 @@ class Hook_trusted_sites_core
     public function find_trusted_sites_2(array &$sites)
     {
         if (!empty(get_option('google_fonts'))) {
-            $sites[] = 'fonts.googleapis.com';
+            $sites[] = '*.googleapis.com';
         }
 
         if ((get_option('google_apis_api_key') != '') && (get_option('google_translate_enabled') == '1') && (get_option('csp_on_forms') == '1')) {
-            $sites[] = 'translate.googleusercontent.com';
+            $sites[] = '*.googleusercontent.com';
         }
 
         if (get_option('csp_on_forms') == '1') {
@@ -69,7 +70,7 @@ class Hook_trusted_sites_core
 
         global $MIGHT_BE_USING_CF;
         if ($MIGHT_BE_USING_CF) {
-            $sites[] = 'static.cloudflareinsights.com';
+            $sites[] = '*.cloudflareinsights.com';
         }
     }
 }

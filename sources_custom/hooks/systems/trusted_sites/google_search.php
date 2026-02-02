@@ -49,6 +49,6 @@ class Hook_trusted_sites_google_search
             return;
         }
 
-        $sites[] = 'csp.withgoogle.com';
+        $sites[] = '*.withgoogle.com';
     }
 }

@@ -50,7 +50,7 @@ class Hook_trusted_sites_data_mappr
         }
 
         if (get_option('google_apis_api_key') != '') {
-            $sites[] = 'maps.googleapis.com';
+            $sites[] = '*.googleapis.com';
         }
     }
 }

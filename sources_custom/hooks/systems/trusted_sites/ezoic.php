@@ -1,3 +1,4 @@
+
 <?php /*
 
  The contents of this file are subject to the Common Public Attribution License Version 1.0 (the "License");
@@ -21,13 +22,13 @@
 /**
  * @license    http://opensource.org/licenses/cpal_1.0 Common Public Attribution License
  * @copyright  Christopher Graham
- * @package    amazon_affiliate_sales
+ * @package    ezoic
  */
 
 /**
  * Hook class.
  */
-class Hook_trusted_sites_amazon_affiliate_sales
+class Hook_trusted_sites_ezoic
 {
     /**
      * Detect what needs to be 'added' to the trusted_sites_1 option.
@@ -45,10 +46,17 @@ class Hook_trusted_sites_amazon_affiliate_sales
      */
     public function find_trusted_sites_2(array &$sites)
     {
-        if (!addon_installed('amazon_affiliate_sales')) {
+        if (!addon_installed('ezoic')) {
             return;
         }
 
-        $sites[] = '*.amazon-adsystem.com';
+        $sites[] = '*.gatekeeperconsent.com';
+        $sites[] = 'ezojs.com';
+        $sites[] = '*.ezoic.net';
+        $sites[] = 'ezodn.com';
+        $sites[] = 'googlesyndication.com';
+        $sites[] = '*.id5-sync.com';
+        $sites[] = 'id5-sync.com';
+        $sites[] = '*.eu-1-id5-sync.com';
     }
 }
