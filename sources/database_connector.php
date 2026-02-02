@@ -180,7 +180,32 @@ class Source_database_connector
                     $where .= ' AND ';
                 }
 
-                if (is_float($value)) {
+                if (is_array($value)) { // We want an "IN" operator
+                    $where .= $key . ' IN (';
+                    $first_entry = true;
+                    foreach ($value as $_value) {
+                        if ($_value === null) {
+                            continue;
+                        }
+                        if (($_value === '') && ($this->driver->empty_is_null())) {
+                            $_value = ' ';
+                        }
+
+                        if ($first_entry === false) {
+                            $where .= ',';
+                        }
+                        $first_entry = false;
+
+                        if (is_float($_value)) {
+                            $where .= number_format($_value, 10, '.', '');
+                        } elseif (is_integer($_value)) {
+                            $where .= strval($_value);
+                        } else {
+                            $where .= "'" . db_escape_string($_value) . "'";
+                        }
+                    }
+                    $where .= ')';
+                } elseif (is_float($value)) {
                     $where .= $key . '=' . number_format($value, 10, '.', '');
                 } elseif (is_integer($value)) {
                     $where .= $key . '=' . strval($value);
