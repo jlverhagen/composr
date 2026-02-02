@@ -164,6 +164,7 @@ function erase_block_cache(bool $erase_cache_signatures_too = false, ?string $th
 
 /**
  * Regenerate the trusted sites caching.
+ * TODO: values are limited to 255 characters. Use a different method. And decache when installing/uninstalling/updating addons.
  */
 function regenerate_trusted_sites_cache()
 {
