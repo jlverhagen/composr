@@ -57,11 +57,11 @@ class Hook_database_manifest_activity_feed
                     'addon' => 'activity_feed',
                     'fields' => [
                         'id' => '*AUTO',
-                        'a_language_string_code' => '*ID_TEXT',
-                        'a_member_id' => '*MEMBER',
                         'a_also_involving' => '?MEMBER',
                         'a_is_public' => 'BINARY',
                         'a_addon' => 'ID_TEXT',
+                        'a_language_string_code' => 'ID_TEXT',
+                        'a_member_id' => 'MEMBER',
                         'a_label_1' => 'SHORT_TEXT',
                         'a_label_2' => 'SHORT_TEXT',
                         'a_label_3' => 'SHORT_TEXT',

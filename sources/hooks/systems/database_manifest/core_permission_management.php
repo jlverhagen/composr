@@ -148,6 +148,11 @@ class Hook_database_manifest_core_permission_management
                     'section' => 'SUBMISSION',
                     'default' => 0,
                 ],
+                'perform_keyword_check' => [
+                    'addon' => 'core_permission_management',
+                    'section' => 'SUBMISSION',
+                    'default' => 0,
+                ],
                 'see_query_errors' => [
                     'addon' => 'core_permission_management',
                     'section' => 'STAFF_ACTIONS',
