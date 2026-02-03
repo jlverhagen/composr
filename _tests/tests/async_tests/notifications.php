@@ -49,7 +49,7 @@ class notifications_test_set extends cms_test_case
         $GLOBALS['SITE_DB']->query_delete('notification_lockdown');
         $GLOBALS['SITE_DB']->query_delete('member_zone_access');
 
-        $all_members = $GLOBALS['FORUM_DB']->query_select('f_members', ['id'], [], 'WHERE id<>' . strval($GLOBALS['FORUM_DRIVER']->get_guest_id()) . ' AND m_validated=1 AND ' . db_string_equal_to('m_validated_email_confirm_code', ''));
+        $all_members = $GLOBALS['FORUM_DB']->query_select('f_members', ['id'], [], 'AND id<>' . strval($GLOBALS['FORUM_DRIVER']->get_guest_id()) . ' AND m_validated=1 AND ' . db_string_equal_to('m_validated_email_confirm_code', ''));
         $GLOBALS['FORUM_DB']->query_update('f_members', ['m_allow_emails' => 1, 'm_allow_emails_from_staff' => 1]);
 
         foreach ($all_members as $member) {

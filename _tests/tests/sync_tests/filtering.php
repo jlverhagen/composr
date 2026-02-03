@@ -550,7 +550,7 @@ class filtering_test_set extends cms_test_case
         $this->expected_full = [1, 3, 4, 5, 7, 8, 100, 101];
 
         $sql = selectcode_to_sqlfragment($this->selectcode, 'id', 'temp_test_categories', 'parent_id_of_cat', 'parent_id', 'id');
-        $results = collapse_1d_complexity('id', $GLOBALS['SITE_DB']->query_select('temp_test_entries', ['id'], [], 'WHERE ' . $sql));
+        $results = collapse_1d_complexity('id', $GLOBALS['SITE_DB']->query_select('temp_test_entries', ['id'], [], 'AND ' . $sql));
         sort($results);
         $this->assertTrue($results == $this->expected_full, 'Failed on this Selectcode: ' . $this->selectcode . ' / ' . $sql);
 
@@ -573,7 +573,7 @@ class filtering_test_set extends cms_test_case
         $this->expected = [2, 3, 4, 5, 6, 7, 8, 100, 101];
 
         $sql = selectcode_to_sqlfragment($this->selectcode, 'id', 'temp_test_categories', 'parent_id_of_cat', 'parent_id', 'id');
-        $results = collapse_1d_complexity('id', $GLOBALS['SITE_DB']->query_select('temp_test_entries', ['id'], [], 'WHERE ' . $sql));
+        $results = collapse_1d_complexity('id', $GLOBALS['SITE_DB']->query_select('temp_test_entries', ['id'], [], 'AND ' . $sql));
         sort($results);
         $this->assertTrue($results == $this->expected, 'Failed on this Selectcode: ' . $this->selectcode . ' / ' . $sql);
 
@@ -596,7 +596,7 @@ class filtering_test_set extends cms_test_case
         $this->expected = [8, 100, 101];
 
         $sql = selectcode_to_sqlfragment($this->selectcode, 'id', 'temp_test_categories', 'parent_id_of_cat', 'parent_id', 'id');
-        $results = collapse_1d_complexity('id', $GLOBALS['SITE_DB']->query_select('temp_test_entries', ['id'], [], 'WHERE ' . $sql));
+        $results = collapse_1d_complexity('id', $GLOBALS['SITE_DB']->query_select('temp_test_entries', ['id'], [], 'AND ' . $sql));
         sort($results);
         $this->assertTrue($results == $this->expected, 'Failed on this Selectcode: ' . $this->selectcode . ' / ' . $sql);
 
@@ -619,7 +619,7 @@ class filtering_test_set extends cms_test_case
         $this->expected = [1, 2, 3];
 
         $sql = selectcode_to_sqlfragment($this->selectcode, 'id', 'temp_test_categories', 'parent_id_of_cat', 'parent_id', 'id');
-        $results = collapse_1d_complexity('id', $GLOBALS['SITE_DB']->query_select('temp_test_entries', ['id'], [], 'WHERE ' . $sql));
+        $results = collapse_1d_complexity('id', $GLOBALS['SITE_DB']->query_select('temp_test_entries', ['id'], [], 'AND ' . $sql));
         sort($results);
         $this->assertTrue($results == $this->expected, 'Failed on this Selectcode: ' . $this->selectcode . ' / ' . $sql);
 
@@ -642,7 +642,7 @@ class filtering_test_set extends cms_test_case
         $this->expected = [101];
 
         $sql = selectcode_to_sqlfragment($this->selectcode, 'id', 'temp_test_categories', 'parent_id_of_cat', 'parent_id', 'id');
-        $results = collapse_1d_complexity('id', $GLOBALS['SITE_DB']->query_select('temp_test_entries', ['id'], [], 'WHERE ' . $sql));
+        $results = collapse_1d_complexity('id', $GLOBALS['SITE_DB']->query_select('temp_test_entries', ['id'], [], 'AND ' . $sql));
         sort($results);
         $this->assertTrue($results == $this->expected, 'Failed on this Selectcode: ' . $this->selectcode . ' / ' . $sql);
 
@@ -665,7 +665,7 @@ class filtering_test_set extends cms_test_case
         $this->expected = [100];
 
         $sql = selectcode_to_sqlfragment($this->selectcode, 'id', 'temp_test_categories', 'parent_id_of_cat', 'parent_id', 'id');
-        $results = collapse_1d_complexity('id', $GLOBALS['SITE_DB']->query_select('temp_test_entries', ['id'], [], 'WHERE ' . $sql));
+        $results = collapse_1d_complexity('id', $GLOBALS['SITE_DB']->query_select('temp_test_entries', ['id'], [], 'AND ' . $sql));
         sort($results);
         $this->assertTrue($results == $this->expected, 'Failed on this Selectcode: ' . $this->selectcode . ' / ' . $sql);
 
