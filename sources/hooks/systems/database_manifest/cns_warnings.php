@@ -126,7 +126,24 @@ class Hook_database_manifest_cns_warnings
                     'is_full_text' => false,
                 ],
             ],
-            'foreign_keys' => [],
+            'foreign_keys' => [
+                'f_warnings__w_topic_id||f_topics__id' => [
+                    'addon' => 'cns_warnings',
+                    'from_table' => 'f_warnings',
+                    'from_field' => 'w_topic_id',
+                    'to_table' => 'f_topics',
+                    'to_field' => 'id',
+                    'special_values' => [],
+                ],
+                'f_warnings_punitive__p_warning_id||f_warnings__id' => [
+                    'addon' => 'cns_warnings',
+                    'from_table' => 'f_warnings_punitive',
+                    'from_field' => 'p_warning_id',
+                    'to_table' => 'f_warnings',
+                    'to_field' => 'id',
+                    'special_values' => [],
+                ],
+            ],
             'privileges' => [
                 'see_warnings' => [
                     'addon' => 'cns_warnings',

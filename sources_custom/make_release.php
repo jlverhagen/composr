@@ -871,6 +871,10 @@ function make_database_manifest() // Builds database_manifest, which is used for
                 $addon_name = 'core';
             }
 
+            if ($addon_name == 'core_upgrader') { // This might contain instructions for installing things for legacy reasons
+                continue;
+            }
+
             $table_regexp = '#->create_table\(\'(\w+)\'#';
             $table_matches = [];
             $table_num_matches = preg_match_all($table_regexp, $contents, $table_matches);
@@ -1068,7 +1072,7 @@ function make_database_manifest() // Builds database_manifest, which is used for
     require_code('files');
 
     // Build per-addon mapping
-    // TODO: clean up
+    // TODO: clean up; needs to account for addons without any tables or meta
     $by_addon = [];
     foreach ($tables as $table_name => $table) {
         $addon = $table['addon'];

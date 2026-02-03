@@ -876,7 +876,7 @@ function preprocess_raw_data_for(string $hook_name, int $start_time = 0, ?int $e
 /**
  * Process (merge) pending deltas into the official statistics.
  *
- * @param  integer $time_limit Only keep processing deltas for this many seconds; will still terminate if memory use starts getting high
+ * @param  integer $time_limit Only keep processing deltas for this many seconds; will still terminate if memory use starts getting high (0: disable all limits)
  */
 function stats_merge_deltas(int $time_limit = 15)
 {
@@ -884,7 +884,11 @@ function stats_merge_deltas(int $time_limit = 15)
 
     cms_profile_start_for('Hook_cron_stats_preprocess_raw_data deltas');
 
-    $old = cms_extend_time_limit($time_limit + 1);
+    if ($time_limit > 0) {
+        $old = cms_extend_time_limit($time_limit + 1);
+    } else {
+        $old = cms_extend_time_limit(TIME_LIMIT_EXTEND__CRAWL);
+    }
 
     push_query_limiting(false);
 
@@ -892,105 +896,69 @@ function stats_merge_deltas(int $time_limit = 15)
     $ml = php_return_bytes(ini_get('memory_limit'));
     $current_memory = memory_get_usage(false);
     $near_limit = (($ml > 0) && ($current_memory >= ($ml - (1024 * 1024 * 8)))); // within 8 MB of PHP memory limit
-    $r_start = 0;
 
-    $max_bytes = (1024 * 1024 * 32);
-    if (($ml > 0) && (($ml - $current_memory) < ($max_bytes * 2))) {
-        $max_bytes = ($ml - $current_memory) / 2;
-    }
-
-    while ((!$near_limit) && ((time() - $start) < $time_limit)) { // Time and memory checks
-        $rows = $GLOBALS['SITE_DB']->query_select('stats_preprocessed_delta', ['*'], [], ' ORDER BY id', 0 - $max_bytes, $r_start);
+    while (($time_limit <= 0) || ((!$near_limit) && ((time() - $start) < $time_limit))) { // Time and memory checks
+        $rows = $GLOBALS['SITE_DB']->query_select('stats_preprocessed_delta', ['*'], [], '', 100);
         if (!array_key_exists(0, $rows)) { // No more to do
             break;
         }
 
-        $r_start += count($rows);
-
-        // Group rows so we can process multiple deltas for the same stats row at once
+        // Calculate our initial delta
         $groups = [];
-        foreach ($rows as $i => $row) {
-            $group_key = $row['p_bucket'] . '___' . $row['p_pivot'] . '___' . strval($row['p_pivot_interval']) . '___' . $row['p_pivot_value'];
-            if (!isset($groups[$group_key])) {
-                $groups[$group_key] = [
-                    'p_bucket' => $row['p_bucket'],
-                    'p_pivot' => $row['p_pivot'],
-                    'p_pivot_interval' => $row['p_pivot_interval'],
-                    'p_pivot_value' => $row['p_pivot_value'],
-                    'i' => [],
-                    'ids' => [],
-                ];
+        foreach ($rows as $row) {
+            if (!isset($groups[$row['p_id']])) {
+                $groups[$row['p_id']] = 0;
             }
-            $groups[$group_key]['i'][] = $i;
-            $groups[$group_key]['ids'][] = $row['id'];
+            $groups[$row['p_id']] += $row['p_value'];
         }
 
-        foreach ($groups as $group) {
-            $stats_row = $GLOBALS['SITE_DB']->query_select('stats_preprocessed', ['*'], [
-                'p_bucket' => $group['p_bucket'],
-                'p_pivot' => $group['p_pivot'],
-                'p_pivot_interval' => $group['p_pivot_interval'],
-                'p_pivot_value' => $group['p_pivot_value'],
-            ], '', 1);
+        // Batch select the rows that we need
+        $s_rows = $GLOBALS['SITE_DB']->query_select('stats_preprocessed', ['*'], [
+            'p_id' => array_keys($groups),
+        ]);
 
-            $stats_row_u = null;
-            if (array_key_exists(0, $stats_row)) {
-                $stats_row_u = @unserialize($stats_row[0]['p_data']);
-                if ($stats_row_u === false) {
-                    warn_exit(do_lang_tempcode('INTERNAL_ERROR', escape_html('df243edab1d45299b9d8b79f6de6d357')), escape_html('TODO'));
-                }
+        // Merge our current totals into our deltas
+        foreach ($s_rows as $row) {
+            if (!isset($groups[$row['p_id']])) {
+                continue; // This should never happen
             }
-
-            foreach ($group['i'] as $row_i) {
-                $row_u = @unserialize($rows[$row_i]['p_data']);
-                if ($row_u === false) {
-                    warn_exit(do_lang_tempcode('INTERNAL_ERROR', escape_html('67b35ad8e6935ab8b8f76f5734789f72')), escape_html('TODO'));
-                }
-
-                if ($stats_row_u === null) {
-                    $stats_row_u = $row_u;
-                } else {
-                    stats_deep_merge($stats_row_u, $row_u);
-                }
-            }
-
-            if (!array_key_exists(0, $stats_row)) {
-                $GLOBALS['SITE_DB']->query_insert('stats_preprocessed', [
-                    'p_bucket' => $group['p_bucket'],
-                    'p_pivot' => $group['p_pivot'],
-                    'p_pivot_interval' => $group['p_pivot_interval'],
-                    'p_pivot_value' => $group['p_pivot_value'],
-                    'p_data' => serialize($stats_row_u),
-                ]);
-            } else {
-                $GLOBALS['SITE_DB']->query_update('stats_preprocessed', ['p_data' => serialize($stats_row_u)], [
-                    'p_bucket' => $group['p_bucket'],
-                    'p_pivot' => $group['p_pivot'],
-                    'p_pivot_interval' => $group['p_pivot_interval'],
-                    'p_pivot_value' => $group['p_pivot_value'],
-                ]);
-            }
-
-            $GLOBALS['SITE_DB']->query('DELETE FROM ' . get_table_prefix() . 'stats_preprocessed_delta WHERE id IN (' . implode(',', array_map('strval', $group['ids'])) . ')');
-
-            $current_memory = memory_get_usage(false);
-            $near_limit = (($ml > 0) && ($current_memory >= ($ml - (1024 * 1024 * 8)))); // within 8 MB of PHP memory limit
-            if ($near_limit || ((time() - $start) >= $time_limit)) {
-                break;
-            }
+            $groups[$row['p_id']] += $row['p_value'];
         }
+
+        // Batch delete and insert our new values
+        $GLOBALS['SITE_DB']->query_delete('stats_preprocessed_delta', ['p_id' => array_keys($groups)]);
+        $GLOBALS['SITE_DB']->query_delete('stats_preprocessed', ['p_id' => array_keys($groups)]);
+
+        // Batch insert our updated values
+        $insert_rows = [
+            'p_id' => [],
+            'p_bucket' => [],
+            'p_pivot' => [],
+            'p_pivot_interval' => [],
+            'p_pivot_value' => [],
+            'p_key' => [],
+            'p_value' => [],
+        ];
+
+        // We use delta rows because they might not yet exist in the statistics. We use list_to_map as deltas may contain duplicate points.
+        foreach (list_to_map('p_id', $rows) as $pid => $row) {
+            $insert_rows['p_id'][] = $pid;
+            $insert_rows['p_bucket'][] = $row['p_bucket'];
+            $insert_rows['p_pivot'][] = $row['p_pivot'];
+            $insert_rows['p_pivot_interval'][] = $row['p_pivot_interval'];
+            $insert_rows['p_pivot_value'][] = $row['p_pivot_value'];
+            $insert_rows['p_key'][] = $row['p_key'];
+            $insert_rows['p_value'][] = $groups[$pid];
+        }
+        $GLOBALS['SITE_DB']->query_insert('stats_preprocessed', $insert_rows);
 
         unset($rows);
+        unset($s_rows);
         unset($groups);
+        unset($insert_rows);
 
         $current_memory = memory_get_usage(false);
         $near_limit = (($ml > 0) && ($current_memory >= ($ml - (1024 * 1024 * 8)))); // within 8 MB of PHP memory limit
-        $r_start = 0;
-
-        $max_bytes = (1024 * 1024 * 32);
-        if (($ml > 0) && (($ml - $current_memory) < ($max_bytes * 2))) {
-            $max_bytes = ($ml - $current_memory) / 2;
-        }
     }
 
     cms_set_time_limit($old);
@@ -1001,45 +969,30 @@ function stats_merge_deltas(int $time_limit = 15)
 }
 
 /**
- * Deep-merge two statistics arrays.
+ * Get the p_id hash of a statistics row.
  *
- * @param  mixed $base The base statistics, passed and modified by reference
- * @param  mixed $delta The statistics we are merging into $base
+ * @param  ID_TEXT $p_bucket The name of the bucket
+ * @param  ?ID_TEXT $p_pivot The name of the pivot (null: flat data)
+ * @param  ?integer $p_pivot_interval The interval index of the pivot (null: flat data)
+ * @param  ?integer $p_pivot_value The time point within the interval of the pivot (null: flat data)
+ * @param  SHORT_TEXT $p_key The data key
+ * @return ID_TEXT The hash
  */
-function stats_deep_merge(&$base, $delta)
+function stats_get_p_id(string $p_bucket, ?string $p_pivot, ?int $p_pivot_interval, ?int $p_pivot_value, string $p_key) : string
 {
-    // Sanity check: $base and $delta must both be arrays or both not be arrays
-    if (is_array($base) && !is_array($delta)) {
-        warn_exit(do_lang_tempcode('INTERNAL_ERROR', escape_html('13e4e28074765b2480c21e0e1a75fa27')), escape_html('TODO'));
+    $data = $p_bucket;
+    if ($p_pivot !== null) {
+        $data .= '::' . $p_pivot;
     }
-    if (!is_array($base) && is_array($delta)) {
-        warn_exit(do_lang_tempcode('INTERNAL_ERROR', escape_html('3a468e9dfb835362a1dc7673c3234f1f')), escape_html('TODO'));
+    if ($p_pivot_interval !== null) {
+        $data .= '::' . strval($p_pivot_interval);
     }
+    if ($p_pivot_value !== null) {
+        $data .= '::' . strval($p_pivot_value);
+    }
+    $data .= '::' . $p_key;
 
-    if (!is_array($delta)) {
-        if (is_numeric($delta)) { // Numbers get added together (counters)
-            $base = $base + $delta;
-        } else { // All other types overwrite previous values
-            $base = $delta;
-        }
-        return;
-    }
-
-    foreach ($delta as $k => $v) {
-        // Does not exist on base? Create it!
-        if (!array_key_exists($k, $base)) {
-            $base[$k] = $v;
-            continue;
-        }
-
-        if (is_array($v)) { // Arrays get merged
-            stats_deep_merge($base[$k], $v);
-        } elseif (is_numeric($v)) { // Numbers get added together (counters)
-            $base[$k] = $base[$k] + $v;
-        } else { // All other types overwrite previous values
-            $base[$k] = $v;
-        }
-    }
+    return cms_base64_encode($data, false, true, false);
 }
 
 /**

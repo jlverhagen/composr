@@ -600,30 +600,73 @@ abstract class Source_hook_stats_provider extends Source_hook_stats_base
         $ml = php_return_bytes(ini_get('memory_limit'));
         $current_memory = memory_get_usage(false);
         $near_limit = (($ml > 0) && ($current_memory >= ($ml - (1024 * 1024 * 8)))); // within 8 MB of PHP memory limit
-        $large_bucket = (count($this->data_buckets, COUNT_RECURSIVE) >= 5000);
+        $large_bucket = (count($this->data_buckets, COUNT_RECURSIVE) >= 500); // Keep it reasonable; we process SQL in batches of 100
 
         $should_dump = ($force || $near_limit || $large_bucket);
 
+        // Dump to the database if we determined that we should do so
         if ($should_dump) {
-            // Dump what we have to the database
-
+            // Flat data operates on a "replacement"; we replace the value in the database with the value that we calculated.
+            // Also, we perform database operations immediately for flat data instead of using a delta
             if ($flat) {
+                $groups = [];
+                $insert_rows = [
+                    'p_id' => [],
+                    'p_bucket' => [],
+                    'p_key' => [],
+                    'p_value' => [],
+                ];
                 foreach ($this->data_buckets as $bucket => $data) {
                     $flattened = [];
                     $this->flatten_data_buckets($flattened, $data);
 
                     foreach ($flattened as $f_key => $f_value) {
-                        $GLOBALS['SITE_DB']->query_insert_or_replace('stats_preprocessed_flat', [
-                            'p_value' => $f_value,
-                        ], [
-                            'p_bucket' => $bucket,
-                            'p_key' => $f_key,
-                        ]);
+                        $pid = stats_get_p_id($bucket, null, null, null, strval($f_key));
+                        $groups[$pid] = true;
+
+                        $insert_rows['p_id'][] = $pid;
+                        $insert_rows['p_bucket'][] = $bucket;
+                        $insert_rows['p_key'][] = $f_key;
+                        $insert_rows['p_value'][] = $f_value;
+
+                        // Time to perform a batch database operation?
+                        if (count($insert_rows['p_id']) >= 100) {
+                            $GLOBALS['SITE_DB']->query_delete('stats_preprocessed_flat', ['p_id' => array_keys($groups)]);
+                            $GLOBALS['SITE_DB']->query_insert('stats_preprocessed_flat', $insert_rows);
+
+                            $groups = [];
+                            $insert_rows = [
+                                'p_id' => [],
+                                'p_bucket' => [],
+                                'p_key' => [],
+                                'p_value' => [],
+                            ];
+                        }
                     }
 
                     unset($flattened);
                 }
+
+                // Fnish what's left
+                if (count($insert_rows['p_id']) > 0) {
+                    $GLOBALS['SITE_DB']->query_delete('stats_preprocessed_flat', ['p_id' => array_keys($groups)]);
+                    $GLOBALS['SITE_DB']->query_insert('stats_preprocessed_flat', $insert_rows);
+                }
+
+                unset($groups);
+                unset($insert_rows);
             } else {
+                // Timed data operates on a "delta"; we increment the value in the database by the value that we calculated.
+                // For efficiency, we just dump to a delta table and let the scheduler merge it in later.
+                $insert_rows = [
+                    'p_id' => [],
+                    'p_bucket' => [],
+                    'p_pivot' => [],
+                    'p_pivot_interval' => [],
+                    'p_pivot_value' => [],
+                    'p_key' => [],
+                    'p_value' => [],
+                ];
                 foreach ($this->data_buckets as $bucket => $_) {
                     foreach ($_ as $pivot => $__) {
                         foreach ($__ as $pivot_interval => $___) {
@@ -632,23 +675,36 @@ abstract class Source_hook_stats_provider extends Source_hook_stats_base
                                 $this->flatten_data_buckets($flattened, $data);
 
                                 foreach ($flattened as $f_key => $f_value) {
-                                    $key_map = [
-                                        'p_bucket' => $bucket,
-                                        'p_pivot' => $pivot,
-                                        'p_pivot_interval' => $pivot_interval,
-                                        'p_pivot_value' => $pivot_value,
-                                        'p_key' => $f_key,
-                                    ];
+                                    $insert_rows['p_id'][] = stats_get_p_id($bucket, $pivot, $pivot_interval, $pivot_value, strval($f_key));
+                                    $insert_rows['p_bucket'][] = $bucket;
+                                    $insert_rows['p_pivot'][] = $pivot;
+                                    $insert_rows['p_pivot_interval'][] = $pivot_interval;
+                                    $insert_rows['p_pivot_value'][] = $pivot_value;
+                                    $insert_rows['p_key'][] = $f_key;
+                                    $insert_rows['p_value'][] = $f_value;
 
-                                    $test = $GLOBALS['SITE_DB']->query_select_value_if_there('stats_preprocessed', 'p_value', $key_map);
-                                    if ($test === null) {
-                                        $GLOBALS['SITE_DB']->query_insert('stats_preprocessed', $key_map + ['p_value' => $f_value]);
-                                    } else {
-                                        $GLOBALS['SITE_DB']->query_parameterised('UPDATE {prefix}stats_preprocessed SET p_value={p_value} WHERE ' . db_string_equal_to('p_bucket', $bucket) . ' AND ' . db_string_equal_to('p_pivot', $pivot) . ' AND p_pivot_interval={p_pivot_interval} AND p_pivot_value={p_pivot_value} AND ' . db_string_equal_to('p_key', strval($f_key)), ['p_value' => $f_value, 'p_pivot_interval' => $pivot_interval, 'p_pivot_value' => $pivot_value]);
+                                    if (count($insert_rows['p_id']) >= 100) {
+                                        $GLOBALS['SITE_DB']->query_insert('stats_preprocessed_delta', $insert_rows);
+
+                                        $insert_rows = [
+                                            'p_id' => [],
+                                            'p_bucket' => [],
+                                            'p_pivot' => [],
+                                            'p_pivot_interval' => [],
+                                            'p_pivot_value' => [],
+                                            'p_key' => [],
+                                            'p_value' => [],
+                                        ];
                                     }
                                 }
 
+                                // Fnish what's left
+                                if (count($insert_rows['p_id']) > 0) {
+                                    $GLOBALS['SITE_DB']->query_insert('stats_preprocessed_delta', $insert_rows);
+                                }
                                 unset($flattened);
+                                unset($groups);
+                                unset($insert_rows);
                             }
                         }
                     }

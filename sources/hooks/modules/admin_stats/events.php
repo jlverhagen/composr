@@ -234,7 +234,8 @@ class Hook_admin_stats_events extends Source_hook_stats_provider
                 }
                 $timestamp = tz_time($timestamp, $server_timezone);
 
-                $session_id = $session_row['session_id'];
+                // Use anonymous identifiers so it is hard to trace back to specific IPs or sessions
+                $session_id = cms_base64_encode($session_row['session_id'], false, true, true);
 
                 // Find tracking codes for this session
                 cms_profile_start_for('Hook_admin_stats_events->preprocess_raw_data stats loop ' . strval($start) . ' tracking codes ' . $session_id);

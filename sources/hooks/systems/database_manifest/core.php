@@ -196,7 +196,7 @@ class Hook_database_manifest_core
                     'addon' => 'core',
                     'fields' => [
                         'id' => '*AUTO',
-                        'd_member_id' => '*MEMBER',
+                        'd_member_id' => 'MEMBER',
                         'd_date_and_time' => 'TIME',
                     ],
                 ],
@@ -567,14 +567,6 @@ class Hook_database_manifest_core
                         'cache_on' => 'LONG_TEXT',
                     ],
                 ],
-                'captchas' => [
-                    'addon' => 'core',
-                    'fields' => [
-                        'si_session_id' => '*ID_TEXT',
-                        'si_code' => 'ID_TEXT',
-                        'si_time' => 'TIME',
-                    ],
-                ],
                 'comcode_pages' => [
                     'addon' => 'core',
                     'fields' => [
@@ -598,6 +590,7 @@ class Hook_database_manifest_core
                         'c_value_trans' => '?LONG_TRANS',
                         'c_needs_dereference' => 'BINARY',
                         'c_set' => 'BINARY',
+                        'c_default' => 'LONG_TEXT',
                         'c_value' => 'LONG_TEXT',
                     ],
                 ],
@@ -1005,15 +998,6 @@ class Hook_database_manifest_core
                     'table' => 'cached_comcode_pages',
                     'fields' => [
                         0 => 'string_index',
-                    ],
-                    'is_full_text' => false,
-                ],
-                'captchas__si_time' => [
-                    'addon' => 'core',
-                    'name' => 'si_time',
-                    'table' => 'captchas',
-                    'fields' => [
-                        0 => 'si_time',
                     ],
                     'is_full_text' => false,
                 ],
@@ -2290,11 +2274,6 @@ class Hook_database_manifest_core
                 'open_virtual_roots' => [
                     'addon' => 'core',
                     'section' => 'GENERAL_SETTINGS',
-                    'default' => 0,
-                ],
-                'perform_keyword_check' => [
-                    'addon' => 'core',
-                    'section' => 'SUBMISSION',
                     'default' => 0,
                 ],
                 'perform_webstandards_check_by_default' => [

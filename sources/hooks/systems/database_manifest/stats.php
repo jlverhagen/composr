@@ -128,6 +128,19 @@ class Hook_database_manifest_stats
                         'c_url' => 'URLPATH',
                     ],
                 ],
+                'stats_preprocessed_delta' => [
+                    'addon' => 'stats',
+                    'fields' => [
+                        'id' => '*AUTO',
+                        'p_id' => 'ID_TEXT',
+                        'p_bucket' => 'ID_TEXT',
+                        'p_pivot' => 'ID_TEXT',
+                        'p_pivot_interval' => 'INTEGER',
+                        'p_pivot_value' => 'INTEGER',
+                        'p_value' => 'INTEGER',
+                        'p_key' => 'SHORT_TEXT',
+                    ],
+                ],
                 'stats_known_events' => [
                     'addon' => 'stats',
                     'fields' => [
@@ -145,18 +158,22 @@ class Hook_database_manifest_stats
                 'stats_preprocessed' => [
                     'addon' => 'stats',
                     'fields' => [
-                        'p_bucket' => '*ID_TEXT',
-                        'p_pivot' => '*ID_TEXT',
-                        'p_pivot_interval' => '*INTEGER',
-                        'p_pivot_value' => '*INTEGER',
-                        'p_data' => 'LONG_TEXT',
+                        'p_id' => '*ID_TEXT',
+                        'p_bucket' => 'ID_TEXT',
+                        'p_pivot' => 'ID_TEXT',
+                        'p_pivot_interval' => 'INTEGER',
+                        'p_pivot_value' => 'INTEGER',
+                        'p_value' => 'INTEGER',
+                        'p_key' => 'SHORT_TEXT',
                     ],
                 ],
                 'stats_preprocessed_flat' => [
                     'addon' => 'stats',
                     'fields' => [
-                        'p_bucket' => '*ID_TEXT',
-                        'p_data' => 'LONG_TEXT',
+                        'p_id' => '*ID_TEXT',
+                        'p_bucket' => 'ID_TEXT',
+                        'p_value' => 'INTEGER',
+                        'p_key' => 'SHORT_TEXT',
                     ],
                 ],
                 'usersonline_track' => [
@@ -265,6 +282,26 @@ class Hook_database_manifest_stats
                     'table' => 'stats_link_tracker',
                     'fields' => [
                         0 => 'c_url',
+                    ],
+                    'is_full_text' => false,
+                ],
+                'stats_preprocessed__pivotsearch' => [
+                    'addon' => 'stats',
+                    'name' => 'pivotsearch',
+                    'table' => 'stats_preprocessed',
+                    'fields' => [
+                        0 => 'p_pivot',
+                        1 => 'p_pivot_interval',
+                        2 => 'p_pivot_value',
+                    ],
+                    'is_full_text' => false,
+                ],
+                'stats_preprocessed_delta__pid' => [
+                    'addon' => 'stats',
+                    'name' => 'pid',
+                    'table' => 'stats_preprocessed_delta',
+                    'fields' => [
+                        0 => 'p_id',
                     ],
                     'is_full_text' => false,
                 ],
