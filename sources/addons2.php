@@ -1644,7 +1644,7 @@ function find_addons_for_files(array $paths) : array
         }
         $or_list .= db_string_equal_to('filepath', $path);
     }
-    $addon_files = $GLOBALS['SITE_DB']->query_select('addons_files', ['addon_name', 'filepath'], [], 'WHERE ' . $or_list);
+    $addon_files = $GLOBALS['SITE_DB']->query_select('addons_files', ['addon_name', 'filepath'], [], 'AND ' . $or_list);
     foreach ($addon_files as $_path) {
         if (in_array($_path['filepath'], $paths)) {
             $addons[$_path['filepath']][] = $_path['addon_name'];

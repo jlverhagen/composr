@@ -107,7 +107,7 @@ function sitemap_xml_build($callback = null, bool $force = false)
     $time = time();
 
     // Build from sitemap_cache table
-    $set_numbers = $GLOBALS['SITE_DB']->query_select('sitemap_cache', ['DISTINCT set_number'], [], $force ? '' : (' WHERE last_updated>=' . strval($last_time)));
+    $set_numbers = $GLOBALS['SITE_DB']->query_select('sitemap_cache', ['DISTINCT set_number'], [], $force ? '' : (' AND last_updated>=' . strval($last_time)));
     if (!empty($set_numbers)) {
         foreach ($set_numbers as $set_number) {
             rebuild_sitemap_set($set_number['set_number'], $last_time, $callback);
