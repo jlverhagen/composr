@@ -389,10 +389,12 @@ function static_cache(int $mode)
             echo $contents;
             cms_flush_safe();
 
-            // Add to stats
-            global $PAGE_START_TIME;
-            $page_generation_time = (microtime(true) - $PAGE_START_TIME) * 1000.0;
-            log_stats(null, intval($page_generation_time));
+            // Add to stats (but only if we are not in failover mode)
+            if (!$in_failover_mode) {
+                global $PAGE_START_TIME;
+                $page_generation_time = (microtime(true) - $PAGE_START_TIME) * 1000.0;
+                log_stats(null, intval($page_generation_time));
+            }
 
             exit();
         } else {
