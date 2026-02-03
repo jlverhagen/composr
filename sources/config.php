@@ -577,7 +577,7 @@ function get_value(string $name, ?string $default = null, bool $elective_or_leng
     }
 
     // It's not in the cache; try grabbing it from the database (and add to smart cache) unless we already fully loaded values
-    if ($VALUES_FULLY_LOADED != 2) {
+    if (($VALUES_FULLY_LOADED != 2) && (($VALUE_OPTIONS_CACHE === null) || (!array_key_exists($name, $VALUE_OPTIONS_CACHE)))) {
         $value = _get_value($name);
         if ($value !== null) {
             return $value;
@@ -675,7 +675,7 @@ function get_value_newer_than(string $name, int $cutoff, bool $elective_or_lengt
     }
 
     // Try the database (but only if we did not fully load the values)
-    if ($VALUES_FULLY_LOADED != 2) {
+    if (($VALUES_FULLY_LOADED != 2) && (($VALUE_OPTIONS_CACHE === null) || (!array_key_exists($name, $VALUE_OPTIONS_CACHE)))) {
         $value = _get_value($name, ' AND date_and_time>' . strval($cutoff));
         if ($value !== null) {
             return $value;
