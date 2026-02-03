@@ -124,11 +124,7 @@ class RemoteContentGrabber
                 $where = [];
             }
 
-            if (empty($where)) {
-                $extra = 'WHERE 1=1';
-            } else {
-                $extra = '';
-            }
+            $extra = '';
 
             $extra .= ' AND ' . $opts['id_field'] . '>=' . $start_from_id;
             if ($opts['end_before_id'] !== null) {

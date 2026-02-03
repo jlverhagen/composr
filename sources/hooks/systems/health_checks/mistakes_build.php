@@ -695,7 +695,7 @@ class Hook_health_check_mistakes_build extends Source_hook_health_check
             $or_list .= db_string_equal_to('m_type', $field_type);
         }
 
-        $db_fields = $GLOBALS['SITE_DB']->query_select('db_meta', ['m_table', 'm_name'], [], 'WHERE (' . $or_list . ')');
+        $db_fields = $GLOBALS['SITE_DB']->query_select('db_meta', ['m_table', 'm_name'], [], 'AND (' . $or_list . ')');
         foreach ($db_fields as $db_field) {
             $table = $db_field['m_table'];
             $name = $db_field['m_name'];
