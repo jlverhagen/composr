@@ -889,7 +889,18 @@ function database_specific() : bool
         $GLOBALS['SITE_DB']->drop_table_if_exists('stats_preprocessed_delta');
 
         $GLOBALS['SITE_DB']->create_table('stats_preprocessed', [
+            'p_id' => '*ID_TEXT', // Hash of p_bucket, p_pivot, p_pivot_interval, p_pivot_value, and p_key
+            'p_bucket' => 'ID_TEXT',
+            'p_pivot' => 'ID_TEXT',
+            'p_pivot_interval' => 'INTEGER',
+            'p_pivot_value' => 'INTEGER',
+            'p_key' => 'SHORT_TEXT',
+            'p_value' => 'INTEGER',
+        ]);
+
+        $GLOBALS['SITE_DB']->create_table('stats_preprocessed_delta', [
             'id' => '*AUTO',
+            'p_id' => 'ID_TEXT',
             'p_bucket' => 'ID_TEXT',
             'p_pivot' => 'ID_TEXT',
             'p_pivot_interval' => 'INTEGER',
@@ -899,13 +910,14 @@ function database_specific() : bool
         ]);
 
         $GLOBALS['SITE_DB']->create_table('stats_preprocessed_flat', [
-            'id' => '*AUTO',
+            'p_id' => '*ID_TEXT', // Hash of p_bucket and p_key
             'p_bucket' => 'ID_TEXT',
             'p_key' => 'SHORT_TEXT',
             'p_value' => 'INTEGER',
         ]);
 
         $GLOBALS['SITE_DB']->create_index('stats_preprocessed', 'pivotsearch', ['p_pivot', 'p_pivot_interval', 'p_pivot_value']);
+        $GLOBALS['SITE_DB']->create_index('stats_preprocessed_delta', 'pid', ['p_id']);
 
         $done_something = true;
     }

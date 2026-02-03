@@ -140,32 +140,14 @@ class Source_database_connector
     }
 
     /**
-     * Create a SELECT query from some abstract data.
+     * Generate a WHERE component of an SQL query based on a map of parameters.
      *
-     * @param  string $table The table to select from
-     * @param  ?array $select_map List of field selections (null: all fields)
      * @param  array $where_map Map of conditions to enforce
-     * @param  string $end Additional stuff to tack onto the query
-     * @return string SQL query
+     * @return string SQL query fragment
      */
-    protected function _get_where_expand(string $table, ?array $select_map = null, array $where_map = [], string $end = '') : string
+    protected function _get_where_expand(array $where_map = []) : string
     {
         global $DEV_MODE;
-
-        if ($select_map === null) {
-            $select_map = ['*'];
-        }
-
-        $select = '';
-        foreach ($select_map as $key) {
-            //if (!is_string($key)) $key = strval($key);   Should not happen, but won't cause a problem if does. Don't do this check for performance reasons.
-
-            if ($select !== '') {
-                $select .= ',';
-            }
-
-            $select .= $key;
-        }
 
         $where = '';
         if (!empty($where_map)) {
@@ -224,12 +206,10 @@ class Source_database_connector
                 }
             }
 
-            return 'SELECT ' . $select . ' FROM ' . $table . ' WHERE (' . $where . ') ' . $end;
+            return ' WHERE (' . $where . ') ';
         }
-        if (substr(ltrim($end), 0, 6) !== 'WHERE ') {
-            $end = 'WHERE 1=1 ' . $end; // We force a WHERE so that code of ours that alters queries can work robustly
-        }
-        return 'SELECT ' . $select . ' FROM ' . $table . ' ' . $end;
+
+        return ' WHERE 1=1 '; // We force a WHERE so that code of ours that alters queries can work robustly
     }
 
     /**
@@ -254,7 +234,7 @@ class Source_database_connector
             return null; // error
         }
         if (!array_key_exists(0, $values)) {
-            $this->driver->failed_query_exit(do_lang_tempcode('QUERY_NULL', escape_html($this->_get_where_expand($this->table_prefix . $table, [$selected_value], $where_map, $end)))); // No result found
+            $this->driver->failed_query_exit(do_lang_tempcode('QUERY_NULL', escape_html('SELECT ' . $selected_value . ' FROM ' . $this->table_prefix . $table . $this->_get_where_expand($where_map) . $end))); // No result found
         }
         return $this->_query_select_value($values);
     }
@@ -342,7 +322,7 @@ class Source_database_connector
      * Only use this if you're where condition is a series of AND clauses doing simple property comparisons.
      *
      * @param  string $table The table name
-     * @param  array $select The SELECT map
+     * @param  array $select_list The SELECT list
      * @param  array $where_map The WHERE map [will all be ANDed together]
      * @param  string $end Something to tack onto the end of the SQL query
      * @param  ?integer $max The maximum number of rows to affect; negative number is number of maximum bytes to return (null: no limit)
@@ -351,15 +331,26 @@ class Source_database_connector
      * @param  ?array $lang_fields Extra language fields to join in for cache pre-filling / Tempcode, perhaps via the find_lang_fields function. You only need to send this if you are doing a JOIN and carefully craft your query so table field names won't conflict (null: auto-detect, if not a join)
      * @return ?array The results (empty array: empty result set) (null: error)
      */
-    public function query_select(string $table, array $select = ['*'], array $where_map = [], string $end = '', ?int $max = null, int $start = 0, bool $fail_ok = false, ?array $lang_fields = null) : ?array
+    public function query_select(string $table, array $select_list = ['*'], array $where_map = [], string $end = '', ?int $max = null, int $start = 0, bool $fail_ok = false, ?array $lang_fields = null) : ?array
     {
         $full_table = $this->table_prefix . $table;
 
         $field_prefix = '';
 
-        $this->_automatic_lang_fields($table, $full_table, $select, $where_map, $end, $lang_fields);
+        $this->_automatic_lang_fields($table, $full_table, $select_list, $where_map, $end, $lang_fields);
 
-        return $this->_query($this->_get_where_expand($full_table, $select, $where_map, $end), $max, $start, $fail_ok, false, $lang_fields, $field_prefix);
+        $select = '';
+        foreach ($select_list as $key) {
+            //if (!is_string($key)) $key = strval($key);   Should not happen, but won't cause a problem if does. Don't do this check for performance reasons.
+
+            if ($select !== '') {
+                $select .= ',';
+            }
+
+            $select .= $key;
+        }
+
+        return $this->_query('SELECT ' . $select . ' FROM ' . $full_table . $this->_get_where_expand($where_map) . $end, $max, $start, $fail_ok, false, $lang_fields, $field_prefix);
     }
 
     /**
@@ -1150,33 +1141,11 @@ class Source_database_connector
      */
     public function query_update(string $table, array $update_map, array $where_map = [], string $end = '', ?int $max = null, int $start = 0, bool $num_touched = false, bool $fail_ok = false) : ?int
     {
-        $where = '';
         $update = '';
 
         $value = mixed();
 
-        foreach ($where_map as $key => $value) {
-            if ($where !== '') {
-                $where .= ' AND ';
-            }
-
-            if (is_float($value)) {
-                $where .= $key . '=' . number_format($value, 10, '.', '');
-            } elseif (is_integer($value)) {
-                $where .= $key . '=' . strval($value);
-            } elseif (($key === 'begin_num') || ($key === 'end_num')) {
-                $where .= $key . '=' . $value; // FUDGE: for all our known large unsigned integers #3046
-            } else {
-                if ($value === null) {
-                    $where .= $key . ' IS NULL';
-                } else {
-                    if (($value === '') && ($this->driver->empty_is_null())) {
-                        $value = ' ';
-                    }
-                    $where .= db_string_equal_to($key, $value);
-                }
-            }
-        }
+        $where = $this->_get_where_expand($where_map);
 
         foreach ($update_map as $key => $value) {
             if (($value === STRING_MAGIC_NULL) || ($value === INTEGER_MAGIC_NULL)) {
@@ -1194,7 +1163,7 @@ class Source_database_connector
                 } elseif (is_integer($value)) {
                     $update .= $key . '=' . strval($value);
                 } elseif (($key === 'begin_num') || ($key === 'end_num')) {
-                    $where .= $key . '=' . $value; // FUDGE: for all our known large unsigned integers #3046
+                    $update .= $key . '=' . $value; // FUDGE: for all our known large unsigned integers #3046
                 } else {
                     $update .= $key . '=\'' . $this->driver->escape_string($value) . '\'';
                 }
@@ -1208,7 +1177,7 @@ class Source_database_connector
             return $this->_query('UPDATE ' . $this->table_prefix . $table . ' SET ' . $update . ' ' . $end, $max, $start, $fail_ok, $num_touched);
         }
 
-        return $this->_query('UPDATE ' . $this->table_prefix . $table . ' SET ' . $update . ' WHERE (' . $where . ') ' . $end, $max, $start, $fail_ok, $num_touched);
+        return $this->_query('UPDATE ' . $this->table_prefix . $table . ' SET ' . $update . $where . $end, $max, $start, $fail_ok, $num_touched);
     }
 
     /**
@@ -1232,33 +1201,9 @@ class Source_database_connector
             return;
         }
 
-        $where = '';
+        $where = $this->_get_where_expand($where_map);
 
-        foreach ($where_map as $key => $value) {
-            if ($where !== '') {
-                $where .= ' AND ';
-            }
-
-            if (is_float($value)) {
-                $where .= $key . '=' . number_format($value, 10, '.', '');
-            } elseif (is_integer($value)) {
-                $where .= $key . '=' . strval($value);
-            } elseif (($key === 'begin_num') || ($key === 'end_num')) {
-                $where .= $key . '=' . $value; // FUDGE: for all our known large unsigned integers #3046
-            } else {
-                if ($value === null) {
-                    $where .= $key . ' IS NULL';
-                } else {
-                    if (($value === '') && ($this->driver->empty_is_null())) {
-                        $where .= $key . ' IS NULL'; // $value = ' ';
-                    } else {
-                        $where .= db_string_equal_to($key, $value);
-                    }
-                }
-            }
-        }
-
-        $query = 'DELETE FROM ' . $this->table_prefix . $table . ' WHERE (' . $where . ') ' . $end;
+        $query = 'DELETE FROM ' . $this->table_prefix . $table . $where . $end;
         $this->_query($query, $max, $start, $fail_ok);
     }
 

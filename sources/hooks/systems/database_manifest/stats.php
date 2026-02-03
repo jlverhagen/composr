@@ -132,7 +132,7 @@ class Hook_database_manifest_stats
                     'addon' => 'stats',
                     'fields' => [
                         'id' => '*AUTO',
-                        'p_id' => 'AUTO_LINK',
+                        'p_id' => 'ID_TEXT',
                         'p_bucket' => 'ID_TEXT',
                         'p_pivot' => 'ID_TEXT',
                         'p_pivot_interval' => 'INTEGER',

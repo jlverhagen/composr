@@ -182,6 +182,7 @@ class stats_test_set extends cms_test_case
         // Remove old preprocessed stats so we can force pre-processing again
         $GLOBALS['SITE_DB']->query_delete('stats_preprocessed');
         $GLOBALS['SITE_DB']->query_delete('stats_preprocessed_flat');
+        $GLOBALS['SITE_DB']->query_delete('stats_preprocessed_delta');
 
         // Generate dummy data so we can process stats on them
         foreach ($dummy_data as $table => $rows) {
@@ -220,11 +221,15 @@ class stats_test_set extends cms_test_case
             preprocess_raw_data_for($hook_name, $start_time, $end_time);
         }
 
+        stats_merge_deltas(0);
+
+        $count = $GLOBALS['SITE_DB']->get_table_count_approx('stats_preprocessed_delta');
+        $this->assertTrue(($count == 0), 'Expected all rows in stats_preprocessed_delta to get processed, but ' . integer_format($count) . ' rows did not.');
+
         $rows = $GLOBALS['SITE_DB']->query_select('stats_preprocessed', ['DISTINCT p_bucket']);
         foreach ($rows as $row) {
             $buckets_existing[] = $row['p_bucket'];
         }
-
         $rows = $GLOBALS['SITE_DB']->query_select('stats_preprocessed_flat', ['p_bucket']);
         foreach ($rows as $row) {
             $buckets_existing[] = $row['p_bucket'];
@@ -351,6 +356,7 @@ class stats_test_set extends cms_test_case
         // Remove old preprocessed stats so we can force pre-processing again
         $GLOBALS['SITE_DB']->query_delete('stats_preprocessed');
         $GLOBALS['SITE_DB']->query_delete('stats_preprocessed_flat');
+        $GLOBALS['SITE_DB']->query_delete('stats_preprocessed_delta');
 
         // Delete dummy data
         if (count($this->dummy_data_added) > 0) {
