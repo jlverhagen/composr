@@ -194,17 +194,12 @@ function load_value_options()
             // Actually, this will cause issues as different pages may have different records of the values; we need to re-load in the current value
             //$VALUE_OPTIONS_CACHE = list_to_map('the_name', $test);
 
-            if (count($test) >= 25) { // Safety limit to prevent long SQL queries
+            if (count($test) >= 250) { // Safety limit to prevent long SQL queries
                 $_value_options = $GLOBALS['SITE_DB']->query_select('values', ['*']);
                 $VALUE_OPTIONS_CACHE = list_to_map('the_name', $_value_options);
                 $VALUES_FULLY_LOADED = 2; // We loaded fully from the database
             } else {
-                $end = [];
-                foreach ($test as $key => $value) {
-                    $end[] = '\'' . db_escape_string($key) . '\'';
-                }
-
-                $_value_options = $GLOBALS['SITE_DB']->query('SELECT * FROM ' . get_table_prefix() . 'values WHERE the_name IN (' . implode(',', $end) . ')');
+                $_value_options = $GLOBALS['SITE_DB']->query_select('values', ['*'], ['the_name' => array_keys($test)]);
                 $VALUE_OPTIONS_CACHE = list_to_map('the_name', $_value_options);
                 $VALUES_FULLY_LOADED = 1;
             }
@@ -576,16 +571,17 @@ function get_value(string $name, ?string $default = null, bool $elective_or_leng
 
     // First, check if the value already exists in cache and return it if so
     if (($VALUE_OPTIONS_CACHE !== null) && (array_key_exists($name, $VALUE_OPTIONS_CACHE))) {
-        if ($VALUE_OPTIONS_CACHE[$name] === null) {
-            return $default; // We already know this does not exist, so return the default and skip trying to later query for it
+        if ($VALUE_OPTIONS_CACHE[$name] !== null) {
+            return $VALUE_OPTIONS_CACHE[$name]['the_value'];
         }
-        return $VALUE_OPTIONS_CACHE[$name]['the_value'];
     }
 
-    // It's not in the cache; try grabbing it from the database (and add to smart cache)
-    $value = _get_value($name);
-    if ($value !== null) {
-        return $value;
+    // It's not in the cache; try grabbing it from the database (and add to smart cache) unless we already fully loaded values
+    if ($VALUES_FULLY_LOADED != 2) {
+        $value = _get_value($name);
+        if ($value !== null) {
+            return $value;
+        }
     }
 
     // Still no value, so check environment if applicable
@@ -673,19 +669,17 @@ function get_value_newer_than(string $name, int $cutoff, bool $elective_or_lengt
 
     // Try cache first
     if (($VALUE_OPTIONS_CACHE !== null) && array_key_exists($name, $VALUE_OPTIONS_CACHE)) {
-        if ($VALUE_OPTIONS_CACHE[$name] === null) {
-            return null; // We already know this does not exist, so return the default and skip trying to later query for it
-        }
-        if ($VALUE_OPTIONS_CACHE[$name]['date_and_time'] > $cutoff) {
+        if (($VALUE_OPTIONS_CACHE[$name] !== null) && ($VALUE_OPTIONS_CACHE[$name]['date_and_time'] > $cutoff)) {
             return $VALUE_OPTIONS_CACHE[$name]['the_value'];
         }
-        return null;
     }
 
-    // Try the database
-    $value = _get_value($name, ' AND date_and_time>' . strval($cutoff));
-    if ($value !== null) {
-        return $value;
+    // Try the database (but only if we did not fully load the values)
+    if ($VALUES_FULLY_LOADED != 2) {
+        $value = _get_value($name, ' AND date_and_time>' . strval($cutoff));
+        if ($value !== null) {
+            return $value;
+        }
     }
 
     return null;
