@@ -600,7 +600,7 @@ abstract class Source_hook_stats_provider extends Source_hook_stats_base
         $ml = php_return_bytes(ini_get('memory_limit'));
         $current_memory = memory_get_usage(false);
         $near_limit = (($ml > 0) && ($current_memory >= ($ml - (1024 * 1024 * 8)))); // within 8 MB of PHP memory limit
-        $large_bucket = (count($this->data_buckets, COUNT_RECURSIVE) >= 500); // Keep it reasonable; we process SQL in batches of 100
+        $large_bucket = (count($this->data_buckets, COUNT_RECURSIVE) >= 10000);
 
         $should_dump = ($force || $near_limit || $large_bucket);
 
