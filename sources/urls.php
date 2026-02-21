@@ -284,7 +284,7 @@ function cms_urldecode_post_process(string $url_part) : string
             $url_part = str_replace([':uhash:', ':amp:', ':slash:', ':plus:', ':space:'], ['#', '&', '/', '+', ' '], $url_part);
             //$url_part = str_replace('(colon)', ':', $url_part);
         }
-        if (get_value('disable_modsecurity_workaround') !== '1') {
+        if (!function_exists('get_value') || (get_value('disable_modsecurity_workaround') !== '1')) {
             $url_part = str_replace([':ques:', ':equals:'], ['?', '='], $url_part);
         }
     }
