@@ -275,6 +275,10 @@ class Module_admin_stats extends Source_standard_crud_module
             $GLOBALS['SITE_DB']->create_index('stats_known_tracking', 't_count_logged', ['t_count_logged']);
             $GLOBALS['SITE_DB']->create_index('stats_known_links', 'l_count_logged', ['l_count_logged']);
         }
+
+        if (($upgrade_from === null) || ($upgrade_from < 12)) {
+            $GLOBALS['SITE_DB']->create_index('stats', 'memberid', ['member_id']);
+        }
     }
 
     /**
