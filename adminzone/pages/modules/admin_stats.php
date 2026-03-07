@@ -96,6 +96,7 @@ class Module_admin_stats extends Source_standard_crud_module
     public function install(?int $upgrade_from = null, ?int $upgrade_from_hack = null)
     {
         if ($upgrade_from === null) {
+            // Indexes defined in version 12 module upgrade
             $GLOBALS['SITE_DB']->create_table('stats', [
                 'id' => '*AUTO',
                 'date_and_time' => 'TIME',
@@ -111,7 +112,6 @@ class Module_admin_stats extends Source_standard_crud_module
                 'milliseconds' => 'INTEGER',
                 'tracking_code' => 'ID_TEXT',
             ]);
-            $GLOBALS['SITE_DB']->create_index('stats', 'date_and_time', ['date_and_time']);
 
             $GLOBALS['SITE_DB']->create_table('usersonline_track', [
                 'date_and_time' => '*TIME',
@@ -277,7 +277,10 @@ class Module_admin_stats extends Source_standard_crud_module
         }
 
         if (($upgrade_from === null) || ($upgrade_from < 12)) {
-            $GLOBALS['SITE_DB']->create_index('stats', 'memberid', ['member_id']);
+            $GLOBALS['SITE_DB']->delete_index_if_exists('stats', 'date_and_time'); // Not efficient enough; we are going to make it more efficient below
+            $GLOBALS['SITE_DB']->create_index('stats', 'member_browser', ['member_id', 'date_and_time']);
+            $GLOBALS['SITE_DB']->create_index('stats', 'tracking_code', ['session_id', 'date_and_time']);
+            $GLOBALS['SITE_DB']->create_index('stats', 'member_ip', ['member_id', 'ip', 'date_and_time']);
         }
     }
 
