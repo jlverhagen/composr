@@ -170,9 +170,9 @@ class Hook_addon_registry_ezoic
             'lang_custom/EN/ezoic.ini',
             'sources_custom/hooks/systems/addon_registry/ezoic.php',
             'sources_custom/hooks/systems/cron/ezoic.php',
+            'sources_custom/hooks/systems/privacy/ezoic.php',
             'sources_custom/hooks/systems/startup/ezoic.php',
             'sources_custom/hooks/systems/trusted_sites/ezoic.php',
-            'sources_custom/hooks/systems/privacy/ezoic.php',
         ];
     }
 }
