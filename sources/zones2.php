@@ -411,6 +411,7 @@ function save_zone_base_url(string $zone, string $base_url)
  */
 function upgrade_module(string $zone, string $module) : int
 {
+    require_lang('upgrade');
     require_code('version');
 
     $rows = $GLOBALS['SITE_DB']->query_select('modules', ['*'], ['module_the_name' => $module], '', 1);
@@ -453,6 +454,10 @@ function upgrade_module(string $zone, string $module) : int
                         escape_html($info['addon']),
                         protect_from_escaping(build_url(['page' => 'admin_addons'], get_module_zone('admin_addons')))
                     ]));
+            }
+
+            if (is_cli()) {
+                echo "\n" . do_lang('UPGRADER_UPGRADING_MODULE_CLI', comcode_escape($module));
             }
 
             $old = cms_extend_time_limit(TIME_LIMIT_EXTEND__SLUGGISH);
@@ -500,6 +505,7 @@ function reinstall_module(string $zone, string $module) : bool
     require_all_core_cms_code();
     require_code('files2');
     require_code('version');
+    require_lang('upgrade');
 
     $already_installed = ($GLOBALS['SITE_DB']->query_select_value_if_there('modules', 'module_the_name', ['module_the_name' => $module]) !== null);
 
@@ -566,6 +572,10 @@ function reinstall_module(string $zone, string $module) : bool
 
     if ($functions[1] !== null) {
         $old = cms_extend_time_limit(TIME_LIMIT_EXTEND__SLUGGISH);
+
+        if (is_cli()) {
+            echo "\n" . do_lang('UPGRADER_INSTALLING_MODULE_CLI', comcode_escape($module));
+        }
 
         if (is_array($functions[1])) {
             call_user_func_array($functions[1][0], $functions[1][1]);
@@ -736,6 +746,7 @@ function get_standard_block_parameters() : array
  */
 function upgrade_block(string $block) : int
 {
+    require_lang('upgrade');
     require_code('version');
 
     $rows = $GLOBALS['SITE_DB']->query_select('blocks', ['*'], ['block_name' => $block], '', 1);
@@ -769,6 +780,10 @@ function upgrade_block(string $block) : int
 
         if (($functions[1] !== null) && ((($upgrade_from < $info['version']) && (!empty($info['update_require_upgrade']))) || (($upgrade_from_hack < $info['hack_version']) && (!empty($info['hack_require_upgrade']))))) {
             $old = cms_extend_time_limit(TIME_LIMIT_EXTEND__SLUGGISH);
+
+            if (is_cli()) {
+                echo "\n" . do_lang('UPGRADER_UPGRADING_BLOCK_CLI', comcode_escape($block));
+            }
 
             require_all_core_cms_code();
             require_code('files2');
@@ -812,6 +827,7 @@ function reinstall_block(string $block) : bool
     require_all_core_cms_code();
     require_code('files2');
     require_code('version');
+    require_lang('upgrade');
 
     $functions = extract_class_functions($block_path, ['info', 'install', 'uninstall']);
     if ($functions[0] === null) {
@@ -820,6 +836,10 @@ function reinstall_block(string $block) : bool
 
     if ($functions[2] !== null) {
         $old = cms_extend_time_limit(15);
+
+        if (is_cli()) {
+            echo "\n" . do_lang('UPGRADER_INSTALLING_BLOCK_CLI', comcode_escape($block));
+        }
 
         if (is_array($functions[2])) {
             call_user_func_array($functions[2][0], $functions[2][1]);
