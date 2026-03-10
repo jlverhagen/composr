@@ -1,4 +1,3 @@
-
 <?php /*
 
  The contents of this file are subject to the Common Public Attribution License Version 1.0 (the "License");

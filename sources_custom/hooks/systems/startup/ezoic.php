@@ -31,18 +31,18 @@ class Hook_startup_ezoic
 {
     public function run($MICRO_BOOTUP, $MICRO_AJAX_BOOTUP)
     {
-        if (!addon_installed('ezoic')) {
-            return;
-        }
-
-        if (!allowed_cookies('MARKETING')) {
-            return;
-        }
-        if (!allowed_cookies('ANALYTICS')) {
-            return;
-        }
-
         if ((!$MICRO_AJAX_BOOTUP) && (!$MICRO_BOOTUP) && (running_script('index'))) {
+            if (!addon_installed('ezoic')) {
+                return;
+            }
+
+            if (!allowed_cookies('MARKETING')) {
+                return;
+            }
+            if (!allowed_cookies('ANALYTICS')) {
+                return;
+            }
+
             require_code('csp');
             $nonce_html = csp_nonce_html();
 
