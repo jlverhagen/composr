@@ -308,17 +308,19 @@ function get_trusted_sites(int $level, bool $include_self = true) : array
     }
 
     // Hooks
-    $_ts = [];
-    $hook_obs = find_all_hook_obs('systems', 'trusted_sites', 'Hook_trusted_sites_');
-    foreach ($hook_obs as $hook => $ob) {
-        if ($level >= 1) {
-            $ob->find_trusted_sites_1($_ts);
+    if (function_exists('find_all_hook_obs')) {
+        $_ts = [];
+        $hook_obs = find_all_hook_obs('systems', 'trusted_sites', 'Hook_trusted_sites_');
+        foreach ($hook_obs as $hook => $ob) {
+            if ($level >= 1) {
+                $ob->find_trusted_sites_1($_ts);
+            }
+            if ($level >= 2) {
+                $ob->find_trusted_sites_2($_ts);
+            }
         }
-        if ($level >= 2) {
-            $ob->find_trusted_sites_2($_ts);
-        }
+        $option['T' . strval($level)] = array_merge($option['T' . strval($level)], $_ts);
     }
-    $option['T' . strval($level)] = array_merge($option['T' . strval($level)], $_ts);
 
     foreach ($option['T' . strval($level)] as $i => $trusted_site) {
         // Remove blanks
@@ -360,8 +362,8 @@ function get_trusted_sites(int $level, bool $include_self = true) : array
 
     $option['T' . strval($level)] = array_unique($option['T' . strval($level)]);
 
-    // No cache if we could not load config
-    if (!function_exists('get_option')) {
+    // No cache if we could not load config or hooks
+    if (!function_exists('get_option') || !function_exists('find_all_hook_obs')) {
         $ret = array_merge([], $option['T' . strval($level)]);
         unset($option['T' . strval($level)]);
         return $ret;
