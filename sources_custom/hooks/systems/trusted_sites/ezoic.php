@@ -58,5 +58,7 @@ class Hook_trusted_sites_ezoic
         $sites[] = '*.id5-sync.com';
         $sites[] = 'id5-sync.com';
         $sites[] = '*.eu-1-id5-sync.com';
+        $sites[] = 'rlcdn.com';
+        $sites[] = '*.rlcdn.com';
     }
 }
