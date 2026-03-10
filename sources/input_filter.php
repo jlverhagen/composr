@@ -284,55 +284,76 @@ function strip_url_to_representative_domain(string $url) : string
 function get_trusted_sites(int $level, bool $include_self = true) : array
 {
     global $SITE_INFO;
+    static $option = [];
 
-    if (function_exists('get_option')) {
-        $option = '';
-        if ($level >= 1) {
-            $option .= get_option('trusted_sites_1') . "\n";
-            $option .= get_value('trusted_sites_1', '') . "\n"; // Built from hooks
-        }
-        if ($level >= 2) {
-            $option .= get_option('trusted_sites_2') . "\n";
-            $option .= get_value('trusted_sites_2', '') . "\n"; // Built from hooks
-        }
-
-        $trusted_sites = [];
-        foreach (explode("\n", $option) as $allowed_partner) {
-            if (trim($allowed_partner) != '') {
-                $trusted_sites[] = $allowed_partner;
-
-                if ((substr($allowed_partner, 0, 4) != 'www.') && (substr_count($allowed_partner, '.') == 1)) {
-                    $trusted_sites[] = 'www.' . $allowed_partner;
-                }
-            }
-        }
-    } else {
-        $trusted_sites = [];
+    if (isset($option[$level])) {
+        return $option[$level];
     }
 
+    $option[$level] = [];
+
+    // Configuration
+    if ($level >= 1) {
+        $option[$level] = array_merge($option[$level], explode("\n", get_option('trusted_sites_1')));
+    }
+    if ($level >= 2) {
+        $option[$level] = array_merge($option[$level], explode("\n", get_option('trusted_sites_2')));
+    }
+
+    // Hooks
+    $_ts = [];
+    $hook_obs = find_all_hook_obs('systems', 'trusted_sites', 'Hook_trusted_sites_');
+    foreach ($hook_obs as $hook => $ob) {
+        if ($level >= 1) {
+            $ob->find_trusted_sites_1($_ts);
+        }
+        if ($level >= 2) {
+            $ob->find_trusted_sites_2($_ts);
+        }
+    }
+    $option[$level] = array_merge($option[$level], $_ts);
+
+    foreach ($option[$level] as $i => $trusted_site) {
+        // Remove blanks
+        if (trim($trusted_site) == '') {
+            unset($option[$level][$i]);
+            continue;
+        }
+
+        // Add www. version where needed
+        if ((substr($trusted_site, 0, 4) != 'www.') && (substr_count($trusted_site, '.') == 1)) {
+            $option[$level][] = 'www.' . $trusted_site;
+        }
+    }
+
+    // Zone maps
     $zl = strlen('ZONE_MAPPING_');
     foreach ($SITE_INFO as $key => $_val) {
         if ($key !== '' && $key[0] === 'Z' && substr($key, 0, $zl) === 'ZONE_MAPPING_') {
-            $trusted_sites[] = $_val[0];
+            $option[$level][] = $_val[0];
         }
     }
 
+    // Base URL (?)
     if ($include_self) {
         $host = get_base_url_hostname();
         if ($host != '') {
-            $trusted_sites[] = $host;
+            $option[$level][] = $host;
         }
     }
 
+    // Custom base URL
     if (!empty($SITE_INFO['custom_base_url'])) {
         $base_url = $SITE_INFO['custom_base_url'];
         $parsed_url = cms_parse_url_safe($base_url, PHP_URL_HOST);
         if ($parsed_url !== false) {
-            $trusted_sites[] = $parsed_url;
+            $option[$level][] = $parsed_url;
         }
     }
 
-    return $trusted_sites;
+    $option[$level] = array_unique($option[$level]);
+
+    return $option[$level];
 }
 
 /**
