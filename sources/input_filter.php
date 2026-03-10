@@ -293,11 +293,13 @@ function get_trusted_sites(int $level, bool $include_self = true) : array
     $option[$level] = [];
 
     // Configuration
-    if ($level >= 1) {
-        $option[$level] = array_merge($option[$level], explode("\n", get_option('trusted_sites_1')));
-    }
-    if ($level >= 2) {
-        $option[$level] = array_merge($option[$level], explode("\n", get_option('trusted_sites_2')));
+    if (function_exists('get_option')) {
+        if ($level >= 1) {
+            $option[$level] = array_merge($option[$level], explode("\n", get_option('trusted_sites_1')));
+        }
+        if ($level >= 2) {
+            $option[$level] = array_merge($option[$level], explode("\n", get_option('trusted_sites_2')));
+        }
     }
 
     // Hooks
@@ -352,6 +354,13 @@ function get_trusted_sites(int $level, bool $include_self = true) : array
     }
 
     $option[$level] = array_unique($option[$level]);
+
+    // No cache if we could not load config
+    if (!function_exists('get_option')) {
+        $ret = array_merge([], $option[$level]);
+        unset($option[$level]);
+        return $ret;
+    }
 
     return $option[$level];
 }
