@@ -97,17 +97,20 @@ https://csp.withgoogle.com/
  */
 function init__csp()
 {
-    require_code('crypt');
-
     /**
      * CSP Nonce.
      * @global boolean $CSP_NONCE
      */
     global $CSP_NONCE;
-    $CSP_NONCE = get_secure_random_string();
+    if (!isset($CSP_NONCE)) {
+        require_code('crypt');
+        $CSP_NONCE = get_secure_random_string();
+    }
 
     global $CSP_ENABLED;
-    $CSP_ENABLED = false;
+    if (!isset($CSP_ENABLED)) {
+        $CSP_ENABLED = false;
+    }
 
     if (!defined('CSP_PRETTY_STRICT')) {
         define('CSP_PRETTY_STRICT', serialize([
