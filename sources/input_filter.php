@@ -286,19 +286,24 @@ function get_trusted_sites(int $level, bool $include_self = true) : array
     global $SITE_INFO;
     static $option = [];
 
-    if (isset($option[$level])) {
-        return $option[$level];
+    /*
+        NB: We cast $level to a string by adding 'T' for two reasons:
+            - We might have to later unset this; we don't want keys to shift [this will happen if it's an integer].
+            - PHP has a habit of automatically changing numeric strings to integers; our 'T' fixes that.
+    */
+    if (isset($option['T' . strval($level)])) {
+        return $option['T' . strval($level)];
     }
 
-    $option[$level] = [];
+    $option['T' . strval($level)] = [];
 
     // Configuration
     if (function_exists('get_option')) {
         if ($level >= 1) {
-            $option[$level] = array_merge($option[$level], explode("\n", get_option('trusted_sites_1')));
+            $option['T' . strval($level)] = array_merge($option['T' . strval($level)], explode("\n", get_option('trusted_sites_1')));
         }
         if ($level >= 2) {
-            $option[$level] = array_merge($option[$level], explode("\n", get_option('trusted_sites_2')));
+            $option['T' . strval($level)] = array_merge($option['T' . strval($level)], explode("\n", get_option('trusted_sites_2')));
         }
     }
 
@@ -313,18 +318,18 @@ function get_trusted_sites(int $level, bool $include_self = true) : array
             $ob->find_trusted_sites_2($_ts);
         }
     }
-    $option[$level] = array_merge($option[$level], $_ts);
+    $option['T' . strval($level)] = array_merge($option['T' . strval($level)], $_ts);
 
-    foreach ($option[$level] as $i => $trusted_site) {
+    foreach ($option['T' . strval($level)] as $i => $trusted_site) {
         // Remove blanks
         if (trim($trusted_site) == '') {
-            unset($option[$level][$i]);
+            unset($option['T' . strval($level)][$i]);
             continue;
         }
 
         // Add www. version where needed
         if ((substr($trusted_site, 0, 4) != 'www.') && (substr_count($trusted_site, '.') == 1)) {
-            $option[$level][] = 'www.' . $trusted_site;
+            $option['T' . strval($level)][] = 'www.' . $trusted_site;
         }
     }
 
@@ -332,7 +337,7 @@ function get_trusted_sites(int $level, bool $include_self = true) : array
     $zl = strlen('ZONE_MAPPING_');
     foreach ($SITE_INFO as $key => $_val) {
         if ($key !== '' && $key[0] === 'Z' && substr($key, 0, $zl) === 'ZONE_MAPPING_') {
-            $option[$level][] = $_val[0];
+            $option['T' . strval($level)][] = $_val[0];
         }
     }
 
@@ -340,7 +345,7 @@ function get_trusted_sites(int $level, bool $include_self = true) : array
     if ($include_self) {
         $host = get_base_url_hostname();
         if ($host != '') {
-            $option[$level][] = $host;
+            $option['T' . strval($level)][] = $host;
         }
     }
 
@@ -349,20 +354,20 @@ function get_trusted_sites(int $level, bool $include_self = true) : array
         $base_url = $SITE_INFO['custom_base_url'];
         $parsed_url = cms_parse_url_safe($base_url, PHP_URL_HOST);
         if ($parsed_url !== false) {
-            $option[$level][] = $parsed_url;
+            $option['T' . strval($level)][] = $parsed_url;
         }
     }
 
-    $option[$level] = array_unique($option[$level]);
+    $option['T' . strval($level)] = array_unique($option['T' . strval($level)]);
 
     // No cache if we could not load config
     if (!function_exists('get_option')) {
-        $ret = array_merge([], $option[$level]);
-        unset($option[$level]);
+        $ret = array_merge([], $option['T' . strval($level)]);
+        unset($option['T' . strval($level)]);
         return $ret;
     }
 
-    return $option[$level];
+    return $option['T' . strval($level)];
 }
 
 /**
