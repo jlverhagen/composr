@@ -166,9 +166,6 @@ class Source_database_connector
                     $where .= $key . ' IN (';
                     $first_entry = true;
                     foreach ($value as $_value) {
-                        if ($_value === null) {
-                            continue;
-                        }
                         if (($_value === '') && ($this->driver->empty_is_null())) {
                             $_value = ' ';
                         }
@@ -183,7 +180,11 @@ class Source_database_connector
                         } elseif (is_integer($_value)) {
                             $where .= strval($_value);
                         } else {
-                            $where .= "'" . db_escape_string($_value) . "'";
+                            if ($_value === null) {
+                                $where .= 'NULL';
+                            } else {
+                                $where .= "'" . db_escape_string($_value) . "'";
+                            }
                         }
                     }
                     $where .= ')';

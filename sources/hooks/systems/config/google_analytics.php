@@ -68,15 +68,4 @@ class Hook_config_google_analytics
     {
         return '';
     }
-
-    /**
-     * Code to run after the option is saved, if the value was changed or we are not formally setting it.
-     *
-     * @param  string $new_value The new value
-     */
-    public function postsave_handler(string $new_value)
-    {
-        require_code('caches3');
-        regenerate_trusted_sites_cache();
-    }
 }

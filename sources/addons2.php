@@ -1123,6 +1123,7 @@ function reinstall_addon_soft(string $addon_name, ?array $ini_info = null)
     push_query_limiting(false);
 
     require_code('files2');
+    require_lang('upgrade');
     require_all_core_cms_code();
 
     $addon_info = read_addon_info($addon_name, false, null, $ini_info);
@@ -1131,6 +1132,10 @@ function reinstall_addon_soft(string $addon_name, ?array $ini_info = null)
     require_code('version');
     if (($addon_info['min_cms_version'] == '') || (floatval($addon_info['min_cms_version']) > cms_version_number()) || ((!empty($addon_info['max_cms_version']) && (floatval($addon_info['max_cms_version']) < cms_version_number())))) {
         warn_exit(do_lang_tempcode('ADDON_WARNING_INCOMPATIBILITIES_VERSION', escape_html(float_to_raw_string(cms_version_number())), escape_html($addon_name)));
+    }
+
+    if (is_cli()) {
+        echo "\n" . do_lang('UPGRADER_INSTALLING_ADDON_CLI', comcode_escape($addon_name));
     }
 
     $ob = get_hook_ob('systems', 'addon_registry', filter_naughty_harsh($addon_name), 'Hook_addon_registry_', true);
@@ -1466,6 +1471,7 @@ function upgrade_addon_soft(string $addon_name) : int
 {
     require_code('files2');
     require_code('version2');
+    require_lang('upgrade');
     require_all_core_cms_code();
 
     $rows = $GLOBALS['SITE_DB']->query_select('addons', ['*'], ['addon_name' => $addon_name], '', 1);
@@ -1510,6 +1516,11 @@ function upgrade_addon_soft(string $addon_name) : int
 
         if (method_exists($ob, 'install')) {
             $old = cms_extend_time_limit(TIME_LIMIT_EXTEND__SLUGGISH);
+
+            if (is_cli()) {
+                echo "\n" . do_lang('UPGRADER_UPGRADING_ADDON_CLI', comcode_escape($addon_name));
+            }
+
             $ob->install($upgrade_major_minor, $upgrade_patch);
             cms_set_time_limit($old);
         }

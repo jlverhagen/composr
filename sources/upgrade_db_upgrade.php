@@ -52,6 +52,34 @@ function upgrader_db_upgrade_screen()
 
     $offset = get_param_integer('offset', 0);
 
+    upgrader_db_upgrade($offset);
+}
+
+/**
+ * Database upgrade screen for the terminal.
+ */
+function upgrader_db_upgrade_screen_cli()
+{
+    require_lang('global2');
+
+    echo '**' . do_lang('_UPGRADER_DATABASE_UPGRADE') . '**' . "\n";
+    echo strip_html(do_lang('UPGRADER_DATABASE_UPGRADE_TEXT') . "\n\n");
+
+    // Wait for input to continue
+    echo do_lang('CLI_PRESS_KEY_TO_CONTINUE');
+    fgets(STDIN);
+    echo "\n\n";
+
+
+}
+
+/**
+ * Execute the next stage of our database upgrade.
+ *
+ * @param  integer $offset Our current offset to track progress
+ */
+function upgrader_db_upgrade(int $offset)
+{
     $version_files = cms_version_number();
     $_version_database_cns = get_value('cns_version');
     if ($_version_database_cns === null) { // LEGACY
@@ -72,50 +100,93 @@ function upgrader_db_upgrade_screen()
         // Ensure we do not re-use a temporary file on a new upgrade
         @unlink(get_custom_file_base() . '/data_custom/db_upgrade_temp.bin');
 
-        log_it('UPGRADER_DATABASE_UPGRADE');
+        if (is_cli()) {
+            echo do_lang('UPGRADER_UPGRADE_VERSION') . '... ';
+            $version_upgrade = version_specific();
+            if ($version_upgrade) {
+                log_it('UPGRADER_DATABASE_UPGRADE');
+                echo do_lang('SUCCESS');
+            } else {
+                echo do_lang('UPGRADER_NO_VERSION_UPGRADE');
+            }
 
-        echo '<h3>' . do_lang('UPGRADER_UPGRADE_VERSION') . '</h3>';
-
-        $version_upgrade = version_specific();
-        if ($version_upgrade) {
-            echo do_lang('SUCCESS');
+            echo "\n";
+            upgrader_db_upgrade($offset++);
         } else {
-            echo do_lang('UPGRADER_NO_VERSION_UPGRADE');
+            echo '<h3>' . do_lang('UPGRADER_UPGRADE_VERSION') . '</h3>';
+            $version_upgrade = version_specific();
+            if ($version_upgrade) {
+                log_it('UPGRADER_DATABASE_UPGRADE');
+                echo do_lang('SUCCESS');
+            } else {
+                echo do_lang('UPGRADER_NO_VERSION_UPGRADE');
+            }
         }
     } elseif ($offset == 1) {
-        echo '<h3>' . do_lang('UPGRADER_UPGRADE_CNS') . '</h3>';
-
-        if ($version_database_cns < $version_files) {
-            if (cns_upgrade()) {
-                echo '<p>' . do_lang('SUCCESS') . '</p>';
+        if (is_cli()) {
+            echo do_lang('UPGRADER_UPGRADE_CNS') . '... ';
+            if ($version_database_cns < $version_files) {
+                if (cns_upgrade()) {
+                    echo do_lang('SUCCESS');
+                } else {
+                    echo do_lang('UPGRADER_NO_CNS_UPGRADE');
+                }
             } else {
                 echo do_lang('UPGRADER_NO_CNS_UPGRADE');
             }
+
+            echo "\n";
+            upgrader_db_upgrade($offset++);
         } else {
-            echo do_lang('UPGRADER_NO_CNS_UPGRADE');
+            echo '<h3>' . do_lang('UPGRADER_UPGRADE_CNS') . '</h3>';
+            if ($version_database_cns < $version_files) {
+                if (cns_upgrade()) {
+                    echo '<p>' . do_lang('SUCCESS') . '</p>';
+                } else {
+                    echo do_lang('UPGRADER_NO_CNS_UPGRADE');
+                }
+            } else {
+                echo do_lang('UPGRADER_NO_CNS_UPGRADE');
+            }
         }
     } elseif (($offset >= 2) && ($offset < 1000000)) {
-        echo '<h3>' . do_lang('_UPGRADER_UPGRADE_MODULES') . '</h3>';
-
-        $done = upgrade_addons($version_database_cns, $offset);
-        if ($done != '') {
-            echo do_lang('UPGRADER_UPGRADE_MODULES', $done);
+        if (is_cli()) {
+            upgrade_addons($version_database_cns, $offset);
+            upgrader_db_upgrade($offset++);
+        } else {
+            echo '<h3>' . do_lang('_UPGRADER_UPGRADE_MODULES') . '</h3>';
+            $done = upgrade_addons($version_database_cns, $offset);
+            if ($done != '') {
+                echo do_lang('UPGRADER_UPGRADE_MODULES', $done);
+            }
         }
     } elseif ($offset == 1000000) {
-        echo '<h3>' . do_lang('UPGRADER_UPGRADE_DB_SPECIFIC') . '</h3>';
-        echo '<p>' . do_lang('_UPGRADER_UPGRADE_DB_SPECIFIC') . '</p>';
+        if (is_cli()) {
+            echo "\n" . do_lang('UPGRADER_UPGRADE_DB_SPECIFIC') . '... ';
+            echo "\n" . do_lang('_UPGRADER_UPGRADE_DB_SPECIFIC');
 
-        // Database-specific upgrade
-        $database_upgrade = database_specific();
-        set_value('db_version', strval(cms_version_time_db()), true);
-        clear_caches_2();
+            // Database-specific upgrade
+            $database_upgrade = database_specific();
+            set_value('db_version', strval(cms_version_time_db()), true);
+            clear_caches_2();
 
-        echo '<p>' . do_lang('SUCCESS') . '</p>';
-        echo '<p><strong>' . do_lang('UPGRADER_UPGRADE_DB_DONE') . '</strong></p>';
+            echo do_lang('SUCCESS');
+        } else {
+            echo '<h3>' . do_lang('UPGRADER_UPGRADE_DB_SPECIFIC') . '</h3>';
+            echo '<p>' . do_lang('_UPGRADER_UPGRADE_DB_SPECIFIC') . '</p>';
+
+            // Database-specific upgrade
+            $database_upgrade = database_specific();
+            set_value('db_version', strval(cms_version_time_db()), true);
+            clear_caches_2();
+
+            echo '<p>' . do_lang('SUCCESS') . '</p>';
+            echo '<p><strong>' . do_lang('UPGRADER_UPGRADE_DB_DONE') . '</strong></p>';
+        }
     }
 
     // Add a self-executing proceed button
-    if ($offset < 1000000) {
+    if (($offset < 1000000) && (!is_cli())) {
         $offset++;
         $url = get_base_url() . '/upgrader.php?type=db_upgrade&offset=' . escape_html(strval($offset));
         $given_password = escape_html(post_param_string('given_password', false, INPUT_FILTER_PASSWORD));
@@ -212,7 +283,7 @@ function version_specific() : bool
             'special_values' => 'SERIAL',
         ]);
 
-        echo do_lang('UPGRADER_UPGRADED_CUSTOM', '11', 'Added foreign key meta table');
+        upgrader_echo(do_lang('UPGRADER_UPGRADED_CUSTOM', '11', 'Added foreign key meta table'));
     }
 
     if ($version_database < $version_files) {
@@ -229,7 +300,7 @@ function version_specific() : bool
                 }
                 closedir($dh);
             }
-            echo do_lang('UPGRADER_UPGRADED_CUSTOM', '9', 'Migrated imports/mods to imports/addons');
+            upgrader_echo(do_lang('UPGRADER_UPGRADED_CUSTOM', '9', 'Migrated imports/mods to imports/addons'));
         }
 
         if ($version_database < 10.0) {
@@ -280,7 +351,7 @@ function version_specific() : bool
                 $GLOBALS['SITE_DB']->query_update('modules', ['module_the_name' => $to], ['module_the_name' => $from], '', 1);
                 $GLOBALS['SITE_DB']->query('UPDATE ' . get_table_prefix() . 'menu_items SET i_url=REPLACE(i_url,\'' . $from . '\',\'' . $to . '\')');
             }
-            echo do_lang('UPGRADER_RENAMED_MODULES', '10', $_out);
+            upgrader_echo(do_lang('UPGRADER_RENAMED_MODULES', '10', $_out));
 
             /*
             $deleted_modules = [
@@ -302,7 +373,7 @@ function version_specific() : bool
                 $GLOBALS['SITE_DB']->query_delete('blocks', ['block_name' => $to]);
                 $GLOBALS['SITE_DB']->query_update('blocks', ['block_name' => $to], ['block_name' => $from], '', 1);
             }
-            echo do_lang('UPGRADER_RENAMED_MODULES', '10', $_out);
+            upgrader_echo(do_lang('UPGRADER_RENAMED_MODULES', '10', $_out));
 
             $deleted_blocks = [
                 'main_feedback',
@@ -401,7 +472,7 @@ function version_specific() : bool
                     $GLOBALS['SITE_DB']->promote_text_field_to_comcode('f_member_custom_fields', $db_field, 'mf_member_id');
                 }
             }
-            echo do_lang('UPGRADER_UPGRADED_CUSTOM', '10', 'applied fix for legacy no-multi-lang crash bug');
+            upgrader_echo(do_lang('UPGRADER_UPGRADED_CUSTOM', '10', 'applied fix for legacy no-multi-lang crash bug'));
 
             // For old (and renamed) non-bundled addons
             if ($GLOBALS['SITE_DB']->table_exists('bank')) {
@@ -424,7 +495,7 @@ function version_specific() : bool
             if (addon_installed('catalogues')) {
                 $GLOBALS['SITE_DB']->query('UPDATE ' . get_table_prefix() . 'catalogue_categories SET rep_image=REPLACE(rep_image,\'/grepimages\',\'/repimages\')');
             }
-            echo do_lang('UPGRADER_UPGRADED_CUSTOM', '10', 'uploads/grepimages => uploads/repimages');
+            upgrader_echo(do_lang('UPGRADER_UPGRADED_CUSTOM', '10', 'uploads/grepimages => uploads/repimages'));
 
             // Delete old files
             @unlink(get_file_base() . '/pages/html_custom/EN/cedi_tree_made.htm');
@@ -463,7 +534,7 @@ function version_specific() : bool
                 '#solidborder#' => 'results_table',
             ];
             perform_search_replace($reps);
-            echo do_lang('UPGRADER_UPGRADED_FILE_REPLACEMENTS', '10');
+            upgrader_echo(do_lang('UPGRADER_UPGRADED_FILE_REPLACEMENTS', '10'));
 
             // Old-style comment topics
             $comment_topic_forums = [
@@ -497,9 +568,9 @@ function version_specific() : bool
                 }
             }
             $GLOBALS['FORUM_DB']->query_update('f_topics', ['t_description' => 'Comment: #block_main_comments_guestbook_main'], ['t_description' => 'guestbook: #block_main_comments_guestbook_main'], '', 1);
-            echo do_lang('UPGRADER_UPGRADED_CUSTOM', '10', 'upgraded old-style comment topics');
+            upgrader_echo(do_lang('UPGRADER_UPGRADED_CUSTOM', '10', 'upgraded old-style comment topics'));
 
-            echo do_lang('UPGRADER_UPGRADED_CORE_TABLES', '10');
+            upgrader_echo(do_lang('UPGRADER_UPGRADED_CORE_TABLES', '10'));
         }
 
         if ($version_database < 11.0) {
@@ -563,7 +634,7 @@ function version_specific() : bool
             // InnoDB
             $GLOBALS['SITE_DB']->create_foreign_key('attachment_refs', 'a_id', 'attachments', 'id');
 
-            echo do_lang('UPGRADER_UPGRADED_CORE_TABLES', '11');
+            upgrader_echo(do_lang('UPGRADER_UPGRADED_CORE_TABLES', '11'));
 
             // Renamed blocks
             $remap = [
@@ -576,7 +647,7 @@ function version_specific() : bool
                 $GLOBALS['SITE_DB']->query_delete('blocks', ['block_name' => $to]);
                 $GLOBALS['SITE_DB']->query_update('blocks', ['block_name' => $to], ['block_name' => $from], '', 1);
             }
-            echo do_lang('UPGRADER_RENAMED_MODULES', '11', $_out);
+            upgrader_echo(do_lang('UPGRADER_RENAMED_MODULES', '11', $_out));
 
             // Delete bundled and non-bundled addons that no longer exist (addon => [whether non-bundled, whether being moved between bundled/non-bundled opposed to deleted])
             //  Note that any old tables etc should be removed from the upgrade code in admin_version
@@ -618,7 +689,7 @@ function version_specific() : bool
                     @unlink(get_custom_file_base() . '/sources/hooks/systems/addon_registry/' . $addon . '.php');
                 }
             }
-            echo do_lang('UPGRADER_UNINSTALL_MODULES', '11', $_out);
+            upgrader_echo(do_lang('UPGRADER_UNINSTALL_MODULES', '11', $_out));
 
             // Renamed addons (old name => new name), just in case the user did not process file integrity yet
             //  Note that any table modifications etc should be handled in the upgrade code for the NEW addon / module
@@ -645,7 +716,7 @@ function version_specific() : bool
                 @unlink(get_custom_file_base() . '/sources/hooks/systems/addon_registry/' . $old_addon . '.php');
                 @unlink(get_custom_file_base() . '/sources_custom/hooks/systems/addon_registry/' . $old_addon . '.php');
             }
-            echo do_lang('UPGRADER_RENAMED_MODULES', '11', $_out);
+            upgrader_echo(do_lang('UPGRADER_RENAMED_MODULES', '11', $_out));
 
             // Deleted modules
             $deleted_modules = [
@@ -666,7 +737,7 @@ function version_specific() : bool
                 $_out .= '<li><kbd>' . $module_name . '</kbd></li>';
                 $GLOBALS['SITE_DB']->query_delete('modules', ['module_the_name' => $module_name]);
             }
-            echo do_lang('UPGRADER_UNINSTALL_MODULES', '11', $_out);
+            upgrader_echo(do_lang('UPGRADER_UNINSTALL_MODULES', '11', $_out));
 
             // Deleted blocks
             $deleted_blocks = [
@@ -680,7 +751,7 @@ function version_specific() : bool
                 $_out .= '<li><kbd>' . $block_name . '</kbd></li>';
                 $GLOBALS['SITE_DB']->query_delete('blocks', ['block_name' => $block_name]);
             }
-            echo do_lang('UPGRADER_UNINSTALL_MODULES', '11', $_out);
+            upgrader_echo(do_lang('UPGRADER_UNINSTALL_MODULES', '11', $_out));
 
             // File replacements
             $reps = [
@@ -690,12 +761,12 @@ function version_specific() : bool
                 '#\:start#' => ':home',
             ];
             perform_search_replace($reps);
-            echo do_lang('UPGRADER_UPGRADED_FILE_REPLACEMENTS', '11');
+            upgrader_echo(do_lang('UPGRADER_UPGRADED_FILE_REPLACEMENTS', '11'));
 
             // Delete removed collaboration zone
             require_code('zones3');
             actual_delete_zone('collaboration', true);
-            echo do_lang('UPGRADER_UPGRADED_CUSTOM', '11', 'removed collaboration zone');
+            upgrader_echo(do_lang('UPGRADER_UPGRADED_CUSTOM', '11', 'removed collaboration zone'));
 
             // Make sure all attachments have a GUID if Commandr is installed (attachments are now resource meta-aware)
             if (addon_installed('commandr')) {
@@ -710,6 +781,8 @@ function version_specific() : bool
                     }
                     $start += $max;
                 } while (count($rows) > 0);
+
+                upgrader_echo(do_lang('UPGRADER_UPGRADED_CUSTOM', '11', 'added GUID monikers for attachments'));
             }
         }
 
@@ -1076,7 +1149,10 @@ function upgrade_addons(float $from_cms_version, int &$offset) : string
 
             return '<li>' . do_lang('UPGRADER_INSTALLED_ADDON', '<kbd>' . escape_html($addon_name) . '</kbd>') . '</li>';
         } elseif ($ret == -1) {
-            return '<li>' . do_lang('UPGRADER_ADDON_INCOMPATIBLE', '<kbd>' . escape_html($addon_name) . '</kbd>') . '</li>';
+            if (is_cli()) {
+                upgrader_echo(do_lang('UPGRADER_ADDON_INCOMPATIBLE', '<kbd>' . escape_html($addon_name) . '</kbd>'));
+            }
+            return '<li>' . do_lang('UPGRADER_ADDON_INCOMPATIBLE', escape_html($addon_name)) . '</li>';
         } else {
             $offset++;
         }
@@ -1131,4 +1207,18 @@ function cns_upgrade() : bool
         return true;
     }
     return false;
+}
+
+/**
+ * A client-aware helper for spitting out text regarding upgrade progress.
+ *
+ * @param  LONG_TEXT $out The HTML text to output (usually from do_lang)
+ */
+function upgrader_echo(string $out)
+{
+    if (is_cli()) {
+        echo "\n" . strip_html($out);
+    } else {
+        echo $out;
+    }
 }

@@ -64,4 +64,9 @@ require_once $FILE_BASE . '/sources/bootstrap.php';
 require_code__bootstrap('global');
 
 require_code('upgrade');
-upgrade_script();
+
+if (is_cli()) {
+    upgrade_script_cli();
+} else {
+    upgrade_script();
+}

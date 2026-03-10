@@ -36,7 +36,6 @@
 function upgrade_script()
 {
     // Init...
-
     cms_ini_set('ocproducts.xss_detect', '0');
 
     require_lang('upgrade');
@@ -240,6 +239,29 @@ function upgrade_script()
     }
 
     upgrader_output_footer();
+}
+
+/**
+ * Execute an upgrade operation in the terminal.
+ */
+function upgrade_script_cli()
+{
+    if (!is_cli()) {
+        warn_exit(do_lang_tempcode('INTERNAL_ERROR', escape_html('TODO')));
+    }
+
+    $type = $_SERVER['argv'][0];
+    switch ($type) {
+        case 'db_upgrade':
+            require_code('upgrade_db_upgrade');
+            upgrader_db_upgrade_screen_cli();
+            break;
+        case 'innodb_upgrade':
+            // TODO
+            break;
+        default:
+            echo 'Invalid command'; // TODO: language string
+    }
 }
 
 /**
@@ -493,6 +515,8 @@ END;
  */
 function upgrader_menu_screen() : string
 {
+    require_code('files2');
+
     // Clear cache automatically
     clear_caches_1();
 
@@ -520,6 +544,7 @@ function upgrader_menu_screen() : string
         $b = do_lang('UNKNOWN');
     }
     $l_up_info = do_lang('UPGRADER_UP_INFO' . (($a == $b) ? '_1' : '_2'), $a, $b);
+    $l_db_php = do_lang('UPGRADER_DB_PHP', comcode_escape(find_php_path()), comcode_escape(get_file_base()));
 
     // Clear cache link
     $l_clear_caches = upgrader_link('upgrader.php?type=decache', do_lang('UPGRADER_CLEAR_CACHES'), false);
@@ -684,7 +709,7 @@ function upgrader_menu_screen() : string
     $step_num++;
     $_step_num = strval($step_num);
     $out .= "
-                    <tr><th>{$_step_num}</th><td>{$l_db_upgrade}<br />{$l_up_info}</td><td>" . escape_html(display_time_period(60 * 5)) . "</td></tr>
+                    <tr><th>{$_step_num}</th><td>{$l_db_upgrade}<br />{$l_up_info}<br />{$l_db_php}</td><td>" . escape_html(display_time_period(60 * 5)) . "</td></tr>
     ";
 
     // InnoDB upgrade

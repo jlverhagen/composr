@@ -8,10 +8,12 @@ function aceComposrLoader(textareaId, programmingLanguage, autoRefresh) {
     // Create Ace editor div from textarea
     var textarea = document.getElementById(textareaId);
     var val = textarea.value;
+
     var div = document.createElement('div');
     var aceId = textareaId + '__ace';
     div.id = aceId;
     div.style.height = (textarea.rows * 20) + 'px';
+
     textarea.style.display = 'none';
     textarea.parentNode.insertBefore(div, textarea);
 
@@ -27,6 +29,7 @@ function aceComposrLoader(textareaId, programmingLanguage, autoRefresh) {
     if (val.includes('{+') || val.includes('{$')) {
         // Troublesome Tempcode, so no syntax validation
         editorSession.setOption('useWorker', false);
+        console.log('Workers disabled; editor contains Tempcode.');
     }
 
     // Save reference

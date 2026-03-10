@@ -403,7 +403,7 @@ class Hook_sitemap_zone extends Source_hook_sitemap_base
                     if ($page_or_list == '') {
                         $_comcode_page_db_rows = [];
                     } else {
-                        $_comcode_page_db_rows = $GLOBALS['SITE_DB']->query_select('cached_comcode_pages a LEFT JOIN ' . get_table_prefix() . 'comcode_pages b ON a.the_zone=b.the_zone AND a.the_page=b.the_page', ['cc_page_title', 'p_add_date', 'p_edit_date', 'p_submitter', 'a.the_zone', 'a.the_page'], [], ' WHERE 1=0' . $page_or_list);
+                        $_comcode_page_db_rows = $GLOBALS['SITE_DB']->query_select('cached_comcode_pages a LEFT JOIN ' . get_table_prefix() . 'comcode_pages b ON a.the_zone=b.the_zone AND a.the_page=b.the_page', ['cc_page_title', 'p_add_date', 'p_edit_date', 'p_submitter', 'a.the_zone', 'a.the_page'], [], $page_or_list);
                     }
                     $comcode_page_db_rows = [];
                     foreach ($_comcode_page_db_rows as $comcode_page_db_row) {

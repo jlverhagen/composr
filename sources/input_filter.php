@@ -284,55 +284,92 @@ function strip_url_to_representative_domain(string $url) : string
 function get_trusted_sites(int $level, bool $include_self = true) : array
 {
     global $SITE_INFO;
+    static $option = [];
 
-    if (function_exists('get_option')) {
-        $option = '';
-        if ($level >= 1) {
-            $option .= get_option('trusted_sites_1') . "\n";
-            $option .= get_value('trusted_sites_1', '') . "\n"; // Built from hooks
-        }
-        if ($level >= 2) {
-            $option .= get_option('trusted_sites_2') . "\n";
-            $option .= get_value('trusted_sites_2', '') . "\n"; // Built from hooks
-        }
-
-        $trusted_sites = [];
-        foreach (explode("\n", $option) as $allowed_partner) {
-            if (trim($allowed_partner) != '') {
-                $trusted_sites[] = $allowed_partner;
-
-                if ((substr($allowed_partner, 0, 4) != 'www.') && (substr_count($allowed_partner, '.') == 1)) {
-                    $trusted_sites[] = 'www.' . $allowed_partner;
-                }
-            }
-        }
-    } else {
-        $trusted_sites = [];
+    /*
+        NB: We cast $level to a string by adding 'T' for two reasons:
+            - We might have to later unset this; we don't want keys to shift [this will happen if it's an integer].
+            - PHP has a habit of automatically changing numeric strings to integers; our 'T' fixes that.
+    */
+    if (isset($option['T' . strval($level)])) {
+        return $option['T' . strval($level)];
     }
 
+    $option['T' . strval($level)] = [];
+
+    // Configuration
+    if (function_exists('get_option')) {
+        if ($level >= 1) {
+            $option['T' . strval($level)] = array_merge($option['T' . strval($level)], explode("\n", get_option('trusted_sites_1')));
+        }
+        if ($level >= 2) {
+            $option['T' . strval($level)] = array_merge($option['T' . strval($level)], explode("\n", get_option('trusted_sites_2')));
+        }
+    }
+
+    // Hooks
+    if (function_exists('find_all_hook_obs')) {
+        $_ts = [];
+        $hook_obs = find_all_hook_obs('systems', 'trusted_sites', 'Hook_trusted_sites_');
+        foreach ($hook_obs as $hook => $ob) {
+            if ($level >= 1) {
+                $ob->find_trusted_sites_1($_ts);
+            }
+            if ($level >= 2) {
+                $ob->find_trusted_sites_2($_ts);
+            }
+        }
+        $option['T' . strval($level)] = array_merge($option['T' . strval($level)], $_ts);
+    }
+
+    foreach ($option['T' . strval($level)] as $i => $trusted_site) {
+        // Remove blanks
+        if (trim($trusted_site) == '') {
+            unset($option['T' . strval($level)][$i]);
+            continue;
+        }
+
+        // Add www. version where needed
+        if ((substr($trusted_site, 0, 4) != 'www.') && (substr_count($trusted_site, '.') == 1)) {
+            $option['T' . strval($level)][] = 'www.' . $trusted_site;
+        }
+    }
+
+    // Zone maps
     $zl = strlen('ZONE_MAPPING_');
     foreach ($SITE_INFO as $key => $_val) {
         if ($key !== '' && $key[0] === 'Z' && substr($key, 0, $zl) === 'ZONE_MAPPING_') {
-            $trusted_sites[] = $_val[0];
+            $option['T' . strval($level)][] = $_val[0];
         }
     }
 
+    // Base URL (?)
     if ($include_self) {
         $host = get_base_url_hostname();
         if ($host != '') {
-            $trusted_sites[] = $host;
+            $option['T' . strval($level)][] = $host;
         }
     }
 
+    // Custom base URL
     if (!empty($SITE_INFO['custom_base_url'])) {
         $base_url = $SITE_INFO['custom_base_url'];
         $parsed_url = cms_parse_url_safe($base_url, PHP_URL_HOST);
         if ($parsed_url !== false) {
-            $trusted_sites[] = $parsed_url;
+            $option['T' . strval($level)][] = $parsed_url;
         }
     }
 
-    return $trusted_sites;
+    $option['T' . strval($level)] = array_unique($option['T' . strval($level)]);
+
+    // No cache if we could not load config or hooks
+    if (!function_exists('get_option') || !function_exists('find_all_hook_obs')) {
+        $ret = array_merge([], $option['T' . strval($level)]);
+        unset($option['T' . strval($level)]);
+        return $ret;
+    }
+
+    return $option['T' . strval($level)];
 }
 
 /**

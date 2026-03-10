@@ -1,4 +1,3 @@
-
 <?php /*
 
  The contents of this file are subject to the Common Public Attribution License Version 1.0 (the "License");
@@ -58,5 +57,7 @@ class Hook_trusted_sites_ezoic
         $sites[] = '*.id5-sync.com';
         $sites[] = 'id5-sync.com';
         $sites[] = '*.eu-1-id5-sync.com';
+        $sites[] = 'rlcdn.com';
+        $sites[] = '*.rlcdn.com';
     }
 }
