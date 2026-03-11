@@ -63,14 +63,18 @@ function upgrader_db_upgrade_screen_cli()
     require_lang('global2');
 
     echo '**' . do_lang('_UPGRADER_DATABASE_UPGRADE') . '**' . "\n";
-    echo strip_html(do_lang('UPGRADER_DATABASE_UPGRADE_TEXT') . "\n\n");
+    echo strip_html(do_lang('UPGRADER_DATABASE_UPGRADE_TEXT')) . "\n\n";
 
     // Wait for input to continue
     echo do_lang('CLI_PRESS_KEY_TO_CONTINUE');
-    fgets(STDIN);
+    $output = fgets(STDIN);
     echo "\n\n";
 
+    upgrader_db_upgrade(0);
 
+    echo "\n\n";
+    echo do_lang('UPGRADER_UPGRADE_DB_DONE');
+    echo "\n\n";
 }
 
 /**
@@ -111,7 +115,7 @@ function upgrader_db_upgrade(int $offset)
             }
 
             echo "\n";
-            upgrader_db_upgrade($offset++);
+            upgrader_db_upgrade(++$offset);
         } else {
             echo '<h3>' . do_lang('UPGRADER_UPGRADE_VERSION') . '</h3>';
             $version_upgrade = version_specific();
@@ -136,7 +140,7 @@ function upgrader_db_upgrade(int $offset)
             }
 
             echo "\n";
-            upgrader_db_upgrade($offset++);
+            upgrader_db_upgrade(++$offset);
         } else {
             echo '<h3>' . do_lang('UPGRADER_UPGRADE_CNS') . '</h3>';
             if ($version_database_cns < $version_files) {
@@ -152,7 +156,7 @@ function upgrader_db_upgrade(int $offset)
     } elseif (($offset >= 2) && ($offset < 1000000)) {
         if (is_cli()) {
             upgrade_addons($version_database_cns, $offset);
-            upgrader_db_upgrade($offset++);
+            upgrader_db_upgrade(++$offset);
         } else {
             echo '<h3>' . do_lang('_UPGRADER_UPGRADE_MODULES') . '</h3>';
             $done = upgrade_addons($version_database_cns, $offset);
