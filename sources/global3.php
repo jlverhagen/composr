@@ -6445,3 +6445,23 @@ function log_stats(?string $page_link, int $pg_time)
         }
     }
 }
+
+/**
+ * Get the human-readable form of a language string codename.
+ * There must never be a non-null parameter after a null parameter, and if $parameter3 is an array none of those array elements may be null.
+ * Ideally either all parameters are Tempcode, or none are. If the first parameter is Tempcode, we will consider we want to avoid evaluating Tempcode and therefore we will return Tempcode.
+ * Further documentation: https://www.youtube.com/watch?v=rinz9Avvq6A.
+ *
+ * @param  ID_TEXT $codename The language string codename
+ * @param  ?mixed $parameter1 The first parameter [string or Tempcode] (replaces {1}) (null: none, and ignore all other parameters)
+ * @param  ?mixed $parameter2 The second parameter [string or Tempcode] (replaces {2}) (null: none, and ignore $parameter3)
+ * @param  ?mixed $parameter3 The third parameter (replaces {3}). May be an array of [of string or Tempcode], to allow any number of additional args (null: none)
+ * @param  ?LANGUAGE_NAME $lang The language to use (null: user's language)
+ * @param  boolean $require_result Whether to cause the software to exit if the lookup does not succeed
+ * @return ?mixed The human-readable content (null: not found). The same type as $parameter1.
+ */
+function do_lang(string $codename, $parameter1 = null, $parameter2 = null, $parameter3 = null, ?string $lang = null, bool $require_result = true)
+{
+    require_code('lang');
+    return _do_lang($codename, $parameter1, $parameter2, $parameter3, $lang, $require_result);
+}
