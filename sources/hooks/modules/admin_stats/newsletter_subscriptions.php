@@ -99,8 +99,6 @@ class Hook_admin_stats_newsletter_subscriptions extends Source_hook_stats_provid
                     }
                     $this->data_buckets['newsletter_subscriptions'][$pivot][$pivot_interval][$pivot_value]++;
                 }
-
-                $this->dump_data_buckets_if_necessary();
             }
 
             $start += $max;

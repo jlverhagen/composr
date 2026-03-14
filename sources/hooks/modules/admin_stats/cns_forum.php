@@ -130,12 +130,8 @@ class Hook_admin_stats_cns_forum extends Source_hook_stats_provider
     {
         require_code('temporal');
 
-        $server_timezone = get_server_timezone();
-
         $max = 1000;
         $start = 0;
-
-        $date_pivots = $this->get_date_pivots();
 
         $query = 'SELECT t_forum_id,t_cache_first_time FROM ' . $GLOBALS['FORUM_DB']->get_table_prefix() . 'f_topics WHERE ';
         $query .= 't_cache_first_time>=' . strval($start_time) . ' AND ';
@@ -148,26 +144,12 @@ class Hook_admin_stats_cns_forum extends Source_hook_stats_provider
                 if ($timestamp === null) {
                     continue;
                 }
-                $timestamp = tz_time($timestamp, $server_timezone);
 
-                foreach (array_keys($date_pivots) as $pivot) {
-                    $pivot_interval = $this->calculate_date_pivot_interval($pivot, $timestamp);
-                    $pivot_value = $this->calculate_date_pivot_value($pivot, $timestamp);
-
-                    if ($row['t_forum_id'] === null) {
-                        if (!isset($this->data_buckets['private_topics'][$pivot][$pivot_interval][$pivot_value])) {
-                            $this->data_buckets['private_topics'][$pivot][$pivot_interval][$pivot_value] = 0;
-                        }
-                        $this->data_buckets['private_topics'][$pivot][$pivot_interval][$pivot_value]++;
-                    } else {
-                        if (!isset($this->data_buckets['public_topics'][$pivot][$pivot_interval][$pivot_value])) {
-                            $this->data_buckets['public_topics'][$pivot][$pivot_interval][$pivot_value] = 0;
-                        }
-                        $this->data_buckets['public_topics'][$pivot][$pivot_interval][$pivot_value]++;
-                    }
+                if ($row['t_forum_id'] === null) {
+                    $this->save_stat('private_topics', $timestamp, []);
+                } else {
+                    $this->save_stat('public_topics', $timestamp, []);
                 }
-
-                $this->dump_data_buckets_if_necessary();
             }
 
             $start += $max;
@@ -183,26 +165,12 @@ class Hook_admin_stats_cns_forum extends Source_hook_stats_provider
             $rows = $GLOBALS['FORUM_DB']->query($query, $max, $start);
             foreach ($rows as $row) {
                 $timestamp = $row['p_time'];
-                $timestamp = tz_time($timestamp, $server_timezone);
 
-                foreach (array_keys($date_pivots) as $pivot) {
-                    $pivot_interval = $this->calculate_date_pivot_interval($pivot, $timestamp);
-                    $pivot_value = $this->calculate_date_pivot_value($pivot, $timestamp);
-
-                    if (($row['p_cache_forum_id'] === null) || ($row['p_whisper_to_member'] !== null)) {
-                        if (!isset($this->data_buckets['private_posts'][$pivot][$pivot_interval][$pivot_value])) {
-                            $this->data_buckets['private_posts'][$pivot][$pivot_interval][$pivot_value] = 0;
-                        }
-                        $this->data_buckets['private_posts'][$pivot][$pivot_interval][$pivot_value]++;
-                    } else {
-                        if (!isset($this->data_buckets['public_posts'][$pivot][$pivot_interval][$pivot_value])) {
-                            $this->data_buckets['public_posts'][$pivot][$pivot_interval][$pivot_value] = 0;
-                        }
-                        $this->data_buckets['public_posts'][$pivot][$pivot_interval][$pivot_value]++;
-                    }
+                if (($row['p_cache_forum_id'] === null) || ($row['p_whisper_to_member'] !== null)) {
+                    $this->save_stat('private_posts', $timestamp, []);
+                } else {
+                    $this->save_stat('public_posts', $timestamp, []);
                 }
-
-                $this->dump_data_buckets_if_necessary();
             }
 
             $start += $max;
@@ -219,19 +187,7 @@ class Hook_admin_stats_cns_forum extends Source_hook_stats_provider
             $rows = $GLOBALS['FORUM_DB']->query($query, $max, $start);
             foreach ($rows as $row) {
                 $timestamp = $row['pv_date_time'];
-                $timestamp = tz_time($timestamp, $server_timezone);
-
-                foreach (array_keys($date_pivots) as $pivot) {
-                    $pivot_interval = $this->calculate_date_pivot_interval($pivot, $timestamp);
-                    $pivot_value = $this->calculate_date_pivot_value($pivot, $timestamp);
-
-                    if (!isset($this->data_buckets['topic_poll_votes'][$pivot][$pivot_interval][$pivot_value])) {
-                        $this->data_buckets['topic_poll_votes'][$pivot][$pivot_interval][$pivot_value] = 0;
-                    }
-                    $this->data_buckets['topic_poll_votes'][$pivot][$pivot_interval][$pivot_value]++;
-                }
-
-                $this->dump_data_buckets_if_necessary();
+                $this->save_stat('topic_poll_votes', $timestamp, []);
             }
 
             $start += $max;

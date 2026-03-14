@@ -116,8 +116,6 @@ class Hook_admin_stats_invites extends Source_hook_stats_provider
                         $this->data_buckets['invites_taken'][$pivot][$pivot_interval][$pivot_value]++;
                     }
                 }
-
-                $this->dump_data_buckets_if_necessary();
             }
 
             $start += $max;

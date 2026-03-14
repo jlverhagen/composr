@@ -174,8 +174,6 @@ class Hook_admin_stats_comments extends Source_hook_stats_provider
                         }
                     }
                 }
-
-                $this->dump_data_buckets_if_necessary();
             }
 
             $start += $max;

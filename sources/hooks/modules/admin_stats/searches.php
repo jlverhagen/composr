@@ -120,8 +120,6 @@ class Hook_admin_stats_searches extends Source_hook_stats_provider
                         $this->data_buckets['internal_keywords'][$pivot][$pivot_interval][$pivot_value][$keyword]++;
                     }
                 }
-
-                $this->dump_data_buckets_if_necessary();
             }
 
             $start += $max;

@@ -128,8 +128,6 @@ class Hook_admin_stats_transactions extends Source_hook_stats_provider
                     }
                     $this->data_buckets['transaction_income'][$pivot][$pivot_interval][$pivot_value][$product_name] += $row['t_price'];
                 }
-
-                $this->dump_data_buckets_if_necessary();
             }
 
             $start += $max;

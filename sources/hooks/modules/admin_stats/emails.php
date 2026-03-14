@@ -103,8 +103,6 @@ class Hook_admin_stats_emails extends Source_hook_stats_provider
                     }
                     $this->data_buckets['emails_sent'][$pivot][$pivot_interval][$pivot_value]++;
                 }
-
-                $this->dump_data_buckets_if_necessary();
             }
 
             $start += $max;
@@ -134,8 +132,6 @@ class Hook_admin_stats_emails extends Source_hook_stats_provider
                     }
                     $this->data_buckets['unsubscribed_emails'][$pivot][$pivot_interval][$pivot_value]++;
                 }
-
-                $this->dump_data_buckets_if_necessary();
             }
 
             $start += $max;

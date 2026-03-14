@@ -183,8 +183,6 @@ class Hook_admin_stats_cns_members extends Source_hook_stats_provider
                         $this->data_buckets['demographics'][$pivot][$pivot_interval][$pivot_value][$age]++;
                     }
                 }
-
-                $this->dump_data_buckets_if_necessary();
             }
 
             $start += $max;

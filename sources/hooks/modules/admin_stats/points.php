@@ -170,8 +170,6 @@ class Hook_admin_stats_points extends Source_hook_stats_provider
                         $this->data_buckets['gift_points_used'][$pivot][$pivot_interval][$pivot_value] += $row['amount_gift_points'];
                     }
                 }
-
-                $this->dump_data_buckets_if_necessary();
             }
 
             $start += $max;

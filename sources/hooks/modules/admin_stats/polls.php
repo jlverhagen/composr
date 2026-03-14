@@ -96,8 +96,6 @@ class Hook_admin_stats_polls extends Source_hook_stats_provider
                     }
                     $this->data_buckets['poll_votes'][$pivot][$pivot_interval][$pivot_value]++;
                 }
-
-                $this->dump_data_buckets_if_necessary();
             }
 
             $start += $max;

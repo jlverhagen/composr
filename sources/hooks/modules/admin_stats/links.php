@@ -135,8 +135,6 @@ class Hook_admin_stats_links extends Source_hook_stats_provider
                     }
                     $this->data_buckets['link_tracking'][$pivot][$pivot_interval][$pivot_value][$country_code][$url]++;
                 }
-
-                $this->dump_data_buckets_if_necessary();
             }
 
             $start += $max;

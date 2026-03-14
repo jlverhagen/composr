@@ -147,8 +147,6 @@ class Hook_admin_stats_security_incidents extends Source_hook_stats_provider
                         $this->data_buckets['security_incidents_countries'][$pivot][$pivot_interval][$pivot_value]['failedlogins'][$country]++;
                     }
                 }
-
-                $this->dump_data_buckets_if_necessary();
             }
 
             $start += $max;
@@ -187,8 +185,6 @@ class Hook_admin_stats_security_incidents extends Source_hook_stats_provider
                         $this->data_buckets['security_incidents_countries'][$pivot][$pivot_interval][$pivot_value]['hackattacks'][$country]++;
                     }
                 }
-
-                $this->dump_data_buckets_if_necessary();
             }
 
             $start += $max;

@@ -64,7 +64,7 @@ abstract class Source_hook_stats_base
 abstract class Source_hook_stats_provider extends Source_hook_stats_base
 {
     // $data_buckets uses a lot of memory. It is better to manage it as a class-level variable than to pass it by reference.
-    public $data_buckets = [];
+    public $data_buckets = null;
 
     public const GRAPH_LINE_CHART = 1;
     public const GRAPH_PIE_CHART = 2;
@@ -586,176 +586,63 @@ abstract class Source_hook_stats_provider extends Source_hook_stats_base
     }
 
     /**
-     * Check if the data buckets is getting large, and if so, dump to the database delta and then reset.
-     * This should regularly be used in stats hooks to avoid out of memory errors.
+     * Save a data point into the statistics database. This tries to be efficient by doing inserts in batches.
+     * Make sure that $keys does not exceed 255 characters (note that a || delimiter is placed between each key).
      *
-     * @param  boolean $force Whether to forcefully dump regardless of size, e.g. we are finished processing data buckets
-     * @param  boolean $rebuild Whether to rebuild the delta array structure with the buckets for this hook
-     * @param  boolean $flat Whether the data buckets are for the flat statistics data
+     * @param  ?ID_TEXT $bucket The bucket in which the data point belongs (null: We are not saving a new data point; dump what we have in memory into the database)
+     * @param  ?TIME $timestamp The date and time at which this action occurred (null: This is flat/timeless data)
+     * @param  array $keys List of keys defining this data point; this is structural with the lower numeric keys being super-sets of the higher numeric keys
+     * @param  integer $value The number of occurrences of this specific data point at this specific time
      */
-    public function dump_data_buckets_if_necessary(bool $force = false, bool $rebuild = true, $flat = false)
+    public function save_stat(?string $bucket, ?int $timestamp = null, array $keys = [], int $value = 1)
     {
+        // Initialise structure
+        if (!isset($this->data_buckets)) {
+            $this->data_buckets = [
+                'p_date_and_time' => [],
+                'p_bucket' => [],
+                'p_key' => [],
+                'p_value' => [],
+            ];
+        }
+
+        // Insert the data into memory
+        if ($bucket !== null) {
+            $this->data_buckets['p_date_and_time'][] = $timestamp;
+            $this->data_buckets['p_bucket'][] = $bucket;
+            $this->data_buckets['p_key'][] = implode('||', $keys);
+            $this->data_buckets['p_value'][] = $value;
+        }
+
         // Check memory use
         require_code('files');
         $ml = php_return_bytes(ini_get('memory_limit'));
         $current_memory = memory_get_usage(false);
         $near_limit = (($ml > 0) && ($current_memory >= ($ml - (1024 * 1024 * 8)))); // within 8 MB of PHP memory limit
-        $large_bucket = (count($this->data_buckets, COUNT_RECURSIVE) >= 10000);
-
-        $should_dump = ($force || $near_limit || $large_bucket);
+        $large_bucket = (count($this->data_buckets['p_key']) >= 150);
+        $should_dump = ((($bucket === null) || $near_limit || $large_bucket) && (count($this->data_buckets['p_key']) > 0));
 
         // Dump to the database if we determined that we should do so
         if ($should_dump) {
             // Flat data operates on a "replacement"; we replace the value in the database with the value that we calculated.
-            // Also, we perform database operations immediately for flat data instead of using a delta
-            if ($flat) {
-                $groups = [];
-                $insert_rows = [
-                    'p_id' => [],
-                    'p_bucket' => [],
-                    'p_key' => [],
-                    'p_value' => [],
-                ];
-                foreach ($this->data_buckets as $bucket => $data) {
-                    $flattened = [];
-                    $this->flatten_data_buckets($flattened, $data);
-
-                    foreach ($flattened as $f_key => $f_value) {
-                        $pid = stats_get_p_id($bucket, null, null, null, strval($f_key));
-                        $groups[$pid] = true;
-
-                        $insert_rows['p_id'][] = $pid;
-                        $insert_rows['p_bucket'][] = $bucket;
-                        $insert_rows['p_key'][] = $f_key;
-                        $insert_rows['p_value'][] = $f_value;
-
-                        // Time to perform a batch database operation?
-                        if (count($insert_rows['p_id']) >= 100) {
-                            $GLOBALS['SITE_DB']->query_delete('stats_preprocessed_flat', ['p_id' => array_keys($groups)]);
-                            $GLOBALS['SITE_DB']->query_insert('stats_preprocessed_flat', $insert_rows);
-
-                            $groups = [];
-                            $insert_rows = [
-                                'p_id' => [],
-                                'p_bucket' => [],
-                                'p_key' => [],
-                                'p_value' => [],
-                            ];
-                        }
-                    }
-
-                    unset($flattened);
+            foreach ($this->data_buckets['p_bucket'] as $i => $bucket) {
+                if ($this->data_buckets['p_date_and_time'][$i] !== null) { // Not a flat data point; skip
+                    continue;
                 }
 
-                // Fnish what's left
-                if (count($insert_rows['p_id']) > 0) {
-                    $GLOBALS['SITE_DB']->query_delete('stats_preprocessed_flat', ['p_id' => array_keys($groups)]);
-                    $GLOBALS['SITE_DB']->query_insert('stats_preprocessed_flat', $insert_rows);
-                }
-
-                unset($groups);
-                unset($insert_rows);
-            } else {
-                // Timed data operates on a "delta"; we increment the value in the database by the value that we calculated.
-                // For efficiency, we just dump to a delta table and let the scheduler merge it in later.
-                $insert_rows = [
-                    'p_id' => [],
-                    'p_bucket' => [],
-                    'p_pivot' => [],
-                    'p_pivot_interval' => [],
-                    'p_pivot_value' => [],
-                    'p_key' => [],
-                    'p_value' => [],
-                ];
-                foreach ($this->data_buckets as $bucket => $_) {
-                    foreach ($_ as $pivot => $__) {
-                        foreach ($__ as $pivot_interval => $___) {
-                            foreach ($___ as $pivot_value => $data) {
-                                $flattened = [];
-                                $this->flatten_data_buckets($flattened, $data);
-
-                                foreach ($flattened as $f_key => $f_value) {
-                                    $insert_rows['p_id'][] = stats_get_p_id($bucket, $pivot, $pivot_interval, $pivot_value, strval($f_key));
-                                    $insert_rows['p_bucket'][] = $bucket;
-                                    $insert_rows['p_pivot'][] = $pivot;
-                                    $insert_rows['p_pivot_interval'][] = $pivot_interval;
-                                    $insert_rows['p_pivot_value'][] = $pivot_value;
-                                    $insert_rows['p_key'][] = $f_key;
-                                    $insert_rows['p_value'][] = $f_value;
-
-                                    if (count($insert_rows['p_id']) >= 100) {
-                                        $GLOBALS['SITE_DB']->query_insert('stats_preprocessed_delta', $insert_rows);
-
-                                        $insert_rows = [
-                                            'p_id' => [],
-                                            'p_bucket' => [],
-                                            'p_pivot' => [],
-                                            'p_pivot_interval' => [],
-                                            'p_pivot_value' => [],
-                                            'p_key' => [],
-                                            'p_value' => [],
-                                        ];
-                                    }
-                                }
-
-                                // Fnish what's left
-                                if (count($insert_rows['p_id']) > 0) {
-                                    $GLOBALS['SITE_DB']->query_insert('stats_preprocessed_delta', $insert_rows);
-                                }
-                                unset($flattened);
-                                unset($groups);
-                                unset($insert_rows);
-                            }
-                        }
-                    }
-                }
+                $GLOBALS['SITE_DB']->query_delete('stats_preprocessed', ['p_bucket' => $bucket, 'p_key' => $this->data_buckets['p_key'][$i], 'p_date_and_time' => null]);
             }
 
+            $GLOBALS['SITE_DB']->query_insert('stats_preprocessed', $this->data_buckets);
+
+            $this->data_buckets = null;
+
             // Garbage collect
-            $this->data_buckets = [];
             gc_collect_cycles();
             if (function_exists('gc_mem_caches')) {
                 @gc_mem_caches();
             }
-
-            // Rebuild data structure
-            if ($rebuild) {
-                $info = $this->info();
-                if ($info === null) {
-                    return;
-                }
-                foreach (array_keys($info) as $bucket) {
-                    $this->data_buckets[$bucket] = [];
-                }
-            }
         }
-    }
-
-    /**
-     * Flatten a data bucket associative array into a single map.
-     * This takes every depth path in the array and generates a single key (using the || delimiter) mapped to its end value.
-     *
-     * @param  array $ret The flattened array, passed by reference
-     * @param  mixed $cur_structure The current working data; you would pass the array to be flattened here
-     * @param  integer $depth The current depth level of the array
-     * @param  array $cur_key A map of $depth to key name for the current structure
-     */
-    protected function flatten_data_buckets(array &$ret, $cur_structure, int $depth = 0, array $cur_key = [])
-    {
-        // Did we find the end of the line?
-        if (!is_array($cur_structure)) {
-            $ret[implode('||', $cur_key)] = $cur_structure;
-            unset($cur_key[$depth]);
-            return;
-        }
-
-        // Recurse over the array
-        foreach ($cur_structure as $i_key => $i_value) {
-            $cur_key[$depth] = $i_key;
-            $this->flatten_data_buckets($ret, $i_value, $depth + 1, $cur_key);
-        }
-
-        unset($cur_key[$depth]);
     }
 }
 

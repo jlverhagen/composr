@@ -201,8 +201,6 @@ class Hook_admin_stats_events extends Source_hook_stats_provider
                     }
                     $this->data_buckets['events'][$pivot][$pivot_interval][$pivot_value][$event][$country_code]++;
                 }
-
-                $this->dump_data_buckets_if_necessary();
             }
 
             cms_profile_start_for('Hook_admin_stats_events->preprocess_raw_data stats_events loop ' . strval($start));
@@ -271,8 +269,6 @@ class Hook_admin_stats_events extends Source_hook_stats_provider
                         }
                         $this->data_buckets['tracking_code_usage'][$pivot][$pivot_interval][$pivot_value][$tracking_code][$country_code]++;
                     }
-
-                    $this->dump_data_buckets_if_necessary();
                 }
 
                 cms_profile_end_for('Hook_admin_stats_events->preprocess_raw_data stats loop ' . strval($start) . ' tracking codes ' . $session_id);
@@ -297,8 +293,6 @@ class Hook_admin_stats_events extends Source_hook_stats_provider
                             $this->data_buckets['conversion_rates'][$pivot][$pivot_interval][$pivot_value][$event][1]++;
                         }
                     }
-
-                    $this->dump_data_buckets_if_necessary();
                 }
 
                 // Each combination of event tracking code wrt session
@@ -320,8 +314,6 @@ class Hook_admin_stats_events extends Source_hook_stats_provider
                             }
                         }
                     }
-
-                    $this->dump_data_buckets_if_necessary();
                 }
 
                 cms_profile_end_for('Hook_admin_stats_events->preprocess_raw_data stats loop ' . strval($start) . ' events ' . $session_id);

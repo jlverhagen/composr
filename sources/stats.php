@@ -969,33 +969,6 @@ function stats_merge_deltas(int $time_limit = 15)
 }
 
 /**
- * Get the p_id hash of a statistics row.
- *
- * @param  ID_TEXT $p_bucket The name of the bucket
- * @param  ?ID_TEXT $p_pivot The name of the pivot (null: flat data)
- * @param  ?integer $p_pivot_interval The interval index of the pivot (null: flat data)
- * @param  ?integer $p_pivot_value The time point within the interval of the pivot (null: flat data)
- * @param  SHORT_TEXT $p_key The data key
- * @return ID_TEXT The hash
- */
-function stats_get_p_id(string $p_bucket, ?string $p_pivot, ?int $p_pivot_interval, ?int $p_pivot_value, string $p_key) : string
-{
-    $data = $p_bucket;
-    if ($p_pivot !== null) {
-        $data .= '::' . $p_pivot;
-    }
-    if ($p_pivot_interval !== null) {
-        $data .= '::' . strval($p_pivot_interval);
-    }
-    if ($p_pivot_value !== null) {
-        $data .= '::' . strval($p_pivot_value);
-    }
-    $data .= '::' . $p_key;
-
-    return cms_base64_encode($data, false, true, false);
-}
-
-/**
  * Send out KPI notifications, as appropriate based on today's date.
  */
 function send_kpi_notifications()

@@ -150,8 +150,6 @@ class Hook_admin_stats_warnings extends Source_hook_stats_provider
                     }
                     $this->data_buckets['recorded_punishments'][$pivot][$pivot_interval][$pivot_value][$country][$explanation]++;
                 }
-
-                $this->dump_data_buckets_if_necessary();
             }
 
             $start += $max;

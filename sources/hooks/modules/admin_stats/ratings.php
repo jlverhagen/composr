@@ -115,8 +115,6 @@ class Hook_admin_stats_ratings extends Source_hook_stats_provider
                     }
                     $this->data_buckets['ratings'][$pivot][$pivot_interval][$pivot_value][$rating_for_type][$rating]++;
                 }
-
-                $this->dump_data_buckets_if_necessary();
             }
 
             $start += $max;

@@ -98,8 +98,6 @@ class Hook_admin_stats_sitemap extends Source_hook_stats_provider
                     }
                     $this->data_buckets['sitemap_growth'][$pivot][$pivot_interval][$pivot_value][$page_link]++;
                 }
-
-                $this->dump_data_buckets_if_necessary();
             }
 
             $start += $max;

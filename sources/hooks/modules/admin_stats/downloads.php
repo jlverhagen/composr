@@ -106,8 +106,6 @@ class Hook_admin_stats_downloads extends Source_hook_stats_provider
                     }
                     $this->data_buckets['downloads'][$pivot][$pivot_interval][$pivot_value][$country_code]++;
                 }
-
-                $this->dump_data_buckets_if_necessary();
             }
 
             $start += $max;

@@ -168,8 +168,6 @@ class Hook_admin_stats_cms_homesite extends Source_hook_stats_provider
                     }
                     $this->data_buckets['relayed_errors'][$pivot][$pivot_interval][$pivot_value]['']++;
                 }
-
-                $this->dump_data_buckets_if_necessary();
             }
 
             $start += $max;
@@ -227,8 +225,6 @@ class Hook_admin_stats_cms_homesite extends Source_hook_stats_provider
                         }
                         $this->data_buckets['tracker_issue_activity'][$pivot][$pivot_interval][$pivot_value]['all']++;
                     }
-
-                    $this->dump_data_buckets_if_necessary();
                 }
 
                 $start += $max;
@@ -287,8 +283,6 @@ class Hook_admin_stats_cms_homesite extends Source_hook_stats_provider
                         }
                         $this->data_buckets['tracker_issues'][$pivot][$pivot_interval][$pivot_value]['all']++;
                     }
-
-                    $this->dump_data_buckets_if_necessary();
                 }
 
                 $start += $max;
