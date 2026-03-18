@@ -655,10 +655,10 @@ function unsubscribe_script()
 
     if ($email !== null) { // E-mail provided? See if we can unsubscribe.
         $can_unsubscribe = false;
-        $checksum = post_param_string('checksum', null);
+        $checksum = either_param_string('checksum', null);
 
         if ($checksum !== null) { // Checksum provided; we are trying a one-click unsubscribe
-            $nonce = post_param_string('nonce', null);
+            $nonce = either_param_string('nonce', null);
 
             if (($nonce !== null) && ratchet_hash_verify($nonce . $email, get_site_salt(), $checksum)) {
                 $can_unsubscribe = true;
