@@ -113,10 +113,10 @@ class DKIMSignature
 			 * or the older, weaker SHA-1 (historic).  This variable takes either the value
 			 * "sha1" or "sha256", as those are the only two hashes supported by the current
 			 * version of DKIM.
-			 * 
+			 *
 			 * RFC 8301 says that "rsa-sha1 MUST NOT be used for signing or verifying."
 			 * It is very highly recommended that you keep this set to "sha256".
-			 * 
+			 *
 			 * This only affects DKIM signing.  DomainKeys, historic in its own right,
 			 * only supported SHA-1.
 			 */
@@ -135,7 +135,9 @@ class DKIMSignature
                 'from',
                 'to',
                 'subject',
-                'reply-to'
+                'reply-to',
+                'list-unsubscribe',
+                'list-unsubscribe-post',
             )
         );
 
