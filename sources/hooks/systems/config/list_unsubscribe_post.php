@@ -44,7 +44,7 @@ class Hook_config_list_unsubscribe_post
     {
         return [
             'human_name' => 'LIST_UNSUBSCRIBE_POST',
-            'type' => 'line',
+            'type' => 'tick',
             'category' => 'MESSAGES',
             'group' => 'EMAIL_GENERAL',
             'explanation' => 'CONFIG_OPTION_list_unsubscribe_post',
@@ -64,6 +64,6 @@ class Hook_config_list_unsubscribe_post
      */
     public function get_default() : ?string
     {
-        return '';
+        return '1';
     }
 }

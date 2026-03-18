@@ -934,35 +934,49 @@ abstract class Source_mail_dispatcher_base
      */
     public function inject_unsubscribe_headers(string $email_address, string $_headers) : string
     {
-        $list_unsubscribe_target = get_option('list_unsubscribe_target');
+        $list_unsubscribe = get_option('list_unsubscribe');
         $list_unsubscribe_post = get_option('list_unsubscribe_post');
 
         $headers = $_headers;
-        if (!empty($list_unsubscribe_target)) {
-            if (strpos($list_unsubscribe_target, 'mailto:') !== 0) { // mailto does not allow POSTing
-                // Add recipient e-mail to POST data so we know who is unsubscribing
-                if ($list_unsubscribe_post != '') {
-                    $list_unsubscribe_post .= '&';
+        if (!empty($list_unsubscribe)) {
+            $headers .= 'List-Unsubscribe: ';
+            $list_unsubscribe_targets = explode(',', $list_unsubscribe);
+            foreach ($list_unsubscribe_targets as $i => $list_unsubscribe_target) {
+                if ($i > 0) {
+                    $headers .= ', ';
                 }
-                $list_unsubscribe_post .= 'email=' . rawurlencode($email_address);
+                $headers .= '<';
 
-                if ($list_unsubscribe_target == '1') { // Use the software's built-in List-Unsubscribe
-                    $list_unsubscribe_target = find_script('unsubscribe');
+                if ($list_unsubscribe_target == '1') { // Built-in
+                    $headers .= find_script('unsubscribe') . '?';
 
                     require_code('crypt');
 
                     // Add a nonce (we cannot use CSRF because the member sending the email is not necessarily the one unsubscribing)
                     $nonce = get_secure_random_string();
-                    $list_unsubscribe_post .= '&nonce=' . rawurlencode($nonce);
+                    $headers .= 'nonce=' . rawurlencode($nonce);
 
                     // Add a checksum ratchet using the e-mail address, nonce, and site salt
-                    $list_unsubscribe_post .= '&checksum=' . rawurlencode(ratchet_hash($nonce . $email_address, get_site_salt()));
+                    $headers .= '&checksum=' . rawurlencode(ratchet_hash($nonce . $email_address, get_site_salt()));
+
+                    // Add recipient e-mail to POST data so we know who is unsubscribing
+                    $headers .= '&email=' . rawurlencode($email_address);
+
+                    // Actually, we also need to add the mailto
+                    $headers .= '>, <mailto:' . get_option('staff_address');
+                } elseif (strpos($list_unsubscribe_target, 'mailto:') !== 0) {
+                    $headers .= 'mailto:' . rawurlencode(substr($list_unsubscribe_target, 7));
+                } else {
+                    $headers .= rawurlencode($list_unsubscribe_target);
                 }
 
-                $headers .= 'List-Unsubscribe-Post: ' . $list_unsubscribe_post . $this->line_term;
+                $headers .= '>';
             }
+            $headers .= $this->line_term;
 
-            $headers .= 'List-Unsubscribe: <' . $list_unsubscribe_target . '>' . $this->line_term;
+            if ($list_unsubscribe_post != '0') {
+                $headers .= 'List-Unsubscribe-Post: List-Unsubscribe=One-Click' . $this->line_term;
+            }
         }
 
         return $headers;
