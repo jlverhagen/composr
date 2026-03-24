@@ -83,12 +83,8 @@ class Hook_admin_stats_invites extends Source_hook_stats_provider
     {
         require_code('temporal');
 
-        $server_timezone = get_server_timezone();
-
         $max = 1000;
         $start = 0;
-
-        $date_pivots = $this->get_date_pivots();
 
         $query = 'SELECT * FROM ' . $GLOBALS['FORUM_DB']->get_table_prefix() . 'f_invites WHERE ';
         $query .= 'i_time>=' . strval($start_time) . ' AND ';
@@ -98,23 +94,11 @@ class Hook_admin_stats_invites extends Source_hook_stats_provider
             $rows = $GLOBALS['FORUM_DB']->query($query, $max, $start);
             foreach ($rows as $row) {
                 $timestamp = $row['i_time'];
-                $timestamp = tz_time($timestamp, $server_timezone);
 
-                foreach (array_keys($date_pivots) as $pivot) {
-                    $pivot_interval = $this->calculate_date_pivot_interval($pivot, $timestamp);
-                    $pivot_value = $this->calculate_date_pivot_value($pivot, $timestamp);
+                $this->save_stat('invites_sent', $timestamp, []);
 
-                    if (!isset($this->data_buckets['invites_sent'][$pivot][$pivot_interval][$pivot_value])) {
-                        $this->data_buckets['invites_sent'][$pivot][$pivot_interval][$pivot_value] = 0;
-                    }
-                    $this->data_buckets['invites_sent'][$pivot][$pivot_interval][$pivot_value]++;
-
-                    if (($row['i_taken'] == 1) && (get_option('is_on_invites') === '1') && (get_forum_type() == 'cns')) {
-                        if (!isset($this->data_buckets['invites_taken'][$pivot][$pivot_interval][$pivot_value])) {
-                            $this->data_buckets['invites_taken'][$pivot][$pivot_interval][$pivot_value] = 0;
-                        }
-                        $this->data_buckets['invites_taken'][$pivot][$pivot_interval][$pivot_value]++;
-                    }
+                if (($row['i_taken'] == 1) && (get_option('is_on_invites') === '1') && (get_forum_type() == 'cns')) {
+                    $this->save_stat('invites_taken', $timestamp, []);
                 }
             }
 

@@ -68,12 +68,9 @@ class Hook_admin_stats_sitemap extends Source_hook_stats_provider
     public function preprocess_raw_data(int $start_time, int $end_time)
     {
         require_code('temporal');
-        $server_timezone = get_server_timezone();
 
         $max = 1000;
         $start = 0;
-
-        $date_pivots = $this->get_date_pivots();
 
         $query = 'SELECT * FROM ' . get_table_prefix() . 'sitemap_cache WHERE ';
         $query .= 'add_date>=' . strval($start_time) . ' AND ';
@@ -83,21 +80,12 @@ class Hook_admin_stats_sitemap extends Source_hook_stats_provider
             $rows = $GLOBALS['SITE_DB']->query($query, $max, $start);
             foreach ($rows as $row) {
                 $timestamp = $row['add_date'];
-                $timestamp = tz_time($timestamp, $server_timezone);
 
                 list($zone, $attributes) = page_link_decode($row['page_link']);
                 $page = isset($attributes['page']) ? $attributes['page'] : DEFAULT_ZONE_PAGE_NAME;
                 $page_link = $zone . ':' . $page;
 
-                foreach (array_keys($date_pivots) as $pivot) {
-                    $pivot_interval = $this->calculate_date_pivot_interval($pivot, $timestamp);
-                    $pivot_value = $this->calculate_date_pivot_value($pivot, $timestamp);
-
-                    if (!isset($this->data_buckets['sitemap_growth'][$pivot][$pivot_interval][$pivot_value][$page_link])) {
-                        $this->data_buckets['sitemap_growth'][$pivot][$pivot_interval][$pivot_value][$page_link] = 0;
-                    }
-                    $this->data_buckets['sitemap_growth'][$pivot][$pivot_interval][$pivot_value][$page_link]++;
-                }
+                $this->save_stat('sitemap_growth', $timestamp, [$page_link]);
             }
 
             $start += $max;

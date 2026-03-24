@@ -79,9 +79,6 @@ class Hook_admin_stats_content extends Source_hook_stats_provider
 
         $limit_per_content_type = 100;
 
-        $this->data_buckets['content_views'] = [];
-        $this->data_buckets['content_views_per_content_day'] = [];
-
         require_code('content');
         $cma_hooks = find_all_hook_obs('systems', 'content_meta_aware', 'Hook_content_meta_aware_');
         foreach ($cma_hooks as $content_type => $hook_ob) {
@@ -100,13 +97,13 @@ class Hook_admin_stats_content extends Source_hook_stats_provider
                     $id = $hook_ob->get_id_string($row);
                     $views = $row[$views_field];
 
-                    $this->data_buckets['content_views'][$content_type][$title . ' (' . $hook_ob->get_id_string($row) . ')'] = $views;
+                    $this->save_stat('content_views', null, [$content_type, $id, $title], $views);
 
                     if ($add_time_field !== null) {
                         $add_time = $row[$add_time_field];
                         if ($add_time !== null) {
                             $days = floatval(time() - $add_time + 1/*prevent divide by zero errors*/) / floatval(60 * 60 * 24);
-                            $this->data_buckets['content_views_per_content_day'][$content_type][$title . ' (' . $id . ')'] = floatval($views) / $days;
+                            $this->save_stat('content_views_per_content_day', null, [$content_type, $id, $title], intval(floatval($views) / $days));
                         }
                     }
                 }
