@@ -129,8 +129,6 @@ class Hook_admin_stats_actionlogs extends Source_hook_stats_provider
     {
         require_code('temporal');
 
-        $server_timezone = get_server_timezone();
-
         $max = 1000;
         $start = 0;
 
