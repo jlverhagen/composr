@@ -148,10 +148,13 @@ class Module_users_online
                         if (!empty($test)) {
                             $ip = $test;
                         } else {
+                            // Disabled for performance reasons
+                            /*
                             $test = $GLOBALS['SITE_DB']->query_value_if_there('SELECT ip,date_and_time FROM ' . get_table_prefix() . 'stats WHERE ip LIKE \'' . db_encode_like(str_replace('*', '%', $ip)) . '\' AND date_and_time>=' . strval(time() - intval(60.0 * 60.0 * floatval(get_option('session_expiry_time')))) . ' ORDER BY date_and_time DESC');
                             if (!empty($test)) {
                                 $ip = $test;
                             }
+                            */
                         }
                     }
                 } else {
