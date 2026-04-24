@@ -212,9 +212,12 @@ class Hook_cns_warnings_ban_ip
         $ip = null;
         $email_address = null;
         $known_ip_addresses = lookup_user($member_id_of, $username, $member_id, $ip, $email_address);
+        if (($ip !== null) && ($ip != '') && ($ip != '127.0.0.1')) {
+            $known_ip_addresses[] = ['ip' => $ip, 'date_and_time' => time()];
+        }
 
         // Check if maybe the member was IP-banned outside of the warnings system
-        foreach (array_merge($known_ip_addresses, [['ip' => $ip, 'date_and_time' => time()]]) as $ip_check) {
+        foreach ($known_ip_addresses as $ip_check) {
             if (isset($checked_ip_addresses[$ip_check['ip']])) {
                 continue;
             }
@@ -235,7 +238,7 @@ class Hook_cns_warnings_ban_ip
         if ($autoban_enabled) {
             $hack_threshold = floatval(get_option('hack_ban_threshold'));
 
-            foreach (array_merge($known_ip_addresses, [['ip' => $ip, 'date_and_time' => time()]]) as $ip_check) {
+            foreach ($known_ip_addresses as $ip_check) {
                 if (isset($checked_ip_addresses[$ip_check['ip']])) {
                     continue;
                 }
