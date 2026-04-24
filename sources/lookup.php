@@ -48,7 +48,7 @@ function init__lookup()
  * @param  ?AUTO_LINK $member_id The member's ID (by reference) (null: unknown)
  * @param  ?string $ip The member's IP from the forum (by reference) (null: unknown)
  * @param  ?string $email_address The member's e-mail address (by reference) (null: unknown)
- * @return array The member's IP addresses from the stats table (IP address and most recent time of hit)
+ * @return array The member's IP addresses from the stats table if not a guest (IP address and most recent time of hit)
  */
 function lookup_user($param, ?string &$username, ?int &$member_id, ?string &$ip, ?string &$email_address) : array
 {
@@ -120,6 +120,12 @@ function lookup_user($param, ?string &$username, ?int &$member_id, ?string &$ip,
     }
 
     if (!addon_installed('stats')) {
+        return [];
+    }
+
+    // Performance: we could have millions of records for bots. Don't look up IP addresses for Guest.
+    require_code('users');
+    if (is_guest($member_id)) {
         return [];
     }
 
