@@ -369,10 +369,14 @@ class Module_admin_version
                     'end_num' => 'UINTEGER',
                     'country' => 'SHORT_TEXT',
                 ]);
-
-                $GLOBALS['SITE_DB']->create_index('ip_country', 'begin_num', ['begin_num']);
-                $GLOBALS['SITE_DB']->create_index('ip_country', 'end_num', ['end_num']);
             }
+        }
+        if (($upgrade_from === null) || ($upgrade_from < 25)) {
+            // LEGACY
+            $GLOBALS['SITE_DB']->delete_index_if_exists('ip_country', 'start_num');
+            $GLOBALS['SITE_DB']->delete_index_if_exists('ip_country', 'end_num');
+
+            $GLOBALS['SITE_DB']->create_index('ip_country', 'ip_range', ['begin_num', 'end_num']);
         }
 
         // A lot of core upgrade is also here. When absolutely necessary it is put in upgrade.php.

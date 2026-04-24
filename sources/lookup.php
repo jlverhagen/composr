@@ -123,9 +123,8 @@ function lookup_user($param, ?string &$username, ?int &$member_id, ?string &$ip,
         return [];
     }
 
-    // Performance: we could have millions of records for bots. Don't look up IP addresses for Guest.
-    require_code('users');
-    if (is_guest($member_id)) {
+    // Performance: we could have millions of records for bots. Don't look up IP addresses for Guest. Don't use is_guest as we have to load users.php (requires more queries).
+    if (!isset($GLOBALS['FORUM_DRIVER']) || ($GLOBALS['FORUM_DRIVER']->get_guest_id() == $member_id)) {
         return [];
     }
 
