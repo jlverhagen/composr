@@ -270,13 +270,12 @@ class Module_admin_stats extends Source_standard_crud_module
         }
 
         if (($upgrade_from === null) || ($upgrade_from < 12)) {
-            $GLOBALS['SITE_DB']->delete_index_if_exists('stats', 'date_and_time'); // Not efficient enough; we are going to make it more efficient below
-
             // Aggressive indexing necessary because it is not unusual for the stats table to exceed 1 million records
             $GLOBALS['SITE_DB']->create_index('stats', 'member_browser', ['member_id', 'date_and_time']);
             $GLOBALS['SITE_DB']->create_index('stats', 'tracking_code', ['session_id', 'date_and_time']);
             $GLOBALS['SITE_DB']->create_index('stats', 'member_ip', ['member_id', 'ip', 'date_and_time']);
             $GLOBALS['SITE_DB']->create_index('stats', 'ip_date_time', ['ip', 'date_and_time']);
+            $GLOBALS['SITE_DB']->create_index('stats', 'date_and_time', ['date_and_time']); // NB: necessary for privacy purging
         }
     }
 
