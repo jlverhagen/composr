@@ -81,10 +81,6 @@ class Hook_admin_stats_searches extends Source_hook_stats_provider
     {
         require_code('temporal');
 
-        $server_timezone = get_server_timezone();
-
-        $date_pivots = $this->get_date_pivots();
-
         $max = 1000;
         $start = 0;
 
@@ -98,30 +94,15 @@ class Hook_admin_stats_searches extends Source_hook_stats_provider
             $rows = $GLOBALS['SITE_DB']->query($query, $max, $start);
             foreach ($rows as $row) {
                 $timestamp = $row['s_time'];
-                $timestamp = tz_time($timestamp, $server_timezone);
 
                 $search = cms_mb_strtolower($row['s_primary']);
+                $this->save_stat('internal_searches', $timestamp, [$search]);
 
-                foreach (array_keys($date_pivots) as $pivot) {
-                    $pivot_interval = $this->calculate_date_pivot_interval($pivot, $timestamp);
-                    $pivot_value = $this->calculate_date_pivot_value($pivot, $timestamp);
-
-                    if (!isset($this->data_buckets['internal_searches'][$pivot][$pivot_interval][$pivot_value][$search])) {
-                        $this->data_buckets['internal_searches'][$pivot][$pivot_interval][$pivot_value][$search] = 0;
-                    }
-                    $this->data_buckets['internal_searches'][$pivot][$pivot_interval][$pivot_value][$search]++;
-
-                    list($_keywords) = _seo_meta_find_data([$search]);
-                    $keywords = explode(',', $_keywords);
-                    foreach ($keywords as $keyword) {
-                        if (!isset($this->data_buckets['internal_keywords'][$pivot][$pivot_interval][$pivot_value][$keyword])) {
-                            $this->data_buckets['internal_keywords'][$pivot][$pivot_interval][$pivot_value][$keyword] = 0;
-                        }
-                        $this->data_buckets['internal_keywords'][$pivot][$pivot_interval][$pivot_value][$keyword]++;
-                    }
+                list($_keywords) = _seo_meta_find_data([$search]);
+                $keywords = explode(',', $_keywords);
+                foreach ($keywords as $keyword) {
+                    $this->save_stat('internal_keywords', $timestamp, [$keyword]);
                 }
-
-                $this->dump_data_buckets_if_necessary();
             }
 
             $start += $max;

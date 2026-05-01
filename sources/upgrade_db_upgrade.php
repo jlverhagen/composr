@@ -63,14 +63,18 @@ function upgrader_db_upgrade_screen_cli()
     require_lang('global2');
 
     echo '**' . do_lang('_UPGRADER_DATABASE_UPGRADE') . '**' . "\n";
-    echo strip_html(do_lang('UPGRADER_DATABASE_UPGRADE_TEXT') . "\n\n");
+    echo strip_html(do_lang('UPGRADER_DATABASE_UPGRADE_TEXT')) . "\n\n";
 
     // Wait for input to continue
     echo do_lang('CLI_PRESS_KEY_TO_CONTINUE');
-    fgets(STDIN);
+    $output = fgets(STDIN);
     echo "\n\n";
 
+    upgrader_db_upgrade(0);
 
+    echo "\n\n";
+    echo do_lang('UPGRADER_UPGRADE_DB_DONE');
+    echo "\n\n";
 }
 
 /**
@@ -111,7 +115,7 @@ function upgrader_db_upgrade(int $offset)
             }
 
             echo "\n";
-            upgrader_db_upgrade($offset++);
+            upgrader_db_upgrade(++$offset);
         } else {
             echo '<h3>' . do_lang('UPGRADER_UPGRADE_VERSION') . '</h3>';
             $version_upgrade = version_specific();
@@ -136,7 +140,7 @@ function upgrader_db_upgrade(int $offset)
             }
 
             echo "\n";
-            upgrader_db_upgrade($offset++);
+            upgrader_db_upgrade(++$offset);
         } else {
             echo '<h3>' . do_lang('UPGRADER_UPGRADE_CNS') . '</h3>';
             if ($version_database_cns < $version_files) {
@@ -152,7 +156,7 @@ function upgrader_db_upgrade(int $offset)
     } elseif (($offset >= 2) && ($offset < 1000000)) {
         if (is_cli()) {
             upgrade_addons($version_database_cns, $offset);
-            upgrader_db_upgrade($offset++);
+            upgrader_db_upgrade(++$offset);
         } else {
             echo '<h3>' . do_lang('_UPGRADER_UPGRADE_MODULES') . '</h3>';
             $done = upgrade_addons($version_database_cns, $offset);
@@ -956,41 +960,22 @@ function database_specific() : bool
     }
 
     // LEGACY: 11.beta9. Remove prior to v11 release.
-    if ((is_numeric($upgrade_from)) && (intval($upgrade_from) < 1768323014)) {
+    if ((is_numeric($upgrade_from)) && (intval($upgrade_from) < 1777660242)) {
         $GLOBALS['SITE_DB']->drop_table_if_exists('stats_preprocessed');
         $GLOBALS['SITE_DB']->drop_table_if_exists('stats_preprocessed_flat');
         $GLOBALS['SITE_DB']->drop_table_if_exists('stats_preprocessed_delta');
 
         $GLOBALS['SITE_DB']->create_table('stats_preprocessed', [
-            'p_id' => '*ID_TEXT', // Hash of p_bucket, p_pivot, p_pivot_interval, p_pivot_value, and p_key
-            'p_bucket' => 'ID_TEXT',
-            'p_pivot' => 'ID_TEXT',
-            'p_pivot_interval' => 'INTEGER',
-            'p_pivot_value' => 'INTEGER',
-            'p_key' => 'SHORT_TEXT',
-            'p_value' => 'INTEGER',
-        ]);
-
-        $GLOBALS['SITE_DB']->create_table('stats_preprocessed_delta', [
             'id' => '*AUTO',
-            'p_id' => 'ID_TEXT',
-            'p_bucket' => 'ID_TEXT',
-            'p_pivot' => 'ID_TEXT',
-            'p_pivot_interval' => 'INTEGER',
-            'p_pivot_value' => 'INTEGER',
-            'p_key' => 'SHORT_TEXT',
-            'p_value' => 'INTEGER',
-        ]);
-
-        $GLOBALS['SITE_DB']->create_table('stats_preprocessed_flat', [
-            'p_id' => '*ID_TEXT', // Hash of p_bucket and p_key
+            'p_date_and_time' => '?TIME',
+            'p_processed' => 'BINARY',
             'p_bucket' => 'ID_TEXT',
             'p_key' => 'SHORT_TEXT',
             'p_value' => 'INTEGER',
         ]);
 
-        $GLOBALS['SITE_DB']->create_index('stats_preprocessed', 'pivotsearch', ['p_pivot', 'p_pivot_interval', 'p_pivot_value']);
-        $GLOBALS['SITE_DB']->create_index('stats_preprocessed_delta', 'pid', ['p_id']);
+        $GLOBALS['SITE_DB']->create_index('stats_preprocessed', 'pbucket', ['p_bucket']);
+        $GLOBALS['SITE_DB']->create_index('stats_preprocessed', 'pdatetime', ['p_bucket', 'p_date_and_time']);
 
         $done_something = true;
     }

@@ -94,7 +94,6 @@ class Hook_cron_stats_preprocess_raw_data
         if ($_start_time !== null) {
             delete_value('stats__last_processed', true);
             $GLOBALS['SITE_DB']->query_delete('stats_preprocessed');
-            $GLOBALS['SITE_DB']->query_delete('stats_preprocessed_flat');
         }
 
         $hook_start = time();
@@ -107,8 +106,8 @@ class Hook_cron_stats_preprocess_raw_data
         push_query_limiting(false);
         disable_php_memory_limit();
 
-        // Start by merging in pending deltas
-        stats_merge_deltas($max_time);
+        // Start by merging records within the same hour to conserve space
+        stats_merge_by_hour($max_time);
 
         // Memory and time check
         $ml = php_return_bytes(ini_get('memory_limit'));

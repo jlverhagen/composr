@@ -75,7 +75,8 @@ class Module_admin_stats extends Source_standard_crud_module
         $tables = [
             'stats',
             'stats_preprocessed',
-            'stats_preprocessed_flat',
+            'stats_preprocessed_flat', // LEGACY
+            'stats_preprocessed_delta', // LEGACY
             'stats_kpis',
             'stats_events',
             'stats_link_tracker',
@@ -96,6 +97,7 @@ class Module_admin_stats extends Source_standard_crud_module
     public function install(?int $upgrade_from = null, ?int $upgrade_from_hack = null)
     {
         if ($upgrade_from === null) {
+            // Indexes defined in version 12 module upgrade
             $GLOBALS['SITE_DB']->create_table('stats', [
                 'id' => '*AUTO',
                 'date_and_time' => 'TIME',
@@ -111,7 +113,6 @@ class Module_admin_stats extends Source_standard_crud_module
                 'milliseconds' => 'INTEGER',
                 'tracking_code' => 'ID_TEXT',
             ]);
-            $GLOBALS['SITE_DB']->create_index('stats', 'date_and_time', ['date_and_time']);
 
             $GLOBALS['SITE_DB']->create_table('usersonline_track', [
                 'date_and_time' => '*TIME',
@@ -176,35 +177,16 @@ class Module_admin_stats extends Source_standard_crud_module
 
         if (($upgrade_from === null) || ($upgrade_from < 12)) { // LEGACY
             $GLOBALS['SITE_DB']->create_table('stats_preprocessed', [
-                'p_id' => '*ID_TEXT', // Hash of p_bucket, p_pivot, p_pivot_interval, p_pivot_value, and p_key
-                'p_bucket' => 'ID_TEXT',
-                'p_pivot' => 'ID_TEXT',
-                'p_pivot_interval' => 'INTEGER',
-                'p_pivot_value' => 'INTEGER',
-                'p_key' => 'SHORT_TEXT',
-                'p_value' => 'INTEGER',
-            ]);
-
-            $GLOBALS['SITE_DB']->create_table('stats_preprocessed_delta', [
                 'id' => '*AUTO',
-                'p_id' => 'ID_TEXT',
-                'p_bucket' => 'ID_TEXT',
-                'p_pivot' => 'ID_TEXT',
-                'p_pivot_interval' => 'INTEGER',
-                'p_pivot_value' => 'INTEGER',
-                'p_key' => 'SHORT_TEXT',
-                'p_value' => 'INTEGER',
-            ]);
-
-            $GLOBALS['SITE_DB']->create_table('stats_preprocessed_flat', [
-                'p_id' => '*ID_TEXT', // Hash of p_bucket and p_key
+                'p_date_and_time' => '?TIME',
+                'p_processed' => 'BINARY', // 0 = p_date_and_time is an exact time; 1 = we combined records from the same hour together
                 'p_bucket' => 'ID_TEXT',
                 'p_key' => 'SHORT_TEXT',
                 'p_value' => 'INTEGER',
             ]);
 
-            $GLOBALS['SITE_DB']->create_index('stats_preprocessed', 'pivotsearch', ['p_pivot', 'p_pivot_interval', 'p_pivot_value']);
-            $GLOBALS['SITE_DB']->create_index('stats_preprocessed_delta', 'pid', ['p_id']);
+            $GLOBALS['SITE_DB']->create_index('stats_preprocessed', 'pbucket', ['p_bucket']);
+            $GLOBALS['SITE_DB']->create_index('stats_preprocessed', 'pdatetime', ['p_bucket', 'p_date_and_time']);
         }
 
         if (($upgrade_from === null) || ($upgrade_from < 10)) { // LEGACY
@@ -287,6 +269,15 @@ class Module_admin_stats extends Source_standard_crud_module
             $GLOBALS['SITE_DB']->create_index('stats_known_events', 'e_count_logged', ['e_count_logged']);
             $GLOBALS['SITE_DB']->create_index('stats_known_tracking', 't_count_logged', ['t_count_logged']);
             $GLOBALS['SITE_DB']->create_index('stats_known_links', 'l_count_logged', ['l_count_logged']);
+        }
+
+        if (($upgrade_from === null) || ($upgrade_from < 12)) { // 11.beta9
+            // Aggressive indexing necessary because it is not unusual for the stats table to exceed 1 million records
+            $GLOBALS['SITE_DB']->create_index('stats', 'member_browser', ['member_id', 'date_and_time']);
+            $GLOBALS['SITE_DB']->create_index('stats', 'tracking_code', ['session_id', 'date_and_time']);
+            $GLOBALS['SITE_DB']->create_index('stats', 'member_ip', ['member_id', 'ip', 'date_and_time']);
+            $GLOBALS['SITE_DB']->create_index('stats', 'ip_date_time', ['ip', 'date_and_time']);
+            $GLOBALS['SITE_DB']->create_index('stats', 'date_and_time', ['date_and_time']); // NB: necessary for privacy purging
         }
     }
 

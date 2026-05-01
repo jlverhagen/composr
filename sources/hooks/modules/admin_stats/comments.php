@@ -116,14 +116,10 @@ class Hook_admin_stats_comments extends Source_hook_stats_provider
     {
         require_code('temporal');
 
-        $server_timezone = get_server_timezone();
-
         $feedback_type_codes = $this->find_all_feedback_type_codes();
 
         $max = 1000;
         $start = 0;
-
-        $date_pivots = $this->get_date_pivots();
 
         $forum = get_option('comments_forum_name');
         if (!is_integer($forum)) {
@@ -144,7 +140,6 @@ class Hook_admin_stats_comments extends Source_hook_stats_provider
                     $content_id = $matches[2];
 
                     $timestamp = $topic['t_cache_first_time'];
-                    $timestamp = tz_time($timestamp, $server_timezone);
 
                     if ($timestamp < $start_time) {
                         continue;
@@ -155,27 +150,15 @@ class Hook_admin_stats_comments extends Source_hook_stats_provider
 
                     $num_comments = $topic['t_cache_num_posts'] - 1;
 
-                    foreach (array_keys($date_pivots) as $pivot) {
-                        $pivot_interval = $this->calculate_date_pivot_interval($pivot, $timestamp);
-                        $pivot_value = $this->calculate_date_pivot_value($pivot, $timestamp);
+                    // TODO: check if this is accurate
+                    $this->save_stat('comments', $timestamp, [$feedback_type_code, 0], $num_comments);
+                    $this->save_stat('comments', $timestamp, [$feedback_type_code, 1], 1);
 
-                        if (!isset($this->data_buckets['comments'][$pivot][$pivot_interval][$pivot_value][$feedback_type_code])) {
-                            $this->data_buckets['comments'][$pivot][$pivot_interval][$pivot_value][$feedback_type_code] = [0, 0];
-                        }
-                        $this->data_buckets['comments'][$pivot][$pivot_interval][$pivot_value][$feedback_type_code][0] += $num_comments;
-                        $this->data_buckets['comments'][$pivot][$pivot_interval][$pivot_value][$feedback_type_code][1]++;
-
-                        $comment_bracket = $this->find_value_bracket($this->comments_brackets, $num_comments);
-                        if ($comment_bracket !== null) {
-                            if (!isset($this->data_buckets['comments_tallies'][$pivot][$pivot_interval][$pivot_value][$comment_bracket])) {
-                                $this->data_buckets['comments_tallies'][$pivot][$pivot_interval][$pivot_value][$comment_bracket] = 0;
-                            }
-                            $this->data_buckets['comments_tallies'][$pivot][$pivot_interval][$pivot_value][$comment_bracket]++;
-                        }
+                    $comment_bracket = $this->find_value_bracket($this->comments_brackets, $num_comments);
+                    if ($comment_bracket !== null) {
+                        $this->save_stat('comments_tallies', $timestamp, [$comment_bracket]);
                     }
                 }
-
-                $this->dump_data_buckets_if_necessary();
             }
 
             $start += $max;

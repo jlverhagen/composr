@@ -729,7 +729,12 @@ abstract class Source_database_driver
         if (!running_script('upgrader')) {
             $this->substitute_query_message($message);
         }
-        echo '<p class="red-alert">' . $message . "</p>\n";
+
+        if (is_cli()) {
+            echo "\n" . 'WARNING: ' . $message . "\n";
+        } else {
+            echo '<p class="red-alert">' . $message . "</p>\n";
+        }
 
         // Bomb out anyway if we have a bunch of failed queries; usually indicates something seriously wrong.
         $this->echoed_failed_queries++;

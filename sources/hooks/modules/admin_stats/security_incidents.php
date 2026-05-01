@@ -78,22 +78,10 @@ class Hook_admin_stats_security_incidents extends Source_hook_stats_provider
                 'security_incidents__day_range' => new Source_stats_filter_day_range('security_incidents__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
                 'security_incidents__include_hackattacks' => new Source_stats_filter_tick('security_incidents__include_hackattacks', do_lang_tempcode('SECURITY_ALERTS')),
                 'security_incidents__include_failedlogins' => new Source_stats_filter_tick('security_incidents__include_failedlogins', do_lang_tempcode('FAILED_LOGINS')),
+                'security_incidents__country' => new Source_stats_filter_country('security_incidents__country', do_lang_tempcode('COUNTRY')),
             ],
             'pivot' => new Source_stats_filter_date_pivot('security_incidents__pivot', $this->get_date_pivots(!$for_kpi)),
         ];
-
-        if (has_geolocation_data()) {
-            $ret['security_incidents_countries'] = [
-                'label' => do_lang_tempcode('_COUNTRIES', do_lang_tempcode('SECURITY_LOG')),
-                'category' => 'security',
-                'filters' => [
-                    'security_incidents_countries__day_range' => new Source_stats_filter_day_range('security_incidents_countries__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
-                    'security_incidents_countries__include_hackattacks' => new Source_stats_filter_tick('security_incidents_countries__include_hackattacks', do_lang_tempcode('SECURITY_ALERTS')),
-                    'security_incidents_countries__include_failedlogins' => new Source_stats_filter_tick('security_incidents_countries__include_failedlogins', do_lang_tempcode('FAILED_LOGINS')),
-                ],
-                'pivot' => null,
-            ];
-        }
 
         return $ret;
     }
@@ -109,12 +97,8 @@ class Hook_admin_stats_security_incidents extends Source_hook_stats_provider
         require_code('temporal');
         require_code('locations');
 
-        $server_timezone = get_server_timezone();
-
         $max = 1000;
         $start = 0;
-
-        $date_pivots = $this->get_date_pivots();
 
         $query = 'SELECT * FROM ' . get_table_prefix() . 'failedlogins WHERE ';
         $query .= 'date_and_time>=' . strval($start_time) . ' AND ';
@@ -124,31 +108,13 @@ class Hook_admin_stats_security_incidents extends Source_hook_stats_provider
             $rows = $GLOBALS['SITE_DB']->query($query, $max, $start);
             foreach ($rows as $row) {
                 $timestamp = $row['date_and_time'];
-                $timestamp = tz_time($timestamp, $server_timezone);
 
                 $country = geolocate_ip($row['ip']);
                 if ($country === null) {
                     $country = '';
                 }
 
-                foreach (array_keys($date_pivots) as $pivot) {
-                    $pivot_interval = $this->calculate_date_pivot_interval($pivot, $timestamp);
-                    $pivot_value = $this->calculate_date_pivot_value($pivot, $timestamp);
-
-                    if (!isset($this->data_buckets['security_incidents'][$pivot][$pivot_interval][$pivot_value]['failedlogins'])) {
-                        $this->data_buckets['security_incidents'][$pivot][$pivot_interval][$pivot_value]['failedlogins'] = 0;
-                    }
-                    $this->data_buckets['security_incidents'][$pivot][$pivot_interval][$pivot_value]['failedlogins']++;
-
-                    if (has_geolocation_data()) {
-                        if (!isset($this->data_buckets['security_incidents_countries'][$pivot][$pivot_interval][$pivot_value]['failedlogins'][$country])) {
-                            $this->data_buckets['security_incidents_countries'][$pivot][$pivot_interval][$pivot_value]['failedlogins'][$country] = 0;
-                        }
-                        $this->data_buckets['security_incidents_countries'][$pivot][$pivot_interval][$pivot_value]['failedlogins'][$country]++;
-                    }
-                }
-
-                $this->dump_data_buckets_if_necessary();
+                $this->save_stat('security_incidents', $timestamp, ['failedlogins', $country]);
             }
 
             $start += $max;
@@ -164,31 +130,13 @@ class Hook_admin_stats_security_incidents extends Source_hook_stats_provider
             $rows = $GLOBALS['SITE_DB']->query($query, $max, $start);
             foreach ($rows as $row) {
                 $timestamp = $row['date_and_time'];
-                $timestamp = tz_time($timestamp, $server_timezone);
 
                 $country = geolocate_ip($row['ip']);
                 if ($country === null) {
                     $country = '';
                 }
 
-                foreach (array_keys($date_pivots) as $pivot) {
-                    $pivot_interval = $this->calculate_date_pivot_interval($pivot, $timestamp);
-                    $pivot_value = $this->calculate_date_pivot_value($pivot, $timestamp);
-
-                    if (!isset($this->data_buckets['security_incidents'][$pivot][$pivot_interval][$pivot_value]['hackattacks'])) {
-                        $this->data_buckets['security_incidents'][$pivot][$pivot_interval][$pivot_value]['hackattacks'] = 0;
-                    }
-                    $this->data_buckets['security_incidents'][$pivot][$pivot_interval][$pivot_value]['hackattacks']++;
-
-                    if (has_geolocation_data()) {
-                        if (!isset($this->data_buckets['security_incidents_countries'][$pivot][$pivot_interval][$pivot_value]['hackattacks'][$country])) {
-                            $this->data_buckets['security_incidents_countries'][$pivot][$pivot_interval][$pivot_value]['hackattacks'][$country] = 0;
-                        }
-                        $this->data_buckets['security_incidents_countries'][$pivot][$pivot_interval][$pivot_value]['hackattacks'][$country]++;
-                    }
-                }
-
-                $this->dump_data_buckets_if_necessary();
+                $this->save_stat('security_incidents', $timestamp, ['hackattacks', $country]);
             }
 
             $start += $max;

@@ -72,8 +72,6 @@ class Hook_admin_stats_users_online extends Source_hook_stats_provider
 
         require_code('temporal');
 
-        $server_timezone = get_server_timezone();
-
         $max = 1000;
         $start = 0;
 
@@ -82,10 +80,9 @@ class Hook_admin_stats_users_online extends Source_hook_stats_provider
             $rows = $GLOBALS['SITE_DB']->query($query, $max, $start);
             foreach ($rows as $row) {
                 $timestamp = $row['date_and_time'];
-                $timestamp = tz_time($timestamp, $server_timezone);
                 $date_interval = to_epoch_interval_index($timestamp, 'days');
 
-                $this->data_buckets['users_online'][$date_interval] = $row['peak'];
+                $this->save_stat('users_online', null, [$date_interval]);
             }
 
             $start += $max;

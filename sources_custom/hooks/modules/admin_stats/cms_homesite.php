@@ -1,20 +1,22 @@
-<?php /*
+<?php
 
- The contents of this file are subject to the Common Public Attribution License Version 1.0 (the "License");
- you may not use this file except in compliance with the License.
- You may obtain a copy of the License at http://opensource.org/licenses/cpal_1.0.
+/*
 
- Software distributed under the License is distributed on an "AS IS" basis, WITHOUT WARRANTY OF ANY KIND, either express or implied.
- See the License for the specific language governing rights and limitations under the License.
+The contents of this file are subject to the Common Public Attribution License Version 1.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at http://opensource.org/licenses/cpal_1.0.
 
- The Original Code is Composr CMS.
+Software distributed under the License is distributed on an "AS IS" basis, WITHOUT WARRANTY OF ANY KIND, either express or implied.
+See the License for the specific language governing rights and limitations under the License.
 
- The Original Developer is the Initial Developer.
+The Original Code is Composr CMS.
 
- The Initial Developer of the Original Code is Chris Graham.
- All portions of the code written by Chris Graham are Copyright (c) Christopher Graham. All Rights Reserved.
+The Original Developer is the Initial Developer.
 
- See docs/LICENSE.md for full licensing information.
+The Initial Developer of the Original Code is Chris Graham.
+All portions of the code written by Chris Graham are Copyright (c) Christopher Graham. All Rights Reserved.
+
+See docs/LICENSE.md for full licensing information.
 
 */
 
@@ -29,6 +31,7 @@
  */
 class Hook_admin_stats_cms_homesite extends Source_hook_stats_provider
 {
+
     /**
      * Find metadata about stats categories that are defined by this stats hook.
      *
@@ -132,10 +135,6 @@ class Hook_admin_stats_cms_homesite extends Source_hook_stats_provider
     {
         require_code('temporal');
 
-        $server_timezone = get_server_timezone();
-
-        $date_pivots = $this->get_date_pivots();
-
         /* relayed errors */
 
         $max = 1000;
@@ -149,27 +148,12 @@ class Hook_admin_stats_cms_homesite extends Source_hook_stats_provider
             $rows = $GLOBALS['SITE_DB']->query($query, $max, $start);
             foreach ($rows as $row) {
                 $timestamp = $row['e_first_date_and_time'];
-                $timestamp = tz_time($timestamp, $server_timezone);
 
                 $resolved = strval($row['e_resolved']);
+                $this->save_stat('relayed_errors', $timestamp, [$resolved]);
 
-                foreach (array_keys($date_pivots) as $pivot) {
-                    $pivot_interval = $this->calculate_date_pivot_interval($pivot, $timestamp);
-                    $pivot_value = $this->calculate_date_pivot_value($pivot, $timestamp);
-
-                    if (!isset($this->data_buckets['relayed_errors'][$pivot][$pivot_interval][$pivot_value][$resolved])) {
-                        $this->data_buckets['relayed_errors'][$pivot][$pivot_interval][$pivot_value][$resolved] = 0;
-                    }
-                    $this->data_buckets['relayed_errors'][$pivot][$pivot_interval][$pivot_value][$resolved]++;
-
-                    // For all
-                    if (!isset($this->data_buckets['relayed_errors'][$pivot][$pivot_interval][$pivot_value][''])) {
-                        $this->data_buckets['relayed_errors'][$pivot][$pivot_interval][$pivot_value][''] = 0;
-                    }
-                    $this->data_buckets['relayed_errors'][$pivot][$pivot_interval][$pivot_value]['']++;
-                }
-
-                $this->dump_data_buckets_if_necessary();
+                // For all
+                $this->save_stat('relayed_errors', $timestamp, ['']);
             }
 
             $start += $max;
@@ -199,7 +183,6 @@ class Hook_admin_stats_cms_homesite extends Source_hook_stats_provider
                     $entry_fields = get_catalogue_entry_field_values('tracker', $row['id'], null, null, false);
 
                     $timestamp = isset($row['ce_edit_date']) ? $row['ce_edit_date'] : $row['ce_add_date'];
-                    $timestamp = tz_time($timestamp, $server_timezone);
 
                     $status = '';
                     $addon = '';
@@ -212,23 +195,10 @@ class Hook_admin_stats_cms_homesite extends Source_hook_stats_provider
                         }
                     }
 
-                    foreach (array_keys($date_pivots) as $pivot) {
-                        $pivot_interval = $this->calculate_date_pivot_interval($pivot, $timestamp);
-                        $pivot_value = $this->calculate_date_pivot_value($pivot, $timestamp);
+                    $this->save_stat('tracker_issue_activity', $timestamp, [$status]);
 
-                        if (!isset($this->data_buckets['tracker_issue_activity'][$pivot][$pivot_interval][$pivot_value][$status])) {
-                            $this->data_buckets['tracker_issue_activity'][$pivot][$pivot_interval][$pivot_value][$status] = 0;
-                        }
-                        $this->data_buckets['tracker_issue_activity'][$pivot][$pivot_interval][$pivot_value][$status]++;
-
-                        // For all
-                        if (!isset($this->data_buckets['tracker_issue_activity'][$pivot][$pivot_interval][$pivot_value]['all'])) {
-                            $this->data_buckets['tracker_issue_activity'][$pivot][$pivot_interval][$pivot_value]['all'] = 0;
-                        }
-                        $this->data_buckets['tracker_issue_activity'][$pivot][$pivot_interval][$pivot_value]['all']++;
-                    }
-
-                    $this->dump_data_buckets_if_necessary();
+                    // For all
+                    $this->save_stat('tracker_issue_activity', $timestamp, ['all']);
                 }
 
                 $start += $max;
@@ -259,7 +229,6 @@ class Hook_admin_stats_cms_homesite extends Source_hook_stats_provider
                     $entry_fields = get_catalogue_entry_field_values('tracker', $row['id'], null, null, false);
 
                     $timestamp = $row['ce_add_date'];
-                    $timestamp = tz_time($timestamp, $server_timezone);
 
                     $status = '';
                     $addon = '';
@@ -272,23 +241,10 @@ class Hook_admin_stats_cms_homesite extends Source_hook_stats_provider
                         }
                     }
 
-                    foreach (array_keys($date_pivots) as $pivot) {
-                        $pivot_interval = $this->calculate_date_pivot_interval($pivot, $timestamp);
-                        $pivot_value = $this->calculate_date_pivot_value($pivot, $timestamp);
+                    $this->save_stat('tracker_issues', $timestamp, [$addon]);
 
-                        if (!isset($this->data_buckets['tracker_issues'][$pivot][$pivot_interval][$pivot_value][$addon])) {
-                            $this->data_buckets['tracker_issues'][$pivot][$pivot_interval][$pivot_value][$addon] = 0;
-                        }
-                        $this->data_buckets['tracker_issues'][$pivot][$pivot_interval][$pivot_value][$addon]++;
-
-                        // For all
-                        if (!isset($this->data_buckets['tracker_issues'][$pivot][$pivot_interval][$pivot_value]['all'])) {
-                            $this->data_buckets['tracker_issues'][$pivot][$pivot_interval][$pivot_value]['all'] = 0;
-                        }
-                        $this->data_buckets['tracker_issues'][$pivot][$pivot_interval][$pivot_value]['all']++;
-                    }
-
-                    $this->dump_data_buckets_if_necessary();
+                    // For all
+                    $this->save_stat('tracker_issues', $timestamp, ['all']);
                 }
 
                 $start += $max;

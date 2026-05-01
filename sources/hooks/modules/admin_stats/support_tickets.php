@@ -80,12 +80,9 @@ class Hook_admin_stats_support_tickets extends Source_hook_stats_provider
     public function preprocess_raw_data(int $start_time, int $end_time)
     {
         require_code('temporal');
-        $server_timezone = get_server_timezone();
 
         $max = 1000;
         $start = 0;
-
-        $date_pivots = $this->get_date_pivots();
 
         $forum_id = get_ticket_forum_id();
 
@@ -102,19 +99,8 @@ class Hook_admin_stats_support_tickets extends Source_hook_stats_provider
                 if ($timestamp === null) {
                     continue;
                 }
-                $timestamp = tz_time($timestamp, $server_timezone);
 
-                foreach (array_keys($date_pivots) as $pivot) {
-                    $pivot_interval = $this->calculate_date_pivot_interval($pivot, $timestamp);
-                    $pivot_value = $this->calculate_date_pivot_value($pivot, $timestamp);
-
-                    if (!isset($this->data_buckets['support_tickets'][$pivot][$pivot_interval][$pivot_value])) {
-                        $this->data_buckets['support_tickets'][$pivot][$pivot_interval][$pivot_value] = 0;
-                    }
-                    $this->data_buckets['support_tickets'][$pivot][$pivot_interval][$pivot_value]++;
-                }
-
-                $this->dump_data_buckets_if_necessary();
+                $this->save_stat('support_tickets', $timestamp, []);
             }
 
             $start += $max;

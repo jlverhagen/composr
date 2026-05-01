@@ -129,12 +129,8 @@ class Hook_admin_stats_actionlogs extends Source_hook_stats_provider
     {
         require_code('temporal');
 
-        $server_timezone = get_server_timezone();
-
         $max = 1000;
         $start = 0;
-
-        $date_pivots = $this->get_date_pivots();
 
         $query = 'SELECT * FROM ' . get_table_prefix() . 'actionlogs WHERE ';
         $query .= 'date_and_time>=' . strval($start_time) . ' AND ';
@@ -144,20 +140,10 @@ class Hook_admin_stats_actionlogs extends Source_hook_stats_provider
             $rows = $GLOBALS['SITE_DB']->query($query, $max, $start);
             foreach ($rows as $row) {
                 $timestamp = $row['date_and_time'];
-                $timestamp = tz_time($timestamp, $server_timezone);
-
                 $type = $row['the_type'];
 
                 if ($type == 'ACCESSED_ADMIN_ZONE') { // NB: special handling
-                    foreach (array_keys($date_pivots) as $pivot) {
-                        $pivot_interval = $this->calculate_date_pivot_interval($pivot, $timestamp);
-                        $pivot_value = $this->calculate_date_pivot_value($pivot, $timestamp);
-
-                        if (!isset($this->data_buckets['actionlog_adminzone'][$pivot][$pivot_interval][$pivot_value][$type])) {
-                            $this->data_buckets['actionlog_adminzone'][$pivot][$pivot_interval][$pivot_value][$type] = 0;
-                        }
-                        $this->data_buckets['actionlog_adminzone'][$pivot][$pivot_interval][$pivot_value][$type]++;
-                    }
+                    $this->save_stat('actionlog_adminzone', $timestamp, [$type]);
                     continue;
                 }
 
@@ -165,25 +151,12 @@ class Hook_admin_stats_actionlogs extends Source_hook_stats_provider
                     continue;
                 }
 
-                foreach (array_keys($date_pivots) as $pivot) {
-                    $pivot_interval = $this->calculate_date_pivot_interval($pivot, $timestamp);
-                    $pivot_value = $this->calculate_date_pivot_value($pivot, $timestamp);
-
-                    if (!$this->should_skip_type($row['the_type'], 'actionlog_activity')) {
-                        if (!isset($this->data_buckets['actionlog_activity'][$pivot][$pivot_interval][$pivot_value][$type])) {
-                            $this->data_buckets['actionlog_activity'][$pivot][$pivot_interval][$pivot_value][$type] = 0;
-                        }
-                        $this->data_buckets['actionlog_activity'][$pivot][$pivot_interval][$pivot_value][$type]++;
-                    }
-                    if (!$this->should_skip_type($row['the_type'], 'actionlog_growth')) {
-                        if (!isset($this->data_buckets['actionlog_growth'][$pivot][$pivot_interval][$pivot_value][$type])) {
-                            $this->data_buckets['actionlog_growth'][$pivot][$pivot_interval][$pivot_value][$type] = 0;
-                        }
-                        $this->data_buckets['actionlog_growth'][$pivot][$pivot_interval][$pivot_value][$type]++;
-                    }
+                if (!$this->should_skip_type($row['the_type'], 'actionlog_activity')) {
+                    $this->save_stat('actionlog_activity', $timestamp, [$type]);
                 }
-
-                $this->dump_data_buckets_if_necessary();
+                if (!$this->should_skip_type($row['the_type'], 'actionlog_growth')) {
+                    $this->save_stat('actionlog_growth', $timestamp, [$type]);
+                }
             }
 
             $start += $max;
@@ -197,32 +170,18 @@ class Hook_admin_stats_actionlogs extends Source_hook_stats_provider
             $rows = $GLOBALS['SITE_DB']->query($query, $max, $start);
             foreach ($rows as $row) {
                 $timestamp = $row['l_date_and_time'];
-                $timestamp = tz_time($timestamp, $server_timezone);
-
                 $type = $row['l_the_type'];
+
                 if ($this->should_skip_type($type, '')) {
                     continue;
                 }
 
-                foreach (array_keys($date_pivots) as $pivot) {
-                    $pivot_interval = $this->calculate_date_pivot_interval($pivot, $timestamp);
-                    $pivot_value = $this->calculate_date_pivot_value($pivot, $timestamp);
-
-                    if (!$this->should_skip_type($row['l_the_type'], 'actionlog_activity')) {
-                        if (!isset($this->data_buckets['actionlog_activity'][$pivot][$pivot_interval][$pivot_value][$type])) {
-                            $this->data_buckets['actionlog_activity'][$pivot][$pivot_interval][$pivot_value][$type] = 0;
-                        }
-                        $this->data_buckets['actionlog_activity'][$pivot][$pivot_interval][$pivot_value][$type]++;
-                    }
-                    if (!$this->should_skip_type($row['l_the_type'], 'actionlog_growth')) {
-                        if (!isset($this->data_buckets['actionlog_growth'][$pivot][$pivot_interval][$pivot_value][$type])) {
-                            $this->data_buckets['actionlog_growth'][$pivot][$pivot_interval][$pivot_value][$type] = 0;
-                        }
-                        $this->data_buckets['actionlog_growth'][$pivot][$pivot_interval][$pivot_value][$type]++;
-                    }
+                if (!$this->should_skip_type($row['l_the_type'], 'actionlog_activity')) {
+                    $this->save_stat('actionlog_activity', $timestamp, [$type]);
                 }
-
-                $this->dump_data_buckets_if_necessary();
+                if (!$this->should_skip_type($row['l_the_type'], 'actionlog_growth')) {
+                    $this->save_stat('actionlog_growth', $timestamp, [$type]);
+                }
             }
 
             $start += $max;

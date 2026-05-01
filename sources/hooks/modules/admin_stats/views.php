@@ -192,16 +192,7 @@ class Hook_admin_stats_views extends Source_hook_stats_provider
                     'operating_systems__day_range' => new Source_stats_filter_day_range('operating_systems__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
                     'operating_systems__country' => has_geolocation_data() ? new Source_stats_filter_country('operating_systems__country', do_lang_tempcode('VISITOR_COUNTRY')) : null,
                     'operating_systems__exclude_bots' => new Source_stats_filter_tick('operating_systems__exclude_bots', do_lang_tempcode('EXCLUDE_LIKELY_BOTS')),
-                ],
-                'pivot' => null,
-            ],
-            'operating_systems__stripped' => [
-                'label' => do_lang_tempcode('WITHOUT_VERSION_NUMBERS', do_lang_tempcode('OPERATING_SYSTEMS')),
-                'category' => 'audience_technical',
-                'filters' => [
-                    'operating_systems__stripped__day_range' => new Source_stats_filter_day_range('operating_systems__stripped__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
-                    'operating_systems__stripped__country' => has_geolocation_data() ? new Source_stats_filter_country('operating_systems__stripped__country', do_lang_tempcode('VISITOR_COUNTRY')) : null,
-                    'operating_systems__stripped__exclude_bots' => new Source_stats_filter_tick('operating_systems__stripped__exclude_bots', do_lang_tempcode('EXCLUDE_LIKELY_BOTS')),
+                    'operating_systems__exclude_version' => new Source_stats_filter_tick('operating_systems__exclude_version', do_lang_tempcode('EXCLUDE_VERSION')),
                 ],
                 'pivot' => null,
             ],
@@ -212,16 +203,7 @@ class Hook_admin_stats_views extends Source_hook_stats_provider
                     'web_browsers__day_range' => new Source_stats_filter_day_range('web_browsers__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
                     'web_browsers__country' => has_geolocation_data() ? new Source_stats_filter_country('web_browsers__country', do_lang_tempcode('VISITOR_COUNTRY')) : null,
                     'web_browsers__exclude_bots' => new Source_stats_filter_tick('web_browsers__exclude_bots', do_lang_tempcode('EXCLUDE_LIKELY_BOTS')),
-                ],
-                'pivot' => null,
-            ],
-            'web_browsers__stripped' => [
-                'label' => do_lang_tempcode('WITHOUT_VERSION_NUMBERS', do_lang_tempcode('WEB_BROWSERS')),
-                'category' => 'audience_technical',
-                'filters' => [
-                    'web_browsers__stripped__day_range' => new Source_stats_filter_day_range('web_browsers__stripped__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
-                    'web_browsers__stripped__country' => has_geolocation_data() ? new Source_stats_filter_country('web_browsers__stripped__country', do_lang_tempcode('VISITOR_COUNTRY')) : null,
-                    'web_browsers__stripped__exclude_bots' => new Source_stats_filter_tick('web_browsers__stripped__exclude_bots', do_lang_tempcode('EXCLUDE_LIKELY_BOTS')),
+                    'web_browsers__exclude_version' => new Source_stats_filter_tick('web_browsers__exclude_version', do_lang_tempcode('EXCLUDE_VERSION')),
                 ],
                 'pivot' => null,
             ],
@@ -242,16 +224,7 @@ class Hook_admin_stats_views extends Source_hook_stats_provider
                     'referrer_urls__day_range' => new Source_stats_filter_day_range('referrer_urls__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
                     'referrer_urls__country' => has_geolocation_data() ? new Source_stats_filter_country('referrer_urls__country', do_lang_tempcode('VISITOR_COUNTRY')) : null,
                     'referrer_urls__exclude_bots' => new Source_stats_filter_tick('referrer_urls__exclude_bots', do_lang_tempcode('EXCLUDE_LIKELY_BOTS')),
-                ],
-                'pivot' => null,
-            ],
-            'referrer_domains' => [
-                'label' => do_lang_tempcode('REFERRER_DOMAINS'),
-                'category' => 'referrers_and_referrals',
-                'filters' => [
-                    'referrer_domains__day_range' => new Source_stats_filter_day_range('referrer_domains__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
-                    'referrer_domains__country' => has_geolocation_data() ? new Source_stats_filter_country('referrer_domains__country', do_lang_tempcode('VISITOR_COUNTRY')) : null,
-                    'referrer_domains__exclude_bots' => new Source_stats_filter_tick('referrer_domains__exclude_bots', do_lang_tempcode('EXCLUDE_LIKELY_BOTS')),
+                    'referrer_urls__group_by_domain' => new Source_stats_filter_tick('referrer_urls__group_by_domain', do_lang_tempcode('GROUP_BY_DOMAIN')),
                 ],
                 'pivot' => null,
             ],
@@ -418,12 +391,8 @@ class Hook_admin_stats_views extends Source_hook_stats_provider
         require_code('temporal');
         require_code('locations');
 
-        $server_timezone = get_server_timezone();
-
         $max = 1000;
         $start = 0;
-
-        $date_pivots = $this->get_date_pivots();
 
         $guest_id = $GLOBALS['FORUM_DRIVER']->get_guest_id();
 
@@ -445,7 +414,6 @@ class Hook_admin_stats_views extends Source_hook_stats_provider
             $rows = $GLOBALS['SITE_DB']->query($query, $max, $start);
             foreach ($rows as $row) {
                 $timestamp = $row['date_and_time'];
-                $timestamp = tz_time($timestamp, $server_timezone);
 
                 // Use anonymous identifiers so it is hard to trace back to specific IPs or users
                 if ($row['member_id'] == $guest_id) {
@@ -526,122 +494,59 @@ class Hook_admin_stats_views extends Source_hook_stats_provider
                     $referrer_type = self::REFERRER_TYPE__EXTERNAL_MISC;
                 }
 
-                foreach (array_keys($date_pivots) as $pivot) {
-                    $pivot_interval = $this->calculate_date_pivot_interval($pivot, $timestamp);
-                    $pivot_value = $this->calculate_date_pivot_value($pivot, $timestamp);
+                // Hits...
 
-                    // Hits...
+                $this->save_stat('total_views', $timestamp, [$is_real_human, $country, $page_link]);
+                $this->save_stat('total_unique_views', $timestamp, [$is_real_human, $country, $unique_identifier]);
 
-                    if (!isset($this->data_buckets['total_views'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$page_link])) {
-                        $this->data_buckets['total_views'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$page_link] = 0;
-                    }
-                    $this->data_buckets['total_views'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$page_link]++;
-
-                    $this->data_buckets['total_unique_views'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$unique_identifier] = 1;
-
-                    if ($referrer_type != self::REFERRER_TYPE__INTERNAL) {
-                        if (!isset($this->data_buckets['total_referrals'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human])) {
-                            $this->data_buckets['total_referrals'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human] = 0;
-                        }
-                        $this->data_buckets['total_referrals'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human]++;
-                    }
-
-                    if (!isset($this->data_buckets['popular_pages'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$page_link])) {
-                        $this->data_buckets['popular_pages'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$page_link] = 0;
-                    }
-                    $this->data_buckets['popular_pages'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$page_link]++;
-
-                    // User agents...
-
-                    if ($os != '') {
-                        if (!isset($this->data_buckets['operating_systems'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$os])) {
-                            $this->data_buckets['operating_systems'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$os] = 0;
-                        }
-                        $this->data_buckets['operating_systems'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$os]++;
-                    }
-                    if ($os_stripped != '') {
-                        if (!isset($this->data_buckets['operating_systems__stripped'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$os_stripped])) {
-                            $this->data_buckets['operating_systems__stripped'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$os_stripped] = 0;
-                        }
-                        $this->data_buckets['operating_systems__stripped'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$os_stripped]++;
-                    }
-
-                    if ($web_browser != brand_name()) {
-                        if (!isset($this->data_buckets['web_browsers'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$web_browser])) {
-                            $this->data_buckets['web_browsers'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$web_browser] = 0;
-                        }
-                        $this->data_buckets['web_browsers'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$web_browser]++;
-                        if (!isset($this->data_buckets['web_browsers__stripped'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$web_browser_stripped])) {
-                            $this->data_buckets['web_browsers__stripped'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$web_browser_stripped] = 0;
-                        }
-                        $this->data_buckets['web_browsers__stripped'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$web_browser_stripped]++;
-
-                        if (!isset($this->data_buckets['user_agent_types'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$user_agent_type])) {
-                            $this->data_buckets['user_agent_types'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$user_agent_type] = 0;
-                        }
-                        $this->data_buckets['user_agent_types'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$user_agent_type]++;
-                    }
-
-                    // Referrers...
-
-                    if ($referrer_type != self::REFERRER_TYPE__INTERNAL) {
-                        if (!isset($this->data_buckets['referrer_urls'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$referrer_url])) {
-                            $this->data_buckets['referrer_urls'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$referrer_url] = 0;
-                        }
-                        $this->data_buckets['referrer_urls'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$referrer_url]++;
-                        if (!isset($this->data_buckets['referrer_domains'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$referrer_domain])) {
-                            $this->data_buckets['referrer_domains'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$referrer_domain] = 0;
-                        }
-                        $this->data_buckets['referrer_domains'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$referrer_domain]++;
-                    }
-
-                    if (!isset($this->data_buckets['referrer_type'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$referrer_type])) {
-                        $this->data_buckets['referrer_type'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$referrer_type] = 0;
-                    }
-                    $this->data_buckets['referrer_type'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$referrer_type]++;
-
-                    // Speed...
-
-                    $page_speed = $row['milliseconds'];
-
-                    // Build up our distribution (in the Gaussian sense) of page speeds
-                    $speed_bracket = $this->find_value_bracket($this->speed_brackets, $page_speed);
-                    if (!isset($this->data_buckets['load_times_spread'][$pivot][$pivot_interval][$pivot_value][$speed_bracket])) {
-                        $this->data_buckets['load_times_spread'][$pivot][$pivot_interval][$pivot_value][$speed_bracket] = 0;
-                    }
-                    $this->data_buckets['load_times_spread'][$pivot][$pivot_interval][$pivot_value][$speed_bracket]++;
-
-                    // Build in speed of this hit to its particular page for its particular month -- gives us an idea about what are our slow and fast pages
-                    if (!isset($this->data_buckets['page_average_speeds'][$pivot][$pivot_interval][$pivot_value][$page_link])) {
-                        $this->data_buckets['page_average_speeds'][$pivot][$pivot_interval][$pivot_value][$page_link] = [0, 0];
-                    }
-                    $this->data_buckets['page_average_speeds'][$pivot][$pivot_interval][$pivot_value][$page_link][0] += $page_speed;
-                    $this->data_buckets['page_average_speeds'][$pivot][$pivot_interval][$pivot_value][$page_link][1]++;
-
-                    // Build in speed of this hit to its particular page for its particular month - but pivoted e.g. by hour of day, day of week, etc -- gives us an idea about peak times
-                    if (!isset($this->data_buckets['average_page_speed'][$pivot][$pivot_interval][$pivot_value][$page_link])) {
-                        $this->data_buckets['average_page_speed'][$pivot][$pivot_interval][$pivot_value][$page_link] = [0, 0];
-                    }
-                    $this->data_buckets['average_page_speed'][$pivot][$pivot_interval][$pivot_value][$page_link][0] += $page_speed;
-                    $this->data_buckets['average_page_speed'][$pivot][$pivot_interval][$pivot_value][$page_link][1]++;
-
-                    // Languages and countries...
-
-                    $language = preg_replace('#[\-_].*$#', '', $row['requested_language']);
-                    if (!isset($this->data_buckets['requested_languages'][$pivot][$pivot_interval][$pivot_value][$is_real_human][$language])) {
-                        $this->data_buckets['requested_languages'][$pivot][$pivot_interval][$pivot_value][$is_real_human][$language] = 0;
-                    }
-                    $this->data_buckets['requested_languages'][$pivot][$pivot_interval][$pivot_value][$is_real_human][$language]++;
-
-                    if (has_geolocation_data()) {
-                        if (!isset($this->data_buckets['countries'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human])) {
-                            $this->data_buckets['countries'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human] = 0;
-                        }
-                        $this->data_buckets['countries'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human]++;
-                    }
+                if ($referrer_type != self::REFERRER_TYPE__INTERNAL) {
+                    $this->save_stat('total_referrals', $timestamp, [$is_real_human, $country]);
                 }
 
-                $this->dump_data_buckets_if_necessary();
+                $this->save_stat('popular_pages', $timestamp, [$is_real_human, $country, $page_link]);
+
+                // User agents...
+
+                if ($os != '') {
+                    $this->save_stat('operating_systems', $timestamp, [$is_real_human, $country, $os_stripped, $os]);
+                }
+
+                if ($web_browser != brand_name()) {
+                    $this->save_stat('web_browsers', $timestamp, [$is_real_human, $country, $web_browser_stripped, $web_browser]);
+                    $this->save_stat('user_agent_types', $timestamp, [$is_real_human, $country, $user_agent_type]);
+                }
+
+                // Referrers...
+
+                if ($referrer_type != self::REFERRER_TYPE__INTERNAL) {
+                    $this->save_stat('referrer_urls', $timestamp, [$is_real_human, $country, $referrer_domain, $referrer_url]);
+                }
+                $this->save_stat('referrer_type', $timestamp, [$is_real_human, $country, $referrer_type]);
+
+                // Speed...
+
+                $page_speed = $row['milliseconds'];
+
+                // Build up our distribution (in the Gaussian sense) of page speeds
+                $speed_bracket = $this->find_value_bracket($this->speed_brackets, $page_speed);
+                $this->save_stat('load_times_spread', $timestamp, [$speed_bracket]);
+
+                // Build in speed of this hit to its particular page for its particular month -- gives us an idea about what are our slow and fast pages
+                $this->save_stat('page_average_speeds', $timestamp, [0], $page_speed);
+                $this->save_stat('page_average_speeds', $timestamp, [1]);
+
+                // Build in speed of this hit to its particular page for its particular month - but pivoted e.g. by hour of day, day of week, etc -- gives us an idea about peak times
+                $this->save_stat('average_page_speed', $timestamp, [$page_link, 0], $page_speed);
+                $this->save_stat('average_page_speed', $timestamp, [$page_link, 1]);
+
+                // Languages and countries...
+
+                $language = preg_replace('#[\-_].*$#', '', $row['requested_language']);
+                $this->save_stat('requested_languages', $timestamp, [$language]);
+
+                if (has_geolocation_data()) {
+                    $this->save_stat('countries', $timestamp, [$is_real_human, $country]);
+                }
             }
 
             cms_profile_end_for('Hook_admin_stats_views->preprocess_raw_data (group ' . integer_format($start) . ')');
@@ -670,7 +575,6 @@ class Hook_admin_stats_views extends Source_hook_stats_provider
                 $rows = $GLOBALS['SITE_DB']->query_select('stats', ['page_link', 'date_and_time', 'ip'], ['session_id' => $session_id], $end, $max, $start);
                 foreach ($rows as $row) {
                     $timestamp = $row['date_and_time'];
-                    $timestamp = tz_time($timestamp, $server_timezone);
 
                     list($zone, $attributes) = page_link_decode($row['page_link']);
                     $page = isset($attributes['page']) ? $attributes['page'] : DEFAULT_ZONE_PAGE_NAME;
@@ -700,53 +604,24 @@ class Hook_admin_stats_views extends Source_hook_stats_provider
             $is_bounce = ($total_views == 1);
             $session_duration = $last_page_timestamp - $first_page_timestamp;
 
-            foreach (array_keys($date_pivots) as $pivot) {
-                $pivot_interval = $this->calculate_date_pivot_interval($pivot, $timestamp);
-                $pivot_value = $this->calculate_date_pivot_value($pivot, $timestamp);
-
-                if (!isset($this->data_buckets['session_bounce_rates'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$page_link])) {
-                    $this->data_buckets['session_bounce_rates'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$page_link] = [0, 0];
-                }
-                if ($is_bounce) {
-                    $this->data_buckets['session_bounce_rates'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$page_link][0]++;
-                }
-                $this->data_buckets['session_bounce_rates'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$page_link][1]++;
-
-                if (!isset($this->data_buckets['average_session_duration'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human])) {
-                    $this->data_buckets['average_session_duration'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human] = [0, 0];
-                }
-                $this->data_buckets['average_session_duration'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][0] += $session_duration;
-                $this->data_buckets['average_session_duration'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][1]++;
-
-                if (!isset($this->data_buckets['average_session_total_views'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human])) {
-                    $this->data_buckets['average_session_total_views'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human] = [0, 0];
-                }
-                $this->data_buckets['average_session_total_views'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][0] += $total_views;
-                $this->data_buckets['average_session_total_views'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][1]++;
-
-                if (!isset($this->data_buckets['session_entry_pages'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$first_page_link])) {
-                    $this->data_buckets['session_entry_pages'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$first_page_link] = 0;
-                }
-                $this->data_buckets['session_entry_pages'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$first_page_link]++;
-
-                if (!isset($this->data_buckets['session_exit_pages'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$last_page_link])) {
-                    $this->data_buckets['session_exit_pages'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$last_page_link] = 0;
-                }
-                $this->data_buckets['session_exit_pages'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$last_page_link]++;
-
-                $session_duration_bracket = $this->find_value_bracket($this->session_duration_brackets, $session_duration);
-                if (!isset($this->data_buckets['session_durations'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$session_duration_bracket])) {
-                    $this->data_buckets['session_durations'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$session_duration_bracket] = 0;
-                }
-                $this->data_buckets['session_durations'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$session_duration_bracket]++;
-
-                if (!isset($this->data_buckets['session_total_views'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$total_views])) {
-                    $this->data_buckets['session_total_views'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$total_views] = 0;
-                }
-                $this->data_buckets['session_total_views'][$pivot][$pivot_interval][$pivot_value][$country][$is_real_human][$total_views]++;
-
-                $this->dump_data_buckets_if_necessary();
+            if ($is_bounce) {
+                $this->save_stat('session_bounce_rates', $timestamp, [$is_real_human, $country, $page_link, 0]);
             }
+            $this->save_stat('session_bounce_rates', $timestamp, [$is_real_human, $country, $page_link, 1]);
+
+            $this->save_stat('average_session_duration', $timestamp, [$is_real_human, $country, 0], $session_duration);
+            $this->save_stat('average_session_duration', $timestamp, [$is_real_human, $country, 1]);
+
+            $this->save_stat('average_session_total_views', $timestamp, [$is_real_human, $country, 0], $total_views);
+            $this->save_stat('average_session_total_views', $timestamp, [$is_real_human, $country, 1]);
+
+            $this->save_stat('session_entry_pages', $timestamp, [$is_real_human, $country, $first_page_link]);
+            $this->save_stat('session_exit_pages', $timestamp, [$is_real_human, $country, $last_page_link]);
+
+            $session_duration_bracket = $this->find_value_bracket($this->session_duration_brackets, $session_duration);
+            $this->save_stat('session_durations', $timestamp, [$is_real_human, $country, $session_duration_bracket]);
+
+            $this->save_stat('session_total_views', $timestamp, [$is_real_human, $country, $total_views]);
         }
         cms_profile_end_for('Hook_admin_stats_views->preprocess_raw_data (session behaviours)');
 
@@ -797,6 +672,8 @@ class Hook_admin_stats_views extends Source_hook_stats_provider
      */
     public function generate_final_data(string $bucket, string $pivot, array $filters) : ?array
     {
+        // TODO: we removed operating_system__stripped and web_browsers__stripped; added "exclude_version" filter on "operating_system" and "web_browsers"
+        // TODO: remove referrer_domains; added group_by_domain to referrer_urls
         require_lang('dates');
 
         switch ($bucket) {

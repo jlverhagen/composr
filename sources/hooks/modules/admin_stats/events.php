@@ -155,8 +155,6 @@ class Hook_admin_stats_events extends Source_hook_stats_provider
         cms_profile_start_for('Hook_admin_stats_events->preprocess_raw_data');
         require_code('temporal');
 
-        $server_timezone = get_server_timezone();
-
         $max = 100;
         $start = 0;
 
@@ -164,8 +162,6 @@ class Hook_admin_stats_events extends Source_hook_stats_provider
 
         $top_events = $this->get_top_events();
         $top_tracking_codes = $this->get_top_tracking_codes();
-
-        $date_pivots = $this->get_date_pivots();
 
         // Basic event processing...
 
@@ -182,7 +178,6 @@ class Hook_admin_stats_events extends Source_hook_stats_provider
             $event_rows = $GLOBALS['SITE_DB']->query($query_events, $max, $start);
             foreach ($event_rows as $event_row) {
                 $timestamp = $event_row['e_date_and_time'];
-                $timestamp = tz_time($timestamp, $server_timezone);
 
                 $country_code = $event_row['e_country_code'];
                 $event = $event_row['e_event'];
@@ -191,18 +186,7 @@ class Hook_admin_stats_events extends Source_hook_stats_provider
                     $events_seen[$event] = 0;
                 }
                 $events_seen[$event]++;
-
-                foreach (array_keys($date_pivots) as $pivot) {
-                    $pivot_interval = $this->calculate_date_pivot_interval($pivot, $timestamp);
-                    $pivot_value = $this->calculate_date_pivot_value($pivot, $timestamp);
-
-                    if (!isset($this->data_buckets['events'][$pivot][$pivot_interval][$pivot_value][$event][$country_code])) {
-                        $this->data_buckets['events'][$pivot][$pivot_interval][$pivot_value][$event][$country_code] = 0;
-                    }
-                    $this->data_buckets['events'][$pivot][$pivot_interval][$pivot_value][$event][$country_code]++;
-                }
-
-                $this->dump_data_buckets_if_necessary();
+                $this->save_stat('events', $timestamp, [$event, $country_code]);
             }
 
             cms_profile_start_for('Hook_admin_stats_events->preprocess_raw_data stats_events loop ' . strval($start));
@@ -232,7 +216,6 @@ class Hook_admin_stats_events extends Source_hook_stats_provider
                 if ($timestamp < $start_time) {
                     continue;
                 }
-                $timestamp = tz_time($timestamp, $server_timezone);
 
                 // Use anonymous identifiers so it is hard to trace back to specific IPs or sessions
                 $session_id = cms_base64_encode($session_row['session_id'], false, true, true);
@@ -262,17 +245,7 @@ class Hook_admin_stats_events extends Source_hook_stats_provider
                     }
                     $tracking_codes_seen[$tracking_code]++;
 
-                    foreach (array_keys($date_pivots) as $pivot) {
-                        $pivot_interval = $this->calculate_date_pivot_interval($pivot, $timestamp);
-                        $pivot_value = $this->calculate_date_pivot_value($pivot, $timestamp);
-
-                        if (!isset($this->data_buckets['tracking_code_usage'][$pivot][$pivot_interval][$pivot_value][$tracking_code][$country_code])) {
-                            $this->data_buckets['tracking_code_usage'][$pivot][$pivot_interval][$pivot_value][$tracking_code][$country_code] = 0;
-                        }
-                        $this->data_buckets['tracking_code_usage'][$pivot][$pivot_interval][$pivot_value][$tracking_code][$country_code]++;
-                    }
-
-                    $this->dump_data_buckets_if_necessary();
+                    $this->save_stat('tracking_code_usage', $timestamp, [$tracking_code, $country_code]);
                 }
 
                 cms_profile_end_for('Hook_admin_stats_events->preprocess_raw_data stats loop ' . strval($start) . ' tracking codes ' . $session_id);
@@ -282,46 +255,22 @@ class Hook_admin_stats_events extends Source_hook_stats_provider
 
                 $events_for_session = collapse_2d_complexity('e_event', 'e_event', $GLOBALS['SITE_DB']->query_select('stats_events', ['e_event'], ['e_session_id' => $session_id]));
 
-                // Each combination of event wrt session
+                // Each combination of event with session
                 foreach (array_keys($top_events) as $event) {
-                    foreach (array_keys($date_pivots) as $pivot) {
-                        $pivot_interval = $this->calculate_date_pivot_interval($pivot, $timestamp);
-                        $pivot_value = $this->calculate_date_pivot_value($pivot, $timestamp);
-
-                        if (!isset($this->data_buckets['conversion_rates'][$pivot][$pivot_interval][$pivot_value][$event])) {
-                            $this->data_buckets['conversion_rates'][$pivot][$pivot_interval][$pivot_value][$event] = [0, 0];
-                        }
-
-                        $this->data_buckets['conversion_rates'][$pivot][$pivot_interval][$pivot_value][$event][0]++;
-                        if (isset($events_for_session[$event])) {
-                            $this->data_buckets['conversion_rates'][$pivot][$pivot_interval][$pivot_value][$event][1]++;
-                        }
+                    $this->save_stat('conversion_rates', $timestamp, [$event, 0]);
+                    if (isset($events_for_session[$event])) {
+                        $this->save_stat('conversion_rates', $timestamp, [$event, 1]);
                     }
-
-                    $this->dump_data_buckets_if_necessary();
                 }
 
-                // Each combination of event tracking code wrt session
+                // Each combination of event tracking code with session
                 foreach (array_keys($top_tracking_codes) as $tracking_code) {
                     foreach (array_keys($top_events) as $event) {
-                        foreach (array_keys($date_pivots) as $pivot) {
-                            $pivot_interval = $this->calculate_date_pivot_interval($pivot, $timestamp);
-                            $pivot_value = $this->calculate_date_pivot_value($pivot, $timestamp);
-
-                            $this->data_buckets['tracking_code_conversion_rates'][$pivot][$pivot_interval][$pivot_value][$session_id][$tracking_code] = []; // We need this as we need to know tracking codes with no events
-
-                            if (!isset($this->data_buckets['tracking_code_conversion_rates'][$pivot][$pivot_interval][$pivot_value][$session_id][$tracking_code][$event])) {
-                                $this->data_buckets['tracking_code_conversion_rates'][$pivot][$pivot_interval][$pivot_value][$session_id][$tracking_code][$event] = [0, 0];
-                            }
-
-                            $this->data_buckets['tracking_code_conversion_rates'][$pivot][$pivot_interval][$pivot_value][$session_id][$tracking_code][$event][0]++;
-                            if (isset($events_for_session[$event])) {
-                                $this->data_buckets['tracking_code_conversion_rates'][$pivot][$pivot_interval][$pivot_value][$session_id][$tracking_code][$event][1]++;
-                            }
+                        $this->save_stat('tracking_code_conversion_rates', $timestamp, [$tracking_code, $event, 0]);
+                        if (isset($events_for_session[$event])) {
+                            $this->save_stat('tracking_code_conversion_rates', $timestamp, [$tracking_code, $event, 1]);
                         }
                     }
-
-                    $this->dump_data_buckets_if_necessary();
                 }
 
                 cms_profile_end_for('Hook_admin_stats_events->preprocess_raw_data stats loop ' . strval($start) . ' events ' . $session_id);
@@ -504,7 +453,7 @@ class Hook_admin_stats_events extends Source_hook_stats_provider
                     $rows = $this->get_preprocessed_data_for_graph($range, $bucket, $pivot, $filters, $start);
 
                     foreach ($rows as $row) {
-                        list($session, $tracking_code, $event, $conversion_or_session) = explode('||', $row['p_key']);
+                        list($tracking_code, $event, $conversion_or_session) = explode('||', $row['p_key']);
                         if ((!empty($filters[$bucket . '__tracking_code'])) && ($filters[$bucket . '__tracking_code'] != $tracking_code)) {
                             continue;
                         }

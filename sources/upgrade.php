@@ -250,7 +250,7 @@ function upgrade_script_cli()
         warn_exit(do_lang_tempcode('INTERNAL_ERROR', escape_html('TODO')));
     }
 
-    $type = $_SERVER['argv'][0];
+    $type = $_SERVER['argv'][1];
     switch ($type) {
         case 'db_upgrade':
             require_code('upgrade_db_upgrade');

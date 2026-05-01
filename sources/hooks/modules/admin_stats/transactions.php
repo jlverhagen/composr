@@ -94,12 +94,8 @@ class Hook_admin_stats_transactions extends Source_hook_stats_provider
     {
         require_code('temporal');
 
-        $server_timezone = get_server_timezone();
-
         $max = 1000;
         $start = 0;
-
-        $date_pivots = $this->get_date_pivots();
 
         $query = 'SELECT t_time,t_type_code,t_price FROM ' . get_table_prefix() . 'ecom_transactions WHERE ';
         $query .= db_string_equal_to('t_status', 'Completed') . ' AND ';
@@ -110,26 +106,10 @@ class Hook_admin_stats_transactions extends Source_hook_stats_provider
             $rows = $GLOBALS['SITE_DB']->query($query, $max, $start);
             foreach ($rows as $row) {
                 $timestamp = $row['t_time'];
-                $timestamp = tz_time($timestamp, $server_timezone);
-
                 $product_name = $row['t_type_code'];
 
-                foreach (array_keys($date_pivots) as $pivot) {
-                    $pivot_interval = $this->calculate_date_pivot_interval($pivot, $timestamp);
-                    $pivot_value = $this->calculate_date_pivot_value($pivot, $timestamp);
-
-                    if (!isset($this->data_buckets['transaction_quantity'][$pivot][$pivot_interval][$pivot_value][$product_name])) {
-                        $this->data_buckets['transaction_quantity'][$pivot][$pivot_interval][$pivot_value][$product_name] = 0;
-                    }
-                    $this->data_buckets['transaction_quantity'][$pivot][$pivot_interval][$pivot_value][$product_name]++;
-
-                    if (!isset($this->data_buckets['transaction_income'][$pivot][$pivot_interval][$pivot_value][$product_name])) {
-                        $this->data_buckets['transaction_income'][$pivot][$pivot_interval][$pivot_value][$product_name] = 0;
-                    }
-                    $this->data_buckets['transaction_income'][$pivot][$pivot_interval][$pivot_value][$product_name] += $row['t_price'];
-                }
-
-                $this->dump_data_buckets_if_necessary();
+                $this->save_stat('transaction_quantity', $timestamp, [$product_name]);
+                $this->save_stat('transaction_income', $timestamp, [$product_name]);
             }
 
             $start += $max;

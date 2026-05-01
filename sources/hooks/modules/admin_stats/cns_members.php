@@ -140,12 +140,8 @@ class Hook_admin_stats_cns_members extends Source_hook_stats_provider
         require_code('locations');
         require_code('temporal');
 
-        $server_timezone = get_server_timezone();
-
         $max = 1000;
         $start = 0;
-
-        $date_pivots = $this->get_date_pivots();
 
         $query = 'SELECT m_join_time,m_dob_year,m_dob_month,m_dob_day,m_ip_address FROM ' . $GLOBALS['FORUM_DB']->get_table_prefix() . 'f_members WHERE ';
         $query .= 'm_join_time>=' . strval($start_time) . ' AND ';
@@ -155,36 +151,22 @@ class Hook_admin_stats_cns_members extends Source_hook_stats_provider
             $rows = $GLOBALS['FORUM_DB']->query($query, $max, $start);
             foreach ($rows as $row) {
                 $timestamp = $row['m_join_time'];
-                $timestamp = tz_time($timestamp, $server_timezone);
 
                 $country = geolocate_ip($row['m_ip_address']);
                 if ($country === null) {
                     $country = '';
                 }
 
-                foreach (array_keys($date_pivots) as $pivot) {
-                    $pivot_interval = $this->calculate_date_pivot_interval($pivot, $timestamp);
-                    $pivot_value = $this->calculate_date_pivot_value($pivot, $timestamp);
+                $this->save_stat('members', $timestamp, [$country]);
 
-                    if (!isset($this->data_buckets['members'][$pivot][$pivot_interval][$pivot_value][$country])) {
-                        $this->data_buckets['members'][$pivot][$pivot_interval][$pivot_value][$country] = 0;
+                if ($row['m_dob_year'] !== null) {
+                    $age = intval(date('Y')) - $row['m_dob_year'];
+                    if (date('md', cms_mktime(0, 0, 0, $row['m_dob_month'], $row['m_dob_day'], $row['m_dob_year'])) > date('md')) {
+                        $age--;
                     }
-                    $this->data_buckets['members'][$pivot][$pivot_interval][$pivot_value][$country]++;
 
-                    if ($row['m_dob_year'] !== null) {
-                        $age = intval(date('Y')) - $row['m_dob_year'];
-                        if (date('md', cms_mktime(0, 0, 0, $row['m_dob_month'], $row['m_dob_day'], $row['m_dob_year'])) > date('md')) {
-                            $age--;
-                        }
-
-                        if (!isset($this->data_buckets['demographics'][$pivot][$pivot_interval][$pivot_value][$age])) {
-                            $this->data_buckets['demographics'][$pivot][$pivot_interval][$pivot_value][$age] = 0;
-                        }
-                        $this->data_buckets['demographics'][$pivot][$pivot_interval][$pivot_value][$age]++;
-                    }
+                    $this->save_stat('demographics', $timestamp, [$age]);
                 }
-
-                $this->dump_data_buckets_if_necessary();
             }
 
             $start += $max;
@@ -213,6 +195,8 @@ class Hook_admin_stats_cns_members extends Source_hook_stats_provider
         $max = 1000;
         $start = 0;
 
+        $members_ages = [];
+
         $query = 'SELECT id,m_username,m_cache_num_posts,m_total_sessions,m_dob_year,m_dob_month,m_dob_day FROM ' . $GLOBALS['FORUM_DB']->get_table_prefix() . 'f_members WHERE ';
         $query .= 'id<>' . strval($GLOBALS['FORUM_DRIVER']->get_guest_id());
         do {
@@ -221,33 +205,22 @@ class Hook_admin_stats_cns_members extends Source_hook_stats_provider
                 $member_id = $row['id'];
                 $username = $row['m_username'];
 
-                if(!isset($this->data_buckets['top_members_by_visits'][$username])) {
-                    $this->data_buckets['top_members_by_visits'][$username] = 0;
-                }
-                if(!isset($this->data_buckets['top_members_by_forum_posts'][$username])) {
-                    $this->data_buckets['top_members_by_forum_posts'][$username] = 0;
-                }
-
                 $visits = $row['m_total_sessions'];
                 if ($visits > 0) {
-                    $this->data_buckets['top_members_by_visits'][$username] = $visits;
+                    $this->save_stat('top_members_by_visits', null, [$username], $visits);
                 }
 
                 if (addon_installed('cns_forum')) {
                     $posts = $row['m_cache_num_posts'];
                     if ($posts > 0) {
-                        $this->data_buckets['top_members_by_forum_posts'][$username] = $posts;
+                        $this->save_stat('top_members_by_forum_posts', null, [$username], $posts);
                     }
                 }
 
                 if (addon_installed('points')) {
-                    if(!isset($this->data_buckets['top_members_by_points'][$username])) {
-                        $this->data_buckets['top_members_by_points'][$username] = 0;
-                    }
-
                     $points = points_rank($member_id);
                     if ($points > 100) { // Hard-coded minimum
-                        $this->data_buckets['top_members_by_points'][$username] = $points;
+                        $this->save_stat('top_members_by_points', null, [$username], $points);
                     }
                 }
 
@@ -257,15 +230,19 @@ class Hook_admin_stats_cns_members extends Source_hook_stats_provider
                         $age--;
                     }
 
-                    if (!isset($this->data_buckets['demographics_overall'][$age])) {
-                        $this->data_buckets['demographics_overall'][$age] = 0;
+                    if (!isset($members_ages[$age])) {
+                        $members_ages[$age] = 0;
                     }
-                    $this->data_buckets['demographics_overall'][$age]++;
+                    $members_ages[$age]++;
                 }
             }
 
             $start += $max;
         } while (!empty($rows));
+
+        foreach ($members_ages as $age_bracket => $age_count) {
+            $this->save_stat('demographics_overall', null, [$age_bracket], $age_count);
+        }
     }
 
     /**

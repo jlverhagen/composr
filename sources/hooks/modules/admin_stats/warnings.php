@@ -117,12 +117,8 @@ class Hook_admin_stats_warnings extends Source_hook_stats_provider
         require_code('temporal');
         require_code('locations');
 
-        $server_timezone = get_server_timezone();
-
         $max = 1000;
         $start = 0;
-
-        $date_pivots = $this->get_date_pivots();
 
         $query = 'SELECT w_time,w_explanation,m_ip_address FROM ' . $GLOBALS['FORUM_DB']->get_table_prefix() . 'f_warnings w JOIN ' . $GLOBALS['FORUM_DB']->get_table_prefix() . 'f_members m ON m.id=w.w_member_id WHERE ';
         $query .= 'w_time>=' . strval($start_time) . ' AND ';
@@ -132,7 +128,6 @@ class Hook_admin_stats_warnings extends Source_hook_stats_provider
             $rows = $GLOBALS['FORUM_DB']->query($query, $max, $start);
             foreach ($rows as $row) {
                 $timestamp = $row['w_time'];
-                $timestamp = tz_time($timestamp, $server_timezone);
 
                 $country = geolocate_ip($row['m_ip_address']);
                 if ($country === null) {
@@ -141,17 +136,7 @@ class Hook_admin_stats_warnings extends Source_hook_stats_provider
 
                 $explanation = $row['w_explanation'];
 
-                foreach (array_keys($date_pivots) as $pivot) {
-                    $pivot_interval = $this->calculate_date_pivot_interval($pivot, $timestamp);
-                    $pivot_value = $this->calculate_date_pivot_value($pivot, $timestamp);
-
-                    if (!isset($this->data_buckets['recorded_punishments'][$pivot][$pivot_interval][$pivot_value][$country][$explanation])) {
-                        $this->data_buckets['recorded_punishments'][$pivot][$pivot_interval][$pivot_value][$country][$explanation] = 0;
-                    }
-                    $this->data_buckets['recorded_punishments'][$pivot][$pivot_interval][$pivot_value][$country][$explanation]++;
-                }
-
-                $this->dump_data_buckets_if_necessary();
+                $this->save_stat('recorded_punishments', $timestamp, [$country, $explanation]);
             }
 
             $start += $max;
@@ -183,15 +168,10 @@ class Hook_admin_stats_warnings extends Source_hook_stats_provider
                     $country = '';
                 }
 
-                if (!isset($this->data_buckets['recorded_punishment_countries'][$country][$reason])) {
-                    $this->data_buckets['recorded_punishment_countries'][$country][$reason] = 0;
+                if (has_geolocation_data()) {
+                    $this->save_stat('recorded_punishment_countries', null, [$country, $reason]);
                 }
-                $this->data_buckets['recorded_punishment_countries'][$country][$reason]++;
-
-                if (!isset($this->data_buckets['recorded_punishment_reasons'][$reason][$country])) {
-                    $this->data_buckets['recorded_punishment_reasons'][$reason][$country] = 0;
-                }
-                $this->data_buckets['recorded_punishment_reasons'][$reason][$country]++;
+                $this->save_stat('recorded_punishment_reasons', null, [$reason, $country]);
             }
 
             $start += $max;

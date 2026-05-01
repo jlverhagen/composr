@@ -91,16 +91,12 @@ class Hook_admin_stats_links extends Source_hook_stats_provider
     {
         require_code('temporal');
 
-        $server_timezone = get_server_timezone();
-
         $max = 1000;
         $start = 0;
 
         $top_urls = $this->get_top_urls();
 
         $links_seen = [];
-
-        $date_pivots = $this->get_date_pivots();
 
         $urls_seen = [];
 
@@ -112,7 +108,6 @@ class Hook_admin_stats_links extends Source_hook_stats_provider
             $rows = $GLOBALS['SITE_DB']->query($query, $max, $start);
             foreach ($rows as $link_row) {
                 $timestamp = $link_row['c_date_and_time'];
-                $timestamp = tz_time($timestamp, $server_timezone);
 
                 $country_code = geolocate_ip($link_row['c_ip_address']);
                 if ($country_code === null) {
@@ -126,17 +121,7 @@ class Hook_admin_stats_links extends Source_hook_stats_provider
                 }
                 $urls_seen[$url]++;
 
-                foreach (array_keys($date_pivots) as $pivot) {
-                    $pivot_interval = $this->calculate_date_pivot_interval($pivot, $timestamp);
-                    $pivot_value = $this->calculate_date_pivot_value($pivot, $timestamp);
-
-                    if (!isset($this->data_buckets['link_tracking'][$pivot][$pivot_interval][$pivot_value][$country_code][$url])) {
-                        $this->data_buckets['link_tracking'][$pivot][$pivot_interval][$pivot_value][$country_code][$url] = 0;
-                    }
-                    $this->data_buckets['link_tracking'][$pivot][$pivot_interval][$pivot_value][$country_code][$url]++;
-                }
-
-                $this->dump_data_buckets_if_necessary();
+                $this->save_stat('link_tracking', $timestamp, [$country_code, $url]);
             }
 
             $start += $max;

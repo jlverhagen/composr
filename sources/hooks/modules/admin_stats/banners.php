@@ -83,10 +83,6 @@ class Hook_admin_stats_banners extends Source_hook_stats_provider
         require_code('locations');
         require_code('temporal');
 
-        $server_timezone = get_server_timezone();
-
-        $date_pivots = $this->get_date_pivots();
-
         $max = 1000;
         $start = 0;
 
@@ -98,8 +94,6 @@ class Hook_admin_stats_banners extends Source_hook_stats_provider
             $rows = $GLOBALS['SITE_DB']->query($query, $max, $start);
             foreach ($rows as $row) {
                 $timestamp = $row['c_date_and_time'];
-                $timestamp = tz_time($timestamp, $server_timezone);
-
                 $banner = $row['c_banner_id'];
 
                 $country = geolocate_ip($row['c_ip_address']);
@@ -107,17 +101,7 @@ class Hook_admin_stats_banners extends Source_hook_stats_provider
                     $country = '';
                 }
 
-                foreach (array_keys($date_pivots) as $pivot) {
-                    $pivot_interval = $this->calculate_date_pivot_interval($pivot, $timestamp);
-                    $pivot_value = $this->calculate_date_pivot_value($pivot, $timestamp);
-
-                    if (!isset($this->data_buckets['banner_clicks'][$pivot][$pivot_interval][$pivot_value][$banner][$country])) {
-                        $this->data_buckets['banner_clicks'][$pivot][$pivot_interval][$pivot_value][$banner][$country] = 0;
-                    }
-                    $this->data_buckets['banner_clicks'][$pivot][$pivot_interval][$pivot_value][$banner][$country]++;
-                }
-
-                $this->dump_data_buckets_if_necessary();
+                $this->save_stat('banner_clicks', $timestamp, [$banner, $country]);
             }
 
             $start += $max;

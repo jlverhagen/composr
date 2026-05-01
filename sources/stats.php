@@ -1,20 +1,22 @@
-<?php /*
+<?php
 
- The contents of this file are subject to the Common Public Attribution License Version 1.0 (the "License");
- you may not use this file except in compliance with the License.
- You may obtain a copy of the License at http://opensource.org/licenses/cpal_1.0.
+/*
 
- Software distributed under the License is distributed on an "AS IS" basis, WITHOUT WARRANTY OF ANY KIND, either express or implied.
- See the License for the specific language governing rights and limitations under the License.
+The contents of this file are subject to the Common Public Attribution License Version 1.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at http://opensource.org/licenses/cpal_1.0.
 
- The Original Code is Composr CMS.
+Software distributed under the License is distributed on an "AS IS" basis, WITHOUT WARRANTY OF ANY KIND, either express or implied.
+See the License for the specific language governing rights and limitations under the License.
 
- The Original Developer is the Initial Developer.
+The Original Code is Composr CMS.
 
- The Initial Developer of the Original Code is Chris Graham.
- All portions of the code written by Chris Graham are Copyright (c) Christopher Graham. All Rights Reserved.
+The Original Developer is the Initial Developer.
 
- See docs/LICENSE.md for full licensing information.
+The Initial Developer of the Original Code is Chris Graham.
+All portions of the code written by Chris Graham are Copyright (c) Christopher Graham. All Rights Reserved.
+
+See docs/LICENSE.md for full licensing information.
 
 */
 
@@ -659,81 +661,17 @@ function find_known_stats_day_bounds() : array
     static $min_day = null, $max_day = null;
 
     if ($min_day === null) {
-        $_data = $GLOBALS['SITE_DB']->query_select('stats_preprocessed', ['p_pivot', 'MIN(p_pivot_interval) AS min_interval'], [], ' GROUP BY p_pivot');
-        foreach ($_data as $row) {
-            $value = 0;
-            switch ($row['p_pivot']) {
-                case 'hour_of_day':
-                case 'day_series':
-                    $value = from_epoch_interval_index($row['min_interval'], 'days');
-                    break;
-
-                case 'day_of_week':
-                case 'week_series':
-                    $value = from_epoch_interval_index($row['min_interval'], 'weeks');
-                    break;
-
-                case 'week_of_year':
-                case 'month_of_year':
-                case 'quarter_of_year':
-                case 'year_series':
-                    $value = from_epoch_interval_index($row['min_interval'], 'years');
-                    break;
-
-                case 'month_series':
-                    $value = from_epoch_interval_index($row['min_interval'], 'months');
-                    break;
-
-                case 'quarter_series':
-                    $value = from_epoch_interval_index($row['min_interval'] * 3, 'months');
-                    break;
-            }
-
-            if (($min_day === null) || ($value < $min_day)) {
-                $min_day = $value;
-            }
+        $min_day = $GLOBALS['SITE_DB']->query_select_value_if_there('stats_preprocessed', 'MIN(p_date_and_time) AS p_date_and_time');
+        if ($min_day === null) {
+            return [null, null];
         }
     }
 
     if ($max_day === null) {
-        $_data = $GLOBALS['SITE_DB']->query_select('stats_preprocessed', ['p_pivot', 'MAX(p_pivot_interval) AS max_interval'], [], ' GROUP BY p_pivot');
-        foreach ($_data as $row) {
-            $value = 0;
-            switch ($row['p_pivot']) {
-                case 'hour_of_day':
-                case 'day_series':
-                    $value = from_epoch_interval_index($row['max_interval'], 'days');
-                    break;
-
-                case 'day_of_week':
-                case 'week_series':
-                    $value = from_epoch_interval_index($row['max_interval'], 'weeks');
-                    break;
-
-                case 'week_of_year':
-                case 'month_of_year':
-                case 'quarter_of_year':
-                case 'year_series':
-                    $value = from_epoch_interval_index($row['max_interval'], 'years');
-                    break;
-
-                case 'month_series':
-                    $value = from_epoch_interval_index($row['max_interval'], 'months');
-                    break;
-
-                case 'quarter_series':
-                    $value = from_epoch_interval_index($row['max_interval'] * 3, 'months');
-                    break;
-            }
-
-            if (($max_day === null) || ($value > $max_day)) {
-                $max_day = $value;
-            }
+        $max_day = $GLOBALS['SITE_DB']->query_select_value_if_there('stats_preprocessed', 'MAX(p_date_and_time) AS p_date_and_time');
+        if ($max_day === null) {
+            return [null, null];
         }
-    }
-
-    if ($min_day === null) {
-        return [null, null];
     }
 
     return [to_epoch_interval_index($min_day, 'days'), to_epoch_interval_index($max_day, 'days')];
@@ -823,12 +761,6 @@ function preprocess_raw_data_for(string $hook_name, int $start_time = 0, ?int $e
 
     cms_profile_start_for('preprocess_raw_data_for::' . $hook_name . '->preprocess_raw_data');
 
-    // Build delta structure
-    $hook_ob->data_buckets = [];
-    foreach (array_keys($info) as $bucket) {
-        $hook_ob->data_buckets[$bucket] = [];
-    }
-
     // Preprocess new data...
 
     $extend_time = intval((($end_time - $start_time) / (60 * 60)) + 1.0); // We grant 1 second for every hour to be processed
@@ -837,9 +769,8 @@ function preprocess_raw_data_for(string $hook_name, int $start_time = 0, ?int $e
 
     $hook_ob->preprocess_raw_data($start_time, $end_time);
 
-    // Dump final delta data...
-
-    $hook_ob->dump_data_buckets_if_necessary(true, false);
+    // Dump final data...
+    $hook_ob->save_stat(null);
 
     cms_set_time_limit($old);
 
@@ -851,18 +782,12 @@ function preprocess_raw_data_for(string $hook_name, int $start_time = 0, ?int $e
 
     $old = cms_extend_time_limit(TIME_LIMIT_EXTEND__MODEST);
 
-    // Build delta structure
-    $hook_ob->data_buckets = [];
-    foreach (array_keys($info) as $bucket) {
-        $hook_ob->data_buckets[$bucket] = [];
-    }
-
     // Preprocess new data...
 
     $hook_ob->preprocess_raw_data_flat($start_time, $end_time);
-    $hook_ob->dump_data_buckets_if_necessary(true, false, true);
 
-    $hook_ob->data_buckets = [];
+    // Dump final data...
+    $hook_ob->save_stat(null);
 
     cms_set_time_limit($old);
 
@@ -874,15 +799,15 @@ function preprocess_raw_data_for(string $hook_name, int $start_time = 0, ?int $e
 }
 
 /**
- * Process (merge) pending deltas into the official statistics.
+ * Merge statistics records in the database by hour to reduce table size.
  *
- * @param  integer $time_limit Only keep processing deltas for this many seconds; will still terminate if memory use starts getting high (0: disable all limits)
+ * @param  integer $time_limit Only keep processing data for this many seconds; will still terminate if memory use starts getting high (0: disable all limits)
  */
-function stats_merge_deltas(int $time_limit = 15)
+function stats_merge_by_hour(int $time_limit = 15)
 {
     $start = time();
 
-    cms_profile_start_for('Hook_cron_stats_preprocess_raw_data deltas');
+    cms_profile_start_for('stats_merge_by_hour()');
 
     if ($time_limit > 0) {
         $old = cms_extend_time_limit($time_limit + 1);
@@ -898,101 +823,52 @@ function stats_merge_deltas(int $time_limit = 15)
     $near_limit = (($ml > 0) && ($current_memory >= ($ml - (1024 * 1024 * 8)))); // within 8 MB of PHP memory limit
 
     while (($time_limit <= 0) || ((!$near_limit) && ((time() - $start) < $time_limit))) { // Time and memory checks
-        $rows = $GLOBALS['SITE_DB']->query_select('stats_preprocessed_delta', ['*'], [], '', 100);
-        if (!array_key_exists(0, $rows)) { // No more to do
-            break;
+        $next_time = $GLOBALS['SITE_DB']->query_select_value_if_there('stats_preprocessed', 'p_date_and_time', ['p_processed' => 0], ' AND p_date_and_time IS NOT NULL ORDER BY p_date_and_time ASC');
+        if ($next_time === null) {
+            break; // Nothing to process
         }
 
-        // Calculate our initial delta
-        $groups = [];
-        foreach ($rows as $row) {
-            if (!isset($groups[$row['p_id']])) {
-                $groups[$row['p_id']] = 0;
+        require_code('temporal');
+        $start_hour = to_epoch_interval_index($next_time, 'hours');
+        $end_hour = $start_hour + 1;
+        $start_timestamp = from_epoch_interval_index($start_hour, 'hours');
+        $end_timestamp = from_epoch_interval_index($end_hour, 'hours');
+
+        $start = 0;
+        $max = 100;
+        do {
+            $rows = $GLOBALS['SITE_DB']->query_parameterised('SELECT SUM(p_value) AS p_value,p_bucket,p_key FROM {prefix}stats_preprocessed WHERE p_date_and_time BETWEEN {start_timestamp} AND {end_timestamp} GROUP BY p_bucket,p_key', ['start_timestamp' => $start_timestamp, 'end_timestamp' => $end_timestamp], $max, $start);
+
+            $batch = [
+                'p_date_and_time' => [],
+                'p_processed' => [],
+                'p_bucket' => [],
+                'p_key' => [],
+                'p_value' => [],
+            ];
+
+            foreach ($rows as $row) {
+                $batch['p_date_and_time'][] = $start_timestamp;
+                $batch['p_processed'][] = 1;
+                $batch['p_bucket'][] = $row['p_bucket'];
+                $batch['p_key'][] = $row['p_key'];
+                $batch['p_value'][] = $row['p_value'];
             }
-            $groups[$row['p_id']] += $row['p_value'];
-        }
 
-        // Batch select the rows that we need
-        $s_rows = $GLOBALS['SITE_DB']->query_select('stats_preprocessed', ['*'], [
-            'p_id' => array_keys($groups),
-        ]);
+            $GLOBALS['SITE_DB']->query_insert('stats_preprocessed', $batch);
+            $GLOBALS['SITE_DB']->query_delete('stats_preprocessed', ['p_processed' => 0], ' AND p_date_and_time IS NOT NULL AND p_date_and_time BETWEEN ' . strval($start_timestamp) . ' AND ' . strval($end_timestamp));
 
-        // Merge our current totals into our deltas
-        foreach ($s_rows as $row) {
-            if (!isset($groups[$row['p_id']])) {
-                continue; // This should never happen
-            }
-            $groups[$row['p_id']] += $row['p_value'];
-        }
-
-        // Batch delete and insert our new values
-        $GLOBALS['SITE_DB']->query_delete('stats_preprocessed_delta', ['p_id' => array_keys($groups)]);
-        $GLOBALS['SITE_DB']->query_delete('stats_preprocessed', ['p_id' => array_keys($groups)]);
-
-        // Batch insert our updated values
-        $insert_rows = [
-            'p_id' => [],
-            'p_bucket' => [],
-            'p_pivot' => [],
-            'p_pivot_interval' => [],
-            'p_pivot_value' => [],
-            'p_key' => [],
-            'p_value' => [],
-        ];
-
-        // We use delta rows because they might not yet exist in the statistics. We use list_to_map as deltas may contain duplicate points.
-        foreach (list_to_map('p_id', $rows) as $pid => $row) {
-            $insert_rows['p_id'][] = $pid;
-            $insert_rows['p_bucket'][] = $row['p_bucket'];
-            $insert_rows['p_pivot'][] = $row['p_pivot'];
-            $insert_rows['p_pivot_interval'][] = $row['p_pivot_interval'];
-            $insert_rows['p_pivot_value'][] = $row['p_pivot_value'];
-            $insert_rows['p_key'][] = $row['p_key'];
-            $insert_rows['p_value'][] = $groups[$pid];
-        }
-        $GLOBALS['SITE_DB']->query_insert('stats_preprocessed', $insert_rows);
-
-        unset($rows);
-        unset($s_rows);
-        unset($groups);
-        unset($insert_rows);
+            $current_memory = memory_get_usage(false);
+            $near_limit = (($ml > 0) && ($current_memory >= ($ml - (1024 * 1024 * 8)))); // within 8 MB of PHP memory limit
+        } while ((count($rows) >= $max) && (($time_limit <= 0) || ((!$near_limit) && ((time() - $start) < $time_limit))));
 
         $current_memory = memory_get_usage(false);
         $near_limit = (($ml > 0) && ($current_memory >= ($ml - (1024 * 1024 * 8)))); // within 8 MB of PHP memory limit
     }
 
     cms_set_time_limit($old);
-
     pop_query_limiting();
-
-    cms_profile_end_for('Hook_cron_stats_preprocess_raw_data preprocess_raw_data_for');
-}
-
-/**
- * Get the p_id hash of a statistics row.
- *
- * @param  ID_TEXT $p_bucket The name of the bucket
- * @param  ?ID_TEXT $p_pivot The name of the pivot (null: flat data)
- * @param  ?integer $p_pivot_interval The interval index of the pivot (null: flat data)
- * @param  ?integer $p_pivot_value The time point within the interval of the pivot (null: flat data)
- * @param  SHORT_TEXT $p_key The data key
- * @return ID_TEXT The hash
- */
-function stats_get_p_id(string $p_bucket, ?string $p_pivot, ?int $p_pivot_interval, ?int $p_pivot_value, string $p_key) : string
-{
-    $data = $p_bucket;
-    if ($p_pivot !== null) {
-        $data .= '::' . $p_pivot;
-    }
-    if ($p_pivot_interval !== null) {
-        $data .= '::' . strval($p_pivot_interval);
-    }
-    if ($p_pivot_value !== null) {
-        $data .= '::' . strval($p_pivot_value);
-    }
-    $data .= '::' . $p_key;
-
-    return cms_base64_encode($data, false, true, false);
+    cms_profile_end_for('stats_merge_by_hour()');
 }
 
 /**
@@ -1049,4 +925,16 @@ function send_kpi_notifications()
     }
 
     cms_profile_end_for('send_kpi_notifications');
+}
+
+/**
+ * Escape a statistics key so that our delimiter is not used in the key itself.
+ *
+ * @param  string $key The key to escape
+ * @return   string The escaped key
+ * @ignore
+ */
+function _stats_escape_keys(string $key) : string
+{
+    return str_replace('||', '\|\|', $key);
 }
