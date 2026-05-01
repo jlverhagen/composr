@@ -60,7 +60,7 @@ class Module_admin_stats extends Source_standard_crud_module
         $info['hacked_by'] = null;
         $info['hack_version'] = null;
         $info['version'] = 12;
-        $info['locked'] = false;
+        $info['locked'] = true; // A lot of important data can get erased
         $info['update_require_upgrade'] = true;
         $info['min_cms_version'] = 11.0;
         $info['addon'] = 'stats';
