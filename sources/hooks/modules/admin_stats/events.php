@@ -266,8 +266,6 @@ class Hook_admin_stats_events extends Source_hook_stats_provider
                 // Each combination of event tracking code with session
                 foreach (array_keys($top_tracking_codes) as $tracking_code) {
                     foreach (array_keys($top_events) as $event) {
-                        // $this->data_buckets['tracking_code_conversion_rates'][$pivot][$pivot_interval][$pivot_value][$session_id][$tracking_code] = []; // TODO: We need this as we need to know tracking codes with no events
-
                         $this->save_stat('tracking_code_conversion_rates', $timestamp, [$tracking_code, $event, 0]);
                         if (isset($events_for_session[$event])) {
                             $this->save_stat('tracking_code_conversion_rates', $timestamp, [$tracking_code, $event, 1]);

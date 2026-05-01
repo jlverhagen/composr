@@ -168,7 +168,9 @@ class Hook_admin_stats_warnings extends Source_hook_stats_provider
                     $country = '';
                 }
 
-                $this->save_stat('recorded_punishment_countries', null, [$country, $reason]);
+                if (has_geolocation_data()) {
+                    $this->save_stat('recorded_punishment_countries', null, [$country, $reason]);
+                }
                 $this->save_stat('recorded_punishment_reasons', null, [$reason, $country]);
             }
 

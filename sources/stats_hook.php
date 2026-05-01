@@ -553,6 +553,7 @@ abstract class Source_hook_stats_provider extends Source_hook_stats_base
      */
     protected function get_preprocessed_data_for_graph(?array $range, string $bucket, ?string $pivot, array $filters, int &$start = 0) : array
     {
+        // TODO: edit this function
         if ($pivot === '') {
             $pivot = 'day_series';
         }
@@ -574,9 +575,6 @@ abstract class Source_hook_stats_provider extends Source_hook_stats_base
         }
 
         $table = 'stats_preprocessed';
-        if ($pivot === null) {
-            $table = 'stats_preprocessed_flat';
-        }
 
         $rows = $GLOBALS['SITE_DB']->query_select($table, ['*'], $where, $extra, $max, $start);
 
@@ -603,8 +601,13 @@ abstract class Source_hook_stats_provider extends Source_hook_stats_base
                 'p_bucket' => [],
                 'p_key' => [],
                 'p_value' => [],
+                'p_processed' => [],
             ];
         }
+
+        // Escape keys so that our delimiter does not get used where it shouldn't
+        require_code('stats');
+        $keys = array_map('_stats_escape_keys', $keys);
 
         // Insert the data into memory
         if ($bucket !== null) {
@@ -612,6 +615,7 @@ abstract class Source_hook_stats_provider extends Source_hook_stats_base
             $this->data_buckets['p_bucket'][] = $bucket;
             $this->data_buckets['p_key'][] = implode('||', $keys);
             $this->data_buckets['p_value'][] = $value;
+            $this->data_buckets['p_processed'][] = 0;
         }
 
         // Check memory use
@@ -625,12 +629,12 @@ abstract class Source_hook_stats_provider extends Source_hook_stats_base
         // Dump to the database if we determined that we should do so
         if ($should_dump) {
             // Flat data operates on a "replacement"; we replace the value in the database with the value that we calculated.
-            foreach ($this->data_buckets['p_bucket'] as $i => $bucket) {
+            foreach ($this->data_buckets['p_bucket'] as $i => $p_bucket) {
                 if ($this->data_buckets['p_date_and_time'][$i] !== null) { // Not a flat data point; skip
                     continue;
                 }
 
-                $GLOBALS['SITE_DB']->query_delete('stats_preprocessed', ['p_bucket' => $bucket, 'p_key' => $this->data_buckets['p_key'][$i], 'p_date_and_time' => null]);
+                $GLOBALS['SITE_DB']->query_delete('stats_preprocessed', ['p_bucket' => $p_bucket, 'p_key' => $this->data_buckets['p_key'][$i], 'p_date_and_time' => null]);
             }
 
             $GLOBALS['SITE_DB']->query_insert('stats_preprocessed', $this->data_buckets);

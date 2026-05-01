@@ -75,7 +75,8 @@ class Module_admin_stats extends Source_standard_crud_module
         $tables = [
             'stats',
             'stats_preprocessed',
-            'stats_preprocessed_flat',
+            'stats_preprocessed_flat', // LEGACY
+            'stats_preprocessed_delta', // LEGACY
             'stats_kpis',
             'stats_events',
             'stats_link_tracker',
@@ -178,6 +179,7 @@ class Module_admin_stats extends Source_standard_crud_module
             $GLOBALS['SITE_DB']->create_table('stats_preprocessed', [
                 'id' => '*AUTO',
                 'p_date_and_time' => '?TIME',
+                'p_processed' => 'BINARY', // 0 = p_date_and_time is an exact time; 1 = we combined records from the same hour together
                 'p_bucket' => 'ID_TEXT',
                 'p_key' => 'SHORT_TEXT',
                 'p_value' => 'INTEGER',
@@ -269,7 +271,7 @@ class Module_admin_stats extends Source_standard_crud_module
             $GLOBALS['SITE_DB']->create_index('stats_known_links', 'l_count_logged', ['l_count_logged']);
         }
 
-        if (($upgrade_from === null) || ($upgrade_from < 12)) {
+        if (($upgrade_from === null) || ($upgrade_from < 12)) { // 11.beta9
             // Aggressive indexing necessary because it is not unusual for the stats table to exceed 1 million records
             $GLOBALS['SITE_DB']->create_index('stats', 'member_browser', ['member_id', 'date_and_time']);
             $GLOBALS['SITE_DB']->create_index('stats', 'tracking_code', ['session_id', 'date_and_time']);

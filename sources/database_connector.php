@@ -176,7 +176,8 @@ class Source_database_connector
                         $first_entry = false;
 
                         if (is_float($_value)) {
-                            $where .= number_format($_value, 10, '.', '');
+                            require_code('global3');
+                            $where .= float_to_raw_string($_value, 10);
                         } elseif (is_integer($_value)) {
                             $where .= strval($_value);
                         } else {
@@ -189,7 +190,8 @@ class Source_database_connector
                     }
                     $where .= ')';
                 } elseif (is_float($value)) {
-                    $where .= $key . '=' . number_format($value, 10, '.', '');
+                    require_code('global3');
+                    $where .= $key . '=' . float_to_raw_string($value, 10);
                 } elseif (is_integer($value)) {
                     $where .= $key . '=' . strval($value);
                 } elseif (($key === 'begin_num') || ($key === 'end_num')) {
@@ -1069,12 +1071,8 @@ class Source_database_connector
                     $values .= ', ';
                 }
 
-                if ($value === null) {
-                    if (($eis) && ($v === '')) {
-                        $values .= '\' \'';
-                    } else {
-                        $values .= 'NULL';
-                    }
+                if ($v === null) {
+                    $values .= 'NULL';
                 } else {
                     if (($eis) && ($v === '')) {
                         $v = ' ';
@@ -1082,7 +1080,8 @@ class Source_database_connector
                     if (is_integer($v)) {
                         $values .= strval($v);
                     } elseif (is_float($v)) {
-                        $values .= number_format($v, 10, '.', '');
+                        require_code('global3');
+                        $values .= float_to_raw_string($v, 10);
                     } elseif (($key === 'begin_num') || ($key === 'end_num')) {
                         $values .= $v; // FUDGE: for all our known large unsigned integers #3046
                     } else {
@@ -1160,7 +1159,8 @@ class Source_database_connector
                 $update .= $key . '=NULL';
             } else {
                 if (is_float($value)) {
-                    $update .= $key . '=' . number_format($value, 10, '.', '');
+                    require_code('global3');
+                    $update .= $key . '=' . float_to_raw_string($value, 10);
                 } elseif (is_integer($value)) {
                     $update .= $key . '=' . strval($value);
                 } elseif (($key === 'begin_num') || ($key === 'end_num')) {

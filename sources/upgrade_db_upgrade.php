@@ -960,7 +960,7 @@ function database_specific() : bool
     }
 
     // LEGACY: 11.beta9. Remove prior to v11 release.
-    if ((is_numeric($upgrade_from)) && (intval($upgrade_from) < 1768323014)) {
+    if ((is_numeric($upgrade_from)) && (intval($upgrade_from) < 1777660242)) {
         $GLOBALS['SITE_DB']->drop_table_if_exists('stats_preprocessed');
         $GLOBALS['SITE_DB']->drop_table_if_exists('stats_preprocessed_flat');
         $GLOBALS['SITE_DB']->drop_table_if_exists('stats_preprocessed_delta');
@@ -968,6 +968,7 @@ function database_specific() : bool
         $GLOBALS['SITE_DB']->create_table('stats_preprocessed', [
             'id' => '*AUTO',
             'p_date_and_time' => '?TIME',
+            'p_processed' => 'BINARY',
             'p_bucket' => 'ID_TEXT',
             'p_key' => 'SHORT_TEXT',
             'p_value' => 'INTEGER',

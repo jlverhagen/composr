@@ -22,7 +22,7 @@
 				<label for="telemetry_1">{!TELEMETRY_HOMESITE_1,{$BRAND_BASE_URL}}</label><br>
 				<input type="radio" id="telemetry_0" name="telemetry" value="0"{+START,IF,{OFFICIAL_GIT}}checked="checked" {+END}>
 				<label for="telemetry_0">{!TELEMETRY_HOMESITE_0,{$BRAND_BASE_URL}}</label><br>
-				<input type="checkbox" id="telemetry_may_feature" name="telemetry_may_feature" value="1"{+START,IF,{OFFICIAL_GIT}}checked="checked" {+END}>
+				<input type="checkbox" id="telemetry_may_feature" name="telemetry_may_feature" value="1"{+START,IF,{$NOT,{OFFICIAL_GIT}}}checked="checked" {+END}>
 				<label for="telemetry_may_feature">{!TELEMETRY_MAY_FEATURE_HOMESITE,{$BRAND_BASE_URL}}</label><br>
 				<p><small>{!TELEMETRY_HOMESITE_CAN_CHANGE_LATER}</small></p>
 				<p><small>{!DESCRIPTION_TELEMETRY_HOMESITE}</small></p>

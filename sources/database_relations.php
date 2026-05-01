@@ -290,7 +290,6 @@ function get_table_descriptions() : array
         'stats_events' => 'stores statistics of events that have happened such as contact forms being filled in',
         'stats_kpis' => 'configured stats KPIs and targets',
         'stats_preprocessed' => 'stores long-term data for quick processing of statistics',
-        'stats_preprocessed_flat' => 'stores long-term data for quick processing of statistics, for data where no dates are involved',
         'stats_known_events' => 'keeps a record of all the event (types) that have happened',
         'stats_known_tracking' => 'keeps a record of all the tracking codes that have been seen',
         'stats_known_links' => 'keeps a record of all the tracked links that have been seen',
