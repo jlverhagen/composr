@@ -186,7 +186,8 @@ class Module_admin_stats extends Source_standard_crud_module
             ]);
 
             $GLOBALS['SITE_DB']->create_index('stats_preprocessed', 'pbucket', ['p_bucket']);
-            $GLOBALS['SITE_DB']->create_index('stats_preprocessed', 'pdatetime', ['p_bucket', 'p_date_and_time']);
+            $GLOBALS['SITE_DB']->create_index('stats_preprocessed', 'pdatetime', ['p_date_and_time']);
+            $GLOBALS['SITE_DB']->create_index('stats_preprocessed', 'pprocessed', ['p_processed', 'p_date_and_time']);
         }
 
         if (($upgrade_from === null) || ($upgrade_from < 10)) { // LEGACY
