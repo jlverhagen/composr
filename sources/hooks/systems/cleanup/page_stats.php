@@ -65,6 +65,7 @@ class Hook_cleanup_page_stats
     {
         $GLOBALS['SITE_DB']->query_delete('stats');
         $GLOBALS['SITE_DB']->query_delete('stats_preprocessed');
+        $GLOBALS['SITE_DB']->query_delete('stats_preprocessed_delta');
         $GLOBALS['SITE_DB']->query_delete('usersonline_track');
         $GLOBALS['SITE_DB']->query_delete('stats_events');
 
