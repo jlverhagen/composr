@@ -148,7 +148,7 @@ class Hook_database_manifest_stats
                         'p_date_and_time' => '?TIME',
                         'p_processed' => 'BINARY',
                         'p_bucket' => 'ID_TEXT',
-                        'p_key' => 'SHORT_TEXT',
+                        'p_key' => 'LONG_TEXT',
                         'p_value' => 'REAL',
                     ],
                 ],
