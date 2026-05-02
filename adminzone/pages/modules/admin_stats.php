@@ -75,8 +75,8 @@ class Module_admin_stats extends Source_standard_crud_module
         $tables = [
             'stats',
             'stats_preprocessed',
+            'stats_preprocessed_delta',
             'stats_preprocessed_flat', // LEGACY
-            'stats_preprocessed_delta', // LEGACY
             'stats_kpis',
             'stats_events',
             'stats_link_tracker',
@@ -179,15 +179,22 @@ class Module_admin_stats extends Source_standard_crud_module
             $GLOBALS['SITE_DB']->create_table('stats_preprocessed', [
                 'id' => '*AUTO',
                 'p_date_and_time' => '?TIME',
-                'p_processed' => 'BINARY', // 0 = p_date_and_time is an exact time; 1 = we combined records from the same hour together
                 'p_bucket' => 'ID_TEXT',
                 'p_key' => 'LONG_TEXT',
                 'p_value' => 'REAL',
             ]);
-
             $GLOBALS['SITE_DB']->create_index('stats_preprocessed', 'pbucket', ['p_bucket']);
             $GLOBALS['SITE_DB']->create_index('stats_preprocessed', 'pdatetime', ['p_date_and_time']);
-            $GLOBALS['SITE_DB']->create_index('stats_preprocessed', 'pprocessed', ['p_processed', 'p_date_and_time']);
+
+            $GLOBALS['SITE_DB']->create_table('stats_preprocessed_delta', [
+                'id' => '*AUTO',
+                'pd_date_and_time' => '?TIME',
+                'pd_bucket' => 'ID_TEXT',
+                'pd_key' => 'LONG_TEXT',
+                'pd_value' => 'REAL',
+            ]);
+            $GLOBALS['SITE_DB']->create_index('stats_preprocessed_delta', 'pdbucket', ['pd_bucket']);
+            $GLOBALS['SITE_DB']->create_index('stats_preprocessed_delta', 'pddatetime', ['pd_date_and_time']);
         }
 
         if (($upgrade_from === null) || ($upgrade_from < 10)) { // LEGACY

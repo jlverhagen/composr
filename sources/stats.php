@@ -799,15 +799,15 @@ function preprocess_raw_data_for(string $hook_name, int $start_time = 0, ?int $e
 }
 
 /**
- * Merge statistics records in the database by hour to reduce table size.
+ * Fully process statistics from the delta table into the main table.
  *
  * @param  integer $time_limit Only keep processing data for this many seconds; will still terminate if memory use starts getting high (0: disable all limits)
  */
-function stats_merge_by_hour(int $time_limit = 15)
+function stats_merge_deltas(int $time_limit = 15)
 {
     $start = time();
 
-    cms_profile_start_for('stats_merge_by_hour()');
+    cms_profile_start_for('stats_merge_deltas()');
 
     if ($time_limit > 0) {
         $old = cms_extend_time_limit($time_limit + 1);
@@ -822,27 +822,36 @@ function stats_merge_by_hour(int $time_limit = 15)
     $current_memory = memory_get_usage(false);
     $near_limit = (($ml > 0) && ($current_memory >= ($ml - (1024 * 1024 * 8)))); // within 8 MB of PHP memory limit
 
+    require_code('temporal');
+
+    // Time range data
     while (($time_limit <= 0) || ((!$near_limit) && ((time() - $start) < $time_limit))) { // Time and memory checks
-        $next_time = $GLOBALS['SITE_DB']->query_select_value_if_there('stats_preprocessed', 'p_date_and_time', ['p_processed' => 0], ' AND p_date_and_time IS NOT NULL ORDER BY p_date_and_time ASC');
-        if ($next_time === null) {
+        $low_time = $GLOBALS['SITE_DB']->query_select_value_if_there('stats_preprocessed_delta', 'pd_date_and_time', [], ' AND pd_date_and_time IS NOT NULL ORDER BY pd_date_and_time ASC');
+        if ($low_time === null) {
             break; // Nothing to process
         }
 
-        require_code('temporal');
-        $start_hour = to_epoch_interval_index($next_time, 'hours');
+        // To prevent duplicate counts, we cannot process anything that is too new
+        if ($low_time > (time() - (60 * 60))) {
+            break;
+        }
+
+        $start_hour = to_epoch_interval_index($low_time, 'hours');
         $end_hour = $start_hour + 1;
         $start_timestamp = from_epoch_interval_index($start_hour, 'hours');
         $end_timestamp = from_epoch_interval_index($end_hour, 'hours') - 1;
 
         $start = 0;
         $max = 100;
+        $rows = [];
         do {
-            // NB: We do not filter by 'p_processed=0' because we also want to sum any existing hourly records
-            $rows = $GLOBALS['SITE_DB']->query_parameterised('SELECT SUM(p_value) AS p_value,p_bucket,p_key FROM {prefix}stats_preprocessed WHERE p_date_and_time BETWEEN {start_timestamp} AND {end_timestamp} GROUP BY p_bucket,p_key', ['start_timestamp' => $start_timestamp, 'end_timestamp' => $end_timestamp], $max, $start);
+            $rows = $GLOBALS['SITE_DB']->query_parameterised('SELECT SUM(pd_value) AS pd_value,pd_bucket,pd_key FROM {prefix}stats_preprocessed_delta WHERE pd_date_and_time BETWEEN {start_timestamp} AND {end_timestamp} GROUP BY pd_bucket,pd_key', ['start_timestamp' => $start_timestamp, 'end_timestamp' => $end_timestamp], $max, $start);
+            if (count($rows) == 0) {
+                break;
+            }
 
             $batch = [
                 'p_date_and_time' => [],
-                'p_processed' => [],
                 'p_bucket' => [],
                 'p_key' => [],
                 'p_value' => [],
@@ -850,18 +859,53 @@ function stats_merge_by_hour(int $time_limit = 15)
 
             foreach ($rows as $row) {
                 $batch['p_date_and_time'][] = $start_timestamp;
-                $batch['p_processed'][] = 1;
-                $batch['p_bucket'][] = $row['p_bucket'];
-                $batch['p_key'][] = $row['p_key'];
-                $batch['p_value'][] = $row['p_value'];
+                $batch['p_bucket'][] = $row['pd_bucket'];
+                $batch['p_key'][] = $row['pd_key'];
+                $batch['p_value'][] = $row['pd_value'];
             }
 
-            $GLOBALS['SITE_DB']->query_delete('stats_preprocessed', [], ' AND p_date_and_time IS NOT NULL AND p_date_and_time BETWEEN ' . strval($start_timestamp) . ' AND ' . strval($end_timestamp));
             $GLOBALS['SITE_DB']->query_insert('stats_preprocessed', $batch);
 
-            $current_memory = memory_get_usage(false);
-            $near_limit = (($ml > 0) && ($current_memory >= ($ml - (1024 * 1024 * 8)))); // within 8 MB of PHP memory limit
-        } while ((count($rows) >= $max) && (($time_limit <= 0) || ((!$near_limit) && ((time() - $start) < $time_limit))));
+            unset($batch);
+            $start += $max;
+        } while (count($rows) >= $max);
+
+        $GLOBALS['SITE_DB']->query_delete('stats_preprocessed_delta', [], ' AND pd_date_and_time IS NOT NULL AND pd_date_and_time BETWEEN ' . strval($start_timestamp) . ' AND ' . strval($end_timestamp));
+
+        $current_memory = memory_get_usage(false);
+        $near_limit = (($ml > 0) && ($current_memory >= ($ml - (1024 * 1024 * 8)))); // within 8 MB of PHP memory limit
+    }
+
+    // Flat data
+    while (($time_limit <= 0) || ((!$near_limit) && ((time() - $start) < $time_limit))) { // Time and memory checks
+        $test = $GLOBALS['SITE_DB']->query_select_value_if_there('stats_preprocessed_delta', 'id', [], ' AND pd_date_and_time IS NULL');
+        if ($test === null) {
+            break; // Nothing to process
+        }
+
+        $start = 0;
+        $max = 100;
+        $rows = [];
+        do {
+            $rows = $GLOBALS['SITE_DB']->query_parameterised('SELECT MAX(pd_value) AS pd_value,pd_bucket,pd_key FROM {prefix}stats_preprocessed_delta WHERE pd_date_and_time IS NULL GROUP BY pd_bucket,pd_key', [], $max, $start);
+            if (count($rows) == 0) {
+                break;
+            }
+
+            foreach ($rows as $row) {
+                $GLOBALS['SITE_DB']->query_insert_or_replace('stats_preprocessed', [
+                    'p_value' => $row['pd_value'],
+                ], [
+                    'p_bucket' => $row['pd_bucket'],
+                    'p_key' => $row['pd_key'],
+                    'p_date_and_time' => null,
+                ]);
+            }
+
+            $start += $max;
+        } while (count($rows) >= $max);
+
+        $GLOBALS['SITE_DB']->query_delete('stats_preprocessed_delta', [], ' AND pd_date_and_time IS NULL');
 
         $current_memory = memory_get_usage(false);
         $near_limit = (($ml > 0) && ($current_memory >= ($ml - (1024 * 1024 * 8)))); // within 8 MB of PHP memory limit
@@ -869,7 +913,7 @@ function stats_merge_by_hour(int $time_limit = 15)
 
     cms_set_time_limit($old);
     pop_query_limiting();
-    cms_profile_end_for('stats_merge_by_hour()');
+    cms_profile_end_for('stats_merge_deltas()');
 }
 
 /**

@@ -642,8 +642,7 @@ abstract class Source_hook_stats_provider extends Source_hook_stats_base
     }
 
     /**
-     * Save a data point into the statistics database. This tries to be efficient by doing inserts in batches.
-     * Make sure that $keys does not exceed 255 characters (note that a || delimiter is placed between each key).
+     * Save a data point into the statistics database (delta). This tries to be efficient by doing inserts in batches.
      *
      * @param  ?ID_TEXT $bucket The bucket in which the data point belongs (null: We are not saving a new data point; dump what we have in memory into the database)
      * @param  ?TIME $timestamp The date and time at which this action occurred (null: This is flat/timeless data)
@@ -655,11 +654,10 @@ abstract class Source_hook_stats_provider extends Source_hook_stats_base
         // Initialise structure
         if (!isset($this->data_buckets)) {
             $this->data_buckets = [
-                'p_date_and_time' => [],
-                'p_bucket' => [],
-                'p_key' => [],
-                'p_value' => [],
-                'p_processed' => [],
+                'pd_date_and_time' => [],
+                'pd_bucket' => [],
+                'pd_key' => [],
+                'pd_value' => [],
             ];
         }
 
@@ -669,11 +667,10 @@ abstract class Source_hook_stats_provider extends Source_hook_stats_base
 
         // Insert the data into memory
         if ($bucket !== null) {
-            $this->data_buckets['p_date_and_time'][] = $timestamp;
-            $this->data_buckets['p_bucket'][] = $bucket;
-            $this->data_buckets['p_key'][] = implode('||', $keys);
-            $this->data_buckets['p_value'][] = $value;
-            $this->data_buckets['p_processed'][] = 0;
+            $this->data_buckets['pd_date_and_time'][] = $timestamp;
+            $this->data_buckets['pd_bucket'][] = $bucket;
+            $this->data_buckets['pd_key'][] = implode('||', $keys);
+            $this->data_buckets['pd_value'][] = $value;
         }
 
         // Check memory use
@@ -681,21 +678,21 @@ abstract class Source_hook_stats_provider extends Source_hook_stats_base
         $ml = php_return_bytes(ini_get('memory_limit'));
         $current_memory = memory_get_usage(false);
         $near_limit = (($ml > 0) && ($current_memory >= ($ml - (1024 * 1024 * 8)))); // within 8 MB of PHP memory limit
-        $large_bucket = (count($this->data_buckets['p_key']) >= 150);
-        $should_dump = ((($bucket === null) || $near_limit || $large_bucket) && (count($this->data_buckets['p_key']) > 0));
+        $large_bucket = (count($this->data_buckets['pd_key']) >= 150);
+        $should_dump = ((($bucket === null) || $near_limit || $large_bucket) && (count($this->data_buckets['pd_key']) > 0));
 
         // Dump to the database if we determined that we should do so
         if ($should_dump) {
             // Flat data operates on a "replacement"; we replace the value in the database with the value that we calculated.
-            foreach ($this->data_buckets['p_bucket'] as $i => $p_bucket) {
-                if ($this->data_buckets['p_date_and_time'][$i] !== null) { // Not a flat data point; skip
+            foreach ($this->data_buckets['pd_bucket'] as $i => $p_bucket) {
+                if ($this->data_buckets['pd_date_and_time'][$i] !== null) { // Not a flat data point; skip
                     continue;
                 }
 
-                $GLOBALS['SITE_DB']->query_delete('stats_preprocessed', ['p_bucket' => $p_bucket, 'p_key' => $this->data_buckets['p_key'][$i], 'p_date_and_time' => null]);
+                $GLOBALS['SITE_DB']->query_delete('stats_preprocessed_delta', ['pd_bucket' => $p_bucket, 'pd_key' => $this->data_buckets['pd_key'][$i], 'pd_date_and_time' => null]);
             }
 
-            $GLOBALS['SITE_DB']->query_insert('stats_preprocessed', $this->data_buckets);
+            $GLOBALS['SITE_DB']->query_insert('stats_preprocessed_delta', $this->data_buckets);
 
             $this->data_buckets = null;
 

@@ -48,6 +48,7 @@ class Hook_database_manifest_stats
             'stats' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__NO_BACKUPS | TABLE_PURPOSE__FLUSHABLE,
             'stats_events' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__NO_BACKUPS | TABLE_PURPOSE__FLUSHABLE,
             'stats_preprocessed' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__FLUSHABLE_AGGRESSIVE,
+            'stats_preprocessed_delta' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__FLUSHABLE_AGGRESSIVE,
             'stats_kpis' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__FLUSHABLE_AGGRESSIVE,
             'stats_known_events' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__FLUSHABLE_AGGRESSIVE,
             'stats_known_tracking' => TABLE_PURPOSE__NORMAL | TABLE_PURPOSE__FLUSHABLE_AGGRESSIVE,
@@ -146,10 +147,19 @@ class Hook_database_manifest_stats
                     'fields' => [
                         'id' => '*AUTO',
                         'p_date_and_time' => '?TIME',
-                        'p_processed' => 'BINARY',
                         'p_bucket' => 'ID_TEXT',
                         'p_key' => 'LONG_TEXT',
                         'p_value' => 'REAL',
+                    ],
+                ],
+                'stats_preprocessed_delta' => [
+                    'addon' => 'stats',
+                    'fields' => [
+                        'id' => '*AUTO',
+                        'pd_date_and_time' => '?TIME',
+                        'pd_bucket' => 'ID_TEXT',
+                        'pd_key' => 'LONG_TEXT',
+                        'pd_value' => 'REAL',
                     ],
                 ],
                 'usersonline_track' => [

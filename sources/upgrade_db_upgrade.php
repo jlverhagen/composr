@@ -1,20 +1,22 @@
-<?php /*
+<?php
 
- The contents of this file are subject to the Common Public Attribution License Version 1.0 (the "License");
- you may not use this file except in compliance with the License.
- You may obtain a copy of the License at http://opensource.org/licenses/cpal_1.0.
+/*
 
- Software distributed under the License is distributed on an "AS IS" basis, WITHOUT WARRANTY OF ANY KIND, either express or implied.
- See the License for the specific language governing rights and limitations under the License.
+The contents of this file are subject to the Common Public Attribution License Version 1.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at http://opensource.org/licenses/cpal_1.0.
 
- The Original Code is Composr CMS.
+Software distributed under the License is distributed on an "AS IS" basis, WITHOUT WARRANTY OF ANY KIND, either express or implied.
+See the License for the specific language governing rights and limitations under the License.
 
- The Original Developer is the Initial Developer.
+The Original Code is Composr CMS.
 
- The Initial Developer of the Original Code is Chris Graham.
- All portions of the code written by Chris Graham are Copyright (c) Christopher Graham. All Rights Reserved.
+The Original Developer is the Initial Developer.
 
- See docs/LICENSE.md for full licensing information.
+The Initial Developer of the Original Code is Chris Graham.
+All portions of the code written by Chris Graham are Copyright (c) Christopher Graham. All Rights Reserved.
+
+See docs/LICENSE.md for full licensing information.
 
 */
 
@@ -595,12 +597,12 @@ function version_specific() : bool
             }
 
             // We have to take a non-conventional approach to migrating the old long country field to the new short field
-            $test = $GLOBALS['FORUM_DB']->query_select_value_if_there('f_custom_fields', 'id', ['cf_name'=> 'cms_country']);
+            $test = $GLOBALS['FORUM_DB']->query_select_value_if_there('f_custom_fields', 'id', ['cf_name' => 'cms_country']);
             if ($test !== null) {
-                $GLOBALS['FORUM_DRIVER']->install_edit_custom_field('country', 'legacy_country', 5, /*locked=*/1, /*viewable=*/0, /*settable=*/0, /*required=*/0);
-                $GLOBALS['FORUM_DRIVER']->install_create_custom_field('country', 5, /*locked=*/0, /*viewable=*/0, /*settable=*/1, /*required=*/0, '', 'country', 0, null, '', 0, 0, '', '', '', /*autofill_type=*/'country');
+                $GLOBALS['FORUM_DRIVER']->install_edit_custom_field('country', 'legacy_country', 5, /*locked=*/ 1, /*viewable=*/ 0, /*settable=*/ 0, /*required=*/ 0);
+                $GLOBALS['FORUM_DRIVER']->install_create_custom_field('country', 5, /*locked=*/ 0, /*viewable=*/ 0, /*settable=*/ 1, /*required=*/ 0, '', 'country', 0, null, '', 0, 0, '', '', '', /*autofill_type=*/ 'country');
                 $_legacy_id = $GLOBALS['FORUM_DB']->query_select_value('f_custom_fields', 'id', ['cf_name' => 'cms_legacy_country']);
-                $_new_id = $GLOBALS['FORUM_DB']->query_select_value('f_custom_fields', 'id', ['cf_name'=> 'cms_country']);
+                $_new_id = $GLOBALS['FORUM_DB']->query_select_value('f_custom_fields', 'id', ['cf_name' => 'cms_country']);
                 $legacy_id = 'field_' . strval($_legacy_id);
                 $new_id = 'field_' . strval($_new_id);
 
@@ -748,7 +750,7 @@ function version_specific() : bool
                 'main_only_if_match',
                 'main_pt_notifications',
                 'main_staff_website_monitoring',
-                'side_network'
+                'side_network',
             ];
             $_out = '';
             foreach ($deleted_blocks as $block_name) {
@@ -968,15 +970,22 @@ function database_specific() : bool
         $GLOBALS['SITE_DB']->create_table('stats_preprocessed', [
             'id' => '*AUTO',
             'p_date_and_time' => '?TIME',
-            'p_processed' => 'BINARY',
             'p_bucket' => 'ID_TEXT',
             'p_key' => 'LONG_TEXT',
             'p_value' => 'REAL',
         ]);
-
         $GLOBALS['SITE_DB']->create_index('stats_preprocessed', 'pbucket', ['p_bucket']);
         $GLOBALS['SITE_DB']->create_index('stats_preprocessed', 'pdatetime', ['p_date_and_time']);
-        $GLOBALS['SITE_DB']->create_index('stats_preprocessed', 'pprocessed', ['p_processed', 'p_date_and_time']);
+
+        $GLOBALS['SITE_DB']->create_table('stats_preprocessed_delta', [
+            'id' => '*AUTO',
+            'pd_date_and_time' => '?TIME',
+            'pd_bucket' => 'ID_TEXT',
+            'pd_key' => 'LONG_TEXT',
+            'pd_value' => 'REAL',
+        ]);
+        $GLOBALS['SITE_DB']->create_index('stats_preprocessed_delta', 'pdbucket', ['pd_bucket']);
+        $GLOBALS['SITE_DB']->create_index('stats_preprocessed_delta', 'pddatetime', ['pd_date_and_time']);
 
         $done_something = true;
     }
