@@ -265,30 +265,29 @@ class Hook_admin_stats_cms_homesite extends Source_hook_stats_provider
         switch ($bucket) {
             case 'relayed_errors':
                 $data = [];
-                $_data = $this->prepare_preprocessed_data_for_graph($bucket, $pivot, $filters);
+                $range = $this->convert_day_range_filter_to_pair($pivot, $filters[$bucket . '__day_range']);
+                $data = $this->fill_data_by_date_pivots_for_graph($pivot, $range[0], $range[1]);
 
-                foreach ($_data as $_pivot => $__data) {
-                    foreach ($__data as $pivot_interval => $_) {
-                        foreach ($_ as $pivot_value => $__) {
-                            $pivot_value_nice = $this->make_date_pivot_value_nice($_pivot, $pivot_interval, $pivot_value);
-                            if (!isset($data[$pivot_value_nice])) {
-                                $data[$pivot_value_nice] = 0;
-                            }
+                $start = 0;
+                do {
+                    $rows = $this->get_preprocessed_data_for_graph($range, $bucket, $pivot, $filters, $start);
 
-                            if ($__ === null) {
-                                continue;
-                            }
-
-                            foreach ($__ as $resolved => $value) {
-                                if ((empty($filters[$bucket . '__resolved'])) && ($resolved == '1')) {
-                                    continue;
-                                }
-
-                                $data[$pivot_value_nice] += $value;
-                            }
+                    foreach ($rows as $row) {
+                        $resolved = $row['p_key'];
+                        if ((empty($filters[$bucket . '__resolved'])) && ($resolved == '1')) {
+                            continue;
                         }
+
+                        $pivot_interval = $this->calculate_date_pivot_interval($pivot, $row['p_date_and_time']);
+                        $pivot_value = $this->calculate_date_pivot_value($pivot, $row['p_date_and_time']);
+                        $pivot_value_nice = $this->make_date_pivot_value_nice($pivot, $pivot_interval, $pivot_value);
+
+                        if (!isset($data[$pivot_value_nice])) {
+                            $data[$pivot_value_nice] = 0.0;
+                        }
+                        $data[$pivot_value_nice] += $row['p_value'];
                     }
-                }
+                } while (count($rows) > 0);
 
                 return [
                     'type' => null,
@@ -299,30 +298,29 @@ class Hook_admin_stats_cms_homesite extends Source_hook_stats_provider
 
             case 'tracker_issue_activity':
                 $data = [];
-                $_data = $this->prepare_preprocessed_data_for_graph($bucket, $pivot, $filters);
+                $range = $this->convert_day_range_filter_to_pair($pivot, $filters[$bucket . '__day_range']);
+                $data = $this->fill_data_by_date_pivots_for_graph($pivot, $range[0], $range[1]);
 
-                foreach ($_data as $_pivot => $__data) {
-                    foreach ($__data as $pivot_interval => $_) {
-                        foreach ($_ as $pivot_value => $__) {
-                            $pivot_value_nice = $this->make_date_pivot_value_nice($_pivot, $pivot_interval, $pivot_value);
-                            if (!isset($data[$pivot_value_nice])) {
-                                $data[$pivot_value_nice] = 0;
-                            }
+                $start = 0;
+                do {
+                    $rows = $this->get_preprocessed_data_for_graph($range, $bucket, $pivot, $filters, $start);
 
-                            if ($__ === null) {
-                                continue;
-                            }
-
-                            foreach ($__ as $type => $value) {
-                                if (($type != 'all') && (!empty($filters[$bucket . '__status'])) && ($filters[$bucket . '__status'] != $type)) {
-                                    continue;
-                                }
-
-                                $data[$pivot_value_nice] += $value;
-                            }
+                    foreach ($rows as $row) {
+                        $type = $row['p_key'];
+                        if (($type != 'all') && (!empty($filters[$bucket . '__status'])) && ($filters[$bucket . '__status'] != $type)) {
+                            continue;
                         }
+
+                        $pivot_interval = $this->calculate_date_pivot_interval($pivot, $row['p_date_and_time']);
+                        $pivot_value = $this->calculate_date_pivot_value($pivot, $row['p_date_and_time']);
+                        $pivot_value_nice = $this->make_date_pivot_value_nice($pivot, $pivot_interval, $pivot_value);
+
+                        if (!isset($data[$pivot_value_nice])) {
+                            $data[$pivot_value_nice] = 0.0;
+                        }
+                        $data[$pivot_value_nice] += $row['p_value'];
                     }
-                }
+                } while (count($rows) > 0);
 
                 return [
                     'type' => null,
@@ -333,30 +331,29 @@ class Hook_admin_stats_cms_homesite extends Source_hook_stats_provider
 
             case 'tracker_issues':
                 $data = [];
-                $_data = $this->prepare_preprocessed_data_for_graph($bucket, $pivot, $filters);
+                $range = $this->convert_day_range_filter_to_pair($pivot, $filters[$bucket . '__day_range']);
+                $data = $this->fill_data_by_date_pivots_for_graph($pivot, $range[0], $range[1]);
 
-                foreach ($_data as $_pivot => $__data) {
-                    foreach ($__data as $pivot_interval => $_) {
-                        foreach ($_ as $pivot_value => $__) {
-                            $pivot_value_nice = $this->make_date_pivot_value_nice($_pivot, $pivot_interval, $pivot_value);
-                            if (!isset($data[$pivot_value_nice])) {
-                                $data[$pivot_value_nice] = 0;
-                            }
+                $start = 0;
+                do {
+                    $rows = $this->get_preprocessed_data_for_graph($range, $bucket, $pivot, $filters, $start);
 
-                            if ($__ === null) {
-                                continue;
-                            }
-
-                            foreach ($__ as $category => $value) {
-                                if (($category != 'all') && (!empty($filters[$bucket . '__addon'])) && ($filters[$bucket . '__addon'] != $category)) {
-                                    continue;
-                                }
-
-                                $data[$pivot_value_nice] += $value;
-                            }
+                    foreach ($rows as $row) {
+                        $category = $row['p_key'];
+                        if (($category != 'all') && (!empty($filters[$bucket . '__addon'])) && ($filters[$bucket . '__addon'] != $category)) {
+                            continue;
                         }
+
+                        $pivot_interval = $this->calculate_date_pivot_interval($pivot, $row['p_date_and_time']);
+                        $pivot_value = $this->calculate_date_pivot_value($pivot, $row['p_date_and_time']);
+                        $pivot_value_nice = $this->make_date_pivot_value_nice($pivot, $pivot_interval, $pivot_value);
+
+                        if (!isset($data[$pivot_value_nice])) {
+                            $data[$pivot_value_nice] = 0.0;
+                        }
+                        $data[$pivot_value_nice] += $row['p_value'];
                     }
-                }
+                } while (count($rows) > 0);
 
                 return [
                     'type' => null,

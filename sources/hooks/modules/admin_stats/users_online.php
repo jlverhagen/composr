@@ -100,31 +100,30 @@ class Hook_admin_stats_users_online extends Source_hook_stats_provider
     public function generate_final_data(string $bucket, string $pivot, array $filters) : ?array
     {
         $data = [];
-        $__data = $GLOBALS['SITE_DB']->query_select_value_if_there('stats_preprocessed_flat', 'p_data', ['p_bucket' => $bucket]);
-        if ($__data !== null) {
-            $_data = @unserialize($__data);
-            if ($_data === false) {
-                $_data = [];
-            }
-        } else {
-            $_data = [];
-        }
 
-        ksort($_data, SORT_NUMERIC);
+        $start = 0;
+        do {
+            $rows = $this->get_preprocessed_data_for_graph(null, $bucket, null, $filters, $start);
 
-        foreach ($_data as $_interval => $value) {
-            // Makeshift day pivot
-            if (isset($filters[$bucket . '__day_range'])) {
-                list($min_day, $max_day) = $filters[$bucket . '__day_range'];
-                if (($_interval < $min_day) || ($_interval > $max_day)) {
-                    continue;
+            foreach ($rows as $row) {
+                $date_interval = $row['p_key'];
+
+                // Makeshift day pivot
+                if (isset($filters[$bucket . '__day_range'])) {
+                    list($min_day, $max_day) = $filters[$bucket . '__day_range'];
+                    if (($date_interval < $min_day) || ($date_interval > $max_day)) {
+                        continue;
+                    }
                 }
+
+                $pivot_value_nice = $this->make_date_pivot_value_nice('day_series', $date_interval, 0);
+
+                if (!isset($data[$pivot_value_nice])) {
+                    $data[$pivot_value_nice] = 0.0;
+                }
+                $data[$pivot_value_nice] += $row['p_value'];
             }
-
-            $interval = $this->make_date_pivot_value_nice('day_series', $_interval, 0);
-
-            $data[$interval] = $value;
-        }
+        } while (count($rows) > 0);
 
         return [
             'type' => null,

@@ -1,20 +1,22 @@
-<?php /*
+<?php
 
- The contents of this file are subject to the Common Public Attribution License Version 1.0 (the "License");
- you may not use this file except in compliance with the License.
- You may obtain a copy of the License at http://opensource.org/licenses/cpal_1.0.
+/*
 
- Software distributed under the License is distributed on an "AS IS" basis, WITHOUT WARRANTY OF ANY KIND, either express or implied.
- See the License for the specific language governing rights and limitations under the License.
+The contents of this file are subject to the Common Public Attribution License Version 1.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at http://opensource.org/licenses/cpal_1.0.
 
- The Original Code is Composr CMS.
+Software distributed under the License is distributed on an "AS IS" basis, WITHOUT WARRANTY OF ANY KIND, either express or implied.
+See the License for the specific language governing rights and limitations under the License.
 
- The Original Developer is the Initial Developer.
+The Original Code is Composr CMS.
 
- The Initial Developer of the Original Code is Chris Graham.
- All portions of the code written by Chris Graham are Copyright (c) Christopher Graham. All Rights Reserved.
+The Original Developer is the Initial Developer.
 
- See docs/LICENSE.md for full licensing information.
+The Initial Developer of the Original Code is Chris Graham.
+All portions of the code written by Chris Graham are Copyright (c) Christopher Graham. All Rights Reserved.
+
+See docs/LICENSE.md for full licensing information.
 
 */
 
@@ -35,6 +37,7 @@
  */
 class Hook_admin_stats_transactions extends Source_hook_stats_provider
 {
+
     /**
      * Find metadata about stats graphs that are provided by this stats hook.
      *
@@ -109,7 +112,7 @@ class Hook_admin_stats_transactions extends Source_hook_stats_provider
                 $product_name = $row['t_type_code'];
 
                 $this->save_stat('transaction_quantity', $timestamp, [$product_name]);
-                $this->save_stat('transaction_income', $timestamp, [$product_name]);
+                $this->save_stat('transaction_income', $timestamp, [$product_name], $row['t_price']);
             }
 
             $start += $max;
@@ -127,30 +130,29 @@ class Hook_admin_stats_transactions extends Source_hook_stats_provider
     public function generate_final_data(string $bucket, string $pivot, array $filters) : ?array
     {
         $data = [];
-        $_data = $this->prepare_preprocessed_data_for_graph($bucket, $pivot, $filters);
+        $range = $this->convert_day_range_filter_to_pair($pivot, $filters[$bucket . '__day_range']);
+        $data = $this->fill_data_by_date_pivots_for_graph($pivot, $range[0], $range[1]);
 
-        foreach ($_data as $_pivot => $__data) {
-            foreach ($__data as $pivot_interval => $_) {
-                foreach ($_ as $pivot_value => $__) {
-                    $pivot_value_nice = $this->make_date_pivot_value_nice($_pivot, $pivot_interval, $pivot_value);
-                    if (!isset($data[$pivot_value_nice])) {
-                        $data[$pivot_value_nice] = 0;
-                    }
+        $start = 0;
+        do {
+            $rows = $this->get_preprocessed_data_for_graph($range, $bucket, $pivot, $filters, $start);
 
-                    if ($__ === null) {
-                        continue;
-                    }
-
-                    foreach ($__ as $product_name => $price) {
-                        if ((!empty($filters[$bucket . '__product_name'])) && (!simulated_wildcard_match($filters[$bucket . '__product_name'], $product_name, true))) {
-                            continue;
-                        }
-
-                        $data[$pivot_value_nice] += $price;
-                    }
+            foreach ($rows as $row) {
+                $product_name = $row['p_key'];
+                if ((!empty($filters[$bucket . '__product_name'])) && (!simulated_wildcard_match($filters[$bucket . '__product_name'], $product_name, true))) {
+                    continue;
                 }
+
+                $pivot_interval = $this->calculate_date_pivot_interval($pivot, $row['p_date_and_time']);
+                $pivot_value = $this->calculate_date_pivot_value($pivot, $row['p_date_and_time']);
+                $pivot_value_nice = $this->make_date_pivot_value_nice($pivot, $pivot_interval, $pivot_value);
+
+                if (!isset($data[$pivot_value_nice])) {
+                    $data[$pivot_value_nice] = 0.0;
+                }
+                $data[$pivot_value_nice] += $row['p_value'];
             }
-        }
+        } while (count($rows) > 0);
 
         if ($bucket == 'transaction_income') {
             return [

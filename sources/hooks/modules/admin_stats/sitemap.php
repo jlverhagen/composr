@@ -103,34 +103,33 @@ class Hook_admin_stats_sitemap extends Source_hook_stats_provider
     public function generate_final_data(string $bucket, string $pivot, array $filters) : ?array
     {
         $data = [];
-        $_data = $this->prepare_preprocessed_data_for_graph($bucket, $pivot, $filters);
+        $range = $this->convert_day_range_filter_to_pair($pivot, $filters[$bucket . '__day_range']);
+        $data = $this->fill_data_by_date_pivots_for_graph($pivot, $range[0], $range[1]);
 
-        foreach ($_data as $_pivot => $__data) {
-            foreach ($__data as $pivot_interval => $_) {
-                foreach ($_ as $pivot_value => $__) {
-                    $pivot_value_nice = $this->make_date_pivot_value_nice($_pivot, $pivot_interval, $pivot_value);
-                    if (!isset($data[$pivot_value_nice])) {
-                        $data[$pivot_value_nice] = 0;
-                    }
+        $start = 0;
+        do {
+            $rows = $this->get_preprocessed_data_for_graph($range, $bucket, $pivot, $filters, $start);
 
-                    if ($__ === null) {
+            foreach ($rows as $row) {
+                $page_link = $row['p_key'];
+                if (!empty($filters[$bucket . '__page_link'])) {
+                    list($current_zone_name, $attributes) = page_link_decode($page_link);
+                    $current_page_name = isset($attributes['page']) ? $attributes['page'] : DEFAULT_ZONE_PAGE_NAME;
+                    if (!match_key_match($filters[$bucket . '__page_link'], false, null, $current_zone_name, $current_page_name)) {
                         continue;
                     }
-
-                    foreach ($__ as $page_link => $num_new_nodes) {
-                        if (!empty($filters[$bucket . '__page_link'])) {
-                            list($current_zone_name, $attributes) = page_link_decode($page_link);
-                            $current_page_name = isset($attributes['page']) ? $attributes['page'] : DEFAULT_ZONE_PAGE_NAME;
-                            if (!match_key_match($filters[$bucket . '__page_link'], false, null, $current_zone_name, $current_page_name)) {
-                                continue;
-                            }
-                        }
-
-                        $data[$pivot_value_nice] += $num_new_nodes;
-                    }
                 }
+
+                $pivot_interval = $this->calculate_date_pivot_interval($pivot, $row['p_date_and_time']);
+                $pivot_value = $this->calculate_date_pivot_value($pivot, $row['p_date_and_time']);
+                $pivot_value_nice = $this->make_date_pivot_value_nice($pivot, $pivot_interval, $pivot_value);
+
+                if (!isset($data[$pivot_value_nice])) {
+                    $data[$pivot_value_nice] = 0.0;
+                }
+                $data[$pivot_value_nice] += $row['p_value'];
             }
-        }
+        } while (count($rows) > 0);
 
         return [
             'type' => null,

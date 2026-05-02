@@ -1,20 +1,22 @@
-<?php /*
+<?php
 
- The contents of this file are subject to the Common Public Attribution License Version 1.0 (the "License");
- you may not use this file except in compliance with the License.
- You may obtain a copy of the License at http://opensource.org/licenses/cpal_1.0.
+/*
 
- Software distributed under the License is distributed on an "AS IS" basis, WITHOUT WARRANTY OF ANY KIND, either express or implied.
- See the License for the specific language governing rights and limitations under the License.
+The contents of this file are subject to the Common Public Attribution License Version 1.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at http://opensource.org/licenses/cpal_1.0.
 
- The Original Code is Composr CMS.
+Software distributed under the License is distributed on an "AS IS" basis, WITHOUT WARRANTY OF ANY KIND, either express or implied.
+See the License for the specific language governing rights and limitations under the License.
 
- The Original Developer is the Initial Developer.
+The Original Code is Composr CMS.
 
- The Initial Developer of the Original Code is Chris Graham.
- All portions of the code written by Chris Graham are Copyright (c) Christopher Graham. All Rights Reserved.
+The Original Developer is the Initial Developer.
 
- See docs/LICENSE.md for full licensing information.
+The Initial Developer of the Original Code is Chris Graham.
+All portions of the code written by Chris Graham are Copyright (c) Christopher Graham. All Rights Reserved.
+
+See docs/LICENSE.md for full licensing information.
 
 */
 
@@ -207,20 +209,20 @@ class Hook_admin_stats_cns_members extends Source_hook_stats_provider
 
                 $visits = $row['m_total_sessions'];
                 if ($visits > 0) {
-                    $this->save_stat('top_members_by_visits', null, [$username], $visits);
+                    $this->save_stat('top_members_by_visits', null, [$username], floatval($visits));
                 }
 
                 if (addon_installed('cns_forum')) {
                     $posts = $row['m_cache_num_posts'];
                     if ($posts > 0) {
-                        $this->save_stat('top_members_by_forum_posts', null, [$username], $posts);
+                        $this->save_stat('top_members_by_forum_posts', null, [$username], floatval($posts));
                     }
                 }
 
                 if (addon_installed('points')) {
                     $points = points_rank($member_id);
                     if ($points > 100) { // Hard-coded minimum
-                        $this->save_stat('top_members_by_points', null, [$username], $points);
+                        $this->save_stat('top_members_by_points', null, [$username], floatval($points));
                     }
                 }
 
@@ -241,7 +243,7 @@ class Hook_admin_stats_cns_members extends Source_hook_stats_provider
         } while (!empty($rows));
 
         foreach ($members_ages as $age_bracket => $age_count) {
-            $this->save_stat('demographics_overall', null, [$age_bracket], $age_count);
+            $this->save_stat('demographics_overall', null, [$age_bracket], floatval($age_count));
         }
     }
 
@@ -270,11 +272,13 @@ class Hook_admin_stats_cns_members extends Source_hook_stats_provider
                             continue;
                         }
 
-                        $pivot_value_nice = $this->make_date_pivot_value_nice($row['p_pivot'], $row['p_pivot_interval'], $row['p_pivot_value']);
-                        if (!isset($data[$pivot_value_nice])) {
-                            $data[$pivot_value_nice] = 0;
-                        }
+                        $pivot_interval = $this->calculate_date_pivot_interval($pivot, $row['p_date_and_time']);
+                        $pivot_value = $this->calculate_date_pivot_value($pivot, $row['p_date_and_time']);
+                        $pivot_value_nice = $this->make_date_pivot_value_nice($pivot, $pivot_interval, $pivot_value);
 
+                        if (!isset($data[$pivot_value_nice])) {
+                            $data[$pivot_value_nice] = 0.0;
+                        }
                         $data[$pivot_value_nice] += $row['p_value'];
                     }
                 } while (count($rows) > 0);
@@ -289,9 +293,9 @@ class Hook_admin_stats_cns_members extends Source_hook_stats_provider
             case 'demographics':
                 $age_brackets = explode(',', $filters[$bucket . '__age_brackets']);
 
-                $data = [do_lang('OTHER') => 0];
+                $data = [do_lang('OTHER') => 0.0];
                 foreach ($age_brackets as $bracket) {
-                    $data[$bracket] = 0;
+                    $data[$bracket] = 0.0;
                 }
 
                 $range = $this->convert_day_range_filter_to_pair($pivot, $filters[$bucket . '__day_range']);
@@ -310,7 +314,7 @@ class Hook_admin_stats_cns_members extends Source_hook_stats_provider
                     }
                 } while (count($rows) > 0);
 
-                if (array_sum($data) == 0) {
+                if (array_sum($data) == 0.0) {
                     $data = [];
                 }
 
@@ -332,9 +336,8 @@ class Hook_admin_stats_cns_members extends Source_hook_stats_provider
 
                     foreach ($rows as $row) {
                         if (!isset($data[$row['p_key']])) {
-                            $data[$row['p_key']] = 0;
+                            $data[$row['p_key']] = 0.0;
                         }
-
                         $data[$row['p_key']] += $row['p_value'];
                     }
                 } while (count($rows) > 0);
@@ -367,9 +370,9 @@ class Hook_admin_stats_cns_members extends Source_hook_stats_provider
             case 'demographics_overall':
                 $age_brackets = explode(',', $filters[$bucket . '__age_brackets']);
 
-                $data = [do_lang('OTHER') => 0];
+                $data = [do_lang('OTHER') => 0.0];
                 foreach ($age_brackets as $bracket) {
-                    $data[$bracket] = 0;
+                    $data[$bracket] = 0.0;
                 }
 
                 $start = 0;

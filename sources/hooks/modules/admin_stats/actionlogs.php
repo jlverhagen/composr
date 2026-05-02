@@ -211,11 +211,13 @@ class Hook_admin_stats_actionlogs extends Source_hook_stats_provider
                     continue;
                 }
 
-                $pivot_value_nice = $this->make_date_pivot_value_nice($row['p_pivot'], $row['p_pivot_interval'], $row['p_pivot_value']);
-                if (!isset($data[$pivot_value_nice])) {
-                    $data[$pivot_value_nice] = 0;
-                }
+                $pivot_interval = $this->calculate_date_pivot_interval($pivot, $row['p_date_and_time']);
+                $pivot_value = $this->calculate_date_pivot_value($pivot, $row['p_date_and_time']);
+                $pivot_value_nice = $this->make_date_pivot_value_nice($pivot, $pivot_interval, $pivot_value);
 
+                if (!isset($data[$pivot_value_nice])) {
+                    $data[$pivot_value_nice] = 0.0;
+                }
                 $data[$pivot_value_nice] += $row['p_value'];
             }
         } while (count($rows) > 0);

@@ -182,7 +182,7 @@ class Module_admin_stats extends Source_standard_crud_module
                 'p_processed' => 'BINARY', // 0 = p_date_and_time is an exact time; 1 = we combined records from the same hour together
                 'p_bucket' => 'ID_TEXT',
                 'p_key' => 'SHORT_TEXT',
-                'p_value' => 'INTEGER',
+                'p_value' => 'REAL',
             ]);
 
             $GLOBALS['SITE_DB']->create_index('stats_preprocessed', 'pbucket', ['p_bucket']);

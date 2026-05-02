@@ -971,11 +971,12 @@ function database_specific() : bool
             'p_processed' => 'BINARY',
             'p_bucket' => 'ID_TEXT',
             'p_key' => 'SHORT_TEXT',
-            'p_value' => 'INTEGER',
+            'p_value' => 'REAL',
         ]);
 
         $GLOBALS['SITE_DB']->create_index('stats_preprocessed', 'pbucket', ['p_bucket']);
-        $GLOBALS['SITE_DB']->create_index('stats_preprocessed', 'pdatetime', ['p_bucket', 'p_date_and_time']);
+        $GLOBALS['SITE_DB']->create_index('stats_preprocessed', 'pdatetime', ['p_date_and_time']);
+        $GLOBALS['SITE_DB']->create_index('stats_preprocessed', 'pprocessed', ['p_processed', 'p_date_and_time']);
 
         $done_something = true;
     }

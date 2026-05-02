@@ -233,6 +233,10 @@ abstract class Source_hook_stats_provider extends Source_hook_stats_base
     {
         require_code('temporal');
 
+        if ($pivot == '') {
+            $pivot = 'day_series';
+        }
+
         switch ($pivot) {
             case 'hour_of_day':
                 return intval(cms_date('H', $timestamp));
@@ -265,13 +269,17 @@ abstract class Source_hook_stats_provider extends Source_hook_stats_base
     /**
      * Get the pivot interval for a standard date pivot type.
      *
-     * @param  string $pivot Pivot type
+     * @param  ID_TEXT $pivot Pivot type
      * @param  TIME $timestamp Timestamp
      * @return integer Pivot interval
      */
     protected function calculate_date_pivot_interval(string $pivot, int $timestamp) : int
     {
         require_code('temporal');
+
+        if ($pivot == '') {
+            $pivot = 'day_series';
+        }
 
         switch ($pivot) {
             case 'hour_of_day':
@@ -296,6 +304,47 @@ abstract class Source_hook_stats_provider extends Source_hook_stats_base
     }
 
     /**
+     * Given a value from calculate_date_pivot_interval, calculate its timestamp.
+     *
+     * @param  ID_TEXT $pivot Pivot type
+     * @param  integer $interval The interval
+     * @return TIME The timestamp
+     */
+    protected function calculate_date_pivot_timestamp(string $pivot, int $interval) : int
+    {
+        // TODO: does not quite work for graphs
+        require_code('temporal');
+
+         if ($pivot == '') {
+            $pivot = 'day_series';
+        }
+
+        switch ($pivot) {
+            case 'hour_of_day':
+            case 'day_series':
+                return from_epoch_interval_index($interval, 'days');
+
+            case 'day_of_week':
+            case 'week_series':
+                return from_epoch_interval_index($interval, 'weeks');
+
+            case 'month_series':
+                return from_epoch_interval_index($interval, 'months');
+            case 'quarter_series':
+                return from_epoch_interval_index($interval * 3, 'months');
+
+            case 'week_of_year':
+            case 'month_of_year':
+            case 'quarter_of_year':
+            case 'year_series':
+                return from_epoch_interval_index($interval, 'years');
+        }
+
+        fatal_exit(do_lang_tempcode('INTERNAL_ERROR', escape_html('TODO')));
+        return 0;
+    }
+
+    /**
      * Fill up an array with all standard date pivot values between a day range.
      *
      * @param  string $pivot Pivot type
@@ -306,6 +355,10 @@ abstract class Source_hook_stats_provider extends Source_hook_stats_base
     public function fill_data_by_date_pivots(string $pivot, int $start, int $end) : array
     {
         require_code('temporal');
+
+        if ($pivot == '') {
+            $pivot = 'day_series';
+        }
 
         $data = [];
         switch ($pivot) {
@@ -392,7 +445,7 @@ abstract class Source_hook_stats_provider extends Source_hook_stats_base
      * @param  string $pivot Pivot type
      * @param  integer $start The pivot interval at which we are starting
      * @param  integer $end The pivot interval at which we are ending
-     * @return array Map of "nice" pivot interval to initial value of 0
+     * @return array Map of "nice" pivot interval to initial value of 0.0
      */
     public function fill_data_by_date_pivots_for_graph(string $pivot, int $start, int $end) : array
     {
@@ -403,7 +456,7 @@ abstract class Source_hook_stats_provider extends Source_hook_stats_base
             foreach ($__data as $pivot_interval => $_) {
                 foreach ($_ as $pivot_value => $__) {
                     $pivot_value_nice = $this->make_date_pivot_value_nice($_pivot, $pivot_interval, $pivot_value);
-                    $ret[$pivot_value_nice] = 0;
+                    $ret[$pivot_value_nice] = 0.0;
                 }
             }
         }
@@ -421,6 +474,10 @@ abstract class Source_hook_stats_provider extends Source_hook_stats_base
     protected function convert_day_range_filter_to_pair(string $pivot, $_range_value) : array
     {
         require_code('temporal');
+
+        if ($pivot == '') {
+            $pivot = 'day_series';
+        }
 
         // Work out what our range value is as an integer if applicable if $_range_value is not already a range pair
         $range_value = null;
@@ -553,7 +610,6 @@ abstract class Source_hook_stats_provider extends Source_hook_stats_base
      */
     protected function get_preprocessed_data_for_graph(?array $range, string $bucket, ?string $pivot, array $filters, int &$start = 0) : array
     {
-        // TODO: edit this function
         if ($pivot === '') {
             $pivot = 'day_series';
         }
@@ -563,20 +619,22 @@ abstract class Source_hook_stats_provider extends Source_hook_stats_base
         $where = [
             'p_bucket' => $bucket,
         ];
-        if ($pivot !== null) {
-            $where['p_pivot'] = $pivot;
-        }
 
         $extra = '';
-
         if ($range !== null) {
-            $extra .= ' AND p_pivot_interval>=' . strval($range[0]);
-            $extra .= ' AND p_pivot_interval<=' . strval($range[1]);
+            require_code('temporal');
+
+            $start_timestamp = $this->calculate_date_pivot_timestamp($pivot, $range[0]);
+            $end_timestamp = $this->calculate_date_pivot_timestamp($pivot, $range[1]) - 1;
+
+            $extra .= ' AND (p_date_and_time BETWEEN ' . strval($start_timestamp) . ' AND ' . strval($end_timestamp) . ')';
+        } else {
+            $where['p_date_and_time'] = null;
         }
 
-        $table = 'stats_preprocessed';
+        $extra .= ' ORDER BY p_date_and_time ASC';
 
-        $rows = $GLOBALS['SITE_DB']->query_select($table, ['*'], $where, $extra, $max, $start);
+        $rows = $GLOBALS['SITE_DB']->query_select('stats_preprocessed', ['*'], $where, $extra, $max, $start);
 
         $start += $max;
 
@@ -592,7 +650,7 @@ abstract class Source_hook_stats_provider extends Source_hook_stats_base
      * @param  array $keys List of keys defining this data point; this is structural with the lower numeric keys being super-sets of the higher numeric keys
      * @param  integer $value The number of occurrences of this specific data point at this specific time
      */
-    public function save_stat(?string $bucket, ?int $timestamp = null, array $keys = [], int $value = 1)
+    public function save_stat(?string $bucket, ?int $timestamp = null, array $keys = [], float $value = 1.0)
     {
         // Initialise structure
         if (!isset($this->data_buckets)) {
