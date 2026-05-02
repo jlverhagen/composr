@@ -832,11 +832,12 @@ function stats_merge_by_hour(int $time_limit = 15)
         $start_hour = to_epoch_interval_index($next_time, 'hours');
         $end_hour = $start_hour + 1;
         $start_timestamp = from_epoch_interval_index($start_hour, 'hours');
-        $end_timestamp = from_epoch_interval_index($end_hour, 'hours');
+        $end_timestamp = from_epoch_interval_index($end_hour, 'hours') - 1;
 
         $start = 0;
         $max = 100;
         do {
+            // NB: We do not filter by 'p_processed=0' because we also want to sum any existing hourly records
             $rows = $GLOBALS['SITE_DB']->query_parameterised('SELECT SUM(p_value) AS p_value,p_bucket,p_key FROM {prefix}stats_preprocessed WHERE p_date_and_time BETWEEN {start_timestamp} AND {end_timestamp} GROUP BY p_bucket,p_key', ['start_timestamp' => $start_timestamp, 'end_timestamp' => $end_timestamp], $max, $start);
 
             $batch = [
@@ -855,8 +856,8 @@ function stats_merge_by_hour(int $time_limit = 15)
                 $batch['p_value'][] = $row['p_value'];
             }
 
+            $GLOBALS['SITE_DB']->query_delete('stats_preprocessed', [], ' AND p_date_and_time IS NOT NULL AND p_date_and_time BETWEEN ' . strval($start_timestamp) . ' AND ' . strval($end_timestamp));
             $GLOBALS['SITE_DB']->query_insert('stats_preprocessed', $batch);
-            $GLOBALS['SITE_DB']->query_delete('stats_preprocessed', ['p_processed' => 0], ' AND p_date_and_time IS NOT NULL AND p_date_and_time BETWEEN ' . strval($start_timestamp) . ' AND ' . strval($end_timestamp));
 
             $current_memory = memory_get_usage(false);
             $near_limit = (($ml > 0) && ($current_memory >= ($ml - (1024 * 1024 * 8)))); // within 8 MB of PHP memory limit
