@@ -1,20 +1,22 @@
-<?php /*
+<?php
 
- The contents of this file are subject to the Common Public Attribution License Version 1.0 (the "License");
- you may not use this file except in compliance with the License.
- You may obtain a copy of the License at http://opensource.org/licenses/cpal_1.0.
+/*
 
- Software distributed under the License is distributed on an "AS IS" basis, WITHOUT WARRANTY OF ANY KIND, either express or implied.
- See the License for the specific language governing rights and limitations under the License.
+The contents of this file are subject to the Common Public Attribution License Version 1.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at http://opensource.org/licenses/cpal_1.0.
 
- The Original Code is Composr CMS.
+Software distributed under the License is distributed on an "AS IS" basis, WITHOUT WARRANTY OF ANY KIND, either express or implied.
+See the License for the specific language governing rights and limitations under the License.
 
- The Original Developer is the Initial Developer.
+The Original Code is Composr CMS.
 
- The Initial Developer of the Original Code is Chris Graham.
- All portions of the code written by Chris Graham are Copyright (c) Christopher Graham. All Rights Reserved.
+The Original Developer is the Initial Developer.
 
- See docs/LICENSE.md for full licensing information.
+The Initial Developer of the Original Code is Chris Graham.
+All portions of the code written by Chris Graham are Copyright (c) Christopher Graham. All Rights Reserved.
+
+See docs/LICENSE.md for full licensing information.
 
 */
 
@@ -35,6 +37,7 @@
  */
 class Hook_admin_stats_ratings extends Source_hook_stats_provider
 {
+
     /**
      * Find metadata about stats graphs that are provided by this stats hook.
      *
@@ -117,11 +120,11 @@ class Hook_admin_stats_ratings extends Source_hook_stats_provider
         switch ($bucket) {
             case 'ratings':
                 $data = [
-                    1 => 0,
-                    2 => 0,
-                    3 => 0,
-                    4 => 0,
-                    5 => 0,
+                    1 => 0.0,
+                    2 => 0.0,
+                    3 => 0.0,
+                    4 => 0.0,
+                    5 => 0.0,
                 ];
 
                 $range = $this->convert_day_range_filter_to_pair($pivot, $filters[$bucket . '__day_range']);
@@ -173,11 +176,13 @@ class Hook_admin_stats_ratings extends Source_hook_stats_provider
                             continue;
                         }
 
-                        $pivot_value_nice = $this->make_date_pivot_value_nice($row['p_pivot'], $row['p_pivot_interval'], $row['p_pivot_value']);
-                        if (!isset($_data[$pivot_value_nice])) {
-                            $_data[$pivot_value_nice] = [0, 0];
-                        }
+                        $pivot_interval = $this->calculate_date_pivot_interval($pivot, $row['p_date_and_time']);
+                        $pivot_value = $this->calculate_date_pivot_value($pivot, $row['p_date_and_time']);
+                        $pivot_value_nice = $this->make_date_pivot_value_nice($pivot, $pivot_interval, $pivot_value);
 
+                        if (!isset($_data[$pivot_value_nice])) {
+                            $_data[$pivot_value_nice] = [0.0, 0.0];
+                        }
                         $_data[$pivot_value_nice][$aggregate_or_count] += $row['p_value'];
                     }
                 } while (count($rows) > 0);
@@ -186,7 +191,7 @@ class Hook_admin_stats_ratings extends Source_hook_stats_provider
                     list($aggregate_rating, $total_ratings) = $aggregates_and_counts;
 
                     if (!isset($data[$pivot_value_nice])) {
-                        $data[$pivot_value_nice] = 0;
+                        $data[$pivot_value_nice] = 0.0;
                     }
 
                     if ($total_ratings != 0) {

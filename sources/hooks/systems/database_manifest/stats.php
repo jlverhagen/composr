@@ -149,7 +149,7 @@ class Hook_database_manifest_stats
                         'p_processed' => 'BINARY',
                         'p_bucket' => 'ID_TEXT',
                         'p_key' => 'SHORT_TEXT',
-                        'p_value' => 'INTEGER',
+                        'p_value' => 'REAL',
                     ],
                 ],
                 'usersonline_track' => [
@@ -258,17 +258,6 @@ class Hook_database_manifest_stats
                     'table' => 'stats_link_tracker',
                     'fields' => [
                         0 => 'c_url',
-                    ],
-                    'is_full_text' => false,
-                ],
-                'stats_preprocessed__pivotsearch' => [
-                    'addon' => 'stats',
-                    'name' => 'pivotsearch',
-                    'table' => 'stats_preprocessed',
-                    'fields' => [
-                        0 => 'p_pivot',
-                        1 => 'p_pivot_interval',
-                        2 => 'p_pivot_value',
                     ],
                     'is_full_text' => false,
                 ],

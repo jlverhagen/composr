@@ -1,20 +1,22 @@
-<?php /*
+<?php
 
- The contents of this file are subject to the Common Public Attribution License Version 1.0 (the "License");
- you may not use this file except in compliance with the License.
- You may obtain a copy of the License at http://opensource.org/licenses/cpal_1.0.
+/*
 
- Software distributed under the License is distributed on an "AS IS" basis, WITHOUT WARRANTY OF ANY KIND, either express or implied.
- See the License for the specific language governing rights and limitations under the License.
+The contents of this file are subject to the Common Public Attribution License Version 1.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at http://opensource.org/licenses/cpal_1.0.
 
- The Original Code is Composr CMS.
+Software distributed under the License is distributed on an "AS IS" basis, WITHOUT WARRANTY OF ANY KIND, either express or implied.
+See the License for the specific language governing rights and limitations under the License.
 
- The Original Developer is the Initial Developer.
+The Original Code is Composr CMS.
 
- The Initial Developer of the Original Code is Chris Graham.
- All portions of the code written by Chris Graham are Copyright (c) Christopher Graham. All Rights Reserved.
+The Original Developer is the Initial Developer.
 
- See docs/LICENSE.md for full licensing information.
+The Initial Developer of the Original Code is Chris Graham.
+All portions of the code written by Chris Graham are Copyright (c) Christopher Graham. All Rights Reserved.
+
+See docs/LICENSE.md for full licensing information.
 
 */
 
@@ -186,7 +188,7 @@ class Hook_admin_stats_views extends Source_hook_stats_provider
                 'pivot' => null,
             ],
             'operating_systems' => [
-                'label' => do_lang_tempcode('WITH_VERSION_NUMBERS', do_lang_tempcode('OPERATING_SYSTEMS')),
+                'label' => do_lang_tempcode('OPERATING_SYSTEMS'),
                 'category' => 'audience_technical',
                 'filters' => [
                     'operating_systems__day_range' => new Source_stats_filter_day_range('operating_systems__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
@@ -197,7 +199,7 @@ class Hook_admin_stats_views extends Source_hook_stats_provider
                 'pivot' => null,
             ],
             'web_browsers' => [
-                'label' => do_lang_tempcode('WITH_VERSION_NUMBERS', do_lang_tempcode('WEB_BROWSERS')),
+                'label' => do_lang_tempcode('WEB_BROWSERS'),
                 'category' => 'audience_technical',
                 'filters' => [
                     'web_browsers__day_range' => new Source_stats_filter_day_range('web_browsers__day_range', do_lang_tempcode('DATE_RANGE'), null, $for_kpi),
@@ -532,8 +534,9 @@ class Hook_admin_stats_views extends Source_hook_stats_provider
                 $this->save_stat('load_times_spread', $timestamp, [$speed_bracket]);
 
                 // Build in speed of this hit to its particular page for its particular month -- gives us an idea about what are our slow and fast pages
-                $this->save_stat('page_average_speeds', $timestamp, [0], $page_speed);
-                $this->save_stat('page_average_speeds', $timestamp, [1]);
+                // TODO: is this necessary?
+                $this->save_stat('page_average_speeds', $timestamp, [$page_link, 0], $page_speed);
+                $this->save_stat('page_average_speeds', $timestamp, [$page_link, 1]);
 
                 // Build in speed of this hit to its particular page for its particular month - but pivoted e.g. by hour of day, day of week, etc -- gives us an idea about peak times
                 $this->save_stat('average_page_speed', $timestamp, [$page_link, 0], $page_speed);
@@ -672,53 +675,44 @@ class Hook_admin_stats_views extends Source_hook_stats_provider
      */
     public function generate_final_data(string $bucket, string $pivot, array $filters) : ?array
     {
-        // TODO: we removed operating_system__stripped and web_browsers__stripped; added "exclude_version" filter on "operating_system" and "web_browsers"
-        // TODO: remove referrer_domains; added group_by_domain to referrer_urls
         require_lang('dates');
 
         switch ($bucket) {
             case 'total_views':
                 $data = [];
-                $_data = $this->prepare_preprocessed_data_for_graph($bucket, $pivot, $filters);
+                $range = $this->convert_day_range_filter_to_pair($pivot, $filters[$bucket . '__day_range']);
+                $data = $this->fill_data_by_date_pivots_for_graph($pivot, $range[0], $range[1]);
 
-                foreach ($_data as $_pivot => $__data) {
-                    foreach ($__data as $pivot_interval => $_) {
-                        foreach ($_ as $pivot_value => $__) {
-                            $pivot_value_nice = $this->make_date_pivot_value_nice($_pivot, $pivot_interval, $pivot_value);
-                            if (!isset($data[$pivot_value_nice])) {
-                                $data[$pivot_value_nice] = 0;
-                            }
+                $start = 0;
+                do {
+                    $rows = $this->get_preprocessed_data_for_graph($range, $bucket, $pivot, $filters, $start);
 
-                            if ($__ === null) {
+                    foreach ($rows as $row) {
+                        list($is_real_human, $country, $page_link) = explode('||', $row['p_key']);
+                        if ((!empty($filters[$bucket . '__exclude_bots'])) && (!$is_real_human)) {
+                            continue;
+                        }
+                        if ((!empty($filters[$bucket . '__country'])) && ($filters[$bucket . '__country'] != $country)) {
+                            continue;
+                        }
+                        if (!empty($filters[$bucket . '__page_link'])) {
+                            list($current_zone_name, $attributes) = page_link_decode($page_link);
+                            $current_page_name = isset($attributes['page']) ? $attributes['page'] : DEFAULT_ZONE_PAGE_NAME;
+                            if (!match_key_match($filters[$bucket . '__page_link'], false, null, $current_zone_name, $current_page_name)) {
                                 continue;
                             }
-
-                            foreach ($__ as $country => $___) {
-                                if ((!empty($filters[$bucket . '__country'])) && ($filters[$bucket . '__country'] != $country)) {
-                                    continue;
-                                }
-
-                                foreach ($___ as $is_real_human => $____) {
-                                    if ((!empty($filters[$bucket . '__exclude_bots'])) && (!$is_real_human)) {
-                                        continue;
-                                    }
-
-                                    foreach ($____ as $page_link => $total_views) {
-                                        if (!empty($filters[$bucket . '__page_link'])) {
-                                            list($current_zone_name, $attributes) = page_link_decode($page_link);
-                                            $current_page_name = isset($attributes['page']) ? $attributes['page'] : DEFAULT_ZONE_PAGE_NAME;
-                                            if (!match_key_match($filters[$bucket . '__page_link'], false, null, $current_zone_name, $current_page_name)) {
-                                                continue;
-                                            }
-                                        }
-
-                                        $data[$pivot_value_nice] += $total_views;
-                                    }
-                                }
-                            }
                         }
+
+                        $pivot_interval = $this->calculate_date_pivot_interval($pivot, $row['p_date_and_time']);
+                        $pivot_value = $this->calculate_date_pivot_value($pivot, $row['p_date_and_time']);
+                        $pivot_value_nice = $this->make_date_pivot_value_nice($pivot, $pivot_interval, $pivot_value);
+
+                        if (!isset($data[$pivot_value_nice])) {
+                            $data[$pivot_value_nice] = 0.0;
+                        }
+                        $data[$pivot_value_nice] += $row['p_value'];
                     }
-                }
+                } while (count($rows) > 0);
 
                 return [
                     'type' => null,
@@ -728,43 +722,39 @@ class Hook_admin_stats_views extends Source_hook_stats_provider
                 ];
 
             case 'total_unique_views':
+                $hashed_ips = [];
                 $data = [];
-                $_data = $this->prepare_preprocessed_data_for_graph($bucket, $pivot, $filters);
+                $range = $this->convert_day_range_filter_to_pair($pivot, $filters[$bucket . '__day_range']);
+                $data = $this->fill_data_by_date_pivots_for_graph($pivot, $range[0], $range[1]);
 
-                foreach ($_data as $_pivot => $__data) {
-                    foreach ($__data as $pivot_interval => $_) {
-                        foreach ($_ as $pivot_value => $__) {
-                            $pivot_value_nice = $this->make_date_pivot_value_nice($_pivot, $pivot_interval, $pivot_value);
-                            if (!isset($data[$pivot_value_nice])) {
-                                $data[$pivot_value_nice] = 0;
-                            }
+                $start = 0;
+                do {
+                    $rows = $this->get_preprocessed_data_for_graph($range, $bucket, $pivot, $filters, $start);
 
-                            if ($__ === null) {
-                                continue;
-                            }
-
-                            $_hashed_ips = [];
-
-                            foreach ($__ as $country => $___) {
-                                if ((!empty($filters[$bucket . '__country'])) && ($filters[$bucket . '__country'] != $country)) {
-                                    continue;
-                                }
-
-                                foreach ($___ as $is_real_human => $hashed_ips) {
-                                    if ((!empty($filters[$bucket . '__exclude_bots'])) && (!$is_real_human)) {
-                                        continue;
-                                    }
-
-                                    foreach ($hashed_ips as $hashed_ip) {
-                                        $_hashed_ips[$hashed_ip] = true;
-                                    }
-                                }
-                            }
-
-                            $data[$pivot_value_nice] += count($_hashed_ips);
+                    foreach ($rows as $row) {
+                        list($is_real_human, $country, $hashed_ip) = explode('||', $row['p_key']);
+                        if ((!empty($filters[$bucket . '__exclude_bots'])) && (!$is_real_human)) {
+                            continue;
                         }
+                        if ((!empty($filters[$bucket . '__country'])) && ($filters[$bucket . '__country'] != $country)) {
+                            continue;
+                        }
+
+                        $pivot_interval = $this->calculate_date_pivot_interval($pivot, $row['p_date_and_time']);
+                        $pivot_value = $this->calculate_date_pivot_value($pivot, $row['p_date_and_time']);
+                        $pivot_value_nice = $this->make_date_pivot_value_nice($pivot, $pivot_interval, $pivot_value);
+
+                        if (isset($hashed_ips[$pivot_value_nice][$hashed_ip])) {
+                            continue;
+                        }
+                        $hashed_ips[$pivot_value_nice][$hashed_ip] = true;
+
+                        if (!isset($data[$pivot_value_nice])) {
+                            $data[$pivot_value_nice] = 0.0;
+                        }
+                        $data[$pivot_value_nice] += $row['p_value'];
                     }
-                }
+                } while (count($rows) > 0);
 
                 return [
                     'type' => null,
@@ -775,36 +765,32 @@ class Hook_admin_stats_views extends Source_hook_stats_provider
 
             case 'total_referrals':
                 $data = [];
-                $_data = $this->prepare_preprocessed_data_for_graph($bucket, $pivot, $filters);
+                $range = $this->convert_day_range_filter_to_pair($pivot, $filters[$bucket . '__day_range']);
+                $data = $this->fill_data_by_date_pivots_for_graph($pivot, $range[0], $range[1]);
 
-                foreach ($_data as $_pivot => $__data) {
-                    foreach ($__data as $pivot_interval => $_) {
-                        foreach ($_ as $pivot_value => $__) {
-                            $pivot_value_nice = $this->make_date_pivot_value_nice($_pivot, $pivot_interval, $pivot_value);
-                            if (!isset($data[$pivot_value_nice])) {
-                                $data[$pivot_value_nice] = 0;
-                            }
+                $start = 0;
+                do {
+                    $rows = $this->get_preprocessed_data_for_graph($range, $bucket, $pivot, $filters, $start);
 
-                            if ($__ === null) {
-                                continue;
-                            }
-
-                            foreach ($__ as $country => $___) {
-                                if ((!empty($filters[$bucket . '__country'])) && ($filters[$bucket . '__country'] != $country)) {
-                                    continue;
-                                }
-
-                                foreach ($___ as $is_real_human => $total) {
-                                    if ((!empty($filters[$bucket . '__exclude_bots'])) && (!$is_real_human)) {
-                                        continue;
-                                    }
-
-                                    $data[$pivot_value_nice] += $total;
-                                }
-                            }
+                    foreach ($rows as $row) {
+                        list($is_real_human, $country) = explode('||', $row['p_key']);
+                        if ((!empty($filters[$bucket . '__exclude_bots'])) && (!$is_real_human)) {
+                            continue;
                         }
+                        if ((!empty($filters[$bucket . '__country'])) && ($filters[$bucket . '__country'] != $country)) {
+                            continue;
+                        }
+
+                        $pivot_interval = $this->calculate_date_pivot_interval($pivot, $row['p_date_and_time']);
+                        $pivot_value = $this->calculate_date_pivot_value($pivot, $row['p_date_and_time']);
+                        $pivot_value_nice = $this->make_date_pivot_value_nice($pivot, $pivot_interval, $pivot_value);
+
+                        if (!isset($data[$pivot_value_nice])) {
+                            $data[$pivot_value_nice] = 0.0;
+                        }
+                        $data[$pivot_value_nice] += $row['p_value'];
                     }
-                }
+                } while (count($rows) > 0);
 
                 return [
                     'type' => null,
@@ -816,42 +802,48 @@ class Hook_admin_stats_views extends Source_hook_stats_provider
             case 'average_session_total_views':
             case 'average_session_duration':
                 $data = [];
-                $_data = $this->prepare_preprocessed_data_for_graph($bucket, $pivot, $filters);
+                $range = $this->convert_day_range_filter_to_pair($pivot, $filters[$bucket . '__day_range']);
+                $data = $this->fill_data_by_date_pivots_for_graph($pivot, $range[0], $range[1]);
 
-                foreach ($_data as $_pivot => $__data) {
-                    foreach ($__data as $pivot_interval => $_) {
-                        foreach ($_ as $pivot_value => $__) {
-                            $pivot_value_nice = $this->make_date_pivot_value_nice($_pivot, $pivot_interval, $pivot_value);
-                            if (!isset($data[$pivot_value_nice])) {
-                                $data[$pivot_value_nice] = 0;
-                            }
+                /*
+                    NB: For this graph, we need both the number of sessions and duration. However, each are stored in a separate database row.
+                    So, we need to keep track of these in $_data first. Then, after we finish getting everything from the database,
+                    we perform the actual calculation into $data.
+                */
+                $start = 0;
+                do {
+                    $rows = $this->get_preprocessed_data_for_graph($range, $bucket, $pivot, $filters, $start);
 
-                            if ($__ === null) {
-                                continue;
-                            }
-
-                            $aggregate_total = 0;
-                            $records_total = 0;
-
-                            foreach ($__ as $country => $___) {
-                                if ((!empty($filters[$bucket . '__country'])) && ($filters[$bucket . '__country'] != $country)) {
-                                    continue;
-                                }
-
-                                foreach ($___ as $is_real_human => $____) {
-                                    if ((!empty($filters[$bucket . '__exclude_bots'])) && (!$is_real_human)) {
-                                        continue;
-                                    }
-
-                                    $aggregate_total += $____[0];
-                                    $records_total += $____[1];
-                                }
-                            }
-
-                            if ($records_total > 0) {
-                                $data[$pivot_value_nice] += (floatval($aggregate_total) / floatval($records_total));
-                            }
+                    foreach ($rows as $row) {
+                        list($is_real_human, $country, $quantity_or_hit) = explode('||', $row['p_key']);
+                        if ((!empty($filters[$bucket . '__exclude_bots'])) && (!$is_real_human)) {
+                            continue;
                         }
+                        if ((!empty($filters[$bucket . '__country'])) && ($filters[$bucket . '__country'] != $country)) {
+                            continue;
+                        }
+
+                        $pivot_interval = $this->calculate_date_pivot_interval($pivot, $row['p_date_and_time']);
+                        $pivot_value = $this->calculate_date_pivot_value($pivot, $row['p_date_and_time']);
+                        $pivot_value_nice = $this->make_date_pivot_value_nice($pivot, $pivot_interval, $pivot_value);
+
+                        if (!isset($_data[$pivot_value_nice])) {
+                            $_data[$pivot_value_nice] = [0.0, 0.0];
+                        }
+
+                        $_data[$pivot_value_nice][$quantity_or_hit] += $row['p_value'];
+                    }
+                } while (count($rows) > 0);
+
+                foreach ($_data as $pivot_value_nice => $quantities_and_hits) {
+                    list($quantities, $hits) = $quantities_and_hits;
+
+                    if (!isset($data[$pivot_value_nice])) {
+                        $data[$pivot_value_nice] = 0.0;
+                    }
+
+                    if ($hits != 0) {
+                        $data[$pivot_value_nice] += (floatval($quantities) / floatval($hits));
                     }
                 }
 
@@ -865,7 +857,7 @@ class Hook_admin_stats_views extends Source_hook_stats_provider
                         break;
                 }
 
-                if (array_sum($data) == 0) {
+                if (array_sum($data) == 0.0) {
                     $data = [];
                 }
 
@@ -880,39 +872,29 @@ class Hook_admin_stats_views extends Source_hook_stats_provider
                 $data = [];
                 foreach ($this->session_duration_brackets as $bracket) {
                     $bracket = $this->cleanup_session_duration($bracket);
-                    $data[$bracket] = 0;
+                    $data[$bracket] = 0.0;
                 }
+                $range = $this->convert_day_range_filter_to_pair($pivot, $filters[$bucket . '__day_range']);
 
-                $_data = $this->prepare_preprocessed_data_for_graph($bucket, $pivot, $filters);
+                $start = 0;
+                do {
+                    $rows = $this->get_preprocessed_data_for_graph($range, $bucket, $pivot, $filters, $start);
 
-                foreach ($_data as $_pivot => $__data) {
-                    foreach ($__data as $pivot_interval => $_) {
-                        foreach ($_ as $pivot_value => $__) {
-                            if ($__ === null) {
-                                continue;
-                            }
-
-                            foreach ($__ as $country => $___) {
-                                if ((!empty($filters[$bucket . '__country'])) && ($filters[$bucket . '__country'] != $country)) {
-                                    continue;
-                                }
-
-                                foreach ($___ as $is_real_human => $____) {
-                                    if ((!empty($filters[$bucket . '__exclude_bots'])) && (!$is_real_human)) {
-                                        continue;
-                                    }
-
-                                    foreach ($____ as $bracket => $total) {
-                                        $bracket = $this->cleanup_session_duration($bracket);
-                                        $data[$bracket] += $total;
-                                    }
-                                }
-                            }
+                    foreach ($rows as $row) {
+                        list($is_real_human, $country, $bracket) = explode('||', $row['p_key']);
+                        if ((!empty($filters[$bucket . '__exclude_bots'])) && (!$is_real_human)) {
+                            continue;
                         }
-                    }
-                }
+                        if ((!empty($filters[$bucket . '__country'])) && ($filters[$bucket . '__country'] != $country)) {
+                            continue;
+                        }
 
-                if (array_sum($data) == 0) {
+                        $bracket = $this->cleanup_session_duration($bracket);
+                        $data[$bracket] += $row['p_value'];
+                    }
+                } while (count($rows) > 0);
+
+                if (array_sum($data) == 0.0) {
                     $data = [];
                 }
 
@@ -925,53 +907,44 @@ class Hook_admin_stats_views extends Source_hook_stats_provider
 
             case 'user_agent_types':
                 $data = [];
-                $_data = $this->prepare_preprocessed_data_for_graph($bucket, $pivot, $filters);
+                $range = $this->convert_day_range_filter_to_pair($pivot, $filters[$bucket . '__day_range']);
 
-                foreach ($_data as $_pivot => $__data) {
-                    foreach ($__data as $pivot_interval => $_) {
-                        foreach ($_ as $pivot_value => $__) {
-                            if ($__ === null) {
-                                continue;
-                            }
+                $start = 0;
+                do {
+                    $rows = $this->get_preprocessed_data_for_graph($range, $bucket, $pivot, $filters, $start);
 
-                            foreach ($__ as $country => $___) {
-                                if ((!empty($filters[$bucket . '__country'])) && ($filters[$bucket . '__country'] != $country)) {
-                                    continue;
-                                }
-
-                                foreach ($___ as $is_real_human => $____) {
-                                    if ((!empty($filters[$bucket . '__exclude_bots'])) && (!$is_real_human)) {
-                                        continue;
-                                    }
-
-                                    foreach ($____ as $user_agent_type => $total_views) {
-                                        switch ($user_agent_type) {
-                                            case self::USER_AGENT_TYPE__UNKNOWN:
-                                                $user_agent_type = do_lang('_UNKNOWN');
-                                                break;
-                                            case self::USER_AGENT_TYPE__DESKTOP:
-                                                $user_agent_type = do_lang('USER_AGENT_TYPE__DESKTOP');
-                                                break;
-                                            case self::USER_AGENT_TYPE__MOBILE:
-                                                $user_agent_type = do_lang('USER_AGENT_TYPE__MOBILE');
-                                                break;
-                                            case self::USER_AGENT_TYPE__BOT:
-                                                $user_agent_type = do_lang('USER_AGENT_TYPE__BOT');
-                                                break;
-                                        }
-
-                                        if (!isset($data[$user_agent_type])) {
-                                            $data[$user_agent_type] = 0;
-                                        }
-                                        $data[$user_agent_type] += $total_views;
-                                    }
-                                }
-                            }
+                    foreach ($rows as $row) {
+                        list($is_real_human, $country, $user_agent_type) = explode('||', $row['p_key']);
+                        if ((!empty($filters[$bucket . '__exclude_bots'])) && (!$is_real_human)) {
+                            continue;
                         }
-                    }
-                }
+                        if ((!empty($filters[$bucket . '__country'])) && ($filters[$bucket . '__country'] != $country)) {
+                            continue;
+                        }
 
-                if (array_sum($data) == 0) {
+                        switch ($user_agent_type) {
+                            case self::USER_AGENT_TYPE__UNKNOWN:
+                                $user_agent_type = do_lang('_UNKNOWN');
+                                break;
+                            case self::USER_AGENT_TYPE__DESKTOP:
+                                $user_agent_type = do_lang('USER_AGENT_TYPE__DESKTOP');
+                                break;
+                            case self::USER_AGENT_TYPE__MOBILE:
+                                $user_agent_type = do_lang('USER_AGENT_TYPE__MOBILE');
+                                break;
+                            case self::USER_AGENT_TYPE__BOT:
+                                $user_agent_type = do_lang('USER_AGENT_TYPE__BOT');
+                                break;
+                        }
+
+                        if (!isset($data[$user_agent_type])) {
+                            $data[$user_agent_type] = 0.0;
+                        }
+                        $data[$user_agent_type] += $row['p_value'];
+                    }
+                } while (count($rows) > 0);
+
+                if (array_sum($data) == 0.0) {
                     $data = [];
                 }
 
@@ -984,59 +957,50 @@ class Hook_admin_stats_views extends Source_hook_stats_provider
 
             case 'referrer_type':
                 $data = [];
-                $_data = $this->prepare_preprocessed_data_for_graph($bucket, $pivot, $filters);
+                $range = $this->convert_day_range_filter_to_pair($pivot, $filters[$bucket . '__day_range']);
 
-                foreach ($_data as $_pivot => $__data) {
-                    foreach ($__data as $pivot_interval => $_) {
-                        foreach ($_ as $pivot_value => $__) {
-                            if ($__ === null) {
-                                continue;
-                            }
+                $start = 0;
+                do {
+                    $rows = $this->get_preprocessed_data_for_graph($range, $bucket, $pivot, $filters, $start);
 
-                            foreach ($__ as $country => $___) {
-                                if ((!empty($filters[$bucket . '__country'])) && ($filters[$bucket . '__country'] != $country)) {
-                                    continue;
-                                }
-
-                                foreach ($___ as $is_real_human => $____) {
-                                    if ((!empty($filters[$bucket . '__exclude_bots'])) && (!$is_real_human)) {
-                                        continue;
-                                    }
-
-                                    foreach ($____ as $referrer_type => $total_views) {
-                                        switch ($referrer_type) {
-                                            case self::REFERRER_TYPE__DIRECT:
-                                                $referrer_type = do_lang('REFERRER_TYPE__DIRECT');
-                                                break;
-                                            case self::REFERRER_TYPE__UNKNOWN:
-                                                $referrer_type = do_lang('_UNKNOWN');
-                                                break;
-                                            case self::REFERRER_TYPE__INTERNAL:
-                                                $referrer_type = do_lang('REFERRER_TYPE__INTERNAL');
-                                                break;
-                                            case self::REFERRER_TYPE__EXTERNAL_SEARCH_ENGINE:
-                                                $referrer_type = do_lang('REFERRER_TYPE__EXTERNAL_SEARCH_ENGINE');
-                                                break;
-                                            case self::REFERRER_TYPE__EXTERNAL_SOCIAL_MEDIA:
-                                                $referrer_type = do_lang('REFERRER_TYPE__EXTERNAL_SOCIAL_MEDIA');
-                                                break;
-                                            case self::REFERRER_TYPE__EXTERNAL_MISC:
-                                                $referrer_type = do_lang('REFERRER_TYPE__EXTERNAL_MISC');
-                                                break;
-                                        }
-
-                                        if (!isset($data[$referrer_type])) {
-                                            $data[$referrer_type] = 0;
-                                        }
-                                        $data[$referrer_type] += $total_views;
-                                    }
-                                }
-                            }
+                    foreach ($rows as $row) {
+                        list($is_real_human, $country, $referrer_type) = explode('||', $row['p_key']);
+                        if ((!empty($filters[$bucket . '__exclude_bots'])) && (!$is_real_human)) {
+                            continue;
                         }
-                    }
-                }
+                        if ((!empty($filters[$bucket . '__country'])) && ($filters[$bucket . '__country'] != $country)) {
+                            continue;
+                        }
 
-                if (array_sum($data) == 0) {
+                        switch ($referrer_type) {
+                            case self::REFERRER_TYPE__DIRECT:
+                                $referrer_type = do_lang('REFERRER_TYPE__DIRECT');
+                                break;
+                            case self::REFERRER_TYPE__UNKNOWN:
+                                $referrer_type = do_lang('_UNKNOWN');
+                                break;
+                            case self::REFERRER_TYPE__INTERNAL:
+                                $referrer_type = do_lang('REFERRER_TYPE__INTERNAL');
+                                break;
+                            case self::REFERRER_TYPE__EXTERNAL_SEARCH_ENGINE:
+                                $referrer_type = do_lang('REFERRER_TYPE__EXTERNAL_SEARCH_ENGINE');
+                                break;
+                            case self::REFERRER_TYPE__EXTERNAL_SOCIAL_MEDIA:
+                                $referrer_type = do_lang('REFERRER_TYPE__EXTERNAL_SOCIAL_MEDIA');
+                                break;
+                            case self::REFERRER_TYPE__EXTERNAL_MISC:
+                                $referrer_type = do_lang('REFERRER_TYPE__EXTERNAL_MISC');
+                                break;
+                        }
+
+                        if (!isset($data[$referrer_type])) {
+                            $data[$referrer_type] = 0;
+                        }
+                        $data[$referrer_type] += $row['p_value'];
+                    }
+                } while (count($rows) > 0);
+
+                if (array_sum($data) == 0.0) {
                     $data = [];
                 }
 
@@ -1049,71 +1013,61 @@ class Hook_admin_stats_views extends Source_hook_stats_provider
 
             case 'popular_pages':
             case 'operating_systems':
-            case 'operating_systems__stripped':
             case 'web_browsers':
-            case 'web_browsers__stripped':
             case 'referrer_urls':
-            case 'referrer_domains':
             case 'session_entry_pages':
             case 'session_exit_pages':
             case 'session_total_views':
                 $data = [];
-                $_data = $this->prepare_preprocessed_data_for_graph($bucket, $pivot, $filters);
+                $range = $this->convert_day_range_filter_to_pair($pivot, $filters[$bucket . '__day_range']);
 
-                foreach ($_data as $_pivot => $__data) {
-                    foreach ($__data as $pivot_interval => $_) {
-                        foreach ($_ as $pivot_value => $__) {
-                            if ($__ === null) {
-                                continue;
-                            }
+                $start = 0;
+                do {
+                    $rows = $this->get_preprocessed_data_for_graph($range, $bucket, $pivot, $filters, $start);
 
-                            foreach ($__ as $country => $___) {
-                                if ((!empty($filters[$bucket . '__country'])) && ($filters[$bucket . '__country'] != $country)) {
-                                    continue;
-                                }
-
-                                foreach ($___ as $is_real_human => $____) {
-                                    if ((!empty($filters[$bucket . '__exclude_bots'])) && (!$is_real_human)) {
-                                        continue;
-                                    }
-
-                                    foreach ($____ as $bar => $total_views) {
-                                        if ($bar === '') {
-                                            $bar = do_lang('_UNKNOWN');
-                                        }
-
-                                        if (!isset($data[$bar])) {
-                                            $data[$bar] = 0;
-                                        }
-                                        $data[$bar] += $total_views;
-                                    }
-                                }
-                            }
+                    foreach ($rows as $row) {
+                        $keys = explode('||', $row['p_key']);
+                        if ((!empty($filters[$bucket . '__exclude_bots'])) && (!$keys[0])) {
+                            continue;
                         }
-                    }
-                }
+                        if ((!empty($filters[$bucket . '__country'])) && ($filters[$bucket . '__country'] != $keys[1])) {
+                            continue;
+                        }
 
-                if (array_sum($data) == 0) {
+                        if (isset($keys[3])) {
+                            $bar = $keys[3];
+                            if ((!empty($filters[$bucket . '__exclude_version'])) || (!empty($filters[$bucket . '__group_by_domain']))) {
+                                $bar = $keys[2];
+                            }
+                        } else {
+                            $bar = $keys[2];
+                        }
+                        if ($bar === '') {
+                            $bar = do_lang('_UNKNOWN');
+                        }
+
+                        if (!isset($data[$bar])) {
+                            $data[$bar] = 0.0;
+                        }
+                        $data[$bar] += $row['p_value'];
+                    }
+                } while (count($rows) > 0);
+
+                if (array_sum($data) == 0.0) {
                     $data = [];
                 }
 
                 switch ($bucket) {
                     case 'operating_systems':
-                    case 'operating_systems__stripped':
                         $x_axis_label = do_lang_tempcode('USER_OS');
                         break;
 
                     case 'web_browsers':
-                    case 'web_browsers__stripped':
                         $x_axis_label = do_lang_tempcode('WEB_BROWSER');
                         break;
 
                     case 'referrer_urls':
                         $x_axis_label = do_lang_tempcode('REFERER');
-                        break;
-
-                    case 'referrer_domains':
-                        $x_axis_label = do_lang_tempcode('DOMAIN');
                         break;
 
                     case 'popular_pages':
@@ -1142,25 +1096,20 @@ class Hook_admin_stats_views extends Source_hook_stats_provider
                 $data = [];
                 foreach ($this->speed_brackets as $bracket) {
                     $bracket = $this->cleanup_speed($bracket);
-                    $data[$bracket] = 0;
+                    $data[$bracket] = 0.0;
                 }
+                $range = $this->convert_day_range_filter_to_pair($pivot, $filters[$bucket . '__day_range']);
 
-                $_data = $this->prepare_preprocessed_data_for_graph($bucket, $pivot, $filters);
+                $start = 0;
+                do {
+                    $rows = $this->get_preprocessed_data_for_graph($range, $bucket, $pivot, $filters, $start);
 
-                foreach ($_data as $_pivot => $__data) {
-                    foreach ($__data as $pivot_interval => $_) {
-                        foreach ($_ as $pivot_value => $__) {
-                            if ($__ === null) {
-                                continue;
-                            }
-
-                            foreach ($__ as $bracket => $total) {
-                                $bracket = $this->cleanup_speed($bracket);
-                                $data[$bracket] += $total;
-                            }
-                        }
+                    foreach ($rows as $row) {
+                        $bracket = $row['p_key'];
+                        $bracket = $this->cleanup_speed($bracket);
+                        $data[$bracket] += $row['p_value'];
                     }
-                }
+                } while (count($rows) > 0);
 
                 return [
                     'type' => self::GRAPH_BAR_CHART,
@@ -1173,49 +1122,34 @@ class Hook_admin_stats_views extends Source_hook_stats_provider
                 require_code('lang2');
 
                 $data = [];
-                $_data = $this->prepare_preprocessed_data_for_graph($bucket, $pivot, $filters);
+                $range = $this->convert_day_range_filter_to_pair($pivot, $filters[$bucket . '__day_range']);
 
-                foreach ($_data as $_pivot => $__data) {
-                    foreach ($__data as $pivot_interval => $_) {
-                        foreach ($_ as $pivot_value => $__) {
-                            $pivot_value_nice = $this->make_date_pivot_value_nice($_pivot, $pivot_interval, $pivot_value);
-                            if (!isset($data[$pivot_value_nice])) {
-                                $data[$pivot_value_nice] = 0;
+                $start = 0;
+                do {
+                    $rows = $this->get_preprocessed_data_for_graph($range, $bucket, $pivot, $filters, $start);
+
+                    foreach ($rows as $row) {
+                        $bar = $row['p_key'];
+                        if (empty($bar)) {
+                            $nice_bar = do_lang('_UNKNOWN');
+                        } else {
+                            $nice_bar = lookup_language_full_name(cms_strtoupper_ascii($bar));
+                            if (empty($nice_bar)) {
+                                $nice_bar = lookup_language_full_name(cms_strtoupper_ascii(preg_replace('#_.*$#', '', $bar)));
                             }
-
-                            if ($__ === null) {
-                                continue;
-                            }
-
-                            foreach ($__ as $is_real_human => $___) {
-                                if ((!empty($filters[$bucket . '__exclude_bots'])) && (!$is_real_human)) {
-                                    continue;
-                                }
-
-                                foreach ($___ as $bar => $total) {
-                                    if (empty($bar)) {
-                                        $nice_bar = do_lang('_UNKNOWN');
-                                    } else {
-                                        $nice_bar = lookup_language_full_name(cms_strtoupper_ascii($bar));
-                                        if (empty($nice_bar)) {
-                                            $nice_bar = lookup_language_full_name(cms_strtoupper_ascii(preg_replace('#_.*$#', '', $bar)));
-                                        }
-                                        if (empty($nice_bar)) {
-                                            $nice_bar = $bar;
-                                        }
-                                    }
-
-                                    if (!isset($data[$nice_bar])) {
-                                        $data[$nice_bar] = 0;
-                                    }
-                                    $data[$nice_bar] += $total;
-                                }
+                            if (empty($nice_bar)) {
+                                $nice_bar = $bar;
                             }
                         }
-                    }
-                }
 
-                if (array_sum($data) == 0) {
+                        if (!isset($data[$nice_bar])) {
+                            $data[$nice_bar] = 0.0;
+                        }
+                        $data[$nice_bar] += $row['p_value'];
+                    }
+                } while (count($rows) > 0);
+
+                if (array_sum($data) == 0.0) {
                     $data = [];
                 }
 
@@ -1231,41 +1165,35 @@ class Hook_admin_stats_views extends Source_hook_stats_provider
                 require_code('locations');
 
                 $data = [];
-                $_data = $this->prepare_preprocessed_data_for_graph($bucket, $pivot, $filters);
+                $range = $this->convert_day_range_filter_to_pair($pivot, $filters[$bucket . '__day_range']);
 
-                foreach ($_data as $_pivot => $__data) {
-                    foreach ($__data as $pivot_interval => $_) {
-                        foreach ($_ as $pivot_value => $__) {
-                            if ($__ === null) {
-                                continue;
-                            }
+                $start = 0;
+                do {
+                    $rows = $this->get_preprocessed_data_for_graph($range, $bucket, $pivot, $filters, $start);
 
-                            foreach ($__ as $is_real_human => $___) {
-                                if ((!empty($filters[$bucket . '__exclude_bots'])) && (!$is_real_human)) {
-                                    continue;
-                                }
+                    foreach ($rows as $row) {
+                        list($is_real_human, $bar) = $row['p_key'];
+                        if ((!empty($filters[$bucket . '__exclude_bots'])) && (!$is_real_human)) {
+                            continue;
+                        }
 
-                                foreach ($___ as $bar => $total) {
-                                    if (empty($bar)) {
-                                        $nice_bar = do_lang('_UNKNOWN');
-                                    } else {
-                                        $nice_bar = find_country_name_from_iso($bar);
-                                        if (empty($nice_bar)) {
-                                            $nice_bar = $bar;
-                                        }
-                                    }
-
-                                    if (!isset($data[$nice_bar])) {
-                                        $data[$nice_bar] = 0;
-                                    }
-                                    $data[$nice_bar] += $total;
-                                }
+                        if (empty($bar)) {
+                            $nice_bar = do_lang('_UNKNOWN');
+                        } else {
+                            $nice_bar = find_country_name_from_iso($bar);
+                            if (empty($nice_bar)) {
+                                $nice_bar = $bar;
                             }
                         }
-                    }
-                }
 
-                if (array_sum($data) == 0) {
+                        if (!isset($data[$nice_bar])) {
+                            $data[$nice_bar] = 0.0;
+                        }
+                        $data[$nice_bar] += $row['p_value'];
+                    }
+                } while (count($rows) > 0);
+
+                if (array_sum($data) == 0.0) {
                     $data = [];
                 }
 
@@ -1279,41 +1207,49 @@ class Hook_admin_stats_views extends Source_hook_stats_provider
 
             case 'average_page_speed':
                 $data = [];
-                $_data = $this->prepare_preprocessed_data_for_graph($bucket, $pivot, $filters);
+                $range = $this->convert_day_range_filter_to_pair($pivot, $filters[$bucket . '__day_range']);
+                $data = $this->fill_data_by_date_pivots_for_graph($pivot, $range[0], $range[1]);
 
-                foreach ($_data as $_pivot => $__data) {
-                    foreach ($__data as $pivot_interval => $_) {
-                        foreach ($_ as $pivot_value => $__) {
-                            $pivot_value_nice = $this->make_date_pivot_value_nice($_pivot, $pivot_interval, $pivot_value);
-                            if (!isset($data[$pivot_value_nice])) {
-                                $data[$pivot_value_nice] = 0;
-                            }
+                /*
+                    NB: For this graph, we need both the number of sessions and duration. However, each are stored in a separate database row.
+                    So, we need to keep track of these in $_data first. Then, after we finish getting everything from the database,
+                    we perform the actual calculation into $data.
+                */
+                $start = 0;
+                do {
+                    $rows = $this->get_preprocessed_data_for_graph($range, $bucket, $pivot, $filters, $start);
 
-                            if ($__ === null) {
+                    foreach ($rows as $row) {
+                        list($page_link, $quantity_or_hit) = explode('||', $row['p_key']);
+                        if (!empty($filters[$bucket . '__page_link'])) {
+                            list($current_zone_name, $attributes) = page_link_decode($page_link);
+                            $current_page_name = isset($attributes['page']) ? $attributes['page'] : DEFAULT_ZONE_PAGE_NAME;
+                            if (!match_key_match($filters[$bucket . '__page_link'], false, null, $current_zone_name, $current_page_name)) {
                                 continue;
                             }
-
-                            $total_time_spent = 0;
-                            $total_views = 0;
-
-                            foreach ($__ as $page_link => $___) {
-                                if (!empty($filters[$bucket . '__page_link'])) {
-                                    list($current_zone_name, $attributes) = page_link_decode($page_link);
-                                    $current_page_name = isset($attributes['page']) ? $attributes['page'] : DEFAULT_ZONE_PAGE_NAME;
-                                    if (!match_key_match($filters[$bucket . '__page_link'], false, null, $current_zone_name, $current_page_name)) {
-                                        continue;
-                                    }
-                                }
-
-                                list($_total_time_spent, $_total_views) = $___;
-                                $total_time_spent += $_total_time_spent;
-                                $total_views += $_total_views;
-                            }
-
-                            if ($total_views != 0) {
-                                $data[$pivot_value_nice] += (floatval($total_time_spent) / floatval($total_views));
-                            }
                         }
+
+                        $pivot_interval = $this->calculate_date_pivot_interval($pivot, $row['p_date_and_time']);
+                        $pivot_value = $this->calculate_date_pivot_value($pivot, $row['p_date_and_time']);
+                        $pivot_value_nice = $this->make_date_pivot_value_nice($pivot, $pivot_interval, $pivot_value);
+
+                        if (!isset($_data[$pivot_value_nice])) {
+                            $_data[$pivot_value_nice] = [0.0, 0.0];
+                        }
+
+                        $_data[$pivot_value_nice][$quantity_or_hit] += $row['p_value'];
+                    }
+                } while (count($rows) > 0);
+
+                foreach ($_data as $pivot_value_nice => $quantities_and_hits) {
+                    list($quantities, $hits) = $quantities_and_hits;
+
+                    if (!isset($data[$pivot_value_nice])) {
+                        $data[$pivot_value_nice] = 0.0;
+                    }
+
+                    if ($hits != 0) {
+                        $data[$pivot_value_nice] += (floatval($quantities) / floatval($hits));
                     }
                 }
 
@@ -1326,54 +1262,55 @@ class Hook_admin_stats_views extends Source_hook_stats_provider
 
             case 'session_bounce_rates':
                 $data = [];
-                $_data = $this->prepare_preprocessed_data_for_graph($bucket, $pivot, $filters);
+                $range = $this->convert_day_range_filter_to_pair($pivot, $filters[$bucket . '__day_range']);
+                $data = $this->fill_data_by_date_pivots_for_graph($pivot, $range[0], $range[1]);
 
-                foreach ($_data as $_pivot => $__data) {
-                    foreach ($__data as $pivot_interval => $_) {
-                        foreach ($_ as $pivot_value => $__) {
-                            $pivot_value_nice = $this->make_date_pivot_value_nice($_pivot, $pivot_interval, $pivot_value);
-                            if (!isset($data[$pivot_value_nice])) {
-                                $data[$pivot_value_nice] = 0;
-                            }
+                /*
+                    NB: For this graph, we need both the number of sessions and duration. However, each are stored in a separate database row.
+                    So, we need to keep track of these in $_data first. Then, after we finish getting everything from the database,
+                    we perform the actual calculation into $data.
+                */
+                $start = 0;
+                do {
+                    $rows = $this->get_preprocessed_data_for_graph($range, $bucket, $pivot, $filters, $start);
 
-                            if ($__ === null) {
-                                continue;
-                            }
-
-                            $total_bounces = 0;
-                            $total_views = 0;
-
-                            foreach ($__ as $country => $___) {
-                                if ((!empty($filters[$bucket . '__country'])) && ($filters[$bucket . '__country'] != $country)) {
-                                    continue;
-                                }
-
-                                foreach ($___ as $is_real_human => $____) {
-                                    if ((!empty($filters[$bucket . '__exclude_bots'])) && (!$is_real_human)) {
+                    foreach ($rows as $row) {
+                        list($is_real_human, $country, $page_link, $quantity_or_hit) = explode('||', $row['p_key']);
+                        if ((!empty($filters[$bucket . '__exclude_bots'])) && (!$is_real_human)) {
                                         continue;
                                     }
-
-                                    foreach ($____ as $page_link => $_____) {
-                                        if (!empty($filters[$bucket . '__page_link'])) {
-                                            list($current_zone_name, $attributes) = page_link_decode($page_link);
-                                            $current_page_name = isset($attributes['page']) ? $attributes['page'] : DEFAULT_ZONE_PAGE_NAME;
-                                            if (!match_key_match($filters[$bucket . '__page_link'], false, null, $current_zone_name, $current_page_name)) {
-                                                continue;
-                                            }
-                                        }
-
-                                        list($_total_bounces, $_total_views) = $_____;
-                                        $total_bounces += $_total_bounces;
-                                        $total_views += $_total_views;
-                                    }
+                                    if ((!empty($filters[$bucket . '__country'])) && ($filters[$bucket . '__country'] != $country)) {
+                                    continue;
                                 }
-                            }
-
-                            // TODO: possibly buggy?
-                            if ($total_views != 0) {
-                                $data[$pivot_value_nice] = 100.0 * floatval($total_bounces) / floatval($total_views);
+                        if (!empty($filters[$bucket . '__page_link'])) {
+                            list($current_zone_name, $attributes) = page_link_decode($page_link);
+                            $current_page_name = isset($attributes['page']) ? $attributes['page'] : DEFAULT_ZONE_PAGE_NAME;
+                            if (!match_key_match($filters[$bucket . '__page_link'], false, null, $current_zone_name, $current_page_name)) {
+                                continue;
                             }
                         }
+
+                        $pivot_interval = $this->calculate_date_pivot_interval($pivot, $row['p_date_and_time']);
+                        $pivot_value = $this->calculate_date_pivot_value($pivot, $row['p_date_and_time']);
+                        $pivot_value_nice = $this->make_date_pivot_value_nice($pivot, $pivot_interval, $pivot_value);
+
+                        if (!isset($_data[$pivot_value_nice])) {
+                            $_data[$pivot_value_nice] = [0.0, 0.0];
+                        }
+
+                        $_data[$pivot_value_nice][$quantity_or_hit] += $row['p_value'];
+                    }
+                } while (count($rows) > 0);
+
+                foreach ($_data as $pivot_value_nice => $quantities_and_hits) {
+                    list($quantities, $hits) = $quantities_and_hits;
+
+                    if (!isset($data[$pivot_value_nice])) {
+                        $data[$pivot_value_nice] = 0.0;
+                    }
+
+                    if ($quantities != 0) {
+                       $data[$pivot_value_nice] = 100.0 * (floatval($hits) / floatval($quantities)); // TODO: buggy?
                     }
                 }
 
@@ -1386,30 +1323,41 @@ class Hook_admin_stats_views extends Source_hook_stats_provider
 
             case 'page_average_speeds':
                 $data = [];
-                $_data = $this->prepare_preprocessed_data_for_graph($bucket, $pivot, $filters);
+                $range = $this->convert_day_range_filter_to_pair($pivot, $filters[$bucket . '__day_range']);
 
-                foreach ($_data as $_pivot => $__data) {
-                    foreach ($__data as $pivot_interval => $_) {
-                        foreach ($_ as $pivot_value => $__) {
-                            if ($__ === null) {
-                                continue;
-                            }
+                /*
+                    NB: For this graph, we need both the number of sessions and duration. However, each are stored in a separate database row.
+                    So, we need to keep track of these in $_data first. Then, after we finish getting everything from the database,
+                    we perform the actual calculation into $data.
+                */
+                $start = 0;
+                do {
+                    $rows = $this->get_preprocessed_data_for_graph($range, $bucket, $pivot, $filters, $start);
 
-                            foreach ($__ as $page_link => $___) {
-                                list($total_compound_speed, $total_views) = $___;
+                    foreach ($rows as $row) {
+                        list($page_link, $quantity_or_hit) = explode('||', $row['p_key']);
 
-                                if ($total_views != 0) {
-                                    if (!isset($data[$page_link])) {
-                                        $data[$page_link] = 0.0;
-                                    }
-                                    $data[$page_link] += (floatval($total_compound_speed) / floatval($total_views));
-                                }
-                            }
+                        if (!isset($_data[$page_link])) {
+                            $_data[$page_link] = [0.0, 0.0];
                         }
+
+                        $_data[$page_link][$quantity_or_hit] += $row['p_value'];
+                    }
+                } while (count($rows) > 0);
+
+                foreach ($_data as $pivot_value_nice => $quantities_and_hits) {
+                    list($quantities, $hits) = $quantities_and_hits;
+
+                    if (!isset($data[$pivot_value_nice])) {
+                        $data[$pivot_value_nice] = 0.0;
+                    }
+
+                    if ($hits != 0) {
+                       $data[$pivot_value_nice] += (floatval($quantities) / floatval($hits));
                     }
                 }
 
-                if (array_sum($data) == 0) {
+                if (array_sum($data) == 0.0) {
                     $data = [];
                 }
 

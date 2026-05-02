@@ -138,7 +138,7 @@ class Hook_admin_stats_content extends Source_hook_stats_provider
                 $prefix = array_key_exists($content_type, $content_types) ? $content_types[$content_type] : $content_type;
 
                 if (!isset($data[$prefix . ': ' . $title])) {
-                    $data[$prefix . ': ' . $title] = 0;
+                    $data[$prefix . ': ' . $title] = 0.0;
                 }
                 $data[$prefix . ': ' . $title] += $row['p_value'];
             }

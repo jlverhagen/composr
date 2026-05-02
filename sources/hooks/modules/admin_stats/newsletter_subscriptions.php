@@ -1,20 +1,22 @@
-<?php /*
+<?php
 
- The contents of this file are subject to the Common Public Attribution License Version 1.0 (the "License");
- you may not use this file except in compliance with the License.
- You may obtain a copy of the License at http://opensource.org/licenses/cpal_1.0.
+/*
 
- Software distributed under the License is distributed on an "AS IS" basis, WITHOUT WARRANTY OF ANY KIND, either express or implied.
- See the License for the specific language governing rights and limitations under the License.
+The contents of this file are subject to the Common Public Attribution License Version 1.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at http://opensource.org/licenses/cpal_1.0.
 
- The Original Code is Composr CMS.
+Software distributed under the License is distributed on an "AS IS" basis, WITHOUT WARRANTY OF ANY KIND, either express or implied.
+See the License for the specific language governing rights and limitations under the License.
 
- The Original Developer is the Initial Developer.
+The Original Code is Composr CMS.
 
- The Initial Developer of the Original Code is Chris Graham.
- All portions of the code written by Chris Graham are Copyright (c) Christopher Graham. All Rights Reserved.
+The Original Developer is the Initial Developer.
 
- See docs/LICENSE.md for full licensing information.
+The Initial Developer of the Original Code is Chris Graham.
+All portions of the code written by Chris Graham are Copyright (c) Christopher Graham. All Rights Reserved.
+
+See docs/LICENSE.md for full licensing information.
 
 */
 
@@ -35,6 +37,7 @@
  */
 class Hook_admin_stats_newsletter_subscriptions extends Source_hook_stats_provider
 {
+
     /**
      * Find metadata about stats graphs that are provided by this stats hook.
      *
@@ -110,11 +113,13 @@ class Hook_admin_stats_newsletter_subscriptions extends Source_hook_stats_provid
             $rows = $this->get_preprocessed_data_for_graph($range, $bucket, $pivot, $filters, $start);
 
             foreach ($rows as $row) {
-                $pivot_value_nice = $this->make_date_pivot_value_nice($row['p_pivot'], $row['p_pivot_interval'], $row['p_pivot_value']);
-                if (!isset($data[$pivot_value_nice])) {
-                    $data[$pivot_value_nice] = 0;
-                }
+                $pivot_interval = $this->calculate_date_pivot_interval($pivot, $row['p_date_and_time']);
+                $pivot_value = $this->calculate_date_pivot_value($pivot, $row['p_date_and_time']);
+                $pivot_value_nice = $this->make_date_pivot_value_nice($pivot, $pivot_interval, $pivot_value);
 
+                if (!isset($data[$pivot_value_nice])) {
+                    $data[$pivot_value_nice] = 0.0;
+                }
                 $data[$pivot_value_nice] += $row['p_value'];
             }
         } while (count($rows) > 0);
@@ -122,7 +127,7 @@ class Hook_admin_stats_newsletter_subscriptions extends Source_hook_stats_provid
         return [
             'type' => null,
             'data' => $data,
-            'x_axis_label' => do_lang_tempcode('TIME_IN_TIMEZONE', escape_html(make_nice_timezone_name(get_site_timezone()))),
+            'x_axis_label' => do_lang_tempcode('TIME_IN_TIMEZONE', parameter1: escape_html(make_nice_timezone_name(get_site_timezone()))),
             'y_axis_label' => do_lang_tempcode('NEW'),
         ];
     }

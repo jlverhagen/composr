@@ -1,20 +1,22 @@
-<?php /*
+<?php
 
- The contents of this file are subject to the Common Public Attribution License Version 1.0 (the "License");
- you may not use this file except in compliance with the License.
- You may obtain a copy of the License at http://opensource.org/licenses/cpal_1.0.
+/*
 
- Software distributed under the License is distributed on an "AS IS" basis, WITHOUT WARRANTY OF ANY KIND, either express or implied.
- See the License for the specific language governing rights and limitations under the License.
+The contents of this file are subject to the Common Public Attribution License Version 1.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at http://opensource.org/licenses/cpal_1.0.
 
- The Original Code is Composr CMS.
+Software distributed under the License is distributed on an "AS IS" basis, WITHOUT WARRANTY OF ANY KIND, either express or implied.
+See the License for the specific language governing rights and limitations under the License.
 
- The Original Developer is the Initial Developer.
+The Original Code is Composr CMS.
 
- The Initial Developer of the Original Code is Chris Graham.
- All portions of the code written by Chris Graham are Copyright (c) Christopher Graham. All Rights Reserved.
+The Original Developer is the Initial Developer.
 
- See docs/LICENSE.md for full licensing information.
+The Initial Developer of the Original Code is Chris Graham.
+All portions of the code written by Chris Graham are Copyright (c) Christopher Graham. All Rights Reserved.
+
+See docs/LICENSE.md for full licensing information.
 
 */
 
@@ -375,7 +377,7 @@ class Source_database_connector
                 (strpos($table, ' ') === false) &&
                 (strpos($end, 'GROUP BY ') === false/*Can only SELECT what is also in GROUP BY*/) &&
                 ((isset($GLOBALS['SITE_DB'])) &&
-                ($this->connection_unique_identifier === $GLOBALS['SITE_DB']->connection_unique_identifier) || (get_forum_type() === 'cns') && ($this->connection_unique_identifier == $GLOBALS['CNS_DRIVER']->db->connection_unique_identifier))
+                    ($this->connection_unique_identifier === $GLOBALS['SITE_DB']->connection_unique_identifier) || (get_forum_type() === 'cns') && ($this->connection_unique_identifier == $GLOBALS['CNS_DRIVER']->db->connection_unique_identifier))
             ) {
                 global $TABLE_LANG_FIELDS_CACHE;
                 $lang_fields_provisional = find_lang_fields($table);
@@ -1193,12 +1195,8 @@ class Source_database_connector
      */
     public function query_delete(string $table, array $where_map = [], string $end = '', ?int $max = null, int $start = 0, bool $fail_ok = false)
     {
-        if (empty($where_map)) {
-            if (($end === '') && ($max === null) && ($start == 0) && ($this->driver->has_truncate_table($GLOBALS['SITE_DB']->connection_read))) {
-                $this->_query('TRUNCATE TABLE ' . $this->table_prefix . $table, null, 0, $fail_ok);
-            } else {
-                $this->_query('DELETE FROM ' . $this->table_prefix . $table . ' ' . $end, $max, $start, $fail_ok);
-            }
+        if (empty($where_map) && ($end === '') && ($max === null) && ($start == 0) && ($this->driver->has_truncate_table($GLOBALS['SITE_DB']->connection_read))) {
+            $this->_query('TRUNCATE TABLE ' . $this->table_prefix . $table, null, 0, $fail_ok);
             return;
         }
 
