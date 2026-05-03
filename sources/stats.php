@@ -802,9 +802,11 @@ function preprocess_raw_data_for(string $hook_name, int $start_time = 0, ?int $e
  * Fully process statistics from the delta table into the main table.
  *
  * @param  integer $time_limit Only keep processing data for this many seconds; will still terminate if memory use starts getting high (0: disable all limits)
+ * @return boolean Whether we exited early due to time or memory limits
  */
-function stats_merge_deltas(int $time_limit = 15)
+function stats_merge_deltas(int $time_limit = 15) : bool
 {
+    $ret = false;
     $function_start_time = time();
 
     cms_profile_start_for('stats_merge_deltas()');
@@ -819,13 +821,11 @@ function stats_merge_deltas(int $time_limit = 15)
 
     require_code('files');
     $ml = php_return_bytes(ini_get('memory_limit'));
-    $current_memory = memory_get_usage(false);
-    $near_limit = (($ml > 0) && ($current_memory >= ($ml - (1024 * 1024 * 8)))); // within 8 MB of PHP memory limit
 
     require_code('temporal');
 
     // Time range data
-    while (($time_limit <= 0) || ((!$near_limit) && ((time() - $function_start_time) < $time_limit))) { // Time and memory checks
+    while (!$ret) { // Time and memory checks
         $low_time = $GLOBALS['SITE_DB']->query_select_value_if_there('stats_preprocessed_delta', 'pd_date_and_time', [], ' AND pd_date_and_time IS NOT NULL ORDER BY pd_date_and_time ASC');
         if ($low_time === null) {
             break; // Nothing to process
@@ -864,10 +864,14 @@ function stats_merge_deltas(int $time_limit = 15)
 
         $current_memory = memory_get_usage(false);
         $near_limit = (($ml > 0) && ($current_memory >= ($ml - (1024 * 1024 * 8)))); // within 8 MB of PHP memory limit
+        if (($time_limit <= 0) || ((!$near_limit) && ((time() - $function_start_time) < $time_limit))) {
+            $ret = true;
+            break;
+        }
     }
 
     // Flat data
-    while (($time_limit <= 0) || ((!$near_limit) && ((time() - $function_start_time) < $time_limit))) { // Time and memory checks
+    while (!$ret) { // Time and memory checks
         $test = $GLOBALS['SITE_DB']->query_select_value_if_there('stats_preprocessed_delta', 'id', [], ' AND pd_date_and_time IS NULL');
         if ($test === null) {
             break; // Nothing to process
@@ -912,11 +916,17 @@ function stats_merge_deltas(int $time_limit = 15)
 
         $current_memory = memory_get_usage(false);
         $near_limit = (($ml > 0) && ($current_memory >= ($ml - (1024 * 1024 * 8)))); // within 8 MB of PHP memory limit
+        if (($time_limit <= 0) || ((!$near_limit) && ((time() - $function_start_time) < $time_limit))) {
+            $ret = true;
+            break;
+        }
     }
 
     cms_set_time_limit($old);
     pop_query_limiting();
     cms_profile_end_for('stats_merge_deltas()');
+
+    return $ret;
 }
 
 /**
