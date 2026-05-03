@@ -805,7 +805,7 @@ function preprocess_raw_data_for(string $hook_name, int $start_time = 0, ?int $e
  */
 function stats_merge_deltas(int $time_limit = 15)
 {
-    $start = time();
+    $function_start_time = time();
 
     cms_profile_start_for('stats_merge_deltas()');
 
@@ -825,7 +825,7 @@ function stats_merge_deltas(int $time_limit = 15)
     require_code('temporal');
 
     // Time range data
-    while (($time_limit <= 0) || ((!$near_limit) && ((time() - $start) < $time_limit))) { // Time and memory checks
+    while (($time_limit <= 0) || ((!$near_limit) && ((time() - $function_start_time) < $time_limit))) { // Time and memory checks
         $low_time = $GLOBALS['SITE_DB']->query_select_value_if_there('stats_preprocessed_delta', 'pd_date_and_time', [], ' AND pd_date_and_time IS NOT NULL ORDER BY pd_date_and_time ASC');
         if ($low_time === null) {
             break; // Nothing to process
@@ -841,33 +841,23 @@ function stats_merge_deltas(int $time_limit = 15)
         $start_timestamp = from_epoch_interval_index($start_hour, 'hours');
         $end_timestamp = from_epoch_interval_index($end_hour, 'hours') - 1;
 
-        $start = 0;
+        $offset = 0;
         $max = 100;
         $rows = [];
         do {
-            $rows = $GLOBALS['SITE_DB']->query_parameterised('SELECT SUM(pd_value) AS pd_value,pd_bucket,pd_key FROM {prefix}stats_preprocessed_delta WHERE pd_date_and_time BETWEEN {start_timestamp} AND {end_timestamp} GROUP BY pd_bucket,pd_key', ['start_timestamp' => $start_timestamp, 'end_timestamp' => $end_timestamp], $max, $start);
+            $rows = $GLOBALS['SITE_DB']->query_parameterised('SELECT SUM(pd_value) AS pd_value,pd_bucket,pd_filters FROM {prefix}stats_preprocessed_delta WHERE pd_date_and_time IS NOT NULL AND pd_date_and_time BETWEEN {start_timestamp} AND {end_timestamp} GROUP BY pd_bucket,pd_filters', ['start_timestamp' => $start_timestamp, 'end_timestamp' => $end_timestamp], $max, $offset);
             if (count($rows) == 0) {
                 break;
             }
 
-            $batch = [
-                'p_date_and_time' => [],
-                'p_bucket' => [],
-                'p_key' => [],
-                'p_value' => [],
-            ];
+            _stats_insert_missing_filter_values($rows);
 
+            // Insert stats and their filter value maps
             foreach ($rows as $row) {
-                $batch['p_date_and_time'][] = $start_timestamp;
-                $batch['p_bucket'][] = $row['pd_bucket'];
-                $batch['p_key'][] = $row['pd_key'];
-                $batch['p_value'][] = $row['pd_value'];
+                _stats_insert_into_db($row, $start_timestamp);
             }
 
-            $GLOBALS['SITE_DB']->query_insert('stats_preprocessed', $batch);
-
-            unset($batch);
-            $start += $max;
+            $offset += $max;
         } while (count($rows) >= $max);
 
         $GLOBALS['SITE_DB']->query_delete('stats_preprocessed_delta', [], ' AND pd_date_and_time IS NOT NULL AND pd_date_and_time BETWEEN ' . strval($start_timestamp) . ' AND ' . strval($end_timestamp));
@@ -877,32 +867,45 @@ function stats_merge_deltas(int $time_limit = 15)
     }
 
     // Flat data
-    while (($time_limit <= 0) || ((!$near_limit) && ((time() - $start) < $time_limit))) { // Time and memory checks
+    while (($time_limit <= 0) || ((!$near_limit) && ((time() - $function_start_time) < $time_limit))) { // Time and memory checks
         $test = $GLOBALS['SITE_DB']->query_select_value_if_there('stats_preprocessed_delta', 'id', [], ' AND pd_date_and_time IS NULL');
         if ($test === null) {
             break; // Nothing to process
         }
 
-        $start = 0;
+        $offset = 0;
         $max = 100;
         $rows = [];
         do {
-            $rows = $GLOBALS['SITE_DB']->query_parameterised('SELECT MAX(pd_value) AS pd_value,pd_bucket,pd_key FROM {prefix}stats_preprocessed_delta WHERE pd_date_and_time IS NULL GROUP BY pd_bucket,pd_key', [], $max, $start);
+            $rows = $GLOBALS['SITE_DB']->query_parameterised('SELECT MAX(pd_value) AS pd_value,pd_bucket,pd_filters FROM {prefix}stats_preprocessed_delta WHERE pd_date_and_time IS NULL GROUP BY pd_bucket,pd_filters', [], $max, $offset);
             if (count($rows) == 0) {
                 break;
             }
 
+            _stats_insert_missing_filter_values($rows);
+
             foreach ($rows as $row) {
-                $GLOBALS['SITE_DB']->query_insert_or_replace('stats_preprocessed', [
-                    'p_value' => $row['pd_value'],
-                ], [
-                    'p_bucket' => $row['pd_bucket'],
-                    'p_key' => $row['pd_key'],
-                    'p_date_and_time' => null,
-                ]);
+                $filters = explode('||', $row['pd_filters']);
+
+                $query = 'SELECT p.id AS p_id FROM {prefix}stats_preprocessed p WHERE p_bucket={p_bucket} AND p_date_and_time IS NULL';
+                $params = ['p_bucket' => $row['pd_bucket']];
+                foreach ($filters as $i => $filter_value) {
+                    $query .= ' AND EXISTS (SELECT * FROM {prefix}stats_preprocessed_filter_maps pfm JOIN {prefix}stats_preprocessed_filters pf ON pfm.pfm_value=pf.id WHERE pfm.pfm_stat=p.id AND pfm.pfm_key={pfm_key_' . strval($i) . '} AND pf.pf_value={pfm_value_' . strval($i) . '})';
+                    $params['pfm_key_' . strval($i)] = $i;
+                    $params['pfm_value_' . strval($i)] = $filter_value;
+                }
+                $query .= ' AND (SELECT COUNT(*) FROM {prefix}stats_preprocessed_filter_maps WHERE pfm_stat=p.id)={count}';
+                $params['count'] = count($filters);
+
+                $test = $GLOBALS['SITE_DB']->query_parameterised($query, $params, 1);
+                if (!isset($test[0])) {
+                    _stats_insert_into_db($row, null);
+                } else {
+                    $GLOBALS['SITE_DB']->query_update('stats_preprocessed', ['p_value' => $row['pd_value']], ['id' => $test[0]['p_id']], '', 1);
+                }
             }
 
-            $start += $max;
+            $offset += $max;
         } while (count($rows) >= $max);
 
         $GLOBALS['SITE_DB']->query_delete('stats_preprocessed_delta', [], ' AND pd_date_and_time IS NULL');
@@ -914,6 +917,55 @@ function stats_merge_deltas(int $time_limit = 15)
     cms_set_time_limit($old);
     pop_query_limiting();
     cms_profile_end_for('stats_merge_deltas()');
+}
+
+/**
+ * Insert missing filter values in the statistics database.
+ *
+ * @param  array $rows List of rows from stats_preprocessed_delta
+ * @ignore
+ */
+function _stats_insert_missing_filter_values(array $rows)
+{
+    $filters = [];
+    foreach ($rows as $row) {
+        $filters = array_merge($filters, explode('||', $row['pd_filters']));
+    }
+    $filters = array_unique($filters);
+    $existing_filters = $GLOBALS['SITE_DB']->query_select('stats_preprocessed_filters', ['pf_value'], ['pf_value' => $filters]);
+    $existing_filters = collapse_1d_complexity('pf_value', $existing_filters);
+    $diff = array_diff($filters, $existing_filters);
+    if (count($diff) > 0) {
+        $filters_insert = [
+            'pf_value' => array_values($diff),
+        ];
+        $GLOBALS['SITE_DB']->query_insert('stats_preprocessed_filters', $filters_insert);
+    }
+}
+
+/**
+ * Insert a stats_preprocessed_delta statistics row into stats_preprocessed.
+ *
+ * @param  array $row The stats_preprocessed_delta row we are inserting, already processed/merged
+ * @param  ?TIME $timestamp The timestamp at which we want to log the statistic, usually the top of the hour (null: this is flat data)
+ * @ignore
+ */
+function _stats_insert_into_db(array $row, ?int $timestamp)
+{
+    $stats_id = $GLOBALS['SITE_DB']->query_insert('stats_preprocessed', [
+        'p_date_and_time' => $timestamp,
+        'p_bucket' => $row['pd_bucket'],
+        'p_value' => $row['pd_value'],
+    ], true);
+
+    foreach (explode('||', $row['pd_filters']) as $i => $filter_value) {
+        $insert = 'INSERT INTO {prefix}stats_preprocessed_filter_maps (pfm_stat, pfm_key, pfm_value) SELECT {pfm_stat},{pfm_key},id FROM {prefix}stats_preprocessed_filters WHERE pf_value={pfm_value} LIMIT 1';
+        $insert_params['pfm_stat'] = $stats_id;
+        $insert_params['pfm_key'] = $i;
+        $insert_params['pfm_value'] = $filter_value;
+
+        $GLOBALS['SITE_DB']->query_parameterised($insert, $insert_params); // Does not support batch inserting
+    }
 }
 
 /**
@@ -973,13 +1025,15 @@ function send_kpi_notifications()
 }
 
 /**
- * Escape a statistics key so that our delimiter is not used in the key itself.
+ * Ensure our filter values will not cause problems in the database.
  *
  * @param  string $key The key to escape
  * @return   string The escaped key
  * @ignore
  */
-function _stats_escape_keys(string $key) : string
+function _stats_escape_filter_values(string $key) : string
 {
-    return str_replace('||', '\|\|', $key);
+    $ret = str_replace('||', '\|\|', $key);
+    $ret = substr($ret, 0, 255);
+    return $ret;
 }

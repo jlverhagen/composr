@@ -158,7 +158,7 @@ class Hook_database_manifest_stats
                         'id' => '*AUTO',
                         'pd_date_and_time' => '?TIME',
                         'pd_bucket' => 'ID_TEXT',
-                        'pd_key' => 'LONG_TEXT',
+                        'pd_filters' => 'LONG_TEXT',
                         'pd_value' => 'REAL',
                     ],
                 ],

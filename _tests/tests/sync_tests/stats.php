@@ -182,6 +182,8 @@ class stats_test_set extends cms_test_case
         // Remove old preprocessed stats so we can force pre-processing again
         $GLOBALS['SITE_DB']->query_delete('stats_preprocessed');
         $GLOBALS['SITE_DB']->query_delete('stats_preprocessed_delta');
+        $GLOBALS['SITE_DB']->query_delete('stats_preprocessed_filters');
+        $GLOBALS['SITE_DB']->query_delete('stats_preprocessed_filter_maps');
 
         // Generate dummy data so we can process stats on them
         foreach ($dummy_data as $table => $rows) {
@@ -343,7 +345,10 @@ class stats_test_set extends cms_test_case
     public function tearDown()
     {
         // Remove old preprocessed stats so we can force pre-processing again
-        $GLOBALS['SITE_DB']->query_delete('stats_preprocessed');
+        //$GLOBALS['SITE_DB']->query_delete('stats_preprocessed');
+        //$GLOBALS['SITE_DB']->query_delete('stats_preprocessed_delta');
+        //$GLOBALS['SITE_DB']->query_delete('stats_preprocessed_filters');
+        //$GLOBALS['SITE_DB']->query_delete('stats_preprocessed_filter_maps');
 
         // Delete dummy data
         if (count($this->dummy_data_added) > 0) {
