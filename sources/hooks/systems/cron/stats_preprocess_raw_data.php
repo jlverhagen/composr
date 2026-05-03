@@ -108,7 +108,12 @@ class Hook_cron_stats_preprocess_raw_data
         disable_php_memory_limit();
 
         // Start by merging records within the same hour to conserve space
-        stats_merge_deltas($max_time);
+        $bailed_early = stats_merge_deltas($max_time);
+        if ($bailed_early) {
+            set_value('stats_catching_up', '1', true);
+            pop_query_limiting();
+            return;
+        }
 
         // Memory and time check
         $ml = php_return_bytes(ini_get('memory_limit'));
