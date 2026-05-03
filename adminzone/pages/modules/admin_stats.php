@@ -77,6 +77,8 @@ class Module_admin_stats extends Source_standard_crud_module
             'stats_preprocessed',
             'stats_preprocessed_delta',
             'stats_preprocessed_flat', // LEGACY
+            'stats_preprocessed_filters',
+            'stats_preprocessed_filter_maps',
             'stats_kpis',
             'stats_events',
             'stats_link_tracker',
@@ -86,6 +88,8 @@ class Module_admin_stats extends Source_standard_crud_module
             'usersonline_track',
         ];
         $GLOBALS['SITE_DB']->drop_table_if_exists($tables);
+
+        $GLOBALS['SITE_DB']->query('DELETE FROM ' . get_table_prefix() . 'values_elective WHERE the_name LIKE ' . db_encode_like('stats__last_processed__%'));
     }
 
     /**
@@ -180,7 +184,6 @@ class Module_admin_stats extends Source_standard_crud_module
                 'id' => '*AUTO',
                 'p_date_and_time' => '?TIME',
                 'p_bucket' => 'ID_TEXT',
-                'p_key' => 'LONG_TEXT',
                 'p_value' => 'REAL',
             ]);
             $GLOBALS['SITE_DB']->create_index('stats_preprocessed', 'pbucket', ['p_bucket']);
@@ -190,11 +193,24 @@ class Module_admin_stats extends Source_standard_crud_module
                 'id' => '*AUTO',
                 'pd_date_and_time' => '?TIME',
                 'pd_bucket' => 'ID_TEXT',
-                'pd_key' => 'LONG_TEXT',
+                'pd_filters' => 'LONG_TEXT',
                 'pd_value' => 'REAL',
             ]);
             $GLOBALS['SITE_DB']->create_index('stats_preprocessed_delta', 'pdbucket', ['pd_bucket']);
             $GLOBALS['SITE_DB']->create_index('stats_preprocessed_delta', 'pddatetime', ['pd_date_and_time']);
+
+            $GLOBALS['SITE_DB']->create_table('stats_preprocessed_filters', [
+                'id' => '*AUTO',
+                'pf_value' => 'SHORT_TEXT',
+            ]);
+
+            $GLOBALS['SITE_DB']->create_table('stats_preprocessed_filter_maps', [
+                'id' => '*AUTO',
+                'pfm_stat' => 'AUTO_LINK',
+                'pfm_key' => 'INTEGER',
+                'pfm_value' => 'AUTO_LINK',
+            ]);
+            $GLOBALS['SITE_DB']->create_index('stats_preprocessed_filter_maps', 'pfmstatkeyvalue', ['pfm_stat', 'pfm_key', 'pfm_value']);
         }
 
         if (($upgrade_from === null) || ($upgrade_from < 10)) { // LEGACY

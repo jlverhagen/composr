@@ -610,6 +610,8 @@ abstract class Source_hook_stats_provider extends Source_hook_stats_base
      */
     protected function get_preprocessed_data_for_graph(?array $range, string $bucket, ?string $pivot, array $filters, int &$start = 0) : array
     {
+        return []; // TODO
+
         if ($pivot === '') {
             $pivot = 'day_series';
         }
@@ -643,33 +645,34 @@ abstract class Source_hook_stats_provider extends Source_hook_stats_base
 
     /**
      * Save a data point into the statistics database (delta). This tries to be efficient by doing inserts in batches.
+     * These statistics must later be processed with stats_merge_deltas (through the scheduler).
      *
      * @param  ?ID_TEXT $bucket The bucket in which the data point belongs (null: We are not saving a new data point; dump what we have in memory into the database)
      * @param  ?TIME $timestamp The date and time at which this action occurred (null: This is flat/timeless data)
-     * @param  array $keys List of keys defining this data point; this is structural with the lower numeric keys being super-sets of the higher numeric keys
+     * @param  array $filter_values List of values defining this data point; this is structural with the lower numeric keys in the array being super-sets of the higher numeric keys
      * @param  integer $value The number of occurrences of this specific data point at this specific time
      */
-    public function save_stat(?string $bucket, ?int $timestamp = null, array $keys = [], float $value = 1.0)
+    public function save_stat(?string $bucket, ?int $timestamp = null, array $filter_values = [], float $value = 1.0)
     {
         // Initialise structure
         if (!isset($this->data_buckets)) {
             $this->data_buckets = [
                 'pd_date_and_time' => [],
                 'pd_bucket' => [],
-                'pd_key' => [],
+                'pd_filters' => [],
                 'pd_value' => [],
             ];
         }
 
         // Escape keys so that our delimiter does not get used where it shouldn't
         require_code('stats');
-        $keys = array_map('_stats_escape_keys', $keys);
+        $filter_values = array_map('_stats_escape_filter_values', $filter_values);
 
         // Insert the data into memory
         if ($bucket !== null) {
             $this->data_buckets['pd_date_and_time'][] = $timestamp;
             $this->data_buckets['pd_bucket'][] = $bucket;
-            $this->data_buckets['pd_key'][] = implode('||', $keys);
+            $this->data_buckets['pd_filters'][] = implode('||', $filter_values);
             $this->data_buckets['pd_value'][] = $value;
         }
 
@@ -678,8 +681,8 @@ abstract class Source_hook_stats_provider extends Source_hook_stats_base
         $ml = php_return_bytes(ini_get('memory_limit'));
         $current_memory = memory_get_usage(false);
         $near_limit = (($ml > 0) && ($current_memory >= ($ml - (1024 * 1024 * 8)))); // within 8 MB of PHP memory limit
-        $large_bucket = (count($this->data_buckets['pd_key']) >= 150);
-        $should_dump = ((($bucket === null) || $near_limit || $large_bucket) && (count($this->data_buckets['pd_key']) > 0));
+        $large_bucket = (count($this->data_buckets['pd_filters']) >= 150);
+        $should_dump = ((($bucket === null) || $near_limit || $large_bucket) && (count($this->data_buckets['pd_filters']) > 0));
 
         // Dump to the database if we determined that we should do so
         if ($should_dump) {
@@ -689,7 +692,7 @@ abstract class Source_hook_stats_provider extends Source_hook_stats_base
                     continue;
                 }
 
-                $GLOBALS['SITE_DB']->query_delete('stats_preprocessed_delta', ['pd_bucket' => $p_bucket, 'pd_key' => $this->data_buckets['pd_key'][$i], 'pd_date_and_time' => null]);
+                $GLOBALS['SITE_DB']->query_delete('stats_preprocessed_delta', ['pd_bucket' => $p_bucket, 'pd_filters' => $this->data_buckets['pd_filters'][$i], 'pd_date_and_time' => null]);
             }
 
             $GLOBALS['SITE_DB']->query_insert('stats_preprocessed_delta', $this->data_buckets);
