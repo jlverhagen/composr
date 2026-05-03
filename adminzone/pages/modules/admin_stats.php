@@ -89,7 +89,7 @@ class Module_admin_stats extends Source_standard_crud_module
         ];
         $GLOBALS['SITE_DB']->drop_table_if_exists($tables);
 
-        $GLOBALS['SITE_DB']->query('DELETE FROM ' . get_table_prefix() . 'values_elective WHERE the_name LIKE ' . db_encode_like('stats__last_processed__%'));
+        $GLOBALS['SITE_DB']->query('DELETE FROM ' . get_table_prefix() . 'values_elective WHERE the_name LIKE \'' . db_encode_like('stats__last_processed__%') . '\'');
     }
 
     /**

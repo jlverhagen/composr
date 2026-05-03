@@ -832,7 +832,7 @@ function stats_merge_deltas(int $time_limit = 15) : bool
         }
 
         // Make sure ALL of the stats hooks processed records at least one hour past the oldest record. This is to prevent duplicates when we finalise delta stats.
-        $rows = $GLOBALS['SITE_DB']->query_select('values_elective', ['the_value'], [], ' AND the_name LIKE ' . db_encode_like('stats__last_processed__%'));
+        $rows = $GLOBALS['SITE_DB']->query_select('values_elective', ['the_value'], [], ' AND the_name LIKE \'' . db_encode_like('stats__last_processed__%') . '\'');
         foreach ($rows as $row) {
             if (intval($row['the_value']) < $low_time + (60 * 60)) {
                 break 2;
