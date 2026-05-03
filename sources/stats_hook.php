@@ -610,11 +610,33 @@ abstract class Source_hook_stats_provider extends Source_hook_stats_base
      */
     protected function get_preprocessed_data_for_graph(?array $range, string $bucket, ?string $pivot, array $filters, int &$start = 0) : array
     {
-        return []; // TODO
-
         if ($pivot === '') {
             $pivot = 'day_series';
         }
+
+        /*
+                stats_preprocessed p:
+                    - id (integer)
+                    - p_date_and_time (Unix timestamp)
+                    - p_bucket (string)
+                    - p_value (float)
+
+                stats_preprocessed_filter_maps pfm:
+                    - id (integer)
+                    - pfm_stat (integer) [maps to p.id]
+                    - pfm_key (integer)
+                    - pfm_value (integer) [maps to pf.id]
+
+                stats_preprocessed_filters pf:
+                    - id (integer)
+                    - pf_value (string)
+
+                We want to SELECT p.p_date_and_time, p.p_value, and a string of delimited pf.pf_value (separated by ||) as p_key (they must be in order according to pfm_key),
+                WHERE p.p_bucket = $bucket
+                AND p.p_date_and_time IS NOT NULL AND p.p_date_and_time BETWEEN $start_timestamp AND $end_timestamp (<<< if $range is not null)
+                AND p.p_date_and_time IS NULL (<<< if $range is null)
+                ORDER BY p.p_date_and_time ASC
+        */
 
         $max = 250;
 
@@ -637,6 +659,26 @@ abstract class Source_hook_stats_provider extends Source_hook_stats_base
         $extra .= ' ORDER BY p_date_and_time ASC';
 
         $rows = $GLOBALS['SITE_DB']->query_select('stats_preprocessed', ['*'], $where, $extra, $max, $start);
+
+        if (count($rows) != 0) {
+            $ids = [];
+            foreach ($rows as $row) {
+                $ids[] = $row['id'];
+            }
+            $filter_rows = $GLOBALS['SITE_DB']->query('SELECT pfm_stat, pf_value FROM ' . $GLOBALS['SITE_DB']->get_table_prefix() . 'stats_preprocessed_filter_maps pfm JOIN ' . $GLOBALS['SITE_DB']->get_table_prefix() . 'stats_preprocessed_filters pf ON pfm.pfm_value=pf.id WHERE pfm_stat IN (' . implode(',', $ids) . ') ORDER BY pfm_key ASC');
+            $filter_map = [];
+            foreach ($filter_rows as $filter_row) {
+                if (!isset($filter_map[$filter_row['pfm_stat']])) {
+                    $filter_map[$filter_row['pfm_stat']] = '';
+                } else {
+                    $filter_map[$filter_row['pfm_stat']] .= '||';
+                }
+                $filter_map[$filter_row['pfm_stat']] .= $filter_row['pf_value'];
+            }
+            foreach ($rows as &$row) {
+                $row['p_key'] = isset($filter_map[$row['id']]) ? $filter_map[$row['id']] : '';
+            }
+        }
 
         $start += $max;
 
