@@ -252,13 +252,14 @@ class Hook_database_manifest_stats
                     ],
                     'is_full_text' => false,
                 ],
-                'stats_preprocessed__pbucket_pdatetime' => [
+                'stats_preprocessed__graphquery' => [
                     'addon' => 'stats',
-                    'name' => 'pbucket_pdatetime',
+                    'name' => 'graphquery',
                     'table' => 'stats_preprocessed',
                     'fields' => [
                         0 => 'p_bucket',
                         1 => 'p_date_and_time',
+                        2 => 'id',
                     ],
                     'is_full_text' => false,
                 ],

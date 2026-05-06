@@ -188,7 +188,7 @@ class Module_admin_stats extends Source_standard_crud_module
             ]);
             $GLOBALS['SITE_DB']->create_index('stats_preprocessed', 'pbucket', ['p_bucket']);
             $GLOBALS['SITE_DB']->create_index('stats_preprocessed', 'pdatetime', ['p_date_and_time']);
-            $GLOBALS['SITE_DB']->create_index('stats_preprocessed', 'pbucket_pdatetime', ['p_bucket', 'p_date_and_time']);
+            $GLOBALS['SITE_DB']->create_index('stats_preprocessed', 'graphquery', ['p_bucket', 'p_date_and_time', 'id']);
 
             $GLOBALS['SITE_DB']->create_table('stats_preprocessed_delta', [
                 'id' => '*AUTO',

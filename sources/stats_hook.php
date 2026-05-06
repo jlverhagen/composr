@@ -642,23 +642,25 @@ abstract class Source_hook_stats_provider extends Source_hook_stats_base
             $pivot = 'day_series';
         }
 
-        $query = 'SELECT p.id, p.p_date_and_time, p.p_bucket, SUM(p.p_value) AS p_value, '
+        $query = 'SELECT p.id, p.p_date_and_time, p.p_bucket, SUM(p.sum_value) AS p_value, '
             . db_function('GROUP_CONCAT_RAW', ['pf.pf_value', 'pfm.pfm_key', '||']) . ' AS p_key'
-            . ' FROM {prefix}stats_preprocessed p'
-            . ' LEFT JOIN {prefix}stats_preprocessed_filter_maps pfm ON pfm.pfm_stat=p.id'
-            . ' LEFT JOIN {prefix}stats_preprocessed_filters pf ON pfm.pfm_value=pf.id'
-            . ' WHERE p.p_bucket={p_bucket}';
+            . ' FROM (SELECT id, p_date_and_time, p_bucket, SUM(p_value) as sum_value'
+            . ' FROM {prefix}stats_preprocessed'
+            . ' WHERE p_bucket={p_bucket}';
         $params = ['p_bucket' => $bucket];
         if ($range !== null) {
             $start_timestamp = $this->calculate_date_pivot_timestamp($pivot, $range[0]);
             $end_timestamp = $this->calculate_date_pivot_timestamp($pivot, $range[1]) - 1;
-            $query .= ' AND (p.p_date_and_time BETWEEN {start_timestamp} AND {end_timestamp})';
+            $query .= ' AND (p_date_and_time BETWEEN {start_timestamp} AND {end_timestamp})';
             $params['start_timestamp'] = $start_timestamp;
             $params['end_timestamp'] = $end_timestamp;
         } else {
-            $query .= ' AND p.p_date_and_time IS NULL';
+            $query .= ' AND p_date_and_time IS NULL';
         }
-        $query .= ' GROUP BY p.id,p.p_date_and_time,p.p_bucket';
+        $query .= ' GROUP BY p_bucket,p_date_and_time,id) p'
+        . ' LEFT JOIN {prefix}stats_preprocessed_filter_maps pfm ON pfm.pfm_stat=p.id'
+        . ' LEFT JOIN {prefix}stats_preprocessed_filters pf ON pfm.pfm_value=pf.id'
+        . ' GROUP BY p.p_bucket,p.p_date_and_time,p.id';
         $rows = $GLOBALS['SITE_DB']->query_parameterised($query, $params, $max, $start);
         foreach ($rows as &$row) {
             if ($row['p_key'] === null) {
