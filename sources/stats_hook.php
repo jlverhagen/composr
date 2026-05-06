@@ -610,10 +610,6 @@ abstract class Source_hook_stats_provider extends Source_hook_stats_base
      */
     protected function get_preprocessed_data_for_graph(?array $range, string $bucket, ?string $pivot, array $filters, int &$start = 0) : array
     {
-        if ($pivot === '') {
-            $pivot = 'day_series';
-        }
-
         /*
                 stats_preprocessed p:
                     - id (integer)
@@ -631,52 +627,42 @@ abstract class Source_hook_stats_provider extends Source_hook_stats_base
                     - id (integer)
                     - pf_value (string)
 
-                We want to SELECT p.p_date_and_time, p.p_value, and a string of delimited pf.pf_value (separated by ||) as p_key (they must be in order according to pfm_key),
+                Optimized behavior:
+                We perform a single LEFT JOIN query using GROUP_CONCAT to fetch p_date_and_time, p_value,
+                and an aggregated string of pf.pf_value values joined by || as p_key (in order according to pfm_key),
                 WHERE p.p_bucket = $bucket
                 AND p.p_date_and_time IS NOT NULL AND p.p_date_and_time BETWEEN $start_timestamp AND $end_timestamp (<<< if $range is not null)
                 AND p.p_date_and_time IS NULL (<<< if $range is null)
                 ORDER BY p.p_date_and_time ASC
         */
 
-        $max = 250;
+        $max = 1000;
 
-        $where = [
-            'p_bucket' => $bucket,
-        ];
-
-        $extra = '';
-        if ($range !== null) {
-            require_code('temporal');
-
-            $start_timestamp = $this->calculate_date_pivot_timestamp($pivot, $range[0]);
-            $end_timestamp = $this->calculate_date_pivot_timestamp($pivot, $range[1]) - 1;
-
-            $extra .= ' AND (p_date_and_time BETWEEN ' . strval($start_timestamp) . ' AND ' . strval($end_timestamp) . ')';
-        } else {
-            $where['p_date_and_time'] = null;
+        if ($pivot === '') {
+            $pivot = 'day_series';
         }
 
-        $extra .= ' ORDER BY p_date_and_time ASC';
-
-        $rows = $GLOBALS['SITE_DB']->query_select('stats_preprocessed', ['*'], $where, $extra, $max, $start);
-
-        if (count($rows) != 0) {
-            $ids = [];
-            foreach ($rows as $row) {
-                $ids[] = $row['id'];
-            }
-            $filter_rows = $GLOBALS['SITE_DB']->query('SELECT pfm_stat, pf_value FROM ' . $GLOBALS['SITE_DB']->get_table_prefix() . 'stats_preprocessed_filter_maps pfm JOIN ' . $GLOBALS['SITE_DB']->get_table_prefix() . 'stats_preprocessed_filters pf ON pfm.pfm_value=pf.id WHERE pfm_stat IN (' . implode(',', $ids) . ') ORDER BY pfm_key ASC');
-            $filter_map = [];
-            foreach ($filter_rows as $filter_row) {
-                if (!isset($filter_map[$filter_row['pfm_stat']])) {
-                    $filter_map[$filter_row['pfm_stat']] = '';
-                } else {
-                    $filter_map[$filter_row['pfm_stat']] .= '||';
-                }
-                $filter_map[$filter_row['pfm_stat']] .= $filter_row['pf_value'];
-            }
-            foreach ($rows as &$row) {
-                $row['p_key'] = isset($filter_map[$row['id']]) ? $filter_map[$row['id']] : '';
+        $query = 'SELECT p.id, p.p_date_and_time, p.p_bucket, SUM(p.p_value) AS p_value, '
+            . db_function('GROUP_CONCAT_RAW', ['pf.pf_value', 'pfm.pfm_key', '||']) . ' AS p_key'
+            . ' FROM {prefix}stats_preprocessed p'
+            . ' LEFT JOIN {prefix}stats_preprocessed_filter_maps pfm ON pfm.pfm_stat=p.id'
+            . ' LEFT JOIN {prefix}stats_preprocessed_filters pf ON pfm.pfm_value=pf.id'
+            . ' WHERE p.p_bucket={p_bucket}';
+        $params = ['p_bucket' => $bucket];
+        if ($range !== null) {
+            $start_timestamp = $this->calculate_date_pivot_timestamp($pivot, $range[0]);
+            $end_timestamp = $this->calculate_date_pivot_timestamp($pivot, $range[1]) - 1;
+            $query .= ' AND (p.p_date_and_time BETWEEN {start_timestamp} AND {end_timestamp})';
+            $params['start_timestamp'] = $start_timestamp;
+            $params['end_timestamp'] = $end_timestamp;
+        } else {
+            $query .= ' AND p.p_date_and_time IS NULL';
+        }
+        $query .= ' GROUP BY p.id,p.p_date_and_time,p.p_bucket';
+        $rows = $GLOBALS['SITE_DB']->query_parameterised($query, $params, $max, $start);
+        foreach ($rows as &$row) {
+            if ($row['p_key'] === null) {
+                $row['p_key'] = '';
             }
         }
 

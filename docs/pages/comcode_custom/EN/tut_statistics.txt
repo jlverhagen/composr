@@ -450,14 +450,21 @@ Why do we do pre-computed data processing? There are a number of reasons:
 For efficiency, the scheduler splits the pre-computations up into two stages:
 [list]
 [*]The calculation stage
-Composr will scan for any statistical events that occurred since the last run (but we limit to batches of one hour at a time). The basic details get logged into the [tt]stats_preprocessed[/tt] table with the raw timestamp.
+Composr will scan for any statistical events that occurred since the last run (but we limit to batches of one hour at a time). The basic details get logged into the [tt]stats_preprocessed_delta[/tt] table with the raw timestamp.
  - Composr will only generate statistics up to 31 days in the past. Anything that hasn't already been generated over 31 days ago will not be calculated.
  - Composr only runs the "Stats preprocessing" scheduler hook for a maximum of about 15 seconds per execution, or until available PHP memory gets low. This is to help avoid timeouts and out-of-memory errors. It also helps ensure that other scheduler hooks can also run. Therefore, you should never run the system scheduler any less often than once every 15 minutes (5 minutes if your site has a lot of traffic) to ensure statistics can keep up. Composr is smart. It will pick up where it left off on the next scheduler run.
-[*]The merge stage
-Initially, statistical events are stored in the database with their raw timestamp (down to the second). This is efficient for quick batch insertions during the calculation stage. However, it quickly eats up disk space as the table gets flooded with many thousands of rows. During the "Stats preprocessing" task, Composr will gradually merge statistical data together in intervals of one hour to reduce the size of the database table. The graphs (pivots) never get more precise than hourly. Therefore, it is not necessary to log events beyond hourly precision.
+[*]The processing stage
+Initially, every statistical event is stored as a separate row in the database with their raw timestamp and string of filters. This is efficient for quick batch insertions during the calculation stage. However, it quickly eats up disk space as the table gets flooded with many thousands of rows (and with redundant data). During the "Stats preprocessing" task, Composr will gradually process everything in the [tt]stats_preprocessed_delta[/tt] for efficiency. This involves the following:
+ - Grouping statistical events together that occurred within the same one-hour period (our graphs do not go beyond hourly precision anyway)
+ - Fragmenting the filters so that multiple events that use the same string do not save many copies of the same string ([tt]stats_preprocessed_filters[/tt] and [tt]stats_preprocessed_filter_maps[/tt]).
 [/list]
 
-This two-step process helps ensure that sites large and small do not get bogged down by statistics processing. This is not a fool-proof strategy; very large sites may experience very slow updating of statistics graphs or even out-of-memory errors in rare circumstances. At that point, you have grown to the point that you should probably consider off-loading your analytics to a third-party service instead.
+This two-step process helps ensure that sites large and small do not get bogged down by statistics processing. This also drastically reduces the amount of disk space used by the statistics addon.
+
+This is not a fool-proof strategy:
+ - Very large sites may experience very slow updating of statistics graphs or even out-of-memory errors in rare circumstances. At that point, you have grown to the point that you should probably consider off-loading your analytics to a third-party service instead.
+ - Statistics from the most recent hour may not reflect in the graphs. Since we group events together by hour, we cannot process statistics in the [tt]stats_preprocessed_delta[/tt] table until the current hour ends. Otherwise, we will have duplicate records and counts.
+ - Additional computations have to run when loading the graphs since we fragmented the data (to preserve memory and disk space).
 
 You may also notice, under the Admin Zone > Audit > Low-level logging > System scheduler hooks, that 'Stats preprocessing' will alternate between running every minute and running every 15 minutes. In normal operation, it will run every 15 minutes instead of every minute because it uses a lot of memory and database queries. However, under any of the following circumstances, it will run every minute until none of these circumstances apply anymore:
  - The latest pre-processed stats are over an hour ago (it needs to catch up)

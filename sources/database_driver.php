@@ -1010,26 +1010,66 @@ abstract class Source_database_driver
                 break;
 
             case 'GROUP_CONCAT':
-                if (count($args) != 2) {
+                if ((count($args) != 2) && (count($args) != 3)) {
                     fatal_exit(do_lang_tempcode('INTERNAL_ERROR', escape_html('1165066576cb56d5bb6e6b7f0b0b0f67')));
                 }
+
+                $column = $args[0];
+                $expression = $args[1];
+                $separator = ',';
+                if (isset($args[2])) {
+                    $separator = $args[2];
+                }
+
                 switch (get_db_type()) {
                     case 'oracle':
-                        return '(SELECT LISTAGG(' . $args[0] . ', \',\') WITHIN GROUP (ORDER BY ' . $args[0] . ') FROM ' . $args[1] . ')';
+                        return '(SELECT LISTAGG(' . $column . ', \'' . $separator . '\') WITHIN GROUP (ORDER BY ' . $column . ') FROM ' . $expression . ')';
                     case 'postgresql':
-                        return '(SELECT array_to_string(array_agg(' . $args[0] . '), \',\') FROM ' . $args[1] . ')';
+                        return '(SELECT array_to_string(array_agg(' . $column . '), \'' . $separator . '\') FROM ' . $expression . ')';
                     case 'sqlserver':
-                        return 'STUFF((SELECT \',\'+' . $args[0] . ' FROM ' . $args[1] . ' FOR XML PATH(\'\')), 1, 1, \'\')';
-                    case 'ibm': // Not fully supported
-                        return '(SELECT ' . $args[0] . ' FROM ' . $args[1] . ' fetch first 1 rows only)';
+                        return '(SELECT STRING_AGG(' . $column . ', \'' . $separator . '\') WITHIN GROUP (ORDER BY ' . $column . ') FROM ' . $expression . ')';
+                    case 'ibm':
+                        return '(SELECT LISTAGG(' . $column . ', \'' . $separator . '\') WITHIN GROUP (ORDER BY ' . $column . ') FROM ' . $expression . ')';
                     case 'xml':
-                        return '(SELECT X_GROUP_CONCAT(' . $args[0] . ') FROM ' . $args[1] . ')';
+                        return '(SELECT X_GROUP_CONCAT(' . $column . ') FROM ' . $expression . ')'; // Separator not supported
                     case 'mysql':
                     case 'mysqli':
                     case 'mysql_pdo':
                     case 'sqlite3':
                     default:
-                        return '(SELECT GROUP_CONCAT(' . $args[0] . ') FROM ' . $args[1] . ')';
+                        return '(SELECT GROUP_CONCAT(' . $column . ' SEPARATOR \'' .$separator . '\') FROM ' . $expression . ')';
+                }
+                break;
+
+            case 'GROUP_CONCAT_RAW':
+                if ((count($args) != 2) && (count($args) != 3)) {
+                    fatal_exit(do_lang_tempcode('INTERNAL_ERROR', escape_html('TODO')));
+                }
+
+                $column = $args[0];
+                $order_by = $args[1];
+                $separator = ',';
+                if (isset($args[2])) {
+                    $separator = $args[2];
+                }
+
+                switch (get_db_type()) {
+                    case 'oracle':
+                        return 'LISTAGG(' . $column . ', \'' . $separator . '\') WITHIN GROUP (ORDER BY ' . $order_by . ')';
+                    case 'postgresql':
+                        return 'array_to_string(array_agg(' . $column . ' ORDER BY ' . $order_by . '), \'' . $separator . '\')';
+                    case 'sqlserver':
+                        return 'STRING_AGG(' . $column . ', \'' . $separator . '\') WITHIN GROUP (ORDER BY ' . $order_by . ')';
+                    case 'ibm': // Not fully supported
+                        return 'LISTAGG(' . $column . ', \'' . $separator . '\') WITHIN GROUP (ORDER BY ' . $order_by . ')';
+                    case 'xml':
+                        return 'X_GROUP_CONCAT(' . $column . ')'; // Separator not supported
+                    case 'mysql':
+                    case 'mysqli':
+                    case 'mysql_pdo':
+                    case 'sqlite3':
+                    default:
+                        return 'GROUP_CONCAT(' . $column . ' ORDER BY ' . $order_by . ' SEPARATOR \'' .$separator . '\')';
                 }
                 break;
 
