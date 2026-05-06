@@ -636,7 +636,7 @@ abstract class Source_hook_stats_provider extends Source_hook_stats_base
                 ORDER BY p.p_date_and_time ASC
         */
 
-        $max = 250;
+        $max = 1000;
 
         if ($pivot === '') {
             $pivot = 'day_series';
