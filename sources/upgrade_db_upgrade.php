@@ -975,6 +975,7 @@ function database_specific() : bool
         ]);
         $GLOBALS['SITE_DB']->create_index('stats_preprocessed', 'pbucket', ['p_bucket']);
         $GLOBALS['SITE_DB']->create_index('stats_preprocessed', 'pdatetime', ['p_date_and_time']);
+        $GLOBALS['SITE_DB']->create_index('stats_preprocessed', 'pbucket_pdatetime', ['p_bucket', 'p_date_and_time']);
 
         $GLOBALS['SITE_DB']->create_table('stats_preprocessed_delta', [
             'id' => '*AUTO',
@@ -985,6 +986,7 @@ function database_specific() : bool
         ]);
         $GLOBALS['SITE_DB']->create_index('stats_preprocessed_delta', 'pdbucket', ['pd_bucket']);
         $GLOBALS['SITE_DB']->create_index('stats_preprocessed_delta', 'pddatetime', ['pd_date_and_time']);
+        $GLOBALS['SITE_DB']->create_index('stats_preprocessed_delta', 'pdbucket_pddatetime', ['pd_bucket', 'pd_date_and_time']);
 
         $GLOBALS['SITE_DB']->create_table('stats_preprocessed_filters', [
             'id' => '*AUTO',

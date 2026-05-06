@@ -148,7 +148,6 @@ class Hook_database_manifest_stats
                         'id' => '*AUTO',
                         'p_date_and_time' => '?TIME',
                         'p_bucket' => 'ID_TEXT',
-                        'p_key' => 'LONG_TEXT',
                         'p_value' => 'REAL',
                     ],
                 ],
@@ -250,6 +249,26 @@ class Hook_database_manifest_stats
                     'table' => 'stats_kpis',
                     'fields' => [
                         0 => 'k_graph_name',
+                    ],
+                    'is_full_text' => false,
+                ],
+                'stats_preprocessed__pbucket_pdatetime' => [
+                    'addon' => 'stats',
+                    'name' => 'pbucket_pdatetime',
+                    'table' => 'stats_preprocessed',
+                    'fields' => [
+                        0 => 'p_bucket',
+                        1 => 'p_date_and_time',
+                    ],
+                    'is_full_text' => false,
+                ],
+                'stats_preprocessed_delta__pdbucket_pddatetime' => [
+                    'addon' => 'stats',
+                    'name' => 'pdbucket_pddatetime',
+                    'table' => 'stats_preprocessed_delta',
+                    'fields' => [
+                        0 => 'pd_bucket',
+                        1 => 'pd_date_and_time',
                     ],
                     'is_full_text' => false,
                 ],
