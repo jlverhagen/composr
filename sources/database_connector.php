@@ -785,13 +785,7 @@ class Source_database_connector
             $query .= '/* ' . get_session_id() . ' */'; // Identify query to session, for accurate de-duping
 
             $real_query = $query;
-            if (($max !== null) && ($start != 0) && ($max > 0)) {
-                $real_query .= ' LIMIT ' . strval($start) . ',' . strval($max);
-            } elseif (($max !== null) && ($max > 0)) {
-                $real_query .= ' LIMIT ' . strval($max);
-            } elseif ($start != 0) {
-                $real_query .= ' LIMIT ' . strval($start) . ',30000000';
-            }
+            $this->driver->apply_sql_limit_clause($real_query, $max, $start);
 
             $ret = $this->driver->query('SHOW FULL PROCESSLIST', $connection, null, 0, true); // Suppress errors in case access denied
             if (is_array($ret)) {
