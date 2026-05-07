@@ -605,10 +605,10 @@ abstract class Source_hook_stats_provider extends Source_hook_stats_base
      * @param  ID_TEXT $bucket The bucket we are loading
      * @param  ?ID_TEXT $pivot The pivot at which we are viewing the graph (blank: graph does not support pivots, so use day_series data) (null: we want flat data)
      * @param  array $filters Array of active filters
-     * @param  integer $start The starting row, passed by reference as we add 250 after each iteration
+     * @param  integer $start_id The starting ID number, passed by reference (we only process 1000 at a time)
      * @return array The database rows, limited to 250 per iteration
      */
-    protected function get_preprocessed_data_for_graph(?array $range, string $bucket, ?string $pivot, array $filters, int &$start = 0) : array
+    protected function get_preprocessed_data_for_graph(?array $range, string $bucket, ?string $pivot, array $filters, int &$start_id = 0) : array
     {
         $max = 1000;
 
@@ -616,12 +616,12 @@ abstract class Source_hook_stats_provider extends Source_hook_stats_base
             $pivot = 'day_series';
         }
 
-        $query = 'SELECT p.id, p.p_date_and_time, p.p_bucket, SUM(p.sum_value) AS p_value, '
+        $query = 'SELECT p.id, p.p_date_and_time, p.p_bucket, SUM(p.p_value) AS p_value, '
             . db_function('GROUP_CONCAT_RAW', ['pf.pf_value', 'pfm.pfm_key', '||']) . ' AS p_key'
-            . ' FROM (SELECT id, p_date_and_time, p_bucket, SUM(p_value) as sum_value'
+            . ' FROM (SELECT id'
             . ' FROM {prefix}stats_preprocessed'
-            . ' WHERE p_bucket={p_bucket}';
-        $params = ['p_bucket' => $bucket];
+            . ' WHERE id>{start_id} AND p_bucket={p_bucket}';
+        $params = ['start_id' => $start_id, 'p_bucket' => $bucket];
         if ($range !== null) {
             $start_timestamp = $this->calculate_date_pivot_timestamp($pivot, $range[0]);
             $end_timestamp = $this->calculate_date_pivot_timestamp($pivot, $range[1]) - 1;
@@ -631,9 +631,10 @@ abstract class Source_hook_stats_provider extends Source_hook_stats_base
         } else {
             $query .= ' AND p_date_and_time IS NULL';
         }
-        $query .= ' GROUP BY p_bucket,p_date_and_time,id';
-        $GLOBALS['SITE_DB']->driver->apply_sql_limit_clause($query, $max, $start);
-        $query .= ') p'
+        $query .= ' ORDER BY id';
+        $GLOBALS['SITE_DB']->driver->apply_sql_limit_clause($query, $max);
+        $query .= ') lim'
+        . ' INNER JOIN {prefix}stats_preprocessed p ON p.id = lim.id'
         . ' LEFT JOIN {prefix}stats_preprocessed_filter_maps pfm ON pfm.pfm_stat=p.id'
         . ' LEFT JOIN {prefix}stats_preprocessed_filters pf ON pfm.pfm_value=pf.id'
         . ' GROUP BY p.p_bucket,p.p_date_and_time,p.id';
@@ -642,9 +643,10 @@ abstract class Source_hook_stats_provider extends Source_hook_stats_base
             if ($row['p_key'] === null) {
                 $row['p_key'] = '';
             }
+            if ($row['id'] > $start_id) {
+                $start_id = $row['id'];
+            }
         }
-
-        $start += $max;
 
         return $rows;
     }
