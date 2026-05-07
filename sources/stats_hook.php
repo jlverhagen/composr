@@ -619,7 +619,7 @@ abstract class Source_hook_stats_provider extends Source_hook_stats_base
         $query = 'SELECT p.id, p.p_date_and_time, p.p_bucket, SUM(p.p_value) AS p_value, '
             . db_function('GROUP_CONCAT_RAW', ['pf.pf_value', 'pfm.pfm_key', '||']) . ' AS p_key'
             . ' FROM (SELECT id'
-            . ' FROM {prefix}stats_preprocessed'
+            . ' FROM {prefix}stats_preprocessed' . $GLOBALS['FORUM_DB']->prefer_index('stats_preprocessed', 'graphquery', true)
             . ' WHERE id>{start_id} AND p_bucket={p_bucket}';
         $params = ['start_id' => $start_id, 'p_bucket' => $bucket];
         if ($range !== null) {
@@ -637,7 +637,7 @@ abstract class Source_hook_stats_provider extends Source_hook_stats_base
         . ' INNER JOIN {prefix}stats_preprocessed p ON p.id = lim.id'
         . ' LEFT JOIN {prefix}stats_preprocessed_filter_maps pfm ON pfm.pfm_stat=p.id'
         . ' LEFT JOIN {prefix}stats_preprocessed_filters pf ON pfm.pfm_value=pf.id'
-        . ' GROUP BY p.p_bucket,p.p_date_and_time,p.id';
+        . ' GROUP BY p.p_bucket,p.p_date_and_time,p.id,p_key';
         $rows = $GLOBALS['SITE_DB']->query_parameterised($query, $params);
         foreach ($rows as &$row) {
             if ($row['p_key'] === null) {
