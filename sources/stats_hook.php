@@ -619,7 +619,7 @@ abstract class Source_hook_stats_provider extends Source_hook_stats_base
         $query = 'SELECT p.id, p.p_date_and_time, p.p_bucket, SUM(p.p_value) AS p_value, '
             . db_function('GROUP_CONCAT_RAW', ['pf.pf_value', 'pfm.pfm_key', '||']) . ' AS p_key'
             . ' FROM (SELECT id'
-            . ' FROM {prefix}stats_preprocessed' . $GLOBALS['FORUM_DB']->prefer_index('stats_preprocessed', 'graphquery', true)
+            . ' FROM {prefix}stats_preprocessed'
             . ' WHERE p_bucket={p_bucket}';
         $params = ['start_id' => $start_id, 'p_bucket' => $bucket];
         if ($range !== null) {
@@ -631,7 +631,7 @@ abstract class Source_hook_stats_provider extends Source_hook_stats_base
         } else {
             $query .= ' AND p_date_and_time IS NULL';
         }
-        $query .= ' AND id>{start_id} ORDER BY id';
+        $query .= ' AND id>{start_id}';
         $GLOBALS['SITE_DB']->driver->apply_sql_limit_clause($query, $max);
         $query .= ') lim'
         . ' INNER JOIN {prefix}stats_preprocessed p ON p.id = lim.id'
