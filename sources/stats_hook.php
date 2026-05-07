@@ -610,32 +610,6 @@ abstract class Source_hook_stats_provider extends Source_hook_stats_base
      */
     protected function get_preprocessed_data_for_graph(?array $range, string $bucket, ?string $pivot, array $filters, int &$start = 0) : array
     {
-        /*
-                stats_preprocessed p:
-                    - id (integer)
-                    - p_date_and_time (Unix timestamp)
-                    - p_bucket (string)
-                    - p_value (float)
-
-                stats_preprocessed_filter_maps pfm:
-                    - id (integer)
-                    - pfm_stat (integer) [maps to p.id]
-                    - pfm_key (integer)
-                    - pfm_value (integer) [maps to pf.id]
-
-                stats_preprocessed_filters pf:
-                    - id (integer)
-                    - pf_value (string)
-
-                Optimized behavior:
-                We perform a single LEFT JOIN query using GROUP_CONCAT to fetch p_date_and_time, p_value,
-                and an aggregated string of pf.pf_value values joined by || as p_key (in order according to pfm_key),
-                WHERE p.p_bucket = $bucket
-                AND p.p_date_and_time IS NOT NULL AND p.p_date_and_time BETWEEN $start_timestamp AND $end_timestamp (<<< if $range is not null)
-                AND p.p_date_and_time IS NULL (<<< if $range is null)
-                ORDER BY p.p_date_and_time ASC
-        */
-
         $max = 1000;
 
         if ($pivot === '') {
@@ -657,11 +631,13 @@ abstract class Source_hook_stats_provider extends Source_hook_stats_base
         } else {
             $query .= ' AND p_date_and_time IS NULL';
         }
-        $query .= ' GROUP BY p_bucket,p_date_and_time,id) p'
+        $query .= ' GROUP BY p_bucket,p_date_and_time,id';
+        $GLOBALS['SITE_DB']->driver->apply_sql_limit_clause($query, $max, $start);
+        $query .= ') p'
         . ' LEFT JOIN {prefix}stats_preprocessed_filter_maps pfm ON pfm.pfm_stat=p.id'
         . ' LEFT JOIN {prefix}stats_preprocessed_filters pf ON pfm.pfm_value=pf.id'
-        . ' GROUP BY p.p_bucket,p.p_date_and_time,p.id';
-        $rows = $GLOBALS['SITE_DB']->query_parameterised($query, $params, $max, $start);
+        . ' GROUP BY p.p_bucket,p.p_date_and_time,p.id,p_key';
+        $rows = $GLOBALS['SITE_DB']->query_parameterised($query, $params);
         foreach ($rows as &$row) {
             if ($row['p_key'] === null) {
                 $row['p_key'] = '';
