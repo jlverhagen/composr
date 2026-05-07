@@ -637,7 +637,7 @@ abstract class Source_hook_stats_provider extends Source_hook_stats_base
         . ' INNER JOIN {prefix}stats_preprocessed p ON p.id = lim.id'
         . ' LEFT JOIN {prefix}stats_preprocessed_filter_maps pfm ON pfm.pfm_stat=p.id'
         . ' LEFT JOIN {prefix}stats_preprocessed_filters pf ON pfm.pfm_value=pf.id'
-        . ' GROUP BY p.p_bucket,p.p_date_and_time,p.id,p_key';
+        . ' GROUP BY p.p_bucket,p.p_date_and_time,p.id';
         $rows = $GLOBALS['SITE_DB']->query_parameterised($query, $params);
         foreach ($rows as &$row) {
             if ($row['p_key'] === null) {
