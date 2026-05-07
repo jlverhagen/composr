@@ -610,7 +610,7 @@ abstract class Source_hook_stats_provider extends Source_hook_stats_base
      */
     protected function get_preprocessed_data_for_graph(?array $range, string $bucket, ?string $pivot, array $filters, int &$start_id = 0) : array
     {
-        $max = 1000;
+        $max = 10000;
 
         if ($pivot === '') {
             $pivot = 'day_series';
