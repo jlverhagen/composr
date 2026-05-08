@@ -68,6 +68,6 @@ class Hook_config_hc_compound_requests_per_second_threshold
             return null;
         }
 
-        return '0.3';
+        return '1';
     }
 }

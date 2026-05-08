@@ -55,7 +55,7 @@ class Hook_cron_rate_limiting_cleanup
 
         return [
             'num_queued' => null,
-            'minutes_between_runs' => 1,
+            'minutes_between_runs' => 5,
             'enabled_by_default' => true,
         ];
     }
@@ -69,16 +69,26 @@ class Hook_cron_rate_limiting_cleanup
     {
         global $SITE_INFO;
 
-        require_code('files2');
+        // We specifically use SQLite3 for rate limiting
+        require_code('database/sqlite3');
+        $db_driver = object_factory('Source_database_static_sqlite3', false, ['cms_']);
+        $db = object_factory('Source_database_connector', false, ['ratelimiting', '', '', '', 'cms_', false, $db_driver]);
 
-        $time_window = $SITE_INFO['rate_limit_time_window'];
-
-        $rate_limiter_dir = get_custom_file_base() . '/data_custom/rate_limiting';
-        $files = get_directory_contents($rate_limiter_dir, $rate_limiter_dir, IGNORE_ACCESS_CONTROLLERS, true, true, ['json']);
-        foreach ($files as $file) {
-            if (filemtime($file) < (time() - $time_window - 1)) {
-                @unlink($file);
-            }
+        // Quick test to make sure that we have a connection. Bail if we don't; we don't want to crash.
+        $results = $db->query_value_if_there('SELECT 1', true);
+        if ($results === null) {
+            return;
         }
+
+        // Nothing to do if a rate limiting table does not exist
+        if ($db->get_table_count_approx('rate_limiting', [], null, true) === null) {
+            return;
+        }
+
+        // Prune records
+        $rate_limit_time_window = empty($SITE_INFO['rate_limit_time_window']) ? 10 : intval($SITE_INFO['rate_limit_time_window']);
+        $db->query_parameterised('DELETE FROM {prefix}rate_limiting WHERE date_and_time<{date_and_time}', [
+            'date_and_time' => (time() - $rate_limit_time_window)
+        ]);
     }
 }

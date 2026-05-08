@@ -117,7 +117,8 @@ class Source_database_static_sqlite3 extends Source_database_driver
         try {
             $db_link = new SQLite3($path);
             $db_link->createFunction('MD5', 'md5', 1);
-            $db_link->exec('PRAGMA foreign_keys = ON;'); // Activates foreign key constraints
+            $db_link->exec('PRAGMA foreign_keys=ON;'); // Activates foreign key constraints
+            $db_link->exec('PRAGMA journal_mode=WAL;'); // Activates write-ahead logging
         } catch (Exception $e) {
             $error = 'Could not connect to database (' . $e->getMessage() . ')';
             if ($fail_ok) {
@@ -365,7 +366,7 @@ class Source_database_static_sqlite3 extends Source_database_driver
             ocp_mark_as_escaped($err);
         }
         if ((!running_script('upgrader')) && ((!get_mass_import_mode()) || (current_fatalistic() > 0)) && (strpos($err, 'Duplicate entry') === false)) {
-            if ((!function_exists('do_lang')) || (do_lang('QUERY_FAILED', null, null, null, null, false) === null)) {
+            if ((!function_exists('do_lang')) || (!function_exists('do_lang_tempcode')) || (do_lang('QUERY_FAILED', null, null, null, null, false) === null)) {
                 $this->failed_query_exit(htmlentities('Query failed: ' . $query . ' : ' . $err));
             }
             $this->failed_query_exit(do_lang_tempcode('QUERY_FAILED', escape_html($query), ($err)));
@@ -633,7 +634,7 @@ class Source_database_static_sqlite3 extends Source_database_driver
      */
     public function get_table_count_approx(string $table, $connection) : ?int
     {
-        $res = $this->query('SELECT COUNT(*) AS cnt FROM ' . $table, $connection, 1);
+        $res = $this->query('SELECT COUNT(*) AS cnt FROM ' . $table, $connection, null, 0, true);
         if ($res === null) {
             return null;
         }
