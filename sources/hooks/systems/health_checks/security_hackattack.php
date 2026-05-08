@@ -55,7 +55,7 @@ class Hook_health_check_security_hackattack extends Source_hook_health_check
         $this->process_checks_section('testOverseasAccess', 'Overseas access', $sections_to_run, $check_context, $manual_checks, $automatic_repair, $use_test_data_for_pass, $urls_or_page_links, $comcode_segments);
         $this->process_checks_section('testHackAttacks', 'Attack frequency', $sections_to_run, $check_context, $manual_checks, $automatic_repair, $use_test_data_for_pass, $urls_or_page_links, $comcode_segments);
         $this->process_checks_section('testFailedLogins', 'Failed logins', $sections_to_run, $check_context, $manual_checks, $automatic_repair, $use_test_data_for_pass, $urls_or_page_links, $comcode_segments);
-        $this->process_checks_section('testRateLimitSpike', 'Rate-limit spiking', $sections_to_run, $check_context, $manual_checks, $automatic_repair, $use_test_data_for_pass, $urls_or_page_links, $comcode_segments);
+        $this->process_checks_section('testRequestSpike', 'Request spiking', $sections_to_run, $check_context, $manual_checks, $automatic_repair, $use_test_data_for_pass, $urls_or_page_links, $comcode_segments);
 
         return [$this->category_label, $this->results];
     }
@@ -184,33 +184,16 @@ class Hook_health_check_security_hackattack extends Source_hook_health_check
      * @param  ?array $urls_or_page_links List of URLs and/or page-links to operate on, if applicable (null: those configured)
      * @param  ?array $comcode_segments Map of field names to Comcode segments to operate on, if applicable (null: N/A)
      */
-    public function testRateLimitSpike(int $check_context, bool $manual_checks = false, bool $automatic_repair = false, ?bool $use_test_data_for_pass = null, ?array $urls_or_page_links = null, ?array $comcode_segments = null)
+    public function testRequestSpike(int $check_context, bool $manual_checks = false, bool $automatic_repair = false, ?bool $use_test_data_for_pass = null, ?array $urls_or_page_links = null, ?array $comcode_segments = null)
     {
         if ($check_context != CHECK_CONTEXT__LIVE_SITE) {
             $this->stateCheckSkipped('Skipped; we are not running from a live site.');
             return;
         }
 
-        require_code('files2');
-
-        $rate_limiting_data = [];
-
-        // Populate rate limiting data
-        $rate_limiter_dir = get_custom_file_base() . '/data_custom/rate_limiting';
-        $files = get_directory_contents($rate_limiter_dir, $rate_limiter_dir, IGNORE_ACCESS_CONTROLLERS, true, true, ['json']);
-        foreach ($files as $file) {
-            $ip = str_replace(['_', '-'], ['.', ':'], basename($file, '.json'));
-            $file_contents = cms_file_get_contents_safe($file);
-            if (!$file_contents) {
-                continue;
-            }
-
-            $_rate_limiting_data = @json_decode($file_contents, true);
-            if (empty($_rate_limiting_data)) {
-                continue;
-            }
-
-            $rate_limiting_data[$ip] = $_rate_limiting_data;
+        if (!addon_installed('stats')) {
+            $this->stateCheckSkipped('Skipped; stats addon is not installed.');
+            return;
         }
 
         $threshold_sample = intval(get_option('hc_requests_window_size'));
@@ -218,6 +201,22 @@ class Hook_health_check_security_hackattack extends Source_hook_health_check
 
         $threshold_sample_compound = intval(get_option('hc_compound_requests_window_size'));
         $threshold_rps_compound = floatval(get_option('hc_compound_requests_per_second_threshold'));
+
+        if ($threshold_sample >= 1) {
+            $rows = $GLOBALS['SITE_DB']->query_select('stats', ['COUNT(ip) AS hits', 'ip'], [], ' AND date_and_time>=' . strval(time() - $threshold_sample) . ' GROUP BY ip');
+            foreach ($rows as $row) {
+                $requests_per_second = floatval($row['hits']) / floatval($threshold_sample);
+                $ok = ($row['hits'] < $threshold_sample) || ($requests_per_second < $threshold_rps);
+                $this->assertTrue($ok, 'Heavy visitor load @ ' . float_format($requests_per_second, 2, true) . ' PHP requests per second (for a sample size over ' . integer_format($threshold_sample) . ') requests from IP ' . $row['ip']);
+            }
+        }
+
+        if ($threshold_sample_compound >= 1) {
+            $hits = $GLOBALS['SITE_DB']->query_select_value('stats', 'COUNT(ip) AS hits', [], ' AND date_and_time>=' . strval(time() - $threshold_sample_compound));
+            $requests_per_second = floatval($hits) / floatval($threshold_sample_compound);
+            $ok = ($hits < $threshold_sample_compound) || ($requests_per_second < $threshold_rps_compound);
+            $this->assertTrue($ok, 'Heavy visitor load @ ' . float_format($requests_per_second, 2, true) . ' PHP requests per second (for a sample size over ' . integer_format($threshold_sample_compound) . ') requests from all IPs together');
+        }
 
         if (!empty($rate_limiting_data)) {
             global $SITE_INFO;
