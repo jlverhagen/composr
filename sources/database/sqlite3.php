@@ -111,15 +111,22 @@ class Source_database_static_sqlite3 extends Source_database_driver
             make_missing_directory(dirname($path));
         }
 
+        $needs_pragma = true;
+        if (is_file($path)) {
+            $needs_pragma = false;
+        }
+
         require_code('failure');
 
         push_throw_errors(true);
         try {
             $db_link = new SQLite3($path);
+            $db_link->busyTimeout(5000);
             $db_link->createFunction('MD5', 'md5', 1);
-            $db_link->exec('PRAGMA foreign_keys=ON;'); // Activates foreign key constraints
-            $db_link->exec('PRAGMA journal_mode=WAL;'); // Activates write-ahead logging
-            $db_link->exec('PRAGMA busy_timeout=5000;'); // Keep trying for 5 seconds on an active lock
+            if ($needs_pragma) {
+                $db_link->exec('PRAGMA journal_mode=WAL;'); // Activates write-ahead logging (this persists)
+            }
+            $db_link->exec('PRAGMA foreign_keys=ON;'); // Activates foreign key constraints (this does not persist)
         } catch (Exception $e) {
             $error = 'Could not connect to database (' . $e->getMessage() . ')';
             if ($fail_ok) {
