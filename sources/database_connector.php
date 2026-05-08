@@ -373,7 +373,7 @@ class Source_database_connector
                 (strpos($table, ' ') === false) &&
                 (strpos($end, 'GROUP BY ') === false/*Can only SELECT what is also in GROUP BY*/) &&
                 ((isset($GLOBALS['SITE_DB'])) &&
-                ($this->connection_unique_identifier === $GLOBALS['SITE_DB']->connection_unique_identifier) || (get_forum_type() === 'cns') && ($this->connection_unique_identifier == $GLOBALS['CNS_DRIVER']->db->connection_unique_identifier))
+                ($this->connection_unique_identifier === $GLOBALS['SITE_DB']->connection_unique_identifier) || (get_forum_type() === 'cns') && (isset($GLOBALS['CNS_DRIVER'])) && ($this->connection_unique_identifier == $GLOBALS['CNS_DRIVER']->db->connection_unique_identifier))
             ) {
                 global $TABLE_LANG_FIELDS_CACHE;
                 $lang_fields_provisional = find_lang_fields($table);
