@@ -610,7 +610,7 @@ abstract class Source_hook_stats_provider extends Source_hook_stats_base
      */
     protected function get_preprocessed_data_for_graph(?array $range, string $bucket, ?string $pivot, array $filters, int &$start_id = 0) : array
     {
-        cms_profile_start_for('Source_hook_stats_provider->get_preprocessed_data_for_graph($bucket ' . $bucket . ', $start_id ' . strval($start_id) . ')');
+        cms_profile_start_for('Source_hook_stats_provider->get_preprocessed_data_for_graph($bucket ' . $bucket . ')');
 
         $max = 10000;
 
@@ -654,7 +654,7 @@ abstract class Source_hook_stats_provider extends Source_hook_stats_base
             }
         }
 
-        cms_profile_end_for('Source_hook_stats_provider->get_preprocessed_data_for_graph($bucket ' . $bucket . ', $start_id ' . strval($start_id) . ')');
+        cms_profile_end_for('Source_hook_stats_provider->get_preprocessed_data_for_graph($bucket ' . $bucket . ')');
 
         return $rows;
     }
