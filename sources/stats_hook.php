@@ -610,7 +610,9 @@ abstract class Source_hook_stats_provider extends Source_hook_stats_base
      */
     protected function get_preprocessed_data_for_graph(?array $range, string $bucket, ?string $pivot, array $filters, int &$start_id = 0) : array
     {
-        $max = 1000;
+        cms_profile_start_for('Source_hook_stats_provider->get_preprocessed_data_for_graph($bucket ' . $bucket . ', $start_id ' . strval($start_id) . ')');
+
+        $max = 10000;
 
         if ($pivot === '') {
             $pivot = 'day_series';
@@ -638,7 +640,11 @@ abstract class Source_hook_stats_provider extends Source_hook_stats_base
         . ' LEFT JOIN {prefix}stats_preprocessed_filter_maps pfm ON pfm.pfm_stat=p.id'
         . ' LEFT JOIN {prefix}stats_preprocessed_filters pf ON pfm.pfm_value=pf.id'
         . ' GROUP BY p.p_bucket,p.p_date_and_time,p.id';
+
+        cms_profile_start_for('Source_hook_stats_provider->get_preprocessed_data_for_graph($bucket ' . $bucket . ', $start_id ' . strval($start_id) . ') SQL');
         $rows = $GLOBALS['SITE_DB']->query_parameterised($query, $params);
+        cms_profile_end_for('Source_hook_stats_provider->get_preprocessed_data_for_graph($bucket ' . $bucket . ', $start_id ' . strval($start_id) . ') SQL', strval(count($rows)));
+
         foreach ($rows as &$row) {
             if ($row['p_key'] === null) {
                 $row['p_key'] = '';
@@ -647,6 +653,8 @@ abstract class Source_hook_stats_provider extends Source_hook_stats_base
                 $start_id = $row['id'];
             }
         }
+
+        cms_profile_end_for('Source_hook_stats_provider->get_preprocessed_data_for_graph($bucket ' . $bucket . ', $start_id ' . strval($start_id) . ')');
 
         return $rows;
     }
