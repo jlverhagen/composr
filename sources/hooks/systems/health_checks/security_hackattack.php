@@ -217,24 +217,5 @@ class Hook_health_check_security_hackattack extends Source_hook_health_check
             $ok = ($hits < $threshold_sample_compound) || ($requests_per_second < $threshold_rps_compound);
             $this->assertTrue($ok, 'Heavy visitor load @ ' . float_format($requests_per_second, 2, true) . ' PHP requests per second (for a sample size over ' . integer_format($threshold_sample_compound) . ') requests from all IPs together');
         }
-
-        if (!empty($rate_limiting_data)) {
-            global $SITE_INFO;
-            $rate_limit_time_window = empty($SITE_INFO['rate_limit_time_window']) ? 10 : intval($SITE_INFO['rate_limit_time_window']);
-
-            $times_compound = [];
-
-            foreach ($rate_limiting_data as $ip => $times) {
-                $requests_per_second = floatval(count($times)) / floatval($rate_limit_time_window);
-                $ok = (count($times) < $threshold_sample) || ($requests_per_second < $threshold_rps);
-                $this->assertTrue($ok, 'Heavy visitor load @ ' . float_format($requests_per_second, 2, true) . ' PHP requests per second (for a sample size over ' . integer_format($threshold_sample) . ') requests from IP ' . $ip);
-
-                $times_compound = array_merge($times_compound, $times);
-            }
-
-            $requests_per_second = floatval(count($times_compound)) / floatval($rate_limit_time_window);
-            $ok = (count($times_compound) < $threshold_sample_compound) || ($requests_per_second < $threshold_rps_compound);
-            $this->assertTrue($ok, 'Heavy visitor load @ ' . float_format($requests_per_second, 2, true) . ' PHP requests per second (for a sample size over ' . integer_format($threshold_sample_compound) . ') requests from all IPs together');
-        }
     }
 }
