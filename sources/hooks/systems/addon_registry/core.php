@@ -786,8 +786,6 @@ class Hook_addon_registry_core
             'data_custom/modules/index.html',
             'data_custom/profiler/.htaccess',
             'data_custom/profiler/index.html',
-            'data_custom/rate_limiting/.htaccess',
-            'data_custom/rate_limiting/index.html',
             'data_custom/sitemaps/index.html',
             'data_custom/xml_config/.htaccess',
             'data_custom/xml_config/index.html',

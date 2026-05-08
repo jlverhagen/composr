@@ -169,7 +169,11 @@ $SITE_INFO['rate_limit_time_window'] = '10'; // Time window in seconds
 $SITE_INFO['rate_limit_hits_per_window'] = '5'; // The number of permitted hits within the given time window before requests are denied
 [/code]
 
-This produces soft errors with the correct HTTP header. The errors happen early, before Composr boots up.
+This produces soft errors with the correct HTTP header.
+
+This requires the PHP [b]SQLite3[/b] extension even if your site was not configured to run on an SQLite3 database. We use SQLite3 to track hits as it is quicker than the filesystem and most other database engines.
+
+We highly recommend that you use your server's rate limiting features if they are available instead of Composr's. They will stop request floods before they even reach Composr.
 
 Note that anyone behind a shared proxy server will share an IP address. See how to properly configure IP addresses under the "Reverse proxying" section.
 

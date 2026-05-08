@@ -36,6 +36,18 @@
  * @package    core
  */
 
+// NB: bootstrap should have loaded $SITE_INFO already, but bootstrap does not actually check if it's missing because it's not critical until global.php
+global $SITE_INFO;
+if (!is_array($SITE_INFO) || (count($SITE_INFO) == 0) || (empty($SITE_INFO))) {
+    if (!is_file($FILE_BASE . '/_config.php')) {
+        critical_error('_CONFIG.PHP_MISSING');
+    } elseif (strlen(trim(file_get_contents($FILE_BASE . '/_config.php'))) == 0) {
+        critical_error('_CONFIG.PHP_EMPTY');
+    } else {
+        critical_error('_CONFIG.PHP_CORRUPTED');
+    }
+}
+
 /**
  * Require a software PHP file while, where applicable, compiling in overrides from *_custom folders and contentious overrides.
  * You should remember this function and use this opposed to require/include/require_once/include_once for proper modularity (except for bootstrap.php which has to be required directly).
@@ -1626,18 +1638,6 @@ if (is_file($FILE_BASE . '/sources_custom/critical_errors.php')) {
     }
 }
 
-// NB: bootstrap should have loaded $SITE_INFO already, but bootstrap does not actually check if it's missing because it's not critical until global.php
-global $SITE_INFO;
-if (!is_array($SITE_INFO) || (count($SITE_INFO) == 0) || (empty($SITE_INFO))) {
-    if (!is_file($FILE_BASE . '/_config.php')) {
-        critical_error('_CONFIG.PHP_MISSING');
-    } elseif (strlen(trim(file_get_contents($FILE_BASE . '/_config.php'))) == 0) {
-        critical_error('_CONFIG.PHP_EMPTY');
-    } else {
-        critical_error('_CONFIG.PHP_CORRUPTED');
-    }
-}
-
 // Check if we might be proxying through Cloudflare (unsafe test as this does not check actual remote address against known Cloudflare IPs)
 global $MIGHT_BE_USING_CF, $CF_ORIGINAL_IP, $ACTUALLY_USING_CF;
 $ACTUALLY_USING_CF = false;
@@ -1669,64 +1669,6 @@ if (!empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
                 break;
             }
         }
-    }
-}
-
-// Rate limiter, to stop aggressive bots. Must be after Cloudflare / proxy processing.
-global $SITE_INFO;
-$rate_limiting = !empty($SITE_INFO['rate_limiting']);
-if ($rate_limiting) {
-    if ((!empty($_SERVER['REMOTE_ADDR'])) && (basename($_SERVER['SCRIPT_NAME']) == 'index.php')) {
-        // Basic context
-        $ip = $_SERVER['REMOTE_ADDR'];
-        $time = time();
-
-        $fixed_ip = str_replace(['.', ':'], ['_', '-'], $ip);
-
-        //if (!(((!empty($_SERVER['SERVER_ADDR'])) && ($ip == $_SERVER['SERVER_ADDR'])) || ((!empty($_SERVER['LOCAL_ADDR'])) && ($ip == $_SERVER['LOCAL_ADDR'])))) {
-            $rate_limiting_data = [];
-
-            // Read in rate limiter data for this IP
-            $rate_limiter_path = dirname(__DIR__) . '/data_custom/rate_limiting/' . $fixed_ip . '.json';
-
-            if (is_file($rate_limiter_path)) {
-                $_rate_limiting_data = file_get_contents($rate_limiter_path);
-                if (!$_rate_limiting_data) {
-                    $rate_limiting_data = [];
-                } else {
-                    $rate_limiting_data = @json_decode($_rate_limiting_data, true);
-                    if (!$rate_limiting_data) {
-                        $rate_limiting_data = [];
-                    }
-                }
-            }
-
-            // Filter to just times within our window
-            $pertinent = [];
-            $rate_limit_time_window = empty($SITE_INFO['rate_limit_time_window']) ? 10 : intval($SITE_INFO['rate_limit_time_window']);
-            foreach ($rate_limiting_data as $i => $old_time) {
-                if ($old_time >= $time - $rate_limit_time_window) {
-                    $pertinent[] = $old_time;
-                }
-            }
-
-            // Do we have to block?
-            $rate_limit_hits_per_window = empty($SITE_INFO['rate_limit_hits_per_window']) ? 5 : intval($SITE_INFO['rate_limit_hits_per_window']);
-            if (count($pertinent) >= $rate_limit_hits_per_window) {
-                http_response_code(429);
-                header('Content-Type: text/plain');
-                exit('We only allow ' . strval($rate_limit_hits_per_window - 1) . ' page hits every ' . strval($rate_limit_time_window) . ' seconds. You\'re at ' . strval(count($pertinent)) . '.');
-            }
-
-            // Write out new state
-            $rate_limiting_data = $pertinent;
-            $rate_limiting_data[] = $time;
-            file_put_contents($rate_limiter_path, json_encode($rate_limiting_data), LOCK_EX);
-            //sync_file($rate_limiter_path); Not done. Each server should rate limit separately. Synching this data across servers would be too slow and not scalable
-
-            // Save some memory
-            unset($rate_limiting_data);
-        //}
     }
 }
 

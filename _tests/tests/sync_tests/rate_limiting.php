@@ -38,8 +38,6 @@ class rate_limiting_test_set extends cms_test_case
         file_put_contents($config_file_path, $config_file . "\n\n\$SITE_INFO['rate_limiting'] = '1';\n\$SITE_INFO['rate_limit_time_window'] = '60';\n\$SITE_INFO['rate_limit_hits_per_window'] = '3';");
         fix_permissions($config_file_path);
 
-        $rate_limiter_path = get_custom_file_base() . '/data_custom/rate_limiting/' . str_replace(['.', ':'], ['_', '-'], get_ip_address()) . '.json';
-
         $url = build_url(['page' => ''], '');
         for ($i = 0; $i < 4; $i++) {
             $result = cms_http_request($url->evaluate(), ['trigger_error' => false, 'timeout' => 8.0]);
@@ -54,12 +52,6 @@ class rate_limiting_test_set extends cms_test_case
             if ($this->debug) {
                 $this->dump($result->data, 'Iteration ' . strval($i));
             }
-        }
-
-        // Output contents of rate limit file if debugging
-        if ($this->debug) {
-            $test = cms_file_get_contents_safe($rate_limiter_path, FILE_READ_LOCK);
-            var_dump($test);
         }
 
         file_put_contents($config_file_path, $config_file);
