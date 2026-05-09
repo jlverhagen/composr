@@ -336,6 +336,8 @@ function _helper_create_table(object $this_ref, string $table_name, array $field
     if (!in_array($table_name, ['db_meta', 'db_meta_indices', 'db_meta_foreign_keys'])) {
         if ((!running_script('install') && (!running_script('upgrader'))) || $this_ref->table_exists('db_meta_foreign_keys')) {
             require_code('database');
+            connect_site_db();
+
             $fk = $GLOBALS['SITE_DB']->query_select('db_meta_foreign_keys', ['*'], ['to_table' => $table_name]);
             foreach ($fk as $row) {
                 $db = get_db_for($row['from_table']);
@@ -855,6 +857,8 @@ function _helper_add_table_field(object $this_ref, string $table_name, string $n
 
     // Add foreign key references to this field
     require_code('database');
+    connect_site_db();
+
     $fk = $GLOBALS['SITE_DB']->query_select('db_meta_foreign_keys', ['*'], ['to_table' => $table_name, 'to_field' => $name]);
     foreach ($fk as $row) {
         $db = get_db_for($row['from_table']);

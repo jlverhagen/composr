@@ -207,6 +207,8 @@ class Hook_health_check_integrity extends Source_hook_health_check
         }
 
         require_code('database');
+        connect_site_db();
+
         $old = cms_extend_time_limit(TIME_LIMIT_EXTEND__MODEST);
 
         $count_bad_rows = 0;

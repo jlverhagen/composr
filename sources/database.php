@@ -67,17 +67,37 @@ function init__database()
         $QUERY_FILE_LOG = null;
     }
 
+    // Create our main database objects
+    global $SITE_DB, $TABLE_LANG_FIELDS_CACHE;
+    $SITE_DB = null;
+    $TABLE_LANG_FIELDS_CACHE = [];
+
+    global $UPON_QUERY_HOOKS_CACHE;
+    $UPON_QUERY_HOOKS_CACHE = null;
+}
+
+/**
+ * Initialise a connection to the site database.
+ */
+function connect_site_db()
+{
+    static $already_loaded = false;
+    if ($already_loaded) {
+        return;
+    }
+
+    $already_loaded = true;
+
     require_code('database/' . get_db_type());
+
+    global $DB_DRIVER, $SITE_INFO, $SITE_DB;
+
     /** The connection to the database driver.
      *
      * @global object $DB_DRIVER
      */
     $DB_DRIVER = object_factory('Source_database_static_' . get_db_type(), false, [get_table_prefix()]);
 
-    // Create our main database objects
-    global $SITE_DB, $TABLE_LANG_FIELDS_CACHE;
-    $SITE_DB = null;
-    $TABLE_LANG_FIELDS_CACHE = [];
     if ((!empty($SITE_INFO['db_site'])) || (!empty($SITE_INFO['db_site_user']))) {
         /** The connector to the active site database.
          *
@@ -85,9 +105,6 @@ function init__database()
          */
         $SITE_DB = object_factory('Source_database_connector', false, [get_db_site(), get_db_site_host(), get_db_site_user(), get_db_site_password(), get_table_prefix()]);
     }
-
-    global $UPON_QUERY_HOOKS_CACHE;
-    $UPON_QUERY_HOOKS_CACHE = null;
 }
 
 /**

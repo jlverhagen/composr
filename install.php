@@ -2485,6 +2485,7 @@ function step_6() : object
     $config_file = '_config.php';
     require get_file_base() . '/' . $config_file;
     require_code('database');
+    connect_site_db();
     require_code('config');
     require_all_core_cms_code();
     include_cns();
@@ -2521,6 +2522,7 @@ function big_installation_common()
     require get_file_base() . '/' . $config_file;
 
     require_code('database');
+    connect_site_db();
 
     if (!isset($GLOBALS['SITE_DB'])) {
         fatal_exit('Could not initialise database connection');

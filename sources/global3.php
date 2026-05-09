@@ -1863,6 +1863,7 @@ function addon_installed(string $addon_name, bool $check_hookless = false, bool 
 
     if ((!$GLOBALS['IN_MINIKERNEL_VERSION']) && (($check_hookless || $deep_scan || $disabled_scan))) {
         require_code('database');
+        connect_site_db();
 
         // Check addons table
         // NB: addons without a hook are always custom, so only run if we are also checking custom (bundled addons always have a hook)
@@ -1880,7 +1881,6 @@ function addon_installed(string $addon_name, bool $check_hookless = false, bool 
                 $data = get_db_meta();
 
                 if ((isset($data[$addon_name])) && ($data[$addon_name] !== null) && array_key_exists('tables', $data[$addon_name])) {
-                    require_code('database');
                     foreach ($data[$addon_name]['tables'] as $table_name => $table_details) {
                         $db = get_db_for($table_name);
                         if (!$db->table_exists($table_name)) {
