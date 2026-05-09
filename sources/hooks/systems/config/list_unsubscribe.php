@@ -33,7 +33,7 @@
 /**
  * Hook class.
  */
-class Hook_config_list_unsubscribe_target
+class Hook_config_list_unsubscribe
 {
     /**
      * Gets the details relating to the config option.
@@ -43,11 +43,11 @@ class Hook_config_list_unsubscribe_target
     public function get_details() : array
     {
         return [
-            'human_name' => 'LIST_UNSUBSCRIBE_TARGET',
+            'human_name' => 'LIST_UNSUBSCRIBE',
             'type' => 'line',
             'category' => 'MESSAGES',
             'group' => 'EMAIL_GENERAL',
-            'explanation' => 'CONFIG_OPTION_list_unsubscribe_target',
+            'explanation' => 'CONFIG_OPTION_list_unsubscribe',
             'shared_hosting_restricted' => '0',
             'list_options' => '',
             'order_in_category_group' => 3,

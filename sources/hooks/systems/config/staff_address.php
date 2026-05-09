@@ -64,6 +64,6 @@ class Hook_config_staff_address
      */
     public function get_default() : ?string
     {
-        return 'staff@' . get_domain();
+        return 'info@' . get_domain();
     }
 }

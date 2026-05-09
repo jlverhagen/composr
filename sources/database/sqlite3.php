@@ -111,13 +111,22 @@ class Source_database_static_sqlite3 extends Source_database_driver
             make_missing_directory(dirname($path));
         }
 
+        $needs_pragma = true;
+        if (is_file($path)) {
+            $needs_pragma = false;
+        }
+
         require_code('failure');
 
         push_throw_errors(true);
         try {
             $db_link = new SQLite3($path);
+            $db_link->busyTimeout(5000);
             $db_link->createFunction('MD5', 'md5', 1);
-            $db_link->exec('PRAGMA foreign_keys = ON;'); // Activates foreign key constraints
+            if ($needs_pragma) {
+                $db_link->exec('PRAGMA journal_mode=WAL;'); // Activates write-ahead logging (this persists)
+            }
+            $db_link->exec('PRAGMA foreign_keys=ON;'); // Activates foreign key constraints (this does not persist)
         } catch (Exception $e) {
             $error = 'Could not connect to database (' . $e->getMessage() . ')';
             if ($fail_ok) {
@@ -303,12 +312,6 @@ class Source_database_static_sqlite3 extends Source_database_driver
      */
     public function query(string $query, $connection, ?int $max = null, int $start = 0, bool $fail_ok = false, bool $get_insert_id = false, bool $save_as_volatile = false)
     {
-        static $attempts = [];
-        $hash = md5($query);
-        if (!isset($attempts[$hash])) {
-            $attempts[$hash] = 0;
-        }
-
         if (substr($query, 0, 17) === '!!!MIGRATE_FIELD:') {
             return $this->do_field_migration($query, $connection);
         }
@@ -324,16 +327,8 @@ class Source_database_static_sqlite3 extends Source_database_driver
 
         $this->apply_sql_limit_clause($query, $max, $start);
 
-        // SQLite has DB-level locking
-        do {
-            $err = '';
-            $results = @$connection->query($query);
-            if ($results === false) {
-                $attempts[$hash]++;
-                $err = $connection->lastErrorMsg();
-                usleep(mt_rand(25000, 100000));
-            }
-        } while (($results === false) && ($attempts[$hash] < 100) && (cms_strtolower_ascii($err) == 'database is locked'));
+        $err = '';
+        $results = @$connection->query($query);
 
         if (($results === false) && (!$fail_ok)) {
             $this->handle_failed_query($query, $err, $connection);
@@ -365,7 +360,7 @@ class Source_database_static_sqlite3 extends Source_database_driver
             ocp_mark_as_escaped($err);
         }
         if ((!running_script('upgrader')) && ((!get_mass_import_mode()) || (current_fatalistic() > 0)) && (strpos($err, 'Duplicate entry') === false)) {
-            if ((!function_exists('do_lang')) || (do_lang('QUERY_FAILED', null, null, null, null, false) === null)) {
+            if ((!function_exists('do_lang')) || (!function_exists('do_lang_tempcode')) || (do_lang('QUERY_FAILED', null, null, null, null, false) === null)) {
                 $this->failed_query_exit(htmlentities('Query failed: ' . $query . ' : ' . $err));
             }
             $this->failed_query_exit(do_lang_tempcode('QUERY_FAILED', escape_html($query), ($err)));
@@ -633,7 +628,7 @@ class Source_database_static_sqlite3 extends Source_database_driver
      */
     public function get_table_count_approx(string $table, $connection) : ?int
     {
-        $res = $this->query('SELECT COUNT(*) AS cnt FROM ' . $table, $connection, 1);
+        $res = $this->query('SELECT COUNT(*) AS cnt FROM ' . $table, $connection, null, 0, true);
         if ($res === null) {
             return null;
         }

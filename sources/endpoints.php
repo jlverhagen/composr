@@ -76,6 +76,15 @@ function endpoint_script()
         if (empty($_POST)) {
             if ($_SERVER['REQUEST_METHOD'] != 'HEAD' && $_SERVER['REQUEST_METHOD'] != 'GET') { // i.e. not a simple CSRF case
                 $_POST['data'] = @file_get_contents('php://input');
+
+                // Support POSTing JSON as if we POSTed using form parameters
+                if ($_POST['data'] !== false) {
+                    $temp = @json_decode($_POST['data'], true);
+                    if ($temp !== false) {
+                        //unset($_POST['data']); // TODO: we need to modify the implementation of some endpoints to support this
+                        $_POST = array_merge($_POST, $temp);
+                    }
+                }
             }
         }
 

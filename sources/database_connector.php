@@ -377,7 +377,7 @@ class Source_database_connector
                 (strpos($table, ' ') === false) &&
                 (strpos($end, 'GROUP BY ') === false/*Can only SELECT what is also in GROUP BY*/) &&
                 ((isset($GLOBALS['SITE_DB'])) &&
-                    ($this->connection_unique_identifier === $GLOBALS['SITE_DB']->connection_unique_identifier) || (get_forum_type() === 'cns') && ($this->connection_unique_identifier == $GLOBALS['CNS_DRIVER']->db->connection_unique_identifier))
+                ($this->connection_unique_identifier === $GLOBALS['SITE_DB']->connection_unique_identifier) || (get_forum_type() === 'cns') && (isset($GLOBALS['CNS_DRIVER'])) && ($this->connection_unique_identifier == $GLOBALS['CNS_DRIVER']->db->connection_unique_identifier))
             ) {
                 global $TABLE_LANG_FIELDS_CACHE;
                 $lang_fields_provisional = find_lang_fields($table);
@@ -1216,7 +1216,7 @@ class Source_database_connector
         $this->table_exists_real_cache[$table_name] = false;
         $this->table_exists_cache[$table_name] = false;
 
-        if (strpos(get_db_type(), 'mysql') !== false) {
+        if (strpos(get_class($this->driver), '_mysql') !== false) {
             // Just works with MySQL (too complex to do for all SQL's http://forums.whirlpool.net.au/forum-replies-archive.cfm/523219.html)...
             $prefix = $this->table_prefix;
             static $cached_show_tables = [];
@@ -1541,9 +1541,10 @@ class Source_database_connector
      * @param  string $table The table name
      * @param  array $where WHERE clauses if it will help get a more reliable number when we're not approximating in map form
      * @param  ?string $where_clause WHERE clauses if it will help get a more reliable number when we're not approximating in SQL form (null: none)
-     * @return ?integer The count (null: do it normally)
+     * @param  boolean $fail_ok Whether to return null instead of bailing on an error
+     * @return ?integer The count (null: cannot use an approximation; you should run a normal query)
      */
-    public function get_table_count_approx(string $table, array $where = [], ?string $where_clause = null) : ?int
+    public function get_table_count_approx(string $table, array $where = [], ?string $where_clause = null, $fail_ok = false) : ?int
     {
         $this->ensure_connected();
 
@@ -1552,7 +1553,7 @@ class Source_database_connector
             return $ret;
         }
 
-        return $this->query_select_value($table, 'COUNT(*)', $where, ($where_clause === null) ? ' AND 1=1' : (' AND ' . $where_clause));
+        return $this->query_select_value($table, 'COUNT(*)', $where, ($where_clause === null) ? ' AND 1=1' : (' AND ' . $where_clause), $fail_ok);
     }
 
     /**

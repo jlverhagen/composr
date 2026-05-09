@@ -68,6 +68,6 @@ class Hook_config_hc_requests_window_size
             return null;
         }
 
-        return '20';
+        return '60';
     }
 }
