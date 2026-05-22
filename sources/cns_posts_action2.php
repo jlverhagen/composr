@@ -471,7 +471,7 @@ function cns_force_update_forum_caching(int $forum_id, ?int $num_topics_incremen
     // Now, are there any parents who need updating?
     if ($forum_id !== null) {
         $parent_forum = $GLOBALS['FORUM_DB']->query_select_value_if_there('f_forums', 'f_parent_forum_id', ['id' => $forum_id]);
-        if (($parent_forum !== null) && ($parent_forum != db_get_first_id())) {
+        if (($parent_forum !== null) && ($parent_forum != db_get_first_id($GLOBALS['FORUM_DB']->driver))) {
             cns_force_update_forum_caching($parent_forum, $num_topics_increment, $num_posts_increment);
         }
     }

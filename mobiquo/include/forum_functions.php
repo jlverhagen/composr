@@ -369,7 +369,7 @@ function build_forum_breadcrumbs(int $forum_id) : array
     $forum_details = $GLOBALS['FORUM_DB']->query_select('f_forums', ['f_name', 'f_parent_forum_id'], ['id' => $forum_id], '', 1);
 
     $breadcrumbs = [];
-    if (($forum_details[0]['f_parent_forum_id'] !== null) && ($forum_details[0]['f_parent_forum_id'] != db_get_first_id())) {
+    if (($forum_details[0]['f_parent_forum_id'] !== null) && ($forum_details[0]['f_parent_forum_id'] != db_get_first_id($GLOBALS['FORUM_DB']->driver))) {
         $breadcrumbs = array_merge($breadcrumbs, build_forum_breadcrumbs($forum_details[0]['f_parent_forum_id']));
     }
     $breadcrumbs[] = mobiquo_val([

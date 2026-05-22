@@ -119,7 +119,7 @@ class Hook_cns_warnings_change_group
             $groups->attach(form_input_list_entry('', false, do_lang_tempcode('NA_EM')));
             $current_group_id = $GLOBALS['FORUM_DRIVER']->get_member_row_field($member_id, 'm_primary_group');
             foreach ($rows as $group) {
-                if (($group['id'] != db_get_first_id()) && ($group['id'] != $current_group_id)) {
+                if (($group['id'] != db_get_first_id($GLOBALS['FORUM_DB']->driver)) && ($group['id'] != $current_group_id)) {
                     $groups->attach(form_input_list_entry(strval($group['id']), false, get_translated_text($group['g_name'], $GLOBALS['FORUM_DB'])));
                 }
             }

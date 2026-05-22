@@ -162,7 +162,7 @@ class Hook_sitemap_forum extends Source_hook_sitemap_content
             return $nodes;
         }
 
-        $parent = (($options & SITEMAP_GEN_KEEP_FULL_STRUCTURE) == 0) ? db_get_first_id() : null;
+        $parent = (($options & SITEMAP_GEN_KEEP_FULL_STRUCTURE) == 0) ? db_get_first_id($GLOBALS['FORUM_DB']->driver) : null;
 
         if ($child_cutoff !== null) {
             $count = $GLOBALS['FORUM_DB']->query_select_value('f_forums', 'COUNT(*)', ['f_parent_forum_id' => $parent]);
@@ -259,7 +259,7 @@ class Hook_sitemap_forum extends Source_hook_sitemap_content
 
         // level 0 = root
         // level 1 = zone
-        if ($content_id == strval(db_get_first_id())) {
+        if ($content_id == strval(db_get_first_id($GLOBALS['FORUM_DB']->driver))) {
             $sitemap_priority = SITEMAP_IMPORTANCE_ULTRA; // level 2
         } else {
             if ($recurse_level == 3) {
@@ -284,7 +284,7 @@ class Hook_sitemap_forum extends Source_hook_sitemap_content
         ] + $struct['extra_meta'];
 
 
-        if ($content_id == strval(db_get_first_id())) {
+        if ($content_id == strval(db_get_first_id($GLOBALS['FORUM_DB']->driver))) {
             $struct['extra_meta']['is_a_category_tree_root'] = true;
         }
 

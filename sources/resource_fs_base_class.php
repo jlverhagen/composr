@@ -832,7 +832,7 @@ abstract class Source_resource_fs_base
     protected function _default_property_group(array $properties, string $property) : ?int
     {
         if (!isset($properties[$property])) {
-            $properties[$property] = db_get_first_id();
+            $properties[$property] = db_get_first_id($GLOBALS['FORUM_DB']->driver);
         }
 
         if (is_integer($properties[$property])) {
@@ -2748,7 +2748,7 @@ abstract class Source_resource_fs_base
                 $where = [];
             } else {
                 if ((($_cat_id === null) || ($_cat_id === '')) && ($relationship['linker_table'] != $folder_info['table'])) {
-                    $where = [$relationship['id_field'] => ($folder_info['id_field_numeric'] ? db_get_first_id() : '')]; // Don't go through the linker table for the root category
+                    $where = [$relationship['id_field'] => ($folder_info['id_field_numeric'] ? db_get_first_id($folder_info['db']->driver) : '')]; // Don't go through the linker table for the root category
                 } else {
                     $where = [$relationship['cat_field'] => $_cat_id];
                 }

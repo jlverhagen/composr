@@ -385,7 +385,7 @@ class Module_admin_cns_customprofilefields extends Source_standard_crud_module
             $groups = new Tempcode();
             //$groups = form_input_list_entry('-1', false, do_lang_tempcode('_ALL'));
             foreach ($rows as $group) {
-                if ($group['id'] != db_get_first_id()) {
+                if ($group['id'] != db_get_first_id($GLOBALS['FORUM_DB']->driver)) {
                     $groups->attach(form_input_list_entry(strval($group['id']), !empty(array_intersect([$group['id']], explode(',', $only_group))), get_translated_text($group['g_name'], $GLOBALS['FORUM_DB'])));
                 }
             }

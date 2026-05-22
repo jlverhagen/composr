@@ -160,7 +160,7 @@ class Block_main_bottom_bar
         $groups = [];
         $all_groups = $GLOBALS['FORUM_DRIVER']->get_usergroup_list(true, false, false, [], null, true);
         foreach ($all_groups as $gid => $gtitle) {
-            if ($gid == db_get_first_id()) {
+            if ($gid == db_get_first_id($GLOBALS['FORUM_DB']->driver)) {
                 continue; // Throw out the first, guest
             }
             if (array_key_exists($gid, $groups_seen)) {

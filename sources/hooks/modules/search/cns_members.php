@@ -147,7 +147,7 @@ class Hook_search_cns_members extends Source_hook_search_base
         foreach ($rows as $row) {
             $name = get_translated_text($row['g_name'], $GLOBALS['FORUM_DB']);
 
-            if ($row['id'] == db_get_first_id()) {
+            if ($row['id'] == db_get_first_id($GLOBALS['FORUM_DB']->driver)) {
                 continue;
             }
             $groups->attach(form_input_list_entry(strval($row['id']), in_array(strval($row['id']), $bits), $name));

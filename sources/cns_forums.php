@@ -50,7 +50,7 @@ function render_forum_box(array $row, string $zone = '_SEARCH', bool $give_conte
     require_lang('cns');
 
     $map = ['page' => 'forumview'];
-    if ($row['id'] != db_get_first_id()) {
+    if ($row['id'] != db_get_first_id($GLOBALS['FORUM_DB']->driver)) {
         $map['id'] = $row['id'];
     }
     if ($root !== null) {
@@ -311,7 +311,7 @@ function cns_forum_breadcrumbs($end_point_forum, $this_name = null, ?int $parent
     }
 
     if ($root === null) {
-        $root = get_param_integer('keep_forum_root', db_get_first_id());
+        $root = get_param_integer('keep_forum_root', db_get_first_id($GLOBALS['FORUM_DB']->driver));
     }
 
     static $cache = [];
@@ -334,7 +334,7 @@ function cns_forum_breadcrumbs($end_point_forum, $this_name = null, ?int $parent
 
     if (((!$start) || ((has_privilege(get_member(), 'open_virtual_roots'))) && (get_option('virtual_root_links') == '1') && (is_integer($end_point_forum)))) {
         $map = ['page' => 'forumview'];
-        if ($end_point_forum != db_get_first_id()) {
+        if ($end_point_forum != db_get_first_id($GLOBALS['FORUM_DB']->driver)) {
             $map['id'] = $end_point_forum;
         }
         $test = get_param_string('kfs' . strval($end_point_forum), null, INPUT_FILTER_GET_COMPLEX);

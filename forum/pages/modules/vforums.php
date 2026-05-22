@@ -295,7 +295,7 @@ class Module_vforums
         require_code('templates_pagination');
         list($max, $start, , $sql_sup, $sql_sup_order_by, $true_start, , , $keyset_field) = get_keyset_pagination_settings('forum_max', intval(get_option('forum_topics_per_page')), 'forum_start', null, 'forum_sort', $order, 'get_forum_sort_order_vforums');
 
-        $_breadcrumbs = cns_forum_breadcrumbs(db_get_first_id(), null, get_param_integer('keep_forum_root', db_get_first_id()), false);
+        $_breadcrumbs = cns_forum_breadcrumbs(db_get_first_id($GLOBALS['FORUM_DB']->driver), null, get_param_integer('keep_forum_root', db_get_first_id($GLOBALS['FORUM_DB']->driver)), false);
         $_breadcrumbs[] = ['', $title];
         breadcrumb_set_parents($_breadcrumbs);
         $breadcrumbs = breadcrumb_segments_to_tempcode($_breadcrumbs);
@@ -414,10 +414,10 @@ class Module_vforums
         }
 
         $_buttons = new Tempcode();
-        $archive_url = $GLOBALS['FORUM_DRIVER']->forum_url(db_get_first_id(), true);
+        $archive_url = $GLOBALS['FORUM_DRIVER']->forum_url(db_get_first_id($GLOBALS['FORUM_DB']->driver), true);
         $_buttons->attach(do_template('BUTTON_SCREEN', ['_GUID' => '8c928f1f703e9ba232a7033adee19a31', 'TITLE' => do_lang_tempcode('ROOT_FORUM'), 'IMG' => 'buttons/all', 'IMMEDIATE' => false, 'URL' => $archive_url]));
         if ($title->evaluate() == do_lang('TOPICS_UNREAD')) {
-            $mark_read_url = build_url(['page' => 'topics', 'type' => 'mark_read', 'id' => db_get_first_id()], get_module_zone('topics'));
+            $mark_read_url = build_url(['page' => 'topics', 'type' => 'mark_read', 'id' => db_get_first_id($GLOBALS['FORUM_DB']->driver)], get_module_zone('topics'));
             $_buttons->attach(do_template('BUTTON_SCREEN', ['_GUID' => 'b96e17e77be6de6faf9eb340d7ba955a', 'TITLE' => do_lang_tempcode('ROOT_FORUM'), 'IMG' => 'buttons/mark_read', 'IMMEDIATE' => false, 'URL' => $mark_read_url]));
         }
 

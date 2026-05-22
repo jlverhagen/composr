@@ -149,7 +149,7 @@ class Source_forum_driver_cns extends Source_forum_driver_base
     {
         static $ret = null;
         if ($ret === null) {
-            $ret = db_get_first_id();
+            $ret = db_get_first_id($GLOBALS['FORUM_DB']->driver);
         }
         return $ret;
     }
@@ -737,7 +737,7 @@ class Source_forum_driver_cns extends Source_forum_driver_base
     protected function _forum_url(int $forum_id, bool $tempcode_okay = false)
     {
         $view_map = ['page' => 'forumview'];
-        if ($forum_id != db_get_first_id()) {
+        if ($forum_id != db_get_first_id($GLOBALS['FORUM_DB']->driver)) {
             $view_map['id'] = $forum_id;
         }
         $_url = build_url($view_map, get_module_zone('forumview'), [], false, false, !$tempcode_okay);
@@ -1078,7 +1078,7 @@ class Source_forum_driver_cns extends Source_forum_driver_base
      */
     public function get_member_photo_url(int $member_id, bool $full = false) : string
     {
-        if ($member_id == db_get_first_id()) {
+        if ($member_id == db_get_first_id($GLOBALS['FORUM_DB']->driver)) {
             return '';
         }
 
@@ -1118,7 +1118,7 @@ class Source_forum_driver_cns extends Source_forum_driver_base
             return '';
         }
 
-        if ($member_id == db_get_first_id()) {
+        if ($member_id == db_get_first_id($GLOBALS['FORUM_DB']->driver)) {
             return '';
         }
 

@@ -67,6 +67,6 @@ class Hook_config_club_forum_parent_forum
             return null;
         }
 
-        return strval(db_get_first_id());
+        return strval(db_get_first_id($GLOBALS['FORUM_DB']->driver));
     }
 }

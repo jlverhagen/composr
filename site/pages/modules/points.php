@@ -549,7 +549,7 @@ class Module_points
         }
 
         if ($type == 'browse') {
-            $this->member_id_of = db_get_first_id() + 1;
+            $this->member_id_of = db_get_first_id($GLOBALS['FORUM_DB']->driver) + 1;
             inject_feed_url('?mode=points&select=' . strval($this->member_id_of), do_lang('POINTS'));
 
             breadcrumb_set_parents([['_SELF:_SELF:browse', do_lang_tempcode('MEMBER_POINT_FIND')]]);

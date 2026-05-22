@@ -154,8 +154,8 @@ function cns_get_details_to_show_post(array $_postdetails, array $topic_info, bo
 
     $primary_group = cns_get_member_primary_group($_postdetails['p_posting_member']);
     if ($primary_group === null) {
-        $_postdetails['p_posting_member'] = db_get_first_id();
-        $primary_group = db_get_first_id();
+        $_postdetails['p_posting_member'] = db_get_first_id($GLOBALS['FORUM_DB']->driver);
+        $primary_group = db_get_first_id($GLOBALS['FORUM_DB']->driver);
     }
 
     $post = [

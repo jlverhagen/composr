@@ -237,7 +237,7 @@ abstract class Source_database_super_sqlserver extends Source_database_driver
             if (substr($name, -13) == '__text_parsed') {
                 $_fields .= ' DEFAULT \'\'';
             } elseif (substr($name, -13) == '__source_user') {
-                $_fields .= ' DEFAULT ' . strval(db_get_first_id());
+                $_fields .= ' DEFAULT ' . strval(db_get_first_id($this));
             }
 
             $_fields .= ' ' . $perhaps_null . ',' . "\n";

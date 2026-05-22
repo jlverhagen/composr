@@ -847,7 +847,7 @@ function _helper_add_table_field(object $this_ref, string $table_name, string $n
             if ($sub_type == 'LONG_TEXT') {
                 $sub_default = '';
             } else {
-                $sub_default = db_get_first_id();
+                $sub_default = db_get_first_id($this_ref->driver);
             }
 
             $query = $this_ref->driver->add_table_field__sql($this_ref->table_prefix . $table_name, $sub_name, $sub_type, $sub_default);
@@ -1061,7 +1061,7 @@ function _helper_add_auto_key(object $this_ref, string $table_name, string $fiel
 
     // But it does need to be unique
     $start = 0;
-    $i = db_get_first_id();
+    $i = db_get_first_id($this_ref->driver);
     do {
         $rows = $this_ref->query_select($table_name, empty($key_select) ? ['*'] : $key_select, [], '', 100, $start);
         foreach ($rows as $row) {

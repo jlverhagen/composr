@@ -168,33 +168,33 @@ function do_work()
 
         add_author(random_line(), '', $member_id, random_text(), random_text());
 
-        set_notifications('cns_topic', 'forum:' . strval(db_get_first_id()), $member_id);
+        set_notifications('cns_topic', 'forum:' . strval(db_get_first_id($GLOBALS['FORUM_DB']->driver)), $member_id);
 
-        set_notifications('cns_topic', strval(db_get_first_id()), $member_id);
+        set_notifications('cns_topic', strval(db_get_first_id($GLOBALS['FORUM_DB']->driver)), $member_id);
 
         // number of friends to a single member
         $GLOBALS['SITE_DB']->query_insert('chat_friends', [
             'member_likes' => $member_id,
-            'member_liked' => db_get_first_id() + 1,
+            'member_liked' => db_get_first_id($GLOBALS['FORUM_DB']->driver) + 1,
             'date_and_time' => time(),
         ], false, true);
     }
     echo 'FINISHED: Create members' . "\n";
-    $member_id = db_get_first_id() + 2;
+    $member_id = db_get_first_id($GLOBALS['FORUM_DB']->driver) + 2;
 
     // point earn list to a single member
     require_code('points2');
     echo 'STARTING: Points' . "\n";
     for ($j = $GLOBALS['SITE_DB']->get_table_count_approx('points_ledger'); $j < ($num_wanted * 6); $j += 6) {
         // Credit transaction with a random aggregate type
-        points_credit_member(mt_rand(db_get_first_id(), $num_wanted - 1), random_line(), random_points(), 0, null, 0, random_t_type(), 'add', '');
+        points_credit_member(mt_rand(db_get_first_id($GLOBALS['FORUM_DB']->driver), $num_wanted - 1), random_line(), random_points(), 0, null, 0, random_t_type(), 'add', '');
 
         // Transactions between two members of random point values with a 1% chance of it using gift points too.
-        points_transact(mt_rand(db_get_first_id(), $num_wanted - 1), $member_id, random_line(), random_points(), ((mt_rand(1, 100) == 1) ? null : 0), 0, null);
-        points_transact($member_id, mt_rand(db_get_first_id(), $num_wanted - 1), random_line(), random_points(), ((mt_rand(1, 100) == 1) ? null : 0), 0, null);
+        points_transact(mt_rand(db_get_first_id($GLOBALS['FORUM_DB']->driver), $num_wanted - 1), $member_id, random_line(), random_points(), ((mt_rand(1, 100) == 1) ? null : 0), 0, null);
+        points_transact($member_id, mt_rand(db_get_first_id($GLOBALS['FORUM_DB']->driver), $num_wanted - 1), random_line(), random_points(), ((mt_rand(1, 100) == 1) ? null : 0), 0, null);
 
         // Debit transaction
-        points_debit_member(mt_rand(db_get_first_id(), $num_wanted - 1), random_line(), random_points(), 0, 0, null);
+        points_debit_member(mt_rand(db_get_first_id($GLOBALS['FORUM_DB']->driver), $num_wanted - 1), random_line(), random_points(), 0, 0, null);
 
         // Credit transaction that gets reversed
         $reverse = points_credit_member($member_id, random_line(), random_points(), 0, null);
@@ -211,7 +211,7 @@ function do_work()
     for ($j = intval(floatval($GLOBALS['SITE_DB']->get_table_count_approx('chat_friends')) / 2.0); $j < $num_wanted; $j++) {
         $GLOBALS['SITE_DB']->query_insert('chat_friends', [
             'member_likes' => $member_id,
-            'member_liked' => $j + db_get_first_id(),
+            'member_liked' => $j + db_get_first_id($GLOBALS['FORUM_DB']->driver),
             'date_and_time' => time(),
         ], false, true);
     }
@@ -226,7 +226,7 @@ function do_work()
     require_code('banners2');
     echo 'STARTING: Banners' . "\n";
     for ($i = $GLOBALS['SITE_DB']->get_table_count_approx('banners'); $i < $num_wanted; $i++) {
-        add_banner(uniqid('', false), get_logo_url(), random_line(), random_text(), '', 100, get_base_url(), 3, '', BANNER_PERMANENT, null, db_get_first_id() + 1, 1);
+        add_banner(uniqid('', false), get_logo_url(), random_line(), random_text(), '', 100, get_base_url(), 3, '', BANNER_PERMANENT, null, db_get_first_id($GLOBALS['FORUM_DB']->driver) + 1, 1);
     }
     echo 'FINISHED: Banners' . "\n";
 
@@ -249,7 +249,7 @@ function do_work()
             'p_validated' => 1,
             'p_edit_date' => null,
             'p_add_date' => time(),
-            'p_submitter' => db_get_first_id(),
+            'p_submitter' => db_get_first_id($GLOBALS['FORUM_DB']->driver),
             'p_show_as_edit' => 0,
             'p_include_on_sitemap' => 1,
             'p_order' => 0,
@@ -293,7 +293,7 @@ function do_work()
     require_code('chat');
     echo 'STARTING: Chatrooms' . "\n";
     for ($i = $GLOBALS['SITE_DB']->get_table_count_approx('chat_rooms'); $i < $num_wanted; $i++) {
-        $room_id = add_chatroom(random_text(), random_line(), mt_rand(db_get_first_id() + 1, $num_wanted - 1), strval(db_get_first_id() + 1), '', '', '', fallback_lang());
+        $room_id = add_chatroom(random_text(), random_line(), mt_rand(db_get_first_id($GLOBALS['FORUM_DB']->driver) + 1, $num_wanted - 1), strval(db_get_first_id($GLOBALS['FORUM_DB']->driver) + 1), '', '', '', fallback_lang());
     }
     echo 'FINISHED: Chatrooms' . "\n";
     $room_id = db_get_first_id() + 1;
@@ -305,7 +305,7 @@ function do_work()
             'system_message' => 0,
             'ip_address' => '',
             'room_id' => $room_id,
-            'member_id' => db_get_first_id(),
+            'member_id' => db_get_first_id($GLOBALS['FORUM_DB']->driver),
             'date_and_time' => time(),
             'text_colour' => get_option('chat_default_post_colour'),
             'font_name' => get_option('chat_default_post_font'),
@@ -375,7 +375,7 @@ function do_work()
     require_code('cns_forums_action');
     echo 'STARTING: Sub-forums' . "\n";
     for ($i = $GLOBALS['FORUM_DB']->get_table_count_approx('f_forums'); $i < $num_wanted; $i++) {
-        cns_make_forum(random_line(), random_text(), db_get_first_id(), [], db_get_first_id() + 3);
+        cns_make_forum(random_line(), random_text(), db_get_first_id($GLOBALS['FORUM_DB']->driver), [], db_get_first_id($GLOBALS['FORUM_DB']->driver) + 3);
     }
     echo 'FINISHED: Sub-forums' . "\n";
 
@@ -386,7 +386,7 @@ function do_work()
     require_code('cns_topics');
     echo 'STARTING: Topics' . "\n";
     for ($i = intval(floatval($GLOBALS['FORUM_DB']->get_table_count_approx('f_topics')) / 2.0); $i < $num_wanted; $i++) {
-        $topic_id = cns_make_topic(db_get_first_id(), '', '', null, 1, 0, 0, null, null, false);
+        $topic_id = cns_make_topic(db_get_first_id($GLOBALS['FORUM_DB']->driver), '', '', null, 1, 0, 0, null, null, false);
         cns_make_post($topic_id, random_line(), random_text(), 0, true, 0, 0, null, null, null, null, null, null, null, false, false);
     }
     echo 'FINISHED: Topics' . "\n";
@@ -394,10 +394,10 @@ function do_work()
     // forum posts in a topic
     require_code('cns_topics_action');
     require_code('cns_posts_action');
-    $topic_id = cns_make_topic(db_get_first_id() + 1, '', '', null, 1, 0, 0, null, null, false);
+    $topic_id = cns_make_topic(db_get_first_id($GLOBALS['FORUM_DB']->driver) + 1, '', '', null, 1, 0, 0, null, null, false);
     echo 'STARTING: Topic Posts' . "\n";
     for ($i = intval(floatval($GLOBALS['FORUM_DB']->get_table_count_approx('f_posts')) / 3.0); $i < $num_wanted; $i++) {
-        cns_make_post($topic_id, random_line(), random_text(), 0, true, 0, 0, null, null, null, mt_rand(db_get_first_id(), $num_wanted - 1), null, null, null, false, false);
+        cns_make_post($topic_id, random_line(), random_text(), 0, true, 0, 0, null, null, null, mt_rand(db_get_first_id($GLOBALS['FORUM_DB']->driver), $num_wanted - 1), null, null, null, false, false);
     }
     echo 'FINISHED: Topic Posts' . "\n";
 
@@ -528,7 +528,7 @@ function do_work()
             'user_agent' => '',
             'referer_url' => '',
             'user_os' => '',
-            'member_id' => db_get_first_id(),
+            'member_id' => db_get_first_id($GLOBALS['FORUM_DB']->driver),
             'date_and_time' => time(),
             'ip' => uniqid('', true),
             'reason' => 'ASCII_ENTITY_URL_HACK',
@@ -556,7 +556,7 @@ function do_work()
     require_code('news2');
     echo 'STARTING: Blogs and News' . "\n";
     for ($i = $GLOBALS['SITE_DB']->get_table_count_approx('news'); $i < $num_wanted; $i++) {
-        add_news(random_line(), random_text(), 'admin', 1, 1, 1, 1, '', random_text(), null, [], null, db_get_first_id() + $i);
+        add_news(random_line(), random_text(), 'admin', 1, 1, 1, 1, '', random_text(), null, [], null, db_get_first_id($GLOBALS['FORUM_DB']->driver) + $i);
     }
     echo 'FINISHED: Blogs and News' . "\n";
 
@@ -570,7 +570,7 @@ function do_work()
     require_code('tickets2');
     echo 'STARTING: Support Tickets' . "\n";
     for ($i = intval(floatval($GLOBALS['FORUM_DB']->get_table_count_approx('f_topics')) / 2.0); $i < $num_wanted; $i++) {
-        $ticket_member_id = mt_rand(db_get_first_id(), $num_wanted - 1);
+        $ticket_member_id = mt_rand(db_get_first_id($GLOBALS['FORUM_DB']->driver), $num_wanted - 1);
         ticket_add_post(ticket_generate_new_id($ticket_member_id), db_get_first_id(), random_line(), random_text(), false, $ticket_member_id);
     }
     echo 'FINISHED: Support Tickets' . "\n";
@@ -635,7 +635,7 @@ function do_work()
     for ($j = $GLOBALS['SITE_DB']->get_table_count_approx('shopping_cart'); $j < $num_wanted; $j++) {
         $GLOBALS['SITE_DB']->query_insert('shopping_cart', [
             'session_id' => get_secure_random_string(),
-            'ordering_member' => mt_rand(db_get_first_id() + 1, $num_wanted - 1),
+            'ordering_member' => mt_rand(db_get_first_id($GLOBALS['FORUM_DB']->driver) + 1, $num_wanted - 1),
             'type_code' => strval(db_get_first_id()),
             'purchase_id' => strval(get_member()),
             'quantity' => 1,
@@ -646,7 +646,7 @@ function do_work()
     echo 'STARTING: Shopping Orders' . "\n";
     for ($j = $GLOBALS['SITE_DB']->get_table_count_approx('shopping_orders'); $j < $num_wanted; $j++) {
         $order_id = $GLOBALS['SITE_DB']->query_insert('shopping_orders', [
-            'member_id' => mt_rand(db_get_first_id() + 1, $num_wanted - 1),
+            'member_id' => mt_rand(db_get_first_id($GLOBALS['FORUM_DB']->driver) + 1, $num_wanted - 1),
             'session_id' => get_secure_random_string(),
             'add_date' => time(),
             'total_price' => 10.00,

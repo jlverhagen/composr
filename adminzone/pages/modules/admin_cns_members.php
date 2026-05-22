@@ -416,7 +416,7 @@ class Module_admin_cns_members
         $all_pt_allow = '';
         $tmp_groups = $GLOBALS['CNS_DRIVER']->get_usergroup_list(true, true);
         foreach (array_keys($tmp_groups) as $key) {
-            if ($key != db_get_first_id()) {
+            if ($key != db_get_first_id($GLOBALS['FORUM_DB']->driver)) {
                 if ($all_pt_allow != '') {
                     $all_pt_allow .= ',';
                 }
@@ -635,7 +635,7 @@ class Module_admin_cns_members
         $group_count = $GLOBALS['FORUM_DB']->get_table_count_approx('f_groups');
         $rows = $GLOBALS['FORUM_DB']->query_select('f_groups', ['id', 'g_name'], ($group_count > 200) ? ['g_is_private_club' => 0] : []);
         foreach ($rows as $row) {
-            if ($row['id'] != db_get_first_id()) {
+            if ($row['id'] != db_get_first_id($GLOBALS['FORUM_DB']->driver)) {
                 $groups->attach(form_input_list_entry(strval($row['id']), in_array($row['id'], $usergroups), get_translated_text($row['g_name'], $GLOBALS['FORUM_DB'])));
             }
         }

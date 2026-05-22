@@ -149,7 +149,7 @@ function cns_create_selection_list_topic_tree(?int $it = null) : object
 function cns_get_topic_tree(?int $forum_id = null, ?string $breadcrumbs = null, ?string $title = null, ?int $levels = null) : array
 {
     if ($forum_id === null) {
-        $forum_id = db_get_first_id();
+        $forum_id = db_get_first_id($GLOBALS['FORUM_DB']->driver);
     }
     if ($breadcrumbs === null) {
         $breadcrumbs = '';

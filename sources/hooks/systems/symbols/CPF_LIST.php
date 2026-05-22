@@ -86,7 +86,7 @@ class Hook_symbol_CPF_LIST
                 }
                 sort_maps_by($_m, 'text', false, true);
                 foreach ($_m as $m) {
-                    if ($m['id'] == db_get_first_id()) {
+                    if ($m['id'] == db_get_first_id($GLOBALS['FORUM_DB']->driver)) {
                         continue;
                     }
 

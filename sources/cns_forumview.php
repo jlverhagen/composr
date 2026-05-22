@@ -410,7 +410,7 @@ function cns_render_forumview(?int $id, ?array $forum_info, string $current_filt
     }
     if ($type == 'pt') {
         // There has been debate in the past whether to have a link from PTs to the forum or not! Currently using the Social menu is considered canon - templating could add a button in though.
-        // $archive_url = $GLOBALS['FORUM_DRIVER']->forum_url(db_get_first_id(), true);
+        // $archive_url = $GLOBALS['FORUM_DRIVER']->forum_url(db_get_first_id($GLOBALS['FORUM_DB']->driver), true);
         // $button_array[] = ['immediate' => false, 'title' => do_lang_tempcode('ROOT_FORUM'), 'url' => $archive_url, 'img' => 'buttons/forum'];
     }
     if (array_key_exists('may_post_topic', $details)) {
@@ -811,7 +811,7 @@ function cns_get_forum_view(int $forum_id, array $forum_info, int $start = 0, in
         $tree = [];
         $subforum_rows_copy = $subforum_rows;
         $tree = cns_organise_into_tree($subforum_rows_copy, $forum_id);
-        if ($forum_id != db_get_first_id()) {
+        if ($forum_id != db_get_first_id($GLOBALS['FORUM_DB']->driver)) {
             $child_or_list = cns_get_all_subordinate_forums($forum_id, 't_forum_id', $tree);
         } else {
             $child_or_list = '';

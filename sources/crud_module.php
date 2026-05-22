@@ -1435,7 +1435,7 @@ abstract class Source_standard_crud_module
                 ]
             );
         }
-        return (($this->non_integer_id) || (intval($content_id) >= db_get_first_id() + $this->protect_first)) && ($delete_permission);
+        return (($this->non_integer_id) || (intval($content_id) >= db_get_first_id() + $this->protect_first)) && ($delete_permission); // TODO: needs to be modified
     }
 
     /**

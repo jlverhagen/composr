@@ -272,7 +272,7 @@ function cns_wrapper($title, $content, $show_personal_bar = true, $show_stats = 
         $groups = array();
         $all_groups = $GLOBALS['FORUM_DRIVER']->get_usergroup_list();
         foreach ($all_groups as $gid => $gtitle) {
-            if ($gid == db_get_first_id()) {
+            if ($gid == db_get_first_id($GLOBALS['FORUM_DB']->driver)) {
                 continue; // Throw out the first, guest usergroup
             }
             $groups[] = array('GCOLOUR' => $all_colours[$gid], 'GID' => strval($gid), 'GTITLE' => $gtitle);

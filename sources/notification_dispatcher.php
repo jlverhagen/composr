@@ -368,7 +368,7 @@ class Source_notification_dispatcher
         $to_name = $GLOBALS['FORUM_DRIVER']->get_username($to_member_id, true);
         $from_email = '';
         $from_name = '';
-        $from_member_id_shown = db_get_first_id();
+        $from_member_id_shown = db_get_first_id($GLOBALS['FORUM_DB']->driver);
         if (($from_member_id !== null) && ($from_member_id >= 0)) {
             if ($use_real_from) {
                 $from_email = $GLOBALS['FORUM_DRIVER']->get_member_email_address($from_member_id);

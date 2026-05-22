@@ -662,7 +662,7 @@ class Module_cms_calendar extends Source_standard_crud_module
             if (has_privilege(get_member(), 'add_public_events')) {
                 $usergroup_list = $GLOBALS['FORUM_DRIVER']->get_usergroup_list(true);
                 if (get_forum_type() == 'cns') {
-                    unset($usergroup_list[db_get_first_id()]);
+                    unset($usergroup_list[db_get_first_id($GLOBALS['FORUM_DB']->driver)]);
                 }
                 $t_usergroup_list = new Tempcode();
                 foreach ($usergroup_list as $_id => $name) {
@@ -964,7 +964,7 @@ class Module_cms_calendar extends Source_standard_crud_module
                 if ((substr($multi_code, 0, 1) == '-') || (substr($multi_code, 0, 1) == '*')) {
                     $rem_groups = $all_groups;
                     if (get_forum_type() == 'cns') {
-                        unset($rem_groups[db_get_first_id()]);
+                        unset($rem_groups[db_get_first_id($GLOBALS['FORUM_DB']->driver)]);
                     }
                 }
                 if ($multi_code != '') {

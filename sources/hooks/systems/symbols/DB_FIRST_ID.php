@@ -57,7 +57,12 @@ class Hook_symbol_DB_FIRST_ID
      */
     public function run(array $param, string $lang, array $escaped) : string
     {
-        $value = strval(db_get_first_id());
+        if (!isset($param[0])) {
+            $value = strval(db_get_first_id());
+        } else {
+            $value = strval(db_get_first_id($GLOBALS['FORUM_DB']->driver));
+        }
+        
 
         if ($GLOBALS['XSS_DETECT']) {
             ocp_mark_as_escaped($value);

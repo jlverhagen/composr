@@ -186,7 +186,7 @@ class Module_polls
             $staff_groups = $GLOBALS['FORUM_DRIVER']->get_moderator_groups();
             $usergroups = $GLOBALS['FORUM_DRIVER']->get_usergroup_list(false, true);
             foreach (array_keys($usergroups) as $id) {
-                if ((!isset($staff_groups[$id])) && $id != (db_get_first_id())) {
+                if ((!isset($staff_groups[$id])) && $id != (db_get_first_id($GLOBALS['FORUM_DB']->driver))) {
                     set_privilege($id, 'bypass_validation_midrange_content', false, 'cms_polls');
                     set_privilege($id, 'edit_own_midrange_content', false, 'cms_polls');
                 }

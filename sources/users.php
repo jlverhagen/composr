@@ -185,7 +185,7 @@ function get_member(bool $quick_only = false) : int
 
     if ($GETTING_MEMBER) {
         if (!isset($GLOBALS['FORUM_DRIVER'])) {
-            return db_get_first_id(); // :S
+            warn_exit('INTERNAL_ERROR', escape_html('TODO')); // TODO: is this too aggressive?
         }
         return $GLOBALS['FORUM_DRIVER']->get_guest_id();
     }

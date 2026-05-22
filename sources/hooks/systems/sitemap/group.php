@@ -103,7 +103,7 @@ class Hook_sitemap_group extends Source_hook_sitemap_content
         do {
             $rows = $GLOBALS['FORUM_DB']->query('SELECT ' . implode(',', $select) . ' FROM ' . $GLOBALS['FORUM_DB']->get_table_prefix() . 'f_groups g WHERE ' . $where, $max_rows_per_loop, $start);
             foreach ($rows as $row) {
-                if ($row['id'] == db_get_first_id()) {
+                if ($row['id'] == db_get_first_id($GLOBALS['FORUM_DB']->driver)) {
                     continue;
                 }
                 $child_page_link = $zone . ':' . $page . ':' . $this->screen_type . ':' . strval($row['id']);

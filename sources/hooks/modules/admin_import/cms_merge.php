@@ -4232,8 +4232,8 @@ class Hook_import_cms_merge
                 if (import_check_if_imported('forum', strval($row['id']))) {
                     continue;
                 }
-                if ($row['id'] == db_get_first_id()) { // PTs
-                    import_id_remap_put('forum', strval(db_get_first_id()), db_get_first_id());
+                if ($row['id'] == db_get_first_id($GLOBALS['FORUM_DB']->driver)) { // PTs
+                    import_id_remap_put('forum', strval(db_get_first_id($GLOBALS['FORUM_DB']->driver)), db_get_first_id($GLOBALS['FORUM_DB']->driver));
                     continue;
                 }
                 if (($row['f_name'] == $comments_forum) && ($comments_forum_id !== null)) {
@@ -4243,7 +4243,7 @@ class Hook_import_cms_merge
 
                 $forum_groupings_id = import_id_remap_get('forum_groupings', strval($row['f_forum_grouping_id']), true);
 
-                $id_new = cns_make_forum($row['f_name'], $this->get_lang_string($db, $row['f_description']), $forum_groupings_id, [], db_get_first_id(), $row['f_position'], $row['f_post_count_increment'], $row['f_order_sub_alpha'], $this->get_lang_string($db, $row['f_intro_question']), $row['f_intro_answer'], $row['f_redirection'], $row['f_order'], $row['f_is_threaded'], $row['f_allows_anonymous_posts'], $row['f_mail_email_address'], $row['f_mail_server_type'], $row['f_mail_server_host'], $row['f_mail_server_port'], $row['f_mail_folder'], $row['f_mail_username'], $row['f_mail_password'], $row['f_mail_nonmatch_policy'], $row['f_mail_unconfirmed_notice'], $row['f_poll_default_options_xml']);
+                $id_new = cns_make_forum($row['f_name'], $this->get_lang_string($db, $row['f_description']), $forum_groupings_id, [], db_get_first_id($GLOBALS['FORUM_DB']->driver), $row['f_position'], $row['f_post_count_increment'], $row['f_order_sub_alpha'], $this->get_lang_string($db, $row['f_intro_question']), $row['f_intro_answer'], $row['f_redirection'], $row['f_order'], $row['f_is_threaded'], $row['f_allows_anonymous_posts'], $row['f_mail_email_address'], $row['f_mail_server_type'], $row['f_mail_server_host'], $row['f_mail_server_port'], $row['f_mail_folder'], $row['f_mail_username'], $row['f_mail_password'], $row['f_mail_nonmatch_policy'], $row['f_mail_unconfirmed_notice'], $row['f_poll_default_options_xml']);
                 import_id_remap_put('forum', strval($row['id']), $id_new);
             }
             $start += $max;
@@ -4261,7 +4261,7 @@ class Hook_import_cms_merge
                     }
                     $parent_id = import_id_remap_get('forum', strval($row['f_parent_forum_id']), true);
                     if ($parent_id === null) {
-                        $parent_id = db_get_first_id();
+                        $parent_id = db_get_first_id($GLOBALS['FORUM_DB']->driver);
                     }
                     $GLOBALS['FORUM_DB']->query_update('f_forums', ['f_parent_forum_id' => $parent_id], ['id' => import_id_remap_get('forum', strval($row['id']))], '', 1);
 
@@ -4363,13 +4363,13 @@ class Hook_import_cms_merge
                 if ($t_pt_to_member !== null) {
                     $t_pt_to_member = import_id_remap_get('member', strval($t_pt_to_member), true);
                     if ($t_pt_to_member === null) {
-                        $t_pt_to_member = db_get_first_id();
+                        $t_pt_to_member = db_get_first_id($GLOBALS['FORUM_DB']->driver);
                     }
                 }
                 if ($t_pt_from_member !== null) {
                     $t_pt_from_member = import_id_remap_get('member', strval($t_pt_from_member), true);
                     if ($t_pt_from_member === null) {
-                        $t_pt_from_member = db_get_first_id();
+                        $t_pt_from_member = db_get_first_id($GLOBALS['FORUM_DB']->driver);
                     }
                 }
 
@@ -4474,7 +4474,7 @@ class Hook_import_cms_merge
 
                 $member_id = import_id_remap_get('member', strval($row['p_posting_member']), true);
                 if ($member_id === null) {
-                    $member_id = db_get_first_id();
+                    $member_id = db_get_first_id($GLOBALS['FORUM_DB']->driver);
                 }
 
                 $topic_id = import_id_remap_get('topic', strval($row['p_topic_id']), true);
@@ -5412,7 +5412,7 @@ class Hook_import_cms_merge
                 if (substr($field, 0, 13) == '__source_user') {
                     $member_id = import_id_remap_get('member', strval($value), true);
                     if ($member_id === null) {
-                        $member_id = db_get_first_id();
+                        $member_id = db_get_first_id($GLOBALS['FORUM_DB']->driver);
                     }
 
                     $row[$field] = $member_id;

@@ -246,7 +246,7 @@ class Module_admin_cns_groups extends Source_standard_crud_module
         $fields->attach(get_order_field('group', null, $order));
 
         $fields->attach(do_template('FORM_SCREEN_FIELD_SPACER', ['_GUID' => '4d72d054883ede5250a3c3e03d27d18c', 'TITLE' => do_lang_tempcode('JOINING')]));
-        if (($id === null) || ($id != db_get_first_id())) {
+        if (($id === null) || ($id != db_get_first_id($GLOBALS['FORUM_DB']->driver))) {
             $fields->attach(form_input_tick(do_lang_tempcode('IS_PRESENTED_AT_INSTALL'), do_lang_tempcode('DESCRIPTION_IS_PRESENTED_AT_INSTALL'), 'is_presented_at_install', $is_presented_at_install == 1));
             if (cns_get_all_default_groups(true) === [$id]) {
                 $hidden->attach(form_input_hidden('is_default', '1'));
@@ -263,7 +263,7 @@ class Module_admin_cns_groups extends Source_standard_crud_module
         if (addon_installed('points')) {
             $promotion_target_groups = form_input_list_entry('', false, do_lang_tempcode('NA_EM'));
             foreach ($rows as $group) {
-                if (($group['id'] != $id) && ($group['id'] != db_get_first_id())) {
+                if (($group['id'] != $id) && ($group['id'] != db_get_first_id($GLOBALS['FORUM_DB']->driver))) {
                     $promotion_target_groups->attach(form_input_list_entry(strval($group['id']), ($group['id'] == $promotion_target), get_translated_text($group['g_name'], $GLOBALS['FORUM_DB'])));
                 }
             }
@@ -348,7 +348,7 @@ class Module_admin_cns_groups extends Source_standard_crud_module
 
         $copy_members_from_groups = new Tempcode();
         foreach ($rows as $row) {
-            if (($row['id'] != db_get_first_id()) && ($row['id'] != $id)) {
+            if (($row['id'] != db_get_first_id($GLOBALS['FORUM_DB']->driver)) && ($row['id'] != $id)) {
                 $copy_members_from_groups->attach(form_input_list_entry(strval($row['id']), false, get_translated_text($row['g_name'], $GLOBALS['FORUM_DB'])));
             }
         }
@@ -560,7 +560,7 @@ class Module_admin_cns_groups extends Source_standard_crud_module
         } else {
             $rows = $GLOBALS['FORUM_DB']->query_select('f_groups', ['id', 'g_name'], ($group_count > 300) ? ['g_is_private_club' => 0] : []);
             foreach ($rows as $row) {
-                if (($row['id'] != db_get_first_id()) && ($row['id'] != intval($id))) {
+                if (($row['id'] != db_get_first_id($GLOBALS['FORUM_DB']->driver)) && ($row['id'] != intval($id))) {
                     $groups->attach(form_input_list_entry(strval($row['id']), $row['id'] == ($default_group), get_translated_text($row['g_name'], $GLOBALS['FORUM_DB'])));
                 }
             }

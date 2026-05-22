@@ -844,7 +844,7 @@ class Hook_import_smf2
             $position = $row['board_order'];
             $post_count_increment = 1;
 
-            $parent_forum = ($row['id_parent'] > 0) ? $row['id_parent'] : db_get_first_id();
+            $parent_forum = ($row['id_parent'] > 0) ? $row['id_parent'] : db_get_first_id($GLOBALS['FORUM_DB']->driver);
             $cat_id = $row['id_cat'];
 
             $profile_id = $row['id_profile'];
@@ -919,7 +919,7 @@ class Hook_import_smf2
         // Now we must fix parenting
         foreach ($rows as $row) {
             if (($row['id_parent'] !== null) && (isset($remap_id[$row['id_board']]))) {
-                $parent_id = array_key_exists($row['id_parent'], $remap_id) ? $remap_id[$row['id_parent']] : db_get_first_id();
+                $parent_id = array_key_exists($row['id_parent'], $remap_id) ? $remap_id[$row['id_parent']] : db_get_first_id($GLOBALS['FORUM_DB']->driver);
                 $GLOBALS['FORUM_DB']->query_update('f_forums', ['f_parent_forum_id' => $parent_id], ['id' => $remap_id[$row['id_board']]], '', 1);
             }
         }
@@ -1051,7 +1051,7 @@ class Hook_import_smf2
                 }
                 $member_id = import_id_remap_get('member', strval($row['id_member']), true);
                 if ($member_id === null) {
-                    $member_id = db_get_first_id();
+                    $member_id = db_get_first_id($GLOBALS['FORUM_DB']->driver);
                 }
 
                 $forum_id = import_id_remap_get('forum', strval($row['id_board']), true);

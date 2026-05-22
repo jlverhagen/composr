@@ -356,11 +356,13 @@ function find_lang_fields(string $table, ?string $alias = null) : array
 /**
  * Get the ID of the first row in an auto-increment table (used whenever we need to reference the first).
  *
+ * @param  ?object The database driver to use (null: use the global database driver)
  * @return integer First ID used
  */
-function db_get_first_id() : int
+function db_get_first_id(?object $db_driver = null) : int
 {
-    return $GLOBALS['DB_DRIVER']->get_first_id();
+    _get_db_driver($db_driver);
+    return $db_driver->get_first_id();
 }
 
 /**
@@ -722,4 +724,21 @@ function db_is_innodb() : bool
     }
 
     return false;
+}
+
+/**
+ * Get the default database driver if requested.
+ * 
+ * @param  ?object $db_driver The database driver, passed by reference (null: get the default database driver if loaded, otherwise throw an error)
+ * @ignore
+ */
+function _get_db_driver(?object &$db_driver)
+{
+    if ($db_driver === null) {
+        if (is_object($GLOBALS['DB_DRIVER'])) {
+            $db_driver = $GLOBALS['DB_DRIVER'];
+        } else {
+            warn_exit('INTERNAL_ERROR', escape_html('TODO'));
+        }
+    }
 }

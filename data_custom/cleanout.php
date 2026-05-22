@@ -277,7 +277,7 @@ function cleanup()
             'cns_forums_action2',
             'f_forums',
             'id',
-            [db_get_first_id()],
+            [db_get_first_id($GLOBALS['FORUM_DB']->driver)],
         ],
 
         [
@@ -285,7 +285,7 @@ function cleanup()
             'cns_forums_action2',
             'f_categories',
             'id',
-            [db_get_first_id()],
+            [db_get_first_id($GLOBALS['FORUM_DB']->driver)],
         ],
 
         [
@@ -325,7 +325,7 @@ function cleanup()
             'cns_members_action2',
             'f_members',
             'id',
-            [db_get_first_id(), db_get_first_id() + 1],
+            [db_get_first_id($GLOBALS['FORUM_DB']->driver), db_get_first_id($GLOBALS['FORUM_DB']->driver) + 1],
         ],
 
         /*[  Probably not wanted
@@ -349,7 +349,7 @@ function cleanup()
             'cns_multi_moderations2',
             'f_multi_moderations',
             'id',
-            [db_get_first_id()],
+            [db_get_first_id($GLOBALS['FORUM_DB']->driver)],
         ],
 
         [

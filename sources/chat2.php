@@ -209,7 +209,7 @@ function get_chatroom_fields(?int $id = null, bool $is_made_by_me = false, strin
         $usergroup_list = new Tempcode();
         $groups = $GLOBALS['FORUM_DRIVER']->get_usergroup_list(true);
         foreach ($groups as $key => $val) {
-            if ($key != db_get_first_id()) {
+            if ($key != db_get_first_id($GLOBALS['FORUM_DB']->driver)) {
                 if (get_forum_type() == 'cns') {
                     require_code('cns_groups2');
                     $num_members = cns_get_group_members_raw_count($key);
@@ -242,7 +242,7 @@ function get_chatroom_fields(?int $id = null, bool $is_made_by_me = false, strin
         $usergroup_list = new Tempcode();
         $groups = $GLOBALS['FORUM_DRIVER']->get_usergroup_list(true);
         foreach ($groups as $key => $val) {
-            if ($key != db_get_first_id()) {
+            if ($key != db_get_first_id($GLOBALS['FORUM_DB']->driver)) {
                 if (get_forum_type() == 'cns') {
                     require_code('cns_groups2');
                     $num_members = cns_get_group_members_raw_count($key);

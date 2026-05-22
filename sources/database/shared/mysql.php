@@ -537,7 +537,7 @@ abstract class Source_database_super_mysql extends Source_database_driver
                 $_fields .= ' DEFAULT \'\'';
             } else*/
             if (substr($name, -13) == '__source_user') {
-                $_fields .= ' DEFAULT ' . strval(db_get_first_id());
+                $_fields .= ' DEFAULT ' . strval(db_get_first_id($this));
             }
 
             $_fields .= ' ' . $perhaps_null . ',' . "\n";

@@ -127,7 +127,7 @@ function get_config_func($raw_params)
         'close_report' => '0', // No centralised view of reports, it's just another forum
         'get_contact' => '1',
         'ads_disabled_group' => implode(',', $banners_disabled),
-        'guest_group_id' => strval(db_get_first_id()),
+        'guest_group_id' => strval(db_get_first_id($GLOBALS['FORUM_DB']->driver)),
         'login_type' => $login_type,
         'get_topic_participants' => '1',
         'upload_avatar' => '1',
@@ -209,14 +209,14 @@ function get_forum_func($raw_params) // Get forum tree structure
         if (array_key_exists(1, $params)) {
             $forum_id = intval($params[1]);
             if ($forum_id == 0) {
-                $forum_id = db_get_first_id();
+                $forum_id = db_get_first_id($GLOBALS['FORUM_DB']->driver);
             }
         } else {
-            $forum_id = db_get_first_id();
+            $forum_id = db_get_first_id($GLOBALS['FORUM_DB']->driver);
         }
         $full_tree = false;
     } else {
-        $forum_id = db_get_first_id();
+        $forum_id = db_get_first_id($GLOBALS['FORUM_DB']->driver);
         $return_description = true;
         $full_tree = true;
     }
@@ -275,7 +275,7 @@ function mark_all_as_read_func($raw_params)
     require_once COMMON_CLASS_PATH_WRITE . '/forum_write.php';
 
     if (!isset($params[0])) {
-        $forum_id = db_get_first_id();
+        $forum_id = db_get_first_id($GLOBALS['FORUM_DB']->driver);
     } else {
         $forum_id = intval($params[0]);
     }

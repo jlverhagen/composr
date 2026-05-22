@@ -332,7 +332,7 @@ class points_test_set extends cms_test_case
 
         $initial_points = points_balance($this->admin_user);
 
-        $this->topic_id = cns_make_topic(db_get_first_id(), 'Test');
+        $this->topic_id = cns_make_topic(db_get_first_id($GLOBALS['FORUM_DB']->driver), 'Test');
         $this->post_id = cns_make_post($this->topic_id, 'Welcome', 'Welcome to the posts', 0, true, null, 0, null, null, null, $this->admin_user, null, null, null, true, true, null, true, '', null, false, false, false);
 
         $current_points = points_balance($this->admin_user);

@@ -175,7 +175,7 @@ class Hook_profiles_tabs_edit_settings
                 $tmp_groups = $GLOBALS['CNS_DRIVER']->get_usergroup_list(true, true);
                 $all_pt_allow = '';
                 foreach (array_keys($tmp_groups) as $key) {
-                    if ($key != db_get_first_id()) {
+                    if ($key != db_get_first_id($GLOBALS['FORUM_DB']->driver)) {
                         if ($all_pt_allow != '') {
                             $all_pt_allow .= ',';
                         }

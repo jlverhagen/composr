@@ -363,7 +363,7 @@ class Hook_import_mybb
                 $primary_group = import_id_remap_get('group', strval($row['usergroup']));
 
                 if ($row['usergroup'] == 4) {
-                    $secondary_groups[] = db_get_first_id() + 1;
+                    $secondary_groups[] = db_get_first_id($GLOBALS['FORUM_DB']->driver) + 1;
                 }
 
                 $custom_fields = [];
@@ -768,7 +768,7 @@ class Hook_import_mybb
                 }
                 $member_id = import_id_remap_get('member', strval($row['uid']), true);
                 if ($member_id === null) {
-                    $member_id = db_get_first_id();
+                    $member_id = db_get_first_id($GLOBALS['FORUM_DB']->driver);
                 }
 
                 $forum_id = import_id_remap_get('forum', strval($row['fid']), true);

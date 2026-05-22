@@ -117,7 +117,7 @@ class Hook_sitemap_member extends Source_hook_sitemap_content
         do {
             $rows = $GLOBALS['FORUM_DB']->query_select('f_members', $select, $consider_validation ? ['m_validated' => 1] : [], 'ORDER BY m_username', SITEMAP_MAX_ROWS_PER_LOOP, $start);
             foreach ($rows as $row) {
-                if ($row['id'] == db_get_first_id()) {
+                if ($row['id'] == db_get_first_id($GLOBALS['FORUM_DB']->driver)) {
                     continue;
                 }
                 $child_page_link = $zone . ':' . $page . ':' . $this->screen_type . ':' . strval($row['id']);

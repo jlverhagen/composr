@@ -79,7 +79,7 @@ class Module_contact_member
         $staff_groups = $GLOBALS['FORUM_DRIVER']->get_moderator_groups();
         $usergroups = $GLOBALS['FORUM_DRIVER']->get_usergroup_list(false, true);
         foreach (array_keys($usergroups) as $id) {
-            if ((!isset($staff_groups[$id])) && $id != (db_get_first_id())) {
+            if ((!isset($staff_groups[$id])) && $id != (db_get_first_id($GLOBALS['FORUM_DB']->driver))) {
                 $GLOBALS['SITE_DB']->query_delete('group_page_access', ['page_name' => 'contact_member', 'zone_name' => 'site', 'group_id' => $id], '', 1); // in case already exists
                 $GLOBALS['SITE_DB']->query_insert('group_page_access', ['page_name' => 'contact_member', 'zone_name' => 'site', 'group_id' => $id]);
             }

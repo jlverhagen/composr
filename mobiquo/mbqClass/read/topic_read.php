@@ -92,7 +92,7 @@ class CMSTopicRead
      */
     public function get_topics(string $mode, int $forum_id, int $start, int $max) : array
     {
-        if (!has_category_access(get_member(), 'forums', strval(($forum_id == 0) ? db_get_first_id() : $forum_id))) {
+        if (!has_category_access(get_member(), 'forums', strval(($forum_id == 0) ? db_get_first_id($GLOBALS['FORUM_DB']->driver) : $forum_id))) {
             access_denied('I_ERROR');
         }
 

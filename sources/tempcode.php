@@ -1244,7 +1244,7 @@ function handle_symbol_preprocessing(array $seq_part, array &$children, string $
                     if (($url_parts['page'] == 'members') && ($url_parts['type'] == 'view')) {
                         $url_parts['id'] = strval(get_member()); // FUDGE
                     } else {
-                        $url_parts['id'] = strval(db_get_first_id());
+                        $url_parts['id'] = strval(db_get_first_id($GLOBALS['FORUM_DB']->driver));
                     }
                 }
 

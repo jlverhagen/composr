@@ -465,7 +465,7 @@ function cns_join_actual(string $declarations_made = '', bool $captcha_if_enable
             if (!is_numeric($forum_id)) {
                 $_forum_id = $GLOBALS['FORUM_DB']->query_select_value('f_forums', 'id', ['f_name' => $forum_id]);
                 if ($_forum_id === null) {
-                    $forum_id = strval(db_get_first_id());
+                    $forum_id = strval(db_get_first_id($GLOBALS['FORUM_DB']->driver));
                 } else {
                     $forum_id = strval($_forum_id);
                 }

@@ -53,7 +53,7 @@ class forum_polls_test_set extends cms_test_case
 
         $this->establish_admin_session();
 
-        $this->topic_id = cns_make_topic(db_get_first_id(), 'Test');
+        $this->topic_id = cns_make_topic(db_get_first_id($GLOBALS['FORUM_DB']->driver), 'Test');
 
         $this->post_id = cns_make_post($this->topic_id, 'Who is this?', 'I have no clue', 0, true, 1);
 

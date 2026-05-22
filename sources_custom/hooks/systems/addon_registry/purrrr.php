@@ -280,6 +280,6 @@ class Hook_addon_registry_purrrr
 
     public function add_image($url = '', $title = '', $description = '', $notes = '')
     {
-        add_image($title, 'root', $description, $url, 1, 1, 1, 1, $notes, db_get_first_id());
+        add_image($title, 'root', $description, $url, 1, 1, 1, 1, $notes, db_get_first_id($GLOBALS['FORUM_DB']->driver));
     }
 }

@@ -715,7 +715,7 @@ function _log_hack_attack_and_exit(string $reason, string $reason_param_a = '', 
         $id = get_member();
         $username = $GLOBALS['FORUM_DRIVER']->get_username($id);
     } else {
-        $id = db_get_first_id();
+        $id = db_get_first_id($GLOBALS['FORUM_DB']->driver);
         $username = ((function_exists('do_lang')) && (!$GLOBALS['BOOTSTRAPPING'])) ? do_lang('UNKNOWN') : 'Unknown';
     }
 

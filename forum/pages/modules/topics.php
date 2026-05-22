@@ -529,7 +529,7 @@ class Module_topics
 
         $test = $GLOBALS['FORUM_DB']->query_select_value('f_posts', 'COUNT(*)', ['p_topic_id' => $topic_id]);
         if ($test == 0) {
-            return $this->redirect_to_forum('MOVE_POSTS', db_get_first_id());
+            return $this->redirect_to_forum('MOVE_POSTS', db_get_first_id($GLOBALS['FORUM_DB']->driver));
         }
 
         return $this->redirect_to('DELETE_POSTS', $topic_id);
@@ -691,7 +691,7 @@ class Module_topics
         $test = cns_move_posts($from_topic_id, $to_topic_id, $posts, post_param_string('reason'), $to_forum_id, $delete_if_empty, post_param_string('title', null));
 
         if ($test) {
-            return $this->redirect_to_forum('MOVE_POSTS', db_get_first_id());
+            return $this->redirect_to_forum('MOVE_POSTS', db_get_first_id($GLOBALS['FORUM_DB']->driver));
         }
 
         return $this->redirect_to('MOVE_POSTS', $from_topic_id);
@@ -4495,7 +4495,7 @@ class Module_topics
         require_code('cns_forums_action2');
         cns_ping_forum_read_all($forum_id);
 
-        if ($forum_id != db_get_first_id()) {
+        if ($forum_id != db_get_first_id($GLOBALS['FORUM_DB']->driver)) {
             // Take user to parent forum
             $forum_id = $GLOBALS['FORUM_DB']->query_select_value_if_there('f_forums', 'f_parent_forum_id', ['id' => $forum_id]);
         }
@@ -4603,7 +4603,7 @@ class Module_topics
         $_POST['title'] = do_lang('HAPPY_BIRTHDAY_PERSON', $id);
         $forum_id = $GLOBALS['FORUM_DB']->query_select_value_if_there('f_forums', 'id', ['f_name' => get_option('main_forum_name')]);
         if ($forum_id === null) {
-            $forum_id = db_get_first_id();
+            $forum_id = db_get_first_id($GLOBALS['FORUM_DB']->driver);
         }
         $_GET['id'] = strval($forum_id);
         return $this->new_topic(false, null, 'cns_emoticons/birthday');

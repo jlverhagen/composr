@@ -224,10 +224,10 @@ class Hook_import_ipb2
                 if ($parent_forum !== null) {
                     $rows[$row_number]['parent_id'] = null; // Mark it as good (we do not need to fix this parenting)
                 }
-                $category_id = db_get_first_id();
+                $category_id = db_get_first_id($GLOBALS['FORUM_DB']->driver);
             } else { // Pointing to category
                 $category_id = import_id_remap_get('category', strval($row['parent_id']));
-                $parent_forum = db_get_first_id();
+                $parent_forum = db_get_first_id($GLOBALS['FORUM_DB']->driver);
                 $rows[$row_number]['parent_id'] = null; // Mark it as good (we do not need to fix this parenting)
             }
 
@@ -646,7 +646,7 @@ class Hook_import_ipb2
                 }
 
                 if ($row['mgroup'] == 0) {
-                    $row['mgroup'] = db_get_first_id(); // Not really necessary - but repairs problem in my test db
+                    $row['mgroup'] = db_get_first_id($GLOBALS['FORUM_DB']->driver); // Not really necessary - but repairs problem in my test db
                 }
                 $primary_group = import_id_remap_get('group', strval($row['mgroup']));
                 $language = ($row['language'] === null) ? '' : cms_strtoupper_ascii($row['language']);
@@ -993,7 +993,7 @@ class Hook_import_ipb2
                 }
                 $member_id = import_id_remap_get('member', strval($row['author_id']), true);
                 if ($member_id === null) {
-                    $member_id = db_get_first_id();
+                    $member_id = db_get_first_id($GLOBALS['FORUM_DB']->driver);
                 }
 
                 // This speeds up addition... using the cache can reduce about 7/8 of a query per post on average
@@ -1183,7 +1183,7 @@ class Hook_import_ipb2
             foreach ($rows2 as $row2) { // For all votes. We have to match votes to members - but it is arbitrary because no such mapping is stored from IPB
                 $member_id = import_id_remap_get('member', $row2['member_id'], true);
                 if ($member_id === null) {
-                    $member_id = db_get_first_id();
+                    $member_id = db_get_first_id($GLOBALS['FORUM_DB']->driver);
                 }
 
                 if ($member_id != $GLOBALS['CNS_DRIVER']->get_guest_id()) {

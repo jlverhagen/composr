@@ -74,11 +74,11 @@ class CMSForumRead
         $forums_with_groupings = [];
         foreach ($_forums_with_groupings as $grouping_id => $forums_in_grouping) {
             if (!isset($all_groupings[$grouping_id])) {
-                $all_groupings[$grouping_id] = $all_groupings[db_get_first_id()];
+                $all_groupings[$grouping_id] = $all_groupings[db_get_first_id($GLOBALS['FORUM_DB']->driver)];
             }
 
             if (count($forums_in_grouping) == 1) {
-                $pseudo_parent = ($forum_id == db_get_first_id()) ? '-1' : strval($forum_id);
+                $pseudo_parent = ($forum_id == db_get_first_id($GLOBALS['FORUM_DB']->driver)) ? '-1' : strval($forum_id);
             } else {
                 $pseudo_parent = 'grouping_' . strval($forum_id) . '_' . strval($grouping_id);
             }
@@ -86,12 +86,12 @@ class CMSForumRead
             $forums = [];
 
             // Do we need a virtual forum for the root forum? As we don't show an actual root forum in Tapatalk
-            if (($forum_id == db_get_first_id()) && (empty($forums_with_groupings)) && ($GLOBALS['FORUM_DB']->query_select_value('f_topics', 'COUNT(*)', ['t_forum_id' => $forum_id]) > 1)) {
-                $unread_count = get_num_unread_topics(db_get_first_id());
+            if (($forum_id == db_get_first_id($GLOBALS['FORUM_DB']->driver)) && (empty($forums_with_groupings)) && ($GLOBALS['FORUM_DB']->query_select_value('f_topics', 'COUNT(*)', ['t_forum_id' => $forum_id]) > 1)) {
+                $unread_count = get_num_unread_topics(db_get_first_id($GLOBALS['FORUM_DB']->driver));
                 $new_post = ($unread_count > 0);
 
                 require_code('notifications');
-                $is_subscribed = notifications_enabled('cns_topic', 'forum:' . strval(db_get_first_id()));
+                $is_subscribed = notifications_enabled('cns_topic', 'forum:' . strval(db_get_first_id($GLOBALS['FORUM_DB']->driver)));
 
                 $arr = [
                     'forum_id' => mobiquo_val('-2', 'string'),
@@ -156,7 +156,7 @@ class CMSForumRead
                 $arr = [
                     'forum_id' => mobiquo_val($pseudo_parent, 'string'),
                     'forum_name' => mobiquo_val($all_groupings[$grouping_id]['c_title'], 'base64'),
-                    'parent_id' => mobiquo_val(($forum_id == db_get_first_id()) ? '-1' : strval($forum_id), 'string'),
+                    'parent_id' => mobiquo_val(($forum_id == db_get_first_id($GLOBALS['FORUM_DB']->driver)) ? '-1' : strval($forum_id), 'string'),
                     'logo_url' => mobiquo_val('', 'string'),
                     'new_post' => mobiquo_val(false, 'boolean'),
                     'unread_count' => mobiquo_val(0, 'int'),

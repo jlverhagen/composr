@@ -181,7 +181,7 @@ function is_ticket_forum(?int $forum_id) : bool
         $cache[$forum_id] = false;
         return false;
     }
-    if (($root_ticket_forum_id == db_get_first_id()) && ($forum_id != db_get_first_id())) {
+    if (($root_ticket_forum_id == db_get_first_id($GLOBALS['FORUM_DB']->driver)) && ($forum_id != db_get_first_id($GLOBALS['FORUM_DB']->driver))) {
         $cache[$forum_id] = false;
         return false; // If ticket forum (oddly) set as root, don't cascade it through all!
     }

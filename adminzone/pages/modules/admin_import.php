@@ -831,7 +831,7 @@ class Module_admin_import
     {
         $out = new Tempcode();
 
-        $todos = ['MEMBER' => ['member', db_get_first_id(), null], 'GROUP' => ['group', null, 'group_id']];
+        $todos = ['MEMBER' => ['member', db_get_first_id($GLOBALS['FORUM_DB']->driver), null], 'GROUP' => ['group', null, 'group_id']];
         foreach ($todos as $db_abstraction => $definition) {
             list($import_code, $default_id, $field_name_also) = $definition;
 

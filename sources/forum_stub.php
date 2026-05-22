@@ -105,7 +105,7 @@ abstract class Source_forum_driver_base
      */
     public function get_guest_group() : int
     {
-        return db_get_first_id();
+        return db_get_first_id($GLOBALS['FORUM_DB']->driver);
     }
 
     /**
@@ -476,7 +476,7 @@ abstract class Source_forum_driver_base
         if ((is_guest($id)) && (get_forum_type() == 'cns')) {
             static $ret = null;
             if ($ret === null) {
-                $ret = [db_get_first_id()];
+                $ret = [db_get_first_id($GLOBALS['FORUM_DB']->driver)];
             }
             return $ret;
         }

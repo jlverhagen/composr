@@ -1445,7 +1445,7 @@ function table_id_locking_start(object $db, ?int &$id, bool &$lock, string $tabl
         } elseif (!$db->driver->has_sequential_auto_increment()) { // Needed as on SQL Server we need to choose our own key, as we cannot use an 'identity' column as a part of a shared key.
             $lock = true;
             $id = $db->query_select_value($table, 'MAX(' . $id_field . ')');
-            $id = ($id === null) ? db_get_first_id() : ($id + 1);
+            $id = ($id === null) ? db_get_first_id($db->driver) : ($id + 1);
         }
         // Other databases are probably fine as-is
     }

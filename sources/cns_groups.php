@@ -99,7 +99,7 @@ function cns_create_selection_list_usergroups(?int $it = null, bool $allow_guest
     $_m = $GLOBALS['FORUM_DB']->query_select('f_groups', ['id', 'g_name', 'g_order'], ($group_count > 200) ? ['g_is_private_club' => 0] : [], 'ORDER BY g_order,' . $GLOBALS['FORUM_DB']->translate_field_ref('g_name'));
     $entries = new Tempcode();
     foreach ($_m as $m) {
-        if (!$allow_guest_group && $m['id'] == db_get_first_id()) {
+        if (!$allow_guest_group && $m['id'] == db_get_first_id($GLOBALS['FORUM_DB']->driver)) {
             continue;
         }
 
@@ -122,7 +122,7 @@ function cns_create_multi_list_usergroups(array $it = [], bool $allow_guest_grou
     $_m = $GLOBALS['FORUM_DB']->query_select('f_groups', ['id', 'g_name', 'g_order'], ($group_count > 200) ? ['g_is_private_club' => 0] : [], 'ORDER BY g_order,' . $GLOBALS['FORUM_DB']->translate_field_ref('g_name'));
     $entries = new Tempcode();
     foreach ($_m as $m) {
-        if (!$allow_guest_group && $m['id'] == db_get_first_id()) {
+        if (!$allow_guest_group && $m['id'] == db_get_first_id($GLOBALS['FORUM_DB']->driver)) {
             continue;
         }
 
@@ -171,7 +171,8 @@ function cns_get_all_default_groups(bool $include_primary = false, bool $include
         }
 
         if (empty($groups)) {
-            $groups[] = db_get_first_id() + 7; // FUDGE: It should never be in the situation, as there is no g_is_default row, so we use a hard-coded group
+            // TODO: Is this going to be a problem if someone edits group 8?
+            $groups[] = db_get_first_id($GLOBALS['FORUM_DB']->driver) + 7; // FUDGE: It should never be in the situation, as there is no g_is_default row, so we use a hard-coded group
         }
     }
 
@@ -288,7 +289,7 @@ function cns_get_group_link(int $id, bool $hide_hidden = true) : object
     }
     $row = $_row[0];
 
-    if ($row['id'] == db_get_first_id()) {
+    if ($row['id'] == db_get_first_id($GLOBALS['FORUM_DB']->driver)) {
         $ret = make_string_tempcode(escape_html(get_translated_text($row['g_name'], $GLOBALS['FORUM_DB'])));
         $cache[$id][$hide_hidden] = $ret;
         return $ret;
@@ -425,7 +426,7 @@ function cns_get_members_groups(?int $member_id = null, bool $skip_secret = fals
 {
     if (is_guest($member_id)) {
         $ret = [];
-        $ret[db_get_first_id()] = true;
+        $ret[db_get_first_id($GLOBALS['FORUM_DB']->driver)] = true;
         return $ret;
     }
 
@@ -499,7 +500,7 @@ function cns_get_members_groups(?int $member_id = null, bool $skip_secret = fals
         }
         $primary_group = $GLOBALS['CNS_DRIVER']->get_member_row_field($member_id, 'm_primary_group');
         if ($primary_group === null) {
-            $primary_group = db_get_first_id();
+            $primary_group = db_get_first_id($GLOBALS['FORUM_DB']->driver);
         }
         $groups[$primary_group] = true;
         foreach (array_keys($groups) as $group_id) {

@@ -114,7 +114,7 @@ class CMSUserRead
             case 'can_send_pm':
                 return true;
             case 'can_moderate':
-                return cns_may_moderate_forum(db_get_first_id(), $user_id);
+                return cns_may_moderate_forum(db_get_first_id($GLOBALS['FORUM_DB']->driver), $user_id);
             case 'can_search':
                 return has_actual_page_access($user_id, 'search');
             case 'can_profile':

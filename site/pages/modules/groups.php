@@ -105,7 +105,7 @@ class Module_groups
         if ($type == 'view') {
             $id = get_param_integer('id');
 
-            if ($id == db_get_first_id()) {
+            if ($id == db_get_first_id($GLOBALS['FORUM_DB']->driver)) {
                 warn_exit(do_lang_tempcode('INTERNAL_ERROR', escape_html('ad8913a6a5cf5d2b9196679469972be4')));
             }
 
@@ -147,7 +147,7 @@ class Module_groups
             $id = post_param_integer('id', null);
             if ($id === null) {
                 $id = get_param_integer('id');
-                if ($id == db_get_first_id()) {
+                if ($id == db_get_first_id($GLOBALS['FORUM_DB']->driver)) {
                     warn_exit(do_lang_tempcode('INTERNAL_ERROR', escape_html('c0fc39f8a30f5cba9e8660caf1d7780d')));
                 }
 
@@ -433,7 +433,7 @@ class Module_groups
             foreach ($staff_groups as $g_id) {
                 $sql .= ' AND g.id<>' . strval($g_id);
             }
-            $sql .= ' AND g.id<>' . strval(db_get_first_id());
+            $sql .= ' AND g.id<>' . strval(db_get_first_id($GLOBALS['FORUM_DB']->driver));
             $sql .= ')';
             $sql .= ' ORDER BY g_order,' . $GLOBALS['FORUM_DB']->translate_field_ref('g_name');
             $_rows = $GLOBALS['FORUM_DB']->query($sql, $max, $start, false, false, $lang_fields);
@@ -897,7 +897,7 @@ class Module_groups
     {
         $id = get_param_integer('id');
 
-        if ($id == db_get_first_id()) {
+        if ($id == db_get_first_id($GLOBALS['FORUM_DB']->driver)) {
             warn_exit(do_lang_tempcode('INTERNAL_ERROR', escape_html('4db078b20fc95ddb94de267393e5f120')));
         }
 
@@ -1010,7 +1010,7 @@ class Module_groups
                 'PREVIEW' => '',
             ]);
         }
-        if ($id == db_get_first_id()) {
+        if ($id == db_get_first_id($GLOBALS['FORUM_DB']->driver)) {
             warn_exit(do_lang_tempcode('INTERNAL_ERROR', escape_html('f7c312ece7085127a9805f206c8b2053')));
         }
 

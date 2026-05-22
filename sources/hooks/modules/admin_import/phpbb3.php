@@ -660,8 +660,8 @@ class Hook_import_phpbb3
             $position = 1;
             $post_count_increment = 1;
 
-            $category_id = db_get_first_id();
-            $parent_forum = db_get_first_id();
+            $category_id = db_get_first_id($GLOBALS['FORUM_DB']->driver);
+            $parent_forum = db_get_first_id($GLOBALS['FORUM_DB']->driver);
 
             $rules = $this->fix_links($row['forum_rules'], $row['forum_rules_uid'], $db, $table_prefix);
             if ($row['forum_rules_link'] != '') {
@@ -701,8 +701,8 @@ class Hook_import_phpbb3
             if ($row['forum_type'] == 1) {
                 $remapped = import_id_remap_get('forum', strval($row['forum_id']));
                 list($cat_id, $parent_id) = $this->_find_parent_forum_and_category($rows, $row['parent_id']);
-                $parent_forum = ($parent_id === null) ? db_get_first_id() : import_id_remap_get('forum', strval($parent_id));
-                $cat = ($cat_id === null) ? db_get_first_id() : import_id_remap_get('forum', strval($cat_id));
+                $parent_forum = ($parent_id === null) ? db_get_first_id($GLOBALS['FORUM_DB']->driver) : import_id_remap_get('forum', strval($parent_id));
+                $cat = ($cat_id === null) ? db_get_first_id($GLOBALS['FORUM_DB']->driver) : import_id_remap_get('forum', strval($cat_id));
                 $GLOBALS['FORUM_DB']->query_update('f_forums', ['f_forum_grouping_id' => $cat, 'f_parent_forum_id' => $parent_forum], ['id' => $remapped], '', 1);
             }
         }
@@ -891,7 +891,7 @@ class Hook_import_phpbb3
                 }
                 $member_id = import_id_remap_get('member', strval($row['poster_id']), true);
                 if ($member_id === null) {
-                    $member_id = db_get_first_id();
+                    $member_id = db_get_first_id($GLOBALS['FORUM_DB']->driver);
                 }
 
                 $forum_id = import_id_remap_get('forum', strval($row['forum_id']), true);
@@ -1385,7 +1385,7 @@ class Hook_import_phpbb3
         $rows = $db->query_select('warnings', ['*']);
         foreach ($rows as $row) {
             $member_id = import_id_remap_get('member', strval($row['user_id']), true);
-            $by = db_get_first_id() + 1;
+            $by = db_get_first_id($GLOBALS['FORUM_DB']->driver) + 1;
             if ($member_id === null) {
                 continue;
             }

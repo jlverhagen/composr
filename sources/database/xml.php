@@ -1997,7 +1997,7 @@ class Source_database_static_xml extends Source_database_driver
                     if (substr($key, -10) == '__text_parsed') {
                         $record[$key] = '';
                     } elseif (substr($key, -13) == '__source_user') {
-                        $record[$key] = db_get_first_id();
+                        $record[$key] = db_get_first_id($this);
                     } elseif (preg_replace('#[^\w]#', '', $val) == 'AUTO') {
                         $record[$key] = isset($TABLE_BASES[$table_name]) ? $TABLE_BASES[$table_name] : $this->get_first_id(); // We always want first record as '1', because we often reference it in a hard-coded way
                         while ((file_exists($db[0] . '/' . $table_name . '/' . strval($record[$key]) . '.xml')) || (file_exists($db[0] . '/' . $table_name . '/' . $this->_guid($schema, $record) . '.xml')) || (file_exists($db[0] . '/' . $table_name . '/' . strval($record[$key]) . '.xml-volatile')) || (file_exists($db[0] . '/' . $table_name . '/' . $this->_guid($schema, $record) . '.xml-volatile'))) {

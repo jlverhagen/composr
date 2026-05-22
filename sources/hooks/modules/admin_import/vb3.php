@@ -639,9 +639,9 @@ class Hook_import_vb3
 
             $category_id = import_id_remap_get('category', strval($row['parentid']), true);
             if ($category_id === null) {
-                $category_id = db_get_first_id();
+                $category_id = db_get_first_id($GLOBALS['FORUM_DB']->driver);
             }
-            $parent_forum = db_get_first_id();
+            $parent_forum = db_get_first_id($GLOBALS['FORUM_DB']->driver);
 
             $permissions = $db->query_select('forumpermission', ['usergroupid', 'forumpermissions'], ['forumid' => $row['forumid']]);
             $access_mapping = [];
@@ -811,7 +811,7 @@ class Hook_import_vb3
                 }
                 $member_id = import_id_remap_get('member', strval($row['userid']), true);
                 if ($member_id === null) {
-                    $member_id = db_get_first_id();
+                    $member_id = db_get_first_id($GLOBALS['FORUM_DB']->driver);
                 }
 
                 // This speeds up addition... using the cache can reduce about 7/8 of a query per post on average

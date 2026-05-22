@@ -2155,31 +2155,31 @@ class Hook_addon_registry_cns_forum
         require_lang('cns');
 
         // Normal topic
-        $topic_id = cns_make_topic(db_get_first_id(), lorem_phrase(), 'cns_emoticons/lol', 1, 1, 0, 0, null, null, false);
+        $topic_id = cns_make_topic(db_get_first_id($GLOBALS['FORUM_DB']->driver), lorem_phrase(), 'cns_emoticons/lol', 1, 1, 0, 0, null, null, false);
         cns_make_post($topic_id, lorem_phrase(), lorem_chunk(), 0, true, 1, 0, null, null, null, null, null, null, null, false, true, null, true, lorem_phrase());
-        cns_make_post($topic_id, lorem_phrase(), lorem_chunk(), 0, false, 1, 0, null, null, null, db_get_first_id() + 2, get_member(), null, null, false, true, null, true, lorem_phrase()); // With inline PP
+        cns_make_post($topic_id, lorem_phrase(), lorem_chunk(), 0, false, 1, 0, null, null, null, db_get_first_id($GLOBALS['FORUM_DB']->driver) + 2, get_member(), null, null, false, true, null, true, lorem_phrase()); // With inline PP
 
         // Closed topic
-        $topic_id = cns_make_topic(db_get_first_id(), lorem_phrase(), '', 1, 0, 0, 0, null, null, false);
+        $topic_id = cns_make_topic(db_get_first_id($GLOBALS['FORUM_DB']->driver), lorem_phrase(), '', 1, 0, 0, 0, null, null, false);
         cns_make_post($topic_id, lorem_phrase(), lorem_chunk(), 0, true, 1, 0, null, null, null, null, null, null, null, false, true, null, true, lorem_phrase() . ' (' . do_lang('MODIFIER_closed') . ')');
         cns_make_post($topic_id, lorem_phrase(), lorem_chunk(), 0, true, 1, 1, null, null, null, null, null, null, null, false, true, null, true, lorem_phrase() . ' (' . do_lang('MODIFIER_closed') . ')'); // With emphasised post
 
         // Not validated topic
-        $topic_id = cns_make_topic(db_get_first_id(), lorem_phrase(), '', 0, 1, 0, 0, null, null, false);
+        $topic_id = cns_make_topic(db_get_first_id($GLOBALS['FORUM_DB']->driver), lorem_phrase(), '', 0, 1, 0, 0, null, null, false);
         cns_make_post($topic_id, lorem_phrase(), lorem_chunk(), 0, true, 1, 0, null, null, null, null, null, null, null, false, true, null, true, lorem_phrase() . ' (' . do_lang('MODIFIER_not_validated') . ')');
 
         // Pinned topic
-        $topic_id = cns_make_topic(db_get_first_id(), lorem_phrase(), '', 1, 1, 1, 0, null, null, false);
+        $topic_id = cns_make_topic(db_get_first_id($GLOBALS['FORUM_DB']->driver), lorem_phrase(), '', 1, 1, 1, 0, null, null, false);
         cns_make_post($topic_id, lorem_phrase(), lorem_chunk(), 0, true, 1, 0, null, null, null, null, null, null, null, false, true, null, true, lorem_phrase() . ' (' . do_lang('MODIFIER_pinned') . ')');
 
         // Announcement topic
-        $topic_id = cns_make_topic(db_get_first_id(), lorem_phrase(), '', 1, 1, 1, 1, null, null, false);
+        $topic_id = cns_make_topic(db_get_first_id($GLOBALS['FORUM_DB']->driver), lorem_phrase(), '', 1, 1, 1, 1, null, null, false);
         cns_make_post($topic_id, lorem_phrase(), lorem_chunk(), 0, true, 1, 0, null, null, null, null, null, null, null, false, true, null, true, lorem_phrase() . ' (' . do_lang('MODIFIER_announcement') . ')');
 
         require_code('cns_polls_action');
 
         // Poll topic
-        $topic_id = cns_make_topic(db_get_first_id(), lorem_phrase(), '', 1, 1, 0, 0, null, null, false);
+        $topic_id = cns_make_topic(db_get_first_id($GLOBALS['FORUM_DB']->driver), lorem_phrase(), '', 1, 1, 0, 0, null, null, false);
         cns_make_post($topic_id, lorem_phrase(), lorem_chunk(), 0, true, 1, 0, null, null, null, null, null, null, null, false, true, null, true, lorem_phrase() . ' (' . do_lang('MODIFIER_poll') . ')');
         cns_make_poll($topic_id, lorem_phrase(), 0, 1, 1, 1, 0, [lorem_phrase() . ' 1', lorem_phrase() . ' 2'], 0, 0, 1, 1, false);
 

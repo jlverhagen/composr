@@ -145,7 +145,7 @@ class Module_admin_group_member_timeouts
         } else {
             $usergroups = $GLOBALS['FORUM_DRIVER']->get_usergroup_list();
         }
-        unset($usergroups[db_get_first_id()]);
+        unset($usergroups[db_get_first_id($GLOBALS['FORUM_DB']->driver)]);
 
         single_field__start();
 

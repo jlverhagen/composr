@@ -227,7 +227,7 @@ function build_config_inputter(string $name, array $details, ?string $current_va
                     $_current_setting = $GLOBALS['FORUM_DB']->query_select_value_if_there('f_forums', 'id', ['f_name' => $current_setting]);
                     if ($_current_setting === null) {
                         if ($required) {
-                            $current_setting = strval(db_get_first_id());
+                            $current_setting = strval(db_get_first_id($GLOBALS['FORUM_DB']->driver));
                             attach_message(do_lang_tempcode('FORUM_CURRENTLY_UNSET', $title/*Tempcode*/), 'notice');
                         } else {
                             $current_setting = null;

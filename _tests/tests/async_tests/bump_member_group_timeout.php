@@ -38,9 +38,9 @@ class bump_member_group_timeout_test_set extends cms_test_case
             return;
         }
 
-        $probation = $GLOBALS['FORUM_DRIVER']->get_member_row_field(db_get_first_id() + 2, 'm_probation_expiration_time');
+        $probation = $GLOBALS['FORUM_DRIVER']->get_member_row_field(db_get_first_id($GLOBALS['FORUM_DB']->driver) + 2, 'm_probation_expiration_time');
         if (($probation !== null) && ($probation > time())) {
-            $this->assertTrue(false, 'Member ID ' . strval(db_get_first_id() + 2) . ' is on probation; this test will not work.');
+            $this->assertTrue(false, 'Member ID ' . strval(db_get_first_id($GLOBALS['FORUM_DB']->driver) + 2) . ' is on probation; this test will not work.');
             return;
         }
 
@@ -58,8 +58,8 @@ class bump_member_group_timeout_test_set extends cms_test_case
             return;
         }
 
-        $member_id = db_get_first_id() + 2;
-        $group_id = db_get_first_id() + 3;
+        $member_id = db_get_first_id($GLOBALS['FORUM_DB']->driver) + 2;
+        $group_id = db_get_first_id($GLOBALS['FORUM_DB']->driver) + 3;
 
         bump_member_group_timeout($member_id, $group_id, -10, false);
 
@@ -76,8 +76,8 @@ class bump_member_group_timeout_test_set extends cms_test_case
             return;
         }
 
-        $member_id = db_get_first_id() + 2;
-        $group_id = db_get_first_id() + 3;
+        $member_id = db_get_first_id($GLOBALS['FORUM_DB']->driver) + 2;
+        $group_id = db_get_first_id($GLOBALS['FORUM_DB']->driver) + 3;
 
         bump_member_group_timeout($member_id, $group_id, -10, true);
 
@@ -94,8 +94,8 @@ class bump_member_group_timeout_test_set extends cms_test_case
             return;
         }
 
-        $member_id = db_get_first_id() + 2;
-        $group_id = db_get_first_id() + 3;
+        $member_id = db_get_first_id($GLOBALS['FORUM_DB']->driver) + 2;
+        $group_id = db_get_first_id($GLOBALS['FORUM_DB']->driver) + 3;
 
         bump_member_group_timeout($member_id, $group_id, 10, false);
         cleanup_member_timeouts();
@@ -113,8 +113,8 @@ class bump_member_group_timeout_test_set extends cms_test_case
             return;
         }
 
-        $member_id = db_get_first_id() + 2;
-        $group_id = db_get_first_id() + 3;
+        $member_id = db_get_first_id($GLOBALS['FORUM_DB']->driver) + 2;
+        $group_id = db_get_first_id($GLOBALS['FORUM_DB']->driver) + 3;
 
         bump_member_group_timeout($member_id, $group_id, -10, false);
         bump_member_group_timeout($member_id, $group_id, 30, false);
@@ -132,8 +132,8 @@ class bump_member_group_timeout_test_set extends cms_test_case
             return;
         }
 
-        $member_id = db_get_first_id() + 2;
-        $group_id = db_get_first_id() + 3;
+        $member_id = db_get_first_id($GLOBALS['FORUM_DB']->driver) + 2;
+        $group_id = db_get_first_id($GLOBALS['FORUM_DB']->driver) + 3;
 
         bump_member_group_timeout($member_id, $group_id, 10, false);
         bump_member_group_timeout($member_id, $group_id, -30, false);
@@ -147,19 +147,19 @@ class bump_member_group_timeout_test_set extends cms_test_case
             return;
         }
 
-        $group_id = db_get_first_id() + 3;
+        $group_id = db_get_first_id($GLOBALS['FORUM_DB']->driver) + 3;
 
-        $member_id = db_get_first_id() + 2;
+        $member_id = db_get_first_id($GLOBALS['FORUM_DB']->driver) + 2;
         bump_member_group_timeout($member_id, $group_id, -10, false);
         $this->assertTrue(in_array($group_id, $GLOBALS['FORUM_DRIVER']->get_members_groups($member_id, false, true, true)), 'Expected member first+2 to be in group but was not.');
 
-        $member_id = db_get_first_id() + 1;
+        $member_id = db_get_first_id($GLOBALS['FORUM_DB']->driver) + 1;
         bump_member_group_timeout($member_id, $group_id, -10, false);
         $this->assertTrue(in_array($group_id, $GLOBALS['FORUM_DRIVER']->get_members_groups($member_id, false, true, true)), 'Expected member first+1 to be in group but was not.');
 
         cleanup_member_timeouts();
 
-        $this->assertFalse(in_array($group_id, $GLOBALS['FORUM_DRIVER']->get_members_groups(db_get_first_id() + 2, false, true, true)), 'Expected member first+2 to NOT be in group but was.');
-        $this->assertFalse(in_array($group_id, $GLOBALS['FORUM_DRIVER']->get_members_groups(db_get_first_id() + 1, false, true, true)), 'Expected member first+1 to NOT be in group but was.');
+        $this->assertFalse(in_array($group_id, $GLOBALS['FORUM_DRIVER']->get_members_groups(db_get_first_id($GLOBALS['FORUM_DB']->driver) + 2, false, true, true)), 'Expected member first+2 to NOT be in group but was.');
+        $this->assertFalse(in_array($group_id, $GLOBALS['FORUM_DRIVER']->get_members_groups(db_get_first_id($GLOBALS['FORUM_DB']->driver) + 1, false, true, true)), 'Expected member first+1 to NOT be in group but was.');
     }
 }

@@ -349,7 +349,7 @@ function _insert_lang(string $field_name, string $text, int $level, ?object $db 
                     require_code('users_active_actions');
                     $comcode_member_id = get_first_admin_user();
                 } else {
-                    $comcode_member_id = db_get_first_id() + 1;
+                    $comcode_member_id = db_get_first_id($db->driver) + 1;
                 }
                 $insert_as_admin = true;
                 $source_user = $comcode_member_id;

@@ -190,7 +190,7 @@ class Hook_profiles_tabs_edit_privacy
                 $groups->attach(form_input_list_entry('all', $view_by_groups == ['all'], do_lang_tempcode('_ALL')));
                 $probation_group = get_probation_group();
                 foreach ($tmp_groups as $gr_key => $group) {
-                    if ($gr_key == db_get_first_id()) {
+                    if ($gr_key == db_get_first_id($GLOBALS['FORUM_DB']->driver)) {
                         continue;
                     }
                     if ($gr_key === $probation_group) {

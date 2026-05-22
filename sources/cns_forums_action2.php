@@ -234,10 +234,10 @@ function cns_edit_forum(int $forum_id, string $name, string $description, int $f
 function cns_delete_forum(int $forum_id, ?int $target_forum_id = null, int $delete_topics = 0, bool $reverse_point_transaction = false)
 {
     if ($target_forum_id === null) {
-        $target_forum_id = db_get_first_id();
+        $target_forum_id = db_get_first_id($GLOBALS['FORUM_DB']->driver);
     }
 
-    if ($forum_id == db_get_first_id()) {
+    if ($forum_id == db_get_first_id($GLOBALS['FORUM_DB']->driver)) {
         warn_exit(do_lang_tempcode('CANNOT_DELETE_ROOT_FORUM'));
     }
     require_code('cns_topics_action');
@@ -260,7 +260,7 @@ function cns_delete_forum(int $forum_id, ?int $target_forum_id = null, int $dele
 
     $name = $GLOBALS['FORUM_DB']->query_select_value('f_forums', 'f_name', ['id' => $forum_id]);
     $GLOBALS['FORUM_DB']->query_update('f_multi_moderations', ['mm_move_to_forum_id' => null], ['mm_move_to_forum_id' => $forum_id]);
-    $GLOBALS['FORUM_DB']->query_update('f_forums', ['f_parent_forum_id' => db_get_first_id()], ['f_parent_forum_id' => $forum_id]);
+    $GLOBALS['FORUM_DB']->query_update('f_forums', ['f_parent_forum_id' => db_get_first_id($GLOBALS['FORUM_DB']->driver)], ['f_parent_forum_id' => $forum_id]);
     $GLOBALS['FORUM_DB']->query_delete('f_forums', ['id' => $forum_id], '', 1);
     $GLOBALS['FORUM_DB']->query_delete('group_category_access', ['module_the_name' => 'forums', 'category_name' => strval($forum_id)]);
     $GLOBALS['FORUM_DB']->query_delete('group_privileges', ['module_the_name' => 'forums', 'category_name' => strval($forum_id)]);

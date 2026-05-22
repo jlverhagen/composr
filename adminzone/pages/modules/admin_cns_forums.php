@@ -261,7 +261,7 @@ class Module_admin_cns_forums extends Source_standard_crud_module
     public function get_form_fields(?int $id = null, string $name = '', string $description = '', ?int $forum_grouping_id = null, ?int $parent_forum = null, ?int $position = null, int $post_count_increment = 1, int $order_sub_alpha = 0, string $intro_question = '', string $intro_answer = '', string $redirection = '', string $order = 'last_post', int $is_threaded = 0, int $allows_anonymous_posts = 1, string $mail_email_address = '', string $mail_server_type = '', string $mail_server_host = '', ?int $mail_server_port = null, string $mail_folder = '', string $mail_username = '', string $mail_password = '', string $mail_nonmatch_policy = 'post_as_guest', int $mail_unconfirmed_notice = 1, string $poll_default_options_xml = '') : array
     {
         if ($forum_grouping_id === null) {
-            $forum_grouping_id = get_param_integer('forum_grouping_id', db_get_first_id());
+            $forum_grouping_id = get_param_integer('forum_grouping_id', db_get_first_id($GLOBALS['FORUM_DB']->driver));
         }
 
         if ($parent_forum === null) {
@@ -275,7 +275,7 @@ class Module_admin_cns_forums extends Source_standard_crud_module
         $fields->attach(form_input_line_comcode(do_lang_tempcode('DESCRIPTION'), do_lang_tempcode('DESCRIPTION_DESCRIPTION'), 'description', $description, false));
         $list = cns_create_selection_list_forum_groupings(null, $forum_grouping_id);
         $fields->attach(form_input_list(do_lang_tempcode('FORUM_GROUPING'), do_lang_tempcode('DESCRIPTION_FORUM_GROUPING'), 'forum_grouping_id', $list));
-        if (($id === null) || (($id !== null) && ($id != db_get_first_id()))) {
+        if (($id === null) || (($id !== null) && ($id != db_get_first_id($GLOBALS['FORUM_DB']->driver)))) {
             $fields->attach(form_input_tree_list(do_lang_tempcode('PARENT'), do_lang_tempcode('DESCRIPTION_PARENT_FORUM'), 'parent_forum', null, 'choose_forum', [], true, ($parent_forum === null) ? '' : strval($parent_forum)));
         }
 
@@ -462,7 +462,7 @@ class Module_admin_cns_forums extends Source_standard_crud_module
 
         $edit_url = build_url(['page' => '_SELF', 'type' => '_edit', 'id' => $id], '_SELF');
         $view_map = ['page' => 'forumview'];
-        if ($id != db_get_first_id()) {
+        if ($id != db_get_first_id($GLOBALS['FORUM_DB']->driver)) {
             $view_map['id'] = $id;
         }
         $view_url = build_url($view_map, get_module_zone('forumview'));
@@ -503,7 +503,7 @@ class Module_admin_cns_forums extends Source_standard_crud_module
         $huge = ($GLOBALS['FORUM_DB']->get_table_count_approx('f_forums') > intval(get_option('general_safety_listing_limit')));
 
         $all_forums = [];
-        $forums = $this->get_forum_tree(db_get_first_id(), $GLOBALS['FORUM_DB']->query_select_value('f_forums', 'f_name', ['id' => db_get_first_id()]), $all_forums, 0, 1, null, null, $huge);
+        $forums = $this->get_forum_tree(db_get_first_id($GLOBALS['FORUM_DB']->driver), $GLOBALS['FORUM_DB']->query_select_value('f_forums', 'f_name', ['id' => db_get_first_id($GLOBALS['FORUM_DB']->driver)]), $all_forums, 0, 1, null, null, $huge);
 
         if ($huge) {
             $reorder_url = new Tempcode();
@@ -571,7 +571,7 @@ class Module_admin_cns_forums extends Source_standard_crud_module
 
         $id = intval($_id);
 
-        if ($id == db_get_first_id()) {
+        if ($id == db_get_first_id($GLOBALS['FORUM_DB']->driver)) {
             return false;
         }
 
@@ -632,7 +632,7 @@ class Module_admin_cns_forums extends Source_standard_crud_module
         $fields = $this->get_form_fields($r['id'], $r['f_name'], get_translated_text($r['f_description'], $GLOBALS['FORUM_DB']), $r['f_forum_grouping_id'], $r['f_parent_forum_id'], $r['f_position'], $r['f_post_count_increment'], $r['f_order_sub_alpha'], get_translated_text($r['f_intro_question'], $GLOBALS['FORUM_DB']), $r['f_intro_answer'], $r['f_redirection'], $r['f_order'], $r['f_is_threaded'], $r['f_allows_anonymous_posts'], $r['f_mail_email_address'], $r['f_mail_server_type'], $r['f_mail_server_host'], $r['f_mail_server_port'], $r['f_mail_folder'], $r['f_mail_username'], $r['f_mail_password'], $r['f_mail_nonmatch_policy'], $r['f_mail_unconfirmed_notice'], $r['f_poll_default_options_xml']);
 
         $delete_fields = new Tempcode();
-        if (intval($id) != db_get_first_id()) {
+        if (intval($id) != db_get_first_id($GLOBALS['FORUM_DB']->driver)) {
             $default_delete_forum_id = ($r['f_parent_forum_id'] === null) ? null : strval($r['f_parent_forum_id']);
             $default_delete_forum_label = ($r['f_parent_forum_id'] === null) ? null : $GLOBALS['FORUM_DB']->query_select_value_if_there('f_forums', 'f_name', ['id' => $r['f_parent_forum_id']]);
             $delete_fields->attach(form_input_tree_list(do_lang_tempcode('TARGET'), do_lang_tempcode('DESCRIPTION_TOPIC_MOVE_TARGET'), 'target_forum', null, 'choose_forum', [], true, $default_delete_forum_id, false, null, false, $default_delete_forum_label));

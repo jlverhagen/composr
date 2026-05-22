@@ -498,7 +498,7 @@ PHP;
 
         $symbols = null;
         if (get_option('allow_alpha_search') == '1') {
-            $alpha_query = $GLOBALS['FORUM_DB']->query('SELECT m_username FROM ' . $GLOBALS['FORUM_DB']->get_table_prefix() . 'f_members WHERE id<>' . strval(db_get_first_id()) . ' ORDER BY m_username ASC');
+            $alpha_query = $GLOBALS['FORUM_DB']->query('SELECT m_username FROM ' . $GLOBALS['FORUM_DB']->get_table_prefix() . 'f_members WHERE id<>' . strval(db_get_first_id($GLOBALS['FORUM_DB']->driver)) . ' ORDER BY m_username ASC');
             $symbols = [['START' => '0', 'SYMBOL' => do_lang('ALL')], ['START' => '0', 'SYMBOL' => '#']];
             foreach (['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z'] as $s) {
                 foreach ($alpha_query as $i => $q) {

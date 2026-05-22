@@ -240,9 +240,9 @@ class Module_topicview
         }
 
         if ($id === null) { // Just inline personal posts
-            $root_forum_name = $GLOBALS['FORUM_DB']->query_select_value('f_forums', 'f_name', ['id' => db_get_first_id()]);
+            $root_forum_name = $GLOBALS['FORUM_DB']->query_select_value('f_forums', 'f_name', ['id' => db_get_first_id($GLOBALS['FORUM_DB']->driver)]);
             $breadcrumbs = [];
-            $breadcrumbs[] = [build_page_link(['page' => 'forumview', 'id' => db_get_first_id()], get_module_zone('forumview')), $root_forum_name];
+            $breadcrumbs[] = [build_page_link(['page' => 'forumview', 'id' => db_get_first_id($GLOBALS['FORUM_DB']->driver)], get_module_zone('forumview')), $root_forum_name];
             $breadcrumbs[] = ['', do_lang_tempcode('INLINE_PERSONAL_POSTS')];
             breadcrumb_set_parents($breadcrumbs);
         }

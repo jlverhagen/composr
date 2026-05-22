@@ -67,7 +67,7 @@ class Source_database_connector
      * @param  string $db_password The connection password
      * @param  string $table_prefix The table prefix
      * @param  boolean $fail_ok Whether to on error echo an error and return with a null, rather than giving a critical error
-     * @param  ?object $static Static call object (null: use global static call object)
+     * @param  ?object $static The database driver to use (null: use global database driver)
      */
     public function __construct(string $db_name, string $db_host, string $db_user, string $db_password, string $table_prefix, bool $fail_ok = false, ?object $static = null)
     {
@@ -92,8 +92,10 @@ class Source_database_connector
 
         if ($static !== null) {
             $this->driver = $static;
-        } else {
+        } elseif (is_object($GLOBALS['DB_DRIVER'])) {
             $this->driver = $GLOBALS['DB_DRIVER'];
+        } else {
+            warn_exit('INTERNAL_ERROR', escape_html('TODO'));
         }
     }
 

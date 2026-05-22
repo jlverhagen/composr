@@ -76,7 +76,7 @@ function mass_set_page_access(array $no_guest_permissions, array $only_admin_per
         foreach ($no_guest_permissions as $page) {
             $GLOBALS['SITE_DB']->query_delete('group_page_access', ['page_name' => $page, 'zone_name' => $zone]);
 
-            $GLOBALS['SITE_DB']->query_insert('group_page_access', ['page_name' => $page, 'zone_name' => $zone, 'group_id' => db_get_first_id()]);
+            $GLOBALS['SITE_DB']->query_insert('group_page_access', ['page_name' => $page, 'zone_name' => $zone, 'group_id' => db_get_first_id($GLOBALS['FORUM_DB']->driver)]);
         }
 
         $usergroups = $GLOBALS['FORUM_DRIVER']->get_usergroup_list(false, true);

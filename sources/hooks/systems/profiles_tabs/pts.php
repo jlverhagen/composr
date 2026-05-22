@@ -77,12 +77,12 @@ class Hook_profiles_tabs_pts
         $id = null;
         $current_filter_cat = get_param_string('category', '');
 
-        $root = get_param_integer('keep_forum_root', db_get_first_id());
+        $root = get_param_integer('keep_forum_root', db_get_first_id($GLOBALS['FORUM_DB']->driver));
 
         require_code('templates_pagination');
         list($max, $start, $sort, $sql_sup, $sql_sup_order_by, $true_start, , $keyset_clause, $keyset_field) = get_keyset_pagination_settings('forum_max', intval(get_option('private_topics_per_page')), 'forum_start', 'kfs', 'forum_sort', 'last_post', 'get_forum_sort_order');
 
-        $root = db_get_first_id();
+        $root = db_get_first_id($GLOBALS['FORUM_DB']->driver);
 
         if ($member_id_of != $member_id_viewing) {
             $username = $GLOBALS['FORUM_DRIVER']->get_username($member_id_of);

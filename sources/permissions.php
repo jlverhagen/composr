@@ -606,7 +606,7 @@ function get_permission_where_clause_groups(int $member_id, bool $consider_clubs
     }
     if ($out == '') {
         if ((!$consider_clubs) && (get_forum_type() == 'cns')) {
-            return $field_prefix . 'group_id=' . strval(db_get_first_id()); // Hmm, user was just put in a club! :S
+            return $field_prefix . 'group_id=' . strval(db_get_first_id($GLOBALS['FORUM_DB']->driver)); // Hmm, user was just put in a club! :S
         }
         fatal_exit(do_lang_tempcode('MEMBER_NO_GROUP')); // Shouldn't happen
     }

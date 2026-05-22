@@ -320,7 +320,7 @@ class Hook_commandr_fs_forums extends Source_resource_fs_base
                 return false;
             }
             if ($category == '') { // Can't create more than one root
-                $category = strval(db_get_first_id());
+                $category = strval(db_get_first_id($GLOBALS['FORUM_DB']->driver));
                 /*return false;*/
             }
 

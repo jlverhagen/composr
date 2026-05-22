@@ -905,7 +905,7 @@ class Source_forum_driver_none extends Source_forum_driver_base
     protected function _get_members_groups(int $member_id) : array
     {
         if ($member_id == 1) {
-            return [db_get_first_id() + 1];
+            return [db_get_first_id($GLOBALS['FORUM_DB']->driver) + 1];
         }
         return [0];
     }

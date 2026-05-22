@@ -62,7 +62,7 @@ function do_comcode_attachments(string $comcode, string $type = 'null', string $
     if ($for_member !== null) {
         $member_id = $for_member;
     } else {
-        $member_id = function_exists('get_member') ? get_member() : db_get_first_id();
+        $member_id = function_exists('get_member') ? get_member() : db_get_first_id($GLOBALS['FORUM_DB']->driver);
     }
     if ($insert_as_admin === null) {
         $insert_as_admin = false;

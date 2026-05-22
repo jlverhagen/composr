@@ -424,7 +424,7 @@ class Module_admin_newsletter extends Source_standard_crud_module
 
                 $groups = $GLOBALS['FORUM_DRIVER']->get_usergroup_list();
                 foreach ($groups as $group_id => $group) {
-                    if ($group_id != db_get_first_id()) {
+                    if ($group_id != db_get_first_id($GLOBALS['FORUM_DB']->driver)) {
                         $_key = 'g' . strval($group_id);
                         $subscriber_count = $this->_count_on_newsletter($_key, $lang);
                         if ($subscriber_count != 0) {
@@ -1102,7 +1102,7 @@ class Module_admin_newsletter extends Source_standard_crud_module
 
             $groups = $GLOBALS['FORUM_DRIVER']->get_usergroup_list();
             foreach ($groups as $group_id => $group) {
-                if ($group_id != db_get_first_id()) {
+                if ($group_id != db_get_first_id($GLOBALS['FORUM_DB']->driver)) {
                     $key = 'g' . strval($group_id);
 
                     $send_to = (post_param_integer($key, empty($send_details[$key]) ? 0 : 1) == 1);

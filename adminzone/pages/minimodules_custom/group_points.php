@@ -69,7 +69,7 @@ $group_points = get_group_points();
 $fields = new Tempcode();
 
 foreach ($groups as $group_id => $group_name) {
-    if ($group_id == db_get_first_id()) {
+    if ($group_id == db_get_first_id($GLOBALS['FORUM_DB']->driver)) {
         continue;
     }
 

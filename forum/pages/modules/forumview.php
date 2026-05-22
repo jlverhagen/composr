@@ -117,7 +117,7 @@ class Module_forumview
         inform_non_canonical_parameter('#^kfs_.*$#');
 
         if ($type != 'pt') {
-            $id = get_param_integer('id', db_get_first_id());
+            $id = get_param_integer('id', db_get_first_id($GLOBALS['FORUM_DB']->driver));
 
             $_forum_info = $GLOBALS['FORUM_DB']->query_select('f_forums', ['*'], ['id' => $id], '', 1, 0, false);
             if (!array_key_exists(0, $_forum_info)) {
@@ -164,10 +164,10 @@ class Module_forumview
         if ($type == 'pt') {
             $this->title = get_screen_title('PRIVATE_TOPICS');
 
-            $root = get_param_integer('keep_forum_root', db_get_first_id());
+            $root = get_param_integer('keep_forum_root', db_get_first_id($GLOBALS['FORUM_DB']->driver));
             $root_forum_name = $GLOBALS['FORUM_DB']->query_select_value('f_forums', 'f_name', ['id' => $root]);
             $breadcrumbs = [];
-            $breadcrumbs[] = [build_page_link(['page' => '_SELF', 'id' => ($root == db_get_first_id()) ? null : $root], '_SELF'), $root_forum_name];
+            $breadcrumbs[] = [build_page_link(['page' => '_SELF', 'id' => ($root == db_get_first_id($GLOBALS['FORUM_DB']->driver)) ? null : $root], '_SELF'), $root_forum_name];
             $of_member_id = get_param_integer('id', get_member());
             $pt_username = $GLOBALS['FORUM_DRIVER']->get_username($of_member_id);
             $pt_displayname = $GLOBALS['FORUM_DRIVER']->get_username($of_member_id, true);
@@ -192,7 +192,7 @@ class Module_forumview
 
         $current_filter_cat = get_param_string('category', '');
 
-        $root = get_param_integer('keep_forum_root', db_get_first_id());
+        $root = get_param_integer('keep_forum_root', db_get_first_id($GLOBALS['FORUM_DB']->driver));
 
         if ($type == 'pt') { // Not used anymore by default, but code still here
             $id = null;

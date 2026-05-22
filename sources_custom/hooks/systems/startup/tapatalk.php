@@ -87,13 +87,13 @@ class Hook_startup_tapatalk
                             }
                             break;
                         case 'browse':
-                            $id = get_param_integer('id', db_get_first_id());
+                            $id = get_param_integer('id', db_get_first_id($GLOBALS['FORUM_DB']->driver));
 
                             require_code('templates_pagination');
                             require_code('cns_forumview');
                             list($max, , , , , $start) = get_keyset_pagination_settings('forum_max', intval(get_option('forum_topics_per_page')), 'forum_start', 'kfs' . strval($id), 'forum_sort', 'last_post', 'get_forum_sort_order');
 
-                            if ($id == db_get_first_id()) {
+                            if ($id == db_get_first_id($GLOBALS['FORUM_DB']->driver)) {
                                 $page_type = 'home';
                             } else {
                                 $page_type = 'forum';

@@ -1595,6 +1595,10 @@ Note that all of these except URL monikers require the [tt]commandr[/tt] addon f
 			<td>{$PRIVACY_POLICY_DATE}</td>
 			<td>Returns the timestamp on which the Privacy Policy page (or the automatic Privacy Policy) was last modified.</td>
 		</tr>
+		<tr style="background: #FFDDDD">
+			<td>{$DB_FIRST_ID,1}</td>
+			<td>Returns the first numerical ID of the site database (or the forum database if '1' is passed as the first parameter).</td>
+		</tr>
 	</tbody>
 </table>
 [/html]

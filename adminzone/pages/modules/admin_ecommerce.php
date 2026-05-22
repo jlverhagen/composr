@@ -242,7 +242,7 @@ class Module_admin_ecommerce extends Source_standard_crud_module
         }
 
         $sql = 'SELECT id,g_name FROM ' . $GLOBALS['FORUM_DB']->get_table_prefix() . 'f_groups';
-        $sql .= ' WHERE id<>' . strval(db_get_first_id());
+        $sql .= ' WHERE id<>' . strval(db_get_first_id($GLOBALS['FORUM_DB']->driver));
         $sql .= ' AND g_is_super_admin=0';
         $sql .= ' AND g_is_super_moderator=0';
         $sql .= ' AND g_is_presented_at_install=0';

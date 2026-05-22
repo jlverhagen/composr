@@ -1086,7 +1086,7 @@ function install_cns(?float $upgrade_from = null)
 
         $test = $GLOBALS['FORUM_DB']->query_select_value_if_there('f_groups', 'id', ['g_is_default' => 1]);
         if ($test === null) {
-            $GLOBALS['FORUM_DB']->query_update('f_groups', ['g_is_default' => 1], ['id' => db_get_first_id() + 8], '', 1);
+            $GLOBALS['FORUM_DB']->query_update('f_groups', ['g_is_default' => 1], ['id' => db_get_first_id($GLOBALS['FORUM_DB']->driver) + 8], '', 1);
         }
 
         $GLOBALS['FORUM_DB']->create_table('f_group_approvals', [

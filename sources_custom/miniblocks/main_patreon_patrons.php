@@ -44,7 +44,7 @@ if (empty($patreon_patrons)) {
         require_code('lorem');
 
         $map = [
-            'p_member_id' => db_get_first_id() + 1,
+            'p_member_id' => db_get_first_id($GLOBALS['FORUM_DB']->driver) + 1,
             'p_tier' => lorem_word(),
             'p_id' => placeholder_number(),
             'p_monthly' => placeholder_number(),

@@ -253,7 +253,7 @@ function cns_make_post(int $topic_id, string $title, string $post, int $skip_sig
         'p_title' => cms_mb_substr($title, 0, 255),
         'p_ip_address' => $ip_address,
         'p_time' => $time,
-        'p_posting_member' => $anonymous ? db_get_first_id() : $poster,
+        'p_posting_member' => $anonymous ? db_get_first_id($GLOBALS['FORUM_DB']->driver) : $poster,
         'p_poster_name_if_guest' => cms_mb_substr($poster_name_if_guest, 0, 80),
         'p_validated' => $validated,
         'p_topic_id' => $topic_id,
@@ -281,7 +281,7 @@ function cns_make_post(int $topic_id, string $title, string $post, int $skip_sig
         } else {
             $map['p_post'] = '';
             $map['p_post__text_parsed'] = '';
-            $map['p_post__source_user'] = db_get_first_id();
+            $map['p_post__source_user'] = db_get_first_id($GLOBALS['FORUM_DB']->driver);
         }
     }
 
@@ -305,7 +305,7 @@ function cns_make_post(int $topic_id, string $title, string $post, int $skip_sig
 
         cms_profile_start_for('cns_make_post:dispatch_member_mention_notifications');
         require_code('member_mentions');
-        dispatch_member_mention_notifications('post', strval($post_id), $anonymous ? db_get_first_id() : $poster);
+        dispatch_member_mention_notifications('post', strval($post_id), $anonymous ? db_get_first_id($GLOBALS['FORUM_DB']->driver) : $poster);
         cms_profile_end_for('cns_make_post:dispatch_member_mention_notifications');
     }
 
@@ -317,7 +317,7 @@ function cns_make_post(int $topic_id, string $title, string $post, int $skip_sig
             require_code('notifications');
             $subject = do_lang('POST_REQUIRING_VALIDATION_MAIL_SUBJECT', $topic_title, null, null, get_site_default_lang());
             $post_text = get_translated_text($map['p_post'], $GLOBALS['FORUM_DB'], get_site_default_lang());
-            $mail = do_notification_lang('POST_REQUIRING_VALIDATION_MAIL', comcode_escape($url), comcode_escape($poster_name_if_guest), [$post_text, $poster_name_if_guest, strval($anonymous ? db_get_first_id() : $poster)]);
+            $mail = do_notification_lang('POST_REQUIRING_VALIDATION_MAIL', comcode_escape($url), comcode_escape($poster_name_if_guest), [$post_text, $poster_name_if_guest, strval($anonymous ? db_get_first_id($GLOBALS['FORUM_DB']->driver) : $poster)]);
             Source_notification_dispatcher::dispatch_notification('needs_validation', null, $subject, $mail, null, $poster, ['use_real_from' => true]);
         }
     } else {
@@ -328,13 +328,13 @@ function cns_make_post(int $topic_id, string $title, string $post, int $skip_sig
             if ($whisper_to_member !== null) {
                 require_code('notifications');
                 $msubject = do_lang('NEW_PERSONAL_POST_SUBJECT', $topic_title, null, null, get_lang($whisper_to_member));
-                $mmessage = do_notification_lang('NEW_PERSONAL_POST_MESSAGE', comcode_escape($GLOBALS['FORUM_DRIVER']->get_username($anonymous ? db_get_first_id() : $poster, true)), comcode_escape($topic_title), [comcode_escape($url), $post_comcode, $poster_name_if_guest, get_lang($whisper_to_member), strval($anonymous ? db_get_first_id() : $poster)]);
+                $mmessage = do_notification_lang('NEW_PERSONAL_POST_MESSAGE', comcode_escape($GLOBALS['FORUM_DRIVER']->get_username($anonymous ? db_get_first_id($GLOBALS['FORUM_DB']->driver) : $poster, true)), comcode_escape($topic_title), [comcode_escape($url), $post_comcode, $poster_name_if_guest, get_lang($whisper_to_member), strval($anonymous ? db_get_first_id($GLOBALS['FORUM_DB']->driver) : $poster)]);
                 $use_real_from = ($GLOBALS['FORUM_DRIVER']->get_member_row_field($poster, 'm_allow_emails') == 1);
-                Source_notification_dispatcher::dispatch_notification('cns_new_pt', null, $msubject, $mmessage, [$whisper_to_member], $anonymous ? db_get_first_id() : $poster);
+                Source_notification_dispatcher::dispatch_notification('cns_new_pt', null, $msubject, $mmessage, [$whisper_to_member], $anonymous ? db_get_first_id($GLOBALS['FORUM_DB']->driver) : $poster);
             } else {
                 require_code('cns_posts_action2');
                 cms_profile_start_for('cns_make_post:cns_send_topic_notification');
-                cns_send_topic_notification($url, $topic_id, $post_id, $forum_id, $anonymous ? db_get_first_id() : $poster, $is_starter, $post_comcode, $topic_title, $whisper_to_member/*limits to this*/, $is_pt, null, null, $poster_name_if_guest);
+                cns_send_topic_notification($url, $topic_id, $post_id, $forum_id, $anonymous ? db_get_first_id($GLOBALS['FORUM_DB']->driver) : $poster, $is_starter, $post_comcode, $topic_title, $whisper_to_member/*limits to this*/, $is_pt, null, null, $poster_name_if_guest);
                 cms_profile_end_for('cns_make_post:cns_send_topic_notification');
             }
         }

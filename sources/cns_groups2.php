@@ -197,7 +197,7 @@ function get_all_preserved_groups(bool $only_preserve_first_admin_groups = false
 {
     require_code('cns_groups');
     $all_groups_to_preserve = [];
-    $all_groups_to_preserve[] = db_get_first_id();
+    $all_groups_to_preserve[] = db_get_first_id($GLOBALS['FORUM_DB']->driver);
     $probation_group = get_probation_group();
     if ($probation_group !== null) {
         $all_groups_to_preserve[] = $probation_group;

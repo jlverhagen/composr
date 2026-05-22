@@ -297,7 +297,7 @@ function cns_member_external_linker(string $type, string $username, string $pass
         $test = $GLOBALS['FORUM_DB']->query_select_value_if_there('f_members', 'm_username', ['m_email_address' => $email_address]);
         if ($test !== null) {
             global $MEMBER_CACHED;
-            $MEMBER_CACHED = db_get_first_id();
+            $MEMBER_CACHED = db_get_first_id($GLOBALS['FORUM_DB']->driver);
             $reset_url = build_url(['page' => 'lost_password', 'email' => $email_address], get_module_zone('lost_password'));
             warn_exit(do_lang_tempcode('EMAIL_ADDRESS_IN_USE', escape_html(get_site_name()), escape_html($reset_url->evaluate())));
         }
@@ -746,7 +746,7 @@ function cns_get_member_fields_settings(bool $mini_mode = true, string $special_
             $usergroup_list = new Tempcode();
             $lgroups = $GLOBALS['CNS_DRIVER']->get_usergroup_list(true, true, false, [], null, true);
             foreach ($lgroups as $key => $val) {
-                if ($key != db_get_first_id()) {
+                if ($key != db_get_first_id($GLOBALS['FORUM_DB']->driver)) {
                     $usergroup_list->attach(form_input_list_entry(strval($key), ($pt_allow == '*') || (!empty(array_intersect([strval($key)], explode(',', $pt_allow)))), $val));
                 }
             }
@@ -765,7 +765,7 @@ function cns_get_member_fields_settings(bool $mini_mode = true, string $special_
         $_groups = new Tempcode();
         $current_primary_group = null;
         foreach ($rows as $group) {
-            if ($group['id'] != db_get_first_id()) {
+            if ($group['id'] != db_get_first_id($GLOBALS['FORUM_DB']->driver)) {
                 $selected = ($group['id'] == $primary_group) || (($primary_group === null) && ($group['id'] == $default_primary_group));
                 if ($selected) {
                     $current_primary_group = $group['id'];
@@ -805,7 +805,7 @@ function cns_get_member_fields_settings(bool $mini_mode = true, string $special_
                     continue;
                 }
 
-                if (($group['id'] != db_get_first_id()) && ((array_key_exists($group['id'], $members_groups)) || (has_privilege(get_member(), 'assume_any_member')) || ($group['g_open_membership'] == 1))) {
+                if (($group['id'] != db_get_first_id($GLOBALS['FORUM_DB']->driver)) && ((array_key_exists($group['id'], $members_groups)) || (has_privilege(get_member(), 'assume_any_member')) || ($group['g_open_membership'] == 1))) {
                     $selected = array_key_exists($group['id'], $members_groups) && ($group['id'] != $current_primary_group);
                     $_groups2->attach(form_input_list_entry(strval($group['id']), $selected, get_translated_text($group['g_name'], $GLOBALS['FORUM_DB'])));
                 }

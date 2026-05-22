@@ -43,7 +43,7 @@ class Hook_implicit_usergroups_under18s
         require_code('cns_groups');
         $probation_group_id = get_probation_group(); // Customise as required
         if ($probation_group_id === null) {
-            $probation_group_id = db_get_first_id(); // Guests then
+            $probation_group_id = db_get_first_id($GLOBALS['FORUM_DB']->driver); // Guests then
         }
         return [$probation_group_id];
     }
