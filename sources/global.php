@@ -37,14 +37,36 @@
  */
 
 // NB: bootstrap should have loaded $SITE_INFO already, but bootstrap does not actually check if it's missing because it's not critical until global.php
+// You should update these strings with the critical_error function.
 global $SITE_INFO;
 if (!is_array($SITE_INFO) || (count($SITE_INFO) == 0) || (empty($SITE_INFO))) {
     if (!is_file($FILE_BASE . '/_config.php')) {
-        critical_error('_CONFIG.PHP_MISSING');
+        $install_url = 'install.php';
+        if (!file_exists($install_url)) {
+            $install_url = '../install.php';
+        }
+        if (file_exists($install_url)) {
+            $error = '<div>The top-level configuration file is missing, but we detected the installer, so you may wish to <a href="' . $install_url . '">run the installer</a>.</div>';
+            $error_log = '';
+        } else {
+            $error = '<div>The top-level configuration file is missing and must be recovered from a backup or an official software release.</div>';
+        }
+        exit($error);
     } elseif (strlen(trim(file_get_contents($FILE_BASE . '/_config.php'))) == 0) {
-        critical_error('_CONFIG.PHP_EMPTY');
+        $install_url = 'install.php';
+        if (!file_exists($install_url)) {
+            $install_url = '../install.php';
+        }
+        if (file_exists($install_url)) {
+            $error = '<div>The top-level configuration file is empty or cannot be accessed, but we detected the installer, so you may wish to <a href="' . $install_url . '">run the installer</a>.</div>';
+            $error_log = '';
+        } else {
+            $error = '<div>The top-level configuration file is empty or cannot be accessed. Permissions for the file must be fixed, or the file must be recovered from a backup or official software release.</div>';
+        }
+        exit($error);
     } else {
-        critical_error('_CONFIG.PHP_CORRUPTED');
+        $error = '<div>The top-level configuration file appears to be corrupt. Perhaps it was incorrectly uploaded, or a typo was made. It must be valid PHP code.</div>';
+        exit($error);
     }
 }
 
