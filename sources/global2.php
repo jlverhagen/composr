@@ -2555,6 +2555,10 @@ function current_fatalistic() : int
  */
 function check_rate_limit()
 {
+    // TODO: fundamentally broken; I don't have time to fix it for 11 beta9
+    return;
+
+    /*
     static $already_checked = false;
     if ($already_checked === true) {
         return;
@@ -2620,4 +2624,5 @@ function check_rate_limit()
         unset($db);
         unset($db_driver);
     //}
+    */
 }
