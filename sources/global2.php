@@ -368,14 +368,14 @@ function init__global2()
     // More critical things
     require_code('caches');
     require_code('database'); // There's nothing without the database
+    connect_site_db(); // TODO: we do not want to load the database before the rate limit. However, this would require refactoring the database API code.
+    check_rate_limit();
     require_code('config'); // Config is needed for much active stuff
     if ((!isset($SITE_INFO['known_suexec'])) || ($SITE_INFO['known_suexec'] == '0')) {
         if (ip_banned(get_ip_address())) {
             critical_error('BANNED');
         }
     }
-
-    check_rate_limit();
 
     // Set CSP to what is truly configured
     load_csp();

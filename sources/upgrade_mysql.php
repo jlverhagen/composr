@@ -124,6 +124,7 @@ function _upgrader_data_integrity_screen() : string
     }
 
     require_code('database');
+    connect_site_db();
 
     cms_extend_time_limit(TIME_LIMIT_EXTEND__CRAWL);
 
