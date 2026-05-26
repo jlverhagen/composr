@@ -59,8 +59,6 @@ function init__users()
     $IS_ACTUALLY = null;
     global $IS_A_COOKIE_LOGIN;
     $IS_A_COOKIE_LOGIN = false;
-    global $DOING_USERS_INIT;
-    $DOING_USERS_INIT = true;
     global $IS_VIA_BACKDOOR;
     $IS_VIA_BACKDOOR = false;
     global $DID_CHANGE_SESSION_ID;
@@ -68,39 +66,25 @@ function init__users()
     global $SESSION_IS_NEW;
     $SESSION_IS_NEW = false;
 
-    // Load all sessions into memory, if possible
+    // Load all sessions into memory, if using persistent cache
     if (get_option('session_prudence') == '0' && function_exists('persistent_cache_get')) {
         $SESSION_CACHE = persistent_cache_get('SESSION_CACHE');
     } else {
         $SESSION_CACHE = null;
     }
+
     global $IN_MINIKERNEL_VERSION;
     if (!is_array($SESSION_CACHE)) {
         $SESSION_CACHE = [];
+
         if (!$IN_MINIKERNEL_VERSION) {
-            if (get_option('session_prudence') == '0') {
-                $where = 'last_activity_time>=' . strval(time() - 60 * 60 * max(1, intval(get_option('session_expiry_time'))));
-            } else {
-                $where = db_string_equal_to('the_session', get_session_id()) . ' OR ' . db_string_equal_to('ip', get_ip_address(3));
-            }
-            if ((get_forum_type() == 'cns') && (!is_on_multi_site_network())) {
-                push_db_scope_check(false);
-                $_s = $GLOBALS['SITE_DB']->query('SELECT s.*,m.m_primary_group FROM ' . get_table_prefix() . 'sessions s LEFT JOIN ' . $GLOBALS['SITE_DB']->get_table_prefix() . 'f_members m ON m.id=s.member_id WHERE ' . $where . ' ORDER BY last_activity_time DESC', null, 0, true, true); // Suppress errors in case table does not exist yet
-                if ($_s === null) {
-                    $_s = [];
-                }
-                $SESSION_CACHE = list_to_map('the_session', $_s);
-                pop_db_scope_check();
-            } else {
-                $SESSION_CACHE = list_to_map('the_session', $GLOBALS['SITE_DB']->query('SELECT * FROM ' . get_table_prefix() . 'sessions WHERE ' . $where . ' ORDER BY last_activity_time DESC'));
-            }
+            get_session_id(); // This will load our session from the database (if necessary) and validate our session.
+
             if (get_option('session_prudence') == '0' && function_exists('persistent_cache_set')) {
                 persistent_cache_set('SESSION_CACHE', $SESSION_CACHE);
             }
         }
     }
-
-    $DOING_USERS_INIT = null;
 }
 
 /**
@@ -641,7 +625,7 @@ function get_displayname(string $username) : string
 /**
  * Get the current session ID.
  *
- * @param  boolean $ignore_static_cache Whether to ignore the fact there may be a static cache; used to get true session ID during authentication code to break a paradoxs
+ * @param  boolean $ignore_static_cache Whether to ignore the fact there may be a static cache; used to get true session ID during authentication code to break a paradox
  * @param  boolean $ignore_ip_validation Whether to ignore IP validation when getting the session; always ignored if the IP address is the server
  * @return ID_TEXT The current session ID (blank: none)
  */
@@ -651,8 +635,6 @@ function get_session_id(bool $ignore_static_cache = false, bool $ignore_ip_valid
 
     global $SESSION_CACHE, $IN_MINIKERNEL_VERSION;
 
-    $cookie_var = get_session_cookie();
-
     if (!empty($GLOBALS['INVALIDATED_FAST_SPIDER_CACHE'])) {
         $ignore_static_cache = true;
     }
@@ -661,64 +643,70 @@ function get_session_id(bool $ignore_static_cache = false, bool $ignore_ip_valid
     if (array_key_exists('keep_session', $_GET)) {
         $ret = get_param_string('keep_session');
 
-        // No validation in kinikernel
-        if ($IN_MINIKERNEL_VERSION) {
-            return $ret;
-        }
-
-        // Do not allow using invalid or expired session IDs passed in
-        if (!isset($SESSION_CACHE[$ret])) {
+        if (!validate_session($ret, $ignore_ip_validation)) {
             return '';
-        }
-
-        // No expired sessions
-        if ($SESSION_CACHE[$ret]['last_activity_time'] < time() - intval(60.0 * 60.0 * max(0.017, floatval(get_option('session_expiry_time'))))) {
-            return '';
-        }
-
-        // IP validation
-        if ((!$ignore_ip_validation) && (!is_our_server())) {
-            if (((get_option('ip_strict_for_sessions') == '1') || (is_guest())) && ($SESSION_CACHE[$ret]['ip'] != get_ip_address(3))) {
-                return '';
-            }
         }
 
         return $ret;
     }
 
     // Cookie sessions take priority
+    $cookie_var = get_session_cookie();
     if (isset($_COOKIE[$cookie_var])) {
         $ret = $_COOKIE[$cookie_var];
         if ((!$ignore_static_cache) && (substr($ret, 0, 1) == '[') && (substr($ret, -1) == ']') && (can_static_cache_request())) {
             return ''; // Shy session, so we do not retrieve it
         }
 
-        // No validation in kinikernel
-        if ($IN_MINIKERNEL_VERSION) {
-            return $ret;
-        }
-
-        // Do not allow using invalid or expired session IDs passed in
-        if (!isset($SESSION_CACHE[$ret])) {
+        if (!validate_session($ret, $ignore_ip_validation)) {
             return '';
-        }
-
-        // No expired sessions
-        if ($SESSION_CACHE[$ret]['last_activity_time'] < time() - intval(60.0 * 60.0 * max(0.017, floatval(get_option('session_expiry_time'))))) {
-            return '';
-        }
-
-        // IP validation
-        if ((!$ignore_ip_validation) && (!is_our_server())) {
-            if (((get_option('ip_strict_for_sessions') == '1') || (is_guest())) && ($SESSION_CACHE[$ret]['ip'] != get_ip_address(3))) {
-                return '';
-            }
         }
 
         return $ret;
     }
 
     return '';
+}
+
+/**
+ * Check whether a session is valid.
+ * This function removes the session from the cache if it is invalid.
+ *
+ * @param  ID_TEXT $session_id The session to check
+ * @param  boolean $ignore_ip_validation Whether to ignore IP validation when getting the session; always ignored if the IP address is the server
+ * @return boolean Whether the session is valid
+ */
+function validate_session(string $session_id, $ignore_ip_validation) : bool
+{
+    global $SESSION_CACHE, $IN_MINIKERNEL_VERSION;
+
+    // No validation in kinikernel; assume it is valid
+    if ($IN_MINIKERNEL_VERSION) {
+        return true;
+    }
+
+    if (!isset($SESSION_CACHE[$session_id])) {
+        load_session_from_database($session_id, get_ip_address(3));
+        if (!isset($SESSION_CACHE[$session_id])) {
+            return false;
+        }
+    }
+
+    // No expired sessions
+    if ($SESSION_CACHE[$session_id]['last_activity_time'] < time() - intval(60.0 * 60.0 * max(0.017, floatval(get_option('session_expiry_time'))))) {
+        unset($SESSION_CACHE[$session_id]);
+        return false;
+    }
+
+    // IP validation
+    if ((!$ignore_ip_validation) && (!is_our_server())) {
+        if (((get_option('ip_strict_for_sessions') == '1') || (is_guest())) && ($SESSION_CACHE[$session_id]['ip'] != get_ip_address(3))) {
+            unset($SESSION_CACHE[$session_id]);
+            return false;
+        }
+    }
+
+    return true;
 }
 
 /**
@@ -836,12 +824,30 @@ function delete_expired_sessions_or_recover(?int $member_id = null, bool $force_
         });
     }
 
+    global $SESSION_CACHE;
+
+    // We must load all member sessions into the cache if we want to recover a session.
+    if ($member_id !== null) {
+        if (!is_array($SESSION_CACHE)) {
+            $SESSION_CACHE = [];
+        }
+
+        if ((get_forum_type() == 'cns') && (!is_on_multi_site_network())) {
+            push_db_scope_check(false);
+            $_s = $GLOBALS['SITE_DB']->query('SELECT s.*,m.m_primary_group FROM ' . get_table_prefix() . 'sessions s LEFT JOIN ' . $GLOBALS['SITE_DB']->get_table_prefix() . 'f_members m ON m.id=s.member_id WHERE s.member_id=' . strval($member_id) . ' ORDER BY last_activity_time DESC', null, 0, true, true); // Suppress errors in case table does not exist yet
+            if ($_s === null) {
+                $_s = [];
+            }
+            $SESSION_CACHE += list_to_map('the_session', $_s);
+            pop_db_scope_check();
+        } else {
+            $SESSION_CACHE += list_to_map('the_session', $GLOBALS['SITE_DB']->query('SELECT * FROM ' . get_table_prefix() . 'sessions WHERE member_id=' . strval($member_id) . ' ORDER BY last_activity_time DESC'));
+        }
+    }
+
     // Look through sessions
     $dirty_session_cache = false;
-    global $SESSION_CACHE;
     $_session = null;
-    $num_guests = 0;
-    $num_members = 0;
     foreach ($SESSION_CACHE as $_session => $row) {
         if (is_integer($_session)) {
             $_session = strval($_session);
@@ -855,11 +861,6 @@ function delete_expired_sessions_or_recover(?int $member_id = null, bool $force_
         }
 
         $is_guest = ($row['member_id'] == $GLOBALS['FORUM_DRIVER']->get_guest_id());
-        if ($is_guest) {
-            $num_guests++;
-        } else {
-            $num_members++;
-        }
 
         // Get back to prior session if there was one (NB: we don't turn guest sessions into member sessions, as that would increase risk of there being a session fixation vulnerability)
         if (
@@ -867,7 +868,8 @@ function delete_expired_sessions_or_recover(?int $member_id = null, bool $force_
             ($new_session === null) &&
             ($row['member_id'] == $member_id) &&
             (((get_option('ip_strict_for_sessions') == '0') && (!$is_guest)) || ($row['ip'] == $ip)) &&
-            ($row['last_activity_time'] > time() - intval(60.0 * 60.0 * max(0.017, floatval(get_option('session_expiry_time')))))
+            ($row['last_activity_time'] > time() - intval(60.0 * 60.0 * max(0.017, floatval(get_option('session_expiry_time'))))) &&
+            validate_session($_session, true)
         ) {
             $new_session = $_session;
         }
@@ -877,6 +879,9 @@ function delete_expired_sessions_or_recover(?int $member_id = null, bool $force_
             persistent_cache_set('SESSION_CACHE', $SESSION_CACHE);
         }
     }
+
+    $num_guests = $GLOBALS['SITE_DB']->query_select_value('sessions', 'COUNT(the_session)', ['member_id' => $GLOBALS['FORUM_DRIVER']->get_guest_id()], ' AND last_activity_time>=' . strval(time() - intval(60.0 * 60.0 * max(0.017, floatval(get_option('session_expiry_time'))))));
+    $num_members = $GLOBALS['SITE_DB']->query_select_value('sessions', 'COUNT(the_session)', [], ' AND member_id<>' . strval($GLOBALS['FORUM_DRIVER']->get_guest_id()) . ' AND last_activity_time>=' . strval(time() - intval(60.0 * 60.0 * max(0.017, floatval(get_option('session_expiry_time'))))));
 
     return [$new_session, $num_members, $num_guests];
 }
@@ -1067,4 +1072,56 @@ function session_expiration_script()
         require_code('temporal');
         do_lang_tempcode('AJAX_SESSION_ABOUT_TO_EXPIRE', escape_html(get_timezoned_date_time($actual_session_expiry, false)))->evaluate_echo();
     }
+}
+
+/**
+ * Explicitly load a session row from the database into the cache.
+ * This does not validate the session. You should call validate_session after this to validate it.
+ *
+ * @param  ID_TEXT $session_id The session to load
+ * @param  ID_TEXT $ip_address The IP address of the session we want to load, for prudence (null: do not use prudence)
+ * @return ?array The session row (null: not found)
+ */
+function load_session_from_database(string $session_id, ?string $ip_address = null) : ?array
+{
+    global $SESSION_CACHE;
+    if (!is_array($SESSION_CACHE)) {
+        $SESSION_CACHE = [];
+    }
+
+    static $sessions_checked = [];
+
+    if (isset($sessions_checked[$session_id])) {
+        return (isset($SESSION_CACHE[$session_id])) ? $SESSION_CACHE[$session_id] : null;
+    }
+
+    if (isset($SESSION_CACHE[$session_id])) {
+        return $SESSION_CACHE[$session_id];
+    }
+
+    if ((get_option('session_prudence') == '0') || ($ip_address === null)) {
+        $where = db_string_equal_to('the_session', $session_id);
+    } else {
+        $where = db_string_equal_to('the_session', $session_id) . ' OR ' . db_string_equal_to('ip', $ip_address);
+    }
+
+    if ((get_forum_type() == 'cns') && (!is_on_multi_site_network())) {
+        push_db_scope_check(false);
+        $_s = $GLOBALS['SITE_DB']->query('SELECT s.*,m.m_primary_group FROM ' . get_table_prefix() . 'sessions s LEFT JOIN ' . $GLOBALS['SITE_DB']->get_table_prefix() . 'f_members m ON m.id=s.member_id WHERE ' . $where . ' ORDER BY last_activity_time DESC', null, 0, true, true); // Suppress errors in case table does not exist yet
+        if ($_s === null) {
+            $_s = [];
+        }
+        $SESSION_CACHE += list_to_map('the_session', $_s);
+        pop_db_scope_check();
+    } else {
+        $SESSION_CACHE += list_to_map('the_session', $GLOBALS['SITE_DB']->query('SELECT * FROM ' . get_table_prefix() . 'sessions WHERE ' . $where . ' ORDER BY last_activity_time DESC'));
+    }
+
+    $sessions_checked[$session_id] = true;
+
+    if (!isset($SESSION_CACHE[$session_id])) {
+        return null;
+    }
+
+    return $SESSION_CACHE[$session_id];
 }
