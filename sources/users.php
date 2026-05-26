@@ -826,22 +826,32 @@ function delete_expired_sessions_or_recover(?int $member_id = null, bool $force_
 
     global $SESSION_CACHE;
 
-    // We must load all member sessions into the cache if we want to recover a session.
+    // We must load all member sessions into the cache if we want to recover a session
     if ($member_id !== null) {
         if (!is_array($SESSION_CACHE)) {
             $SESSION_CACHE = [];
         }
 
+        $wants_guest = ($GLOBALS['FORUM_DRIVER']->get_guest_id() == $member_id);
+
         if ((get_forum_type() == 'cns') && (!is_on_multi_site_network())) {
             push_db_scope_check(false);
-            $_s = $GLOBALS['SITE_DB']->query('SELECT s.*,m.m_primary_group FROM ' . get_table_prefix() . 'sessions s LEFT JOIN ' . $GLOBALS['SITE_DB']->get_table_prefix() . 'f_members m ON m.id=s.member_id WHERE s.member_id=' . strval($member_id) . ' ORDER BY last_activity_time DESC', null, 0, true, true); // Suppress errors in case table does not exist yet
+            if ($wants_guest) {
+                $_s = $GLOBALS['SITE_DB']->query('SELECT s.*,m.m_primary_group FROM ' . get_table_prefix() . 'sessions s LEFT JOIN ' . $GLOBALS['SITE_DB']->get_table_prefix() . 'f_members m ON m.id=s.member_id WHERE ' . db_string_equal_to('s.ip', $ip) . ' AND s.member_id=' . strval($member_id) . ' ORDER BY last_activity_time DESC', null, 0, true, true); // Suppress errors in case table does not exist yet
+            } else {
+                $_s = $GLOBALS['SITE_DB']->query('SELECT s.*,m.m_primary_group FROM ' . get_table_prefix() . 'sessions s LEFT JOIN ' . $GLOBALS['SITE_DB']->get_table_prefix() . 'f_members m ON m.id=s.member_id WHERE s.member_id=' . strval($member_id) . ' ORDER BY last_activity_time DESC', null, 0, true, true); // Suppress errors in case table does not exist yet
+            }
             if ($_s === null) {
                 $_s = [];
             }
             $SESSION_CACHE += list_to_map('the_session', $_s);
             pop_db_scope_check();
         } else {
-            $SESSION_CACHE += list_to_map('the_session', $GLOBALS['SITE_DB']->query('SELECT * FROM ' . get_table_prefix() . 'sessions WHERE member_id=' . strval($member_id) . ' ORDER BY last_activity_time DESC'));
+            if ($wants_guest) {
+                $SESSION_CACHE += list_to_map('the_session', $GLOBALS['SITE_DB']->query('SELECT * FROM ' . get_table_prefix() . 'sessions WHERE ' . db_string_equal_to('ip', $ip) . ' AND member_id=' . strval($member_id) . ' ORDER BY last_activity_time DESC'));
+            } else {
+                $SESSION_CACHE += list_to_map('the_session', $GLOBALS['SITE_DB']->query('SELECT * FROM ' . get_table_prefix() . 'sessions WHERE member_id=' . strval($member_id) . ' ORDER BY last_activity_time DESC'));
+            }
         }
     }
 
@@ -1079,7 +1089,7 @@ function session_expiration_script()
  * This does not validate the session. You should call validate_session after this to validate it.
  *
  * @param  ID_TEXT $session_id The session to load
- * @param  ID_TEXT $ip_address The IP address of the session we want to load, for prudence (null: do not use prudence)
+ * @param  ID_TEXT $ip_address The IP address of the session we want to load with the last octave masked, for prudence (null: do not use prudence)
  * @return ?array The session row (null: not found)
  */
 function load_session_from_database(string $session_id, ?string $ip_address = null) : ?array
