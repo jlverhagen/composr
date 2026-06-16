@@ -79,6 +79,10 @@ class Hook_task_compile_api
                     continue;
                 }
 
+                if (strpos($path, 'sources/monolog/') !== false) {
+                    continue;
+                }
+
                 $files_to_process[] = $path;
             }
         }
