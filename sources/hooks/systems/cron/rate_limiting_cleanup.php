@@ -27,7 +27,7 @@
 /**
  * @license    http://opensource.org/licenses/cpal_1.0 Common Public Attribution License
  * @copyright  Christopher Graham
- * @package    core
+ * @package    core_rate_limiter
  */
 
 /**
@@ -70,25 +70,35 @@ class Hook_cron_rate_limiting_cleanup
         global $SITE_INFO;
 
         // We specifically use SQLite3 for rate limiting
-        require_code('database/sqlite3');
-        $db_driver = object_factory('Source_database_static_sqlite3', false, ['cms_']);
-        $db = object_factory('Source_database_connector', false, ['ratelimiting', '', '', '', 'cms_', false, $db_driver]);
+        $path = get_custom_file_base() . '/data_custom/sqlitedb/rate_limiter.sqlite';
 
-        // Quick test to make sure that we have a connection. Bail if we don't; we don't want to crash.
-        $results = $db->query_value_if_there('SELECT 1', true);
-        if ($results === null) {
+        if (!is_file($path)) {
             return;
         }
 
-        // Nothing to do if a rate limiting table does not exist
-        if ($db->get_table_count_approx('rate_limiting', [], null, true) === null) {
+        // Open the database
+        $db_link = new SQLite3($path);
+        $db_link->busyTimeout(5000);
+        $db_link->createFunction('MD5', 'md5', 1);
+        $db_link->exec('PRAGMA foreign_keys=ON;');
+
+        // Quick test to make sure that we have a connection. Bail if we don't; we don't want to crash.
+        $statement = $db_link->prepare('SELECT 1');
+        $result = $statement->execute();
+        if ($result === false) {
             return;
         }
 
         // Prune records
         $rate_limit_time_window = empty($SITE_INFO['rate_limit_time_window']) ? 10 : intval($SITE_INFO['rate_limit_time_window']);
-        $db->query_parameterised('DELETE FROM {prefix}rate_limiting WHERE date_and_time<{date_and_time}', [
-            'date_and_time' => (time() - $rate_limit_time_window)
-        ]);
+        $statement = $db_link->prepare('DELETE FROM rate_limiting WHERE date_and_time<:date_and_time');
+        $statement->bindValue(':date_and_time', (time() - $rate_limit_time_window), SQLITE3_INTEGER);
+        $statement->execute();
+        $statement->close();
+
+        // Cleanup
+        $db_link->close();
+        unset($statement);
+        unset($db_link);
     }
 }

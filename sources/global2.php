@@ -368,8 +368,6 @@ function init__global2()
     // More critical things
     require_code('caches');
     require_code('database'); // There's nothing without the database
-    connect_site_db(); // TODO: we do not want to load the database before the rate limit. However, this would require refactoring the database API code.
-    check_rate_limit();
     require_code('config'); // Config is needed for much active stuff
     if ((!isset($SITE_INFO['known_suexec'])) || ($SITE_INFO['known_suexec'] == '0')) {
         if (ip_banned(get_ip_address())) {
@@ -2548,81 +2546,4 @@ function current_fatalistic() : int
     }
 
     return 0;
-}
-
-/**
- * Check our rate limiter (and log a hit if enabled).
- */
-function check_rate_limit()
-{
-    // TODO: fundamentally broken; I don't have time to fix it for 11 beta9
-    return;
-
-    /*
-    static $already_checked = false;
-    if ($already_checked === true) {
-        return;
-    }
-    $already_checked = true;
-
-    global $SITE_INFO;
-    $rate_limiting = !empty($SITE_INFO['rate_limiting']);
-    if (!$rate_limiting) {
-        return;
-    }
-
-    if ((empty($_SERVER['REMOTE_ADDR'])) || (basename($_SERVER['SCRIPT_NAME']) != 'index.php')) {
-        return;
-    }
-
-    // Basic context
-    $ip = $_SERVER['REMOTE_ADDR'];
-
-    //if (!(((!empty($_SERVER['SERVER_ADDR'])) && ($ip == $_SERVER['SERVER_ADDR'])) || ((!empty($_SERVER['LOCAL_ADDR'])) && ($ip == $_SERVER['LOCAL_ADDR'])))) {
-        // We specifically use SQLite3 for rate limiting
-        require_code('database/sqlite3');
-        $db_driver = object_factory('Source_database_static_sqlite3', false, ['cms_']);
-        $db = object_factory('Source_database_connector', false, ['ratelimiting', '', '', '', 'cms_', false, $db_driver]);
-
-        // Quick test to make sure that we have a connection. Bail if we don't; we don't want to crash.
-        $results = $db->query_value_if_there('SELECT 1', true);
-        if ($results === null) {
-            return;
-        }
-
-        if ($db->get_table_count_approx('rate_limiting', [], null, true) === null) {
-            $db->create_table('rate_limiting', [
-                'id' => '*AUTO',
-                'ip' => 'SHORT_TEXT',
-                'date_and_time' => 'TIME',
-            ]);
-        }
-
-        // Prune old records
-        $rate_limit_time_window = empty($SITE_INFO['rate_limit_time_window']) ? 10 : intval($SITE_INFO['rate_limit_time_window']);
-        $db->query_parameterised('DELETE FROM {prefix}rate_limiting WHERE ip={ip} AND date_and_time<{date_and_time}', [
-            'ip' => $ip,
-            'date_and_time' => (time() - $rate_limit_time_window)
-        ]);
-
-        // Get our current count
-        $hit_count = $db->query_select_value('rate_limiting', 'COUNT(ip) AS hit_count', ['ip' => $ip]);
-
-        // Do we have to block?
-        $rate_limit_hits_per_window = empty($SITE_INFO['rate_limit_hits_per_window']) ? 5 : intval($SITE_INFO['rate_limit_hits_per_window']);
-        if ($hit_count >= $rate_limit_hits_per_window) {
-            http_response_code(429);
-            header('Content-Type: text/plain');
-            exit('We only allow ' . strval($rate_limit_hits_per_window - 1) . ' page hits every ' . strval($rate_limit_time_window) . ' seconds. You\'re at ' . strval($hit_count) . '.');
-        }
-
-        // Record new hit
-        $db->query_insert('rate_limiting', ['ip' => $ip, 'date_and_time' => time()]);
-
-        // Shut down the database
-        $db->driver->close_connections();
-        unset($db);
-        unset($db_driver);
-    //}
-    */
 }

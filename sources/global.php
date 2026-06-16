@@ -36,38 +36,156 @@
  * @package    core
  */
 
-// NB: bootstrap should have loaded $SITE_INFO already, but bootstrap does not actually check if it's missing because it's not critical until global.php
-// You should update these strings with the critical_error function.
-global $SITE_INFO;
-if (!is_array($SITE_INFO) || (count($SITE_INFO) == 0) || (empty($SITE_INFO))) {
-    if (!is_file($FILE_BASE . '/_config.php')) {
-        $install_url = 'install.php';
-        if (!file_exists($install_url)) {
-            $install_url = '../install.php';
-        }
-        if (file_exists($install_url)) {
-            $error = '<div>The top-level configuration file is missing, but we detected the installer, so you may wish to <a href="' . $install_url . '">run the installer</a>.</div>';
-            $error_log = '';
+/**
+ * Standard code initialisation function.
+ */
+function init__global()
+{
+    // NB: bootstrap should have loaded $SITE_INFO already, but bootstrap does not actually check if it's missing because it's not critical until global.php
+    // You should update these strings with the critical_error function.
+    global $SITE_INFO, $FILE_BASE;
+    if (!is_array($SITE_INFO) || (count($SITE_INFO) == 0) || (empty($SITE_INFO))) {
+        if (!is_file($FILE_BASE . '/_config.php')) {
+            $install_url = 'install.php';
+            if (!file_exists($install_url)) {
+                $install_url = '../install.php';
+            }
+            if (file_exists($install_url)) {
+                $error = '<div>The top-level configuration file is missing, but we detected the installer, so you may wish to <a href="' . $install_url . '">run the installer</a>.</div>';
+                $error_log = '';
+            } else {
+                $error = '<div>The top-level configuration file is missing and must be recovered from a backup or an official software release.</div>';
+            }
+            exit($error);
+        } elseif (strlen(trim(file_get_contents($FILE_BASE . '/_config.php'))) == 0) {
+            $install_url = 'install.php';
+            if (!file_exists($install_url)) {
+                $install_url = '../install.php';
+            }
+            if (file_exists($install_url)) {
+                $error = '<div>The top-level configuration file is empty or cannot be accessed, but we detected the installer, so you may wish to <a href="' . $install_url . '">run the installer</a>.</div>';
+                $error_log = '';
+            } else {
+                $error = '<div>The top-level configuration file is empty or cannot be accessed. Permissions for the file must be fixed, or the file must be recovered from a backup or official software release.</div>';
+            }
+            exit($error);
         } else {
-            $error = '<div>The top-level configuration file is missing and must be recovered from a backup or an official software release.</div>';
+            $error = '<div>The top-level configuration file appears to be corrupt. Perhaps it was incorrectly uploaded, or a typo was made. It must be valid PHP code.</div>';
+            exit($error);
         }
-        exit($error);
-    } elseif (strlen(trim(file_get_contents($FILE_BASE . '/_config.php'))) == 0) {
-        $install_url = 'install.php';
-        if (!file_exists($install_url)) {
-            $install_url = '../install.php';
-        }
-        if (file_exists($install_url)) {
-            $error = '<div>The top-level configuration file is empty or cannot be accessed, but we detected the installer, so you may wish to <a href="' . $install_url . '">run the installer</a>.</div>';
-            $error_log = '';
-        } else {
-            $error = '<div>The top-level configuration file is empty or cannot be accessed. Permissions for the file must be fixed, or the file must be recovered from a backup or official software release.</div>';
-        }
-        exit($error);
-    } else {
-        $error = '<div>The top-level configuration file appears to be corrupt. Perhaps it was incorrectly uploaded, or a typo was made. It must be valid PHP code.</div>';
-        exit($error);
     }
+
+    // Useful for basic profiling
+    global $PAGE_START_TIME;
+    $PAGE_START_TIME = microtime(true);
+
+    global $HOOKS_CACHE;
+    $HOOKS_CACHE = [];
+
+    // Are we in a special version of PHP?
+    define('GOOGLE_APPENGINE', isset($_SERVER['APPLICATION_ID']));
+
+    define('URL_CONTENT_REGEXP', '\w\-\x80-\xFF'); // PHP is done using ASCII (don't use the 'u' modifier). Note this doesn't include dots, this is intentional as they can cause problems in filenames
+    define('URL_CONTENT_REGEXP_JS', '\w\-\u0080-\uFFFF'); // JavaScript is done using Unicode
+
+    // Sanitise the PHP environment some more
+    if (!GOOGLE_APPENGINE) {
+        cms_ini_set('include_path', '');
+        cms_ini_set('allow_url_fopen', '0');
+    }
+    cms_ini_set('allow_url_include', '0');
+    cms_ini_set('display_errors', '0');
+    cms_ini_set('suhosin.executor.disable_emodifier', '1'); // Extra security if suhosin is available
+    cms_ini_set('suhosin.executor.multiheader', '1'); // Extra security if suhosin is available
+    cms_ini_set('suhosin.executor.disable_eval', '0');
+    cms_ini_set('suhosin.executor.eval.whitelist', '');
+    cms_ini_set('suhosin.executor.func.whitelist', '');
+    cms_ini_set('auto_detect_line_endings', '0'); // LEGACY: Remove when only supporting PHP 8.1+
+    cms_ini_set('default_socket_timeout', '60');
+    cms_ini_set('html_errors', '1');
+    cms_ini_set('docref_root', 'http://php.net/manual/en/');
+    cms_ini_set('docref_ext', '.php');
+    cms_ini_set('pcre.jit', '0'); // Compatibility issue in PHP 7.3, "JIT compilation failed: no more memory"
+    @header_remove('x-powered-by'); // Security
+
+    fixup_bad_php_env_vars_pre();
+
+    $script_name = isset($_SERVER['SCRIPT_NAME']) ? $_SERVER['SCRIPT_NAME'] : '';
+    if ((strpos($script_name, '/sources/') !== false) || (strpos($script_name, '/sources_custom/') !== false)) {
+        header('Content-Type: text/plain; charset=utf-8');
+        exit('May not be included directly');
+    }
+
+    // Get ready for some global variables
+    global $REQUIRED_CODE, $REQUIRING_CODE, $CURRENT_SHARE_USER, $PURE_POST, $IN_MINIKERNEL_VERSION;
+    /** Details of what code files have been loaded up.
+     *
+     * @global array $REQUIRED_CODE
+     */
+    $REQUIRED_CODE = [];
+    $REQUIRING_CODE = false;
+    /** If running on a shared-install, this is the identifying name of the site that is being called up.
+     *
+     * @global ?ID_TEXT $CURRENT_SHARE_USER
+     */
+    if ((!isset($CURRENT_SHARE_USER)) || (isset($_SERVER['REQUEST_METHOD']))) {
+        $CURRENT_SHARE_USER = null;
+    }
+    /** A copy of the POST parameters, as passed initially to PHP (needed for hash checks with some IPN systems).
+     *
+     * @global array $PURE_POST
+     */
+    $PURE_POST = $_POST;
+    $IN_MINIKERNEL_VERSION = false;
+
+    // Critical error reporting system
+    require_code('critical_errors');
+
+    // Check if we might be proxying through Cloudflare (unsafe test as this does not check actual remote address against known Cloudflare IPs)
+    global $MIGHT_BE_USING_CF, $CF_ORIGINAL_IP, $ACTUALLY_USING_CF;
+    $ACTUALLY_USING_CF = false;
+    $MIGHT_BE_USING_CF = isset($_SERVER['HTTP_CF_RAY']);
+
+    // Make sure we have the correct IP address in REMOTE_ADDR. Note for Cloudflare checks, some webhosts might handle Cloudflare automatically, which prevents us from knowing the true REMOTE_ADDR of Cloudflare, thus we cannot compare it to trusted proxies.
+    if (!empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
+        if (empty($SITE_INFO['trusted_proxies'])) {
+            $trusted_proxies = '173.245.48.0/20,103.21.244.0/22,103.22.200.0/22,103.31.4.0/22,141.101.64.0/18,108.162.192.0/18,190.93.240.0/20,188.114.96.0/20,197.234.240.0/22,198.41.128.0/17,162.158.0.0/15,104.16.0.0/13,104.24.0.0/14,172.64.0.0/13,131.0.72.0/22,2400:cb00::/32,2606:4700::/32,2803:f800::/32,2405:b500::/32,2405:8100::/32,2a06:98c0::/29,2c0f:f248::/32';
+            $might_be_cloudflare = true;
+            $ACTUALLY_USING_CF = true;
+        } else {
+            $trusted_proxies = $SITE_INFO['trusted_proxies'];
+            $might_be_cloudflare = false;
+        }
+        foreach (explode(',', $trusted_proxies) as $proxy) {
+            if (((strpos($proxy, '/') !== false) && (ip_cidr_check($_SERVER['REMOTE_ADDR'], $proxy))) || ($_SERVER['REMOTE_ADDR'] == $proxy)) {
+                if (ip_cidr_check($_SERVER['REMOTE_ADDR'], $proxy)) {
+                    $CF_ORIGINAL_IP = (($might_be_cloudflare) && (isset($_SERVER['HTTP_CF_CONNECTING_IP']))) ? $_SERVER['REMOTE_ADDR'] : null; // We may still need to know the original Cloudflare IP address
+                    $_SERVER['REMOTE_ADDR'] = (($might_be_cloudflare) && (isset($_SERVER['HTTP_CF_CONNECTING_IP']))) ? $_SERVER['HTTP_CF_CONNECTING_IP'] : $_SERVER['HTTP_X_FORWARDED_FOR'];
+                    $_SERVER['HTTP_X_FORWARDED_FOR'] = '';
+                    if ($might_be_cloudflare) {
+                        unset($_SERVER['HTTP_CF_CONNECTING_IP']);
+                    }
+                    if ((isset($_SERVER['HTTP_X_FORWARDED_PROTO'])) && ($_SERVER['HTTP_X_FORWARDED_PROTO'] == 'https')) {
+                        $_SERVER['HTTPS'] = 'on';
+                        $_SERVER['SERVER_PORT'] = '443';
+                    }
+                    break;
+                }
+            }
+        }
+    }
+
+    get_custom_file_base(); // Make sure $CURRENT_SHARE_USER is set if it is a shared site, so we can use CURRENT_SHARE_USER as an indicator of it being one.
+
+    require_code('rate_limiter');
+    check_rate_limit();
+
+    if (GOOGLE_APPENGINE) {
+        require_code('google_appengine');
+    }
+
+    // Pass on to next bootstrap level
+    require_code('global2');
 }
 
 /**
@@ -1580,124 +1698,3 @@ function get_hook_ob(string $type, string $subtype, string $hook, string $classn
 
     return $ob;
 }
-
-// Useful for basic profiling
-global $PAGE_START_TIME;
-$PAGE_START_TIME = microtime(true);
-
-global $HOOKS_CACHE;
-$HOOKS_CACHE = [];
-
-// Are we in a special version of PHP?
-define('GOOGLE_APPENGINE', isset($_SERVER['APPLICATION_ID']));
-
-define('URL_CONTENT_REGEXP', '\w\-\x80-\xFF'); // PHP is done using ASCII (don't use the 'u' modifier). Note this doesn't include dots, this is intentional as they can cause problems in filenames
-define('URL_CONTENT_REGEXP_JS', '\w\-\u0080-\uFFFF'); // JavaScript is done using Unicode
-
-// Sanitise the PHP environment some more
-if (!GOOGLE_APPENGINE) {
-    cms_ini_set('include_path', '');
-    cms_ini_set('allow_url_fopen', '0');
-}
-cms_ini_set('allow_url_include', '0');
-cms_ini_set('display_errors', '0');
-cms_ini_set('suhosin.executor.disable_emodifier', '1'); // Extra security if suhosin is available
-cms_ini_set('suhosin.executor.multiheader', '1'); // Extra security if suhosin is available
-cms_ini_set('suhosin.executor.disable_eval', '0');
-cms_ini_set('suhosin.executor.eval.whitelist', '');
-cms_ini_set('suhosin.executor.func.whitelist', '');
-cms_ini_set('auto_detect_line_endings', '0'); // LEGACY: Remove when only supporting PHP 8.1+
-cms_ini_set('default_socket_timeout', '60');
-cms_ini_set('html_errors', '1');
-cms_ini_set('docref_root', 'http://php.net/manual/en/');
-cms_ini_set('docref_ext', '.php');
-cms_ini_set('pcre.jit', '0'); // Compatibility issue in PHP 7.3, "JIT compilation failed: no more memory"
-@header_remove('x-powered-by'); // Security
-
-fixup_bad_php_env_vars_pre();
-
-$script_name = isset($_SERVER['SCRIPT_NAME']) ? $_SERVER['SCRIPT_NAME'] : '';
-if ((strpos($script_name, '/sources/') !== false) || (strpos($script_name, '/sources_custom/') !== false)) {
-    header('Content-Type: text/plain; charset=utf-8');
-    exit('May not be included directly');
-}
-
-// Get ready for some global variables
-global $REQUIRED_CODE, $REQUIRING_CODE, $CURRENT_SHARE_USER, $PURE_POST, $IN_MINIKERNEL_VERSION;
-/** Details of what code files have been loaded up.
- *
- * @global array $REQUIRED_CODE
- */
-$REQUIRED_CODE = [];
-$REQUIRING_CODE = false;
-/** If running on a shared-install, this is the identifying name of the site that is being called up.
- *
- * @global ?ID_TEXT $CURRENT_SHARE_USER
- */
-if ((!isset($CURRENT_SHARE_USER)) || (isset($_SERVER['REQUEST_METHOD']))) {
-    $CURRENT_SHARE_USER = null;
-}
-/** A copy of the POST parameters, as passed initially to PHP (needed for hash checks with some IPN systems).
- *
- * @global array $PURE_POST
- */
-$PURE_POST = $_POST;
-$IN_MINIKERNEL_VERSION = false;
-
-// Critical error reporting system
-global $FILE_BASE;
-if (is_file($FILE_BASE . '/sources_custom/critical_errors.php')) {
-    require $FILE_BASE . '/sources_custom/critical_errors.php';
-} else {
-    if (function_exists('error_clear_last')) {
-        error_clear_last();
-    }
-    $errormsg_before = error_get_last();
-    $result = @include $FILE_BASE . '/sources/critical_errors.php';
-    $errormsg = error_get_last();
-    if ((!$result) && ($errormsg !== null) && ($errormsg !== $errormsg_before)) {
-        exit('<!DOCTYPE html>' . "\n" . '<html lang="EN"><head><title>Critical startup error</title></head><body><h1>Composr startup error</h1><p>The third most basic Composr startup file, sources/critical_errors.php, could not be loaded (error: ' . $errormsg['message'] . '). This is almost always due to an incomplete upload of the Composr system, so please check all files are uploaded correctly.</p><p>Once all Composr files are in place, Composr must actually be installed by running the installer. You must be seeing this message either because your system has become corrupt since installation, or because you have uploaded some but not all files from our manual installer package: the quick installer is easier, so you might consider using that instead.</p><p>The core developers maintain full documentation for all procedures and tools, especially those for installation. These may be found on the <a href="https://composr.app">Composr website</a>. If you are unable to easily solve this problem, we may be contacted from our website and can help resolve it for you.</p><hr /><p style="font-size: 0.8em">Composr is a website engine created by Christopher Graham.</p></body></html>');
-    }
-}
-
-// Check if we might be proxying through Cloudflare (unsafe test as this does not check actual remote address against known Cloudflare IPs)
-global $MIGHT_BE_USING_CF, $CF_ORIGINAL_IP, $ACTUALLY_USING_CF;
-$ACTUALLY_USING_CF = false;
-$MIGHT_BE_USING_CF = isset($_SERVER['HTTP_CF_RAY']);
-
-// Make sure we have the correct IP address in REMOTE_ADDR. Note for Cloudflare checks, some webhosts might handle Cloudflare automatically, which prevents us from knowing the true REMOTE_ADDR of Cloudflare, thus we cannot compare it to trusted proxies.
-if (!empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
-    if (empty($SITE_INFO['trusted_proxies'])) {
-        $trusted_proxies = '173.245.48.0/20,103.21.244.0/22,103.22.200.0/22,103.31.4.0/22,141.101.64.0/18,108.162.192.0/18,190.93.240.0/20,188.114.96.0/20,197.234.240.0/22,198.41.128.0/17,162.158.0.0/15,104.16.0.0/13,104.24.0.0/14,172.64.0.0/13,131.0.72.0/22,2400:cb00::/32,2606:4700::/32,2803:f800::/32,2405:b500::/32,2405:8100::/32,2a06:98c0::/29,2c0f:f248::/32';
-        $might_be_cloudflare = true;
-        $ACTUALLY_USING_CF = true;
-    } else {
-        $trusted_proxies = $SITE_INFO['trusted_proxies'];
-        $might_be_cloudflare = false;
-    }
-    foreach (explode(',', $trusted_proxies) as $proxy) {
-        if (((strpos($proxy, '/') !== false) && (ip_cidr_check($_SERVER['REMOTE_ADDR'], $proxy))) || ($_SERVER['REMOTE_ADDR'] == $proxy)) {
-            if (ip_cidr_check($_SERVER['REMOTE_ADDR'], $proxy)) {
-                $CF_ORIGINAL_IP = (($might_be_cloudflare) && (isset($_SERVER['HTTP_CF_CONNECTING_IP']))) ? $_SERVER['REMOTE_ADDR'] : null; // We may still need to know the original Cloudflare IP address
-                $_SERVER['REMOTE_ADDR'] = (($might_be_cloudflare) && (isset($_SERVER['HTTP_CF_CONNECTING_IP']))) ? $_SERVER['HTTP_CF_CONNECTING_IP'] : $_SERVER['HTTP_X_FORWARDED_FOR'];
-                $_SERVER['HTTP_X_FORWARDED_FOR'] = '';
-                if ($might_be_cloudflare) {
-                    unset($_SERVER['HTTP_CF_CONNECTING_IP']);
-                }
-                if ((isset($_SERVER['HTTP_X_FORWARDED_PROTO'])) && ($_SERVER['HTTP_X_FORWARDED_PROTO'] == 'https')) {
-                    $_SERVER['HTTPS'] = 'on';
-                    $_SERVER['SERVER_PORT'] = '443';
-                }
-                break;
-            }
-        }
-    }
-}
-
-get_custom_file_base(); // Make sure $CURRENT_SHARE_USER is set if it is a shared site, so we can use CURRENT_SHARE_USER as an indicator of it being one.
-
-// Pass on to next bootstrap level
-if (GOOGLE_APPENGINE) {
-    require_code('google_appengine');
-}
-require_code('global2');

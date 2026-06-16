@@ -74,8 +74,6 @@ function init__database()
 
     global $UPON_QUERY_HOOKS_CACHE;
     $UPON_QUERY_HOOKS_CACHE = null;
-
-    connect_site_db(); // TODO: remove when we can safely do so
 }
 
 /**
