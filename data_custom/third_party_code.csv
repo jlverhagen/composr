@@ -49,3 +49,4 @@ xsl_mopup.js,,,No,Yes,"Remove when Firefox doesn't need it, unlikely to happen",
 Web Font Loader,,https://github.com/typekit/webfontloader,No,Yes,Re-sync regularly,21st Feb 2024,1.6.28,N/A,N/A,N/A,
 php-imap2,php_imap2,https://github.com/javanile/php-imap2,Yes,Yes,Re-sync regularly,21st Feb 2024,0.1.10,PHP 7.0+,_protocol_imap,IMAP login,
 Pace.js,,https://codebyzach.github.io/pace/,Yes,Yes,Re-sync regularly,2nd Jan 2025,1.2.4,N/A,N/A,N/A,"Add a 'use strict' in pace.js if not already there. Also download the 'Flat Top' theme CSS and save as 'pace.css'; replace background with Tempcode $GET,seed; move z-index from '.pace .pace-progress' to '.pace'"
+Monolog,monolog,https://github.com/Seldaek/monolog/tree/2.x,Yes,Yes,Re-sync regularly,15th June 2026,2.11.0,PHP FTP Extension,N/A,N/A,

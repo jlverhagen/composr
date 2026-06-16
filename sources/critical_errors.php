@@ -67,6 +67,23 @@ if ((isset($_SERVER['argv'][0])) && (strpos($_SERVER['argv'][0], 'critical_error
     }
 }
 
+/**
+ * Standard initialisation function.
+ */
+function init__critical_errors()
+{
+    require_code('monolog/vendor/autoload');
+
+    global $LOGGER;
+
+    // NB: We only want to load Loggers here that are absolutely necessary for every page load
+    $LOGGER = [
+        'PHP' => new Monolog\Logger('PHP'),
+        'CMS' => new Monolog\Logger('CMS'), // Software errors
+        'banned_access' => new Monolog\Logger('banned_access'),
+    ];
+}
+
 if (!function_exists('critical_error')) {
     /**
      * Exit with a nicely formatted critical error.
@@ -109,7 +126,7 @@ if (!function_exists('critical_error')) {
         $may_save_critical_error_file = true;
 
         // Name of the log file for which this error should be logged (blank: no logging). If errorlog.php, then the error will be passed to error_log.
-        $error_log = 'errorlog.php';
+        $error_log = 'CMS';
 
         switch ($code) {
             case 'CORRUPT_OVERRIDE':
@@ -135,7 +152,7 @@ if (!function_exists('critical_error')) {
             case 'BANNED':
                 $error = '<div>The IP address you are accessing this website from (' . get_ip_address() . ') has been banned. If you believe this is a mistake, contact the staff to have it resolved (typically, postmaster@' . get_domain() . ' will be able to reach them).</div>';
                 $may_show_footer = false;
-                $error_log = 'banned_access.log';
+                $error_log = 'banned_access';
                 $may_save_critical_error_file = false; // Banned IPs are not actually errors
                 break;
             case 'TEST':
@@ -366,23 +383,9 @@ END;
         }
 
         // Standard error logging
-        if ((php_function_allowed('error_log')) && ($error_log == 'errorlog.php')) {
-            @error_log('Composr: CRITICAL ' . str_replace("\n", '', $error . "\n" . $full_trace), 0);
-        }
-
-        // Custom error logging
-        if (($error_log != '') && ($error_log != 'errorlog.php')) {
-            if ((file_exists(get_custom_file_base() . '/data_custom/' . $error_log)) && (cms_is_writable(get_custom_file_base() . '/data_custom/' . $error_log))) {
-                require_code('files');
-                $myfile = cms_fopen_text_write(get_custom_file_base() . '/data_custom/' . $error_log, true, 'ab');
-                fwrite($myfile, loggable_date() . "\n");
-                fwrite($myfile, 'Composr: CRITICAL ' . "\n");
-                fwrite($myfile, $error);
-                fwrite($myfile, $full_trace);
-                fwrite($myfile, "\n\n");
-                flock($myfile, LOCK_UN);
-                fclose($myfile);
-            }
+        if ($error_log != '') {
+            global $LOGGER;
+            $LOGGER[$error_log]->emergency($error);
         }
 
         if ($exit) {
