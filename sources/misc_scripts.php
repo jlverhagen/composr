@@ -788,14 +788,14 @@ END;
     if (addon_installed('captcha')) {
         $js_files[] = 'captcha';
     }
+
+    $js_tpl = new Tempcode();
     foreach ($js_files as $js_file) {
-        $js_path = javascript_enforce($js_file, 'default');
-        if ($js_path != '') {
-            echo "<script nonce=\"" . $GLOBALS['CSP_NONCE'] . "\">";
-            @print(cms_file_get_contents_safe($js_path, FILE_READ_LOCK | FILE_READ_BOM));
-            echo '</script>';
-        }
+        $js_tpl->attach(_do_template('default', '/javascript/', $js_file, $js_file . '__unsubscribe', get_lang(get_member()), '.js'));
     }
+    $js_tpl->handle_symbol_preprocessing();
+    $js_tpl->evaluate_echo();
+
     echo <<<END
     </div></div></body>
 </html>
@@ -908,14 +908,14 @@ END;
     if (addon_installed('captcha')) {
         $js_files[] = 'captcha';
     }
+
+    $js_tpl = new Tempcode();
     foreach ($js_files as $js_file) {
-        $js_path = javascript_enforce($js_file, 'default');
-        if ($js_path != '') {
-            echo "<script nonce=\"" . $GLOBALS['CSP_NONCE'] . "\">";
-            @print(cms_file_get_contents_safe($js_path, FILE_READ_LOCK | FILE_READ_BOM));
-            echo '</script>';
-        }
+        $js_tpl->attach(_do_template('default', '/javascript/', $js_file, $js_file . '__mail_check', get_lang(get_member()), '.js'));
     }
+    $js_tpl->handle_symbol_preprocessing();
+    $js_tpl->evaluate_echo();
+
     echo <<<END
     </div></div></body>
 </html>
