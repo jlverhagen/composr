@@ -43,7 +43,7 @@ class Hook_privacy_ezoic extends Source_hook_privacy_base
         require_code('http');
 
         $ezoic_url = 'https://g.ezoic.net/privacy/' . get_base_url_hostname();
-        $ezoic_data = cache_and_carry('cms_http_request', [$ezoic_url, []], (60 * 24));
+        $ezoic_data = cache_and_carry('cms_http_request', [$ezoic_url, ['trigger_error' => false]], (60 * 24));
         $ezoic_pp = null;
         if ((is_array($ezoic_data)) && ($ezoic_data[0] !== null) && ($ezoic_data[4] == '200')) {
             require_code('comcode');
