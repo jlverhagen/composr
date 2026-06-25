@@ -648,7 +648,10 @@ function unsubscribe_script()
     require_code('crypt');
     require_code('templates');
     require_code('tempcode');
+    require_code('tempcode_compiler');
     require_code('form_templates');
+    require_code('lang');
+    require_code('users');
     require_lang('mail');
 
     $text = new Tempcode();
@@ -737,6 +740,8 @@ function unsubscribe_script()
     $charset = get_charset();
     $lang = user_lang();
     $dir = do_lang('dir');
+    $symbol_data = escape_html(static_evaluate_tempcode(symbol_tempcode('SYMBOL_DATA_AS_JSON')));
+    $nonce = escape_html(static_evaluate_tempcode(symbol_tempcode('CSP_NONCE')));
 
     cms_ob_end_clean();
     echo <<<END
@@ -744,6 +749,8 @@ function unsubscribe_script()
     <html lang="{$lang}" dir="{$dir}">
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset={$charset}" />
+        <meta id="cms-symbol-data" name="cms-symbol-data" content="{$symbol_data}" />
+        <meta id="cms-nonce" name="cms-nonce" content="{$nonce}" />
 
         <title>{$_title}</title>
         <link rel="icon" href="/favicon.ico" type="image/x-icon" />
@@ -788,14 +795,15 @@ END;
     if (addon_installed('captcha')) {
         $js_files[] = 'captcha';
     }
+
     foreach ($js_files as $js_file) {
-        $js_path = javascript_enforce($js_file, 'default');
-        if ($js_path != '') {
-            echo "<script nonce=\"" . $GLOBALS['CSP_NONCE'] . "\">";
-            @print(cms_file_get_contents_safe($js_path, FILE_READ_LOCK | FILE_READ_BOM));
-            echo '</script>';
-        }
+        echo "<script nonce=\"" . $GLOBALS['CSP_NONCE'] . "\">";
+        $js_tpl = do_template($js_file, [], null, false, null, '.js', 'javascript', null, false);
+        $js_tpl->handle_symbol_preprocessing();
+        $js_tpl->evaluate_echo();
+        echo "</script>";
     }
+
     echo <<<END
     </div></div></body>
 </html>
@@ -814,12 +822,22 @@ function mail_check_script()
     require_code('templates');
     require_code('tempcode');
     require_code('form_templates');
-    require_lang('mail');
+    require_code('lang');
     require_code('mail2');
+    require_code('users');
+    require_lang('mail');
 
     $text = new Tempcode();
 
     if ($email !== null) { // E-mail provided?
+        require_code('csrf_filter');
+        check_csrf_token(post_param_string('csrf_token', null)); // NB: Will exit if it fails
+
+        if (addon_installed('captcha')) {
+            require_code('captcha');
+            enforce_captcha();
+        }
+
         require_code('crypt');
 
         $staff_address = obfuscate_email_address(get_option('staff_address'));
@@ -850,6 +868,14 @@ function mail_check_script()
     $hidden = new Tempcode();
 
     $fields->attach(form_input_email(do_lang_tempcode('YOUR_EMAIL_ADDRESS'), $body_text, 'email', $email, true));
+    if (addon_installed('captcha')) {
+        require_code('captcha');
+        if (use_captcha()) {
+            $fields->attach(form_input_captcha($hidden));
+            $text->attach(' ');
+            $text->attach(do_lang_tempcode('captcha:FORM_TIME_SECURITY'));
+        }
+    }
 
     $post_url = find_script('mail_check');
 
@@ -857,6 +883,8 @@ function mail_check_script()
     $charset = get_charset();
     $lang = user_lang();
     $dir = do_lang('dir');
+    $symbol_data = escape_html(static_evaluate_tempcode(symbol_tempcode('SYMBOL_DATA_AS_JSON')));
+    $nonce = escape_html(static_evaluate_tempcode(symbol_tempcode('CSP_NONCE')));
 
     cms_ob_end_clean();
     echo <<<END
@@ -864,6 +892,8 @@ function mail_check_script()
     <html lang="{$lang}" dir="{$dir}">
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset={$charset}" />
+        <meta id="cms-symbol-data" name="cms-symbol-data" content="{$symbol_data}" />
+        <meta id="cms-nonce" name="cms-nonce" content="{$nonce}" />
 
         <title>{$_title}</title>
         <link rel="icon" href="/favicon.ico" type="image/x-icon" />
@@ -908,14 +938,15 @@ END;
     if (addon_installed('captcha')) {
         $js_files[] = 'captcha';
     }
+
     foreach ($js_files as $js_file) {
-        $js_path = javascript_enforce($js_file, 'default');
-        if ($js_path != '') {
-            echo "<script nonce=\"" . $GLOBALS['CSP_NONCE'] . "\">";
-            @print(cms_file_get_contents_safe($js_path, FILE_READ_LOCK | FILE_READ_BOM));
-            echo '</script>';
-        }
+        echo "<script nonce=\"" . $GLOBALS['CSP_NONCE'] . "\">";
+        $js_tpl = do_template($js_file, [], null, false, null, '.js', 'javascript', null, false);
+        $js_tpl->handle_symbol_preprocessing();
+        $js_tpl->evaluate_echo();
+        echo "</script>";
     }
+
     echo <<<END
     </div></div></body>
 </html>
