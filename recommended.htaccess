@@ -74,6 +74,8 @@ RedirectMatch 404 /\.git
     Require all denied
 </FilesMatch>
 
+### WARNING! If you modify rewrite rules, then you must also modify the nginx.php source file.
+
 <IfModule mod_rewrite.c>
 
 # Needed for mod_rewrite. Disable this line if your server does not have AllowOverride permission (can be one cause of Internal Server Errors)
@@ -94,7 +96,8 @@ RewriteEngine on
 # Needed to pass HTTP-auth header on PHP CGI (it's not automatic, unlike PHP Module)
 RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
 
-# Ad-hoc redirects go here. If this file is writeable, Composr will write in configured redirects below)
+# Ad-hoc redirects go here. If this file is writeable, Composr will write in configured redirects below.
+# TODO: nginx.php
 # RewriteRule somerule sometarget (leave this comment here!)
 
 # If rewrites are directing to bogus URLs, try adding a "RewriteBase /" line, or a "RewriteBase /subdir" line if you're in a subdirectory. Requirements vary from server to server.
@@ -126,6 +129,7 @@ RewriteCond $1 -l [OR]
 RewriteCond $1 -d
 RewriteRule ^/?(.*) - [L]
 
+# TODO: nginx.php
 #FAILOVER STARTS
 ### LEAVE THIS ALONE, AUTOMATICALLY MAINTAINED ###
 #FAILOVER ENDS

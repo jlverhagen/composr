@@ -1206,6 +1206,12 @@ function sync_htaccess_with_zones()
  */
 function check_zone_name(string $zone)
 {
+    // Do not name a zone a reserved name for pretty URLs
+    if (in_array($zone, ['pg', 'webdav'])) {
+        require_lang('zones');
+        warn_exit(do_lang_tempcode('CONFLICTING_ZONE_NAME__DISALLOWED'));
+    }
+
     $url_scheme = get_option('url_scheme');
     if (($url_scheme == 'SIMPLE') || ($url_scheme == 'HTM')) {
         if ($url_scheme == 'SIMPLE') {

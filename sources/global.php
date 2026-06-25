@@ -184,6 +184,13 @@ function init__global()
         require_code('google_appengine');
     }
 
+    // If running under Nginx (without Apache), load Nginx fallbacks
+    $server_software = isset($_SERVER['SERVER_SOFTWARE']) ? $_SERVER['SERVER_SOFTWARE'] : '';
+    if ((!GOOGLE_APPENGINE) && (stripos($server_software, 'nginx') !== false)) {
+        require_code('nginx');
+        nginx_rewrite();
+    }
+
     // Pass on to next bootstrap level
     require_code('global2');
 }

@@ -82,6 +82,7 @@ function init__global2()
 
     fixup_bad_php_env_vars();
 
+    // Initialise error logging
     cms_ini_set('log_errors', '1');
     if ((GOOGLE_APPENGINE) && (!appengine_is_live())) {
         @mkdir(get_custom_file_base() . '/data_custom', 0755);
@@ -323,6 +324,7 @@ function init__global2()
     }
     if ((!$MICRO_BOOTUP) && (!$MICRO_AJAX_BOOTUP)) {
         // Marker of what we are running
+        // NB: Can't use brand_name(); it's in global3
         //@header('X-Powered-By: Composr ' . cms_version_pretty() . ' (PHP ' . phpversion() . ')');
         if (!headers_sent()) {
             header('X-Powered-By: Composr'); // Better to keep it vague, for security reasons
